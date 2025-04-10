@@ -694,7 +694,7 @@ export default function Home() {
 
   return (
     // Main container with flex column layout
-    <div className="flex flex-col h-screen bg-gray-900 text-white relative touch-none">
+    <div className="flex flex-col h-screen bg-gray-900 text-white relative">
       {/* Fullscreen Toggle Button */}
       <button
         onClick={toggleFullScreen}
