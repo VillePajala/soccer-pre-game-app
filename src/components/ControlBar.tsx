@@ -9,6 +9,7 @@ interface ControlBarProps {
   canUndo: boolean;
   canRedo: boolean;
   onToggleNames: () => void;
+  onResetField: () => void;
   // TODO: Add props for Reset
 }
 
@@ -18,6 +19,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   canUndo,
   canRedo,
   onToggleNames,
+  onResetField,
 }) => {
   // Placeholder functions for other buttons
   const handleReset = () => console.log('Reset clicked');
@@ -47,13 +49,13 @@ const ControlBar: React.FC<ControlBarProps> = ({
       >
         Toggle Names
       </button>
-      {/* Optional Reset Button */}
-      {/* <button
-        onClick={handleReset}
+      {/* Reset Button */}
+      <button
+        onClick={onResetField} // Use passed handler
         className={`${baseButtonStyle} bg-red-500 hover:bg-red-600`}
       >
-        Reset
-      </button> */}
+        Reset Field
+      </button>
     </div>
   );
 };

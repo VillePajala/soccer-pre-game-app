@@ -283,6 +283,45 @@ export default function Home() {
     }
   };
 
+  // --- Reset Field Handler ---
+  const handleResetField = () => {
+    console.log("Resetting field state (robustly)...");
+    const currentState = history[historyIndex];
+
+    // 1. Create a map of current names from both field and available players
+    const currentNames = new Map<string, string>();
+    currentState.availablePlayers.forEach(p => currentNames.set(p.id, p.name));
+    currentState.playersOnField.forEach(p => currentNames.set(p.id, p.name)); // Overwrites if player was on field
+
+    // 2. Start with the initial list of all players (deep copy)
+    const resetAvailablePlayers = JSON.parse(JSON.stringify(initialAvailablePlayersData));
+
+    // 3. Update names in the initial list based on the current names map
+    resetAvailablePlayers.forEach((player: Player) => {
+      if (currentNames.has(player.id)) {
+        player.name = currentNames.get(player.id)!; // Update name if it was changed
+      }
+    });
+
+    // 4. Sort the final list by ID (optional but good for consistency)
+    resetAvailablePlayers.sort((a: Player, b: Player) => {
+        const numA = parseInt(a.id.substring(1));
+        const numB = parseInt(b.id.substring(1));
+        return numA - numB;
+    });
+
+    // 5. Define the reset state
+    const resetState: Partial<AppState> = {
+        playersOnField: [],
+        drawings: [],
+        availablePlayers: resetAvailablePlayers, // Use the rebuilt list
+        showPlayerNames: true // Reset to default
+    };
+
+    // 6. Save the new state
+    saveState(resetState);
+  };
+
   const canUndo = historyIndex > 0;
   const canRedo = historyIndex < history.length - 1;
 
@@ -310,6 +349,7 @@ export default function Home() {
         canUndo={canUndo}
         canRedo={canRedo}
         onToggleNames={handleTogglePlayerNames}
+        onResetField={handleResetField}
       />
     </div>
   );
