@@ -28,6 +28,7 @@
 - [ ] Ensure responsive design for mobile, tablet, and desktop.
 - [ ] Implement visual feedback for interactions (e.g., dragging).
 - [ ] Address accessibility considerations (contrast, touch target size).
+- [x] Implement persistence using `localStorage`. (History and index saved)
 
 **Optional/Future**
 - [ ] Implement "Reset Field" functionality.

@@ -50,16 +50,72 @@ const initialState: AppState = {
   showPlayerNames: true, // Default to showing names
 };
 
+// Define localStorage key
+const LOCAL_STORAGE_KEY = 'soccerTacticsAppState';
+
 export default function Home() {
   // --- State Management ---
   const [playersOnField, setPlayersOnField] = useState<Player[]>(initialState.playersOnField);
   const [drawings, setDrawings] = useState<Point[][]>(initialState.drawings);
   const [availablePlayers, setAvailablePlayers] = useState<Player[]>(initialState.availablePlayers);
   const [showPlayerNames, setShowPlayerNames] = useState<boolean>(initialState.showPlayerNames);
-
-  // History State
   const [history, setHistory] = useState<AppState[]>([initialState]);
   const [historyIndex, setHistoryIndex] = useState<number>(0);
+  const [isLoaded, setIsLoaded] = useState<boolean>(false); // Flag to prevent overwriting loaded state
+
+  // --- Load state from localStorage on mount ---
+  useEffect(() => {
+    console.log("Attempting to load state from localStorage...");
+    try {
+      const savedStateJSON = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (savedStateJSON) {
+        const savedData = JSON.parse(savedStateJSON);
+        if (savedData && Array.isArray(savedData.history) && typeof savedData.historyIndex === 'number') {
+          const loadedHistory: AppState[] = savedData.history;
+          const loadedIndex: number = savedData.historyIndex;
+
+          if (loadedIndex >= 0 && loadedIndex < loadedHistory.length) {
+            console.log(`Loaded state from localStorage: History length ${loadedHistory.length}, Index ${loadedIndex}`);
+            const currentState = loadedHistory[loadedIndex];
+
+            // Set history and index first
+            setHistory(loadedHistory);
+            setHistoryIndex(loadedIndex);
+
+            // Update visual state based on loaded history index
+            setPlayersOnField(currentState.playersOnField);
+            setDrawings(currentState.drawings);
+            setAvailablePlayers(currentState.availablePlayers);
+            setShowPlayerNames(currentState.showPlayerNames);
+          } else {
+            console.warn("Loaded historyIndex is out of bounds.");
+          }
+        } else {
+            console.warn("Loaded data structure is invalid.")
+        }
+      } else {
+          console.log("No saved state found in localStorage.")
+      }
+    } catch (error) {
+      console.error("Failed to load or parse state from localStorage:", error);
+      // Proceed with initial state if loading fails
+    }
+    setIsLoaded(true); // Mark loading as complete
+  }, []); // Empty dependency array ensures this runs only once on mount
+
+  // --- Save state to localStorage whenever history or index changes ---
+  useEffect(() => {
+    // Only save after initial load is complete
+    if (isLoaded) {
+      console.log(`Saving state to localStorage (Index: ${historyIndex}, History Length: ${history.length})`);
+      try {
+        const dataToSave = JSON.stringify({ history, historyIndex });
+        localStorage.setItem(LOCAL_STORAGE_KEY, dataToSave);
+      } catch (error) {
+        console.error("Failed to save state to localStorage:", error);
+      }
+    }
+  }, [history, historyIndex, isLoaded]); // Run when history, index, or loaded status changes
 
   // Function to save a new state to history
   const saveState = useCallback((newState: Partial<AppState>) => {
@@ -68,7 +124,7 @@ export default function Home() {
       playersOnField: newState.playersOnField ?? currentState.playersOnField,
       drawings: newState.drawings ?? currentState.drawings,
       availablePlayers: newState.availablePlayers ?? currentState.availablePlayers,
-      showPlayerNames: newState.showPlayerNames ?? currentState.showPlayerNames, // Include in save/restore
+      showPlayerNames: newState.showPlayerNames ?? currentState.showPlayerNames,
     };
 
     if (JSON.stringify(nextState) === JSON.stringify(currentState)) {
@@ -82,11 +138,10 @@ export default function Home() {
     setHistory(newHistory);
     setHistoryIndex(newHistory.length - 1);
 
-    // Update actual state
     setPlayersOnField(nextState.playersOnField);
     setDrawings(nextState.drawings);
     setAvailablePlayers(nextState.availablePlayers);
-    setShowPlayerNames(nextState.showPlayerNames); // Update name visibility state
+    setShowPlayerNames(nextState.showPlayerNames);
 
   }, [history, historyIndex]);
 
@@ -104,7 +159,8 @@ export default function Home() {
   const handlePlayerMoveEnd = () => {
     console.log("Player move ended, saving state.");
     // Save the current visual state (playersOnField) to history
-    saveState({ playersOnField });
+    // Important: Create a *new* object/array reference for saveState
+    saveState({ playersOnField: [...playersOnField] });
   };
 
   // Handles drops from PlayerBar OR completed drag/drop *within* the field
@@ -135,7 +191,11 @@ export default function Home() {
         return; // Don't save state if nothing happened
       }
     }
-    saveState(nextState); // Save the calculated new state
+    // Important: Ensure new references are passed to saveState if modifying based on currentState
+    saveState({ 
+      playersOnField: nextState.playersOnField ? [...nextState.playersOnField] : undefined,
+      availablePlayers: nextState.availablePlayers ? [...nextState.availablePlayers] : undefined
+    }); 
   };
 
   // Drawing handlers: only save state when drawing ends
@@ -156,16 +216,16 @@ export default function Home() {
 
   const handleDrawingEnd = () => {
     console.log('Drawing ended, saving state.');
-    // The visual state (drawings) is already updated, just save it
-    saveState({ drawings });
+    // Ensure a new array reference is passed to saveState
+    saveState({ drawings: drawings.map(path => [...path]) });
   };
 
   // --- Toggle Player Names Handler ---
   const handleTogglePlayerNames = () => {
     console.log('Toggling player names');
     const nextShowNames = !showPlayerNames;
-    setShowPlayerNames(nextShowNames); // Update visual state immediately
-    saveState({ showPlayerNames: nextShowNames }); // Save the change to history
+    setShowPlayerNames(nextShowNames);
+    saveState({ showPlayerNames: nextShowNames });
   };
 
   // --- Undo/Redo Handlers ---
@@ -177,7 +237,7 @@ export default function Home() {
       setPlayersOnField(prevState.playersOnField);
       setDrawings(prevState.drawings);
       setAvailablePlayers(prevState.availablePlayers);
-      setShowPlayerNames(prevState.showPlayerNames); // Restore name visibility
+      setShowPlayerNames(prevState.showPlayerNames);
       setHistoryIndex(prevStateIndex);
     } else {
       console.log("Cannot undo: at beginning of history");
@@ -192,7 +252,7 @@ export default function Home() {
       setPlayersOnField(nextState.playersOnField);
       setDrawings(nextState.drawings);
       setAvailablePlayers(nextState.availablePlayers);
-      setShowPlayerNames(nextState.showPlayerNames); // Restore name visibility
+      setShowPlayerNames(nextState.showPlayerNames);
       setHistoryIndex(nextStateIndex);
     } else {
       console.log("Cannot redo: at end of history");
@@ -210,7 +270,7 @@ export default function Home() {
         <SoccerField
           players={playersOnField}
           drawings={drawings}
-          showPlayerNames={showPlayerNames} // Pass down the state
+          showPlayerNames={showPlayerNames}
           onPlayerDrop={handleDropOnField}
           onPlayerMove={handlePlayerMove}
           onPlayerMoveEnd={handlePlayerMoveEnd}
@@ -225,7 +285,7 @@ export default function Home() {
         onRedo={handleRedo}
         canUndo={canUndo}
         canRedo={canRedo}
-        onToggleNames={handleTogglePlayerNames} // Pass down the handler
+        onToggleNames={handleTogglePlayerNames}
       />
     </div>
   );
