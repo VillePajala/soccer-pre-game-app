@@ -20,12 +20,20 @@ export interface Point {
   y: number
 }
 
+// Define the Opponent type
+export interface Opponent {
+  id: string;
+  x: number;
+  y: number;
+}
+
 // Define the shape of our state snapshot for history
 interface AppState {
   playersOnField: Player[];
   drawings: Point[][];
   availablePlayers: Player[]; // Include available players for full undo/redo
   showPlayerNames: boolean; // Add to state snapshot
+  opponents: Opponent[]; // Add opponents to state snapshot
 }
 
 // Placeholder data moved here
@@ -48,6 +56,7 @@ const initialState: AppState = {
   drawings: [],
   availablePlayers: initialAvailablePlayersData,
   showPlayerNames: true, // Default to showing names
+  opponents: [], // Initialize opponents
 };
 
 // Define localStorage key
@@ -59,6 +68,7 @@ export default function Home() {
   const [drawings, setDrawings] = useState<Point[][]>(initialState.drawings);
   const [availablePlayers, setAvailablePlayers] = useState<Player[]>(initialState.availablePlayers);
   const [showPlayerNames, setShowPlayerNames] = useState<boolean>(initialState.showPlayerNames);
+  const [opponents, setOpponents] = useState<Opponent[]>(initialState.opponents); // Add opponent state
   const [history, setHistory] = useState<AppState[]>([initialState]);
   const [historyIndex, setHistoryIndex] = useState<number>(0);
   const [isLoaded, setIsLoaded] = useState<boolean>(false); // Flag to prevent overwriting loaded state
@@ -87,14 +97,35 @@ export default function Home() {
             setDrawings(currentState.drawings);
             setAvailablePlayers(currentState.availablePlayers);
             setShowPlayerNames(currentState.showPlayerNames);
+            setOpponents(currentState.opponents || []); // Load opponents (handle potentially missing key)
           } else {
             console.warn("Loaded historyIndex is out of bounds.");
+            // Fallback to initial state if index is bad
+            setPlayersOnField(initialState.playersOnField);
+            setDrawings(initialState.drawings);
+            setAvailablePlayers(initialState.availablePlayers);
+            setShowPlayerNames(initialState.showPlayerNames);
+            setOpponents(initialState.opponents);
           }
         } else {
-            console.warn("Loaded data structure is invalid.")
+            console.warn("Loaded data structure is invalid. Resetting to initial state.");
+            // Reset to initial state if structure is wrong
+            setPlayersOnField(initialState.playersOnField);
+            setDrawings(initialState.drawings);
+            setAvailablePlayers(initialState.availablePlayers);
+            setShowPlayerNames(initialState.showPlayerNames);
+            setOpponents(initialState.opponents);
+            setHistory([initialState]);
+            setHistoryIndex(0);
         }
       } else {
-          console.log("No saved state found in localStorage.")
+          console.log("No saved state found in localStorage. Using initial state.");
+          // Explicitly set initial state if nothing is saved
+          setPlayersOnField(initialState.playersOnField);
+          setDrawings(initialState.drawings);
+          setAvailablePlayers(initialState.availablePlayers);
+          setShowPlayerNames(initialState.showPlayerNames);
+          setOpponents(initialState.opponents);
       }
     } catch (error) {
       console.error("Failed to load or parse state from localStorage:", error);
@@ -125,6 +156,7 @@ export default function Home() {
       drawings: newState.drawings ?? currentState.drawings,
       availablePlayers: newState.availablePlayers ?? currentState.availablePlayers,
       showPlayerNames: newState.showPlayerNames ?? currentState.showPlayerNames,
+      opponents: newState.opponents ?? currentState.opponents, // Include opponents
     };
 
     if (JSON.stringify(nextState) === JSON.stringify(currentState)) {
@@ -142,6 +174,7 @@ export default function Home() {
     setDrawings(nextState.drawings);
     setAvailablePlayers(nextState.availablePlayers);
     setShowPlayerNames(nextState.showPlayerNames);
+    setOpponents(nextState.opponents); // Update opponents visual state
 
   }, [history, historyIndex]);
 
@@ -255,17 +288,6 @@ export default function Home() {
     });
   };
 
-  // --- Clear Drawings Handler ---
-  const handleClearDrawings = () => {
-    // Only clear if there are drawings to clear
-    if (drawings.length > 0) {
-      console.log("Clearing drawings...");
-      saveState({ drawings: [] });
-    } else {
-      console.log("No drawings to clear.");
-    }
-  };
-
   // --- Toggle Player Names Handler ---
   const handleTogglePlayerNames = () => {
     console.log('Toggling player names');
@@ -309,6 +331,7 @@ export default function Home() {
       setAvailablePlayers(prevState.availablePlayers);
       setShowPlayerNames(prevState.showPlayerNames);
       setHistoryIndex(prevStateIndex);
+      setOpponents(prevState.opponents); // Undo opponents
     } else {
       console.log("Cannot undo: at beginning of history");
     }
@@ -324,6 +347,7 @@ export default function Home() {
       setAvailablePlayers(nextState.availablePlayers);
       setShowPlayerNames(nextState.showPlayerNames);
       setHistoryIndex(nextStateIndex);
+      setOpponents(nextState.opponents); // Redo opponents
     } else {
       console.log("Cannot redo: at end of history");
     }
@@ -361,11 +385,56 @@ export default function Home() {
         playersOnField: [],
         drawings: [],
         availablePlayers: resetAvailablePlayers, // Use the rebuilt list
-        showPlayerNames: true // Reset to default
+        showPlayerNames: true, // Reset to default
+        opponents: [], // Clear opponents on reset
     };
 
     // 6. Save the new state
     saveState(resetState);
+  };
+
+  // --- Add Opponent Handler ---
+  const handleAddOpponent = () => {
+    const newOpponentId = `opp-${Date.now()}`;
+    const defaultPosition = { x: 100, y: 100 }; // Default placement
+    const newOpponent: Opponent = {
+      id: newOpponentId,
+      ...defaultPosition,
+    };
+    console.log("Adding opponent:", newOpponentId);
+    saveState({ opponents: [...opponents, newOpponent] });
+  };
+
+  // --- Opponent Handlers ---
+  const handleOpponentMove = (opponentId: string, x: number, y: number) => {
+    // Update visual state immediately for smoothness
+    setOpponents((prev) =>
+      prev.map((opp) => (opp.id === opponentId ? { ...opp, x, y } : opp))
+    );
+  };
+
+  const handleOpponentMoveEnd = (opponentId: string) => {
+    // Save the current state of opponents to history
+    console.log(`Opponent ${opponentId} move ended, saving state.`);
+    // Important: Create a *new* array reference for saveState
+    saveState({ opponents: [...opponents] });
+  };
+
+  const handleOpponentRemove = (opponentId: string) => {
+    console.log(`Removing opponent ${opponentId}...`);
+    const nextOpponents = opponents.filter(opp => opp.id !== opponentId);
+    saveState({ opponents: nextOpponents });
+  };
+
+  // --- Clear Drawings Handler ---
+  const handleClearDrawings = () => {
+    // Only clear if there are drawings to clear
+    if (drawings.length > 0) {
+      console.log("Clearing drawings...");
+      saveState({ drawings: [] });
+    } else {
+      console.log("No drawings to clear.");
+    }
   };
 
   const canUndo = historyIndex > 0;
@@ -387,6 +456,10 @@ export default function Home() {
           onDrawingAddPoint={handleDrawingAddPoint}
           onDrawingEnd={handleDrawingEnd}
           onPlayerRemove={handlePlayerRemove}
+          opponents={opponents}
+          onOpponentMove={handleOpponentMove}
+          onOpponentMoveEnd={handleOpponentMoveEnd}
+          onOpponentRemove={handleOpponentRemove}
         />
       </div>
 
@@ -398,6 +471,7 @@ export default function Home() {
         onToggleNames={handleTogglePlayerNames}
         onResetField={handleResetField}
         onClearDrawings={handleClearDrawings}
+        onAddOpponent={handleAddOpponent}
       />
     </div>
   );

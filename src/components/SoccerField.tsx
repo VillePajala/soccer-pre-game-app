@@ -1,11 +1,12 @@
 'use client'; // Need this for client-side interactions like canvas
 
 import React, { useRef, useEffect, useState } from 'react';
-import { Player, Point } from '@/app/page'; // Import Point type
+import { Player, Point, Opponent } from '@/app/page'; // Import Opponent type
 
 // Define props for SoccerField
 interface SoccerFieldProps {
   players: Player[];
+  opponents: Opponent[]; // Add opponents prop
   drawings: Point[][]; // Add drawings prop
   showPlayerNames: boolean; // Add the visibility prop
   onPlayerDrop: (playerId: string, x: number, y: number) => void;
@@ -15,6 +16,10 @@ interface SoccerFieldProps {
   onDrawingAddPoint: (point: Point) => void;
   onDrawingEnd: () => void;
   onPlayerRemove: (playerId: string) => void; // Add the remove handler prop
+  // Opponent handlers
+  onOpponentMove: (opponentId: string, x: number, y: number) => void;
+  onOpponentMoveEnd: (opponentId: string) => void;
+  onOpponentRemove: (opponentId: string) => void; // Add opponent remove prop
 }
 
 // Define player radius for hit detection and drawing
@@ -22,6 +27,7 @@ const PLAYER_RADIUS = 25; // Increased slightly for easier clicking
 
 const SoccerField: React.FC<SoccerFieldProps> = ({
   players,
+  opponents, // Destructure opponents prop
   drawings, // Destructure new props
   showPlayerNames, // Destructure the new prop
   onPlayerDrop,
@@ -31,10 +37,19 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
   onDrawingAddPoint,
   onDrawingEnd,
   onPlayerRemove, // Destructure the remove handler
+  // Opponent handlers
+  onOpponentMove,
+  onOpponentMoveEnd,
+  onOpponentRemove, // Destructure opponent remove handler
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isDraggingPlayer, setIsDraggingPlayer] = useState<boolean>(false); // Renamed for clarity
+  // Player Dragging State
+  const [isDraggingPlayer, setIsDraggingPlayer] = useState<boolean>(false);
   const [draggingPlayerId, setDraggingPlayerId] = useState<string | null>(null);
+  // Opponent Dragging State
+  const [isDraggingOpponent, setIsDraggingOpponent] = useState<boolean>(false);
+  const [draggingOpponentId, setDraggingOpponentId] = useState<string | null>(null);
+  // Drawing State
   const [isDrawing, setIsDrawing] = useState<boolean>(false); // State for drawing mode
 
   // --- Drawing Logic ---
@@ -76,7 +91,18 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
       context.stroke();
     });
 
-    // Draw players (on top of drawings)
+    // Draw opponents (before players?)
+    context.fillStyle = '#EF4444'; // Red color for opponents
+    context.strokeStyle = '#FCA5A5'; // Lighter red border
+    context.lineWidth = 2;
+    opponents.forEach(opponent => {
+      context.beginPath();
+      context.arc(opponent.x, opponent.y, PLAYER_RADIUS * 0.9, 0, Math.PI * 2); // Slightly smaller radius
+      context.fill();
+      context.stroke();
+    });
+
+    // Draw players (on top of drawings and opponents)
     players.forEach(player => {
       if (player.x !== undefined && player.y !== undefined) {
         context.fillStyle = player.color || '#3B82F6';
@@ -100,10 +126,10 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     });
   };
 
-  // Redraw canvas whenever players, drawings, or name visibility change
+  // Redraw canvas whenever players, opponents, drawings, or name visibility change
   useEffect(() => {
     draw();
-  }, [players, drawings, showPlayerNames]); // Add showPlayerNames dependency
+  }, [players, opponents, drawings, showPlayerNames]); // Add opponents and showPlayerNames dependency
 
   // --- Event Handlers ---
   const getMousePos = (e: React.MouseEvent<HTMLCanvasElement>): { x: number; y: number } | null => {
@@ -120,14 +146,19 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     return dx * dx + dy * dy <= PLAYER_RADIUS * PLAYER_RADIUS;
   };
 
+  // Helper for opponent hit detection (slightly smaller radius)
+  const isPointInOpponent = (x: number, y: number, opponent: Opponent): boolean => {
+    const dx = x - opponent.x;
+    const dy = y - opponent.y;
+    return dx * dx + dy * dy <= (PLAYER_RADIUS * 0.9) * (PLAYER_RADIUS * 0.9);
+  };
+
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const pos = getMousePos(e);
     if (!pos) return;
 
-    // Double-click detection logic
-    const doubleClickThreshold = 300; // milliseconds
-    const now = Date.now();
-    if (e.detail === 2) { // Check if it's a native double click event first
+    // Check for player double-click first
+    if (e.detail === 2) {
         for (const player of players) {
           if (isPointInPlayer(pos.x, pos.y, player)) {
             console.log("Native double click detected on player:", player.id);
@@ -135,9 +166,17 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
             return; // Stop further processing
           }
         }
+        // Check for opponent double-click
+        for (const opponent of opponents) {
+          if (isPointInOpponent(pos.x, pos.y, opponent)) {
+            console.log("Native double click detected on opponent:", opponent.id);
+            onOpponentRemove(opponent.id);
+            return; // Stop further processing
+          }
+        }
     }
 
-    // Fallback or primary logic for player drag start
+    // Check for player drag start
     for (const player of players) {
       if (isPointInPlayer(pos.x, pos.y, player)) {
         setIsDraggingPlayer(true);
@@ -147,7 +186,17 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
       }
     }
 
-    // If not dragging a player, start drawing
+    // Check for opponent drag start
+    for (const opponent of opponents) {
+      if (isPointInOpponent(pos.x, pos.y, opponent)) {
+        setIsDraggingOpponent(true);
+        setDraggingOpponentId(opponent.id);
+        canvasRef.current?.style.setProperty('cursor', 'grabbing');
+        return; // Start opponent drag
+      }
+    }
+
+    // If not dragging anything, start drawing
     setIsDrawing(true);
     onDrawingStart(pos);
     canvasRef.current?.style.setProperty('cursor', 'crosshair'); // Ensure crosshair while drawing
@@ -163,6 +212,12 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
       return; // Don't draw while dragging player
     }
 
+    // Handle opponent dragging
+    if (isDraggingOpponent && draggingOpponentId) {
+      onOpponentMove(draggingOpponentId, pos.x, pos.y);
+      return; // Don't draw while dragging opponent
+    }
+
     // Handle drawing
     if (isDrawing) {
       onDrawingAddPoint(pos);
@@ -170,7 +225,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     }
 
     // Update cursor if not actively dragging/drawing
-    if (!isDrawing && !isDraggingPlayer) {
+    if (!isDrawing && !isDraggingPlayer && !isDraggingOpponent) {
       let hoveringPlayer = false;
       for (const player of players) {
         if (isPointInPlayer(pos.x, pos.y, player)) {
@@ -178,7 +233,17 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
           break;
         }
       }
-      canvasRef.current?.style.setProperty('cursor', hoveringPlayer ? 'grab' : 'crosshair');
+      // Add check for hovering opponent
+      let hoveringOpponent = false;
+      if (!hoveringPlayer) { // Only check opponent if not hovering player
+          for (const opponent of opponents) {
+            if (isPointInOpponent(pos.x, pos.y, opponent)) {
+              hoveringOpponent = true;
+              break;
+            }
+          }
+      }
+      canvasRef.current?.style.setProperty('cursor', hoveringPlayer || hoveringOpponent ? 'grab' : 'crosshair');
     }
   };
 
@@ -187,6 +252,12 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
       setIsDraggingPlayer(false);
       setDraggingPlayerId(null);
       onPlayerMoveEnd(); // Call the callback when player drag ends
+      canvasRef.current?.style.setProperty('cursor', 'crosshair');
+    }
+    if (isDraggingOpponent && draggingOpponentId) {
+      onOpponentMoveEnd(draggingOpponentId);
+      setIsDraggingOpponent(false);
+      setDraggingOpponentId(null);
       canvasRef.current?.style.setProperty('cursor', 'crosshair');
     }
     if (isDrawing) {
@@ -201,6 +272,12 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
       setIsDraggingPlayer(false);
       setDraggingPlayerId(null);
       onPlayerMoveEnd(); // Also call if mouse leaves while dragging
+      canvasRef.current?.style.setProperty('cursor', 'crosshair');
+    }
+    if (isDraggingOpponent && draggingOpponentId) {
+      onOpponentMoveEnd(draggingOpponentId);
+      setIsDraggingOpponent(false);
+      setDraggingOpponentId(null);
       canvasRef.current?.style.setProperty('cursor', 'crosshair');
     }
     if (isDrawing) {

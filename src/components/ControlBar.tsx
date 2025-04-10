@@ -11,6 +11,7 @@ interface ControlBarProps {
   onToggleNames: () => void;
   onResetField: () => void;
   onClearDrawings: () => void;
+  onAddOpponent: () => void;
   // TODO: Add props for Reset
 }
 
@@ -22,6 +23,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   onToggleNames,
   onResetField,
   onClearDrawings,
+  onAddOpponent,
 }) => {
   // Placeholder functions for other buttons
   const handleReset = () => console.log('Reset clicked');
@@ -64,6 +66,13 @@ const ControlBar: React.FC<ControlBarProps> = ({
         className={`${baseButtonStyle} bg-yellow-500 hover:bg-yellow-600`}
       >
         Clear Drawings
+      </button>
+      {/* Add Opponent Button */}
+      <button
+        onClick={onAddOpponent} // Use passed handler
+        className={`${baseButtonStyle} bg-red-700 hover:bg-red-800`}
+      >
+        Add Opponent
       </button>
     </div>
   );
