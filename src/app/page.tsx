@@ -1,4 +1,5 @@
 import React from 'react';
+import SoccerField from '@/components/SoccerField';
 
 export default function Home() {
   return (
@@ -11,8 +12,9 @@ export default function Home() {
 
       {/* Main Field Area */}
       <div className="flex-grow bg-green-600 p-4 flex items-center justify-center">
-        <p className="text-white text-2xl">Soccer Field Area (Canvas goes here)</p>
+        {/* <p className="text-white text-2xl">Soccer Field Area (Canvas goes here)</p> */}
         {/* Placeholder for SoccerField component */}
+        <SoccerField />
       </div>
 
       {/* Bottom Control Bar */}
