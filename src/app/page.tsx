@@ -79,13 +79,37 @@ export default function Home() {
   const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
   const [showLargeTimerOverlay, setShowLargeTimerOverlay] = useState<boolean>(false); // State for overlay visibility
 
+  // --- Substitution Timer State ---
+  const [subIntervalMinutes, setSubIntervalMinutes] = useState<number>(5);
+  const [nextSubDueTimeSeconds, setNextSubDueTimeSeconds] = useState<number>(5 * 60);
+  // Alert level: 'none', 'warning', 'due'
+  const [subAlertLevel, setSubAlertLevel] = useState<'none' | 'warning' | 'due'>('none'); 
+  const [completedIntervalDurations, setCompletedIntervalDurations] = useState<number[]>([]);
+  const [lastSubConfirmationTimeSeconds, setLastSubConfirmationTimeSeconds] = useState<number>(0);
+
   // --- Timer Effect ---
   useEffect(() => {
     let intervalId: NodeJS.Timeout | null = null;
 
     if (isTimerRunning) {
       intervalId = setInterval(() => {
-        setTimeElapsedInSeconds(prevTime => prevTime + 1);
+        setTimeElapsedInSeconds(prevTime => {
+          const newTime = prevTime + 1;
+          const currentIntervalMinutes = subIntervalMinutes; // Capture current interval
+          const currentDueTime = nextSubDueTimeSeconds; // Capture current due time
+          const warningTime = currentDueTime - 60;
+
+          let newAlertLevel: 'none' | 'warning' | 'due' = 'none';
+          if (newTime >= currentDueTime) {
+            newAlertLevel = 'due';
+          } else if (warningTime >= 0 && newTime >= warningTime) { 
+            // Show warning if warning time is valid (>= 0) and current time reached it
+            newAlertLevel = 'warning';
+          }
+          setSubAlertLevel(newAlertLevel);
+
+          return newTime;
+        });
       }, 1000);
     } else {
       // Clear interval if it exists and timer is not running
@@ -101,7 +125,7 @@ export default function Home() {
         clearInterval(intervalId);
       }
     };
-  }, [isTimerRunning]); // Dependency array: only re-run effect if isTimerRunning changes
+  }, [isTimerRunning, nextSubDueTimeSeconds, subIntervalMinutes]); // ADD dependencies
 
   // --- Load state from localStorage on mount ---
   useEffect(() => {
@@ -469,12 +493,84 @@ export default function Home() {
 
   // --- Timer Handlers ---
   const handleStartPauseTimer = () => {
+    if (!isTimerRunning && timeElapsedInSeconds === 0) {
+      setCompletedIntervalDurations([]);
+      setLastSubConfirmationTimeSeconds(0); 
+      setNextSubDueTimeSeconds(subIntervalMinutes * 60);
+      setSubAlertLevel('none'); // Reset alert level when starting fresh
+      console.log("Starting timer from zero, clearing duration history.");
+    }
     setIsTimerRunning(prev => !prev);
   };
 
   const handleResetTimer = () => {
     setTimeElapsedInSeconds(0);
     setIsTimerRunning(false);
+    setNextSubDueTimeSeconds(subIntervalMinutes * 60);
+    setSubAlertLevel('none'); // Reset alert level
+    setLastSubConfirmationTimeSeconds(0);
+  };
+
+  const handleSubstitutionMade = () => {
+    const duration = timeElapsedInSeconds - lastSubConfirmationTimeSeconds;
+    const currentElapsedTime = timeElapsedInSeconds; // Capture current time *before* state updates
+    const currentIntervalMins = subIntervalMinutes; // Capture interval
+    
+    setCompletedIntervalDurations(prev => [duration, ...prev]); 
+    setLastSubConfirmationTimeSeconds(currentElapsedTime);
+    
+    // Calculate the next due time based on the previous one
+    let newDueTime = 0;
+    setNextSubDueTimeSeconds(prevDueTime => { 
+        newDueTime = prevDueTime + currentIntervalMins * 60;
+        return newDueTime;
+    });
+
+    // Now, immediately re-evaluate the alert level based on current time and *new* due time
+    const newWarningTime = newDueTime - 60;
+    let newAlertLevel: 'none' | 'warning' | 'due' = 'none';
+    if (currentElapsedTime >= newDueTime) { // Should typically not happen if logic is right
+        newAlertLevel = 'due'; 
+    } else if (newWarningTime >= 0 && currentElapsedTime >= newWarningTime) {
+        // Show warning if warning time is valid (>= 0) and current time reached it
+        newAlertLevel = 'warning';
+    }
+    setSubAlertLevel(newAlertLevel); // Set the calculated level
+    
+    console.log(`Sub made at ${currentElapsedTime}s. Duration: ${duration}s. Next due: ${newDueTime}s. New Alert: ${newAlertLevel}`);
+  };
+
+  const handleSetSubInterval = (minutes: number) => {
+    const newMinutes = Math.max(1, minutes);
+    setSubIntervalMinutes(newMinutes);
+
+    let currentElapsedTime = 0;
+    setTimeElapsedInSeconds(prev => { 
+        currentElapsedTime = prev;
+        return prev;
+    });
+
+    const newIntervalSec = newMinutes * 60;
+    let newDueTime = Math.ceil((currentElapsedTime + 1) / newIntervalSec) * newIntervalSec;
+    if (newDueTime <= currentElapsedTime) {
+      newDueTime += newIntervalSec;
+    }
+    if (newDueTime === 0) newDueTime = newIntervalSec; 
+    
+    setNextSubDueTimeSeconds(newDueTime);
+
+    // Re-evaluate alert status immediately, considering the interval length
+    const warningTime = newDueTime - 60;
+    let newAlertLevel: 'none' | 'warning' | 'due' = 'none';
+    if (currentElapsedTime >= newDueTime) {
+        newAlertLevel = 'due';
+    } else if (warningTime >= 0 && currentElapsedTime >= warningTime) {
+        // Show warning if warning time is valid (>= 0) and current time reached it
+        newAlertLevel = 'warning';
+    }
+    setSubAlertLevel(newAlertLevel);
+
+    console.log(`Interval set to ${newMinutes}m. Current time: ${currentElapsedTime}s. Next due: ${newDueTime}s. New Alert: ${newAlertLevel}`);
   };
 
   const handleToggleLargeTimerOverlay = () => {
@@ -506,7 +602,17 @@ export default function Home() {
           onOpponentRemove={handleOpponentRemove}
         />
         {showLargeTimerOverlay && (
-          <TimerOverlay timeElapsedInSeconds={timeElapsedInSeconds} />
+          <TimerOverlay 
+            timeElapsedInSeconds={timeElapsedInSeconds} 
+            subAlertLevel={subAlertLevel} 
+            onSubstitutionMade={handleSubstitutionMade}
+            completedIntervalDurations={completedIntervalDurations}
+            subIntervalMinutes={subIntervalMinutes}
+            onSetSubInterval={handleSetSubInterval}
+            isTimerRunning={isTimerRunning}
+            onStartPauseTimer={handleStartPauseTimer}
+            onResetTimer={handleResetTimer}
+          />
         )}
       </div>
 
