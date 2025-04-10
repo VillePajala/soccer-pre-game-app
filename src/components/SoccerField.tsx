@@ -6,9 +6,10 @@ import { Player } from '@/app/page'; // Import the Player type
 // Define props for SoccerField
 interface SoccerFieldProps {
   players: Player[]; // Accept players placed on the field
+  onPlayerDrop: (playerId: string, x: number, y: number) => void; // Add the callback prop
 }
 
-const SoccerField: React.FC<SoccerFieldProps> = ({ players }) => {
+const SoccerField: React.FC<SoccerFieldProps> = ({ players, onPlayerDrop }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -30,18 +31,50 @@ const SoccerField: React.FC<SoccerFieldProps> = ({ players }) => {
 
     // TODO: Draw field lines
 
-    // TODO: Draw players from the 'players' prop onto the canvas
-    console.log('Players on field (in SoccerField):', players);
+    // Draw players (basic circles for now)
+    players.forEach(player => {
+      if (player.x !== undefined && player.y !== undefined) {
+        context.fillStyle = player.color || 'blue'; // Use player color or default
+        context.beginPath();
+        context.arc(player.x, player.y, 20, 0, Math.PI * 2); // Simple circle representation (radius 20)
+        context.fill();
+        // TODO: Optionally draw name if toggled on
+      }
+    });
 
     // TODO: Add drawing logic for user drawings
 
   }, [players]); // Re-run effect if players array changes
 
+  // --- Drag and Drop Handlers ---
+
+  const handleDragOver = (e: React.DragEvent<HTMLCanvasElement>) => {
+    e.preventDefault(); // Necessary to allow dropping
+    e.dataTransfer.dropEffect = "move"; // Indicate the type of operation
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    const playerId = e.dataTransfer.getData('text/plain');
+    const canvas = canvasRef.current;
+
+    if (playerId && canvas) {
+      const rect = canvas.getBoundingClientRect();
+      // Calculate drop position relative to the canvas
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      // Call the callback function passed from the parent
+      onPlayerDrop(playerId, x, y);
+    }
+  };
+
   return (
     <canvas
       ref={canvasRef}
-      className="w-full h-full bg-green-700" // Use Tailwind for initial background
-      // TODO: Add event handlers for drag drop (onDrop, onDragOver)
+      className="w-full h-full bg-green-700 cursor-crosshair" // Added cursor style
+      onDragOver={handleDragOver} // Add drag over handler
+      onDrop={handleDrop}         // Add drop handler
     />
   );
 };

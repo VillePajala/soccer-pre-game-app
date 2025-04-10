@@ -37,8 +37,27 @@ export default function Home() {
   // State for players placed on the field
   const [playersOnField, setPlayersOnField] = useState<Player[]>([]);
 
-  // TODO: Add functions to handle player movement (drag/drop)
-  // e.g., handleDropOnField, handleDragStart, etc.
+  // Handler for dropping a player onto the field
+  const handleDropOnField = (playerId: string, x: number, y: number) => {
+    console.log(`Player ${playerId} dropped at (${x}, ${y})`);
+
+    // Find the player in the available list
+    const playerToAdd = availablePlayers.find((p) => p.id === playerId);
+
+    if (playerToAdd) {
+      // Add player to field with coordinates
+      setPlayersOnField((prev) => [...prev, { ...playerToAdd, x, y }]);
+
+      // Remove player from available list
+      setAvailablePlayers((prev) => prev.filter((p) => p.id !== playerId));
+    } else {
+      console.warn(`Player with ID ${playerId} not found in available players.`);
+      // Handle case where player might already be on field (repositioning - later)
+    }
+  };
+
+  // TODO: Add handler for dragging players already on the field
+  // TODO: Add handler for dragging players off the field (back to bar? delete?)
 
   return (
     <div className="flex flex-col h-screen bg-gray-100">
@@ -47,8 +66,8 @@ export default function Home() {
 
       {/* Main Field Area */}
       <div className="flex-grow bg-green-600 p-4 flex items-center justify-center relative"> {/* Added relative positioning for potential absolute positioning of players */}
-        {/* Pass playersOnField state to SoccerField */}
-        <SoccerField players={playersOnField} />
+        {/* Pass playersOnField state and drop handler to SoccerField */}
+        <SoccerField players={playersOnField} onPlayerDrop={handleDropOnField} />
       </div>
 
       {/* Bottom Control Bar */}
