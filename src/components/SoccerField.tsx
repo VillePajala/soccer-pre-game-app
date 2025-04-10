@@ -20,10 +20,16 @@ interface SoccerFieldProps {
   onOpponentMove: (opponentId: string, x: number, y: number) => void;
   onOpponentMoveEnd: (opponentId: string) => void;
   onOpponentRemove: (opponentId: string) => void; // Add opponent remove prop
+  // Add props for handling touch drags from PlayerBar
+  draggingPlayerFromBarInfo: Player | null; 
+  onPlayerDropViaTouch: (x: number, y: number) => void;
+  onPlayerDragCancelViaTouch: () => void;
 }
 
 // Define player/opponent radius for hit detection and drawing
 const PLAYER_RADIUS = 30; // Increased size
+const DOUBLE_TAP_TIME_THRESHOLD = 300; // ms for double tap detection
+const DOUBLE_TAP_POS_THRESHOLD = 15; // pixels for double tap proximity
 
 const SoccerField: React.FC<SoccerFieldProps> = ({
   players,
@@ -41,6 +47,10 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
   onOpponentMove,
   onOpponentMoveEnd,
   onOpponentRemove, // Destructure opponent remove handler
+  // Destructure touch drag props
+  draggingPlayerFromBarInfo, 
+  onPlayerDropViaTouch,
+  onPlayerDragCancelViaTouch,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   // Player Dragging State
@@ -52,6 +62,8 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
   // Drawing State
   const [isDrawing, setIsDrawing] = useState<boolean>(false); // State for drawing mode
   const [activeTouchId, setActiveTouchId] = useState<number | null>(null); // Track the primary touch for drawing/dragging
+  // Double Tap State
+  const [lastTapInfo, setLastTapInfo] = useState<{ time: number; x: number; y: number; targetId: string | null; targetType: 'player' | 'opponent' | null } | null>(null);
 
   // --- Drawing Logic ---
   const draw = () => {
@@ -241,7 +253,10 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
   // --- Event Handlers ---
 
   // Unified function to get position from Mouse or Touch events
-  const getEventPosition = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>): { x: number; y: number } | null => {
+  const getEventPosition = (
+    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>,
+    specificTouchId?: number | null
+  ): { x: number; y: number } | null => {
     const canvas = canvasRef.current;
     if (!canvas) return null;
     const rect = canvas.getBoundingClientRect();
@@ -249,25 +264,42 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     let clientX: number;
     let clientY: number;
 
-    if ('touches' in e) {
-      // Touch event
-      if (e.touches.length > 0) {
-        clientX = e.touches[0].clientX;
-        clientY = e.touches[0].clientY;
-      } else if (e.changedTouches.length > 0) {
-        // Use changedTouches for touchend/touchcancel
-        clientX = e.changedTouches[0].clientX;
-        clientY = e.changedTouches[0].clientY;
+    if ('touches' in e) { // Touch event
+      let touch: React.Touch | null = null;
+      if (specificTouchId !== undefined && specificTouchId !== null) {
+        // Find the specific touch if an ID is provided (for move/end)
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          if (e.changedTouches[i].identifier === specificTouchId) {
+            touch = e.changedTouches[i];
+            break;
+          }
+        }
+        // Fallback for move events if not in changedTouches (less common but possible)
+        if (!touch) {
+             for (let i = 0; i < e.touches.length; i++) {
+                if (e.touches[i].identifier === specificTouchId) {
+                    touch = e.touches[i];
+                    break;
+                }
+            }
+        }
       } else {
-        return null; // No touch points found
+        // Use the first touch if no specific ID (for start)
+        touch = e.touches[0];
       }
-    } else {
-      // Mouse event
+
+      if (!touch) return null; // No relevant touch found
+      clientX = touch.clientX;
+      clientY = touch.clientY;
+    } else { // Mouse event
       clientX = e.clientX;
       clientY = e.clientY;
     }
 
-    return { x: clientX - rect.left, y: clientY - rect.top };
+    return {
+      x: clientX - rect.left,
+      y: clientY - rect.top,
+    };
   };
 
   const isPointInPlayer = (x: number, y: number, player: Player): boolean => {
@@ -285,200 +317,320 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
   };
 
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    // Reset touch state in case of mixed input
-    setActiveTouchId(null);
+    // Allow only left clicks (button 0)
+    if (e.button !== 0) return;
+
     const pos = getEventPosition(e);
     if (!pos) return;
 
-    // Check for player double-click first
-    if (e.detail === 2) {
-        for (const player of players) {
-          if (isPointInPlayer(pos.x, pos.y, player)) {
-            console.log("Native double click detected on player:", player.id);
-            onPlayerRemove(player.id);
-            return; // Stop further processing
-          }
+    // Check for double-click removal first
+    if (e.detail === 2) { // Standard double-click detection
+      for (const player of players) {
+        if (player.x && player.y && isPointInPlayer(pos.x, pos.y, player)) {
+          onPlayerRemove(player.id);
+          return; // Prevent starting a drag on double-click remove
         }
-        // Check for opponent double-click
-        for (const opponent of opponents) {
-          if (isPointInOpponent(pos.x, pos.y, opponent)) {
-            console.log("Native double click detected on opponent:", opponent.id);
-            onOpponentRemove(opponent.id);
-            return; // Stop further processing
-          }
+      }
+      for (const opponent of opponents) {
+        if (isPointInOpponent(pos.x, pos.y, opponent)) {
+          onOpponentRemove(opponent.id);
+          return; // Prevent starting a drag on double-click remove
         }
+      }
     }
 
-    // Check for player drag start
+    // Check if dragging a player
     for (const player of players) {
-      if (isPointInPlayer(pos.x, pos.y, player)) {
+      if (player.x && player.y && isPointInPlayer(pos.x, pos.y, player)) {
         setIsDraggingPlayer(true);
         setDraggingPlayerId(player.id);
-        canvasRef.current?.style.setProperty('cursor', 'grabbing');
-        return; // Start player drag
+        if (canvasRef.current) canvasRef.current.style.cursor = 'grabbing';
+        return; // Found player to drag, exit
       }
     }
 
-    // Check for opponent drag start
+    // Check if dragging an opponent
     for (const opponent of opponents) {
-      if (isPointInOpponent(pos.x, pos.y, opponent)) {
-        setIsDraggingOpponent(true);
-        setDraggingOpponentId(opponent.id);
-        canvasRef.current?.style.setProperty('cursor', 'grabbing');
-        return; // Start opponent drag
-      }
+        if (isPointInOpponent(pos.x, pos.y, opponent)) {
+            setIsDraggingOpponent(true);
+            setDraggingOpponentId(opponent.id);
+            if (canvasRef.current) canvasRef.current.style.cursor = 'grabbing';
+            return; // Found opponent to drag, exit
+        }
     }
 
-    // If not dragging anything, start drawing
+    // If not dragging, start drawing
     setIsDrawing(true);
     onDrawingStart(pos);
-    canvasRef.current?.style.setProperty('cursor', 'crosshair'); // Ensure crosshair while drawing
+    if (canvasRef.current) canvasRef.current.style.cursor = 'crosshair';
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const pos = getEventPosition(e);
     if (!pos) return;
 
-    // Handle player dragging
     if (isDraggingPlayer && draggingPlayerId) {
       onPlayerMove(draggingPlayerId, pos.x, pos.y);
-      return; // Don't draw while dragging player
-    }
-
-    // Handle opponent dragging
-    if (isDraggingOpponent && draggingOpponentId) {
+    } else if (isDraggingOpponent && draggingOpponentId) {
       onOpponentMove(draggingOpponentId, pos.x, pos.y);
-      return; // Don't draw while dragging opponent
-    }
-
-    // Handle drawing
-    if (isDrawing) {
+    } else if (isDrawing) {
       onDrawingAddPoint(pos);
-      // Redrawing happens via useEffect in parent when `drawings` state changes
-    }
-
-    // Update cursor if not actively dragging/drawing
-    if (!isDrawing && !isDraggingPlayer && !isDraggingOpponent) {
-      let hoveringPlayer = false;
+    } else {
+      // Change cursor to grab on hover over draggable items
+      let hovering = false;
       for (const player of players) {
-        if (isPointInPlayer(pos.x, pos.y, player)) {
-          hoveringPlayer = true;
+        if (player.x && player.y && isPointInPlayer(pos.x, pos.y, player)) {
+          hovering = true;
           break;
         }
       }
-      // Add check for hovering opponent
-      let hoveringOpponent = false;
-      if (!hoveringPlayer) { // Only check opponent if not hovering player
+      if (!hovering) {
           for (const opponent of opponents) {
-            if (isPointInOpponent(pos.x, pos.y, opponent)) {
-              hoveringOpponent = true;
-              break;
-            }
+              if (isPointInOpponent(pos.x, pos.y, opponent)) {
+                  hovering = true;
+                  break;
+              }
           }
       }
-      canvasRef.current?.style.setProperty('cursor', hoveringPlayer || hoveringOpponent ? 'grab' : 'crosshair');
+
+      if (canvasRef.current) {
+        canvasRef.current.style.cursor = hovering ? 'grab' : 'default';
+      }
     }
   };
 
   const handleMouseUp = () => {
     if (isDraggingPlayer) {
+      onPlayerMoveEnd(); // Call the end handler
       setIsDraggingPlayer(false);
       setDraggingPlayerId(null);
-      onPlayerMoveEnd(); // Call the callback when player drag ends
-      canvasRef.current?.style.setProperty('cursor', 'crosshair');
-    }
-    if (isDraggingOpponent && draggingOpponentId) {
-      onOpponentMoveEnd(draggingOpponentId);
-      setIsDraggingOpponent(false);
-      setDraggingOpponentId(null);
-      canvasRef.current?.style.setProperty('cursor', 'crosshair');
-    }
-    if (isDrawing) {
-      setIsDrawing(false);
+    } else if (isDraggingOpponent && draggingOpponentId) { // Check opponent state
+        onOpponentMoveEnd(draggingOpponentId); // Call opponent end handler
+        setIsDraggingOpponent(false);
+        setDraggingOpponentId(null);
+    } else if (isDrawing) {
       onDrawingEnd();
-      canvasRef.current?.style.setProperty('cursor', 'crosshair');
+      setIsDrawing(false);
     }
+    if (canvasRef.current) canvasRef.current.style.cursor = 'default';
   };
 
   const handleMouseLeave = () => {
+    // If dragging or drawing stops when mouse leaves canvas
     if (isDraggingPlayer) {
+      onPlayerMoveEnd();
       setIsDraggingPlayer(false);
       setDraggingPlayerId(null);
-      onPlayerMoveEnd(); // Also call if mouse leaves while dragging
-      canvasRef.current?.style.setProperty('cursor', 'crosshair');
-    }
-    if (isDraggingOpponent && draggingOpponentId) {
-      onOpponentMoveEnd(draggingOpponentId);
-      setIsDraggingOpponent(false);
-      setDraggingOpponentId(null);
-      canvasRef.current?.style.setProperty('cursor', 'crosshair');
-    }
-    if (isDrawing) {
+    } else if (isDraggingOpponent && draggingOpponentId) { // Check opponent state
+        onOpponentMoveEnd(draggingOpponentId);
+        setIsDraggingOpponent(false);
+        setDraggingOpponentId(null);
+    } else if (isDrawing) {
+      onDrawingEnd();
       setIsDrawing(false);
-      onDrawingEnd(); // End drawing if mouse leaves
-      canvasRef.current?.style.setProperty('cursor', 'crosshair');
     }
+    if (canvasRef.current) canvasRef.current.style.cursor = 'default';
   };
 
   // --- Touch Handlers ---
 
   const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
-    // Prevent multi-touch interference for now, only handle first touch
-    if (activeTouchId !== null) return;
+    // Prevent mouse event emulation
+    // e.preventDefault(); // Still maybe problematic
+
+    if (e.touches.length > 1) return; // Ignore multi-touch gestures for now
 
     const touch = e.touches[0];
-    if (!touch) return;
+    const touchId = touch.identifier;
+    // Set the active touch ID immediately, needed for drop detection even if we don't drag/draw on canvas
+    setActiveTouchId(touchId); 
 
-    const pos = getEventPosition(e);
-    if (!pos) return;
+    const pos = getEventPosition(e, touchId);
+    if (!pos) {
+        setActiveTouchId(null); // Clear if position is invalid
+        return;
+    }
 
-    setActiveTouchId(touch.identifier);
+    // If a drag from the bar is in progress, don't initiate any *new* actions on the canvas itself (drag/draw/double-tap check).
+    // Just track the touch ID so onTouchEnd can handle the drop.
+    if (draggingPlayerFromBarInfo) { 
+        console.log("TouchStart on Field detected while dragging from bar. Allowing drop on TouchEnd.");
+        // Prevent default scrolling while user is dragging *potentially* onto the canvas
+        e.preventDefault(); 
+        return; 
+    }
 
-    // TODO: Add Player/Opponent Drag Start Logic here (similar to mousedown)
+    const now = Date.now();
+    let tappedTargetId: string | null = null;
+    let tappedTargetType: 'player' | 'opponent' | null = null;
 
-    // If not dragging anything, start drawing
-    setIsDrawing(true);
-    onDrawingStart(pos);
-    e.preventDefault(); // Prevent potential scroll/zoom during drawing start
+    // Check for tap on player
+    for (const player of players) {
+      if (player.x && player.y && isPointInPlayer(pos.x, pos.y, player)) {
+        tappedTargetId = player.id;
+        tappedTargetType = 'player';
+        break;
+      }
+    }
+
+    // Check for tap on opponent if no player found
+    if (!tappedTargetId) {
+        for (const opponent of opponents) {
+            if (isPointInOpponent(pos.x, pos.y, opponent)) {
+                tappedTargetId = opponent.id;
+                tappedTargetType = 'opponent';
+                break;
+            }
+        }
+    }
+
+    // Double Tap Logic
+    if (lastTapInfo && tappedTargetId && lastTapInfo.targetId === tappedTargetId && lastTapInfo.targetType === tappedTargetType) {
+      const timeDiff = now - lastTapInfo.time;
+      const distDiff = Math.sqrt(Math.pow(pos.x - lastTapInfo.x, 2) + Math.pow(pos.y - lastTapInfo.y, 2));
+
+      if (timeDiff < DOUBLE_TAP_TIME_THRESHOLD && distDiff < DOUBLE_TAP_POS_THRESHOLD) {
+        // Double tap detected!
+        if (tappedTargetType === 'player') {
+            onPlayerRemove(tappedTargetId);
+        } else if (tappedTargetType === 'opponent') {
+            onOpponentRemove(tappedTargetId);
+        }
+        setLastTapInfo(null); // Reset tap info
+        setActiveTouchId(null); // Ensure no drag starts
+        e.preventDefault(); // Prevent initiating drag/draw after remove
+        return;
+      }
+    }
+
+    // Store tap info for potential double tap next time
+    setLastTapInfo({ time: now, x: pos.x, y: pos.y, targetId: tappedTargetId, targetType: tappedTargetType });
+
+
+    // --- Start Dragging or Drawing ---
+    if (tappedTargetType === 'player' && tappedTargetId) {
+        setIsDraggingPlayer(true);
+        setDraggingPlayerId(tappedTargetId);
+        setActiveTouchId(touchId);
+    } else if (tappedTargetType === 'opponent' && tappedTargetId) {
+        setIsDraggingOpponent(true);
+        setDraggingOpponentId(tappedTargetId);
+        setActiveTouchId(touchId);
+    } else {
+        // If not hitting a player or opponent, start drawing
+        // *** ADDED CHECK: Only start drawing if not dragging from bar (redundant check, belt-and-suspenders) ***
+        if (!draggingPlayerFromBarInfo) {
+            setIsDrawing(true);
+            onDrawingStart(pos);
+            setActiveTouchId(touchId);
+        }
+    }
   };
 
+
   const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
-    if (activeTouchId === null) return;
+    if (activeTouchId === null) return; // Only track the finger that started the action
 
-    // Find the active touch
-    const touch = Array.from(e.touches).find(t => t.identifier === activeTouchId);
-    if (!touch) return; // Active touch not found in current touches
+    // *** Crucially prevent page scrolling during canvas interaction ***
+    if (isDraggingPlayer || isDraggingOpponent || isDrawing) {
+        e.preventDefault();
+    }
 
-    const pos = getEventPosition(e); // Use the first touch for position
+    const pos = getEventPosition(e, activeTouchId);
     if (!pos) return;
 
-    // Prevent page scrolling while drawing or dragging
-    e.preventDefault();
-
-    // TODO: Add Player/Opponent Drag Move Logic here
-
-    // Handle drawing
-    if (isDrawing) {
+    if (isDraggingPlayer && draggingPlayerId) {
+      onPlayerMove(draggingPlayerId, pos.x, pos.y);
+    } else if (isDraggingOpponent && draggingOpponentId) {
+      onOpponentMove(draggingOpponentId, pos.x, pos.y);
+    } else if (isDrawing) {
       onDrawingAddPoint(pos);
     }
   };
 
   const handleTouchEndOrCancel = (e: React.TouchEvent<HTMLCanvasElement>) => {
-    if (activeTouchId === null) return;
+    // If we are dragging a player *from the bar*, handle the drop/cancel
+    if (draggingPlayerFromBarInfo && activeTouchId !== null) {
+        // Find the specific touch that ended/cancelled
+        let relevantTouch: React.Touch | null = null;
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            if (e.changedTouches[i].identifier === activeTouchId) {
+                relevantTouch = e.changedTouches[i];
+                break;
+            }
+        }
 
-    // Check if the ending/cancelled touch is the one we were tracking
-    const touch = Array.from(e.changedTouches).find(t => t.identifier === activeTouchId);
-    if (!touch) return; // Not our active touch ending
+        if (relevantTouch) {
+            const pos = getEventPosition(e, activeTouchId); // Get final position
 
-    // TODO: Add Player/Opponent Drag End Logic here
+            // Check if the touch ended *within* the canvas bounds
+            // Note: getEventPosition returns null if touch is outside canvas, but let's be explicit
+            const canvas = canvasRef.current;
+            let droppedOnCanvas = false;
+            if (pos && canvas) {
+                const rect = canvas.getBoundingClientRect();
+                // Use clientX/Y from the touch event directly for bounds check relative to viewport
+                if ( relevantTouch.clientX >= rect.left &&
+                     relevantTouch.clientX <= rect.right &&
+                     relevantTouch.clientY >= rect.top &&
+                     relevantTouch.clientY <= rect.bottom ) 
+                {
+                     droppedOnCanvas = true;
+                }
+            }
 
-    if (isDrawing) {
-      setIsDrawing(false);
-      onDrawingEnd();
+            if (e.type === 'touchend' && droppedOnCanvas && pos) {
+                console.log("Touch ended on canvas while dragging from bar", pos);
+                onPlayerDropViaTouch(pos.x, pos.y);
+            } else {
+                // If touch cancelled, ended outside canvas, or pos was invalid
+                console.log("Touch cancelled or ended off-canvas while dragging from bar");
+                onPlayerDragCancelViaTouch();
+            }
+
+            // Clear touch ID and return, as this touch event is handled.
+            setActiveTouchId(null);
+            // Reset lastTapInfo to prevent accidental double-tap triggers after drag-drop
+            setLastTapInfo(null); 
+            return; 
+        }
+        // If the ending touch wasn't the one we tracked for the bar-drag, 
+        // fall through to potentially handle other touch end logic, though unlikely.
     }
 
-    // Release the active touch tracking
+    // --- Original logic for ending drags/draws initiated *on* the canvas ---
+    if (activeTouchId === null) return;
+
+    // Check if the ending touch matches the tracked touch for on-canvas actions
+    let touchEnded = false;
+    for (let i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i].identifier === activeTouchId) {
+            touchEnded = true;
+            break;
+        }
+    }
+
+    if (!touchEnded) return; // This end/cancel event doesn't correspond to our active touch
+
+
+    // Reset states based on what action was active
+    if (isDraggingPlayer) {
+      onPlayerMoveEnd();
+      setIsDraggingPlayer(false);
+      setDraggingPlayerId(null);
+    } else if (isDraggingOpponent && draggingOpponentId) {
+      onOpponentMoveEnd(draggingOpponentId);
+      setIsDraggingOpponent(false);
+      setDraggingOpponentId(null);
+    } else if (isDrawing) {
+      onDrawingEnd();
+      setIsDrawing(false);
+    }
+
+    // Always clear the active touch ID
     setActiveTouchId(null);
+
+    // We don't reset lastTapInfo here, it's reset on successful double tap or overwritten by the next tap.
   };
 
   // --- HTML Drag and Drop Handlers (for PlayerBar drops) ---
@@ -488,32 +640,50 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
   };
 
   const handleDrop = (e: React.DragEvent<HTMLCanvasElement>) => {
-    e.preventDefault();
-    const playerId = e.dataTransfer.getData('text/plain');
+    e.preventDefault(); // Prevent default browser behavior
+    const data = e.dataTransfer.getData('application/reactflow'); // Or your custom data type
+
+    // Basic check if data exists
+    if (!data) {
+      console.error("No data transferred on drop");
+      return;
+    }
+
+    let droppedPlayerId: string;
+    try {
+        const parsedData = JSON.parse(data);
+        droppedPlayerId = parsedData.id; // Assuming your data has an 'id'
+        if (!droppedPlayerId) throw new Error("ID missing in dropped data");
+    } catch (error) {
+        console.error("Failed to parse dropped data:", error, "Raw data:", data);
+        return; // Stop if data is invalid
+    }
+
+
     const canvas = canvasRef.current;
-    if (!playerId || !canvas) return;
+    if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    onPlayerDrop(playerId, x, y);
+
+    onPlayerDrop(droppedPlayerId, x, y); // Call the callback prop
+    if (canvasRef.current) canvasRef.current.style.cursor = 'default'; // Reset cursor after drop
   };
 
   return (
     <canvas
       ref={canvasRef}
-      className="w-full h-full bg-green-400"
-      style={{ touchAction: 'none' }}
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
+      className="w-full h-full bg-green-700 cursor-default" // Use cursor-default initially
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseLeave}
-      // Add Touch Handlers
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEndOrCancel}
       onTouchCancel={handleTouchEndOrCancel}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
     />
   );
 };

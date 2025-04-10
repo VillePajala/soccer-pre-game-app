@@ -11,6 +11,8 @@ interface PlayerBarProps {
   onRenamePlayer: (playerId: string, newName: string) => void; // Add rename handler prop
   teamName: string;
   onTeamNameChange: (newName: string) => void;
+  // Add prop to pass down touch drag start handler
+  onPlayerDragStartFromBar?: (player: Player) => void;
 }
 
 // Placeholder data - this would eventually come from state/localStorage
@@ -28,7 +30,7 @@ interface PlayerBarProps {
 //   { id: 'p11', name: 'Player 11' },
 // ];
 
-const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName, onTeamNameChange }) => { // Destructure players and rename handler from props
+const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName, onTeamNameChange, onPlayerDragStartFromBar }) => { // Destructure players and rename handler from props
   const [isEditingTeamName, setIsEditingTeamName] = useState(false);
   const [editedTeamName, setEditedTeamName] = useState(teamName);
   const teamNameInputRef = useRef<HTMLInputElement>(null);
@@ -101,8 +103,13 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName
         ) : (
           <h2 
             className="text-yellow-400 text-lg font-semibold cursor-pointer hover:text-yellow-300 truncate"
-            onClick={handleStartEditingTeamName}
-            title="Click to edit team name"
+            // Use onTouchEnd for touch devices, keep onClick for mouse
+            onTouchEnd={(e) => {
+                e.stopPropagation(); // Prevent potential bubbling
+                handleStartEditingTeamName();
+            }}
+            onClick={handleStartEditingTeamName} // Keep for mouse interaction
+            title="Click or tap to edit team name"
           >
             {teamName}
           </h2>
@@ -116,6 +123,8 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName
           id={player.id}
           name={player.name}
           onRename={(newName) => onRenamePlayer(player.id, newName)} // Pass specific rename call
+          // Pass the touch drag start handler down to PlayerDisk
+          onPlayerDragStartFromBar={onPlayerDragStartFromBar}
         />
       ))}
       {/* Add button or mechanism to add/edit players might go here */}

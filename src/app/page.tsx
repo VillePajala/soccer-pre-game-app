@@ -77,6 +77,8 @@ export default function Home() {
   const [history, setHistory] = useState<AppState[]>([initialState]);
   const [historyIndex, setHistoryIndex] = useState<number>(0);
   const [isLoaded, setIsLoaded] = useState<boolean>(false); // Flag to prevent overwriting loaded state
+  // State to track player being dragged FROM the bar (for touch)
+  const [draggingPlayerFromBarInfo, setDraggingPlayerFromBarInfo] = useState<Player | null>(null);
 
   // --- Timer State ---
   const [timeElapsedInSeconds, setTimeElapsedInSeconds] = useState<number>(0);
@@ -259,37 +261,37 @@ export default function Home() {
 
   // Handles drops from PlayerBar OR completed drag/drop *within* the field
   const handleDropOnField = (playerId: string, x: number, y: number) => {
-    const playerIsOnField = playersOnField.some((p) => p.id === playerId);
-    const currentState = history[historyIndex];
-    let nextState: Partial<AppState> = {};
-
-    if (playerIsOnField) {
-      // It's a move that just finished via drop (alternative to mouse up)
-      console.log(`Drop Move finished for ${playerId} to (${x}, ${y})`);
-      nextState = {
-        playersOnField: currentState.playersOnField.map((p) =>
-          p.id === playerId ? { ...p, x, y } : p
-        )
-      };
-    } else {
-      // Adding a player from the bar
-      const playerToAdd = availablePlayers.find((p) => p.id === playerId);
-      if (playerToAdd) {
-        console.log(`Adding player ${playerId} via drop at (${x}, ${y})`);
-        nextState = {
-          playersOnField: [...currentState.playersOnField, { ...playerToAdd, x, y }],
-          availablePlayers: currentState.availablePlayers.filter((p) => p.id !== playerId),
-        };
-      } else {
-        console.warn(`Drop: Player ID ${playerId} not found.`);
-        return; // Don't save state if nothing happened
-      }
+    const playerToAdd = availablePlayers.find(p => p.id === playerId);
+    if (!playerToAdd) {
+      console.error("Dropped player not found in available list:", playerId);
+      return;
     }
-    // Important: Ensure new references are passed to saveState if modifying based on currentState
-    saveState({ 
-      playersOnField: nextState.playersOnField ? [...nextState.playersOnField] : undefined,
-      availablePlayers: nextState.availablePlayers ? [...nextState.availablePlayers] : undefined
-    }); 
+
+    const playerAlreadyOnField = playersOnField.find(p => p.id === playerId);
+
+    let newPlayersOnField;
+    let newAvailablePlayers;
+
+    if (playerAlreadyOnField) {
+      // Player already on field, just move them
+      newPlayersOnField = playersOnField.map(p =>
+        p.id === playerId ? { ...p, x, y } : p
+      );
+      newAvailablePlayers = availablePlayers; // Available list doesn't change
+    } else {
+      // Player is new to the field
+      newPlayersOnField = [
+        ...playersOnField,
+        { ...playerToAdd, x, y }, // Add player with position
+      ];
+      // Remove player from available list
+      newAvailablePlayers = availablePlayers.filter(p => p.id !== playerId);
+    }
+
+    saveState({
+      playersOnField: newPlayersOnField,
+      availablePlayers: newAvailablePlayers,
+    });
   };
 
   // Drawing handlers: only save state when drawing ends
@@ -594,24 +596,70 @@ export default function Home() {
   };
 
   const handleToggleLargeTimerOverlay = () => {
-    setShowLargeTimerOverlay(prev => !prev);
+    setShowLargeTimerOverlay(!showLargeTimerOverlay);
   };
 
   const canUndo = historyIndex > 0;
   const canRedo = historyIndex < history.length - 1;
 
+  // Handler for when a touch drag STARTS on a PlayerDisk in the PlayerBar
+  const handlePlayerDragStartFromBar = (player: Player) => {
+    console.log("Touch drag started from bar:", player);
+    setDraggingPlayerFromBarInfo(player);
+  };
+
+  // Handler for when a touch drag from the bar ENDS successfully on the field
+  const handlePlayerDropViaTouch = (x: number, y: number) => {
+    console.log("Touch drop on field:", draggingPlayerFromBarInfo, x, y);
+    if (draggingPlayerFromBarInfo) {
+      handleDropOnField(draggingPlayerFromBarInfo.id, x, y);
+      // Clear the dragging state AFTER handling the drop
+      setDraggingPlayerFromBarInfo(null);
+    } else {
+      console.warn("handlePlayerDropViaTouch called but no player was being dragged from bar.");
+    }
+  };
+
+  // Handler for when a touch drag from the bar is CANCELED (ends outside field)
+  const handlePlayerDragCancelViaTouch = () => {
+    console.log("Touch drag from bar canceled/ended off-field.");
+    setDraggingPlayerFromBarInfo(null);
+  };
+
   return (
-    <div className="flex flex-col h-screen bg-gray-100 overflow-hidden">
-      <PlayerBar 
-        players={availablePlayers} 
-        onRenamePlayer={handleRenamePlayer} 
-        teamName={teamName} // Pass team name
-        onTeamNameChange={handleTeamNameChange} // Pass handler
+    // Main container with flex column layout
+    <div className="flex flex-col h-screen bg-gray-800 text-white overflow-hidden">
+      {/* Top Player Bar */}
+      <PlayerBar
+        players={availablePlayers}
+        onRenamePlayer={handleRenamePlayer}
+        teamName={teamName}
+        onTeamNameChange={handleTeamNameChange}
+        onPlayerDragStartFromBar={handlePlayerDragStartFromBar}
       />
 
-      <div className="flex-grow bg-green-600 flex items-center justify-center relative overflow-hidden">
+      {/* Main content area - Should take up space between PlayerBar and ControlBar */}
+      <main className="flex-1 relative overflow-hidden"> {/* Removed flex, added relative for positioning overlay/field */}
+        {/* Soccer Field (Takes full space of main) */}
+        {/* The container div might not be necessary anymore unless used for specific positioning */}
+        {/* Let's put TimerOverlay and SoccerField directly in main */} 
+        {showLargeTimerOverlay && (
+          <TimerOverlay 
+              // Pass all required props as defined in TimerOverlayProps
+              timeElapsedInSeconds={timeElapsedInSeconds} 
+              subAlertLevel={subAlertLevel}
+              onSubstitutionMade={handleSubstitutionMade} 
+              completedIntervalDurations={completedIntervalDurations}
+              subIntervalMinutes={subIntervalMinutes}
+              onSetSubInterval={handleSetSubInterval}
+              isTimerRunning={isTimerRunning}
+              onStartPauseTimer={handleStartPauseTimer}
+              onResetTimer={handleResetTimer}
+          />
+        )}
         <SoccerField
           players={playersOnField}
+          opponents={opponents}
           drawings={drawings}
           showPlayerNames={showPlayerNames}
           onPlayerDrop={handleDropOnField}
@@ -621,45 +669,32 @@ export default function Home() {
           onDrawingAddPoint={handleDrawingAddPoint}
           onDrawingEnd={handleDrawingEnd}
           onPlayerRemove={handlePlayerRemove}
-          opponents={opponents}
           onOpponentMove={handleOpponentMove}
           onOpponentMoveEnd={handleOpponentMoveEnd}
           onOpponentRemove={handleOpponentRemove}
+          draggingPlayerFromBarInfo={draggingPlayerFromBarInfo}
+          onPlayerDropViaTouch={handlePlayerDropViaTouch}
+          onPlayerDragCancelViaTouch={handlePlayerDragCancelViaTouch}
         />
-        {showLargeTimerOverlay && (
-          <TimerOverlay 
-            timeElapsedInSeconds={timeElapsedInSeconds} 
-            subAlertLevel={subAlertLevel} 
-            onSubstitutionMade={handleSubstitutionMade}
-            completedIntervalDurations={completedIntervalDurations}
-            subIntervalMinutes={subIntervalMinutes}
-            onSetSubInterval={handleSetSubInterval}
-            isTimerRunning={isTimerRunning}
-            onStartPauseTimer={handleStartPauseTimer}
-            onResetTimer={handleResetTimer}
-          />
-        )}
-      </div>
+      </main>
 
+      {/* Control Bar (Bottom Bar) - Moved outside main */}
       <ControlBar
+        onAddOpponent={handleAddOpponent}
+        onClearDrawings={handleClearDrawings}
+        onToggleNames={handleTogglePlayerNames} 
+        showPlayerNames={showPlayerNames} 
         onUndo={handleUndo}
         onRedo={handleRedo}
         canUndo={canUndo}
         canRedo={canRedo}
-        onToggleNames={handleTogglePlayerNames}
-        onResetField={handleResetField}
-        onClearDrawings={handleClearDrawings}
-        onAddOpponent={handleAddOpponent}
-        // Timer props
-        timeElapsedInSeconds={timeElapsedInSeconds}
+        onResetField={handleResetField} 
         isTimerRunning={isTimerRunning}
         onStartPauseTimer={handleStartPauseTimer}
         onResetTimer={handleResetTimer}
-        // Timer Overlay props
+        timeElapsedInSeconds={timeElapsedInSeconds}
         showLargeTimerOverlay={showLargeTimerOverlay}
         onToggleLargeTimerOverlay={handleToggleLargeTimerOverlay}
-        // Name Visibility
-        showPlayerNames={showPlayerNames}
       />
     </div>
   );
