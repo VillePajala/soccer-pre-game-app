@@ -8,11 +8,11 @@
 - [x] Set up basic page structure in `app/page.tsx`
 
 **UI Layout & Components**
-- [ ] Create the main layout: Full-screen field canvas, top player bar, bottom control bar.
-- [ ] Implement the `SoccerField` component (Canvas).
-- [ ] Implement the `PlayerDisk` component (draggable, named circles).
-- [ ] Implement the `PlayerBar` component (holds available player disks).
-- [ ] Implement the `ControlBar` component (buttons for actions).
+- [x] Create the main layout: Full-screen field canvas, top player bar, bottom control bar.
+- [x] Implement the `SoccerField` component (Canvas) - Basic structure created.
+- [x] Implement the `PlayerDisk` component (draggable, named circles) - Basic structure created.
+- [x] Implement the `PlayerBar` component (holds available player disks) - Basic structure created.
+- [x] Implement the `ControlBar` component (buttons for actions) - Basic structure created.
 
 **Core Functionality**
 - [ ] Implement player addition/naming (tapping disk in the bar?).
