@@ -1,6 +1,6 @@
 'use client'; // Need this for client-side interactions like canvas
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Player, Point, Opponent } from '@/app/page'; // Import Opponent type
 
 // Define props for SoccerField
@@ -65,8 +65,9 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
   // Double Tap State
   const [lastTapInfo, setLastTapInfo] = useState<{ time: number; x: number; y: number; targetId: string | null; targetType: 'player' | 'opponent' | null } | null>(null);
 
-  // --- Drawing Logic ---
-  const draw = () => {
+  // --- Drawing Logic wrapped in useCallback ---
+  // Dependencies: Need to list everything used inside draw that comes from props or state
+  const draw = useCallback(() => { 
     const canvas = canvasRef.current;
     if (!canvas) return;
     const context = canvas.getContext('2d');
@@ -242,13 +243,15 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
         }
       }
     });
-  };
+  // List dependencies for useCallback: props used inside draw
+  }, [players, opponents, drawings, showPlayerNames]); 
 
-  // Redraw canvas whenever players, opponents, drawings, or name visibility change
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Redraw canvas whenever relevant props change
+  // REMOVED: eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    draw();
-  }, [players, opponents, drawings, showPlayerNames]); // Add opponents and showPlayerNames dependency
+    draw(); // Now depends on the memoized draw function
+  // Add draw itself as a dependency
+  }, [draw]); 
 
   // --- Event Handlers ---
 
