@@ -23,6 +23,8 @@ interface ControlBarProps {
   // Timer Overlay props
   showLargeTimerOverlay: boolean;
   onToggleLargeTimerOverlay: () => void;
+  // Add name visibility prop
+  showPlayerNames: boolean;
   // TODO: Add props for Reset
 }
 
@@ -50,6 +52,8 @@ const ControlBar: React.FC<ControlBarProps> = ({
   // Timer Overlay props
   showLargeTimerOverlay,
   onToggleLargeTimerOverlay,
+  // Destructure name visibility prop
+  showPlayerNames,
 }) => {
   // Placeholder functions for other buttons
   const handleReset = () => console.log('Reset clicked');
@@ -74,7 +78,9 @@ const ControlBar: React.FC<ControlBarProps> = ({
       {/* Action Buttons */}
       <button onClick={onUndo} disabled={!canUndo} className={`${baseButtonStyle} ${secondaryColor}`} title="Undo"><FaUndo /></button>
       <button onClick={onRedo} disabled={!canRedo} className={`${baseButtonStyle} ${secondaryColor}`} title="Redo"><FaRedo /></button>
-      <button onClick={onToggleNames} className={`${baseButtonStyle} ${secondaryColor}`} title="Toggle Names"><FaEyeSlash />{/* TODO: Change icon based on state */}</button>
+      <button onClick={onToggleNames} className={`${baseButtonStyle} ${secondaryColor}`} title="Toggle Names">
+        {showPlayerNames ? <FaEyeSlash /> : <FaEye />}
+      </button>
       <button onClick={onResetField} className={`${baseButtonStyle} ${resetColor}`} title="Reset Field"><FaTrashAlt /></button>
       <button onClick={onClearDrawings} className={`${baseButtonStyle} ${clearColor}`} title="Clear Drawings"><FaEraser /></button>
       <button onClick={onAddOpponent} className={`${baseButtonStyle} ${addOpponentColor}`} title="Add Opponent"><FaUserPlus style={{ color: 'white' }}/> {/* Ensure icon color contrast */}</button>
