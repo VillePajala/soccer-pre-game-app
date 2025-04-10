@@ -237,10 +237,10 @@ export default function Home() {
       try {
         if (elem.requestFullscreen) {
           await elem.requestFullscreen();
-        } else if ((elem as any).webkitRequestFullscreen) { /* Safari */
-          await (elem as any).webkitRequestFullscreen();
-        } else if ((elem as any).msRequestFullscreen) { /* IE11 */
-          await (elem as any).msRequestFullscreen();
+        } else if ('webkitRequestFullscreen' in elem && typeof elem.webkitRequestFullscreen === 'function') { /* Safari */
+          await elem.webkitRequestFullscreen();
+        } else if ('msRequestFullscreen' in elem && typeof elem.msRequestFullscreen === 'function') { /* IE11 */
+          await elem.msRequestFullscreen();
         }
         setIsFullscreen(true);
       } catch (err) {
@@ -256,10 +256,10 @@ export default function Home() {
       try {
         if (document.exitFullscreen) {
           await document.exitFullscreen();
-        } else if ((document as any).webkitExitFullscreen) { /* Safari */
-          await (document as any).webkitExitFullscreen();
-        } else if ((document as any).msExitFullscreen) { /* IE11 */
-          await (document as any).msExitFullscreen();
+        } else if ('webkitExitFullscreen' in document && typeof document.webkitExitFullscreen === 'function') { /* Safari */
+          await document.webkitExitFullscreen();
+        } else if ('msExitFullscreen' in document && typeof document.msExitFullscreen === 'function') { /* IE11 */
+          await document.msExitFullscreen();
         }
         setIsFullscreen(false);
       } catch (err) {
