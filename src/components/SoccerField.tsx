@@ -23,7 +23,7 @@ interface SoccerFieldProps {
 }
 
 // Define player/opponent radius for hit detection and drawing
-const PLAYER_RADIUS = 25; // Use a fixed pixel radius to prevent distortion
+const PLAYER_RADIUS = 30; // Increased size
 
 const SoccerField: React.FC<SoccerFieldProps> = ({
   players,
@@ -69,8 +69,8 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     context.fillRect(0, 0, canvas.width, canvas.height);
 
     // --- Draw Field Lines --- 
-    context.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-    context.lineWidth = 2;
+    context.strokeStyle = 'rgba(255, 255, 255, 0.6)'; // Lower opacity
+    context.lineWidth = 2; // Slightly thicker than before
     const W = canvas.width;
     const H = canvas.height;
     const lineMargin = 5; 
@@ -158,8 +158,8 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     // --- End Field Lines ---
 
     // Draw user drawings
-    context.strokeStyle = '#06B6D4'; // Cyan 500 for user drawings
-    context.lineWidth = 3;
+    context.strokeStyle = '#FB923C'; // Orange 400 for user drawings
+    context.lineWidth = 3; 
     context.lineCap = 'round';
     context.lineJoin = 'round';
     drawings.forEach(path => {
@@ -172,36 +172,60 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
       context.stroke();
     });
 
-    // Draw opponents (before players?)
-    context.fillStyle = '#EF4444'; // Red color for opponents
-    context.strokeStyle = '#DC2626'; // Darker red border for better contrast?
-    context.lineWidth = 2;
+    // Draw opponents 
+    context.lineWidth = 1.5; // Keep border thin
     opponents.forEach(opponent => {
       context.beginPath();
-      context.arc(opponent.x, opponent.y, PLAYER_RADIUS * 0.9, 0, Math.PI * 2); // Slightly smaller radius
+      context.arc(opponent.x, opponent.y, PLAYER_RADIUS * 0.9, 0, Math.PI * 2);
+      context.save(); // Save context state before applying shadow/gradient
+      // Inner Shadow
+      context.shadowColor = 'rgba(0, 0, 0, 0.5)';
+      context.shadowBlur = 5;
+      context.shadowOffsetX = 1;
+      context.shadowOffsetY = 2;
+      // Radial Gradient Fill
+      const gradientOpp = context.createRadialGradient(opponent.x - 3, opponent.y - 3, 1, opponent.x, opponent.y, PLAYER_RADIUS * 0.9);
+      gradientOpp.addColorStop(0, '#F87171'); // Lighter red center (red-400)
+      gradientOpp.addColorStop(1, '#DC2626'); // Darker red edge (red-600)
+      context.fillStyle = gradientOpp;
       context.fill();
+      context.restore(); // Restore context (removes shadow for stroke)
+      // Stroke (border)
+      context.strokeStyle = '#B91C1C'; // Even darker red border (red-700)
       context.stroke();
     });
 
-    // Draw players (on top of drawings and opponents)
+    // Draw players 
+    // context.lineWidth = 1.5; // No border needed now
     players.forEach(player => {
       if (player.x !== undefined && player.y !== undefined) {
-        context.fillStyle = player.color || '#3B82F6';
-        context.strokeStyle = '#1D4ED8'; // Darker blue border for better contrast
-        context.lineWidth = 2;
         context.beginPath();
         context.arc(player.x, player.y, PLAYER_RADIUS, 0, Math.PI * 2);
+        context.save(); // Save context state
+        // Inner Shadow (same as opponent)
+        context.shadowColor = 'rgba(0, 0, 0, 0.5)';
+        context.shadowBlur = 5;
+        context.shadowOffsetX = 1;
+        context.shadowOffsetY = 2;
+        // Use flat color matching PlayerDisk default
+        context.fillStyle = player.color || '#3B82F6'; 
         context.fill();
+        context.restore(); // Restore context (removes shadow)
+        // Stroke (border) - RE-ADD for consistent look with shadow
+        context.strokeStyle = '#1E40AF'; // Darker blue border (blue-800)
+        context.lineWidth = 1.5; 
         context.stroke();
 
         // Draw name if toggled on
         if (showPlayerNames) {
-          context.fillStyle = 'white'; // Or black, depending on disk color
-          context.font = 'bold 12px sans-serif';
+          context.fillStyle = '#F1F5F9'; // Slate-100 for text, matching PlayerDisk
+          // context.strokeStyle = 'rgba(0,0,0,0.7)'; // Remove outline
+          // context.lineWidth = 2.5; 
+          context.font = '600 11px Inter, sans-serif'; // Match font-semibold, size, and family 
           context.textAlign = 'center';
           context.textBaseline = 'middle';
-          // Simple text rendering, might need refinement for long names
-          context.fillText(player.name, player.x, player.y);
+          // context.strokeText(player.name, player.x, player.y); // Remove outline
+          context.fillText(player.name, player.x, player.y); // Fill only
         }
       }
     });

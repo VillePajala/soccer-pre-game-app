@@ -37,5 +37,5 @@
 **Optional/Future**
 - [x] Implement "Reset Field" functionality.
 - [x] Implement "Clear Drawings" functionality.
-- [ ] Implement saving/loading formations.
+- [ ] Implement saving/loading formations. 
 - [ ] Implement exporting field view as an image. 

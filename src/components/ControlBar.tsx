@@ -2,7 +2,8 @@
 
 import React from 'react';
 import { 
-    FaUndo, FaRedo, FaEye, FaEyeSlash, FaTrashAlt, FaEraser, FaUserPlus 
+    FaUndo, FaRedo, FaEye, FaEyeSlash, FaTrashAlt, FaEraser, FaUserPlus, 
+    FaRegStopCircle, FaRegClock // Added Icons for Overlay Toggle
 } from 'react-icons/fa'; // Example using Font Awesome via react-icons
 
 // Define props for ControlBar
@@ -59,8 +60,8 @@ const ControlBar: React.FC<ControlBarProps> = ({
   const handleReset = () => console.log('Reset clicked');
 
   // Consistent Button Styles
-  const baseButtonStyle = "text-slate-100 font-semibold py-2 px-4 rounded-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800";
-  const smallButtonStyle = "text-slate-100 font-semibold py-1 px-3 rounded shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-sm transition-colors duration-150 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900";
+  const baseButtonStyle = "text-slate-100 font-semibold py-2 px-4 rounded-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 active:scale-95 active:brightness-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900";
+  const smallButtonStyle = "text-slate-100 font-semibold py-1 px-3 rounded shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-sm transition-all duration-150 active:scale-95 active:brightness-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900";
   
   // Specific Colors
   const primaryColor = "bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500";
@@ -73,7 +74,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   const timerControlBg = "bg-slate-900";
 
   return (
-    <div className="bg-slate-900 p-4 h-20 flex-shrink-0 flex items-center space-x-4 shadow-md">
+    <div className="bg-slate-900/85 backdrop-blur-md p-4 h-20 flex-shrink-0 flex items-center space-x-4 shadow-lg border-t border-slate-700/50">
       {/* Group 1: Undo/Redo */}
       <div className="flex items-center space-x-2">
         <button onClick={onUndo} disabled={!canUndo} className={`${baseButtonStyle} ${secondaryColor}`} title="Undo"><FaUndo /></button>
@@ -81,7 +82,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
       </div>
       
       {/* Group 2: Toggles */}
-      <div className="flex items-center space-x-2 border-l border-slate-700 pl-4">
+      <div className="flex items-center space-x-2 border-l border-slate-700/50 pl-4">
         <button onClick={onToggleNames} className={`${baseButtonStyle} ${secondaryColor}`} title="Toggle Names">
           {showPlayerNames ? <FaEyeSlash /> : <FaEye />}
         </button>
@@ -90,12 +91,12 @@ const ControlBar: React.FC<ControlBarProps> = ({
           className={`${baseButtonStyle} ${secondaryColor}`}
           title={showLargeTimerOverlay ? "Hide Large Timer" : "Show Large Timer"}
         >
-           {showLargeTimerOverlay ? '⏹️' : '⏱️'}
+           {showLargeTimerOverlay ? <FaRegStopCircle /> : <FaRegClock />}
         </button>
       </div>
 
       {/* Group 3: Field Actions */}
-      <div className="flex items-center space-x-2 border-l border-slate-700 pl-4">
+      <div className="flex items-center space-x-2 border-l border-slate-700/50 pl-4">
         <button onClick={onResetField} className={`${baseButtonStyle} ${resetColor}`} title="Reset Field"><FaTrashAlt /></button>
         <button onClick={onClearDrawings} className={`${baseButtonStyle} ${clearColor}`} title="Clear Drawings"><FaEraser /></button>
         <button onClick={onAddOpponent} className={`${baseButtonStyle} ${addOpponentColor}`} title="Add Opponent"><FaUserPlus style={{ color: 'white' }}/>
@@ -106,9 +107,9 @@ const ControlBar: React.FC<ControlBarProps> = ({
       <div className="flex-grow"></div>
 
       {/* Group 4: Timer Controls */}
-      <div className={`flex items-center space-x-2 ${timerControlBg} p-2 rounded-lg border border-slate-700`}>
+      <div className={`flex items-center space-x-2 ${timerControlBg}/90 backdrop-blur-sm p-2 rounded-lg border border-slate-700/50`}>
         {/* Small Timer Display */}
-        <span className="text-slate-100 font-semibold text-base tabular-nums mx-1">
+        <span className="text-slate-200 font-medium text-base tabular-nums mx-1">
           {formatTime(timeElapsedInSeconds)}
         </span>
         {/* Start/Pause Button */}
