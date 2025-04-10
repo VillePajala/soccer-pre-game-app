@@ -79,6 +79,8 @@ export default function Home() {
   const [isLoaded, setIsLoaded] = useState<boolean>(false); // Flag to prevent overwriting loaded state
   // State to track player being dragged FROM the bar (for touch)
   const [draggingPlayerFromBarInfo, setDraggingPlayerFromBarInfo] = useState<Player | null>(null);
+  // Fullscreen state
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
   // --- Timer State ---
   const [timeElapsedInSeconds, setTimeElapsedInSeconds] = useState<number>(0);
@@ -208,6 +210,70 @@ export default function Home() {
       }
     }
   }, [history, historyIndex, isLoaded]); // Run when history, index, or loaded status changes
+
+  // --- Fullscreen API Logic ---
+  const handleFullscreenChange = useCallback(() => {
+    setIsFullscreen(!!document.fullscreenElement);
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange); // Safari/Chrome
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange); // Firefox
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange); // IE/Edge
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+    };
+  }, [handleFullscreenChange]);
+
+  const toggleFullScreen = async () => {
+    const elem = document.documentElement; // Target the whole page
+
+    if (!document.fullscreenElement) {
+      try {
+        if (elem.requestFullscreen) {
+          await elem.requestFullscreen();
+        } else if ((elem as any).webkitRequestFullscreen) { /* Safari */
+          await (elem as any).webkitRequestFullscreen();
+        } else if ((elem as any).msRequestFullscreen) { /* IE11 */
+          await (elem as any).msRequestFullscreen();
+        }
+        setIsFullscreen(true);
+      } catch (err) {
+        // Type check for error handling
+        if (err instanceof Error) {
+            console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+        } else {
+            console.error(`An unknown error occurred attempting to enable full-screen mode:`, err);
+        }
+        setIsFullscreen(false); // Ensure state is correct if request fails
+      }
+    } else {
+      try {
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if ((document as any).webkitExitFullscreen) { /* Safari */
+          await (document as any).webkitExitFullscreen();
+        } else if ((document as any).msExitFullscreen) { /* IE11 */
+          await (document as any).msExitFullscreen();
+        }
+        setIsFullscreen(false);
+      } catch (err) {
+        // Type check for error handling
+         if (err instanceof Error) {
+             console.error(`Error attempting to disable full-screen mode: ${err.message} (${err.name})`);
+         } else {
+             console.error(`An unknown error occurred attempting to disable full-screen mode:`, err);
+         }
+         // State might already be false due to event listener, but set explicitly just in case
+         setIsFullscreen(false);
+      }
+    }
+  };
 
   // Function to save a new state to history
   const saveState = useCallback((newState: Partial<AppState>) => {
@@ -628,7 +694,17 @@ export default function Home() {
 
   return (
     // Main container with flex column layout
-    <div className="flex flex-col h-screen bg-gray-800 text-white overflow-hidden">
+    <div className="flex flex-col h-screen bg-gray-900 text-white relative touch-none">
+      {/* Fullscreen Toggle Button */}
+      <button
+        onClick={toggleFullScreen}
+        className="absolute top-2 right-2 z-50 bg-gray-700 hover:bg-gray-600 text-white text-xs font-bold py-1 px-2 rounded"
+        aria-label={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+        title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+      >
+        {isFullscreen ? 'Exit FS' : 'Full'}
+      </button>
+
       {/* Top Player Bar */}
       <PlayerBar
         players={availablePlayers}
