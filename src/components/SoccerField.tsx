@@ -68,16 +68,97 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     context.fillStyle = '#34D399';
     context.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Draw field lines (placeholder)
-    // context.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-    // context.lineWidth = 2;
-    // context.beginPath();
-    // context.moveTo(canvas.width / 2, 0);
-    // context.lineTo(canvas.width / 2, canvas.height);
-    // context.stroke();
+    // --- Draw Field Lines --- 
+    context.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+    context.lineWidth = 2;
+    const W = canvas.width;
+    const H = canvas.height;
+    const lineMargin = 5; 
+    const centerRadius = Math.min(W, H) * 0.08;
+    const penaltyBoxWidth = W * 0.6;
+    const penaltyBoxHeight = H * 0.18;
+    const goalBoxWidth = W * 0.3;
+    const goalBoxHeight = H * 0.07;
+    const penaltySpotDist = H * 0.12;
+    const cornerRadius = Math.min(W, H) * 0.02;
+
+    // Outer boundary
+    context.beginPath();
+    context.strokeRect(lineMargin, lineMargin, W - 2 * lineMargin, H - 2 * lineMargin);
+
+    // Halfway line (Horizontal)
+    context.beginPath();
+    context.moveTo(lineMargin, H / 2); // Start at left edge, middle height
+    context.lineTo(W - lineMargin, H / 2); // End at right edge, middle height
+    context.stroke();
+
+    // Center circle
+    context.beginPath();
+    context.arc(W / 2, H / 2, centerRadius, 0, Math.PI * 2);
+    context.stroke();
+
+    // Top Penalty Area & Arc
+    context.beginPath(); // Path for rectangle
+    const topPenaltyX = (W - penaltyBoxWidth) / 2;
+    context.rect(topPenaltyX, lineMargin, penaltyBoxWidth, penaltyBoxHeight); // Define rect path
+    context.stroke(); // Stroke JUST the rectangle
+    context.beginPath(); // Start NEW path for the arc
+    context.arc(W / 2, lineMargin + penaltyBoxHeight, centerRadius * 0.8, 0, Math.PI, false);
+    context.stroke(); // Stroke JUST the arc
+
+    // Top Goal Area
+    context.beginPath();
+    const topGoalX = (W - goalBoxWidth) / 2;
+    context.strokeRect(topGoalX, lineMargin, goalBoxWidth, goalBoxHeight);
+    context.stroke(); // Explicitly stroke path
+
+    // Bottom Penalty Area & Arc
+    context.beginPath(); // Path for rectangle
+    const bottomPenaltyY = H - lineMargin - penaltyBoxHeight;
+    context.rect(topPenaltyX, bottomPenaltyY, penaltyBoxWidth, penaltyBoxHeight); // Define rect path
+    context.stroke(); // Stroke JUST the rectangle
+    context.beginPath(); // Start NEW path for the arc
+    context.arc(W / 2, H - lineMargin - penaltyBoxHeight, centerRadius * 0.8, Math.PI, 0, false);
+    context.stroke(); // Stroke JUST the arc
+
+    // Bottom Goal Area
+    context.beginPath();
+    const bottomGoalY = H - lineMargin - goalBoxHeight;
+    context.strokeRect(topGoalX, bottomGoalY, goalBoxWidth, goalBoxHeight);
+    context.stroke(); // Explicitly stroke path
+
+    // Corner Arcs (each needs its own path)
+    context.beginPath();
+    context.arc(lineMargin, lineMargin, cornerRadius, 0, Math.PI / 2);
+    context.stroke();
+    context.beginPath();
+    context.arc(W - lineMargin, lineMargin, cornerRadius, Math.PI / 2, Math.PI);
+    context.stroke();
+    context.beginPath();
+    context.arc(lineMargin, H - lineMargin, cornerRadius, Math.PI * 1.5, 0);
+    context.stroke();
+    context.beginPath();
+    context.arc(W - lineMargin, H - lineMargin, cornerRadius, Math.PI, Math.PI * 1.5);
+    context.stroke();
+
+    // Draw filled spots (need separate fill style and paths)
+    context.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    // Center Spot
+    context.beginPath();
+    context.arc(W / 2, H / 2, 3, 0, Math.PI * 2);
+    context.fill();
+    // Top Penalty Spot
+    context.beginPath();
+    context.arc(W / 2, lineMargin + penaltySpotDist, 3, 0, Math.PI * 2);
+    context.fill();
+    // Bottom Penalty Spot
+    context.beginPath();
+    context.arc(W / 2, H - lineMargin - penaltySpotDist, 3, 0, Math.PI * 2);
+    context.fill();
+    // --- End Field Lines ---
 
     // Draw user drawings
-    context.strokeStyle = '#FFFFFF'; // White lines
+    context.strokeStyle = '#FFFFFF'; // White lines for user drawings
     context.lineWidth = 3;
     context.lineCap = 'round';
     context.lineJoin = 'round';
