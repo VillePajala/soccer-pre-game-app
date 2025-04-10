@@ -9,6 +9,7 @@ interface SoccerFieldProps {
   drawings: Point[][]; // Add drawings prop
   onPlayerDrop: (playerId: string, x: number, y: number) => void;
   onPlayerMove: (playerId: string, x: number, y: number) => void;
+  onPlayerMoveEnd: () => void; // Add the move end callback prop
   onDrawingStart: (point: Point) => void; // Add drawing callbacks
   onDrawingAddPoint: (point: Point) => void;
   onDrawingEnd: () => void;
@@ -22,6 +23,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
   drawings, // Destructure new props
   onPlayerDrop,
   onPlayerMove,
+  onPlayerMoveEnd, // Destructure the new prop
   onDrawingStart,
   onDrawingAddPoint,
   onDrawingEnd,
@@ -158,8 +160,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     if (isDraggingPlayer) {
       setIsDraggingPlayer(false);
       setDraggingPlayerId(null);
-      // Check if cursor should be 'grab' or 'crosshair' after dropping
-      // (Can refine this later)
+      onPlayerMoveEnd(); // Call the callback when player drag ends
       canvasRef.current?.style.setProperty('cursor', 'crosshair');
     }
     if (isDrawing) {
@@ -170,10 +171,10 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
   };
 
   const handleMouseLeave = () => {
-    // Stop any active operation if mouse leaves canvas
     if (isDraggingPlayer) {
       setIsDraggingPlayer(false);
       setDraggingPlayerId(null);
+      onPlayerMoveEnd(); // Also call if mouse leaves while dragging
       canvasRef.current?.style.setProperty('cursor', 'crosshair');
     }
     if (isDrawing) {
