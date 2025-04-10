@@ -1,25 +1,29 @@
 # Soccer Pre-Game Tactics App
 
-A mobile-first web application built with Next.js for soccer coaches to quickly visualize player positioning and tactical strategies on a virtual field.
+A sleek, modern web application built with Next.js and Tailwind CSS for soccer coaches to visualize player positioning, opponent formations, and tactical movements on a virtual field. Optimized for quick use on mobile, tablet, or desktop.
 
 ## Overview
 
-This app provides an intuitive interface for coaches, especially those working with youth teams, to explain formations, player roles, and movement strategies directly on their phone or tablet. It's designed for quick, on-the-go use before matches.
+This app provides an intuitive, responsive interface for coaches to explain formations, player roles, and strategies. Drag players and opponents, draw movement paths, and use the integrated game timer with substitution assistance.
 
 ## Features
 
-*   **Virtual Soccer Field:** A clear, full-screen view of a soccer pitch.
-*   **Player Management:** Add player disks, assign names (renameable), and drag them onto the field.
-*   **Drag & Drop Positioning:** Easily place and reposition players anywhere on the field.
-*   **Tactical Drawing:** Use freehand drawing to illustrate movement paths, zones, or plays directly on the field.
-*   **Toggle Name Visibility:** Show or hide player names on the disks to reduce visual clutter.
-*   **Undo/Redo:** Step back and forth through recent actions (player moves, opponent moves, drawings, adds/removes).
-*   **Opponent Markers:** Add, drag, and remove simple opponent markers.
+*   **Virtual Soccer Field:** A clear, non-distorting view of a soccer pitch with standard markings.
+*   **Player Management:** Add player disks from the top bar, assign names (renameable via click), and drag them onto the field.
+*   **Opponent Markers:** Add, drag, and remove distinct opponent markers.
+*   **Drag & Drop Positioning:** Easily place and reposition players and opponents.
+*   **Tactical Drawing:** Use freehand drawing (distinct color) to illustrate movement paths, zones, or plays.
+*   **Toggle Name Visibility:** Show or hide player names on the disks.
+*   **Undo/Redo:** Step back and forth through all significant actions.
 *   **Reset/Clear:** Reset the entire field or clear only drawings.
-*   **Game Timer:** Integrated timer with start/pause/reset.
-*   **Substitution Assist:** Optional large timer overlay with configurable substitution interval alerts (warning/due) and history of lineup durations.
-*   **Responsive Design:** Optimized for mobile and tablet use, with desktop/web support.
-*   **Local Storage Persistence:** The entire application state (players, opponents, drawings, history, timer settings) is saved in the browser.
+*   **Game Timer & Substitution Assist:** 
+    *   Integrated timer with start/pause/reset.
+    *   Optional large timer overlay.
+    *   Configurable substitution interval alerts (warning/due colors).
+    *   History log of actual lineup durations.
+*   **Responsive & Fixed Layout:** Optimized for various screen sizes with a non-scrolling interface.
+*   **Polished Dark Theme:** Professional dark UI with glassmorphism effects and clear visual hierarchy.
+*   **Local Storage Persistence:** The entire application state is automatically saved in the browser.
 
 ## Tech Stack
 
@@ -61,9 +65,11 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 ## Future Enhancements
 
-*   Saving and loading specific formations/setups.
+*   Saving and loading specific named formations/setups.
 *   Exporting the current field view as an image.
-*   Further styling improvements and accessibility considerations.
+*   Advanced touch interaction refinement.
+*   Code cleanup (e.g., shared utilities).
+*   Further accessibility improvements.
 
 ## Learn More (About Next.js)
 

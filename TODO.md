@@ -26,11 +26,13 @@
 - [x] Implement opponent markers (add/drag/remove).
 - [x] Implement game timer with start/pause/reset.
 - [x] Implement large timer overlay with substitution alerts and interval history.
+- [x] Add static field markings (lines, circles, arcs) to canvas background.
 
 **Styling & Refinements**
-- [ ] Apply Tailwind CSS styling according to the UID (field appearance, disk colors, controls).
+- [x] Apply Tailwind CSS styling according to the UID (field appearance, disk colors, controls).
 - [x] Ensure responsive design for mobile, tablet, and desktop.
 - [x] Implement visual feedback for interactions (e.g., dragging).
+- [x] Improve canvas rendering (non-distorting disks, distinct drawing colors).
 - [ ] Address accessibility considerations (contrast, touch target size).
 - [x] Implement persistence using `localStorage`. (History and index saved)
 
@@ -39,3 +41,5 @@
 - [x] Implement "Clear Drawings" functionality.
 - [ ] Implement saving/loading formations. 
 - [ ] Implement exporting field view as an image. 
+- [ ] Advanced touch interaction refinement.
+- [ ] Code cleanup (e.g., shared utilities). 
