@@ -57,7 +57,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   showPlayerNames,
 }) => {
   // Consistent Button Styles
-  const baseButtonStyle = "text-slate-100 font-semibold py-2 px-4 rounded-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 active:scale-95 active:brightness-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900";
+  const baseButtonStyle = "text-slate-100 font-semibold py-2 px-2 w-11 h-10 flex items-center justify-center rounded-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 active:scale-95 active:brightness-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900";
   const smallButtonStyle = "text-slate-100 font-semibold py-1 px-3 rounded shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-sm transition-all duration-150 active:scale-95 active:brightness-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900";
   
   // Specific Colors
@@ -71,51 +71,38 @@ const ControlBar: React.FC<ControlBarProps> = ({
 
   return (
     <div 
-      className="bg-slate-900/85 backdrop-blur-md p-2 sm:p-4 h-20 flex-shrink-0 flex flex-wrap items-center justify-center sm:justify-start space-x-2 sm:space-x-4 shadow-lg border-t border-slate-700/50"
+      className="bg-slate-900/85 backdrop-blur-md p-2 sm:p-4 h-auto min-h-20 flex-shrink-0 flex flex-wrap items-center justify-center space-x-1 sm:space-x-2 shadow-lg border-t border-slate-700/50"
       style={{ touchAction: 'none' }}
     >
-      {/* Group 1: Undo/Redo */}
-      <div className="flex items-center space-x-2">
-        <button onClick={onUndo} disabled={!canUndo} className={`${baseButtonStyle} ${secondaryColor}`} title="Undo"><FaUndo /></button>
-        <button onClick={onRedo} disabled={!canRedo} className={`${baseButtonStyle} ${secondaryColor}`} title="Redo"><FaRedo /></button>
-      </div>
-      
-      {/* Group 2: Toggles */}
-      <div className="flex items-center space-x-2 pl-0 sm:pl-4 sm:border-l border-slate-700/50">
-        <button onClick={onToggleNames} className={`${baseButtonStyle} ${secondaryColor}`} title="Toggle Names">
-          {showPlayerNames ? <FaEyeSlash /> : <FaEye />}
-        </button>
-         <button
+      <button onClick={onUndo} disabled={!canUndo} className={`${baseButtonStyle} ${secondaryColor}`} title="Undo"><FaUndo size={20} /></button>
+      <button onClick={onRedo} disabled={!canRedo} className={`${baseButtonStyle} ${secondaryColor}`} title="Redo"><FaRedo size={20} /></button>
+        
+      <button onClick={onToggleNames} className={`${baseButtonStyle} ${secondaryColor}`} title="Toggle Names">
+          {showPlayerNames ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
+      </button>
+      <button
           onClick={onToggleLargeTimerOverlay}
           className={`${baseButtonStyle} ${secondaryColor}`}
           title={showLargeTimerOverlay ? "Hide Large Timer" : "Show Large Timer"}
         >
-           {showLargeTimerOverlay ? <FaRegStopCircle /> : <FaRegClock />}
-        </button>
-      </div>
+           {showLargeTimerOverlay ? <FaRegStopCircle size={20} /> : <FaRegClock size={20} />}
+      </button>
 
-      {/* Group 3: Field Actions */}
-      <div className="flex items-center space-x-2 pl-0 sm:pl-4 sm:border-l border-slate-700/50">
-        <button onClick={onResetField} className={`${baseButtonStyle} ${resetColor}`} title="Reset Field"><FaTrashAlt /></button>
-        <button onClick={onClearDrawings} className={`${baseButtonStyle} ${clearColor}`} title="Clear Drawings"><FaEraser /></button>
-        <button onClick={onAddOpponent} className={`${baseButtonStyle} ${addOpponentColor}`} title="Add Opponent"><FaUserPlus style={{ color: 'white' }}/>
-        </button>
-      </div>
+      <button onClick={onResetField} className={`${baseButtonStyle} ${resetColor}`} title="Reset Field"><FaTrashAlt size={20} /></button>
+      <button onClick={onClearDrawings} className={`${baseButtonStyle} ${clearColor}`} title="Clear Drawings"><FaEraser size={20} /></button>
+      <button onClick={onAddOpponent} className={`${baseButtonStyle} ${addOpponentColor}`} title="Add Opponent"><FaUserPlus size={20} style={{ color: 'white' }}/>
+      </button>
 
-      {/* Group 4: Timer Controls */}
-      <div className={`flex items-center space-x-2 ${timerControlBg}/90 backdrop-blur-sm p-2 rounded-lg border border-slate-700/50`}>
-        {/* Small Timer Display */}
+      <div className={`flex items-center space-x-2 ${timerControlBg}/90 backdrop-blur-sm p-2 rounded-lg border border-slate-700/50 mx-1 sm:mx-2`}>
         <span className="text-slate-200 font-medium text-base tabular-nums mx-1">
           {formatTime(timeElapsedInSeconds)}
         </span>
-        {/* Start/Pause Button */}
         <button
           onClick={onStartPauseTimer}
           className={`${smallButtonStyle} ${isTimerRunning ? pauseColor : startColor}`}
         >
           {isTimerRunning ? 'Pause' : 'Start'}
         </button>
-        {/* Reset Button */}
         <button
           onClick={onResetTimer}
           disabled={timeElapsedInSeconds === 0 && !isTimerRunning}
