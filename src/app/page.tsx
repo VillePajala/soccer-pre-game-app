@@ -581,10 +581,10 @@ export default function Home() {
   const canRedo = historyIndex < history.length - 1;
 
   return (
-    <div className="flex flex-col h-screen bg-gray-100">
+    <div className="flex flex-col h-screen bg-gray-100 overflow-hidden">
       <PlayerBar players={availablePlayers} onRenamePlayer={handleRenamePlayer} />
 
-      <div className="flex-grow bg-green-600 flex items-center justify-center relative">
+      <div className="flex-grow bg-green-600 flex items-center justify-center relative overflow-hidden">
         <SoccerField
           players={playersOnField}
           drawings={drawings}

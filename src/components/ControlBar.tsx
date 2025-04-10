@@ -74,30 +74,40 @@ const ControlBar: React.FC<ControlBarProps> = ({
   const intervalControlBg = "bg-gray-900"; 
 
   return (
-    <div className="bg-gray-800 p-3 h-20 flex-shrink-0 flex items-center justify-center space-x-2"> {/* Dark bg, adjusted spacing/padding */}
-      {/* Action Buttons */}
-      <button onClick={onUndo} disabled={!canUndo} className={`${baseButtonStyle} ${secondaryColor}`} title="Undo"><FaUndo /></button>
-      <button onClick={onRedo} disabled={!canRedo} className={`${baseButtonStyle} ${secondaryColor}`} title="Redo"><FaRedo /></button>
-      <button onClick={onToggleNames} className={`${baseButtonStyle} ${secondaryColor}`} title="Toggle Names">
-        {showPlayerNames ? <FaEyeSlash /> : <FaEye />}
-      </button>
-      <button onClick={onResetField} className={`${baseButtonStyle} ${resetColor}`} title="Reset Field"><FaTrashAlt /></button>
-      <button onClick={onClearDrawings} className={`${baseButtonStyle} ${clearColor}`} title="Clear Drawings"><FaEraser /></button>
-      <button onClick={onAddOpponent} className={`${baseButtonStyle} ${addOpponentColor}`} title="Add Opponent"><FaUserPlus style={{ color: 'white' }}/> {/* Ensure icon color contrast */}</button>
+    <div className="bg-gray-800 p-3 h-20 flex-shrink-0 flex items-center space-x-4"> {/* Increased base spacing between groups */}
+      {/* Group 1: Undo/Redo */}
+      <div className="flex items-center space-x-2">
+        <button onClick={onUndo} disabled={!canUndo} className={`${baseButtonStyle} ${secondaryColor}`} title="Undo"><FaUndo /></button>
+        <button onClick={onRedo} disabled={!canRedo} className={`${baseButtonStyle} ${secondaryColor}`} title="Redo"><FaRedo /></button>
+      </div>
+      
+      {/* Group 2: Toggles */}
+      <div className="flex items-center space-x-2">
+        <button onClick={onToggleNames} className={`${baseButtonStyle} ${secondaryColor}`} title="Toggle Names">
+          {showPlayerNames ? <FaEyeSlash /> : <FaEye />}
+        </button>
+         <button
+          onClick={onToggleLargeTimerOverlay}
+          className={`${baseButtonStyle} ${secondaryColor}`}
+          title={showLargeTimerOverlay ? "Hide Large Timer" : "Show Large Timer"}
+        >
+           {showLargeTimerOverlay ? '⏹️' : '⏱️'} {/* Using text icons for toggle timer */}
+        </button>
+      </div>
+
+      {/* Group 3: Field Actions */}
+      <div className="flex items-center space-x-2">
+        <button onClick={onResetField} className={`${baseButtonStyle} ${resetColor}`} title="Reset Field"><FaTrashAlt /></button>
+        <button onClick={onClearDrawings} className={`${baseButtonStyle} ${clearColor}`} title="Clear Drawings"><FaEraser /></button>
+        <button onClick={onAddOpponent} className={`${baseButtonStyle} ${addOpponentColor}`} title="Add Opponent"><FaUserPlus style={{ color: 'white' }}/>
+        </button>
+      </div>
 
       {/* Spacer */}
       <div className="flex-grow"></div>
 
-      {/* Timer Controls */}
+      {/* Group 4: Timer Controls */}
       <div className={`flex items-center space-x-2 ${timerControlBg} p-2 rounded-lg`}> 
-        {/* Toggle Overlay Button */}
-        <button
-          onClick={onToggleLargeTimerOverlay}
-          className={`${smallButtonStyle} ${secondaryColor}`}
-          title={showLargeTimerOverlay ? "Hide Large Timer" : "Show Large Timer"}
-        >
-           {showLargeTimerOverlay ? '⏹️' : '⏱️'}
-        </button>
         {/* Small Timer Display */}
         <span className="text-gray-100 font-semibold text-base tabular-nums mx-1">
           {formatTime(timeElapsedInSeconds)}
