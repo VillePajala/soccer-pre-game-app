@@ -22,8 +22,8 @@ interface SoccerFieldProps {
   onOpponentRemove: (opponentId: string) => void; // Add opponent remove prop
 }
 
-// Define player radius for hit detection and drawing
-const PLAYER_RADIUS = 25; // Increased slightly for easier clicking
+// Define player/opponent radius for hit detection and drawing
+const PLAYER_RADIUS = 25; // Use a fixed pixel radius to prevent distortion
 
 const SoccerField: React.FC<SoccerFieldProps> = ({
   players,
