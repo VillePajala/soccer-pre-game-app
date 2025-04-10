@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react'; // Added useEff
 import SoccerField from '@/components/SoccerField';
 import PlayerBar from '@/components/PlayerBar';
 import ControlBar from '@/components/ControlBar';
+import TimerOverlay from '@/components/TimerOverlay'; // Import TimerOverlay
 
 // Define the Player type
 export interface Player {
@@ -72,6 +73,35 @@ export default function Home() {
   const [history, setHistory] = useState<AppState[]>([initialState]);
   const [historyIndex, setHistoryIndex] = useState<number>(0);
   const [isLoaded, setIsLoaded] = useState<boolean>(false); // Flag to prevent overwriting loaded state
+
+  // --- Timer State ---
+  const [timeElapsedInSeconds, setTimeElapsedInSeconds] = useState<number>(0);
+  const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
+  const [showLargeTimerOverlay, setShowLargeTimerOverlay] = useState<boolean>(false); // State for overlay visibility
+
+  // --- Timer Effect ---
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout | null = null;
+
+    if (isTimerRunning) {
+      intervalId = setInterval(() => {
+        setTimeElapsedInSeconds(prevTime => prevTime + 1);
+      }, 1000);
+    } else {
+      // Clear interval if it exists and timer is not running
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    }
+
+    // Cleanup function to clear the interval when the component unmounts
+    // or before the effect runs again if isTimerRunning changes
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [isTimerRunning]); // Dependency array: only re-run effect if isTimerRunning changes
 
   // --- Load state from localStorage on mount ---
   useEffect(() => {
@@ -437,6 +467,20 @@ export default function Home() {
     }
   };
 
+  // --- Timer Handlers ---
+  const handleStartPauseTimer = () => {
+    setIsTimerRunning(prev => !prev);
+  };
+
+  const handleResetTimer = () => {
+    setTimeElapsedInSeconds(0);
+    setIsTimerRunning(false);
+  };
+
+  const handleToggleLargeTimerOverlay = () => {
+    setShowLargeTimerOverlay(prev => !prev);
+  };
+
   const canUndo = historyIndex > 0;
   const canRedo = historyIndex < history.length - 1;
 
@@ -461,6 +505,9 @@ export default function Home() {
           onOpponentMoveEnd={handleOpponentMoveEnd}
           onOpponentRemove={handleOpponentRemove}
         />
+        {showLargeTimerOverlay && (
+          <TimerOverlay timeElapsedInSeconds={timeElapsedInSeconds} />
+        )}
       </div>
 
       <ControlBar
@@ -472,6 +519,14 @@ export default function Home() {
         onResetField={handleResetField}
         onClearDrawings={handleClearDrawings}
         onAddOpponent={handleAddOpponent}
+        // Timer props
+        timeElapsedInSeconds={timeElapsedInSeconds}
+        isTimerRunning={isTimerRunning}
+        onStartPauseTimer={handleStartPauseTimer}
+        onResetTimer={handleResetTimer}
+        // Timer Overlay props
+        showLargeTimerOverlay={showLargeTimerOverlay}
+        onToggleLargeTimerOverlay={handleToggleLargeTimerOverlay}
       />
     </div>
   );
@@ -480,8 +535,6 @@ export default function Home() {
 /*
 TODO: Optional Future Enhancements:
 - Clear Drawings Button: Add a button to ControlBar to clear only drawings.
-- Player Colors: Allow assigning colors to players (e.g., two teams).
 - Save/Load State: Implement saving/loading field setups (players/drawings) locally.
-- Improved Drawing Tools: Options for colors, thickness, arrow tool.
 - Export as Image: Button to save the current field view as a PNG/JPG.
 */
