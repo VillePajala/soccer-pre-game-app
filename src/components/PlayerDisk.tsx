@@ -55,10 +55,10 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
     setEditedName(e.target.value);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+  const handleKeyDown = (_e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (_e.key === 'Enter') {
       handleFinishEditing();
-    } else if (e.key === 'Escape') {
+    } else if (_e.key === 'Escape') {
       // Revert changes on Escape
       setEditedName(name);
       setIsEditing(false);
