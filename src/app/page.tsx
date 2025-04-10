@@ -14,6 +14,12 @@ export interface Player {
   color?: string; // Optional: Specific color for the disk
 }
 
+// Define the Point type for drawing
+export interface Point {
+  x: number;
+  y: number;
+}
+
 // Placeholder data moved here
 const initialAvailablePlayers: Player[] = [
   { id: 'p1', name: 'Player 1' },
@@ -36,6 +42,7 @@ export default function Home() {
   );
   // State for players placed on the field
   const [playersOnField, setPlayersOnField] = useState<Player[]>([]);
+  const [drawings, setDrawings] = useState<Point[][]>([]); // State for drawing paths
 
   // Function to update the position of a player already on the field
   const handlePlayerMove = (playerId: string, x: number, y: number) => {
@@ -69,6 +76,26 @@ export default function Home() {
     }
   };
 
+  // --- Drawing Handlers ---
+  const handleDrawingStart = (point: Point) => {
+    console.log('Drawing started at:', point);
+    setDrawings((prev) => [...prev, [point]]); // Start a new drawing path
+  };
+
+  const handleDrawingAddPoint = (point: Point) => {
+    // Add point to the latest drawing path
+    setDrawings((prev) => {
+      const currentDrawing = prev[prev.length - 1];
+      const updatedDrawing = [...currentDrawing, point];
+      return [...prev.slice(0, -1), updatedDrawing];
+    });
+  };
+
+  const handleDrawingEnd = () => {
+    console.log('Drawing ended');
+    // Optional: Clean up or simplify the path here if needed
+  };
+
   // TODO: Add handler for dragging players off the field (back to bar? delete?)
 
   return (
@@ -78,11 +105,15 @@ export default function Home() {
 
       {/* Main Field Area */}
       <div className="flex-grow bg-green-600 p-4 flex items-center justify-center relative"> {/* Added relative positioning for potential absolute positioning of players */}
-        {/* Pass playersOnField state and drop handler to SoccerField */}
+        {/* Pass playersOnField state, drawings state, and drop handler to SoccerField */}
         <SoccerField
           players={playersOnField}
+          drawings={drawings}
           onPlayerDrop={handleDropOnField} // Handles initial drop from bar
           onPlayerMove={handlePlayerMove} // Handles moving existing players via mouse events
+          onDrawingStart={handleDrawingStart} // Pass drawing handlers
+          onDrawingAddPoint={handleDrawingAddPoint}
+          onDrawingEnd={handleDrawingEnd}
         />
       </div>
 

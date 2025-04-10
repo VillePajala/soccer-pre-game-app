@@ -1,86 +1,103 @@
 'use client'; // Need this for client-side interactions like canvas
 
 import React, { useRef, useEffect, useState } from 'react';
-import { Player } from '@/app/page'; // Import the Player type
+import { Player, Point } from '@/app/page'; // Import Point type
 
 // Define props for SoccerField
 interface SoccerFieldProps {
-  players: Player[]; // Accept players placed on the field
-  onPlayerDrop: (playerId: string, x: number, y: number) => void; // Add the callback prop
-  onPlayerMove: (playerId: string, x: number, y: number) => void; // Add the move callback prop
+  players: Player[];
+  drawings: Point[][]; // Add drawings prop
+  onPlayerDrop: (playerId: string, x: number, y: number) => void;
+  onPlayerMove: (playerId: string, x: number, y: number) => void;
+  onDrawingStart: (point: Point) => void; // Add drawing callbacks
+  onDrawingAddPoint: (point: Point) => void;
+  onDrawingEnd: () => void;
 }
 
 // Define player radius for hit detection and drawing
 const PLAYER_RADIUS = 25; // Increased slightly for easier clicking
 
-const SoccerField: React.FC<SoccerFieldProps> = ({ players, onPlayerDrop, onPlayerMove }) => {
+const SoccerField: React.FC<SoccerFieldProps> = ({
+  players,
+  drawings, // Destructure new props
+  onPlayerDrop,
+  onPlayerMove,
+  onDrawingStart,
+  onDrawingAddPoint,
+  onDrawingEnd,
+}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [isDraggingPlayer, setIsDraggingPlayer] = useState<boolean>(false); // Renamed for clarity
   const [draggingPlayerId, setDraggingPlayerId] = useState<string | null>(null);
+  const [isDrawing, setIsDrawing] = useState<boolean>(false); // State for drawing mode
 
-  // --- Drawing Logic --- (Moved drawing into a reusable function)
+  // --- Drawing Logic ---
   const draw = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const context = canvas.getContext('2d');
     if (!context) return;
 
-    // Ensure canvas size matches parent
     const parent = canvas.parentElement;
     if (parent && (canvas.width !== parent.clientWidth || canvas.height !== parent.clientHeight)) {
       canvas.width = parent.clientWidth;
       canvas.height = parent.clientHeight;
     }
 
-    // Clear canvas and draw background
-    context.fillStyle = '#34D399'; // Use a specific green from Tailwind palette (green-400)
+    context.fillStyle = '#34D399';
     context.fillRect(0, 0, canvas.width, canvas.height);
 
-    // TODO: Draw field lines (e.g., center circle, penalty boxes)
+    // Draw field lines (placeholder)
+    // context.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+    // context.lineWidth = 2;
+    // context.beginPath();
+    // context.moveTo(canvas.width / 2, 0);
+    // context.lineTo(canvas.width / 2, canvas.height);
+    // context.stroke();
 
-    // Draw players
+    // Draw user drawings
+    context.strokeStyle = '#FFFFFF'; // White lines
+    context.lineWidth = 3;
+    context.lineCap = 'round';
+    context.lineJoin = 'round';
+    drawings.forEach(path => {
+      if (path.length < 2) return; // Need at least 2 points for a line
+      context.beginPath();
+      context.moveTo(path[0].x, path[0].y);
+      for (let i = 1; i < path.length; i++) {
+        context.lineTo(path[i].x, path[i].y);
+      }
+      context.stroke();
+    });
+
+    // Draw players (on top of drawings)
     players.forEach(player => {
       if (player.x !== undefined && player.y !== undefined) {
-        context.fillStyle = player.color || '#3B82F6'; // Tailwind blue-500
-        context.strokeStyle = '#E5E7EB'; // gray-200 border
+        context.fillStyle = player.color || '#3B82F6';
+        context.strokeStyle = '#E5E7EB';
         context.lineWidth = 2;
         context.beginPath();
         context.arc(player.x, player.y, PLAYER_RADIUS, 0, Math.PI * 2);
         context.fill();
         context.stroke();
-
-        // TODO: Draw name if toggled on (consider clipping)
-        // Example: Draw name
-        // context.fillStyle = 'white';
-        // context.font = 'bold 12px sans-serif';
-        // context.textAlign = 'center';
-        // context.textBaseline = 'middle';
-        // context.fillText(player.name, player.x, player.y);
+        // TODO: Draw name if toggled on
       }
     });
-
-    // TODO: Add logic for user drawings (lines/arrows)
   };
 
-  // Redraw canvas whenever players change
+  // Redraw canvas whenever players or drawings change
   useEffect(() => {
     draw();
-  }, [players]);
+  }, [players, drawings]);
 
   // --- Event Handlers ---
-
-  // Gets mouse position relative to canvas
   const getMousePos = (e: React.MouseEvent<HTMLCanvasElement>): { x: number; y: number } | null => {
     const canvas = canvasRef.current;
     if (!canvas) return null;
     const rect = canvas.getBoundingClientRect();
-    return {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    };
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
   };
 
-  // Check if a point is inside a player circle
   const isPointInPlayer = (x: number, y: number, player: Player): boolean => {
     if (player.x === undefined || player.y === undefined) return false;
     const dx = x - player.x;
@@ -92,58 +109,76 @@ const SoccerField: React.FC<SoccerFieldProps> = ({ players, onPlayerDrop, onPlay
     const pos = getMousePos(e);
     if (!pos) return;
 
-    // Check if click is on any player
+    // Prioritize player dragging
     for (const player of players) {
       if (isPointInPlayer(pos.x, pos.y, player)) {
-        setIsDragging(true);
+        setIsDraggingPlayer(true);
         setDraggingPlayerId(player.id);
-        console.log(`Started dragging player: ${player.id}`);
         canvasRef.current?.style.setProperty('cursor', 'grabbing');
-        return; // Found a player, start drag
+        return; // Start player drag
       }
     }
-    // If click was not on a player, potential start for drawing?
+
+    // If not dragging a player, start drawing
+    setIsDrawing(true);
+    onDrawingStart(pos);
+    canvasRef.current?.style.setProperty('cursor', 'crosshair'); // Ensure crosshair while drawing
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const pos = getMousePos(e);
     if (!pos) return;
 
-    // Update cursor based on hover
-    let hoveringPlayer = false;
-    for (const player of players) {
-      if (isPointInPlayer(pos.x, pos.y, player)) {
-        hoveringPlayer = true;
-        break;
-      }
-    }
-    if (!isDragging) {
-       canvasRef.current?.style.setProperty('cursor', hoveringPlayer ? 'grab' : 'crosshair');
+    // Handle player dragging
+    if (isDraggingPlayer && draggingPlayerId) {
+      onPlayerMove(draggingPlayerId, pos.x, pos.y);
+      return; // Don't draw while dragging player
     }
 
-    // If currently dragging a player, update their position
-    if (isDragging && draggingPlayerId && pos) {
-      onPlayerMove(draggingPlayerId, pos.x, pos.y);
-      // Redrawing happens via useEffect when `players` state changes in parent
+    // Handle drawing
+    if (isDrawing) {
+      onDrawingAddPoint(pos);
+      // Redrawing happens via useEffect in parent when `drawings` state changes
     }
-    // If not dragging player, potential drawing logic?
+
+    // Update cursor if not actively dragging/drawing
+    if (!isDrawing && !isDraggingPlayer) {
+      let hoveringPlayer = false;
+      for (const player of players) {
+        if (isPointInPlayer(pos.x, pos.y, player)) {
+          hoveringPlayer = true;
+          break;
+        }
+      }
+      canvasRef.current?.style.setProperty('cursor', hoveringPlayer ? 'grab' : 'crosshair');
+    }
   };
 
   const handleMouseUp = () => {
-    if (isDragging) {
-      console.log(`Stopped dragging player: ${draggingPlayerId}`);
-      setIsDragging(false);
+    if (isDraggingPlayer) {
+      setIsDraggingPlayer(false);
       setDraggingPlayerId(null);
-      canvasRef.current?.style.setProperty('cursor', 'grab'); // Or crosshair if not over player
+      // Check if cursor should be 'grab' or 'crosshair' after dropping
+      // (Can refine this later)
+      canvasRef.current?.style.setProperty('cursor', 'crosshair');
+    }
+    if (isDrawing) {
+      setIsDrawing(false);
+      onDrawingEnd();
+      canvasRef.current?.style.setProperty('cursor', 'crosshair');
     }
   };
 
   const handleMouseLeave = () => {
-    // Stop dragging if mouse leaves canvas
-    if (isDragging) {
-      console.log(`Stopped dragging (mouse left canvas): ${draggingPlayerId}`);
-      setIsDragging(false);
+    // Stop any active operation if mouse leaves canvas
+    if (isDraggingPlayer) {
+      setIsDraggingPlayer(false);
       setDraggingPlayerId(null);
+      canvasRef.current?.style.setProperty('cursor', 'crosshair');
+    }
+    if (isDrawing) {
+      setIsDrawing(false);
+      onDrawingEnd(); // End drawing if mouse leaves
       canvasRef.current?.style.setProperty('cursor', 'crosshair');
     }
   };
@@ -159,25 +194,22 @@ const SoccerField: React.FC<SoccerFieldProps> = ({ players, onPlayerDrop, onPlay
     const playerId = e.dataTransfer.getData('text/plain');
     const canvas = canvasRef.current;
     if (!playerId || !canvas) return;
-
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-
-    // Let the parent handle the drop logic (add or move)
     onPlayerDrop(playerId, x, y);
   };
 
   return (
     <canvas
       ref={canvasRef}
-      className="w-full h-full bg-green-400" // Match draw background
-      onDragOver={handleDragOver} // For drops from PlayerBar
-      onDrop={handleDrop}         // For drops from PlayerBar
-      onMouseDown={handleMouseDown} // Start dragging player on field
-      onMouseMove={handleMouseMove} // Handle dragging / cursor change
-      onMouseUp={handleMouseUp}     // Stop dragging
-      onMouseLeave={handleMouseLeave} // Stop dragging if leaves canvas
+      className="w-full h-full bg-green-400"
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseLeave}
     />
   );
 };
