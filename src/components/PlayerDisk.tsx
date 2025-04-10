@@ -65,7 +65,7 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
     }
   };
 
-  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+  const handleTouchStart = (_e: React.TouchEvent<HTMLDivElement>) => {
     // Only initiate drag if not editing and the handler is provided (i.e., in the bar)
     if (!isEditing && onPlayerDragStartFromBar) {
       console.log(`Touch start on PlayerDisk: ${name}, initiating drag from bar.`);
