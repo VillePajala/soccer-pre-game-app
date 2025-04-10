@@ -17,7 +17,7 @@ export interface Player {
 // Define the Point type for drawing
 export interface Point {
   x: number;
-  y: number;
+  y: number
 }
 
 // Define the shape of our state snapshot for history
@@ -255,6 +255,17 @@ export default function Home() {
     });
   };
 
+  // --- Clear Drawings Handler ---
+  const handleClearDrawings = () => {
+    // Only clear if there are drawings to clear
+    if (drawings.length > 0) {
+      console.log("Clearing drawings...");
+      saveState({ drawings: [] });
+    } else {
+      console.log("No drawings to clear.");
+    }
+  };
+
   // --- Toggle Player Names Handler ---
   const handleTogglePlayerNames = () => {
     console.log('Toggling player names');
@@ -386,7 +397,17 @@ export default function Home() {
         canRedo={canRedo}
         onToggleNames={handleTogglePlayerNames}
         onResetField={handleResetField}
+        onClearDrawings={handleClearDrawings}
       />
     </div>
   );
 }
+
+/*
+TODO: Optional Future Enhancements:
+- Clear Drawings Button: Add a button to ControlBar to clear only drawings.
+- Player Colors: Allow assigning colors to players (e.g., two teams).
+- Save/Load State: Implement saving/loading field setups (players/drawings) locally.
+- Improved Drawing Tools: Options for colors, thickness, arrow tool.
+- Export as Image: Button to save the current field view as a PNG/JPG.
+*/
