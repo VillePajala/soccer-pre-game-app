@@ -584,7 +584,7 @@ export default function Home() {
     <div className="flex flex-col h-screen bg-gray-100">
       <PlayerBar players={availablePlayers} onRenamePlayer={handleRenamePlayer} />
 
-      <div className="flex-grow bg-green-600 p-4 flex items-center justify-center relative">
+      <div className="flex-grow bg-green-600 flex items-center justify-center relative">
         <SoccerField
           players={playersOnField}
           drawings={drawings}
@@ -638,9 +638,4 @@ export default function Home() {
   );
 }
 
-/*
-TODO: Optional Future Enhancements:
-- Clear Drawings Button: Add a button to ControlBar to clear only drawings.
-- Save/Load State: Implement saving/loading field setups (players/drawings) locally.
-- Export as Image: Button to save the current field view as a PNG/JPG.
-*/
+

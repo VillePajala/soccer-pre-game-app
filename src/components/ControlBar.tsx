@@ -1,6 +1,9 @@
 'use client';
 
 import React from 'react';
+import { 
+    FaUndo, FaRedo, FaEye, FaEyeSlash, FaTrashAlt, FaEraser, FaUserPlus 
+} from 'react-icons/fa'; // Example using Font Awesome via react-icons
 
 // Define props for ControlBar
 interface ControlBarProps {
@@ -51,77 +54,52 @@ const ControlBar: React.FC<ControlBarProps> = ({
   // Placeholder functions for other buttons
   const handleReset = () => console.log('Reset clicked');
 
-  // Base button style
-  const baseButtonStyle = "text-white font-semibold py-2 px-4 rounded shadow disabled:opacity-50 disabled:cursor-not-allowed";
-  const smallButtonStyle = "text-white font-semibold py-1 px-2 rounded shadow disabled:opacity-50 disabled:cursor-not-allowed text-sm"; // Smaller buttons for timer controls
+  // Consistent Button Styles
+  const baseButtonStyle = "text-gray-100 font-semibold py-2 px-4 rounded-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150";
+  const smallButtonStyle = "text-gray-100 font-semibold py-1 px-3 rounded shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-sm transition-colors duration-150";
+  
+  // Specific Colors
+  const primaryColor = "bg-blue-600 hover:bg-blue-700";
+  const secondaryColor = "bg-gray-600 hover:bg-gray-500";
+  const resetColor = "bg-red-600 hover:bg-red-700";
+  const clearColor = "bg-yellow-500 hover:bg-yellow-600 text-gray-900"; // Yellow needs dark text
+  const addOpponentColor = "bg-red-700 hover:bg-red-800"; // Keep distinct red for opponent?
+  const startColor = "bg-green-600 hover:bg-green-700";
+  const pauseColor = "bg-orange-500 hover:bg-orange-600";
+  const timerControlBg = "bg-gray-900"; // Darker background for timer area
+  const intervalControlBg = "bg-gray-900"; 
 
   return (
-    <div className="bg-gray-700 p-2 h-20 flex-shrink-0 flex items-center justify-center space-x-3">
+    <div className="bg-gray-800 p-3 h-20 flex-shrink-0 flex items-center justify-center space-x-2"> {/* Dark bg, adjusted spacing/padding */}
       {/* Action Buttons */}
-      <button
-        onClick={onUndo} // Use passed handler
-        disabled={!canUndo} // Use status prop
-        className={`${baseButtonStyle} bg-gray-500 hover:bg-gray-600`}
-      >
-        Undo
-      </button>
-      <button
-        onClick={onRedo} // Use passed handler
-        disabled={!canRedo} // Use status prop
-        className={`${baseButtonStyle} bg-gray-500 hover:bg-gray-600`}
-      >
-        Redo
-      </button>
-      <button
-        onClick={onToggleNames}
-        className={`${baseButtonStyle} bg-blue-500 hover:bg-blue-600`}
-      >
-        Toggle Names
-      </button>
-      {/* Reset Button */}
-      <button
-        onClick={onResetField} // Use passed handler
-        className={`${baseButtonStyle} bg-red-500 hover:bg-red-600`}
-      >
-        Reset Field
-      </button>
-      {/* Clear Drawings Button */}
-      <button
-        onClick={onClearDrawings} // Use passed handler
-        className={`${baseButtonStyle} bg-yellow-500 hover:bg-yellow-600`}
-      >
-        Clear Drawings
-      </button>
-      {/* Add Opponent Button */}
-      <button
-        onClick={onAddOpponent} // Use passed handler
-        className={`${baseButtonStyle} bg-red-700 hover:bg-red-800`}
-      >
-        Add Opponent
-      </button>
+      <button onClick={onUndo} disabled={!canUndo} className={`${baseButtonStyle} ${secondaryColor}`} title="Undo"><FaUndo /></button>
+      <button onClick={onRedo} disabled={!canRedo} className={`${baseButtonStyle} ${secondaryColor}`} title="Redo"><FaRedo /></button>
+      <button onClick={onToggleNames} className={`${baseButtonStyle} ${secondaryColor}`} title="Toggle Names"><FaEyeSlash />{/* TODO: Change icon based on state */}</button>
+      <button onClick={onResetField} className={`${baseButtonStyle} ${resetColor}`} title="Reset Field"><FaTrashAlt /></button>
+      <button onClick={onClearDrawings} className={`${baseButtonStyle} ${clearColor}`} title="Clear Drawings"><FaEraser /></button>
+      <button onClick={onAddOpponent} className={`${baseButtonStyle} ${addOpponentColor}`} title="Add Opponent"><FaUserPlus style={{ color: 'white' }}/> {/* Ensure icon color contrast */}</button>
 
       {/* Spacer */}
       <div className="flex-grow"></div>
 
       {/* Timer Controls */}
-      <div className="flex items-center space-x-2 bg-gray-800 p-2 rounded"> {/* Reduced padding/spacing */}
+      <div className={`flex items-center space-x-2 ${timerControlBg} p-2 rounded-lg`}> 
         {/* Toggle Overlay Button */}
         <button
           onClick={onToggleLargeTimerOverlay}
-          className={`${smallButtonStyle} ${showLargeTimerOverlay ? 'bg-purple-600 hover:bg-purple-700' : 'bg-purple-500 hover:bg-purple-600'}`}
+          className={`${smallButtonStyle} ${secondaryColor}`}
           title={showLargeTimerOverlay ? "Hide Large Timer" : "Show Large Timer"}
         >
-           {/* Simple Icon Placeholder - Could use SVG */}
            {showLargeTimerOverlay ? '⏹️' : '⏱️'}
         </button>
         {/* Small Timer Display */}
-        <span className="text-white font-semibold text-base tabular-nums mx-1"> {/* Reduced text size, added margin */}
+        <span className="text-gray-100 font-semibold text-base tabular-nums mx-1">
           {formatTime(timeElapsedInSeconds)}
         </span>
         {/* Start/Pause Button */}
         <button
           onClick={onStartPauseTimer}
-          className={`${smallButtonStyle} ${isTimerRunning ? 'bg-orange-500 hover:bg-orange-600' : 'bg-green-500 hover:bg-green-600'}`}
+          className={`${smallButtonStyle} ${isTimerRunning ? pauseColor : startColor}`}
         >
           {isTimerRunning ? 'Pause' : 'Start'}
         </button>
@@ -129,11 +107,12 @@ const ControlBar: React.FC<ControlBarProps> = ({
         <button
           onClick={onResetTimer}
           disabled={timeElapsedInSeconds === 0 && !isTimerRunning}
-          className={`${smallButtonStyle} bg-gray-500 hover:bg-gray-600`}
+          className={`${smallButtonStyle} ${secondaryColor}`}
         >
           Reset
         </button>
       </div>
+
     </div>
   );
 };

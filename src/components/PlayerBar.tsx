@@ -27,7 +27,7 @@ interface PlayerBarProps {
 
 const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer }) => { // Destructure players and rename handler from props
   return (
-    <div className="bg-blue-200 p-2 h-20 flex items-center flex-shrink-0 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-blue-400 scrollbar-track-blue-100">
+    <div className="bg-gray-800 p-2 h-20 flex items-center flex-shrink-0 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-700">
       {players.map((player) => ( // Use the players prop
         <PlayerDisk
           key={player.id}
