@@ -15,7 +15,7 @@
 - [x] Implement the `ControlBar` component (buttons for actions) - Basic structure created.
 
 **Core Functionality**
-- [ ] Implement player addition/naming (tapping disk in the bar?).
+- [x] Implement player addition/naming (tapping disk in the bar?). (Inline rename done)
 - [x] Implement dragging players from the bar to the field.
 - [x] Implement repositioning players already on the field. (Basic mouse drag done)
 - [x] Implement freehand drawing on the field canvas. (Basic implementation done)
