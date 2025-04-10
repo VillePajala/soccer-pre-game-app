@@ -79,7 +79,11 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName
   };
 
   return (
-    <div className="bg-slate-900/85 backdrop-blur-md pl-8 pr-3 py-2 flex items-center flex-shrink-0 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-slate-700/80 scrollbar-track-slate-800/50 shadow-lg border-b border-slate-700/50">
+    <div 
+      className="bg-slate-900/85 backdrop-blur-md pl-8 pr-3 py-2 flex items-center flex-shrink-0 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-slate-700/80 scrollbar-track-slate-800/50 shadow-lg border-b border-slate-700/50"
+      // Allow vertical panning (page scroll), disable horizontal panning/zoom to allow custom horizontal scroll
+      style={{ touchAction: 'pan-y' }} 
+    >
       {/* Team Name Display/Edit */}
       <div className="flex flex-col items-center flex-shrink-0 mr-8 py-4">
         <Image 

@@ -70,7 +70,10 @@ const ControlBar: React.FC<ControlBarProps> = ({
   const timerControlBg = "bg-slate-900";
 
   return (
-    <div className="bg-slate-900/85 backdrop-blur-md p-4 h-20 flex-shrink-0 flex items-center space-x-4 shadow-lg border-t border-slate-700/50">
+    <div 
+      className="bg-slate-900/85 backdrop-blur-md p-2 sm:p-4 h-20 flex-shrink-0 flex flex-wrap items-center justify-center sm:justify-start space-x-2 sm:space-x-4 shadow-lg border-t border-slate-700/50"
+      style={{ touchAction: 'none' }}
+    >
       {/* Group 1: Undo/Redo */}
       <div className="flex items-center space-x-2">
         <button onClick={onUndo} disabled={!canUndo} className={`${baseButtonStyle} ${secondaryColor}`} title="Undo"><FaUndo /></button>
@@ -78,7 +81,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
       </div>
       
       {/* Group 2: Toggles */}
-      <div className="flex items-center space-x-2 border-l border-slate-700/50 pl-4">
+      <div className="flex items-center space-x-2 pl-0 sm:pl-4 sm:border-l border-slate-700/50">
         <button onClick={onToggleNames} className={`${baseButtonStyle} ${secondaryColor}`} title="Toggle Names">
           {showPlayerNames ? <FaEyeSlash /> : <FaEye />}
         </button>
@@ -92,15 +95,12 @@ const ControlBar: React.FC<ControlBarProps> = ({
       </div>
 
       {/* Group 3: Field Actions */}
-      <div className="flex items-center space-x-2 border-l border-slate-700/50 pl-4">
+      <div className="flex items-center space-x-2 pl-0 sm:pl-4 sm:border-l border-slate-700/50">
         <button onClick={onResetField} className={`${baseButtonStyle} ${resetColor}`} title="Reset Field"><FaTrashAlt /></button>
         <button onClick={onClearDrawings} className={`${baseButtonStyle} ${clearColor}`} title="Clear Drawings"><FaEraser /></button>
         <button onClick={onAddOpponent} className={`${baseButtonStyle} ${addOpponentColor}`} title="Add Opponent"><FaUserPlus style={{ color: 'white' }}/>
         </button>
       </div>
-
-      {/* Spacer */}
-      <div className="flex-grow"></div>
 
       {/* Group 4: Timer Controls */}
       <div className={`flex items-center space-x-2 ${timerControlBg}/90 backdrop-blur-sm p-2 rounded-lg border border-slate-700/50`}>

@@ -27,7 +27,7 @@ interface SoccerFieldProps {
 }
 
 // Define player/opponent radius for hit detection and drawing
-const PLAYER_RADIUS = 30; // Increased size
+const PLAYER_RADIUS = 20; // Reduced size for smaller appearance on field
 const DOUBLE_TAP_TIME_THRESHOLD = 300; // ms for double tap detection
 const DOUBLE_TAP_POS_THRESHOLD = 15; // pixels for double tap proximity
 
