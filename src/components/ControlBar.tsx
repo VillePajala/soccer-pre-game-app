@@ -59,22 +59,21 @@ const ControlBar: React.FC<ControlBarProps> = ({
   const handleReset = () => console.log('Reset clicked');
 
   // Consistent Button Styles
-  const baseButtonStyle = "text-gray-100 font-semibold py-2 px-4 rounded-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150";
-  const smallButtonStyle = "text-gray-100 font-semibold py-1 px-3 rounded shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-sm transition-colors duration-150";
+  const baseButtonStyle = "text-slate-100 font-semibold py-2 px-4 rounded-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800";
+  const smallButtonStyle = "text-slate-100 font-semibold py-1 px-3 rounded shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-sm transition-colors duration-150 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900";
   
   // Specific Colors
-  const primaryColor = "bg-blue-600 hover:bg-blue-700";
-  const secondaryColor = "bg-gray-600 hover:bg-gray-500";
-  const resetColor = "bg-red-600 hover:bg-red-700";
-  const clearColor = "bg-yellow-500 hover:bg-yellow-600 text-gray-900"; // Yellow needs dark text
-  const addOpponentColor = "bg-red-700 hover:bg-red-800"; // Keep distinct red for opponent?
-  const startColor = "bg-green-600 hover:bg-green-700";
-  const pauseColor = "bg-orange-500 hover:bg-orange-600";
-  const timerControlBg = "bg-gray-900"; // Darker background for timer area
-  const intervalControlBg = "bg-gray-900"; 
+  const primaryColor = "bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500";
+  const secondaryColor = "bg-slate-700 hover:bg-slate-600 focus:ring-slate-500";
+  const resetColor = "bg-red-600 hover:bg-red-700 focus:ring-red-500";
+  const clearColor = "bg-yellow-500 hover:bg-yellow-600 text-gray-900 focus:ring-yellow-400";
+  const addOpponentColor = "bg-rose-700 hover:bg-rose-800 focus:ring-rose-600";
+  const startColor = "bg-green-600 hover:bg-green-700 focus:ring-green-500";
+  const pauseColor = "bg-orange-500 hover:bg-orange-600 focus:ring-orange-400";
+  const timerControlBg = "bg-slate-900";
 
   return (
-    <div className="bg-gray-800 p-3 h-20 flex-shrink-0 flex items-center space-x-4"> {/* Increased base spacing between groups */}
+    <div className="bg-slate-900 p-4 h-20 flex-shrink-0 flex items-center space-x-4 shadow-md">
       {/* Group 1: Undo/Redo */}
       <div className="flex items-center space-x-2">
         <button onClick={onUndo} disabled={!canUndo} className={`${baseButtonStyle} ${secondaryColor}`} title="Undo"><FaUndo /></button>
@@ -82,7 +81,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
       </div>
       
       {/* Group 2: Toggles */}
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-2 border-l border-slate-700 pl-4">
         <button onClick={onToggleNames} className={`${baseButtonStyle} ${secondaryColor}`} title="Toggle Names">
           {showPlayerNames ? <FaEyeSlash /> : <FaEye />}
         </button>
@@ -91,12 +90,12 @@ const ControlBar: React.FC<ControlBarProps> = ({
           className={`${baseButtonStyle} ${secondaryColor}`}
           title={showLargeTimerOverlay ? "Hide Large Timer" : "Show Large Timer"}
         >
-           {showLargeTimerOverlay ? '⏹️' : '⏱️'} {/* Using text icons for toggle timer */}
+           {showLargeTimerOverlay ? '⏹️' : '⏱️'}
         </button>
       </div>
 
       {/* Group 3: Field Actions */}
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-2 border-l border-slate-700 pl-4">
         <button onClick={onResetField} className={`${baseButtonStyle} ${resetColor}`} title="Reset Field"><FaTrashAlt /></button>
         <button onClick={onClearDrawings} className={`${baseButtonStyle} ${clearColor}`} title="Clear Drawings"><FaEraser /></button>
         <button onClick={onAddOpponent} className={`${baseButtonStyle} ${addOpponentColor}`} title="Add Opponent"><FaUserPlus style={{ color: 'white' }}/>
@@ -107,9 +106,9 @@ const ControlBar: React.FC<ControlBarProps> = ({
       <div className="flex-grow"></div>
 
       {/* Group 4: Timer Controls */}
-      <div className={`flex items-center space-x-2 ${timerControlBg} p-2 rounded-lg`}> 
+      <div className={`flex items-center space-x-2 ${timerControlBg} p-2 rounded-lg border border-slate-700`}>
         {/* Small Timer Display */}
-        <span className="text-gray-100 font-semibold text-base tabular-nums mx-1">
+        <span className="text-slate-100 font-semibold text-base tabular-nums mx-1">
           {formatTime(timeElapsedInSeconds)}
         </span>
         {/* Start/Pause Button */}

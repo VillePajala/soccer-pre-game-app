@@ -65,7 +65,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
       canvas.height = parent.clientHeight;
     }
 
-    context.fillStyle = '#34D399';
+    context.fillStyle = '#059669'; // Use Tailwind Emerald 600
     context.fillRect(0, 0, canvas.width, canvas.height);
 
     // --- Draw Field Lines --- 
@@ -158,7 +158,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     // --- End Field Lines ---
 
     // Draw user drawings
-    context.strokeStyle = '#FFFF00'; // Yellow color for user drawings
+    context.strokeStyle = '#06B6D4'; // Cyan 500 for user drawings
     context.lineWidth = 3;
     context.lineCap = 'round';
     context.lineJoin = 'round';
