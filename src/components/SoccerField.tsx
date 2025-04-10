@@ -232,6 +232,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
   };
 
   // Redraw canvas whenever players, opponents, drawings, or name visibility change
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     draw();
   }, [players, opponents, drawings, showPlayerNames]); // Add opponents and showPlayerNames dependency

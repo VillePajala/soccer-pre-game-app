@@ -56,15 +56,11 @@ const ControlBar: React.FC<ControlBarProps> = ({
   // Destructure name visibility prop
   showPlayerNames,
 }) => {
-  // Placeholder functions for other buttons
-  const handleReset = () => console.log('Reset clicked');
-
   // Consistent Button Styles
   const baseButtonStyle = "text-slate-100 font-semibold py-2 px-4 rounded-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 active:scale-95 active:brightness-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900";
   const smallButtonStyle = "text-slate-100 font-semibold py-1 px-3 rounded shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-sm transition-all duration-150 active:scale-95 active:brightness-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900";
   
   // Specific Colors
-  const primaryColor = "bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500";
   const secondaryColor = "bg-slate-700 hover:bg-slate-600 focus:ring-slate-500";
   const resetColor = "bg-red-600 hover:bg-red-700 focus:ring-red-500";
   const clearColor = "bg-yellow-500 hover:bg-yellow-600 text-gray-900 focus:ring-yellow-400";
@@ -128,7 +124,6 @@ const ControlBar: React.FC<ControlBarProps> = ({
           Reset
         </button>
       </div>
-
     </div>
   );
 };

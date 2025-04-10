@@ -99,7 +99,6 @@ export default function Home() {
       intervalId = setInterval(() => {
         setTimeElapsedInSeconds(prevTime => {
           const newTime = prevTime + 1;
-          const currentIntervalMinutes = subIntervalMinutes; // Capture current interval
           const currentDueTime = nextSubDueTimeSeconds; // Capture current due time
           const warningTime = currentDueTime - 60;
 
