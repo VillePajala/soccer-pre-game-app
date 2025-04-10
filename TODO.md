@@ -17,7 +17,7 @@
 **Core Functionality**
 - [ ] Implement player addition/naming (tapping disk in the bar?).
 - [x] Implement dragging players from the bar to the field.
-- [ ] Implement repositioning players already on the field.
+- [x] Implement repositioning players already on the field.
 - [ ] Implement freehand drawing on the field canvas.
 - [ ] Implement Undo/Redo functionality for movements and drawings.
 - [ ] Implement the "Toggle Player Names" feature.

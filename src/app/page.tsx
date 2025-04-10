@@ -37,26 +37,38 @@ export default function Home() {
   // State for players placed on the field
   const [playersOnField, setPlayersOnField] = useState<Player[]>([]);
 
-  // Handler for dropping a player onto the field
+  // Function to update the position of a player already on the field
+  const handlePlayerMove = (playerId: string, x: number, y: number) => {
+    console.log(`Moving player ${playerId} to (${x}, ${y}) in state`);
+    setPlayersOnField((prev) =>
+      prev.map((p) => (p.id === playerId ? { ...p, x, y } : p))
+    );
+  };
+
+  // Handles drops onto the field (both initial add and moves)
   const handleDropOnField = (playerId: string, x: number, y: number) => {
-    console.log(`Player ${playerId} dropped at (${x}, ${y})`);
+    // Check if player is already on the field (signifying a move)
+    const playerIsOnField = playersOnField.some((p) => p.id === playerId);
 
-    // Find the player in the available list
-    const playerToAdd = availablePlayers.find((p) => p.id === playerId);
-
-    if (playerToAdd) {
-      // Add player to field with coordinates
-      setPlayersOnField((prev) => [...prev, { ...playerToAdd, x, y }]);
-
-      // Remove player from available list
-      setAvailablePlayers((prev) => prev.filter((p) => p.id !== playerId));
+    if (playerIsOnField) {
+      // Player is already on the field, just update position
+      // Note: This might be redundant if mousemove already called handlePlayerMove,
+      // but good for handling drops if we use HTML D&D for repositioning later.
+      console.log(`Drop Move detected for ${playerId} to (${x}, ${y})`);
+      handlePlayerMove(playerId, x, y);
     } else {
-      console.warn(`Player with ID ${playerId} not found in available players.`);
-      // Handle case where player might already be on field (repositioning - later)
+      // Player is not on the field, try adding from available list
+      const playerToAdd = availablePlayers.find((p) => p.id === playerId);
+      if (playerToAdd) {
+        console.log(`Adding player ${playerId} from bar at (${x}, ${y})`);
+        setPlayersOnField((prev) => [...prev, { ...playerToAdd, x, y }]);
+        setAvailablePlayers((prev) => prev.filter((p) => p.id !== playerId));
+      } else {
+        console.warn(`Dropped player ID ${playerId} not found on field or in bar.`);
+      }
     }
   };
 
-  // TODO: Add handler for dragging players already on the field
   // TODO: Add handler for dragging players off the field (back to bar? delete?)
 
   return (
@@ -67,7 +79,11 @@ export default function Home() {
       {/* Main Field Area */}
       <div className="flex-grow bg-green-600 p-4 flex items-center justify-center relative"> {/* Added relative positioning for potential absolute positioning of players */}
         {/* Pass playersOnField state and drop handler to SoccerField */}
-        <SoccerField players={playersOnField} onPlayerDrop={handleDropOnField} />
+        <SoccerField
+          players={playersOnField}
+          onPlayerDrop={handleDropOnField} // Handles initial drop from bar
+          onPlayerMove={handlePlayerMove} // Handles moving existing players via mouse events
+        />
       </div>
 
       {/* Bottom Control Bar */}
