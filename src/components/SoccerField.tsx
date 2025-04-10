@@ -1,8 +1,14 @@
 'use client'; // Need this for client-side interactions like canvas
 
 import React, { useRef, useEffect } from 'react';
+import { Player } from '@/app/page'; // Import the Player type
 
-const SoccerField: React.FC = () => {
+// Define props for SoccerField
+interface SoccerFieldProps {
+  players: Player[]; // Accept players placed on the field
+}
+
+const SoccerField: React.FC<SoccerFieldProps> = ({ players }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -22,14 +28,20 @@ const SoccerField: React.FC = () => {
       context.fillRect(0, 0, canvas.width, canvas.height);
     }
 
-    // TODO: Add drawing logic for field lines, players, and user drawings
+    // TODO: Draw field lines
 
-  }, []); // Empty dependency array ensures this runs once on mount
+    // TODO: Draw players from the 'players' prop onto the canvas
+    console.log('Players on field (in SoccerField):', players);
+
+    // TODO: Add drawing logic for user drawings
+
+  }, [players]); // Re-run effect if players array changes
 
   return (
     <canvas
       ref={canvasRef}
       className="w-full h-full bg-green-700" // Use Tailwind for initial background
+      // TODO: Add event handlers for drag drop (onDrop, onDragOver)
     />
   );
 };
