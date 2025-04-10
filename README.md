@@ -2,6 +2,8 @@
 
 A sleek, modern web application built with Next.js and Tailwind CSS for soccer coaches to visualize player positioning, opponent formations, and tactical movements on a virtual field. Optimized for quick use on mobile, tablet, or desktop.
 
+**Live Demo:** [https://soccer-pre-game-2slu7n1gt-ville-pajalas-projects.vercel.app/](https://soccer-pre-game-2slu7n1gt-ville-pajalas-projects.vercel.app/)
+
 ## Overview
 
 This app provides an intuitive, responsive interface for coaches to explain formations, player roles, and strategies. Drag players and opponents, draw movement paths, and use the integrated game timer with substitution assistance.
