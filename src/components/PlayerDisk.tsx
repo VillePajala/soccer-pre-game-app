@@ -83,7 +83,7 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
     <div
       id={`player-${id}`}
       className={`${color} text-yellow-300 rounded-full w-16 h-16 flex items-center justify-center font-semibold text-sm shadow-md my-2 mr-2 flex-shrink-0 select-none relative ${isEditing ? 'cursor-text' : 'cursor-grab'} hover:brightness-110 transition-all duration-150`}
-      onClick={(_e) => { // Rename 'e' to '_e' as it's unused in the if-branch
+      onClick={() => { 
           // Prevent starting edit if a drag was just initiated by touch
           // This check might be brittle; relies on touchstart firing just before click
           // A better approach might involve a small delay or state check if issues arise.
