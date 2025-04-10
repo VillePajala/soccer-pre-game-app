@@ -158,7 +158,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     // --- End Field Lines ---
 
     // Draw user drawings
-    context.strokeStyle = '#FFFFFF'; // White lines for user drawings
+    context.strokeStyle = '#FFFF00'; // Yellow color for user drawings
     context.lineWidth = 3;
     context.lineCap = 'round';
     context.lineJoin = 'round';
