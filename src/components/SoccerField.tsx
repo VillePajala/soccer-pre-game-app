@@ -512,17 +512,19 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
         setIsDraggingPlayer(true);
         setDraggingPlayerId(tappedTargetId);
         setActiveTouchId(touchId);
+        e.preventDefault(); // Prevent scroll/drag start when grabbing player
     } else if (tappedTargetType === 'opponent' && tappedTargetId) {
         setIsDraggingOpponent(true);
         setDraggingOpponentId(tappedTargetId);
         setActiveTouchId(touchId);
+        e.preventDefault(); // Prevent scroll/drag start when grabbing opponent
     } else {
         // If not hitting a player or opponent, start drawing
-        // *** ADDED CHECK: Only start drawing if not dragging from bar (redundant check, belt-and-suspenders) ***
         if (!draggingPlayerFromBarInfo) {
             setIsDrawing(true);
             onDrawingStart(pos);
             setActiveTouchId(touchId);
+            e.preventDefault(); // Prevent scroll/drag start when drawing
         }
     }
   };
@@ -674,6 +676,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     <canvas
       ref={canvasRef}
       className="w-full h-full bg-green-700 cursor-default" // Use cursor-default initially
+      style={{ touchAction: 'none' }} 
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
