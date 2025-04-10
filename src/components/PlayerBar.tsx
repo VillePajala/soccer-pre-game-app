@@ -7,6 +7,7 @@ import { Player } from '@/app/page'; // Import the Player type
 // Define props for PlayerBar
 interface PlayerBarProps {
   players: Player[];
+  onRenamePlayer: (playerId: string, newName: string) => void; // Add rename handler prop
 }
 
 // Placeholder data - this would eventually come from state/localStorage
@@ -24,11 +25,16 @@ interface PlayerBarProps {
 //   { id: 'p11', name: 'Player 11' },
 // ];
 
-const PlayerBar: React.FC<PlayerBarProps> = ({ players }) => { // Destructure players from props
+const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer }) => { // Destructure players and rename handler from props
   return (
     <div className="bg-blue-200 p-2 h-20 flex items-center flex-shrink-0 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-blue-400 scrollbar-track-blue-100">
       {players.map((player) => ( // Use the players prop
-        <PlayerDisk key={player.id} id={player.id} name={player.name} />
+        <PlayerDisk
+          key={player.id}
+          id={player.id}
+          name={player.name}
+          onRename={(newName) => onRenamePlayer(player.id, newName)} // Pass specific rename call
+        />
       ))}
       {/* Add button or mechanism to add/edit players might go here */}
     </div>

@@ -228,6 +228,30 @@ export default function Home() {
     saveState({ showPlayerNames: nextShowNames });
   };
 
+  // --- Rename Player Handler ---
+  const handleRenamePlayer = (playerId: string, newName: string) => {
+    if (!newName.trim()) {
+      console.warn("Player name cannot be empty.");
+      return; // Or revert to old name?
+    }
+    console.log(`Renaming player ${playerId} to ${newName}`);
+    const updatedAvailablePlayers = availablePlayers.map(p =>
+      p.id === playerId ? { ...p, name: newName.trim() } : p
+    );
+    // Also update player on field if they exist there with the same ID
+    const updatedPlayersOnField = playersOnField.map(p => 
+      p.id === playerId ? { ...p, name: newName.trim() } : p
+    );
+
+    setAvailablePlayers(updatedAvailablePlayers); // Update visual state immediately
+    setPlayersOnField(updatedPlayersOnField); // Update field players too
+
+    saveState({ 
+        availablePlayers: updatedAvailablePlayers,
+        playersOnField: updatedPlayersOnField
+    });
+  };
+
   // --- Undo/Redo Handlers ---
   const handleUndo = () => {
     if (historyIndex > 0) {
@@ -264,7 +288,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-100">
-      <PlayerBar players={availablePlayers} />
+      <PlayerBar players={availablePlayers} onRenamePlayer={handleRenamePlayer} />
 
       <div className="flex-grow bg-green-600 p-4 flex items-center justify-center relative">
         <SoccerField
