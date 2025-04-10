@@ -1,8 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Soccer Pre-Game Tactics App
+
+A mobile-first web application built with Next.js for soccer coaches to quickly visualize player positioning and tactical strategies on a virtual field.
+
+## Overview
+
+This app provides an intuitive interface for coaches, especially those working with youth teams, to explain formations, player roles, and movement strategies directly on their phone or tablet. It's designed for quick, on-the-go use before matches.
+
+## Features
+
+*   **Virtual Soccer Field:** A clear, full-screen view of a soccer pitch.
+*   **Player Management:** Add player disks, assign names, and drag them onto the field.
+*   **Drag & Drop Positioning:** Easily place and reposition players anywhere on the field.
+*   **Tactical Drawing:** Use freehand drawing to illustrate movement paths, zones, or plays directly on the field.
+*   **Toggle Name Visibility:** Show or hide player names on the disks to reduce visual clutter.
+*   **Undo/Redo:** Step back and forth through recent actions (movements, drawings).
+*   **Responsive Design:** Optimized for mobile and tablet use, with desktop/web support.
+*   **Local Storage:** Player names are stored locally in the browser.
+
+## Tech Stack
+
+*   **Framework:** [Next.js](https://nextjs.org/) (React)
+*   **Rendering:** HTML5 Canvas API
+*   **Styling:** [Tailwind CSS](https://tailwindcss.com/)
+*   **State Management:** React Hooks (`useState`, `useReducer`)
+*   **Persistence:** Browser `localStorage`
 
 ## Getting Started
 
-First, run the development server:
+First, install the dependencies:
+
+```bash
+npm install
+# or
+yarn install
+# or
+pnpm install
+# or
+bun install
+```
+
+Then, run the development server:
 
 ```bash
 npm run dev
@@ -18,14 +55,16 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Future Enhancements
 
-## Learn More
+*   Saving and loading specific formations/setups.
+
+## Learn More (About Next.js)
 
 To learn more about Next.js, take a look at the following resources:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+*   [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+*   [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
