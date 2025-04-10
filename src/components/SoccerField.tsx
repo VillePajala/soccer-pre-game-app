@@ -208,17 +208,17 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
         context.shadowOffsetX = 1;
         context.shadowOffsetY = 2;
         // Use flat color matching PlayerDisk default
-        context.fillStyle = player.color || '#3B82F6'; 
+        context.fillStyle = player.color || '#7E22CE'; // CHANGED default from #3B82F6 (blue-500) to #7E22CE (purple-700)
         context.fill();
         context.restore(); // Restore context (removes shadow)
         // Stroke (border) - RE-ADD for consistent look with shadow
-        context.strokeStyle = '#1E40AF'; // Darker blue border (blue-800)
+        context.strokeStyle = '#581C87'; // CHANGED from #1E40AF (blue-800) to #581C87 (purple-900)
         context.lineWidth = 1.5; 
         context.stroke();
 
         // Draw name if toggled on
         if (showPlayerNames) {
-          context.fillStyle = '#F1F5F9'; // Slate-100 for text, matching PlayerDisk
+          context.fillStyle = '#FACC15'; // CHANGED from #F1F5F9 (slate-100) to #FACC15 (yellow-400)
           // context.strokeStyle = 'rgba(0,0,0,0.7)'; // Remove outline
           // context.lineWidth = 2.5; 
           context.font = '600 11px Inter, sans-serif'; // Match font-semibold, size, and family 

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PlayerDisk from './PlayerDisk'; // Import the PlayerDisk component
 import { Player } from '@/app/page'; // Import the Player type
+import Image from 'next/image'; // ADDED Import
 
 // Define props for PlayerBar
 interface PlayerBarProps {
@@ -76,9 +77,16 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName
   };
 
   return (
-    <div className="bg-slate-900/85 backdrop-blur-md pl-5 pr-3 py-2 h-28 flex items-center flex-shrink-0 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-slate-700/80 scrollbar-track-slate-800/50 shadow-lg border-b border-slate-700/50">
+    <div className="bg-slate-900/85 backdrop-blur-md pl-8 pr-3 py-2 flex items-center flex-shrink-0 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-slate-700/80 scrollbar-track-slate-800/50 shadow-lg border-b border-slate-700/50">
       {/* Team Name Display/Edit */}
-      <div className="flex-shrink-0 mr-6">
+      <div className="flex flex-col items-center flex-shrink-0 mr-8 py-4">
+        <Image 
+          src="/pepo-logo.png" 
+          alt="PEPO Logo" 
+          width={64}
+          height={64}
+          className="mb-1 flex-shrink-0"
+        />
         {isEditingTeamName ? (
           <input
             ref={teamNameInputRef}
@@ -87,12 +95,12 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName
             onChange={handleTeamNameInputChange}
             onBlur={handleFinishEditingTeamName}
             onKeyDown={handleTeamNameKeyDown}
-            className="bg-slate-700 text-slate-100 text-lg font-semibold outline-none rounded px-2 py-1"
+            className="bg-slate-700 text-yellow-400 text-lg font-semibold outline-none rounded px-2 py-1"
             onClick={(e) => e.stopPropagation()} 
           />
         ) : (
           <h2 
-            className="text-slate-200 text-lg font-semibold cursor-pointer hover:text-white truncate"
+            className="text-yellow-400 text-lg font-semibold cursor-pointer hover:text-yellow-300 truncate"
             onClick={handleStartEditingTeamName}
             title="Click to edit team name"
           >
