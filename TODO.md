@@ -5,7 +5,7 @@
 - [x] Set up Git repository and push initial commit
 - [x] Create `.docs` folder and add documentation
 - [x] Update `README.md`
-- [ ] Set up basic page structure in `app/page.tsx`
+- [x] Set up basic page structure in `app/page.tsx`
 
 **UI Layout & Components**
 - [ ] Create the main layout: Full-screen field canvas, top player bar, bottom control bar.
