@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PlayerDisk from './PlayerDisk'; // Import the PlayerDisk component
 import { Player } from '@/app/page'; // Import the Player type
 
@@ -8,6 +8,8 @@ import { Player } from '@/app/page'; // Import the Player type
 interface PlayerBarProps {
   players: Player[];
   onRenamePlayer: (playerId: string, newName: string) => void; // Add rename handler prop
+  teamName: string;
+  onTeamNameChange: (newName: string) => void;
 }
 
 // Placeholder data - this would eventually come from state/localStorage
@@ -25,10 +27,82 @@ interface PlayerBarProps {
 //   { id: 'p11', name: 'Player 11' },
 // ];
 
-const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer }) => { // Destructure players and rename handler from props
+const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName, onTeamNameChange }) => { // Destructure players and rename handler from props
+  const [isEditingTeamName, setIsEditingTeamName] = useState(false);
+  const [editedTeamName, setEditedTeamName] = useState(teamName);
+  const teamNameInputRef = useRef<HTMLInputElement>(null);
+
+  // Effect to update local state if prop changes (e.g., undo/redo)
+  useEffect(() => {
+    setEditedTeamName(teamName);
+  }, [teamName]);
+
+  // Focus input when editing starts
+  useEffect(() => {
+    if (isEditingTeamName && teamNameInputRef.current) {
+      teamNameInputRef.current.focus();
+      teamNameInputRef.current.select();
+    }
+  }, [isEditingTeamName]);
+
+  const handleStartEditingTeamName = () => {
+     if (!isEditingTeamName) {
+      setEditedTeamName(teamName);
+      setIsEditingTeamName(true);
+    }
+  };
+
+  const handleFinishEditingTeamName = () => {
+     if (isEditingTeamName) {
+      setIsEditingTeamName(false);
+      const trimmedName = editedTeamName.trim();
+      if (trimmedName && trimmedName !== teamName) {
+        onTeamNameChange(trimmedName); 
+      }
+    }
+  };
+
+  const handleTeamNameInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditedTeamName(e.target.value);
+  };
+
+  const handleTeamNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleFinishEditingTeamName();
+    } else if (e.key === 'Escape') {
+      setEditedTeamName(teamName);
+      setIsEditingTeamName(false);
+    }
+  };
+
   return (
-    <div className="bg-slate-900/85 backdrop-blur-md px-3 py-2 h-28 flex items-center flex-shrink-0 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-slate-700/80 scrollbar-track-slate-800/50 shadow-lg border-b border-slate-700/50">
-      {players.map((player) => ( // Use the players prop
+    <div className="bg-slate-900/85 backdrop-blur-md pl-5 pr-3 py-2 h-28 flex items-center flex-shrink-0 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-slate-700/80 scrollbar-track-slate-800/50 shadow-lg border-b border-slate-700/50">
+      {/* Team Name Display/Edit */}
+      <div className="flex-shrink-0 mr-6">
+        {isEditingTeamName ? (
+          <input
+            ref={teamNameInputRef}
+            type="text"
+            value={editedTeamName}
+            onChange={handleTeamNameInputChange}
+            onBlur={handleFinishEditingTeamName}
+            onKeyDown={handleTeamNameKeyDown}
+            className="bg-slate-700 text-slate-100 text-lg font-semibold outline-none rounded px-2 py-1"
+            onClick={(e) => e.stopPropagation()} 
+          />
+        ) : (
+          <h2 
+            className="text-slate-200 text-lg font-semibold cursor-pointer hover:text-white truncate"
+            onClick={handleStartEditingTeamName}
+            title="Click to edit team name"
+          >
+            {teamName}
+          </h2>
+        )}
+      </div>
+
+      {/* Player Disks */}
+      {players.map((player) => (
         <PlayerDisk
           key={player.id}
           id={player.id}

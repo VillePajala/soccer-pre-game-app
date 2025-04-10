@@ -31,10 +31,12 @@ export interface Opponent {
 // Define the shape of our state snapshot for history
 interface AppState {
   playersOnField: Player[];
+  opponents: Opponent[]; 
   drawings: Point[][];
-  availablePlayers: Player[]; // Include available players for full undo/redo
-  showPlayerNames: boolean; // Add to state snapshot
-  opponents: Opponent[]; // Add opponents to state snapshot
+  availablePlayers: Player[]; 
+  showPlayerNames: boolean; 
+  // Add team name to state snapshot
+  teamName: string; 
 }
 
 // Placeholder data moved here
@@ -54,10 +56,11 @@ const initialAvailablePlayersData: Player[] = [
 
 const initialState: AppState = {
   playersOnField: [],
+  opponents: [],
   drawings: [],
   availablePlayers: initialAvailablePlayersData,
-  showPlayerNames: true, // Default to showing names
-  opponents: [], // Initialize opponents
+  showPlayerNames: true,
+  teamName: "My Team", // Initialize team name
 };
 
 // Define localStorage key
@@ -66,10 +69,11 @@ const LOCAL_STORAGE_KEY = 'soccerTacticsAppState';
 export default function Home() {
   // --- State Management ---
   const [playersOnField, setPlayersOnField] = useState<Player[]>(initialState.playersOnField);
+  const [opponents, setOpponents] = useState<Opponent[]>(initialState.opponents);
   const [drawings, setDrawings] = useState<Point[][]>(initialState.drawings);
   const [availablePlayers, setAvailablePlayers] = useState<Player[]>(initialState.availablePlayers);
   const [showPlayerNames, setShowPlayerNames] = useState<boolean>(initialState.showPlayerNames);
-  const [opponents, setOpponents] = useState<Opponent[]>(initialState.opponents); // Add opponent state
+  const [teamName, setTeamName] = useState<string>(initialState.teamName); // Add team name state
   const [history, setHistory] = useState<AppState[]>([initialState]);
   const [historyIndex, setHistoryIndex] = useState<number>(0);
   const [isLoaded, setIsLoaded] = useState<boolean>(false); // Flag to prevent overwriting loaded state
@@ -142,33 +146,34 @@ export default function Home() {
             console.log(`Loaded state from localStorage: History length ${loadedHistory.length}, Index ${loadedIndex}`);
             const currentState = loadedHistory[loadedIndex];
 
-            // Set history and index first
             setHistory(loadedHistory);
             setHistoryIndex(loadedIndex);
 
-            // Update visual state based on loaded history index
             setPlayersOnField(currentState.playersOnField);
+            setOpponents(currentState.opponents || []); 
             setDrawings(currentState.drawings);
             setAvailablePlayers(currentState.availablePlayers);
             setShowPlayerNames(currentState.showPlayerNames);
-            setOpponents(currentState.opponents || []); // Load opponents (handle potentially missing key)
+            setTeamName(currentState.teamName || initialState.teamName); // Load team name
           } else {
             console.warn("Loaded historyIndex is out of bounds.");
             // Fallback to initial state if index is bad
             setPlayersOnField(initialState.playersOnField);
+            setOpponents(initialState.opponents);
             setDrawings(initialState.drawings);
             setAvailablePlayers(initialState.availablePlayers);
             setShowPlayerNames(initialState.showPlayerNames);
-            setOpponents(initialState.opponents);
+            setTeamName(initialState.teamName); // Reset team name
           }
         } else {
             console.warn("Loaded data structure is invalid. Resetting to initial state.");
             // Reset to initial state if structure is wrong
             setPlayersOnField(initialState.playersOnField);
+            setOpponents(initialState.opponents);
             setDrawings(initialState.drawings);
             setAvailablePlayers(initialState.availablePlayers);
             setShowPlayerNames(initialState.showPlayerNames);
-            setOpponents(initialState.opponents);
+            setTeamName(initialState.teamName); // Reset team name
             setHistory([initialState]);
             setHistoryIndex(0);
         }
@@ -176,10 +181,11 @@ export default function Home() {
           console.log("No saved state found in localStorage. Using initial state.");
           // Explicitly set initial state if nothing is saved
           setPlayersOnField(initialState.playersOnField);
+          setOpponents(initialState.opponents);
           setDrawings(initialState.drawings);
           setAvailablePlayers(initialState.availablePlayers);
           setShowPlayerNames(initialState.showPlayerNames);
-          setOpponents(initialState.opponents);
+          setTeamName(initialState.teamName); // Set initial team name
       }
     } catch (error) {
       console.error("Failed to load or parse state from localStorage:", error);
@@ -207,10 +213,11 @@ export default function Home() {
     const currentState = history[historyIndex];
     const nextState: AppState = {
       playersOnField: newState.playersOnField ?? currentState.playersOnField,
+      opponents: newState.opponents ?? currentState.opponents,
       drawings: newState.drawings ?? currentState.drawings,
       availablePlayers: newState.availablePlayers ?? currentState.availablePlayers,
       showPlayerNames: newState.showPlayerNames ?? currentState.showPlayerNames,
-      opponents: newState.opponents ?? currentState.opponents, // Include opponents
+      teamName: newState.teamName ?? currentState.teamName, // Include team name
     };
 
     if (JSON.stringify(nextState) === JSON.stringify(currentState)) {
@@ -225,10 +232,11 @@ export default function Home() {
     setHistoryIndex(newHistory.length - 1);
 
     setPlayersOnField(nextState.playersOnField);
+    setOpponents(nextState.opponents);
     setDrawings(nextState.drawings);
     setAvailablePlayers(nextState.availablePlayers);
     setShowPlayerNames(nextState.showPlayerNames);
-    setOpponents(nextState.opponents); // Update opponents visual state
+    setTeamName(nextState.teamName); // Update team name visual state
 
   }, [history, historyIndex]);
 
@@ -374,6 +382,14 @@ export default function Home() {
     });
   };
 
+  // --- Team Name Handler ---
+  const handleTeamNameChange = (newName: string) => {
+    if (newName.trim()) {
+        console.log("Updating team name to:", newName.trim());
+        saveState({ teamName: newName.trim() });
+    }
+  };
+
   // --- Undo/Redo Handlers ---
   const handleUndo = () => {
     if (historyIndex > 0) {
@@ -381,11 +397,13 @@ export default function Home() {
       const prevStateIndex = historyIndex - 1;
       const prevState = history[prevStateIndex];
       setPlayersOnField(prevState.playersOnField);
+      setOpponents(prevState.opponents);
       setDrawings(prevState.drawings);
       setAvailablePlayers(prevState.availablePlayers);
       setShowPlayerNames(prevState.showPlayerNames);
+      setTeamName(prevState.teamName); // Undo team name
       setHistoryIndex(prevStateIndex);
-      setOpponents(prevState.opponents); // Undo opponents
+      // Restore timer state if needed here too
     } else {
       console.log("Cannot undo: at beginning of history");
     }
@@ -397,11 +415,13 @@ export default function Home() {
       const nextStateIndex = historyIndex + 1;
       const nextState = history[nextStateIndex];
       setPlayersOnField(nextState.playersOnField);
+      setOpponents(nextState.opponents);
       setDrawings(nextState.drawings);
       setAvailablePlayers(nextState.availablePlayers);
       setShowPlayerNames(nextState.showPlayerNames);
+      setTeamName(nextState.teamName); // Redo team name
       setHistoryIndex(nextStateIndex);
-      setOpponents(nextState.opponents); // Redo opponents
+      // Restore timer state if needed here too
     } else {
       console.log("Cannot redo: at end of history");
     }
@@ -437,10 +457,11 @@ export default function Home() {
     // 5. Define the reset state
     const resetState: Partial<AppState> = {
         playersOnField: [],
+        opponents: [],
         drawings: [],
         availablePlayers: resetAvailablePlayers, // Use the rebuilt list
         showPlayerNames: true, // Reset to default
-        opponents: [], // Clear opponents on reset
+        // teamName is omitted, so saveState keeps the current one
     };
 
     // 6. Save the new state
@@ -582,7 +603,12 @@ export default function Home() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-100 overflow-hidden">
-      <PlayerBar players={availablePlayers} onRenamePlayer={handleRenamePlayer} />
+      <PlayerBar 
+        players={availablePlayers} 
+        onRenamePlayer={handleRenamePlayer} 
+        teamName={teamName} // Pass team name
+        onTeamNameChange={handleTeamNameChange} // Pass handler
+      />
 
       <div className="flex-grow bg-green-600 flex items-center justify-center relative overflow-hidden">
         <SoccerField

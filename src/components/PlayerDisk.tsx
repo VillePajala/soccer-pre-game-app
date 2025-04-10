@@ -63,7 +63,7 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
   return (
     <div
       id={`player-${id}`}
-      className={`${color} text-slate-100 rounded-full w-16 h-16 flex items-center justify-center font-semibold text-sm shadow-md m-2 flex-shrink-0 select-none relative ${isEditing ? 'cursor-default' : 'cursor-grab'} hover:brightness-110 transition-all duration-150`}
+      className={`${color} text-slate-100 rounded-full w-16 h-16 flex items-center justify-center font-semibold text-sm shadow-md my-2 mr-2 flex-shrink-0 select-none relative ${isEditing ? 'cursor-default' : 'cursor-grab'} hover:brightness-110 transition-all duration-150`}
       draggable={!isEditing} // Prevent dragging while editing
       onDragStart={(e) => {
         if (isEditing) {
