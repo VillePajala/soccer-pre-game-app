@@ -174,7 +174,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
 
     // Draw opponents (before players?)
     context.fillStyle = '#EF4444'; // Red color for opponents
-    context.strokeStyle = '#FCA5A5'; // Lighter red border
+    context.strokeStyle = '#DC2626'; // Darker red border for better contrast?
     context.lineWidth = 2;
     opponents.forEach(opponent => {
       context.beginPath();
@@ -187,7 +187,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     players.forEach(player => {
       if (player.x !== undefined && player.y !== undefined) {
         context.fillStyle = player.color || '#3B82F6';
-        context.strokeStyle = '#E5E7EB';
+        context.strokeStyle = '#1D4ED8'; // Darker blue border for better contrast
         context.lineWidth = 2;
         context.beginPath();
         context.arc(player.x, player.y, PLAYER_RADIUS, 0, Math.PI * 2);

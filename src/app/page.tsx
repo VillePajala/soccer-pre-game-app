@@ -633,6 +633,8 @@ export default function Home() {
         // Timer Overlay props
         showLargeTimerOverlay={showLargeTimerOverlay}
         onToggleLargeTimerOverlay={handleToggleLargeTimerOverlay}
+        // Name Visibility
+        showPlayerNames={showPlayerNames}
       />
     </div>
   );
