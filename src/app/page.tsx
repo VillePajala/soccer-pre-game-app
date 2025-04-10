@@ -220,6 +220,41 @@ export default function Home() {
     saveState({ drawings: drawings.map(path => [...path]) });
   };
 
+  // --- Handle Removing Player from Field ---
+  const handlePlayerRemove = (playerId: string) => {
+    console.log(`Attempting to remove player ${playerId} from field.`);
+    const playerToRemove = playersOnField.find(p => p.id === playerId);
+
+    if (!playerToRemove) {
+      console.warn(`Player ${playerId} not found on field.`);
+      return;
+    }
+
+    // Create the player object to add back to available (without x, y)
+    const playerToReturn = { id: playerToRemove.id, name: playerToRemove.name };
+
+    // Remove from field
+    const nextPlayersOnField = playersOnField.filter(p => p.id !== playerId);
+
+    // Add back to available and sort
+    const nextAvailablePlayers = [...availablePlayers, playerToReturn];
+    nextAvailablePlayers.sort((a, b) => {
+      const numA = parseInt(a.id.substring(1));
+      const numB = parseInt(b.id.substring(1));
+      return numA - numB;
+    });
+
+    // Update visual state immediately (optional, but can feel smoother)
+    // setPlayersOnField(nextPlayersOnField);
+    // setAvailablePlayers(nextAvailablePlayers);
+
+    // Save the state change
+    saveState({ 
+      playersOnField: nextPlayersOnField, 
+      availablePlayers: nextAvailablePlayers 
+    });
+  };
+
   // --- Toggle Player Names Handler ---
   const handleTogglePlayerNames = () => {
     console.log('Toggling player names');
@@ -340,6 +375,7 @@ export default function Home() {
           onDrawingStart={handleDrawingStart}
           onDrawingAddPoint={handleDrawingAddPoint}
           onDrawingEnd={handleDrawingEnd}
+          onPlayerRemove={handlePlayerRemove}
         />
       </div>
 

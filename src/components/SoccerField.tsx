@@ -14,6 +14,7 @@ interface SoccerFieldProps {
   onDrawingStart: (point: Point) => void; // Add drawing callbacks
   onDrawingAddPoint: (point: Point) => void;
   onDrawingEnd: () => void;
+  onPlayerRemove: (playerId: string) => void; // Add the remove handler prop
 }
 
 // Define player radius for hit detection and drawing
@@ -29,6 +30,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
   onDrawingStart,
   onDrawingAddPoint,
   onDrawingEnd,
+  onPlayerRemove, // Destructure the remove handler
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDraggingPlayer, setIsDraggingPlayer] = useState<boolean>(false); // Renamed for clarity
@@ -122,7 +124,20 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     const pos = getMousePos(e);
     if (!pos) return;
 
-    // Prioritize player dragging
+    // Double-click detection logic
+    const doubleClickThreshold = 300; // milliseconds
+    const now = Date.now();
+    if (e.detail === 2) { // Check if it's a native double click event first
+        for (const player of players) {
+          if (isPointInPlayer(pos.x, pos.y, player)) {
+            console.log("Native double click detected on player:", player.id);
+            onPlayerRemove(player.id);
+            return; // Stop further processing
+          }
+        }
+    }
+
+    // Fallback or primary logic for player drag start
     for (const player of players) {
       if (isPointInPlayer(pos.x, pos.y, player)) {
         setIsDraggingPlayer(true);
