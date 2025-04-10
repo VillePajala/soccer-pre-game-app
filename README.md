@@ -9,13 +9,17 @@ This app provides an intuitive interface for coaches, especially those working w
 ## Features
 
 *   **Virtual Soccer Field:** A clear, full-screen view of a soccer pitch.
-*   **Player Management:** Add player disks, assign names, and drag them onto the field.
+*   **Player Management:** Add player disks, assign names (renameable), and drag them onto the field.
 *   **Drag & Drop Positioning:** Easily place and reposition players anywhere on the field.
 *   **Tactical Drawing:** Use freehand drawing to illustrate movement paths, zones, or plays directly on the field.
 *   **Toggle Name Visibility:** Show or hide player names on the disks to reduce visual clutter.
-*   **Undo/Redo:** Step back and forth through recent actions (movements, drawings).
+*   **Undo/Redo:** Step back and forth through recent actions (player moves, opponent moves, drawings, adds/removes).
+*   **Opponent Markers:** Add, drag, and remove simple opponent markers.
+*   **Reset/Clear:** Reset the entire field or clear only drawings.
+*   **Game Timer:** Integrated timer with start/pause/reset.
+*   **Substitution Assist:** Optional large timer overlay with configurable substitution interval alerts (warning/due) and history of lineup durations.
 *   **Responsive Design:** Optimized for mobile and tablet use, with desktop/web support.
-*   **Local Storage:** Player names are stored locally in the browser.
+*   **Local Storage Persistence:** The entire application state (players, opponents, drawings, history, timer settings) is saved in the browser.
 
 ## Tech Stack
 
@@ -58,6 +62,8 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 ## Future Enhancements
 
 *   Saving and loading specific formations/setups.
+*   Exporting the current field view as an image.
+*   Further styling improvements and accessibility considerations.
 
 ## Learn More (About Next.js)
 

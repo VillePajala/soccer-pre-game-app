@@ -21,15 +21,21 @@
 - [x] Implement freehand drawing on the field canvas. (Basic implementation done)
 - [x] Implement Undo/Redo functionality for movements and drawings. (Basic implementation done)
 - [x] Implement the "Toggle Player Names" feature. (Basic implementation done)
-- [ ] Implement persistence using `localStorage` for player names and potentially positions/drawings.
+- [x] Implement persistence using `localStorage` for player names and potentially positions/drawings.
+- [x] Implement player removal from field (double-click).
+- [x] Implement opponent markers (add/drag/remove).
+- [x] Implement game timer with start/pause/reset.
+- [x] Implement large timer overlay with substitution alerts and interval history.
 
 **Styling & Refinements**
 - [ ] Apply Tailwind CSS styling according to the UID (field appearance, disk colors, controls).
-- [ ] Ensure responsive design for mobile, tablet, and desktop.
-- [ ] Implement visual feedback for interactions (e.g., dragging).
+- [x] Ensure responsive design for mobile, tablet, and desktop.
+- [x] Implement visual feedback for interactions (e.g., dragging).
 - [ ] Address accessibility considerations (contrast, touch target size).
 - [x] Implement persistence using `localStorage`. (History and index saved)
 
 **Optional/Future**
-- [ ] Implement "Reset Field" functionality.
-- [ ] Implement saving/loading formations. 
+- [x] Implement "Reset Field" functionality.
+- [x] Implement "Clear Drawings" functionality.
+- [ ] Implement saving/loading formations.
+- [ ] Implement exporting field view as an image. 
