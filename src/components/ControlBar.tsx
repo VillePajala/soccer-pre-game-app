@@ -8,7 +8,8 @@ interface ControlBarProps {
   onRedo: () => void;
   canUndo: boolean;
   canRedo: boolean;
-  // TODO: Add props for Toggle Names, Reset
+  onToggleNames: () => void;
+  // TODO: Add props for Reset
 }
 
 const ControlBar: React.FC<ControlBarProps> = ({
@@ -16,9 +17,9 @@ const ControlBar: React.FC<ControlBarProps> = ({
   onRedo,
   canUndo,
   canRedo,
+  onToggleNames,
 }) => {
   // Placeholder functions for other buttons
-  const handleToggleNames = () => console.log('Toggle Names clicked');
   const handleReset = () => console.log('Reset clicked');
 
   // Base button style
@@ -41,7 +42,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
         Redo
       </button>
       <button
-        onClick={handleToggleNames}
+        onClick={onToggleNames}
         className={`${baseButtonStyle} bg-blue-500 hover:bg-blue-600`}
       >
         Toggle Names
@@ -57,4 +58,4 @@ const ControlBar: React.FC<ControlBarProps> = ({
   );
 };
 
-export default ControlBar; 
+export default ControlBar;

@@ -20,7 +20,7 @@
 - [x] Implement repositioning players already on the field. (Basic mouse drag done)
 - [x] Implement freehand drawing on the field canvas. (Basic implementation done)
 - [x] Implement Undo/Redo functionality for movements and drawings. (Basic implementation done)
-- [ ] Implement the "Toggle Player Names" feature.
+- [x] Implement the "Toggle Player Names" feature. (Basic implementation done)
 - [ ] Implement persistence using `localStorage` for player names and potentially positions/drawings.
 
 **Styling & Refinements**

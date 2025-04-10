@@ -7,6 +7,7 @@ import { Player, Point } from '@/app/page'; // Import Point type
 interface SoccerFieldProps {
   players: Player[];
   drawings: Point[][]; // Add drawings prop
+  showPlayerNames: boolean; // Add the visibility prop
   onPlayerDrop: (playerId: string, x: number, y: number) => void;
   onPlayerMove: (playerId: string, x: number, y: number) => void;
   onPlayerMoveEnd: () => void; // Add the move end callback prop
@@ -21,6 +22,7 @@ const PLAYER_RADIUS = 25; // Increased slightly for easier clicking
 const SoccerField: React.FC<SoccerFieldProps> = ({
   players,
   drawings, // Destructure new props
+  showPlayerNames, // Destructure the new prop
   onPlayerDrop,
   onPlayerMove,
   onPlayerMoveEnd, // Destructure the new prop
@@ -82,15 +84,24 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
         context.arc(player.x, player.y, PLAYER_RADIUS, 0, Math.PI * 2);
         context.fill();
         context.stroke();
-        // TODO: Draw name if toggled on
+
+        // Draw name if toggled on
+        if (showPlayerNames) {
+          context.fillStyle = 'white'; // Or black, depending on disk color
+          context.font = 'bold 12px sans-serif';
+          context.textAlign = 'center';
+          context.textBaseline = 'middle';
+          // Simple text rendering, might need refinement for long names
+          context.fillText(player.name, player.x, player.y);
+        }
       }
     });
   };
 
-  // Redraw canvas whenever players or drawings change
+  // Redraw canvas whenever players, drawings, or name visibility change
   useEffect(() => {
     draw();
-  }, [players, drawings]);
+  }, [players, drawings, showPlayerNames]); // Add showPlayerNames dependency
 
   // --- Event Handlers ---
   const getMousePos = (e: React.MouseEvent<HTMLCanvasElement>): { x: number; y: number } | null => {

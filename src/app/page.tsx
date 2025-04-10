@@ -25,6 +25,7 @@ interface AppState {
   playersOnField: Player[];
   drawings: Point[][];
   availablePlayers: Player[]; // Include available players for full undo/redo
+  showPlayerNames: boolean; // Add to state snapshot
 }
 
 // Placeholder data moved here
@@ -46,6 +47,7 @@ const initialState: AppState = {
   playersOnField: [],
   drawings: [],
   availablePlayers: initialAvailablePlayersData,
+  showPlayerNames: true, // Default to showing names
 };
 
 export default function Home() {
@@ -53,6 +55,7 @@ export default function Home() {
   const [playersOnField, setPlayersOnField] = useState<Player[]>(initialState.playersOnField);
   const [drawings, setDrawings] = useState<Point[][]>(initialState.drawings);
   const [availablePlayers, setAvailablePlayers] = useState<Player[]>(initialState.availablePlayers);
+  const [showPlayerNames, setShowPlayerNames] = useState<boolean>(initialState.showPlayerNames);
 
   // History State
   const [history, setHistory] = useState<AppState[]>([initialState]);
@@ -65,25 +68,25 @@ export default function Home() {
       playersOnField: newState.playersOnField ?? currentState.playersOnField,
       drawings: newState.drawings ?? currentState.drawings,
       availablePlayers: newState.availablePlayers ?? currentState.availablePlayers,
+      showPlayerNames: newState.showPlayerNames ?? currentState.showPlayerNames, // Include in save/restore
     };
 
-    // Avoid saving if state hasn't actually changed (simple check)
     if (JSON.stringify(nextState) === JSON.stringify(currentState)) {
       console.log("State hasn't changed, not saving history.");
       return;
     }
 
     console.log("Saving new state to history");
-    const newHistory = history.slice(0, historyIndex + 1); // Discard redo states
+    const newHistory = history.slice(0, historyIndex + 1);
     newHistory.push(nextState);
-
     setHistory(newHistory);
     setHistoryIndex(newHistory.length - 1);
 
-    // Update actual state (this might seem redundant, but ensures consistency)
+    // Update actual state
     setPlayersOnField(nextState.playersOnField);
     setDrawings(nextState.drawings);
     setAvailablePlayers(nextState.availablePlayers);
+    setShowPlayerNames(nextState.showPlayerNames); // Update name visibility state
 
   }, [history, historyIndex]);
 
@@ -157,6 +160,14 @@ export default function Home() {
     saveState({ drawings });
   };
 
+  // --- Toggle Player Names Handler ---
+  const handleTogglePlayerNames = () => {
+    console.log('Toggling player names');
+    const nextShowNames = !showPlayerNames;
+    setShowPlayerNames(nextShowNames); // Update visual state immediately
+    saveState({ showPlayerNames: nextShowNames }); // Save the change to history
+  };
+
   // --- Undo/Redo Handlers ---
   const handleUndo = () => {
     if (historyIndex > 0) {
@@ -166,6 +177,7 @@ export default function Home() {
       setPlayersOnField(prevState.playersOnField);
       setDrawings(prevState.drawings);
       setAvailablePlayers(prevState.availablePlayers);
+      setShowPlayerNames(prevState.showPlayerNames); // Restore name visibility
       setHistoryIndex(prevStateIndex);
     } else {
       console.log("Cannot undo: at beginning of history");
@@ -180,6 +192,7 @@ export default function Home() {
       setPlayersOnField(nextState.playersOnField);
       setDrawings(nextState.drawings);
       setAvailablePlayers(nextState.availablePlayers);
+      setShowPlayerNames(nextState.showPlayerNames); // Restore name visibility
       setHistoryIndex(nextStateIndex);
     } else {
       console.log("Cannot redo: at end of history");
@@ -197,17 +210,23 @@ export default function Home() {
         <SoccerField
           players={playersOnField}
           drawings={drawings}
+          showPlayerNames={showPlayerNames} // Pass down the state
           onPlayerDrop={handleDropOnField}
-          onPlayerMove={handlePlayerMove} // Still used for live visual update
-          onPlayerMoveEnd={handlePlayerMoveEnd} // Call this when drag finishes
+          onPlayerMove={handlePlayerMove}
+          onPlayerMoveEnd={handlePlayerMoveEnd}
           onDrawingStart={handleDrawingStart}
-          onDrawingAddPoint={handleDrawingAddPoint} // Still used for live visual update
+          onDrawingAddPoint={handleDrawingAddPoint}
           onDrawingEnd={handleDrawingEnd}
         />
       </div>
 
-      {/* Pass undo/redo handlers and status to ControlBar */}
-      <ControlBar onUndo={handleUndo} onRedo={handleRedo} canUndo={canUndo} canRedo={canRedo} />
+      <ControlBar
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        canUndo={canUndo}
+        canRedo={canRedo}
+        onToggleNames={handleTogglePlayerNames} // Pass down the handler
+      />
     </div>
   );
 }
