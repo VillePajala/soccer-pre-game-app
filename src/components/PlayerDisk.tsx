@@ -63,7 +63,7 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
   return (
     <div
       id={`player-${id}`}
-      className={`${color} text-yellow-400 rounded-full w-16 h-16 flex items-center justify-center font-semibold text-sm shadow-md my-2 mr-2 flex-shrink-0 select-none relative ${isEditing ? 'cursor-default' : 'cursor-grab'} hover:brightness-110 transition-all duration-150`}
+      className={`${color} text-yellow-300 rounded-full w-16 h-16 flex items-center justify-center font-semibold text-sm shadow-md my-2 mr-2 flex-shrink-0 select-none relative ${isEditing ? 'cursor-default' : 'cursor-grab'} hover:brightness-110 transition-all duration-150`}
       draggable={!isEditing} // Prevent dragging while editing
       onDragStart={(e) => {
         if (isEditing) {
@@ -83,7 +83,7 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
           onChange={handleInputChange}
           onBlur={handleFinishEditing} // Finish editing when input loses focus
           onKeyDown={handleKeyDown}    // Finish on Enter, revert on Escape
-          className="w-full h-full bg-transparent text-yellow-400 text-center font-semibold text-sm outline-none border-none p-0 m-0"
+          className="w-full h-full bg-transparent text-yellow-300 text-center font-semibold text-sm outline-none border-none p-0 m-0"
           // Prevent click event from bubbling up and restarting edit immediately
           onClick={(e) => e.stopPropagation()} 
         />

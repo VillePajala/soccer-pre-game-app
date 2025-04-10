@@ -218,7 +218,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
 
         // Draw name if toggled on
         if (showPlayerNames) {
-          context.fillStyle = '#FACC15'; // CHANGED from #F1F5F9 (slate-100) to #FACC15 (yellow-400)
+          context.fillStyle = '#FDE047'; // CHANGED from #FACC15 (yellow-400) to #FDE047 (yellow-300)
           // context.strokeStyle = 'rgba(0,0,0,0.7)'; // Remove outline
           // context.lineWidth = 2.5; 
           context.font = '600 11px Inter, sans-serif'; // Match font-semibold, size, and family 
