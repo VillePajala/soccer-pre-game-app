@@ -181,7 +181,7 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
   return (
     <div
       className={`relative ${diskSizeClasses} rounded-full flex items-center justify-center cursor-pointer shadow-lg m-2 transition-all duration-150 ease-in-out ${outerRingClass}`}
-      style={{ backgroundColor: color, touchAction: 'pan-y' }} // Allow vertical page scroll, horizontal is handled by bar scroll
+      style={{ backgroundColor: color }}
       draggable={isInBar && !isEditing} // Only draggable if in bar and not editing
       onDragStart={handleMouseDown} // Use mouse down for HTML drag API
       onMouseDown={isInBar ? handleMouseDown : undefined} // Only attach mouse down if in bar
