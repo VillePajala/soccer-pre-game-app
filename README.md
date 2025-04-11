@@ -2,7 +2,7 @@
 
 A touch-friendly web app for visualizing soccer tactics, managing players, and drawing plays. Built with React/Next.js.
 
-![Main Tactics View](.docs/images/screenshot_tactics_view.png)
+![Main Tactics View](docs/images/screenshot_tactics_view.png)
 
 ## Features
 
@@ -25,7 +25,7 @@ A touch-friendly web app for visualizing soccer tactics, managing players, and d
     *   Record substitutions made.
     *   View player play time based on timer and substitutions in an overlay.
     *   Optional large timer overlay display.
-    ![Timer and Substitution Tracking](.docs/images/screenshot_timer_view_with_substitutions_play_time_records.png)
+    ![Timer and Substitution Tracking](docs/images/screenshot_timer_view_with_substitutions_play_time_records.png)
 *   **Touch-Friendly Controls:** Designed with touch devices in mind, including double-tap actions and scroll detection.
 *   **Undo/Redo:** Step back and forth through your tactical changes.
 *   **Control Bar:** Access features like adding opponents, clearing drawings, toggling player names, resetting the field, and timer controls.
