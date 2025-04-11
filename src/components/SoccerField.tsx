@@ -676,21 +676,22 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
   };
 
   return (
-    <canvas
-      ref={canvasRef}
-      className="w-full h-full bg-green-700 cursor-default" // Use cursor-default initially
-      style={{ touchAction: 'none' }} 
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseLeave}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEndOrCancel}
-      onTouchCancel={handleTouchEndOrCancel}
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
-    />
+    <div className="relative w-full h-full touch-none">
+      <canvas 
+        ref={canvasRef}
+        className="w-full h-full block touch-none"
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}  
+        onTouchEnd={handleTouchEndOrCancel}
+        onTouchCancel={handleTouchEndOrCancel}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      />
+    </div>
   );
 };
 

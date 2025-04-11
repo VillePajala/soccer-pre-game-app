@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, Suspense } from 'react'; // Added useEffect, useCallback, Suspense
+import React, { useState, useEffect, useCallback } from 'react'; // Added useEffect, useCallback
 import SoccerField from '@/components/SoccerField';
 import PlayerBar from '@/components/PlayerBar';
 import ControlBar from '@/components/ControlBar';
@@ -539,8 +539,9 @@ export default function Home() {
   };
 
   // --- Add Opponent Handler ---
-  const handleAddOpponent = () => {
-    const newOpponentId = `opp-${Date.now()}`;
+  const handleAddOpponent = useCallback(() => {
+    // Generate a unique ID without using Date.now() during render
+    const newOpponentId = `opp-${Math.floor(Math.random() * 1000000)}`;
     const defaultPosition = { x: 100, y: 100 }; // Default placement
     const newOpponent: Opponent = {
       id: newOpponentId,
@@ -548,7 +549,7 @@ export default function Home() {
     };
     console.log("Adding opponent:", newOpponentId);
     saveState({ opponents: [...opponents, newOpponent] });
-  };
+  }, [opponents, saveState]);
 
   // --- Opponent Handlers ---
   const handleOpponentMove = (opponentId: string, x: number, y: number) => {
@@ -729,8 +730,8 @@ export default function Home() {
         {isFullscreen ? 'Exit FS' : 'Full'}
       </button>
 
-      {/* Wrap main content potentially using translations with Suspense */}
-      <Suspense fallback={<div>Loading translations...</div>}> 
+      {/* Replace Suspense with a regular div */}
+      <div className="flex flex-col h-full">
         {/* Top Player Bar */}
         <PlayerBar
           players={availablePlayers}
@@ -741,8 +742,8 @@ export default function Home() {
           selectedPlayerIdFromBar={draggingPlayerFromBarInfo?.id}
           onBarBackgroundClick={handleDeselectPlayer}
         />
-
-        {/* Main content area - Should take up space between PlayerBar and ControlBar */}
+        
+        {/* Main content */}
         <main className="flex-1 relative overflow-hidden">
           {showLargeTimerOverlay && (
             <TimerOverlay 
@@ -779,7 +780,7 @@ export default function Home() {
           />
         </main>
 
-        {/* Control Bar (Bottom Bar) - Moved outside main */}
+        {/* Control Bar */}
         <ControlBar
           onAddOpponent={handleAddOpponent}
           onClearDrawings={handleClearDrawings}
@@ -803,7 +804,7 @@ export default function Home() {
           isOpen={isInstructionsOpen} 
           onClose={() => setIsInstructionsOpen(false)} 
         />
-      </Suspense>
+      </div>
     </div>
   );
 }
