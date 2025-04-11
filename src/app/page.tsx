@@ -672,6 +672,14 @@ export default function Home() {
     setIsInstructionsOpen(!isInstructionsOpen);
   };
 
+  // Handler to specifically deselect player when bar background is clicked
+  const handleDeselectPlayer = () => {
+    if (draggingPlayerFromBarInfo) { // Only log if there was a selection
+      console.log("Deselecting player by clicking bar background.");
+      setDraggingPlayerFromBarInfo(null);
+    }
+  };
+
   const canUndo = historyIndex > 0;
   const canRedo = historyIndex < history.length - 1;
 
@@ -729,6 +737,7 @@ export default function Home() {
         onTeamNameChange={handleTeamNameChange}
         onPlayerDragStartFromBar={handlePlayerDragStartFromBar}
         selectedPlayerIdFromBar={draggingPlayerFromBarInfo?.id}
+        onBarBackgroundClick={handleDeselectPlayer}
       />
 
       {/* Main content area - Should take up space between PlayerBar and ControlBar */}

@@ -15,6 +15,7 @@ interface PlayerBarProps {
   onPlayerDragStartFromBar?: (player: Player) => void;
   // ID of the player currently being dragged from the bar
   selectedPlayerIdFromBar?: string | null; 
+  onBarBackgroundClick?: () => void; // Add prop for background click
 }
 
 // Placeholder data - this would eventually come from state/localStorage
@@ -32,7 +33,7 @@ interface PlayerBarProps {
 //   { id: 'p11', name: 'Player 11' },
 // ];
 
-const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName, onTeamNameChange, onPlayerDragStartFromBar, selectedPlayerIdFromBar }) => { // Destructure players and rename handler from props
+const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName, onTeamNameChange, onPlayerDragStartFromBar, selectedPlayerIdFromBar, onBarBackgroundClick }) => { // Destructure players and rename handler from props
   const [isEditingTeamName, setIsEditingTeamName] = useState(false);
   const [editedTeamName, setEditedTeamName] = useState(teamName);
   const teamNameInputRef = useRef<HTMLInputElement>(null);
@@ -120,9 +121,23 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName
     <div 
       className="bg-slate-900/85 backdrop-blur-md pl-8 pr-3 py-2 flex items-center flex-shrink-0 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-slate-700/80 scrollbar-track-slate-800/50 shadow-lg border-b border-slate-700/50"
       // Allow vertical panning (page scroll), disable horizontal panning/zoom to allow custom horizontal scroll
+      onClick={(e) => {
+        // Check if the click target is the div itself (the background)
+        if (e.target === e.currentTarget && onBarBackgroundClick) {
+          onBarBackgroundClick();
+        }
+      }}
     >
       {/* Team Name Display/Edit */}
-      <div className="flex flex-col items-center flex-shrink-0 mr-8 py-4">
+      <div 
+        className="flex flex-col items-center flex-shrink-0 mr-8 py-4"
+        onClick={() => {
+          // Also deselect player when clicking the logo/team name area
+          if (onBarBackgroundClick) {
+            onBarBackgroundClick();
+          }
+        }}
+      >
         <Image 
           src="/pepo-logo.png" 
           alt="PEPO Logo" 
