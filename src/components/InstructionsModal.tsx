@@ -35,7 +35,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, onClose }
               <li><span className="font-semibold">Select Player:</span> Tap a player disk once to select it (a yellow ring will appear). You can then tap on the field to place/move them.</li>
               <li><span className="font-semibold">Deselect Player:</span> Tap the currently selected player disk again to deselect it.</li>
               <li><span className="font-semibold">Rename Player:</span> Double-tap (or double-click) a player disk in the bar to edit its name. Press Enter or click away to save.</li>
-              <li><span className="font-semibold">Rename Team:</span> Double-tap (or double-click) the Team Name (e.g., "My Team") to edit it.</li>
+              <li><span className="font-semibold">Rename Team:</span> Double-tap (or double-click) the Team Name (e.g., &quot;My Team&quot;) to edit it.</li>
               <li><span className="font-semibold">Scroll Bar:</span> Swipe horizontally on the bar itself (not directly on a player disk) to scroll if players overflow.</li>
             </ul>
           </section>
@@ -69,7 +69,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, onClose }
              <ul className="list-disc list-inside space-y-1 pl-2">
               <li><span className="font-semibold">Set Interval:</span> Use the input field to set the desired substitution interval in minutes.</li>
               <li><span className="font-semibold">Substitution Alerts:</span> The background will turn orange as a warning (1 min before due) and red when the interval is reached.</li>
-              <li><span className="font-semibold">Confirm Sub:</span> Click "Substitution Made" after completing subs. This logs the duration and resets the alert for the next interval.</li>
+              <li><span className="font-semibold">Confirm Sub:</span> Click &quot;Substitution Made&quot; after completing subs. This logs the duration and resets the alert for the next interval.</li>
               <li><span className="font-semibold">Play Time History:</span> View the durations of previous play intervals below the controls.</li>
             </ul>
           </section>
@@ -78,8 +78,8 @@ const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, onClose }
             <h3 className="text-lg font-semibold mb-2 text-yellow-300">General</h3>
              <ul className="list-disc list-inside space-y-1 pl-2">
               <li><span className="font-semibold">Touch Interactions:</span> Many actions use double-tap instead of single-click on touch devices to avoid accidental triggers (e.g., renaming, removing from field).</li>
-               <li><span className="font-semibold">Saving:</span> All your changes (players, positions, drawings, names, timer state) are saved automatically in your browser.</li>
-               <li><span className="font-semibold">Fullscreen:</span> Use the 'Full' button in the top-right corner to toggle fullscreen mode.</li>
+               <li><span className="font-semibold">Saving:</span> All your changes (players, positions, drawings, names, timer state) are saved automatically in your browser&apos;s local storage.</li>
+               <li><span className="font-semibold">Fullscreen:</span> Use the &apos;Full&apos; button in the top-right corner to toggle fullscreen mode.</li>
             </ul>
           </section>
         </div>
