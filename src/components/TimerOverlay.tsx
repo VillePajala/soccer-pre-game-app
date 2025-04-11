@@ -1,6 +1,8 @@
 'use client';
 
 import React from 'react';
+import { FaPlay, FaPause, FaUndo } from 'react-icons/fa'; // Import icons
+import { useTranslation } from 'react-i18next'; // Import translation hook
 
 // Helper function to format time (copied from ControlBar for now)
 // TODO: Consider moving to a shared utility file
@@ -33,6 +35,8 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
   onStartPauseTimer,
   onResetTimer,
 }) => {
+  const { t } = useTranslation(); // Initialize translation hook
+
   // Determine text color based on alert status
   let timerTextColor = 'text-slate-100'; // Base text color
   if (subAlertLevel === 'due') {
@@ -42,83 +46,113 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
   }
 
   // Button styles
-  const subButtonStyle = "mt-6 text-slate-100 font-bold py-4 px-8 rounded-lg shadow-lg bg-indigo-600 hover:bg-indigo-700 pointer-events-auto text-xl active:scale-95 active:brightness-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-black focus:ring-offset-opacity-75"; // Indigo primary, focus ring, added active:brightness-90
+  const subButtonStyle = "text-slate-100 font-bold py-3 px-6 rounded-lg shadow-lg bg-indigo-600 hover:bg-indigo-700 pointer-events-auto text-lg active:scale-95 active:brightness-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-black focus:ring-offset-opacity-75"; // Reduced size
   const smallIntervalButtonStyle = "text-slate-100 font-bold py-2 px-4 rounded shadow bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed pointer-events-auto text-2xl active:scale-95 active:brightness-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 focus:ring-offset-black focus:ring-offset-opacity-75"; // Slate secondary, focus ring, added active:brightness-90
   const controlButtonStyle = "text-slate-100 font-bold py-3 px-6 rounded-lg shadow disabled:opacity-50 disabled:cursor-not-allowed pointer-events-auto text-lg active:scale-95 active:brightness-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black focus:ring-offset-opacity-75"; // Base for controls, added focus, added active:brightness-90
 
+  const handleIntervalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value, 10);
+    if (!isNaN(value) && value >= 1) {
+      onSetSubInterval(value);
+    }
+  };
+
+  const handleConfirmSubClick = () => {
+    onSubstitutionMade();
+  };
+
+  let bgColor = 'bg-slate-900/85'; // Default background
+  if (subAlertLevel === 'warning') {
+    bgColor = 'bg-orange-800/90';
+  } else if (subAlertLevel === 'due') {
+    bgColor = 'bg-red-800/90';
+  }
+
+  let textColor = 'text-slate-100'; // Base text color
+  if (subAlertLevel === 'warning' || subAlertLevel === 'due') {
+    textColor = 'text-yellow-300';
+  }
+
+  // Consistent button styles (simplified for overlay)
+  const timerButtonStyle = "text-white font-semibold py-2 px-5 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 transition-colors duration-150 flex items-center justify-center space-x-2";
+  const intervalAdjustButtonStyle = "text-slate-100 font-bold py-2 px-4 rounded shadow bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-2xl active:scale-95 active:brightness-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 focus:ring-offset-slate-900";
+
   return (
-    <div 
-      className="absolute inset-0 flex flex-col items-center z-50 pointer-events-none overflow-y-auto pb-8" // Outer container scrolls, REMOVED backdrop-blur-lg
-    >
-        {/* Inner Container - Grow, sharp corners, full width */}
-        <div 
-          className="flex-grow bg-slate-900/75 backdrop-blur-sm p-10 shadow-2xl flex flex-col items-center pointer-events-auto border border-slate-600/50 w-full" // Kept flex-grow, REMOVED rounded-xl, REMOVED max-w-lg, kept p-10
-        >
-          <span className={`${timerTextColor} font-bold text-8xl tabular-nums mb-4`}>
+    <div className={`fixed inset-0 z-40 flex flex-col items-center p-4 pt-24 ${bgColor} backdrop-blur-lg transition-colors duration-500`}>
+      <div className="w-full max-w-lg flex flex-col items-center">
+        {/* Timer Display */}
+        <div className="mb-2">
+          <span className={`text-7xl sm:text-8xl font-bold tabular-nums ${textColor}`}>
             {formatTime(timeElapsedInSeconds)}
           </span>
-
-          {/* Timer Controls added to Overlay */}
-          <div className="flex items-center space-x-6 mt-2 pointer-events-auto">
-            <button
-              onClick={onStartPauseTimer}
-              className={`${controlButtonStyle} ${isTimerRunning ? 'bg-orange-500 hover:bg-orange-600 focus:ring-orange-400' : 'bg-green-600 hover:bg-green-700 focus:ring-green-500'}`}
-            >
-              {isTimerRunning ? 'Pause' : 'Start'}
-            </button>
-            <button
-              onClick={onResetTimer}
-              disabled={timeElapsedInSeconds === 0 && !isTimerRunning}
-              className={`${controlButtonStyle} bg-slate-700 hover:bg-slate-600 focus:ring-slate-500`}
-            >
-              Reset
-            </button>
-          </div>
-
-          {/* "Sub Made" button */}
-          <button
-            onClick={onSubstitutionMade}
-            className={subButtonStyle}
-          >
-            SUBSTITUTION MADE
-          </button>
-
-          {/* Sub Interval Controls */}
-          <div className="flex items-center space-x-4 mt-6 pointer-events-auto">
-            <span className="text-slate-300 font-medium text-lg mr-2">Interval:</span> {/* Lighter, medium weight */}
-            <button
-              onClick={() => onSetSubInterval(subIntervalMinutes - 1)}
-              disabled={subIntervalMinutes <= 1} 
-              className={smallIntervalButtonStyle}
-            >
-              -
-            </button>
-            <span className="text-slate-100 font-bold text-3xl tabular-nums w-12 text-center">
-              {subIntervalMinutes}
-            </span>
-            <button
-              onClick={() => onSetSubInterval(subIntervalMinutes + 1)}
-              className={smallIntervalButtonStyle}
-            >
-              +
-            </button>
-            <span className="text-slate-300 font-medium text-lg ml-1">min</span> {/* Lighter, medium weight */}
-          </div>
-
-          {/* Display Completed Interval Durations Horizontally */}
-          {completedIntervalDurations.length > 0 && (
-            <div className="flex flex-wrap justify-center mt-6 w-full">
-              {completedIntervalDurations.map((duration, index) => (
-                <span 
-                  key={index} 
-                  className="text-slate-300 text-sm font-mono tabular-nums mx-2 my-1 bg-slate-800/50 px-2 py-1 rounded"
-                >
-                  {formatTime(duration)}
-                </span>
-              ))}
-            </div>
-          )}
         </div>
+
+        {/* Timer Controls */}
+        <div className="flex items-center space-x-3 mb-6">
+          <button 
+            onClick={onStartPauseTimer} 
+            className={`${timerButtonStyle} ${isTimerRunning ? 'bg-orange-600 hover:bg-orange-700 focus:ring-orange-400' : 'bg-green-600 hover:bg-green-700 focus:ring-green-500'}`}
+          >
+            {isTimerRunning ? <FaPause size={16}/> : <FaPlay size={16}/>} 
+            <span>{isTimerRunning ? "Pause" : "Start"}</span>
+          </button>
+          <button 
+            onClick={onResetTimer}
+            className={`${timerButtonStyle} bg-slate-600 hover:bg-slate-700 focus:ring-slate-500 disabled:opacity-50 disabled:cursor-not-allowed`}
+            disabled={timeElapsedInSeconds === 0 && !isTimerRunning}
+          >
+            <FaUndo size={14}/>
+            <span>Reset</span>
+          </button>
+        </div>
+        
+        {/* Interval Controls - directly below timer controls */}
+        <div className="bg-slate-800/80 backdrop-blur-sm p-3 rounded-lg w-full mb-4">
+          <div className="flex flex-col space-y-3">
+            <div className="flex items-center justify-center">
+              <span className="text-sm font-medium text-slate-300 mr-2">{t('timerOverlay.intervalLabel')}</span>
+              <button
+                onClick={() => onSetSubInterval(subIntervalMinutes - 1)}
+                disabled={subIntervalMinutes <= 1}
+                className="text-slate-100 font-bold py-1 px-3 rounded shadow bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-xl active:scale-95"
+                aria-label="Decrease interval"
+              >
+                -
+              </button>
+              <span className="text-slate-100 font-bold text-xl tabular-nums w-8 mx-2 text-center">
+                {subIntervalMinutes}
+              </span>
+              <button
+                onClick={() => onSetSubInterval(subIntervalMinutes + 1)}
+                className="text-slate-100 font-bold py-1 px-3 rounded shadow bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-xl active:scale-95"
+                aria-label="Increase interval"
+              >
+                +
+              </button>
+            </div>
+            <div className="flex justify-center">
+              <button 
+                onClick={handleConfirmSubClick} 
+                className="text-slate-100 font-bold py-2 px-6 rounded-lg shadow-lg bg-indigo-600 hover:bg-indigo-700 pointer-events-auto text-base active:scale-95 w-full sm:w-auto"
+              >
+                {t('timerOverlay.confirmSubButton')}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Play Time History - only show if there are entries */}
+        {completedIntervalDurations.length > 0 && (
+          <div className="bg-slate-800/60 backdrop-blur-sm p-3 rounded-lg w-full max-h-32 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-700/50">
+            <h3 className="text-sm font-semibold mb-1 text-center text-slate-300">{t('timerOverlay.historyTitle')}</h3>
+            <ul className="list-none text-slate-400 text-sm text-center space-y-1">
+              {completedIntervalDurations.map((duration, index) => (
+                <li key={index}>{formatTime(duration)}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
