@@ -142,7 +142,7 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName
             onChange={handleTeamNameInputChange}
             onBlur={handleFinishEditingTeamName}
             onKeyDown={handleTeamNameKeyDown}
-            className="bg-slate-700 text-yellow-400 text-base font-semibold outline-none rounded px-2 py-0.5"
+            className="bg-slate-700 text-yellow-400 text-base font-semibold outline-none rounded px-2 py-0.5 w-24"
             onClick={(e) => e.stopPropagation()} 
           />
         ) : (
