@@ -127,18 +127,20 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
   const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
     // Only handle logic if in the bar and not currently editing
     if (onPlayerDragStartFromBar && !isEditing) {
+      
+      // *** Check for scroll first ***
+      if (isScrollingRef.current) {
+        console.log(`Touch end on ${name}: Was detected as a scroll, doing nothing.`);
+        isScrollingRef.current = false; // Reset scroll flag
+        lastTapTimeRef.current = 0; // Reset tap ref
+        // DO NOT call e.preventDefault() here - allow native scroll behavior
+        return; 
+      }
+
+      // *** If not a scroll, proceed with tap/double-tap/drag logic ***
       const currentTime = Date.now();
       const timeSinceLastTap = currentTime - lastTapTimeRef.current;
       const touchDuration = currentTime - touchStartTimeRef.current;
-
-      // Check if it was a scroll gesture
-      if (isScrollingRef.current) {
-        console.log(`Touch end on ${name}: Was a scroll, doing nothing.`);
-        isScrollingRef.current = false; // Reset scroll flag
-        return; // Do not process as tap/double-tap
-      }
-
-      // --- Handle Tap / Double Tap (only if not scrolling) ---
       const TAP_DURATION_THRESHOLD = 300; // ms threshold for a tap
 
       if (timeSinceLastTap < 300 && timeSinceLastTap > 0) {
@@ -146,27 +148,26 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
         console.log("Double-tap detected in bar, starting edit.");
         handleStartEditing();
         lastTapTimeRef.current = 0; // Reset tap time
-        e.preventDefault(); // Prevent potential further actions like click
+        e.preventDefault(); // Prevent default ONLY for the double-tap action
       } else if (touchDuration < TAP_DURATION_THRESHOLD) {
-        // Single Tap Detected (not a scroll, short duration)
+        // Single Tap Detected (not a scroll, short duration) -> Initiate Drag/Selection
         console.log(`Single tap on ${name} in bar detected (duration: ${touchDuration}ms), initiating drag/selection.`);
         lastTapTimeRef.current = currentTime; // Record time for potential double-tap
 
         // *** Initiate the drag/selection ***
-        // Prevent default touch behavior *only* if we are initiating the drag
-        e.preventDefault(); // Prevent click event after tap if needed
+        e.preventDefault(); // Prevent default ONLY when initiating the drag/selection via tap
         onPlayerDragStartFromBar({ id, name, color }); // Call the selection/drag handler
-
       } else {
-         // Touch was too long to be a tap, likely a press/hold then maybe scroll attempt cancelled early
-         console.log(`Touch end on ${name}: Not a tap (duration: ${touchDuration}ms) or scroll.`);
-         lastTapTimeRef.current = currentTime; // Still record for double tap start
+         // Touch was too long or didn't fit tap criteria, and wasn't a scroll
+         console.log(`Touch end on ${name}: Not a valid tap/double-tap (duration: ${touchDuration}ms) or scroll.`);
+         lastTapTimeRef.current = 0; // Reset tap time if it wasn't a valid action
+         // DO NOT call e.preventDefault() here
       }
 
-      // Reset scroll flag just in case
+      // Reset scroll flag (should be false anyway if we reached here)
       isScrollingRef.current = false;
     }
-    // No special action needed if not in the bar or already editing
+    // No special action needed if not in the bar or already editing, or if handled as scroll
   };
   
   // Conditional styling based on context (in bar or not)
