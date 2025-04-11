@@ -1,89 +1,72 @@
-# Soccer Pre-Game Tactics App
+# Soccer Tactics Board
 
-A sleek, modern web application built with Next.js and Tailwind CSS for soccer coaches to visualize player positioning, opponent formations, and tactical movements on a virtual field. Optimized for quick use on mobile, tablet, or desktop.
+A touch-friendly web app for visualizing soccer tactics, managing players, and drawing plays. Built with React/Next.js.
 
-**Live Demo:** [https://soccer-pre-game-2slu7n1gt-ville-pajalas-projects.vercel.app/](https://soccer-pre-game-2slu7n1gt-ville-pajalas-projects.vercel.app/)
-
-## Overview
-
-This app provides an intuitive, responsive interface for coaches to explain formations, player roles, and strategies. Drag players and opponents, draw movement paths, and use the integrated game timer with substitution assistance.
+![Main Tactics View](.docs/images/screenshot_tactics_view.png)
 
 ## Features
 
-*   **Virtual Soccer Field:** A clear, non-distorting view of a soccer pitch with standard markings.
-*   **Player Management:** Add player disks from the top bar, assign names (renameable via click), and drag them onto the field.
-*   **Opponent Markers:** Add, drag, and remove distinct opponent markers.
-*   **Drag & Drop Positioning:** Easily place and reposition players and opponents.
-*   **Tactical Drawing:** Use freehand drawing (distinct color) to illustrate movement paths, zones, or plays.
-*   **Toggle Name Visibility:** Show or hide player names on the disks.
-*   **Undo/Redo:** Step back and forth through all significant actions.
-*   **Reset/Clear:** Reset the entire field or clear only drawings.
-*   **Game Timer & Substitution Assist:** 
-    *   Integrated timer with start/pause/reset.
-    *   Optional large timer overlay.
-    *   Configurable substitution interval alerts (warning/due colors).
-    *   History log of actual lineup durations.
-*   **Responsive & Fixed Layout:** Optimized for various screen sizes with a non-scrolling interface.
-*   **Polished Dark Theme:** Professional dark UI with glassmorphism effects and clear visual hierarchy.
-*   **Local Storage Persistence:** The entire application state is automatically saved in the browser.
+*   **Interactive Tactics Board:** Visualize formations on a realistic soccer field background.
+*   **Drag & Drop Players:**
+    *   Drag players from the top bar onto the field.
+    *   Move players already on the field.
+    *   Double-tap (or double-click) a player on the field to remove them.
+*   **Player Management:**
+    *   Available players listed in the top bar.
+    *   Double-tap (or double-click) a player in the bar to edit their name.
+    *   Tap a player in the bar to select them for placement; tap again to deselect.
+    *   Differentiates between tap/drag start and horizontal scrolling in the player bar.
+*   **Opponent Markers:** Add simple opponent markers to the field via the control bar and drag them around. Double-tap/click to remove.
+*   **Drawing Tool:** Draw freehand lines on the field to illustrate runs, passes, or zones.
+*   **Team Name Editing:** Double-tap (or double-click) the team name in the top bar to edit it.
+*   **Timer & Substitution Management:**
+    *   Start, pause, and reset a match timer.
+    *   Configure substitution interval alerts (warning/due).
+    *   Record substitutions made.
+    *   View player play time based on timer and substitutions in an overlay.
+    *   Optional large timer overlay display.
+    ![Timer and Substitution Tracking](.docs/images/screenshot_timer_view_with_substitutions_play_time_records.png)
+*   **Touch-Friendly Controls:** Designed with touch devices in mind, including double-tap actions and scroll detection.
+*   **Undo/Redo:** Step back and forth through your tactical changes.
+*   **Control Bar:** Access features like adding opponents, clearing drawings, toggling player names, resetting the field, and timer controls.
+*   **State Persistence:** Your setup (players, drawings, team name, timer state) is automatically saved to your browser's local storage.
+*   **Fullscreen Mode:** Toggle fullscreen for an immersive view.
 
 ## Tech Stack
 
-*   **Framework:** [Next.js](https://nextjs.org/) (React)
-*   **Rendering:** HTML5 Canvas API
+*   **Framework:** [Next.js](https://nextjs.org/)
+*   **Language:** [TypeScript](https://www.typescriptlang.org/)
+*   **UI Library:** [React](https://reactjs.org/)
 *   **Styling:** [Tailwind CSS](https://tailwindcss.com/)
-*   **State Management:** React Hooks (`useState`, `useReducer`)
-*   **Persistence:** Browser `localStorage`
 
 ## Getting Started
 
-First, install the dependencies:
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/VIllePajala/soccer-app.git 
+    cd soccer-app
+    ```
 
-```bash
-npm install
-# or
-yarn install
-# or
-pnpm install
-# or
-bun install
-```
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    # or
+    # yarn install
+    # or
+    # pnpm install
+    ```
 
-Then, run the development server:
+3.  **Run the development server:**
+    ```bash
+    npm run dev
+    # or
+    # yarn dev
+    # or
+    # pnpm dev
+    ```
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+4.  Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-## Future Enhancements
-
-*   Saving and loading specific named formations/setups.
-*   Exporting the current field view as an image.
-*   Advanced touch interaction refinement.
-*   Code cleanup (e.g., shared utilities).
-*   Further accessibility improvements.
-
-## Learn More (About Next.js)
-
-To learn more about Next.js, take a look at the following resources:
-
-*   [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-*   [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+*Feel free to contribute or report issues!*
