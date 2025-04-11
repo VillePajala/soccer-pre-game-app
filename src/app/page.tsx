@@ -671,7 +671,16 @@ export default function Home() {
   // Handler for when a touch drag STARTS on a PlayerDisk in the PlayerBar
   const handlePlayerDragStartFromBar = (player: Player) => {
     console.log("Touch drag started from bar:", player);
-    setDraggingPlayerFromBarInfo(player);
+    // Check if the tapped player is already the selected one
+    if (draggingPlayerFromBarInfo?.id === player.id) {
+      // If yes, deselect the player
+      console.log(`Player ${player.name} deselected by tapping again.`);
+      setDraggingPlayerFromBarInfo(null);
+    } else {
+      // If no, or if no player was selected, select the tapped player
+      console.log(`Player ${player.name} selected.`);
+      setDraggingPlayerFromBarInfo(player);
+    }
   };
 
   // Handler for when a touch drag from the bar ENDS successfully on the field
