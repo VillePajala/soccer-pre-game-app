@@ -394,7 +394,9 @@ export default function Home() {
     // Save on end
   }, []);
 
-  const handleOpponentMoveEnd = useCallback((_opponentId: string) => {
+  const handleOpponentMoveEnd = useCallback(() => {
+    // _opponentId might be useful later, but currently unused
+    console.log("Opponent move ended, saving state.");
     saveState({ opponents });
   }, [opponents, saveState]);
 
