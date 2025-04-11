@@ -1,6 +1,5 @@
-'use client'; // Needed for useState
 
-import React, { useState, useEffect, useCallback } from 'react'; // Added useEffect, useCallback
+import React, { useState, useEffect, useCallback, Suspense } from 'react'; // Added useEffect, useCallback, Suspense
 import SoccerField from '@/components/SoccerField';
 import PlayerBar from '@/components/PlayerBar';
 import ControlBar from '@/components/ControlBar';
@@ -729,81 +728,81 @@ export default function Home() {
         {isFullscreen ? 'Exit FS' : 'Full'}
       </button>
 
-      {/* Top Player Bar */}
-      <PlayerBar
-        players={availablePlayers}
-        onRenamePlayer={handleRenamePlayer}
-        teamName={teamName}
-        onTeamNameChange={handleTeamNameChange}
-        onPlayerDragStartFromBar={handlePlayerDragStartFromBar}
-        selectedPlayerIdFromBar={draggingPlayerFromBarInfo?.id}
-        onBarBackgroundClick={handleDeselectPlayer}
-      />
-
-      {/* Main content area - Should take up space between PlayerBar and ControlBar */}
-      <main className="flex-1 relative overflow-hidden"> {/* Removed flex, added relative for positioning overlay/field */}
-        {/* Soccer Field (Takes full space of main) */}
-        {/* The container div might not be necessary anymore unless used for specific positioning */}
-        {/* Let's put TimerOverlay and SoccerField directly in main */} 
-        {showLargeTimerOverlay && (
-          <TimerOverlay 
-              // Pass all required props as defined in TimerOverlayProps
-              timeElapsedInSeconds={timeElapsedInSeconds} 
-              subAlertLevel={subAlertLevel}
-              onSubstitutionMade={handleSubstitutionMade} 
-              completedIntervalDurations={completedIntervalDurations}
-              subIntervalMinutes={subIntervalMinutes}
-              onSetSubInterval={handleSetSubInterval}
-              isTimerRunning={isTimerRunning}
-              onStartPauseTimer={handleStartPauseTimer}
-              onResetTimer={handleResetTimer}
-          />
-        )}
-        <SoccerField
-          players={playersOnField}
-          opponents={opponents}
-          drawings={drawings}
-          showPlayerNames={showPlayerNames}
-          onPlayerDrop={handleDropOnField}
-          onPlayerMove={handlePlayerMove}
-          onPlayerMoveEnd={handlePlayerMoveEnd}
-          onDrawingStart={handleDrawingStart}
-          onDrawingAddPoint={handleDrawingAddPoint}
-          onDrawingEnd={handleDrawingEnd}
-          onPlayerRemove={handlePlayerRemove}
-          onOpponentMove={handleOpponentMove}
-          onOpponentMoveEnd={handleOpponentMoveEnd}
-          onOpponentRemove={handleOpponentRemove}
-          draggingPlayerFromBarInfo={draggingPlayerFromBarInfo}
-          onPlayerDropViaTouch={handlePlayerDropViaTouch}
-          onPlayerDragCancelViaTouch={handlePlayerDragCancelViaTouch}
+      {/* Wrap main content potentially using translations with Suspense */}
+      <Suspense fallback={<div>Loading translations...</div>}> 
+        {/* Top Player Bar */}
+        <PlayerBar
+          players={availablePlayers}
+          onRenamePlayer={handleRenamePlayer}
+          teamName={teamName}
+          onTeamNameChange={handleTeamNameChange}
+          onPlayerDragStartFromBar={handlePlayerDragStartFromBar}
+          selectedPlayerIdFromBar={draggingPlayerFromBarInfo?.id}
+          onBarBackgroundClick={handleDeselectPlayer}
         />
-      </main>
 
-      {/* Control Bar (Bottom Bar) - Moved outside main */}
-      <ControlBar
-        onAddOpponent={handleAddOpponent}
-        onClearDrawings={handleClearDrawings}
-        onToggleNames={handleTogglePlayerNames} 
-        showPlayerNames={showPlayerNames} 
-        onUndo={handleUndo}
-        onRedo={handleRedo}
-        canUndo={canUndo}
-        canRedo={canRedo}
-        onResetField={handleResetField} 
-        isTimerRunning={isTimerRunning}
-        onStartPauseTimer={handleStartPauseTimer}
-        onResetTimer={handleResetTimer}
-        timeElapsedInSeconds={timeElapsedInSeconds}
-        showLargeTimerOverlay={showLargeTimerOverlay}
-        onToggleLargeTimerOverlay={handleToggleLargeTimerOverlay}
-        onToggleInstructions={handleToggleInstructions}
-      />
-      {/* Instructions Modal */}
-      <InstructionsModal 
-        isOpen={isInstructionsOpen} 
-        onClose={() => setIsInstructionsOpen(false)} 
-      />
+        {/* Main content area - Should take up space between PlayerBar and ControlBar */}
+        <main className="flex-1 relative overflow-hidden">
+          {showLargeTimerOverlay && (
+            <TimerOverlay 
+                // Pass all required props as defined in TimerOverlayProps
+                timeElapsedInSeconds={timeElapsedInSeconds} 
+                subAlertLevel={subAlertLevel}
+                onSubstitutionMade={handleSubstitutionMade} 
+                completedIntervalDurations={completedIntervalDurations}
+                subIntervalMinutes={subIntervalMinutes}
+                onSetSubInterval={handleSetSubInterval}
+                isTimerRunning={isTimerRunning}
+                onStartPauseTimer={handleStartPauseTimer}
+                onResetTimer={handleResetTimer}
+            />
+          )}
+          <SoccerField
+            players={playersOnField}
+            opponents={opponents}
+            drawings={drawings}
+            showPlayerNames={showPlayerNames}
+            onPlayerDrop={handleDropOnField}
+            onPlayerMove={handlePlayerMove}
+            onPlayerMoveEnd={handlePlayerMoveEnd}
+            onDrawingStart={handleDrawingStart}
+            onDrawingAddPoint={handleDrawingAddPoint}
+            onDrawingEnd={handleDrawingEnd}
+            onPlayerRemove={handlePlayerRemove}
+            onOpponentMove={handleOpponentMove}
+            onOpponentMoveEnd={handleOpponentMoveEnd}
+            onOpponentRemove={handleOpponentRemove}
+            draggingPlayerFromBarInfo={draggingPlayerFromBarInfo}
+            onPlayerDropViaTouch={handlePlayerDropViaTouch}
+            onPlayerDragCancelViaTouch={handlePlayerDragCancelViaTouch}
+          />
+        </main>
+
+        {/* Control Bar (Bottom Bar) - Moved outside main */}
+        <ControlBar
+          onAddOpponent={handleAddOpponent}
+          onClearDrawings={handleClearDrawings}
+          onToggleNames={handleTogglePlayerNames} 
+          showPlayerNames={showPlayerNames} 
+          onUndo={handleUndo}
+          onRedo={handleRedo}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          onResetField={handleResetField} 
+          isTimerRunning={isTimerRunning}
+          onStartPauseTimer={handleStartPauseTimer}
+          onResetTimer={handleResetTimer}
+          timeElapsedInSeconds={timeElapsedInSeconds}
+          showLargeTimerOverlay={showLargeTimerOverlay}
+          onToggleLargeTimerOverlay={handleToggleLargeTimerOverlay}
+          onToggleInstructions={handleToggleInstructions}
+        />
+        {/* Instructions Modal */}
+        <InstructionsModal 
+          isOpen={isInstructionsOpen} 
+          onClose={() => setIsInstructionsOpen(false)} 
+        />
+      </Suspense>
     </div>
   );
 }

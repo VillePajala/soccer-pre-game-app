@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "i18next": "^24.2.3",
+    "i18next-http-backend": "^3.0.2",
     "next": "15.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

@@ -1,29 +1,23 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
+import HttpApi from 'i18next-http-backend';
 
-// We'll load translations from static JSON files later
-// For now, let's define some basic ones directly
-const resources = {
-  en: {
-    translation: {
-      "controlBar.help": "Help",
-      "instructionsModal.title": "How to Use"
-    }
-  },
-  fi: {
-    translation: {
-      "controlBar.help": "Ohje",
-      "instructionsModal.title": "Käyttöohjeet"
-    }
-  }
-};
+// Removed hardcoded resources
+// const resources = { ... };
 
 i18n
+  .use(HttpApi) // Use backend to load translations
   .use(initReactI18next) // passes i18n down to react-i18next
   .init({
-    resources,
+    // Removed 'resources' option
     lng: "en", // default language
     fallbackLng: "en", // use en if detected lng is not available
+    ns: ['common'], // Define namespace(s)
+    defaultNS: 'common',
+
+    backend: {
+      loadPath: '/locales/{{lng}}/{{ns}}.json', // Path to translation files
+    },
 
     interpolation: {
       escapeValue: false // react already safes from xss
