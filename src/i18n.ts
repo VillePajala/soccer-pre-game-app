@@ -12,7 +12,7 @@ if (!i18n.isInitialized) {
     .use(initReactI18next) // passes i18n down to react-i18next
     .init({
       // Removed 'resources' option
-      lng: "en", // default language
+      lng: "fi", // default language
       fallbackLng: "en", // use en if detected lng is not available
       ns: ['common'], // Define namespace(s)
       defaultNS: 'common',
