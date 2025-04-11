@@ -717,18 +717,16 @@ export default function Home() {
     setDraggingPlayerFromBarInfo(null);
   };
 
+  // Render null or a loading indicator until state is loaded
+  if (!isLoaded) {
+    // You might want a more sophisticated loading indicator
+    return <div className="flex items-center justify-center h-screen bg-gray-900 text-white">Loading...</div>;
+  }
+
   return (
     // Main container with flex column layout
     <div className="flex flex-col h-screen bg-gray-900 text-white relative">
-      {/* Fullscreen Toggle Button */}
-      <button
-        onClick={toggleFullScreen}
-        className="absolute top-2 right-2 z-50 bg-gray-700 hover:bg-gray-600 text-white text-xs font-bold py-1 px-2 rounded"
-        aria-label={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
-        title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
-      >
-        {isFullscreen ? 'Exit FS' : 'Full'}
-      </button>
+      {/* REMOVED Fullscreen Toggle Button from here */}
 
       {/* Replace Suspense with a regular div */}
       <div className="flex flex-col h-full">
@@ -798,6 +796,9 @@ export default function Home() {
           showLargeTimerOverlay={showLargeTimerOverlay}
           onToggleLargeTimerOverlay={handleToggleLargeTimerOverlay}
           onToggleInstructions={handleToggleInstructions}
+          // Pass fullscreen state and handler down
+          isFullscreen={isFullscreen}
+          onToggleFullScreen={toggleFullScreen}
         />
         {/* Instructions Modal */}
         <InstructionsModal 
