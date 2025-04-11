@@ -78,8 +78,8 @@ const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, onClose }
             <h3 className="text-lg font-semibold mb-2 text-yellow-300">General</h3>
              <ul className="list-disc list-inside space-y-1 pl-2">
               <li><span className="font-semibold">Touch Interactions:</span> Many actions use double-tap instead of single-click on touch devices to avoid accidental triggers (e.g., renaming, removing from field).</li>
-               <li><span className="font-semibold">Saving:</span> All your changes (players, positions, drawings, names, timer state) are saved automatically in your browser&apos;s local storage.</li>
-               <li><span className="font-semibold">Fullscreen:</span> Use the &apos;Full&apos; button in the top-right corner to toggle fullscreen mode.</li>
+              <li><span className="font-semibold">Saving:</span> All your changes (players, positions, drawings, names, timer state) are saved automatically in your browser&apos;s local storage.</li>
+              <li><span className="font-semibold">Fullscreen:</span> Use the &quot;Full&quot; button in the top-right corner to toggle fullscreen mode.</li>
             </ul>
           </section>
         </div>
