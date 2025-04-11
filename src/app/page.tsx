@@ -7,40 +7,39 @@ import ControlBar from '@/components/ControlBar';
 import TimerOverlay from '@/components/TimerOverlay'; // Import TimerOverlay
 import InstructionsModal from '@/components/InstructionsModal'; // Import InstructionsModal
 
-// Define the Player type
+// Define the Player type - Use relative coordinates
 export interface Player {
   id: string;
   name: string;
-  x?: number; // Optional: X-coordinate on the field
-  y?: number; // Optional: Y-coordinate on the field
+  relX?: number; // Relative X (0.0 to 1.0)
+  relY?: number; // Relative Y (0.0 to 1.0)
   color?: string; // Optional: Specific color for the disk
 }
 
-// Define the Point type for drawing
+// Define the Point type for drawing - Use relative coordinates
 export interface Point {
-  x: number;
-  y: number
+  relX: number; // Relative X (0.0 to 1.0)
+  relY: number; // Relative Y (0.0 to 1.0)
 }
 
-// Define the Opponent type
+// Define the Opponent type - Use relative coordinates
 export interface Opponent {
   id: string;
-  x: number;
-  y: number;
+  relX: number; // Relative X (0.0 to 1.0)
+  relY: number; // Relative Y (0.0 to 1.0)
 }
 
-// Define the shape of our state snapshot for history
+// Define the structure for the application state (for history)
 interface AppState {
   playersOnField: Player[];
   opponents: Opponent[]; 
   drawings: Point[][];
-  availablePlayers: Player[]; 
-  showPlayerNames: boolean; 
-  // Add team name to state snapshot
+  availablePlayers: Player[]; // Available players don't need coordinates
+  showPlayerNames: boolean;
   teamName: string; 
 }
 
-// Placeholder data moved here
+// Placeholder data - No coordinates needed here
 const initialAvailablePlayersData: Player[] = [
   { id: 'p1', name: 'Player 1' },
   { id: 'p2', name: 'Player 2' },
@@ -56,12 +55,12 @@ const initialAvailablePlayersData: Player[] = [
 ];
 
 const initialState: AppState = {
-  playersOnField: [],
-  opponents: [],
+  playersOnField: [], // Start with no players on field
+  opponents: [], // Start with no opponents
   drawings: [],
   availablePlayers: initialAvailablePlayersData,
   showPlayerNames: true,
-  teamName: "My Team", // Initialize team name
+  teamName: "My Team",
 };
 
 // Define localStorage key
@@ -279,146 +278,150 @@ export default function Home() {
   };
 
   // Function to save a new state to history
-  const saveState = useCallback((newState: Partial<AppState>) => {
-    const currentState = history[historyIndex];
-    const nextState: AppState = {
-      playersOnField: newState.playersOnField ?? currentState.playersOnField,
-      opponents: newState.opponents ?? currentState.opponents,
-      drawings: newState.drawings ?? currentState.drawings,
-      availablePlayers: newState.availablePlayers ?? currentState.availablePlayers,
-      showPlayerNames: newState.showPlayerNames ?? currentState.showPlayerNames,
-      teamName: newState.teamName ?? currentState.teamName, // Include team name
-    };
+  const saveState = useCallback((newStateChanges: Partial<AppState>) => {
+    setHistory((prevHistory) => {
+      const newHistory = prevHistory.slice(0, historyIndex + 1);
+      const currentState = newHistory[newHistory.length - 1];
+      const nextState: AppState = { ...currentState, ...newStateChanges };
+      console.log("Saving new state snapshot:", nextState);
+      return [...newHistory, nextState];
+    });
+    setHistoryIndex((prevIndex) => prevIndex + 1);
 
-    if (JSON.stringify(nextState) === JSON.stringify(currentState)) {
-      console.log("State hasn't changed, not saving history.");
-      return;
-    }
+    // Apply the changes to the current state
+    if (newStateChanges.playersOnField !== undefined) setPlayersOnField(newStateChanges.playersOnField);
+    if (newStateChanges.opponents !== undefined) setOpponents(newStateChanges.opponents);
+    if (newStateChanges.drawings !== undefined) setDrawings(newStateChanges.drawings);
+    if (newStateChanges.availablePlayers !== undefined) setAvailablePlayers(newStateChanges.availablePlayers);
+    if (newStateChanges.showPlayerNames !== undefined) setShowPlayerNames(newStateChanges.showPlayerNames);
+    if (newStateChanges.teamName !== undefined) setTeamName(newStateChanges.teamName);
 
-    console.log("Saving new state to history");
-    const newHistory = history.slice(0, historyIndex + 1);
-    newHistory.push(nextState);
-    setHistory(newHistory);
-    setHistoryIndex(newHistory.length - 1);
+  }, [historyIndex]);
 
-    setPlayersOnField(nextState.playersOnField);
-    setOpponents(nextState.opponents);
-    setDrawings(nextState.drawings);
-    setAvailablePlayers(nextState.availablePlayers);
-    setShowPlayerNames(nextState.showPlayerNames);
-    setTeamName(nextState.teamName); // Update team name visual state
-
-  }, [history, historyIndex]);
-
-  // --- Action Handlers (modified to use saveState) ---
-
-  // Called frequently during drag, but saveState is called by onPlayerMoveEnd
-  const handlePlayerMove = (playerId: string, x: number, y: number) => {
-    // Update visual state immediately for smoothness
-    setPlayersOnField((prev) =>
-      prev.map((p) => (p.id === playerId ? { ...p, x, y } : p))
-    );
-  };
-
-  // Called when a drag operation (player move) finishes
-  const handlePlayerMoveEnd = () => {
-    console.log("Player move ended, saving state.");
-    // Save the current visual state (playersOnField) to history
-    // Important: Create a *new* object/array reference for saveState
-    saveState({ playersOnField: [...playersOnField] });
-  };
-
-  // Handles drops from PlayerBar OR completed drag/drop *within* the field
-  const handleDropOnField = (playerId: string, x: number, y: number) => {
+  // --- Player Management Handlers (Updated for relative coords) ---
+  const handleDropOnField = useCallback((playerId: string, relX: number, relY: number) => {
     const playerToAdd = availablePlayers.find(p => p.id === playerId);
-    if (!playerToAdd) {
-      console.error("Dropped player not found in available list:", playerId);
-      return;
-    }
+    if (!playerToAdd) return;
 
-    const playerAlreadyOnField = playersOnField.find(p => p.id === playerId);
-
-    let newPlayersOnField;
-    let newAvailablePlayers;
-
-    if (playerAlreadyOnField) {
-      // Player already on field, just move them
-      newPlayersOnField = playersOnField.map(p =>
-        p.id === playerId ? { ...p, x, y } : p
+    const playerOnFieldIndex = playersOnField.findIndex(p => p.id === playerId);
+    let newPlayersOnField: Player[];
+    if (playerOnFieldIndex !== -1) {
+      // Move existing player
+      newPlayersOnField = playersOnField.map(p => 
+        p.id === playerId ? { ...p, relX, relY } : p // Use relX, relY
       );
-      newAvailablePlayers = availablePlayers; // Available list doesn't change
     } else {
-      // Player is new to the field
-      newPlayersOnField = [
-        ...playersOnField,
-        { ...playerToAdd, x, y }, // Add player with position
-      ];
-      // Remove player from available list
-      newAvailablePlayers = availablePlayers.filter(p => p.id !== playerId);
+      // Add new player
+      newPlayersOnField = [...playersOnField, { ...playerToAdd, relX, relY }]; // Use relX, relY
     }
+    saveState({ playersOnField: newPlayersOnField });
+    setDraggingPlayerFromBarInfo(null);
+  }, [availablePlayers, playersOnField, saveState]);
 
-    saveState({
-      playersOnField: newPlayersOnField,
-      availablePlayers: newAvailablePlayers,
-    });
-  };
+  const handlePlayerMove = useCallback((playerId: string, relX: number, relY: number) => {
+    // Update visual state immediately
+    setPlayersOnField(prevPlayers => 
+      prevPlayers.map(p => 
+        p.id === playerId ? { ...p, relX, relY } : p // Use relX, relY
+      )
+    );
+    // State saved on move end
+  }, []);
 
-  // Drawing handlers: only save state when drawing ends
-  const handleDrawingStart = (point: Point) => {
-    console.log('Drawing started at:', point);
-    // Visually start the line immediately
-    setDrawings((prev) => [...prev, [point]]);
-  };
+  const handlePlayerMoveEnd = useCallback(() => {
+    saveState({ playersOnField });
+  }, [playersOnField, saveState]);
 
-  const handleDrawingAddPoint = (point: Point) => {
-    // Visually update the line immediately
-    setDrawings((prev) => {
-      const currentDrawing = prev[prev.length - 1];
-      const updatedDrawing = [...currentDrawing, point];
-      return [...prev.slice(0, -1), updatedDrawing];
-    });
-  };
-
-  const handleDrawingEnd = () => {
-    console.log('Drawing ended, saving state.');
-    // Ensure a new array reference is passed to saveState
-    saveState({ drawings: drawings.map(path => [...path]) });
-  };
-
-  // --- Handle Removing Player from Field ---
-  const handlePlayerRemove = (playerId: string) => {
-    console.log(`Attempting to remove player ${playerId} from field.`);
-    const playerToRemove = playersOnField.find(p => p.id === playerId);
-
-    if (!playerToRemove) {
-      console.warn(`Player ${playerId} not found on field.`);
-      return;
-    }
-
-    // Create the player object to add back to available (without x, y)
-    const playerToReturn = { id: playerToRemove.id, name: playerToRemove.name };
-
-    // Remove from field
-    const nextPlayersOnField = playersOnField.filter(p => p.id !== playerId);
-
-    // Add back to available and sort
-    const nextAvailablePlayers = [...availablePlayers, playerToReturn];
-    nextAvailablePlayers.sort((a, b) => {
-      const numA = parseInt(a.id.substring(1));
-      const numB = parseInt(b.id.substring(1));
-      return numA - numB;
-    });
-
-    // Update visual state immediately (optional, but can feel smoother)
-    // setPlayersOnField(nextPlayersOnField);
-    // setAvailablePlayers(nextAvailablePlayers);
-
-    // Save the state change
+  const handlePlayerRemove = useCallback((playerId: string) => {
+    const updatedPlayersOnField = playersOnField.filter(p => p.id !== playerId);
+    saveState({ playersOnField: updatedPlayersOnField });
+  }, [playersOnField, saveState]);
+  
+  const handleRenamePlayer = useCallback((playerId: string, newName: string) => {
+    const updatedAvailablePlayers = availablePlayers.map(p => 
+      p.id === playerId ? { ...p, name: newName } : p
+    );
+    // Also update name if player is on field
+    const updatedPlayersOnField = playersOnField.map(p => 
+      p.id === playerId ? { ...p, name: newName } : p
+    );
     saveState({ 
-      playersOnField: nextPlayersOnField, 
-      availablePlayers: nextAvailablePlayers 
+      availablePlayers: updatedAvailablePlayers, 
+      playersOnField: updatedPlayersOnField 
     });
-  };
+  }, [availablePlayers, playersOnField, saveState]);
+
+  // --- Drawing Handlers (Updated for relative coords) ---
+  const handleDrawingStart = useCallback((point: Point) => {
+    saveState({ drawings: [...drawings, [point]] }); // Point already uses relX, relY
+  }, [drawings, saveState]);
+
+  const handleDrawingAddPoint = useCallback((point: Point) => {
+    setDrawings(prevDrawings => {
+      if (prevDrawings.length === 0) return prevDrawings;
+      const currentPath = prevDrawings[prevDrawings.length - 1];
+      const updatedPath = [...currentPath, point]; // Point already uses relX, relY
+      return [...prevDrawings.slice(0, -1), updatedPath];
+    });
+    // Save on end
+  }, []);
+
+  const handleDrawingEnd = useCallback(() => {
+    saveState({ drawings });
+  }, [drawings, saveState]);
+
+  const handleClearDrawings = useCallback(() => {
+    saveState({ drawings: [] });
+  }, [saveState]);
+
+  // --- Opponent Handlers (Updated for relative coords) ---
+  const handleAddOpponent = useCallback(() => {
+    const newOpponentId = `opp-${Math.floor(Math.random() * 1000000)}`;
+    const defaultPosition = { relX: 0.5, relY: 0.5 }; // Center position relative
+    const newOpponent: Opponent = {
+      id: newOpponentId,
+      ...defaultPosition,
+    };
+    saveState({ opponents: [...opponents, newOpponent] });
+  }, [opponents, saveState]);
+
+  const handleOpponentMove = useCallback((opponentId: string, relX: number, relY: number) => {
+    setOpponents(prevOpponents => 
+      prevOpponents.map(opp => 
+        opp.id === opponentId ? { ...opp, relX, relY } : opp // Use relX, relY
+      )
+    );
+    // Save on end
+  }, []);
+
+  const handleOpponentMoveEnd = useCallback((_opponentId: string) => {
+    saveState({ opponents });
+  }, [opponents, saveState]);
+
+  const handleOpponentRemove = useCallback((opponentId: string) => {
+    const updatedOpponents = opponents.filter(opp => opp.id !== opponentId);
+    saveState({ opponents: updatedOpponents });
+  }, [opponents, saveState]);
+
+  // --- Reset Handler (no change needed) ---
+  const handleResetField = useCallback(() => {
+    saveState({ playersOnField: [], opponents: [], drawings: [] });
+  }, [saveState]);
+
+  // --- Touch Drag from Bar Handlers (Updated for relative coords) ---
+  const handlePlayerDragStartFromBar = useCallback((playerInfo: Player) => {
+    setDraggingPlayerFromBarInfo(playerInfo);
+  }, []);
+
+  const handlePlayerDropViaTouch = useCallback((relX: number, relY: number) => {
+    if (draggingPlayerFromBarInfo) {
+      handleDropOnField(draggingPlayerFromBarInfo.id, relX, relY); // Pass relX, relY
+    }
+  }, [draggingPlayerFromBarInfo, handleDropOnField]);
+
+  const handlePlayerDragCancelViaTouch = useCallback(() => {
+    setDraggingPlayerFromBarInfo(null);
+  }, []);
 
   // --- Toggle Player Names Handler ---
   const handleTogglePlayerNames = () => {
@@ -426,30 +429,6 @@ export default function Home() {
     const nextShowNames = !showPlayerNames;
     setShowPlayerNames(nextShowNames);
     saveState({ showPlayerNames: nextShowNames });
-  };
-
-  // --- Rename Player Handler ---
-  const handleRenamePlayer = (playerId: string, newName: string) => {
-    if (!newName.trim()) {
-      console.warn("Player name cannot be empty.");
-      return; // Or revert to old name?
-    }
-    console.log(`Renaming player ${playerId} to ${newName}`);
-    const updatedAvailablePlayers = availablePlayers.map(p =>
-      p.id === playerId ? { ...p, name: newName.trim() } : p
-    );
-    // Also update player on field if they exist there with the same ID
-    const updatedPlayersOnField = playersOnField.map(p => 
-      p.id === playerId ? { ...p, name: newName.trim() } : p
-    );
-
-    setAvailablePlayers(updatedAvailablePlayers); // Update visual state immediately
-    setPlayersOnField(updatedPlayersOnField); // Update field players too
-
-    saveState({ 
-        availablePlayers: updatedAvailablePlayers,
-        playersOnField: updatedPlayersOnField
-    });
   };
 
   // --- Team Name Handler ---
@@ -494,92 +473,6 @@ export default function Home() {
       // Restore timer state if needed here too
     } else {
       console.log("Cannot redo: at end of history");
-    }
-  };
-
-  // --- Reset Field Handler ---
-  const handleResetField = () => {
-    console.log("Resetting field state (robustly)...");
-    const currentState = history[historyIndex];
-
-    // 1. Create a map of current names from both field and available players
-    const currentNames = new Map<string, string>();
-    currentState.availablePlayers.forEach(p => currentNames.set(p.id, p.name));
-    currentState.playersOnField.forEach(p => currentNames.set(p.id, p.name)); // Overwrites if player was on field
-
-    // 2. Start with the initial list of all players (deep copy)
-    const resetAvailablePlayers = JSON.parse(JSON.stringify(initialAvailablePlayersData));
-
-    // 3. Update names in the initial list based on the current names map
-    resetAvailablePlayers.forEach((player: Player) => {
-      if (currentNames.has(player.id)) {
-        player.name = currentNames.get(player.id)!; // Update name if it was changed
-      }
-    });
-
-    // 4. Sort the final list by ID (optional but good for consistency)
-    resetAvailablePlayers.sort((a: Player, b: Player) => {
-        const numA = parseInt(a.id.substring(1));
-        const numB = parseInt(b.id.substring(1));
-        return numA - numB;
-    });
-
-    // 5. Define the reset state
-    const resetState: Partial<AppState> = {
-        playersOnField: [],
-        opponents: [],
-        drawings: [],
-        availablePlayers: resetAvailablePlayers, // Use the rebuilt list
-        showPlayerNames: true, // Reset to default
-        // teamName is omitted, so saveState keeps the current one
-    };
-
-    // 6. Save the new state
-    saveState(resetState);
-  };
-
-  // --- Add Opponent Handler ---
-  const handleAddOpponent = useCallback(() => {
-    // Generate a unique ID without using Date.now() during render
-    const newOpponentId = `opp-${Math.floor(Math.random() * 1000000)}`;
-    const defaultPosition = { x: 100, y: 100 }; // Default placement
-    const newOpponent: Opponent = {
-      id: newOpponentId,
-      ...defaultPosition,
-    };
-    console.log("Adding opponent:", newOpponentId);
-    saveState({ opponents: [...opponents, newOpponent] });
-  }, [opponents, saveState]);
-
-  // --- Opponent Handlers ---
-  const handleOpponentMove = (opponentId: string, x: number, y: number) => {
-    // Update visual state immediately for smoothness
-    setOpponents((prev) =>
-      prev.map((opp) => (opp.id === opponentId ? { ...opp, x, y } : opp))
-    );
-  };
-
-  const handleOpponentMoveEnd = (opponentId: string) => {
-    // Save the current state of opponents to history
-    console.log(`Opponent ${opponentId} move ended, saving state.`);
-    // Important: Create a *new* array reference for saveState
-    saveState({ opponents: [...opponents] });
-  };
-
-  const handleOpponentRemove = (opponentId: string) => {
-    console.log(`Removing opponent ${opponentId}...`);
-    const nextOpponents = opponents.filter(opp => opp.id !== opponentId);
-    saveState({ opponents: nextOpponents });
-  };
-
-  // --- Clear Drawings Handler ---
-  const handleClearDrawings = () => {
-    // Only clear if there are drawings to clear
-    if (drawings.length > 0) {
-      console.log("Clearing drawings...");
-      saveState({ drawings: [] });
-    } else {
-      console.log("No drawings to clear.");
     }
   };
 
@@ -683,39 +576,6 @@ export default function Home() {
 
   const canUndo = historyIndex > 0;
   const canRedo = historyIndex < history.length - 1;
-
-  // Handler for when a touch drag STARTS on a PlayerDisk in the PlayerBar
-  const handlePlayerDragStartFromBar = (player: Player) => {
-    console.log("Touch drag started from bar:", player);
-    // Check if the tapped player is already the selected one
-    if (draggingPlayerFromBarInfo?.id === player.id) {
-      // If yes, deselect the player
-      console.log(`Player ${player.name} deselected by tapping again.`);
-      setDraggingPlayerFromBarInfo(null);
-    } else {
-      // If no, or if no player was selected, select the tapped player
-      console.log(`Player ${player.name} selected.`);
-      setDraggingPlayerFromBarInfo(player);
-    }
-  };
-
-  // Handler for when a touch drag from the bar ENDS successfully on the field
-  const handlePlayerDropViaTouch = (x: number, y: number) => {
-    console.log("Touch drop on field:", draggingPlayerFromBarInfo, x, y);
-    if (draggingPlayerFromBarInfo) {
-      handleDropOnField(draggingPlayerFromBarInfo.id, x, y);
-      // Clear the dragging state AFTER handling the drop
-      setDraggingPlayerFromBarInfo(null);
-    } else {
-      console.warn("handlePlayerDropViaTouch called but no player was being dragged from bar.");
-    }
-  };
-
-  // Handler for when a touch drag from the bar is CANCELED (ends outside field)
-  const handlePlayerDragCancelViaTouch = () => {
-    console.log("Touch drag from bar canceled/ended off-field.");
-    setDraggingPlayerFromBarInfo(null);
-  };
 
   // Render null or a loading indicator until state is loaded
   if (!isLoaded) {

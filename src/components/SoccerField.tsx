@@ -1,72 +1,65 @@
 'use client'; // Need this for client-side interactions like canvas
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Player, Point, Opponent } from '@/app/page'; // Import Opponent type
+import { Player, Point, Opponent } from '@/app/page'; // Import types with relative coords
 
 // Define props for SoccerField
 interface SoccerFieldProps {
   players: Player[];
-  opponents: Opponent[]; // Add opponents prop
-  drawings: Point[][]; // Add drawings prop
-  showPlayerNames: boolean; // Add the visibility prop
-  onPlayerDrop: (playerId: string, x: number, y: number) => void;
-  onPlayerMove: (playerId: string, x: number, y: number) => void;
-  onPlayerMoveEnd: () => void; // Add the move end callback prop
-  onDrawingStart: (point: Point) => void; // Add drawing callbacks
-  onDrawingAddPoint: (point: Point) => void;
+  opponents: Opponent[];
+  drawings: Point[][];
+  showPlayerNames: boolean;
+  onPlayerDrop: (playerId: string, relX: number, relY: number) => void; // Use relative coords
+  onPlayerMove: (playerId: string, relX: number, relY: number) => void; // Use relative coords
+  onPlayerMoveEnd: () => void;
+  onDrawingStart: (point: Point) => void; // Point already uses relative
+  onDrawingAddPoint: (point: Point) => void; // Point already uses relative
   onDrawingEnd: () => void;
-  onPlayerRemove: (playerId: string) => void; // Add the remove handler prop
+  onPlayerRemove: (playerId: string) => void;
   // Opponent handlers
-  onOpponentMove: (opponentId: string, x: number, y: number) => void;
+  onOpponentMove: (opponentId: string, relX: number, relY: number) => void; // Use relative coords
   onOpponentMoveEnd: (opponentId: string) => void;
-  onOpponentRemove: (opponentId: string) => void; // Add opponent remove prop
-  // Add props for handling touch drags from PlayerBar
+  onOpponentRemove: (opponentId: string) => void;
+  // Touch drag props
   draggingPlayerFromBarInfo: Player | null; 
-  onPlayerDropViaTouch: (x: number, y: number) => void;
+  onPlayerDropViaTouch: (relX: number, relY: number) => void; // Use relative coords
   onPlayerDragCancelViaTouch: () => void;
 }
 
-// Define player/opponent radius for hit detection and drawing
-const PLAYER_RADIUS = 20; // Reduced size for smaller appearance on field
-const DOUBLE_TAP_TIME_THRESHOLD = 300; // ms for double tap detection
-const DOUBLE_TAP_POS_THRESHOLD = 15; // pixels for double tap proximity
+// Constants
+const PLAYER_RADIUS = 20;
+const DOUBLE_TAP_TIME_THRESHOLD = 300; // ms
+const DOUBLE_TAP_POS_THRESHOLD = 15; // pixels
 
 const SoccerField: React.FC<SoccerFieldProps> = ({
   players,
-  opponents, // Destructure opponents prop
-  drawings, // Destructure new props
-  showPlayerNames, // Destructure the new prop
+  opponents,
+  drawings,
+  showPlayerNames,
   onPlayerDrop,
   onPlayerMove,
-  onPlayerMoveEnd, // Destructure the new prop
+  onPlayerMoveEnd,
   onDrawingStart,
   onDrawingAddPoint,
   onDrawingEnd,
-  onPlayerRemove, // Destructure the remove handler
-  // Opponent handlers
+  onPlayerRemove,
   onOpponentMove,
   onOpponentMoveEnd,
-  onOpponentRemove, // Destructure opponent remove handler
-  // Destructure touch drag props
+  onOpponentRemove,
   draggingPlayerFromBarInfo, 
   onPlayerDropViaTouch,
   onPlayerDragCancelViaTouch,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  // Player Dragging State
   const [isDraggingPlayer, setIsDraggingPlayer] = useState<boolean>(false);
   const [draggingPlayerId, setDraggingPlayerId] = useState<string | null>(null);
-  // Opponent Dragging State
   const [isDraggingOpponent, setIsDraggingOpponent] = useState<boolean>(false);
   const [draggingOpponentId, setDraggingOpponentId] = useState<string | null>(null);
-  // Drawing State
-  const [isDrawing, setIsDrawing] = useState<boolean>(false); // State for drawing mode
-  const [activeTouchId, setActiveTouchId] = useState<number | null>(null); // Track the primary touch for drawing/dragging
-  // Double Tap State
+  const [isDrawing, setIsDrawing] = useState<boolean>(false);
+  const [activeTouchId, setActiveTouchId] = useState<number | null>(null);
   const [lastTapInfo, setLastTapInfo] = useState<{ time: number; x: number; y: number; targetId: string | null; targetType: 'player' | 'opponent' | null } | null>(null);
 
-  // --- Drawing Logic wrapped in useCallback ---
-  // Dependencies: Need to list everything used inside draw that comes from props or state
+  // --- Drawing Logic ---
   const draw = useCallback(() => { 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -78,15 +71,21 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
       canvas.width = parent.clientWidth;
       canvas.height = parent.clientHeight;
     }
-
-    context.fillStyle = '#059669'; // Use Tailwind Emerald 600
-    context.fillRect(0, 0, canvas.width, canvas.height);
-
-    // --- Draw Field Lines --- 
-    context.strokeStyle = 'rgba(255, 255, 255, 0.6)'; // Lower opacity
-    context.lineWidth = 2; // Slightly thicker than before
     const W = canvas.width;
     const H = canvas.height;
+
+    // *** SAFETY CHECK: Ensure canvas dimensions are valid ***
+    if (W <= 0 || H <= 0 || !Number.isFinite(W) || !Number.isFinite(H)) {
+      console.warn("Canvas dimensions are invalid, skipping draw:", { W, H });
+      return; 
+    }
+
+    // --- Clear and Draw Background/Field Lines --- 
+    context.fillStyle = '#059669'; 
+    context.fillRect(0, 0, W, H);
+    // ... (rest of field line drawing code - safe as it uses W/H directly) ...
+    context.strokeStyle = 'rgba(255, 255, 255, 0.6)'; // Lower opacity
+    context.lineWidth = 2; // Slightly thicker than before
     const lineMargin = 5; 
     const centerRadius = Math.min(W, H) * 0.08;
     const penaltyBoxWidth = W * 0.6;
@@ -115,7 +114,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     context.beginPath(); // Path for rectangle
     const topPenaltyX = (W - penaltyBoxWidth) / 2;
     context.rect(topPenaltyX, lineMargin, penaltyBoxWidth, penaltyBoxHeight); // Define rect path
-    context.stroke(); // Stroke JUST the rectangle
+    context.stroke();
     context.beginPath(); // Start NEW path for the arc
     context.arc(W / 2, lineMargin + penaltyBoxHeight, centerRadius * 0.8, 0, Math.PI, false);
     context.stroke(); // Stroke JUST the arc
@@ -171,95 +170,127 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     context.fill();
     // --- End Field Lines ---
 
-    // Draw user drawings
-    context.strokeStyle = '#FB923C'; // Orange 400 for user drawings
-    context.lineWidth = 3; 
+    // --- Draw User Drawings --- Convert relative points to absolute
+    context.strokeStyle = '#FB923C'; // Orange 400
+    context.lineWidth = 3;
     context.lineCap = 'round';
     context.lineJoin = 'round';
     drawings.forEach(path => {
-      if (path.length < 2) return; // Need at least 2 points for a line
+      if (path.length < 2) return;
+      
+      // Check first point validity
+      const startX = path[0].relX * W;
+      const startY = path[0].relY * H;
+      if (!Number.isFinite(startX) || !Number.isFinite(startY)) {
+        console.warn("Skipping drawing path due to non-finite start point", path[0]);
+        return; // Skip this whole path
+      }
+
       context.beginPath();
-      context.moveTo(path[0].x, path[0].y);
+      context.moveTo(startX, startY);
+      
       for (let i = 1; i < path.length; i++) {
-        context.lineTo(path[i].x, path[i].y);
+        const pointX = path[i].relX * W;
+        const pointY = path[i].relY * H;
+        // Check subsequent point validity
+        if (!Number.isFinite(pointX) || !Number.isFinite(pointY)) {
+          console.warn("Skipping drawing segment due to non-finite point", path[i]);
+          // Stop drawing this path segment, but stroke what we have so far
+          context.stroke(); 
+          context.beginPath(); // Start new path if needed for next valid points
+          context.moveTo(pointX, pointY); // Try moving to the next potential point
+          continue; // Skip to next point in this path
+        }
+        context.lineTo(pointX, pointY);
       }
       context.stroke();
     });
 
-    // Draw opponents 
-    context.lineWidth = 1.5; // Keep border thin
+    // --- Draw Opponents --- Convert relative positions to absolute
+    context.lineWidth = 1.5;
     opponents.forEach(opponent => {
+      // *** SAFETY CHECK: Ensure relative coordinates are valid numbers ***
+      if (typeof opponent.relX !== 'number' || typeof opponent.relY !== 'number') {
+        console.warn("Skipping opponent due to invalid relX/relY", opponent);
+        return; // Skip this opponent
+      }
+      const absX = opponent.relX * W;
+      const absY = opponent.relY * H;
+      // *** SAFETY CHECK: Ensure calculated absolute coordinates are finite ***
+      if (!Number.isFinite(absX) || !Number.isFinite(absY)) {
+        console.warn("Skipping opponent due to non-finite calculated position", { opponent, absX, absY });
+        return; // Skip this opponent
+      }
+
       context.beginPath();
-      context.arc(opponent.x, opponent.y, PLAYER_RADIUS * 0.9, 0, Math.PI * 2);
-      context.save(); // Save context state before applying shadow/gradient
-      // Inner Shadow
+      context.arc(absX, absY, PLAYER_RADIUS * 0.9, 0, Math.PI * 2);
+      context.save();
       context.shadowColor = 'rgba(0, 0, 0, 0.5)';
       context.shadowBlur = 5;
       context.shadowOffsetX = 1;
       context.shadowOffsetY = 2;
-      // Radial Gradient Fill
-      const gradientOpp = context.createRadialGradient(opponent.x - 3, opponent.y - 3, 1, opponent.x, opponent.y, PLAYER_RADIUS * 0.9);
-      gradientOpp.addColorStop(0, '#F87171'); // Lighter red center (red-400)
-      gradientOpp.addColorStop(1, '#DC2626'); // Darker red edge (red-600)
+      const gradientOpp = context.createRadialGradient(absX - 3, absY - 3, 1, absX, absY, PLAYER_RADIUS * 0.9);
+      gradientOpp.addColorStop(0, '#F87171');
+      gradientOpp.addColorStop(1, '#DC2626');
       context.fillStyle = gradientOpp;
       context.fill();
-      context.restore(); // Restore context (removes shadow for stroke)
-      // Stroke (border)
-      context.strokeStyle = '#B91C1C'; // Even darker red border (red-700)
+      context.restore();
+      context.strokeStyle = '#B91C1C';
       context.stroke();
     });
 
-    // Draw players 
-    // context.lineWidth = 1.5; // No border needed now
+    // --- Draw Players --- Convert relative positions to absolute
     players.forEach(player => {
-      if (player.x !== undefined && player.y !== undefined) {
-        context.beginPath();
-        context.arc(player.x, player.y, PLAYER_RADIUS, 0, Math.PI * 2);
-        context.save(); // Save context state
-        // Inner Shadow (same as opponent)
-        context.shadowColor = 'rgba(0, 0, 0, 0.5)';
-        context.shadowBlur = 5;
-        context.shadowOffsetX = 1;
-        context.shadowOffsetY = 2;
-        // Use flat color matching PlayerDisk default
-        context.fillStyle = player.color || '#7E22CE'; // CHANGED default from #3B82F6 (blue-500) to #7E22CE (purple-700)
-        context.fill();
-        context.restore(); // Restore context (removes shadow)
-        // Stroke (border) - RE-ADD for consistent look with shadow
-        context.strokeStyle = '#581C87'; // CHANGED from #1E40AF (blue-800) to #581C87 (purple-900)
-        context.lineWidth = 1.5; 
-        context.stroke();
+      // *** SAFETY CHECK: Ensure relative coordinates are valid numbers and exist ***
+      if (typeof player.relX !== 'number' || typeof player.relY !== 'number') {
+        // This check is important because relX/relY are optional on Player type
+        // We only draw players that have been placed (i.e., have coordinates)
+        // console.log("Skipping player without coordinates:", player.name); // Optional log
+        return; // Skip this player if they don't have coords
+      }
+      const absX = player.relX * W;
+      const absY = player.relY * H;
+      // *** SAFETY CHECK: Ensure calculated absolute coordinates are finite ***
+      if (!Number.isFinite(absX) || !Number.isFinite(absY)) {
+        console.warn("Skipping player due to non-finite calculated position", { player, absX, absY });
+        return; // Skip this player
+      }
 
-        // Draw name if toggled on
-        if (showPlayerNames) {
-          context.fillStyle = '#FDE047'; // CHANGED from #FACC15 (yellow-400) to #FDE047 (yellow-300)
-          // context.strokeStyle = 'rgba(0,0,0,0.7)'; // Remove outline
-          // context.lineWidth = 2.5; 
-          context.font = '600 11px Inter, sans-serif'; // Match font-semibold, size, and family 
-          context.textAlign = 'center';
-          context.textBaseline = 'middle';
-          // context.strokeText(player.name, player.x, player.y); // Remove outline
-          context.fillText(player.name, player.x, player.y); // Fill only
-        }
+      context.beginPath();
+      context.arc(absX, absY, PLAYER_RADIUS, 0, Math.PI * 2);
+      context.save();
+      context.shadowColor = 'rgba(0, 0, 0, 0.5)';
+      context.shadowBlur = 5;
+      context.shadowOffsetX = 1;
+      context.shadowOffsetY = 2;
+      context.fillStyle = player.color || '#7E22CE';
+      context.fill();
+      context.restore();
+      context.strokeStyle = '#581C87';
+      context.lineWidth = 1.5;
+      context.stroke();
+
+      if (showPlayerNames) {
+        context.fillStyle = '#FDE047';
+        context.font = '600 11px Inter, sans-serif';
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        context.fillText(player.name, absX, absY);
       }
     });
-  // List dependencies for useCallback: props used inside draw
-  }, [players, opponents, drawings, showPlayerNames]); 
+  }, [players, opponents, drawings, showPlayerNames]);
 
-  // Redraw canvas whenever relevant props change
-  // REMOVED: eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    draw(); // Now depends on the memoized draw function
-  // Add draw itself as a dependency
-  }, [draw]); 
+    draw();
+  }, [draw]);
 
-  // --- Event Handlers ---
+  // --- Event Handlers --- 
 
-  // Unified function to get position from Mouse or Touch events
-  const getEventPosition = (
+  // Unified function to get relative position from events
+  const getRelativeEventPosition = (
     e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>,
     specificTouchId?: number | null
-  ): { x: number; y: number } | null => {
+  ): Point | null => {
     const canvas = canvasRef.current;
     if (!canvas) return null;
     const rect = canvas.getBoundingClientRect();
@@ -267,135 +298,141 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     let clientX: number;
     let clientY: number;
 
-    if ('touches' in e) { // Touch event
+    if ('touches' in e) {
       let touch: React.Touch | null = null;
       if (specificTouchId !== undefined && specificTouchId !== null) {
-        // Find the specific touch if an ID is provided (for move/end)
         for (let i = 0; i < e.changedTouches.length; i++) {
           if (e.changedTouches[i].identifier === specificTouchId) {
-            touch = e.changedTouches[i];
-            break;
+            touch = e.changedTouches[i]; break;
           }
         }
-        // Fallback for move events if not in changedTouches (less common but possible)
         if (!touch) {
              for (let i = 0; i < e.touches.length; i++) {
                 if (e.touches[i].identifier === specificTouchId) {
-                    touch = e.touches[i];
-                    break;
+                    touch = e.touches[i]; break;
                 }
             }
         }
       } else {
-        // Use the first touch if no specific ID (for start)
         touch = e.touches[0];
       }
-
-      if (!touch) return null; // No relevant touch found
+      if (!touch) return null;
       clientX = touch.clientX;
       clientY = touch.clientY;
-    } else { // Mouse event
+    } else {
       clientX = e.clientX;
       clientY = e.clientY;
     }
 
+    const absX = clientX - rect.left;
+    const absY = clientY - rect.top;
+
+    // Calculate relative position
+    const relX = absX / canvas.width;
+    const relY = absY / canvas.height;
+
+    // Clamp values between 0 and 1 to handle edge cases
     return {
-      x: clientX - rect.left,
-      y: clientY - rect.top,
+      relX: Math.max(0, Math.min(1, relX)),
+      relY: Math.max(0, Math.min(1, relY)),
     };
   };
 
-  const isPointInPlayer = (x: number, y: number, player: Player): boolean => {
-    if (player.x === undefined || player.y === undefined) return false;
-    const dx = x - player.x;
-    const dy = y - player.y;
+  // --- Hit Detection Helpers (need absolute coords) ---
+  const isPointInPlayer = (absEventX: number, absEventY: number, player: Player): boolean => {
+    if (player.relX === undefined || player.relY === undefined || !canvasRef.current) return false;
+    const canvas = canvasRef.current;
+    const absPlayerX = player.relX * canvas.width;
+    const absPlayerY = player.relY * canvas.height;
+    const dx = absEventX - absPlayerX;
+    const dy = absEventY - absPlayerY;
     return dx * dx + dy * dy <= PLAYER_RADIUS * PLAYER_RADIUS;
   };
 
-  // Helper for opponent hit detection (slightly smaller radius)
-  const isPointInOpponent = (x: number, y: number, opponent: Opponent): boolean => {
-    const dx = x - opponent.x;
-    const dy = y - opponent.y;
+  const isPointInOpponent = (absEventX: number, absEventY: number, opponent: Opponent): boolean => {
+    if (!canvasRef.current) return false;
+    const canvas = canvasRef.current;
+    const absOpponentX = opponent.relX * canvas.width;
+    const absOpponentY = opponent.relY * canvas.height;
+    const dx = absEventX - absOpponentX;
+    const dy = absEventY - absOpponentY;
     return dx * dx + dy * dy <= (PLAYER_RADIUS * 0.9) * (PLAYER_RADIUS * 0.9);
   };
 
+  // --- Mouse Handlers (Updated to use relative positions) ---
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    // Allow only left clicks (button 0)
     if (e.button !== 0) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-    const pos = getEventPosition(e);
-    if (!pos) return;
+    const relPos = getRelativeEventPosition(e);
+    if (!relPos) return;
+    const absPos = { x: relPos.relX * canvas.width, y: relPos.relY * canvas.height }; // Get abs pos for hit detect
 
-    // Check for double-click removal first
-    if (e.detail === 2) { // Standard double-click detection
+    // Double-click check
+    if (e.detail === 2) {
       for (const player of players) {
-        if (player.x && player.y && isPointInPlayer(pos.x, pos.y, player)) {
+        if (isPointInPlayer(absPos.x, absPos.y, player)) {
           onPlayerRemove(player.id);
-          return; // Prevent starting a drag on double-click remove
+          return;
         }
       }
       for (const opponent of opponents) {
-        if (isPointInOpponent(pos.x, pos.y, opponent)) {
+        if (isPointInOpponent(absPos.x, absPos.y, opponent)) {
           onOpponentRemove(opponent.id);
-          return; // Prevent starting a drag on double-click remove
+          return;
         }
       }
     }
 
-    // Check if dragging a player
+    // Drag check
     for (const player of players) {
-      if (player.x && player.y && isPointInPlayer(pos.x, pos.y, player)) {
+      if (isPointInPlayer(absPos.x, absPos.y, player)) {
         setIsDraggingPlayer(true);
         setDraggingPlayerId(player.id);
         if (canvasRef.current) canvasRef.current.style.cursor = 'grabbing';
-        return; // Found player to drag, exit
+        return;
       }
     }
-
-    // Check if dragging an opponent
     for (const opponent of opponents) {
-        if (isPointInOpponent(pos.x, pos.y, opponent)) {
+        if (isPointInOpponent(absPos.x, absPos.y, opponent)) {
             setIsDraggingOpponent(true);
             setDraggingOpponentId(opponent.id);
             if (canvasRef.current) canvasRef.current.style.cursor = 'grabbing';
-            return; // Found opponent to drag, exit
+            return;
         }
     }
 
-    // If not dragging, start drawing
+    // Start drawing
     setIsDrawing(true);
-    onDrawingStart(pos);
+    onDrawingStart(relPos); // Pass relative pos
     if (canvasRef.current) canvasRef.current.style.cursor = 'crosshair';
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const pos = getEventPosition(e);
-    if (!pos) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const relPos = getRelativeEventPosition(e);
+    if (!relPos) return;
+    const absPos = { x: relPos.relX * canvas.width, y: relPos.relY * canvas.height };
 
     if (isDraggingPlayer && draggingPlayerId) {
-      onPlayerMove(draggingPlayerId, pos.x, pos.y);
+      onPlayerMove(draggingPlayerId, relPos.relX, relPos.relY); // Pass relative
     } else if (isDraggingOpponent && draggingOpponentId) {
-      onOpponentMove(draggingOpponentId, pos.x, pos.y);
+      onOpponentMove(draggingOpponentId, relPos.relX, relPos.relY); // Pass relative
     } else if (isDrawing) {
-      onDrawingAddPoint(pos);
+      onDrawingAddPoint(relPos); // Pass relative
     } else {
-      // Change cursor to grab on hover over draggable items
+      // Hover check
       let hovering = false;
       for (const player of players) {
-        if (player.x && player.y && isPointInPlayer(pos.x, pos.y, player)) {
-          hovering = true;
-          break;
-        }
+        if (isPointInPlayer(absPos.x, absPos.y, player)) { hovering = true; break; }
       }
       if (!hovering) {
           for (const opponent of opponents) {
-              if (isPointInOpponent(pos.x, pos.y, opponent)) {
-                  hovering = true;
-                  break;
-              }
+              if (isPointInOpponent(absPos.x, absPos.y, opponent)) { hovering = true; break; }
           }
       }
-
       if (canvasRef.current) {
         canvasRef.current.style.cursor = hovering ? 'grab' : 'default';
       }
@@ -404,27 +441,10 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
 
   const handleMouseUp = () => {
     if (isDraggingPlayer) {
-      onPlayerMoveEnd(); // Call the end handler
-      setIsDraggingPlayer(false);
-      setDraggingPlayerId(null);
-    } else if (isDraggingOpponent && draggingOpponentId) { // Check opponent state
-        onOpponentMoveEnd(draggingOpponentId); // Call opponent end handler
-        setIsDraggingOpponent(false);
-        setDraggingOpponentId(null);
-    } else if (isDrawing) {
-      onDrawingEnd();
-      setIsDrawing(false);
-    }
-    if (canvasRef.current) canvasRef.current.style.cursor = 'default';
-  };
-
-  const handleMouseLeave = () => {
-    // If dragging or drawing stops when mouse leaves canvas
-    if (isDraggingPlayer) {
       onPlayerMoveEnd();
       setIsDraggingPlayer(false);
       setDraggingPlayerId(null);
-    } else if (isDraggingOpponent && draggingOpponentId) { // Check opponent state
+    } else if (isDraggingOpponent && draggingOpponentId) {
         onOpponentMoveEnd(draggingOpponentId);
         setIsDraggingOpponent(false);
         setDraggingOpponentId(null);
@@ -435,30 +455,28 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     if (canvasRef.current) canvasRef.current.style.cursor = 'default';
   };
 
-  // --- Touch Handlers ---
+  const handleMouseLeave = () => {
+    handleMouseUp(); // Treat leave same as mouse up
+  };
 
+  // --- Touch Handlers (Updated to use relative positions) ---
   const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
-    // Prevent mouse event emulation
-    // e.preventDefault(); // Still maybe problematic
-
-    if (e.touches.length > 1) return; // Ignore multi-touch gestures for now
+    if (e.touches.length > 1) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
     const touch = e.touches[0];
     const touchId = touch.identifier;
-    // Set the active touch ID immediately, needed for drop detection even if we don't drag/draw on canvas
-    setActiveTouchId(touchId); 
+    setActiveTouchId(touchId);
 
-    const pos = getEventPosition(e, touchId);
-    if (!pos) {
-        setActiveTouchId(null); // Clear if position is invalid
+    const relPos = getRelativeEventPosition(e, touchId);
+    if (!relPos) {
+        setActiveTouchId(null);
         return;
     }
+    const absPos = { x: relPos.relX * canvas.width, y: relPos.relY * canvas.height }; // For hit detect
 
-    // If a drag from the bar is in progress, don't initiate any *new* actions on the canvas itself (drag/draw/double-tap check).
-    // Just track the touch ID so onTouchEnd can handle the drop.
     if (draggingPlayerFromBarInfo) { 
-        console.log("TouchStart on Field detected while dragging from bar. Allowing drop on TouchEnd.");
-        // Prevent default scrolling while user is dragging *potentially* onto the canvas
         e.preventDefault(); 
         return; 
     }
@@ -467,212 +485,137 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     let tappedTargetId: string | null = null;
     let tappedTargetType: 'player' | 'opponent' | null = null;
 
-    // Check for tap on player
+    // Find tapped target
     for (const player of players) {
-      if (player.x && player.y && isPointInPlayer(pos.x, pos.y, player)) {
-        tappedTargetId = player.id;
-        tappedTargetType = 'player';
-        break;
+      if (isPointInPlayer(absPos.x, absPos.y, player)) {
+        tappedTargetId = player.id; tappedTargetType = 'player'; break;
       }
     }
-
-    // Check for tap on opponent if no player found
     if (!tappedTargetId) {
         for (const opponent of opponents) {
-            if (isPointInOpponent(pos.x, pos.y, opponent)) {
-                tappedTargetId = opponent.id;
-                tappedTargetType = 'opponent';
-                break;
+            if (isPointInOpponent(absPos.x, absPos.y, opponent)) {
+                tappedTargetId = opponent.id; tappedTargetType = 'opponent'; break;
             }
         }
     }
 
-    // Double Tap Logic
+    // Double Tap Logic (uses absPos for distance check)
     if (lastTapInfo && tappedTargetId && lastTapInfo.targetId === tappedTargetId && lastTapInfo.targetType === tappedTargetType) {
       const timeDiff = now - lastTapInfo.time;
-      const distDiff = Math.sqrt(Math.pow(pos.x - lastTapInfo.x, 2) + Math.pow(pos.y - lastTapInfo.y, 2));
-
+      const distDiff = Math.sqrt(Math.pow(absPos.x - lastTapInfo.x, 2) + Math.pow(absPos.y - lastTapInfo.y, 2));
       if (timeDiff < DOUBLE_TAP_TIME_THRESHOLD && distDiff < DOUBLE_TAP_POS_THRESHOLD) {
-        // Double tap detected!
-        if (tappedTargetType === 'player') {
-            onPlayerRemove(tappedTargetId);
-        } else if (tappedTargetType === 'opponent') {
-            onOpponentRemove(tappedTargetId);
-        }
-        setLastTapInfo(null); // Reset tap info
-        setActiveTouchId(null); // Ensure no drag starts
-        e.preventDefault(); // Prevent initiating drag/draw after remove
-        return;
+        if (tappedTargetType === 'player') onPlayerRemove(tappedTargetId);
+        else if (tappedTargetType === 'opponent') onOpponentRemove(tappedTargetId);
+        setLastTapInfo(null); setActiveTouchId(null); e.preventDefault(); return;
       }
     }
+    // Store tap info (using absolute position for distance check later)
+    setLastTapInfo({ time: now, x: absPos.x, y: absPos.y, targetId: tappedTargetId, targetType: tappedTargetType });
 
-    // Store tap info for potential double tap next time
-    setLastTapInfo({ time: now, x: pos.x, y: pos.y, targetId: tappedTargetId, targetType: tappedTargetType });
-
-
-    // --- Start Dragging or Drawing ---
+    // Start Dragging or Drawing (using relative pos for callbacks)
     if (tappedTargetType === 'player' && tappedTargetId) {
-        setIsDraggingPlayer(true);
-        setDraggingPlayerId(tappedTargetId);
-        setActiveTouchId(touchId);
-        e.preventDefault(); // Prevent scroll/drag start when grabbing player
+        setIsDraggingPlayer(true); setDraggingPlayerId(tappedTargetId); e.preventDefault();
     } else if (tappedTargetType === 'opponent' && tappedTargetId) {
-        setIsDraggingOpponent(true);
-        setDraggingOpponentId(tappedTargetId);
-        setActiveTouchId(touchId);
-        e.preventDefault(); // Prevent scroll/drag start when grabbing opponent
+        setIsDraggingOpponent(true); setDraggingOpponentId(tappedTargetId); e.preventDefault();
     } else {
-        // If not hitting a player or opponent, start drawing
         if (!draggingPlayerFromBarInfo) {
-            setIsDrawing(true);
-            onDrawingStart(pos);
-            setActiveTouchId(touchId);
-            e.preventDefault(); // Prevent scroll/drag start when drawing
+            setIsDrawing(true); onDrawingStart(relPos); e.preventDefault();
         }
     }
   };
 
-
   const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
-    if (activeTouchId === null) return; // Only track the finger that started the action
+    if (activeTouchId === null) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-    // *** Crucially prevent page scrolling during canvas interaction ***
     if (isDraggingPlayer || isDraggingOpponent || isDrawing) {
         e.preventDefault();
     }
 
-    const pos = getEventPosition(e, activeTouchId);
-    if (!pos) return;
+    const relPos = getRelativeEventPosition(e, activeTouchId);
+    if (!relPos) return;
 
     if (isDraggingPlayer && draggingPlayerId) {
-      onPlayerMove(draggingPlayerId, pos.x, pos.y);
+      onPlayerMove(draggingPlayerId, relPos.relX, relPos.relY); // Pass relative
     } else if (isDraggingOpponent && draggingOpponentId) {
-      onOpponentMove(draggingOpponentId, pos.x, pos.y);
+      onOpponentMove(draggingOpponentId, relPos.relX, relPos.relY); // Pass relative
     } else if (isDrawing) {
-      onDrawingAddPoint(pos);
+      onDrawingAddPoint(relPos); // Pass relative
     }
   };
 
-  const handleTouchEndOrCancel = (e: React.TouchEvent<HTMLCanvasElement>) => {
-    // If we are dragging a player *from the bar*, handle the drop/cancel
+  const handleTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => {
     if (draggingPlayerFromBarInfo && activeTouchId !== null) {
-        // Find the specific touch that ended/cancelled
         let relevantTouch: React.Touch | null = null;
         for (let i = 0; i < e.changedTouches.length; i++) {
-            if (e.changedTouches[i].identifier === activeTouchId) {
-                relevantTouch = e.changedTouches[i];
-                break;
-            }
+            if (e.changedTouches[i].identifier === activeTouchId) { relevantTouch = e.changedTouches[i]; break; }
         }
-
         if (relevantTouch) {
-            const pos = getEventPosition(e, activeTouchId); // Get final position
-
-            // Check if the touch ended *within* the canvas bounds
-            // Note: getEventPosition returns null if touch is outside canvas, but let's be explicit
+            const relPos = getRelativeEventPosition(e, activeTouchId); // Get final relative position
             const canvas = canvasRef.current;
             let droppedOnCanvas = false;
-            if (pos && canvas) {
+            if (relPos && canvas) {
                 const rect = canvas.getBoundingClientRect();
-                // Use clientX/Y from the touch event directly for bounds check relative to viewport
-                if ( relevantTouch.clientX >= rect.left &&
-                     relevantTouch.clientX <= rect.right &&
-                     relevantTouch.clientY >= rect.top &&
-                     relevantTouch.clientY <= rect.bottom ) 
+                if ( relevantTouch.clientX >= rect.left && relevantTouch.clientX <= rect.right &&
+                     relevantTouch.clientY >= rect.top && relevantTouch.clientY <= rect.bottom ) 
                 {
                      droppedOnCanvas = true;
                 }
             }
-
-            if (e.type === 'touchend' && droppedOnCanvas && pos) {
-                console.log("Touch ended on canvas while dragging from bar", pos);
-                onPlayerDropViaTouch(pos.x, pos.y);
+            if (e.type === 'touchend' && droppedOnCanvas && relPos) {
+                onPlayerDropViaTouch(relPos.relX, relPos.relY); // Pass relative coords
             } else {
-                // If touch cancelled, ended outside canvas, or pos was invalid
-                console.log("Touch cancelled or ended off-canvas while dragging from bar");
                 onPlayerDragCancelViaTouch();
             }
-
-            // Clear touch ID and return, as this touch event is handled.
-            setActiveTouchId(null);
-            // Reset lastTapInfo to prevent accidental double-tap triggers after drag-drop
-            setLastTapInfo(null); 
+            setActiveTouchId(null); setLastTapInfo(null); 
             return; 
         }
-        // If the ending touch wasn't the one we tracked for the bar-drag, 
-        // fall through to potentially handle other touch end logic, though unlikely.
     }
 
-    // --- Original logic for ending drags/draws initiated *on* the canvas ---
+    // Original logic for ending on-canvas actions
     if (activeTouchId === null) return;
-
-    // Check if the ending touch matches the tracked touch for on-canvas actions
     let touchEnded = false;
     for (let i = 0; i < e.changedTouches.length; i++) {
-        if (e.changedTouches[i].identifier === activeTouchId) {
-            touchEnded = true;
-            break;
-        }
+        if (e.changedTouches[i].identifier === activeTouchId) { touchEnded = true; break; }
     }
+    if (!touchEnded) return;
 
-    if (!touchEnded) return; // This end/cancel event doesn't correspond to our active touch
+    if (isDraggingPlayer) { onPlayerMoveEnd(); setIsDraggingPlayer(false); setDraggingPlayerId(null); }
+    else if (isDraggingOpponent && draggingOpponentId) { onOpponentMoveEnd(draggingOpponentId); setIsDraggingOpponent(false); setDraggingOpponentId(null); }
+    else if (isDrawing) { onDrawingEnd(); setIsDrawing(false); }
 
-
-    // Reset states based on what action was active
-    if (isDraggingPlayer) {
-      onPlayerMoveEnd();
-      setIsDraggingPlayer(false);
-      setDraggingPlayerId(null);
-    } else if (isDraggingOpponent && draggingOpponentId) {
-      onOpponentMoveEnd(draggingOpponentId);
-      setIsDraggingOpponent(false);
-      setDraggingOpponentId(null);
-    } else if (isDrawing) {
-      onDrawingEnd();
-      setIsDrawing(false);
-    }
-
-    // Always clear the active touch ID
     setActiveTouchId(null);
-
-    // We don't reset lastTapInfo here, it's reset on successful double tap or overwritten by the next tap.
   };
+  const handleTouchCancel = handleTouchEnd; // Treat cancel same as end
 
-  // --- HTML Drag and Drop Handlers (for PlayerBar drops) ---
+  // --- HTML Drag and Drop Handlers (Updated for relative coords) ---
   const handleDragOver = (e: React.DragEvent<HTMLCanvasElement>) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
   };
 
   const handleDrop = (e: React.DragEvent<HTMLCanvasElement>) => {
-    e.preventDefault(); // Prevent default browser behavior
-    const data = e.dataTransfer.getData('application/reactflow'); // Or your custom data type
-
-    // Basic check if data exists
-    if (!data) {
-      console.error("No data transferred on drop");
-      return;
-    }
-
+    e.preventDefault();
+    const data = e.dataTransfer.getData('application/json'); // Use json MIME type
+    if (!data) return;
     let droppedPlayerId: string;
     try {
         const parsedData = JSON.parse(data);
-        droppedPlayerId = parsedData.id; // Assuming your data has an 'id'
-        if (!droppedPlayerId) throw new Error("ID missing in dropped data");
-    } catch (error) {
-        console.error("Failed to parse dropped data:", error, "Raw data:", data);
-        return; // Stop if data is invalid
-    }
-
+        droppedPlayerId = parsedData.id;
+        if (!droppedPlayerId) throw new Error("ID missing");
+    } catch (error) { console.error("Drop data error:", error); return; }
 
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const absX = e.clientX - rect.left;
+    const absY = e.clientY - rect.top;
+    const relX = Math.max(0, Math.min(1, absX / canvas.width));
+    const relY = Math.max(0, Math.min(1, absY / canvas.height));
 
-    onPlayerDrop(droppedPlayerId, x, y); // Call the callback prop
-    if (canvasRef.current) canvasRef.current.style.cursor = 'default'; // Reset cursor after drop
+    onPlayerDrop(droppedPlayerId, relX, relY); // Pass relative coords
+    if (canvasRef.current) canvasRef.current.style.cursor = 'default';
   };
 
   return (
@@ -686,8 +629,8 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
         onMouseLeave={handleMouseLeave}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}  
-        onTouchEnd={handleTouchEndOrCancel}
-        onTouchCancel={handleTouchEndOrCancel}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchCancel}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
       />
