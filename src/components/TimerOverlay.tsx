@@ -38,28 +38,12 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
   const { t } = useTranslation(); // Initialize translation hook
 
   // Determine text color based on alert status
-  let timerTextColor = 'text-slate-100'; // Base text color
+  let textColor = 'text-slate-100'; // Base text color
   if (subAlertLevel === 'due') {
-    timerTextColor = 'text-red-500';
+    textColor = 'text-red-500';
   } else if (subAlertLevel === 'warning') {
-    timerTextColor = 'text-orange-400';
+    textColor = 'text-orange-400';
   }
-
-  // Button styles
-  const subButtonStyle = "text-slate-100 font-bold py-3 px-6 rounded-lg shadow-lg bg-indigo-600 hover:bg-indigo-700 pointer-events-auto text-lg active:scale-95 active:brightness-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-black focus:ring-offset-opacity-75"; // Reduced size
-  const smallIntervalButtonStyle = "text-slate-100 font-bold py-2 px-4 rounded shadow bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed pointer-events-auto text-2xl active:scale-95 active:brightness-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 focus:ring-offset-black focus:ring-offset-opacity-75"; // Slate secondary, focus ring, added active:brightness-90
-  const controlButtonStyle = "text-slate-100 font-bold py-3 px-6 rounded-lg shadow disabled:opacity-50 disabled:cursor-not-allowed pointer-events-auto text-lg active:scale-95 active:brightness-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black focus:ring-offset-opacity-75"; // Base for controls, added focus, added active:brightness-90
-
-  const handleIntervalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value, 10);
-    if (!isNaN(value) && value >= 1) {
-      onSetSubInterval(value);
-    }
-  };
-
-  const handleConfirmSubClick = () => {
-    onSubstitutionMade();
-  };
 
   let bgColor = 'bg-slate-900/85'; // Default background
   if (subAlertLevel === 'warning') {
@@ -67,15 +51,13 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
   } else if (subAlertLevel === 'due') {
     bgColor = 'bg-red-800/90';
   }
-
-  let textColor = 'text-slate-100'; // Base text color
-  if (subAlertLevel === 'warning' || subAlertLevel === 'due') {
-    textColor = 'text-yellow-300';
-  }
-
+  
   // Consistent button styles (simplified for overlay)
   const timerButtonStyle = "text-white font-semibold py-2 px-5 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 transition-colors duration-150 flex items-center justify-center space-x-2";
-  const intervalAdjustButtonStyle = "text-slate-100 font-bold py-2 px-4 rounded shadow bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-2xl active:scale-95 active:brightness-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 focus:ring-offset-slate-900";
+
+  const handleConfirmSubClick = () => {
+    onSubstitutionMade();
+  };
 
   return (
     <div className={`fixed inset-0 z-40 flex flex-col items-center p-4 pt-24 ${bgColor} backdrop-blur-lg transition-colors duration-500`}>
