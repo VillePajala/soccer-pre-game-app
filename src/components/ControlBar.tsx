@@ -26,6 +26,7 @@ interface ControlBarProps {
   onToggleLargeTimerOverlay: () => void;
   // Add name visibility prop
   showPlayerNames: boolean;
+  onToggleInstructions: () => void;
   // TODO: Add props for Reset
 }
 
@@ -55,6 +56,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   onToggleLargeTimerOverlay,
   // Destructure name visibility prop
   showPlayerNames,
+  onToggleInstructions,
 }) => {
   // Consistent Button Styles
   const baseButtonStyle = "text-slate-100 font-semibold py-2 px-2 w-11 h-10 flex items-center justify-center rounded-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 active:scale-95 active:brightness-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900";
@@ -111,6 +113,18 @@ const ControlBar: React.FC<ControlBarProps> = ({
           Reset
         </button>
       </div>
+
+      <div className="border-l border-slate-600 h-8 mx-2"></div>
+
+      <button 
+        onClick={onToggleInstructions} 
+        className={`${baseButtonStyle} ${secondaryColor}`}
+        title="Show Help/Instructions"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z" />
+        </svg>
+      </button>
     </div>
   );
 };

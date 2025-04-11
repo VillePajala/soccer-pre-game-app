@@ -5,6 +5,7 @@ import SoccerField from '@/components/SoccerField';
 import PlayerBar from '@/components/PlayerBar';
 import ControlBar from '@/components/ControlBar';
 import TimerOverlay from '@/components/TimerOverlay'; // Import TimerOverlay
+import InstructionsModal from '@/components/InstructionsModal'; // Import InstructionsModal
 
 // Define the Player type
 export interface Player {
@@ -81,6 +82,8 @@ export default function Home() {
   const [draggingPlayerFromBarInfo, setDraggingPlayerFromBarInfo] = useState<Player | null>(null);
   // Fullscreen state
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  // Instructions Modal state
+  const [isInstructionsOpen, setIsInstructionsOpen] = useState<boolean>(false);
 
   // --- Timer State ---
   const [timeElapsedInSeconds, setTimeElapsedInSeconds] = useState<number>(0);
@@ -665,6 +668,10 @@ export default function Home() {
     setShowLargeTimerOverlay(!showLargeTimerOverlay);
   };
 
+  const handleToggleInstructions = () => {
+    setIsInstructionsOpen(!isInstructionsOpen);
+  };
+
   const canUndo = historyIndex > 0;
   const canRedo = historyIndex < history.length - 1;
 
@@ -781,6 +788,12 @@ export default function Home() {
         timeElapsedInSeconds={timeElapsedInSeconds}
         showLargeTimerOverlay={showLargeTimerOverlay}
         onToggleLargeTimerOverlay={handleToggleLargeTimerOverlay}
+        onToggleInstructions={handleToggleInstructions}
+      />
+      {/* Instructions Modal */}
+      <InstructionsModal 
+        isOpen={isInstructionsOpen} 
+        onClose={() => setIsInstructionsOpen(false)} 
       />
     </div>
   );
