@@ -1,3 +1,4 @@
+'use client';
 
 import React, { useState, useEffect, useCallback, Suspense } from 'react'; // Added useEffect, useCallback, Suspense
 import SoccerField from '@/components/SoccerField';

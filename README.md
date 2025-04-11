@@ -25,11 +25,17 @@ A touch-friendly web app for visualizing soccer tactics, managing players, and d
     *   Record substitutions made.
     *   View player play time based on timer and substitutions in an overlay.
     *   Optional large timer overlay display.
+    *   Responsive and accessible timer controls in multiple screen sizes.
+*   **Internationalization:** 
+    *   Support for multiple languages (currently English and Finnish).
+    *   Language selection directly in the interface.
+    *   Translatable interface elements while keeping universal terms like "Start" and "Reset".
 *   **Touch-Friendly Controls:** Designed with touch devices in mind, including double-tap actions and scroll detection.
 *   **Undo/Redo:** Step back and forth through your tactical changes.
 *   **Control Bar:** Access features like adding opponents, clearing drawings, toggling player names, resetting the field, and timer controls.
 *   **State Persistence:** Your setup (players, drawings, team name, timer state) is automatically saved to your browser's local storage.
 *   **Fullscreen Mode:** Toggle fullscreen for an immersive view.
+*   **Instructions Modal:** Detailed usage instructions available through the help icon.
 
 ## Tech Stack
 
@@ -37,6 +43,7 @@ A touch-friendly web app for visualizing soccer tactics, managing players, and d
 *   **Language:** [TypeScript](https://www.typescriptlang.org/)
 *   **UI Library:** [React](https://reactjs.org/)
 *   **Styling:** [Tailwind CSS](https://tailwindcss.com/)
+*   **Internationalization:** [i18next](https://www.i18next.com/) and [react-i18next](https://react.i18next.com/)
 
 ## Getting Started
 
@@ -65,6 +72,14 @@ A touch-friendly web app for visualizing soccer tactics, managing players, and d
     ```
 
 4.  Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## Adding New Languages
+
+To add support for a new language:
+
+1. Create a new JSON file in `public/locales/[language-code]/common.json`
+2. Copy the content from an existing language file and translate the values
+3. Add the new language to the language switcher in `ControlBar.tsx`
 
 ---
 
