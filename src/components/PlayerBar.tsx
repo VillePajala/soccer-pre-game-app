@@ -36,6 +36,8 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName
   const [isEditingTeamName, setIsEditingTeamName] = useState(false);
   const [editedTeamName, setEditedTeamName] = useState(teamName);
   const teamNameInputRef = useRef<HTMLInputElement>(null);
+  // Ref for team name double-tap detection
+  const teamNameLastTapTimeRef = useRef<number>(0);
 
   // Effect to update local state if prop changes (e.g., undo/redo)
   useEffect(() => {
@@ -80,6 +82,40 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName
     }
   };
 
+  // --- New Handlers for Double Click/Tap Team Name Edit ---
+  const handleTeamNameClick = (e: React.MouseEvent<HTMLHeadingElement>) => {
+    // Edit only on double-click
+    if (e.detail === 2) {
+        console.log("Team name double-click detected, starting edit.");
+        handleStartEditingTeamName();
+    } else {
+        console.log("Team name single click ignored.");
+    }
+  };
+
+  const handleTeamNameTouchEnd = (e: React.TouchEvent<HTMLHeadingElement>) => {
+    if (!isEditingTeamName) {
+        const currentTime = Date.now();
+        const timeSinceLastTap = currentTime - teamNameLastTapTimeRef.current;
+
+        if (timeSinceLastTap < 300 && timeSinceLastTap > 0) {
+            // Double tap detected
+            console.log("Team name double-tap detected, starting edit.");
+            handleStartEditingTeamName();
+            teamNameLastTapTimeRef.current = 0; // Reset tap time
+            e.preventDefault(); // Prevent potential further actions
+            e.stopPropagation(); // Stop bubbling
+        } else {
+            // Single tap (or first tap)
+            console.log("Team name single tap detected (or first tap).");
+            teamNameLastTapTimeRef.current = currentTime;
+            // Do nothing else on single tap end
+        }
+    } 
+    // If already editing, touch end doesn't do anything special here
+  };
+  // --- End New Handlers ---
+
   return (
     <div 
       className="bg-slate-900/85 backdrop-blur-md pl-8 pr-3 py-2 flex items-center flex-shrink-0 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-slate-700/80 scrollbar-track-slate-800/50 shadow-lg border-b border-slate-700/50"
@@ -108,13 +144,10 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName
         ) : (
           <h2 
             className="text-yellow-400 text-lg font-semibold cursor-pointer hover:text-yellow-300 truncate"
-            // Use onTouchEnd for touch devices, keep onClick for mouse
-            onTouchEnd={(e) => {
-                e.stopPropagation(); // Prevent potential bubbling
-                handleStartEditingTeamName();
-            }}
-            onClick={handleStartEditingTeamName} // Keep for mouse interaction
-            title="Click or tap to edit team name"
+            // Use NEW handlers for double-click/tap
+            onClick={handleTeamNameClick}
+            onTouchEnd={handleTeamNameTouchEnd}
+            title="Double-click or double-tap to edit team name"
           >
             {teamName}
           </h2>
