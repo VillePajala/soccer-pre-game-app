@@ -26,6 +26,12 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
   // Ref to store the timestamp of the last tap for double-tap detection
   const lastTapTimeRef = useRef<number>(0);
 
+  // Refs to track touch interaction details for differentiating tap/drag from scroll
+  const touchStartXRef = useRef<number>(0);
+  const touchStartYRef = useRef<number>(0);
+  const touchStartTimeRef = useRef<number>(0);
+  const isScrollingRef = useRef<boolean>(false);
+
   // Focus input when editing starts
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -67,18 +73,38 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
     }
   };
 
-  const handleTouchStart = () => {
-    // Only initiate drag if not editing and the handler is provided (i.e., in the bar)
-    if (!isEditing && onPlayerDragStartFromBar) {
-      console.log(`Touch start on PlayerDisk: ${name}, initiating drag from bar.`);
-      // Prevent default touch behavior like scrolling or text selection during drag start
-      // Note: Don't prevent default if NOT starting drag, to allow potential scroll on parent
-      // e.preventDefault();
-      // Call the handler passed from the parent (page.tsx via PlayerBar)
-      // We pass the essential player info needed for the drop
-      onPlayerDragStartFromBar({ id, name, color });
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    // Only care about touch interactions in the bar for drag/scroll differentiation
+    if (onPlayerDragStartFromBar) {
+      // Record initial touch details
+      const touch = e.touches[0];
+      touchStartXRef.current = touch.clientX;
+      touchStartYRef.current = touch.clientY;
+      touchStartTimeRef.current = Date.now();
+      isScrollingRef.current = false; // Reset scrolling flag
+      console.log(`Touch start on PlayerDisk: ${name} at (${touchStartXRef.current}, ${touchStartYRef.current})`);
+      // Don't call onPlayerDragStartFromBar immediately
     }
-    // Don't stop propagation, other elements might need touchstart?
+    // Don't stop propagation or prevent default initially, allow parent scroll handler
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!onPlayerDragStartFromBar || isScrollingRef.current) {
+        // If not in the bar, or already detected as scrolling, do nothing
+        return;
+    }
+
+    const touch = e.touches[0];
+    const deltaX = Math.abs(touch.clientX - touchStartXRef.current);
+    const deltaY = Math.abs(touch.clientY - touchStartYRef.current);
+    const SCROLL_THRESHOLD = 10; // Pixels threshold to detect scroll
+
+    // Check if horizontal movement exceeds threshold and is greater than vertical
+    if (deltaX > SCROLL_THRESHOLD && deltaX > deltaY) {
+        console.log(`Scroll detected on ${name}. DeltaX: ${deltaX}`);
+        isScrollingRef.current = true; // Mark as scrolling
+    }
+     // If isScrollingRef is true, the browser's default scroll should take over
   };
 
   // Click handler: Edit on double-click in bar, single-click on field
@@ -99,26 +125,50 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
     }
   };
 
-  // TouchEnd handler: Edit on double-tap in bar
+  // TouchEnd handler: Edit on double-tap in bar, select/initiate drag on single tap
   const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    // Only handle logic if in the bar and not currently editing
     if (onPlayerDragStartFromBar && !isEditing) {
-        const currentTime = Date.now();
-        const timeSinceLastTap = currentTime - lastTapTimeRef.current;
+      const currentTime = Date.now();
+      const timeSinceLastTap = currentTime - lastTapTimeRef.current;
+      const touchDuration = currentTime - touchStartTimeRef.current;
 
-        if (timeSinceLastTap < 300 && timeSinceLastTap > 0) {
-            // Double tap detected
-            console.log("Double-tap detected in bar, starting edit.");
-            handleStartEditing();
-            lastTapTimeRef.current = 0; // Reset tap time
-            e.preventDefault(); // Prevent potential further actions like click
-        } else {
-            // Single tap (or first tap)
-            console.log("Single tap in bar detected (or first tap).");
-            lastTapTimeRef.current = currentTime;
-            // Do nothing else on single tap end (drag started in onTouchStart)
-        }
-    } 
-    // No special action needed if not in the bar, already editing, or if touch didn't start drag
+      // Check if it was a scroll gesture
+      if (isScrollingRef.current) {
+        console.log(`Touch end on ${name}: Was a scroll, doing nothing.`);
+        isScrollingRef.current = false; // Reset scroll flag
+        return; // Do not process as tap/double-tap
+      }
+
+      // --- Handle Tap / Double Tap (only if not scrolling) ---
+      const TAP_DURATION_THRESHOLD = 300; // ms threshold for a tap
+
+      if (timeSinceLastTap < 300 && timeSinceLastTap > 0) {
+        // Double tap detected (and was not a scroll)
+        console.log("Double-tap detected in bar, starting edit.");
+        handleStartEditing();
+        lastTapTimeRef.current = 0; // Reset tap time
+        e.preventDefault(); // Prevent potential further actions like click
+      } else if (touchDuration < TAP_DURATION_THRESHOLD) {
+        // Single Tap Detected (not a scroll, short duration)
+        console.log(`Single tap on ${name} in bar detected (duration: ${touchDuration}ms), initiating drag/selection.`);
+        lastTapTimeRef.current = currentTime; // Record time for potential double-tap
+
+        // *** Initiate the drag/selection ***
+        // Prevent default touch behavior *only* if we are initiating the drag
+        e.preventDefault(); // Prevent click event after tap if needed
+        onPlayerDragStartFromBar({ id, name, color }); // Call the selection/drag handler
+
+      } else {
+         // Touch was too long to be a tap, likely a press/hold then maybe scroll attempt cancelled early
+         console.log(`Touch end on ${name}: Not a tap (duration: ${touchDuration}ms) or scroll.`);
+         lastTapTimeRef.current = currentTime; // Still record for double tap start
+      }
+
+      // Reset scroll flag just in case
+      isScrollingRef.current = false;
+    }
+    // No special action needed if not in the bar or already editing
   };
 
   return (
@@ -133,7 +183,8 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
       `}
       // Use the new handlers
       onClick={handleClick}
-      onTouchStart={handleTouchStart} 
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove} // Add touch move handler
       onTouchEnd={handleTouchEnd}
     >
       {isEditing ? (
