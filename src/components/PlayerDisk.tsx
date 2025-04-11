@@ -9,6 +9,7 @@ interface PlayerDiskProps {
   color?: string; // Optional color, default can be blue
   onRename: (newName: string) => void; // Add rename callback prop
   onPlayerDragStartFromBar?: (player: Player) => void; // Optional callback for touch drag start
+  isSelected?: boolean; // Add isSelected prop
 }
 
 const PlayerDisk: React.FC<PlayerDiskProps> = ({
@@ -17,6 +18,7 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
   color = 'bg-purple-700',
   onRename,
   onPlayerDragStartFromBar,
+  isSelected = false, // Destructure isSelected prop with default value
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(name);
@@ -122,7 +124,13 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
   return (
     <div
       id={`player-${id}`}
-      className={`${color} text-yellow-300 rounded-full w-16 h-16 flex items-center justify-center font-semibold text-sm shadow-md my-2 mr-2 flex-shrink-0 select-none relative ${isEditing ? 'cursor-text' : 'cursor-grab'} hover:brightness-110 transition-all duration-150`}
+      className={`
+        ${color} text-yellow-300 rounded-full w-16 h-16 flex items-center justify-center 
+        font-semibold text-sm shadow-md my-2 mr-2 flex-shrink-0 select-none relative 
+        ${isEditing ? 'cursor-text' : 'cursor-grab'} 
+        hover:brightness-110 transition-all duration-150
+        ${isSelected ? 'ring-2 ring-offset-2 ring-yellow-400 ring-offset-slate-900' : ''} // Add ring if selected
+      `}
       // Use the new handlers
       onClick={handleClick}
       onTouchStart={handleTouchStart} 

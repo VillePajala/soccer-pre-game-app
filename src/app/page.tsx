@@ -712,6 +712,7 @@ export default function Home() {
         teamName={teamName}
         onTeamNameChange={handleTeamNameChange}
         onPlayerDragStartFromBar={handlePlayerDragStartFromBar}
+        selectedPlayerIdFromBar={draggingPlayerFromBarInfo?.id}
       />
 
       {/* Main content area - Should take up space between PlayerBar and ControlBar */}

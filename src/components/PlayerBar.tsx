@@ -13,6 +13,8 @@ interface PlayerBarProps {
   onTeamNameChange: (newName: string) => void;
   // Add prop to pass down touch drag start handler
   onPlayerDragStartFromBar?: (player: Player) => void;
+  // ID of the player currently being dragged from the bar
+  selectedPlayerIdFromBar?: string | null; 
 }
 
 // Placeholder data - this would eventually come from state/localStorage
@@ -30,7 +32,7 @@ interface PlayerBarProps {
 //   { id: 'p11', name: 'Player 11' },
 // ];
 
-const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName, onTeamNameChange, onPlayerDragStartFromBar }) => { // Destructure players and rename handler from props
+const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName, onTeamNameChange, onPlayerDragStartFromBar, selectedPlayerIdFromBar }) => { // Destructure players and rename handler from props
   const [isEditingTeamName, setIsEditingTeamName] = useState(false);
   const [editedTeamName, setEditedTeamName] = useState(teamName);
   const teamNameInputRef = useRef<HTMLInputElement>(null);
@@ -128,6 +130,8 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName
           onRename={(newName) => onRenamePlayer(player.id, newName)} // Pass specific rename call
           // Pass the touch drag start handler down to PlayerDisk
           onPlayerDragStartFromBar={onPlayerDragStartFromBar}
+          // Pass the isSelected status down
+          isSelected={player.id === selectedPlayerIdFromBar}
         />
       ))}
       {/* Add button or mechanism to add/edit players might go here */}
