@@ -2,7 +2,7 @@
 
 A touch-friendly web app for visualizing soccer tactics, managing players, and drawing plays. Built with React/Next.js.
 
-![Main Tactics View](.docs/images/screeshot_tactics_view.jpg) ![Timer and Substitution Tracking](.docs/images/screenshot_timer_view_with_substitutions_play_time_records.jpg)
+<img src=".docs/images/screeshot_tactics_view.jpg" alt="Main Tactics View" width="300"/> <img src=".docs/images/screenshot_timer_view_with_substitutions_play_time_records.jpg" alt="Timer and Substitution Tracking" width="300"/>
 
 ## Features
 
