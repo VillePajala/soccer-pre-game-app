@@ -6,6 +6,9 @@ import {
     FaRegStopCircle, FaRegClock // Added Icons for Overlay Toggle
 } from 'react-icons/fa'; // Example using Font Awesome via react-icons
 
+// Import translation hook
+import { useTranslation } from 'react-i18next';
+
 // Define props for ControlBar
 interface ControlBarProps {
   onUndo: () => void;
@@ -58,6 +61,8 @@ const ControlBar: React.FC<ControlBarProps> = ({
   showPlayerNames,
   onToggleInstructions,
 }) => {
+  const { t, i18n } = useTranslation(); // Initialize translation hook, get i18n instance
+
   // Consistent Button Styles
   const baseButtonStyle = "text-slate-100 font-semibold py-2 px-2 w-11 h-10 flex items-center justify-center rounded-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 active:scale-95 active:brightness-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900";
   const smallButtonStyle = "text-slate-100 font-semibold py-1 px-3 rounded shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-sm transition-all duration-150 active:scale-95 active:brightness-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900";
@@ -119,12 +124,31 @@ const ControlBar: React.FC<ControlBarProps> = ({
       <button 
         onClick={onToggleInstructions} 
         className={`${baseButtonStyle} ${secondaryColor}`}
-        title="Show Help/Instructions"
+        title={t('controlBar.help') ?? "Show Help/Instructions"}
       >
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
           <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z" />
         </svg>
       </button>
+
+      {/* Language Switcher Buttons */}
+      <div className="flex items-center space-x-1 ml-1">
+        <button 
+          onClick={() => i18n.changeLanguage('en')}
+          className={`py-1 px-2 rounded text-xs font-semibold transition-colors duration-150 focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-offset-slate-900 ${i18n.language === 'en' ? 'bg-yellow-500 text-slate-900 focus:ring-yellow-400' : 'bg-slate-600 hover:bg-slate-500 text-slate-200 focus:ring-slate-400'}`}
+          disabled={i18n.language === 'en'}
+        >
+          EN
+        </button>
+        <button 
+          onClick={() => i18n.changeLanguage('fi')}
+          className={`py-1 px-2 rounded text-xs font-semibold transition-colors duration-150 focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-offset-slate-900 ${i18n.language === 'fi' ? 'bg-yellow-500 text-slate-900 focus:ring-yellow-400' : 'bg-slate-600 hover:bg-slate-500 text-slate-200 focus:ring-slate-400'}`}
+          disabled={i18n.language === 'fi'}
+        >
+          FI
+        </button>
+      </div>
+
     </div>
   );
 };

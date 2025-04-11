@@ -1,5 +1,6 @@
 import React from 'react';
 import { FaUndo, FaRedo, FaEye, FaEyeSlash, FaRegClock, FaRegStopCircle, FaTrashAlt, FaEraser, FaUserPlus } from 'react-icons/fa';
+import { useTranslation } from 'react-i18next';
 
 interface InstructionsModalProps {
   isOpen: boolean;
@@ -7,6 +8,8 @@ interface InstructionsModalProps {
 }
 
 const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, onClose }) => {
+  const { t } = useTranslation();
+
   if (!isOpen) return null;
 
   return (
@@ -25,7 +28,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, onClose }
         >
           &times; {/* Unicode multiplication sign for 'X' */}
         </button>
-        <h2 className="text-2xl font-bold mb-4 text-yellow-400">How to Use</h2>
+        <h2 className="text-2xl font-bold mb-4 text-yellow-400">{t('instructionsModal.title')}</h2>
         
         {/* Instructions Content */}
         <div className="space-y-4 text-sm sm:text-base">
