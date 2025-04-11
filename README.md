@@ -2,7 +2,7 @@
 
 A touch-friendly web app for visualizing soccer tactics, managing players, and drawing plays. Built with React/Next.js.
 
-![Main Tactics View](.docs/images/screenshot_tactics_view.png)
+![Main Tactics View](.docs/images/screeshot_tactics_view.png)
 
 ## Features
 
