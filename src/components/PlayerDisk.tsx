@@ -1,49 +1,54 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Player } from '@/app/page'; // Import Player type for the callback
+import Image from 'next/image';
+import { Player } from '@/app/page'; // Import Player type
 
 interface PlayerDiskProps {
   id: string;
   name: string;
-  color?: string; // Optional color, default can be blue
-  onRename: (newName: string) => void; // Add rename callback prop
-  onPlayerDragStartFromBar?: (player: Player) => void; // Optional callback for touch drag start
-  isSelected?: boolean; // Add isSelected prop
+  color?: string;
+  // Bar specific props
+  onPlayerDragStartFromBar?: (player: Player) => void;
+  onRenamePlayer?: (id: string, newName: string) => void;
+  selectedPlayerIdFromBar?: string | null;
 }
 
 const PlayerDisk: React.FC<PlayerDiskProps> = ({
   id,
   name,
-  color = 'bg-purple-700',
-  onRename,
+  color = '#7E22CE', // Default to purple-700 if no color passed
   onPlayerDragStartFromBar,
-  isSelected = false, // Destructure isSelected prop with default value
+  onRenamePlayer,
+  selectedPlayerIdFromBar,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(name);
   const inputRef = useRef<HTMLInputElement>(null);
-  // Ref to store the timestamp of the last tap for double-tap detection
+  
+  // Refs for double-tap detection
   const lastTapTimeRef = useRef<number>(0);
-
-  // Refs to track touch interaction details for differentiating tap/drag from scroll
+  // Refs for touch drag vs scroll detection
   const touchStartXRef = useRef<number>(0);
   const touchStartYRef = useRef<number>(0);
   const touchStartTimeRef = useRef<number>(0);
   const isScrollingRef = useRef<boolean>(false);
 
+  // Update editedName if the name prop changes (e.g., via undo/redo)
+  useEffect(() => {
+    setEditedName(name);
+  }, [name]);
+
   // Focus input when editing starts
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
-      inputRef.current.select(); // Select text for easy replacement
+      inputRef.current.select();
     }
   }, [isEditing]);
 
   const handleStartEditing = () => {
-    // Prevent starting edit if already editing, also maybe prevent during drag?
-    if (!isEditing) {
-      setEditedName(name); // Reset edited name to current name
+    if (onRenamePlayer) {
       setIsEditing(true);
     }
   };
@@ -52,10 +57,10 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
     if (isEditing) {
       setIsEditing(false);
       const trimmedName = editedName.trim();
-      if (trimmedName && trimmedName !== name) {
-        onRename(trimmedName); // Call parent handler only if name changed and is not empty
+      if (trimmedName && trimmedName !== name && onRenamePlayer) {
+        onRenamePlayer(id, trimmedName);
       }
-      // If name is empty or unchanged, it implicitly reverts visually when isEditing becomes false
+      // No need to reset editedName here, useEffect handles external changes
     }
   };
 
@@ -63,14 +68,27 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
     setEditedName(e.target.value);
   };
 
-  const handleKeyDown = (_e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (_e.key === 'Enter') {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
       handleFinishEditing();
-    } else if (_e.key === 'Escape') {
-      // Revert changes on Escape
-      setEditedName(name);
+    } else if (e.key === 'Escape') {
       setIsEditing(false);
+      setEditedName(name); // Reset to original name on Escape
     }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Start drag only if onPlayerDragStartFromBar is provided (i.e., in the bar)
+    if (onPlayerDragStartFromBar) {
+      e.preventDefault(); // Prevent text selection, etc.
+      console.log("Mouse down on PlayerDisk in bar, starting drag.", { id, name, color });
+      onPlayerDragStartFromBar({ id, name, color });
+    }
+  };
+
+  const handleDoubleClick = () => {
+    console.log("Double-click detected, starting edit.");
+    handleStartEditing();
   };
 
   const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
@@ -107,25 +125,6 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
      // If isScrollingRef is true, the browser's default scroll should take over
   };
 
-  // Click handler: Edit on double-click in bar, single-click on field
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (onPlayerDragStartFromBar) {
-        // In the PlayerBar: Only edit on double-click
-        if (e.detail === 2) {
-            console.log("Double-click detected in bar, starting edit.");
-            handleStartEditing();
-        } else {
-             console.log("Single click in bar ignored (drag is separate).");
-             // Single click does nothing, drag is handled by drag-and-drop library or touch
-        }
-    } else {
-        // On the Field: Start editing on single click (current behavior)
-        console.log("Single click on field, starting edit.");
-        handleStartEditing();
-    }
-  };
-
-  // TouchEnd handler: Edit on double-tap in bar, select/initiate drag on single tap
   const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
     // Only handle logic if in the bar and not currently editing
     if (onPlayerDragStartFromBar && !isEditing) {
@@ -170,22 +169,27 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
     }
     // No special action needed if not in the bar or already editing
   };
+  
+  // Conditional styling based on context (in bar or not)
+  const isInBar = !!onPlayerDragStartFromBar;
+  const diskSizeClasses = isInBar ? "w-16 h-16 p-1" : "w-20 h-20 p-2"; // Smaller size when in bar
+  const textSizeClasses = isInBar ? "text-xs" : "text-sm";
+  const inputPaddingClasses = isInBar ? "px-1 py-0.5" : "px-2 py-1";
+  const inputWidthClass = isInBar ? "w-14" : "w-16";
+  const outerRingClass = selectedPlayerIdFromBar === id ? 'ring-4 ring-yellow-400 ring-offset-2 ring-offset-slate-900' : '';
 
   return (
     <div
-      id={`player-${id}`}
-      className={`
-        ${color} text-yellow-300 rounded-full w-16 h-16 flex items-center justify-center 
-        font-semibold text-sm shadow-md my-2 mr-2 flex-shrink-0 select-none relative 
-        ${isEditing ? 'cursor-text' : 'cursor-grab'} 
-        hover:brightness-110 transition-all duration-150
-        ${isSelected ? 'outline outline-2 outline-offset-2 outline-orange-400' : ''} // Add orange outline if selected
-      `}
-      // Use the new handlers
-      onClick={handleClick}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove} // Add touch move handler
-      onTouchEnd={handleTouchEnd}
+      className={`relative ${diskSizeClasses} rounded-full flex items-center justify-center cursor-pointer shadow-lg m-2 transition-all duration-150 ease-in-out ${outerRingClass}`}
+      style={{ backgroundColor: color, touchAction: 'pan-y' }} // Allow vertical page scroll, horizontal is handled by bar scroll
+      draggable={isInBar && !isEditing} // Only draggable if in bar and not editing
+      onDragStart={handleMouseDown} // Use mouse down for HTML drag API
+      onMouseDown={isInBar ? handleMouseDown : undefined} // Only attach mouse down if in bar
+      onDoubleClick={isInBar ? handleDoubleClick : undefined} // Double-click only in bar
+      onTouchStart={isInBar ? handleTouchStart : undefined}
+      onTouchMove={isInBar ? handleTouchMove : undefined}
+      onTouchEnd={isInBar ? handleTouchEnd : undefined}
+      onTouchCancel={isInBar ? handleTouchEnd : undefined} // Treat cancel like end for tap/drag logic
     >
       {isEditing ? (
         <input
@@ -193,14 +197,18 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
           type="text"
           value={editedName}
           onChange={handleInputChange}
-          onBlur={handleFinishEditing} // Finish editing when input loses focus
-          onKeyDown={handleKeyDown}    // Finish on Enter, revert on Escape
-          className="w-full h-full bg-transparent text-yellow-300 text-center font-semibold text-sm outline-none border-none p-0 m-0"
-          // Prevent click event from bubbling up and restarting edit immediately
-          onClick={(e) => e.stopPropagation()} 
+          onBlur={handleFinishEditing}
+          onKeyDown={handleKeyDown}
+          className={`bg-slate-700 text-yellow-300 ${textSizeClasses} font-semibold outline-none rounded ${inputPaddingClasses} text-center ${inputWidthClass}`}
+          onClick={(e) => e.stopPropagation()} // Prevent triggering disk events
         />
       ) : (
-        name // Display name normally
+        <span 
+          className={`text-white ${textSizeClasses} font-semibold text-center break-words line-clamp-2`}
+          style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.7)' }} // Add text shadow for readability
+        >
+          {name}
+        </span>
       )}
     </div>
   );

@@ -78,49 +78,38 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName
     if (e.key === 'Enter') {
       handleFinishEditingTeamName();
     } else if (e.key === 'Escape') {
-      setEditedTeamName(teamName);
       setIsEditingTeamName(false);
+      setEditedTeamName(teamName);
     }
   };
 
   // --- New Handlers for Double Click/Tap Team Name Edit ---
-  const handleTeamNameClick = (e: React.MouseEvent<HTMLHeadingElement>) => {
-    // Edit only on double-click
-    if (e.detail === 2) {
-        console.log("Team name double-click detected, starting edit.");
-        handleStartEditingTeamName();
+  const handleTeamNameClick = () => {
+    const currentTime = Date.now();
+    if (currentTime - teamNameLastTapTimeRef.current < 300) {
+      // Double click detected
+      handleStartEditingTeamName();
+      teamNameLastTapTimeRef.current = 0; // Reset tap time
     } else {
-        console.log("Team name single click ignored.");
+      teamNameLastTapTimeRef.current = currentTime;
     }
   };
 
-  const handleTeamNameTouchEnd = (e: React.TouchEvent<HTMLHeadingElement>) => {
-    if (!isEditingTeamName) {
-        const currentTime = Date.now();
-        const timeSinceLastTap = currentTime - teamNameLastTapTimeRef.current;
-
-        if (timeSinceLastTap < 300 && timeSinceLastTap > 0) {
-            // Double tap detected
-            console.log("Team name double-tap detected, starting edit.");
-            handleStartEditingTeamName();
-            teamNameLastTapTimeRef.current = 0; // Reset tap time
-            e.preventDefault(); // Prevent potential further actions
-            e.stopPropagation(); // Stop bubbling
-        } else {
-            // Single tap (or first tap)
-            console.log("Team name single tap detected (or first tap).");
-            teamNameLastTapTimeRef.current = currentTime;
-            // Do nothing else on single tap end
-        }
-    } 
-    // If already editing, touch end doesn't do anything special here
+  const handleTeamNameTouchEnd = () => {
+    const currentTime = Date.now();
+    if (currentTime - teamNameLastTapTimeRef.current < 300) {
+      // Double tap detected
+      handleStartEditingTeamName();
+      teamNameLastTapTimeRef.current = 0; // Reset tap time
+    } else {
+      teamNameLastTapTimeRef.current = currentTime;
+    }
   };
   // --- End New Handlers ---
 
   return (
     <div 
-      className="bg-slate-900/85 backdrop-blur-md pl-8 pr-3 py-2 flex items-center flex-shrink-0 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-slate-700/80 scrollbar-track-slate-800/50 shadow-lg border-b border-slate-700/50"
-      // Allow vertical panning (page scroll), disable horizontal panning/zoom to allow custom horizontal scroll
+      className="bg-slate-900/85 backdrop-blur-md pl-4 pr-2 py-1 flex items-center flex-shrink-0 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-slate-700/80 scrollbar-track-slate-800/50 shadow-lg border-b border-slate-700/50"
       onClick={(e) => {
         // Check if the click target is the div itself (the background)
         if (e.target === e.currentTarget && onBarBackgroundClick) {
@@ -130,7 +119,7 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName
     >
       {/* Team Name Display/Edit */}
       <div 
-        className="flex flex-col items-center flex-shrink-0 mr-8 py-4"
+        className="flex flex-col items-center flex-shrink-0 mr-4 py-1"
         onClick={() => {
           // Also deselect player when clicking the logo/team name area
           if (onBarBackgroundClick) {
@@ -141,9 +130,9 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName
         <Image 
           src="/pepo-logo.png" 
           alt="PEPO Logo" 
-          width={64}
-          height={64}
-          className="mb-1 flex-shrink-0"
+          width={48}
+          height={48}
+          className="mb-0.5 flex-shrink-0"
         />
         {isEditingTeamName ? (
           <input
@@ -153,12 +142,12 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName
             onChange={handleTeamNameInputChange}
             onBlur={handleFinishEditingTeamName}
             onKeyDown={handleTeamNameKeyDown}
-            className="bg-slate-700 text-yellow-400 text-lg font-semibold outline-none rounded px-2 py-1"
+            className="bg-slate-700 text-yellow-400 text-base font-semibold outline-none rounded px-2 py-0.5"
             onClick={(e) => e.stopPropagation()} 
           />
         ) : (
           <h2 
-            className="text-yellow-400 text-lg font-semibold cursor-pointer hover:text-yellow-300 truncate"
+            className="text-yellow-400 text-base font-semibold cursor-pointer hover:text-yellow-300 truncate"
             // Use NEW handlers for double-click/tap
             onClick={handleTeamNameClick}
             onTouchEnd={handleTeamNameTouchEnd}
@@ -169,20 +158,23 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName
         )}
       </div>
 
+      {/* Separator */}
+      <div className="border-l border-slate-600 h-16 mx-2 self-center"></div>
+
       {/* Player Disks */}
-      {players.map((player) => (
-        <PlayerDisk
-          key={player.id}
-          id={player.id}
-          name={player.name}
-          onRename={(newName) => onRenamePlayer(player.id, newName)} // Pass specific rename call
-          // Pass the touch drag start handler down to PlayerDisk
-          onPlayerDragStartFromBar={onPlayerDragStartFromBar}
-          // Pass the isSelected status down
-          isSelected={player.id === selectedPlayerIdFromBar}
-        />
-      ))}
-      {/* Add button or mechanism to add/edit players might go here */}
+      <div className="flex items-center">
+        {players.map(player => (
+          <PlayerDisk
+            key={player.id}
+            id={player.id}
+            name={player.name}
+            color={player.color}
+            onRenamePlayer={onRenamePlayer}
+            onPlayerDragStartFromBar={onPlayerDragStartFromBar}
+            selectedPlayerIdFromBar={selectedPlayerIdFromBar}
+          />
+        ))}
+      </div>
     </div>
   );
 };
