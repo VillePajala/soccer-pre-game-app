@@ -84,7 +84,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, onClose }
           </section>
         </div>
 
-        <p className="text-sm text-slate-400 mt-6">Click outside the box or the 'X' to close.</p>
+        <p className="text-sm text-slate-400 mt-6">Click outside the box or the &apos;X&apos; to close.</p>
       </div>
     </div>
   );
