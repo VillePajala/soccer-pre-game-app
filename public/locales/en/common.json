@@ -14,38 +14,102 @@
   "timerOverlay.intervalLabel": "Interval (min):",
   "timerOverlay.confirmSubButton": "Substitution Made",
   "timerOverlay.historyTitle": "Play Time History",
-  "instructionsModal.title": "How to Use",
-  "instructionsModal.playerBarTitle": "Player Bar (Top)",
-  "instructionsModal.playerBar.selectPlayer": "Tap a player disk once to select it (a yellow ring will appear). You can then tap on the field to place/move them.",
-  "instructionsModal.playerBar.deselectPlayer": "Tap the currently selected player disk again to deselect it.",
-  "instructionsModal.playerBar.renamePlayer": "Double-tap (or double-click) a player disk in the bar to edit its name. Press Enter or click away to save.",
-  "instructionsModal.playerBar.renameTeam": "Double-tap (or double-click) the Team Name (e.g., \"My Team\") to edit it.",
-  "instructionsModal.playerBar.scrollBar": "Swipe horizontally on the bar itself (including on player disks) to scroll if players overflow.",
-  "instructionsModal.fieldAreaTitle": "Field Area",
-  "instructionsModal.fieldArea.movePlayer": "Click/touch and drag a player or opponent marker already on the field.",
-  "instructionsModal.fieldArea.addPlacePlayer": "After selecting a player from the top bar (yellow ring), tap on the field to place them at that location.",
-  "instructionsModal.fieldArea.removePlayer": "Double-tap (or double-click) directly on a player or opponent marker on the field to remove it.",
-  "instructionsModal.fieldArea.drawLines": "Click/touch and drag on an empty area of the field to draw lines.",
-  "instructionsModal.controlBarTitle": "Control Bar (Bottom)",
-  "instructionsModal.controlBar.undoRedo": "Undo/Redo previous actions.",
-  "instructionsModal.controlBar.toggleNames": "Show/hide player names on field disks.",
-  "instructionsModal.controlBar.clearDrawings": "Remove drawings.",
-  "instructionsModal.controlBar.addOpponent": "Add opponent marker.",
-  "instructionsModal.controlBar.resetField": "Reset field (removes players, opponents, drawings).",
-  "instructionsModal.controlBar.toggleTimerOverlay": "Show/hide large timer overlay.",
-  "instructionsModal.controlBar.timerControls": "Control the timer (display, play/pause, reset).",
-  "instructionsModal.controlBar.help": "Show these instructions.",
-  "instructionsModal.controlBar.fullscreen": "Toggle fullscreen mode.",
-  "instructionsModal.controlBar.languageToggle": "Switch between English (EN) and Finnish (FI).",
-  "instructionsModal.timerOverlayTitle": "Timer & Substitution Overlay (Large View)",
-  "instructionsModal.timerOverlay.setInterval": "Use the +/- buttons to set the desired substitution interval.",
-  "instructionsModal.timerOverlay.subAlerts": "The background will turn orange (1 min before) and red when the interval is reached.",
-  "instructionsModal.timerOverlay.confirmSub": "Click \"Substitution Made\" after completing subs. Logs duration, resets alert.",
-  "instructionsModal.timerOverlay.playTimeHistory": "View previous play interval durations.",
-  "instructionsModal.generalTitle": "General",
-  "instructionsModal.general.touchInteractions": "Many actions use double-tap on touch devices (rename, remove from field). Tap player in bar to select/deselect.",
-  "instructionsModal.general.saving": "Changes are saved automatically to browser storage.",
-  "instructionsModal.general.fullscreen": "Fullscreen button is in the bottom control bar.",
-  "instructionsModal.closeButton": "Close instructions",
-  "instructionsModal.closeText": "Click outside the box or the 'X' to close."
+  "instructionsModal": {
+    "title": "Instructions",
+    "closeButton": "Close instructions",
+    "closeText": "Click outside the modal or use the 'X' button to close.",
+    "tabInstructions": "Instructions",
+    "tabWarmup": "Warmup Plan",
+    "playerBarTitle": "Player Bar (Top)",
+    "playerBar": {
+      "selectPlayer": "Select Player: Tap a player disk to select it for placement.",
+      "deselectPlayer": "Deselect Player: Tap the selected player disk again or tap the bar background.",
+      "renamePlayer": "Rename Player: Double-tap/click a player disk.",
+      "renameTeam": "Rename Team: Double-tap/click the team name.",
+      "scrollBar": "Scroll Bar: If players overflow, swipe horizontally to scroll."
+    },
+    "fieldAreaTitle": "Field Area",
+    "fieldArea": {
+      "movePlayer": "Move Player/Opponent: Drag a disk placed on the field.",
+      "addPlacePlayer": "Add/Place Player: Select a player from the top bar, then tap or drag to the field.",
+      "removePlayer": "Remove Player/Opponent: Double-tap/click a disk on the field.",
+      "drawLines": "Draw Lines: Drag on an empty area of the field."
+    },
+    "controlBarTitle": "Control Bar (Bottom)",
+    "controlBar": {
+      "undoRedo": "Step backward/forward through your actions.",
+      "toggleNames": "Show/hide player names on the field.",
+      "clearDrawings": "Remove all drawn lines.",
+      "addOpponent": "Add an opponent marker to the center of the field.",
+      "resetField": "Clear all players, opponents, and drawings from the field.",
+      "toggleTimerOverlay": "Show/hide the large timer/substitution overlay.",
+      "timerControls": "Start/Pause/Reset the match timer.",
+      "help": "Show/hide these instructions.",
+      "fullscreen": "Toggle fullscreen mode.",
+      "languageToggle": "Switch between English (EN) and Finnish (FI)."
+    },
+    "timerOverlayTitle": "Timer Overlay",
+    "timerOverlay": {
+      "setInterval": "Adjust Sub Interval: Use +/- buttons.",
+      "subAlerts": "Sub Alerts: Yellow = 1 min warning, Red = Due.",
+      "confirmSub": "Confirm Substitution: Press \"Substitution Made\".",
+      "playTimeHistory": "View Play Time: Lists completed intervals and last confirmation time."
+    },
+    "generalTitle": "General",
+    "general": {
+      "touchInteractions": "Touch: Double-tap is used for removing/editing.",
+      "saving": "Saving: All changes are saved automatically to your browser.",
+      "fullscreen": "Fullscreen: Toggle via the control bar button."
+    }
+  },
+  "warmup": {
+    "title": "Pre-Match Preparation",
+    "section1Title": "1. 30 min / Gathering",
+    "section1Goal": "Goal: Create a positive atmosphere and review the day's agenda.",
+    "section1Points": [
+      "High fives, fist bumps, check-ins – sharing how everyone is doing.",
+      "Positions, captain, equipment check.",
+      "Day's themes (max 3, e.g.): Enjoy, Compete, Dribble or Pass.",
+      "Themes based on training – can vary, but \"Enjoy\" is always included."
+    ],
+    "section2Title": "2. 20 min / Warm-up",
+    "section2Goal": "Goal: Raise body temperature, tune minds for the game.",
+    "section2Activities": [
+      "Two lines + marker 5m away (cone/vest), circle around outside to the back of own line.",
+      "Jogging (forwards/backwards).",
+      "Side shuffles (right/left side leading).",
+      "Butt kicks.",
+      "High knees ('Berry picking').",
+      "Jump to partner's side (2 times per movement).",
+      "Animal movements: inchworm, bear walk, duck walk (kids can suggest).",
+      "Sprints (approx. 5): standing start, sitting start, push-up start."
+    ],
+    "section3Title": "3. 10 min / Ball Work",
+    "section3Goal": "Goal: Activate ball touch and prepare for the game.",
+    "section3PairWork": "Partner + Ball:",
+    "section3PairWorkPoints": [
+      "Basic passing close → further away (game stance, balls of feet, inside foot, care)."
+    ],
+    "section3GoalieWarmup": "Goalkeeper Warm-up (Assistant coach can help):",
+    "section3GoalieWarmupPoints": [
+      "Throws/passes from close (2m) and further away:",
+      "Up, side, air, ground (getting used to the ball).",
+      "Returns with hands + feet."
+    ],
+    "section3CombinedGoalieWarmup": "Combined GK warm-up (if space allows):",
+    "section3CombinedGoalieWarmupPoints": [
+      "GK in goal → wall pass → shot from 16m / between pen. spot & box (coach can be wall)."
+    ],
+    "section4Title": "4. 2 min / Bench Area",
+    "section4Goal": "Goal: Final preparations before the game.",
+    "section4Points": [
+      "Equipment check + PEPO chant briskly.",
+      "Timing just before entering the field (game leader ready)."
+    ],
+    "duringGameTitle": "During the Game:",
+    "duringGamePoints": [
+      "Encourage good plays (e.g., fist bumps, \"Yes!\", \"Just like we practiced!\").",
+      "Let the player make their own decisions – guide only off-the-ball players and subs if needed."
+    ]
+  }
 } 
