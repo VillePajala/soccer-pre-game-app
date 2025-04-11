@@ -179,7 +179,7 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
         font-semibold text-sm shadow-md my-2 mr-2 flex-shrink-0 select-none relative 
         ${isEditing ? 'cursor-text' : 'cursor-grab'} 
         hover:brightness-110 transition-all duration-150
-        ${isSelected ? 'ring-2 ring-offset-2 ring-yellow-400 ring-offset-slate-900' : ''} // Add ring if selected
+        ${isSelected ? 'outline outline-2 outline-offset-2 outline-orange-400' : ''} // Add orange outline if selected
       `}
       // Use the new handlers
       onClick={handleClick}
