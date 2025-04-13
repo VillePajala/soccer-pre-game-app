@@ -111,5 +111,32 @@
       "Encourage good plays (e.g., fist bumps, \"Yes!\", \"Just like we practiced!\").",
       "Let the player make their own decisions – guide only off-the-ball players and subs if needed."
     ]
+  },
+  "goalLogModal": {
+    "title": "Log Goal Event",
+    "closeButton": "Close",
+    "timeLabel": "Time",
+    "scorerLabel": "Scorer",
+    "assisterLabel": "Assister (Optional)",
+    "selectPlaceholder": "-- Select Scorer --",
+    "noAssisterPlaceholder": "-- No Assist --",
+    "cancelButton": "Cancel",
+    "logButton": "Log Goal"
+  },
+  "gameStatsModal": {
+    "title": "Game Statistics",
+    "closeButton": "Close",
+    "editButton": "Edit",
+    "saveButton": "Save",
+    "cancelButton": "Cancel",
+    "gameInfoTitle": "Game Information",
+    "opponentPlaceholder": "Opponent Name",
+    "playerStatsTitle": "Player Stats",
+    "playerHeader": "Player",
+    "goalsHeader": "G",
+    "assistsHeader": "A",
+    "goalLogTitle": "Goal Log",
+    "assistPrefix": "A:",
+    "noGoalsLogged": "No goals logged yet."
   }
 } 

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import PlayerDisk from './PlayerDisk'; // Import the PlayerDisk component
 import { Player } from '@/app/page'; // Import the Player type
 import Image from 'next/image'; // ADDED Import
+import { GameEvent } from '@/app/page'; // Import the GameEvent type
 
 // Define props for PlayerBar
 interface PlayerBarProps {
@@ -16,6 +17,8 @@ interface PlayerBarProps {
   // ID of the player currently being dragged from the bar
   selectedPlayerIdFromBar?: string | null; 
   onBarBackgroundClick?: () => void; // Add prop for background click
+  gameEvents: GameEvent[]; // Add gameEvents prop
+  onPlayerTapInBar?: (player: Player) => void; // Add the new prop type
 }
 
 // Placeholder data - this would eventually come from state/localStorage
@@ -33,7 +36,7 @@ interface PlayerBarProps {
 //   { id: 'p11', name: 'Player 11' },
 // ];
 
-const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName, onTeamNameChange, onPlayerDragStartFromBar, selectedPlayerIdFromBar, onBarBackgroundClick }) => { // Destructure players and rename handler from props
+const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName, onTeamNameChange, onPlayerDragStartFromBar, selectedPlayerIdFromBar, onBarBackgroundClick, gameEvents, onPlayerTapInBar }) => { // Destructure players and rename handler from props
   const [isEditingTeamName, setIsEditingTeamName] = useState(false);
   const [editedTeamName, setEditedTeamName] = useState(teamName);
   const teamNameInputRef = useRef<HTMLInputElement>(null);
@@ -172,6 +175,8 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName
             onRenamePlayer={onRenamePlayer}
             onPlayerDragStartFromBar={onPlayerDragStartFromBar}
             selectedPlayerIdFromBar={selectedPlayerIdFromBar}
+            gameEvents={gameEvents}
+            onPlayerTapInBar={onPlayerTapInBar}
           />
         ))}
       </div>

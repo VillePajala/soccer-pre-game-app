@@ -43,3 +43,20 @@
 - [ ] Implement exporting field view as an image. 
 - [ ] Advanced touch interaction refinement.
 - [ ] Code cleanup (e.g., shared utilities). 
+
+## Game Stats Modal Improvements
+
+- [ ] Add Totals Row to Player Stats table (code is commented out).
+- [ ] Enhanced Sorting/Filtering:
+  - [x] Allow sorting Player Stats table by clicking column headers (Name, G, A, Pts). (Implemented)
+  - [x] Add filter input for Player Stats table. (Implemented)
+- [ ] Goal Log Improvements:
+  - [ ] Allow editing goal log entries (scorer, assister, time).
+  - [ ] Add filtering options to the goal log.
+- [ ] Add Export Functionality (JSON/CSV).
+- [ ] Basic Visualizations (e.g., bar chart for player points).
+- [ ] Track More Stats (e.g., substitutions, cards - more complex).
+
+## Other
+
+- [ ] ... (Add other tasks here) 

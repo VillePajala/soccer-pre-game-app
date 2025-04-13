@@ -111,5 +111,32 @@
       "Kannusta hyvistä suorituksista (esim. kivet, \"jes!\", \"just niinku ollaan harjoiteltu!\").",
       "Anna pelaajan itse tehdä ratkaisuja – ohjaa vain pallotonta ja vaihdossa olevia pelaajia tarvittaessa."
     ]
+  },
+  "goalLogModal": {
+    "title": "Kirjaa Maalitapahtuma",
+    "closeButton": "Sulje",
+    "timeLabel": "Aika",
+    "scorerLabel": "Maalintekijä",
+    "assisterLabel": "Syöttäjä (Valinnainen)",
+    "selectPlaceholder": "-- Valitse Maalintekijä --",
+    "noAssisterPlaceholder": "-- Ei Syöttäjää --",
+    "cancelButton": "Peruuta",
+    "logButton": "Kirjaa Maali"
+  },
+  "gameStatsModal": {
+    "title": "Ottelutilastot",
+    "closeButton": "Sulje",
+    "editButton": "Muokkaa",
+    "saveButton": "Tallenna",
+    "cancelButton": "Peruuta",
+    "gameInfoTitle": "Ottelun Tiedot",
+    "opponentPlaceholder": "Vastustajan Nimi",
+    "playerStatsTitle": "Pelaajatilastot",
+    "playerHeader": "Pelaaja",
+    "goalsHeader": "M",
+    "assistsHeader": "S",
+    "goalLogTitle": "Maaliloki",
+    "assistPrefix": "S:",
+    "noGoalsLogged": "Maaleja ei ole vielä kirjattu."
   }
 } 
