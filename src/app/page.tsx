@@ -1046,7 +1046,6 @@ export default function Home() {
           isOpen={isGoalLogModalOpen}
           onClose={handleToggleGoalLogModal}
           onLogGoal={handleAddGoalEvent}
-          onLogOpponentGoal={handleLogOpponentGoal}
           availablePlayers={availablePlayers}
           currentTime={timeElapsedInSeconds}
         />
