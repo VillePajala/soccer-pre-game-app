@@ -23,6 +23,7 @@ interface TimerOverlayProps {
   onStartPauseTimer: () => void;
   onResetTimer: () => void;
   onToggleGoalLogModal?: () => void;
+  onRecordOpponentGoal?: () => void;
   teamName: string;
   opponentName: string;
   homeScore: number;
@@ -48,6 +49,7 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
   onStartPauseTimer,
   onResetTimer,
   onToggleGoalLogModal = () => { console.warn('onToggleGoalLogModal handler not provided'); },
+  onRecordOpponentGoal = () => { console.warn('onRecordOpponentGoal handler not provided'); },
   teamName = "Team",
   opponentName = "Opponent",
   homeScore = 0,
@@ -109,15 +111,26 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
   return (
     <div className={`fixed inset-0 z-40 flex flex-col items-center p-4 pt-12 ${bgColor} backdrop-blur-lg transition-colors duration-500`}> {/* Reduced top padding */} 
       <div className="w-full max-w-lg flex flex-col items-center">
+        {/* Game Score Display - MOVED TO TOP ABOVE TIMER */}
+        <div className="bg-slate-800/70 px-5 py-2 rounded-lg mb-4">
+          <div className="flex items-center justify-center gap-3 text-xl font-semibold">
+            <span className="text-slate-100">{teamName}</span>
+            <span className={`text-2xl font-bold ${homeScore > awayScore ? 'text-green-400' : 'text-slate-100'}`}>{homeScore}</span>
+            <span className="text-slate-500">-</span>
+            <span className={`text-2xl font-bold ${awayScore > homeScore ? 'text-red-400' : 'text-slate-100'}`}>{awayScore}</span>
+            <span className="text-slate-100">{opponentName}</span>
+          </div> 
+        </div>
+      
         {/* Timer Display */}
-        <div className="mb-1">
-          <span className={`text-7xl sm:text-8xl font-bold tabular-nums ${textColor}`}> {/* Larger font size */}
+        <div className="mb-4">
+          <span className={`text-7xl sm:text-8xl font-bold tabular-nums ${textColor}`}>
             {formatTime(timeElapsedInSeconds)}
           </span>
         </div>
         
         {/* Time Since Last Substitution */}
-        <div className="mb-2 flex flex-col items-center"> {/* Reduced bottom margin */} 
+        <div className="mb-2 flex flex-col items-center">
           <span className="text-xs text-slate-400">{t('timerOverlay.timeSinceLastSub', 'Time since last substitution')}</span>
           <span className="text-lg font-semibold tabular-nums text-slate-300">
             {formatTime(timeSinceLastSub)}
@@ -128,59 +141,41 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
         <div className="mb-3 text-center">
             {gameStatus === 'notStarted' && (
                 <span className="text-base text-yellow-400 font-medium">
-                    {t('timerOverlay.gameNotStarted', 'Game not started')} ({numberOfPeriods} x {periodDurationMinutes} min)
+                    {t('timerOverlay.gameNotStarted', 'Game not started')} 
+                    {numberOfPeriods === 1 ? 
+                        ` (${periodDurationMinutes} min)` : 
+                        ` (2 x ${periodDurationMinutes} min)`}
                 </span>
             )}
             {gameStatus === 'inProgress' && (
                 <span className="text-base text-green-400 font-medium">
-                    {t('timerOverlay.periodInProgress', 'Period {currentPeriod}/{numberOfPeriods}')
-                        .replace('{currentPeriod}', String(currentPeriod))
-                        .replace('{numberOfPeriods}', String(numberOfPeriods))}
-                    ({formatTime(periodDurationMinutes * 60 - (timeElapsedInSeconds % (periodDurationMinutes * 60)))}) {/* Time remaining in period */}
+                    {numberOfPeriods === 1 ? (
+                        // For single period games, no text needed
+                        ''
+                    ) : (
+                        // For 2 periods (half times), just show which half time
+                        t('timerOverlay.halfTimeInProgress', 'Puoliaika {currentPeriod}/2')
+                            .replace('{currentPeriod}', String(currentPeriod))
+                    )}
                 </span>
             )}
             {gameStatus === 'periodEnd' && currentPeriod < numberOfPeriods && (
                 <span className="text-base text-orange-400 font-medium">
-                    {t('timerOverlay.periodEnded', 'End of Period {currentPeriod}').replace('{currentPeriod}', String(currentPeriod))}
+                    {numberOfPeriods === 1 ? 
+                        t('timerOverlay.gameEnded', 'Game Ended') :
+                        t('timerOverlay.halfTimeEnded', 'End of Half Time {currentPeriod}')
+                            .replace('{currentPeriod}', String(currentPeriod))
+                    }
                 </span>
             )}
             {gameStatus === 'gameEnd' && (
                 <span className="text-base text-red-500 font-medium">
-                    {t('timerOverlay.gameEnded', 'Game Ended')} ({formatTime(totalGameTimeSeconds)})
+                    {t('timerOverlay.gameEnded', 'Game Ended')}
                 </span>
             )}
         </div>
 
-        {/* Game Score Display */}
-        {/* Removed mb-4, handled by spacing on sections above/below */}
-        <div className="bg-slate-800/70 px-5 py-2 rounded-lg mb-4"> 
-          <div className="flex items-center justify-center gap-3 text-xl font-semibold">
-            <span className="text-slate-100">{teamName}</span>
-            <span className={`text-2xl font-bold ${homeScore > awayScore ? 'text-green-400' : 'text-slate-100'}`}>{homeScore}</span>
-            <span className="text-slate-500">-</span>
-            <span className={`text-2xl font-bold ${awayScore > homeScore ? 'text-red-400' : 'text-slate-100'}`}>{awayScore}</span>
-            <span className="text-slate-100">{opponentName}</span>
-          </div>
-          {/* Match status indicator */}
-          <div className="text-center mt-1">
-            {homeScore > awayScore ? (
-              <div className="text-sm font-medium text-green-400">
-                {t('gameStatsModal.winning', 'Winning')} (+{homeScore - awayScore})
-              </div>
-            ) : homeScore < awayScore ? (
-              <div className="text-sm font-medium text-red-400">
-                {t('gameStatsModal.losing', 'Losing')} (-{awayScore - homeScore})
-              </div>
-            ) : (
-              <div className="text-sm font-medium text-yellow-400">
-                {t('gameStatsModal.draw', 'Draw')}
-              </div>
-            )}
-          </div>
-        </div>
-
         {/* Timer Controls */}
-        {/* Reduced mb-6 */} 
         <div className="flex items-center space-x-3 mb-4"> 
           <button 
             onClick={onStartPauseTimer} 
@@ -240,21 +235,25 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
           
           {/* Substitution Interval & Action Buttons */}
           <div className="flex flex-col space-y-3">
-            <div className="flex items-center justify-center">
-              <span className={controlLabelStyle}>{t('timerOverlay.intervalLabel', 'Sub Interval')}</span>
-              <button
-                onClick={() => onSetSubInterval(subIntervalMinutes - 1)}
-                disabled={subIntervalMinutes <= 1}
-                className={controlButtonStyle} aria-label="Decrease interval">
-                -
-              </button>
-              <span className={controlValueStyle}>{subIntervalMinutes}</span>
-              <button
-                onClick={() => onSetSubInterval(subIntervalMinutes + 1)}
-                className={controlButtonStyle} aria-label="Increase interval">
-                +
-              </button>
-            </div>
+            {/* ONLY SHOW INTERVAL SETTINGS WHEN GAME NOT STARTED */}
+            {gameStatus === 'notStarted' && (
+              <div className="flex items-center justify-center">
+                <span className={controlLabelStyle}>{t('timerOverlay.intervalLabel', 'Sub Interval')}</span>
+                <button
+                  onClick={() => onSetSubInterval(subIntervalMinutes - 1)}
+                  disabled={subIntervalMinutes <= 1}
+                  className={controlButtonStyle} aria-label="Decrease interval">
+                  -
+                </button>
+                <span className={controlValueStyle}>{subIntervalMinutes}</span>
+                <button
+                  onClick={() => onSetSubInterval(subIntervalMinutes + 1)}
+                  className={controlButtonStyle} aria-label="Increase interval">
+                  +
+                </button>
+              </div>
+            )}
+            
             <div className="flex justify-center">
               <button 
                 onClick={handleConfirmSubClick} 
@@ -263,12 +262,20 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
                 {t('timerOverlay.confirmSubButton', 'Vaihto tehty')}
               </button>
             </div>
-            <div className="flex justify-center pt-2"> 
+            <div className="flex justify-center gap-2 pt-2">
               <button 
                 onClick={onToggleGoalLogModal} 
-                className="text-slate-200 font-medium py-2 px-6 rounded-lg shadow-md bg-teal-700 hover:bg-teal-600 pointer-events-auto text-base active:scale-95 w-full sm:w-auto"
+                className="text-slate-200 font-medium py-2 px-4 rounded-lg shadow-md bg-teal-700 hover:bg-teal-600 pointer-events-auto text-base active:scale-95 flex-1"
+                title={`${teamName} maali`}
               >
-                {t('timerOverlay.logGoalButton', 'Kirjaa maali')}
+                {t('timerOverlay.teamGoalButton', 'Kirjaa maali')}
+              </button>
+              <button 
+                onClick={onRecordOpponentGoal} 
+                className="text-slate-200 font-medium py-2 px-4 rounded-lg shadow-md bg-red-700 hover:bg-red-600 pointer-events-auto text-base active:scale-95 flex-1"
+                title={`${opponentName} maali`}
+              >
+                {t('timerOverlay.opponentGoalButton', 'Vastustaja +1')}
               </button>
             </div>
           </div>

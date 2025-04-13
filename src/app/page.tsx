@@ -975,6 +975,7 @@ export default function Home() {
               onStartPauseTimer={handleStartPauseTimer}
               onResetTimer={handleResetTimer}
               onToggleGoalLogModal={handleToggleGoalLogModal}
+              onRecordOpponentGoal={() => handleLogOpponentGoal(timeElapsedInSeconds)}
               // Game score props
               teamName={teamName}
               opponentName={opponentName}
