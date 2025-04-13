@@ -708,6 +708,7 @@ export default function Home() {
     const currentElapsedTime = timeElapsedInSeconds; // Capture current time *before* state updates
     const currentIntervalMins = subIntervalMinutes; // Capture interval
     
+    // Update non-alert states immediately
     setCompletedIntervalDurations(prev => [duration, ...prev]); 
     setLastSubConfirmationTimeSeconds(currentElapsedTime);
     
@@ -718,18 +719,20 @@ export default function Home() {
         return newDueTime;
     });
 
-    // Now, immediately re-evaluate the alert level based on current time and *new* due time
-    const newWarningTime = newDueTime - 60;
-    let newAlertLevel: 'none' | 'warning' | 'due' = 'none';
-    if (currentElapsedTime >= newDueTime) { // Should typically not happen if logic is right
-        newAlertLevel = 'due'; 
-    } else if (newWarningTime >= 0 && currentElapsedTime >= newWarningTime) {
-        // Show warning if warning time is valid (>= 0) and current time reached it
-        newAlertLevel = 'warning';
-    }
-    setSubAlertLevel(newAlertLevel); // Set the calculated level
+    // Delay the subAlertLevel update slightly
+    setTimeout(() => {
+        const newWarningTime = newDueTime - 60;
+        let newAlertLevel: 'none' | 'warning' | 'due' = 'none';
+        if (currentElapsedTime >= newDueTime) { 
+            newAlertLevel = 'due'; 
+        } else if (newWarningTime >= 0 && currentElapsedTime >= newWarningTime) {
+            newAlertLevel = 'warning';
+        }
+        setSubAlertLevel(newAlertLevel); // Set the calculated level after the delay
+        console.log(`Sub alert level updated after delay: ${newAlertLevel}`);
+    }, 50); // Short delay (e.g., 50ms)
     
-    console.log(`Sub made at ${currentElapsedTime}s. Duration: ${duration}s. Next due: ${newDueTime}s. New Alert: ${newAlertLevel}`);
+    console.log(`Sub made at ${currentElapsedTime}s. Duration: ${duration}s. Next due: ${newDueTime}s. (Alert update delayed)`);
   };
 
   const handleSetSubInterval = (minutes: number) => {
