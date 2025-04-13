@@ -15,6 +15,7 @@
   "timerOverlay.confirmSubButton": "Substitution Made",
   "timerOverlay.historyTitle": "Play Time History",
   "timerOverlay.logGoalButton": "Log Goal",
+  "timerOverlay.timeSinceLastSub": "Time since last substitution",
   "instructionsModal": {
     "title": "Instructions",
     "closeButton": "Close instructions",

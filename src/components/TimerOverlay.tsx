@@ -27,6 +27,7 @@ interface TimerOverlayProps {
   opponentName: string;
   homeScore: number;
   awayScore: number;
+  lastSubConfirmationTimeSeconds: number;
 }
 
 const TimerOverlay: React.FC<TimerOverlayProps> = ({
@@ -44,6 +45,7 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
   opponentName = "Opponent",
   homeScore = 0,
   awayScore = 0,
+  lastSubConfirmationTimeSeconds = 0,
 }) => {
   const { t } = useTranslation(); // Initialize translation hook
 
@@ -69,13 +71,26 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
     onSubstitutionMade();
   };
 
+  // Calculate time since last substitution
+  const timeSinceLastSub = lastSubConfirmationTimeSeconds === 0 
+    ? timeElapsedInSeconds 
+    : timeElapsedInSeconds - lastSubConfirmationTimeSeconds;
+
   return (
     <div className={`fixed inset-0 z-40 flex flex-col items-center p-4 pt-24 ${bgColor} backdrop-blur-lg transition-colors duration-500`}>
       <div className="w-full max-w-lg flex flex-col items-center">
         {/* Timer Display */}
-        <div className="mb-2">
+        <div className="mb-1">
           <span className={`text-7xl sm:text-8xl font-bold tabular-nums ${textColor}`}>
             {formatTime(timeElapsedInSeconds)}
+          </span>
+        </div>
+        
+        {/* Time Since Last Substitution */}
+        <div className="mb-3 flex flex-col items-center">
+          <span className="text-xs text-slate-400">{t('timerOverlay.timeSinceLastSub', 'Time since last substitution')}</span>
+          <span className="text-lg font-semibold tabular-nums text-slate-300">
+            {formatTime(timeSinceLastSub)}
           </span>
         </div>
 

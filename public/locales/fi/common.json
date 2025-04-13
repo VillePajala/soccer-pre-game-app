@@ -15,6 +15,7 @@
   "timerOverlay.confirmSubButton": "Vaihto Tehty",
   "timerOverlay.historyTitle": "Peliaikahistoria",
   "timerOverlay.logGoalButton": "Kirjaa Maali",
+  "timerOverlay.timeSinceLastSub": "Aika viimeisestä vaihdosta",
   "instructionsModal": {
     "title": "Käyttöohjeet",
     "closeButton": "Sulje ohjeet",

@@ -865,6 +865,8 @@ export default function Home() {
               opponentName={opponentName}
               homeScore={homeScore}
               awayScore={awayScore}
+              // Add last substitution time
+              lastSubConfirmationTimeSeconds={lastSubConfirmationTimeSeconds}
           />
         )}
         <SoccerField
