@@ -567,6 +567,24 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                      </span>
                    )}
                 </div>
+
+                {/* Match Result Status */}
+                <div className="mt-2 text-center">
+                  {homeScore > awayScore ? (
+                    <div className="inline-block px-3 py-1 bg-green-700/40 text-green-300 rounded-full text-sm font-medium">
+                      {t('gameStatsModal.winning', 'Winning')} (+{homeScore - awayScore})
+                    </div>
+                  ) : homeScore < awayScore ? (
+                    <div className="inline-block px-3 py-1 bg-red-700/40 text-red-300 rounded-full text-sm font-medium">
+                      {t('gameStatsModal.losing', 'Losing')} (-{awayScore - homeScore})
+                    </div>
+                  ) : (
+                    <div className="inline-block px-3 py-1 bg-yellow-700/40 text-yellow-300 rounded-full text-sm font-medium">
+                      {t('gameStatsModal.draw', 'Draw')}
+                    </div>
+                  )}
+                </div>
+                
                  {/* Game Date (View or Inline Edit) - Centered */}
                  <div className="flex justify-center">
                    {inlineEditingField === 'date' ? (

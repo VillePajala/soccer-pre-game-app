@@ -82,7 +82,7 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
         >
           &times;
         </button>
-        <h2 className="text-xl font-bold mb-4 text-yellow-400">
+        <h2 className="text-xl font-bold mb-4 text-yellow-400 text-center">
           {t('goalLogModal.title', 'Log Goal Event')}
         </h2>
 
@@ -144,18 +144,7 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-between items-center pt-4"> {/* Use justify-between */}
-             {/* Log Opponent Goal Button */}
-             <button
-                type="button"
-                onClick={handleLogOpponentGoalClick}
-                className="px-3 py-2 bg-red-700 hover:bg-red-600 text-white rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 focus:ring-offset-slate-800"
-              >
-                {t('goalLogModal.logOpponentButton', 'Log Opponent Goal')}
-              </button>
-
-            {/* Cancel & Log Own Goal Buttons */}
-            <div className="flex space-x-3">
+          <div className="flex flex-col space-y-2 pt-4">
               <button
                 type="button"
                 onClick={onClose}
@@ -163,15 +152,24 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
               >
                 {t('goalLogModal.cancelButton', 'Cancel')}
               </button>
+              
               <button
                 type="button"
-                onClick={handleLogOwnGoalClick} // Renamed handler
-                disabled={!scorerId} // Disable if no scorer selected
+                onClick={handleLogOwnGoalClick}
+                disabled={!scorerId}
                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {t('goalLogModal.logOwnGoalButton', 'Log Goal')}
+                {t('goalLogModal.logButton', 'Log Goal')}
               </button>
-            </div>
+
+             {/* Log Opponent Goal Button */}
+             <button
+                type="button"
+                onClick={handleLogOpponentGoalClick}
+                className="px-4 py-2 bg-red-700 hover:bg-red-600 text-white rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 focus:ring-offset-slate-800"
+              >
+                {t('goalLogModal.logOpponentButton', 'Log Opponent Goal')}
+              </button>
           </div>
         </div>
       </div>

@@ -719,8 +719,14 @@ export default function Home() {
     };
 
     const newGameEvents = [...gameEvents, newEvent];
-    setGameEvents(newGameEvents); // Update state directly first
-    saveStateToHistory({ gameEvents: newGameEvents }); // Save the new events array to history
+    const newHomeScore = homeScore + 1; // Increment home score when logging a goal
+    
+    setGameEvents(newGameEvents);
+    setHomeScore(newHomeScore); // Update the home score
+    saveStateToHistory({ 
+      gameEvents: newGameEvents,
+      homeScore: newHomeScore // Include updated score in history
+    });
     setIsGoalLogModalOpen(false); // Close modal after logging
   };
 
@@ -853,6 +859,12 @@ export default function Home() {
               isTimerRunning={isTimerRunning}
               onStartPauseTimer={handleStartPauseTimer}
               onResetTimer={handleResetTimer}
+              onToggleGoalLogModal={handleToggleGoalLogModal}
+              // Add game score props
+              teamName={teamName}
+              opponentName={opponentName}
+              homeScore={homeScore}
+              awayScore={awayScore}
           />
         )}
         <SoccerField

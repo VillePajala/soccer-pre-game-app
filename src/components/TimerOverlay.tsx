@@ -22,6 +22,11 @@ interface TimerOverlayProps {
   isTimerRunning: boolean;
   onStartPauseTimer: () => void;
   onResetTimer: () => void;
+  onToggleGoalLogModal?: () => void;
+  teamName: string;
+  opponentName: string;
+  homeScore: number;
+  awayScore: number;
 }
 
 const TimerOverlay: React.FC<TimerOverlayProps> = ({
@@ -34,6 +39,11 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
   isTimerRunning,
   onStartPauseTimer,
   onResetTimer,
+  onToggleGoalLogModal = () => { console.warn('onToggleGoalLogModal handler not provided'); },
+  teamName = "Team",
+  opponentName = "Opponent",
+  homeScore = 0,
+  awayScore = 0,
 }) => {
   const { t } = useTranslation(); // Initialize translation hook
 
@@ -67,6 +77,33 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
           <span className={`text-7xl sm:text-8xl font-bold tabular-nums ${textColor}`}>
             {formatTime(timeElapsedInSeconds)}
           </span>
+        </div>
+
+        {/* Game Score Display */}
+        <div className="mb-4 bg-slate-800/70 px-5 py-2 rounded-lg">
+          <div className="flex items-center justify-center gap-3 text-xl font-semibold">
+            <span className="text-slate-100">{teamName}</span>
+            <span className={`text-2xl font-bold ${homeScore > awayScore ? 'text-green-400' : 'text-slate-100'}`}>{homeScore}</span>
+            <span className="text-slate-500">-</span>
+            <span className={`text-2xl font-bold ${awayScore > homeScore ? 'text-red-400' : 'text-slate-100'}`}>{awayScore}</span>
+            <span className="text-slate-100">{opponentName}</span>
+          </div>
+          {/* Match status indicator */}
+          <div className="text-center mt-1">
+            {homeScore > awayScore ? (
+              <div className="text-sm font-medium text-green-400">
+                {t('gameStatsModal.winning', 'Winning')} (+{homeScore - awayScore})
+              </div>
+            ) : homeScore < awayScore ? (
+              <div className="text-sm font-medium text-red-400">
+                {t('gameStatsModal.losing', 'Losing')} (-{awayScore - homeScore})
+              </div>
+            ) : (
+              <div className="text-sm font-medium text-yellow-400">
+                {t('gameStatsModal.draw', 'Draw')}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Timer Controls */}
@@ -117,7 +154,15 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
                 onClick={handleConfirmSubClick} 
                 className="text-slate-100 font-bold py-2 px-6 rounded-lg shadow-lg bg-indigo-600 hover:bg-indigo-700 pointer-events-auto text-base active:scale-95 w-full sm:w-auto"
               >
-                {t('timerOverlay.confirmSubButton')}
+                {t('timerOverlay.confirmSubButton', 'Vaihto tehty')}
+              </button>
+            </div>
+            <div className="flex justify-center pt-2"> 
+              <button 
+                onClick={onToggleGoalLogModal} 
+                className="text-slate-200 font-medium py-2 px-6 rounded-lg shadow-md bg-teal-700 hover:bg-teal-600 pointer-events-auto text-base active:scale-95 w-full sm:w-auto"
+              >
+                {t('timerOverlay.logGoalButton', 'Log Goal')}
               </button>
             </div>
           </div>

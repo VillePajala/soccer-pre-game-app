@@ -14,6 +14,7 @@
   "timerOverlay.intervalLabel": "Vaihtoväli (min):",
   "timerOverlay.confirmSubButton": "Vaihto Tehty",
   "timerOverlay.historyTitle": "Peliaikahistoria",
+  "timerOverlay.logGoalButton": "Kirjaa Maali",
   "instructionsModal": {
     "title": "Käyttöohjeet",
     "closeButton": "Sulje ohjeet",
@@ -121,7 +122,8 @@
     "selectPlaceholder": "-- Valitse Maalintekijä --",
     "noAssisterPlaceholder": "-- Ei Syöttäjää --",
     "cancelButton": "Peruuta",
-    "logButton": "Kirjaa Maali"
+    "logButton": "Kirjaa Maali",
+    "logOpponentButton": "Kirjaa Vastustajan Maali"
   },
   "gameStatsModal": {
     "title": "Ottelutilastot",
@@ -137,6 +139,15 @@
     "assistsHeader": "S",
     "goalLogTitle": "Maaliloki",
     "assistPrefix": "S:",
-    "noGoalsLogged": "Maaleja ei ole vielä kirjattu."
+    "noGoalsLogged": "Maaleja ei ole vielä kirjattu.",
+    "tapToEdit": "Napauta muokataksesi",
+    "tapToEditScore": "Napauta muokataksesi tulosta",
+    "resetStatsButton": "Nollaa Tilastot",
+    "editNotesButton": "Muokkaa Muistiinpanoja",
+    "notesTitle": "Ottelun Muistiinpanot",
+    "resetConfirmation": "Haluatko varmasti nollata kaikki ottelutilastot?",
+    "winning": "Johdossa",
+    "losing": "Häviöllä",
+    "draw": "Tasapeli"
   }
 } 
