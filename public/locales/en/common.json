@@ -16,6 +16,12 @@
   "timerOverlay.historyTitle": "Play Time History",
   "timerOverlay.logGoalButton": "Log Goal",
   "timerOverlay.timeSinceLastSub": "Time since last substitution",
+  "timerOverlay.numPeriods": "Periods",
+  "timerOverlay.periodDuration": "Duration (min)",
+  "timerOverlay.gameNotStarted": "Game not started",
+  "timerOverlay.periodInProgress": "Period {currentPeriod}/{numberOfPeriods}",
+  "timerOverlay.periodEnded": "End of Period {currentPeriod}",
+  "timerOverlay.gameEnded": "Game Ended",
   "instructionsModal": {
     "title": "Instructions",
     "closeButton": "Close instructions",

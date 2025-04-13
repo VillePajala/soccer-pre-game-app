@@ -57,6 +57,11 @@ interface AppState {
   homeScore: number;
   awayScore: number;
   gameNotes: string; // Add game notes to state
+  // Add game structure state
+  numberOfPeriods: 1 | 2;
+  periodDurationMinutes: number;
+  currentPeriod: number; // 1 or 2
+  gameStatus: 'notStarted' | 'inProgress' | 'periodEnd' | 'gameEnd';
 }
 
 // Placeholder data - No coordinates needed here
@@ -88,6 +93,11 @@ const initialState: AppState = {
   homeScore: 0,
   awayScore: 0,
   gameNotes: '', // Initialize game notes as empty string
+  // Initialize game structure
+  numberOfPeriods: 2,
+  periodDurationMinutes: 10, // Default to 10 minutes
+  currentPeriod: 1,
+  gameStatus: 'notStarted',
 };
 
 // Define localStorage key
@@ -134,22 +144,47 @@ export default function Home() {
   const [completedIntervalDurations, setCompletedIntervalDurations] = useState<number[]>([]);
   const [lastSubConfirmationTimeSeconds, setLastSubConfirmationTimeSeconds] = useState<number>(0);
 
+  // --- Game Structure State ---
+  const [numberOfPeriods, setNumberOfPeriods] = useState<1 | 2>(initialState.numberOfPeriods);
+  const [periodDurationMinutes, setPeriodDurationMinutes] = useState<number>(initialState.periodDurationMinutes);
+  const [currentPeriod, setCurrentPeriod] = useState<number>(initialState.currentPeriod);
+  const [gameStatus, setGameStatus] = useState<AppState['gameStatus']>(initialState.gameStatus);
+
   // --- Timer Effect ---
   useEffect(() => {
     let intervalId: NodeJS.Timeout | null = null;
+    const periodEndTimeSeconds = currentPeriod * periodDurationMinutes * 60;
 
-    if (isTimerRunning) {
+    if (isTimerRunning && gameStatus === 'inProgress') {
       intervalId = setInterval(() => {
         setTimeElapsedInSeconds(prevTime => {
           const newTime = prevTime + 1;
-          const currentDueTime = nextSubDueTimeSeconds; // Capture current due time
-          const warningTime = currentDueTime - 60;
 
+          // Check if period or game ended
+          if (newTime >= periodEndTimeSeconds) {
+            clearInterval(intervalId!);
+            setIsTimerRunning(false);
+            setTimeElapsedInSeconds(periodEndTimeSeconds); // Set exactly to end time
+            
+            if (currentPeriod === numberOfPeriods) {
+              setGameStatus('gameEnd');
+              console.log("Game ended.");
+            } else {
+              setGameStatus('periodEnd');
+              console.log(`Period ${currentPeriod} ended.`);
+            }
+            // Update substitution alert based on end time
+            setSubAlertLevel(newTime >= nextSubDueTimeSeconds ? 'due' : subAlertLevel);
+            return periodEndTimeSeconds;
+          }
+
+          // Update substitution alert level
+          const currentDueTime = nextSubDueTimeSeconds;
+          const warningTime = currentDueTime - 60;
           let newAlertLevel: 'none' | 'warning' | 'due' = 'none';
           if (newTime >= currentDueTime) {
             newAlertLevel = 'due';
           } else if (warningTime >= 0 && newTime >= warningTime) { 
-            // Show warning if warning time is valid (>= 0) and current time reached it
             newAlertLevel = 'warning';
           }
           setSubAlertLevel(newAlertLevel);
@@ -158,20 +193,19 @@ export default function Home() {
         });
       }, 1000);
     } else {
-      // Clear interval if it exists and timer is not running
+      // Clear interval if it exists and timer is not running or game not in progress
       if (intervalId) {
         clearInterval(intervalId);
       }
     }
 
-    // Cleanup function to clear the interval when the component unmounts
-    // or before the effect runs again if isTimerRunning changes
+    // Cleanup function
     return () => {
       if (intervalId) {
         clearInterval(intervalId);
       }
     };
-  }, [isTimerRunning, nextSubDueTimeSeconds, subIntervalMinutes]); // ADD dependencies
+  }, [isTimerRunning, gameStatus, currentPeriod, periodDurationMinutes, numberOfPeriods, nextSubDueTimeSeconds, subAlertLevel]); // ADD gameStatus, currentPeriod, periodDurationMinutes, numberOfPeriods dependencies
 
   // --- Load state from localStorage on mount ---
   useEffect(() => {
@@ -204,6 +238,11 @@ export default function Home() {
             setHomeScore(currentState.homeScore || 0);
             setAwayScore(currentState.awayScore || 0);
             setGameNotes(currentState.gameNotes || '');
+            // Load game structure state
+            setNumberOfPeriods(currentState.numberOfPeriods || 2);
+            setPeriodDurationMinutes(currentState.periodDurationMinutes || 10);
+            setCurrentPeriod(currentState.currentPeriod || 1);
+            setGameStatus(currentState.gameStatus || 'notStarted');
           } else {
             console.warn("Loaded historyIndex is out of bounds.");
             // Fallback to initial state if index is bad
@@ -220,6 +259,11 @@ export default function Home() {
             setHomeScore(initialState.homeScore);
             setAwayScore(initialState.awayScore);
             setGameNotes(initialState.gameNotes);
+            // Reset game structure state on fallback
+            setNumberOfPeriods(2);
+            setPeriodDurationMinutes(10);
+            setCurrentPeriod(1);
+            setGameStatus('notStarted');
           }
         } else {
             console.warn("Loaded data structure is invalid. Resetting to initial state.");
@@ -239,6 +283,9 @@ export default function Home() {
             setHomeScore(initialState.homeScore);
             setAwayScore(initialState.awayScore);
             setGameNotes(initialState.gameNotes);
+            // Reset game structure state on fallback
+            setNumberOfPeriods(2);
+            setPeriodDurationMinutes(10);
         }
       } else {
           console.log("No saved state found in localStorage. Using initial state.");
@@ -256,6 +303,9 @@ export default function Home() {
           setHomeScore(initialState.homeScore);
           setAwayScore(initialState.awayScore);
           setGameNotes(initialState.gameNotes);
+          // Set initial game structure state
+          setNumberOfPeriods(2);
+          setPeriodDurationMinutes(10);
       }
     } catch (error) {
       console.error("Failed to load or parse state from localStorage:", error);
@@ -358,6 +408,11 @@ export default function Home() {
       homeScore,
       awayScore,
       gameNotes,
+      // Include game structure in state snapshot
+      numberOfPeriods,
+      periodDurationMinutes,
+      currentPeriod,
+      gameStatus,
     };
     
     const nextState: AppState = { ...currentAppState, ...newState };
@@ -373,7 +428,7 @@ export default function Home() {
     const newHistory = history.slice(0, historyIndex + 1);
     setHistory([...newHistory, nextState]);
     setHistoryIndex(newHistory.length);
-  }, [history, historyIndex, playersOnField, opponents, drawings, availablePlayers, showPlayerNames, teamName, gameEvents, opponentName, gameDate, homeScore, awayScore, gameNotes]); // Add new dependencies
+  }, [history, historyIndex, playersOnField, opponents, drawings, availablePlayers, showPlayerNames, teamName, gameEvents, opponentName, gameDate, homeScore, awayScore, gameNotes, numberOfPeriods, periodDurationMinutes, currentPeriod, gameStatus]); // Add game structure dependencies
 
   // --- Load state from history on index change ---
   useEffect(() => {
@@ -392,6 +447,11 @@ export default function Home() {
       setHomeScore(stateToLoad.homeScore || 0);
       setAwayScore(stateToLoad.awayScore || 0);
       setGameNotes(stateToLoad.gameNotes || '');
+      // Load game structure from history state
+      setNumberOfPeriods(stateToLoad.numberOfPeriods || 2);
+      setPeriodDurationMinutes(stateToLoad.periodDurationMinutes || 10);
+      setCurrentPeriod(stateToLoad.currentPeriod || 1);
+      setGameStatus(stateToLoad.gameStatus || 'notStarted');
     }
   }, [historyIndex, history]); // History dependency added
 
@@ -594,22 +654,53 @@ export default function Home() {
 
   // --- Timer Handlers ---
   const handleStartPauseTimer = () => {
-    if (!isTimerRunning && timeElapsedInSeconds === 0) {
+    if (gameStatus === 'notStarted') {
+      // Start the game (first period)
+      setGameStatus('inProgress');
+      setCurrentPeriod(1);
+      setTimeElapsedInSeconds(0); // Ensure timer starts from 0
       setCompletedIntervalDurations([]);
-      setLastSubConfirmationTimeSeconds(0); 
+      setLastSubConfirmationTimeSeconds(0);
       setNextSubDueTimeSeconds(subIntervalMinutes * 60);
-      setSubAlertLevel('none'); // Reset alert level when starting fresh
-      console.log("Starting timer from zero, clearing duration history.");
+      setSubAlertLevel('none');
+      setIsTimerRunning(true);
+      console.log("Game started, Period 1.");
+    } else if (gameStatus === 'periodEnd') {
+      // Start the next period
+      const nextPeriod = currentPeriod + 1;
+      setCurrentPeriod(nextPeriod);
+      setGameStatus('inProgress');
+      // Reset sub timer for the new period relative to the end of the previous
+      const previousPeriodEndTime = (nextPeriod - 1) * periodDurationMinutes * 60;
+      setTimeElapsedInSeconds(previousPeriodEndTime); // Start timer from period end time
+      setCompletedIntervalDurations([]); // Clear history for new period
+      setLastSubConfirmationTimeSeconds(previousPeriodEndTime);
+      setNextSubDueTimeSeconds(previousPeriodEndTime + (subIntervalMinutes * 60));
+      setSubAlertLevel('none');
+      setIsTimerRunning(true);
+      console.log(`Starting Period ${nextPeriod}.`);
+    } else if (gameStatus === 'inProgress') {
+      // Pause or resume the current period
+      setIsTimerRunning(prev => !prev);
+      console.log(isTimerRunning ? "Timer paused." : "Timer resumed.");
+    } else if (gameStatus === 'gameEnd') {
+      // Game has ended, do nothing or maybe allow reset?
+      console.log("Game has ended. Cannot start/pause.");
     }
-    setIsTimerRunning(prev => !prev);
   };
 
   const handleResetTimer = () => {
+    // Reset the entire game state related to time and periods
     setTimeElapsedInSeconds(0);
     setIsTimerRunning(false);
-    setNextSubDueTimeSeconds(subIntervalMinutes * 60);
-    setSubAlertLevel('none'); // Reset alert level
+    setSubIntervalMinutes(5); // Reset sub interval to default
+    setNextSubDueTimeSeconds(5 * 60);
+    setSubAlertLevel('none');
     setLastSubConfirmationTimeSeconds(0);
+    setCompletedIntervalDurations([]);
+    setCurrentPeriod(1);
+    setGameStatus('notStarted'); // Reset game status
+    console.log("Timer and game progress reset.");
   };
 
   const handleSubstitutionMade = () => {
@@ -819,6 +910,30 @@ export default function Home() {
     saveStateToHistory({ gameNotes: notes });
   };
 
+  // --- Handlers for Game Structure ---
+  const handleSetNumberOfPeriods = (periods: 1 | 2) => {
+    if (gameStatus === 'notStarted') {
+      setNumberOfPeriods(periods);
+      // No history save needed here, handled implicitly by timer start/reset?
+      // Or maybe save it immediately?
+      saveStateToHistory({ numberOfPeriods: periods }); // Let's save it
+      console.log(`Number of periods set to: ${periods}`);
+    } else {
+      console.log("Cannot change number of periods after game has started.");
+    }
+  };
+
+  const handleSetPeriodDuration = (minutes: number) => {
+    const newMinutes = Math.max(1, minutes);
+    if (gameStatus === 'notStarted') {
+      setPeriodDurationMinutes(newMinutes);
+      saveStateToHistory({ periodDurationMinutes: newMinutes }); // Save immediately
+      console.log(`Period duration set to: ${newMinutes} minutes.`);
+    } else {
+      console.log("Cannot change period duration after game has started.");
+    }
+  };
+
   // Render null or a loading indicator until state is loaded
   if (!isLoaded) {
     // You might want a more sophisticated loading indicator
@@ -860,13 +975,20 @@ export default function Home() {
               onStartPauseTimer={handleStartPauseTimer}
               onResetTimer={handleResetTimer}
               onToggleGoalLogModal={handleToggleGoalLogModal}
-              // Add game score props
+              // Game score props
               teamName={teamName}
               opponentName={opponentName}
               homeScore={homeScore}
               awayScore={awayScore}
-              // Add last substitution time
+              // Last substitution time
               lastSubConfirmationTimeSeconds={lastSubConfirmationTimeSeconds}
+              // Game Structure props & handlers
+              numberOfPeriods={numberOfPeriods}
+              periodDurationMinutes={periodDurationMinutes}
+              currentPeriod={currentPeriod}
+              gameStatus={gameStatus}
+              onSetNumberOfPeriods={handleSetNumberOfPeriods}
+              onSetPeriodDuration={handleSetPeriodDuration}
           />
         )}
         <SoccerField

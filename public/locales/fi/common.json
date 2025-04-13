@@ -12,10 +12,16 @@
   "controlBar.timerPause": "Tauko",
   "controlBar.timerReset": "Nollaa",
   "timerOverlay.intervalLabel": "Vaihtoväli (min):",
-  "timerOverlay.confirmSubButton": "Vaihto Tehty",
+  "timerOverlay.confirmSubButton": "Vaihto tehty",
   "timerOverlay.historyTitle": "Peliaikahistoria",
-  "timerOverlay.logGoalButton": "Kirjaa Maali",
+  "timerOverlay.logGoalButton": "Kirjaa maali",
   "timerOverlay.timeSinceLastSub": "Aika viimeisestä vaihdosta",
+  "timerOverlay.numPeriods": "Erät",
+  "timerOverlay.periodDuration": "Kesto (min)",
+  "timerOverlay.gameNotStarted": "Peli ei ole alkanut",
+  "timerOverlay.periodInProgress": "Erä {currentPeriod}/{numberOfPeriods}",
+  "timerOverlay.periodEnded": "Erä {currentPeriod} päättyi",
+  "timerOverlay.gameEnded": "Peli päättyi",
   "instructionsModal": {
     "title": "Käyttöohjeet",
     "closeButton": "Sulje ohjeet",
@@ -123,7 +129,7 @@
     "selectPlaceholder": "-- Valitse Maalintekijä --",
     "noAssisterPlaceholder": "-- Ei Syöttäjää --",
     "cancelButton": "Peruuta",
-    "logButton": "Kirjaa Maali",
+    "logButton": "Kirjaa maali",
     "logOpponentButton": "Kirjaa Vastustajan Maali"
   },
   "gameStatsModal": {
