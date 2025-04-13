@@ -7,7 +7,8 @@ import { Player, GameEvent } from '@/app/page'; // Import types
 interface GoalLogModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onLogGoal: (scorerId: string, assisterId?: string) => void;
+  onLogGoal: (scorerId: string, assisterId?: string) => void; // For logging own team's goal
+  onLogOpponentGoal?: (time: number) => void; // NEW: For logging opponent's goal
   availablePlayers: Player[];
   currentTime: number; // timeElapsedInSeconds
 }
@@ -16,6 +17,7 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
   isOpen,
   onClose,
   onLogGoal,
+  onLogOpponentGoal = () => { console.warn('onLogOpponentGoal handler not provided'); }, // Default handler
   availablePlayers,
   currentTime,
 }) => {
@@ -41,10 +43,16 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
     ));
   }, [availablePlayers]);
 
-  const handleLogClick = () => {
+  const handleLogOwnGoalClick = () => {
     if (scorerId) {
       onLogGoal(scorerId, assisterId || undefined); // Pass undefined if assisterId is empty
     }
+  };
+
+  const handleLogOpponentGoalClick = () => {
+      onLogOpponentGoal(currentTime);
+      // No need to reset scorer/assister here as they weren't used
+      // Modal close is handled in the parent handler now
   };
 
   // Reset state when modal closes (or opens)
@@ -136,22 +144,34 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end space-x-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 focus:ring-offset-slate-800"
-            >
-              {t('goalLogModal.cancelButton', 'Cancel')}
-            </button>
-            <button
-              type="button"
-              onClick={handleLogClick}
-              disabled={!scorerId} // Disable if no scorer selected
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {t('goalLogModal.logButton', 'Log Goal')}
-            </button>
+          <div className="flex justify-between items-center pt-4"> {/* Use justify-between */}
+             {/* Log Opponent Goal Button */}
+             <button
+                type="button"
+                onClick={handleLogOpponentGoalClick}
+                className="px-3 py-2 bg-red-700 hover:bg-red-600 text-white rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 focus:ring-offset-slate-800"
+              >
+                {t('goalLogModal.logOpponentButton', 'Log Opponent Goal')}
+              </button>
+
+            {/* Cancel & Log Own Goal Buttons */}
+            <div className="flex space-x-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 focus:ring-offset-slate-800"
+              >
+                {t('goalLogModal.cancelButton', 'Cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={handleLogOwnGoalClick} // Renamed handler
+                disabled={!scorerId} // Disable if no scorer selected
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {t('goalLogModal.logOwnGoalButton', 'Log Goal')}
+              </button>
+            </div>
           </div>
         </div>
       </div>

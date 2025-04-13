@@ -189,7 +189,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   // Filter and sort goal events by time
   const sortedGoals = useMemo(() => {
     return gameEvents
-      .filter(e => e.type === 'goal')
+      .filter(e => e.type === 'goal' || e.type === 'opponentGoal')
       .sort((a, b) => a.time - b.time);
   }, [gameEvents]);
 
@@ -719,9 +719,9 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
             {sortedGoals.length > 0 ? (
               <ul className="space-y-1.5 text-sm max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-700 pr-1">
                 {sortedGoals.map(goal => (
-                  <li key={goal.id} className="bg-slate-700/50 p-2 rounded-md flex justify-between items-center min-h-[40px]">
-                    {editingGoalId === goal.id ? (
-                      // --- Edit Goal Mode ---
+                  <li key={goal.id} className={`p-2 rounded-md flex justify-between items-center min-h-[40px] ${goal.type === 'opponentGoal' ? 'bg-red-900/40' : 'bg-slate-700/50'}`}>
+                    {editingGoalId === goal.id && goal.type === 'goal' ? (
+                      // --- Edit Own Goal Mode ---
                       <div className="flex-grow space-y-2" onKeyDown={handleGoalEditKeyDown}>
                         <div className="flex items-center gap-2 flex-wrap">
                           {/* Time Input */}
@@ -759,22 +759,24 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                         </div>
                       </div>
                     ) : (
-                      // --- View Goal Mode ---
+                      // --- View Goal Mode (Own or Opponent) ---
                       <>
                         <span className="font-mono text-slate-400 mr-2">[{formatTime(goal.time)}]</span>
-                        <span className="text-right flex-grow mr-2">
-                          <span className="font-semibold text-yellow-300">{goal.scorerName}</span>
-                          {goal.assisterName && (
+                        <span className={`text-right flex-grow mr-2 ${goal.type === 'opponentGoal' ? 'text-red-400' : 'text-yellow-300'}`}>
+                          <span className="font-semibold">{goal.scorerName}</span>
+                          {goal.type === 'goal' && goal.assisterName && (
                             <span className="text-slate-400 text-xs ml-1">({t('gameStatsModal.assistPrefix', 'A:')} {goal.assisterName})</span>
                           )}
                         </span>
-                        <button 
-                          onClick={() => handleStartEditGoal(goal)}
-                          className="p-1 text-slate-400 hover:text-yellow-300" 
-                          title={t('gameStatsModal.editGoalButton', 'Edit Goal') ?? "Edit Goal"}
-                        >
-                           <FaEdit />
-                        </button>
+                        {goal.type === 'goal' && (
+                            <button 
+                              onClick={() => handleStartEditGoal(goal)}
+                              className="p-1 text-slate-400 hover:text-yellow-300" 
+                              title={t('gameStatsModal.editGoalButton', 'Edit Goal') ?? "Edit Goal"}
+                            >
+                               <FaEdit />
+                            </button>
+                        )}
                       </>
                     )}
                   </li>

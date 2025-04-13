@@ -34,7 +34,7 @@ export interface Opponent {
 // Define the structure for a game event
 export interface GameEvent {
   id: string; // Unique ID for the event
-  type: 'goal';
+  type: 'goal' | 'opponentGoal';
   time: number; // timeElapsedInSeconds at the moment of logging
   scorerId: string;
   scorerName: string; // Store name at time of event
@@ -724,7 +724,32 @@ export default function Home() {
     setIsGoalLogModalOpen(false); // Close modal after logging
   };
 
-  // NEW Handler to update an existing game event
+  // NEW Handler to log an opponent goal
+  const handleLogOpponentGoal = (time: number) => {
+    console.log(`Logging opponent goal at time: ${time}`);
+    const newEvent: GameEvent = {
+      id: `oppGoal-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      type: 'opponentGoal', // Use a distinct type
+      time: time,
+      // Assign placeholder/generic identifiers for opponent
+      scorerId: 'opponent', 
+      scorerName: opponentName || 'Opponent', // Use current opponent name or default
+      // No assister for opponent goals in this model
+    };
+
+    const newGameEvents = [...gameEvents, newEvent];
+    const newAwayScore = awayScore + 1;
+
+    setGameEvents(newGameEvents);
+    setAwayScore(newAwayScore);
+    saveStateToHistory({ 
+      gameEvents: newGameEvents, 
+      awayScore: newAwayScore 
+    });
+    setIsGoalLogModalOpen(false); // Close modal after logging
+  };
+
+  // Handler to update an existing game event
   const handleUpdateGameEvent = (updatedEvent: GameEvent) => {
     const eventIndex = gameEvents.findIndex(e => e.id === updatedEvent.id);
     if (eventIndex === -1) {
@@ -884,6 +909,7 @@ export default function Home() {
           isOpen={isGoalLogModalOpen}
           onClose={handleToggleGoalLogModal}
           onLogGoal={handleAddGoalEvent}
+          onLogOpponentGoal={handleLogOpponentGoal}
           availablePlayers={availablePlayers}
           currentTime={timeElapsedInSeconds}
         />
