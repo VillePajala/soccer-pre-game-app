@@ -1,7 +1,7 @@
 'use client'; // Need this for client-side interactions like canvas
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Player, Point, Opponent, GameEvent } from '@/app/page'; // Import types with relative coords
+import { Player, Point, Opponent } from '@/app/page'; // Remove GameEvent import
 
 // Define props for SoccerField
 interface SoccerFieldProps {
