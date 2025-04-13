@@ -22,6 +22,19 @@ interface TimerOverlayProps {
   isTimerRunning: boolean;
   onStartPauseTimer: () => void;
   onResetTimer: () => void;
+  onToggleGoalLogModal?: () => void;
+  teamName: string;
+  opponentName: string;
+  homeScore: number;
+  awayScore: number;
+  lastSubConfirmationTimeSeconds: number;
+  // Game Structure props
+  numberOfPeriods: 1 | 2;
+  periodDurationMinutes: number;
+  currentPeriod: number;
+  gameStatus: 'notStarted' | 'inProgress' | 'periodEnd' | 'gameEnd';
+  onSetNumberOfPeriods: (periods: 1 | 2) => void;
+  onSetPeriodDuration: (minutes: number) => void;
 }
 
 const TimerOverlay: React.FC<TimerOverlayProps> = ({
@@ -34,6 +47,19 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
   isTimerRunning,
   onStartPauseTimer,
   onResetTimer,
+  onToggleGoalLogModal = () => { console.warn('onToggleGoalLogModal handler not provided'); },
+  teamName = "Team",
+  opponentName = "Opponent",
+  homeScore = 0,
+  awayScore = 0,
+  lastSubConfirmationTimeSeconds = 0,
+  // Game Structure props
+  numberOfPeriods = 2,
+  periodDurationMinutes = 10,
+  currentPeriod = 1,
+  gameStatus = 'notStarted',
+  onSetNumberOfPeriods = () => { console.warn('onSetNumberOfPeriods handler not provided'); },
+  onSetPeriodDuration = () => { console.warn('onSetPeriodDuration handler not provided'); },
 }) => {
   const { t } = useTranslation(); // Initialize translation hook
 
@@ -54,61 +80,178 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
   
   // Consistent button styles (simplified for overlay)
   const timerButtonStyle = "text-white font-semibold py-2 px-5 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 transition-colors duration-150 flex items-center justify-center space-x-2";
+  const controlButtonStyle = "text-slate-100 font-bold py-1 px-3 rounded shadow bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-lg active:scale-95";
+  const controlValueStyle = "text-slate-100 font-bold text-lg tabular-nums w-8 mx-2 text-center";
+  const controlLabelStyle = "text-sm font-medium text-slate-300 mr-2";
 
   const handleConfirmSubClick = () => {
     onSubstitutionMade();
   };
 
+  // Calculate time since last substitution
+  const timeSinceLastSub = lastSubConfirmationTimeSeconds === 0 
+    ? timeElapsedInSeconds 
+    : timeElapsedInSeconds - lastSubConfirmationTimeSeconds;
+    
+  // Determine button text based on game status
+  let startPauseButtonText = "Start";
+  if (gameStatus === 'inProgress') {
+    startPauseButtonText = isTimerRunning ? "Pause" : "Resume";
+  } else if (gameStatus === 'periodEnd') {
+    startPauseButtonText = currentPeriod < numberOfPeriods ? `Start Period ${currentPeriod + 1}` : "Game Over";
+  } else if (gameStatus === 'gameEnd') {
+    startPauseButtonText = "Game Over";
+  }
+  
+  // Calculate total game time for display
+  const totalGameTimeSeconds = numberOfPeriods * periodDurationMinutes * 60;
+
   return (
-    <div className={`fixed inset-0 z-40 flex flex-col items-center p-4 pt-24 ${bgColor} backdrop-blur-lg transition-colors duration-500`}>
+    <div className={`fixed inset-0 z-40 flex flex-col items-center p-4 pt-12 ${bgColor} backdrop-blur-lg transition-colors duration-500`}> {/* Reduced top padding */} 
       <div className="w-full max-w-lg flex flex-col items-center">
         {/* Timer Display */}
-        <div className="mb-2">
-          <span className={`text-7xl sm:text-8xl font-bold tabular-nums ${textColor}`}>
+        <div className="mb-1">
+          <span className={`text-7xl sm:text-8xl font-bold tabular-nums ${textColor}`}> {/* Larger font size */}
             {formatTime(timeElapsedInSeconds)}
           </span>
         </div>
+        
+        {/* Time Since Last Substitution */}
+        <div className="mb-2 flex flex-col items-center"> {/* Reduced bottom margin */} 
+          <span className="text-xs text-slate-400">{t('timerOverlay.timeSinceLastSub', 'Time since last substitution')}</span>
+          <span className="text-lg font-semibold tabular-nums text-slate-300">
+            {formatTime(timeSinceLastSub)}
+          </span>
+        </div>
+
+        {/* Game Status / Period Info */}
+        <div className="mb-3 text-center">
+            {gameStatus === 'notStarted' && (
+                <span className="text-base text-yellow-400 font-medium">
+                    {t('timerOverlay.gameNotStarted', 'Game not started')} ({numberOfPeriods} x {periodDurationMinutes} min)
+                </span>
+            )}
+            {gameStatus === 'inProgress' && (
+                <span className="text-base text-green-400 font-medium">
+                    {t('timerOverlay.periodInProgress', 'Period {currentPeriod}/{numberOfPeriods}')
+                        .replace('{currentPeriod}', String(currentPeriod))
+                        .replace('{numberOfPeriods}', String(numberOfPeriods))}
+                    ({formatTime(periodDurationMinutes * 60 - (timeElapsedInSeconds % (periodDurationMinutes * 60)))}) {/* Time remaining in period */}
+                </span>
+            )}
+            {gameStatus === 'periodEnd' && currentPeriod < numberOfPeriods && (
+                <span className="text-base text-orange-400 font-medium">
+                    {t('timerOverlay.periodEnded', 'End of Period {currentPeriod}').replace('{currentPeriod}', String(currentPeriod))}
+                </span>
+            )}
+            {gameStatus === 'gameEnd' && (
+                <span className="text-base text-red-500 font-medium">
+                    {t('timerOverlay.gameEnded', 'Game Ended')} ({formatTime(totalGameTimeSeconds)})
+                </span>
+            )}
+        </div>
+
+        {/* Game Score Display */}
+        {/* Removed mb-4, handled by spacing on sections above/below */}
+        <div className="bg-slate-800/70 px-5 py-2 rounded-lg mb-4"> 
+          <div className="flex items-center justify-center gap-3 text-xl font-semibold">
+            <span className="text-slate-100">{teamName}</span>
+            <span className={`text-2xl font-bold ${homeScore > awayScore ? 'text-green-400' : 'text-slate-100'}`}>{homeScore}</span>
+            <span className="text-slate-500">-</span>
+            <span className={`text-2xl font-bold ${awayScore > homeScore ? 'text-red-400' : 'text-slate-100'}`}>{awayScore}</span>
+            <span className="text-slate-100">{opponentName}</span>
+          </div>
+          {/* Match status indicator */}
+          <div className="text-center mt-1">
+            {homeScore > awayScore ? (
+              <div className="text-sm font-medium text-green-400">
+                {t('gameStatsModal.winning', 'Winning')} (+{homeScore - awayScore})
+              </div>
+            ) : homeScore < awayScore ? (
+              <div className="text-sm font-medium text-red-400">
+                {t('gameStatsModal.losing', 'Losing')} (-{awayScore - homeScore})
+              </div>
+            ) : (
+              <div className="text-sm font-medium text-yellow-400">
+                {t('gameStatsModal.draw', 'Draw')}
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Timer Controls */}
-        <div className="flex items-center space-x-3 mb-6">
+        {/* Reduced mb-6 */} 
+        <div className="flex items-center space-x-3 mb-4"> 
           <button 
             onClick={onStartPauseTimer} 
-            className={`${timerButtonStyle} ${isTimerRunning ? 'bg-orange-600 hover:bg-orange-700 focus:ring-orange-400' : 'bg-green-600 hover:bg-green-700 focus:ring-green-500'}`}
+            disabled={gameStatus === 'gameEnd'} // Disable when game ended
+            className={`${timerButtonStyle} ${isTimerRunning ? 'bg-orange-600 hover:bg-orange-700 focus:ring-orange-400' : 'bg-green-600 hover:bg-green-700 focus:ring-green-500'} ${gameStatus === 'gameEnd' ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {isTimerRunning ? <FaPause size={16}/> : <FaPlay size={16}/>} 
-            <span>{isTimerRunning ? "Pause" : "Start"}</span>
+            <span>{startPauseButtonText}</span>
           </button>
           <button 
             onClick={onResetTimer}
             className={`${timerButtonStyle} bg-slate-600 hover:bg-slate-700 focus:ring-slate-500 disabled:opacity-50 disabled:cursor-not-allowed`}
-            disabled={timeElapsedInSeconds === 0 && !isTimerRunning}
+            disabled={timeElapsedInSeconds === 0 && gameStatus === 'notStarted'} // Only disable if truly at start
           >
             <FaUndo size={14}/>
             <span>Reset</span>
           </button>
         </div>
         
-        {/* Interval Controls - directly below timer controls */}
-        <div className="bg-slate-800/80 backdrop-blur-sm p-3 rounded-lg w-full mb-4">
+        {/* Game Setup & Interval Controls Section */}
+        <div className="bg-slate-800/80 backdrop-blur-sm p-3 rounded-lg w-full mb-4 space-y-4">
+          {/* Game Structure Controls (only when game not started) */}
+          {gameStatus === 'notStarted' && (
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2 items-center border-b border-slate-700 pb-3 mb-3">
+              {/* Number of Periods */}
+              <div className="flex items-center justify-center">
+                <span className={controlLabelStyle}>{t('timerOverlay.numPeriods', 'Periods')}</span>
+                <button 
+                    onClick={() => onSetNumberOfPeriods(1)} 
+                    className={`${controlButtonStyle} ${numberOfPeriods === 1 ? 'bg-indigo-600 border-2 border-indigo-400' : 'border-2 border-transparent'}`}>
+                    1
+                </button>
+                <button 
+                    onClick={() => onSetNumberOfPeriods(2)} 
+                    className={`${controlButtonStyle} ${numberOfPeriods === 2 ? 'bg-indigo-600 border-2 border-indigo-400' : 'border-2 border-transparent'}`}>
+                    2
+                </button>
+              </div>
+              {/* Period Duration */}
+              <div className="flex items-center justify-center">
+                <span className={controlLabelStyle}>{t('timerOverlay.periodDuration', 'Duration')}</span>
+                <button
+                  onClick={() => onSetPeriodDuration(periodDurationMinutes - 1)}
+                  disabled={periodDurationMinutes <= 1}
+                  className={controlButtonStyle} aria-label="Decrease period duration">
+                  -
+                </button>
+                <span className={controlValueStyle}>{periodDurationMinutes}</span>
+                <button 
+                  onClick={() => onSetPeriodDuration(periodDurationMinutes + 1)}
+                  className={controlButtonStyle} aria-label="Increase period duration">
+                  +
+                </button>
+              </div>
+            </div>
+          )}
+          
+          {/* Substitution Interval & Action Buttons */}
           <div className="flex flex-col space-y-3">
             <div className="flex items-center justify-center">
-              <span className="text-sm font-medium text-slate-300 mr-2">{t('timerOverlay.intervalLabel')}</span>
+              <span className={controlLabelStyle}>{t('timerOverlay.intervalLabel', 'Sub Interval')}</span>
               <button
                 onClick={() => onSetSubInterval(subIntervalMinutes - 1)}
                 disabled={subIntervalMinutes <= 1}
-                className="text-slate-100 font-bold py-1 px-3 rounded shadow bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-xl active:scale-95"
-                aria-label="Decrease interval"
-              >
+                className={controlButtonStyle} aria-label="Decrease interval">
                 -
               </button>
-              <span className="text-slate-100 font-bold text-xl tabular-nums w-8 mx-2 text-center">
-                {subIntervalMinutes}
-              </span>
+              <span className={controlValueStyle}>{subIntervalMinutes}</span>
               <button
                 onClick={() => onSetSubInterval(subIntervalMinutes + 1)}
-                className="text-slate-100 font-bold py-1 px-3 rounded shadow bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-xl active:scale-95"
-                aria-label="Increase interval"
-              >
+                className={controlButtonStyle} aria-label="Increase interval">
                 +
               </button>
             </div>
@@ -117,7 +260,15 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
                 onClick={handleConfirmSubClick} 
                 className="text-slate-100 font-bold py-2 px-6 rounded-lg shadow-lg bg-indigo-600 hover:bg-indigo-700 pointer-events-auto text-base active:scale-95 w-full sm:w-auto"
               >
-                {t('timerOverlay.confirmSubButton')}
+                {t('timerOverlay.confirmSubButton', 'Vaihto tehty')}
+              </button>
+            </div>
+            <div className="flex justify-center pt-2"> 
+              <button 
+                onClick={onToggleGoalLogModal} 
+                className="text-slate-200 font-medium py-2 px-6 rounded-lg shadow-md bg-teal-700 hover:bg-teal-600 pointer-events-auto text-base active:scale-95 w-full sm:w-auto"
+              >
+                {t('timerOverlay.logGoalButton', 'Kirjaa maali')}
               </button>
             </div>
           </div>

@@ -14,6 +14,14 @@
   "timerOverlay.intervalLabel": "Interval (min):",
   "timerOverlay.confirmSubButton": "Substitution Made",
   "timerOverlay.historyTitle": "Play Time History",
+  "timerOverlay.logGoalButton": "Log Goal",
+  "timerOverlay.timeSinceLastSub": "Time since last substitution",
+  "timerOverlay.numPeriods": "Periods",
+  "timerOverlay.periodDuration": "Duration (min)",
+  "timerOverlay.gameNotStarted": "Game not started",
+  "timerOverlay.periodInProgress": "Period {currentPeriod}/{numberOfPeriods}",
+  "timerOverlay.periodEnded": "End of Period {currentPeriod}",
+  "timerOverlay.gameEnded": "Game Ended",
   "instructionsModal": {
     "title": "Instructions",
     "closeButton": "Close instructions",
@@ -111,5 +119,42 @@
       "Encourage good plays (e.g., fist bumps, \"Yes!\", \"Just like we practiced!\").",
       "Let the player make their own decisions – guide only off-the-ball players and subs if needed."
     ]
+  },
+  "goalLogModal": {
+    "title": "Log Goal Event",
+    "closeButton": "Close",
+    "timeLabel": "Time",
+    "scorerLabel": "Scorer",
+    "assisterLabel": "Assister (Optional)",
+    "selectPlaceholder": "-- Select Scorer --",
+    "noAssisterPlaceholder": "-- No Assist --",
+    "cancelButton": "Cancel",
+    "logButton": "Log Goal",
+    "logOpponentButton": "Log Opponent Goal"
+  },
+  "gameStatsModal": {
+    "title": "Game Statistics",
+    "closeButton": "Close",
+    "editButton": "Edit",
+    "saveButton": "Save",
+    "cancelButton": "Cancel",
+    "gameInfoTitle": "Game Information",
+    "opponentPlaceholder": "Opponent Name",
+    "playerStatsTitle": "Player Stats",
+    "playerHeader": "Player",
+    "goalsHeader": "G",
+    "assistsHeader": "A",
+    "goalLogTitle": "Goal Log",
+    "assistPrefix": "A:",
+    "noGoalsLogged": "No goals logged yet.",
+    "tapToEdit": "Tap to edit",
+    "tapToEditScore": "Tap to edit score",
+    "resetStatsButton": "Reset Stats",
+    "editNotesButton": "Edit Notes",
+    "notesTitle": "Game Notes",
+    "resetConfirmation": "Are you sure you want to reset all game statistics?",
+    "winning": "Winning",
+    "losing": "Losing",
+    "draw": "Draw"
   }
 } 

@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Player } from '@/app/page'; // Import Player type
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { Player, GameEvent } from '@/app/page'; // Import Player & GameEvent type
 
 interface PlayerDiskProps {
   id: string;
@@ -11,7 +11,19 @@ interface PlayerDiskProps {
   onPlayerDragStartFromBar?: (player: Player) => void;
   onRenamePlayer?: (id: string, newName: string) => void;
   selectedPlayerIdFromBar?: string | null;
+  gameEvents: GameEvent[]; // Add gameEvents prop
+  onPlayerTapInBar?: (player: Player) => void; // New prop for tap action
 }
+
+// Define badge component
+const StatBadge: React.FC<{ count: number, bgColor: string, positionClasses: string, title: string }> = ({ count, bgColor, positionClasses, title }) => (
+  <div 
+    title={title}
+    className={`absolute ${positionClasses} w-5 h-5 rounded-full ${bgColor} flex items-center justify-center text-xs font-bold text-slate-900 shadow-md pointer-events-none`}
+  >
+    {count}
+  </div>
+);
 
 const PlayerDisk: React.FC<PlayerDiskProps> = ({
   id,
@@ -20,6 +32,8 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
   onPlayerDragStartFromBar,
   onRenamePlayer,
   selectedPlayerIdFromBar,
+  gameEvents,
+  onPlayerTapInBar // Destructure new prop
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(name);
@@ -45,6 +59,13 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
       inputRef.current.select();
     }
   }, [isEditing]);
+
+  // Calculate goals and assists for this player
+  const playerStats = useMemo(() => {
+    const goals = gameEvents.filter(event => event.type === 'goal' && event.scorerId === id).length;
+    const assists = gameEvents.filter(event => event.type === 'goal' && event.assisterId === id).length;
+    return { goals, assists };
+  }, [gameEvents, id]);
 
   const handleStartEditing = () => {
     if (onRenamePlayer) {
@@ -77,12 +98,20 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
   };
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Start drag only if onPlayerDragStartFromBar is provided (i.e., in the bar)
-    if (onPlayerDragStartFromBar) {
-      e.preventDefault(); // Prevent text selection, etc.
-      console.log("Mouse down on PlayerDisk in bar, starting drag.", { id, name, color });
-      onPlayerDragStartFromBar({ id, name, color });
+    // Handle left click for selection/drag start
+    if (e.button === 0 && onPlayerDragStartFromBar && !isEditing) { 
+      console.log("Mouse down/click on PlayerDisk in bar, selecting player.", { id, name, color });
+       // Call the new tap handler to set the selection state
+       if (onPlayerTapInBar) {
+         e.preventDefault(); // Prevent text selection, etc.
+         onPlayerTapInBar({ id, name, color });
+       } else {
+         console.warn("onPlayerTapInBar handler not provided to PlayerDisk");
+         // Fallback drag initiation if needed
+         // onPlayerDragStartFromBar({ id, name, color }); 
+       }
     }
+    // Allow right-click etc. for context menus if added later
   };
 
   const handleDoubleClick = () => {
@@ -125,7 +154,6 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
   };
 
   const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
-    // Only handle logic if in the bar and not currently editing
     if (onPlayerDragStartFromBar && !isEditing) {
       
       // *** Check for scroll first ***
@@ -148,15 +176,22 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
         console.log("Double-tap detected in bar, starting edit.");
         handleStartEditing();
         lastTapTimeRef.current = 0; // Reset tap time
-        e.preventDefault(); // Prevent default ONLY for the double-tap action
+        e.preventDefault(); // Keep preventDefault ONLY for the double-tap action
       } else if (touchDuration < TAP_DURATION_THRESHOLD) {
         // Single Tap Detected (not a scroll, short duration) -> Initiate Drag/Selection
-        console.log(`Single tap on ${name} in bar detected (duration: ${touchDuration}ms), initiating drag/selection.`);
+        console.log(`Single tap on ${name} in bar detected (duration: ${touchDuration}ms), selecting player.`);
         lastTapTimeRef.current = currentTime; // Record time for potential double-tap
 
-        // *** Initiate the drag/selection ***
-        e.preventDefault(); // Prevent default ONLY when initiating the drag/selection via tap
-        onPlayerDragStartFromBar({ id, name, color }); // Call the selection/drag handler
+        // Call the new tap handler to set the selection state
+        if (onPlayerTapInBar) {
+             e.preventDefault(); // Prevent default for the tap selection action
+             onPlayerTapInBar({ id, name, color });
+        } else {
+            // Fallback or if only drag is supported (shouldn't happen with our setup)
+            // onPlayerDragStartFromBar({ id, name, color });
+             console.warn("onPlayerTapInBar handler not provided to PlayerDisk");
+        }
+
       } else {
          // Touch was too long or didn't fit tap criteria, and wasn't a scroll
          console.log(`Touch end on ${name}: Not a valid tap/double-tap (duration: ${touchDuration}ms) or scroll.`);
@@ -178,13 +213,28 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
   const inputWidthClass = isInBar ? "w-14" : "w-16";
   const outerRingClass = selectedPlayerIdFromBar === id ? 'ring-4 ring-yellow-400 ring-offset-2 ring-offset-slate-900' : '';
 
+  // We might not need the onDragStart handler anymore if tap selection works
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+     if (onPlayerDragStartFromBar && !isEditing) {
+       console.log("HTML Drag Start on PlayerDisk", {id});
+       // Set data transfer - ensure this matches what SoccerField expects if using HTML D&D
+       const playerData = JSON.stringify({ id }); // Only need ID usually
+       e.dataTransfer.setData('application/json', playerData);
+       e.dataTransfer.effectAllowed = 'move';
+       // Set the dragging state via the provided handler
+       onPlayerDragStartFromBar({ id, name, color }); 
+     } else {
+       e.preventDefault(); // Prevent dragging if not applicable
+     }
+  };
+
   return (
     <div
       className={`relative ${diskSizeClasses} rounded-full flex items-center justify-center cursor-pointer shadow-lg m-2 transition-all duration-150 ease-in-out ${outerRingClass}`}
       style={{ backgroundColor: color }}
-      draggable={isInBar && !isEditing} // Only draggable if in bar and not editing
-      onDragStart={handleMouseDown} // Use mouse down for HTML drag API
-      onMouseDown={isInBar ? handleMouseDown : undefined} // Only attach mouse down if in bar
+      draggable={isInBar && !isEditing}
+      onDragStart={handleDragStart} // Keep HTML drag start for now
+      onMouseDown={isInBar ? handleMouseDown : undefined} // Use modified mousedown
       onDoubleClick={isInBar ? handleDoubleClick : undefined} // Double-click only in bar
       onTouchStart={isInBar ? handleTouchStart : undefined}
       onTouchMove={isInBar ? handleTouchMove : undefined}
@@ -209,6 +259,24 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
         >
           {name}
         </span>
+      )}
+      {/* Goal Badge */}
+      {playerStats.goals > 0 && (
+        <StatBadge 
+          count={playerStats.goals} 
+          bgColor="bg-yellow-400" 
+          positionClasses="top-0 right-0 transform translate-x-1 -translate-y-1"
+          title={`${playerStats.goals} Goals`}
+        />
+      )}
+      {/* Assist Badge */}
+      {playerStats.assists > 0 && (
+        <StatBadge 
+          count={playerStats.assists} 
+          bgColor="bg-slate-400" 
+          positionClasses="bottom-0 right-0 transform translate-x-1 translate-y-1"
+          title={`${playerStats.assists} Assists`}
+        />
       )}
     </div>
   );

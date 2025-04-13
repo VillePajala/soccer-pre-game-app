@@ -4,7 +4,7 @@ import React from 'react';
 import { 
     FaUndo, FaRedo, FaEye, FaEyeSlash, FaTrashAlt, FaEraser, FaUserPlus, 
     FaRegStopCircle, FaRegClock, FaPlay, FaPause,
-    FaExpand, FaCompress // Icons for Fullscreen
+    FaExpand, FaCompress, FaFutbol, FaClipboardList // Added stats icon
 } from 'react-icons/fa'; // Example using Font Awesome via react-icons
 
 // Import translation hook
@@ -34,6 +34,8 @@ interface ControlBarProps {
   // Add Fullscreen props
   isFullscreen: boolean;
   onToggleFullScreen: () => void;
+  onToggleGoalLogModal: () => void; // Add prop for goal modal
+  onToggleGameStatsModal: () => void; // Add prop for stats modal
   // TODO: Add props for Reset
 }
 
@@ -67,6 +69,8 @@ const ControlBar: React.FC<ControlBarProps> = ({
   // Destructure Fullscreen props
   isFullscreen,
   onToggleFullScreen,
+  onToggleGoalLogModal, // Destructure goal modal handler
+  onToggleGameStatsModal // Destructure stats modal handler
 }) => {
   const { t, i18n } = useTranslation(); // Initialize translation hook, get i18n instance
 
@@ -79,6 +83,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   const resetColor = "bg-red-600 hover:bg-red-700 focus:ring-red-500";
   const clearColor = "bg-amber-600 hover:bg-amber-700 focus:ring-amber-500 text-white";
   const addOpponentColor = "bg-rose-700 hover:bg-rose-800 focus:ring-rose-600";
+  const logGoalColor = "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"; // Color for log goal
   const startColor = "bg-green-600 hover:bg-green-700 focus:ring-green-500";
   const pauseColor = "bg-orange-500 hover:bg-orange-600 focus:ring-orange-400";
   // const timerControlBg = "bg-slate-900"; // No longer needed
@@ -106,6 +111,11 @@ const ControlBar: React.FC<ControlBarProps> = ({
       
       {/* Danger Zone */}
       <button onClick={onResetField} className={`${baseButtonStyle} ${resetColor}`} title={t('controlBar.resetField') ?? "Reset Field"}><FaTrashAlt size={20} /></button>
+
+      {/* NEW: Log Goal Button */}
+      <button onClick={onToggleGoalLogModal} className={`${baseButtonStyle} ${logGoalColor}`} title={t('controlBar.logGoal', 'Log Goal') ?? "Log Goal"}>
+          <FaFutbol size={20} />
+      </button>
 
       {/* --- Timer Controls (Inline) --- */}
       {/* Toggle Overlay Button */}
@@ -139,8 +149,17 @@ const ControlBar: React.FC<ControlBarProps> = ({
       </button>
       {/* --- End Timer Controls --- */}
 
-      {/* Meta Controls (Help, Fullscreen, Language) */}
+      {/* Meta Controls (Help, Fullscreen, Language, Stats) */}
       <div className="flex items-center gap-x-1.5">
+        {/* Stats Button */}
+         <button 
+          onClick={onToggleGameStatsModal}
+          className={`${baseButtonStyle} ${secondaryColor}`}
+          title={t('controlBar.showStats', 'Show Stats') ?? "Show Stats"}
+        >
+          <FaClipboardList size={20} />
+        </button>
+        {/* Help Button */}
         <button 
           onClick={onToggleInstructions} 
           className={`${baseButtonStyle} ${secondaryColor}`}

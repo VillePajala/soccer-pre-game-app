@@ -1,7 +1,7 @@
 'use client'; // Need this for client-side interactions like canvas
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Player, Point, Opponent } from '@/app/page'; // Import types with relative coords
+import { Player, Point, Opponent, GameEvent } from '@/app/page'; // Import types with relative coords
 
 // Define props for SoccerField
 interface SoccerFieldProps {
@@ -252,13 +252,12 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
       context.stroke();
     });
 
-    // --- Draw Players --- (No manual scaling needed)
-    const playerRadius = PLAYER_RADIUS; // Use original radius
+    // --- Draw Players ---
+    const playerRadius = PLAYER_RADIUS;
     players.forEach(player => {
       if (typeof player.relX !== 'number' || typeof player.relY !== 'number') {
         return;
       }
-      // Calculate absolute positions using CSS dimensions (W/H)
       const absX = player.relX * W;
       const absY = player.relY * H;
       if (!Number.isFinite(absX) || !Number.isFinite(absY)) {
@@ -266,13 +265,14 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
         return;
       }
 
+      // Draw the player disk (existing code)
       context.beginPath();
       context.arc(absX, absY, playerRadius, 0, Math.PI * 2);
       context.save();
       context.shadowColor = 'rgba(0, 0, 0, 0.5)';
-      context.shadowBlur = 5; // Original value
-      context.shadowOffsetX = 1; // Original value
-      context.shadowOffsetY = 2; // Original value
+      context.shadowBlur = 5;
+      context.shadowOffsetX = 1;
+      context.shadowOffsetY = 2;
       context.fillStyle = player.color || '#7E22CE';
       context.fill();
       context.restore();
@@ -280,15 +280,16 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
       context.lineWidth = 1.5;
       context.stroke();
 
+      // Draw player name (existing code)
       if (showPlayerNames) {
         context.fillStyle = '#FDE047';
-        context.font = '600 11px Inter, sans-serif'; // Original font size
+        context.font = '600 11px Inter, sans-serif';
         context.textAlign = 'center';
         context.textBaseline = 'middle';
         context.fillText(player.name, absX, absY);
       }
     });
-  }, [players, opponents, drawings, showPlayerNames]);
+  }, [players, opponents, drawings, showPlayerNames]); // Remove gameEvents dependency
 
   // Add the new ResizeObserver effect
   useEffect(() => {
@@ -400,11 +401,22 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     if (e.button !== 0) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const rect = canvas.getBoundingClientRect(); // Need CSS size
-
+    const rect = canvas.getBoundingClientRect();
     const relPos = getRelativeEventPosition(e);
     if (!relPos) return;
-    const absPos = { x: relPos.relX * rect.width, y: relPos.relY * rect.height }; // Abs pos based on CSS size
+    const absPos = { x: relPos.relX * rect.width, y: relPos.relY * rect.height };
+
+    // *** Check if placing a tapped player ***
+    if (draggingPlayerFromBarInfo) {
+      console.log("Field MouseDown: Placing player from bar tap:", draggingPlayerFromBarInfo.id);
+      onPlayerDrop(draggingPlayerFromBarInfo.id, relPos.relX, relPos.relY);
+      // IMPORTANT: Clear the selection state after placing
+      // This needs to happen in the parent (page.tsx), 
+      // so we might need a new callback prop like `onPlayerPlaceFromBar()` 
+      // OR rely on handleDropOnField in page.tsx to clear it.
+      // For now, let's assume handleDropOnField in page.tsx clears draggingPlayerFromBarInfo.
+      return; // Don't proceed with other actions
+    }
 
     // Double-click check
     if (e.detail === 2) {
@@ -502,18 +514,21 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     if (e.touches.length > 1) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const rect = canvas.getBoundingClientRect(); // Need CSS size
-
+    const rect = canvas.getBoundingClientRect();
     const touch = e.touches[0];
     const touchId = touch.identifier;
     setActiveTouchId(touchId);
-
     const relPos = getRelativeEventPosition(e, touchId);
     if (!relPos) { setActiveTouchId(null); return; }
-    const absPos = { x: relPos.relX * rect.width, y: relPos.relY * rect.height }; // Abs pos based on CSS size
+    const absPos = { x: relPos.relX * rect.width, y: relPos.relY * rect.height };
 
-    if (draggingPlayerFromBarInfo) { 
-        e.preventDefault(); 
+    // *** Check if placing a tapped player ***
+    if (draggingPlayerFromBarInfo) {
+        console.log("Field TouchStart: Placing player from bar tap:", draggingPlayerFromBarInfo.id);
+        e.preventDefault(); // Prevent potential scrolling/other actions when placing
+        onPlayerDropViaTouch(relPos.relX, relPos.relY);
+        // Again, assume parent state (draggingPlayerFromBarInfo) is cleared by onPlayerDropViaTouch/handleDropOnField
+        setActiveTouchId(null); // Clear active touch
         return; 
     }
 
