@@ -464,7 +464,14 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
       return { name: player.name, goals, assists, totalScore };
     })
     .filter(p => p.totalScore > 0) // Only include players with stats
-    .sort((a, b) => b.totalScore - a.totalScore); // Sort by total score descending
+    .sort((a, b) => {
+      // Primary sort: totalScore descending
+      if (b.totalScore !== a.totalScore) {
+        return b.totalScore - a.totalScore;
+      }
+      // Secondary sort: goals descending (if totalScore is equal)
+      return b.goals - a.goals;
+    });
 
     rows.push('Player Stats'); // Cleaned
     // Using more descriptive headers, ensure translation keys exist or add defaults
