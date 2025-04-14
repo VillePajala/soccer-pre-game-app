@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React from 'react';
 import { FaPlay, FaPause, FaUndo } from 'react-icons/fa'; // Import icons
 import { useTranslation } from 'react-i18next'; // Import translation hook
 
@@ -28,7 +28,6 @@ interface TimerOverlayProps {
   opponentName: string;
   homeScore: number;
   awayScore: number;
-  lastSubConfirmationTimeSeconds: number;
   // Game Structure props
   numberOfPeriods: 1 | 2;
   periodDurationMinutes: number;
@@ -36,12 +35,7 @@ interface TimerOverlayProps {
   gameStatus: 'notStarted' | 'inProgress' | 'periodEnd' | 'gameEnd';
   onSetNumberOfPeriods: (periods: 1 | 2) => void;
   onSetPeriodDuration: (minutes: number) => void;
-  intervalMinutes: number;
-  onIntervalChange: (minutes: number) => void;
-  onConfirmSub: () => void;
-  subHistory: number[];
   lastSubTime: number | null;
-  isRunning: boolean;
 }
 
 const TimerOverlay: React.FC<TimerOverlayProps> = ({
@@ -60,7 +54,6 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
   opponentName = "Opponent",
   homeScore = 0,
   awayScore = 0,
-  lastSubConfirmationTimeSeconds = 0,
   // Game Structure props
   numberOfPeriods = 2,
   periodDurationMinutes = 10,
@@ -68,15 +61,9 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
   gameStatus = 'notStarted',
   onSetNumberOfPeriods = () => { console.warn('onSetNumberOfPeriods handler not provided'); },
   onSetPeriodDuration = () => { console.warn('onSetPeriodDuration handler not provided'); },
-  intervalMinutes,
-  onIntervalChange,
-  onConfirmSub,
-  subHistory,
-  lastSubTime,
-  isRunning,
+  lastSubTime = null,
 }) => {
   const { t } = useTranslation(); // Initialize translation hook
-  const dialogRef = useRef<HTMLDivElement>(null);
 
   // Determine text color based on alert status directly from prop
   let textColor = 'text-slate-100'; // Base text color
@@ -117,20 +104,6 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
     startPauseButtonText = "Game Over";
   }
   
-  // Calculate total game time for display
-  const totalGameTimeSeconds = numberOfPeriods * periodDurationMinutes * 60;
-
-  // Background color based on alert level
-  const alertBgColor = 
-    subAlertLevel === 'due' ? 'bg-red-700/90' : 
-    subAlertLevel === 'warning' ? 'bg-yellow-700/90' : 
-    'bg-slate-800/90';
-
-  const buttonBgColor = 
-    subAlertLevel === 'due' ? 'bg-red-500 hover:bg-red-400' : 
-    subAlertLevel === 'warning' ? 'bg-yellow-500 hover:bg-yellow-400' : 
-    'bg-blue-600 hover:bg-blue-500';
-
   return (
     <div className={`fixed inset-0 z-40 flex flex-col items-center p-4 pt-12 ${bgColor} backdrop-blur-lg`}>
       <div className="w-full max-w-lg flex flex-col items-center">

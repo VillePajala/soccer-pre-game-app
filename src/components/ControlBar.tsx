@@ -38,12 +38,6 @@ interface ControlBarProps {
   onResetField: () => void;
   onClearDrawings: () => void;
   onAddOpponent: () => void;
-  onToggleTimerOverlay: () => void;
-  isTimerOverlayVisible: boolean;
-  onToggleHelp: () => void;
-  onToggleGameStatsModal: () => void;
-  onToggleTrainingResourcesModal: () => void;
-  onLogGoal: () => void;
   // Timer props
   timeElapsedInSeconds: number;
   showLargeTimerOverlay: boolean;
@@ -56,6 +50,7 @@ interface ControlBarProps {
   isFullscreen: boolean;
   onToggleFullScreen: () => void;
   onToggleGoalLogModal: () => void; // Add prop for goal modal
+  onToggleGameStatsModal: () => void;
 }
 
 // Helper function to format time
@@ -74,12 +69,6 @@ const ControlBar: React.FC<ControlBarProps> = ({
   onResetField,
   onClearDrawings,
   onAddOpponent,
-  onToggleTimerOverlay,
-  isTimerOverlayVisible,
-  onToggleHelp,
-  onToggleGameStatsModal,
-  onToggleTrainingResourcesModal,
-  onLogGoal,
   // Timer props
   timeElapsedInSeconds,
   showLargeTimerOverlay,
@@ -92,6 +81,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   isFullscreen,
   onToggleFullScreen,
   onToggleGoalLogModal, // Destructure goal modal handler
+  onToggleGameStatsModal,
 }) => {
   const { t, i18n } = useTranslation(); // Initialize translation hook, get i18n instance
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
