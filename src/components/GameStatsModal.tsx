@@ -4,6 +4,7 @@ import React, { useMemo, useState, useEffect, useRef } from 'react'; // Added us
 import { useTranslation } from 'react-i18next';
 import { Player, GameEvent } from '@/app/page';
 import { FaSort, FaSortUp, FaSortDown, FaEdit, FaSave, FaTimes } from 'react-icons/fa'; // Import sort icons and new icons
+import { HiOutlineArrowTopRightOnSquare } from 'react-icons/hi2'; // Import external link icon
 
 // Define the type for sortable columns
 type SortableColumn = 'name' | 'goals' | 'assists' | 'totalScore';
@@ -427,27 +428,6 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
               <h3 className="text-xl font-semibold text-yellow-300">
                 {t('gameStatsModal.gameInfoTitle', 'Game Information')}
               </h3>
-              {/* Buttons container - visible when not inline editing */}
-              {!isEditingInfo && !inlineEditingField && (
-                <div className="flex gap-2">
-                  <button
-                      onClick={handleResetClick} // Call reset handler
-                      className="px-2 py-0.5 bg-red-700 hover:bg-red-600 text-white rounded text-xs transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-                      title={t('gameStatsModal.resetStatsButton', 'Reset Stats') ?? "Reset Stats"}
-                      disabled={!!inlineEditingField || isEditingNotes} // Disable if any edit mode active
-                  >
-                      {t('gameStatsModal.resetStatsButton', 'Reset Stats')}
-                  </button>
-                  <button
-                      onClick={() => setIsEditingInfo(true)}
-                      className="px-2 py-0.5 bg-slate-600 hover:bg-slate-500 text-white rounded text-xs transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-                      title={t('gameStatsModal.editButton', 'Edit Info') ?? "Edit"}
-                      disabled={!!inlineEditingField || isEditingNotes} // Disable if any edit mode active
-                  >
-                      {t('gameStatsModal.editButton', 'Edit')}
-                  </button>
-                </div>
-              )}
             </div>
 
             {isEditingInfo ? (
@@ -568,26 +548,9 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                    )}
                 </div>
 
-                {/* Match Result Status */}
-                <div className="mt-2 text-center">
-                  {homeScore > awayScore ? (
-                    <div className="inline-block px-3 py-1 bg-green-700/40 text-green-300 rounded-full text-sm font-medium">
-                      {t('gameStatsModal.winning', 'Winning')} (+{homeScore - awayScore})
-                    </div>
-                  ) : homeScore < awayScore ? (
-                    <div className="inline-block px-3 py-1 bg-red-700/40 text-red-300 rounded-full text-sm font-medium">
-                      {t('gameStatsModal.losing', 'Losing')} (-{awayScore - homeScore})
-                    </div>
-                  ) : (
-                    <div className="inline-block px-3 py-1 bg-yellow-700/40 text-yellow-300 rounded-full text-sm font-medium">
-                      {t('gameStatsModal.draw', 'Draw')}
-                    </div>
-                  )}
-                </div>
-                
-                 {/* Game Date (View or Inline Edit) - Centered */}
-                 <div className="flex justify-center">
-                   {inlineEditingField === 'date' ? (
+                {/* Game Date (View or Inline Edit) - Centered RE-ADDED */}
+                <div className="flex justify-center mt-2"> 
+                  {inlineEditingField === 'date' ? (
                       <input
                          ref={dateInputRef}
                          type="date"
@@ -597,16 +560,16 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                          onKeyDown={handleInlineEditKeyDown}
                          className="bg-slate-700 border border-indigo-500 rounded px-1 py-0 text-sm text-slate-400 outline-none"
                       />
-                   ) : (
-                     <p
-                        onClick={() => handleStartInlineEdit('date')}
-                        className="text-center text-sm text-slate-400 cursor-pointer hover:bg-slate-600/50 px-1 rounded inline-block border border-dashed border-slate-600 hover:border-indigo-400" 
-                        title={t('gameStatsModal.tapToEdit', 'Tap to edit') ?? "Tap to edit"}
-                      >
-                       {gameDate}
-                     </p>
-                   )}
-                 </div>
+                  ) : (
+                    <p
+                      onClick={() => handleStartInlineEdit('date')}
+                      className="text-center text-sm text-slate-400 cursor-pointer hover:bg-slate-600/50 px-1 rounded inline-block border border-dashed border-slate-600 hover:border-indigo-400" 
+                      title={t('gameStatsModal.tapToEdit', 'Tap to edit') ?? "Tap to edit"}
+                    >
+                      {gameDate}
+                    </p>
+                  )}
+                </div>
               </div>
             )}
           </section>
@@ -807,15 +770,38 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
 
         </div>
 
-        {/* Footer / Close Button Area */}
-        <div className="mt-6 pt-4 border-t border-slate-700 flex justify-end">
+        {/* Footer / Button Area - RE-HARMONIZED */}
+        <div className="flex justify-between items-center border-t border-slate-600 pt-4 mt-auto space-x-2">
+          {/* Reset Stats Button */} 
+          {/* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */}
+          {onResetGameStats && (
             <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 focus:ring-offset-slate-800"
+              onClick={handleResetClick}
+              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition duration-150 text-sm flex-1 text-center flex items-center justify-center"
+              title={t('gameStatsModal.resetConfirmation', 'Are you sure you want to reset all game statistics?') ?? undefined}
             >
-              {t('gameStatsModal.closeButton', 'Close')}
+              {t('gameStatsModal.resetStatsButton', 'Nollaa')}
             </button>
+          )}
+
+          {/* Taso Link Button */} 
+          <a
+            href="https://taso.palloliitto.fi/taso/login.php"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition duration-150 text-sm flex-1 text-center flex items-center justify-center"
+          >
+            <HiOutlineArrowTopRightOnSquare className="w-4 h-4 mr-1.5" />
+            {t('gameStatsModal.tasoLink', 'Taso')} {/* Ensure default text is Taso */}
+          </a>
+
+          {/* Close Button */} 
+          <button 
+            onClick={onClose} 
+            className="px-4 py-2 bg-slate-600 text-white rounded hover:bg-slate-500 transition duration-150 text-sm flex-1 text-center flex items-center justify-center"
+          >
+            {t('gameStatsModal.closeButton', 'Close')}
+          </button>
         </div>
       </div>
     </div>

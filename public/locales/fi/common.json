@@ -15,7 +15,7 @@
   "controlBar.stats": "Tilastot",
   "controlBar.language": "Kieli",
   "controlBar.timerControls": "Käynnistä/pysäytä/nollaa otteluajastin.",
-  "controlBar.appGuide": "Näytä/piilota sovellusopas.",
+  "controlBar.appGuide": "Käyttöohjeet",
   "controlBar.settings": "Asetukset",
   "controlBar.training": "Harjoitusmateriaalit",
   "controlBar.logGoal": "Kirjaa maali",
@@ -23,6 +23,12 @@
   "controlBar.enterFullscreen": "Siirry koko näyttöön",
   "controlBar.exitFullscreen": "Poistu koko näytöstä",
   "controlBar.languageToggle": "Vaihda kieli englannin (EN) ja suomen (FI) välillä.",
+  "controlBar.tasoLink": "Taso",
+  "controlBar.tulospalveluLink": "Tulospalvelu",
+  "controlBar.tulospalveluP9": "P9 Alue Taso 1",
+  "controlBar.tulospalveluP9EK": "P/T 9 EK Kortteli (2016)",
+  "controlBar.tulospalveluResults": "Tulokset",
+  "controlBar.tulospalveluStandings": "Sarjataulukko",
   "timerOverlay.intervalLabel": "Vaihtoväli (min):",
   "timerOverlay.confirmSubButton": "Vaihto tehty",
   "timerOverlay.historyTitle": "Peliaikahistoria",
@@ -171,12 +177,13 @@
     "noGoalsLogged": "Maaleja ei ole vielä kirjattu.",
     "tapToEdit": "Napauta muokataksesi",
     "tapToEditScore": "Napauta muokataksesi tulosta",
-    "resetStatsButton": "Nollaa Tilastot",
+    "resetStatsButton": "Nollaa",
     "editNotesButton": "Muokkaa Muistiinpanoja",
     "notesTitle": "Ottelun Muistiinpanot",
     "resetConfirmation": "Haluatko varmasti nollata kaikki ottelutilastot?",
     "winning": "Johdossa",
     "losing": "Häviöllä",
-    "draw": "Tasapeli"
+    "draw": "Tasapeli",
+    "tasoLink": "Taso"
   }
 } 

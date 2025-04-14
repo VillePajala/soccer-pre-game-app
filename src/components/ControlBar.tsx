@@ -18,7 +18,9 @@ import {
     HiOutlineQuestionMarkCircle,
     HiOutlineLanguage,
     HiOutlineCog6Tooth, // Settings icon
-    HiOutlineBookOpen // Import for Training Resources
+    HiOutlineBookOpen, // Import for Training Resources
+    HiOutlineArrowTopRightOnSquare, // External link icon
+    HiOutlineChevronRight // Chevron for submenu
 } from 'react-icons/hi2'; // Using hi2 for Heroicons v2 Outline
 // Keep FaFutbol for now unless a good Heroicon alternative is found
 import { FaFutbol } from 'react-icons/fa';
@@ -92,7 +94,9 @@ const ControlBar: React.FC<ControlBarProps> = ({
 }) => {
   const { t, i18n } = useTranslation(); // Initialize translation hook, get i18n instance
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
+  const [isTulospalveluOpen, setIsTulospalveluOpen] = useState(false); // New state for submenu
   const settingsMenuRef = useRef<HTMLDivElement>(null);
+  const tulospalveluRef = useRef<HTMLDivElement>(null); // Reference for submenu
 
   // Consistent Button Styles - Adjusted active state
   const baseButtonStyle = "text-slate-100 font-semibold py-2 px-2 w-10 h-10 flex items-center justify-center rounded-md shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900";
@@ -133,6 +137,32 @@ const ControlBar: React.FC<ControlBarProps> = ({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
+  }, [isSettingsMenuOpen]);
+
+  // Close submenu when clicking outside or when settings menu closes
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (tulospalveluRef.current && !tulospalveluRef.current.contains(event.target as Node)) {
+        setIsTulospalveluOpen(false);
+      }
+    };
+
+    if (isTulospalveluOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isTulospalveluOpen]);
+
+  // Close submenu when settings menu closes
+  useEffect(() => {
+    if (!isSettingsMenuOpen) {
+      setIsTulospalveluOpen(false);
+    }
   }, [isSettingsMenuOpen]);
 
   const iconSize = "w-6 h-6"; // Standard icon size class
@@ -210,9 +240,9 @@ const ControlBar: React.FC<ControlBarProps> = ({
           <HiOutlineCog6Tooth className={iconSize} />
         </button>
 
-        {/* Settings Dropdown Menu - Reverted to Darker Styling */}
+        {/* Settings Dropdown Menu */}
         {isSettingsMenuOpen && (
-          <div className="absolute bottom-full right-0 mb-2 w-48 bg-slate-700 rounded-md shadow-xl py-1 z-50 overflow-hidden border border-slate-500"> {/* Increased width slightly */}
+          <div className="absolute bottom-full right-0 mb-2 w-48 bg-slate-700 rounded-md shadow-xl py-1 z-50 border border-slate-500">
             {/* Stats Button */}
             <button 
               onClick={wrapHandler(onToggleGameStatsModal)}
@@ -221,7 +251,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
               <HiOutlineClipboardDocumentList className={menuIconSize} />
               {t('controlBar.stats', 'Stats')}
             </button>
-            {/* NEW Training Resources Button */}
+            {/* Training Resources Button */}
             <button 
               onClick={wrapHandler(onToggleTrainingResources)}
               className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600 border-t border-slate-600/50"
@@ -237,7 +267,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
               <HiOutlineQuestionMarkCircle className={menuIconSize} />
               {t('controlBar.appGuide', 'App Guide')} 
             </button>
-             {/* Language Toggle Button */}
+            {/* Language Toggle Button */}
             <button 
               onClick={handleLanguageToggle}
               className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600 border-t border-slate-600/50"
@@ -245,6 +275,72 @@ const ControlBar: React.FC<ControlBarProps> = ({
               <HiOutlineLanguage className={menuIconSize} />
               {t('controlBar.language', 'Language')} ({i18n.language === 'en' ? 'FI' : 'EN'})
             </button>
+
+            {/* External Links Section - NEW */}
+            <div className="border-t border-slate-600/50 mt-1 pt-1">
+              {/* Taso Link */}
+              <a 
+                href="https://taso.palloliitto.fi/taso/login.php" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600"
+                onClick={() => setIsSettingsMenuOpen(false)} // Close menu on click
+              >
+                <HiOutlineArrowTopRightOnSquare className={menuIconSize} />
+                {t('controlBar.tasoLink', 'Taso')}
+              </a>
+
+              {/* Tulospalvelu Submenu - NEW */}
+              <div className="relative" ref={tulospalveluRef}>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent settings menu from closing
+                    setIsTulospalveluOpen(!isTulospalveluOpen);
+                  }}
+                  className="w-full flex items-center justify-between px-3 py-2 text-sm text-slate-100 hover:bg-slate-600"
+                >
+                  <span className="flex items-center">
+                    <HiOutlineArrowTopRightOnSquare className={menuIconSize} />
+                    {t('controlBar.tulospalveluLink', 'Tulospalvelu')}
+                  </span>
+                  <HiOutlineChevronRight className={`w-4 h-4 transition-transform ${isTulospalveluOpen ? 'rotate-90' : ''}`} />
+                </button>
+
+                {/* Tulospalvelu Submenu Items */}
+                {isTulospalveluOpen && (
+                  <div className="absolute right-0 bottom-full mb-1 w-56 bg-slate-700 rounded-md shadow-xl py-1 z-50 border border-slate-500">
+                    <a 
+                      href="https://tulospalvelu.palloliitto.fi/category/P91!Itajp25/tables" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsTulospalveluOpen(false);
+                        setIsSettingsMenuOpen(false);
+                      }}
+                    >
+                      <HiOutlineArrowTopRightOnSquare className="w-4 h-4 mr-2 opacity-70" />
+                      {t('controlBar.tulospalveluP9', 'P9 Alue Taso 1')}
+                    </a>
+                    <a 
+                      href="https://tulospalvelu.palloliitto.fi/category/P9EKK!splita_ekk25/tables" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600 border-t border-slate-600/50"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsTulospalveluOpen(false);
+                        setIsSettingsMenuOpen(false);
+                      }}
+                    >
+                      <HiOutlineArrowTopRightOnSquare className="w-4 h-4 mr-2 opacity-70" />
+                      {t('controlBar.tulospalveluP9EK', 'P/T 9 EK Kortteli (2016)')}
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>
