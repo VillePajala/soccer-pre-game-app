@@ -1019,7 +1019,6 @@ export default function Home() {
               gameStatus={gameStatus}
               onSetNumberOfPeriods={handleSetNumberOfPeriods}
               onSetPeriodDuration={handleSetPeriodDuration}
-              onToggleLargeTimerOverlay={handleToggleLargeTimerOverlay}
               onOpponentNameChange={handleOpponentNameChange}
           />
         )}
