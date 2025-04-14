@@ -40,6 +40,7 @@
   "timerOverlay.periodInProgress": "Erä {currentPeriod}/{numberOfPeriods}",
   "timerOverlay.periodEnded": "Erä {currentPeriod} päättyi",
   "timerOverlay.gameEnded": "Peli päättyi",
+  "timerOverlay.editOpponentNameTitle": "Klikkaa muokataksesi vastustajan nimeä",
   "instructionsModal": {
     "title": "Sovellusopas",
     "closeButton": "Sulje opas",

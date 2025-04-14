@@ -77,7 +77,8 @@
       "setInterval": "Adjust Sub Interval: Use +/- buttons.",
       "subAlerts": "Sub Alerts: Yellow = 1 min warning, Red = Due.",
       "confirmSub": "Confirm Substitution: Press \"Substitution Made\".",
-      "playTimeHistory": "View Play Time: Lists completed intervals and last confirmation time."
+      "playTimeHistory": "View Play Time: Lists completed intervals and last confirmation time.",
+      "editOpponentNameTitle": "Click to edit opponent name"
     },
     "generalTitle": "General",
     "general": {

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { FaPlay, FaPause, FaUndo } from 'react-icons/fa'; // Import icons
 import { useTranslation } from 'react-i18next'; // Import translation hook
 
@@ -36,6 +36,10 @@ interface TimerOverlayProps {
   onSetNumberOfPeriods: (periods: 1 | 2) => void;
   onSetPeriodDuration: (minutes: number) => void;
   lastSubTime: number | null;
+  onToggleLargeTimerOverlay: () => void;
+  isPulsing?: boolean;
+  pulsingClass?: string;
+  onOpponentNameChange: (name: string) => void;
 }
 
 const TimerOverlay: React.FC<TimerOverlayProps> = ({
@@ -62,8 +66,38 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
   onSetNumberOfPeriods = () => { console.warn('onSetNumberOfPeriods handler not provided'); },
   onSetPeriodDuration = () => { console.warn('onSetPeriodDuration handler not provided'); },
   lastSubTime = null,
+  onToggleLargeTimerOverlay = () => { console.warn('onToggleLargeTimerOverlay handler not provided'); },
+  isPulsing,
+  pulsingClass,
+  onOpponentNameChange = () => { console.warn('onOpponentNameChange handler not provided'); },
 }) => {
   const { t } = useTranslation(); // Initialize translation hook
+
+  // --- State for Opponent Name Editing ---
+  const [isEditingOpponentName, setIsEditingOpponentName] = useState(false);
+  const [editedOpponentName, setEditedOpponentName] = useState(opponentName);
+  const opponentInputRef = useRef<HTMLInputElement>(null);
+  // --- End State ---
+
+  // --- Effects for Opponent Name Editing ---
+  // Reset local edit state if the prop changes externally
+  useEffect(() => {
+    setEditedOpponentName(opponentName);
+    if (isEditingOpponentName) {
+        // If it was editing and the prop changed, maybe cancel the edit?
+        // Or just update the local value and keep editing?
+        // Let's update and keep editing for now, user can explicitly cancel/save.
+    }
+  }, [opponentName]); // Only run when opponentName prop changes
+
+  // Focus input when editing starts
+  useEffect(() => {
+    if (isEditingOpponentName) {
+      opponentInputRef.current?.focus();
+      opponentInputRef.current?.select();
+    }
+  }, [isEditingOpponentName]);
+  // --- End Effects ---
 
   // Determine text color based on alert status directly from prop
   let textColor = 'text-slate-100'; // Base text color
@@ -104,6 +138,38 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
     startPauseButtonText = "Game Over";
   }
   
+  // --- Handlers for Opponent Name Editing ---
+  const handleStartEditingOpponent = () => {
+    setEditedOpponentName(opponentName); // Reset to current prop value on edit start
+    setIsEditingOpponentName(true);
+  };
+
+  const handleOpponentInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setEditedOpponentName(event.target.value);
+  };
+
+  const handleSaveOpponentName = () => {
+    const trimmedName = editedOpponentName.trim();
+    if (trimmedName && trimmedName !== opponentName) {
+      onOpponentNameChange(trimmedName);
+    }
+    setIsEditingOpponentName(false);
+  };
+
+  const handleCancelEditOpponent = () => {
+    setIsEditingOpponentName(false);
+    setEditedOpponentName(opponentName); // Reset to original prop value
+  };
+
+  const handleOpponentKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      handleSaveOpponentName();
+    } else if (event.key === 'Escape') {
+      handleCancelEditOpponent();
+    }
+  };
+  // --- End Handlers ---
+
   return (
     <div className={`fixed inset-0 z-40 flex flex-col items-center p-4 pt-12 ${bgColor} backdrop-blur-lg`}>
       <div className="w-full max-w-lg flex flex-col items-center">
@@ -114,7 +180,28 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
             <span className={`text-2xl font-bold ${homeScore > awayScore ? 'text-green-400' : 'text-slate-100'}`}>{homeScore}</span>
             <span className="text-slate-500">-</span>
             <span className={`text-2xl font-bold ${awayScore > homeScore ? 'text-red-400' : 'text-slate-100'}`}>{awayScore}</span>
-            <span className="text-slate-100">{opponentName}</span>
+            {/* --- Opponent Name Display/Edit --- */}
+            {isEditingOpponentName ? (
+                <input
+                    ref={opponentInputRef}
+                    type="text"
+                    value={editedOpponentName}
+                    onChange={handleOpponentInputChange}
+                    onBlur={handleSaveOpponentName} // Save on blur
+                    onKeyDown={handleOpponentKeyDown}
+                    className="bg-slate-700 text-slate-100 text-xl font-semibold outline-none rounded px-2 py-0.5 w-28" // Adjust width as needed
+                    onClick={(e) => e.stopPropagation()} // Prevent triggering underlying handlers
+                />
+            ) : (
+                <span 
+                    className="text-slate-100 cursor-pointer hover:text-slate-300" 
+                    onClick={handleStartEditingOpponent} // Click to edit
+                    title={t('timerOverlay.editOpponentNameTitle', 'Click to edit opponent name') ?? undefined}
+                >
+                    {opponentName}
+                </span>
+            )}
+            {/* --- End Opponent Name --- */}
           </div> 
         </div>
       
