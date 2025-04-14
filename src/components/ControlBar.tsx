@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 // Import Heroicons (Outline style)
 import {
     HiOutlineArrowUturnLeft,
@@ -16,7 +16,8 @@ import {
     HiOutlineArrowsPointingIn,  // Replaces FaCompress
     HiOutlineClipboardDocumentList, // Replaces FaClipboardList
     HiOutlineQuestionMarkCircle,
-    HiOutlineLanguage
+    HiOutlineLanguage,
+    HiOutlineCog6Tooth // Settings icon
 } from 'react-icons/hi2'; // Using hi2 for Heroicons v2 Outline
 // Keep FaFutbol for now unless a good Heroicon alternative is found
 import { FaFutbol } from 'react-icons/fa';
@@ -87,6 +88,8 @@ const ControlBar: React.FC<ControlBarProps> = ({
   onToggleGameStatsModal // Destructure stats modal handler
 }) => {
   const { t, i18n } = useTranslation(); // Initialize translation hook, get i18n instance
+  const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
+  const settingsMenuRef = useRef<HTMLDivElement>(null);
 
   // Consistent Button Styles - Adjusted active state
   const baseButtonStyle = "text-slate-100 font-semibold py-2 px-2 w-10 h-10 flex items-center justify-center rounded-md shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900";
@@ -95,7 +98,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   const secondaryColor = "bg-slate-700 hover:bg-slate-600 focus:ring-slate-500";
   const resetColor = "bg-red-600 hover:bg-red-500 focus:ring-red-500";
   const clearColor = "bg-amber-600 hover:bg-amber-500 focus:ring-amber-500 text-white";
-  const addOpponentColor = "bg-rose-700 hover:bg-rose-600 focus:ring-rose-600";
+  const addOpponentColor = secondaryColor;
   const logGoalColor = "bg-blue-600 hover:bg-blue-500 focus:ring-blue-500"; 
   // const startColor = "bg-green-600 hover:bg-green-500 focus:ring-green-500"; // Not currently used
   // const pauseColor = "bg-orange-500 hover:bg-orange-400 focus:ring-orange-400"; // Not currently used
@@ -103,37 +106,72 @@ const ControlBar: React.FC<ControlBarProps> = ({
   const handleLanguageToggle = () => {
     const nextLang = i18n.language === 'en' ? 'fi' : 'en';
     i18n.changeLanguage(nextLang);
+    setIsSettingsMenuOpen(false); // Close menu after action
   };
 
+  const handleSettingsButtonClick = () => {
+    setIsSettingsMenuOpen(!isSettingsMenuOpen);
+  };
+
+  // Close settings menu if clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (settingsMenuRef.current && !settingsMenuRef.current.contains(event.target as Node)) {
+        setIsSettingsMenuOpen(false);
+      }
+    };
+
+    if (isSettingsMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isSettingsMenuOpen]);
+
   const iconSize = "w-6 h-6"; // Standard icon size class
+  const menuIconSize = "w-5 h-5 mr-2"; // Smaller icon size for menu items
+
+  // Helper to wrap handlers to also close the menu
+  const wrapHandler = (handler: () => void) => () => {
+    handler();
+    setIsSettingsMenuOpen(false);
+  };
 
   return (
-    <div 
-      className="bg-slate-900/85 backdrop-blur-md p-1 sm:p-1.5 h-auto flex-shrink-0 flex flex-wrap items-center justify-center gap-x-1 sm:gap-x-1.5 gap-y-1 shadow-lg border-t border-slate-700/50 relative z-50"
-      style={{ touchAction: 'none' }}
-    >
-      {/* History - Use Heroicons */}
-      <button onClick={onUndo} disabled={!canUndo} className={`${baseButtonStyle} ${secondaryColor}`} title={t('controlBar.undo') ?? "Undo"}><HiOutlineArrowUturnLeft className={iconSize} /></button>
-      <button onClick={onRedo} disabled={!canRedo} className={`${baseButtonStyle} ${secondaryColor}`} title={t('controlBar.redo') ?? "Redo"}><HiOutlineArrowUturnRight className={iconSize} /></button>
-      
-      {/* Visibility/Edit - Use Heroicons */}
-      <button onClick={onToggleNames} className={`${baseButtonStyle} ${secondaryColor}`} title={t('controlBar.toggleNames') ?? "Toggle Names"}>
-          {showPlayerNames ? <HiOutlineEyeSlash className={iconSize} /> : <HiOutlineEye className={iconSize} />}
+    <div className="bg-slate-800 p-2 shadow-md flex flex-wrap justify-center gap-2 relative">
+      {/* Action Buttons - Use Heroicons */}
+      {/* Undo */}
+      <button onClick={onUndo} disabled={!canUndo} className={`${baseButtonStyle} ${secondaryColor}`} title={t('controlBar.undo') ?? "Undo"}>
+          <HiOutlineArrowUturnLeft className={iconSize}/>
       </button>
-      {/* Use Backspace icon for Clear Drawings */}
-      <button onClick={onClearDrawings} className={`${baseButtonStyle} ${clearColor}`} title={t('controlBar.clearDrawings') ?? "Clear Drawings"}><HiOutlineBackspace className={iconSize} /></button>
-      <button onClick={onAddOpponent} className={`${baseButtonStyle} ${addOpponentColor}`} title={t('controlBar.addOpponent') ?? "Add Opponent"}><HiOutlineUserPlus className={iconSize} /></button>
-      
-      {/* Danger Zone - Use Heroicons */}
-      <button onClick={onResetField} className={`${baseButtonStyle} ${resetColor}`} title={t('controlBar.resetField') ?? "Reset Field"}><HiOutlineTrash className={iconSize} /></button>
-
-      {/* NEW: Log Goal Button - Keep FaFutbol for now */}
+      {/* Redo */}
+      <button onClick={onRedo} disabled={!canRedo} className={`${baseButtonStyle} ${secondaryColor}`} title={t('controlBar.redo') ?? "Redo"}>
+          <HiOutlineArrowUturnRight className={iconSize}/>
+      </button>
+      {/* Toggle Names */}
+      <button onClick={onToggleNames} className={`${baseButtonStyle} ${secondaryColor}`} title={t(showPlayerNames ? 'controlBar.toggleNamesHide' : 'controlBar.toggleNamesShow') ?? (showPlayerNames ? "Hide Names" : "Show Names")}>
+          {showPlayerNames ? <HiOutlineEyeSlash className={iconSize}/> : <HiOutlineEye className={iconSize}/>}
+      </button>
+      {/* Clear Drawings */}
+      <button onClick={onClearDrawings} className={`${baseButtonStyle} ${clearColor}`} title={t('controlBar.clearDrawings') ?? "Clear Drawings"}>
+          <HiOutlineBackspace className={iconSize}/>
+      </button>
+      {/* Add Opponent */}
+      <button onClick={onAddOpponent} className={`${baseButtonStyle} ${addOpponentColor}`} title={t('controlBar.addOpponent') ?? "Add Opponent"}>
+          <HiOutlineUserPlus className={iconSize}/>
+      </button>
+      {/* Reset Field */}
+      <button onClick={onResetField} className={`${baseButtonStyle} ${resetColor}`} title={t('controlBar.resetField') ?? "Reset Field"}>
+          <HiOutlineTrash className={iconSize}/>
+      </button>
+      {/* Log Goal */}
       <button onClick={onToggleGoalLogModal} className={`${baseButtonStyle} ${logGoalColor}`} title={t('controlBar.logGoal', 'Log Goal') ?? "Log Goal"}>
           <FaFutbol size={20} /> {/* Keep Fa icon size prop for now */}
       </button>
-
-      {/* Add a visual divider - REMOVING */}
-      {/* <div className="border-l border-slate-600 h-6 mx-1"></div> */}
 
       {/* --- Timer Controls (Inline) - Use Heroicons --- */}
       {/* Toggle Overlay Button */}
@@ -148,47 +186,58 @@ const ControlBar: React.FC<ControlBarProps> = ({
       <span className="text-slate-200 font-semibold text-lg tabular-nums mx-1 px-2 py-1 h-10 flex items-center justify-center rounded bg-slate-800/60 min-w-[5ch]">
         {formatTime(timeElapsedInSeconds)}
       </span>
-      {/* Start/Pause Button (Icon Only) - REMOVING */}
-      {/* ... commented out button ... */}
-      {/* Reset Button (Icon Only) - REMOVING */}
-      {/* ... commented out button ... */}
       {/* --- End Timer Controls --- */}
 
-      {/* Meta Controls (Help, Fullscreen, Language, Stats) - Use Heroicons */}
-      {/* Stats Button */}
-       <button 
-        onClick={onToggleGameStatsModal}
-        className={`${baseButtonStyle} ${secondaryColor}`}
-        title={t('controlBar.showStats', 'Show Stats') ?? "Show Stats"}
-      >
-        <HiOutlineClipboardDocumentList className={iconSize} />
-      </button>
-      {/* Help Button */}
-      <button 
-        onClick={onToggleInstructions} 
-        className={`${baseButtonStyle} ${secondaryColor}`}
-        title={t('controlBar.help') ?? "Help"}
-      >
-        <HiOutlineQuestionMarkCircle className={iconSize} />
-      </button>
-      {/* Fullscreen Button */}
+      {/* Fullscreen Button - Moved back to main bar */}
       <button 
         onClick={onToggleFullScreen}
         className={`${baseButtonStyle} ${secondaryColor}`}
-        title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+        title={isFullscreen ? t('controlBar.exitFullscreen', 'Exit Fullscreen') : t('controlBar.enterFullscreen', 'Enter Fullscreen')}
       >
         {isFullscreen ? <HiOutlineArrowsPointingIn className={iconSize} /> : <HiOutlineArrowsPointingOut className={iconSize} />}
       </button>
-      {/* Single Language Toggle Button - Use Heroicon */} 
-      <button 
-        onClick={handleLanguageToggle}
-        className={`${baseButtonStyle} ${secondaryColor} w-auto px-3`} 
-        title="Switch Language"
-      >
-        {/* Using text still, but could use HiOutlineLanguage if preferred */}
-        {/* <HiOutlineLanguage className={iconSize} /> */}
-        {i18n.language === 'en' ? 'FI' : 'EN'}
-      </button>
+
+      {/* NEW Settings Button & Menu */}
+      <div className="relative" ref={settingsMenuRef}>
+        <button
+          onClick={handleSettingsButtonClick}
+          className={`${baseButtonStyle} ${secondaryColor}`}
+          title={t('controlBar.settings') ?? "Settings"}
+        >
+          <HiOutlineCog6Tooth className={iconSize} />
+        </button>
+
+        {/* Settings Dropdown Menu - Reverted to Darker Styling */}
+        {isSettingsMenuOpen && (
+          <div className="absolute bottom-full right-0 mb-2 w-40 bg-slate-700 rounded-md shadow-xl py-1 z-50 overflow-hidden border border-slate-500">
+            {/* Stats Button */}
+            <button 
+              onClick={wrapHandler(onToggleGameStatsModal)}
+              className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600"
+            >
+              <HiOutlineClipboardDocumentList className={menuIconSize} />
+              {t('controlBar.stats', 'Stats')}
+            </button>
+            {/* Help Button */}
+            <button 
+              onClick={wrapHandler(onToggleInstructions)}
+              className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600 border-t border-slate-600/50"
+            >
+              <HiOutlineQuestionMarkCircle className={menuIconSize} />
+              {t('controlBar.help', 'Help')}
+            </button>
+             {/* Language Toggle Button */}
+            <button 
+              onClick={handleLanguageToggle}
+              className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600 border-t border-slate-600/50"
+            >
+              <HiOutlineLanguage className={menuIconSize} />
+              {t('controlBar.language', 'Language')} ({i18n.language === 'en' ? 'FI' : 'EN'})
+            </button>
+          </div>
+        )}
+      </div>
+
     </div>
   );
 };

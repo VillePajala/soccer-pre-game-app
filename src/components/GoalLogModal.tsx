@@ -8,7 +8,6 @@ interface GoalLogModalProps {
   isOpen: boolean;
   onClose: () => void;
   onLogGoal: (scorerId: string, assisterId?: string) => void; // For logging own team's goal
-  onLogOpponentGoal?: (time: number) => void; // NEW: For logging opponent's goal
   availablePlayers: Player[];
   currentTime: number; // timeElapsedInSeconds
 }
@@ -17,7 +16,6 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
   isOpen,
   onClose,
   onLogGoal,
-  onLogOpponentGoal = () => { console.warn('onLogOpponentGoal handler not provided'); }, // Default handler
   availablePlayers,
   currentTime,
 }) => {
@@ -47,12 +45,6 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
     if (scorerId) {
       onLogGoal(scorerId, assisterId || undefined); // Pass undefined if assisterId is empty
     }
-  };
-
-  const handleLogOpponentGoalClick = () => {
-      onLogOpponentGoal(currentTime);
-      // No need to reset scorer/assister here as they weren't used
-      // Modal close is handled in the parent handler now
   };
 
   // Reset state when modal closes (or opens)
@@ -160,15 +152,6 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {t('goalLogModal.logButton', 'Log Goal')}
-              </button>
-
-             {/* Log Opponent Goal Button */}
-             <button
-                type="button"
-                onClick={handleLogOpponentGoalClick}
-                className="px-4 py-2 bg-red-700 hover:bg-red-600 text-white rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 focus:ring-offset-slate-800"
-              >
-                {t('goalLogModal.logOpponentButton', 'Log Opponent Goal')}
               </button>
           </div>
         </div>
