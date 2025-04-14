@@ -172,9 +172,6 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
             )}
         </div>
 
-        {/* Visual separator */}
-        <div className="w-full h-px bg-slate-700/70 mb-4"></div>
-
         {/* Timer Controls */}
         <div className="flex items-center space-x-3 mb-5"> 
           <button 
@@ -199,7 +196,7 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
         <div className="bg-slate-800/80 backdrop-blur-sm p-3 rounded-lg w-full mb-4 space-y-4">
           {/* Game Structure Controls (only when game not started) */}
           {gameStatus === 'notStarted' && (
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2 items-center border-b border-slate-700 pb-3 mb-3">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2 items-center">
               {/* Number of Periods */}
               <div className="flex items-center justify-center">
                 <span className={controlLabelStyle}>{t('timerOverlay.numPeriods', 'Periods')}</span>

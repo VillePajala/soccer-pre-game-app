@@ -167,7 +167,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   };
 
   return (
-    <div className="bg-slate-800 p-2 shadow-md flex flex-wrap justify-center gap-2 relative">
+    <div className="bg-slate-800 p-2 shadow-md flex flex-wrap justify-center gap-2 relative z-40">
       {/* Action Buttons - Use Heroicons */}
       {/* Undo */}
       <button onClick={onUndo} disabled={!canUndo} className={`${baseButtonStyle} ${secondaryColor}`} title={t('controlBar.undo') ?? "Undo"}>
