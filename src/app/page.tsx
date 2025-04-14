@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react'; // REMOVED unused useRef
+import React, { useState, useEffect, useCallback } from 'react'; // REMOVED unused useRef
 import SoccerField from '@/components/SoccerField';
 import PlayerBar from '@/components/PlayerBar';
 import ControlBar from '@/components/ControlBar';
@@ -1649,5 +1649,3 @@ export default function Home() {
     </div>
   );
 }
-
-
