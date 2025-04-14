@@ -906,25 +906,48 @@ export default function Home() {
     console.log("Updated game event:", updatedEvent.id);
   };
 
-  // NEW Handler to reset game statistics WITH confirmation
-  const handleResetGameStats = () => {
-    if (window.confirm(t('gameStatsModal.resetConfirm', 'Are you sure you want to reset all scores, goals, and notes for this game?') ?? "Are you sure you want to reset all scores, goals, and notes for this game?")) {
-        console.log("Resetting current game stats...");
-        // Reset the relevant state variables
-        setGameEvents([]);
-        setHomeScore(0);
-        setAwayScore(0);
-        setGameNotes('');
-        // Save this reset state to history for undo
-        saveStateToHistory({
-            gameEvents: [],
-            homeScore: 0,
-            awayScore: 0,
-            gameNotes: '',
-        });
-        // The auto-save useEffect will handle persisting these reset values
+  // RENAMED & UPDATED Handler: Resets the current session to initial state
+  const handleStartNewGame = useCallback(() => {
+    if (window.confirm(t('controlBar.startNewGameConfirm', 'Are you sure you want to start a new match? Unsaved data for the current match will be lost.'))) {
+      console.log("Starting new game (resetting session state)..." );
+      // Reset all state variables to their initial values from initialState
+      setPlayersOnField(initialState.playersOnField);
+      setOpponents(initialState.opponents);
+      setDrawings(initialState.drawings);
+      setAvailablePlayers(initialState.availablePlayers);
+      setShowPlayerNames(initialState.showPlayerNames);
+      setTeamName(initialState.teamName);
+      setGameEvents(initialState.gameEvents);
+      setOpponentName(initialState.opponentName);
+      setGameDate(initialState.gameDate);
+      setHomeScore(initialState.homeScore);
+      setAwayScore(initialState.awayScore);
+      setGameNotes(initialState.gameNotes);
+      setNumberOfPeriods(initialState.numberOfPeriods);
+      setPeriodDurationMinutes(initialState.periodDurationMinutes);
+      setCurrentPeriod(initialState.currentPeriod);
+      setGameStatus(initialState.gameStatus);
+      setTimeElapsedInSeconds(0);
+      setIsTimerRunning(false);
+      setSubAlertLevel('none');
+      // Reset sub timer related state if needed
+      // setSubIntervalMinutes(initialState.subIntervalMinutes); // Assuming 5 is default
+      setNextSubDueTimeSeconds(5 * 60);
+      setCompletedIntervalDurations([]);
+      setLastSubConfirmationTimeSeconds(0);
+
+      // Reset session history
+      setHistory([initialState]); 
+      setHistoryIndex(0);
+
+      // Optionally set current game ID back to default unsaved
+      // setCurrentGameId(DEFAULT_GAME_ID); 
+      // Decide if we want this. For now, keep the same gameId but reset its content.
+      // Auto-save will overwrite the previous state for the current game ID.
+
+      console.log("Session state reset to initial values.");
     }
-  };
+  }, [t]); // Add t to dependencies for the confirmation message
 
   // Handler to open/close the stats modal
   const handleToggleGameStatsModal = () => {
@@ -1254,7 +1277,7 @@ export default function Home() {
           onHardResetApp={handleHardResetApp}
           onOpenSaveGameModal={handleOpenSaveGameModal}
           onOpenLoadGameModal={handleOpenLoadGameModal}
-          onResetGameStats={handleResetGameStats}
+          onStartNewGame={handleStartNewGame}
         />
         {/* Instructions Modal */}
         <InstructionsModal 
@@ -1292,7 +1315,7 @@ export default function Home() {
           onAwayScoreChange={handleAwayScoreChange}
           onGameNotesChange={handleGameNotesChange}
           onUpdateGameEvent={handleUpdateGameEvent}
-          onResetGameStats={handleResetGameStats}
+          onResetGameStats={handleStartNewGame}
         />
         {/* Placeholder for new modals - TODO: Create these components */}
         <SaveGameModal 

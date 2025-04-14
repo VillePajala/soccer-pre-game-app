@@ -33,7 +33,8 @@
   "controlBar.tulospalveluStandings": "Sarjataulukko",
   "controlBar.saveGameAs": "Tallenna Peli Nimellä...",
   "controlBar.loadGame": "Lataa Peli...",
-  "controlBar.resetCurrentStats": "Nollaa nykyinen ottelu",
+  "controlBar.startNewGame": "Aloita uusi ottelu",
+  "controlBar.startNewGameConfirm": "Haluatko varmasti aloittaa uuden ottelun? Nykyisen ottelun tallentamattomat tiedot menetetään.",
   "controlBar.hardReset": "Nollaa Sovellus",
   "timerOverlay.intervalLabel": "Vaihtoväli (min):",
   "timerOverlay.confirmSubButton": "Vaihto tehty",
@@ -81,8 +82,7 @@
       "hardReset": "Nollaa Sovellus",
       "hardResetConfirmation": "Haluatko varmasti nollata koko sovelluksen? Kaikki tallennetut tiedot (pelaajat, tilastot, sijainnit) menetetään pysyvästi.",
       "saveGameAs": "Tallenna Peli Nimellä...",
-      "loadGame": "Lataa Peli...",
-      "resetCurrentStats": "Nollaa nykyinen ottelu"
+      "loadGame": "Lataa Peli..."
     },
     "timerOverlayTitle": "Ajastin Overlay",
     "timerOverlay": {
