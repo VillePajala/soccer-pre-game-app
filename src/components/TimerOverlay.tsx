@@ -36,9 +36,6 @@ interface TimerOverlayProps {
   onSetNumberOfPeriods: (periods: 1 | 2) => void;
   onSetPeriodDuration: (minutes: number) => void;
   lastSubTime: number | null;
-  onToggleLargeTimerOverlay: () => void;
-  isPulsing?: boolean;
-  pulsingClass?: string;
   onOpponentNameChange: (name: string) => void;
 }
 
@@ -66,9 +63,6 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
   onSetNumberOfPeriods = () => { console.warn('onSetNumberOfPeriods handler not provided'); },
   onSetPeriodDuration = () => { console.warn('onSetPeriodDuration handler not provided'); },
   lastSubTime = null,
-  onToggleLargeTimerOverlay = () => { console.warn('onToggleLargeTimerOverlay handler not provided'); },
-  isPulsing,
-  pulsingClass,
   onOpponentNameChange = () => { console.warn('onOpponentNameChange handler not provided'); },
 }) => {
   const { t } = useTranslation(); // Initialize translation hook
@@ -80,15 +74,13 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
   // --- End State ---
 
   // --- Effects for Opponent Name Editing ---
-  // Reset local edit state if the prop changes externally
   useEffect(() => {
     setEditedOpponentName(opponentName);
     if (isEditingOpponentName) {
-        // If it was editing and the prop changed, maybe cancel the edit?
-        // Or just update the local value and keep editing?
-        // Let's update and keep editing for now, user can explicitly cancel/save.
+      // Logic here (currently commented out or placeholder)
     }
-  }, [opponentName]); // Only run when opponentName prop changes
+    // Add missing dependency
+  }, [opponentName, isEditingOpponentName]);
 
   // Focus input when editing starts
   useEffect(() => {
