@@ -4,6 +4,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { SavedGamesCollection } from '@/app/page'; // Adjust path if necessary
 import { FaTrashAlt, FaFolderOpen } from 'react-icons/fa'; // Or other appropriate icons
+import { HiOutlineDocumentArrowDown } from 'react-icons/hi2';
 
 interface LoadGameModalProps {
   isOpen: boolean;
@@ -11,6 +12,8 @@ interface LoadGameModalProps {
   onLoad: (gameId: string) => void;
   onDelete: (gameId: string) => void;
   savedGames: SavedGamesCollection;
+  onExportAllJson: () => void;
+  onExportAllExcel: () => void;
 }
 
 // Define the default game ID constant if not imported (consider sharing from page.tsx)
@@ -22,6 +25,8 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
   onLoad,
   onDelete,
   savedGames,
+  onExportAllJson,
+  onExportAllExcel,
 }) => {
   const { t } = useTranslation();
 
@@ -78,10 +83,32 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
           )}
         </div>
 
-        <div className="flex justify-end mt-auto flex-shrink-0">
+        <div className="mt-6 pt-4 border-t border-slate-600 flex justify-between items-center">
+          <div className="flex space-x-2">
+            <button
+              onClick={onExportAllJson}
+              disabled={Object.keys(savedGames).length === 0}
+              className="px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-700 transition duration-150 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              title={t('loadGameModal.exportAllJsonTooltip', 'Export all games to JSON') ?? "Export all games to JSON"}
+            >
+              <HiOutlineDocumentArrowDown className="w-5 h-5 mr-1.5" />
+              {t('loadGameModal.exportAllJsonButton', 'Export JSON')}
+            </button>
+
+            <button
+              onClick={onExportAllExcel}
+              disabled={Object.keys(savedGames).length === 0}
+              className="px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 transition duration-150 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              title={t('loadGameModal.exportAllExcelTooltip', 'Export all games to Excel/CSV') ?? "Export all games to Excel/CSV"}
+            >
+              <HiOutlineDocumentArrowDown className="w-5 h-5 mr-1.5" />
+              {t('loadGameModal.exportAllExcelButton', 'Export Excel')}
+            </button>
+          </div>
+          
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-slate-600 text-white rounded hover:bg-slate-500 transition duration-150 text-sm"
+            className="px-4 py-2 bg-slate-600 text-white rounded hover:bg-slate-500 transition duration-150 text-sm flex items-center"
           >
             {t('loadGameModal.closeButton', 'Close')}
           </button>

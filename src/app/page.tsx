@@ -909,14 +909,19 @@ export default function Home() {
   // RENAMED & UPDATED Handler: Resets the current session to initial state
   const handleStartNewGame = useCallback(() => {
     if (window.confirm(t('controlBar.startNewGameConfirm', 'Are you sure you want to start a new match? Unsaved data for the current match will be lost.'))) {
-      console.log("Starting new game (resetting session state)..." );
-      // Reset all state variables to their initial values from initialState
+      console.log("Starting new game (resetting session state, preserving team/players)..." );
+      
+      // Preserve current team name and available players
+      const preservedTeamName = teamName;
+      const preservedAvailablePlayers = availablePlayers;
+      
+      // Reset other state variables to their initial values from initialState
       setPlayersOnField(initialState.playersOnField);
       setOpponents(initialState.opponents);
       setDrawings(initialState.drawings);
-      setAvailablePlayers(initialState.availablePlayers);
+      // setAvailablePlayers(initialState.availablePlayers); // DO NOT RESET
       setShowPlayerNames(initialState.showPlayerNames);
-      setTeamName(initialState.teamName);
+      // setTeamName(initialState.teamName); // DO NOT RESET
       setGameEvents(initialState.gameEvents);
       setOpponentName(initialState.opponentName);
       setGameDate(initialState.gameDate);
@@ -930,24 +935,24 @@ export default function Home() {
       setTimeElapsedInSeconds(0);
       setIsTimerRunning(false);
       setSubAlertLevel('none');
-      // Reset sub timer related state if needed
-      // setSubIntervalMinutes(initialState.subIntervalMinutes); // Assuming 5 is default
       setNextSubDueTimeSeconds(5 * 60);
       setCompletedIntervalDurations([]);
       setLastSubConfirmationTimeSeconds(0);
 
-      // Reset session history
-      setHistory([initialState]); 
+      // Create a new initial state for history that includes the preserved values
+      const newInitialStateForHistory: AppState = {
+        ...initialState,
+        teamName: preservedTeamName,
+        availablePlayers: preservedAvailablePlayers,
+      };
+      
+      // Reset session history using the new initial state
+      setHistory([newInitialStateForHistory]); 
       setHistoryIndex(0);
 
-      // Optionally set current game ID back to default unsaved
-      // setCurrentGameId(DEFAULT_GAME_ID); 
-      // Decide if we want this. For now, keep the same gameId but reset its content.
-      // Auto-save will overwrite the previous state for the current game ID.
-
-      console.log("Session state reset to initial values.");
+      console.log("Session state reset, preserving team and players.");
     }
-  }, [t]); // Add t to dependencies for the confirmation message
+  }, [t, teamName, availablePlayers]); // Add preserved state variables to dependencies
 
   // Handler to open/close the stats modal
   const handleToggleGameStatsModal = () => {
@@ -1174,6 +1179,162 @@ export default function Home() {
     }
   };
 
+  // Function to export all saved games as a single JSON file (RENAMED)
+  const handleExportAllGamesJson = () => {
+    if (Object.keys(savedGames).length === 0) {
+      alert(t('loadGameModal.noGamesToExport', 'No saved games to export.'));
+      return;
+    }
+
+    try {
+      const jsonString = JSON.stringify(savedGames, null, 2); // Pretty-print JSON
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+
+      // Generate filename with timestamp
+      const now = new Date();
+      const timestamp = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
+      a.download = `SoccerApp_AllGames_${timestamp}.json`; // Keep .json extension
+      
+      a.href = url;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      console.log('All games exported successfully as JSON.');
+      // Optionally close the load modal after export
+      // handleCloseLoadGameModal(); 
+    } catch (error) {
+      console.error('Failed to export all games as JSON:', error);
+      alert(t('loadGameModal.exportAllJsonError', 'Error exporting all games as JSON.')); // Updated error key
+    }
+  };
+
+  // Helper function to safely format CSV fields (handles quotes and commas)
+  const escapeCsvField = (field: string | number | undefined | null): string => {
+    const stringField = String(field ?? ''); // Convert null/undefined to empty string
+    // If field contains comma, newline, or double quote, enclose in double quotes
+    if (stringField.includes(',') || stringField.includes('"') || stringField.includes('\n')) {
+      // Escape existing double quotes by doubling them
+      const escapedField = stringField.replace(/"/g, '""');
+      return `"${escapedField}"`;
+    }
+    return stringField;
+  };
+  
+  // Helper function to format time (consider extracting if used elsewhere)
+  const formatTime = (totalSeconds: number): string => {
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  // Function to export all saved games as Excel/CSV
+  const handleExportAllGamesExcel = () => {
+    const gameIds = Object.keys(savedGames).filter(id => id !== DEFAULT_GAME_ID);
+    if (gameIds.length === 0) {
+      alert(t('loadGameModal.noGamesToExport', 'No saved games to export.'));
+      return;
+    }
+    console.log(`Starting Excel export for ${gameIds.length} games...`);
+
+    try {
+      const allRows: string[] = [];
+      const EOL = '\r\n'; // Use CRLF for Excel compatibility
+      const DELIMITER = ';'; // Use semicolon for better Excel compatibility
+
+      gameIds.forEach((gameId, index) => {
+        const game = savedGames[gameId];
+        if (!game) return; // Skip if game data is missing
+
+        // --- Game Separator ---
+        if (index > 0) {
+          allRows.push(''); // Add a blank separator row between games
+        }
+        allRows.push(`=== GAME START: ${escapeCsvField(gameId)} ===`);
+
+        // --- Section: Game Info ---
+        allRows.push('Game Info');
+        allRows.push(`${escapeCsvField('Game Date:')}${DELIMITER}${escapeCsvField(game.gameDate)}`);
+        allRows.push(`${escapeCsvField('Home Team:')}${DELIMITER}${escapeCsvField(game.teamName)}`);
+        allRows.push(`${escapeCsvField('Away Team:')}${DELIMITER}${escapeCsvField(game.opponentName)}`);
+        allRows.push(`${escapeCsvField('Home Score:')}${DELIMITER}${escapeCsvField(game.homeScore)}`);
+        allRows.push(`${escapeCsvField('Away Score:')}${DELIMITER}${escapeCsvField(game.awayScore)}`);
+        allRows.push(''); // Blank separator row
+
+        // --- Section: Player Stats ---
+        allRows.push('Player Stats');
+        allRows.push(`${escapeCsvField('Player')}${DELIMITER}${escapeCsvField('Goals')}${DELIMITER}${escapeCsvField('Assists')}${DELIMITER}${escapeCsvField('Points')}`);
+        const playerStats = game.availablePlayers?.map(player => {
+          const goals = game.gameEvents?.filter(e => e.type === 'goal' && e.scorerId === player.id).length || 0;
+          const assists = game.gameEvents?.filter(e => e.type === 'goal' && e.assisterId === player.id).length || 0;
+          const totalScore = goals + assists;
+          return { name: player.name, goals, assists, totalScore };
+        })
+        .filter(p => p.totalScore > 0) // Only include players with stats
+        .sort((a, b) => b.totalScore - a.totalScore || b.goals - a.goals); // Sort by points, then goals
+        
+        if (playerStats && playerStats.length > 0) {
+            playerStats.forEach(player => {
+                allRows.push(`${escapeCsvField(player.name)}${DELIMITER}${escapeCsvField(player.goals)}${DELIMITER}${escapeCsvField(player.assists)}${DELIMITER}${escapeCsvField(player.totalScore)}`);
+            });
+        } else {
+            allRows.push('No player stats recorded');
+        }
+        allRows.push(''); // Blank separator row
+
+        // --- Section: Event Log ---
+        allRows.push('Event Log');
+        allRows.push(`${escapeCsvField('Time')}${DELIMITER}${escapeCsvField('Type')}${DELIMITER}${escapeCsvField('Scorer')}${DELIMITER}${escapeCsvField('Assister')}`);
+        const sortedEvents = game.gameEvents?.filter(e => e.type === 'goal' || e.type === 'opponentGoal').sort((a, b) => a.time - b.time) || [];
+        
+        if (sortedEvents.length > 0) {
+            sortedEvents.forEach(event => {
+                const timeFormatted = formatTime(event.time);
+                const type = event.type === 'goal' ? 'Goal' : 'Opponent Goal';
+                const scorer = escapeCsvField(event.scorerName);
+                const assister = event.type === 'goal' ? escapeCsvField(event.assisterName) : '';
+                allRows.push(`${escapeCsvField(timeFormatted)}${DELIMITER}${escapeCsvField(type)}${DELIMITER}${scorer}${DELIMITER}${assister}`);
+            });
+        } else {
+            allRows.push('No goals logged');
+        }
+        allRows.push(''); // Blank separator row
+
+        // --- Section: Notes ---
+        allRows.push('Notes:');
+        // Handle multi-line notes by enclosing in quotes if necessary
+        allRows.push(escapeCsvField(game.gameNotes || '')); 
+        
+        // --- Game End Separator ---
+        allRows.push(`=== GAME END: ${escapeCsvField(gameId)} ===`);
+      });
+
+      // --- Combine and Download ---
+      const csvString = allRows.join(EOL);
+      const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' }); // Specify charset
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+
+      // Generate filename with timestamp
+      const now = new Date();
+      const timestamp = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
+      a.download = `SoccerApp_AllGames_${timestamp}.csv`; // Use .csv extension
+      
+      a.href = url;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      console.log('All games exported successfully as CSV.');
+
+    } catch (error) {
+      console.error('Failed to export all games as CSV:', error);
+      alert(t('loadGameModal.exportAllExcelError', 'Error exporting all games as CSV.'));
+    }
+  };
+
   // Render null or a loading indicator until state is loaded
   if (!isLoaded) {
     // You might want a more sophisticated loading indicator
@@ -1327,11 +1488,13 @@ export default function Home() {
           gameDate={gameDate}         // Pass gameDate state
         />
         <LoadGameModal 
-          isOpen={isLoadGameModalOpen} 
-          onClose={handleCloseLoadGameModal} 
-          onLoad={handleLoadGame} 
-          onDelete={handleDeleteGame} 
+          isOpen={isLoadGameModalOpen}
+          onClose={handleCloseLoadGameModal}
           savedGames={savedGames} 
+          onLoad={handleLoadGame}
+          onDelete={handleDeleteGame}
+          onExportAllJson={handleExportAllGamesJson} // Corrected prop name and handler name
+          onExportAllExcel={handleExportAllGamesExcel} // Pass the new handler
         />
       </div>
     </div>

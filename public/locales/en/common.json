@@ -221,6 +221,13 @@
     "deleteButtonTooltip": "Delete this saved game",
     "deleteConfirm": "Are you sure you want to delete the saved game \"{gameName}\"? This action cannot be undone.",
     "noSavedGames": "No saved games found.",
-    "closeButton": "Close"
+    "closeButton": "Close",
+    "exportAllJsonButton": "Export JSON",
+    "exportAllJsonTooltip": "Export all saved games to a single JSON file",
+    "exportAllExcelButton": "Export CSV",
+    "exportAllExcelTooltip": "Export all saved games to a single CSV file (Excel compatible)",
+    "noGamesToExport": "No saved games to export.",
+    "exportAllJsonError": "Error exporting all games as JSON.",
+    "exportAllExcelError": "Error exporting all games as CSV."
   }
 } 
