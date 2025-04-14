@@ -104,19 +104,15 @@ const ControlBar: React.FC<ControlBarProps> = ({
   const settingsMenuRef = useRef<HTMLDivElement>(null);
   const tulospalveluRef = useRef<HTMLDivElement>(null); // Reference for submenu
   
-  // Force re-render on language change
-  const [language, setLanguage] = useState(i18n.language);
-  
-  // Get direct translations based on current language
+  // State for direct translations (to avoid async issues with t)
   const [directTranslations, setDirectTranslations] = useState(
-    i18n.language === 'fi' ? fiTranslations : enTranslations
+    i18n.language === 'fi' ? fiTranslations : enTranslations 
   );
   
-  // Update translations when language changes
+  // Effect to handle language changes and update direct translations
   useEffect(() => {
     const handleLanguageChanged = () => {
       console.log("Language changed to:", i18n.language);
-      setLanguage(i18n.language);
       setDirectTranslations(i18n.language === 'fi' ? fiTranslations : enTranslations);
     };
     
