@@ -70,7 +70,9 @@
       "timerControls": "Käynnistä/pysäytä/nollaa otteluajastin.",
       "help": "Näytä/piilota nämä ohjeet.",
       "fullscreen": "Vaihda koko näytön tilaan.",
-      "languageToggle": "Vaihda kieli englannin (EN) ja suomen (FI) välillä."
+      "languageToggle": "Vaihda kieli englannin (EN) ja suomen (FI) välillä.",
+      "hardReset": "Nollaa Sovellus",
+      "hardResetConfirmation": "Haluatko varmasti nollata koko sovelluksen? Kaikki tallennetut tiedot (pelaajat, tilastot, sijainnit) menetetään pysyvästi."
     },
     "timerOverlayTitle": "Ajastin Overlay",
     "timerOverlay": {
@@ -184,6 +186,8 @@
     "winning": "Johdossa",
     "losing": "Häviöllä",
     "draw": "Tasapeli",
-    "tasoLink": "Taso"
+    "tasoLink": "Taso",
+    "exportJsonButton": "Lataa JSON",
+    "exportExcelButton": "Lataa EXCEL"
   }
 } 

@@ -9,6 +9,7 @@ import InstructionsModal from '@/components/InstructionsModal'; // Import Instru
 import GoalLogModal from '@/components/GoalLogModal'; // Import GoalLogModal
 import GameStatsModal from '@/components/GameStatsModal'; // Import GameStatsModal
 import TrainingResourcesModal from '@/components/TrainingResourcesModal'; // Import new modal
+import { useTranslation } from 'react-i18next'; // Make sure this is imported
 
 // Define the Player type - Use relative coordinates
 export interface Player {
@@ -105,6 +106,7 @@ const initialState: AppState = {
 const LOCAL_STORAGE_KEY = 'soccerTacticsAppState';
 
 export default function Home() {
+  const { t } = useTranslation(); // Get translation function
   // --- State Management ---
   const [playersOnField, setPlayersOnField] = useState<Player[]>(initialState.playersOnField);
   const [opponents, setOpponents] = useState<Opponent[]>(initialState.opponents);
@@ -946,6 +948,21 @@ export default function Home() {
     setIsTrainingResourcesOpen(!isTrainingResourcesOpen);
   };
 
+  // NEW: Handler for Hard Reset
+  const handleHardResetApp = useCallback(() => {
+    if (window.confirm(t('controlBar.hardResetConfirmation') ?? "Are you sure you want to completely reset the application? All saved data (players, stats, positions) will be permanently lost.")) {
+      try {
+        console.log("Performing hard reset...");
+        localStorage.removeItem(LOCAL_STORAGE_KEY);
+        window.location.reload();
+      } catch (error) {
+        console.error("Error during hard reset:", error);
+        // Optionally show an error message to the user
+        alert("Failed to reset application data.");
+      }
+    }
+  }, [t]); // Add t to dependency array
+
   // Render null or a loading indicator until state is loaded
   if (!isLoaded) {
     // You might want a more sophisticated loading indicator
@@ -1045,6 +1062,7 @@ export default function Home() {
           onToggleFullScreen={toggleFullScreen}
           onToggleGoalLogModal={handleToggleGoalLogModal}
           onToggleGameStatsModal={handleToggleGameStatsModal}
+          onHardResetApp={handleHardResetApp}
         />
         {/* Instructions Modal */}
         <InstructionsModal 
