@@ -14,6 +14,15 @@
   "controlBar.showStats": "Näytä Tilastot",
   "controlBar.stats": "Tilastot",
   "controlBar.language": "Kieli",
+  "controlBar.timerControls": "Käynnistä/pysäytä/nollaa otteluajastin.",
+  "controlBar.appGuide": "Näytä/piilota sovellusopas.",
+  "controlBar.settings": "Asetukset",
+  "controlBar.training": "Harjoitusmateriaalit",
+  "controlBar.logGoal": "Kirjaa maali",
+  "controlBar.fullscreen": "Vaihda koko näytön tilaan.",
+  "controlBar.enterFullscreen": "Siirry koko näyttöön",
+  "controlBar.exitFullscreen": "Poistu koko näytöstä",
+  "controlBar.languageToggle": "Vaihda kieli englannin (EN) ja suomen (FI) välillä.",
   "timerOverlay.intervalLabel": "Vaihtoväli (min):",
   "timerOverlay.confirmSubButton": "Vaihto tehty",
   "timerOverlay.historyTitle": "Peliaikahistoria",
@@ -26,11 +35,9 @@
   "timerOverlay.periodEnded": "Erä {currentPeriod} päättyi",
   "timerOverlay.gameEnded": "Peli päättyi",
   "instructionsModal": {
-    "title": "Käyttöohjeet",
-    "closeButton": "Sulje ohjeet",
+    "title": "Sovellusopas",
+    "closeButton": "Sulje opas",
     "closeText": "Sulje napsauttamalla modaalin ulkopuolella tai käyttämällä 'X'-painiketta.",
-    "tabInstructions": "Ohjeet",
-    "tabWarmup": "Lämmittelysuunnitelma",
     "playerBarTitle": "Pelaajapalkki (Yläosa)",
     "playerBar": {
       "selectPlayer": "Valitse pelaaja: Napauta pelaajakiekkoa valitaksesi sen sijoittamista varten.",
@@ -134,6 +141,18 @@
     "cancelButton": "Peruuta",
     "logButton": "Kirjaa maali",
     "logOpponentButton": "Kirjaa Vastustajan Maali"
+  },
+  "trainingResourcesModal": {
+    "title": "Harjoitusmateriaalit",
+    "navWarmup": "Lämmittelysuunnitelma",
+    "navExampleDrills": "Esimerkkiharjoitteet",
+    "exampleDrills": {
+      "title": "Esimerkkiharjoitteet",
+      "description": "Tähän tulisi harjoitteiden kuvaukset ja ohjeet. Voit rakentaa tämän samalla tavalla kuin lämmittelysuunnitelman, käyttäen osioita ja listoja.",
+      "point1": "Harjoitteen vaihe 1",
+      "point2": "Harjoitteen vaihe 2 variaatioineen",
+      "point3": "Valmennuspisteet"
+    }
   },
   "gameStatsModal": {
     "title": "Ottelutilastot",

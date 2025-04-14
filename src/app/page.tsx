@@ -8,6 +8,7 @@ import TimerOverlay from '@/components/TimerOverlay'; // Import TimerOverlay
 import InstructionsModal from '@/components/InstructionsModal'; // Import InstructionsModal
 import GoalLogModal from '@/components/GoalLogModal'; // Import GoalLogModal
 import GameStatsModal from '@/components/GameStatsModal'; // Import GameStatsModal
+import TrainingResourcesModal from '@/components/TrainingResourcesModal'; // Import new modal
 
 // Define the Player type - Use relative coordinates
 export interface Player {
@@ -120,17 +121,20 @@ export default function Home() {
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   // Instructions Modal state
   const [isInstructionsOpen, setIsInstructionsOpen] = useState<boolean>(false);
-  const [gameEvents, setGameEvents] = useState<GameEvent[]>(initialState.gameEvents); // Add gameEvents state
+  // Training Resources Modal state
+  const [isTrainingResourcesOpen, setIsTrainingResourcesOpen] = useState<boolean>(false); // Add state for new modal
+  // Goal Log Modal state
   const [isGoalLogModalOpen, setIsGoalLogModalOpen] = useState<boolean>(false); // Add modal state
-  // Add state for game info
+  // Game Stats Modal state
+  const [isGameStatsModalOpen, setIsGameStatsModalOpen] = useState<boolean>(false);
+  // Game Events state
+  const [gameEvents, setGameEvents] = useState<GameEvent[]>(initialState.gameEvents); // Add gameEvents state
+  // Game Info state
   const [opponentName, setOpponentName] = useState<string>(initialState.opponentName);
   const [gameDate, setGameDate] = useState<string>(initialState.gameDate);
   const [homeScore, setHomeScore] = useState<number>(initialState.homeScore);
   const [awayScore, setAwayScore] = useState<number>(initialState.awayScore);
   const [gameNotes, setGameNotes] = useState<string>(initialState.gameNotes);
-  // Add state for the stats modal
-  const [isGameStatsModalOpen, setIsGameStatsModalOpen] = useState<boolean>(false);
-
   // --- Timer State ---
   const [timeElapsedInSeconds, setTimeElapsedInSeconds] = useState<number>(0);
   const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
@@ -937,6 +941,11 @@ export default function Home() {
     }
   };
 
+  // Training Resources Modal
+  const handleToggleTrainingResources = () => {
+    setIsTrainingResourcesOpen(!isTrainingResourcesOpen);
+  };
+
   // Render null or a loading indicator until state is loaded
   if (!isLoaded) {
     // You might want a more sophisticated loading indicator
@@ -1034,6 +1043,7 @@ export default function Home() {
         showLargeTimerOverlay={showLargeTimerOverlay}
         onToggleLargeTimerOverlay={handleToggleLargeTimerOverlay}
           onToggleInstructions={handleToggleInstructions}
+          onToggleTrainingResources={handleToggleTrainingResources}
           isFullscreen={isFullscreen}
           onToggleFullScreen={toggleFullScreen}
           onToggleGoalLogModal={handleToggleGoalLogModal}
@@ -1043,6 +1053,11 @@ export default function Home() {
         <InstructionsModal 
           isOpen={isInstructionsOpen} 
           onClose={handleToggleInstructions}
+        />
+        {/* Training Resources Modal */}
+        <TrainingResourcesModal 
+          isOpen={isTrainingResourcesOpen} 
+          onClose={handleToggleTrainingResources}
         />
         {/* Goal Log Modal */}
         <GoalLogModal 

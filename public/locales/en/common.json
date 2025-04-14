@@ -14,6 +14,15 @@
   "controlBar.showStats": "Show Stats",
   "controlBar.stats": "Stats",
   "controlBar.language": "Language",
+  "controlBar.timerControls": "Start/Pause/Reset the match timer.",
+  "controlBar.appGuide": "Show/hide the application guide.",
+  "controlBar.settings": "Settings",
+  "controlBar.training": "Training Resources",
+  "controlBar.logGoal": "Log Goal",
+  "controlBar.fullscreen": "Toggle fullscreen mode.",
+  "controlBar.enterFullscreen": "Enter Fullscreen",
+  "controlBar.exitFullscreen": "Exit Fullscreen",
+  "controlBar.languageToggle": "Switch between English (EN) and Finnish (FI).",
   "timerOverlay.intervalLabel": "Interval (min):",
   "timerOverlay.confirmSubButton": "Substitution Made",
   "timerOverlay.historyTitle": "Play Time History",
@@ -26,11 +35,9 @@
   "timerOverlay.periodEnded": "End of Period {currentPeriod}",
   "timerOverlay.gameEnded": "Game Ended",
   "instructionsModal": {
-    "title": "Instructions",
-    "closeButton": "Close instructions",
+    "title": "App Guide",
+    "closeButton": "Close guide",
     "closeText": "Click outside the modal or use the 'X' button to close.",
-    "tabInstructions": "Instructions",
-    "tabWarmup": "Warmup Plan",
     "playerBarTitle": "Player Bar (Top)",
     "playerBar": {
       "selectPlayer": "Select Player: Tap a player disk to select it for placement.",
@@ -74,7 +81,7 @@
     }
   },
   "warmup": {
-    "title": "Pre-Match Preparation",
+    "title": "Match Preparation",
     "section1Title": "1. 30 min / Gathering",
     "section1Goal": "Goal: Create a positive atmosphere and review the day's agenda.",
     "section1Points": [
@@ -134,6 +141,18 @@
     "cancelButton": "Cancel",
     "logButton": "Log Goal",
     "logOpponentButton": "Log Opponent Goal"
+  },
+  "trainingResourcesModal": {
+    "title": "Training Resources",
+    "navWarmup": "Warmup Plan",
+    "navExampleDrills": "Example Drills",
+    "exampleDrills": {
+      "title": "Example Drills",
+      "description": "This is where drill descriptions and instructions would go. You can structure this similarly to the warmup plan using sections and lists.",
+      "point1": "Drill Step 1",
+      "point2": "Drill Step 2 with variations",
+      "point3": "Coaching Points"
+    }
   },
   "gameStatsModal": {
     "title": "Game Statistics",

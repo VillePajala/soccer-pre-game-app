@@ -17,7 +17,8 @@ import {
     HiOutlineClipboardDocumentList, // Replaces FaClipboardList
     HiOutlineQuestionMarkCircle,
     HiOutlineLanguage,
-    HiOutlineCog6Tooth // Settings icon
+    HiOutlineCog6Tooth, // Settings icon
+    HiOutlineBookOpen // Import for Training Resources
 } from 'react-icons/hi2'; // Using hi2 for Heroicons v2 Outline
 // Keep FaFutbol for now unless a good Heroicon alternative is found
 import { FaFutbol } from 'react-icons/fa';
@@ -46,6 +47,7 @@ interface ControlBarProps {
   // Add name visibility prop
   showPlayerNames: boolean;
   onToggleInstructions: () => void;
+  onToggleTrainingResources: () => void; // Add prop for training modal
   // Add Fullscreen props
   isFullscreen: boolean;
   onToggleFullScreen: () => void;
@@ -81,6 +83,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   // Destructure name visibility prop
   showPlayerNames,
   onToggleInstructions,
+  onToggleTrainingResources, // Destructure new prop
   // Destructure Fullscreen props
   isFullscreen,
   onToggleFullScreen,
@@ -209,7 +212,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
 
         {/* Settings Dropdown Menu - Reverted to Darker Styling */}
         {isSettingsMenuOpen && (
-          <div className="absolute bottom-full right-0 mb-2 w-40 bg-slate-700 rounded-md shadow-xl py-1 z-50 overflow-hidden border border-slate-500">
+          <div className="absolute bottom-full right-0 mb-2 w-48 bg-slate-700 rounded-md shadow-xl py-1 z-50 overflow-hidden border border-slate-500"> {/* Increased width slightly */}
             {/* Stats Button */}
             <button 
               onClick={wrapHandler(onToggleGameStatsModal)}
@@ -218,13 +221,21 @@ const ControlBar: React.FC<ControlBarProps> = ({
               <HiOutlineClipboardDocumentList className={menuIconSize} />
               {t('controlBar.stats', 'Stats')}
             </button>
-            {/* Help Button */}
+            {/* NEW Training Resources Button */}
+            <button 
+              onClick={wrapHandler(onToggleTrainingResources)}
+              className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600 border-t border-slate-600/50"
+            >
+              <HiOutlineBookOpen className={menuIconSize} />
+              {t('controlBar.training', 'Training')} 
+            </button>
+            {/* Help Button (App Guide) */}
             <button 
               onClick={wrapHandler(onToggleInstructions)}
               className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600 border-t border-slate-600/50"
             >
               <HiOutlineQuestionMarkCircle className={menuIconSize} />
-              {t('controlBar.help', 'Help')}
+              {t('controlBar.appGuide', 'App Guide')} 
             </button>
              {/* Language Toggle Button */}
             <button 
