@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react'; // REMOVED unused useRef
+import React, { useState, useEffect, useCallback, useRef } from 'react'; // REMOVED unused useRef
 import SoccerField from '@/components/SoccerField';
 import PlayerBar from '@/components/PlayerBar';
 import ControlBar from '@/components/ControlBar';
@@ -11,6 +11,7 @@ import GameStatsModal from '@/components/GameStatsModal'; // Import GameStatsMod
 import TrainingResourcesModal from '@/components/TrainingResourcesModal'; // Import new modal
 import SaveGameModal from '@/components/SaveGameModal'; // Import the new modal
 import LoadGameModal from '@/components/LoadGameModal'; // Import the new modal
+import NewGameSetupModal from '@/components/NewGameSetupModal'; // Import the new component
 import { useTranslation } from 'react-i18next'; // Make sure this is imported
 
 // Define the Player type - Use relative coordinates
@@ -123,6 +124,8 @@ export interface SavedGamesCollection {
 // Define a default Game ID for the initial/unsaved state
 const DEFAULT_GAME_ID = '__default_unsaved__';
 
+
+
 export default function Home() {
   const { t } = useTranslation(); // Get translation function
   // --- State Management ---
@@ -147,6 +150,8 @@ export default function Home() {
   const [isGoalLogModalOpen, setIsGoalLogModalOpen] = useState<boolean>(false); // Add modal state
   // Game Stats Modal state
   const [isGameStatsModalOpen, setIsGameStatsModalOpen] = useState<boolean>(false);
+  // NEW: State for the New Game Setup Modal
+  const [isNewGameSetupModalOpen, setIsNewGameSetupModalOpen] = useState<boolean>(false);
   // Game Events state
   const [gameEvents, setGameEvents] = useState<GameEvent[]>(initialState.gameEvents); // Add gameEvents state
   // Game Info state
@@ -906,53 +911,71 @@ export default function Home() {
     console.log("Updated game event:", updatedEvent.id);
   };
 
-  // RENAMED & UPDATED Handler: Resets the current session to initial state
+  // RENAMED & UPDATED Handler: Just opens the setup modal after confirmation
   const handleStartNewGame = useCallback(() => {
+    // Confirmation remains the same
     if (window.confirm(t('controlBar.startNewGameConfirm', 'Are you sure you want to start a new match? Unsaved data for the current match will be lost.'))) {
-      console.log("Starting new game (resetting session state, preserving team/players)..." );
-      
-      // Preserve current team name and available players
-      const preservedTeamName = teamName;
-      const preservedAvailablePlayers = availablePlayers;
-      
-      // Reset other state variables to their initial values from initialState
-      setPlayersOnField(initialState.playersOnField);
-      setOpponents(initialState.opponents);
-      setDrawings(initialState.drawings);
-      // setAvailablePlayers(initialState.availablePlayers); // DO NOT RESET
-      setShowPlayerNames(initialState.showPlayerNames);
-      // setTeamName(initialState.teamName); // DO NOT RESET
-      setGameEvents(initialState.gameEvents);
-      setOpponentName(initialState.opponentName);
-      setGameDate(initialState.gameDate);
-      setHomeScore(initialState.homeScore);
-      setAwayScore(initialState.awayScore);
-      setGameNotes(initialState.gameNotes);
-      setNumberOfPeriods(initialState.numberOfPeriods);
-      setPeriodDurationMinutes(initialState.periodDurationMinutes);
-      setCurrentPeriod(initialState.currentPeriod);
-      setGameStatus(initialState.gameStatus);
-      setTimeElapsedInSeconds(0);
-      setIsTimerRunning(false);
-      setSubAlertLevel('none');
-      setNextSubDueTimeSeconds(5 * 60);
-      setCompletedIntervalDurations([]);
-      setLastSubConfirmationTimeSeconds(0);
-
-      // Create a new initial state for history that includes the preserved values
-      const newInitialStateForHistory: AppState = {
-        ...initialState,
-        teamName: preservedTeamName,
-        availablePlayers: preservedAvailablePlayers,
-      };
-      
-      // Reset session history using the new initial state
-      setHistory([newInitialStateForHistory]); 
-      setHistoryIndex(0);
-
-      console.log("Session state reset, preserving team and players.");
+      console.log("Start new game confirmed, opening setup modal..." );
+      setIsNewGameSetupModalOpen(true); // Open the new modal instead of resetting here
     }
-  }, [t, teamName, availablePlayers]); // Add preserved state variables to dependencies
+  }, [t]); 
+
+  // NEW: Handler to actually reset state and set opponent/date from modal
+  const handleFinalizeNewGame = (newOpponentName: string, newGameDate: string) => {
+    console.log(`Finalizing new game start. Opponent: ${newOpponentName}, Date: ${newGameDate}`);
+    
+    // Preserve current team name and available players
+    const preservedTeamName = teamName;
+    const preservedAvailablePlayers = availablePlayers;
+    
+    // Reset other state variables to their initial values from initialState
+    setPlayersOnField(initialState.playersOnField);
+    setOpponents(initialState.opponents);
+    setDrawings(initialState.drawings);
+    // setAvailablePlayers(initialState.availablePlayers); // DO NOT RESET
+    setShowPlayerNames(initialState.showPlayerNames);
+    // setTeamName(initialState.teamName); // DO NOT RESET
+    setGameEvents(initialState.gameEvents);
+    setTimeElapsedInSeconds(0);
+    setIsTimerRunning(false);
+    setSubAlertLevel('none');
+    setNextSubDueTimeSeconds(5 * 60);
+    setCompletedIntervalDurations([]);
+    setLastSubConfirmationTimeSeconds(0);
+    setHomeScore(initialState.homeScore);
+    setAwayScore(initialState.awayScore);
+    setGameNotes(initialState.gameNotes);
+    setNumberOfPeriods(initialState.numberOfPeriods);
+    setPeriodDurationMinutes(initialState.periodDurationMinutes);
+    setCurrentPeriod(initialState.currentPeriod);
+    setGameStatus(initialState.gameStatus);
+
+    // Set the new opponent name and game date from the modal
+    setOpponentName(newOpponentName.trim() || t('gameStatsModal.opponentPlaceholder', 'Opponent')); // Use placeholder if empty
+    setGameDate(newGameDate || new Date().toISOString().split('T')[0]); // Default to today if date is invalid/empty
+
+    // Create a new initial state for history that includes the preserved AND new values
+    const newInitialStateForHistory: AppState = {
+      ...initialState,
+      teamName: preservedTeamName,
+      availablePlayers: preservedAvailablePlayers,
+      opponentName: newOpponentName.trim() || t('gameStatsModal.opponentPlaceholder', 'Opponent'),
+      gameDate: newGameDate || new Date().toISOString().split('T')[0],
+    };
+    
+    // Reset session history using the new initial state
+    setHistory([newInitialStateForHistory]); 
+    setHistoryIndex(0);
+
+    console.log("Session state reset with new opponent/date.");
+    setIsNewGameSetupModalOpen(false); // Close the setup modal
+  };
+
+  // NEW: Handler to cancel the new game setup
+  const handleCancelNewGameSetup = () => {
+    console.log("New game setup cancelled.");
+    setIsNewGameSetupModalOpen(false);
+  };
 
   // Handler to open/close the stats modal
   const handleToggleGameStatsModal = () => {
@@ -1335,6 +1358,122 @@ export default function Home() {
     }
   };
 
+  // --- INDIVIDUAL GAME EXPORT HANDLERS ---
+  const handleExportOneJson = (gameId: string) => {
+    const gameData = savedGames[gameId];
+    if (!gameData) {
+      alert(`Error: Could not find game data for ${gameId}`);
+      return;
+    }
+    console.log(`Exporting game ${gameId} as JSON...`);
+    try {
+      const jsonString = JSON.stringify({ [gameId]: gameData }, null, 2); // Export as { gameId: gameData }
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.download = `${gameId}.json`; // Use gameId as filename
+      a.href = url;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      console.log(`Game ${gameId} exported successfully as JSON.`);
+    } catch (error) {
+      console.error(`Failed to export game ${gameId} as JSON:`, error);
+      alert(`Error exporting game ${gameId} as JSON.`);
+    }
+  };
+
+  const handleExportOneCsv = (gameId: string) => {
+    const gameData = savedGames[gameId];
+    if (!gameData) {
+      alert(`Error: Could not find game data for ${gameId}`);
+      return;
+    }
+    console.log(`Exporting game ${gameId} as CSV...`);
+
+    try {
+      const rows: string[] = [];
+      const EOL = '\r\n';
+      const DELIMITER = ';';
+      const game = gameData; // Alias for clarity
+
+      // --- Section: Game Info ---
+      rows.push('Game Info');
+      rows.push(`${escapeCsvField('Game ID:')}${DELIMITER}${escapeCsvField(gameId)}`);
+      rows.push(`${escapeCsvField('Game Date:')}${DELIMITER}${escapeCsvField(game.gameDate)}`);
+      rows.push(`${escapeCsvField('Home Team:')}${DELIMITER}${escapeCsvField(game.teamName)}`);
+      rows.push(`${escapeCsvField('Away Team:')}${DELIMITER}${escapeCsvField(game.opponentName)}`);
+      rows.push(`${escapeCsvField('Home Score:')}${DELIMITER}${escapeCsvField(game.homeScore)}`);
+      rows.push(`${escapeCsvField('Away Score:')}${DELIMITER}${escapeCsvField(game.awayScore)}`);
+      rows.push('');
+
+      // --- Section: Player Stats ---
+      // (Reusing logic similar to handleExportAllGamesExcel)
+      rows.push('Player Stats');
+      rows.push(`${escapeCsvField('Player')}${DELIMITER}${escapeCsvField('Goals')}${DELIMITER}${escapeCsvField('Assists')}${DELIMITER}${escapeCsvField('Points')}`);
+      const playerStats = game.availablePlayers?.map(player => {
+        const goals = game.gameEvents?.filter(e => e.type === 'goal' && e.scorerId === player.id).length || 0;
+        const assists = game.gameEvents?.filter(e => e.type === 'goal' && e.assisterId === player.id).length || 0;
+        const totalScore = goals + assists;
+        return { name: player.name, goals, assists, totalScore };
+      })
+      .filter(p => p.totalScore > 0)
+      .sort((a, b) => b.totalScore - a.totalScore || b.goals - a.goals);
+      
+      if (playerStats && playerStats.length > 0) {
+        playerStats.forEach(player => {
+            rows.push(`${escapeCsvField(player.name)}${DELIMITER}${escapeCsvField(player.goals)}${DELIMITER}${escapeCsvField(player.assists)}${DELIMITER}${escapeCsvField(player.totalScore)}`);
+        });
+      } else {
+        rows.push('No player stats recorded');
+      }
+      rows.push('');
+
+      // --- Section: Event Log ---
+      // (Reusing logic similar to handleExportAllGamesExcel)
+      rows.push('Event Log');
+      rows.push(`${escapeCsvField('Time')}${DELIMITER}${escapeCsvField('Type')}${DELIMITER}${escapeCsvField('Scorer')}${DELIMITER}${escapeCsvField('Assister')}`);
+      const sortedEvents = game.gameEvents?.filter(e => e.type === 'goal' || e.type === 'opponentGoal').sort((a, b) => a.time - b.time) || [];
+      
+      if (sortedEvents.length > 0) {
+        sortedEvents.forEach(event => {
+            const timeFormatted = formatTime(event.time);
+            const type = event.type === 'goal' ? 'Goal' : 'Opponent Goal';
+            const scorer = escapeCsvField(event.scorerName);
+            const assister = event.type === 'goal' ? escapeCsvField(event.assisterName) : '';
+            rows.push(`${escapeCsvField(timeFormatted)}${DELIMITER}${escapeCsvField(type)}${DELIMITER}${scorer}${DELIMITER}${assister}`);
+        });
+      } else {
+        rows.push('No goals logged');
+      }
+      rows.push('');
+
+      // --- Section: Notes ---
+      rows.push('Notes:');
+      rows.push(escapeCsvField(game.gameNotes || ''));
+
+      // --- Combine and Download ---
+      const csvString = rows.join(EOL);
+      const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.download = `${gameId}.csv`; // Use gameId as filename
+      a.href = url;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      console.log(`Game ${gameId} exported successfully as CSV.`);
+
+    } catch (error) {
+      console.error(`Failed to export game ${gameId} as CSV:`, error);
+      alert(`Error exporting game ${gameId} as CSV.`);
+    }
+  };
+
+  // --- END INDIVIDUAL GAME EXPORT HANDLERS ---
+
   // Render null or a loading indicator until state is loaded
   if (!isLoaded) {
     // You might want a more sophisticated loading indicator
@@ -1493,9 +1632,19 @@ export default function Home() {
           savedGames={savedGames} 
           onLoad={handleLoadGame}
           onDelete={handleDeleteGame}
-          onExportAllJson={handleExportAllGamesJson} // Corrected prop name and handler name
-          onExportAllExcel={handleExportAllGamesExcel} // Pass the new handler
+          onExportAllJson={handleExportAllGamesJson}
+          onExportAllExcel={handleExportAllGamesExcel}
+          onExportOneJson={handleExportOneJson}
+          onExportOneCsv={handleExportOneCsv}
         />
+
+        {/* NEW: New Game Setup Modal */}
+        <NewGameSetupModal 
+          isOpen={isNewGameSetupModalOpen}
+          onStart={handleFinalizeNewGame}
+          onCancel={handleCancelNewGameSetup}
+        />
+
       </div>
     </div>
   );

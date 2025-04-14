@@ -214,12 +214,26 @@
     "deleteConfirm": "Haluatko varmasti poistaa tallennetun pelin \"{gameName}\"? Toimintoa ei voi peruuttaa.",
     "noSavedGames": "Tallennettuja pelejä ei löytynyt.",
     "closeButton": "Sulje",
-    "exportAllJsonButton": "Vie JSON",
+    "exportAllJsonButton": "JSON",
     "exportAllJsonTooltip": "Vie kaikki tallennetut pelit yhteen JSON-tiedostoon",
-    "exportAllExcelButton": "Vie CSV",
-    "exportAllExcelTooltip": "Vie kaikki tallennetut pelit yhteen CSV-tiedostoon (Excel-yhteensopiva)",
+    "exportAllExcelButton": "EXCEL",
+    "exportAllExcelTooltip": "Vie kaikki tallennetut pelit CSV-tiedostoon (Excel-yhteensopiva)",
     "noGamesToExport": "Ei tallennettuja pelejä vietäväksi.",
     "exportAllJsonError": "Virhe kaikkien pelien viennissä JSON-muodossa.",
-    "exportAllExcelError": "Virhe kaikkien pelien viennissä CSV-muodossa."
+    "exportAllExcelError": "Virhe kaikkien pelien viennissä CSV-muodossa.",
+    "actionsMenuTooltip": "Toiminnot",
+    "loadMenuItem": "Lataa",
+    "exportJsonMenuItem": "JSON",
+    "exportExcelMenuItem": "EXCEL",
+    "deleteMenuItem": "Poista",
+    "exportAllTitle": "Lataa kaikki ottelut"
+  },
+  "newGameSetupModal": {
+    "title": "Uuden Ottelun Asetukset",
+    "opponentLabel": "Vastustajan Nimi:",
+    "opponentPlaceholder": "Syötä vastustajan nimi",
+    "dateLabel": "Ottelupäivä:",
+    "cancelButton": "Peruuta",
+    "startButton": "Aloita Ottelu"
   }
 } 

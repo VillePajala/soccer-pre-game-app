@@ -222,12 +222,26 @@
     "deleteConfirm": "Are you sure you want to delete the saved game \"{gameName}\"? This action cannot be undone.",
     "noSavedGames": "No saved games found.",
     "closeButton": "Close",
-    "exportAllJsonButton": "Export JSON",
+    "exportAllJsonButton": "JSON",
     "exportAllJsonTooltip": "Export all saved games to a single JSON file",
-    "exportAllExcelButton": "Export CSV",
-    "exportAllExcelTooltip": "Export all saved games to a single CSV file (Excel compatible)",
+    "exportAllExcelButton": "EXCEL",
+    "exportAllExcelTooltip": "Export all games to a CSV file (Excel compatible)",
     "noGamesToExport": "No saved games to export.",
     "exportAllJsonError": "Error exporting all games as JSON.",
-    "exportAllExcelError": "Error exporting all games as CSV."
+    "exportAllExcelError": "Error exporting all games as CSV.",
+    "actionsMenuTooltip": "Actions",
+    "loadMenuItem": "Load",
+    "exportJsonMenuItem": "JSON",
+    "exportExcelMenuItem": "EXCEL",
+    "deleteMenuItem": "Delete",
+    "exportAllTitle": "Download All Games"
+  },
+  "newGameSetupModal": {
+    "title": "New Game Setup",
+    "opponentLabel": "Opponent Name:",
+    "opponentPlaceholder": "Enter opponent name",
+    "dateLabel": "Game Date:",
+    "cancelButton": "Cancel",
+    "startButton": "Start Game"
   }
 } 
