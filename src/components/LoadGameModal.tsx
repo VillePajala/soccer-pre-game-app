@@ -3,12 +3,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SavedGamesCollection } from '@/app/page'; // Adjust path if necessary
-import { FaTrashAlt, FaFolderOpen } from 'react-icons/fa'; // Or other appropriate icons
 import { 
   HiOutlineDocumentArrowDown, 
-  HiOutlineXMark,
   HiOutlineEllipsisVertical,
-  HiOutlineFolderArrowDown,
   HiOutlineTrash,
   HiOutlineDocumentText,
   HiOutlineTableCells
