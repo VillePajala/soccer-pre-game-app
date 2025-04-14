@@ -181,8 +181,6 @@ export default function Home() {
   const [isSaveGameModalOpen, setIsSaveGameModalOpen] = useState<boolean>(false);
   const [isLoadGameModalOpen, setIsLoadGameModalOpen] = useState<boolean>(false);
 
-  const controlBarRef = useRef<HTMLDivElement>(null);
-
   // --- Timer Effect ---
   useEffect(() => {
     let intervalId: NodeJS.Timeout | null = null;
