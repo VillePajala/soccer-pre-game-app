@@ -1474,6 +1474,94 @@ export default function Home() {
 
   // --- END INDIVIDUAL GAME EXPORT HANDLERS ---
 
+  // Effect to load saved state from localStorage on initial mount
+  useEffect(() => {
+    console.log("Initial mount effect running...");
+    let loadedState: AppState | null = null;
+    let loadedSettings: AppSettings | null = null;
+    let gameIdToLoad = DEFAULT_GAME_ID;
+
+    try {
+      // Load settings first to find the last active game ID
+      const savedSettingsString = localStorage.getItem(APP_SETTINGS_KEY);
+      if (savedSettingsString) {
+        loadedSettings = JSON.parse(savedSettingsString);
+        gameIdToLoad = loadedSettings?.currentGameId || DEFAULT_GAME_ID;
+        setCurrentGameId(gameIdToLoad);
+        console.log("Loaded settings, last active game ID:", gameIdToLoad);
+      }
+
+      // Load all saved games
+      const savedGamesString = localStorage.getItem(SAVED_GAMES_KEY);
+      if (savedGamesString) {
+        const allSavedGames = JSON.parse(savedGamesString);
+        setSavedGames(allSavedGames);
+        // Get the specific state for the gameIdToLoad
+        loadedState = allSavedGames[gameIdToLoad] || null;
+        console.log(`Attempting to load state for game ID: ${gameIdToLoad}. Found:`, !!loadedState);
+      }
+    } catch (error) {
+      console.error("Failed to load or parse state from localStorage:", error);
+      // Fallback to initial state if loading fails
+      loadedState = null; 
+      setSavedGames({}); // Reset saved games if parsing failed
+      setCurrentGameId(DEFAULT_GAME_ID);
+    }
+
+    // Apply the loaded state or use initial state
+    const stateToApply = loadedState || initialState;
+    console.log("Applying state:", stateToApply === initialState ? "Initial State" : "Loaded State");
+    setPlayersOnField(stateToApply.playersOnField);
+    setOpponents(stateToApply.opponents || []);
+    setDrawings(stateToApply.drawings);
+    setAvailablePlayers(stateToApply.availablePlayers);
+    setShowPlayerNames(stateToApply.showPlayerNames);
+    setTeamName(stateToApply.teamName || initialState.teamName);
+    setGameEvents(stateToApply.gameEvents || []);
+    setOpponentName(stateToApply.opponentName || initialState.opponentName);
+    setGameDate(stateToApply.gameDate || initialState.gameDate);
+    setHomeScore(stateToApply.homeScore || 0);
+    setAwayScore(stateToApply.awayScore || 0);
+    setGameNotes(stateToApply.gameNotes || '');
+    setNumberOfPeriods(stateToApply.numberOfPeriods || 2);
+    setPeriodDurationMinutes(stateToApply.periodDurationMinutes || 10);
+    setCurrentPeriod(stateToApply.currentPeriod || 1);
+    setGameStatus(stateToApply.gameStatus || 'notStarted');
+    
+    // Reset non-persistent state
+    setHistory([stateToApply]); 
+    setHistoryIndex(0);
+    setTimeElapsedInSeconds(0);
+    setIsTimerRunning(false);
+    setSubAlertLevel('none');
+    setNextSubDueTimeSeconds(5 * 60);
+    setCompletedIntervalDurations([]);
+    setLastSubConfirmationTimeSeconds(0);
+
+    // Mark loading as complete
+    setIsLoaded(true);
+    console.log("State loading complete. isLoaded: true");
+
+    // *** NEW CHECK: Prompt for opponent name if it's the default ***
+    const finalOpponentName = stateToApply.opponentName || initialState.opponentName;
+    if (finalOpponentName === initialState.opponentName) {
+      console.log("Opponent name is default, prompting for setup...");
+      setIsNewGameSetupModalOpen(true);
+    }
+
+  }, []); // Empty dependency array ensures this runs only once on mount
+
+  // NEW Effect: Check opponent name after initial load is complete
+  useEffect(() => {
+    if (isLoaded && opponentName === initialState.opponentName) {
+        // Check if the modal isn't *already* open to prevent potential loops
+        if (!isNewGameSetupModalOpen) { 
+            console.log("Opponent name is default after load, prompting for setup...");
+            setIsNewGameSetupModalOpen(true);
+        }
+    }
+  }, [isLoaded, opponentName, isNewGameSetupModalOpen]); // Depend on load status and opponent name
+
   // Render null or a loading indicator until state is loaded
   if (!isLoaded) {
     // You might want a more sophisticated loading indicator

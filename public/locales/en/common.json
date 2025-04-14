@@ -242,6 +242,7 @@
     "opponentPlaceholder": "Enter opponent name",
     "dateLabel": "Game Date:",
     "cancelButton": "Cancel",
-    "startButton": "Start Game"
+    "startButton": "Start Game",
+    "opponentRequiredAlert": "Please enter an opponent name."
   }
 } 

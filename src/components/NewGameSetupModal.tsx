@@ -31,8 +31,15 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   }, [isOpen]);
 
   const handleStartClick = () => {
-    // Trim opponent name, allow empty date (defaults in finalize handler)
-    onStart(opponentName.trim(), gameDate); 
+    const trimmedOpponentName = opponentName.trim();
+    // Check if opponent name is empty
+    if (!trimmedOpponentName) {
+      alert(t('newGameSetupModal.opponentRequiredAlert', 'Please enter an opponent name.'));
+      opponentInputRef.current?.focus(); // Focus the empty input
+      return; // Stop execution
+    }
+    // If name is provided, proceed to call onStart
+    onStart(trimmedOpponentName, gameDate); 
   };
 
   const handleKeyDown = (event: React.KeyboardEvent) => {

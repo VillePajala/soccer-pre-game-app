@@ -234,6 +234,7 @@
     "opponentPlaceholder": "Syötä vastustajan nimi",
     "dateLabel": "Ottelupäivä:",
     "cancelButton": "Peruuta",
-    "startButton": "Aloita Ottelu"
+    "startButton": "Aloita Ottelu",
+    "opponentRequiredAlert": "Syötä vastustajan nimi."
   }
 } 
