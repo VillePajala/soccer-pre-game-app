@@ -773,7 +773,6 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
         {/* Footer / Button Area - RE-HARMONIZED */}
         <div className="flex justify-between items-center border-t border-slate-600 pt-4 mt-auto space-x-2">
           {/* Reset Stats Button */} 
-          {/* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */}
           {onResetGameStats && (
             <button
               onClick={handleResetClick}

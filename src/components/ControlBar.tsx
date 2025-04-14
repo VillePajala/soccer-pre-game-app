@@ -38,12 +38,14 @@ interface ControlBarProps {
   onResetField: () => void;
   onClearDrawings: () => void;
   onAddOpponent: () => void;
+  onToggleTimerOverlay: () => void;
+  isTimerOverlayVisible: boolean;
+  onToggleHelp: () => void;
+  onToggleGameStatsModal: () => void;
+  onToggleTrainingResourcesModal: () => void;
+  onLogGoal: () => void;
   // Timer props
   timeElapsedInSeconds: number;
-  isTimerRunning: boolean;
-  onStartPauseTimer: () => void;
-  onResetTimer: () => void;
-  // Timer Overlay props
   showLargeTimerOverlay: boolean;
   onToggleLargeTimerOverlay: () => void;
   // Add name visibility prop
@@ -54,8 +56,6 @@ interface ControlBarProps {
   isFullscreen: boolean;
   onToggleFullScreen: () => void;
   onToggleGoalLogModal: () => void; // Add prop for goal modal
-  onToggleGameStatsModal: () => void; // Add prop for stats modal
-  // TODO: Add props for Reset
 }
 
 // Helper function to format time
@@ -74,12 +74,14 @@ const ControlBar: React.FC<ControlBarProps> = ({
   onResetField,
   onClearDrawings,
   onAddOpponent,
+  onToggleTimerOverlay,
+  isTimerOverlayVisible,
+  onToggleHelp,
+  onToggleGameStatsModal,
+  onToggleTrainingResourcesModal,
+  onLogGoal,
   // Timer props
   timeElapsedInSeconds,
-  isTimerRunning,
-  onStartPauseTimer,
-  onResetTimer,
-  // Timer Overlay props
   showLargeTimerOverlay,
   onToggleLargeTimerOverlay,
   // Destructure name visibility prop
@@ -90,7 +92,6 @@ const ControlBar: React.FC<ControlBarProps> = ({
   isFullscreen,
   onToggleFullScreen,
   onToggleGoalLogModal, // Destructure goal modal handler
-  onToggleGameStatsModal // Destructure stats modal handler
 }) => {
   const { t, i18n } = useTranslation(); // Initialize translation hook, get i18n instance
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
@@ -98,6 +99,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   const settingsMenuRef = useRef<HTMLDivElement>(null);
   const tulospalveluRef = useRef<HTMLDivElement>(null); // Reference for submenu
 
+  // --- RE-ADD BUTTON STYLES --- 
   // Consistent Button Styles - Adjusted active state
   const baseButtonStyle = "text-slate-100 font-semibold py-2 px-2 w-10 h-10 flex items-center justify-center rounded-md shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900";
   
@@ -107,8 +109,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   const clearColor = "bg-amber-600 hover:bg-amber-500 focus:ring-amber-500 text-white";
   const addOpponentColor = secondaryColor;
   const logGoalColor = "bg-blue-600 hover:bg-blue-500 focus:ring-blue-500"; 
-  // const startColor = "bg-green-600 hover:bg-green-500 focus:ring-green-500"; // Not currently used
-  // const pauseColor = "bg-orange-500 hover:bg-orange-400 focus:ring-orange-400"; // Not currently used
+  // --- END RE-ADD BUTTON STYLES --- 
 
   const handleLanguageToggle = () => {
     const nextLang = i18n.language === 'en' ? 'fi' : 'en';
@@ -172,6 +173,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   const wrapHandler = (handler: () => void) => () => {
     handler();
     setIsSettingsMenuOpen(false);
+    setIsTulospalveluOpen(false);
   };
 
   return (

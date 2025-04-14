@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { FaUndo, FaRedo, FaEye, FaEyeSlash, FaRegClock, FaRegStopCircle, FaTrashAlt, FaEraser, FaUserPlus } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
 
