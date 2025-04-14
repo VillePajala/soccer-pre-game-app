@@ -994,7 +994,7 @@ export default function Home() {
               homeScore={homeScore}
               awayScore={awayScore}
               // Last substitution time
-              lastSubConfirmationTimeSeconds={lastSubConfirmationTimeSeconds}
+              lastSubTime={lastSubConfirmationTimeSeconds}
               // Game Structure props & handlers
               numberOfPeriods={numberOfPeriods}
               periodDurationMinutes={periodDurationMinutes}
@@ -1036,9 +1036,6 @@ export default function Home() {
         canUndo={canUndo}
         canRedo={canRedo}
         onResetField={handleResetField} 
-        isTimerRunning={isTimerRunning}
-        onStartPauseTimer={handleStartPauseTimer}
-        onResetTimer={handleResetTimer}
         timeElapsedInSeconds={timeElapsedInSeconds}
         showLargeTimerOverlay={showLargeTimerOverlay}
         onToggleLargeTimerOverlay={handleToggleLargeTimerOverlay}
