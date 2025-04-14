@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   description: "PEPO Soccer Tactics and Timer App",
   icons: {
     icon: '/pepo-logo.png',
+    apple: '/pepo-logo.png',
   },
 };
 
