@@ -77,7 +77,8 @@
       "setInterval": "Adjust Sub Interval: Use +/- buttons.",
       "subAlerts": "Sub Alerts: Yellow = 1 min warning, Red = Due.",
       "confirmSub": "Confirm Substitution: Press \"Substitution Made\".",
-      "playTimeHistory": "View Play Time: Lists completed intervals and last confirmation time."
+      "playTimeHistory": "View Play Time: Lists completed intervals and last confirmation time.",
+      "editOpponentNameTitle": "Click to edit opponent name"
     },
     "generalTitle": "General",
     "general": {
@@ -184,6 +185,12 @@
     "winning": "Winning",
     "losing": "Losing",
     "draw": "Draw",
-    "tasoLink": "Log data to Taso"
+    "tasoLink": "Log data to Taso",
+    "exportJsonButton": "Export JSON",
+    "exportExcelButton": "Export Excel"
+  },
+  "controlBar": {
+    "hardReset": "Hard Reset App",
+    "hardResetConfirmation": "Are you sure you want to completely reset the application? All saved data (players, stats, positions) will be permanently lost."
   }
 } 

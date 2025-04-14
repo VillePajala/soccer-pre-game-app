@@ -20,7 +20,8 @@ import {
     HiOutlineCog6Tooth, // Settings icon
     HiOutlineBookOpen, // Import for Training Resources
     HiOutlineArrowTopRightOnSquare, // External link icon
-    HiOutlineChevronRight // Chevron for submenu
+    HiOutlineChevronRight, // Chevron for submenu
+    HiOutlineExclamationTriangle // Icon for Hard Reset
 } from 'react-icons/hi2'; // Using hi2 for Heroicons v2 Outline
 // Keep FaFutbol for now unless a good Heroicon alternative is found
 import { FaFutbol } from 'react-icons/fa';
@@ -51,6 +52,7 @@ interface ControlBarProps {
   onToggleFullScreen: () => void;
   onToggleGoalLogModal: () => void; // Add prop for goal modal
   onToggleGameStatsModal: () => void;
+  onHardResetApp: () => void; // Add the new prop type
 }
 
 // Helper function to format time
@@ -82,6 +84,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   onToggleFullScreen,
   onToggleGoalLogModal, // Destructure goal modal handler
   onToggleGameStatsModal,
+  onHardResetApp, // Destructure new prop
 }) => {
   const { t, i18n } = useTranslation(); // Initialize translation hook, get i18n instance
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
@@ -267,8 +270,8 @@ const ControlBar: React.FC<ControlBarProps> = ({
               <HiOutlineLanguage className={menuIconSize} />
               {t('controlBar.language', 'Language')} ({i18n.language === 'en' ? 'FI' : 'EN'})
             </button>
-
-            {/* External Links Section - NEW */}
+            
+            {/* External Links Section */}
             <div className="border-t border-slate-600/50 mt-1 pt-1">
               {/* Taso Link */}
               <a 
@@ -333,6 +336,18 @@ const ControlBar: React.FC<ControlBarProps> = ({
                 )}
               </div>
             </div>
+
+            {/* Hard Reset Button - MOVED TO BOTTOM */}
+            <div className="border-t border-slate-600/50 mt-1 pt-1"> {/* Optional separator */} 
+              <button 
+                onClick={onHardResetApp} 
+                className="w-full flex items-center px-3 py-2 text-sm text-red-400 hover:bg-red-900/50"
+              >
+                <HiOutlineExclamationTriangle className={menuIconSize} />
+                {t('controlBar.hardReset', 'Hard Reset App')}
+              </button>
+            </div>
+
           </div>
         )}
       </div>

@@ -4,7 +4,7 @@ import React, { useMemo, useState, useEffect, useRef } from 'react'; // Added us
 import { useTranslation } from 'react-i18next';
 import { Player, GameEvent } from '@/app/page';
 import { FaSort, FaSortUp, FaSortDown, FaEdit, FaSave, FaTimes } from 'react-icons/fa'; // Import sort icons and new icons
-import { HiOutlineArrowTopRightOnSquare } from 'react-icons/hi2'; // Import external link icon
+import { HiOutlineArrowTopRightOnSquare, HiOutlineDocumentArrowDown } from 'react-icons/hi2'; // Import external link icon and new icon
 
 // Define the type for sortable columns
 type SortableColumn = 'name' | 'goals' | 'assists' | 'totalScore';
@@ -395,6 +395,109 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
       }
   };
 
+  // --- NEW Export Handlers ---
+  const triggerDownload = (content: string, filename: string, contentType: string) => {
+    const blob = new Blob([content], { type: contentType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportJson = () => {
+    const exportData = {
+      gameInfo: {
+        gameDate: gameDate,
+        teamName: teamName,
+        opponentName: opponentName,
+      },
+      finalScore: {
+        home: homeScore,
+        away: awayScore,
+      },
+      events: gameEvents, // Already sorted/filtered if needed? No, export raw events.
+      notes: gameNotes,
+    };
+
+    const jsonString = JSON.stringify(exportData, null, 2); // Pretty print JSON
+    const filename = `${teamName.replace(/\s+/g, '')}_vs_${opponentName.replace(/\s+/g, '')}_${gameDate}.json`;
+    triggerDownload(jsonString, filename, 'application/json');
+  };
+
+  // Helper function to safely format CSV fields (handles quotes and commas)
+  const escapeCsvField = (field: string | number | undefined | null): string => {
+    const stringField = String(field ?? ''); // Convert null/undefined to empty string
+    // If field contains comma, newline, or double quote, enclose in double quotes
+    if (stringField.includes(',') || stringField.includes('"') || stringField.includes('\n')) {
+      // Escape existing double quotes by doubling them
+      const escapedField = stringField.replace(/"/g, '""');
+      return `"${escapedField}"`;
+    }
+    return stringField;
+  };
+
+  const handleExportExcel = () => {
+    const rows: string[] = [];
+    const EOL = '\r\n'; // Explicitly use CRLF for Excel compatibility
+    const DELIMITER = ';'; // Use semicolon for better Excel compatibility
+
+    // --- Section: Game Info ---
+    rows.push('Game Info'); // Cleaned: No trailing delimiters
+    rows.push(`${escapeCsvField(t('gameStatsModal.gameDateLabel', 'Game Date:'))}${DELIMITER}${escapeCsvField(gameDate)}`); // Cleaned
+    rows.push(`${escapeCsvField(t('gameStatsModal.homeTeamLabel', 'Home Team:'))}${DELIMITER}${escapeCsvField(teamName)}`); // Cleaned
+    rows.push(`${escapeCsvField(t('gameStatsModal.awayTeamLabel', 'Away Team:'))}${DELIMITER}${escapeCsvField(opponentName)}`); // Cleaned
+    // Split score rows
+    rows.push(`${escapeCsvField(t('gameStatsModal.homeScoreLabel', 'Home Score:'))}${DELIMITER}${escapeCsvField(homeScore)}`); 
+    rows.push(`${escapeCsvField(t('gameStatsModal.awayScoreLabel', 'Away Score:'))}${DELIMITER}${escapeCsvField(awayScore)}`);
+    rows.push(''); // Blank separator row (cleaner)
+
+    // --- Section: Player Stats ---
+    // Calculate stats
+    const playerStats = availablePlayers.map(player => {
+      const goals = gameEvents.filter(e => e.type === 'goal' && e.scorerId === player.id).length;
+      const assists = gameEvents.filter(e => e.type === 'goal' && e.assisterId === player.id).length;
+      const totalScore = goals + assists;
+      return { name: player.name, goals, assists, totalScore };
+    })
+    .filter(p => p.totalScore > 0) // Only include players with stats
+    .sort((a, b) => b.totalScore - a.totalScore); // Sort by total score descending
+
+    rows.push('Player Stats'); // Cleaned
+    // Using more descriptive headers, ensure translation keys exist or add defaults
+    rows.push(`${escapeCsvField(t('gameStatsModal.playerHeader', 'Player'))}${DELIMITER}${escapeCsvField(t('gameStatsModal.goalsHeaderFull', 'Goals'))}${DELIMITER}${escapeCsvField(t('gameStatsModal.assistsHeaderFull', 'Assists'))}${DELIMITER}${escapeCsvField(t('gameStatsModal.pointsHeaderFull', 'Points'))}`); // Cleaned
+    playerStats.forEach(player => {
+        rows.push(`${escapeCsvField(player.name)}${DELIMITER}${escapeCsvField(player.goals)}${DELIMITER}${escapeCsvField(player.assists)}${DELIMITER}${escapeCsvField(player.totalScore)}`); // Cleaned
+    });
+    rows.push(''); // Blank separator row
+
+    // --- Section: Event Log ---
+    rows.push('Event Log'); // Cleaned
+    rows.push(`${escapeCsvField(t('gameStatsModal.timeHeader', 'Time'))}${DELIMITER}${escapeCsvField(t('gameStatsModal.typeHeader', 'Type'))}${DELIMITER}${escapeCsvField(t('gameStatsModal.scorerHeader', 'Scorer'))}${DELIMITER}${escapeCsvField(t('gameStatsModal.assisterHeader', 'Assister'))}`); // Cleaned
+    // Use the pre-sorted goals from useMemo
+    sortedGoals.forEach(event => {
+        const timeFormatted = formatTime(event.time);
+        const type = event.type === 'goal' ? t('gameStatsModal.eventTypeGoal', 'Goal') : t('gameStatsModal.eventTypeOpponentGoal', 'Opponent Goal');
+        const scorer = escapeCsvField(event.scorerName);
+        const assister = event.type === 'goal' ? escapeCsvField(event.assisterName) : ''; // Only show assister for own goals
+        rows.push(`${escapeCsvField(timeFormatted)}${DELIMITER}${escapeCsvField(type)}${DELIMITER}${scorer}${DELIMITER}${assister}`); // Cleaned
+    });
+    rows.push(''); // Blank separator row
+
+    // --- Section: Notes ---
+    rows.push(`${escapeCsvField(t('gameStatsModal.notesTitle', 'Notes:'))}${DELIMITER}${escapeCsvField(gameNotes)}`); // Combined label and notes
+
+    // --- Combine and Download ---
+    const csvString = rows.join(EOL);
+    const filename = `${teamName.replace(/\s+/g, '_')}_vs_${opponentName.replace(/\s+/g, '_')}_${gameDate}.csv`;
+    triggerDownload(csvString, filename, 'text/csv;charset=utf-8;'); // Specify charset
+  };
+
+  // --- END NEW Export Handlers ---
+
   if (!isOpen) return null;
 
   console.log('[GameStatsModal Render] Rendering modal. isEditingNotes:', isEditingNotes);
@@ -771,33 +874,51 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
         </div>
 
         {/* Footer / Button Area - RE-HARMONIZED */}
-        <div className="flex justify-between items-center border-t border-slate-600 pt-4 mt-auto space-x-2">
-          {/* Reset Stats Button - With proper type check */}
-          {typeof onResetGameStats === 'function' && onResetGameStats.toString() !== (() => { console.warn('onResetGameStats handler not provided') }).toString() ? (
-            <button
-              onClick={handleResetClick}
-              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition duration-150 text-sm flex-1 text-center flex items-center justify-center"
-              title={t('gameStatsModal.resetConfirmation', 'Are you sure you want to reset all game statistics?') ?? undefined}
-            >
-              {t('gameStatsModal.resetStatsButton', 'Nollaa')}
-            </button>
-          ) : <div className="flex-1"></div>} {/* Empty div to maintain layout */}
+        <div className="flex flex-wrap justify-between items-center border-t border-slate-600 pt-4 mt-auto gap-2"> {/* Added gap-2 for spacing */}
+          {/* Export JSON Button */}
+          <button
+            onClick={handleExportJson}
+            className="px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 transition duration-150 text-xs sm:text-sm flex-grow flex items-center justify-center"
+          >
+            <HiOutlineDocumentArrowDown className="w-4 h-4 mr-1.5" />
+            {t('gameStatsModal.exportJsonButton', 'Export JSON')}
+          </button>
 
-          {/* Taso Link Button */} 
+          {/* Export Excel Button - NEW NAME & STYLE */}
+          <button
+            onClick={handleExportExcel}
+            className="px-3 py-1.5 bg-emerald-600 text-white rounded hover:bg-emerald-700 transition duration-150 text-xs sm:text-sm flex-grow flex items-center justify-center"
+          >
+            <HiOutlineDocumentArrowDown className="w-4 h-4 mr-1.5" />
+            {t('gameStatsModal.exportExcelButton', 'Export Excel')}
+          </button>
+
+          {/* Taso Link Button */}
           <a
             href="https://taso.palloliitto.fi/taso/login.php"
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition duration-150 text-sm flex-1 text-center flex items-center justify-center"
+            className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 transition duration-150 text-xs sm:text-sm flex-grow flex items-center justify-center"
           >
             <HiOutlineArrowTopRightOnSquare className="w-4 h-4 mr-1.5" />
-            {t('gameStatsModal.tasoLink', 'Taso')} {/* Ensure default text is Taso */}
+            {t('gameStatsModal.tasoLink', 'Taso')}
           </a>
 
-          {/* Close Button */} 
-          <button 
-            onClick={onClose} 
-            className="px-4 py-2 bg-slate-600 text-white rounded hover:bg-slate-500 transition duration-150 text-sm flex-1 text-center flex items-center justify-center"
+          {/* Reset Stats Button */}
+          {typeof onResetGameStats === 'function' && onResetGameStats.toString() !== (() => { console.warn('onResetGameStats handler not provided') }).toString() ? (
+            <button
+              onClick={handleResetClick}
+              className="px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 transition duration-150 text-xs sm:text-sm flex-grow flex items-center justify-center"
+              title={t('gameStatsModal.resetConfirmation', 'Are you sure you want to reset all game statistics?') ?? undefined}
+            >
+              {t('gameStatsModal.resetStatsButton', 'Reset Stats')}
+            </button>
+          ) : <div className="flex-grow"></div>} 
+
+          {/* Close Button */}
+          <button
+            onClick={onClose}
+            className="px-3 py-1.5 bg-slate-600 text-white rounded hover:bg-slate-500 transition duration-150 text-xs sm:text-sm flex-grow flex items-center justify-center"
           >
             {t('gameStatsModal.closeButton', 'Close')}
           </button>
