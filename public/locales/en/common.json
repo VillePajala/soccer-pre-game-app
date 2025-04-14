@@ -2,6 +2,8 @@
   "controlBar.help": "Help",
   "controlBar.undo": "Undo",
   "controlBar.redo": "Redo",
+  "controlBar.toggleNamesShow": "Show Names",
+  "controlBar.toggleNamesHide": "Hide Names",
   "controlBar.toggleNames": "Toggle Names",
   "controlBar.toggleTimerOverlayShow": "Show Large Timer",
   "controlBar.toggleTimerOverlayHide": "Hide Large Timer",
@@ -14,10 +16,10 @@
   "controlBar.showStats": "Show Stats",
   "controlBar.stats": "Stats",
   "controlBar.language": "Language",
-  "controlBar.timerControls": "Start/Pause/Reset the match timer.",
-  "controlBar.appGuide": "Show/hide the application guide.",
+  "controlBar.timerControls": "Start/stop/reset the match timer.",
+  "controlBar.appGuide": "App Guide",
   "controlBar.settings": "Settings",
-  "controlBar.training": "Training Resources",
+  "controlBar.training": "Training",
   "controlBar.logGoal": "Log Goal",
   "controlBar.fullscreen": "Toggle fullscreen mode.",
   "controlBar.enterFullscreen": "Enter Fullscreen",
@@ -29,6 +31,12 @@
   "controlBar.tulospalveluP9EK": "P/T 9 EK Kortteli (2016)",
   "controlBar.tulospalveluResults": "Results",
   "controlBar.tulospalveluStandings": "Standings",
+  "controlBar.saveGameAs": "Save Game As...",
+  "controlBar.loadGame": "Load Game...",
+  "controlBar.startNewGame": "Start New Match",
+  "controlBar.startNewGameConfirm": "Are you sure you want to start a new match? Unsaved data for the current match will be lost.",
+  "controlBar.hardReset": "Hard Reset App",
+  "controlBar.hardResetConfirmation": "Are you sure you want to completely reset the application? All saved data (players, stats, positions) will be permanently lost.",
   "timerOverlay.intervalLabel": "Interval (min):",
   "timerOverlay.confirmSubButton": "Substitution Made",
   "timerOverlay.historyTitle": "Play Time History",
@@ -70,7 +78,11 @@
       "timerControls": "Start/Pause/Reset the match timer.",
       "help": "Show/hide these instructions.",
       "fullscreen": "Toggle fullscreen mode.",
-      "languageToggle": "Switch between English (EN) and Finnish (FI)."
+      "languageToggle": "Switch between English (EN) and Finnish (FI).",
+      "hardReset": "Hard Reset App",
+      "hardResetConfirmation": "Are you sure you want to completely reset the application? All saved data (players, stats, positions) will be permanently lost.",
+      "saveGameAs": "Save Game As...",
+      "loadGame": "Load Game..."
     },
     "timerOverlayTitle": "Timer Overlay",
     "timerOverlay": {
@@ -191,6 +203,46 @@
   },
   "controlBar": {
     "hardReset": "Hard Reset App",
-    "hardResetConfirmation": "Are you sure you want to completely reset the application? All saved data (players, stats, positions) will be permanently lost."
+    "hardResetConfirmation": "Are you sure you want to completely reset the application? All saved data (players, stats, positions) will be permanently lost.",
+    "saveGameAs": "Save Game As...",
+    "loadGame": "Load Game...",
+    "resetCurrentStats": "Reset Current Stats"
+  },
+  "saveGameModal": {
+    "title": "Save Game As...",
+    "label": "Game Name:",
+    "placeholder": "e.g., vs Lapa FC (Home)",
+    "cancelButton": "Cancel",
+    "saveButton": "Save Game"
+  },
+  "loadGameModal": {
+    "title": "Load Game",
+    "loadButtonTooltip": "Load this game",
+    "deleteButtonTooltip": "Delete this saved game",
+    "deleteConfirm": "Are you sure you want to delete the saved game \"{gameName}\"? This action cannot be undone.",
+    "noSavedGames": "No saved games found.",
+    "closeButton": "Close",
+    "exportAllJsonButton": "JSON",
+    "exportAllJsonTooltip": "Export all saved games to a single JSON file",
+    "exportAllExcelButton": "EXCEL",
+    "exportAllExcelTooltip": "Export all games to a CSV file (Excel compatible)",
+    "noGamesToExport": "No saved games to export.",
+    "exportAllJsonError": "Error exporting all games as JSON.",
+    "exportAllExcelError": "Error exporting all games as CSV.",
+    "actionsMenuTooltip": "Actions",
+    "loadMenuItem": "Load",
+    "exportJsonMenuItem": "JSON",
+    "exportExcelMenuItem": "EXCEL",
+    "deleteMenuItem": "Delete",
+    "exportAllTitle": "Download All Games"
+  },
+  "newGameSetupModal": {
+    "title": "New Game Setup",
+    "opponentLabel": "Opponent Name:",
+    "opponentPlaceholder": "Enter opponent name",
+    "dateLabel": "Game Date:",
+    "cancelButton": "Cancel",
+    "startButton": "Start Game",
+    "opponentRequiredAlert": "Please enter an opponent name."
   }
 } 

@@ -388,11 +388,10 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
 
   // Handler for the Reset Stats button
   const handleResetClick = () => {
-      if (window.confirm(t('gameStatsModal.resetConfirm', 'Are you sure you want to reset all scores, goals, and notes for this game?') ?? "Are you sure you want to reset all scores, goals, and notes for this game?")) {
-          onResetGameStats();
-          // Optionally close the modal after reset, or keep it open?
-          // onClose(); 
-      }
+      // Confirmation is now handled in page.tsx
+      onResetGameStats(); 
+      // Optionally close the modal after reset, or keep it open?
+      // onClose(); 
   };
 
   // --- NEW Export Handlers ---

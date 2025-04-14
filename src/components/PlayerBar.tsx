@@ -136,6 +136,7 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName
           width={48}
           height={48}
           className="mb-0.5 flex-shrink-0"
+          priority
         />
         {isEditingTeamName ? (
           <input

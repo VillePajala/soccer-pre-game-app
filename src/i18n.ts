@@ -2,8 +2,8 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import HttpApi from 'i18next-http-backend';
 
-// Removed hardcoded resources
-// const resources = { ... };
+// Generate a cache-busting version number
+const cacheVersion = new Date().getTime();
 
 // Only initialize once
 if (!i18n.isInitialized) {
@@ -11,30 +11,25 @@ if (!i18n.isInitialized) {
     .use(HttpApi) // Use backend to load translations
     .use(initReactI18next) // passes i18n down to react-i18next
     .init({
-      // Removed 'resources' option
       lng: "fi", // default language
       fallbackLng: "en", // use en if detected lng is not available
       ns: ['common'], // Define namespace(s)
       defaultNS: 'common',
 
       backend: {
-        loadPath: '/locales/{{lng}}/{{ns}}.json', // Path to translation files
+        loadPath: `/locales/{{lng}}/{{ns}}.json?v=${cacheVersion}`, // Path with cache busting
       },
 
       interpolation: {
         escapeValue: false // react already safes from xss
       },
       
-      // Disable debug mode for production
       debug: false,
       
-      // Prevent i18next from blocking rendering
       react: {
         useSuspense: false,
-        // Prevent hydration issues
-        bindI18n: 'languageChanged',
-        bindI18nStore: '',
-        transEmptyNodeValue: '',
+        bindI18n: 'languageChanged loaded',
+        bindI18nStore: 'added removed',
         transSupportBasicHtmlNodes: true,
         transKeepBasicHtmlNodesFor: ['br', 'strong', 'i', 'p', 'span']
       }

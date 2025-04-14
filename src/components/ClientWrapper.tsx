@@ -1,14 +1,17 @@
 'use client';
 
 import React from 'react';
-import { I18nextProvider } from 'react-i18next';
-import i18n from '../i18n';
+// Remove direct import of I18nextProvider and i18n instance
+// import { I18nextProvider } from 'react-i18next';
+// import i18n from '../i18n';
+import I18nInitializer from './I18nInitializer'; // Import the initializer component
 
 const ClientWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
-    <I18nextProvider i18n={i18n}>
+    // Use the I18nInitializer to handle waiting for translations
+    <I18nInitializer>
       {children}
-    </I18nextProvider>
+    </I18nInitializer>
   );
 };
 
