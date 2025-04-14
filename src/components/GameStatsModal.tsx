@@ -772,8 +772,8 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
 
         {/* Footer / Button Area - RE-HARMONIZED */}
         <div className="flex justify-between items-center border-t border-slate-600 pt-4 mt-auto space-x-2">
-          {/* Reset Stats Button */} 
-          {onResetGameStats && (
+          {/* Reset Stats Button - With proper type check */}
+          {typeof onResetGameStats === 'function' && onResetGameStats.toString() !== (() => { console.warn('onResetGameStats handler not provided') }).toString() ? (
             <button
               onClick={handleResetClick}
               className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition duration-150 text-sm flex-1 text-center flex items-center justify-center"
@@ -781,7 +781,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
             >
               {t('gameStatsModal.resetStatsButton', 'Nollaa')}
             </button>
-          )}
+          ) : <div className="flex-1"></div>} {/* Empty div to maintain layout */}
 
           {/* Taso Link Button */} 
           <a
