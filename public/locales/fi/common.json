@@ -2,6 +2,8 @@
   "controlBar.help": "Ohje",
   "controlBar.undo": "Kumoa",
   "controlBar.redo": "Tee uudelleen",
+  "controlBar.toggleNamesShow": "Näytä nimet",
+  "controlBar.toggleNamesHide": "Piilota nimet",
   "controlBar.toggleNames": "Vaihda nimien näkyvyyttä",
   "controlBar.toggleTimerOverlayShow": "Näytä suuri ajastin",
   "controlBar.toggleTimerOverlayHide": "Piilota suuri ajastin",
@@ -29,6 +31,10 @@
   "controlBar.tulospalveluP9EK": "P/T 9 EK Kortteli (2016)",
   "controlBar.tulospalveluResults": "Tulokset",
   "controlBar.tulospalveluStandings": "Sarjataulukko",
+  "controlBar.saveGameAs": "Tallenna Peli Nimellä...",
+  "controlBar.loadGame": "Lataa Peli...",
+  "controlBar.resetCurrentStats": "Nollaa nykyinen ottelu",
+  "controlBar.hardReset": "Nollaa Sovellus",
   "timerOverlay.intervalLabel": "Vaihtoväli (min):",
   "timerOverlay.confirmSubButton": "Vaihto tehty",
   "timerOverlay.historyTitle": "Peliaikahistoria",
@@ -73,7 +79,10 @@
       "fullscreen": "Vaihda koko näytön tilaan.",
       "languageToggle": "Vaihda kieli englannin (EN) ja suomen (FI) välillä.",
       "hardReset": "Nollaa Sovellus",
-      "hardResetConfirmation": "Haluatko varmasti nollata koko sovelluksen? Kaikki tallennetut tiedot (pelaajat, tilastot, sijainnit) menetetään pysyvästi."
+      "hardResetConfirmation": "Haluatko varmasti nollata koko sovelluksen? Kaikki tallennetut tiedot (pelaajat, tilastot, sijainnit) menetetään pysyvästi.",
+      "saveGameAs": "Tallenna Peli Nimellä...",
+      "loadGame": "Lataa Peli...",
+      "resetCurrentStats": "Nollaa nykyinen ottelu"
     },
     "timerOverlayTitle": "Ajastin Overlay",
     "timerOverlay": {
@@ -190,5 +199,20 @@
     "tasoLink": "Taso",
     "exportJsonButton": "Lataa JSON",
     "exportExcelButton": "Lataa EXCEL"
+  },
+  "saveGameModal": {
+    "title": "Tallenna Peli Nimellä...",
+    "label": "Pelin Nimi:",
+    "placeholder": "esim. vs Lapa FC (Koti)",
+    "cancelButton": "Peruuta",
+    "saveButton": "Tallenna Peli"
+  },
+  "loadGameModal": {
+    "title": "Lataa Peli",
+    "loadButtonTooltip": "Lataa tämä peli",
+    "deleteButtonTooltip": "Poista tämä tallennettu peli",
+    "deleteConfirm": "Haluatko varmasti poistaa tallennetun pelin \"{gameName}\"? Toimintoa ei voi peruuttaa.",
+    "noSavedGames": "Tallennettuja pelejä ei löytynyt.",
+    "closeButton": "Sulje"
   }
 } 

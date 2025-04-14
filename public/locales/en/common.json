@@ -191,6 +191,24 @@
   },
   "controlBar": {
     "hardReset": "Hard Reset App",
-    "hardResetConfirmation": "Are you sure you want to completely reset the application? All saved data (players, stats, positions) will be permanently lost."
+    "hardResetConfirmation": "Are you sure you want to completely reset the application? All saved data (players, stats, positions) will be permanently lost.",
+    "saveGameAs": "Save Game As...",
+    "loadGame": "Load Game...",
+    "resetCurrentStats": "Reset Current Stats"
+  },
+  "saveGameModal": {
+    "title": "Save Game As...",
+    "label": "Game Name:",
+    "placeholder": "e.g., vs Lapa FC (Home)",
+    "cancelButton": "Cancel",
+    "saveButton": "Save Game"
+  },
+  "loadGameModal": {
+    "title": "Load Game",
+    "loadButtonTooltip": "Load this game",
+    "deleteButtonTooltip": "Delete this saved game",
+    "deleteConfirm": "Are you sure you want to delete the saved game \"{gameName}\"? This action cannot be undone.",
+    "noSavedGames": "No saved games found.",
+    "closeButton": "Close"
   }
 } 
