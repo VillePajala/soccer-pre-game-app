@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react'; // Added useEffect, useCallback
+import React, { useState, useEffect, useCallback } from 'react'; // REMOVED unused useRef
 import SoccerField from '@/components/SoccerField';
 import PlayerBar from '@/components/PlayerBar';
 import ControlBar from '@/components/ControlBar';
