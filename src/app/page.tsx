@@ -1317,11 +1317,14 @@ export default function Home() {
           onUpdateGameEvent={handleUpdateGameEvent}
           onResetGameStats={handleStartNewGame}
         />
-        {/* Placeholder for new modals - TODO: Create these components */}
-        <SaveGameModal 
-          isOpen={isSaveGameModalOpen} 
-          onClose={handleCloseSaveGameModal} 
+        {/* Save Game Modal */}
+        <SaveGameModal
+          isOpen={isSaveGameModalOpen}
+          onClose={handleCloseSaveGameModal}
           onSave={handleSaveGame} 
+          teamName={teamName}         // Pass teamName state
+          opponentName={opponentName} // Pass opponentName state
+          gameDate={gameDate}         // Pass gameDate state
         />
         <LoadGameModal 
           isOpen={isLoadGameModalOpen} 

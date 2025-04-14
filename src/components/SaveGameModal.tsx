@@ -7,33 +7,44 @@ interface SaveGameModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (gameName: string) => void;
-  // Optional: Pass current info to suggest a default name
-  suggestedName?: string; 
+  // Pass current info to suggest a default name
+  teamName?: string;
+  opponentName?: string;
+  gameDate?: string;
 }
 
 const SaveGameModal: React.FC<SaveGameModalProps> = ({
   isOpen,
   onClose,
   onSave,
-  suggestedName = '',
+  teamName = '',
+  opponentName = '',
+  gameDate = '',
 }) => {
   const { t } = useTranslation();
   const [gameName, setGameName] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Reset name input when modal opens, potentially using suggested name
+  // Reset name input when modal opens, using suggested name
   useEffect(() => {
     if (isOpen) {
-      // Suggest name based on Team vs Opponent + Date? Or just let user type?
-      // Let's start with a blank slate or a simple default suggestion
-      setGameName(suggestedName || ''); 
+      // Construct default name if info is available
+      let defaultName = '';
+      if (teamName && opponentName && gameDate) {
+        // Format: Home_vs_Away_YYYY-MM-DD
+        const formattedTeam = teamName.replace(/\\s+/g, '_');
+        const formattedOpponent = opponentName.replace(/\\s+/g, '_');
+        defaultName = `${formattedTeam}_vs_${formattedOpponent}_${gameDate}`;
+      }
+      
+      setGameName(defaultName); // Set the generated or empty name
       // Focus the input field shortly after modal opens
       setTimeout(() => {
         inputRef.current?.focus();
-        inputRef.current?.select();
+        inputRef.current?.select(); // Select the text for easy replacement
       }, 100); 
     }
-  }, [isOpen, suggestedName]);
+  }, [isOpen, teamName, opponentName, gameDate]); // Add new props to dependency array
 
   const handleSaveClick = () => {
     const trimmedName = gameName.trim();
