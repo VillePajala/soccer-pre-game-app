@@ -264,8 +264,9 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
              <div className="flex items-center justify-between pr-2 pb-2 border-b border-slate-600 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
                 {/* Left side: VAL, MV, Nimi - Adjusted Margins */}
                 <div className="flex items-center flex-grow min-w-0 pr-2">
-                   <span className="w-4 text-center mr-4" title={t('rosterSettingsModal.selectHeader', 'Valitse') || 'Valitse'}>VAL</span> {/* Width w-4, Increased mr-4 */}
-                   <span className="w-[20px] text-center mr-3" title={t('rosterSettingsModal.goalieHeader', 'Maalivahti') || 'Maalivahti'}>MV</span> {/* Added mr-3 */}
+                   {/* Use translation keys for headers */}
+                   <span className="w-4 text-center mr-4" title={t('rosterSettingsModal.selectHeader', 'Valitse') || 'Valitse'}>{t('rosterSettingsModal.selectHeader', 'VAL')}</span> 
+                   <span className="w-[20px] text-center mr-3" title={t('rosterSettingsModal.goalieHeader', 'Maalivahti') || 'Maalivahti'}>{t('rosterSettingsModal.goalieHeader', 'MV')}</span>
                    <span className="flex-grow min-w-0">{t('rosterSettingsModal.nameHeader', 'Nimi')}</span>
                 </div>
                 {/* Right side: #, Fair Play, Actions Spacer */}
