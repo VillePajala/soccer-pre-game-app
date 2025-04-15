@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Player, GameEvent } from '@/app/page'; // Import Player & GameEvent type
+import { FaHandPaper } from 'react-icons/fa'; // Re-import if needed, or choose another icon
 
 interface PlayerDiskProps {
   id: string;
@@ -14,6 +15,7 @@ interface PlayerDiskProps {
   selectedPlayerIdFromBar?: string | null;
   gameEvents: GameEvent[]; // Add gameEvents prop
   onPlayerTapInBar?: (player: Player) => void; // New prop for tap action
+  onToggleGoalie?: (playerId: string) => void; // Need this prop
 }
 
 // Define badge component
@@ -26,6 +28,8 @@ const StatBadge: React.FC<{ count: number, bgColor: string, positionClasses: str
   </div>
 );
 
+const LONG_PRESS_DURATION = 750; // ms
+
 const PlayerDisk: React.FC<PlayerDiskProps> = ({
   id,
   name,
@@ -35,7 +39,8 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
   onRenamePlayer,
   selectedPlayerIdFromBar,
   gameEvents,
-  onPlayerTapInBar // Destructure new prop
+  onPlayerTapInBar,
+  onToggleGoalie // Destructure goalie toggle handler
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(name);
@@ -48,6 +53,9 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
   const touchStartYRef = useRef<number>(0);
   const touchStartTimeRef = useRef<number>(0);
   const isScrollingRef = useRef<boolean>(false);
+  // Long press refs
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const didLongPressRef = useRef<boolean>(false); // Flag to prevent tap after long press
 
   // Update editedName if the name prop changes (e.g., via undo/redo)
   useEffect(() => {
@@ -99,112 +107,122 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
     }
   };
 
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Handle left click for selection/drag start
-    if (e.button === 0 && onPlayerDragStartFromBar && !isEditing) { 
-      console.log("Mouse down/click on PlayerDisk in bar, selecting player.", { id, name, color });
-       // Call the new tap handler to set the selection state
-       if (onPlayerTapInBar) {
-         e.preventDefault(); // Prevent text selection, etc.
-         onPlayerTapInBar({ id, name, color });
-       } else {
-         console.warn("onPlayerTapInBar handler not provided to PlayerDisk");
-         // Fallback drag initiation if needed
-         // onPlayerDragStartFromBar({ id, name, color }); 
-       }
+  const clearLongPressTimer = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
     }
-    // Allow right-click etc. for context menus if added later
   };
 
-  const handleDoubleClick = () => {
-    console.log("Double-click detected, starting edit.");
-    handleStartEditing();
+  const handleInteractionStart = () => {
+    if (!isEditing && onToggleGoalie) {
+      didLongPressRef.current = false; // Reset flag
+      clearLongPressTimer(); // Clear any previous timer
+      longPressTimerRef.current = setTimeout(() => {
+        console.log(`Long press detected on ${name}, toggling goalie.`);
+        onToggleGoalie(id);
+        didLongPressRef.current = true; // Mark that long press occurred
+        longPressTimerRef.current = null;
+        // Optionally trigger haptic feedback here if possible/desired
+      }, LONG_PRESS_DURATION);
+    }
+  };
+
+  const handleInteractionEnd = (isTap: boolean) => {
+    const timerWasActive = !!longPressTimerRef.current;
+    clearLongPressTimer();
+    
+    console.log('[handleInteractionEnd]', { isTap, didLongPress: didLongPressRef.current, timerWasActive });
+
+    // Restore the !didLongPressRef.current check
+    if (isTap && !didLongPressRef.current && onPlayerTapInBar) {
+      console.log(`Tap detected on ${name}, attempting selection.`);
+      onPlayerTapInBar({ id, name, color, isGoalie }); 
+    } else if (isTap) {
+      console.log(`Tap detected on ${name}, but condition not met for selection (long press already occurred?).`);
+    }
+    // Reset long press flag AFTER potentially using it in the check above
+    didLongPressRef.current = false; 
+  };
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.button !== 0 || isEditing) return;
+    e.preventDefault(); // Prevent default text selection, etc.
+    handleInteractionStart();
+    // Mouse move/up will handle cancellation/completion
+  };
+
+  const handleMouseUp = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.button !== 0 || isEditing) return;
+    handleInteractionEnd(true); // Treat mouseup as a potential tap end
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    // If mouse moves significantly while pressed, cancel long press timer
+    if (longPressTimerRef.current) { // Check if timer is active
+        // Basic movement threshold - adjust if needed
+        // For simplicity, cancelling on *any* mouse move while timer is pending
+        console.log("Mouse move cancelled long press timer.");
+        clearLongPressTimer();
+    }
+  };
+  
+  const handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Cancel long press if mouse leaves while pressed
+    clearLongPressTimer();
   };
 
   const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-    // Only care about touch interactions in the bar for drag/scroll differentiation
-    if (onPlayerDragStartFromBar) {
-      // Record initial touch details
-      const touch = e.touches[0];
-      touchStartXRef.current = touch.clientX;
-      touchStartYRef.current = touch.clientY;
-      touchStartTimeRef.current = Date.now();
-      isScrollingRef.current = false; // Reset scrolling flag
-      console.log(`Touch start on PlayerDisk: ${name} at (${touchStartXRef.current}, ${touchStartYRef.current})`);
-      // Don't call onPlayerDragStartFromBar immediately
-    }
-    // Don't stop propagation or prevent default initially, allow parent scroll handler
+    if (isEditing) return;
+    // Record initial touch details for scroll/tap detection
+    const touch = e.touches[0];
+    touchStartXRef.current = touch.clientX;
+    touchStartYRef.current = touch.clientY;
+    touchStartTimeRef.current = Date.now();
+    isScrollingRef.current = false; 
+    
+    // Start long press detection
+    handleInteractionStart();
+    // Don't preventDefault initially, allow scroll check in touchMove
   };
 
   const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (!onPlayerDragStartFromBar || isScrollingRef.current) {
-        // If not in the bar, or already detected as scrolling, do nothing
-        return;
-    }
+    if (isEditing) return;
+    if (!longPressTimerRef.current && !isScrollingRef.current) return; // Only process if pressing or haven't decided scroll
 
     const touch = e.touches[0];
     const deltaX = Math.abs(touch.clientX - touchStartXRef.current);
     const deltaY = Math.abs(touch.clientY - touchStartYRef.current);
-    const SCROLL_THRESHOLD = 10; // Pixels threshold to detect scroll
+    const SCROLL_THRESHOLD = 10; 
 
-    // Check if horizontal movement exceeds threshold and is greater than vertical
-    if (deltaX > SCROLL_THRESHOLD && deltaX > deltaY) {
-        console.log(`Scroll detected on ${name}. DeltaX: ${deltaX}`);
-        isScrollingRef.current = true; // Mark as scrolling
+    // If significant movement detected, mark as scrolling AND cancel long press
+    if (deltaX > SCROLL_THRESHOLD || deltaY > SCROLL_THRESHOLD) {
+        if (!isScrollingRef.current) {
+            console.log("Scroll detected, cancelling long press.");
+            isScrollingRef.current = true;
+            clearLongPressTimer(); // Cancel long press if scrolling
+        }
     }
-     // If isScrollingRef is true, the browser's default scroll should take over
   };
 
   const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (onPlayerDragStartFromBar && !isEditing) {
-      
-      // *** Check for scroll first ***
-      if (isScrollingRef.current) {
-        console.log(`Touch end on ${name}: Was detected as a scroll, doing nothing.`);
-        isScrollingRef.current = false; // Reset scroll flag
-        lastTapTimeRef.current = 0; // Reset tap ref
-        // DO NOT call e.preventDefault() here - allow native scroll behavior
-        return; 
-      }
+    if (isEditing) return;
+    const touchDuration = Date.now() - touchStartTimeRef.current;
+    const TAP_DURATION_THRESHOLD = 400; // Increased tap threshold
 
-      // *** If not a scroll, proceed with tap/double-tap/drag logic ***
-      const currentTime = Date.now();
-      const timeSinceLastTap = currentTime - lastTapTimeRef.current;
-      const touchDuration = currentTime - touchStartTimeRef.current;
-      const TAP_DURATION_THRESHOLD = 300; // ms threshold for a tap
-
-      if (timeSinceLastTap < 300 && timeSinceLastTap > 0) {
-        // Double tap detected (and was not a scroll)
-        console.log("Double-tap detected in bar, starting edit.");
-        handleStartEditing();
-        lastTapTimeRef.current = 0; // Reset tap time
-        e.preventDefault(); // Keep preventDefault ONLY for the double-tap action
-      } else if (touchDuration < TAP_DURATION_THRESHOLD) {
-        // Single Tap Detected (not a scroll, short duration) -> Initiate Drag/Selection
-        console.log(`Single tap on ${name} in bar detected (duration: ${touchDuration}ms), selecting player.`);
-        lastTapTimeRef.current = currentTime; // Record time for potential double-tap
-
-        // Call the new tap handler to set the selection state
-        if (onPlayerTapInBar) {
-             e.preventDefault(); // Prevent default for the tap selection action
-             onPlayerTapInBar({ id, name, color });
-        } else {
-            // Fallback or if only drag is supported (shouldn't happen with our setup)
-            // onPlayerDragStartFromBar({ id, name, color });
-             console.warn("onPlayerTapInBar handler not provided to PlayerDisk");
-        }
-
-      } else {
-         // Touch was too long or didn't fit tap criteria, and wasn't a scroll
-         console.log(`Touch end on ${name}: Not a valid tap/double-tap (duration: ${touchDuration}ms) or scroll.`);
-         lastTapTimeRef.current = 0; // Reset tap time if it wasn't a valid action
-         // DO NOT call e.preventDefault() here
-      }
-
-      // Reset scroll flag (should be false anyway if we reached here)
-      isScrollingRef.current = false;
+    // Determine if it was a tap (short duration, didn't scroll)
+    const wasTap = touchDuration < TAP_DURATION_THRESHOLD && !isScrollingRef.current;
+    
+    console.log('[handleTouchEnd]', { touchDuration, isScrolling: isScrollingRef.current, wasTap });
+    
+    // Prevent default browser actions ONLY if it was a tap (to allow scrolling otherwise)
+    if (wasTap) {
+      e.preventDefault();
     }
-    // No special action needed if not in the bar or already editing, or if handled as scroll
+    
+    handleInteractionEnd(wasTap);
+
+    isScrollingRef.current = false; // Reset scroll flag
   };
   
   // Conditional styling based on context (in bar or not)
@@ -241,7 +259,9 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
       draggable={isInBar && !isEditing}
       onDragStart={handleDragStart} // Keep HTML drag start for now
       onMouseDown={isInBar ? handleMouseDown : undefined} // Use modified mousedown
-      onDoubleClick={isInBar ? handleDoubleClick : undefined} // Double-click only in bar
+      onMouseUp={isInBar ? handleMouseUp : undefined}
+      onMouseMove={isInBar ? handleMouseMove : undefined}
+      onMouseLeave={isInBar ? handleMouseLeave : undefined}
       onTouchStart={isInBar ? handleTouchStart : undefined}
       onTouchMove={isInBar ? handleTouchMove : undefined}
       onTouchEnd={isInBar ? handleTouchEnd : undefined}
