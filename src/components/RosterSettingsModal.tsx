@@ -170,8 +170,8 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4">
-      <div className="bg-slate-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60] p-4">
+      <div className="bg-slate-800 rounded-lg shadow-xl w-full max-w-2xl flex flex-col border border-slate-600 overflow-hidden max-h-[calc(100vh-theme(space.8))]" >
         {/* Header - Apply GameStatsModal title style */}
         <div className="flex justify-between items-center p-4 border-b border-slate-700 flex-shrink-0">
           <h2 className="text-xl font-semibold text-yellow-400">{t('rosterSettingsModal.title', 'Manage Roster')}</h2>
@@ -435,7 +435,6 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
             )}
           </section>
         </div>
-        {/* Footer - No specific footer needed here compared to GameStatsModal */}
       </div>
     </div>
   );

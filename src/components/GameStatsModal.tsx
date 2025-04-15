@@ -540,7 +540,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
       onClick={onClose} // Close modal if backdrop is clicked
     >
       <div
-        className="bg-slate-800 rounded-lg p-6 max-w-2xl w-full text-slate-200 shadow-xl relative max-h-[85vh] flex flex-col"
+        className="bg-slate-800 rounded-lg p-6 max-w-2xl w-full text-slate-200 shadow-xl relative flex flex-col border border-slate-600 overflow-hidden max-h-[calc(100vh-theme(space.8))]"
         onClick={(e) => e.stopPropagation()} // Prevent modal close when clicking inside
       >
         <button

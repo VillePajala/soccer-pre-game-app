@@ -42,11 +42,11 @@ const TrainingResourcesModal: React.FC<TrainingResourcesModalProps> = ({ isOpen,
 
   return (
     <div 
-      className="fixed inset-0 bg-black bg-opacity-75 flex items-start justify-center z-50 p-4 pt-12"
+      className="fixed inset-0 bg-black bg-opacity-75 flex items-start justify-center z-50 p-4"
       onClick={onClose}
     >
       <div 
-        className="bg-slate-800 rounded-lg p-6 max-w-4xl w-full text-slate-200 shadow-xl relative min-h-[70vh] max-h-[90vh] flex flex-col"
+        className="bg-slate-800 rounded-lg p-6 max-w-4xl w-full text-slate-200 shadow-xl relative flex flex-col border border-slate-600 overflow-hidden max-h-[calc(100vh-theme(space.8))] min-h-[calc(100vh-theme(space.8))]"
         onClick={(e) => e.stopPropagation()}
       >
         <button 

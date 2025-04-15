@@ -18,7 +18,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, onClose }
       onClick={onClose}
     >
       <div 
-        className="bg-slate-800 rounded-lg p-6 max-w-lg w-full text-slate-200 shadow-xl relative max-h-[80vh] flex flex-col"
+        className="bg-slate-800 rounded-lg p-6 max-w-lg w-full text-slate-200 shadow-xl relative flex flex-col border border-slate-600 overflow-hidden max-h-[calc(100vh-theme(space.8))]"
         onClick={(e) => e.stopPropagation()}
       >
         <button 
