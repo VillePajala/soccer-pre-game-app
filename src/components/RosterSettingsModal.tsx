@@ -25,6 +25,8 @@ interface RosterSettingsModalProps {
   onAddPlayer: (playerData: { name: string; jerseyNumber: string; notes: string; nickname: string }) => void;
   onSetPlayerNickname: (playerId: string, nickname: string) => void;
   onAwardFairPlayCard?: (playerId: string) => void;
+  selectedPlayerIds: string[];
+  onTogglePlayerSelection: (playerId: string) => void;
 }
 
 const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
@@ -38,7 +40,9 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
   onRemovePlayer,
   onAddPlayer,
   onSetPlayerNickname,
-  onAwardFairPlayCard
+  onAwardFairPlayCard,
+  selectedPlayerIds,
+  onTogglePlayerSelection
 }) => {
   const { t } = useTranslation();
   const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
@@ -180,9 +184,27 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
         <div className="p-4 overflow-y-auto flex-grow space-y-3 scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-700 pr-2">
           {/* Wrap Existing Player List in a section similar to GameStatsModal */}
           <section className="bg-slate-700/50 p-4 rounded-md">
-             {/* Optional: Add a title for this section? */} 
+             {/* Optional: Add a title for this section? */}
              {/* <h3 className="text-lg font-semibold mb-3 text-yellow-300">{t('rosterSettingsModal.playersListTitle', 'Players')}</h3> */}
-             <div className="space-y-2"> {/* Add space between player rows */} 
+
+             {/* Header Row - UPDATED LABELS & PADDING */}
+             <div className="flex items-center justify-between pr-2 pb-2 border-b border-slate-600 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                {/* Left side: VAL, MV, Nimi - Adjusted Margins */}
+                <div className="flex items-center flex-grow min-w-0 pr-2">
+                   <span className="w-4 text-center mr-4" title={t('rosterSettingsModal.selectHeader', 'Valitse') || 'Valitse'}>VAL</span> {/* Width w-4, Increased mr-4 */}
+                   <span className="w-[20px] text-center mr-3" title={t('rosterSettingsModal.goalieHeader', 'Maalivahti') || 'Maalivahti'}>MV</span> {/* Added mr-3 */}
+                   <span className="flex-grow min-w-0">{t('rosterSettingsModal.nameHeader', 'Nimi')}</span>
+                </div>
+                {/* Right side: #, Fair Play, Actions Spacer */}
+                <div className="flex items-center space-x-2 flex-shrink-0">
+                    <span className="w-6 text-center" title={t('rosterSettingsModal.jerseyHeader', 'Numero') || 'Numero'}>#</span> {/* Width w-6 */}
+                    <span className="w-6 text-center" title={t('rosterSettingsModal.fairPlayHeader', 'Fair Play') || 'Fair Play'}>FP</span> {/* Width w-6, Changed text to FP */}
+                    <span className="w-8"></span> {/* Invisible spacer w-8 for Actions button */}
+                </div>
+             </div>
+             {/* --------------------- */}
+
+             <div className="space-y-2"> {/* Add space between player rows */}
                 {availablePlayers.map((player) => (
                   <div
                     key={player.id}
@@ -259,8 +281,16 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                     ) : (
                       // --- Display View - Adjust styling and indicator position --- 
                       <div className="flex items-center justify-between">
-                        {/* Left side: Goalie, Name */}
+                        {/* Left side: Checkbox, Goalie, Name */}
                         <div className="flex items-center space-x-2 flex-grow min-w-0 pr-2">
+                          {/* Selection Checkbox */}
+                          <input 
+                            type="checkbox"
+                            checked={selectedPlayerIds.includes(player.id)}
+                            onChange={() => onTogglePlayerSelection(player.id)}
+                            className="form-checkbox h-4 w-4 text-indigo-600 bg-slate-600 border-slate-500 rounded focus:ring-indigo-500 shrink-0" 
+                            title={t('rosterSettingsModal.toggleSelection', 'Toggle player selection for match')}
+                          />
                           {/* Goalie Toggle Button (Display) */}
                           <button
                             title={player.isGoalie ? t('rosterSettingsModal.unsetGoalie', 'Unset Goalie') : t('rosterSettingsModal.setGoalie', 'Set Goalie')}
@@ -270,9 +300,9 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                           >
                             <span className={`font-bold text-[9px] leading-none ${player.isGoalie ? 'text-white' : 'text-amber-600'}`}>G</span>
                           </button>
-                          {/* Name Display - Smaller font */}
-                          <span className="text-sm text-slate-100 flex-shrink min-w-0 break-words truncate" title={player.name}>
-                            {player.name}
+                          {/* Name Display - Prioritize Nickname */}
+                          <span className="text-sm text-slate-100 flex-shrink min-w-0 break-words truncate" title={player.name}> {/* Show full name on hover */} 
+                            {player.nickname || player.name} {/* Display nickname if available, else full name */} 
                           </span>
                         </div>
                         {/* Right side: Indicators, Jersey, Actions */}
