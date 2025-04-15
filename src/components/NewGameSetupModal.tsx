@@ -93,12 +93,14 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
 
         {/* Action Buttons - Centered */}
         <div className="flex justify-center space-x-3">
+          {/* Skip Button (Calls onCancel) */}
           <button
             onClick={onCancel}
             className="px-4 py-2 bg-slate-600 text-white rounded hover:bg-slate-500 transition duration-150 text-sm"
           >
-            {t('newGameSetupModal.cancelButton', 'Cancel')}
+            {t('newGameSetupModal.skipButton', 'Ohita')} 
           </button>
+          {/* Start Game Button */}
           <button
             onClick={handleStartClick}
             className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition duration-150 text-sm"
