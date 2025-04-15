@@ -37,6 +37,8 @@
   "controlBar.startNewGameConfirm": "Are you sure you want to start a new match? Unsaved data for the current match will be lost.",
   "controlBar.hardReset": "Hard Reset App",
   "controlBar.hardResetConfirmation": "Are you sure you want to completely reset the application? All saved data (players, stats, positions) will be permanently lost.",
+  "controlBar.resetCurrentStats": "Reset Current Stats",
+  "controlBar.backButton": "Back",
   "timerOverlay.intervalLabel": "Interval (min):",
   "timerOverlay.confirmSubButton": "Substitution Made",
   "timerOverlay.historyTitle": "Play Time History",
@@ -206,7 +208,8 @@
     "hardResetConfirmation": "Are you sure you want to completely reset the application? All saved data (players, stats, positions) will be permanently lost.",
     "saveGameAs": "Save Game As...",
     "loadGame": "Load Game...",
-    "resetCurrentStats": "Reset Current Stats"
+    "resetCurrentStats": "Reset Current Stats",
+    "backButton": "Back"
   },
   "saveGameModal": {
     "title": "Save Game As...",

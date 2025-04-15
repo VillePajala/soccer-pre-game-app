@@ -36,6 +36,8 @@
   "controlBar.startNewGame": "Aloita uusi ottelu",
   "controlBar.startNewGameConfirm": "Haluatko varmasti aloittaa uuden ottelun? Nykyisen ottelun tallentamattomat tiedot menetetään.",
   "controlBar.hardReset": "Nollaa Sovellus",
+  "controlBar.resetCurrentStats": "Nollaa Pelin Tilastot",
+  "controlBar.backButton": "Takaisin",
   "timerOverlay.intervalLabel": "Vaihtoväli (min):",
   "timerOverlay.confirmSubButton": "Vaihto tehty",
   "timerOverlay.historyTitle": "Peliaikahistoria",

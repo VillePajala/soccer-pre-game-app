@@ -21,6 +21,7 @@ import {
     HiOutlineBookOpen, // Import for Training Resources
     HiOutlineArrowTopRightOnSquare, // External link icon
     HiOutlineChevronRight, // Chevron for submenu
+    HiOutlineChevronLeft, // Chevron for Back button
     HiOutlineExclamationTriangle, // Icon for Hard Reset
     HiOutlineFolderArrowDown,   // Icon for Save Game As...
     HiOutlineFolderOpen,       // Icon for Load Game...
@@ -100,9 +101,8 @@ const ControlBar: React.FC<ControlBarProps> = ({
 }) => {
   const { t, i18n } = useTranslation(); // Initialize translation hook, get i18n instance
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
-  const [isTulospalveluOpen, setIsTulospalveluOpen] = useState(false); // New state for submenu
+  const [menuView, setMenuView] = useState<'main' | 'tulospalvelu'>('main'); // NEW state for menu view
   const settingsMenuRef = useRef<HTMLDivElement>(null);
-  const tulospalveluRef = useRef<HTMLDivElement>(null); // Reference for submenu
   
   // State for direct translations (to avoid async issues with t)
   const [directTranslations, setDirectTranslations] = useState(
@@ -146,6 +146,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
     });
     
     setIsSettingsMenuOpen(false); // Close menu after action
+    setMenuView('main'); 
   };
 
   const handleSettingsButtonClick = () => {
@@ -163,6 +164,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
     const handleClickOutside = (event: MouseEvent) => {
       if (settingsMenuRef.current && !settingsMenuRef.current.contains(event.target as Node)) {
         setIsSettingsMenuOpen(false);
+        setMenuView('main'); // Reset view when closing menu
       }
     };
 
@@ -177,46 +179,21 @@ const ControlBar: React.FC<ControlBarProps> = ({
     };
   }, [isSettingsMenuOpen]);
 
-  // Close submenu when clicking outside or when settings menu closes
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (tulospalveluRef.current && !tulospalveluRef.current.contains(event.target as Node)) {
-        setIsTulospalveluOpen(false);
-      }
-    };
-
-    if (isTulospalveluOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    } else {
-      document.removeEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isTulospalveluOpen]);
-
-  // Close submenu when settings menu closes
-  useEffect(() => {
-    if (!isSettingsMenuOpen) {
-      setIsTulospalveluOpen(false);
-    }
-  }, [isSettingsMenuOpen]);
-
   const iconSize = "w-6 h-6"; // Standard icon size class
   const menuIconSize = "w-5 h-5 mr-2"; // Smaller icon size for menu items
 
-  // Helper to wrap handlers to also close the menu
+  // Helper to wrap handlers to also close the menu & reset view
   const wrapHandler = (handler: () => void) => () => {
     handler();
     setIsSettingsMenuOpen(false);
-    setIsTulospalveluOpen(false);
+    setMenuView('main'); 
   };
 
   // Callback to handle StartNewGame button click
   const handleStartNewGame = () => {
     onStartNewGame();
     setIsSettingsMenuOpen(false);
+    setMenuView('main'); 
   };
 
   return (
@@ -287,147 +264,80 @@ const ControlBar: React.FC<ControlBarProps> = ({
 
         {/* Settings Dropdown Menu */}
         {isSettingsMenuOpen && (
-          <div className="absolute bottom-full right-0 mb-2 w-56 bg-slate-700 rounded-md shadow-xl py-1 z-50 border border-slate-500"> {/* Increased width slightly */}
+          <div 
+             // Set max-height and overflow for consistent size and scrolling if needed
+             className="absolute bottom-full right-0 mb-1 w-56 bg-slate-700 rounded-md shadow-xl z-50 border border-slate-500 overflow-hidden max-h-96" // Added max-h-96
+          > 
+             {/* Inner wrapper for sliding animation */}
+             <div className={`flex transition-transform duration-200 ease-out ${menuView === 'tulospalvelu' ? '-translate-x-full' : 'translate-x-0'}`}>
+             
+               {/* Main Menu View (Takes full width) */}
+               <div className="w-full flex-shrink-0 overflow-y-auto max-h-96"> {/* Added overflow-y-auto + max-h */} 
+                 <div className="py-1"> 
+                   {/* Game Management Section */}
+                   <button onClick={wrapHandler(onOpenSaveGameModal)} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600">
+                     <HiOutlineFolderArrowDown className={menuIconSize} />{directTranslations.saveGameAs}
+                   </button>
+                   <button onClick={wrapHandler(onOpenLoadGameModal)} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600 border-t border-slate-600/50">
+                     <HiOutlineFolderOpen className={menuIconSize} />{directTranslations.loadGame}
+                   </button>
+                   <button onClick={handleStartNewGame} className="w-full flex items-center px-3 py-2 text-sm text-orange-400 hover:bg-orange-900/50 border-t border-slate-600/50" data-testid="start-new-game-button">
+                     <HiOutlineArrowPath className="w-5 h-5 mr-2" /><span className="text-orange-400 font-medium">{directTranslations.startNewMatch}</span>
+                   </button>
+                   
+                   <div className="border-t border-slate-600/50 my-1"></div>
+                   {/* Info & Links Section */}
+                   <button onClick={wrapHandler(onToggleGameStatsModal)} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600">
+                     <HiOutlineClipboardDocumentList className={menuIconSize} />{directTranslations.stats}
+                   </button>
+                   <button onClick={wrapHandler(onToggleTrainingResources)} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600 border-t border-slate-600/50">
+                     <HiOutlineBookOpen className={menuIconSize} />{directTranslations.training}
+                   </button>
+                   <button onClick={wrapHandler(onToggleInstructions)} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600 border-t border-slate-600/50">
+                     <HiOutlineQuestionMarkCircle className={menuIconSize} />{directTranslations.appGuide}
+                   </button>
+                   <a href="https://taso.palloliitto.fi/taso/login.php" target="_blank" rel="noopener noreferrer" className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600 border-t border-slate-600/50" onClick={() => setIsSettingsMenuOpen(false)}>
+                     <HiOutlineArrowTopRightOnSquare className={menuIconSize} />{t('controlBar.tasoLink', 'Taso')}
+                   </a>
+                   {/* Tulospalvelu Trigger Button */}
+                   <button onClick={() => setMenuView('tulospalvelu')} className="w-full flex items-center justify-between px-3 py-2 text-sm text-slate-100 hover:bg-slate-600 border-t border-slate-600/50">
+                     <span className="flex items-center"><HiOutlineArrowTopRightOnSquare className={menuIconSize} />{t('controlBar.tulospalveluLink', 'Tulospalvelu')}</span>
+                     <HiOutlineChevronRight className="w-4 h-4" />
+                   </button>
+                   
+                   <div className="border-t border-slate-600/50 my-1"></div>
+                   {/* App Settings Section */}
+                   <button onClick={handleLanguageToggle} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600">
+                     <HiOutlineLanguage className={menuIconSize} />{directTranslations.language} ({i18n.language === 'en' ? 'FI' : 'EN'})
+                   </button>
+                   <button onClick={wrapHandler(onHardResetApp)} className="w-full flex items-center px-3 py-2 text-sm text-red-400 hover:bg-red-900/50 border-t border-slate-600/50">
+                     <HiOutlineExclamationTriangle className={menuIconSize} />{directTranslations.hardReset}
+                   </button>
+                 </div>
+               </div>
 
-            {/* === Game Management Section === */}
-            {/* Save Game As Button */}
-            <button
-              onClick={wrapHandler(onOpenSaveGameModal)} // wrapHandler also closes menu
-              className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600"
-            >
-              <HiOutlineFolderArrowDown className={menuIconSize} />
-              {directTranslations.saveGameAs}
-            </button>
-
-            {/* Load Game Button */}
-            <button
-              onClick={wrapHandler(onOpenLoadGameModal)}
-              className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600 border-t border-slate-600/50"
-            >
-              <HiOutlineFolderOpen className={menuIconSize} />
-              {directTranslations.loadGame}
-            </button>
-
-            {/* COMPLETELY CUSTOM START NEW GAME BUTTON - HARDCODED TEXT */}
-            <button
-              onClick={handleStartNewGame}
-              className="w-full flex items-center px-3 py-2 text-sm text-orange-400 hover:bg-orange-900/50 border-t border-slate-600/50"
-              data-testid="start-new-game-button"
-            >
-              <HiOutlineArrowPath className="w-5 h-5 mr-2" />
-              <span className="text-orange-400 font-medium">
-                {directTranslations.startNewMatch}
-              </span>
-            </button>
-
-            {/* === Separator === */}
-            <div className="border-t border-slate-600/50 my-1"></div>
-
-            {/* === Information & External Links Section === */}
-            {/* Stats Button */}
-            <button
-              onClick={wrapHandler(onToggleGameStatsModal)}
-              className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600"
-            >
-              <HiOutlineClipboardDocumentList className={menuIconSize} />
-              {directTranslations.stats}
-            </button>
-
-            {/* Training Resources Button */}
-            <button
-              onClick={wrapHandler(onToggleTrainingResources)}
-              className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600 border-t border-slate-600/50"
-            >
-              <HiOutlineBookOpen className={menuIconSize} />
-              {directTranslations.training}
-            </button>
-
-            {/* Help Button (App Guide) */}
-            <button
-              onClick={wrapHandler(onToggleInstructions)}
-              className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600 border-t border-slate-600/50"
-            >
-              <HiOutlineQuestionMarkCircle className={menuIconSize} />
-              {directTranslations.appGuide}
-            </button>
-
-            {/* Taso Link */}
-            <a
-              href="https://taso.palloliitto.fi/taso/login.php"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600 border-t border-slate-600/50"
-              onClick={() => setIsSettingsMenuOpen(false)} // Close menu on click
-            >
-              <HiOutlineArrowTopRightOnSquare className={menuIconSize} />
-              {t('controlBar.tasoLink', 'Taso')}
-            </a>
-
-            {/* Tulospalvelu Submenu */}
-            <div className="relative border-t border-slate-600/50" ref={tulospalveluRef}>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation(); // Prevent settings menu from closing
-                  setIsTulospalveluOpen(!isTulospalveluOpen);
-                }}
-                className="w-full flex items-center justify-between px-3 py-2 text-sm text-slate-100 hover:bg-slate-600"
-              >
-                <span className="flex items-center">
-                  <HiOutlineArrowTopRightOnSquare className={menuIconSize} />
-                  {t('controlBar.tulospalveluLink', 'Tulospalvelu')}
-                </span>
-                <HiOutlineChevronRight className={`w-4 h-4 transition-transform ${isTulospalveluOpen ? 'rotate-90' : ''}`} />
-              </button>
-
-              {/* Tulospalvelu Submenu Items */}
-              {isTulospalveluOpen && (
-                <div className="absolute right-full top-0 mr-1 w-56 bg-slate-600 rounded-md shadow-xl py-1 z-50 border border-slate-500"> {/* Adjusted position */}
-                  <a
-                    href="https://tulospalvelu.palloliitto.fi/category/P91!Itajp25/tables"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-500"
-                    onClick={wrapHandler(() => {})} // Use wrapHandler to close everything
-                  >
-                    <HiOutlineArrowTopRightOnSquare className="w-4 h-4 mr-2 opacity-70" />
-                    {t('controlBar.tulospalveluP9', 'P9 Alue Taso 1')}
-                  </a>
-                  <a
-                    href="https://tulospalvelu.palloliitto.fi/category/P9EKK!splita_ekk25/tables"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-500 border-t border-slate-500/50"
-                    onClick={wrapHandler(() => {})} // Use wrapHandler to close everything
-                  >
-                    <HiOutlineArrowTopRightOnSquare className="w-4 h-4 mr-2 opacity-70" />
-                    {t('controlBar.tulospalveluP9EK', 'P/T 9 EK Kortteli (2016)')}
-                  </a>
-                </div>
-              )}
-            </div>
-
-            {/* === Separator === */}
-            <div className="border-t border-slate-600/50 my-1"></div>
-
-            {/* === App Settings Section === */}
-            {/* Language Toggle Button */}
-            <button
-              onClick={handleLanguageToggle}
-              className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600"
-            >
-              <HiOutlineLanguage className={menuIconSize} />
-              {directTranslations.language} ({i18n.language === 'en' ? 'FI' : 'EN'})
-            </button>
-
-            {/* Hard Reset Button */}
-            <button
-              onClick={wrapHandler(onHardResetApp)}
-              className="w-full flex items-center px-3 py-2 text-sm text-red-400 hover:bg-red-900/50 border-t border-slate-600/50"
-            >
-              <HiOutlineExclamationTriangle className={menuIconSize} />
-              {directTranslations.hardReset}
-            </button>
-
+               {/* Tulospalvelu View (Takes full width) */}
+               <div className="w-full flex-shrink-0 overflow-y-auto max-h-96"> {/* Added overflow-y-auto + max-h */} 
+                 <div className="py-1"> 
+                   {/* Back Button */}
+                   <button onClick={() => setMenuView('main')} className="w-full flex items-center px-3 py-2 text-sm text-slate-300 hover:bg-slate-600 hover:text-slate-100 mb-1 border-b border-slate-600/50">
+                     <HiOutlineChevronLeft className="w-4 h-4 mr-2" />
+                     {t('controlBar.backButton', 'Back')}
+                   </button>
+                   
+                   {/* Tulospalvelu Links */} 
+                   <a href="https://tulospalvelu.palloliitto.fi/category/P91!Itajp25/tables" target="_blank" rel="noopener noreferrer" className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-500" onClick={wrapHandler(() => {})}>
+                     <HiOutlineArrowTopRightOnSquare className="w-4 h-4 mr-2 opacity-70" />
+                     {t('controlBar.tulospalveluP9', 'P9 Alue Taso 1')}
+                   </a>
+                   <a href="https://tulospalvelu.palloliitto.fi/category/P9EKK!splita_ekk25/tables" target="_blank" rel="noopener noreferrer" className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-500 border-t border-slate-500/50" onClick={wrapHandler(() => {})}>
+                     <HiOutlineArrowTopRightOnSquare className="w-4 h-4 mr-2 opacity-70" />
+                     {t('controlBar.tulospalveluP9EK', 'P/T 9 EK Kortteli (2016)')}
+                   </a>
+                 </div>
+               </div>
+               
+             </div> {/* End inner wrapper */}
           </div>
         )}
       </div>
