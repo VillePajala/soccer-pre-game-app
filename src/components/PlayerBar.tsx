@@ -173,6 +173,7 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName
             id={player.id}
             name={player.name}
             color={player.color}
+            isGoalie={player.isGoalie}
             onRenamePlayer={onRenamePlayer}
             onPlayerDragStartFromBar={onPlayerDragStartFromBar}
             selectedPlayerIdFromBar={selectedPlayerIdFromBar}

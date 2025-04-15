@@ -7,6 +7,7 @@ interface PlayerDiskProps {
   id: string;
   name: string;
   color?: string;
+  isGoalie?: boolean; // Add goalie status prop
   // Bar specific props
   onPlayerDragStartFromBar?: (player: Player) => void;
   onRenamePlayer?: (id: string, newName: string) => void;
@@ -29,6 +30,7 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
   id,
   name,
   color = '#7E22CE', // Default to purple-700 if no color passed
+  isGoalie = false, // Default goalie status
   onPlayerDragStartFromBar,
   onRenamePlayer,
   selectedPlayerIdFromBar,
@@ -211,7 +213,9 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
   const textSizeClasses = isInBar ? "text-xs" : "text-sm";
   const inputPaddingClasses = isInBar ? "px-1 py-0.5" : "px-2 py-1";
   const inputWidthClass = isInBar ? "w-14" : "w-16";
-  const outerRingClass = selectedPlayerIdFromBar === id ? 'ring-4 ring-yellow-400 ring-offset-2 ring-offset-slate-900' : '';
+  const selectionRingClass = selectedPlayerIdFromBar === id ? 'ring-4 ring-yellow-400 ring-offset-2 ring-offset-slate-900' : '';
+  // Apply thin blue border ONLY if goalie, otherwise no border class
+  const goalieBorderClass = isGoalie ? 'border-2 border-blue-400' : ''; 
 
   // We might not need the onDragStart handler anymore if tap selection works
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
@@ -230,7 +234,8 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
 
   return (
     <div
-      className={`relative ${diskSizeClasses} rounded-full flex items-center justify-center cursor-pointer shadow-lg m-2 transition-all duration-150 ease-in-out ${outerRingClass}`}
+      // Apply goalie border class
+      className={`relative ${diskSizeClasses} rounded-full flex flex-col items-center justify-center cursor-pointer shadow-lg m-2 transition-all duration-150 ease-in-out ${selectionRingClass} ${goalieBorderClass}`}
       style={{ backgroundColor: color }}
       draggable={isInBar && !isEditing}
       onDragStart={handleDragStart} // Keep HTML drag start for now
@@ -249,16 +254,15 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
           onChange={handleInputChange}
           onBlur={handleFinishEditing}
           onKeyDown={handleKeyDown}
-          className={`bg-slate-700 text-yellow-300 ${textSizeClasses} font-semibold outline-none rounded ${inputPaddingClasses} text-center ${inputWidthClass}`}
-          onClick={(e) => e.stopPropagation()} // Prevent triggering disk events
+          className={`bg-transparent text-center font-semibold outline-none rounded ${inputPaddingClasses} ${inputWidthClass} ${textSizeClasses} text-white`}
         />
       ) : (
-        <span 
-          className={`text-white ${textSizeClasses} font-semibold text-center break-words line-clamp-2`}
-          style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.7)' }} // Add text shadow for readability
-        >
-          {name}
-        </span>
+        <>
+          {/* Player Name */}
+          <span className={`font-semibold ${textSizeClasses} text-white break-words text-center leading-tight max-w-full px-1`}>
+            {name}
+          </span>
+        </>
       )}
       {/* Goal Badge */}
       {playerStats.goals > 0 && (
@@ -282,4 +286,4 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
   );
 };
 
-export default PlayerDisk; 
+export default PlayerDisk;

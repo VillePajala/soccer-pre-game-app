@@ -265,7 +265,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
         return;
       }
 
-      // Draw the player disk (existing code)
+      // Draw the player disk
       context.beginPath();
       context.arc(absX, absY, playerRadius, 0, Math.PI * 2);
       context.save();
@@ -276,9 +276,16 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
       context.fillStyle = player.color || '#7E22CE';
       context.fill();
       context.restore();
-      context.strokeStyle = '#581C87';
-      context.lineWidth = 1.5;
-      context.stroke();
+
+      // Set border based on goalie status
+      if (player.isGoalie) {
+        context.strokeStyle = '#38BDF8'; // Goalie color (sky-500)
+        context.lineWidth = 3; // Thicker border for goalie
+      } else {
+        context.strokeStyle = '#581C87'; // Default border color (purple-900)
+        context.lineWidth = 1.5; // Default border width
+      }
+      context.stroke(); // Draw the border
 
       // Draw player name (existing code)
       if (showPlayerNames) {
