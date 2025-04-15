@@ -290,7 +290,8 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
         context.font = '600 11px Inter, sans-serif';
         context.textAlign = 'center';
         context.textBaseline = 'middle';
-        context.fillText(player.name, absX, absY);
+        // Use nickname if available, otherwise fall back to full name
+        context.fillText(player.nickname || player.name, absX, absY);
       }
     });
   }, [players, opponents, drawings, showPlayerNames]); // Remove gameEvents dependency

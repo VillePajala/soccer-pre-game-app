@@ -19,7 +19,8 @@ import { useGameState, UseGameStateReturn } from '@/hooks/useGameState'; // Impo
 // Define the Player type - Use relative coordinates
 export interface Player {
   id: string;
-  name: string;
+  name: string; // Full name
+  nickname?: string; // Optional nickname (e.g., first name) for display on disc
   relX?: number; // Relative X (0.0 to 1.0)
   relY?: number; // Relative Y (0.0 to 1.0)
   color?: string; // Optional: Specific color for the disk
@@ -1532,6 +1533,35 @@ export default function Home() {
     }
   }, [availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField, saveStateToHistory]);
 
+  // --- NEW: Handler to Set Player Nickname ---
+  const handleSetPlayerNickname = useCallback((playerId: string, nickname: string) => {
+    const updatedAvailable = availablePlayers.map(p => p.id === playerId ? { ...p, nickname: nickname } : p);
+    const updatedOnField = playersOnField.map(p => p.id === playerId ? { ...p, nickname: nickname } : p);
+
+    setAvailablePlayers(updatedAvailable);
+    setPlayersOnField(updatedOnField);
+    saveStateToHistory({ availablePlayers: updatedAvailable, playersOnField: updatedOnField });
+    console.log(`Set nickname for ${playerId} to ${nickname}`);
+  }, [availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField, saveStateToHistory]);
+
+  // --- Handler to Add a Player to the Roster (Updated) ---
+  const handleAddPlayer = useCallback((playerData: { name: string; jerseyNumber: string; notes: string; nickname: string }) => {
+    const newPlayer: Player = {
+        id: `player-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`, 
+        name: playerData.name,
+        nickname: playerData.nickname, // Add nickname
+        jerseyNumber: playerData.jerseyNumber,
+        notes: playerData.notes,
+        isGoalie: false, // Default new players to not be goalies
+        // relX, relY will be undefined initially
+    };
+
+    const updatedAvailable = [...availablePlayers, newPlayer];
+    setAvailablePlayers(updatedAvailable); // Update state hook
+    saveStateToHistory({ availablePlayers: updatedAvailable }); // Save to session history
+    console.log(`Added new player: ${newPlayer.name} (ID: ${newPlayer.id})`);
+  }, [availablePlayers, setAvailablePlayers, saveStateToHistory]); // Dependencies
+
   // Render null or a loading indicator until state is loaded
   if (!isLoaded) {
     // You might want a more sophisticated loading indicator
@@ -1715,6 +1745,8 @@ export default function Home() {
           onSetJerseyNumber={handleSetJerseyNumber}
           onSetPlayerNotes={handleSetPlayerNotes}
           onRemovePlayer={handleRemovePlayerFromRoster}
+          onAddPlayer={handleAddPlayer} 
+          onSetPlayerNickname={handleSetPlayerNickname} // Pass new handler
         />
 
       </div>
