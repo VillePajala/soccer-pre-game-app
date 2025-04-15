@@ -203,7 +203,6 @@ export default function Home() {
   // ... UI/Interaction states ...
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
   const [draggingPlayerFromBarInfo, setDraggingPlayerFromBarInfo] = useState<Player | null>(null);
-  const [loggingGoalForPlayerId, setLoggingGoalForPlayerId] = useState<string | null>(null); // Track player selected for goal
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false); // RE-ADD Fullscreen state
   // Persistence state
   const [savedGames, setSavedGames] = useState<SavedGamesCollection>({});
