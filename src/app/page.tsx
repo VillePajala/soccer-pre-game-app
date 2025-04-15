@@ -372,7 +372,7 @@ export default function Home() {
       setSavedGames({});
     }
     setIsLoaded(true); // Mark loading as complete
-  }, []); // Runs only on mount
+  }, [setAvailablePlayers, setDrawings, setOpponents, setPlayersOnField]); // ADDED dependencies based on ESLint warning (line 375)
 
   // --- Save state to localStorage --- 
   useEffect(() => {
@@ -497,24 +497,27 @@ export default function Home() {
   };
 
   // --- Player Management Handlers (Updated for relative coords) ---
-  const handleDropOnField = (playerId: string, relX: number, relY: number) => {
+  // Wrapped handleDropOnField in useCallback as suggested (line 500)
+  const handleDropOnField = useCallback((playerId: string, relX: number, relY: number) => {
     const droppedPlayer = availablePlayers.find(p => p.id === playerId);
     if (droppedPlayer) {
       handlePlayerDrop(droppedPlayer, { relX, relY }); // Call the handler from the hook
     } else {
       console.error(`Dropped player with ID ${playerId} not found in availablePlayers.`);
     }
-  };
+  // ADDED dependencies based on ESLint warning
+  }, [availablePlayers, handlePlayerDrop]); 
 
   const handlePlayerMove = useCallback((playerId: string, relX: number, relY: number) => {
     // Update visual state immediately
     setPlayersOnField(prevPlayers => 
       prevPlayers.map(p => 
-        p.id === playerId ? { ...p, relX, relY } : p // Use relX, relY
+        p.id === playerId ? { ...p, relX, relY } : p
       )
     );
     // State saved on move end
-  }, []);
+  // ADDED dependency based on ESLint warning (line 517)
+  }, [setPlayersOnField]);
 
   const handlePlayerMoveEnd = useCallback(() => {
     saveStateToHistory({ playersOnField });
@@ -535,7 +538,8 @@ export default function Home() {
     setDrawings([]);
     // Save reset state to history
     saveStateToHistory({ playersOnField: [], opponents: [], drawings: [] });
-  }, [saveStateToHistory]);
+  // ADDED dependencies based on ESLint warning (line 538)
+  }, [saveStateToHistory, setDrawings, setOpponents, setPlayersOnField]);
 
   // --- Touch Drag from Bar Handlers (Updated for relative coords) ---
   const handlePlayerDragStartFromBar = useCallback((playerInfo: Player) => {
@@ -1482,7 +1486,7 @@ export default function Home() {
       setIsNewGameSetupModalOpen(true);
     }
 
-  }, []); // Empty dependency array ensures this runs only once on mount
+  }, [setAvailablePlayers, setDrawings, setOpponents, setPlayersOnField]); // ADDED dependencies based on ESLint warning (line 375)
 
   // NEW Effect: Check opponent name after initial load is complete
   useEffect(() => {

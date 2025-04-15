@@ -3,10 +3,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Player, GameEvent } from '@/app/page'; // Import Player & GameEvent type
 import {
-    HiOutlinePencil, // Keep pencil for edit button
     HiOutlineShieldCheck, // Goalie icon
-    HiOutlineUserCircle, // Default player icon
-    HiOutlineTrophy // Trophy for top scorer
 } from 'react-icons/hi2';
 
 interface PlayerDiskProps {
@@ -48,8 +45,6 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(name);
   const inputRef = useRef<HTMLInputElement>(null);
-  const lastTapTimeRef = useRef<number>(0);
-  const [isTopScorer, setIsTopScorer] = useState(false);
   
   // Update editedName if the name prop changes (e.g., via undo/redo)
   useEffect(() => {
@@ -105,7 +100,7 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
     }
   };
 
-  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+  const handleTouchStart = () => {
      if (isEditing) return;
      // Basic start, no complex logic needed now
   };

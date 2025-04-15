@@ -4,7 +4,6 @@ import {
     Player,
     Opponent,
     Point,
-    GameEvent,
     AppState,
     // Assuming initialState definition might be moved or imported later
 } from '@/app/page'; // Adjust import path if necessary
