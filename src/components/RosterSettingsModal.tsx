@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Player } from '@/app/page'; // Import Player type
 import {
     HiOutlineXMark,
@@ -9,7 +9,8 @@ import {
     HiOutlineTrash,
     HiOutlineShieldCheck, // Goalie icon
     HiOutlineUserCircle, // Default player icon (or choose another)
-    HiOutlinePencilSquare // Icon for notes indicator
+    HiOutlinePencilSquare, // Icon for notes indicator
+    HiOutlineEllipsisVertical // Icon for actions menu
 } from 'react-icons/hi2';
 import { useTranslation } from 'react-i18next';
 
@@ -46,6 +47,10 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
   const [isAddingPlayer, setIsAddingPlayer] = useState(false);
   const [newPlayerData, setNewPlayerData] = useState({ name: '', jerseyNumber: '', notes: '', nickname: '' });
 
+  // State for the actions menu
+  const [actionsMenuPlayerId, setActionsMenuPlayerId] = useState<string | null>(null);
+  const actionsMenuRef = useRef<HTMLDivElement>(null); // Ref for click outside
+
   // Close editing mode when modal closes or players change
   useEffect(() => {
     if (!isOpen) {
@@ -54,6 +59,26 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
       setNewPlayerData({ name: '', jerseyNumber: '', notes: '', nickname: '' }); // Clear add form
     }
   }, [isOpen]);
+
+  // Effect to close actions menu on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (actionsMenuRef.current && !actionsMenuRef.current.contains(event.target as Node)) {
+        setActionsMenuPlayerId(null); // Close menu if click is outside
+      }
+    };
+
+    if (actionsMenuPlayerId) { // Only add listener when a menu is open
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+
+    // Cleanup listener on component unmount or when menu closes
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [actionsMenuPlayerId]); // Re-run when the open menu changes
 
   // Load player data into form when editing starts
   const handleStartEdit = (player: Player) => {
@@ -156,7 +181,7 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
           {availablePlayers.map((player) => (
             <div
               key={player.id}
-              className={`p-3 rounded-md border ${editingPlayerId === player.id ? 'bg-slate-700 border-slate-500' : 'bg-slate-800 border-slate-600 hover:border-slate-500'}`}
+              className={`p-3 rounded-md border relative ${editingPlayerId === player.id ? 'bg-slate-700 border-slate-500' : 'bg-slate-800 border-slate-600 hover:border-slate-500'}`}
             >
               {editingPlayerId === player.id ? (
                 // --- Editing View ---
@@ -228,38 +253,69 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
               ) : (
                  // --- Display View ---
                  <div className="flex items-center justify-between">
-                   <div className="flex items-center space-x-3 flex-grow min-w-0">
+                   <div className="flex items-center space-x-3 flex-grow min-w-0 pr-4"> {/* Added pr-4 for spacing */} 
                      {/* Goalie Status Icon */}
-                     <button
-                       title={player.isGoalie ? t('rosterSettingsModal.unsetGoalie', 'Unset Goalie') : t('rosterSettingsModal.setGoalie', 'Set Goalie')}
-                       onClick={() => onToggleGoalie(player.id)}
-                       className={`p-1.5 rounded ${player.isGoalie ? 'text-emerald-400' : 'text-slate-500 hover:text-slate-300'}`}
+                     <button 
+                        title={player.isGoalie ? t('rosterSettingsModal.unsetGoalie', 'Unset Goalie') : t('rosterSettingsModal.setGoalie', 'Set Goalie')}
+                        onClick={() => onToggleGoalie(player.id)} 
+                        className={`p-1.5 rounded flex-shrink-0 ${player.isGoalie ? 'text-emerald-400' : 'text-slate-500 hover:text-slate-300'}`}
                      >
                        {player.isGoalie ? <HiOutlineShieldCheck className="w-5 h-5" /> : <HiOutlineUserCircle className="w-5 h-5" />}
                      </button>
-                     {/* Name & Nickname Display */}
-                     <span className="font-medium text-slate-100 truncate flex-shrink min-w-0" title={player.name}>
+                     {/* Name Display (Full name, smaller font, no nickname) */}
+                     <span className="text-sm font-medium text-slate-100 flex-shrink min-w-0 break-words" title={player.name}>
                        {player.name}
-                       {player.nickname && <span className="text-xs text-slate-400 ml-1">({player.nickname})</span>}
+                       {/* Nickname removed from display here */} 
                      </span>
                      {/* Jersey # */}
-                     <span className="text-slate-400 text-sm ml-auto mr-3">{player.jerseyNumber ? `#${player.jerseyNumber}` : ''}</span>
+                     <span className="text-slate-400 text-sm ml-auto mr-1 flex-shrink-0">{player.jerseyNumber ? `#${player.jerseyNumber}` : ''}</span>
                      {/* Notes Indicator */}
                      {player.notes && (
-                       <HiOutlinePencilSquare
-                         className="w-4 h-4 text-slate-500 flex-shrink-0"
-                         title={t('rosterSettingsModal.notesExist', 'Has notes') || 'Has notes'}
-                       />
+                         <HiOutlinePencilSquare 
+                            className="w-4 h-4 text-slate-500 flex-shrink-0"
+                            title={t('rosterSettingsModal.notesExist', 'Has notes') || 'Has notes'}
+                        />
                      )}
                    </div>
-                   {/* Action Buttons (Edit/Remove) */}
-                   <div className="flex items-center space-x-2 flex-shrink-0 ml-3">
-                     <button onClick={() => handleStartEdit(player)} className="text-blue-400 hover:text-blue-300 p-1" title={t('common.edit', 'Edit') || 'Edit'} disabled={isAddingPlayer || !!editingPlayerId}>
-                       <HiOutlinePencil className="w-5 h-5" />
-                     </button>
-                     <button onClick={() => onRemovePlayer(player.id)} className="text-red-500 hover:text-red-400 p-1" title={t('common.remove', 'Remove') || 'Remove'} disabled={isAddingPlayer || !!editingPlayerId}>
-                       <HiOutlineTrash className="w-5 h-5" />
-                     </button>
+                   {/* NEW: Action Buttons Menu */}
+                   <div className="relative flex-shrink-0">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent card click if needed
+                          setActionsMenuPlayerId(actionsMenuPlayerId === player.id ? null : player.id);
+                        }}
+                        className="text-slate-400 hover:text-slate-100 p-1 rounded"
+                        title={t('rosterSettingsModal.actionsMenuTitle', 'Actions') || 'Actions'}
+                        disabled={isAddingPlayer || !!editingPlayerId}
+                       >
+                          <HiOutlineEllipsisVertical className="w-5 h-5" />
+                      </button>
+
+                      {/* Conditionally rendered Actions Menu Dropdown */} 
+                      {actionsMenuPlayerId === player.id && (
+                        <div 
+                          ref={actionsMenuRef} // Add ref for click outside detection
+                          className="absolute right-0 top-full mt-1 w-32 bg-slate-700 border border-slate-600 rounded-md shadow-lg z-10 py-1"
+                          onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside menu
+                        >
+                           <button 
+                              onClick={() => { handleStartEdit(player); setActionsMenuPlayerId(null); }} 
+                              className="flex items-center w-full px-3 py-1.5 text-sm text-blue-300 hover:bg-slate-600 disabled:opacity-50"
+                              disabled={isAddingPlayer || !!editingPlayerId}
+                            >
+                             <HiOutlinePencil className="w-4 h-4 mr-2" /> 
+                             {t('common.edit', 'Edit') || 'Edit'}
+                           </button>
+                           <button 
+                              onClick={() => { onRemovePlayer(player.id); setActionsMenuPlayerId(null); }} 
+                              className="flex items-center w-full px-3 py-1.5 text-sm text-red-400 hover:bg-slate-600 disabled:opacity-50"
+                              disabled={isAddingPlayer || !!editingPlayerId}
+                            >
+                             <HiOutlineTrash className="w-4 h-4 mr-2" />
+                             {t('common.remove', 'Remove') || 'Remove'}
+                           </button>
+                        </div>
+                      )}
                    </div>
                  </div>
               )}
