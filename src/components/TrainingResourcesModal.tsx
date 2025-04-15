@@ -83,55 +83,55 @@ const TrainingResourcesModal: React.FC<TrainingResourcesModalProps> = ({ isOpen,
                     className="p-4 bg-slate-800/50 text-sm sm:text-base"
                   >
                     {section.key === 'warmup' && (
-                       <div className="space-y-4">
-                        {/* Warmup content structure (using renderListItems) */}
-                        <h3 className="text-xl font-semibold mb-3 text-yellow-300">{t('warmup.title')}</h3>
+                        <div className="space-y-4">
+                        {/* Use matchPreparation keys for content */}
+                        <h3 className="text-xl font-semibold mb-3 text-yellow-300">{t('matchPreparation.title')}</h3>
                         <section>
-                          <h4 className="text-lg font-medium mb-1 text-yellow-200">{t('warmup.section1Title')}</h4>
-                          <p className="text-xs italic text-slate-400 mb-1">{t('warmup.section1Goal')}</p>
+                          <h4 className="text-lg font-medium mb-1 text-yellow-200">{t('matchPreparation.section1.title')}</h4>
+                          <p className="text-xs italic text-slate-400 mb-1">{t('matchPreparation.section1.goal')}</p>
                           <ul className="list-disc list-inside space-y-1 pl-2">
-                            {renderListItems('warmup.section1Points', 's1')}
+                            {renderListItems('matchPreparation.section1.points', 's1')}
                           </ul>
                         </section>
                         <section>
-                           <h4 className="text-lg font-medium mb-1 text-yellow-200">{t('warmup.section2Title')}</h4>
-                           <p className="text-xs italic text-slate-400 mb-1">{t('warmup.section2Goal')}</p>
-                           <ul className="list-disc list-inside space-y-1 pl-2">
-                             {renderListItems('warmup.section2Activities', 's2')}
-                           </ul>
-                         </section>
-                         <section>
-                           <h4 className="text-lg font-medium mb-1 text-yellow-200">{t('warmup.section3Title')}</h4>
-                           <p className="text-xs italic text-slate-400 mb-1">{t('warmup.section3Goal')}</p>
-                           <div className="pl-2 space-y-2">
-                             <p className="font-semibold">{t('warmup.section3PairWork')}</p>
-                             <ul className="list-disc list-inside space-y-1 pl-4">
-                               {renderListItems('warmup.section3PairWorkPoints', 's3p')}
-                             </ul>
-                             <p className="font-semibold mt-2">{t('warmup.section3GoalieWarmup')}</p>
-                             <ul className="list-disc list-inside space-y-1 pl-4">
-                               {renderListItems('warmup.section3GoalieWarmupPoints', 's3g')}
-                             </ul>
-                             <p className="font-semibold mt-2">{t('warmup.section3CombinedGoalieWarmup')}</p>
-                             <ul className="list-disc list-inside space-y-1 pl-4">
-                                {renderListItems('warmup.section3CombinedGoalieWarmupPoints', 's3c')}
-                             </ul>
-                           </div>
-                         </section>
-                         <section>
-                           <h4 className="text-lg font-medium mb-1 text-yellow-200">{t('warmup.section4Title')}</h4>
-                           <p className="text-xs italic text-slate-400 mb-1">{t('warmup.section4Goal')}</p>
-                           <ul className="list-disc list-inside space-y-1 pl-2">
-                             {renderListItems('warmup.section4Points', 's4')}
-                           </ul>
-                         </section>
-                         <section>
-                           <h4 className="text-lg font-medium mb-1 text-yellow-200">{t('warmup.duringGameTitle')}</h4>
-                           <ul className="list-disc list-inside space-y-1 pl-2">
-                             {renderListItems('warmup.duringGamePoints', 'dg')}
-                           </ul>
-                         </section>
-                       </div>
+                            <h4 className="text-lg font-medium mb-1 text-yellow-200">{t('matchPreparation.section2.title')}</h4>
+                            <p className="text-xs italic text-slate-400 mb-1">{t('matchPreparation.section2.goal')}</p>
+                            <ul className="list-disc list-inside space-y-1 pl-2">
+                              {renderListItems('matchPreparation.section2.points', 's2')}
+                            </ul>
+                          </section>
+                          <section>
+                            <h4 className="text-lg font-medium mb-1 text-yellow-200">{t('matchPreparation.section3.title')}</h4>
+                            <p className="text-xs italic text-slate-400 mb-1">{t('matchPreparation.section3.goal')}</p>
+                            <div className="pl-2 space-y-2">
+                              <p className="font-semibold">{t('matchPreparation.section3.pairWorkTitle')}</p>
+                              <ul className="list-disc list-inside space-y-1 pl-4">
+                                {renderListItems('matchPreparation.section3.pairWorkPoints', 's3p')}
+                              </ul>
+                              <p className="font-semibold mt-2">{t('matchPreparation.section3.goalieWarmupTitle')}</p>
+                              <ul className="list-disc list-inside space-y-1 pl-4">
+                                {renderListItems('matchPreparation.section3.goalieWarmupPoints', 's3g')}
+                              </ul>
+                              <p className="font-semibold mt-2">{t('matchPreparation.section3.combinedWarmupTitle')}</p>
+                              <ul className="list-disc list-inside space-y-1 pl-4">
+                                {renderListItems('matchPreparation.section3.combinedWarmupPoints', 's3c')}
+                              </ul>
+                            </div>
+                          </section>
+                          <section>
+                            <h4 className="text-lg font-medium mb-1 text-yellow-200">{t('matchPreparation.section4.title')}</h4>
+                            <p className="text-xs italic text-slate-400 mb-1">{t('matchPreparation.section4.goal')}</p>
+                            <ul className="list-disc list-inside space-y-1 pl-2">
+                              {renderListItems('matchPreparation.section4.points', 's4')}
+                            </ul>
+                          </section>
+                          <section>
+                            <h4 className="text-lg font-medium mb-1 text-yellow-200">{t('matchPreparation.duringGame.title')}</h4>
+                            <ul className="list-disc list-inside space-y-1 pl-2">
+                              {renderListItems('matchPreparation.duringGame.points', 'dg')}
+                            </ul>
+                          </section>
+                        </div>
                     )}
                     {section.key === 'exampleDrills' && (
                       <div className="space-y-4">

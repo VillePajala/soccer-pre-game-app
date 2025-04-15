@@ -161,52 +161,68 @@
       "point3": "Varmista riittävä lepo harjoitteiden välillä."
     }
   },
-  "warmup": {
-    "title": "Lämmittelysuunnitelma",
-    "section1Title": "1. Yleinen Liikkuvuus ja Valmistautuminen",
-    "section1Goal": "(5-10 min) Tavoite: Kehon herättely, liikkuvuuden parantaminen.",
-    "section1Points": [
-      "Kevyt hölkkä kentän ympäri.",
-      "Dynaamiset venytykset (esim. jalkojen heilautukset, käsivarsien pyöritykset).",
-      "Liikkuvuusharjoitteet (esim. askelkyykky kierrolla)."
-    ],
-    "section2Title": "2. Hermoston Aktivointi ja Nopeus",
-    "section2Goal": "(5 min) Tavoite: Reaktioajan ja nopeuden parantaminen.",
-    "section2Activities": [
-      "Nopeat jalkatyöharjoitteet (tikkaat, matalat aidat).",
-      "Lyhyet spurtit (5-10 metriä) eri suunnista tuleviin signaaleihin."
-    ],
-    "section3Title": "3. Lajinomainen Osuus Pallon Kanssa",
-    "section3Goal": "(10-15 min) Tavoite: Pallokontrollin, syöttötaidon ja maalivahdin valmistaminen.",
-    "section3PairWork": "Parityöskentely:",
-    "section3PairWorkPoints": [
-      "Lyhyet syötöt ja haltuunotot liikkeessä.",
-      "Seinasyötöt.",
-      "Pidemmät syötöt tarkkuuteen keskittyen."
-    ],
-    "section3GoalieWarmup": "Maalivahdin erillislämmittely:",
-    "section3GoalieWarmupPoints": [
-      "Kevyet heitot ja kopit.",
-      "Reaktiotorjunnat läheltä.",
-      "Liikkuminen maalilla ja asennon harjoittelu."
-    ],
-    "section3CombinedGoalieWarmup": "Yhdistetty maalivahtilämmittely (kenttäpelaajat laukovat):",
-    "section3CombinedGoalieWarmupPoints": [
-      "Helpot laukaukset suoraan maalivahdille.",
-      "Laukaukset pienistä kulmista.",
-      "Keskitykset ja niiden torjuminen/nappaaminen."
-    ],
-    "section4Title": "4. Pienpelit ja Pelinomainen Valmistautuminen",
-    "section4Goal": "(5-10 min) Tavoite: Pelinopeuteen ja -tilanteisiin valmistautuminen.",
-    "section4Points": [
-      "Pienpelit (esim. 3v3, 4v4) pienellä alueella.",
-      "Taktiset harjoitteet (esim. nopeat hyökkäykset, puolustusasettuminen)."
-    ],
-    "duringGameTitle": "Pelin Aikana / Tauoilla",
-    "duringGamePoints": [
-      "Pidä pelaajat liikkeessä taukojen aikana kevyillä harjoitteilla.",
-      "Varmista riittävä nesteytys."
-    ]
+  "matchPreparation": {
+    "title": "Otteluun valmistautuminen",
+    "section1": {
+      "title": "1. 30 min / Kokoontuminen",
+      "goal": "Tavoite: Luodaan positiivinen tunnelma ja käydään päivän asiat läpi.",
+      "points": [
+        "Ylävitoset, kivet, mitä kuuluu – kuulumisten jakaminen",
+        "Pelipaikat, kapteeni, varustus",
+        "Päivän teemat (max 3, esim.):",
+        "Nautitaan",
+        "Saalista",
+        "Ohita tai syötä",
+        "Teemat perustuvat harjoituksiin – voi vaihdella, mutta \"Nautitaan\" on aina mukana."
+      ]
+    },
+    "section2": {
+      "title": "2. 20 min / Lämmittely",
+      "goal": "Tavoite: Nostetaan kehon lämpö, viritetään mieli peliin.",
+      "points": [
+        "Pari jonot + merkki 5 m päähän (kartio/liivi), kierto ulkokautta oman jonon päähän",
+        "Hölkkä (etuperin/takaperin)",
+        "Kylkijuoksut (oikea/vasen kylki edellä)",
+        "Kantapäät pakaroihin",
+        "Marjanpoiminta",
+        "Hyppy parin kylkeen (2 krt/liike)",
+        "Eläinliikkeet: mittarimato, karhukävely, ankkakävely (lapset saavat ehdottaa)",
+        "Spurtit (n. 5 kpl): pystystä, istualtaan, etunojasta"
+      ]
+    },
+    "section3": {
+      "title": "3. 10 min / Pallottelu",
+      "goal": "Tavoite: Aktivoi pallokosketus ja valmistaa peliin.",
+      "pairWorkTitle": "Pari + pallo:",
+      "pairWorkPoints": [
+        "Perussyöttely lähellä → kauempaa (peliasento, päkiät, sisäterä, huolellisuus)",
+        "Maalivahdin lämmittely (apuvalmentaja voi auttaa):"
+      ],
+      "goalieWarmupTitle": "Heittoja/syöttöjä läheltä (2m) ja kauempaa:",
+      "goalieWarmupPoints": [
+        "Ylös, sivulle, ilmassa, maata pitkin (tottuu palloon)",
+        "Palautukset käsillä + jaloilla"
+      ],
+      "combinedWarmupTitle": "Yhdessä tehtävä mv-lämmittely (tilan salliessa):",
+      "combinedWarmupPoints": [
+        "MV maaliin → seinäsyöttö → veto 16m / pilkun välistä (valmentaja voi toimia seinänä)"
+      ]
+    },
+    "section4": {
+      "title": "4. 2 min / Vaihtoalue",
+      "goal": "Tavoite: Viimeinen virittäytyminen ennen peliä.",
+      "points": [
+        "Varustus tarkistus + PEPO-huuto reippaasti",
+        "Ajoitus juuri ennen kentälle menoa (pelinohjaaja valmiina)"
+      ]
+    },
+    "duringGame": {
+      "title": "Pelin aikana:",
+      "points": [
+        "Kannusta hyvistä suorituksista (esim. kivet, \"jes!\", \"just niinku ollaan harjoiteltu!\")",
+        "Anna pelaajan itse tehdä ratkaisuja – ohjaa vain pallotonta ja vaihdossa olevia pelaajia tarvittaessa"
+      ]
+    }
   },
   "goalLogModal": {
     "title": "Kirjaa Maalitapahtuma",
