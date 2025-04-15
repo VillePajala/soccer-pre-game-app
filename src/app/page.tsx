@@ -12,6 +12,7 @@ import TrainingResourcesModal from '@/components/TrainingResourcesModal'; // Imp
 import SaveGameModal from '@/components/SaveGameModal'; // Import the new modal
 import LoadGameModal from '@/components/LoadGameModal'; // Import the new modal
 import NewGameSetupModal from '@/components/NewGameSetupModal'; // Import the new component
+import RosterSettingsModal from '@/components/RosterSettingsModal'; // Import the new Roster modal
 import { useTranslation } from 'react-i18next'; // Make sure this is imported
 import { useGameState, UseGameStateReturn } from '@/hooks/useGameState'; // Import the hook
 
@@ -22,6 +23,9 @@ export interface Player {
   relX?: number; // Relative X (0.0 to 1.0)
   relY?: number; // Relative Y (0.0 to 1.0)
   color?: string; // Optional: Specific color for the disk
+  isGoalie?: boolean; // Optional: Is this player the goalie?
+  jerseyNumber?: string; // Optional: Player's jersey number
+  notes?: string; // Optional: Notes specific to this player
 }
 
 // Define the Point type for drawing - Use relative coordinates
@@ -70,26 +74,26 @@ export interface AppState {
   gameStatus: 'notStarted' | 'inProgress' | 'periodEnd' | 'gameEnd';
 }
 
-// Placeholder data - No coordinates needed here
+// Placeholder data - Initialize new fields
 const initialAvailablePlayersData: Player[] = [
-  { id: 'p1', name: 'Player 1' },
-  { id: 'p2', name: 'Player 2' },
-  { id: 'p3', name: 'Player 3' },
-  { id: 'p4', name: 'Player 4' },
-  { id: 'p5', name: 'Player 5' },
-  { id: 'p6', name: 'Player 6' },
-  { id: 'p7', name: 'Player 7' },
-  { id: 'p8', name: 'Player 8' },
-  { id: 'p9', name: 'Player 9' },
-  { id: 'p10', name: 'Player 10' },
-  { id: 'p11', name: 'Player 11' },
+  { id: 'p1', name: 'Player 1', isGoalie: false, jerseyNumber: '1', notes: '' },
+  { id: 'p2', name: 'Player 2', isGoalie: false, jerseyNumber: '2', notes: '' },
+  { id: 'p3', name: 'Player 3', isGoalie: false, jerseyNumber: '3', notes: '' },
+  { id: 'p4', name: 'Player 4', isGoalie: false, jerseyNumber: '4', notes: '' },
+  { id: 'p5', name: 'Player 5', isGoalie: false, jerseyNumber: '5', notes: '' },
+  { id: 'p6', name: 'Player 6', isGoalie: false, jerseyNumber: '6', notes: '' },
+  { id: 'p7', name: 'Player 7', isGoalie: false, jerseyNumber: '7', notes: '' },
+  { id: 'p8', name: 'Player 8', isGoalie: false, jerseyNumber: '8', notes: '' },
+  { id: 'p9', name: 'Player 9', isGoalie: false, jerseyNumber: '9', notes: '' },
+  { id: 'p10', name: 'Player 10', isGoalie: false, jerseyNumber: '10', notes: '' },
+  { id: 'p11', name: 'Player 11', isGoalie: false, jerseyNumber: '11', notes: '' },
 ];
 
 const initialState: AppState = {
   playersOnField: [], // Start with no players on field
   opponents: [], // Start with no opponents
   drawings: [],
-  availablePlayers: initialAvailablePlayersData,
+  availablePlayers: initialAvailablePlayersData, // Use the updated initial data
   showPlayerNames: true,
   teamName: "My Team",
   gameEvents: [], // Initialize game events as empty array
@@ -223,6 +227,7 @@ export default function Home() {
   const [isNewGameSetupModalOpen, setIsNewGameSetupModalOpen] = useState<boolean>(false);
   const [isSaveGameModalOpen, setIsSaveGameModalOpen] = useState<boolean>(false);
   const [isLoadGameModalOpen, setIsLoadGameModalOpen] = useState<boolean>(false);
+  const [isRosterModalOpen, setIsRosterModalOpen] = useState<boolean>(false); // State for the new modal
 
   // --- Handlers (Remaining in Home component or to be moved) ---
   // REMOVED: handlePlayerDrop (now comes from useGameState hook)
@@ -1489,6 +1494,64 @@ export default function Home() {
     }
   }, [isLoaded, opponentName, isNewGameSetupModalOpen]); // Depend on load status and opponent name
 
+  // --- Roster Management Handlers ---
+  const openRosterModal = () => setIsRosterModalOpen(true);
+  const closeRosterModal = () => setIsRosterModalOpen(false);
+
+  const handleToggleGoalie = useCallback((playerId: string) => {
+    // Allow only one goalie
+    const currentGoalie = availablePlayers.find(p => p.isGoalie && p.id !== playerId);
+    
+    const updatedAvailable = availablePlayers.map(p => {
+      if (p.id === playerId) return { ...p, isGoalie: !p.isGoalie }; // Toggle the selected player
+      if (currentGoalie && p.id === currentGoalie.id) return { ...p, isGoalie: false }; // Untoggle the old goalie if needed
+      return p;
+    });
+    
+    const updatedOnField = playersOnField.map(p => {
+      if (p.id === playerId) return { ...p, isGoalie: !p.isGoalie };
+      if (currentGoalie && p.id === currentGoalie.id) return { ...p, isGoalie: false };
+      return p;
+    });
+
+    setAvailablePlayers(updatedAvailable);
+    setPlayersOnField(updatedOnField);
+    saveStateToHistory({ availablePlayers: updatedAvailable, playersOnField: updatedOnField });
+    console.log(`Toggled goalie for ${playerId}. Previous goalie (if any): ${currentGoalie?.id}`);
+  }, [availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField, saveStateToHistory]);
+
+  const handleSetJerseyNumber = useCallback((playerId: string, number: string) => {
+    const updatedAvailable = availablePlayers.map(p => p.id === playerId ? { ...p, jerseyNumber: number } : p);
+    const updatedOnField = playersOnField.map(p => p.id === playerId ? { ...p, jerseyNumber: number } : p);
+
+    setAvailablePlayers(updatedAvailable);
+    setPlayersOnField(updatedOnField);
+    saveStateToHistory({ availablePlayers: updatedAvailable, playersOnField: updatedOnField });
+    console.log(`Set jersey number for ${playerId} to ${number}`);
+  }, [availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField, saveStateToHistory]);
+
+  const handleSetPlayerNotes = useCallback((playerId: string, notes: string) => {
+    const updatedAvailable = availablePlayers.map(p => p.id === playerId ? { ...p, notes: notes } : p);
+    // Notes likely don't need to be tracked for playersOnField unless displayed there
+
+    setAvailablePlayers(updatedAvailable);
+    // setPlayersOnField(updatedOnField); // Only if notes are added to PlayerOnField type
+    saveStateToHistory({ availablePlayers: updatedAvailable /*, playersOnField: updatedOnField */ });
+    console.log(`Set notes for ${playerId}`);
+  }, [availablePlayers, setAvailablePlayers, /* playersOnField, setPlayersOnField, */ saveStateToHistory]);
+
+  const handleRemovePlayerFromRoster = useCallback((playerId: string) => {
+    if (window.confirm(`Are you sure you want to remove player ${availablePlayers.find(p=>p.id === playerId)?.name ?? playerId} from the roster? This cannot be undone easily.`)) {
+      const updatedAvailable = availablePlayers.filter(p => p.id !== playerId);
+      const updatedOnField = playersOnField.filter(p => p.id !== playerId); // Also remove from field
+
+      setAvailablePlayers(updatedAvailable);
+      setPlayersOnField(updatedOnField);
+      saveStateToHistory({ availablePlayers: updatedAvailable, playersOnField: updatedOnField });
+      console.log(`Removed player ${playerId} from roster and field.`);
+    }
+  }, [availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField, saveStateToHistory]);
+
   // Render null or a loading indicator until state is loaded
   if (!isLoaded) {
     // You might want a more sophisticated loading indicator
@@ -1593,6 +1656,7 @@ export default function Home() {
           onOpenSaveGameModal={handleOpenSaveGameModal}
           onOpenLoadGameModal={handleOpenLoadGameModal}
           onStartNewGame={handleStartNewGame}
+          onOpenRosterModal={openRosterModal} // Pass the handler
         />
         {/* Instructions Modal */}
         <InstructionsModal 
@@ -1658,6 +1722,18 @@ export default function Home() {
           isOpen={isNewGameSetupModalOpen}
           onStart={handleFinalizeNewGame}
           onCancel={handleCancelNewGameSetup}
+        />
+
+        {/* Roster Settings Modal */}
+        <RosterSettingsModal
+          isOpen={isRosterModalOpen}
+          onClose={closeRosterModal}
+          availablePlayers={availablePlayers}
+          onRenamePlayer={handleRenamePlayer}
+          onToggleGoalie={handleToggleGoalie}
+          onSetJerseyNumber={handleSetJerseyNumber}
+          onSetPlayerNotes={handleSetPlayerNotes}
+          onRemovePlayer={handleRemovePlayerFromRoster}
         />
 
       </div>
