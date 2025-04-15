@@ -37,6 +37,7 @@ interface GameStatsModalProps {
   onGameNotesChange?: (notes: string) => void; // Add handler for game notes
   onUpdateGameEvent?: (updatedEvent: GameEvent) => void; // Add handler for updating events
   onResetGameStats?: () => void; // Add handler for resetting stats
+  onAwardFairPlayCard?: (playerId: string) => void; // Add Fair Play handler prop
 }
 
 // Helper to format time from seconds to MM:SS
@@ -64,6 +65,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   onGameNotesChange = () => {}, // Default to no-op function
   onUpdateGameEvent = () => { console.warn('onUpdateGameEvent handler not provided'); }, // Default handler
   onResetGameStats = () => { console.warn('onResetGameStats handler not provided'); }, // Default handler
+  onAwardFairPlayCard, // Destructure the new prop
 }) => {
   const { t } = useTranslation();
 
@@ -749,6 +751,30 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
             <h3 className="text-xl font-semibold mb-2 text-yellow-300">
               {t('gameStatsModal.playerStatsTitle', 'Player Stats')}
             </h3>
+
+            {/* Fair Play Award Dropdown - ADDED */}
+            {onAwardFairPlayCard && (
+              <div className="mb-3 flex items-center gap-2">
+                <label htmlFor="fairPlaySelect" className="text-sm font-medium text-slate-300 whitespace-nowrap">
+                  {t('statsModal.awardFairPlayLabel', 'Fair Play Award:')}
+                </label>
+                <select
+                  id="fairPlaySelect"
+                  value={availablePlayers.find(p => p.receivedFairPlayCard)?.id || ''} // Find awarded player ID or default to empty string
+                  onChange={(e) => onAwardFairPlayCard(e.target.value)} // Call handler with selected player ID (or empty string for "None")
+                  className="block w-full px-3 py-1.5 bg-slate-600 border border-slate-500 rounded-md shadow-sm text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                  <option value="">{t('statsModal.awardFairPlayNone', '- None -')}</option>
+                  {availablePlayers.map(player => (
+                    <option key={player.id} value={player.id}>
+                      {player.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {/* --------------------------------- */}
+
             {/* Filter Input */}
             <div className="mb-3">
               <input

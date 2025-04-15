@@ -1556,20 +1556,32 @@ export default function Home() {
 
   // --- NEW: Handler to Award Fair Play Card ---
   const handleAwardFairPlayCard = useCallback((playerId: string) => {
+    // If playerId is empty string, clear the award for everyone
+    const shouldClear = playerId === "";
+
     const updatedAvailable = availablePlayers.map(p => ({
       ...p,
-      receivedFairPlayCard: p.id === playerId ? !p.receivedFairPlayCard : false // Toggle for selected, false for others
+      // Set to false if clearing OR if a different player ID is provided (implicitly handled by next condition)
+      // Set to true ONLY if this player's ID is provided AND we are not clearing
+      receivedFairPlayCard: !shouldClear && p.id === playerId ? true : false
     }));
     const updatedOnField = playersOnField.map(p => ({
       ...p,
-      receivedFairPlayCard: p.id === playerId ? !p.receivedFairPlayCard : false // Sync state
+      // Sync with availablePlayers logic
+      receivedFairPlayCard: !shouldClear && p.id === playerId ? true : false
     }));
 
     setAvailablePlayers(updatedAvailable);
     setPlayersOnField(updatedOnField);
     saveStateToHistory({ availablePlayers: updatedAvailable, playersOnField: updatedOnField });
-    const awardedPlayer = updatedAvailable.find(p => p.id === playerId);
-    console.log(`Toggled Fair Play Card for ${awardedPlayer?.name ?? playerId}. Awarded: ${awardedPlayer?.receivedFairPlayCard}`);
+
+    if (shouldClear) {
+        console.log(`Cleared Fair Play Card award.`);
+    } else {
+        const awardedPlayer = updatedAvailable.find(p => p.id === playerId);
+        // Log awarding, not toggling
+        console.log(`Awarded Fair Play Card to ${awardedPlayer?.name ?? playerId}.`);
+    }
   }, [availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField, saveStateToHistory]);
 
   // --- Handler to Add a Player to the Roster (Updated) ---
@@ -1734,6 +1746,7 @@ export default function Home() {
           onGameNotesChange={handleGameNotesChange}
           onUpdateGameEvent={handleUpdateGameEvent}
           onResetGameStats={handleStartNewGame}
+          onAwardFairPlayCard={handleAwardFairPlayCard} // Pass Fair Play handler
         />
         {/* Save Game Modal */}
         <SaveGameModal
