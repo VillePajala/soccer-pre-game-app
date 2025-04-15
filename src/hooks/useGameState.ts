@@ -38,6 +38,7 @@ export interface UseGameStateReturn {
     handleOpponentMoveEnd: (opponentId: string) => void;
     handleOpponentRemove: (opponentId: string) => void;
     handleRenamePlayer: (playerId: string, newName: string) => void;
+    handleToggleGoalie: (playerId: string) => void;
 }
 
 export function useGameState({ initialState, saveStateToHistory }: UseGameStateArgs): UseGameStateReturn {
@@ -154,6 +155,30 @@ export function useGameState({ initialState, saveStateToHistory }: UseGameStateA
         });
     }, [availablePlayers, playersOnField, saveStateToHistory]);
 
+    // --- Add Goalie Handler Here ---
+    const handleToggleGoalie = useCallback((playerId: string) => {
+        console.log(`[useGameState:handleToggleGoalie] Called for ${playerId}`);
+        const currentGoalie = availablePlayers.find(p => p.isGoalie && p.id !== playerId);
+        
+        const updatedAvailable = availablePlayers.map(p => {
+          if (p.id === playerId) return { ...p, isGoalie: !p.isGoalie };
+          if (currentGoalie && p.id === currentGoalie.id) return { ...p, isGoalie: false };
+          return p;
+        });
+        
+        const updatedOnField = playersOnField.map(p => {
+          if (p.id === playerId) return { ...p, isGoalie: !p.isGoalie };
+          if (currentGoalie && p.id === currentGoalie.id) return { ...p, isGoalie: false };
+          return p;
+        });
+    
+        console.log('[useGameState:handleToggleGoalie] Attempting to set state...');
+        setAvailablePlayers([...updatedAvailable]); // Use spread for safety
+        setPlayersOnField([...updatedOnField]); // Use spread for safety
+        console.log('[useGameState:handleToggleGoalie] State setters called.');
+        saveStateToHistory({ availablePlayers: updatedAvailable, playersOnField: updatedOnField });
+    }, [availablePlayers, playersOnField, saveStateToHistory]); // Dependencies are correct now
+
     // ... (more handlers will be moved here later)
 
     // --- Methods for external interaction ---
@@ -185,6 +210,7 @@ export function useGameState({ initialState, saveStateToHistory }: UseGameStateA
         handleOpponentMoveEnd,
         handleOpponentRemove,
         handleRenamePlayer,
+        handleToggleGoalie,
         // setHookState,
     };
 }

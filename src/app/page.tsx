@@ -179,7 +179,8 @@ export default function Home() {
     handleOpponentMove,
     handleOpponentMoveEnd,
     handleOpponentRemove,
-    handleRenamePlayer // Destructure the handler
+    handleRenamePlayer, // Destructure the handler
+    handleToggleGoalie // Destructure the goalie handler
   }: UseGameStateReturn = useGameState({ initialState, saveStateToHistory });
 
   // --- State Management (Remaining in Home component) ---
@@ -1498,28 +1499,7 @@ export default function Home() {
   const openRosterModal = () => setIsRosterModalOpen(true);
   const closeRosterModal = () => setIsRosterModalOpen(false);
 
-  const handleToggleGoalie = useCallback((playerId: string) => {
-    // Allow only one goalie
-    const currentGoalie = availablePlayers.find(p => p.isGoalie && p.id !== playerId);
-    
-    const updatedAvailable = availablePlayers.map(p => {
-      if (p.id === playerId) return { ...p, isGoalie: !p.isGoalie }; // Toggle the selected player
-      if (currentGoalie && p.id === currentGoalie.id) return { ...p, isGoalie: false }; // Untoggle the old goalie if needed
-      return p;
-    });
-    
-    const updatedOnField = playersOnField.map(p => {
-      if (p.id === playerId) return { ...p, isGoalie: !p.isGoalie };
-      if (currentGoalie && p.id === currentGoalie.id) return { ...p, isGoalie: false };
-      return p;
-    });
-
-    setAvailablePlayers(updatedAvailable);
-    setPlayersOnField(updatedOnField);
-    saveStateToHistory({ availablePlayers: updatedAvailable, playersOnField: updatedOnField });
-    console.log(`Toggled goalie for ${playerId}. Previous goalie (if any): ${currentGoalie?.id}`);
-  }, [availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField, saveStateToHistory]);
-
+  
   const handleSetJerseyNumber = useCallback((playerId: string, number: string) => {
     const updatedAvailable = availablePlayers.map(p => p.id === playerId ? { ...p, jerseyNumber: number } : p);
     const updatedOnField = playersOnField.map(p => p.id === playerId ? { ...p, jerseyNumber: number } : p);
@@ -1576,6 +1556,7 @@ export default function Home() {
           onBarBackgroundClick={handleDeselectPlayer}
           gameEvents={gameEvents}
           onPlayerTapInBar={handlePlayerTapInBar}
+          onToggleGoalie={handleToggleGoalie} // Pass the handler from the hook
         />
         
         {/* Main content */}
