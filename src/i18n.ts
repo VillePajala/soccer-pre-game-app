@@ -1,6 +1,7 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import fiTranslations from './locales/fi.json'; // Import fi translations directly
+import enTranslations from './locales/en.json'; // Import en translations
 
 // Generate a cache-busting version number
 // const cacheVersion = new Date().getTime();
@@ -13,8 +14,7 @@ if (!i18n.isInitialized) {
     .use(initReactI18next) // passes i18n down to react-i18next
     .init({
       lng: "fi", // default language
-      // Remove fallbackLng
-      // fallbackLng: "en", 
+      fallbackLng: "en", // Add fallback language
       // Remove ns and defaultNS
       // ns: ['common'], 
       // defaultNS: 'common',
@@ -28,6 +28,9 @@ if (!i18n.isInitialized) {
       resources: {
         fi: {
           translation: fiTranslations // Use 'translation' as the default NS key
+        },
+        en: { // Add English resources
+          translation: enTranslations
         }
       },
 
