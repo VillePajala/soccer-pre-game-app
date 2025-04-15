@@ -36,6 +36,8 @@
     "saveButtonTooltip": "Lisää Torjunta",
     "goalAgainstButtonTooltip": "Lisää Päästetty Maali",
     "noGoalieStats": "Ei maalivahteja valittuna tähän peliin.",
+    "goalLogTitle": "Maaliloki",
+    "noGoalsLogged": "Maaleja ei ole vielä kirjattu.",
     "exportJsonButton": "Lataa JSON",
     "exportExcelButton": "Lataa EXCEL",
     "resetStatsButton": "Nollaa",
@@ -43,6 +45,13 @@
   },
   "loadGameModal": {
     "title": "Lataa Peli"
+  },
+  "saveGameModal": {
+    "title": "Tallenna Peli Nimellä...",
+    "label": "Pelin Nimi:",
+    "placeholder": "esim. vs Lapa FC (Koti)",
+    "cancelButton": "Peruuta",
+    "saveButton": "Tallenna Peli"
   },
   "statsModal": {
     "awardFairPlayLabel": "Reilun Pelin Palkinto:"
