@@ -4,7 +4,9 @@ import React, { useMemo, useState, useEffect, useRef } from 'react'; // Added us
 import { useTranslation } from 'react-i18next';
 import { Player, GameEvent } from '@/app/page';
 import { FaSort, FaSortUp, FaSortDown, FaEdit, FaSave, FaTimes } from 'react-icons/fa'; // Import sort icons and new icons
-import { HiOutlineArrowTopRightOnSquare, HiOutlineDocumentArrowDown } from 'react-icons/hi2'; // Import external link icon and new icon
+import {
+  HiOutlineArrowTopRightOnSquare, HiOutlineDocumentArrowDown // Remove HiOutlineShieldCheck if not used elsewhere
+} from 'react-icons/hi2'; // Import external link icon and new icon
 
 // Define the type for sortable columns
 type SortableColumn = 'name' | 'goals' | 'assists' | 'totalScore';
@@ -35,6 +37,8 @@ interface GameStatsModalProps {
   onGameNotesChange?: (notes: string) => void; // Add handler for game notes
   onUpdateGameEvent?: (updatedEvent: GameEvent) => void; // Add handler for updating events
   onResetGameStats?: () => void; // Add handler for resetting stats
+  onAwardFairPlayCard?: (playerId: string) => void; // Add Fair Play handler prop
+  selectedPlayerIds: string[]; // Add prop for selected player IDs
 }
 
 // Helper to format time from seconds to MM:SS
@@ -62,6 +66,8 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   onGameNotesChange = () => {}, // Default to no-op function
   onUpdateGameEvent = () => { console.warn('onUpdateGameEvent handler not provided'); }, // Default handler
   onResetGameStats = () => { console.warn('onResetGameStats handler not provided'); }, // Default handler
+  onAwardFairPlayCard, // Destructure the new prop
+  selectedPlayerIds, // Destructure selected IDs
 }) => {
   const { t } = useTranslation();
 
@@ -149,8 +155,11 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   // --- Calculations ---
   // Calculate and filter/sort player stats
   const filteredAndSortedPlayerStats = useMemo(() => {
-    // 1. Calculate initial stats for all available players
-    const allPlayerStats: PlayerStatRow[] = availablePlayers.map(player => {
+    // 0. Filter availablePlayers to only include those selected for the match
+    const selectedPlayers = availablePlayers.filter(p => selectedPlayerIds.includes(p.id));
+
+    // 1. Calculate initial stats for selected players
+    const allPlayerStats: PlayerStatRow[] = selectedPlayers.map(player => {
       const goals = gameEvents.filter(e => e.type === 'goal' && e.scorerId === player.id).length;
       const assists = gameEvents.filter(e => e.type === 'goal' && e.assisterId === player.id).length;
       const totalScore = goals + assists;
@@ -185,7 +194,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
     });
 
     return sortedStats;
-  }, [availablePlayers, gameEvents, filterText, sortColumn, sortDirection]);
+  }, [availablePlayers, selectedPlayerIds, gameEvents, filterText, sortColumn, sortDirection]);
 
   // Filter and sort goal events by time
   const sortedGoals = useMemo(() => {
@@ -531,7 +540,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
       onClick={onClose} // Close modal if backdrop is clicked
     >
       <div
-        className="bg-slate-800 rounded-lg p-6 max-w-2xl w-full text-slate-200 shadow-xl relative max-h-[85vh] flex flex-col"
+        className="bg-slate-800 rounded-lg p-6 max-w-2xl w-full text-slate-200 shadow-xl relative flex flex-col border border-slate-600 overflow-hidden max-h-[calc(100vh-theme(space.8))]"
         onClick={(e) => e.stopPropagation()} // Prevent modal close when clicking inside
       >
         <button
@@ -747,6 +756,32 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
             <h3 className="text-xl font-semibold mb-2 text-yellow-300">
               {t('gameStatsModal.playerStatsTitle', 'Player Stats')}
             </h3>
+
+            {/* Fair Play Award Dropdown - ADDED */}
+            {onAwardFairPlayCard && (
+              <div className="mb-3 flex items-center gap-2">
+                <label htmlFor="fairPlaySelect" className="text-sm font-medium text-slate-300 whitespace-nowrap">
+                  {t('statsModal.awardFairPlayLabel', 'Fair Play Award:')}
+                </label>
+                <select
+                  id="fairPlaySelect"
+                  value={availablePlayers.find(p => selectedPlayerIds.includes(p.id) && p.receivedFairPlayCard)?.id || ''}
+                  onChange={(e) => onAwardFairPlayCard(e.target.value)}
+                  className="block w-full px-3 py-1.5 bg-slate-600 border border-slate-500 rounded-md shadow-sm text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                  <option value="">{t('statsModal.awardFairPlayNone', '- None -')}</option>
+                  {availablePlayers
+                    .filter(player => selectedPlayerIds.includes(player.id))
+                    .map(player => (
+                      <option key={player.id} value={player.id}>
+                        {player.name}
+                      </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {/* --------------------------------- */}
+
             {/* Filter Input */}
             <div className="mb-3">
               <input
@@ -768,21 +803,21 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                      </div>
                   </th>
                   {/* Goals Header (Sortable) */}
-                  <th scope="col" className="px-4 py-2 text-center text-xs font-medium text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('goals')}>
+                  <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-600/50 w-12" onClick={() => handleSort('goals')}>
                      <div className="flex items-center justify-center">
                        {t('gameStatsModal.goalsHeader', 'G')}
                        {sortColumn === 'goals' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1"/> : <FaSortDown className="ml-1"/>) : <FaSort className="ml-1 opacity-30"/>}
                      </div>
                   </th>
                   {/* Assists Header (Sortable) */}
-                  <th scope="col" className="px-4 py-2 text-center text-xs font-medium text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('assists')}>
+                  <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-600/50 w-12" onClick={() => handleSort('assists')}>
                      <div className="flex items-center justify-center">
                        {t('gameStatsModal.assistsHeader', 'A')}
                        {sortColumn === 'assists' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1"/> : <FaSortDown className="ml-1"/>) : <FaSort className="ml-1 opacity-30"/>}
                      </div>
                   </th>
                   {/* Total Header (Sortable) */}
-                  <th scope="col" className="px-4 py-2 text-center text-xs font-medium text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('totalScore')}>
+                  <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-600/50 w-12" onClick={() => handleSort('totalScore')}>
                      <div className="flex items-center justify-center">
                        {t('gameStatsModal.totalHeader', 'Pts')}
                        {sortColumn === 'totalScore' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1"/> : <FaSortDown className="ml-1"/>) : <FaSort className="ml-1 opacity-30"/>}
@@ -792,16 +827,39 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                 <tbody className="bg-slate-800 divide-y divide-slate-700">
                   {filteredAndSortedPlayerStats.length > 0 ? (
                      filteredAndSortedPlayerStats.map((player) => (
-                      <tr key={player.id} className="hover:bg-slate-700/30">
-                        <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-slate-100">{player.name}</td>
-                        <td className="px-4 py-2 whitespace-nowrap text-sm text-slate-300 text-center">{player.goals}</td>
-                        <td className="px-4 py-2 whitespace-nowrap text-sm text-slate-300 text-center">{player.assists}</td>
-                        <td className="px-4 py-2 whitespace-nowrap text-sm text-slate-300 text-center font-semibold">{player.totalScore}</td>
+                      <tr key={player.id} className="border-b border-slate-700 hover:bg-slate-700/50">
+                        {/* Player Name Cell - Same settings */}
+                        <td className="py-1 px-3 text-xs text-slate-200 whitespace-nowrap">
+                          {player.name}
+                          {/* Goalie indicator */}
+                          {player.isGoalie && (
+                            <span
+                              className="inline-block ml-1.5 px-1 py-0.5 text-[9px] font-bold leading-none bg-amber-500 text-white rounded-sm align-middle"
+                              title={t('statsModal.goalieIndicator', 'Goalie')}
+                            >
+                              G
+                            </span>
+                          )}
+                          {/* Fair Play indicator */}
+                          {player.receivedFairPlayCard && (
+                            <span
+                              className="inline-block ml-1.5 px-1 py-0.5 text-[9px] font-bold leading-none bg-emerald-500 text-white rounded-sm align-middle"
+                              title={t('statsModal.fairPlayAwarded', 'Fair Play Award')}
+                            >
+                              FP
+                            </span>
+                          )}
+                        </td>
+                        {/* Stats Cells - Same smaller font/padding */}
+                        <td className="py-1 px-3 text-xs text-slate-300 text-center">{player.goals}</td>
+                        <td className="py-1 px-3 text-xs text-slate-300 text-center">{player.assists}</td>
+                        <td className="py-1 px-3 text-xs text-slate-300 text-center font-semibold">{player.totalScore}</td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={4} className="px-4 py-4 text-center text-sm text-slate-400 italic">
+                      {/* No results row - Smaller font/padding */}
+                      <td colSpan={4} className="px-3 py-2 text-center text-xs text-slate-400 italic">
                         {filterText ? t('gameStatsModal.noPlayersMatchFilter', 'No players match filter') : t('gameStatsModal.noPlayersYet', 'No players available')}
                       </td>
                     </tr>

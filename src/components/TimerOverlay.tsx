@@ -120,14 +120,16 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
   // Calculate time since last substitution
   const timeSinceLastSub = lastSubTime === null ? timeElapsedInSeconds : timeElapsedInSeconds - lastSubTime;
   
-  // Determine button text based on game status
-  let startPauseButtonText = "Start";
+  // Determine button text based on game status using translations
+  let startPauseButtonText = t('timerOverlay.startButton', 'Start'); // Default to Start
   if (gameStatus === 'inProgress') {
-    startPauseButtonText = isTimerRunning ? "Pause" : "Resume";
+    startPauseButtonText = isTimerRunning ? t('timerOverlay.pauseButton', 'Pause') : t('timerOverlay.resumeButton', 'Resume');
   } else if (gameStatus === 'periodEnd') {
-    startPauseButtonText = currentPeriod < numberOfPeriods ? `Start Period ${currentPeriod + 1}` : "Game Over";
+    startPauseButtonText = currentPeriod < numberOfPeriods 
+      ? t('timerOverlay.startPeriodButton', 'Start Period {{period}}', { period: currentPeriod + 1 })
+      : t('timerOverlay.gameOverButton', 'Game Over');
   } else if (gameStatus === 'gameEnd') {
-    startPauseButtonText = "Game Over";
+    startPauseButtonText = t('timerOverlay.gameOverButton', 'Game Over');
   }
   
   // --- Handlers for Opponent Name Editing ---
@@ -267,7 +269,7 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
             disabled={timeElapsedInSeconds === 0 && gameStatus === 'notStarted'} // Only disable if truly at start
           >
             <FaUndo size={14}/>
-            <span>Reset</span>
+            <span>{t('timerControls.resetButton', 'Reset')}</span>
           </button>
         </div>
         
@@ -278,7 +280,7 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
             <div className="grid grid-cols-2 gap-x-4 gap-y-2 items-center">
               {/* Number of Periods */}
               <div className="flex items-center justify-center">
-                <span className={controlLabelStyle}>{t('timerOverlay.numPeriods', 'Periods')}</span>
+                <span className={controlLabelStyle}>{t('timerOverlay.periodsLabel', 'Periods')}</span>
                 <button 
                     onClick={() => onSetNumberOfPeriods(1)} 
                     className={`${controlButtonStyle} ${numberOfPeriods === 1 ? 'bg-indigo-600 border-2 border-indigo-400' : 'border-2 border-transparent'}`}>
@@ -292,7 +294,7 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
               </div>
               {/* Period Duration */}
               <div className="flex items-center justify-center">
-                <span className={controlLabelStyle}>{t('timerOverlay.periodDuration', 'Duration')}</span>
+                <span className={controlLabelStyle}>{t('timerOverlay.durationLabel', 'Duration')}</span>
                 <button
                   onClick={() => onSetPeriodDuration(periodDurationMinutes - 1)}
                   disabled={periodDurationMinutes <= 1}
@@ -314,7 +316,7 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
             {/* ONLY SHOW INTERVAL SETTINGS WHEN GAME NOT STARTED */}
             {gameStatus === 'notStarted' && (
               <div className="flex items-center justify-center">
-                <span className={controlLabelStyle}>{t('timerOverlay.intervalLabel', 'Sub Interval')}</span>
+                <span className={controlLabelStyle}>{t('timerOverlay.subIntervalLabel', 'Sub Interval')}</span>
                 <button
                   onClick={() => onSetSubInterval(subIntervalMinutes - 1)}
                   disabled={subIntervalMinutes <= 1}

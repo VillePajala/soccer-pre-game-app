@@ -167,7 +167,7 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName
       <div className="border-l border-slate-600 h-16 mx-2 self-center"></div>
 
       {/* Player Disks */}
-      <div className="flex items-center">
+      <div className="flex items-center space-x-1"> 
         {players.map(player => (
           <PlayerDisk
             key={player.id}
