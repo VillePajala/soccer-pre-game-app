@@ -8,7 +8,8 @@ import {
     HiOutlinePencil,
     HiOutlineTrash,
     HiOutlineShieldCheck, // Goalie icon
-    HiOutlineUserCircle // Default player icon (or choose another)
+    HiOutlineUserCircle, // Default player icon (or choose another)
+    HiOutlinePencilSquare // Icon for notes indicator
 } from 'react-icons/hi2';
 import { useTranslation } from 'react-i18next';
 
@@ -104,111 +105,108 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
           </button>
         </div>
 
-        {/* Player List / Content */}
-        <div className="p-4 overflow-y-auto flex-grow">
-          <table className="w-full text-left text-sm text-slate-300 table-fixed">
-            <thead className="sticky top-0 bg-slate-800">
-              <tr className="border-b border-slate-600">
-                <th className="py-2 px-2 w-12">{/* Icon/Goalie */}</th>
-                <th className="py-2 px-2 w-[25%]">{t('rosterSettingsModal.name', 'Name')}</th>
-                <th className="py-2 px-2 w-[10%] text-center">{t('rosterSettingsModal.jersey', '#')}</th>
-                <th className="py-2 px-2 w-[40%]">{t('rosterSettingsModal.notes', 'Notes')}</th>
-                <th className="py-2 px-2 w-[20%] text-right">{t('rosterSettingsModal.actions', 'Actions')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {availablePlayers.map((player) => (
-                <tr key={player.id} className={`border-b border-slate-700 last:border-b-0 ${editingPlayerId !== player.id ? 'hover:bg-slate-700/50' : ''}`}>
-                  {editingPlayerId === player.id ? (
-                    // Editing Row
-                    <>
-                      <td className="py-2 px-2 align-top">
-                        <button
-                            title={player.isGoalie ? t('rosterSettingsModal.unsetGoalie', 'Unset Goalie') : t('rosterSettingsModal.setGoalie', 'Set Goalie')}
-                            onClick={() => onToggleGoalie(player.id)}
-                            className={`p-1 rounded ${player.isGoalie ? 'text-emerald-400 bg-emerald-900/50' : 'text-slate-500 hover:text-slate-300'}`}
-                        >
-                          <HiOutlineShieldCheck className="w-5 h-5" />
-                        </button>
-                      </td>
-                      <td className="py-2 px-2 align-top">
-                        <input
-                          type="text"
-                          name="name"
-                          value={editFormData.name}
-                          onChange={handleInputChange}
-                          className="bg-slate-600 text-slate-100 rounded p-1 w-full text-sm"
-                          autoFocus // Focus name input on edit start
+        {/* Player List / Content - Changed to Div layout */}
+        <div className="p-4 overflow-y-auto flex-grow space-y-3">
+          {availablePlayers.map((player) => (
+            <div 
+              key={player.id}
+              className={`p-3 rounded-md border ${editingPlayerId === player.id ? 'bg-slate-700 border-slate-500' : 'bg-slate-800 border-slate-600 hover:border-slate-500'}`}
+            >
+              {editingPlayerId === player.id ? (
+                // --- Editing View --- 
+                <div className="flex flex-col space-y-2">
+                  <div className="flex items-center space-x-3">
+                    {/* Goalie Toggle */}
+                    <button
+                        title={player.isGoalie ? t('rosterSettingsModal.unsetGoalie', 'Unset Goalie') : t('rosterSettingsModal.setGoalie', 'Set Goalie')}
+                        onClick={() => onToggleGoalie(player.id)}
+                        className={`p-1.5 rounded ${player.isGoalie ? 'text-emerald-400 bg-emerald-900/50' : 'text-slate-500 hover:text-slate-300'}`}
+                    >
+                      <HiOutlineShieldCheck className="w-5 h-5" />
+                    </button>
+                    {/* Name Input */}
+                    <input
+                      type="text"
+                      name="name"
+                      value={editFormData.name}
+                      onChange={handleInputChange}
+                      className="flex-grow bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 text-sm"
+                      autoFocus
+                    />
+                    {/* Jersey # Input */}
+                    <input
+                      type="text"
+                      name="jerseyNumber"
+                      placeholder="#"
+                      value={editFormData.jerseyNumber}
+                      onChange={handleInputChange}
+                      className="bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 w-16 text-sm text-center"
+                      maxLength={3}
+                    />
+                  </div>
+                  {/* Notes Textarea (remains editable here for now) */}
+                  <textarea
+                      name="notes"
+                      placeholder={t('rosterSettingsModal.notesPlaceholder', 'Player notes...') || 'Player notes...'}
+                      value={editFormData.notes}
+                      onChange={handleInputChange}
+                      className="bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 w-full text-sm h-16 resize-none scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-700"
+                      rows={2}
+                    />
+                  {/* Action Buttons (Save/Cancel) */}
+                  <div className="flex justify-end space-x-2 pt-1">
+                    <button onClick={() => handleSaveEdit(player.id)} className="text-green-500 hover:text-green-400 p-1" title={t('common.save', 'Save') || 'Save'}>
+                      <HiOutlineCheck className="w-5 h-5" />
+                    </button>
+                    <button onClick={handleCancelEdit} className="text-red-500 hover:text-red-400 p-1" title={t('common.cancel', 'Cancel') || 'Cancel'}>
+                      <HiOutlineXMark className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                // --- Display View --- 
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3 flex-grow min-w-0">
+                    {/* Goalie Status Icon */} 
+                     <button 
+                        title={player.isGoalie ? t('rosterSettingsModal.unsetGoalie', 'Unset Goalie') : t('rosterSettingsModal.setGoalie', 'Set Goalie')}
+                        onClick={() => onToggleGoalie(player.id)} 
+                        className={`p-1.5 rounded ${player.isGoalie ? 'text-emerald-400' : 'text-slate-500 hover:text-slate-300'}`}
+                     >
+                       {player.isGoalie ? <HiOutlineShieldCheck className="w-5 h-5" /> : <HiOutlineUserCircle className="w-5 h-5" />}
+                     </button>
+                    {/* Name */}
+                    <span className="font-medium text-slate-100 truncate flex-shrink min-w-0" title={player.name}>
+                      {player.name}
+                    </span>
+                     {/* Jersey # */}
+                     <span className="text-slate-400 text-sm ml-auto mr-3">{player.jerseyNumber ? `#${player.jerseyNumber}` : ''}</span>
+                     {/* Notes Indicator */}
+                     {player.notes && (
+                         <HiOutlinePencilSquare 
+                            className="w-4 h-4 text-slate-500 flex-shrink-0"
+                            title={t('rosterSettingsModal.notesExist', 'Has notes') || 'Has notes'}
                         />
-                      </td>
-                      <td className="py-2 px-2 align-top">
-                        <input
-                          type="text" // Use text for flexibility (e.g., 00)
-                          name="jerseyNumber"
-                          value={editFormData.jerseyNumber}
-                          onChange={handleInputChange}
-                          className="bg-slate-600 text-slate-100 rounded p-1 w-full text-sm text-center"
-                          maxLength={3}
-                        />
-                      </td>
-                      <td className="py-2 px-2 align-top">
-                         <textarea
-                          name="notes"
-                          value={editFormData.notes}
-                          onChange={handleInputChange}
-                          className="bg-slate-600 text-slate-100 rounded p-1 w-full text-sm h-10 resize-none scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-700"
-                          rows={1}
-                        />
-                      </td>
-                      <td className="py-2 px-2 text-right align-top">
-                        <button onClick={() => handleSaveEdit(player.id)} className="text-green-500 hover:text-green-400 p-1 mr-1" title={t('common.save', 'Save') || 'Save'}>
-                          <HiOutlineCheck className="w-5 h-5" />
-                        </button>
-                        <button onClick={handleCancelEdit} className="text-red-500 hover:text-red-400 p-1" title={t('common.cancel', 'Cancel') || 'Cancel'}>
-                          <HiOutlineXMark className="w-5 h-5" />
-                        </button>
-                      </td>
-                    </>
-                  ) : (
-                    // Display Row
-                    <>
-                      <td className="py-2 px-2">
-                         <button
-                            title={player.isGoalie ? t('rosterSettingsModal.unsetGoalie', 'Unset Goalie') : t('rosterSettingsModal.setGoalie', 'Set Goalie')}
-                            onClick={() => onToggleGoalie(player.id)}
-                            className={`p-1 rounded ${player.isGoalie ? 'text-emerald-400' : 'text-slate-500 hover:text-slate-300'}`}
-                         >
-                           {player.isGoalie ? <HiOutlineShieldCheck className="w-5 h-5" /> : <HiOutlineUserCircle className="w-5 h-5" />}
-                         </button>
-                      </td>
-                      <td className="py-2 px-2 truncate" title={player.name}>{player.name}</td>
-                      <td className="py-2 px-2 text-center">{player.jerseyNumber}</td>
-                       <td className="py-2 px-2 truncate" title={player.notes}>{player.notes}</td>
-                      <td className="py-2 px-2 text-right">
-                        <button onClick={() => handleStartEdit(player)} className="text-blue-400 hover:text-blue-300 p-1 mr-1" title={t('common.edit', 'Edit') || 'Edit'}>
-                          <HiOutlinePencil className="w-5 h-5" />
-                        </button>
-                        <button onClick={() => onRemovePlayer(player.id)} className="text-red-500 hover:text-red-400 p-1" title={t('common.remove', 'Remove') || 'Remove'}>
-                          <HiOutlineTrash className="w-5 h-5" />
-                        </button>
-                      </td>
-                    </>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {/* TODO: Add \"Add Player\" button functionality */}
-           <div className="mt-4 flex justify-start">
-                <button 
-                    // onClick={handleAddPlayer} // Handler needed in page.tsx
-                    className="bg-green-600 hover:bg-green-500 text-white font-semibold py-1 px-3 rounded text-sm disabled:opacity-50"
-                    disabled // Enable when handler is implemented
-                    title={t('rosterSettingsModal.addPlayerTooltip', 'Add New Player (coming soon)')}
-                >
-                    {t('rosterSettingsModal.addPlayer', 'Add Player')}
-                </button>
+                     )}
+                  </div>
+                  {/* Action Buttons (Edit/Remove) */}
+                  <div className="flex items-center space-x-2 flex-shrink-0 ml-3">
+                    <button onClick={() => handleStartEdit(player)} className="text-blue-400 hover:text-blue-300 p-1" title={t('common.edit', 'Edit') || 'Edit'}>
+                      <HiOutlinePencil className="w-5 h-5" />
+                    </button>
+                    <button onClick={() => onRemovePlayer(player.id)} className="text-red-500 hover:text-red-400 p-1" title={t('common.remove', 'Remove') || 'Remove'}>
+                      <HiOutlineTrash className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
+          ))}
+          
+          {/* Add Player Button */}
+          <div className="mt-4 flex justify-start">
+             {/* ... Add player button ... */}
+          </div>
         </div>
 
         {/* Footer (Optional - Close button in header is usually sufficient) */}
