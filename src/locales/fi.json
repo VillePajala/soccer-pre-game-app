@@ -1,0 +1,50 @@
+{
+  "timerOverlay": {
+    "title": "Ajastimen Peittokuva",
+    "setInterval": "Aseta vaihdon pituus (minuutteina).",
+    "subAlerts": "Hälytykset näyttävät pelaajat, jotka pitäisi vaihtaa seuraavaksi.",
+    "confirmSub": "Vahvista vaihto napsauttamalla hälytystä.",
+    "playTimeHistory": "Peliaikahistoria näyttää kaikki vaihdot ja peliajat.",
+    "timerRunningWarning": "Ajastin on käynnissä. Pysäytä ajastin muokataksesi asetuksia."
+  },
+  "gameStatsModal": {
+    "title": "Ottelutilastot",
+    "gameInfoTitle": "Ottelun Tiedot",
+    "closeButton": "Sulje Tilastot",
+    "notesTitle": "Ottelun Muistiinpanot",
+    "editButton": "Muokkaa",
+    "saveNotesButton": "Tallenna",
+    "cancelNotesButton": "Peruuta",
+    "notesPlaceholder": "Lisää muistiinpanoja tähän peliin...",
+    "noNotes": "Muistiinpanoja ei ole vielä lisätty. Napsauta Muokkaa lisätäksesi muistiinpanoja tästä pelistä.",
+    "playerStatsTitle": "Pelaajatilastot",
+    "playerHeader": "PELAAJA",
+    "filterPlaceholder": "Suodata pelaajia...",
+    "goalsHeader": "M",
+    "assistsHeader": "S",
+    "totalHeader": "PTS",
+    "timeHeader": "Aika",
+    "fairPlayHeader": "RP",
+    "fairPlayTooltip": "Reilu Peli",
+    "fairPlayAwardNone": "- Ei valintaa -",
+    "actionsHeader": "Toiminnot",
+    "goalButtonTooltip": "Lisää Maali",
+    "assistButtonTooltip": "Lisää Syöttö",
+    "goalieStatsSectionTitle": "Maalivahtitilastot",
+    "savesHeader": "Torjunnat",
+    "goalsAgainstHeader": "Päästetyt Maalit",
+    "saveButtonTooltip": "Lisää Torjunta",
+    "goalAgainstButtonTooltip": "Lisää Päästetty Maali",
+    "noGoalieStats": "Ei maalivahteja valittuna tähän peliin.",
+    "exportJsonButton": "Lataa JSON",
+    "exportExcelButton": "Lataa EXCEL",
+    "resetStatsButton": "Nollaa",
+    "levelScoreButton": "Taso"
+  },
+  "loadGameModal": {
+    "title": "Lataa Peli"
+  },
+  "statsModal": {
+    "awardFairPlayLabel": "Reilun Pelin Palkinto:"
+  }
+} 

@@ -180,7 +180,80 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
           </button>
         </div>
 
-        {/* Content Area - Add scrollbar styles like GameStatsModal */}
+        {/* Add Player Section - Moved here, below header, outside scroll */}
+        <section className="p-4 border-b border-slate-700 flex-shrink-0">
+           {isAddingPlayer ? (
+            // --- Add Player Form - Apply styles ---
+            <div className="p-3 rounded-md bg-slate-700/50 border border-slate-600 space-y-2">
+               {/* Row 1: Icon, Name/Nickname, Jersey */}
+               <div className="flex items-start space-x-3">
+                  {/* Placeholder Icon */}
+                  <div className="p-1.5 rounded text-slate-500 mt-1">
+                      <HiOutlineUserCircle className="w-5 h-5" />
+                  </div>
+                  {/* Name & Nickname Inputs */}
+                  <div className="flex flex-col space-y-1 flex-grow">
+                      <input
+                        type="text"
+                        name="name"
+                        placeholder={t('rosterSettingsModal.playerNamePlaceholder', 'Player Name') || 'Player Name'}
+                        value={newPlayerData.name}
+                        onChange={handleNewPlayerInputChange}
+                        className="bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 text-sm w-full focus:ring-indigo-500 focus:border-indigo-500 outline-none" // Style match
+                        autoFocus
+                      />
+                      <input
+                        type="text"
+                        name="nickname"
+                        placeholder={t('rosterSettingsModal.nicknamePlaceholder', 'Nickname (for disc)') || 'Nickname (for disc)'}
+                        value={newPlayerData.nickname}
+                        onChange={handleNewPlayerInputChange}
+                        className="bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 text-sm w-full focus:ring-indigo-500 focus:border-indigo-500 outline-none" // Style match
+                      />
+                  </div>
+                  {/* Jersey Input */}
+                  <input
+                    type="text"
+                    name="jerseyNumber"
+                    placeholder="#"
+                    value={newPlayerData.jerseyNumber}
+                    onChange={handleNewPlayerInputChange}
+                    className="bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 w-16 text-sm text-center focus:ring-indigo-500 focus:border-indigo-500 outline-none" // Style match
+                    maxLength={3}
+                  />
+                </div>
+                {/* Notes Textarea */}
+                <textarea
+                    name="notes"
+                    placeholder={t('rosterSettingsModal.notesPlaceholder', 'Player notes...') || 'Player notes...'}
+                    value={newPlayerData.notes}
+                    onChange={handleNewPlayerInputChange}
+                    className="bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 w-full text-sm h-16 resize-none scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-700 focus:ring-indigo-500 focus:border-indigo-500 outline-none" // Style match
+                    rows={2}
+                  />
+                {/* Action Buttons (Save/Cancel) - Use Icons */}
+                <div className="flex justify-end space-x-2 pt-1">
+                  <button onClick={handleAddNewPlayer} className="text-green-500 hover:text-green-400 p-1.5 rounded hover:bg-slate-600" title={t('common.save', 'Save') || 'Save'}>
+                    <HiOutlineCheck className="w-5 h-5" />
+                  </button>
+                  <button onClick={handleCancelAddPlayer} className="text-red-500 hover:text-red-400 p-1.5 rounded hover:bg-slate-600" title={t('common.cancel', 'Cancel') || 'Cancel'}>
+                    <HiOutlineXMark className="w-5 h-5" />
+                  </button>
+                </div>
+            </div>
+          ) : (
+            // --- Add Player Button - Apply button styling ---
+            <button
+              onClick={() => { setIsAddingPlayer(true); setEditingPlayerId(null); }}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 rounded transition duration-150 ease-in-out disabled:opacity-50 text-sm" // Style like GameStatsModal buttons
+              disabled={!!editingPlayerId}
+            >
+              {t('rosterSettingsModal.addPlayerButton', 'Add Player')}
+            </button>
+          )}
+        </section>
+
+        {/* Content Area (Scrollable Player List) - Starts below Add Player section */}
         <div className="p-4 overflow-y-auto flex-grow space-y-3 scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-700 pr-2">
           {/* Wrap Existing Player List in a section similar to GameStatsModal */}
           <section className="bg-slate-700/50 p-4 rounded-md">
@@ -360,81 +433,18 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                 ))}
              </div>
           </section>
-
-          {/* Add Player Section - Apply section styling */}
-          <section className="mt-4 pt-4 border-t border-slate-700">
-             <h3 className="text-lg font-semibold mb-3 text-yellow-300">{t('rosterSettingsModal.addNewPlayerTitle', 'Add New Player')}</h3>
-             {isAddingPlayer ? (
-              // --- Add Player Form - Apply styles --- 
-              <div className="p-3 rounded-md bg-slate-700/50 border border-slate-600 space-y-2">
-                 {/* Row 1: Icon, Name/Nickname, Jersey */}
-                 <div className="flex items-start space-x-3">
-                    {/* Placeholder Icon */}
-                    <div className="p-1.5 rounded text-slate-500 mt-1">
-                        <HiOutlineUserCircle className="w-5 h-5" />
-                    </div>
-                    {/* Name & Nickname Inputs */}
-                    <div className="flex flex-col space-y-1 flex-grow">
-                        <input
-                          type="text"
-                          name="name"
-                          placeholder={t('rosterSettingsModal.playerNamePlaceholder', 'Player Name') || 'Player Name'}
-                          value={newPlayerData.name}
-                          onChange={handleNewPlayerInputChange}
-                          className="bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 text-sm w-full focus:ring-indigo-500 focus:border-indigo-500 outline-none" // Style match
-                          autoFocus
-                        />
-                        <input
-                          type="text"
-                          name="nickname"
-                          placeholder={t('rosterSettingsModal.nicknamePlaceholder', 'Nickname (for disc)') || 'Nickname (for disc)'}
-                          value={newPlayerData.nickname}
-                          onChange={handleNewPlayerInputChange}
-                          className="bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 text-sm w-full focus:ring-indigo-500 focus:border-indigo-500 outline-none" // Style match
-                        />
-                    </div>
-                    {/* Jersey Input */}
-                    <input
-                      type="text"
-                      name="jerseyNumber"
-                      placeholder="#"
-                      value={newPlayerData.jerseyNumber}
-                      onChange={handleNewPlayerInputChange}
-                      className="bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 w-16 text-sm text-center focus:ring-indigo-500 focus:border-indigo-500 outline-none" // Style match
-                      maxLength={3}
-                    />
-                  </div>
-                  {/* Notes Textarea */}
-                  <textarea
-                      name="notes"
-                      placeholder={t('rosterSettingsModal.notesPlaceholder', 'Player notes...') || 'Player notes...'}
-                      value={newPlayerData.notes}
-                      onChange={handleNewPlayerInputChange}
-                      className="bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 w-full text-sm h-16 resize-none scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-700 focus:ring-indigo-500 focus:border-indigo-500 outline-none" // Style match
-                      rows={2}
-                    />
-                  {/* Action Buttons (Save/Cancel) - Use Icons */}
-                  <div className="flex justify-end space-x-2 pt-1">
-                    <button onClick={handleAddNewPlayer} className="text-green-500 hover:text-green-400 p-1.5 rounded hover:bg-slate-600" title={t('common.save', 'Save') || 'Save'}>
-                      <HiOutlineCheck className="w-5 h-5" />
-                    </button>
-                    <button onClick={handleCancelAddPlayer} className="text-red-500 hover:text-red-400 p-1.5 rounded hover:bg-slate-600" title={t('common.cancel', 'Cancel') || 'Cancel'}>
-                      <HiOutlineXMark className="w-5 h-5" />
-                    </button>
-                  </div>
-              </div>
-            ) : (
-              // --- Add Player Button - Apply button styling --- 
-              <button
-                onClick={() => { setIsAddingPlayer(true); setEditingPlayerId(null); }}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 rounded transition duration-150 ease-in-out disabled:opacity-50 text-sm" // Style like GameStatsModal buttons
-                disabled={!!editingPlayerId}
-              >
-                {t('rosterSettingsModal.addPlayerButton', 'Add Player')}
-              </button>
-            )}
-          </section>
         </div>
+
+        {/* Footer with Close Button */}
+        <div className="flex justify-center mt-4 pt-4 border-t border-slate-700 flex-shrink-0 p-4">
+          <button
+            onClick={onClose}
+            className="px-6 py-2 bg-slate-600 text-white rounded hover:bg-slate-500 transition duration-150 text-sm"
+          >
+            {t('common.closeButton', 'Sulje')}
+          </button>
+        </div>
+
       </div>
     </div>
   );

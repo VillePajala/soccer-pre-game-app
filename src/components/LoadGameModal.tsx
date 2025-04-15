@@ -74,14 +74,14 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-      <div className="bg-slate-800 rounded-lg shadow-xl p-5 w-full max-w-lg border border-slate-600 flex flex-col max-h-[80vh]">
+    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-start justify-center z-50 p-4">
+      <div className="bg-slate-800 rounded-lg shadow-xl p-5 w-full max-w-lg border border-slate-600 flex flex-col max-h-[calc(100vh-theme(space.8))] overflow-hidden min-h-[calc(100vh-theme(space.8))]">
         <h2 className="text-xl font-semibold mb-4 text-yellow-300 flex-shrink-0">
           {t('loadGameModal.title', 'Load Game')}
         </h2>
 
         <div 
-          className="flex-grow mb-4 pr-2"
+          className="flex-grow mb-4 pr-2 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-700/50"
         >
           {savedGameIds.length > 0 ? (
             <ul className="space-y-2">
@@ -89,7 +89,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                 <li key={gameId} className="relative flex items-center justify-between bg-slate-700/50 p-2 rounded-md">
                   <button 
                     onClick={() => { onLoad(gameId); onClose(); }}
-                    className="flex-grow text-left text-slate-100 truncate mr-2 p-1 rounded hover:bg-slate-600/50 focus:outline-none focus:ring-1 focus:ring-indigo-400" 
+                    className="flex-grow text-left text-slate-100 text-[0.8rem] mr-2 p-1 rounded hover:bg-slate-600/50 focus:outline-none focus:ring-1 focus:ring-indigo-400" 
                     title={`${t('loadGameModal.loadButtonTooltip', 'Load this game')}: ${gameId}`}
                   >
                     {gameId}

@@ -1,23 +1,34 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import HttpApi from 'i18next-http-backend';
+import fiTranslations from './locales/fi.json'; // Import fi translations directly
 
 // Generate a cache-busting version number
-const cacheVersion = new Date().getTime();
+// const cacheVersion = new Date().getTime();
 
 // Only initialize once
 if (!i18n.isInitialized) {
   i18n
-    .use(HttpApi) // Use backend to load translations
+    // Remove HttpApi use
+    // .use(HttpApi) 
     .use(initReactI18next) // passes i18n down to react-i18next
     .init({
       lng: "fi", // default language
-      fallbackLng: "en", // use en if detected lng is not available
-      ns: ['common'], // Define namespace(s)
-      defaultNS: 'common',
+      // Remove fallbackLng
+      // fallbackLng: "en", 
+      // Remove ns and defaultNS
+      // ns: ['common'], 
+      // defaultNS: 'common',
 
-      backend: {
-        loadPath: `/locales/{{lng}}/{{ns}}.json?v=${cacheVersion}`, // Path with cache busting
+      // Remove backend config
+      // backend: {
+      //   loadPath: `/locales/{{lng}}/{{ns}}.json?v=${cacheVersion}`,
+      // },
+
+      // Add resources directly
+      resources: {
+        fi: {
+          translation: fiTranslations // Use 'translation' as the default NS key
+        }
       },
 
       interpolation: {
