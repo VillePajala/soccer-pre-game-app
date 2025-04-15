@@ -2,8 +2,12 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Player, GameEvent } from '@/app/page'; // Import Player & GameEvent type
-import { FaHandPaper } from 'react-icons/fa'; // Re-import if needed, or choose another icon
-import { HiOutlineShieldCheck } from 'react-icons/hi2'; // Import icon for goalie toggle
+import {
+    HiOutlinePencil, // Keep pencil for edit button
+    HiOutlineShieldCheck, // Goalie icon
+    HiOutlineUserCircle, // Default player icon
+    HiOutlineTrophy // Trophy for top scorer
+} from 'react-icons/hi2';
 
 interface PlayerDiskProps {
   id: string;
@@ -44,6 +48,8 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(name);
   const inputRef = useRef<HTMLInputElement>(null);
+  const lastTapTimeRef = useRef<number>(0);
+  const [isTopScorer, setIsTopScorer] = useState(false);
   
   // Update editedName if the name prop changes (e.g., via undo/redo)
   useEffect(() => {
@@ -64,12 +70,6 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
     const assists = gameEvents.filter(event => event.type === 'goal' && event.assisterId === id).length;
     return { goals, assists };
   }, [gameEvents, id]);
-
-  const handleStartEditing = () => {
-    if (onRenamePlayer) {
-      setIsEditing(true);
-    }
-  };
 
   const handleFinishEditing = () => {
     if (isEditing) {
@@ -127,19 +127,11 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
     }
   };
 
-  // We might not need the onDragStart handler anymore if tap selection works
-  const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
-     if (onPlayerDragStartFromBar && !isEditing) {
-       console.log("HTML Drag Start on PlayerDisk", {id});
-       // Set data transfer - ensure this matches what SoccerField expects if using HTML D&D
-       const playerData = JSON.stringify({ id }); // Only need ID usually
-       e.dataTransfer.setData('application/json', playerData);
-       e.dataTransfer.effectAllowed = 'move';
-       // Set the dragging state via the provided handler
-       onPlayerDragStartFromBar({ id, name, color }); 
-     } else {
-       e.preventDefault(); // Prevent dragging if not applicable
-     }
+  // HTML Drag and Drop
+  const handleDragStart = () => {
+    if (!onPlayerDragStartFromBar) return;
+    const playerData = { id, name, color, isGoalie };
+    onPlayerDragStartFromBar(playerData);
   };
 
   // Conditional styling based on context (in bar or not)
@@ -152,14 +144,13 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
   const goalieFillColor = '#F97316'; // Orange-500
   const defaultFillColor = color || '#7E22CE'; // Existing default purple
   const defaultTextColor = 'text-white';
-  const goalieTextColor = 'text-purple-900'; // Dark purple text for goalie
 
   return (
     <div
       className={`relative ${diskSizeClasses} rounded-full flex flex-col items-center justify-center cursor-pointer shadow-lg m-2 transition-all duration-150 ease-in-out ${selectionRingClass}`}
       style={{ backgroundColor: isGoalie ? goalieFillColor : defaultFillColor }}
       draggable={isInBar && !isEditing}
-      onDragStart={handleDragStart} // Keep HTML drag start for now
+      onDragStart={handleDragStart}
       // Use simplified selection handlers
       onMouseDown={isInBar ? handleMouseDown : undefined}
       onTouchStart={isInBar ? handleTouchStart : undefined} 

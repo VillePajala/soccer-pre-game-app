@@ -35,7 +35,7 @@ export interface UseGameStateReturn {
     handleClearDrawings: () => void;
     handleAddOpponent: () => void;
     handleOpponentMove: (opponentId: string, relX: number, relY: number) => void;
-    handleOpponentMoveEnd: (opponentId: string) => void;
+    handleOpponentMoveEnd: () => void;
     handleOpponentRemove: (opponentId: string) => void;
     handleRenamePlayer: (playerId: string, newName: string) => void;
     handleToggleGoalie: (playerId: string) => void;
@@ -126,9 +126,8 @@ export function useGameState({ initialState, saveStateToHistory }: UseGameStateA
         );
     }, []); // No dependency on opponents needed for setter callback
 
-    const handleOpponentMoveEnd = useCallback((opponentId: string) => {
-        // Save final position to history
-        saveStateToHistory({ opponents }); // Save current state of opponents
+    const handleOpponentMoveEnd = useCallback(() => {
+        saveStateToHistory({ opponents }); // Just save the current opponents state
     }, [opponents, saveStateToHistory]);
 
     const handleOpponentRemove = useCallback((opponentId: string) => {
