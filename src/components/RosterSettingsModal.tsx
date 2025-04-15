@@ -7,7 +7,6 @@ import {
     HiOutlineCheck,
     HiOutlinePencil,
     HiOutlineTrash,
-    HiOutlineShieldCheck, // Goalie icon
     HiOutlineUserCircle, // Default player icon (or choose another)
     HiOutlinePencilSquare, // Icon for notes indicator
     HiOutlineEllipsisVertical // Icon for actions menu
@@ -25,6 +24,7 @@ interface RosterSettingsModalProps {
   onRemovePlayer: (playerId: string) => void;
   onAddPlayer: (playerData: { name: string; jerseyNumber: string; notes: string; nickname: string }) => void;
   onSetPlayerNickname: (playerId: string, nickname: string) => void;
+  onAwardFairPlayCard?: (playerId: string) => void;
 }
 
 const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
@@ -38,6 +38,7 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
   onRemovePlayer,
   onAddPlayer,
   onSetPlayerNickname,
+  onAwardFairPlayCard
 }) => {
   const { t } = useTranslation();
   const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
@@ -188,13 +189,25 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                 <div className="flex flex-col space-y-2">
                   {/* Updated Row: Goalie Button | Vertical Name/Nickname Stack | Jersey Input */}
                   <div className="flex items-start space-x-3"> {/* Changed to items-start for better alignment */} 
-                    {/* Goalie Toggle */}
+                    {/* Goalie Toggle - Changed to 'G' Badge */}
                     <button
                         title={player.isGoalie ? t('rosterSettingsModal.unsetGoalie', 'Unset Goalie') : t('rosterSettingsModal.setGoalie', 'Set Goalie')}
                         onClick={() => onToggleGoalie(player.id)}
-                        className={`p-1.5 rounded mt-1 ${player.isGoalie ? 'text-emerald-400 bg-emerald-900/50' : 'text-slate-500 hover:text-slate-300'}`}
+                        className={`p-1 rounded text-xs transition-all duration-150 flex-shrink-0 flex items-center justify-center mt-1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 ${ // Added focus styles
+                            player.isGoalie
+                                ? 'bg-amber-500 text-white shadow-md hover:bg-amber-600 focus:ring-amber-400' // Amber 'G' style
+                                : 'border border-slate-600 text-slate-400 hover:border-amber-500 hover:text-amber-500 focus:ring-amber-500' // Default style
+                        }`}
+                        style={{ minWidth: '24px', height: '24px' }} // Consistent size
                     >
-                      <HiOutlineShieldCheck className="w-5 h-5" />
+                      {/* Display G text instead of icon */}
+                      <span className={`font-bold text-[10px] leading-none ${ // Extra small font
+                        player.isGoalie
+                          ? 'text-white' // White text on amber card
+                          : 'text-amber-500 group-hover:text-amber-400' // Amber text on default
+                      }`}>
+                        G
+                      </span>
                     </button>
                     
                     {/* NEW: Name and Nickname Vertical Stack */}
@@ -251,74 +264,123 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                   </div>
                 </div>
               ) : (
-                 // --- Display View ---
-                 <div className="flex items-center justify-between">
-                   <div className="flex items-center space-x-3 flex-grow min-w-0 pr-4"> {/* Added pr-4 for spacing */} 
-                     {/* Goalie Status Icon */}
-                     <button 
+                <div className="flex items-center justify-between">
+                   {/* Left side: Icon, Name (Nickname removed from here) */}
+                   <div className="flex items-center space-x-3 flex-grow min-w-0 pr-2"> {/* Added pr-2 */}
+                     {/* Goalie Status Icon - Changed to 'G' Badge */}
+                     <button
                         title={player.isGoalie ? t('rosterSettingsModal.unsetGoalie', 'Unset Goalie') : t('rosterSettingsModal.setGoalie', 'Set Goalie')}
-                        onClick={() => onToggleGoalie(player.id)} 
-                        className={`p-1.5 rounded flex-shrink-0 ${player.isGoalie ? 'text-emerald-400' : 'text-slate-500 hover:text-slate-300'}`}
+                        onClick={() => onToggleGoalie(player.id)}
+                        className={`p-1 rounded text-xs transition-all duration-150 flex-shrink-0 flex items-center justify-center focus:outline-none ${ // Base styles
+                            player.isGoalie
+                                ? 'bg-amber-500 text-white shadow-sm' // Amber 'G' style
+                                : 'border border-slate-700 text-slate-500 opacity-60 hover:opacity-100 hover:border-amber-500 hover:text-amber-500' // Default dim style
+                        }`}
+                        style={{ minWidth: '20px', height: '20px' }} // Slightly smaller size for display view
                      >
-                       {player.isGoalie ? <HiOutlineShieldCheck className="w-5 h-5" /> : <HiOutlineUserCircle className="w-5 h-5" />}
+                        <span className={`font-bold text-[9px] leading-none ${ // Even smaller font
+                           player.isGoalie
+                           ? 'text-white'
+                           : 'text-amber-600' // Keep amber for default state text?
+                        }`}>
+                          G
+                        </span>
                      </button>
-                     {/* Name Display (Full name, smaller font, no nickname) */}
-                     <span className="text-sm font-medium text-slate-100 flex-shrink min-w-0 break-words" title={player.name}>
+                     {/* Name Display (Full name, smaller font) */}
+                     <span className="text-sm font-medium text-slate-100 flex-shrink min-w-0 break-words truncate" title={player.name}>
                        {player.name}
-                       {/* Nickname removed from display here */} 
                      </span>
-                     {/* Jersey # */}
-                     <span className="text-slate-400 text-sm ml-auto mr-1 flex-shrink-0">{player.jerseyNumber ? `#${player.jerseyNumber}` : ''}</span>
-                     {/* Notes Indicator */}
-                     {player.notes && (
-                         <HiOutlinePencilSquare 
-                            className="w-4 h-4 text-slate-500 flex-shrink-0"
-                            title={t('rosterSettingsModal.notesExist', 'Has notes') || 'Has notes'}
-                        />
-                     )}
                    </div>
-                   {/* NEW: Action Buttons Menu */}
-                   <div className="relative flex-shrink-0">
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation(); // Prevent card click if needed
-                          setActionsMenuPlayerId(actionsMenuPlayerId === player.id ? null : player.id);
-                        }}
-                        className="text-slate-400 hover:text-slate-100 p-1 rounded"
-                        title={t('rosterSettingsModal.actionsMenuTitle', 'Actions') || 'Actions'}
-                        disabled={isAddingPlayer || !!editingPlayerId}
-                       >
-                          <HiOutlineEllipsisVertical className="w-5 h-5" />
-                      </button>
 
-                      {/* Conditionally rendered Actions Menu Dropdown */} 
-                      {actionsMenuPlayerId === player.id && (
-                        <div 
-                          ref={actionsMenuRef} // Add ref for click outside detection
-                          className="absolute right-0 top-full mt-1 w-32 bg-slate-700 border border-slate-600 rounded-md shadow-lg z-10 py-1"
-                          onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside menu
-                        >
-                           <button 
-                              onClick={() => { handleStartEdit(player); setActionsMenuPlayerId(null); }} 
-                              className="flex items-center w-full px-3 py-1.5 text-sm text-blue-300 hover:bg-slate-600 disabled:opacity-50"
-                              disabled={isAddingPlayer || !!editingPlayerId}
-                            >
-                             <HiOutlinePencil className="w-4 h-4 mr-2" /> 
-                             {t('common.edit', 'Edit') || 'Edit'}
-                           </button>
-                           <button 
-                              onClick={() => { onRemovePlayer(player.id); setActionsMenuPlayerId(null); }} 
-                              className="flex items-center w-full px-3 py-1.5 text-sm text-red-400 hover:bg-slate-600 disabled:opacity-50"
-                              disabled={isAddingPlayer || !!editingPlayerId}
-                            >
-                             <HiOutlineTrash className="w-4 h-4 mr-2" />
-                             {t('common.remove', 'Remove') || 'Remove'}
-                           </button>
-                        </div>
-                      )}
+                   {/* Right side: Notes, Jersey, Fair Play, Actions */}
+                   <div className="flex items-center space-x-2 flex-shrink-0">
+                     {/* Player Notes Indicator */}
+                     {player.notes && (
+                       <HiOutlinePencilSquare title={t('rosterSettingsModal.hasNotes', 'Has Notes')} className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                     )}
+                     {/* Jersey # */}
+                     <span className="text-slate-400 text-sm mr-1 flex-shrink-0">{player.jerseyNumber ? `#${player.jerseyNumber}` : ''}</span>
+
+                     {/* Fair Play Award Icon --- UPDATED to Green Card --- */}
+                     {onAwardFairPlayCard && (
+                       <button
+                         onClick={(e) => { e.stopPropagation(); onAwardFairPlayCard(player.id); }}
+                         className={`p-1 rounded text-xs transition-all duration-150 flex-shrink-0 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 ${ // Added focus styles
+                           player.receivedFairPlayCard
+                             ? 'bg-emerald-500 text-white shadow-md hover:bg-emerald-600 focus:ring-emerald-400' // Green card style
+                             : 'border border-slate-600 text-slate-400 hover:border-emerald-500 hover:text-emerald-500 focus:ring-emerald-500' // Default style
+                         }`}
+                         style={{ minWidth: '24px', height: '24px' }} // Consistent size
+                         title={player.receivedFairPlayCard ? t('rosterSettingsModal.removeFairPlay', 'Remove Fair Play') : t('rosterSettingsModal.awardFairPlay', 'Award Fair Play Card')}
+                       >
+                         {/* Display FP text instead of icon */}
+                         <span className={`font-bold text-[10px] leading-none ${ // Extra small font, adjust color based on state
+                           player.receivedFairPlayCard
+                             ? 'text-white' // White text on green card
+                             : 'text-emerald-500 group-hover:text-emerald-400' // Green text on default, changes on hover via group-hover
+                         }`}>
+                           FP
+                         </span>
+                       </button>
+                     )}
+                     {/* ---------------------------------------------- */}
+
+                     {/* NEW: Action Buttons Menu */}
+                     <div className="relative flex-shrink-0">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent card click if needed
+                            setActionsMenuPlayerId(actionsMenuPlayerId === player.id ? null : player.id);
+                          }}
+                          className="text-slate-400 hover:text-slate-100 p-1 rounded"
+                          title={t('rosterSettingsModal.actionsMenuTitle', 'Actions') || 'Actions'}
+                          disabled={isAddingPlayer || !!editingPlayerId}
+                         >
+                            <HiOutlineEllipsisVertical className="w-5 h-5" />
+                        </button>
+
+                        {/* Conditionally rendered Actions Menu Dropdown */}
+                        {actionsMenuPlayerId === player.id && (
+                          <div
+                            ref={actionsMenuRef} // Add ref for click outside detection
+                            className="absolute right-0 top-full mt-1 w-32 bg-slate-700 border border-slate-600 rounded-md shadow-lg z-10 py-1"
+                            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside menu
+                          >
+                             <button
+                                onClick={() => { handleStartEdit(player); setActionsMenuPlayerId(null); }}
+                                className="flex items-center w-full px-3 py-1.5 text-sm text-blue-300 hover:bg-slate-600 disabled:opacity-50"
+                                disabled={isAddingPlayer || !!editingPlayerId}
+                              >
+                               <HiOutlinePencil className="w-4 h-4 mr-2" />
+                               {t('common.edit', 'Edit')}
+                             </button>
+
+                             {/* Toggle Goalie Action - ADDED BACK */}
+                             <button
+                                onClick={(e) => { e.stopPropagation(); onToggleGoalie(player.id); setActionsMenuPlayerId(null); }}
+                                className={`flex items-center w-full px-3 py-1.5 text-sm rounded transition-colors ${player.isGoalie ? 'text-amber-400 hover:bg-amber-900/30' : 'text-slate-300 hover:bg-slate-600'} disabled:opacity-50`}
+                                disabled={isAddingPlayer || !!editingPlayerId}
+                              >
+                                 {/* Text indicator for Goalie status */}
+                                 <span className={`w-4 mr-2 text-center font-bold text-[10px] ${player.isGoalie ? 'text-amber-400' : 'text-slate-500'}`}>{player.isGoalie ? 'G' : '-'}</span>
+                                 {player.isGoalie ? t('rosterSettingsModal.unsetGoalie', 'Unset Goalie') : t('rosterSettingsModal.setGoalie', 'Set Goalie')}
+                               </button>
+                             {/* END Toggle Goalie Action */}
+
+                             <button
+                                onClick={() => { onRemovePlayer(player.id); setActionsMenuPlayerId(null); }}
+                                className="flex items-center w-full px-3 py-1.5 text-sm text-red-400 hover:bg-slate-600 disabled:opacity-50"
+                                disabled={isAddingPlayer || !!editingPlayerId}
+                              >
+                               <HiOutlineTrash className="w-4 h-4 mr-2" />
+                               {t('common.remove', 'Remove')}
+                             </button>
+                          </div>
+                        )}
+                     </div>
                    </div>
                  </div>
-              )}
+                 )}
             </div>
           ))}
 

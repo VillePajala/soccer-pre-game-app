@@ -27,6 +27,7 @@ export interface Player {
   isGoalie?: boolean; // Optional: Is this player the goalie?
   jerseyNumber?: string; // Optional: Player's jersey number
   notes?: string; // Optional: Notes specific to this player
+  receivedFairPlayCard?: boolean; // Optional: Did this player receive the fair play card?
 }
 
 // Define the Point type for drawing - Use relative coordinates
@@ -1223,19 +1224,22 @@ export default function Home() {
 
         // --- Section: Player Stats ---
         allRows.push('Player Stats');
-        allRows.push(`${escapeCsvField('Player')}${DELIMITER}${escapeCsvField('Goals')}${DELIMITER}${escapeCsvField('Assists')}${DELIMITER}${escapeCsvField('Points')}`);
+        // Add Fair Play column header
+        allRows.push(`${escapeCsvField('Player')}${DELIMITER}${escapeCsvField('Goals')}${DELIMITER}${escapeCsvField('Assists')}${DELIMITER}${escapeCsvField('Points')}${DELIMITER}${escapeCsvField('Fair Play')}`);
         const playerStats = game.availablePlayers?.map(player => {
           const goals = game.gameEvents?.filter(e => e.type === 'goal' && e.scorerId === player.id).length || 0;
           const assists = game.gameEvents?.filter(e => e.type === 'goal' && e.assisterId === player.id).length || 0;
           const totalScore = goals + assists;
-          return { name: player.name, goals, assists, totalScore };
+          // Include fairPlay status
+          return { name: player.name, goals, assists, totalScore, fairPlay: player.receivedFairPlayCard };
         })
-        .filter(p => p.totalScore > 0) // Only include players with stats
+        // REMOVED filter: .filter(p => p.totalScore > 0) // Show all players now
         .sort((a, b) => b.totalScore - a.totalScore || b.goals - a.goals); // Sort by points, then goals
         
         if (playerStats && playerStats.length > 0) {
             playerStats.forEach(player => {
-                allRows.push(`${escapeCsvField(player.name)}${DELIMITER}${escapeCsvField(player.goals)}${DELIMITER}${escapeCsvField(player.assists)}${DELIMITER}${escapeCsvField(player.totalScore)}`);
+                // Add fairPlay data to the row
+                allRows.push(`${escapeCsvField(player.name)}${DELIMITER}${escapeCsvField(player.goals)}${DELIMITER}${escapeCsvField(player.assists)}${DELIMITER}${escapeCsvField(player.totalScore)}${DELIMITER}${escapeCsvField(player.fairPlay ? 'Yes' : 'No')}`);
             });
         } else {
             allRows.push('No player stats recorded');
@@ -1346,19 +1350,22 @@ export default function Home() {
       // --- Section: Player Stats ---
       // (Reusing logic similar to handleExportAllGamesExcel)
       rows.push('Player Stats');
-      rows.push(`${escapeCsvField('Player')}${DELIMITER}${escapeCsvField('Goals')}${DELIMITER}${escapeCsvField('Assists')}${DELIMITER}${escapeCsvField('Points')}`);
+      // Add Fair Play column header
+      rows.push(`${escapeCsvField('Player')}${DELIMITER}${escapeCsvField('Goals')}${DELIMITER}${escapeCsvField('Assists')}${DELIMITER}${escapeCsvField('Points')}${DELIMITER}${escapeCsvField('Fair Play')}`);
       const playerStats = game.availablePlayers?.map(player => {
         const goals = game.gameEvents?.filter(e => e.type === 'goal' && e.scorerId === player.id).length || 0;
         const assists = game.gameEvents?.filter(e => e.type === 'goal' && e.assisterId === player.id).length || 0;
         const totalScore = goals + assists;
-        return { name: player.name, goals, assists, totalScore };
+        // Include fairPlay status
+        return { name: player.name, goals, assists, totalScore, fairPlay: player.receivedFairPlayCard };
       })
-      .filter(p => p.totalScore > 0)
+      // REMOVED filter: .filter(p => p.totalScore > 0) // Show all players now
       .sort((a, b) => b.totalScore - a.totalScore || b.goals - a.goals);
       
       if (playerStats && playerStats.length > 0) {
         playerStats.forEach(player => {
-            rows.push(`${escapeCsvField(player.name)}${DELIMITER}${escapeCsvField(player.goals)}${DELIMITER}${escapeCsvField(player.assists)}${DELIMITER}${escapeCsvField(player.totalScore)}`);
+            // Add fairPlay data to the row
+            rows.push(`${escapeCsvField(player.name)}${DELIMITER}${escapeCsvField(player.goals)}${DELIMITER}${escapeCsvField(player.assists)}${DELIMITER}${escapeCsvField(player.totalScore)}${DELIMITER}${escapeCsvField(player.fairPlay ? 'Yes' : 'No')}`);
         });
       } else {
         rows.push('No player stats recorded');
@@ -1545,6 +1552,24 @@ export default function Home() {
     setPlayersOnField(updatedOnField);
     saveStateToHistory({ availablePlayers: updatedAvailable, playersOnField: updatedOnField });
     console.log(`Set nickname for ${playerId} to ${nickname}`);
+  }, [availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField, saveStateToHistory]);
+
+  // --- NEW: Handler to Award Fair Play Card ---
+  const handleAwardFairPlayCard = useCallback((playerId: string) => {
+    const updatedAvailable = availablePlayers.map(p => ({
+      ...p,
+      receivedFairPlayCard: p.id === playerId ? !p.receivedFairPlayCard : false // Toggle for selected, false for others
+    }));
+    const updatedOnField = playersOnField.map(p => ({
+      ...p,
+      receivedFairPlayCard: p.id === playerId ? !p.receivedFairPlayCard : false // Sync state
+    }));
+
+    setAvailablePlayers(updatedAvailable);
+    setPlayersOnField(updatedOnField);
+    saveStateToHistory({ availablePlayers: updatedAvailable, playersOnField: updatedOnField });
+    const awardedPlayer = updatedAvailable.find(p => p.id === playerId);
+    console.log(`Toggled Fair Play Card for ${awardedPlayer?.name ?? playerId}. Awarded: ${awardedPlayer?.receivedFairPlayCard}`);
   }, [availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField, saveStateToHistory]);
 
   // --- Handler to Add a Player to the Roster (Updated) ---
@@ -1750,6 +1775,7 @@ export default function Home() {
           onRemovePlayer={handleRemovePlayerFromRoster}
           onAddPlayer={handleAddPlayer} 
           onSetPlayerNickname={handleSetPlayerNickname} // Pass new handler
+          onAwardFairPlayCard={handleAwardFairPlayCard}
         />
 
       </div>

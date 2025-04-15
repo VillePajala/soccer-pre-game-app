@@ -4,7 +4,9 @@ import React, { useMemo, useState, useEffect, useRef } from 'react'; // Added us
 import { useTranslation } from 'react-i18next';
 import { Player, GameEvent } from '@/app/page';
 import { FaSort, FaSortUp, FaSortDown, FaEdit, FaSave, FaTimes } from 'react-icons/fa'; // Import sort icons and new icons
-import { HiOutlineArrowTopRightOnSquare, HiOutlineDocumentArrowDown } from 'react-icons/hi2'; // Import external link icon and new icon
+import {
+  HiOutlineArrowTopRightOnSquare, HiOutlineDocumentArrowDown // Remove HiOutlineShieldCheck if not used elsewhere
+} from 'react-icons/hi2'; // Import external link icon and new icon
 
 // Define the type for sortable columns
 type SortableColumn = 'name' | 'goals' | 'assists' | 'totalScore';
@@ -768,21 +770,21 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                      </div>
                   </th>
                   {/* Goals Header (Sortable) */}
-                  <th scope="col" className="px-4 py-2 text-center text-xs font-medium text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('goals')}>
+                  <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-600/50 w-12" onClick={() => handleSort('goals')}>
                      <div className="flex items-center justify-center">
                        {t('gameStatsModal.goalsHeader', 'G')}
                        {sortColumn === 'goals' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1"/> : <FaSortDown className="ml-1"/>) : <FaSort className="ml-1 opacity-30"/>}
                      </div>
                   </th>
                   {/* Assists Header (Sortable) */}
-                  <th scope="col" className="px-4 py-2 text-center text-xs font-medium text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('assists')}>
+                  <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-600/50 w-12" onClick={() => handleSort('assists')}>
                      <div className="flex items-center justify-center">
                        {t('gameStatsModal.assistsHeader', 'A')}
                        {sortColumn === 'assists' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1"/> : <FaSortDown className="ml-1"/>) : <FaSort className="ml-1 opacity-30"/>}
                      </div>
                   </th>
                   {/* Total Header (Sortable) */}
-                  <th scope="col" className="px-4 py-2 text-center text-xs font-medium text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('totalScore')}>
+                  <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-600/50 w-12" onClick={() => handleSort('totalScore')}>
                      <div className="flex items-center justify-center">
                        {t('gameStatsModal.totalHeader', 'Pts')}
                        {sortColumn === 'totalScore' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1"/> : <FaSortDown className="ml-1"/>) : <FaSort className="ml-1 opacity-30"/>}
@@ -792,16 +794,39 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                 <tbody className="bg-slate-800 divide-y divide-slate-700">
                   {filteredAndSortedPlayerStats.length > 0 ? (
                      filteredAndSortedPlayerStats.map((player) => (
-                      <tr key={player.id} className="hover:bg-slate-700/30">
-                        <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-slate-100">{player.name}</td>
-                        <td className="px-4 py-2 whitespace-nowrap text-sm text-slate-300 text-center">{player.goals}</td>
-                        <td className="px-4 py-2 whitespace-nowrap text-sm text-slate-300 text-center">{player.assists}</td>
-                        <td className="px-4 py-2 whitespace-nowrap text-sm text-slate-300 text-center font-semibold">{player.totalScore}</td>
+                      <tr key={player.id} className="border-b border-slate-700 hover:bg-slate-700/50">
+                        {/* Player Name Cell - Same settings */}
+                        <td className="py-1 px-3 text-xs text-slate-200 whitespace-nowrap">
+                          {player.name}
+                          {/* Goalie indicator */}
+                          {player.isGoalie && (
+                            <span
+                              className="inline-block ml-1.5 px-1 py-0.5 text-[9px] font-bold leading-none bg-amber-500 text-white rounded-sm align-middle"
+                              title={t('statsModal.goalieIndicator', 'Goalie')}
+                            >
+                              G
+                            </span>
+                          )}
+                          {/* Fair Play indicator */}
+                          {player.receivedFairPlayCard && (
+                            <span
+                              className="inline-block ml-1.5 px-1 py-0.5 text-[9px] font-bold leading-none bg-emerald-500 text-white rounded-sm align-middle"
+                              title={t('statsModal.fairPlayAwarded', 'Fair Play Award')}
+                            >
+                              FP
+                            </span>
+                          )}
+                        </td>
+                        {/* Stats Cells - Same smaller font/padding */}
+                        <td className="py-1 px-3 text-xs text-slate-300 text-center">{player.goals}</td>
+                        <td className="py-1 px-3 text-xs text-slate-300 text-center">{player.assists}</td>
+                        <td className="py-1 px-3 text-xs text-slate-300 text-center font-semibold">{player.totalScore}</td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={4} className="px-4 py-4 text-center text-sm text-slate-400 italic">
+                      {/* No results row - Smaller font/padding */}
+                      <td colSpan={4} className="px-3 py-2 text-center text-xs text-slate-400 italic">
                         {filterText ? t('gameStatsModal.noPlayersMatchFilter', 'No players match filter') : t('gameStatsModal.noPlayersYet', 'No players available')}
                       </td>
                     </tr>
