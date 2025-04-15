@@ -38,6 +38,7 @@ interface GameStatsModalProps {
   onUpdateGameEvent?: (updatedEvent: GameEvent) => void; // Add handler for updating events
   onResetGameStats?: () => void; // Add handler for resetting stats
   onAwardFairPlayCard?: (playerId: string) => void; // Add Fair Play handler prop
+  selectedPlayerIds: string[]; // Add prop for selected player IDs
 }
 
 // Helper to format time from seconds to MM:SS
@@ -66,6 +67,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   onUpdateGameEvent = () => { console.warn('onUpdateGameEvent handler not provided'); }, // Default handler
   onResetGameStats = () => { console.warn('onResetGameStats handler not provided'); }, // Default handler
   onAwardFairPlayCard, // Destructure the new prop
+  selectedPlayerIds, // Destructure selected IDs
 }) => {
   const { t } = useTranslation();
 
@@ -153,8 +155,11 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   // --- Calculations ---
   // Calculate and filter/sort player stats
   const filteredAndSortedPlayerStats = useMemo(() => {
-    // 1. Calculate initial stats for all available players
-    const allPlayerStats: PlayerStatRow[] = availablePlayers.map(player => {
+    // 0. Filter availablePlayers to only include those selected for the match
+    const selectedPlayers = availablePlayers.filter(p => selectedPlayerIds.includes(p.id));
+
+    // 1. Calculate initial stats for selected players
+    const allPlayerStats: PlayerStatRow[] = selectedPlayers.map(player => {
       const goals = gameEvents.filter(e => e.type === 'goal' && e.scorerId === player.id).length;
       const assists = gameEvents.filter(e => e.type === 'goal' && e.assisterId === player.id).length;
       const totalScore = goals + assists;
@@ -189,7 +194,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
     });
 
     return sortedStats;
-  }, [availablePlayers, gameEvents, filterText, sortColumn, sortDirection]);
+  }, [availablePlayers, selectedPlayerIds, gameEvents, filterText, sortColumn, sortDirection]);
 
   // Filter and sort goal events by time
   const sortedGoals = useMemo(() => {
@@ -535,7 +540,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
       onClick={onClose} // Close modal if backdrop is clicked
     >
       <div
-        className="bg-slate-800 rounded-lg p-6 max-w-2xl w-full text-slate-200 shadow-xl relative max-h-[85vh] flex flex-col"
+        className="bg-slate-800 rounded-lg p-6 max-w-2xl w-full text-slate-200 shadow-xl relative flex flex-col border border-slate-600 overflow-hidden max-h-[calc(100vh-theme(space.8))]"
         onClick={(e) => e.stopPropagation()} // Prevent modal close when clicking inside
       >
         <button
@@ -760,15 +765,17 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                 </label>
                 <select
                   id="fairPlaySelect"
-                  value={availablePlayers.find(p => p.receivedFairPlayCard)?.id || ''} // Find awarded player ID or default to empty string
-                  onChange={(e) => onAwardFairPlayCard(e.target.value)} // Call handler with selected player ID (or empty string for "None")
+                  value={availablePlayers.find(p => selectedPlayerIds.includes(p.id) && p.receivedFairPlayCard)?.id || ''}
+                  onChange={(e) => onAwardFairPlayCard(e.target.value)}
                   className="block w-full px-3 py-1.5 bg-slate-600 border border-slate-500 rounded-md shadow-sm text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 >
                   <option value="">{t('statsModal.awardFairPlayNone', '- None -')}</option>
-                  {availablePlayers.map(player => (
-                    <option key={player.id} value={player.id}>
-                      {player.name}
-                    </option>
+                  {availablePlayers
+                    .filter(player => selectedPlayerIds.includes(player.id))
+                    .map(player => (
+                      <option key={player.id} value={player.id}>
+                        {player.name}
+                      </option>
                   ))}
                 </select>
               </div>

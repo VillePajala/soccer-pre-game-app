@@ -69,8 +69,8 @@ const SaveGameModal: React.FC<SaveGameModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-      <div className="bg-slate-800 rounded-lg shadow-xl p-5 w-full max-w-md border border-slate-600">
+    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-start justify-center z-50 p-4">
+      <div className="bg-slate-800 rounded-lg shadow-xl p-5 w-full max-w-md border border-slate-600 max-h-[calc(100vh-theme(space.8))] overflow-hidden min-h-[calc(100vh-theme(space.8))] flex flex-col">
         <h2 className="text-xl font-semibold mb-4 text-yellow-300">
           {t('saveGameModal.title', 'Save Game As...')}
         </h2>
@@ -87,11 +87,11 @@ const SaveGameModal: React.FC<SaveGameModalProps> = ({
             onChange={(e) => setGameName(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={t('saveGameModal.placeholder', 'e.g., vs Lapa FC (Home)') ?? undefined}
-            className="w-full px-3 py-2 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            className="w-full px-3 py-2 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
           />
         </div>
 
-        <div className="flex justify-end space-x-3">
+        <div className="flex justify-center space-x-3 mt-auto">
           <button
             onClick={onClose}
             className="px-4 py-2 bg-slate-600 text-white rounded hover:bg-slate-500 transition duration-150 text-sm"

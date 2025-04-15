@@ -18,7 +18,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, onClose }
       onClick={onClose}
     >
       <div 
-        className="bg-slate-800 rounded-lg p-6 max-w-lg w-full text-slate-200 shadow-xl relative max-h-[80vh] flex flex-col"
+        className="bg-slate-800 rounded-lg p-6 max-w-lg w-full text-slate-200 shadow-xl relative flex flex-col border border-slate-600 overflow-hidden max-h-[calc(100vh-theme(space.8))] min-h-[calc(100vh-theme(space.8))] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <button 
@@ -89,6 +89,15 @@ const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, onClose }
         </div>
 
         <p className="text-sm text-slate-400 mt-6 pt-4 border-t border-slate-700">{t('instructionsModal.closeText')}</p>
+
+        <div className="flex justify-center mt-4 flex-shrink-0"> 
+          <button
+            onClick={onClose}
+            className="px-6 py-2 bg-slate-600 text-white rounded hover:bg-slate-500 transition duration-150 text-sm"
+          >
+            {t('common.closeButton', 'Sulje')}
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -74,6 +74,7 @@ export interface AppState {
   periodDurationMinutes: number;
   currentPeriod: number; // 1 or 2
   gameStatus: 'notStarted' | 'inProgress' | 'periodEnd' | 'gameEnd';
+  selectedPlayerIds: string[]; // IDs of players selected for the current match
 }
 
 // Placeholder data - Initialize new fields
@@ -110,6 +111,8 @@ const initialState: AppState = {
   periodDurationMinutes: 10, // Default to 10 minutes
   currentPeriod: 1,
   gameStatus: 'notStarted',
+  // Initialize selectedPlayerIds with all players from initial data
+  selectedPlayerIds: initialAvailablePlayersData.map(p => p.id),
 };
 
 // Define new localStorage keys
@@ -199,6 +202,7 @@ export default function Home() {
   const [periodDurationMinutes, setPeriodDurationMinutes] = useState<number>(initialState.periodDurationMinutes);
   const [currentPeriod, setCurrentPeriod] = useState<number>(initialState.currentPeriod);
   const [gameStatus, setGameStatus] = useState<'notStarted' | 'inProgress' | 'periodEnd' | 'gameEnd'>(initialState.gameStatus);
+  const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>(initialState.selectedPlayerIds); // Add state for selected player IDs
   // ... Timer state ...
   // ... Modal states ...
   // ... UI/Interaction states ...
@@ -356,6 +360,12 @@ export default function Home() {
       setPeriodDurationMinutes(stateToApply.periodDurationMinutes || 10);
       setCurrentPeriod(stateToApply.currentPeriod || 1);
       setGameStatus(stateToApply.gameStatus || 'notStarted');
+      // ADDED: Load selected players, defaulting to all if empty/missing
+      setSelectedPlayerIds(
+        stateToApply.selectedPlayerIds && stateToApply.selectedPlayerIds.length > 0
+          ? stateToApply.selectedPlayerIds
+          : stateToApply.availablePlayers.map(p => p.id) // Default to all players in loaded state
+      );
       // Reset timer state when loading any game state initially?
       setTimeElapsedInSeconds(0);
       setIsTimerRunning(false);
@@ -399,6 +409,7 @@ export default function Home() {
           periodDurationMinutes,
           currentPeriod,
           gameStatus,
+          selectedPlayerIds: initialState.selectedPlayerIds, // Include selectedPlayerIds
         };
 
         // 2. Read the *current* collection from localStorage
@@ -431,7 +442,9 @@ export default function Home() {
   }, [isLoaded, currentGameId, 
       playersOnField, opponents, drawings, availablePlayers, showPlayerNames, teamName,
       gameEvents, opponentName, gameDate, homeScore, awayScore, gameNotes,
-      numberOfPeriods, periodDurationMinutes, currentPeriod, gameStatus]);
+      numberOfPeriods, periodDurationMinutes, currentPeriod, gameStatus,
+      selectedPlayerIds // Add as dependency for saving
+    ]);
 
   // --- Fullscreen API Logic ---
   const handleFullscreenChange = useCallback(() => {
@@ -897,6 +910,8 @@ export default function Home() {
       availablePlayers: preservedAvailablePlayers,
       opponentName: newOpponentName.trim() || t('gameStatsModal.opponentPlaceholder', 'Opponent'),
       gameDate: newGameDate || new Date().toISOString().split('T')[0],
+      // Ensure reset in history state includes ALL players selected
+      selectedPlayerIds: preservedAvailablePlayers.map(p => p.id),
     };
     
     // Reset session history using the new initial state
@@ -1078,6 +1093,7 @@ export default function Home() {
         periodDurationMinutes,
         currentPeriod,
         gameStatus,
+        selectedPlayerIds: initialState.selectedPlayerIds, // Include selectedPlayerIds
       };
 
       // 2. Update the savedGames state and localStorage
@@ -1521,6 +1537,12 @@ export default function Home() {
     setPeriodDurationMinutes(stateToApply.periodDurationMinutes || 10);
     setCurrentPeriod(stateToApply.currentPeriod || 1);
     setGameStatus(stateToApply.gameStatus || 'notStarted');
+    // Load selected players, defaulting to all if empty/missing
+    setSelectedPlayerIds(
+      stateToApply.selectedPlayerIds && stateToApply.selectedPlayerIds.length > 0
+        ? stateToApply.selectedPlayerIds
+        : stateToApply.availablePlayers.map(p => p.id) // Default to all players in loaded state
+    );
     
     // Reset non-persistent state
     setHistory([stateToApply]); 
@@ -1634,6 +1656,24 @@ export default function Home() {
     }
   }, [availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField, saveStateToHistory]);
 
+  // --- NEW: Handler to Toggle Player Selection for Current Match ---
+  const handleTogglePlayerSelection = useCallback((playerId: string) => {
+    const currentIndex = selectedPlayerIds.indexOf(playerId);
+    let newSelectedIds: string[];
+
+    if (currentIndex === -1) {
+      // Add player to selection
+      newSelectedIds = [...selectedPlayerIds, playerId];
+    } else {
+      // Remove player from selection
+      newSelectedIds = selectedPlayerIds.filter(id => id !== playerId);
+    }
+
+    setSelectedPlayerIds(newSelectedIds);
+    saveStateToHistory({ selectedPlayerIds: newSelectedIds }); // Save selection to history
+    console.log(`Updated selected players: ${newSelectedIds.length} players`);
+  }, [selectedPlayerIds, saveStateToHistory]); // Dependencies
+
   // --- Handler to Add a Player to the Roster (Updated) ---
   const handleAddPlayer = useCallback((playerData: { name: string; jerseyNumber: string; notes: string; nickname: string }) => {
     const newPlayer: Player = {
@@ -1650,7 +1690,7 @@ export default function Home() {
     setAvailablePlayers(updatedAvailable); // Update state hook
     saveStateToHistory({ availablePlayers: updatedAvailable }); // Save to session history
     console.log(`Added new player: ${newPlayer.name} (ID: ${newPlayer.id})`);
-  }, [availablePlayers, setAvailablePlayers, saveStateToHistory]); // Dependencies
+  }, [availablePlayers, setAvailablePlayers, saveStateToHistory]);
 
   // Render null or a loading indicator until state is loaded
   if (!isLoaded) {
@@ -1665,9 +1705,9 @@ export default function Home() {
 
       {/* Replace Suspense with a regular div */}
       <div className="flex flex-col h-full">
-      {/* Top Player Bar */}
+      {/* Top Player Bar - Filter players based on selection */}
       <PlayerBar
-        players={availablePlayers}
+        players={availablePlayers.filter(p => selectedPlayerIds.includes(p.id))} // Pass only selected players
         onRenamePlayer={handleRenamePlayer} // Pass the handler from the hook
         teamName={teamName}
         onTeamNameChange={handleTeamNameChange}
@@ -1797,6 +1837,7 @@ export default function Home() {
           onUpdateGameEvent={handleUpdateGameEvent}
           onResetGameStats={handleResetStatsOnly} // Pass the new handler
           onAwardFairPlayCard={handleAwardFairPlayCard} // Pass Fair Play handler
+          selectedPlayerIds={selectedPlayerIds} // Pass selected player IDs
         />
         {/* Save Game Modal */}
         <SaveGameModal
@@ -1839,6 +1880,9 @@ export default function Home() {
           onAddPlayer={handleAddPlayer} 
           onSetPlayerNickname={handleSetPlayerNickname} // Pass new handler
           onAwardFairPlayCard={handleAwardFairPlayCard}
+          // Pass selection state and handler
+          selectedPlayerIds={selectedPlayerIds}
+          onTogglePlayerSelection={handleTogglePlayerSelection}
         />
 
       </div>
