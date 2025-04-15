@@ -273,22 +273,19 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
       context.shadowBlur = 5;
       context.shadowOffsetX = 1;
       context.shadowOffsetY = 2;
-      context.fillStyle = player.color || '#7E22CE';
+      // Set fill color based on goalie status
+      context.fillStyle = player.isGoalie ? '#F97316' : (player.color || '#7E22CE'); // Use orange for goalie
       context.fill();
       context.restore();
 
-      // Set border based on goalie status
-      if (player.isGoalie) {
-        context.strokeStyle = '#38BDF8'; // Goalie color (sky-500)
-        context.lineWidth = 3; // Thicker border for goalie
-      } else {
-        context.strokeStyle = '#581C87'; // Default border color (purple-900)
-        context.lineWidth = 1.5; // Default border width
-      }
-      context.stroke(); // Draw the border
+      // Draw default border (thin purple)
+      context.strokeStyle = '#581C87'; // Default border color (purple-900)
+      context.lineWidth = 1.5; // Default border width
+      context.stroke(); 
 
-      // Draw player name (existing code)
+      // Draw player name
       if (showPlayerNames) {
+        // Always use default text color (yellow on field)
         context.fillStyle = '#FDE047';
         context.font = '600 11px Inter, sans-serif';
         context.textAlign = 'center';

@@ -214,8 +214,10 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
   const inputPaddingClasses = isInBar ? "px-1 py-0.5" : "px-2 py-1";
   const inputWidthClass = isInBar ? "w-14" : "w-16";
   const selectionRingClass = selectedPlayerIdFromBar === id ? 'ring-4 ring-yellow-400 ring-offset-2 ring-offset-slate-900' : '';
-  // Apply thin blue border ONLY if goalie, otherwise no border class
-  const goalieBorderClass = isGoalie ? 'border-2 border-blue-400' : ''; 
+  const goalieFillColor = '#F97316'; // Orange-500
+  const defaultFillColor = color || '#7E22CE'; // Existing default purple
+  const defaultTextColor = 'text-white';
+  const goalieTextColor = 'text-purple-900'; // Dark purple text for goalie
 
   // We might not need the onDragStart handler anymore if tap selection works
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
@@ -234,9 +236,8 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
 
   return (
     <div
-      // Apply goalie border class
-      className={`relative ${diskSizeClasses} rounded-full flex flex-col items-center justify-center cursor-pointer shadow-lg m-2 transition-all duration-150 ease-in-out ${selectionRingClass} ${goalieBorderClass}`}
-      style={{ backgroundColor: color }}
+      className={`relative ${diskSizeClasses} rounded-full flex flex-col items-center justify-center cursor-pointer shadow-lg m-2 transition-all duration-150 ease-in-out ${selectionRingClass}`}
+      style={{ backgroundColor: isGoalie ? goalieFillColor : defaultFillColor }}
       draggable={isInBar && !isEditing}
       onDragStart={handleDragStart} // Keep HTML drag start for now
       onMouseDown={isInBar ? handleMouseDown : undefined} // Use modified mousedown
@@ -259,7 +260,7 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
       ) : (
         <>
           {/* Player Name */}
-          <span className={`font-semibold ${textSizeClasses} text-white break-words text-center leading-tight max-w-full px-1`}>
+          <span className={`font-semibold ${textSizeClasses} ${defaultTextColor} break-words text-center leading-tight max-w-full px-1`}>
             {name}
           </span>
         </>
