@@ -19,6 +19,7 @@ interface PlayerBarProps {
   onBarBackgroundClick?: () => void; // Add prop for background click
   gameEvents: GameEvent[]; // Add gameEvents prop
   onPlayerTapInBar?: (player: Player) => void; // Add the new prop type
+  onToggleGoalie?: (playerId: string) => void; // Add goalie toggle handler prop
 }
 
 // Placeholder data - this would eventually come from state/localStorage
@@ -36,7 +37,7 @@ interface PlayerBarProps {
 //   { id: 'p11', name: 'Player 11' },
 // ];
 
-const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName, onTeamNameChange, onPlayerDragStartFromBar, selectedPlayerIdFromBar, onBarBackgroundClick, gameEvents, onPlayerTapInBar }) => { // Destructure players and rename handler from props
+const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName, onTeamNameChange, onPlayerDragStartFromBar, selectedPlayerIdFromBar, onBarBackgroundClick, gameEvents, onPlayerTapInBar, onToggleGoalie }) => { // Destructure players and rename handler from props
   const [isEditingTeamName, setIsEditingTeamName] = useState(false);
   const [editedTeamName, setEditedTeamName] = useState(teamName);
   const teamNameInputRef = useRef<HTMLInputElement>(null);
@@ -171,13 +172,15 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName
           <PlayerDisk
             key={player.id}
             id={player.id}
-            name={player.name}
+            name={player.nickname || player.name}
             color={player.color}
+            isGoalie={player.isGoalie}
             onRenamePlayer={onRenamePlayer}
             onPlayerDragStartFromBar={onPlayerDragStartFromBar}
             selectedPlayerIdFromBar={selectedPlayerIdFromBar}
             gameEvents={gameEvents}
             onPlayerTapInBar={onPlayerTapInBar}
+            onToggleGoalie={onToggleGoalie}
           />
         ))}
       </div>

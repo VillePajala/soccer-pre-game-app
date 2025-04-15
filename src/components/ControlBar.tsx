@@ -25,7 +25,8 @@ import {
     HiOutlineExclamationTriangle, // Icon for Hard Reset
     HiOutlineFolderArrowDown,   // Icon for Save Game As...
     HiOutlineFolderOpen,       // Icon for Load Game...
-    HiOutlineArrowPath        // CORRECT Icon for Reset Stats
+    HiOutlineArrowPath,        // CORRECT Icon for Reset Stats
+    HiOutlineUsers            // Icon for Manage Roster
 } from 'react-icons/hi2'; // Using hi2 for Heroicons v2 Outline
 // Keep FaFutbol for now unless a good Heroicon alternative is found
 import { FaFutbol } from 'react-icons/fa';
@@ -63,6 +64,7 @@ interface ControlBarProps {
   onOpenSaveGameModal: () => void; // NEW PROP
   onOpenLoadGameModal: () => void; // NEW PROP
   onStartNewGame: () => void; // CHANGED from onResetGameStats
+  onOpenRosterModal: () => void; // Add prop for opening roster modal
 }
 
 // Helper function to format time
@@ -98,6 +100,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   onOpenSaveGameModal, // Destructure new prop
   onOpenLoadGameModal, // Destructure new prop
   onStartNewGame, // CHANGED from onResetGameStats
+  onOpenRosterModal // Destructure the new prop
 }) => {
   const { t, i18n } = useTranslation(); // Initialize translation hook, get i18n instance
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
@@ -250,6 +253,15 @@ const ControlBar: React.FC<ControlBarProps> = ({
         title={isFullscreen ? t('controlBar.exitFullscreen', 'Exit Fullscreen') : t('controlBar.enterFullscreen', 'Enter Fullscreen')}
       >
         {isFullscreen ? <HiOutlineArrowsPointingIn className={iconSize} /> : <HiOutlineArrowsPointingOut className={iconSize} />}
+      </button>
+
+      {/* Manage Roster Button */}
+      <button 
+        onClick={onOpenRosterModal}
+        className={`${baseButtonStyle} ${secondaryColor}`}
+        title={t('controlBar.manageRoster', 'Manage Roster')}
+      >
+        <HiOutlineUsers className={iconSize}/>
       </button>
 
       {/* NEW Settings Button & Menu */}

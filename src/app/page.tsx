@@ -12,15 +12,21 @@ import TrainingResourcesModal from '@/components/TrainingResourcesModal'; // Imp
 import SaveGameModal from '@/components/SaveGameModal'; // Import the new modal
 import LoadGameModal from '@/components/LoadGameModal'; // Import the new modal
 import NewGameSetupModal from '@/components/NewGameSetupModal'; // Import the new component
+import RosterSettingsModal from '@/components/RosterSettingsModal'; // Import the new Roster modal
 import { useTranslation } from 'react-i18next'; // Make sure this is imported
+import { useGameState, UseGameStateReturn } from '@/hooks/useGameState'; // Import the hook
 
 // Define the Player type - Use relative coordinates
 export interface Player {
   id: string;
-  name: string;
+  name: string; // Full name
+  nickname?: string; // Optional nickname (e.g., first name) for display on disc
   relX?: number; // Relative X (0.0 to 1.0)
   relY?: number; // Relative Y (0.0 to 1.0)
   color?: string; // Optional: Specific color for the disk
+  isGoalie?: boolean; // Optional: Is this player the goalie?
+  jerseyNumber?: string; // Optional: Player's jersey number
+  notes?: string; // Optional: Notes specific to this player
 }
 
 // Define the Point type for drawing - Use relative coordinates
@@ -48,7 +54,7 @@ export interface GameEvent {
 }
 
 // Define the structure for the application state (for history)
-interface AppState {
+export interface AppState {
   playersOnField: Player[];
   opponents: Opponent[]; 
   drawings: Point[][];
@@ -69,26 +75,26 @@ interface AppState {
   gameStatus: 'notStarted' | 'inProgress' | 'periodEnd' | 'gameEnd';
 }
 
-// Placeholder data - No coordinates needed here
+// Placeholder data - Initialize new fields
 const initialAvailablePlayersData: Player[] = [
-  { id: 'p1', name: 'Player 1' },
-  { id: 'p2', name: 'Player 2' },
-  { id: 'p3', name: 'Player 3' },
-  { id: 'p4', name: 'Player 4' },
-  { id: 'p5', name: 'Player 5' },
-  { id: 'p6', name: 'Player 6' },
-  { id: 'p7', name: 'Player 7' },
-  { id: 'p8', name: 'Player 8' },
-  { id: 'p9', name: 'Player 9' },
-  { id: 'p10', name: 'Player 10' },
-  { id: 'p11', name: 'Player 11' },
+  { id: 'p1', name: 'Player 1', isGoalie: false, jerseyNumber: '1', notes: '' },
+  { id: 'p2', name: 'Player 2', isGoalie: false, jerseyNumber: '2', notes: '' },
+  { id: 'p3', name: 'Player 3', isGoalie: false, jerseyNumber: '3', notes: '' },
+  { id: 'p4', name: 'Player 4', isGoalie: false, jerseyNumber: '4', notes: '' },
+  { id: 'p5', name: 'Player 5', isGoalie: false, jerseyNumber: '5', notes: '' },
+  { id: 'p6', name: 'Player 6', isGoalie: false, jerseyNumber: '6', notes: '' },
+  { id: 'p7', name: 'Player 7', isGoalie: false, jerseyNumber: '7', notes: '' },
+  { id: 'p8', name: 'Player 8', isGoalie: false, jerseyNumber: '8', notes: '' },
+  { id: 'p9', name: 'Player 9', isGoalie: false, jerseyNumber: '9', notes: '' },
+  { id: 'p10', name: 'Player 10', isGoalie: false, jerseyNumber: '10', notes: '' },
+  { id: 'p11', name: 'Player 11', isGoalie: false, jerseyNumber: '11', notes: '' },
 ];
 
 const initialState: AppState = {
   playersOnField: [], // Start with no players on field
   opponents: [], // Start with no opponents
   drawings: [],
-  availablePlayers: initialAvailablePlayersData,
+  availablePlayers: initialAvailablePlayersData, // Use the updated initial data
   showPlayerNames: true,
   teamName: "My Team",
   gameEvents: [], // Initialize game events as empty array
@@ -128,63 +134,105 @@ const DEFAULT_GAME_ID = '__default_unsaved__';
 
 export default function Home() {
   const { t } = useTranslation(); // Get translation function
-  // --- State Management ---
-  const [playersOnField, setPlayersOnField] = useState<Player[]>(initialState.playersOnField);
-  const [opponents, setOpponents] = useState<Opponent[]>(initialState.opponents);
-  const [drawings, setDrawings] = useState<Point[][]>(initialState.drawings);
-  const [availablePlayers, setAvailablePlayers] = useState<Player[]>(initialState.availablePlayers);
-  const [showPlayerNames, setShowPlayerNames] = useState<boolean>(initialState.showPlayerNames);
-  const [teamName, setTeamName] = useState<string>(initialState.teamName); // Add team name state
+
+  // --- History Management (Still needed here for now) ---
   const [history, setHistory] = useState<AppState[]>([initialState]);
   const [historyIndex, setHistoryIndex] = useState<number>(0);
-  const [isLoaded, setIsLoaded] = useState<boolean>(false); // Flag to prevent overwriting loaded state
-  // State to track player being dragged FROM the bar (for touch)
-  const [draggingPlayerFromBarInfo, setDraggingPlayerFromBarInfo] = useState<Player | null>(null);
-  // Fullscreen state
-  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
-  // Instructions Modal state
-  const [isInstructionsOpen, setIsInstructionsOpen] = useState<boolean>(false);
-  // Training Resources Modal state
-  const [isTrainingResourcesOpen, setIsTrainingResourcesOpen] = useState<boolean>(false); // Add state for new modal
-  // Goal Log Modal state
-  const [isGoalLogModalOpen, setIsGoalLogModalOpen] = useState<boolean>(false); // Add modal state
-  // Game Stats Modal state
-  const [isGameStatsModalOpen, setIsGameStatsModalOpen] = useState<boolean>(false);
-  // NEW: State for the New Game Setup Modal
-  const [isNewGameSetupModalOpen, setIsNewGameSetupModalOpen] = useState<boolean>(false);
-  // Game Events state
-  const [gameEvents, setGameEvents] = useState<GameEvent[]>(initialState.gameEvents); // Add gameEvents state
-  // Game Info state
+  const saveStateToHistory = useCallback((newState: Partial<AppState>) => {
+    // This function currently modifies the 'history' state variable,
+    // which is ONLY used for runtime undo/redo in the current session.
+    // It no longer interacts directly with the localStorage saving mechanism.
+    
+    // Get the current state from the *last* entry in the session history
+    const currentHistoryState = history[historyIndex];
+    if (!currentHistoryState) return; // Should not happen
+
+    const nextState: AppState = { ...currentHistoryState, ...newState };
+
+    if (JSON.stringify(nextState) === JSON.stringify(currentHistoryState)) {
+      return; // Don't save if nothing changed
+    }
+
+    const newHistory = history.slice(0, historyIndex + 1);
+    setHistory([...newHistory, nextState]);
+    setHistoryIndex(newHistory.length);
+
+  }, [history, historyIndex]); // Dependencies are just history state
+
+  // --- Core Game State (Managed by Hook) ---
+  const {
+    playersOnField,
+    opponents,
+    drawings, // State from hook
+    availablePlayers,
+    setPlayersOnField,
+    setOpponents,
+    setDrawings, 
+    setAvailablePlayers,
+    handlePlayerDrop,
+    // Destructure drawing handlers from hook
+    handleDrawingStart,
+    handleDrawingAddPoint,
+    handleDrawingEnd,
+    handleClearDrawings,
+    // Get opponent handlers from hook
+    handleAddOpponent,
+    handleOpponentMove,
+    handleOpponentMoveEnd,
+    handleOpponentRemove,
+    handleRenamePlayer, // Destructure the handler
+    handleToggleGoalie // Destructure the goalie handler
+  }: UseGameStateReturn = useGameState({ initialState, saveStateToHistory });
+
+  // --- State Management (Remaining in Home component) ---
+  // REMOVED: useState for playersOnField, opponents, drawings, availablePlayers
+  const [showPlayerNames, setShowPlayerNames] = useState<boolean>(initialState.showPlayerNames);
+  const [teamName, setTeamName] = useState<string>(initialState.teamName);
+  const [gameEvents, setGameEvents] = useState<GameEvent[]>(initialState.gameEvents);
   const [opponentName, setOpponentName] = useState<string>(initialState.opponentName);
   const [gameDate, setGameDate] = useState<string>(initialState.gameDate);
   const [homeScore, setHomeScore] = useState<number>(initialState.homeScore);
   const [awayScore, setAwayScore] = useState<number>(initialState.awayScore);
   const [gameNotes, setGameNotes] = useState<string>(initialState.gameNotes);
-  // --- Timer State ---
-  const [timeElapsedInSeconds, setTimeElapsedInSeconds] = useState<number>(0);
-  const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
-  const [showLargeTimerOverlay, setShowLargeTimerOverlay] = useState<boolean>(false); // State for overlay visibility
-
-  // --- Substitution Timer State ---
-  const [subIntervalMinutes, setSubIntervalMinutes] = useState<number>(5);
-  const [nextSubDueTimeSeconds, setNextSubDueTimeSeconds] = useState<number>(5 * 60);
-  // Alert level: 'none', 'warning', 'due'
-  const [subAlertLevel, setSubAlertLevel] = useState<'none' | 'warning' | 'due'>('none'); 
-  const [completedIntervalDurations, setCompletedIntervalDurations] = useState<number[]>([]);
-  const [lastSubConfirmationTimeSeconds, setLastSubConfirmationTimeSeconds] = useState<number>(0);
-
-  // --- Game Structure State ---
   const [numberOfPeriods, setNumberOfPeriods] = useState<1 | 2>(initialState.numberOfPeriods);
   const [periodDurationMinutes, setPeriodDurationMinutes] = useState<number>(initialState.periodDurationMinutes);
   const [currentPeriod, setCurrentPeriod] = useState<number>(initialState.currentPeriod);
-  const [gameStatus, setGameStatus] = useState<AppState['gameStatus']>(initialState.gameStatus);
+  const [gameStatus, setGameStatus] = useState<'notStarted' | 'inProgress' | 'periodEnd' | 'gameEnd'>(initialState.gameStatus);
+  // ... Timer state ...
+  // ... Modal states ...
+  // ... UI/Interaction states ...
+  const [isLoaded, setIsLoaded] = useState<boolean>(false);
+  const [draggingPlayerFromBarInfo, setDraggingPlayerFromBarInfo] = useState<Player | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false); // RE-ADD Fullscreen state
+  // Persistence state
+  const [savedGames, setSavedGames] = useState<SavedGamesCollection>({});
+  const [currentGameId, setCurrentGameId] = useState<string | null>(DEFAULT_GAME_ID);
 
-  // Add new state variables here
-  const [currentGameId, setCurrentGameId] = useState<string | null>(DEFAULT_GAME_ID); // Track the loaded game ID
-  const [savedGames, setSavedGames] = useState<SavedGamesCollection>({}); // Hold all saved games in memory
-  // Add state for new modals
+  // --- Timer State (Still needed here) ---
+  const [timeElapsedInSeconds, setTimeElapsedInSeconds] = useState<number>(0);
+  const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
+  const [showLargeTimerOverlay, setShowLargeTimerOverlay] = useState<boolean>(false); // State for overlay visibility
+  
+  // --- Substitution Timer State (Still needed here) ---
+  const [subIntervalMinutes, setSubIntervalMinutes] = useState<number>(5); // Default to 5 min
+  const [nextSubDueTimeSeconds, setNextSubDueTimeSeconds] = useState<number>(5 * 60);
+  const [subAlertLevel, setSubAlertLevel] = useState<'none' | 'warning' | 'due'>('none'); 
+  const [completedIntervalDurations, setCompletedIntervalDurations] = useState<number[]>([]);
+  const [lastSubConfirmationTimeSeconds, setLastSubConfirmationTimeSeconds] = useState<number>(0);
+  
+  // --- Modal States (Still needed here) ---
+  const [isInstructionsOpen, setIsInstructionsOpen] = useState<boolean>(false);
+  const [isTrainingResourcesOpen, setIsTrainingResourcesOpen] = useState<boolean>(false); 
+  const [isGoalLogModalOpen, setIsGoalLogModalOpen] = useState<boolean>(false); 
+  const [isGameStatsModalOpen, setIsGameStatsModalOpen] = useState<boolean>(false);
+  const [isNewGameSetupModalOpen, setIsNewGameSetupModalOpen] = useState<boolean>(false);
   const [isSaveGameModalOpen, setIsSaveGameModalOpen] = useState<boolean>(false);
   const [isLoadGameModalOpen, setIsLoadGameModalOpen] = useState<boolean>(false);
+  const [isRosterModalOpen, setIsRosterModalOpen] = useState<boolean>(false); // State for the new modal
+
+  // --- Handlers (Remaining in Home component or to be moved) ---
+  // REMOVED: handlePlayerDrop (now comes from useGameState hook)
+  // ... other handlers ...
 
   // --- Timer Effect ---
   useEffect(() => {
@@ -324,7 +372,7 @@ export default function Home() {
       setSavedGames({});
     }
     setIsLoaded(true); // Mark loading as complete
-  }, []); // Runs only on mount
+  }, [setAvailablePlayers, setDrawings, setOpponents, setPlayersOnField]); // ADDED dependencies based on ESLint warning (line 375)
 
   // --- Save state to localStorage --- 
   useEffect(() => {
@@ -383,30 +431,6 @@ export default function Home() {
       playersOnField, opponents, drawings, availablePlayers, showPlayerNames, teamName,
       gameEvents, opponentName, gameDate, homeScore, awayScore, gameNotes,
       numberOfPeriods, periodDurationMinutes, currentPeriod, gameStatus]);
-
-  // --- History Management ---
-  // IMPORTANT: History is now per-session, not persistently saved per-game in this revision.
-  // saveStateToHistory needs to be reviewed/potentially removed or simplified.
-  const saveStateToHistory = useCallback((newState: Partial<AppState>) => {
-    // This function currently modifies the 'history' state variable,
-    // which is ONLY used for runtime undo/redo in the current session.
-    // It no longer interacts directly with the localStorage saving mechanism.
-    
-    // Get the current state from the *last* entry in the session history
-    const currentHistoryState = history[historyIndex];
-    if (!currentHistoryState) return; // Should not happen
-
-    const nextState: AppState = { ...currentHistoryState, ...newState };
-
-    if (JSON.stringify(nextState) === JSON.stringify(currentHistoryState)) {
-      return; // Don't save if nothing changed
-    }
-
-    const newHistory = history.slice(0, historyIndex + 1);
-    setHistory([...newHistory, nextState]);
-    setHistoryIndex(newHistory.length);
-
-  }, [history, historyIndex]); // Dependencies are just history state
 
   // --- Fullscreen API Logic ---
   const handleFullscreenChange = useCallback(() => {
@@ -473,35 +497,27 @@ export default function Home() {
   };
 
   // --- Player Management Handlers (Updated for relative coords) ---
+  // Wrapped handleDropOnField in useCallback as suggested (line 500)
   const handleDropOnField = useCallback((playerId: string, relX: number, relY: number) => {
-    const playerToAdd = availablePlayers.find(p => p.id === playerId);
-    if (!playerToAdd) return;
-
-    const playerOnFieldIndex = playersOnField.findIndex(p => p.id === playerId);
-    let newPlayersOnField: Player[];
-    if (playerOnFieldIndex !== -1) {
-      newPlayersOnField = playersOnField.map(p =>
-        p.id === playerId ? { ...p, relX, relY } : p
-      );
+    const droppedPlayer = availablePlayers.find(p => p.id === playerId);
+    if (droppedPlayer) {
+      handlePlayerDrop(droppedPlayer, { relX, relY }); // Call the handler from the hook
     } else {
-      newPlayersOnField = [...playersOnField, { ...playerToAdd, relX, relY }];
+      console.error(`Dropped player with ID ${playerId} not found in availablePlayers.`);
     }
-    // Directly update state
-    setPlayersOnField(newPlayersOnField);
-    // Also save to session history for undo/redo
-    saveStateToHistory({ playersOnField: newPlayersOnField });
-    setDraggingPlayerFromBarInfo(null); // Deselect player from bar
-  }, [availablePlayers, playersOnField, saveStateToHistory]);
+  // ADDED dependencies based on ESLint warning
+  }, [availablePlayers, handlePlayerDrop]); 
 
   const handlePlayerMove = useCallback((playerId: string, relX: number, relY: number) => {
     // Update visual state immediately
     setPlayersOnField(prevPlayers => 
       prevPlayers.map(p => 
-        p.id === playerId ? { ...p, relX, relY } : p // Use relX, relY
+        p.id === playerId ? { ...p, relX, relY } : p
       )
     );
     // State saved on move end
-  }, []);
+  // ADDED dependency based on ESLint warning (line 517)
+  }, [setPlayersOnField]);
 
   const handlePlayerMoveEnd = useCallback(() => {
     saveStateToHistory({ playersOnField });
@@ -512,88 +528,7 @@ export default function Home() {
     saveStateToHistory({ playersOnField: updatedPlayersOnField });
   }, [playersOnField, saveStateToHistory]);
   
-  const handleRenamePlayer = useCallback((playerId: string, newName: string) => {
-    const updatedAvailablePlayers = availablePlayers.map(p => 
-      p.id === playerId ? { ...p, name: newName } : p
-    );
-    const updatedPlayersOnField = playersOnField.map(p => 
-      p.id === playerId ? { ...p, name: newName } : p
-    );
-    // Directly update state
-    setAvailablePlayers(updatedAvailablePlayers);
-    setPlayersOnField(updatedPlayersOnField);
-    // Also save to session history for undo/redo
-    saveStateToHistory({ 
-      availablePlayers: updatedAvailablePlayers, 
-      playersOnField: updatedPlayersOnField 
-    });
-  }, [availablePlayers, playersOnField, saveStateToHistory]);
 
-  // --- Drawing Handlers ---
-  const handleDrawingStart = useCallback((point: Point) => {
-    const newDrawings = [...drawings, [point]];
-    setDrawings(newDrawings); // Direct state update
-    saveStateToHistory({ drawings: newDrawings }); 
-  }, [drawings, saveStateToHistory]);
-
-  const handleDrawingAddPoint = useCallback((point: Point) => {
-    // Continuous update for visual feedback - no history save needed here
-    setDrawings(prevDrawings => {
-      if (prevDrawings.length === 0) return prevDrawings;
-      const currentPath = prevDrawings[prevDrawings.length - 1];
-      const updatedPath = [...currentPath, point]; 
-      return [...prevDrawings.slice(0, -1), updatedPath];
-    });
-  }, []);
-
-  const handleDrawingEnd = useCallback(() => {
-    // Final state is already set by handleDrawingAddPoint, just save to history
-    // Ensure the current state from setDrawings is captured by the effect
-    // No direct setState call needed here if handleDrawingAddPoint sets it,
-    // but need to ensure saveStateToHistory gets the latest state for undo.
-    // Let's re-evaluate if this is needed - maybe saveStateToHistory should read current state? 
-    // For now, rely on the auto-save effect picking up the final state set by handleDrawingAddPoint.
-    saveStateToHistory({ drawings }); // Save final path state to history
-  }, [drawings, saveStateToHistory]);
-
-  const handleClearDrawings = useCallback(() => {
-    setDrawings([]); // Direct state update
-    saveStateToHistory({ drawings: [] });
-  }, [saveStateToHistory]);
-
-  // --- Opponent Handlers ---
-  const handleAddOpponent = useCallback(() => {
-    const newOpponentId = `opp-${Math.floor(Math.random() * 1000000)}`;
-    const defaultPosition = { relX: 0.5, relY: 0.5 };
-    const newOpponent: Opponent = {
-      id: newOpponentId,
-      ...defaultPosition,
-    };
-    const newOpponents = [...opponents, newOpponent];
-    setOpponents(newOpponents); // Direct state update
-    saveStateToHistory({ opponents: newOpponents });
-  }, [opponents, saveStateToHistory]);
-
-  const handleOpponentMove = useCallback((opponentId: string, relX: number, relY: number) => {
-    // Continuous update for visual feedback
-    setOpponents(prevOpponents => 
-      prevOpponents.map(opp => 
-        opp.id === opponentId ? { ...opp, relX, relY } : opp
-      )
-    );
-  }, []);
-
-  const handleOpponentMoveEnd = useCallback(() => {
-    // Final state set by handleOpponentMove, just save history
-    // Rely on auto-save effect for persistence
-    saveStateToHistory({ opponents });
-  }, [opponents, saveStateToHistory]);
-
-  const handleOpponentRemove = useCallback((opponentId: string) => {
-    const updatedOpponents = opponents.filter(opp => opp.id !== opponentId);
-    setOpponents(updatedOpponents); // Direct state update
-    saveStateToHistory({ opponents: updatedOpponents });
-  }, [opponents, saveStateToHistory]);
 
   // --- Reset Handler ---
   const handleResetField = useCallback(() => {
@@ -603,7 +538,8 @@ export default function Home() {
     setDrawings([]);
     // Save reset state to history
     saveStateToHistory({ playersOnField: [], opponents: [], drawings: [] });
-  }, [saveStateToHistory]);
+  // ADDED dependencies based on ESLint warning (line 538)
+  }, [saveStateToHistory, setDrawings, setOpponents, setPlayersOnField]);
 
   // --- Touch Drag from Bar Handlers (Updated for relative coords) ---
   const handlePlayerDragStartFromBar = useCallback((playerInfo: Player) => {
@@ -630,6 +566,7 @@ export default function Home() {
     if (draggingPlayerFromBarInfo) {
       console.log("Player Drop Via Touch (field):", { id: draggingPlayerFromBarInfo.id, relX, relY });
       handleDropOnField(draggingPlayerFromBarInfo.id, relX, relY); 
+      setDraggingPlayerFromBarInfo(null); // Deselect player after placing
     }
   }, [draggingPlayerFromBarInfo, handleDropOnField]);
 
@@ -926,15 +863,13 @@ export default function Home() {
     
     // Preserve current team name and available players
     const preservedTeamName = teamName;
-    const preservedAvailablePlayers = availablePlayers;
+    const preservedAvailablePlayers = availablePlayers.map(p => ({ ...p, isGoalie: false }));
     
     // Reset other state variables to their initial values from initialState
     setPlayersOnField(initialState.playersOnField);
     setOpponents(initialState.opponents);
     setDrawings(initialState.drawings);
-    // setAvailablePlayers(initialState.availablePlayers); // DO NOT RESET
     setShowPlayerNames(initialState.showPlayerNames);
-    // setTeamName(initialState.teamName); // DO NOT RESET
     setGameEvents(initialState.gameEvents);
     setTimeElapsedInSeconds(0);
     setIsTimerRunning(false);
@@ -1511,10 +1446,12 @@ export default function Home() {
     // Apply the loaded state or use initial state
     const stateToApply = loadedState || initialState;
     console.log("Applying state:", stateToApply === initialState ? "Initial State" : "Loaded State");
+    // Use setters from hook for relevant state
     setPlayersOnField(stateToApply.playersOnField);
     setOpponents(stateToApply.opponents || []);
     setDrawings(stateToApply.drawings);
     setAvailablePlayers(stateToApply.availablePlayers);
+    // Apply remaining state directly
     setShowPlayerNames(stateToApply.showPlayerNames);
     setTeamName(stateToApply.teamName || initialState.teamName);
     setGameEvents(stateToApply.gameEvents || []);
@@ -1549,7 +1486,7 @@ export default function Home() {
       setIsNewGameSetupModalOpen(true);
     }
 
-  }, []); // Empty dependency array ensures this runs only once on mount
+  }, [setAvailablePlayers, setDrawings, setOpponents, setPlayersOnField]); // ADDED dependencies based on ESLint warning (line 375)
 
   // NEW Effect: Check opponent name after initial load is complete
   useEffect(() => {
@@ -1561,6 +1498,72 @@ export default function Home() {
         }
     }
   }, [isLoaded, opponentName, isNewGameSetupModalOpen]); // Depend on load status and opponent name
+
+  // --- Roster Management Handlers ---
+  const openRosterModal = () => setIsRosterModalOpen(true);
+  const closeRosterModal = () => setIsRosterModalOpen(false);
+
+  
+  const handleSetJerseyNumber = useCallback((playerId: string, number: string) => {
+    const updatedAvailable = availablePlayers.map(p => p.id === playerId ? { ...p, jerseyNumber: number } : p);
+    const updatedOnField = playersOnField.map(p => p.id === playerId ? { ...p, jerseyNumber: number } : p);
+
+    setAvailablePlayers(updatedAvailable);
+    setPlayersOnField(updatedOnField);
+    saveStateToHistory({ availablePlayers: updatedAvailable, playersOnField: updatedOnField });
+    console.log(`Set jersey number for ${playerId} to ${number}`);
+  }, [availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField, saveStateToHistory]);
+
+  const handleSetPlayerNotes = useCallback((playerId: string, notes: string) => {
+    const updatedAvailable = availablePlayers.map(p => p.id === playerId ? { ...p, notes: notes } : p);
+    // Notes likely don't need to be tracked for playersOnField unless displayed there
+
+    setAvailablePlayers(updatedAvailable);
+    // setPlayersOnField(updatedOnField); // Only if notes are added to PlayerOnField type
+    saveStateToHistory({ availablePlayers: updatedAvailable /*, playersOnField: updatedOnField */ });
+    console.log(`Set notes for ${playerId}`);
+  }, [availablePlayers, setAvailablePlayers, /* playersOnField, setPlayersOnField, */ saveStateToHistory]);
+
+  const handleRemovePlayerFromRoster = useCallback((playerId: string) => {
+    if (window.confirm(`Are you sure you want to remove player ${availablePlayers.find(p=>p.id === playerId)?.name ?? playerId} from the roster? This cannot be undone easily.`)) {
+      const updatedAvailable = availablePlayers.filter(p => p.id !== playerId);
+      const updatedOnField = playersOnField.filter(p => p.id !== playerId); // Also remove from field
+
+      setAvailablePlayers(updatedAvailable);
+      setPlayersOnField(updatedOnField);
+      saveStateToHistory({ availablePlayers: updatedAvailable, playersOnField: updatedOnField });
+      console.log(`Removed player ${playerId} from roster and field.`);
+    }
+  }, [availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField, saveStateToHistory]);
+
+  // --- NEW: Handler to Set Player Nickname ---
+  const handleSetPlayerNickname = useCallback((playerId: string, nickname: string) => {
+    const updatedAvailable = availablePlayers.map(p => p.id === playerId ? { ...p, nickname: nickname } : p);
+    const updatedOnField = playersOnField.map(p => p.id === playerId ? { ...p, nickname: nickname } : p);
+
+    setAvailablePlayers(updatedAvailable);
+    setPlayersOnField(updatedOnField);
+    saveStateToHistory({ availablePlayers: updatedAvailable, playersOnField: updatedOnField });
+    console.log(`Set nickname for ${playerId} to ${nickname}`);
+  }, [availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField, saveStateToHistory]);
+
+  // --- Handler to Add a Player to the Roster (Updated) ---
+  const handleAddPlayer = useCallback((playerData: { name: string; jerseyNumber: string; notes: string; nickname: string }) => {
+    const newPlayer: Player = {
+        id: `player-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`, 
+        name: playerData.name,
+        nickname: playerData.nickname, // Add nickname
+        jerseyNumber: playerData.jerseyNumber,
+        notes: playerData.notes,
+        isGoalie: false, // Default new players to not be goalies
+        // relX, relY will be undefined initially
+    };
+
+    const updatedAvailable = [...availablePlayers, newPlayer];
+    setAvailablePlayers(updatedAvailable); // Update state hook
+    saveStateToHistory({ availablePlayers: updatedAvailable }); // Save to session history
+    console.log(`Added new player: ${newPlayer.name} (ID: ${newPlayer.id})`);
+  }, [availablePlayers, setAvailablePlayers, saveStateToHistory]); // Dependencies
 
   // Render null or a loading indicator until state is loaded
   if (!isLoaded) {
@@ -1578,7 +1581,7 @@ export default function Home() {
       {/* Top Player Bar */}
       <PlayerBar
         players={availablePlayers}
-        onRenamePlayer={handleRenamePlayer}
+        onRenamePlayer={handleRenamePlayer} // Pass the handler from the hook
         teamName={teamName}
         onTeamNameChange={handleTeamNameChange}
         onPlayerDragStartFromBar={handlePlayerDragStartFromBar}
@@ -1586,6 +1589,7 @@ export default function Home() {
           onBarBackgroundClick={handleDeselectPlayer}
           gameEvents={gameEvents}
           onPlayerTapInBar={handlePlayerTapInBar}
+          onToggleGoalie={handleToggleGoalie} // Pass the handler from the hook
         />
         
         {/* Main content */}
@@ -1644,8 +1648,8 @@ export default function Home() {
 
         {/* Control Bar */}
       <ControlBar
-        onAddOpponent={handleAddOpponent}
-        onClearDrawings={handleClearDrawings}
+        onAddOpponent={handleAddOpponent} // Pass handler from hook
+        onClearDrawings={handleClearDrawings} // Correctly passed here
         onToggleNames={handleTogglePlayerNames} 
         showPlayerNames={showPlayerNames} 
         onUndo={handleUndo}
@@ -1666,6 +1670,7 @@ export default function Home() {
           onOpenSaveGameModal={handleOpenSaveGameModal}
           onOpenLoadGameModal={handleOpenLoadGameModal}
           onStartNewGame={handleStartNewGame}
+          onOpenRosterModal={openRosterModal} // Pass the handler
         />
         {/* Instructions Modal */}
         <InstructionsModal 
@@ -1731,6 +1736,20 @@ export default function Home() {
           isOpen={isNewGameSetupModalOpen}
           onStart={handleFinalizeNewGame}
           onCancel={handleCancelNewGameSetup}
+        />
+
+        {/* Roster Settings Modal */}
+        <RosterSettingsModal
+          isOpen={isRosterModalOpen}
+          onClose={closeRosterModal}
+          availablePlayers={availablePlayers}
+          onRenamePlayer={handleRenamePlayer}
+          onToggleGoalie={handleToggleGoalie}
+          onSetJerseyNumber={handleSetJerseyNumber}
+          onSetPlayerNotes={handleSetPlayerNotes}
+          onRemovePlayer={handleRemovePlayerFromRoster}
+          onAddPlayer={handleAddPlayer} 
+          onSetPlayerNickname={handleSetPlayerNickname} // Pass new handler
         />
 
       </div>

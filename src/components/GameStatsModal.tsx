@@ -418,7 +418,8 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
         home: homeScore,
         away: awayScore,
       },
-      events: gameEvents, // Already sorted/filtered if needed? No, export raw events.
+      roster: availablePlayers, // Include the full roster
+      events: gameEvents, 
       notes: gameNotes,
     };
 
@@ -454,29 +455,45 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
     rows.push(`${escapeCsvField(t('gameStatsModal.awayScoreLabel', 'Away Score:'))}${DELIMITER}${escapeCsvField(awayScore)}`);
     rows.push(''); // Blank separator row (cleaner)
 
-    // --- Section: Player Stats ---
-    // Calculate stats
-    const playerStats = availablePlayers.map(player => {
+    // --- Section: Combined Roster & Player Stats ---
+    // 1. Calculate stats for ALL players and combine with roster info
+    const rosterWithStats = availablePlayers.map(player => {
       const goals = gameEvents.filter(e => e.type === 'goal' && e.scorerId === player.id).length;
       const assists = gameEvents.filter(e => e.type === 'goal' && e.assisterId === player.id).length;
       const totalScore = goals + assists;
-      return { name: player.name, goals, assists, totalScore };
+      return { ...player, goals, assists, totalScore };
     })
-    .filter(p => p.totalScore > 0) // Only include players with stats
+    // 2. Sort the combined list (e.g., by points desc, then name asc)
     .sort((a, b) => {
-      // Primary sort: totalScore descending
       if (b.totalScore !== a.totalScore) {
-        return b.totalScore - a.totalScore;
+        return b.totalScore - a.totalScore; // Primary: Points descending
       }
-      // Secondary sort: goals descending (if totalScore is equal)
-      return b.goals - a.goals;
+      return a.name.localeCompare(b.name); // Secondary: Name ascending
     });
 
-    rows.push('Player Stats'); // Cleaned
-    // Using more descriptive headers, ensure translation keys exist or add defaults
-    rows.push(`${escapeCsvField(t('gameStatsModal.playerHeader', 'Player'))}${DELIMITER}${escapeCsvField(t('gameStatsModal.goalsHeaderFull', 'Goals'))}${DELIMITER}${escapeCsvField(t('gameStatsModal.assistsHeaderFull', 'Assists'))}${DELIMITER}${escapeCsvField(t('gameStatsModal.pointsHeaderFull', 'Points'))}`); // Cleaned
-    playerStats.forEach(player => {
-        rows.push(`${escapeCsvField(player.name)}${DELIMITER}${escapeCsvField(player.goals)}${DELIMITER}${escapeCsvField(player.assists)}${DELIMITER}${escapeCsvField(player.totalScore)}`); // Cleaned
+    // 3. Create the header row
+    rows.push(escapeCsvField(t('rosterSettingsModal.title', 'Roster & Stats'))); // Combined title
+    rows.push([
+        escapeCsvField(t('gameStatsModal.playerHeader', 'Player')),
+        escapeCsvField(t('gameStatsModal.jerseyHeader', '#')),
+        escapeCsvField(t('gameStatsModal.goalieHeader', 'Goalie')),
+        escapeCsvField(t('gameStatsModal.notesHeader', 'Player Notes')),
+        escapeCsvField(t('gameStatsModal.goalsHeaderFull', 'Goals')),
+        escapeCsvField(t('gameStatsModal.assistsHeaderFull', 'Assists')),
+        escapeCsvField(t('gameStatsModal.pointsHeaderFull', 'Points'))
+    ].join(DELIMITER));
+
+    // 4. Create data rows for each player
+    rosterWithStats.forEach(player => {
+        rows.push([
+            escapeCsvField(player.name),
+            escapeCsvField(player.jerseyNumber),
+            escapeCsvField(player.isGoalie ? t('common.yes', 'Yes') : t('common.no', 'No')),
+            escapeCsvField(player.notes),
+            escapeCsvField(player.goals),
+            escapeCsvField(player.assists),
+            escapeCsvField(player.totalScore)
+        ].join(DELIMITER));
     });
     rows.push(''); // Blank separator row
 

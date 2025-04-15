@@ -265,7 +265,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
         return;
       }
 
-      // Draw the player disk (existing code)
+      // Draw the player disk
       context.beginPath();
       context.arc(absX, absY, playerRadius, 0, Math.PI * 2);
       context.save();
@@ -273,20 +273,25 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
       context.shadowBlur = 5;
       context.shadowOffsetX = 1;
       context.shadowOffsetY = 2;
-      context.fillStyle = player.color || '#7E22CE';
+      // Set fill color based on goalie status
+      context.fillStyle = player.isGoalie ? '#F97316' : (player.color || '#7E22CE'); // Use orange for goalie
       context.fill();
       context.restore();
-      context.strokeStyle = '#581C87';
-      context.lineWidth = 1.5;
-      context.stroke();
 
-      // Draw player name (existing code)
+      // Draw default border (thin purple)
+      context.strokeStyle = '#581C87'; // Default border color (purple-900)
+      context.lineWidth = 1.5; // Default border width
+      context.stroke(); 
+
+      // Draw player name
       if (showPlayerNames) {
+        // Always use default text color (yellow on field)
         context.fillStyle = '#FDE047';
         context.font = '600 11px Inter, sans-serif';
         context.textAlign = 'center';
         context.textBaseline = 'middle';
-        context.fillText(player.name, absX, absY);
+        // Use nickname if available, otherwise fall back to full name
+        context.fillText(player.nickname || player.name, absX, absY);
       }
     });
   }, [players, opponents, drawings, showPlayerNames]); // Remove gameEvents dependency
@@ -525,10 +530,9 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     // *** Check if placing a tapped player ***
     if (draggingPlayerFromBarInfo) {
         console.log("Field TouchStart: Placing player from bar tap:", draggingPlayerFromBarInfo.id);
-        e.preventDefault(); // Prevent potential scrolling/other actions when placing
+        // Don't preventDefault here for placing, allow potential scroll if placement fails
         onPlayerDropViaTouch(relPos.relX, relPos.relY);
-        // Again, assume parent state (draggingPlayerFromBarInfo) is cleared by onPlayerDropViaTouch/handleDropOnField
-        setActiveTouchId(null); // Clear active touch
+        setActiveTouchId(null); 
         return; 
     }
 
@@ -550,7 +554,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
         }
     }
 
-    // Double Tap Logic (uses absPos for distance check)
+    // Double Tap Logic
     if (lastTapInfo && tappedTargetId && lastTapInfo.targetId === tappedTargetId && lastTapInfo.targetType === tappedTargetType) {
       const timeDiff = now - lastTapInfo.time;
       const distDiff = Math.sqrt(Math.pow(absPos.x - lastTapInfo.x, 2) + Math.pow(absPos.y - lastTapInfo.y, 2));
@@ -560,17 +564,20 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
         setLastTapInfo(null); setActiveTouchId(null); e.preventDefault(); return;
       }
     }
-    // Store tap info (using absolute position for distance check later)
+    // Store tap info
     setLastTapInfo({ time: now, x: absPos.x, y: absPos.y, targetId: tappedTargetId, targetType: tappedTargetType });
 
-    // Start Dragging or Drawing (using relative pos for callbacks)
+    // Start Dragging or Drawing
     if (tappedTargetType === 'player' && tappedTargetId) {
-        setIsDraggingPlayer(true); setDraggingPlayerId(tappedTargetId); e.preventDefault();
+        setIsDraggingPlayer(true); setDraggingPlayerId(tappedTargetId); 
+        e.preventDefault(); // Prevent scroll ONLY when starting player drag
     } else if (tappedTargetType === 'opponent' && tappedTargetId) {
-        setIsDraggingOpponent(true); setDraggingOpponentId(tappedTargetId); e.preventDefault();
+        setIsDraggingOpponent(true); setDraggingOpponentId(tappedTargetId); 
+        e.preventDefault(); // Prevent scroll ONLY when starting opponent drag
     } else {
-        if (!draggingPlayerFromBarInfo) {
-            setIsDrawing(true); onDrawingStart(relPos); e.preventDefault();
+        if (!draggingPlayerFromBarInfo) { // Ensure not placing player
+            setIsDrawing(true); onDrawingStart(relPos); 
+            e.preventDefault(); // Prevent scroll ONLY when starting drawing
         }
     }
   };

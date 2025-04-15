@@ -175,6 +175,21 @@
       "point3": "Coaching Points"
     }
   },
+  "rosterSettingsModal": {
+    "title": "Manage Roster",
+    "unsetGoalie": "Unset Goalie",
+    "setGoalie": "Set Goalie",
+    "playerNotes": "Player Notes",
+    "jerseyNumber": "Jersey #",
+    "goalieStatus": "Goalie",
+    "notesPlaceholder": "Player notes...",
+    "notesExist": "Has notes",
+    "addNewPlayerTitle": "Add New Player",
+    "playerNamePlaceholder": "Player Name",
+    "nicknamePlaceholder": "Nickname (for disc)",
+    "nameRequired": "Player name cannot be empty.",
+    "addPlayerButton": "Add Player"
+  },
   "gameStatsModal": {
     "title": "Game Statistics",
     "closeButton": "Close",
