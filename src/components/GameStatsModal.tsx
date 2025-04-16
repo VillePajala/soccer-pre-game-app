@@ -39,7 +39,6 @@ interface GameStatsModalProps {
   onAwayScoreChange: (score: number) => void;
   onGameNotesChange?: (notes: string) => void; // Add handler for game notes
   onUpdateGameEvent?: (updatedEvent: GameEvent) => void; // Add handler for updating events
-  onResetGameStats?: () => void; // Add handler for resetting stats
   onAwardFairPlayCard?: (playerId: string) => void; // Add Fair Play handler prop
   selectedPlayerIds: string[]; // Add prop for selected player IDs
   savedGames: SavedGamesCollection; // Add savedGames prop
@@ -69,7 +68,6 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   onAwayScoreChange,
   onGameNotesChange = () => {}, // Default to no-op function
   onUpdateGameEvent = () => { console.warn('onUpdateGameEvent handler not provided'); }, // Default handler
-  onResetGameStats = () => { console.warn('onResetGameStats handler not provided'); }, // Default handler
   onAwardFairPlayCard, // Destructure the new prop
   selectedPlayerIds, // Destructure selected IDs
   savedGames, // Destructure savedGames prop
@@ -213,11 +211,10 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   const aggregateStats = (gameTypeFilter?: GameType) => {
     // Filter based on the game ID (key) and the gameType property
     const filteredGames = Object.entries(savedGames)
-      .filter(([gameId, game]) => 
-          gameId !== DEFAULT_GAME_ID && 
+      .filter(([, game]) => 
           (!gameTypeFilter || game.gameType === gameTypeFilter)
       )
-      .map(([/* Removed unused _ */ gameId, game]) => game); // Extract only the game data after filtering
+      .map(([, game]) => game); // Changed [gameId, game] to [, game] to ignore unused gameId
 
     if (filteredGames.length === 0) {
       return { team: null, players: [] };
@@ -350,9 +347,9 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   };
 
   // --- Calculated Aggregated Stats ---
-  const seasonStats = useMemo(() => aggregateStats('season'), [savedGames, aggregateStats]);
-  const tournamentStats = useMemo(() => aggregateStats('tournament'), [savedGames, aggregateStats]);
-  const allStats = useMemo(() => aggregateStats(), [savedGames, aggregateStats]); // No filter for all games
+  const seasonStats = useMemo(() => aggregateStats('season'), [aggregateStats]);
+  const tournamentStats = useMemo(() => aggregateStats('tournament'), [aggregateStats]);
+  const allStats = useMemo(() => aggregateStats(), [aggregateStats]); // No filter for all games
 
   // --- Handlers ---
   // Bulk Edit Mode Handlers
@@ -1212,7 +1209,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
           {['current', 'season', 'tournament', 'all'].map((tab) => (
             <button 
               key={tab}
-              onClick={() => setActiveTab(tab as any)}
+              onClick={() => setActiveTab(tab as 'current' | 'season' | 'tournament' | 'all')}
               className={`px-4 py-2 text-sm font-medium rounded-t-md focus:outline-none transition-colors duration-150 ${ 
                 activeTab === tab 
                 ? 'bg-slate-700/50 text-yellow-300 border-b-2 border-yellow-400' 
