@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState, useEffect, useRef } from 'react'; // Added useEffect, useRef
+import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react'; // Added useEffect, useRef, useCallback
 import { useTranslation } from 'react-i18next';
 import { Player, GameEvent, SavedGamesCollection } from '@/app/page';
 import { FaSort, FaSortUp, FaSortDown, FaEdit, FaSave, FaTimes } from 'react-icons/fa'; // Import sort icons and new icons
@@ -8,8 +8,8 @@ import { FaSort, FaSortUp, FaSortDown, FaEdit, FaSave, FaTimes } from 'react-ico
 // Import GameType
 import { GameType } from '@/components/SaveGameModal';
 
-// Define the default game ID constant
-const DEFAULT_GAME_ID = '__default_unsaved__'; 
+// Define the default game ID constant - REMOVED as unused
+// const DEFAULT_GAME_ID = '__default_unsaved__'; 
 
 // Define the type for sortable columns
 type SortableColumn = 'name' | 'goals' | 'assists' | 'totalScore';
@@ -208,7 +208,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   }, [gameEvents]);
 
   // --- AGGREGATION HELPER FUNCTION ---
-  const aggregateStats = (gameTypeFilter?: GameType) => {
+  const aggregateStats = useCallback((gameTypeFilter?: GameType) => {
     // Filter based on the game ID (key) and the gameType property
     const filteredGames = Object.entries(savedGames)
       .filter(([, game]) => 
@@ -344,7 +344,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
     });
 
     return { team: teamStats, players: initiallySortedPlayerStats };
-  };
+  }, [savedGames, availablePlayers]);
 
   // --- Calculated Aggregated Stats ---
   const seasonStats = useMemo(() => aggregateStats('season'), [aggregateStats]);

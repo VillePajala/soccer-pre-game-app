@@ -1972,7 +1972,6 @@ export default function Home() {
           onAwayScoreChange={handleAwayScoreChange}
           onGameNotesChange={handleGameNotesChange}
           onUpdateGameEvent={handleUpdateGameEvent}
-          onResetGameStats={handleResetStatsOnly} // Pass the new handler
           onAwardFairPlayCard={handleAwardFairPlayCard} // Pass Fair Play handler
           selectedPlayerIds={selectedPlayerIds} // Pass selected player IDs
           savedGames={savedGames} // Pass saved games collection
