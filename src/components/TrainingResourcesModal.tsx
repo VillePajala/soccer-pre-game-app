@@ -17,15 +17,43 @@ const TrainingResourcesModal: React.FC<TrainingResourcesModalProps> = ({ isOpen,
 
   if (!isOpen) return null;
 
-  // Helper to render list items from translation arrays safely
-  const renderListItems = (translationKey: string, itemKeyPrefix: string) => {
-    const items = t(translationKey, { returnObjects: true });
-    if (Array.isArray(items)) {
-      return items.map((item, index) => (
-        <li key={`${itemKeyPrefix}-${index}`}>{String(item)}</li>
-      ));
+  // Define the type for list items, which can be strings or nested objects
+  type ListItem = string | { title: string; subPoints?: ListItem[] }; 
+
+  // Helper to render list items from translation arrays safely, handling multiple levels of nesting
+  const renderListItems = (items: string | ListItem[], itemKeyPrefix: string, level = 1): React.ReactNode => {
+    let actualItems: ListItem[]; // Use a separate variable for the processed array
+
+    // Check if items is the initial string key or already an array
+    if (typeof items === 'string') {
+        const fetchedItems = t(items, { returnObjects: true });
+        if (!Array.isArray(fetchedItems)) return null;
+        actualItems = fetchedItems as ListItem[]; // Assign fetched items
+    } else {
+        actualItems = items; // Assign if already an array
     }
-    return null;
+
+    return actualItems.map((item: ListItem, index: number) => {
+      const key = `${itemKeyPrefix}-${index}`;
+      const currentPadding = `pl-${2 + level * 2}`; // Calculate padding based on level (pl-4, pl-6, etc.)
+
+      // Check if item is an object with title
+      if (typeof item === 'object' && item !== null && item.title) {
+        return (
+          <li key={key}>
+            {item.title}
+            {/* Render sub-points recursively if they exist */}
+            {item.subPoints && Array.isArray(item.subPoints) && item.subPoints.length > 0 && (
+              <ul className={`list-disc list-inside space-y-1 ${currentPadding} mt-1`}> 
+                {renderListItems(item.subPoints, key, level + 1)} {/* Recursive call */}
+              </ul>
+            )}
+          </li>
+        );
+      }
+      // Render regular string item
+      return <li key={key}>{String(item)}</li>;
+    });
   };
 
   // Function to toggle accordion sections
@@ -83,52 +111,42 @@ const TrainingResourcesModal: React.FC<TrainingResourcesModalProps> = ({ isOpen,
                     className="p-4 bg-slate-800/50 text-sm sm:text-base"
                   >
                     {section.key === 'warmup' && (
-                        <div className="space-y-4">
+                        <div className="space-y-6">
                         {/* Use matchPreparation keys for content */}
-                        <h3 className="text-xl font-semibold mb-3 text-yellow-300">{t('matchPreparation.title')}</h3>
+                        <h3 className="text-xl font-semibold mb-4 text-yellow-300">{t('matchPreparation.title')}</h3>
                         <section>
-                          <h4 className="text-lg font-medium mb-1 text-yellow-200">{t('matchPreparation.section1.title')}</h4>
-                          <p className="text-xs italic text-slate-400 mb-1">{t('matchPreparation.section1.goal')}</p>
-                          <ul className="list-disc list-inside space-y-1 pl-2">
-                            {renderListItems('matchPreparation.section1.points', 's1')}
+                          <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('matchPreparation.section1.title')}</h4>
+                          <p className="text-sm italic text-slate-400 mb-2">{t('matchPreparation.section1.goal')}</p>
+                          <ul className="list-disc list-inside space-y-1.5 pl-2">
+                            {renderListItems(t('matchPreparation.section1.points', { returnObjects: true }) as ListItem[], 's1')}
                           </ul>
                         </section>
                         <section>
-                            <h4 className="text-lg font-medium mb-1 text-yellow-200">{t('matchPreparation.section2.title')}</h4>
-                            <p className="text-xs italic text-slate-400 mb-1">{t('matchPreparation.section2.goal')}</p>
-                            <ul className="list-disc list-inside space-y-1 pl-2">
-                              {renderListItems('matchPreparation.section2.points', 's2')}
+                            <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('matchPreparation.section2.title')}</h4>
+                            <p className="text-sm italic text-slate-400 mb-2">{t('matchPreparation.section2.goal')}</p>
+                            <ul className="list-disc list-inside space-y-1.5 pl-2">
+                              {renderListItems(t('matchPreparation.section2.points', { returnObjects: true }) as ListItem[], 's2')}
                             </ul>
                           </section>
                           <section>
-                            <h4 className="text-lg font-medium mb-1 text-yellow-200">{t('matchPreparation.section3.title')}</h4>
-                            <p className="text-xs italic text-slate-400 mb-1">{t('matchPreparation.section3.goal')}</p>
-                            <div className="pl-2 space-y-2">
-                              <p className="font-semibold">{t('matchPreparation.section3.pairWorkTitle')}</p>
-                              <ul className="list-disc list-inside space-y-1 pl-4">
-                                {renderListItems('matchPreparation.section3.pairWorkPoints', 's3p')}
-                              </ul>
-                              <p className="font-semibold mt-2">{t('matchPreparation.section3.goalieWarmupTitle')}</p>
-                              <ul className="list-disc list-inside space-y-1 pl-4">
-                                {renderListItems('matchPreparation.section3.goalieWarmupPoints', 's3g')}
-                              </ul>
-                              <p className="font-semibold mt-2">{t('matchPreparation.section3.combinedWarmupTitle')}</p>
-                              <ul className="list-disc list-inside space-y-1 pl-4">
-                                {renderListItems('matchPreparation.section3.combinedWarmupPoints', 's3c')}
-                              </ul>
-                            </div>
-                          </section>
-                          <section>
-                            <h4 className="text-lg font-medium mb-1 text-yellow-200">{t('matchPreparation.section4.title')}</h4>
-                            <p className="text-xs italic text-slate-400 mb-1">{t('matchPreparation.section4.goal')}</p>
-                            <ul className="list-disc list-inside space-y-1 pl-2">
-                              {renderListItems('matchPreparation.section4.points', 's4')}
+                            <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('matchPreparation.section3.title')}</h4>
+                            <p className="text-sm italic text-slate-400 mb-2">{t('matchPreparation.section3.goal')}</p>
+                            {/* Render the top-level list for section 3 */}
+                            <ul className="list-disc list-inside space-y-1.5 pl-2">
+                                {renderListItems(t('matchPreparation.section3.points', { returnObjects: true }) as ListItem[], 's3')}
                             </ul>
                           </section>
                           <section>
-                            <h4 className="text-lg font-medium mb-1 text-yellow-200">{t('matchPreparation.duringGame.title')}</h4>
-                            <ul className="list-disc list-inside space-y-1 pl-2">
-                              {renderListItems('matchPreparation.duringGame.points', 'dg')}
+                            <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('matchPreparation.section4.title')}</h4>
+                            <p className="text-sm italic text-slate-400 mb-2">{t('matchPreparation.section4.goal')}</p>
+                            <ul className="list-disc list-inside space-y-1.5 pl-2">
+                              {renderListItems(t('matchPreparation.section4.points', { returnObjects: true }) as ListItem[], 's4')}
+                            </ul>
+                          </section>
+                          <section>
+                            <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('matchPreparation.duringGame.title')}</h4>
+                            <ul className="list-disc list-inside space-y-1.5 pl-2">
+                              {renderListItems(t('matchPreparation.duringGame.points', { returnObjects: true }) as ListItem[], 'dg')}
                             </ul>
                           </section>
                         </div>

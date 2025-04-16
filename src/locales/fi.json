@@ -28,6 +28,7 @@
     "cancelNotesButton": "Peruuta",
     "notesPlaceholder": "Lisää muistiinpanoja tähän peliin...",
     "noNotes": "Muistiinpanoja ei ole vielä lisätty. Napsauta Muokkaa lisätäksesi muistiinpanoja tästä pelistä.",
+    "clickToEditNotes": "Napsauta muokataksesi muistiinpanoja",
     "playerStatsTitle": "Pelaajatilastot",
     "playerHeader": "PELAAJA",
     "filterPlaceholder": "Suodata pelaajia...",
@@ -78,8 +79,8 @@
     "saveButton": "Tallenna Peli"
   },
   "statsModal": {
-    "awardFairPlayLabel": "Reilun Pelin Palkinto:",
-    "awardFairPlayNone": "Fair Play -kortti"
+    "awardFairPlayLabel": "Fair Play -Kortti:",
+    "awardFairPlayNone": "None"
   },
   "rosterSettingsModal": {
     "title": "Hallitse Kokoonpanoa",
@@ -110,42 +111,61 @@
     "closeText": "Sulje napsauttamalla modaalin ulkopuolella tai käyttämällä \"X\"-painiketta.",
     "playerBarTitle": "Pelaajapalkki (Yläosa)",
     "playerBar": {
-      "selectPlayer": "Valitse pelaaja: Napauta pelaajakiekkoa valitaksesi sen sijoittamista varten.",
-      "deselectPlayer": "Poista valinta: Napauta valittua pelaajakiekkoa uudelleen tai napauta palkin taustaa.",
-      "renamePlayer": "Nimeä pelaaja uudelleen: Kaksoisnapauta/napsauta pelaajakiekkoa.",
-      "renameTeam": "Nimeä joukkue uudelleen: Kaksoisnapauta/napsauta joukkueen nimeä.",
+      "selectPlayer": "Valitse pelaaja: Napauta pelaajakiekkoa palkissa.",
+      "deselectPlayer": "Poista valinta: Napauta valittua kiekkoa uudelleen TAI napauta palkin taustaa.",
+      "placePlayer": "Sijoita pelaaja kentälle: Vedä valittu kiekko palkista kentälle TAI napauta kentällä haluamaasi paikkaa valinnan jälkeen.",
+      "renamePlayer": "Nimeä pelaaja uudelleen: Kaksoisnapauta/napsauta pelaajakiekkoa palkissa.",
+      "renameTeam": "Nimeä joukkue uudelleen: Kaksoisnapauta/napsauta joukkueen nimeä tai logoa palkissa.",
+      "goalieStatus": "Maalivahdin status: Hallinnoi maalivahteja 'Hallitse Kokoonpanoa' -valikosta (ratas-ikoni -> Kokoonpano). Pitkä painallus kiekosta voi myös toimia.",
       "scrollBar": "Vieritä palkkia: Jos pelaajat ylittävät tilan, vieritä vaakasuunnassa."
     },
     "fieldAreaTitle": "Kenttäalue",
     "fieldArea": {
-      "movePlayer": "Siirrä pelaajaa/vastustajaa: Vedä kentälle asetettua kiekkoa.",
-      "addPlacePlayer": "Lisää/Sijoita pelaaja: Valitse pelaaja yläpalkista, napauta tai vedä kentälle.",
-      "removePlayer": "Poista pelaaja/vastustaja: Kaksoisnapauta/napsauta kiekkoa kentällä.",
-      "drawLines": "Piirrä viivoja: Vedä kentällä piirtääksesi viivoja (punainen = koti, sininen = vieras)."
+      "movePlayer": "Siirrä pelaajaa/vastustajaa: Vedä kentällä olevaa kiekkoa.",
+      "removePlayer": "Poista pelaaja/vastustaja kentältä: Kaksoisnapauta/napsauta kiekkoa kentällä.",
+      "drawLines": "Piirrä viivoja: Vedä tyhjällä kentän alueella."
     },
     "controlBarTitle": "Ohjauspalkki (Alhaalla)",
     "controlBar": {
-      "undoRedo": "Kumoa/Tee uudelleen viimeisin toiminto kentällä.",
-      "toggleNames": "Näytä/Piilota pelaajien nimet kiekoissa.",
-      "toggleTimerOverlay": "Näytä/Piilota ajastimen peittokuva.",
-      "resetField": "Poista kaikki pelaajat ja piirrokset kentältä.",
-      "clearDrawings": "Poista vain piirrokset kentältä.",
-      "addOpponent": "Lisää/Poista vastustajakiekko keskelle kenttää.",
-      "timerControls": "Käynnistä/Pysäytä/Nollaa peliajastin.",
-      "help": "Avaa tämä sovellusopas."
+      "undoRedo": "Kumoa / Tee Uudelleen: Peruuttaa tai palauttaa viimeisimmän kenttätoiminnon (siirrot, piirrot, poistot).",
+      "toggleNames": "Näytä/Piilota Nimet: Vaihtaa pelaajien nimien näkyvyyttä kiekoissa.",
+      "clearDrawings": "Pyyhi Piirrokset: Poistaa vain piirretyt viivat kentältä.",
+      "addOpponent": "Lisää Vastustaja: Lisää vastustajakiekon keskelle kenttää.",
+      "resetField": "Tyhjennä Kenttä: Poistaa KAIKKI pelaajat, vastustajat ja piirrokset kentältä.",
+      "logGoal": "Kirjaa Maali: Avaa modaalin maalitapahtuman (maalintekijä, syöttäjä, aika) kirjaamiseksi.",
+      "toggleTimerOverlay": "Ajastinpeittokuva: Avaa/sulkee suuren ajastinohjauspaneelin.",
+      "timerDisplay": "Aika: Näyttää pelin käynnissä olevan ajan (ohjataan ajastinpeittokuvasta).",
+      "toggleFullscreen": "Koko Näyttö: Laajentaa/supistaa sovelluksen selaimen koko näytön tilaan.",
+      "settingsMenu": "Asetukset (Ratas-ikoni): Avaa päävalikon, josta löydät:",
+      "timerControls": "Ajastinohjaimet: Käynnistä/Pysäytä/Nollaa peliajastin (toiminnot löytyvät Ajastinpeittokuvasta).",
+      "help": "Sovellusopas"
     },
-    "timerOverlayTitle": "Ajastimen Peittokuva (Kun Aktiivinen)",
+    "settingsMenu": {
+      "gameStats": "Ottelutilastot: Avaa modaalin pelin tilastojen (maalit, syötöt, muistiinpanot, RP-kortti) tarkasteluun ja muokkaukseen.",
+      "manageRoster": "Hallitse Kokoonpanoa: Avaa modaalin pelaajien lisäämiseen, muokkaamiseen, poistamiseen ja maalivahdin asettamiseen.",
+      "saveGame": "Tallenna Peli Nimellä...: Avaa modaalin nykyisen pelitilanteen tallentamiseksi.",
+      "loadGame": "Lataa Peli...: Avaa modaalin aiemmin tallennetun pelin lataamiseksi.",
+      "newGame": "Aloita Uusi Peli: Nollaa kaikki pelitiedot (kokoonpano säilyy) ja aloittaa uuden pelin.",
+      "trainingResources": "Harjoitusmateriaalit: Avaa modaalin, jossa on lämmittelyohjeita ja harjoitusesimerkkejä.",
+      "help": "Sovellusopas",
+      "language": "Vaihda Kieli: Vaihtaa sovelluksen kielen (Suomi/Englanti).",
+      "hardReset": "Nollaa Sovellus: POISTAA KAIKKI TIEDOT, mukaan lukien tallennetut pelit ja kokoonpanot. Käytä varoen!",
+      "externalLinks": "Tulospalvelu Linkit: Avaa alivalikon, jossa linkit Palloliiton Taso/Tulospalveluun."
+    },
+    "timerOverlayTitle": "Ajastinpeittokuva (Kun Aktiivinen)",
     "timerOverlay": {
-      "setInterval": "Aseta vaihdon pituus (minuutteina).",
-      "subAlerts": "Hälytykset näyttävät pelaajat, jotka pitäisi vaihtaa seuraavaksi.",
-      "confirmSub": "Vahvista vaihto napsauttamalla hälytystä.",
-      "playTimeHistory": "Peliaikahistoria näyttää kaikki vaihdot ja peliajat."
+      "controls": "Ohjaimet: Käynnistä, Pysäytä, Nollaa ajastin ja siirry erien välillä.",
+      "settings": "Asetukset: Määritä erien määrä ja kesto.",
+      "subInterval": "Vaihtoväli: Aseta vaihtohälytyksen aikaväli minuuteissa.",
+      "subAlerts": "Vaihtohälytykset: Näyttää, ketkä pelaajat ovat olleet kentällä pisimpään vaihtovälin perusteella.",
+      "confirmSub": "Vahvista Vaihto: Napsauta hälytystä vahvistaaksesi vaihdon ja nollataksesi kyseisen pelaajan ajan.",
+      "playTimeHistory": "Peliaikahistoria: Näyttää yksityiskohtaisen lokin pelaajien vaihdoista ja kentälläoloajoista."
     },
-    "generalTitle": "Yleiset",
+    "generalTitle": "Yleiset Huomiot",
     "general": {
-      "touchInteractions": "Kosketusnäytön vuorovaikutukset (kaksoisnapautus, pitkä painallus) voivat toimia eri tavoin.",
-      "saving": "Tallenna/Lataa pelitilanteita käyttäen valikkopainikkeita (ei saatavilla ControlBarissa).",
-      "fullscreen": "Siirry koko näytön tilaan selaimen omalla toiminnolla (yleensä F11)."
+      "touchInteractions": "Kosketusnäyttö: Useimmat toiminnot tehdään napauttamalla, kaksoisnapauttamalla tai vetämällä. Pitkä painallus voi toimia joissain tapauksissa (esim. maalivahdin vaihto).",
+      "saving": "Tallennus/Lataus: Pelitilanteet tallennetaan ja ladataan Asetukset-valikon (ratas-ikoni) kautta.",
+      "dataPersistence": "Tietojen Säilyminen: Pelitiedot ja kokoonpano tallentuvat selaimeesi. 'Nollaa Sovellus' poistaa kaiken."
     }
   },
   "trainingResourcesModal": {
@@ -169,10 +189,14 @@
       "points": [
         "Ylävitoset, kivet, mitä kuuluu – kuulumisten jakaminen",
         "Pelipaikat, kapteeni, varustus",
-        "Päivän teemat (max 3, esim.):",
-        "Nautitaan",
-        "Saalista",
-        "Ohita tai syötä",
+        { 
+          "title": "Päivän teemat (max 3, esim.):", 
+          "subPoints": [
+            "Nautitaan", 
+            "Saalista", 
+            "Ohita tai syötä"
+          ]
+        },
         "Teemat perustuvat harjoituksiin – voi vaihdella, mutta \"Nautitaan\" on aina mukana."
       ]
     },
@@ -180,32 +204,62 @@
       "title": "2. 20 min / Lämmittely",
       "goal": "Tavoite: Nostetaan kehon lämpö, viritetään mieli peliin.",
       "points": [
-        "Pari jonot + merkki 5 m päähän (kartio/liivi), kierto ulkokautta oman jonon päähän",
-        "Hölkkä (etuperin/takaperin)",
-        "Kylkijuoksut (oikea/vasen kylki edellä)",
-        "Kantapäät pakaroihin",
-        "Marjanpoiminta",
-        "Hyppy parin kylkeen (2 krt/liike)",
-        "Eläinliikkeet: mittarimato, karhukävely, ankkakävely (lapset saavat ehdottaa)",
-        "Spurtit (n. 5 kpl): pystystä, istualtaan, etunojasta"
+        { 
+          "title": "Pari jonot + merkki 5 m päähän (kartio/liivi), kierto ulkokautta oman jonon päähän",
+          "subPoints": [
+            "Hölkkä (etuperin/takaperin)",
+            "Kylkijuoksut (oikea/vasen kylki edellä)",
+            "Kantapäät pakaroihin",
+            "Marjanpoiminta",
+            "Hyppy parin kylkeen (2 krt/liike)"
+          ]
+        },
+        { 
+          "title": "Eläinliikkeet:", 
+          "subPoints": [
+            "mittarimato", 
+            "karhukävely", 
+            "ankkakävely (lapset saavat ehdottaa)"
+          ]
+        },
+        { 
+          "title": "Spurtit (n. 5 kpl):", 
+          "subPoints": [
+            "pystystä", 
+            "istualtaan", 
+            "etunojasta"
+          ]
+        }
       ]
     },
     "section3": {
       "title": "3. 10 min / Pallottelu",
       "goal": "Tavoite: Aktivoi pallokosketus ja valmistaa peliin.",
-      "pairWorkTitle": "Pari + pallo:",
-      "pairWorkPoints": [
-        "Perussyöttely lähellä → kauempaa (peliasento, päkiät, sisäterä, huolellisuus)",
-        "Maalivahdin lämmittely (apuvalmentaja voi auttaa):"
-      ],
-      "goalieWarmupTitle": "Heittoja/syöttöjä läheltä (2m) ja kauempaa:",
-      "goalieWarmupPoints": [
-        "Ylös, sivulle, ilmassa, maata pitkin (tottuu palloon)",
-        "Palautukset käsillä + jaloilla"
-      ],
-      "combinedWarmupTitle": "Yhdessä tehtävä mv-lämmittely (tilan salliessa):",
-      "combinedWarmupPoints": [
-        "MV maaliin → seinäsyöttö → veto 16m / pilkun välistä (valmentaja voi toimia seinänä)"
+      "points": [
+        {
+          "title": "Pari + pallo:",
+          "subPoints": [
+            "Perussyöttely lähellä → kauempaa (peliasento, päkiät, sisäterä, huolellisuus)"
+          ]
+        },
+        {
+          "title": "Maalivahdin lämmittely (apuvalmentaja voi auttaa):",
+          "subPoints": [
+            {
+              "title": "Heittoja/syöttöjä läheltä (2m) ja kauempaa:",
+              "subPoints": [
+                "Ylös, sivulle, ilmassa, maata pitkin (tottuu palloon)"
+              ]
+            },
+            "Palautukset käsillä + jaloilla"
+          ]
+        },
+        {
+          "title": "Yhdessä tehtävä mv-lämmittely (tilan salliessa):",
+          "subPoints": [
+            "MV maaliin → seinäsyöttö → veto 16m / pilkun välistä (valmentaja voi toimia seinänä)"
+          ]
+        }
       ]
     },
     "section4": {
@@ -237,5 +291,14 @@
   },
   "timerControls": {
     "resetButton": "Nollaa"
+  },
+  "newGameSetupModal": {
+    "title": "Uuden Pelin Asetukset",
+    "opponentLabel": "Vastustajan Nimi:",
+    "opponentPlaceholder": "Syötä vastustajan nimi",
+    "dateLabel": "Pelin Päivämäärä:",
+    "skipButton": "Ohita",
+    "startButton": "Aloita Peli",
+    "opponentRequiredAlert": "Syötä vastustajan nimi."
   }
 } 

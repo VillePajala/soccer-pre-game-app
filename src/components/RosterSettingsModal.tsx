@@ -85,14 +85,21 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
     };
   }, [actionsMenuPlayerId]); // Re-run when the open menu changes
 
-  // Load player data into form when editing starts
-  const handleStartEdit = (player: Player) => {
-    setEditingPlayerId(player.id);
-    setEditPlayerData({
-      name: player.name,
-      jerseyNumber: player.jerseyNumber || '',
-      notes: player.notes || '',
-      nickname: player.nickname || '',
+  // Load player data into form when editing starts - MODIFIED
+  const handleStartEdit = (playerId: string) => { // Changed parameter to playerId
+    // Find the player data directly from the current prop state INSIDE the handler
+    const playerToEdit = availablePlayers.find(p => p.id === playerId);
+    if (!playerToEdit) {
+      console.error("Player not found in availablePlayers for editing:", playerId);
+      return; // Player not found, shouldn't happen
+    }
+
+    setEditingPlayerId(playerId); // Set the ID
+    setEditPlayerData({ // Set data based on the freshly found player
+      name: playerToEdit.name,
+      jerseyNumber: playerToEdit.jerseyNumber || '',
+      notes: playerToEdit.notes || '',
+      nickname: playerToEdit.nickname || '',
     });
   };
 
@@ -133,6 +140,19 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
     if (editPlayerData.notes !== (originalPlayer.notes || '')) {
         onSetPlayerNotes(playerId, editPlayerData.notes);
     }
+
+    // Attempt to re-sync data *before* closing edit mode
+    const potentiallyUpdatedPlayer = availablePlayers.find(p => p.id === playerId);
+    if (potentiallyUpdatedPlayer) {
+      // Update local edit state again, just in case prop updated but modal didn't re-render yet
+      setEditPlayerData({
+        name: potentiallyUpdatedPlayer.name,
+        jerseyNumber: potentiallyUpdatedPlayer.jerseyNumber || '',
+        notes: potentiallyUpdatedPlayer.notes || '',
+        nickname: potentiallyUpdatedPlayer.nickname || '',
+      });
+    }
+
     setEditingPlayerId(null); // Exit editing mode
   };
 
@@ -172,12 +192,13 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60] p-4">
       <div className="bg-slate-800 rounded-lg shadow-xl w-full max-w-2xl flex flex-col border border-slate-600 overflow-hidden max-h-[calc(100vh-theme(space.8))]" >
-        {/* Header - Apply GameStatsModal title style */}
-        <div className="flex justify-between items-center p-4 border-b border-slate-700 flex-shrink-0">
-          <h2 className="text-xl font-semibold text-yellow-400">{t('rosterSettingsModal.title', 'Manage Roster')}</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-100">
+        {/* Header - Center title, remove X button */}
+        <div className="flex justify-center items-center p-4 border-b border-slate-700 flex-shrink-0 relative"> {/* Use justify-center, add relative for potential absolute positioning if needed later */}
+          <h2 className="text-xl font-semibold text-yellow-400 text-center">{t('rosterSettingsModal.title', 'Manage Roster')}</h2>
+          {/* REMOVED X button */}
+          {/* <button onClick={onClose} className="text-slate-400 hover:text-slate-100 absolute top-4 right-4">
             <HiOutlineXMark className="w-6 h-6" />
-          </button>
+          </button> */}
         </div>
 
         {/* Add Player Section - Moved here, below header, outside scroll */}
@@ -415,7 +436,7 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                                 className="absolute right-0 top-full mt-1 w-32 bg-slate-700 border border-slate-600 rounded-md shadow-lg z-10 py-1"
                                 onClick={(e) => e.stopPropagation()}
                               >
-                                <button onClick={() => { handleStartEdit(player); setActionsMenuPlayerId(null); }} className="flex items-center w-full px-3 py-1.5 text-sm text-blue-300 hover:bg-slate-600 disabled:opacity-50" disabled={isAddingPlayer || !!editingPlayerId}>
+                                <button onClick={() => { handleStartEdit(player.id); setActionsMenuPlayerId(null); }} className="flex items-center w-full px-3 py-1.5 text-sm text-blue-300 hover:bg-slate-600 disabled:opacity-50" disabled={isAddingPlayer || !!editingPlayerId}>
                                  <HiOutlinePencil className="w-4 h-4 mr-2" /> {t('common.edit', 'Edit')}
                                 </button>
                                 <button onClick={(e) => { e.stopPropagation(); onToggleGoalie(player.id); setActionsMenuPlayerId(null); }} className={`flex items-center w-full px-3 py-1.5 text-sm rounded transition-colors ${player.isGoalie ? 'text-amber-400 hover:bg-amber-900/30' : 'text-slate-300 hover:bg-slate-600'} disabled:opacity-50`} disabled={isAddingPlayer || !!editingPlayerId}>

@@ -277,8 +277,8 @@ const ControlBar: React.FC<ControlBarProps> = ({
         {/* Settings Dropdown Menu */}
         {isSettingsMenuOpen && (
           <div 
-             // Set max-height and overflow for consistent size and scrolling if needed
-             className="absolute bottom-full right-0 mb-1 w-56 bg-slate-700 rounded-md shadow-xl z-50 border border-slate-500 overflow-hidden max-h-96" // Added max-h-96
+             // Add transition, initial state (closed), and open state classes
+             className={`absolute bottom-full right-0 mb-1 w-64 bg-slate-700 rounded-md shadow-xl z-50 border border-slate-500 overflow-hidden max-h-96 transition-all duration-150 ease-out transform ${isSettingsMenuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
           > 
              {/* Inner wrapper for sliding animation */}
              <div className={`flex transition-transform duration-200 ease-out ${menuView === 'tulospalvelu' ? '-translate-x-full' : 'translate-x-0'}`}>
@@ -286,7 +286,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
                {/* Main Menu View (Takes full width) */}
                <div className="w-full flex-shrink-0 overflow-y-auto max-h-96"> {/* Added overflow-y-auto + max-h */} 
                  <div className="py-1"> 
-                   {/* Game Management Section */}
+                   {/* Group 1: Game Management */}
                    <button onClick={wrapHandler(onOpenSaveGameModal)} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600">
                      <HiOutlineFolderArrowDown className={menuIconSize} />{directTranslations.saveGameAs}
                    </button>
@@ -297,29 +297,23 @@ const ControlBar: React.FC<ControlBarProps> = ({
                      <HiOutlineArrowPath className="w-5 h-5 mr-2" /><span className="text-orange-400 font-medium">{directTranslations.startNewMatch}</span>
                    </button>
                    
-                   <div className="border-t border-slate-600/50 my-1"></div>
-                   {/* Info & Links Section */}
-                   <button onClick={wrapHandler(onToggleGameStatsModal)} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600">
+                   {/* Group 2: Information/Resources - Add spacing before this group */}
+                   <button onClick={wrapHandler(onToggleGameStatsModal)} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600 pt-2 mt-1"> 
                      <HiOutlineClipboardDocumentList className={menuIconSize} />{directTranslations.stats}
                    </button>
                    <button onClick={wrapHandler(onToggleTrainingResources)} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600 border-t border-slate-600/50">
                      <HiOutlineBookOpen className={menuIconSize} />{directTranslations.training}
                    </button>
-                   <button onClick={wrapHandler(onToggleInstructions)} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600 border-t border-slate-600/50">
-                     <HiOutlineQuestionMarkCircle className={menuIconSize} />{directTranslations.appGuide}
-                   </button>
-                   <a href="https://taso.palloliitto.fi/taso/login.php" target="_blank" rel="noopener noreferrer" className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600 border-t border-slate-600/50" onClick={() => setIsSettingsMenuOpen(false)}>
-                     <HiOutlineArrowTopRightOnSquare className={menuIconSize} />{t('controlBar.tasoLink', 'Taso')}
-                   </a>
-                   {/* Tulospalvelu Trigger Button */}
                    <button onClick={() => setMenuView('tulospalvelu')} className="w-full flex items-center justify-between px-3 py-2 text-sm text-slate-100 hover:bg-slate-600 border-t border-slate-600/50">
                      <span className="flex items-center"><HiOutlineArrowTopRightOnSquare className={menuIconSize} />{t('controlBar.tulospalveluLink', 'Tulospalvelu')}</span>
                      <HiOutlineChevronRight className="w-4 h-4" />
                    </button>
                    
-                   <div className="border-t border-slate-600/50 my-1"></div>
-                   {/* App Settings Section */}
-                   <button onClick={handleLanguageToggle} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600">
+                   {/* Group 3: Application Settings/Help - Add spacing before this group */} 
+                   <button onClick={wrapHandler(onToggleInstructions)} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600 pt-2 mt-1">
+                     <HiOutlineQuestionMarkCircle className={menuIconSize} />{directTranslations.appGuide}
+                   </button>
+                   <button onClick={handleLanguageToggle} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600 border-t border-slate-600/50">
                      <HiOutlineLanguage className={menuIconSize} />{directTranslations.language} ({i18n.language === 'en' ? 'FI' : 'EN'})
                    </button>
                    <button onClick={wrapHandler(onHardResetApp)} className="w-full flex items-center px-3 py-2 text-sm text-red-400 hover:bg-red-900/50 border-t border-slate-600/50">

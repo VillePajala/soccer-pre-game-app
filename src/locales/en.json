@@ -239,5 +239,14 @@
     },
     "timerControls": {
       "resetButton": "Reset"
+    },
+    "newGameSetupModal": {
+      "title": "New Game Setup",
+      "opponentLabel": "Opponent Name:",
+      "opponentPlaceholder": "Enter opponent name",
+      "dateLabel": "Game Date:",
+      "skipButton": "Skip",
+      "startButton": "Start Game",
+      "opponentRequiredAlert": "Please enter an opponent name."
     }
   }

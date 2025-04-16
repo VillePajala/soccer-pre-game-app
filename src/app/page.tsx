@@ -234,6 +234,7 @@ export default function Home() {
   const [isSaveGameModalOpen, setIsSaveGameModalOpen] = useState<boolean>(false);
   const [isLoadGameModalOpen, setIsLoadGameModalOpen] = useState<boolean>(false);
   const [isRosterModalOpen, setIsRosterModalOpen] = useState<boolean>(false); // State for the new modal
+  const [hasSkippedInitialSetup, setHasSkippedInitialSetup] = useState<boolean>(false); // <-- Add this state
 
   // --- Handlers (Remaining in Home component or to be moved) ---
   // REMOVED: handlePlayerDrop (now comes from useGameState hook)
@@ -381,9 +382,16 @@ export default function Home() {
       setHistoryIndex(0);
       setCurrentGameId(DEFAULT_GAME_ID);
       setSavedGames({});
+    } finally { // Use finally to ensure this runs after load attempt
+        // Determine if we need to show the setup modal AFTER loading
+        const finalOpponentName = loadedState?.opponentName ?? initialState.opponentName;
+        if (finalOpponentName === 'Opponent' && !hasSkippedInitialSetup) { // <-- Added !hasSkippedInitialSetup check
+            console.log('Opponent name is default after load, prompting for setup...');
+            setIsNewGameSetupModalOpen(true);
+        }
+        setIsLoaded(true); // Mark loading as complete
     }
-    setIsLoaded(true); // Mark loading as complete
-  }, [setAvailablePlayers, setDrawings, setOpponents, setPlayersOnField]); // ADDED dependencies based on ESLint warning (line 375)
+  }, [setAvailablePlayers, setDrawings, setOpponents, setPlayersOnField, hasSkippedInitialSetup]); // <-- Add hasSkippedInitialSetup to dependency array
 
   // --- Save state to localStorage --- 
   useEffect(() => {
@@ -925,6 +933,7 @@ export default function Home() {
   // NEW: Handler to cancel the new game setup
   const handleCancelNewGameSetup = () => {
     console.log("New game setup cancelled.");
+    setHasSkippedInitialSetup(true); // <-- Add the skip flag logic here
     setIsNewGameSetupModalOpen(false);
   };
 
@@ -1569,14 +1578,13 @@ export default function Home() {
 
   // NEW Effect: Check opponent name after initial load is complete
   useEffect(() => {
-    if (isLoaded && opponentName === initialState.opponentName) {
-        // Check if the modal isn't *already* open to prevent potential loops
-        if (!isNewGameSetupModalOpen) { 
-            console.log("Opponent name is default after load, prompting for setup...");
-            setIsNewGameSetupModalOpen(true);
-        }
+    // Only run if loaded, opponent is default, user hasn't skipped, and modal isn't already open
+    if (isLoaded && opponentName === initialState.opponentName && !hasSkippedInitialSetup && !isNewGameSetupModalOpen) {
+        console.log("Opponent name is default after load (secondary check), prompting for setup...");
+        setIsNewGameSetupModalOpen(true);
     }
-  }, [isLoaded, opponentName, isNewGameSetupModalOpen]); // Depend on load status and opponent name
+    // No action needed if conditions aren't met
+  }, [isLoaded, opponentName, isNewGameSetupModalOpen, hasSkippedInitialSetup]); // Add hasSkippedInitialSetup dependency
 
   // --- Roster Management Handlers ---
   const openRosterModal = () => setIsRosterModalOpen(true);
@@ -1860,12 +1868,14 @@ export default function Home() {
           onExportOneCsv={handleExportOneCsv}
         />
 
-        {/* NEW: New Game Setup Modal */}
-        <NewGameSetupModal 
-          isOpen={isNewGameSetupModalOpen}
-          onStart={handleFinalizeNewGame}
-          onCancel={handleCancelNewGameSetup}
-        />
+        {/* Conditionally render the New Game Setup Modal */}
+        {isNewGameSetupModalOpen && (
+          <NewGameSetupModal
+            isOpen={isNewGameSetupModalOpen}
+            onStart={handleFinalizeNewGame} 
+            onCancel={handleCancelNewGameSetup} // <-- Pass the function name again
+          />
+        )}
 
         {/* Roster Settings Modal */}
         <RosterSettingsModal

@@ -71,7 +71,7 @@ const SaveGameModal: React.FC<SaveGameModalProps> = ({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-start justify-center z-50 p-4">
       <div className="bg-slate-800 rounded-lg shadow-xl p-5 w-full max-w-md border border-slate-600 max-h-[calc(100vh-theme(space.8))] overflow-hidden min-h-[calc(100vh-theme(space.8))] flex flex-col">
-        <h2 className="text-xl font-semibold mb-4 text-yellow-300">
+        <h2 className="text-xl font-semibold mb-6 text-yellow-300 text-center">
           {t('saveGameModal.title', 'Save Game As...')}
         </h2>
         

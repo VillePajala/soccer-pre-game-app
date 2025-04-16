@@ -328,54 +328,51 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
 
   // --- Event Handlers --- 
 
-  // getRelativeEventPosition needs to calculate relative based on CSS size
+  // --- Event Position Helper ---
+  // Function to get the relative position of an event within the canvas
   const getRelativeEventPosition = (
-    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>,
+    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement> | TouchEvent,
     specificTouchId?: number | null
   ): Point | null => {
     const canvas = canvasRef.current;
     if (!canvas) return null;
-    const rect = canvas.getBoundingClientRect(); // Get dimensions in CSS pixels
+    const rect = canvas.getBoundingClientRect();
+    let clientX: number, clientY: number;
 
-    let clientX: number;
-    let clientY: number;
-    if ('touches' in e) {
-      let touch: React.Touch | null = null;
-      if (specificTouchId !== undefined && specificTouchId !== null) {
-        for (let i = 0; i < e.changedTouches.length; i++) {
-          if (e.changedTouches[i].identifier === specificTouchId) {
-            touch = e.changedTouches[i]; break;
-          }
+    if ('touches' in e) { // Handle both React and native TouchEvents
+        let touch: Touch | React.Touch | undefined;
+        // Access changedTouches directly - it exists on both types
+        const touches = e.changedTouches;
+        if (specificTouchId !== undefined && specificTouchId !== null) {
+            // Find the specific touch by identifier
+            touch = Array.from(touches).find(t => t.identifier === specificTouchId);
+        } else if (touches.length > 0) {
+             // Fallback to the first changed touch if no specific ID
+             touch = touches[0];
         }
-        if (!touch) {
-             for (let i = 0; i < e.touches.length; i++) {
-                if (e.touches[i].identifier === specificTouchId) {
-                    touch = e.touches[i]; break;
-                }
-            }
-        }
-      } else {
-        touch = e.touches[0];
-      }
-      if (!touch) return null;
-      clientX = touch.clientX;
-      clientY = touch.clientY;
-    } else {
+
+        if (!touch) return null; 
+        clientX = touch.clientX;
+        clientY = touch.clientY;
+    } else { // It's a MouseEvent
       clientX = e.clientX;
       clientY = e.clientY;
     }
 
-    const absX = clientX - rect.left;
-    const absY = clientY - rect.top;
+    // Check for invalid dimensions before calculating relative position
+    if (rect.width <= 0 || rect.height <= 0) {
+        console.warn("Canvas has invalid dimensions, cannot calculate relative position.");
+        return null;
+    }
 
-    // Calculate relative position based on CSS dimensions (rect.width/height)
-    const relX = absX / rect.width;
-    const relY = absY / rect.height;
+    const relX = (clientX - rect.left) / rect.width;
+    const relY = (clientY - rect.top) / rect.height;
+    
+    // Clamp values between 0 and 1 (optional, but good practice)
+    const clampedX = Math.max(0, Math.min(1, relX));
+    const clampedY = Math.max(0, Math.min(1, relY));
 
-    return {
-      relX: Math.max(0, Math.min(1, relX)),
-      relY: Math.max(0, Math.min(1, relY)),
-    };
+    return { relX: clampedX, relY: clampedY };
   };
 
   // Hit Detection Helpers need to calculate absolute positions based on CSS size
@@ -515,7 +512,8 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     handleMouseUp(); // Treat leave same as mouse up
   };
 
-  const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
+  // --- Touch Handlers ---
+  const handleTouchStart = useCallback((e: TouchEvent) => { // Changed event type, wrapped in useCallback
     if (e.touches.length > 1) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -580,28 +578,35 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
             e.preventDefault(); // Prevent scroll ONLY when starting drawing
         }
     }
-  };
+  }, [ // Added dependencies for useCallback
+    draggingPlayerFromBarInfo, isPointInPlayer, isPointInOpponent,
+    lastTapInfo, onDrawingStart, onOpponentRemove, onPlayerDropViaTouch, 
+    onPlayerRemove, players, opponents // Include relevant states and props
+  ]);
 
-  const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
-    if (activeTouchId === null) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    if (activeTouchId === null) return; 
 
+    const currentTouch = Array.from(e.changedTouches).find(t => t.identifier === activeTouchId);
+    if (!currentTouch) return; 
+
+    // Prevent default only needed if dragging/drawing
     if (isDraggingPlayer || isDraggingOpponent || isDrawing) {
-        e.preventDefault();
+      // We know this listener is non-passive, so preventDefault is safe
+       e.preventDefault(); 
     }
-
-    const relPos = getRelativeEventPosition(e, activeTouchId);
-    if (!relPos) return;
+    
+    const pos = getRelativeEventPosition(e, activeTouchId); // Pass native event
+    if (!pos) return;
 
     if (isDraggingPlayer && draggingPlayerId) {
-      onPlayerMove(draggingPlayerId, relPos.relX, relPos.relY); // Pass relative
+      onPlayerMove(draggingPlayerId, pos.relX, pos.relY);
     } else if (isDraggingOpponent && draggingOpponentId) {
-      onOpponentMove(draggingOpponentId, relPos.relX, relPos.relY); // Pass relative
+      onOpponentMove(draggingOpponentId, pos.relX, pos.relY);
     } else if (isDrawing) {
-      onDrawingAddPoint(relPos); // Pass relative
+      onDrawingAddPoint(pos);
     }
-  };
+  }, [activeTouchId, isDrawing, isDraggingPlayer, isDraggingOpponent, draggingPlayerId, draggingOpponentId, onPlayerMove, onOpponentMove, onDrawingAddPoint]); // Added dependencies
 
   const handleTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => {
     if (draggingPlayerFromBarInfo && activeTouchId !== null) {
@@ -645,7 +650,6 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
 
     setActiveTouchId(null);
   };
-  const handleTouchCancel = handleTouchEnd; // Treat cancel same as end
 
   // --- HTML Drag and Drop Handlers (Needs update for CSS size) ---
   const handleDragOver = (e: React.DragEvent<HTMLCanvasElement>) => {
@@ -676,23 +680,37 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     if (canvasRef.current) canvasRef.current.style.cursor = 'default';
   };
 
+  // --- Effect for Manual Event Listeners --- 
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    // Add listeners manually with passive: false
+    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+
+    // Cleanup function to remove the listeners
+    return () => {
+      canvas.removeEventListener('touchstart', handleTouchStart);
+      canvas.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, [handleTouchStart, handleTouchMove]); // Re-run if the handler function instances change
+
+  // --- Render Canvas ---
   return (
-    <div className="relative w-full h-full touch-none">
-      <canvas 
+    <div className="w-full h-full relative bg-green-700"> {/* Ensure wrapper takes space */} 
+      <canvas
         ref={canvasRef}
-        className="w-full h-full block touch-none"
-        // Set CSS size via className, buffer size is set in draw()
+        className="absolute top-0 left-0 w-full h-full touch-none" // Added touch-none
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}  
         onTouchEnd={handleTouchEnd}
-        onTouchCancel={handleTouchCancel}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
       />
+      {/* Optional: Render player names/numbers as separate HTML elements over the canvas? */}
     </div>
   );
 };
