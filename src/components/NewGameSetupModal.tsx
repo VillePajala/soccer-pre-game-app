@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { GameType } from '@/components/SaveGameModal';
 
 interface NewGameSetupModalProps {
   isOpen: boolean;
-  onStart: (opponentName: string, gameDate: string) => void;
+  onStart: (opponentName: string, gameDate: string, gameType: GameType) => void;
   onCancel: () => void;
 }
 
@@ -17,6 +18,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   const { t } = useTranslation();
   const [opponentName, setOpponentName] = useState('');
   const [gameDate, setGameDate] = useState(new Date().toISOString().split('T')[0]); // Default to today
+  const [gameType, setGameType] = useState<GameType>('season');
   const opponentInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -27,6 +29,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
       setTimeout(() => {
         opponentInputRef.current?.focus();
       }, 100); 
+      setGameType('season'); // Reset game type to default when opening
     }
   }, [isOpen]);
 
@@ -38,8 +41,8 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
       opponentInputRef.current?.focus(); // Focus the empty input
       return; // Stop execution
     }
-    // If name is provided, proceed to call onStart
-    onStart(trimmedOpponentName, gameDate); 
+    // If name is provided, proceed to call onStart with gameType
+    onStart(trimmedOpponentName, gameDate, gameType); 
   };
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
@@ -89,6 +92,39 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
             onKeyDown={handleKeyDown} // Handle Enter/Escape
             className="w-full px-3 py-2 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
           />
+        </div>
+
+        {/* Game Type Selection */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-slate-300 mb-2">
+            {t('newGameSetupModal.gameTypeLabel', 'Game Type:')}
+          </label>
+          <div className="flex space-x-4">
+            {/* Season Radio */}
+            <label className="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="radio"
+                name="newGameType"
+                value="season"
+                checked={gameType === 'season'}
+                onChange={() => setGameType('season')}
+                className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-slate-500 bg-slate-700"
+              />
+              <span className="text-sm text-slate-200">{t('newGameSetupModal.gameTypeSeason', 'Season')}</span>
+            </label>
+            {/* Tournament Radio */}
+            <label className="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="radio"
+                name="newGameType"
+                value="tournament"
+                checked={gameType === 'tournament'}
+                onChange={() => setGameType('tournament')}
+                className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-slate-500 bg-slate-700"
+              />
+              <span className="text-sm text-slate-200">{t('newGameSetupModal.gameTypeTournament', 'Tournament')}</span>
+            </label>
+          </div>
         </div>
 
         {/* Action Buttons - Centered */}

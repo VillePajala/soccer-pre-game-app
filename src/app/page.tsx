@@ -9,7 +9,7 @@ import InstructionsModal from '@/components/InstructionsModal'; // Import Instru
 import GoalLogModal from '@/components/GoalLogModal'; // Import GoalLogModal
 import GameStatsModal from '@/components/GameStatsModal'; // Import GameStatsModal
 import TrainingResourcesModal from '@/components/TrainingResourcesModal'; // Import new modal
-import SaveGameModal from '@/components/SaveGameModal'; // Import the new modal
+import SaveGameModal, { GameType } from '@/components/SaveGameModal'; // Import the new modal
 import LoadGameModal from '@/components/LoadGameModal'; // Import the new modal
 import NewGameSetupModal from '@/components/NewGameSetupModal'; // Import the new component
 import RosterSettingsModal from '@/components/RosterSettingsModal'; // Import the new Roster modal
@@ -75,6 +75,7 @@ export interface AppState {
   currentPeriod: number; // 1 or 2
   gameStatus: 'notStarted' | 'inProgress' | 'periodEnd' | 'gameEnd';
   selectedPlayerIds: string[]; // IDs of players selected for the current match
+  gameType: GameType; // Add game type
 }
 
 // Placeholder data - Initialize new fields
@@ -113,6 +114,7 @@ const initialState: AppState = {
   gameStatus: 'notStarted',
   // Initialize selectedPlayerIds with all players from initial data
   selectedPlayerIds: initialAvailablePlayersData.map(p => p.id),
+  gameType: 'season', // Default game type
 };
 
 // Define new localStorage keys
@@ -137,11 +139,15 @@ const DEFAULT_GAME_ID = '__default_unsaved__';
 
 
 export default function Home() {
+  console.log('Before useTranslation');
   const { t } = useTranslation(); // Get translation function
 
   // --- History Management (Still needed here for now) ---
+  console.log('Before useState(history)');
   const [history, setHistory] = useState<AppState[]>([initialState]);
+  console.log('Before useState(historyIndex)');
   const [historyIndex, setHistoryIndex] = useState<number>(0);
+  console.log('Before useCallback(saveStateToHistory)');
   const saveStateToHistory = useCallback((newState: Partial<AppState>) => {
     // This function currently modifies the 'history' state variable,
     // which is ONLY used for runtime undo/redo in the current session.
@@ -164,6 +170,7 @@ export default function Home() {
   }, [history, historyIndex]); // Dependencies are just history state
 
   // --- Core Game State (Managed by Hook) ---
+  console.log('Before useGameState');
   const {
     playersOnField,
     opponents,
@@ -189,58 +196,97 @@ export default function Home() {
   }: UseGameStateReturn = useGameState({ initialState, saveStateToHistory });
 
   // --- State Management (Remaining in Home component) ---
-  // REMOVED: useState for playersOnField, opponents, drawings, availablePlayers
+  console.log('Before useState(showPlayerNames)');
   const [showPlayerNames, setShowPlayerNames] = useState<boolean>(initialState.showPlayerNames);
+  console.log('Before useState(teamName)');
   const [teamName, setTeamName] = useState<string>(initialState.teamName);
+  console.log('Before useState(gameEvents)');
   const [gameEvents, setGameEvents] = useState<GameEvent[]>(initialState.gameEvents);
+  console.log('Before useState(opponentName)');
   const [opponentName, setOpponentName] = useState<string>(initialState.opponentName);
+  console.log('Before useState(gameDate)');
   const [gameDate, setGameDate] = useState<string>(initialState.gameDate);
+  console.log('Before useState(homeScore)');
   const [homeScore, setHomeScore] = useState<number>(initialState.homeScore);
+  console.log('Before useState(awayScore)');
   const [awayScore, setAwayScore] = useState<number>(initialState.awayScore);
+  console.log('Before useState(gameNotes)');
   const [gameNotes, setGameNotes] = useState<string>(initialState.gameNotes);
+  console.log('Before useState(numberOfPeriods)');
   const [numberOfPeriods, setNumberOfPeriods] = useState<1 | 2>(initialState.numberOfPeriods);
+  console.log('Before useState(periodDurationMinutes)');
   const [periodDurationMinutes, setPeriodDurationMinutes] = useState<number>(initialState.periodDurationMinutes);
+  console.log('Before useState(currentPeriod)');
   const [currentPeriod, setCurrentPeriod] = useState<number>(initialState.currentPeriod);
+  console.log('Before useState(gameStatus)');
   const [gameStatus, setGameStatus] = useState<'notStarted' | 'inProgress' | 'periodEnd' | 'gameEnd'>(initialState.gameStatus);
+  console.log('Before useState(selectedPlayerIds)');
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>(initialState.selectedPlayerIds); // Add state for selected player IDs
+  console.log('Before useState(gameType)');
+  const [gameType, setGameType] = useState<GameType>(initialState.gameType); // Add state for game type
   // ... Timer state ...
   // ... Modal states ...
   // ... UI/Interaction states ...
+  console.log('Before useState(isLoaded)');
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
+  console.log('Before useState(draggingPlayerFromBarInfo)');
   const [draggingPlayerFromBarInfo, setDraggingPlayerFromBarInfo] = useState<Player | null>(null);
+  console.log('Before useState(isFullscreen)');
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false); // RE-ADD Fullscreen state
   // Persistence state
+  console.log('Before useState(savedGames)');
   const [savedGames, setSavedGames] = useState<SavedGamesCollection>({});
+  console.log('Before useState(currentGameId)');
   const [currentGameId, setCurrentGameId] = useState<string | null>(DEFAULT_GAME_ID);
 
   // --- Timer State (Still needed here) ---
+  console.log('Before useState(timeElapsedInSeconds)');
   const [timeElapsedInSeconds, setTimeElapsedInSeconds] = useState<number>(0);
+  console.log('Before useState(isTimerRunning)');
   const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
+  console.log('Before useState(showLargeTimerOverlay)');
   const [showLargeTimerOverlay, setShowLargeTimerOverlay] = useState<boolean>(false); // State for overlay visibility
   
   // --- Substitution Timer State (Still needed here) ---
+  console.log('Before useState(subIntervalMinutes)');
   const [subIntervalMinutes, setSubIntervalMinutes] = useState<number>(5); // Default to 5 min
+  console.log('Before useState(nextSubDueTimeSeconds)');
   const [nextSubDueTimeSeconds, setNextSubDueTimeSeconds] = useState<number>(5 * 60);
+  console.log('Before useState(subAlertLevel)');
   const [subAlertLevel, setSubAlertLevel] = useState<'none' | 'warning' | 'due'>('none'); 
+  console.log('Before useState(completedIntervalDurations)');
   const [completedIntervalDurations, setCompletedIntervalDurations] = useState<number[]>([]);
+  console.log('Before useState(lastSubConfirmationTimeSeconds)');
   const [lastSubConfirmationTimeSeconds, setLastSubConfirmationTimeSeconds] = useState<number>(0);
   
   // --- Modal States (Still needed here) ---
+  console.log('Before useState(isInstructionsOpen)');
   const [isInstructionsOpen, setIsInstructionsOpen] = useState<boolean>(false);
+  console.log('Before useState(isTrainingResourcesOpen)');
   const [isTrainingResourcesOpen, setIsTrainingResourcesOpen] = useState<boolean>(false); 
+  console.log('Before useState(isGoalLogModalOpen)');
   const [isGoalLogModalOpen, setIsGoalLogModalOpen] = useState<boolean>(false); 
+  console.log('Before useState(isGameStatsModalOpen)');
   const [isGameStatsModalOpen, setIsGameStatsModalOpen] = useState<boolean>(false);
+  console.log('Before useState(isNewGameSetupModalOpen)');
   const [isNewGameSetupModalOpen, setIsNewGameSetupModalOpen] = useState<boolean>(false);
+  console.log('Before useState(isSaveGameModalOpen)');
   const [isSaveGameModalOpen, setIsSaveGameModalOpen] = useState<boolean>(false);
+  console.log('Before useState(isLoadGameModalOpen)');
   const [isLoadGameModalOpen, setIsLoadGameModalOpen] = useState<boolean>(false);
+  console.log('Before useState(isRosterModalOpen)');
   const [isRosterModalOpen, setIsRosterModalOpen] = useState<boolean>(false); // State for the new modal
+  console.log('Before useState(hasSkippedInitialSetup)');
   const [hasSkippedInitialSetup, setHasSkippedInitialSetup] = useState<boolean>(false); // <-- Add this state
+  // Add state to track if new game setup should open after saving
+  const [isStartingNewGameAfterSave, setIsStartingNewGameAfterSave] = useState<boolean>(false);
 
   // --- Handlers (Remaining in Home component or to be moved) ---
   // REMOVED: handlePlayerDrop (now comes from useGameState hook)
   // ... other handlers ...
 
   // --- Timer Effect ---
+  console.log('Before useEffect(timer)');
   useEffect(() => {
     let intervalId: NodeJS.Timeout | null = null;
     const periodEndTimeSeconds = currentPeriod * periodDurationMinutes * 60;
@@ -298,6 +344,7 @@ export default function Home() {
   }, [isTimerRunning, gameStatus, currentPeriod, periodDurationMinutes, numberOfPeriods, nextSubDueTimeSeconds, subAlertLevel]); // ADD gameStatus, currentPeriod, periodDurationMinutes, numberOfPeriods dependencies
 
   // --- Load state from localStorage on mount (REVISED) ---
+  console.log('Before useEffect(initial load)');
   useEffect(() => {
     console.log("Attempting to load settings and game states from localStorage...");
     let loadedState: AppState | null = null;
@@ -367,6 +414,9 @@ export default function Home() {
           ? stateToApply.selectedPlayerIds
           : stateToApply.availablePlayers.map(p => p.id) // Default to all players in loaded state
       );
+      // ADDED: Load game type, defaulting if missing
+      setGameType(stateToApply.gameType || 'season'); 
+
       // Reset timer state when loading any game state initially?
       setTimeElapsedInSeconds(0);
       setIsTimerRunning(false);
@@ -394,6 +444,7 @@ export default function Home() {
   }, [setAvailablePlayers, setDrawings, setOpponents, setPlayersOnField, hasSkippedInitialSetup]); // <-- Add hasSkippedInitialSetup to dependency array
 
   // --- Save state to localStorage --- 
+  console.log('Before useEffect(auto-save)');
   useEffect(() => {
     // Check if loaded and we have a game ID to save under
     if (isLoaded && currentGameId) { 
@@ -418,6 +469,7 @@ export default function Home() {
           currentPeriod,
           gameStatus,
           selectedPlayerIds: initialState.selectedPlayerIds, // Include selectedPlayerIds
+          gameType: initialState.gameType, // Include gameType in the saved state
         };
 
         // 2. Read the *current* collection from localStorage
@@ -451,14 +503,28 @@ export default function Home() {
       playersOnField, opponents, drawings, availablePlayers, showPlayerNames, teamName,
       gameEvents, opponentName, gameDate, homeScore, awayScore, gameNotes,
       numberOfPeriods, periodDurationMinutes, currentPeriod, gameStatus,
-      selectedPlayerIds // Add as dependency for saving
+      selectedPlayerIds, // Add as dependency for saving
+      gameType // Add gameType to dependencies
     ]);
 
+  // **** ADDED: Effect to prompt for setup if opponent name is default ****
+  useEffect(() => {
+    // Only run this check after the initial load is complete
+    // and if the user hasn't explicitly skipped the setup
+    // and the modal isn't already open (e.g., from the load effect)
+    if (isLoaded && opponentName === 'Opponent' && !hasSkippedInitialSetup && !isNewGameSetupModalOpen) {
+      console.log('Opponent name is default after load, prompting for setup...');
+      setIsNewGameSetupModalOpen(true);
+    }
+  }, [isLoaded, opponentName, hasSkippedInitialSetup, isNewGameSetupModalOpen]); // Dependencies for the check
+
   // --- Fullscreen API Logic ---
+  console.log('Before useCallback(handleFullscreenChange)');
   const handleFullscreenChange = useCallback(() => {
     setIsFullscreen(!!document.fullscreenElement);
   }, []);
 
+  console.log('Before useEffect(fullscreen listener)');
   useEffect(() => {
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     document.addEventListener('webkitfullscreenchange', handleFullscreenChange); // Safari/Chrome
@@ -473,6 +539,7 @@ export default function Home() {
     };
   }, [handleFullscreenChange]);
 
+  console.log('Before useCallback(toggleFullScreen)');
   const toggleFullScreen = async () => {
     const elem = document.documentElement; // Target the whole page
 
@@ -520,6 +587,7 @@ export default function Home() {
 
   // --- Player Management Handlers (Updated for relative coords) ---
   // Wrapped handleDropOnField in useCallback as suggested (line 500)
+  console.log('Before useCallback(handleDropOnField)');
   const handleDropOnField = useCallback((playerId: string, relX: number, relY: number) => {
     const droppedPlayer = availablePlayers.find(p => p.id === playerId);
     if (droppedPlayer) {
@@ -530,6 +598,7 @@ export default function Home() {
   // ADDED dependencies based on ESLint warning
   }, [availablePlayers, handlePlayerDrop]); 
 
+  console.log('Before useCallback(handlePlayerMove)');
   const handlePlayerMove = useCallback((playerId: string, relX: number, relY: number) => {
     // Update visual state immediately
     setPlayersOnField(prevPlayers => 
@@ -541,10 +610,12 @@ export default function Home() {
   // ADDED dependency based on ESLint warning (line 517)
   }, [setPlayersOnField]);
 
+  console.log('Before useCallback(handlePlayerMoveEnd)');
   const handlePlayerMoveEnd = useCallback(() => {
     saveStateToHistory({ playersOnField });
   }, [playersOnField, saveStateToHistory]);
 
+  console.log('Before useCallback(handlePlayerRemove)');
   const handlePlayerRemove = useCallback((playerId: string) => {
     const updatedPlayersOnField = playersOnField.filter(p => p.id !== playerId);
     saveStateToHistory({ playersOnField: updatedPlayersOnField });
@@ -553,6 +624,7 @@ export default function Home() {
 
 
   // --- Reset Handler ---
+  console.log('Before useCallback(handleResetField)');
   const handleResetField = useCallback(() => {
     // Update state directly
     setPlayersOnField([]);
@@ -564,6 +636,7 @@ export default function Home() {
   }, [saveStateToHistory, setDrawings, setOpponents, setPlayersOnField]);
 
   // --- Touch Drag from Bar Handlers (Updated for relative coords) ---
+  console.log('Before useCallback(handlePlayerDragStartFromBar)');
   const handlePlayerDragStartFromBar = useCallback((playerInfo: Player) => {
     // This is now primarily for HTML Drag and Drop OR potential long-press drag
     setDraggingPlayerFromBarInfo(playerInfo);
@@ -571,6 +644,7 @@ export default function Home() {
   }, []);
 
   // NEW Handler for simple tap selection in the bar
+  console.log('Before useCallback(handlePlayerTapInBar)');
   const handlePlayerTapInBar = useCallback((playerInfo: Player) => {
     // If the tapped player is already selected, deselect them
     if (draggingPlayerFromBarInfo?.id === playerInfo.id) {
@@ -583,6 +657,7 @@ export default function Home() {
     }
   }, [draggingPlayerFromBarInfo]); // Dependency needed
 
+  console.log('Before useCallback(handlePlayerDropViaTouch)');
   const handlePlayerDropViaTouch = useCallback((relX: number, relY: number) => {
     // This handler might be less relevant now if tap-on-field works
     if (draggingPlayerFromBarInfo) {
@@ -592,11 +667,13 @@ export default function Home() {
     }
   }, [draggingPlayerFromBarInfo, handleDropOnField]);
 
+  console.log('Before useCallback(handlePlayerDragCancelViaTouch)');
   const handlePlayerDragCancelViaTouch = useCallback(() => {
     setDraggingPlayerFromBarInfo(null);
   }, []);
 
   // --- Toggle Player Names Handler ---
+  console.log('Before handleTogglePlayerNames definition');
   const handleTogglePlayerNames = () => {
     console.log('Toggling player names');
     const nextShowNames = !showPlayerNames;
@@ -605,6 +682,7 @@ export default function Home() {
   };
 
   // --- Team Name Handler ---
+  console.log('Before handleTeamNameChange definition');
   const handleTeamNameChange = (newName: string) => {
     const trimmedName = newName.trim();
     if (trimmedName) {
@@ -617,6 +695,7 @@ export default function Home() {
   };
 
   // --- Undo/Redo Handlers ---
+  console.log('Before handleUndo definition');
   const handleUndo = () => {
     if (historyIndex > 0) {
       console.log("Undoing...");
@@ -635,6 +714,7 @@ export default function Home() {
     }
   };
 
+  console.log('Before handleRedo definition');
   const handleRedo = () => {
     if (historyIndex < history.length - 1) {
       console.log("Redoing...");
@@ -654,6 +734,7 @@ export default function Home() {
   };
 
   // --- Timer Handlers ---
+  console.log('Before handleStartPauseTimer definition');
   const handleStartPauseTimer = () => {
     if (gameStatus === 'notStarted') {
       // Start the game (first period)
@@ -690,6 +771,7 @@ export default function Home() {
     }
   };
 
+  console.log('Before handleResetTimer definition');
   const handleResetTimer = () => {
     // Reset the entire game state related to time and periods
     setTimeElapsedInSeconds(0);
@@ -704,6 +786,7 @@ export default function Home() {
     console.log("Timer and game progress reset.");
   };
 
+  console.log('Before handleSubstitutionMade definition');
   const handleSubstitutionMade = () => {
     const duration = timeElapsedInSeconds - lastSubConfirmationTimeSeconds;
     const currentElapsedTime = timeElapsedInSeconds; // Capture current time *before* state updates
@@ -736,6 +819,7 @@ export default function Home() {
     console.log(`Sub made at ${currentElapsedTime}s. Duration: ${duration}s. Next due: ${newDueTime}s. (Alert update delayed)`);
   };
 
+  console.log('Before handleSetSubInterval definition');
   const handleSetSubInterval = (minutes: number) => {
     const newMinutes = Math.max(1, minutes);
     setSubIntervalMinutes(newMinutes);
@@ -769,15 +853,18 @@ export default function Home() {
     console.log(`Interval set to ${newMinutes}m. Current time: ${currentElapsedTime}s. Next due: ${newDueTime}s. New Alert: ${newAlertLevel}`);
   };
 
+  console.log('Before handleToggleLargeTimerOverlay definition');
   const handleToggleLargeTimerOverlay = () => {
     setShowLargeTimerOverlay(!showLargeTimerOverlay);
   };
 
+  console.log('Before handleToggleInstructions definition');
   const handleToggleInstructions = () => {
     setIsInstructionsOpen(!isInstructionsOpen);
   };
 
   // Handler to specifically deselect player when bar background is clicked
+  console.log('Before handleDeselectPlayer definition');
   const handleDeselectPlayer = () => {
     if (draggingPlayerFromBarInfo) { // Only log if there was a selection
       console.log("Deselecting player by clicking bar background.");
@@ -789,11 +876,13 @@ export default function Home() {
   const canRedo = historyIndex < history.length - 1;
 
   // Handler to open/close the goal log modal
+  console.log('Before handleToggleGoalLogModal definition');
   const handleToggleGoalLogModal = () => {
     setIsGoalLogModalOpen(!isGoalLogModalOpen);
   };
 
   // Handler to add a goal event
+  console.log('Before handleAddGoalEvent definition');
   const handleAddGoalEvent = (scorerId: string, assisterId?: string) => {
     const scorer = availablePlayers.find(p => p.id === scorerId);
     const assister = assisterId ? availablePlayers.find(p => p.id === assisterId) : undefined;
@@ -826,6 +915,7 @@ export default function Home() {
   };
 
   // NEW Handler to log an opponent goal
+  console.log('Before handleLogOpponentGoal definition');
   const handleLogOpponentGoal = (time: number) => {
     console.log(`Logging opponent goal at time: ${time}`);
     const newEvent: GameEvent = {
@@ -851,6 +941,7 @@ export default function Home() {
   };
 
   // Handler to update an existing game event
+  console.log('Before handleUpdateGameEvent definition');
   const handleUpdateGameEvent = (updatedEvent: GameEvent) => {
     const eventIndex = gameEvents.findIndex(e => e.id === updatedEvent.id);
     if (eventIndex === -1) {
@@ -870,35 +961,35 @@ export default function Home() {
     console.log("Updated game event:", updatedEvent.id);
   };
 
+  // --- Button/Action Handlers ---
+  
   // RENAMED & UPDATED Handler: Just opens the setup modal after confirmation
-  const handleStartNewGame = useCallback(() => {
-    // Confirmation remains the same
-    if (window.confirm(t('controlBar.startNewGameConfirm', 'Are you sure you want to start a new match? Unsaved data for the current match will be lost.'))) {
-      console.log("Start new game confirmed, opening setup modal..." );
-      setIsNewGameSetupModalOpen(true); // Open the new modal instead of resetting here
-    }
-  }, [t]); 
+  
+  
+  // NEW: Handler to actually reset state and set opponent/date/type from modal
+  console.log('Before useCallback(handleFinalizeNewGame)');
+  const handleFinalizeNewGame = useCallback((newOpponentName: string, newGameDate: string, newGameType: GameType) => {
+    console.log(`Finalizing new game start. Opponent: ${newOpponentName}, Date: ${newGameDate}, Type: ${newGameType}`);
 
-  // NEW: Handler to actually reset state and set opponent/date from modal
-  const handleFinalizeNewGame = (newOpponentName: string, newGameDate: string) => {
-    console.log(`Finalizing new game start. Opponent: ${newOpponentName}, Date: ${newGameDate}`);
+    // --- Reset State --- 
+    // Preserve roster (availablePlayers) but reset their goalie/card status
+    const resetAvailablePlayers = availablePlayers.map(p => ({ 
+      ...p, 
+      isGoalie: false, 
+      receivedFairPlayCard: false 
+    }));
+    setAvailablePlayers(resetAvailablePlayers);
     
-    // Preserve current team name and available players
-    const preservedTeamName = teamName;
-    const preservedAvailablePlayers = availablePlayers.map(p => ({ ...p, isGoalie: false }));
-    
-    // Reset other state variables to their initial values from initialState
+    // Reset field state using hook setters
     setPlayersOnField(initialState.playersOnField);
     setOpponents(initialState.opponents);
     setDrawings(initialState.drawings);
+    
+    // Reset other state managed directly in Home component
     setShowPlayerNames(initialState.showPlayerNames);
+    // Keep existing teamName? Or reset?
+    // setTeamName(initialState.teamName); // Let's keep team name for now
     setGameEvents(initialState.gameEvents);
-    setTimeElapsedInSeconds(0);
-    setIsTimerRunning(false);
-    setSubAlertLevel('none');
-    setNextSubDueTimeSeconds(5 * 60);
-    setCompletedIntervalDurations([]);
-    setLastSubConfirmationTimeSeconds(0);
     setHomeScore(initialState.homeScore);
     setAwayScore(initialState.awayScore);
     setGameNotes(initialState.gameNotes);
@@ -906,36 +997,59 @@ export default function Home() {
     setPeriodDurationMinutes(initialState.periodDurationMinutes);
     setCurrentPeriod(initialState.currentPeriod);
     setGameStatus(initialState.gameStatus);
+    setSelectedPlayerIds(resetAvailablePlayers.map(p => p.id)); // Select all players from roster
 
-    // Set the new opponent name and game date from the modal
-    setOpponentName(newOpponentName.trim() || t('gameStatsModal.opponentPlaceholder', 'Opponent')); // Use placeholder if empty
-    setGameDate(newGameDate || new Date().toISOString().split('T')[0]); // Default to today if date is invalid/empty
+    // Set the new opponent name, game date, and game type from the modal
+    setOpponentName(newOpponentName.trim() || t('gameStatsModal.opponentPlaceholder', 'Opponent'));
+    setGameDate(newGameDate || new Date().toISOString().split('T')[0]);
+    setGameType(newGameType); // Set the new game type
 
-    // Create a new initial state for history that includes the preserved AND new values
+    // Reset Timer
+    setTimeElapsedInSeconds(0);
+    setIsTimerRunning(false);
+    setSubAlertLevel('none');
+    setNextSubDueTimeSeconds(subIntervalMinutes * 60); 
+    setCompletedIntervalDurations([]);
+    setLastSubConfirmationTimeSeconds(0);
+
+    // Reset History (Session Undo/Redo)
     const newInitialStateForHistory: AppState = {
-      ...initialState,
-      teamName: preservedTeamName,
-      availablePlayers: preservedAvailablePlayers,
+      playersOnField: initialState.playersOnField,
+      opponents: initialState.opponents,
+      drawings: initialState.drawings,
+      availablePlayers: resetAvailablePlayers, // Use reset roster
+      showPlayerNames: initialState.showPlayerNames, 
+      teamName: teamName, // Keep current team name
+      gameEvents: initialState.gameEvents,
       opponentName: newOpponentName.trim() || t('gameStatsModal.opponentPlaceholder', 'Opponent'),
       gameDate: newGameDate || new Date().toISOString().split('T')[0],
-      // Ensure reset in history state includes ALL players selected
-      selectedPlayerIds: preservedAvailablePlayers.map(p => p.id),
+      homeScore: initialState.homeScore,
+      awayScore: initialState.awayScore,
+      gameNotes: initialState.gameNotes,
+      numberOfPeriods: initialState.numberOfPeriods,
+      periodDurationMinutes: initialState.periodDurationMinutes,
+      currentPeriod: initialState.currentPeriod,
+      gameStatus: initialState.gameStatus,
+      selectedPlayerIds: resetAvailablePlayers.map(p => p.id),
+      gameType: newGameType, // Use new game type
     };
-    
-    // Reset session history using the new initial state
     setHistory([newInitialStateForHistory]); 
     setHistoryIndex(0);
+    
+    // Update current game ID to reflect it's unsaved
+    setCurrentGameId(DEFAULT_GAME_ID);
 
-    console.log("Session state reset with new opponent/date.");
+    console.log("Session state reset with new opponent/date/type.");
     setIsNewGameSetupModalOpen(false); // Close the setup modal
-  };
+  }, [availablePlayers, setAvailablePlayers, setDrawings, setOpponents, setPlayersOnField, subIntervalMinutes, t, teamName]);
 
   // NEW: Handler to cancel the new game setup
-  const handleCancelNewGameSetup = () => {
+  console.log('Before useCallback(handleCancelNewGameSetup)');
+  const handleCancelNewGameSetup = useCallback(() => {
     console.log("New game setup cancelled.");
     setHasSkippedInitialSetup(true); // <-- Add the skip flag logic here
     setIsNewGameSetupModalOpen(false);
-  };
+  }, []);
 
   // Handler to open/close the stats modal
   const handleToggleGameStatsModal = () => {
@@ -965,6 +1079,7 @@ export default function Home() {
   };
 
   // --- Handlers for Game Structure ---
+  console.log('Before handleSetNumberOfPeriods definition');
   const handleSetNumberOfPeriods = (periods: 1 | 2) => {
     if (gameStatus === 'notStarted') {
       setNumberOfPeriods(periods);
@@ -977,6 +1092,7 @@ export default function Home() {
     }
   };
 
+  console.log('Before handleSetPeriodDuration definition');
   const handleSetPeriodDuration = (minutes: number) => {
     const newMinutes = Math.max(1, minutes);
     if (gameStatus === 'notStarted') {
@@ -989,11 +1105,13 @@ export default function Home() {
   };
 
   // Training Resources Modal
+  console.log('Before handleToggleTrainingResources definition');
   const handleToggleTrainingResources = () => {
     setIsTrainingResourcesOpen(!isTrainingResourcesOpen);
   };
 
   // NEW: Handler for Hard Reset
+  console.log('Before useCallback(handleHardResetApp)');
   const handleHardResetApp = useCallback(() => {
     if (window.confirm(t('controlBar.hardResetConfirmation') ?? "Are you sure you want to completely reset the application? All saved data (players, stats, positions) will be permanently lost.")) {
       try {
@@ -1010,78 +1128,50 @@ export default function Home() {
   }, [t]); // Add t to dependency array
 
   // --- NEW: Handler to Reset Only Current Game Stats/Timer ---
-  const handleResetStatsOnly = useCallback(() => {
-    if (window.confirm(t('gameStatsModal.resetConfirmation', 'Are you sure you want to reset all game statistics and timer for the current match? This cannot be undone.') ?? 'Are you sure?')) {
-        console.log("Resetting current game stats and timer...");
-
-        // Reset player statuses (Goalie, Fair Play)
-        const resetAvailablePlayers = availablePlayers.map(p => ({
-            ...p,
-            isGoalie: false,             // Reset goalie status
-            receivedFairPlayCard: false // Reset fair play status
-        }));
-        setAvailablePlayers(resetAvailablePlayers); // Update available players state
-        // Also reset players currently on field to ensure consistency, although they are cleared below anyway
-        const resetPlayersOnField = playersOnField.map(p => ({
-            ...p,
-            isGoalie: false,
-            receivedFairPlayCard: false
-        }));
-        setPlayersOnField(resetPlayersOnField);
-
-        // Reset scores, events, timer, status, period
-        setGameEvents(initialState.gameEvents); // Use initial empty array
-        setHomeScore(initialState.homeScore);   // Use initial 0
-        setAwayScore(initialState.awayScore);   // Use initial 0
-        setTimeElapsedInSeconds(0);
-        setIsTimerRunning(false);
-        setSubAlertLevel('none');
-        setNextSubDueTimeSeconds(subIntervalMinutes * 60); // Reset based on current interval
-        setCompletedIntervalDurations([]);
-        setLastSubConfirmationTimeSeconds(0);
-        setCurrentPeriod(initialState.currentPeriod); // Reset to 1
-        setGameStatus(initialState.gameStatus);   // Reset to 'notStarted'
-
-        // Save this reset state to history (important!)
-        saveStateToHistory({
-            gameEvents: initialState.gameEvents,
-            homeScore: initialState.homeScore,
-            awayScore: initialState.awayScore,
-            availablePlayers: resetAvailablePlayers, // Include reset player statuses in history
-            playersOnField: resetPlayersOnField,   // Include reset field players too
-            // Include timer/status reset in history state snapshot?
-            // For simplicity, maybe only save the core stats reset?
-            // Let's keep it simple for now and only explicitly save stats.
-            // Timer state will be implicitly reset by the direct state calls above.
-            // Status/Period reset also handled above.
-        });
-        console.log("Current game stats, player statuses, and timer reset complete.");
-    }
-  }, [t, subIntervalMinutes, saveStateToHistory, availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField]); // Added player states and setters to dependencies
-
+  
   // Placeholder handlers for Save/Load Modals
-  const handleOpenSaveGameModal = () => {
+  console.log('Before handleOpenSaveGameModal definition');
+  const handleOpenSaveGameModal = useCallback(() => { // Wrap in useCallback
     console.log("Opening Save Game Modal...");
     setIsSaveGameModalOpen(true);
-  };
+  }, []); // Add dependency array
 
+  console.log('Before handleCloseSaveGameModal definition');
   const handleCloseSaveGameModal = () => {
     setIsSaveGameModalOpen(false);
   };
 
+  console.log('Before handleOpenLoadGameModal definition');
   const handleOpenLoadGameModal = () => {
     console.log("Opening Load Game Modal...");
     setIsLoadGameModalOpen(true);
   };
 
+  console.log('Before handleCloseLoadGameModal definition');
   const handleCloseLoadGameModal = () => {
     setIsLoadGameModalOpen(false);
   };
 
   // Function to handle the actual saving
-  const handleSaveGame = (gameName: string) => {
-    console.log(`Saving game with name: ${gameName}`);
-    const gameId = gameName; // Use the name as the ID for simplicity
+  console.log('Before handleSaveGame definition');
+  const handleSaveGame = (gameName: string, gameType: GameType) => {
+    console.log(`Attempting to save game: '${gameName}' with type: ${gameType}`);
+    
+    // Determine the ID to save under
+    let idToSave: string;
+    const isOverwriting = currentGameId && currentGameId !== DEFAULT_GAME_ID;
+
+    if (isOverwriting) {
+      // Use the existing game ID if we are overwriting
+      idToSave = currentGameId;
+      console.log(`Overwriting existing game with ID: ${idToSave}`);
+    } else {
+      // Generate a new ID if it's a new save or the default unsaved state
+      idToSave = `game_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      console.log(`Saving as new game with ID: ${idToSave}`);
+    }
+
+    let saveSuccess = false; // Flag to track success
 
     try {
       // 1. Create the current game state snapshot
@@ -1093,8 +1183,9 @@ export default function Home() {
         showPlayerNames,
         teamName,
         gameEvents,
-        opponentName,
-        gameDate,
+        // Use the opponentName and gameDate from state for the snapshot
+        opponentName: opponentName, 
+        gameDate: gameDate,
         homeScore,
         awayScore,
         gameNotes,
@@ -1102,35 +1193,54 @@ export default function Home() {
         periodDurationMinutes,
         currentPeriod,
         gameStatus,
-        selectedPlayerIds: initialState.selectedPlayerIds, // Include selectedPlayerIds
+        selectedPlayerIds, // Make sure selectedPlayerIds are saved
+        gameType, // Include gameType in the saved state (use state variable)
       };
 
-      // 2. Update the savedGames state and localStorage
+      // 2. Update the savedGames state and localStorage using the determined ID
       const updatedSavedGames = { 
         ...savedGames, 
-        [gameId]: currentSnapshot 
+        [idToSave]: currentSnapshot // Use idToSave here
       };
       setSavedGames(updatedSavedGames); // Update state in memory
       localStorage.setItem(SAVED_GAMES_KEY, JSON.stringify(updatedSavedGames));
 
-      // 3. Update the current game ID and save settings
-      setCurrentGameId(gameId);
-      const currentSettings: AppSettings = { currentGameId: gameId };
-      localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(currentSettings));
+      // 3. Update the current game ID ONLY IF it was a NEW save
+      //    Also update settings in localStorage
+      if (!isOverwriting) {
+        setCurrentGameId(idToSave);
+        const currentSettings: AppSettings = { currentGameId: idToSave };
+        localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(currentSettings));
+      } else {
+        // If overwriting, ensure the settings still point to the correct (existing) ID
+        const currentSettings: AppSettings = { currentGameId: idToSave };
+        localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(currentSettings));
+      }
       
-      console.log(`Game saved successfully with ID: ${gameId}`);
-      // History for the newly saved game should start fresh
+      console.log(`Game saved successfully with ID: ${idToSave}`);
+      // History for the newly saved/overwritten game should start fresh
       setHistory([currentSnapshot]);
       setHistoryIndex(0);
+      saveSuccess = true; // Mark save as successful
 
     } catch (error) {
       console.error("Failed to save game state:", error);
       alert("Error saving game."); // Notify user
+      saveSuccess = false;
     }
-    handleCloseSaveGameModal(); // Close modal regardless of success/error for now
+
+    handleCloseSaveGameModal(); // Close save modal regardless of success/error
+
+    // If save was successful AND we were intending to start a new game, open the setup modal
+    if (saveSuccess && isStartingNewGameAfterSave) {
+      console.log("Save successful, opening new game setup modal...");
+      setIsNewGameSetupModalOpen(true);
+      setIsStartingNewGameAfterSave(false); // Reset the flag
+    }
   };
 
   // Function to handle loading a selected game
+  console.log('Before handleLoadGame definition');
   const handleLoadGame = (gameId: string) => {
     console.log(`Loading game with ID: ${gameId}`);
     const stateToLoad = savedGames[gameId];
@@ -1182,6 +1292,7 @@ export default function Home() {
   };
 
   // Function to handle deleting a saved game
+  console.log('Before handleDeleteGame definition');
   const handleDeleteGame = (gameId: string) => {
     console.log(`Deleting game with ID: ${gameId}`);
     if (gameId === DEFAULT_GAME_ID) {
@@ -1214,6 +1325,7 @@ export default function Home() {
   };
 
   // Function to export all saved games as a single JSON file (RENAMED)
+  console.log('Before handleExportAllGamesJson definition');
   const handleExportAllGamesJson = () => {
     if (Object.keys(savedGames).length === 0) {
       alert(t('loadGameModal.noGamesToExport', 'No saved games to export.'));
@@ -1246,6 +1358,7 @@ export default function Home() {
   };
 
   // Helper function to safely format CSV fields (handles quotes and commas)
+  console.log('Before escapeCsvField definition');
   const escapeCsvField = (field: string | number | undefined | null): string => {
     const stringField = String(field ?? ''); // Convert null/undefined to empty string
     // If field contains comma, newline, or double quote, enclose in double quotes
@@ -1258,6 +1371,7 @@ export default function Home() {
   };
   
   // Helper function to format time (consider extracting if used elsewhere)
+  console.log('Before formatTime definition');
   const formatTime = (totalSeconds: number): string => {
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
@@ -1265,6 +1379,7 @@ export default function Home() {
   };
 
   // Function to export all saved games as Excel/CSV
+  console.log('Before handleExportAllGamesExcel definition');
   const handleExportAllGamesExcel = () => {
     const gameIds = Object.keys(savedGames).filter(id => id !== DEFAULT_GAME_ID);
     if (gameIds.length === 0) {
@@ -1373,6 +1488,7 @@ export default function Home() {
   };
 
   // --- INDIVIDUAL GAME EXPORT HANDLERS ---
+  console.log('Before handleExportOneJson definition');
   const handleExportOneJson = (gameId: string) => {
     const gameData = savedGames[gameId];
     if (!gameData) {
@@ -1398,6 +1514,7 @@ export default function Home() {
     }
   };
 
+  console.log('Before handleExportOneCsv definition');
   const handleExportOneCsv = (gameId: string) => {
     const gameData = savedGames[gameId];
     if (!gameData) {
@@ -1491,106 +1608,14 @@ export default function Home() {
 
   // --- END INDIVIDUAL GAME EXPORT HANDLERS ---
 
-  // Effect to load saved state from localStorage on initial mount
-  useEffect(() => {
-    console.log("Initial mount effect running...");
-    let loadedState: AppState | null = null;
-    let loadedSettings: AppSettings | null = null;
-    let gameIdToLoad = DEFAULT_GAME_ID;
-
-    try {
-      // Load settings first to find the last active game ID
-      const savedSettingsString = localStorage.getItem(APP_SETTINGS_KEY);
-      if (savedSettingsString) {
-        loadedSettings = JSON.parse(savedSettingsString);
-        gameIdToLoad = loadedSettings?.currentGameId || DEFAULT_GAME_ID;
-        setCurrentGameId(gameIdToLoad);
-        console.log("Loaded settings, last active game ID:", gameIdToLoad);
-      }
-
-      // Load all saved games
-      const savedGamesString = localStorage.getItem(SAVED_GAMES_KEY);
-      if (savedGamesString) {
-        const allSavedGames = JSON.parse(savedGamesString);
-        setSavedGames(allSavedGames);
-        // Get the specific state for the gameIdToLoad
-        loadedState = allSavedGames[gameIdToLoad] || null;
-        console.log(`Attempting to load state for game ID: ${gameIdToLoad}. Found:`, !!loadedState);
-      }
-    } catch (error) {
-      console.error("Failed to load or parse state from localStorage:", error);
-      // Fallback to initial state if loading fails
-      loadedState = null; 
-      setSavedGames({}); // Reset saved games if parsing failed
-      setCurrentGameId(DEFAULT_GAME_ID);
-    }
-
-    // Apply the loaded state or use initial state
-    const stateToApply = loadedState || initialState;
-    console.log("Applying state:", stateToApply === initialState ? "Initial State" : "Loaded State");
-    // Use setters from hook for relevant state
-    setPlayersOnField(stateToApply.playersOnField);
-    setOpponents(stateToApply.opponents || []);
-    setDrawings(stateToApply.drawings);
-    setAvailablePlayers(stateToApply.availablePlayers);
-    // Apply remaining state directly
-    setShowPlayerNames(stateToApply.showPlayerNames);
-    setTeamName(stateToApply.teamName || initialState.teamName);
-    setGameEvents(stateToApply.gameEvents || []);
-    setOpponentName(stateToApply.opponentName || initialState.opponentName);
-    setGameDate(stateToApply.gameDate || initialState.gameDate);
-    setHomeScore(stateToApply.homeScore || 0);
-    setAwayScore(stateToApply.awayScore || 0);
-    setGameNotes(stateToApply.gameNotes || '');
-    setNumberOfPeriods(stateToApply.numberOfPeriods || 2);
-    setPeriodDurationMinutes(stateToApply.periodDurationMinutes || 10);
-    setCurrentPeriod(stateToApply.currentPeriod || 1);
-    setGameStatus(stateToApply.gameStatus || 'notStarted');
-    // Load selected players, defaulting to all if empty/missing
-    setSelectedPlayerIds(
-      stateToApply.selectedPlayerIds && stateToApply.selectedPlayerIds.length > 0
-        ? stateToApply.selectedPlayerIds
-        : stateToApply.availablePlayers.map(p => p.id) // Default to all players in loaded state
-    );
-    
-    // Reset non-persistent state
-    setHistory([stateToApply]); 
-    setHistoryIndex(0);
-    setTimeElapsedInSeconds(0);
-    setIsTimerRunning(false);
-    setSubAlertLevel('none');
-    setNextSubDueTimeSeconds(5 * 60);
-    setCompletedIntervalDurations([]);
-    setLastSubConfirmationTimeSeconds(0);
-
-    // Mark loading as complete
-    setIsLoaded(true);
-    console.log("State loading complete. isLoaded: true");
-
-    // *** NEW CHECK: Prompt for opponent name if it's the default ***
-    const finalOpponentName = stateToApply.opponentName || initialState.opponentName;
-    if (finalOpponentName === initialState.opponentName) {
-      console.log("Opponent name is default, prompting for setup...");
-      setIsNewGameSetupModalOpen(true);
-    }
-
-  }, [setAvailablePlayers, setDrawings, setOpponents, setPlayersOnField]); // ADDED dependencies based on ESLint warning (line 375)
-
-  // NEW Effect: Check opponent name after initial load is complete
-  useEffect(() => {
-    // Only run if loaded, opponent is default, user hasn't skipped, and modal isn't already open
-    if (isLoaded && opponentName === initialState.opponentName && !hasSkippedInitialSetup && !isNewGameSetupModalOpen) {
-        console.log("Opponent name is default after load (secondary check), prompting for setup...");
-        setIsNewGameSetupModalOpen(true);
-    }
-    // No action needed if conditions aren't met
-  }, [isLoaded, opponentName, isNewGameSetupModalOpen, hasSkippedInitialSetup]); // Add hasSkippedInitialSetup dependency
-
   // --- Roster Management Handlers ---
+  console.log('Before openRosterModal definition');
   const openRosterModal = () => setIsRosterModalOpen(true);
+  console.log('Before closeRosterModal definition');
   const closeRosterModal = () => setIsRosterModalOpen(false);
 
   
+  console.log('Before useCallback(handleSetJerseyNumber)');
   const handleSetJerseyNumber = useCallback((playerId: string, number: string) => {
     const updatedAvailable = availablePlayers.map(p => p.id === playerId ? { ...p, jerseyNumber: number } : p);
     const updatedOnField = playersOnField.map(p => p.id === playerId ? { ...p, jerseyNumber: number } : p);
@@ -1601,6 +1626,7 @@ export default function Home() {
     console.log(`Set jersey number for ${playerId} to ${number}`);
   }, [availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField, saveStateToHistory]);
 
+  console.log('Before useCallback(handleSetPlayerNotes)');
   const handleSetPlayerNotes = useCallback((playerId: string, notes: string) => {
     const updatedAvailable = availablePlayers.map(p => p.id === playerId ? { ...p, notes: notes } : p);
     // Notes likely don't need to be tracked for playersOnField unless displayed there
@@ -1611,6 +1637,7 @@ export default function Home() {
     console.log(`Set notes for ${playerId}`);
   }, [availablePlayers, setAvailablePlayers, /* playersOnField, setPlayersOnField, */ saveStateToHistory]);
 
+  console.log('Before useCallback(handleRemovePlayerFromRoster)');
   const handleRemovePlayerFromRoster = useCallback((playerId: string) => {
     if (window.confirm(`Are you sure you want to remove player ${availablePlayers.find(p=>p.id === playerId)?.name ?? playerId} from the roster? This cannot be undone easily.`)) {
       const updatedAvailable = availablePlayers.filter(p => p.id !== playerId);
@@ -1624,6 +1651,7 @@ export default function Home() {
   }, [availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField, saveStateToHistory]);
 
   // --- NEW: Handler to Set Player Nickname ---
+  console.log('Before useCallback(handleSetPlayerNickname)');
   const handleSetPlayerNickname = useCallback((playerId: string, nickname: string) => {
     const updatedAvailable = availablePlayers.map(p => p.id === playerId ? { ...p, nickname: nickname } : p);
     const updatedOnField = playersOnField.map(p => p.id === playerId ? { ...p, nickname: nickname } : p);
@@ -1635,6 +1663,7 @@ export default function Home() {
   }, [availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField, saveStateToHistory]);
 
   // --- NEW: Handler to Award Fair Play Card ---
+  console.log('Before useCallback(handleAwardFairPlayCard)');
   const handleAwardFairPlayCard = useCallback((playerId: string) => {
     // If playerId is empty string, clear the award for everyone
     const shouldClear = playerId === "";
@@ -1665,6 +1694,7 @@ export default function Home() {
   }, [availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField, saveStateToHistory]);
 
   // --- NEW: Handler to Toggle Player Selection for Current Match ---
+  console.log('Before useCallback(handleTogglePlayerSelection)');
   const handleTogglePlayerSelection = useCallback((playerId: string) => {
     const currentIndex = selectedPlayerIds.indexOf(playerId);
     let newSelectedIds: string[];
@@ -1683,6 +1713,7 @@ export default function Home() {
   }, [selectedPlayerIds, saveStateToHistory]); // Dependencies
 
   // --- Handler to Add a Player to the Roster (Updated) ---
+  console.log('Before useCallback(handleAddPlayer)');
   const handleAddPlayer = useCallback((playerData: { name: string; jerseyNumber: string; notes: string; nickname: string }) => {
     const newPlayer: Player = {
         id: `player-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`, 
@@ -1700,12 +1731,61 @@ export default function Home() {
     console.log(`Added new player: ${newPlayer.name} (ID: ${newPlayer.id})`);
   }, [availablePlayers, setAvailablePlayers, saveStateToHistory]);
 
+  // ---- MOVE handleStartNewGame UP ----
+  console.log('Before useCallback(handleStartNewGame)');
+  const handleStartNewGame = useCallback(() => {
+    // Check if the current game is potentially unsaved (not the default ID and not null)
+    if (currentGameId && currentGameId !== DEFAULT_GAME_ID) {
+      // Prompt to save first
+      const gameData = savedGames[currentGameId]; // Safe to access due to check above
+      const gameIdentifier = gameData?.teamName 
+                             ? `${gameData.teamName} vs ${gameData.opponentName}` 
+                             : `ID: ${currentGameId}`;
+                             
+      const saveConfirmation = window.confirm(
+        t('controlBar.saveBeforeNewPrompt', 
+          `Save changes to the current game "${gameIdentifier}" before starting a new one?`, 
+          { gameName: gameIdentifier }
+        ) + "\n\n[OK = Save & Continue] [Cancel = Discard & Continue]"
+      );
+
+      if (saveConfirmation) {
+        // User chose OK (Save) -> Set flag, open save modal, and stop here.
+        // handleSaveGame will handle opening the new game modal after save.
+        console.log("User chose to save before starting new game.");
+        setIsStartingNewGameAfterSave(true);
+        handleOpenSaveGameModal();
+        return; // Stop the flow here; saving process takes over
+      } else {
+        // User chose Cancel (Discard) -> Proceed to next confirmation
+        console.log("Discarding current game changes to start new game.");
+        // Reset the flag just in case (shouldn't be needed, but good practice)
+        setIsStartingNewGameAfterSave(false);
+      }
+    }
+
+    // Confirmation for actually starting new game (shown always after discard, or directly if default game)
+    if (window.confirm(t('controlBar.startNewMatchConfirmation', 'Are you sure you want to start a new match? Any unsaved progress will be lost.') ?? 'Are you sure?')) {
+      console.log("Start new game confirmed, opening setup modal..." );
+      setIsNewGameSetupModalOpen(true); // Open the setup modal
+    } else {
+      // If user cancels the second confirmation, reset the flag
+      setIsStartingNewGameAfterSave(false);
+    }
+  }, [t, currentGameId, savedGames, handleOpenSaveGameModal]); // Dependencies
+  // ---- END MOVE handleStartNewGame UP ----
+
   // Render null or a loading indicator until state is loaded
+  // Note: Console log added before the check itself
+  console.log('Before checking isLoaded');
   if (!isLoaded) {
     // You might want a more sophisticated loading indicator
+    console.log('Rendering Loading Indicator because !isLoaded');
     return <div className="flex items-center justify-center h-screen bg-gray-900 text-white">Loading...</div>;
   }
 
+  // Final console log before returning the main JSX
+  console.log('Before returning main JSX');
   return (
     // Main container with flex column layout
     <div className="flex flex-col h-screen bg-gray-900 text-white relative">
@@ -1843,9 +1923,9 @@ export default function Home() {
           onAwayScoreChange={handleAwayScoreChange}
           onGameNotesChange={handleGameNotesChange}
           onUpdateGameEvent={handleUpdateGameEvent}
-          onResetGameStats={handleResetStatsOnly} // Pass the new handler
           onAwardFairPlayCard={handleAwardFairPlayCard} // Pass Fair Play handler
           selectedPlayerIds={selectedPlayerIds} // Pass selected player IDs
+          savedGames={savedGames} // Pass saved games collection
         />
         {/* Save Game Modal */}
         <SaveGameModal
@@ -1854,7 +1934,7 @@ export default function Home() {
           onSave={handleSaveGame} 
           teamName={teamName}         // Pass teamName state
           opponentName={opponentName} // Pass opponentName state
-          gameDate={gameDate}         // Pass gameDate state
+          gameDate={gameDate}         // Pass gameDate state     // Pass gameType state
         />
         <LoadGameModal 
           isOpen={isLoadGameModalOpen}
