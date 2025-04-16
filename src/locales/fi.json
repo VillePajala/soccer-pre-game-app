@@ -138,7 +138,7 @@
       "toggleFullscreen": "Koko Näyttö: Laajentaa/supistaa sovelluksen selaimen koko näytön tilaan.",
       "settingsMenu": "Asetukset (Ratas-ikoni): Avaa päävalikon, josta löydät:",
       "timerControls": "Ajastinohjaimet: Käynnistä/Pysäytä/Nollaa peliajastin (toiminnot löytyvät Ajastinpeittokuvasta).",
-      "help": "Ohje: Avaa tämän Sovellusoppaan."
+      "help": "Sovellusopas"
     },
     "settingsMenu": {
       "gameStats": "Ottelutilastot: Avaa modaalin pelin tilastojen (maalit, syötöt, muistiinpanot, RP-kortti) tarkasteluun ja muokkaukseen.",
@@ -147,7 +147,7 @@
       "loadGame": "Lataa Peli...: Avaa modaalin aiemmin tallennetun pelin lataamiseksi.",
       "newGame": "Aloita Uusi Peli: Nollaa kaikki pelitiedot (kokoonpano säilyy) ja aloittaa uuden pelin.",
       "trainingResources": "Harjoitusmateriaalit: Avaa modaalin, jossa on lämmittelyohjeita ja harjoitusesimerkkejä.",
-      "help": "Ohje: Avaa tämän Sovellusoppaan.",
+      "help": "Sovellusopas",
       "language": "Vaihda Kieli: Vaihtaa sovelluksen kielen (Suomi/Englanti).",
       "hardReset": "Nollaa Sovellus: POISTAA KAIKKI TIEDOT, mukaan lukien tallennetut pelit ja kokoonpanot. Käytä varoen!",
       "externalLinks": "Tulospalvelu Linkit: Avaa alivalikon, jossa linkit Palloliiton Taso/Tulospalveluun."
@@ -189,10 +189,14 @@
       "points": [
         "Ylävitoset, kivet, mitä kuuluu – kuulumisten jakaminen",
         "Pelipaikat, kapteeni, varustus",
-        "Päivän teemat (max 3, esim.):",
-        "Nautitaan",
-        "Saalista",
-        "Ohita tai syötä",
+        { 
+          "title": "Päivän teemat (max 3, esim.):", 
+          "subPoints": [
+            "Nautitaan", 
+            "Saalista", 
+            "Ohita tai syötä"
+          ]
+        },
         "Teemat perustuvat harjoituksiin – voi vaihdella, mutta \"Nautitaan\" on aina mukana."
       ]
     },
@@ -200,32 +204,62 @@
       "title": "2. 20 min / Lämmittely",
       "goal": "Tavoite: Nostetaan kehon lämpö, viritetään mieli peliin.",
       "points": [
-        "Pari jonot + merkki 5 m päähän (kartio/liivi), kierto ulkokautta oman jonon päähän",
-        "Hölkkä (etuperin/takaperin)",
-        "Kylkijuoksut (oikea/vasen kylki edellä)",
-        "Kantapäät pakaroihin",
-        "Marjanpoiminta",
-        "Hyppy parin kylkeen (2 krt/liike)",
-        "Eläinliikkeet: mittarimato, karhukävely, ankkakävely (lapset saavat ehdottaa)",
-        "Spurtit (n. 5 kpl): pystystä, istualtaan, etunojasta"
+        { 
+          "title": "Pari jonot + merkki 5 m päähän (kartio/liivi), kierto ulkokautta oman jonon päähän",
+          "subPoints": [
+            "Hölkkä (etuperin/takaperin)",
+            "Kylkijuoksut (oikea/vasen kylki edellä)",
+            "Kantapäät pakaroihin",
+            "Marjanpoiminta",
+            "Hyppy parin kylkeen (2 krt/liike)"
+          ]
+        },
+        { 
+          "title": "Eläinliikkeet:", 
+          "subPoints": [
+            "mittarimato", 
+            "karhukävely", 
+            "ankkakävely (lapset saavat ehdottaa)"
+          ]
+        },
+        { 
+          "title": "Spurtit (n. 5 kpl):", 
+          "subPoints": [
+            "pystystä", 
+            "istualtaan", 
+            "etunojasta"
+          ]
+        }
       ]
     },
     "section3": {
       "title": "3. 10 min / Pallottelu",
       "goal": "Tavoite: Aktivoi pallokosketus ja valmistaa peliin.",
-      "pairWorkTitle": "Pari + pallo:",
-      "pairWorkPoints": [
-        "Perussyöttely lähellä → kauempaa (peliasento, päkiät, sisäterä, huolellisuus)",
-        "Maalivahdin lämmittely (apuvalmentaja voi auttaa):"
-      ],
-      "goalieWarmupTitle": "Heittoja/syöttöjä läheltä (2m) ja kauempaa:",
-      "goalieWarmupPoints": [
-        "Ylös, sivulle, ilmassa, maata pitkin (tottuu palloon)",
-        "Palautukset käsillä + jaloilla"
-      ],
-      "combinedWarmupTitle": "Yhdessä tehtävä mv-lämmittely (tilan salliessa):",
-      "combinedWarmupPoints": [
-        "MV maaliin → seinäsyöttö → veto 16m / pilkun välistä (valmentaja voi toimia seinänä)"
+      "points": [
+        {
+          "title": "Pari + pallo:",
+          "subPoints": [
+            "Perussyöttely lähellä → kauempaa (peliasento, päkiät, sisäterä, huolellisuus)"
+          ]
+        },
+        {
+          "title": "Maalivahdin lämmittely (apuvalmentaja voi auttaa):",
+          "subPoints": [
+            {
+              "title": "Heittoja/syöttöjä läheltä (2m) ja kauempaa:",
+              "subPoints": [
+                "Ylös, sivulle, ilmassa, maata pitkin (tottuu palloon)"
+              ]
+            },
+            "Palautukset käsillä + jaloilla"
+          ]
+        },
+        {
+          "title": "Yhdessä tehtävä mv-lämmittely (tilan salliessa):",
+          "subPoints": [
+            "MV maaliin → seinäsyöttö → veto 16m / pilkun välistä (valmentaja voi toimia seinänä)"
+          ]
+        }
       ]
     },
     "section4": {
