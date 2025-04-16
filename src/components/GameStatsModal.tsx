@@ -550,7 +550,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
         >
           &times;
         </button>
-        <h2 className="text-2xl font-bold mb-4 text-yellow-400">
+        <h2 className="text-2xl font-bold mb-4 text-yellow-400 text-center">
           {t('gameStatsModal.title', 'Game Statistics')}
         </h2>
 
@@ -559,7 +559,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
 
           {/* Game Information Section */}
           <section className="bg-slate-700/50 p-4 rounded-md relative group">
-            <div className="flex justify-between items-start mb-3"> {/* Use flex to position title and buttons */}
+            <div className="flex justify-center items-start mb-3"> 
               <h3 className="text-xl font-semibold text-yellow-300">
                 {t('gameStatsModal.gameInfoTitle', 'Game Information')}
               </h3>
@@ -711,20 +711,8 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
 
           {/* Game Notes Section */}
           <section className="bg-slate-700/50 p-4 rounded-md relative group">
-            <h3 className="text-xl font-semibold mb-3 text-yellow-300 flex justify-between items-center">
+            <h3 className="text-xl font-semibold mb-3 text-yellow-300 text-center">
               {t('gameStatsModal.notesTitle', 'Game Notes')}
-              {!isEditingNotes && (
-                <button
-                  onClick={() => {
-                    console.log('[GameStatsModal Button Click] Edit Notes button clicked');
-                    setIsEditingNotes(true);
-                  }}
-                  className="px-2 py-0.5 bg-slate-600 hover:bg-slate-500 text-white rounded text-xs transition-opacity"
-                  title={t('gameStatsModal.editNotesButton', 'Edit Notes') ?? "Edit Notes"}
-                >
-                  {t('gameStatsModal.editButton', 'Edit')}
-                </button>
-              )}
             </h3>
             
             {isEditingNotes ? (
@@ -742,10 +730,17 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="min-h-[50px] text-sm text-slate-300 px-1 whitespace-pre-wrap">
+              <div 
+                className="min-h-[50px] text-sm text-slate-300 px-1 whitespace-pre-wrap cursor-pointer hover:bg-slate-700/50 rounded border border-dashed border-slate-600 hover:border-indigo-400"
+                onClick={() => {
+                  console.log('Notes area clicked!');
+                  setIsEditingNotes(true); 
+                }}
+                title={t('gameStatsModal.clickToEditNotes', 'Click to edit notes') ?? undefined}
+              >
                 {gameNotes ? 
                   gameNotes : 
-                  <span className="italic text-slate-400">{t('gameStatsModal.noNotes', 'No notes added yet. Click edit to add notes about this game.')}</span>
+                  <span className="italic text-slate-400">{t('gameStatsModal.clickToEditNotes', 'Click to edit notes')}</span>
                 }
               </div>
             )}
@@ -753,7 +748,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
 
           {/* Player Stats Section */}
           <section>
-            <h3 className="text-xl font-semibold mb-2 text-yellow-300">
+            <h3 className="text-xl font-semibold mb-4 text-yellow-300 text-center">
               {t('gameStatsModal.playerStatsTitle', 'Player Stats')}
             </h3>
 
@@ -878,7 +873,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
 
           {/* Goal Log Section */}
           <section>
-            <h3 className="text-xl font-semibold mb-2 text-yellow-300">
+            <h3 className="text-xl font-semibold mb-2 text-yellow-300 text-center">
               {t('gameStatsModal.goalLogTitle', 'Goal Log')}
             </h3>
             {sortedGoals.length > 0 ? (

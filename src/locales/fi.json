@@ -28,6 +28,7 @@
     "cancelNotesButton": "Peruuta",
     "notesPlaceholder": "Lisää muistiinpanoja tähän peliin...",
     "noNotes": "Muistiinpanoja ei ole vielä lisätty. Napsauta Muokkaa lisätäksesi muistiinpanoja tästä pelistä.",
+    "clickToEditNotes": "Napsauta muokataksesi muistiinpanoja",
     "playerStatsTitle": "Pelaajatilastot",
     "playerHeader": "PELAAJA",
     "filterPlaceholder": "Suodata pelaajia...",
@@ -78,8 +79,8 @@
     "saveButton": "Tallenna Peli"
   },
   "statsModal": {
-    "awardFairPlayLabel": "Reilun Pelin Palkinto:",
-    "awardFairPlayNone": "Fair Play -kortti"
+    "awardFairPlayLabel": "Fair Play -Kortti:",
+    "awardFairPlayNone": "None"
   },
   "rosterSettingsModal": {
     "title": "Hallitse Kokoonpanoa",
