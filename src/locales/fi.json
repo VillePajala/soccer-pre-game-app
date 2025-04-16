@@ -291,5 +291,14 @@
   },
   "timerControls": {
     "resetButton": "Nollaa"
+  },
+  "newGameSetupModal": {
+    "title": "Uuden Pelin Asetukset",
+    "opponentLabel": "Vastustajan Nimi:",
+    "opponentPlaceholder": "Syötä vastustajan nimi",
+    "dateLabel": "Pelin Päivämäärä:",
+    "skipButton": "Ohita",
+    "startButton": "Aloita Peli",
+    "opponentRequiredAlert": "Syötä vastustajan nimi."
   }
 } 
