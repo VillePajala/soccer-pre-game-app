@@ -9,7 +9,7 @@ import InstructionsModal from '@/components/InstructionsModal'; // Import Instru
 import GoalLogModal from '@/components/GoalLogModal'; // Import GoalLogModal
 import GameStatsModal from '@/components/GameStatsModal'; // Import GameStatsModal
 import TrainingResourcesModal from '@/components/TrainingResourcesModal'; // Import new modal
-import SaveGameModal from '@/components/SaveGameModal'; // Import the new modal
+import SaveGameModal, { GameType } from '@/components/SaveGameModal'; // Import the new modal
 import LoadGameModal from '@/components/LoadGameModal'; // Import the new modal
 import NewGameSetupModal from '@/components/NewGameSetupModal'; // Import the new component
 import RosterSettingsModal from '@/components/RosterSettingsModal'; // Import the new Roster modal
@@ -75,6 +75,7 @@ export interface AppState {
   currentPeriod: number; // 1 or 2
   gameStatus: 'notStarted' | 'inProgress' | 'periodEnd' | 'gameEnd';
   selectedPlayerIds: string[]; // IDs of players selected for the current match
+  gameType: GameType; // Add game type
 }
 
 // Placeholder data - Initialize new fields
@@ -113,6 +114,7 @@ const initialState: AppState = {
   gameStatus: 'notStarted',
   // Initialize selectedPlayerIds with all players from initial data
   selectedPlayerIds: initialAvailablePlayersData.map(p => p.id),
+  gameType: 'season', // Default game type
 };
 
 // Define new localStorage keys
@@ -203,6 +205,7 @@ export default function Home() {
   const [currentPeriod, setCurrentPeriod] = useState<number>(initialState.currentPeriod);
   const [gameStatus, setGameStatus] = useState<'notStarted' | 'inProgress' | 'periodEnd' | 'gameEnd'>(initialState.gameStatus);
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>(initialState.selectedPlayerIds); // Add state for selected player IDs
+  const [gameType, setGameType] = useState<GameType>(initialState.gameType); // Add state for game type
   // ... Timer state ...
   // ... Modal states ...
   // ... UI/Interaction states ...
@@ -367,6 +370,9 @@ export default function Home() {
           ? stateToApply.selectedPlayerIds
           : stateToApply.availablePlayers.map(p => p.id) // Default to all players in loaded state
       );
+      // ADDED: Load game type, defaulting if missing
+      setGameType(stateToApply.gameType || 'season'); 
+
       // Reset timer state when loading any game state initially?
       setTimeElapsedInSeconds(0);
       setIsTimerRunning(false);
@@ -418,6 +424,7 @@ export default function Home() {
           currentPeriod,
           gameStatus,
           selectedPlayerIds: initialState.selectedPlayerIds, // Include selectedPlayerIds
+          gameType: initialState.gameType, // Include gameType in the saved state
         };
 
         // 2. Read the *current* collection from localStorage
@@ -451,7 +458,8 @@ export default function Home() {
       playersOnField, opponents, drawings, availablePlayers, showPlayerNames, teamName,
       gameEvents, opponentName, gameDate, homeScore, awayScore, gameNotes,
       numberOfPeriods, periodDurationMinutes, currentPeriod, gameStatus,
-      selectedPlayerIds // Add as dependency for saving
+      selectedPlayerIds, // Add as dependency for saving
+      gameType // Add gameType to dependencies
     ]);
 
   // --- Fullscreen API Logic ---
@@ -920,6 +928,7 @@ export default function Home() {
       gameDate: newGameDate || new Date().toISOString().split('T')[0],
       // Ensure reset in history state includes ALL players selected
       selectedPlayerIds: preservedAvailablePlayers.map(p => p.id),
+      gameType: 'season', // Default game type
     };
     
     // Reset session history using the new initial state
@@ -1079,9 +1088,9 @@ export default function Home() {
   };
 
   // Function to handle the actual saving
-  const handleSaveGame = (gameName: string) => {
-    console.log(`Saving game with name: ${gameName}`);
-    const gameId = gameName; // Use the name as the ID for simplicity
+  const handleSaveGame = (gameName: string, gameType: GameType) => {
+    console.log(`Attempting to save game: '${gameName}' with type: ${gameType}`);
+    const gameId = `game_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
     try {
       // 1. Create the current game state snapshot
@@ -1103,6 +1112,7 @@ export default function Home() {
         currentPeriod,
         gameStatus,
         selectedPlayerIds: initialState.selectedPlayerIds, // Include selectedPlayerIds
+        gameType, // Include gameType in the saved state
       };
 
       // 2. Update the savedGames state and localStorage
@@ -1552,6 +1562,8 @@ export default function Home() {
         ? stateToApply.selectedPlayerIds
         : stateToApply.availablePlayers.map(p => p.id) // Default to all players in loaded state
     );
+    // ADDED: Load game type, defaulting if missing
+    setGameType(stateToApply.gameType || 'season'); 
     
     // Reset non-persistent state
     setHistory([stateToApply]); 
@@ -1846,6 +1858,7 @@ export default function Home() {
           onResetGameStats={handleResetStatsOnly} // Pass the new handler
           onAwardFairPlayCard={handleAwardFairPlayCard} // Pass Fair Play handler
           selectedPlayerIds={selectedPlayerIds} // Pass selected player IDs
+          savedGames={savedGames} // Pass saved games collection
         />
         {/* Save Game Modal */}
         <SaveGameModal
@@ -1854,7 +1867,7 @@ export default function Home() {
           onSave={handleSaveGame} 
           teamName={teamName}         // Pass teamName state
           opponentName={opponentName} // Pass opponentName state
-          gameDate={gameDate}         // Pass gameDate state
+          gameDate={gameDate}         // Pass gameDate state     // Pass gameType state
         />
         <LoadGameModal 
           isOpen={isLoadGameModalOpen}
