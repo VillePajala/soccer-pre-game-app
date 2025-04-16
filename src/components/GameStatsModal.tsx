@@ -251,45 +251,89 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
     };
 
     // --- Player Stats ---
-    const playerTotals: { [playerId: string]: { name: string; goals: number; assists: number; points: number; goalieGames: number; fairPlayCards: number } } = {};
-    const allPlayerNames: { [playerId: string]: string } = {}; // Keep track of latest player name
+    // Use availablePlayers (current full roster) as the base for aggregation
+    const playerTotals: { 
+        [playerId: string]: { 
+            name: string; 
+            goals: number; 
+            assists: number; 
+            goalieGames: number; 
+            fairPlayCards: number 
+        } 
+    } = {};
 
-    // First pass: get all unique players and their latest names from the roster of all relevant games
+    // Initialize totals using the current availablePlayers roster
+    availablePlayers.forEach(p => {
+        playerTotals[p.id] = { 
+            name: p.name, 
+            goals: 0, 
+            assists: 0, 
+            goalieGames: 0, 
+            fairPlayCards: 0 
+        };
+    });
+
+    // Aggregate events and player status from filtered games
     filteredGames.forEach(game => {
-        game.availablePlayers?.forEach(player => {
-            if (!allPlayerNames[player.id]) { // Store the first encountered name (could be refined) 
-                allPlayerNames[player.id] = player.name;
+        // Aggregate Game Events (Goals/Assists)
+        game.gameEvents?.forEach(event => {
+            if (event.type === 'goal') {
+                // Scorer
+                if (playerTotals[event.scorerId]) {
+                    playerTotals[event.scorerId].goals += 1;
+                } else {
+                    // Handle player who scored but isn't in the current main roster
+                    playerTotals[event.scorerId] = { 
+                        name: event.scorerName || `Player ${event.scorerId}`, 
+                        goals: 1, assists: 0, goalieGames: 0, fairPlayCards: 0 
+                    };
+                }
+                // Assister
+                if (event.assisterId) {
+                    if (playerTotals[event.assisterId]) {
+                        playerTotals[event.assisterId].assists += 1;
+                    } else {
+                         // Handle player who assisted but isn't in the current main roster
+                         playerTotals[event.assisterId] = { 
+                             name: event.assisterName || `Player ${event.assisterId}`, 
+                             goals: 0, assists: 1, goalieGames: 0, fairPlayCards: 0 
+                        };
+                    }
+                }
             }
+        });
+        
+        // Aggregate Player Status from each game's roster (Goalie/Fair Play)
+        // Important: Iterate over the roster *saved with that specific game*
+        game.availablePlayers?.forEach(playerInGameRoster => {
+            if (playerTotals[playerInGameRoster.id]) { // Only update if player exists in our main aggregated list
+                 if (playerInGameRoster.isGoalie) {
+                     playerTotals[playerInGameRoster.id].goalieGames += 1;
+                 }
+                 if (playerInGameRoster.receivedFairPlayCard) {
+                     playerTotals[playerInGameRoster.id].fairPlayCards += 1;
+                 }
+            } 
+            // Note: We don't add players dynamically here, as goalie/FP status only makes sense
+            // if they are part of the roster being tracked.
         });
     });
 
-    // Initialize totals for all unique players found
-    Object.keys(allPlayerNames).forEach(id => {
-        playerTotals[id] = { name: allPlayerNames[id], goals: 0, assists: 0, points: 0, goalieGames: 0, fairPlayCards: 0 };
+    // Convert map to array and calculate total score
+    const playerStatsArray = Object.entries(playerTotals).map(([id, stats]) => ({
+      id,
+      ...stats,
+      totalScore: stats.goals + stats.assists,
+    }));
+
+    // Initial sort (can be overridden by user in the UI later)
+    const initiallySortedPlayerStats = playerStatsArray.sort((a, b) => {
+        if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
+        if (b.goals !== a.goals) return b.goals - a.goals;
+        return a.name.localeCompare(b.name); // Final tie-breaker: name ascending
     });
 
-    // Second pass: aggregate stats
-    filteredGames.forEach(game => {
-      // Aggregate stats only for players who were available in that specific game
-      game.availablePlayers?.forEach(playerInGame => {
-        const playerTotalStats = playerTotals[playerInGame.id];
-        if (playerTotalStats) { // Check if player exists in our aggregate list
-          const gameGoals = game.gameEvents?.filter(e => e.type === 'goal' && e.scorerId === playerInGame.id).length || 0;
-          const gameAssists = game.gameEvents?.filter(e => e.type === 'goal' && e.assisterId === playerInGame.id).length || 0;
-          
-          playerTotalStats.goals += gameGoals;
-          playerTotalStats.assists += gameAssists;
-          playerTotalStats.points += (gameGoals + gameAssists);
-          if (playerInGame.isGoalie) playerTotalStats.goalieGames++;
-          if (playerInGame.receivedFairPlayCard) playerTotalStats.fairPlayCards++;
-        } 
-      });
-    });
-
-    const playerStatsArray = Object.entries(playerTotals).map(([id, stats]) => ({ id, ...stats }))
-      .sort((a, b) => b.points - a.points || b.goals - a.goals || a.name.localeCompare(b.name)); // Sort by points, then goals, then name
-
-    return { team: teamStats, players: playerStatsArray };
+    return { team: teamStats, players: initiallySortedPlayerStats };
   };
 
   // --- Calculated Aggregated Stats ---
@@ -628,9 +672,23 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
 
   console.log('[GameStatsModal Render] Rendering modal. isEditingNotes:', isEditingNotes);
 
+  // Define type for sortable columns in aggregated view
+  type AggSortableColumn = 'name' | 'goals' | 'assists' | 'totalScore' | 'goalieGames' | 'fairPlayCards';
+
   // --- REUSABLE DISPLAY COMPONENT ---
   const AggregateStatsDisplay: React.FC<{
-    stats: { team: any; players: any[] };
+    stats: { 
+        team: any; 
+        players: Array<{ // Make sure player type includes all fields
+            id: string;
+            name: string;
+            goals: number;
+            assists: number;
+            totalScore: number;
+            goalieGames: number;
+            fairPlayCards: number;
+        }>;
+    };
     teamTitleKey: string;
     playerTitleKey: string;
     noGamesMessageKey: string;
@@ -646,6 +704,48 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
     defaultPlayerTitle, 
     defaultNoGamesMessage 
   }) => {
+    // State for sorting within this specific aggregate table
+    const [sortColumnAgg, setSortColumnAgg] = useState<AggSortableColumn>('totalScore');
+    const [sortDirectionAgg, setSortDirectionAgg] = useState<SortDirection>('desc');
+
+    // Handler for sorting this table
+    const handleSortAgg = (column: AggSortableColumn) => {
+      if (sortColumnAgg === column) {
+        setSortDirectionAgg(prev => (prev === 'asc' ? 'desc' : 'asc'));
+      } else {
+        setSortColumnAgg(column);
+        // Default sort directions for different columns
+        setSortDirectionAgg(column === 'name' ? 'asc' : 'desc');
+      }
+    };
+
+    // Sort the received player data based on the component's state
+    const sortedPlayers = useMemo(() => {
+        return [...stats.players].sort((a, b) => {
+            const valA = a[sortColumnAgg];
+            const valB = b[sortColumnAgg];
+            let comparison = 0;
+            
+            if (typeof valA === 'string' && typeof valB === 'string') {
+                comparison = valA.localeCompare(valB);
+            } else if (typeof valA === 'number' && typeof valB === 'number') {
+                comparison = valA - valB;
+            } else {
+                comparison = String(valA).localeCompare(String(valB));
+            }
+
+            return sortDirectionAgg === 'desc' ? comparison * -1 : comparison;
+        });
+    }, [stats.players, sortColumnAgg, sortDirectionAgg]);
+
+    // Helper to render sort icons
+    const renderSortIcon = (column: AggSortableColumn) => {
+      if (sortColumnAgg !== column) {
+        return <FaSort className="ml-1 opacity-30" />;
+      }
+      return sortDirectionAgg === 'asc' ? <FaSortUp className="ml-1" /> : <FaSortDown className="ml-1" />;
+    };
+
     return (
       <div className="space-y-6">
         {/* Team Stats */}
@@ -681,16 +781,47 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
               <table className="min-w-full divide-y divide-slate-700">
                 <thead className="bg-slate-700/50 sticky top-0 z-10">
                   <tr>
-                    <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">{t('gameStatsModal.playerHeader', 'Player')}</th>
-                    <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-slate-300 uppercase tracking-wider w-12">{t('gameStatsModal.goalsHeader', 'G')}</th>
-                    <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-slate-300 uppercase tracking-wider w-12">{t('gameStatsModal.assistsHeader', 'A')}</th>
-                    <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-slate-300 uppercase tracking-wider w-12">{t('gameStatsModal.totalHeader', 'Pts')}</th>
-                    <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-slate-300 uppercase tracking-wider w-12" title={t('gameStatsModal.goalieGamesTooltip', 'Games as Goalie')}>{t('gameStatsModal.goalieGamesHeader', 'GK')}</th>
-                    <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-slate-300 uppercase tracking-wider w-12" title={t('gameStatsModal.fairPlayCardsTooltip', 'Fair Play Cards')}>{t('gameStatsModal.fairPlayCardsHeader', 'FP')}</th>
+                    {/* Player Header - Sortable */}
+                    <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-600/50" onClick={() => handleSortAgg('name')}>
+                        <div className="flex items-center">
+                          {t('gameStatsModal.playerHeader', 'Player')} {renderSortIcon('name')}
+                        </div>
+                    </th>
+                    {/* Goals Header - Sortable */}
+                    <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-slate-300 uppercase tracking-wider w-12 cursor-pointer hover:bg-slate-600/50" onClick={() => handleSortAgg('goals')}>
+                       <div className="flex items-center justify-center">
+                         {t('gameStatsModal.goalsHeader', 'G')} {renderSortIcon('goals')}
+                       </div>
+                    </th>
+                    {/* Assists Header - Sortable */}
+                    <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-slate-300 uppercase tracking-wider w-12 cursor-pointer hover:bg-slate-600/50" onClick={() => handleSortAgg('assists')}>
+                       <div className="flex items-center justify-center">
+                         {t('gameStatsModal.assistsHeader', 'A')} {renderSortIcon('assists')}
+                       </div>
+                    </th>
+                    {/* Points Header - Sortable */}
+                    <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-slate-300 uppercase tracking-wider w-12 cursor-pointer hover:bg-slate-600/50" onClick={() => handleSortAgg('totalScore')}>
+                       <div className="flex items-center justify-center">
+                         {t('gameStatsModal.totalHeader', 'Pts')} {renderSortIcon('totalScore')}
+                       </div>
+                    </th>
+                     {/* Goalie Games Header - Sortable */}
+                    <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-slate-300 uppercase tracking-wider w-12 cursor-pointer hover:bg-slate-600/50" title={t('gameStatsModal.goalieGamesTooltip', 'Games as Goalie')} onClick={() => handleSortAgg('goalieGames')}>
+                       <div className="flex items-center justify-center">
+                         {t('gameStatsModal.goalieGamesHeader', 'GK')} {renderSortIcon('goalieGames')}
+                       </div>
+                    </th>
+                     {/* Fair Play Header - Sortable */}
+                    <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-slate-300 uppercase tracking-wider w-12 cursor-pointer hover:bg-slate-600/50" title={t('gameStatsModal.fairPlayCardsTooltip', 'Fair Play Cards')} onClick={() => handleSortAgg('fairPlayCards')}>
+                        <div className="flex items-center justify-center">
+                          {t('gameStatsModal.fairPlayCardsHeader', 'FP')} {renderSortIcon('fairPlayCards')}
+                        </div>
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-slate-800 divide-y divide-slate-700">
-                  {stats.players.map((player) => (
+                  {/* Use the internally sorted players */}
+                  {sortedPlayers.map((player) => (
                     <tr key={player.id} className="hover:bg-slate-700/50">
                       <td className="py-1 px-3 text-xs text-slate-200 whitespace-nowrap">{player.name}</td>
                       <td className="py-1 px-3 text-xs text-slate-300 text-center">{player.goals}</td>

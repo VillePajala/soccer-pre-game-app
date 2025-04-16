@@ -85,58 +85,66 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
         >
           {savedGameIds.length > 0 ? (
             <ul className="space-y-2">
-              {savedGameIds.map((gameId) => (
-                <li key={gameId} className="relative flex items-center justify-between bg-slate-700/50 p-2 rounded-md">
-                  <button 
-                    onClick={() => { onLoad(gameId); onClose(); }}
-                    className="flex-grow text-left text-slate-100 text-[0.8rem] mr-2 p-1 rounded hover:bg-slate-600/50 focus:outline-none focus:ring-1 focus:ring-indigo-400" 
-                    title={`${t('loadGameModal.loadButtonTooltip', 'Load this game')}: ${gameId}`}
-                  >
-                    {gameId}
-                  </button>
-                  
-                  <div className="flex-shrink-0">
-                    <button
-                      onClick={(e) => {
-                         e.stopPropagation(); 
-                         setOpenMenuId(openMenuId === gameId ? null : gameId);
-                      }}
-                      className="p-1.5 text-slate-300 rounded hover:bg-slate-600 hover:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-800"
-                      title={t('loadGameModal.actionsMenuTooltip', 'Actions') ?? 'Actions'}
+              {savedGameIds.map((gameId) => {
+                // Get the game data to display details
+                const gameData = savedGames[gameId];
+                const displayName = gameData 
+                  ? `${gameData.teamName || 'Team'} vs ${gameData.opponentName || 'Opponent'} (${gameData.gameDate || 'No Date'})`
+                  : gameId; // Fallback to gameId if data is somehow missing
+                
+                return (
+                  <li key={gameId} className="relative flex items-center justify-between bg-slate-700/50 p-2 rounded-md">
+                    <button 
+                      onClick={() => { onLoad(gameId); onClose(); }}
+                      className="flex-grow text-left text-slate-100 text-[0.8rem] mr-2 p-1 rounded hover:bg-slate-600/50 focus:outline-none focus:ring-1 focus:ring-indigo-400 truncate" 
+                      title={`${t('loadGameModal.loadButtonTooltip', 'Load this game')}: ${displayName}`}
                     >
-                       <HiOutlineEllipsisVertical className="w-5 h-5" />
+                      {displayName} {/* Display the constructed name */}
                     </button>
+                    
+                    <div className="flex-shrink-0">
+                      <button
+                        onClick={(e) => {
+                           e.stopPropagation(); 
+                           setOpenMenuId(openMenuId === gameId ? null : gameId);
+                        }}
+                        className="p-1.5 text-slate-300 rounded hover:bg-slate-600 hover:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-800"
+                        title={t('loadGameModal.actionsMenuTooltip', 'Actions') ?? 'Actions'}
+                      >
+                         <HiOutlineEllipsisVertical className="w-5 h-5" />
+                      </button>
 
-                    {openMenuId === gameId && (
-                       <div 
-                         ref={menuRef} 
-                         className={`absolute right-0 top-full mt-1 w-48 bg-slate-900 border border-slate-700 rounded-md shadow-lg z-50 py-1`}
-                       >
-                         
-                         <button 
-                            onClick={() => { onExportOneJson(gameId); setOpenMenuId(null); }} 
-                            className="w-full text-left px-3 py-1.5 text-sm text-slate-200 hover:bg-teal-700 flex items-center"
-                          >
-                            <HiOutlineDocumentText className="w-4 h-4 mr-2" /> {t('loadGameModal.exportJsonMenuItem', 'JSON')}
-                         </button>
-                         <button 
-                            onClick={() => { onExportOneCsv(gameId); setOpenMenuId(null); }} 
-                            className="w-full text-left px-3 py-1.5 text-sm text-slate-200 hover:bg-emerald-700 flex items-center"
-                          >
-                            <HiOutlineTableCells className="w-4 h-4 mr-2" /> {t('loadGameModal.exportExcelMenuItem', 'EXCEL')}
-                         </button>
-                         <div className="border-t border-slate-700 my-1"></div>
-                         <button 
-                            onClick={() => handleDeleteClick(gameId, gameId)}
-                            className="w-full text-left px-3 py-1.5 text-sm text-red-400 hover:bg-red-600 hover:text-white flex items-center"
+                      {openMenuId === gameId && (
+                         <div 
+                           ref={menuRef} 
+                           className={`absolute right-0 top-full mt-1 w-48 bg-slate-900 border border-slate-700 rounded-md shadow-lg z-50 py-1`}
                          >
-                            <HiOutlineTrash className="w-4 h-4 mr-2" /> {t('loadGameModal.deleteMenuItem', 'Delete')}
-                         </button>
-                       </div>
-                    )}
-                  </div>
-                </li>
-              ))}
+                           
+                           <button 
+                              onClick={() => { onExportOneJson(gameId); setOpenMenuId(null); }} 
+                              className="w-full text-left px-3 py-1.5 text-sm text-slate-200 hover:bg-teal-700 flex items-center"
+                            >
+                              <HiOutlineDocumentText className="w-4 h-4 mr-2" /> {t('loadGameModal.exportJsonMenuItem', 'JSON')}
+                           </button>
+                           <button 
+                              onClick={() => { onExportOneCsv(gameId); setOpenMenuId(null); }} 
+                              className="w-full text-left px-3 py-1.5 text-sm text-slate-200 hover:bg-emerald-700 flex items-center"
+                            >
+                              <HiOutlineTableCells className="w-4 h-4 mr-2" /> {t('loadGameModal.exportExcelMenuItem', 'EXCEL')}
+                           </button>
+                           <div className="border-t border-slate-700 my-1"></div>
+                           <button 
+                              onClick={() => handleDeleteClick(gameId, displayName)} // Pass displayName to delete confirmation
+                              className="w-full text-left px-3 py-1.5 text-sm text-red-400 hover:bg-red-600 hover:text-white flex items-center"
+                           >
+                              <HiOutlineTrash className="w-4 h-4 mr-2" /> {t('loadGameModal.deleteMenuItem', 'Delete')}
+                           </button>
+                         </div>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           ) : (
             <p className="text-slate-400 italic text-center py-4">

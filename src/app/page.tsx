@@ -278,6 +278,8 @@ export default function Home() {
   const [isRosterModalOpen, setIsRosterModalOpen] = useState<boolean>(false); // State for the new modal
   console.log('Before useState(hasSkippedInitialSetup)');
   const [hasSkippedInitialSetup, setHasSkippedInitialSetup] = useState<boolean>(false); // <-- Add this state
+  // Add state to track if new game setup should open after saving
+  const [isStartingNewGameAfterSave, setIsStartingNewGameAfterSave] = useState<boolean>(false);
 
   // --- Handlers (Remaining in Home component or to be moved) ---
   // REMOVED: handlePlayerDrop (now comes from useGameState hook)
@@ -1203,7 +1205,22 @@ export default function Home() {
   console.log('Before handleSaveGame definition');
   const handleSaveGame = (gameName: string, gameType: GameType) => {
     console.log(`Attempting to save game: '${gameName}' with type: ${gameType}`);
-    const gameId = `game_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    
+    // Determine the ID to save under
+    let idToSave: string;
+    const isOverwriting = currentGameId && currentGameId !== DEFAULT_GAME_ID;
+
+    if (isOverwriting) {
+      // Use the existing game ID if we are overwriting
+      idToSave = currentGameId;
+      console.log(`Overwriting existing game with ID: ${idToSave}`);
+    } else {
+      // Generate a new ID if it's a new save or the default unsaved state
+      idToSave = `game_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      console.log(`Saving as new game with ID: ${idToSave}`);
+    }
+
+    let saveSuccess = false; // Flag to track success
 
     try {
       // 1. Create the current game state snapshot
@@ -1215,8 +1232,9 @@ export default function Home() {
         showPlayerNames,
         teamName,
         gameEvents,
-        opponentName,
-        gameDate,
+        // Use the opponentName and gameDate from state for the snapshot
+        opponentName: opponentName, 
+        gameDate: gameDate,
         homeScore,
         awayScore,
         gameNotes,
@@ -1224,33 +1242,50 @@ export default function Home() {
         periodDurationMinutes,
         currentPeriod,
         gameStatus,
-        selectedPlayerIds: initialState.selectedPlayerIds, // Include selectedPlayerIds
-        gameType, // Include gameType in the saved state
+        selectedPlayerIds, // Make sure selectedPlayerIds are saved
+        gameType, // Include gameType in the saved state (use state variable)
       };
 
-      // 2. Update the savedGames state and localStorage
+      // 2. Update the savedGames state and localStorage using the determined ID
       const updatedSavedGames = { 
         ...savedGames, 
-        [gameId]: currentSnapshot 
+        [idToSave]: currentSnapshot // Use idToSave here
       };
       setSavedGames(updatedSavedGames); // Update state in memory
       localStorage.setItem(SAVED_GAMES_KEY, JSON.stringify(updatedSavedGames));
 
-      // 3. Update the current game ID and save settings
-      setCurrentGameId(gameId);
-      const currentSettings: AppSettings = { currentGameId: gameId };
-      localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(currentSettings));
+      // 3. Update the current game ID ONLY IF it was a NEW save
+      //    Also update settings in localStorage
+      if (!isOverwriting) {
+        setCurrentGameId(idToSave);
+        const currentSettings: AppSettings = { currentGameId: idToSave };
+        localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(currentSettings));
+      } else {
+        // If overwriting, ensure the settings still point to the correct (existing) ID
+        const currentSettings: AppSettings = { currentGameId: idToSave };
+        localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(currentSettings));
+      }
       
-      console.log(`Game saved successfully with ID: ${gameId}`);
-      // History for the newly saved game should start fresh
+      console.log(`Game saved successfully with ID: ${idToSave}`);
+      // History for the newly saved/overwritten game should start fresh
       setHistory([currentSnapshot]);
       setHistoryIndex(0);
+      saveSuccess = true; // Mark save as successful
 
     } catch (error) {
       console.error("Failed to save game state:", error);
       alert("Error saving game."); // Notify user
+      saveSuccess = false;
     }
-    handleCloseSaveGameModal(); // Close modal regardless of success/error for now
+
+    handleCloseSaveGameModal(); // Close save modal regardless of success/error
+
+    // If save was successful AND we were intending to start a new game, open the setup modal
+    if (saveSuccess && isStartingNewGameAfterSave) {
+      console.log("Save successful, opening new game setup modal...");
+      setIsNewGameSetupModalOpen(true);
+      setIsStartingNewGameAfterSave(false); // Reset the flag
+    }
   };
 
   // Function to handle loading a selected game
@@ -1764,12 +1799,17 @@ export default function Home() {
       );
 
       if (saveConfirmation) {
-        // User chose OK (Save) -> Open save modal and stop
+        // User chose OK (Save) -> Set flag, open save modal, and stop here.
+        // handleSaveGame will handle opening the new game modal after save.
+        console.log("User chose to save before starting new game.");
+        setIsStartingNewGameAfterSave(true);
         handleOpenSaveGameModal();
-        return; 
+        return; // Stop the flow here; saving process takes over
       } else {
         // User chose Cancel (Discard) -> Proceed to next confirmation
         console.log("Discarding current game changes to start new game.");
+        // Reset the flag just in case (shouldn't be needed, but good practice)
+        setIsStartingNewGameAfterSave(false);
       }
     }
 
@@ -1777,6 +1817,9 @@ export default function Home() {
     if (window.confirm(t('controlBar.startNewMatchConfirmation', 'Are you sure you want to start a new match? Any unsaved progress will be lost.') ?? 'Are you sure?')) {
       console.log("Start new game confirmed, opening setup modal..." );
       setIsNewGameSetupModalOpen(true); // Open the setup modal
+    } else {
+      // If user cancels the second confirmation, reset the flag
+      setIsStartingNewGameAfterSave(false);
     }
   }, [t, currentGameId, savedGames, handleOpenSaveGameModal]); // Dependencies
   // ---- END MOVE handleStartNewGame UP ----
