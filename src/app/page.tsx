@@ -1180,10 +1180,10 @@ export default function Home() {
 
   // Placeholder handlers for Save/Load Modals
   console.log('Before handleOpenSaveGameModal definition');
-  const handleOpenSaveGameModal = () => {
+  const handleOpenSaveGameModal = useCallback(() => { // Wrap in useCallback
     console.log("Opening Save Game Modal...");
     setIsSaveGameModalOpen(true);
-  };
+  }, []); // Add dependency array
 
   console.log('Before handleCloseSaveGameModal definition');
   const handleCloseSaveGameModal = () => {

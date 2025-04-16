@@ -375,28 +375,35 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     return { relX: clampedX, relY: clampedY };
   };
 
-  // Hit Detection Helpers need to calculate absolute positions based on CSS size
-  const isPointInPlayer = (absEventX: number, absEventY: number, player: Player): boolean => {
-    if (player.relX === undefined || player.relY === undefined || !canvasRef.current) return false;
-    const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect(); // Use CSS dimensions
-    const absPlayerX = player.relX * rect.width;
-    const absPlayerY = player.relY * rect.height;
-    const dx = absEventX - absPlayerX;
-    const dy = absEventY - absPlayerY;
-    return dx * dx + dy * dy <= PLAYER_RADIUS * PLAYER_RADIUS;
-  };
+  // Helper to check if a point (clientX, clientY) is within a player disk
+  const isPointInPlayer = useCallback((clientX: number, clientY: number, playerId: string): boolean => {
+    const fieldRect = canvasRef.current?.getBoundingClientRect();
+    const playerElement = canvasRef.current?.querySelector(`[data-player-id="${playerId}"]`);
+    if (!fieldRect || !playerElement) return false;
 
-  const isPointInOpponent = (absEventX: number, absEventY: number, opponent: Opponent): boolean => {
-    if (!canvasRef.current) return false;
-    const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect(); // Use CSS dimensions
-    const absOpponentX = opponent.relX * rect.width;
-    const absOpponentY = opponent.relY * rect.height;
-    const dx = absEventX - absOpponentX;
-    const dy = absEventY - absOpponentY;
-    return dx * dx + dy * dy <= (PLAYER_RADIUS * 0.9) * (PLAYER_RADIUS * 0.9);
-  };
+    const playerRect = playerElement.getBoundingClientRect();
+    const playerCenterX = playerRect.left + playerRect.width / 2;
+    const playerCenterY = playerRect.top + playerRect.height / 2;
+    const radius = playerRect.width / 2; // Assume circular player disks
+
+    const distance = Math.sqrt(Math.pow(clientX - playerCenterX, 2) + Math.pow(clientY - playerCenterY, 2));
+    return distance <= radius;
+  }, []); // No external dependencies, empty array
+
+  // Helper to check if a point (clientX, clientY) is within an opponent disk
+  const isPointInOpponent = useCallback((clientX: number, clientY: number, opponentId: string): boolean => {
+    const fieldRect = canvasRef.current?.getBoundingClientRect();
+    const opponentElement = canvasRef.current?.querySelector(`[data-opponent-id="${opponentId}"]`);
+    if (!fieldRect || !opponentElement) return false;
+
+    const opponentRect = opponentElement.getBoundingClientRect();
+    const opponentCenterX = opponentRect.left + opponentRect.width / 2;
+    const opponentCenterY = opponentRect.top + opponentRect.height / 2;
+    const radius = opponentRect.width / 2; // Assume circular opponent disks
+
+    const distance = Math.sqrt(Math.pow(clientX - opponentCenterX, 2) + Math.pow(clientY - opponentCenterY, 2));
+    return distance <= radius;
+  }, []); // No external dependencies, empty array
 
   // --- Mouse/Touch Handlers (Logic largely the same, but use CSS size for abs calcs) ---
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -423,13 +430,13 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     // Double-click check
     if (e.detail === 2) {
       for (const player of players) {
-        if (isPointInPlayer(absPos.x, absPos.y, player)) {
+        if (isPointInPlayer(absPos.x, absPos.y, player.id)) {
           onPlayerRemove(player.id);
           return;
         }
       }
       for (const opponent of opponents) {
-        if (isPointInOpponent(absPos.x, absPos.y, opponent)) {
+        if (isPointInOpponent(absPos.x, absPos.y, opponent.id)) {
           onOpponentRemove(opponent.id);
           return;
         }
@@ -438,7 +445,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
 
     // Drag check
     for (const player of players) {
-      if (isPointInPlayer(absPos.x, absPos.y, player)) {
+      if (isPointInPlayer(absPos.x, absPos.y, player.id)) {
         setIsDraggingPlayer(true);
         setDraggingPlayerId(player.id);
         if (canvasRef.current) canvasRef.current.style.cursor = 'grabbing';
@@ -446,7 +453,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
       }
     }
     for (const opponent of opponents) {
-        if (isPointInOpponent(absPos.x, absPos.y, opponent)) {
+        if (isPointInOpponent(absPos.x, absPos.y, opponent.id)) {
             setIsDraggingOpponent(true);
             setDraggingOpponentId(opponent.id);
             if (canvasRef.current) canvasRef.current.style.cursor = 'grabbing';
@@ -479,11 +486,11 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
       // Hover check
       let hovering = false;
       for (const player of players) {
-        if (isPointInPlayer(absPos.x, absPos.y, player)) { hovering = true; break; }
+        if (isPointInPlayer(absPos.x, absPos.y, player.id)) { hovering = true; break; }
       }
       if (!hovering) {
           for (const opponent of opponents) {
-              if (isPointInOpponent(absPos.x, absPos.y, opponent)) { hovering = true; break; }
+              if (isPointInOpponent(absPos.x, absPos.y, opponent.id)) { hovering = true; break; }
           }
       }
       if (canvasRef.current) {
@@ -540,13 +547,13 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
 
     // Find tapped target
     for (const player of players) {
-      if (isPointInPlayer(absPos.x, absPos.y, player)) {
+      if (isPointInPlayer(absPos.x, absPos.y, player.id)) {
         tappedTargetId = player.id; tappedTargetType = 'player'; break;
       }
     }
     if (!tappedTargetId) {
         for (const opponent of opponents) {
-            if (isPointInOpponent(absPos.x, absPos.y, opponent)) {
+            if (isPointInOpponent(absPos.x, absPos.y, opponent.id)) {
                 tappedTargetId = opponent.id; tappedTargetType = 'opponent'; break;
             }
         }

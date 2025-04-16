@@ -4,9 +4,6 @@ import React, { useMemo, useState, useEffect, useRef } from 'react'; // Added us
 import { useTranslation } from 'react-i18next';
 import { Player, GameEvent, SavedGamesCollection } from '@/app/page';
 import { FaSort, FaSortUp, FaSortDown, FaEdit, FaSave, FaTimes } from 'react-icons/fa'; // Import sort icons and new icons
-import {
-  HiOutlineArrowTopRightOnSquare, HiOutlineDocumentArrowDown // Remove HiOutlineShieldCheck if not used elsewhere
-} from 'react-icons/hi2'; // Import external link icon and new icon
 
 // Import GameType
 import { GameType } from '@/components/SaveGameModal';
@@ -220,7 +217,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
           gameId !== DEFAULT_GAME_ID && 
           (!gameTypeFilter || game.gameType === gameTypeFilter)
       )
-      .map(([_, game]) => game); // Extract only the game data after filtering
+      .map(([/* Removed unused _ */ gameId, game]) => game); // Extract only the game data after filtering
 
     if (filteredGames.length === 0) {
       return { team: null, players: [] };
@@ -353,9 +350,9 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   };
 
   // --- Calculated Aggregated Stats ---
-  const seasonStats = useMemo(() => aggregateStats('season'), [savedGames]);
-  const tournamentStats = useMemo(() => aggregateStats('tournament'), [savedGames]);
-  const allStats = useMemo(() => aggregateStats(), [savedGames]); // No filter for all games
+  const seasonStats = useMemo(() => aggregateStats('season'), [savedGames, aggregateStats]);
+  const tournamentStats = useMemo(() => aggregateStats('tournament'), [savedGames, aggregateStats]);
+  const allStats = useMemo(() => aggregateStats(), [savedGames, aggregateStats]); // No filter for all games
 
   // --- Handlers ---
   // Bulk Edit Mode Handlers
@@ -549,139 +546,11 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
       }
   }
 
-  // Handler for the Reset Stats button
-  const handleResetClick = () => {
-      // Confirmation is now handled in page.tsx
-      onResetGameStats(); 
-      // Optionally close the modal after reset, or keep it open?
-      // onClose(); 
-  };
-
   // --- NEW Export Handlers ---
-  const triggerDownload = (content: string, filename: string, contentType: string) => {
-    const blob = new Blob([content], { type: contentType });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  const handleExportJson = () => {
-    const exportData = {
-      gameInfo: {
-        gameDate: gameDate,
-        teamName: teamName,
-        opponentName: opponentName,
-      },
-      finalScore: {
-        home: homeScore,
-        away: awayScore,
-      },
-      roster: availablePlayers, // Include the full roster
-      events: gameEvents, 
-      notes: gameNotes,
-    };
-
-    const jsonString = JSON.stringify(exportData, null, 2); // Pretty print JSON
-    const filename = `${teamName.replace(/\s+/g, '')}_vs_${opponentName.replace(/\s+/g, '')}_${gameDate}.json`;
-    triggerDownload(jsonString, filename, 'application/json');
-  };
-
-  // Helper function to safely format CSV fields (handles quotes and commas)
-  const escapeCsvField = (field: string | number | undefined | null): string => {
-    const stringField = String(field ?? ''); // Convert null/undefined to empty string
-    // If field contains comma, newline, or double quote, enclose in double quotes
-    if (stringField.includes(',') || stringField.includes('"') || stringField.includes('\n')) {
-      // Escape existing double quotes by doubling them
-      const escapedField = stringField.replace(/"/g, '""');
-      return `"${escapedField}"`;
-    }
-    return stringField;
-  };
-
-  const handleExportExcel = () => {
-    const rows: string[] = [];
-    const EOL = '\r\n'; // Explicitly use CRLF for Excel compatibility
-    const DELIMITER = ';'; // Use semicolon for better Excel compatibility
-
-    // --- Section: Game Info ---
-    rows.push('Game Info'); // Cleaned: No trailing delimiters
-    rows.push(`${escapeCsvField(t('gameStatsModal.gameDateLabel', 'Game Date:'))}${DELIMITER}${escapeCsvField(gameDate)}`); // Cleaned
-    rows.push(`${escapeCsvField(t('gameStatsModal.homeTeamLabel', 'Home Team:'))}${DELIMITER}${escapeCsvField(teamName)}`); // Cleaned
-    rows.push(`${escapeCsvField(t('gameStatsModal.awayTeamLabel', 'Away Team:'))}${DELIMITER}${escapeCsvField(opponentName)}`); // Cleaned
-    // Split score rows
-    rows.push(`${escapeCsvField(t('gameStatsModal.homeScoreLabel', 'Home Score:'))}${DELIMITER}${escapeCsvField(homeScore)}`); 
-    rows.push(`${escapeCsvField(t('gameStatsModal.awayScoreLabel', 'Away Score:'))}${DELIMITER}${escapeCsvField(awayScore)}`);
-    rows.push(''); // Blank separator row (cleaner)
-
-    // --- Section: Combined Roster & Player Stats ---
-    // 1. Calculate stats for ALL players and combine with roster info
-    const rosterWithStats = availablePlayers.map(player => {
-      const goals = gameEvents.filter(e => e.type === 'goal' && e.scorerId === player.id).length;
-      const assists = gameEvents.filter(e => e.type === 'goal' && e.assisterId === player.id).length;
-      const totalScore = goals + assists;
-      return { ...player, goals, assists, totalScore };
-    })
-    // 2. Sort the combined list (e.g., by points desc, then name asc)
-    .sort((a, b) => {
-      if (b.totalScore !== a.totalScore) {
-        return b.totalScore - a.totalScore; // Primary: Points descending
-      }
-      return a.name.localeCompare(b.name); // Secondary: Name ascending
-    });
-
-    // 3. Create the header row
-    rows.push(escapeCsvField(t('rosterSettingsModal.title', 'Roster & Stats'))); // Combined title
-    rows.push([
-        escapeCsvField(t('gameStatsModal.playerHeader', 'Player')),
-        escapeCsvField(t('gameStatsModal.jerseyHeader', '#')),
-        escapeCsvField(t('gameStatsModal.goalieHeader', 'Goalie')),
-        escapeCsvField(t('gameStatsModal.notesHeader', 'Player Notes')),
-        escapeCsvField(t('gameStatsModal.goalsHeaderFull', 'Goals')),
-        escapeCsvField(t('gameStatsModal.assistsHeaderFull', 'Assists')),
-        escapeCsvField(t('gameStatsModal.pointsHeaderFull', 'Points'))
-    ].join(DELIMITER));
-
-    // 4. Create data rows for each player
-    rosterWithStats.forEach(player => {
-        rows.push([
-            escapeCsvField(player.name),
-            escapeCsvField(player.jerseyNumber),
-            escapeCsvField(player.isGoalie ? t('common.yes', 'Yes') : t('common.no', 'No')),
-            escapeCsvField(player.notes),
-            escapeCsvField(player.goals),
-            escapeCsvField(player.assists),
-            escapeCsvField(player.totalScore)
-        ].join(DELIMITER));
-    });
-    rows.push(''); // Blank separator row
-
-    // --- Section: Event Log ---
-    rows.push('Event Log'); // Cleaned
-    rows.push(`${escapeCsvField(t('gameStatsModal.timeHeader', 'Time'))}${DELIMITER}${escapeCsvField(t('gameStatsModal.typeHeader', 'Type'))}${DELIMITER}${escapeCsvField(t('gameStatsModal.scorerHeader', 'Scorer'))}${DELIMITER}${escapeCsvField(t('gameStatsModal.assisterHeader', 'Assister'))}`); // Cleaned
-    // Use the pre-sorted goals from useMemo
-    sortedGoals.forEach(event => {
-        const timeFormatted = formatTime(event.time);
-        const type = event.type === 'goal' ? t('gameStatsModal.eventTypeGoal', 'Goal') : t('gameStatsModal.eventTypeOpponentGoal', 'Opponent Goal');
-        const scorer = escapeCsvField(event.scorerName);
-        const assister = event.type === 'goal' ? escapeCsvField(event.assisterName) : ''; // Only show assister for own goals
-        rows.push(`${escapeCsvField(timeFormatted)}${DELIMITER}${escapeCsvField(type)}${DELIMITER}${scorer}${DELIMITER}${assister}`); // Cleaned
-    });
-    rows.push(''); // Blank separator row
-
-    // --- Section: Notes ---
-    rows.push(`${escapeCsvField(t('gameStatsModal.notesTitle', 'Notes:'))}${DELIMITER}${escapeCsvField(gameNotes)}`); // Combined label and notes
-
-    // --- Combine and Download ---
-    const csvString = rows.join(EOL);
-    const filename = `${teamName.replace(/\s+/g, '_')}_vs_${opponentName.replace(/\s+/g, '_')}_${gameDate}.csv`;
-    triggerDownload(csvString, filename, 'text/csv;charset=utf-8;'); // Specify charset
-  };
-
+  // const triggerDownload = (content: string, filename: string, contentType: string) => { ... };
+  // const handleExportJson = () => { ... };
+  // const escapeCsvField = (...) => { ... };
+  // const handleExportExcel = () => { ... };
   // --- END NEW Export Handlers ---
 
   if (!isOpen) return null;
@@ -691,20 +560,32 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   // Define type for sortable columns in aggregated view
   type AggSortableColumn = 'name' | 'goals' | 'assists' | 'totalScore' | 'goalieGames' | 'fairPlayCards' | 'appearances';
 
+  // Define more specific types for aggregated data
+  interface AggregatedTeamStats {
+      gamesPlayed: number;
+      wins: number;
+      losses: number;
+      draws: number;
+      goalsFor: number;
+      goalsAgainst: number;
+  }
+  
+  interface AggregatedPlayerStats {
+      id: string;
+      name: string;
+      goals: number;
+      assists: number;
+      totalScore: number;
+      goalieGames: number;
+      fairPlayCards: number;
+      appearances: number;
+  }
+
   // --- REUSABLE DISPLAY COMPONENT ---
   const AggregateStatsDisplay: React.FC<{
     stats: { 
-        team: any; 
-        players: Array<{ // Make sure player type includes all fields
-            id: string;
-            name: string;
-            goals: number;
-            assists: number;
-            totalScore: number;
-            goalieGames: number;
-            fairPlayCards: number;
-            appearances: number;
-        }>;
+        team: AggregatedTeamStats | null; // Use specific type or null
+        players: AggregatedPlayerStats[]; // Use specific type
     };
     teamTitleKey: string;
     playerTitleKey: string;
@@ -1348,13 +1229,18 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
           {renderTabContent()}
         </div>
 
-        {/* Modal Footer (Optional) */}
-        {/* If you need footer buttons specific to the modal (not tabs), add them here */}
-        {/* Example: 
+        {/* Modal Footer (Optional) - Example buttons removed as handlers are removed */}
+        {/* 
         <div className="p-3 bg-slate-900 border-t border-slate-700 flex justify-end space-x-2">
-          <button onClick={onClose} className="px-3 py-1.5 bg-slate-600 text-white rounded hover:bg-slate-500 transition duration-150 text-xs">
-            {t('gameStatsModal.closeButton', 'Close')}
+          <button ...>
+            Export JSON
           </button>
+          <button ...>
+            Export EXCEL
+          </button>
+           <button ... >
+             Reset Stats
+           </button>
         </div>
         */}
       </div>
