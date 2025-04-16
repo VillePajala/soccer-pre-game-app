@@ -28,13 +28,13 @@ const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, onClose }
         >
           &times;
         </button>
-        <h2 className="text-2xl font-bold mb-4 text-yellow-400">{t('instructionsModal.title', 'App Guide')}</h2>
+        <h2 className="text-2xl font-bold mb-6 text-yellow-400 text-center">{t('instructionsModal.title', 'App Guide')}</h2>
         
         <div className="overflow-y-auto flex-grow scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-700 pr-2">
-          <div className="space-y-4 text-sm sm:text-base">
+          <div className="space-y-5 text-sm sm:text-base">
             <section>
-              <h3 className="text-lg font-semibold mb-2 text-yellow-300">{t('instructionsModal.playerBarTitle')}</h3>
-              <ul className="list-disc list-inside space-y-1 pl-2">
+              <h3 className="text-lg font-semibold mb-3 text-yellow-300">{t('instructionsModal.playerBarTitle')}</h3>
+              <ul className="list-disc list-inside space-y-1.5 pl-2">
                 <li><span className="font-semibold">{t('instructionsModal.playerBar.selectPlayer')}</span></li>
                 <li><span className="font-semibold">{t('instructionsModal.playerBar.deselectPlayer')}</span></li>
                 <li><span className="font-semibold">{t('instructionsModal.playerBar.renamePlayer')}</span></li>
@@ -44,8 +44,8 @@ const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, onClose }
             </section>
 
             <section>
-              <h3 className="text-lg font-semibold mb-2 text-yellow-300">{t('instructionsModal.fieldAreaTitle')}</h3>
-              <ul className="list-disc list-inside space-y-1 pl-2">
+              <h3 className="text-lg font-semibold mb-3 text-yellow-300">{t('instructionsModal.fieldAreaTitle')}</h3>
+              <ul className="list-disc list-inside space-y-1.5 pl-2">
                 <li><span className="font-semibold">{t('instructionsModal.fieldArea.movePlayer')}</span></li>
                 <li><span className="font-semibold">{t('instructionsModal.fieldArea.addPlacePlayer')}</span></li>
                 <li><span className="font-semibold">{t('instructionsModal.fieldArea.removePlayer')}</span></li>
@@ -54,8 +54,8 @@ const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, onClose }
             </section>
 
             <section>
-              <h3 className="text-lg font-semibold mb-2 text-yellow-300">{t('instructionsModal.controlBarTitle')}</h3>
-              <ul className="list-disc list-inside space-y-1 pl-2">
+              <h3 className="text-lg font-semibold mb-3 text-yellow-300">{t('instructionsModal.controlBarTitle')}</h3>
+              <ul className="list-disc list-inside space-y-1.5 pl-2">
                 <li><span className="font-semibold">Undo/Redo <FaUndo className="inline-block align-text-bottom mx-0.5" size={16}/> / <FaRedo className="inline-block align-text-bottom mx-0.5" size={16}/>:</span> {t('instructionsModal.controlBar.undoRedo')}</li>
                 <li><span className="font-semibold">Toggle Names <FaEye className="inline-block align-text-bottom mx-0.5" size={16}/> / <FaEyeSlash className="inline-block align-text-bottom mx-0.5" size={16}/>:</span> {t('instructionsModal.controlBar.toggleNames')}</li>
                 <li><span className="font-semibold">Toggle Timer Overlay <FaRegClock className="inline-block align-text-bottom mx-0.5" size={16}/> / <FaRegStopCircle className="inline-block align-text-bottom mx-0.5" size={16}/>:</span> {t('instructionsModal.controlBar.toggleTimerOverlay')}</li>
@@ -68,8 +68,8 @@ const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, onClose }
             </section>
 
             <section>
-              <h3 className="text-lg font-semibold mb-2 text-yellow-300">{t('instructionsModal.timerOverlayTitle')}</h3>
-               <ul className="list-disc list-inside space-y-1 pl-2">
+              <h3 className="text-lg font-semibold mb-3 text-yellow-300">{t('instructionsModal.timerOverlayTitle')}</h3>
+               <ul className="list-disc list-inside space-y-1.5 pl-2">
                 <li><span className="font-semibold">{t('instructionsModal.timerOverlay.setInterval')}</span></li>
                 <li><span className="font-semibold">{t('instructionsModal.timerOverlay.subAlerts')}</span></li>
                 <li><span className="font-semibold">{t('instructionsModal.timerOverlay.confirmSub')}</span></li>
@@ -78,8 +78,8 @@ const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, onClose }
             </section>
             
             <section>
-              <h3 className="text-lg font-semibold mb-2 text-yellow-300">{t('instructionsModal.generalTitle')}</h3>
-               <ul className="list-disc list-inside space-y-1 pl-2">
+              <h3 className="text-lg font-semibold mb-3 text-yellow-300">{t('instructionsModal.generalTitle')}</h3>
+               <ul className="list-disc list-inside space-y-1.5 pl-2">
                 <li><span className="font-semibold">{t('instructionsModal.general.touchInteractions')}</span></li>
                 <li><span className="font-semibold">{t('instructionsModal.general.saving')}</span></li>
                 <li><span className="font-semibold">{t('instructionsModal.general.fullscreen')}</span></li>
