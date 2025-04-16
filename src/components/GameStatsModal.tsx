@@ -258,7 +258,8 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
             goals: number; 
             assists: number; 
             goalieGames: number; 
-            fairPlayCards: number 
+            fairPlayCards: number; 
+            appearances: number;
         } 
     } = {};
 
@@ -269,7 +270,8 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
             goals: 0, 
             assists: 0, 
             goalieGames: 0, 
-            fairPlayCards: 0 
+            fairPlayCards: 0, 
+            appearances: 0
         };
     });
 
@@ -285,7 +287,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                     // Handle player who scored but isn't in the current main roster
                     playerTotals[event.scorerId] = { 
                         name: event.scorerName || `Player ${event.scorerId}`, 
-                        goals: 1, assists: 0, goalieGames: 0, fairPlayCards: 0 
+                        goals: 1, assists: 0, goalieGames: 0, fairPlayCards: 0, appearances: 0
                     };
                 }
                 // Assister
@@ -296,7 +298,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                          // Handle player who assisted but isn't in the current main roster
                          playerTotals[event.assisterId] = { 
                              name: event.assisterName || `Player ${event.assisterId}`, 
-                             goals: 0, assists: 1, goalieGames: 0, fairPlayCards: 0 
+                             goals: 0, assists: 1, goalieGames: 0, fairPlayCards: 0, appearances: 0
                         };
                     }
                 }
@@ -317,6 +319,20 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
             // Note: We don't add players dynamically here, as goalie/FP status only makes sense
             // if they are part of the roster being tracked.
         });
+
+        // Aggregate Appearances based on selectedPlayerIds for the game
+        if (game.selectedPlayerIds && Array.isArray(game.selectedPlayerIds)) {
+            Object.keys(playerTotals).forEach(playerId => {
+                if (game.selectedPlayerIds.includes(playerId)) {
+                    playerTotals[playerId].appearances += 1;
+                }
+            });
+        } else {
+            // Fallback for older games without selectedPlayerIds?
+            // Option: Assume everyone in game.availablePlayers appeared?
+            // Let's skip counting for games without the data for now.
+            console.warn(`Game data missing selectedPlayerIds, appearances may be inaccurate.`);
+        }
     });
 
     // Convert map to array and calculate total score
@@ -673,7 +689,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   console.log('[GameStatsModal Render] Rendering modal. isEditingNotes:', isEditingNotes);
 
   // Define type for sortable columns in aggregated view
-  type AggSortableColumn = 'name' | 'goals' | 'assists' | 'totalScore' | 'goalieGames' | 'fairPlayCards';
+  type AggSortableColumn = 'name' | 'goals' | 'assists' | 'totalScore' | 'goalieGames' | 'fairPlayCards' | 'appearances';
 
   // --- REUSABLE DISPLAY COMPONENT ---
   const AggregateStatsDisplay: React.FC<{
@@ -687,6 +703,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
             totalScore: number;
             goalieGames: number;
             fairPlayCards: number;
+            appearances: number;
         }>;
     };
     teamTitleKey: string;
@@ -817,6 +834,12 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                           {t('gameStatsModal.fairPlayCardsHeader', 'FP')} {renderSortIcon('fairPlayCards')}
                         </div>
                     </th>
+                    {/* Appearances Header - Sortable */}
+                    <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-slate-300 uppercase tracking-wider w-12 cursor-pointer hover:bg-slate-600/50" title={t('gameStatsModal.appearancesTooltip', 'Games Appeared')} onClick={() => handleSortAgg('appearances')}>
+                        <div className="flex items-center justify-center">
+                          {t('gameStatsModal.appearancesHeader', 'App')} {renderSortIcon('appearances')}
+                        </div>
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-slate-800 divide-y divide-slate-700">
@@ -829,6 +852,8 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                       <td className="py-1 px-3 text-xs text-slate-300 text-center font-semibold">{player.totalScore}</td>
                       <td className="py-1 px-3 text-xs text-slate-300 text-center">{player.goalieGames}</td>
                       <td className="py-1 px-3 text-xs text-slate-300 text-center">{player.fairPlayCards}</td>
+                      {/* Appearances Data Cell */}
+                      <td className="py-1 px-3 text-xs text-slate-300 text-center">{player.appearances}</td>
                     </tr>
                   ))}
                 </tbody>
