@@ -579,7 +579,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
         }
     }
   }, [ // Added dependencies for useCallback
-    activeTouchId, draggingPlayerFromBarInfo, isPointInPlayer, isPointInOpponent,
+    draggingPlayerFromBarInfo, isPointInPlayer, isPointInOpponent,
     lastTapInfo, onDrawingStart, onOpponentRemove, onPlayerDropViaTouch, 
     onPlayerRemove, players, opponents // Include relevant states and props
   ]);
@@ -650,7 +650,6 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
 
     setActiveTouchId(null);
   };
-  const handleTouchCancel = handleTouchEnd; // Treat cancel same as end
 
   // --- HTML Drag and Drop Handlers (Needs update for CSS size) ---
   const handleDragOver = (e: React.DragEvent<HTMLCanvasElement>) => {
