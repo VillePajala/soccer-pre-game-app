@@ -278,7 +278,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
         {isSettingsMenuOpen && (
           <div 
              // Add transition, initial state (closed), and open state classes
-             className={`absolute bottom-full right-0 mb-1 w-56 bg-slate-700 rounded-md shadow-xl z-50 border border-slate-500 overflow-hidden max-h-96 transition-all duration-150 ease-out transform ${isSettingsMenuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
+             className={`absolute bottom-full right-0 mb-1 w-64 bg-slate-700 rounded-md shadow-xl z-50 border border-slate-500 overflow-hidden max-h-96 transition-all duration-150 ease-out transform ${isSettingsMenuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
           > 
              {/* Inner wrapper for sliding animation */}
              <div className={`flex transition-transform duration-200 ease-out ${menuView === 'tulospalvelu' ? '-translate-x-full' : 'translate-x-0'}`}>
