@@ -17,18 +17,23 @@ const TrainingResourcesModal: React.FC<TrainingResourcesModalProps> = ({ isOpen,
 
   if (!isOpen) return null;
 
+  // Define the type for list items, which can be strings or nested objects
+  type ListItem = string | { title: string; subPoints?: ListItem[] }; 
+
   // Helper to render list items from translation arrays safely, handling multiple levels of nesting
-  const renderListItems = (items: any, itemKeyPrefix: string, level = 1): React.ReactNode => {
-    if (!Array.isArray(items)) {
-        const fetchedItems = t(items as string, { returnObjects: true });
+  const renderListItems = (items: string | ListItem[], itemKeyPrefix: string, level = 1): React.ReactNode => {
+    let actualItems: ListItem[]; // Use a separate variable for the processed array
+
+    // Check if items is the initial string key or already an array
+    if (typeof items === 'string') {
+        const fetchedItems = t(items, { returnObjects: true });
         if (!Array.isArray(fetchedItems)) return null;
-        items = fetchedItems;
+        actualItems = fetchedItems as ListItem[]; // Assign fetched items
+    } else {
+        actualItems = items; // Assign if already an array
     }
 
-    // Define the type for list items
-    type ListItem = string | { title: string; subPoints?: ListItem[] }; // subPoints is now optional and recursive
-
-    return (items as ListItem[]).map((item: ListItem, index: number) => {
+    return actualItems.map((item: ListItem, index: number) => {
       const key = `${itemKeyPrefix}-${index}`;
       const currentPadding = `pl-${2 + level * 2}`; // Calculate padding based on level (pl-4, pl-6, etc.)
 
@@ -113,14 +118,14 @@ const TrainingResourcesModal: React.FC<TrainingResourcesModalProps> = ({ isOpen,
                           <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('matchPreparation.section1.title')}</h4>
                           <p className="text-sm italic text-slate-400 mb-2">{t('matchPreparation.section1.goal')}</p>
                           <ul className="list-disc list-inside space-y-1.5 pl-2">
-                            {renderListItems(t('matchPreparation.section1.points', { returnObjects: true }), 's1')}
+                            {renderListItems(t('matchPreparation.section1.points', { returnObjects: true }) as ListItem[], 's1')}
                           </ul>
                         </section>
                         <section>
                             <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('matchPreparation.section2.title')}</h4>
                             <p className="text-sm italic text-slate-400 mb-2">{t('matchPreparation.section2.goal')}</p>
                             <ul className="list-disc list-inside space-y-1.5 pl-2">
-                              {renderListItems(t('matchPreparation.section2.points', { returnObjects: true }), 's2')}
+                              {renderListItems(t('matchPreparation.section2.points', { returnObjects: true }) as ListItem[], 's2')}
                             </ul>
                           </section>
                           <section>
@@ -128,20 +133,20 @@ const TrainingResourcesModal: React.FC<TrainingResourcesModalProps> = ({ isOpen,
                             <p className="text-sm italic text-slate-400 mb-2">{t('matchPreparation.section3.goal')}</p>
                             {/* Render the top-level list for section 3 */}
                             <ul className="list-disc list-inside space-y-1.5 pl-2">
-                                {renderListItems(t('matchPreparation.section3.points', { returnObjects: true }), 's3')}
+                                {renderListItems(t('matchPreparation.section3.points', { returnObjects: true }) as ListItem[], 's3')}
                             </ul>
                           </section>
                           <section>
                             <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('matchPreparation.section4.title')}</h4>
                             <p className="text-sm italic text-slate-400 mb-2">{t('matchPreparation.section4.goal')}</p>
                             <ul className="list-disc list-inside space-y-1.5 pl-2">
-                              {renderListItems(t('matchPreparation.section4.points', { returnObjects: true }), 's4')}
+                              {renderListItems(t('matchPreparation.section4.points', { returnObjects: true }) as ListItem[], 's4')}
                             </ul>
                           </section>
                           <section>
                             <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('matchPreparation.duringGame.title')}</h4>
                             <ul className="list-disc list-inside space-y-1.5 pl-2">
-                              {renderListItems(t('matchPreparation.duringGame.points', { returnObjects: true }), 'dg')}
+                              {renderListItems(t('matchPreparation.duringGame.points', { returnObjects: true }) as ListItem[], 'dg')}
                             </ul>
                           </section>
                         </div>
