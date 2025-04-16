@@ -141,18 +141,6 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
         onSetPlayerNotes(playerId, editPlayerData.notes);
     }
 
-    // Attempt to re-sync data *before* closing edit mode
-    const potentiallyUpdatedPlayer = availablePlayers.find(p => p.id === playerId);
-    if (potentiallyUpdatedPlayer) {
-      // Update local edit state again, just in case prop updated but modal didn't re-render yet
-      setEditPlayerData({
-        name: potentiallyUpdatedPlayer.name,
-        jerseyNumber: potentiallyUpdatedPlayer.jerseyNumber || '',
-        notes: potentiallyUpdatedPlayer.notes || '',
-        nickname: potentiallyUpdatedPlayer.nickname || '',
-      });
-    }
-
     setEditingPlayerId(null); // Exit editing mode
   };
 
@@ -438,9 +426,6 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                               >
                                 <button onClick={() => { handleStartEdit(player.id); setActionsMenuPlayerId(null); }} className="flex items-center w-full px-3 py-1.5 text-sm text-blue-300 hover:bg-slate-600 disabled:opacity-50" disabled={isAddingPlayer || !!editingPlayerId}>
                                  <HiOutlinePencil className="w-4 h-4 mr-2" /> {t('common.edit', 'Edit')}
-                                </button>
-                                <button onClick={(e) => { e.stopPropagation(); onToggleGoalie(player.id); setActionsMenuPlayerId(null); }} className={`flex items-center w-full px-3 py-1.5 text-sm rounded transition-colors ${player.isGoalie ? 'text-amber-400 hover:bg-amber-900/30' : 'text-slate-300 hover:bg-slate-600'} disabled:opacity-50`} disabled={isAddingPlayer || !!editingPlayerId}>
-                                 <span className={`w-4 mr-2 text-center font-bold text-[10px] ${player.isGoalie ? 'text-amber-400' : 'text-slate-500'}`}>{player.isGoalie ? 'G' : '-'}</span> {player.isGoalie ? t('rosterSettingsModal.unsetGoalie', 'Unset Goalie') : t('rosterSettingsModal.setGoalie', 'Set Goalie')}
                                 </button>
                                 <button onClick={() => { onRemovePlayer(player.id); setActionsMenuPlayerId(null); }} className="flex items-center w-full px-3 py-1.5 text-sm text-red-400 hover:bg-slate-600 disabled:opacity-50" disabled={isAddingPlayer || !!editingPlayerId}>
                                  <HiOutlineTrash className="w-4 h-4 mr-2" /> {t('common.remove', 'Remove')}
