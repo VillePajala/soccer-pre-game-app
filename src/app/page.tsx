@@ -933,6 +933,7 @@ export default function Home() {
   // NEW: Handler to cancel the new game setup
   const handleCancelNewGameSetup = () => {
     console.log("New game setup cancelled.");
+    setHasSkippedInitialSetup(true); // <-- Add the skip flag logic here
     setIsNewGameSetupModalOpen(false);
   };
 
@@ -1872,11 +1873,7 @@ export default function Home() {
           <NewGameSetupModal
             isOpen={isNewGameSetupModalOpen}
             onStart={handleFinalizeNewGame} 
-            onCancel={() => {
-              console.log('New game setup cancelled.'); // Keep log for confirmation
-              setHasSkippedInitialSetup(true); // <-- Set the skip flag
-              setIsNewGameSetupModalOpen(false);
-            }} 
+            onCancel={handleCancelNewGameSetup} // <-- Pass the function name again
           />
         )}
 
