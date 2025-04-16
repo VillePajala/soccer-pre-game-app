@@ -1128,56 +1128,7 @@ export default function Home() {
   }, [t]); // Add t to dependency array
 
   // --- NEW: Handler to Reset Only Current Game Stats/Timer ---
-  console.log('Before useCallback(handleResetStatsOnly)');
-  const handleResetStatsOnly = useCallback(() => {
-    if (window.confirm(t('gameStatsModal.resetConfirmation', 'Are you sure you want to reset all game statistics and timer for the current match? This cannot be undone.') ?? 'Are you sure?')) {
-        console.log("Resetting current game stats and timer...");
-
-        // Reset player statuses (Goalie, Fair Play)
-        const resetAvailablePlayers = availablePlayers.map(p => ({
-            ...p,
-            isGoalie: false,             // Reset goalie status
-            receivedFairPlayCard: false // Reset fair play status
-        }));
-        setAvailablePlayers(resetAvailablePlayers); // Update available players state
-        // Also reset players currently on field to ensure consistency, although they are cleared below anyway
-        const resetPlayersOnField = playersOnField.map(p => ({
-            ...p,
-            isGoalie: false,
-            receivedFairPlayCard: false
-        }));
-        setPlayersOnField(resetPlayersOnField);
-
-        // Reset scores, events, timer, status, period
-        setGameEvents(initialState.gameEvents); // Use initial empty array
-        setHomeScore(initialState.homeScore);   // Use initial 0
-        setAwayScore(initialState.awayScore);   // Use initial 0
-        setTimeElapsedInSeconds(0);
-        setIsTimerRunning(false);
-        setSubAlertLevel('none');
-        setNextSubDueTimeSeconds(subIntervalMinutes * 60); // Reset based on current interval
-        setCompletedIntervalDurations([]);
-        setLastSubConfirmationTimeSeconds(0);
-        setCurrentPeriod(initialState.currentPeriod); // Reset to 1
-        setGameStatus(initialState.gameStatus);   // Reset to 'notStarted'
-
-        // Save this reset state to history (important!)
-        saveStateToHistory({
-            gameEvents: initialState.gameEvents,
-            homeScore: initialState.homeScore,
-            awayScore: initialState.awayScore,
-            availablePlayers: resetAvailablePlayers, // Include reset player statuses in history
-            playersOnField: resetPlayersOnField,   // Include reset field players too
-            // Include timer/status reset in history state snapshot?
-            // For simplicity, maybe only save the core stats reset?
-            // Let's keep it simple for now and only explicitly save stats.
-            // Timer state will be implicitly reset by the direct state calls above.
-            // Status/Period reset also handled above.
-        });
-        console.log("Current game stats, player statuses, and timer reset complete.");
-    }
-  }, [t, subIntervalMinutes, saveStateToHistory, availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField]); // Added player states and setters to dependencies
-
+  
   // Placeholder handlers for Save/Load Modals
   console.log('Before handleOpenSaveGameModal definition');
   const handleOpenSaveGameModal = useCallback(() => { // Wrap in useCallback
