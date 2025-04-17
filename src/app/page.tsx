@@ -444,8 +444,8 @@ export default function Home() {
   // --- Save state to localStorage --- 
   console.log('Before useEffect(auto-save)');
   useEffect(() => {
-    // Check if loaded and we have a game ID to save under
-    if (isLoaded && currentGameId) { 
+    // Only auto-save if loaded AND we have a proper game ID (not the default unsaved one)
+    if (isLoaded && currentGameId && currentGameId !== DEFAULT_GAME_ID) { 
       console.log(`Auto-saving state for game ID: ${currentGameId}`);
       try {
         // 1. Create the current game state snapshot (excluding history)
@@ -466,8 +466,8 @@ export default function Home() {
           periodDurationMinutes,
           currentPeriod,
           gameStatus,
-          selectedPlayerIds: initialState.selectedPlayerIds, // Include selectedPlayerIds
-          gameType: initialState.gameType, // Include gameType in the saved state
+          selectedPlayerIds,
+          gameType,
         };
 
         // 2. Read the *current* collection from localStorage
@@ -495,6 +495,8 @@ export default function Home() {
       } catch (error) {
         console.error("Failed to auto-save state to localStorage:", error);
       }
+    } else if (isLoaded && currentGameId === DEFAULT_GAME_ID) {
+      console.log("Not auto-saving as this is an unsaved game (no ID assigned yet)");
     }
     // Dependencies: Only include state that defines the current game, plus isLoaded and currentGameId
   }, [isLoaded, currentGameId, 
@@ -1040,12 +1042,45 @@ export default function Home() {
     setHistory([newInitialStateForHistory]); 
     setHistoryIndex(0);
     
-    // Update current game ID to reflect it's unsaved
-    setCurrentGameId(DEFAULT_GAME_ID);
+    // Only automatically create a save file if user completed the setup form with an opponent name
+    // This will enable auto-saving for future changes
+    if (newOpponentName.trim()) {
+      // Create a proper game ID
+      const newGameId = `game_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+      
+      // Format: Team_vs_Opponent_DATE
+      const formattedTeam = teamName.replace(/\s+/g, '_');
+      const formattedOpponent = newOpponentName.trim().replace(/\s+/g, '_');
+      const defaultName = `${formattedTeam}_vs_${formattedOpponent}_${newGameDate || new Date().toISOString().split('T')[0]}`;
+
+      // Create a state snapshot
+      const currentSnapshot: AppState = {
+        ...newInitialStateForHistory
+      };
+
+      // Save the game state
+      const updatedSavedGames = { 
+        ...savedGames, 
+        [newGameId]: currentSnapshot
+      };
+      setSavedGames(updatedSavedGames);
+      localStorage.setItem(SAVED_GAMES_KEY, JSON.stringify(updatedSavedGames));
+
+      // Update current game ID and save settings
+      setCurrentGameId(newGameId);
+      const currentSettings: AppSettings = { currentGameId: newGameId };
+      localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(currentSettings));
+      
+      console.log(`Automatically created save file: ${defaultName} (ID: ${newGameId})`);
+    } else {
+      // If no opponent name, just update the current game ID to DEFAULT_GAME_ID (unsaved)
+      setCurrentGameId(DEFAULT_GAME_ID);
+      console.log("Setup skipped or incomplete - no auto-save created. User will need to save manually.");
+    }
 
     console.log("Session state reset with new opponent/date/type.");
     setIsNewGameSetupModalOpen(false); // Close the setup modal
-  }, [availablePlayers, setAvailablePlayers, setDrawings, setOpponents, setPlayersOnField, subIntervalMinutes, t, teamName]);
+  }, [availablePlayers, savedGames, setAvailablePlayers, setDrawings, setOpponents, setPlayersOnField, subIntervalMinutes, t, teamName]);
 
   // NEW: Handler to cancel the new game setup
   console.log('Before useCallback(handleCancelNewGameSetup)');
@@ -1936,14 +1971,15 @@ export default function Home() {
           selectedPlayerIds={selectedPlayerIds} // Pass selected player IDs
           savedGames={savedGames} // Pass saved games collection
         />
-        {/* Save Game Modal */}
+        {/* Save Game Modal - Updated to include gameType */}
         <SaveGameModal
           isOpen={isSaveGameModalOpen}
           onClose={handleCloseSaveGameModal}
-          onSave={handleSaveGame} 
-          teamName={teamName}         // Pass teamName state
-          opponentName={opponentName} // Pass opponentName state
-          gameDate={gameDate}         // Pass gameDate state     // Pass gameType state
+          onSave={handleSaveGame}
+          teamName={teamName}
+          opponentName={opponentName}
+          gameDate={gameDate}
+          currentGameType={gameType} // Pass the current game type
         />
         <LoadGameModal 
           isOpen={isLoadGameModalOpen}

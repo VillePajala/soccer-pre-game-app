@@ -15,6 +15,7 @@ interface SaveGameModalProps {
   teamName?: string;
   opponentName?: string;
   gameDate?: string;
+  currentGameType?: GameType; // Add current game type prop
 }
 
 const SaveGameModal: React.FC<SaveGameModalProps> = ({
@@ -24,14 +25,15 @@ const SaveGameModal: React.FC<SaveGameModalProps> = ({
   teamName = '',
   opponentName = '',
   gameDate = '',
+  currentGameType = 'season', // Default to season if not provided
 }) => {
   const { t } = useTranslation();
   const [gameName, setGameName] = useState('');
-  // Add state for game type, default to 'season'
-  const [gameType, setGameType] = useState<GameType>('season');
+  // Initialize game type with current game type prop
+  const [gameType, setGameType] = useState<GameType>(currentGameType);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Reset name input and game type when modal opens
+  // Reset name input and update game type when modal opens
   useEffect(() => {
     if (isOpen) {
       // Construct default name if info is available
@@ -44,14 +46,14 @@ const SaveGameModal: React.FC<SaveGameModalProps> = ({
       }
       
       setGameName(defaultName); // Set the generated or empty name
-      setGameType('season'); // Default to 'season' when opening
+      setGameType(currentGameType); // Use the current game type instead of hardcoded 'season'
       // Focus the input field shortly after modal opens
       setTimeout(() => {
         inputRef.current?.focus();
         inputRef.current?.select(); // Select the text for easy replacement
       }, 100); 
     }
-  }, [isOpen, teamName, opponentName, gameDate]); // Add new props to dependency array
+  }, [isOpen, teamName, opponentName, gameDate, currentGameType]); // Add currentGameType to dependency array
 
   const handleSaveClick = () => {
     const trimmedName = gameName.trim();
