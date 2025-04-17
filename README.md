@@ -1,6 +1,6 @@
-# PEPO Soccer App
+# Pro Soccer Coach
 
-A web application designed for soccer coaches and teams to manage game timing, track statistics, visualize player positions, and access relevant team resources during matches.
+A web application designed for soccer coaches to manage game timing, track statistics, visualize player positions, and access relevant team resources during matches.
 
 <img src=".docs/images/screenshot_timer_view_with_substitutions_play_time_records.jpg" alt="Timer and Substitution Tracking" width="300"/> <img src=".docs/images/screeshot_tactics_view.jpg" alt="Main Tactics View" width="300"/> 
 

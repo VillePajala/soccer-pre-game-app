@@ -1,7 +1,7 @@
 {
-    "name": "PEPO Soccer App",
-    "short_name": "PEPO App",
-    "description": "PEPO Soccer Tactics and Timer App",
+    "name": "Pro Soccer Coach",
+    "short_name": "Pro Coach",
+    "description": "Soccer Tactics and Timer App for Coaches",
     "start_url": "/",
     "display": "fullscreen",
     "background_color": "#111827",
