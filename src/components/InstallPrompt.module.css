@@ -8,15 +8,15 @@
   margin: 0 auto;
   width: 90%;
   max-width: 375px;
-  background: linear-gradient(135deg, #f0f4ff 0%, #e6e9fd 100%);
-  color: #333;
+  background: linear-gradient(135deg, #1a1a1a 0%, #0f0f0f 100%);
+  color: #ffffff;
   padding: 1.25rem;
   border-radius: 0.75rem;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
   z-index: 1000;
-  border: 1px solid rgba(79, 70, 229, 0.25);
+  border: 1px solid rgba(79, 70, 229, 0.4);
   animation: fadeIn 0.3s ease-out;
 }
 
@@ -34,7 +34,7 @@
   font-size: 1rem;
   font-weight: 500;
   text-align: center;
-  color: #404040;
+  color: #ffffff;
 }
 
 .installPromptButtons {
@@ -56,21 +56,21 @@
   transition: all 0.2s;
   flex: 1;
   max-width: 150px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 }
 
 .installButton:hover {
   background: linear-gradient(to bottom, #4c43d8 0%, #3728b9 100%);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
 .dismissButton {
-  color: #6b7280;
+  color: #e5e7eb;
   padding: 0.6rem 1.5rem;
   border-radius: 0.5rem;
   font-size: 0.95rem;
-  background-color: rgba(243, 244, 246, 0.8);
-  border: 1px solid #e5e7eb;
+  background-color: rgba(50, 50, 50, 0.8);
+  border: 1px solid #4d4d4d;
   cursor: pointer;
   transition: all 0.2s;
   font-weight: 500;
@@ -79,6 +79,6 @@
 }
 
 .dismissButton:hover {
-  background-color: #e5e7eb;
-  color: #374151;
+  background-color: #4d4d4d;
+  color: #ffffff;
 } 
