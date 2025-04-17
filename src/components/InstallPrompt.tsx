@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { HiOutlineDownload } from 'react-icons/hi';
 import styles from './InstallPrompt.module.css';
 
 // Define proper interfaces for better type safety
