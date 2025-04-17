@@ -38,6 +38,37 @@ if (!fiTranslations.timerOverlay) {
 fiTranslations.timerOverlay.teamGoalButton = "Kirjaa maali";
 fiTranslations.timerOverlay.opponentGoalButton = "Vastustaja +1";
 
+// Add save game modal translations
+if (!fiTranslations.saveGameModal) {
+  fiTranslations.saveGameModal = {};
+}
+fiTranslations.saveGameModal.title = "Tallenna Peli Nimellä...";
+fiTranslations.saveGameModal.label = "Pelin Nimi:";
+fiTranslations.saveGameModal.placeholder = "esim. vs Lapa FC (Koti)";
+fiTranslations.saveGameModal.gameTypeLabel = "Pelin Tyyppi:";
+fiTranslations.saveGameModal.gameTypeSeason = "Sarjaottelu";
+fiTranslations.saveGameModal.gameTypeTournament = "Turnaus";
+fiTranslations.saveGameModal.cancelButton = "Peruuta";
+fiTranslations.saveGameModal.saveButton = "Tallenna Peli";
+
+// Add control bar menu translations
+if (!fiTranslations.controlBar) {
+  fiTranslations.controlBar = {};
+}
+fiTranslations.controlBar.saveGameAs = "Tallenna Peli Nimellä...";
+fiTranslations.controlBar.loadGame = "Lataa Peli";
+fiTranslations.controlBar.startNewMatch = "Aloita Uusi Ottelu";
+fiTranslations.controlBar.stats = "Tilastot";
+fiTranslations.controlBar.training = "Harjoittelu";
+fiTranslations.controlBar.tasoLink = "Taso";
+fiTranslations.controlBar.tulospalveluLink = "Tulospalvelu";
+fiTranslations.controlBar.appGuide = "Sovelluksen Opas";
+fiTranslations.controlBar.language = "Kieli";
+fiTranslations.controlBar.hardReset = "Nollaa Sovellus";
+fiTranslations.controlBar.backButton = "Takaisin";
+fiTranslations.controlBar.tulospalveluP9 = "P9 Alue Taso 1";
+fiTranslations.controlBar.tulospalveluP9EK = "P/T 9 EK Kortteli (2016)";
+
 // Add common namespace if missing
 if (!fiTranslations.common) {
   fiTranslations.common = {};
@@ -61,6 +92,37 @@ if (!enTranslations.timerOverlay) {
 }
 enTranslations.timerOverlay.teamGoalButton = "Log Goal";
 enTranslations.timerOverlay.opponentGoalButton = "Opponent +1";
+
+// Add save game modal translations for English
+if (!enTranslations.saveGameModal) {
+  enTranslations.saveGameModal = {};
+}
+enTranslations.saveGameModal.title = "Save Game As...";
+enTranslations.saveGameModal.label = "Game Name:";
+enTranslations.saveGameModal.placeholder = "e.g., vs Lapa FC (Home)";
+enTranslations.saveGameModal.gameTypeLabel = "Game Type:";
+enTranslations.saveGameModal.gameTypeSeason = "Season";
+enTranslations.saveGameModal.gameTypeTournament = "Tournament";
+enTranslations.saveGameModal.cancelButton = "Cancel";
+enTranslations.saveGameModal.saveButton = "Save Game";
+
+// Add control bar menu translations for English
+if (!enTranslations.controlBar) {
+  enTranslations.controlBar = {};
+}
+enTranslations.controlBar.saveGameAs = "Save Game As...";
+enTranslations.controlBar.loadGame = "Load Game";
+enTranslations.controlBar.startNewMatch = "Start New Match";
+enTranslations.controlBar.stats = "Stats";
+enTranslations.controlBar.training = "Training";
+enTranslations.controlBar.tasoLink = "Taso";
+enTranslations.controlBar.tulospalveluLink = "Tulospalvelu";
+enTranslations.controlBar.appGuide = "App Guide";
+enTranslations.controlBar.language = "Language";
+enTranslations.controlBar.hardReset = "Hard Reset";
+enTranslations.controlBar.backButton = "Back";
+enTranslations.controlBar.tulospalveluP9 = "P9 Alue Taso 1";
+enTranslations.controlBar.tulospalveluP9EK = "P/T 9 EK Kortteli (2016)";
 
 // Add common namespace if missing
 if (!enTranslations.common) {
