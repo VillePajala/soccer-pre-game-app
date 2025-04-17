@@ -8,7 +8,7 @@ export default function ServiceWorkerRegistration() {
     if (typeof window === 'undefined') return;
     
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
+      const registerServiceWorker = () => {
         navigator.serviceWorker.register('/sw.js')
           .then(registration => {
             console.log('[PWA] Service Worker registered: ', registration);
@@ -16,7 +16,15 @@ export default function ServiceWorkerRegistration() {
           .catch(registrationError => {
             console.log('[PWA] Service Worker registration failed: ', registrationError);
           });
-      });
+      };
+
+      // Register immediately if the page has already loaded
+      if (document.readyState === 'complete') {
+        registerServiceWorker();
+      } else {
+        // Otherwise wait for the load event
+        window.addEventListener('load', registerServiceWorker);
+      }
     } else {
       console.log('[PWA] Service Worker is not supported in this browser.');
     }

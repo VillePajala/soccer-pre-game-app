@@ -2,11 +2,17 @@
 
 import React, { useState, useEffect } from 'react';
 import { HiOutlineDownload } from 'react-icons/hi';
+import styles from './InstallPrompt.module.css';
 
-// Define the BeforeInstallPromptEvent interface
+// Define proper interfaces for better type safety
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
+// Define an interface for iOS navigator with standalone property
+interface IosNavigator extends Navigator {
+  standalone?: boolean;
 }
 
 // This component shows a prompt to install the PWA when available
@@ -15,102 +21,88 @@ const InstallPrompt: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    // Handler for beforeinstallprompt event
-    const handleBeforeInstallPrompt = (e: BeforeInstallPromptEvent) => {
-      // Prevent the mini-infobar from appearing on mobile
-      e.preventDefault();
-      // Store the event for later use
-      setInstallPrompt(e);
-      // Show our custom install button/banner
-      setIsVisible(true);
+    // Only run this in the browser
+    if (typeof window === 'undefined') return;
+
+    // Check if app is already installed (PWA or iOS)
+    const isAppInstalled = 
+      window.matchMedia('(display-mode: standalone)').matches || 
+      window.matchMedia('(display-mode: fullscreen)').matches || 
+      (window.navigator as IosNavigator).standalone === true;
+
+    if (isAppInstalled) {
+      return; // Don't show prompt if already installed
+    }
+
+    // Check localStorage to see if the user dismissed the prompt recently
+    const lastPromptTime = localStorage.getItem('installPromptDismissed');
+    if (lastPromptTime && Date.now() - Number(lastPromptTime) < 24 * 60 * 60 * 1000) {
+      return; // Don't show prompt if dismissed in the last 24 hours
+    }
+
+    const handleBeforeInstallPrompt = (event: Event) => {
+      // Prevent the browser's default install prompt
+      event.preventDefault();
       
-      console.log('[PWA] Install prompt is available');
+      // Store the event for later use
+      const promptEvent = event as BeforeInstallPromptEvent;
+      setInstallPrompt(promptEvent);
+      setIsVisible(true);
     };
 
-    // Check if the app is already installed
-    if (typeof window !== 'undefined' && (
-      window.matchMedia('(display-mode: standalone)').matches || 
-      window.matchMedia('(display-mode: fullscreen)').matches ||
-      (window.navigator as any).standalone === true)) { // For iOS with type assertion
-      console.log('[PWA] App is already installed');
-      setIsVisible(false);
-      return;
-    }
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-    // Check if install was previously deferred (within the last week)
-    const lastPrompt = localStorage.getItem('pwaPromptDismissed');
-    if (lastPrompt) {
-      const lastPromptDate = new Date(parseInt(lastPrompt, 10));
-      const now = new Date();
-      // If less than 7 days have passed since last dismissed, don't show
-      if (now.getTime() - lastPromptDate.getTime() < 7 * 24 * 60 * 60 * 1000) {
-        console.log('[PWA] Prompt was recently dismissed');
-        setIsVisible(false);
-        return;
-      }
-    }
-
-    // Register the event listener - cast to unknown first to work around TypeScript's event type constraints
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt as unknown as EventListener);
-
-    // Cleanup function
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt as unknown as EventListener);
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
   }, []);
 
-  const handleInstallClick = async () => {
+  const handleInstall = async () => {
     if (!installPrompt) return;
-    
+
     try {
-      // Show the browser's install prompt
       await installPrompt.prompt();
-      
-      // Wait for the user to respond to the prompt
       const choiceResult = await installPrompt.userChoice;
       
       if (choiceResult.outcome === 'accepted') {
-        console.log('[PWA] User accepted the install prompt');
+        console.log('User accepted the install prompt');
       } else {
-        console.log('[PWA] User dismissed the install prompt');
+        console.log('User dismissed the install prompt');
+        // Store the time when dismissed to avoid showing it again too soon
+        localStorage.setItem('installPromptDismissed', Date.now().toString());
       }
     } catch (error) {
-      console.error('[PWA] Error showing install prompt:', error);
-    } finally {
-      // Always hide our custom prompt after interaction
-      setIsVisible(false);
-      // We've used the prompt, so we can't use it again
-      setInstallPrompt(null);
+      console.error('Error showing install prompt:', error);
     }
+
+    setInstallPrompt(null);
+    setIsVisible(false);
   };
 
   const handleDismiss = () => {
+    localStorage.setItem('installPromptDismissed', Date.now().toString());
     setIsVisible(false);
-    // Store the timestamp when user dismissed the prompt
-    localStorage.setItem('pwaPromptDismissed', Date.now().toString());
   };
 
   if (!isVisible) return null;
 
   return (
-    <div className="fixed bottom-20 left-0 right-0 mx-auto w-11/12 max-w-md bg-indigo-600 text-white p-4 rounded-lg shadow-lg flex items-center justify-between z-[100]">
-      <div className="flex-1">
-        <h3 className="font-semibold">Install PEPO App</h3>
-        <p className="text-sm text-indigo-100">Install this app on your device for the best experience</p>
-      </div>
-      <div className="flex space-x-2">
+    <div className={styles.installPrompt} style={{ zIndex: 100 }}>
+      <p className={styles.installPromptText}>
+        Install this app on your device for a better experience!
+      </p>
+      <div className={styles.installPromptButtons}>
         <button 
-          onClick={handleInstallClick}
-          className="bg-white text-indigo-700 px-3 py-1.5 rounded-md font-medium text-sm flex items-center"
+          className={styles.installButton} 
+          onClick={handleInstall}
         >
-          <HiOutlineDownload className="mr-1 h-4 w-4" />
           Install
         </button>
         <button 
+          className={styles.dismissButton} 
           onClick={handleDismiss}
-          className="text-indigo-200 hover:text-white px-2 py-1.5 rounded-md text-sm"
         >
-          Later
+          Not now
         </button>
       </div>
     </div>
