@@ -28,8 +28,10 @@ const InstallPrompt: React.FC = () => {
     };
 
     // Check if the app is already installed
-    if (window.matchMedia('(display-mode: standalone)').matches || 
-        window.matchMedia('(display-mode: fullscreen)').matches) {
+    if (typeof window !== 'undefined' && (
+      window.matchMedia('(display-mode: standalone)').matches || 
+      window.matchMedia('(display-mode: fullscreen)').matches ||
+      (window.navigator as any).standalone === true)) { // For iOS with type assertion
       console.log('[PWA] App is already installed');
       setIsVisible(false);
       return;
@@ -60,23 +62,26 @@ const InstallPrompt: React.FC = () => {
   const handleInstallClick = async () => {
     if (!installPrompt) return;
     
-    // Show the browser's install prompt
-    installPrompt.prompt();
-    
-    // Wait for the user to respond to the prompt
-    const choiceResult = await installPrompt.userChoice;
-    
-    if (choiceResult.outcome === 'accepted') {
-      console.log('[PWA] User accepted the install prompt');
+    try {
+      // Show the browser's install prompt
+      await installPrompt.prompt();
+      
+      // Wait for the user to respond to the prompt
+      const choiceResult = await installPrompt.userChoice;
+      
+      if (choiceResult.outcome === 'accepted') {
+        console.log('[PWA] User accepted the install prompt');
+      } else {
+        console.log('[PWA] User dismissed the install prompt');
+      }
+    } catch (error) {
+      console.error('[PWA] Error showing install prompt:', error);
+    } finally {
+      // Always hide our custom prompt after interaction
       setIsVisible(false);
-    } else {
-      console.log('[PWA] User dismissed the install prompt');
-      // Store the timestamp when user dismissed the prompt
-      localStorage.setItem('pwaPromptDismissed', Date.now().toString());
+      // We've used the prompt, so we can't use it again
+      setInstallPrompt(null);
     }
-    
-    // We've used the prompt, so we can't use it again
-    setInstallPrompt(null);
   };
 
   const handleDismiss = () => {
@@ -88,7 +93,7 @@ const InstallPrompt: React.FC = () => {
   if (!isVisible) return null;
 
   return (
-    <div className="fixed bottom-20 left-0 right-0 mx-auto w-11/12 max-w-md bg-indigo-600 text-white p-4 rounded-lg shadow-lg flex items-center justify-between z-50">
+    <div className="fixed bottom-20 left-0 right-0 mx-auto w-11/12 max-w-md bg-indigo-600 text-white p-4 rounded-lg shadow-lg flex items-center justify-between z-[100]">
       <div className="flex-1">
         <h3 className="font-semibold">Install PEPO App</h3>
         <p className="text-sm text-indigo-100">Install this app on your device for the best experience</p>
