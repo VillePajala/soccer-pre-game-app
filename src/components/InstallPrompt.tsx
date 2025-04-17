@@ -3,14 +3,20 @@
 import React, { useState, useEffect } from 'react';
 import { HiOutlineDownload } from 'react-icons/hi';
 
+// Define the BeforeInstallPromptEvent interface
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
+}
+
 // This component shows a prompt to install the PWA when available
 const InstallPrompt: React.FC = () => {
-  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     // Handler for beforeinstallprompt event
-    const handleBeforeInstallPrompt = (e: Event) => {
+    const handleBeforeInstallPrompt = (e: BeforeInstallPromptEvent) => {
       // Prevent the mini-infobar from appearing on mobile
       e.preventDefault();
       // Store the event for later use
@@ -42,12 +48,12 @@ const InstallPrompt: React.FC = () => {
       }
     }
 
-    // Register the event listener
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    // Register the event listener - cast to unknown first to work around TypeScript's event type constraints
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt as unknown as EventListener);
 
     // Cleanup function
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt as unknown as EventListener);
     };
   }, []);
 
