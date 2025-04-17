@@ -1,7 +1,72 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import fiTranslations from './locales/fi.json'; // Import fi translations directly
-import enTranslations from './locales/en.json'; // Import en translations
+// Keep imports for reference but don't use them directly
+import fiTranslationsFile from './locales/fi.json'; 
+import enTranslationsFile from './locales/en.json';
+
+// ADD DEBUG LOG HERE
+// Log the entire object now, without truncation
+console.log('[i18n.ts] Imported fiTranslations:', JSON.stringify(fiTranslationsFile));
+console.log('[i18n.ts] Imported enTranslations:', JSON.stringify(enTranslationsFile));
+
+// Create a complete translation object by merging imported and hardcoded values
+const fiTranslations = JSON.parse(JSON.stringify(fiTranslationsFile));
+const enTranslations = JSON.parse(JSON.stringify(enTranslationsFile));
+
+// Add missing Finnish translations
+if (!fiTranslations.goalLogModal) {
+  fiTranslations.goalLogModal = {};
+}
+
+// Ensure these specific keys are set for Finnish
+fiTranslations.goalLogModal.title = "Kirjaa Maalitapahtuma";
+fiTranslations.goalLogModal.timeLabel = "Aika";
+fiTranslations.goalLogModal.scorerLabel = "Maalintekijä";
+fiTranslations.goalLogModal.selectPlaceholder = "-- Valitse Maalintekijä --";
+fiTranslations.goalLogModal.assisterLabel = "Syöttäjä (Valinnainen)";
+fiTranslations.goalLogModal.noAssisterPlaceholder = "-- Ei Syöttäjää --";
+fiTranslations.goalLogModal.logOpponentGoalButton = "Kirjaa Vast. Maali";
+fiTranslations.goalLogModal.logOpponentGoalButtonShort = "Vastustaja + 1";
+fiTranslations.goalLogModal.logGoalButton = "Kirjaa Maali";
+fiTranslations.goalLogModal.closeButton = "Sulje";
+fiTranslations.goalLogModal.cancelButton = "Peruuta";
+
+// Add timer overlay translations
+if (!fiTranslations.timerOverlay) {
+  fiTranslations.timerOverlay = {};
+}
+fiTranslations.timerOverlay.teamGoalButton = "Kirjaa maali";
+fiTranslations.timerOverlay.opponentGoalButton = "Vastustaja +1";
+
+// Add common namespace if missing
+if (!fiTranslations.common) {
+  fiTranslations.common = {};
+}
+fiTranslations.common.cancelButton = "Peruuta";
+
+// Add missing English translations
+if (!enTranslations.goalLogModal) {
+  enTranslations.goalLogModal = {};
+}
+
+// Ensure these specific keys are set for English
+enTranslations.goalLogModal.logGoalButton = "Log Goal";
+enTranslations.goalLogModal.logOpponentGoalButton = "Log Opponent Goal";
+enTranslations.goalLogModal.logOpponentGoalButtonShort = "Opponent + 1";
+enTranslations.goalLogModal.cancelButton = "Cancel";
+
+// Add timer overlay translations
+if (!enTranslations.timerOverlay) {
+  enTranslations.timerOverlay = {};
+}
+enTranslations.timerOverlay.teamGoalButton = "Log Goal";
+enTranslations.timerOverlay.opponentGoalButton = "Opponent +1";
+
+// Add common namespace if missing
+if (!enTranslations.common) {
+  enTranslations.common = {};
+}
+enTranslations.common.cancelButton = "Cancel";
 
 // Generate a cache-busting version number
 // const cacheVersion = new Date().getTime();
@@ -27,10 +92,10 @@ if (!i18n.isInitialized) {
       // Add resources directly
       resources: {
         fi: {
-          translation: fiTranslations // Use 'translation' as the default NS key
+          translation: fiTranslations // Use our hardcoded version
         },
-        en: { // Add English resources
-          translation: enTranslations
+        en: { 
+          translation: enTranslations // Use our enhanced version for English
         }
       },
 

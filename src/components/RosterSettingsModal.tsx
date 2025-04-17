@@ -17,13 +17,12 @@ interface RosterSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   availablePlayers: Player[];
-  onRenamePlayer: (playerId: string, newName: string) => void;
+  onRenamePlayer: (playerId: string, playerData: { name: string; nickname: string }) => void;
   onToggleGoalie: (playerId: string) => void;
   onSetJerseyNumber: (playerId: string, number: string) => void;
   onSetPlayerNotes: (playerId: string, notes: string) => void;
   onRemovePlayer: (playerId: string) => void;
   onAddPlayer: (playerData: { name: string; jerseyNumber: string; notes: string; nickname: string }) => void;
-  onSetPlayerNickname: (playerId: string, nickname: string) => void;
   onAwardFairPlayCard?: (playerId: string) => void;
   selectedPlayerIds: string[];
   onTogglePlayerSelection: (playerId: string) => void;
@@ -39,7 +38,6 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
   onSetPlayerNotes,
   onRemovePlayer,
   onAddPlayer,
-  onSetPlayerNickname,
   onAwardFairPlayCard,
   selectedPlayerIds,
   onTogglePlayerSelection
@@ -127,17 +125,21 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
         return;
     }
 
-    // Only call handlers if data actually changed
-    if (trimmedName !== originalPlayer.name) {
-        onRenamePlayer(playerId, trimmedName);
+    let nameChanged = trimmedName !== originalPlayer.name;
+    let nicknameChanged = trimmedNickname !== (originalPlayer.nickname || '');
+    let jerseyChanged = editPlayerData.jerseyNumber !== (originalPlayer.jerseyNumber || '');
+    let notesChanged = editPlayerData.notes !== (originalPlayer.notes || '');
+
+    // Call unified rename handler if name or nickname changed
+    if (nameChanged || nicknameChanged) {
+        onRenamePlayer(playerId, { name: trimmedName, nickname: trimmedNickname });
     }
-    if (trimmedNickname !== (originalPlayer.nickname || '')) {
-        onSetPlayerNickname(playerId, trimmedNickname);
-    }
-    if (editPlayerData.jerseyNumber !== (originalPlayer.jerseyNumber || '')) {
+    
+    // Call other handlers if their data changed
+    if (jerseyChanged) {
         onSetJerseyNumber(playerId, editPlayerData.jerseyNumber);
     }
-    if (editPlayerData.notes !== (originalPlayer.notes || '')) {
+    if (notesChanged) {
         onSetPlayerNotes(playerId, editPlayerData.notes);
     }
 

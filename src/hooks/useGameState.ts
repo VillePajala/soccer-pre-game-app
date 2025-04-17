@@ -36,7 +36,7 @@ export interface UseGameStateReturn {
     handleOpponentMove: (opponentId: string, relX: number, relY: number) => void;
     handleOpponentMoveEnd: () => void;
     handleOpponentRemove: (opponentId: string) => void;
-    handleRenamePlayer: (playerId: string, newName: string) => void;
+    handleRenamePlayer: (playerId: string, playerData: { name: string; nickname: string }) => void;
     handleToggleGoalie: (playerId: string) => void;
 }
 
@@ -136,12 +136,12 @@ export function useGameState({ initialState, saveStateToHistory }: UseGameStateA
     }, [opponents, saveStateToHistory]);
 
     // Player Management Handlers (Moved here)
-    const handleRenamePlayer = useCallback((playerId: string, newName: string) => {
+    const handleRenamePlayer = useCallback((playerId: string, playerData: { name: string; nickname: string }) => {
         const updatedAvailablePlayers = availablePlayers.map(p => 
-            p.id === playerId ? { ...p, name: newName } : p
+            p.id === playerId ? { ...p, name: playerData.name, nickname: playerData.nickname } : p
         );
         const updatedPlayersOnField = playersOnField.map(p => 
-            p.id === playerId ? { ...p, name: newName } : p
+            p.id === playerId ? { ...p, name: playerData.name, nickname: playerData.nickname } : p
         );
         // Directly update state using setters from this hook
         setAvailablePlayers(updatedAvailablePlayers);
@@ -151,6 +151,7 @@ export function useGameState({ initialState, saveStateToHistory }: UseGameStateA
             availablePlayers: updatedAvailablePlayers, 
             playersOnField: updatedPlayersOnField 
         });
+        console.log(`Updated name/nickname for player ${playerId} to ${playerData.name} / ${playerData.nickname}`);
     }, [availablePlayers, playersOnField, saveStateToHistory]);
 
     // --- Add Goalie Handler Here ---
