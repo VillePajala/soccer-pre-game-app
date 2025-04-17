@@ -130,11 +130,11 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
         {/* Action Buttons - Centered */}
         <div className="flex justify-center space-x-3">
           {/* Skip Button (Calls onCancel) */}
-          <button
+          <button 
             onClick={onCancel}
-            className="px-4 py-2 bg-slate-600 text-white rounded hover:bg-slate-500 transition duration-150 text-sm"
+            className="px-4 py-2 bg-slate-600 text-white rounded hover:bg-slate-500 transition-colors text-sm"
           >
-            {t('newGameSetupModal.skipButton')}
+            {t('newGameSetupModal.skipButton', 'Skip (No Auto-Save)')}
           </button>
           {/* Start Game Button */}
           <button
