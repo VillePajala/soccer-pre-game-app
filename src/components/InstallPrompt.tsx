@@ -86,9 +86,9 @@ const InstallPrompt: React.FC = () => {
   if (!isVisible) return null;
 
   return (
-    <div className={styles.installPrompt} style={{ zIndex: 100 }}>
+    <div className={styles.installPrompt}>
       <p className={styles.installPromptText}>
-        Install this app on your device for a better experience!
+        Install PEPO App for a better, faster experience and offline access!
       </p>
       <div className={styles.installPromptButtons}>
         <button 
