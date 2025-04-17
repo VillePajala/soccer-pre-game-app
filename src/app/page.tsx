@@ -617,9 +617,11 @@ export default function Home() {
 
   console.log('Before useCallback(handlePlayerRemove)');
   const handlePlayerRemove = useCallback((playerId: string) => {
+    console.log(`Removing player ${playerId} from field`);
     const updatedPlayersOnField = playersOnField.filter(p => p.id !== playerId);
+    setPlayersOnField(updatedPlayersOnField);
     saveStateToHistory({ playersOnField: updatedPlayersOnField });
-  }, [playersOnField, saveStateToHistory]);
+  }, [playersOnField, saveStateToHistory]); // Add dependencies
   
 
 
@@ -1894,7 +1896,7 @@ export default function Home() {
           onDrawingStart={handleDrawingStart}
           onDrawingAddPoint={handleDrawingAddPoint}
           onDrawingEnd={handleDrawingEnd}
-          onPlayerRemove={handlePlayerRemove}
+          onPlayerRemove={handlePlayerRemove} // Pass the newly added handler
           onOpponentMove={handleOpponentMove}
           onOpponentMoveEnd={handleOpponentMoveEnd}
           onOpponentRemove={handleOpponentRemove}
