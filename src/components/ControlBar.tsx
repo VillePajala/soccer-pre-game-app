@@ -268,6 +268,10 @@ const ControlBar: React.FC<ControlBarProps> = ({
                    <button onClick={wrapHandler(onToggleTrainingResources)} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600 border-t border-slate-600/50">
                      <HiOutlineBookOpen className={menuIconSize} />{t('controlBar.training', 'Training')}
                    </button>
+                   {/* Add Taso link before Tulospalvelu */}
+                   <a href="https://taso.palloliitto.fi" target="_blank" rel="noopener noreferrer" className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600 border-t border-slate-600/50" onClick={wrapHandler(() => {})}>
+                     <HiOutlineArrowTopRightOnSquare className={menuIconSize} />{t('controlBar.tasoLink', 'Taso')}
+                   </a>
                    <button onClick={() => setMenuView('tulospalvelu')} className="w-full flex items-center justify-between px-3 py-2 text-sm text-slate-100 hover:bg-slate-600 border-t border-slate-600/50">
                      <span className="flex items-center"><HiOutlineArrowTopRightOnSquare className={menuIconSize} />{t('controlBar.tulospalveluLink', 'Tulospalvelu')}</span>
                      <HiOutlineChevronRight className="w-4 h-4" />
