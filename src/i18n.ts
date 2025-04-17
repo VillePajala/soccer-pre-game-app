@@ -51,6 +51,61 @@ fiTranslations.saveGameModal.gameTypeTournament = "Turnaus";
 fiTranslations.saveGameModal.cancelButton = "Peruuta";
 fiTranslations.saveGameModal.saveButton = "Tallenna Peli";
 
+// Add new game setup modal translations
+if (!fiTranslations.newGameSetupModal) {
+  fiTranslations.newGameSetupModal = {};
+}
+fiTranslations.newGameSetupModal.title = "Uuden Pelin Asetukset";
+fiTranslations.newGameSetupModal.opponentLabel = "Vastustajan Nimi:";
+fiTranslations.newGameSetupModal.opponentPlaceholder = "Syötä vastustajan nimi";
+fiTranslations.newGameSetupModal.dateLabel = "Pelin Päivämäärä:";
+fiTranslations.newGameSetupModal.gameTypeLabel = "Pelin Tyyppi:";
+fiTranslations.newGameSetupModal.gameTypeSeason = "Sarjaottelu";
+fiTranslations.newGameSetupModal.gameTypeTournament = "Turnaus";
+fiTranslations.newGameSetupModal.skipButton = "Ohita";
+fiTranslations.newGameSetupModal.startButton = "Aloita Peli";
+fiTranslations.newGameSetupModal.opponentRequiredAlert = "Syötä vastustajan nimi.";
+
+// Add game stats modal translations
+if (!fiTranslations.gameStatsModal) {
+  fiTranslations.gameStatsModal = {};
+}
+fiTranslations.gameStatsModal.title = "Ottelutilastot";
+fiTranslations.gameStatsModal.gameInfoTitle = "Ottelun Tiedot";
+fiTranslations.gameStatsModal.closeButton = "Sulje";
+fiTranslations.gameStatsModal.notesTitle = "Ottelun Muistiinpanot";
+fiTranslations.gameStatsModal.playerStatsTitle = "Pelaajatilastot";
+fiTranslations.gameStatsModal.tab_current = "Nykyinen";
+fiTranslations.gameStatsModal.tab_season = "Kausi";
+fiTranslations.gameStatsModal.tab_tournament = "Turnaus";
+fiTranslations.gameStatsModal.tab_all = "Kaikki";
+fiTranslations.gameStatsModal.fairPlayTooltip = "Reilun Pelin Kortti";
+fiTranslations.gameStatsModal.fairPlayAwardNone = "- Ei Valittu -";
+fiTranslations.gameStatsModal.playerHeader = "PELAAJA";
+fiTranslations.gameStatsModal.filterPlaceholder = "Suodata pelaajia...";
+fiTranslations.gameStatsModal.goalsHeader = "M";
+fiTranslations.gameStatsModal.assistsHeader = "S";
+fiTranslations.gameStatsModal.totalHeader = "YHT";
+fiTranslations.gameStatsModal.timeHeader = "Aika";
+fiTranslations.gameStatsModal.fairPlayHeader = "RP";
+fiTranslations.gameStatsModal.goalLogTitle = "Maaliloki";
+fiTranslations.gameStatsModal.noGoalsLogged = "Ei maaleja.";
+fiTranslations.gameStatsModal.gamesPlayed = "Pelatut ottelut:";
+fiTranslations.gameStatsModal.record = "Tulos (V-H-T):";
+fiTranslations.gameStatsModal.goalsFor = "Tehdyt maalit:";
+fiTranslations.gameStatsModal.goalsAgainst = "Päästetyt maalit:";
+fiTranslations.gameStatsModal.noPlayersMatchFilter = "Ei pelaajia suodattimen mukaan";
+fiTranslations.gameStatsModal.noPlayersYet = "Ei pelaajia saatavilla";
+fiTranslations.gameStatsModal.seasonTeamStatsTitle = "Kauden Joukkuetilastot";
+fiTranslations.gameStatsModal.seasonPlayerStatsTitle = "Kauden Pelaajatilastot";
+fiTranslations.gameStatsModal.noSeasonGames = "Ei kauden pelejä tallennettu.";
+fiTranslations.gameStatsModal.tournamentTeamStatsTitle = "Turnauksen Joukkuetilastot";
+fiTranslations.gameStatsModal.tournamentPlayerStatsTitle = "Turnauksen Pelaajatilastot";
+fiTranslations.gameStatsModal.noTournamentGames = "Ei turnauspelejä tallennettu.";
+fiTranslations.gameStatsModal.allTeamStatsTitle = "Kaikki Joukkuetilastot";
+fiTranslations.gameStatsModal.allPlayerStatsTitle = "Kaikki Pelaajatilastot";
+fiTranslations.gameStatsModal.noSavedGames = "Ei tallennettuja pelejä.";
+
 // Add control bar menu translations
 if (!fiTranslations.controlBar) {
   fiTranslations.controlBar = {};
@@ -105,6 +160,61 @@ enTranslations.saveGameModal.gameTypeSeason = "Season";
 enTranslations.saveGameModal.gameTypeTournament = "Tournament";
 enTranslations.saveGameModal.cancelButton = "Cancel";
 enTranslations.saveGameModal.saveButton = "Save Game";
+
+// Add new game setup modal translations for English
+if (!enTranslations.newGameSetupModal) {
+  enTranslations.newGameSetupModal = {};
+}
+enTranslations.newGameSetupModal.title = "New Game Setup";
+enTranslations.newGameSetupModal.opponentLabel = "Opponent Name:";
+enTranslations.newGameSetupModal.opponentPlaceholder = "Enter opponent name";
+enTranslations.newGameSetupModal.dateLabel = "Game Date:";
+enTranslations.newGameSetupModal.gameTypeLabel = "Game Type:";
+enTranslations.newGameSetupModal.gameTypeSeason = "Season";
+enTranslations.newGameSetupModal.gameTypeTournament = "Tournament";
+enTranslations.newGameSetupModal.skipButton = "Skip";
+enTranslations.newGameSetupModal.startButton = "Start Game";
+enTranslations.newGameSetupModal.opponentRequiredAlert = "Please enter an opponent name.";
+
+// Add game stats modal translations for English
+if (!enTranslations.gameStatsModal) {
+  enTranslations.gameStatsModal = {};
+}
+enTranslations.gameStatsModal.title = "Game Statistics";
+enTranslations.gameStatsModal.gameInfoTitle = "Game Information";
+enTranslations.gameStatsModal.closeButton = "Close";
+enTranslations.gameStatsModal.notesTitle = "Game Notes";
+enTranslations.gameStatsModal.playerStatsTitle = "Player Statistics";
+enTranslations.gameStatsModal.tab_current = "Current";
+enTranslations.gameStatsModal.tab_season = "Season";
+enTranslations.gameStatsModal.tab_tournament = "Tournament";
+enTranslations.gameStatsModal.tab_all = "All";
+enTranslations.gameStatsModal.fairPlayTooltip = "Fair Play Card";
+enTranslations.gameStatsModal.fairPlayAwardNone = "- None -";
+enTranslations.gameStatsModal.playerHeader = "PLAYER";
+enTranslations.gameStatsModal.filterPlaceholder = "Filter players...";
+enTranslations.gameStatsModal.goalsHeader = "G";
+enTranslations.gameStatsModal.assistsHeader = "A";
+enTranslations.gameStatsModal.totalHeader = "PTS";
+enTranslations.gameStatsModal.timeHeader = "Time";
+enTranslations.gameStatsModal.fairPlayHeader = "FP";
+enTranslations.gameStatsModal.goalLogTitle = "Goal Log";
+enTranslations.gameStatsModal.noGoalsLogged = "No goals logged yet.";
+enTranslations.gameStatsModal.gamesPlayed = "Games Played:";
+enTranslations.gameStatsModal.record = "Record (W-L-D):";
+enTranslations.gameStatsModal.goalsFor = "Goals For:";
+enTranslations.gameStatsModal.goalsAgainst = "Goals Against:";
+enTranslations.gameStatsModal.noPlayersMatchFilter = "No players match filter";
+enTranslations.gameStatsModal.noPlayersYet = "No players available";
+enTranslations.gameStatsModal.seasonTeamStatsTitle = "Season Team Stats";
+enTranslations.gameStatsModal.seasonPlayerStatsTitle = "Season Player Stats";
+enTranslations.gameStatsModal.noSeasonGames = "No season games saved.";
+enTranslations.gameStatsModal.tournamentTeamStatsTitle = "Tournament Team Stats";
+enTranslations.gameStatsModal.tournamentPlayerStatsTitle = "Tournament Player Stats";
+enTranslations.gameStatsModal.noTournamentGames = "No tournament games saved.";
+enTranslations.gameStatsModal.allTeamStatsTitle = "All Team Stats";
+enTranslations.gameStatsModal.allPlayerStatsTitle = "All Player Stats";
+enTranslations.gameStatsModal.noSavedGames = "No saved games.";
 
 // Add control bar menu translations for English
 if (!enTranslations.controlBar) {
