@@ -50,13 +50,85 @@
 - [ ] Enhanced Sorting/Filtering:
   - [x] Allow sorting Player Stats table by clicking column headers (Name, G, A, Pts). (Implemented)
   - [x] Add filter input for Player Stats table. (Implemented)
-- [ ] Goal Log Improvements:
-  - [ ] Allow editing goal log entries (scorer, assister, time).
+- [x] Goal Log Improvements:
+  - [x] Allow editing goal log entries (scorer, assister, time). (Implemented)
   - [ ] Add filtering options to the goal log.
-- [ ] Add Export Functionality (JSON/CSV).
+- [x] Add Export Functionality (JSON/CSV). (Implemented)
 - [ ] Basic Visualizations (e.g., bar chart for player points).
 - [ ] Track More Stats (e.g., substitutions, cards - more complex).
 
-## Other
+## Testing Plan (2024)
 
-- [ ] ... (Add other tasks here) 
+### Test Infrastructure Setup
+- [ ] Install Jest, React Testing Library, and related dependencies
+- [ ] Configure Jest for Next.js and TypeScript
+- [ ] Set up GitHub Actions CI for automated testing
+- [ ] Add test scripts to package.json
+
+### Unit Tests
+- [ ] Create tests for utility functions:
+  - [ ] Time formatting
+  - [ ] CSV/data export functions
+  - [ ] Game event processing
+
+### Component Tests
+- [ ] Test critical UI components:
+  - [ ] PlayerBar component
+  - [ ] GameStatsModal component
+  - [ ] SoccerField component
+  - [ ] TimerOverlay component
+
+### Integration Tests
+- [ ] Test core workflows:
+  - [ ] Game creation and setup
+  - [ ] Game saving and loading
+  - [ ] Player management
+  - [ ] Goal logging and statistics
+
+### Testing Guidelines
+- [ ] Create test documentation for contributors
+- [ ] Establish test coverage targets
+- [ ] Implement pre-commit hooks for running tests
+
+## Near-Term Enhancements (Next Iteration)
+
+### Team Customization
+- [ ] Team logo upload functionality
+- [ ] Customizable color schemes
+- [ ] Team-specific settings persistence
+
+### PWA Improvements
+- [ ] Enhanced offline capabilities
+- [ ] Installation prompts and guides
+- [ ] Home screen icon customization
+
+### User Experience Refinements
+- [ ] Onboarding tour for new users
+- [ ] Contextual help tooltips
+- [ ] Performance optimization for mobile devices
+
+## Future Enhancements (Brainstorm - 2024)
+
+### Game/Session Management
+*   **Save/Load Multiple Games:** ✅ Implemented
+*   **Import Game Data:** ✅ Implemented
+*   **Multiple Team Support:** Allow managing multiple teams in one app
+
+### Enhanced Statistics & Tracking
+*   **Player On-Pitch Time Calculation:** Track and display the total time each player was on the field during the match.
+*   **Log More Event Types:** Consider adding logging for corners, shots, fouls, etc.
+*   **Visual Event Timeline:** Display game events (goals) on a visual timeline relative to game duration in the stats modal.
+*   **Team Season Statistics:** Track performance across multiple games/season
+
+### Tactics Board Improvements
+*   **Ball Marker:** Add a draggable ball marker.
+*   **Advanced Drawing:** Arrows, basic shapes, different colors for drawings.
+*   **Formation Templates:** Quick buttons to set common formations.
+*   **Save/Load Formations:** Save/load player positional arrangements independently.
+*   **Animation Tools:** Simple movement animations for explaining tactics
+
+### UI/UX Refinements
+*   **Player Bar Status Indication:** Visually differentiate players on the field vs. available in the top bar.
+*   **Responsive Design Review:** Thoroughly check modal layouts (Timer, Stats) on smaller mobile screens.
+*   **Accessibility Audit:** Review color contrast, keyboard navigation, and screen reader support. 
+*   **Localization Expansion:** Support for additional languages 
