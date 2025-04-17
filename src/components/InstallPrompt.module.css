@@ -8,7 +8,7 @@
   margin: 0 auto;
   width: 90%;
   max-width: 375px;
-  background-color: #f5f7ff;
+  background: linear-gradient(135deg, #f0f4ff 0%, #e6e9fd 100%);
   color: #333;
   padding: 1.25rem;
   border-radius: 0.75rem;
@@ -16,7 +16,7 @@
   display: flex;
   flex-direction: column;
   z-index: 1000;
-  border: 1px solid rgba(79, 70, 229, 0.2);
+  border: 1px solid rgba(79, 70, 229, 0.25);
   animation: fadeIn 0.3s ease-out;
 }
 
@@ -45,7 +45,7 @@
 }
 
 .installButton {
-  background-color: #4f46e5;
+  background: linear-gradient(to bottom, #5e54e9 0%, #4338ca 100%);
   color: white;
   padding: 0.6rem 1.5rem;
   border-radius: 0.5rem;
@@ -53,14 +53,15 @@
   font-size: 0.95rem;
   border: none;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
   flex: 1;
   max-width: 150px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .installButton:hover {
-  background-color: #4338ca;
+  background: linear-gradient(to bottom, #4c43d8 0%, #3728b9 100%);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .dismissButton {
