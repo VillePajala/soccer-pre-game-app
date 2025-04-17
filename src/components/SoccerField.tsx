@@ -420,7 +420,6 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     const rect = canvas.getBoundingClientRect();
     const relPos = getRelativeEventPosition(e);
     if (!relPos) return;
-    const absPos = { x: relPos.relX * rect.width, y: relPos.relY * rect.height };
 
     // *** Check if placing a tapped player ***
     if (draggingPlayerFromBarInfo) {
@@ -485,7 +484,6 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
 
     const relPos = getRelativeEventPosition(e);
     if (!relPos) return;
-    const absPos = { x: relPos.relX * rect.width, y: relPos.relY * rect.height }; // Abs pos based on CSS size
 
     if (isDraggingPlayer && draggingPlayerId) {
       onPlayerMove(draggingPlayerId, relPos.relX, relPos.relY); // Pass relative
@@ -543,7 +541,6 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     setActiveTouchId(touchId);
     const relPos = getRelativeEventPosition(e, touchId);
     if (!relPos) { setActiveTouchId(null); return; }
-    const absPos = { x: relPos.relX * rect.width, y: relPos.relY * rect.height };
 
     // *** Check if placing a tapped player ***
     if (draggingPlayerFromBarInfo) {
@@ -697,10 +694,8 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect(); // Use CSS rect
-    const absX = e.clientX - rect.left;
-    const absY = e.clientY - rect.top;
-    const relX = Math.max(0, Math.min(1, absX / rect.width)); // Use rect.width
-    const relY = Math.max(0, Math.min(1, absY / rect.height)); // Use rect.height
+    const relX = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)); // Use rect.width
+    const relY = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height)); // Use rect.height
 
     onPlayerDrop(droppedPlayerId, relX, relY); // Pass relative coords
     if (canvasRef.current) canvasRef.current.style.cursor = 'default';

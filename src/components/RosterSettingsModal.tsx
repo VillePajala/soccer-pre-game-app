@@ -125,10 +125,10 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
         return;
     }
 
-    let nameChanged = trimmedName !== originalPlayer.name;
-    let nicknameChanged = trimmedNickname !== (originalPlayer.nickname || '');
-    let jerseyChanged = editPlayerData.jerseyNumber !== (originalPlayer.jerseyNumber || '');
-    let notesChanged = editPlayerData.notes !== (originalPlayer.notes || '');
+    const nameChanged = trimmedName !== originalPlayer.name;
+    const nicknameChanged = trimmedNickname !== (originalPlayer.nickname || '');
+    const jerseyChanged = editPlayerData.jerseyNumber !== (originalPlayer.jerseyNumber || '');
+    const notesChanged = editPlayerData.notes !== (originalPlayer.notes || '');
 
     // Call unified rename handler if name or nickname changed
     if (nameChanged || nicknameChanged) {
