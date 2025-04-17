@@ -49,9 +49,7 @@ export interface GameEvent {
   type: 'goal' | 'opponentGoal';
   time: number; // timeElapsedInSeconds at the moment of logging
   scorerId: string;
-  scorerName: string; // Store name at time of event
   assisterId?: string;
-  assisterName?: string; // Store name at time of event
 }
 
 // Define the structure for the application state (for history)
@@ -885,7 +883,7 @@ export default function Home() {
   console.log('Before handleAddGoalEvent definition');
   const handleAddGoalEvent = (scorerId: string, assisterId?: string) => {
     const scorer = availablePlayers.find(p => p.id === scorerId);
-    const assister = assisterId ? availablePlayers.find(p => p.id === assisterId) : undefined;
+    const assister = assisterId ? availablePlayers.find(p => p.id === assisterId) : undefined; // Keep finding assister object if ID provided
 
     if (!scorer) {
       console.error("Scorer not found!");
@@ -896,10 +894,8 @@ export default function Home() {
       id: `goal-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`, // Simple unique ID
       type: 'goal',
       time: timeElapsedInSeconds,
-      scorerId: scorer.id,
-      scorerName: scorer.name, // Store name at time of event
-      assisterId: assister?.id,
-      assisterName: assister?.name
+      scorerId: scorer.id, // Store only ID
+      assisterId: assister?.id, // Store only ID if exists
     };
 
     const newGameEvents = [...gameEvents, newEvent];
@@ -924,7 +920,6 @@ export default function Home() {
       time: time,
       // Assign placeholder/generic identifiers for opponent
       scorerId: 'opponent', 
-      scorerName: opponentName || 'Opponent', // Use current opponent name or default
       // No assister for opponent goals in this model
     };
 
@@ -949,10 +944,19 @@ export default function Home() {
       return;
     }
 
+    // Ensure the updatedEvent doesn't contain the old name fields if passed in
+    const cleanUpdatedEvent: GameEvent = {
+      id: updatedEvent.id,
+      type: updatedEvent.type,
+      time: updatedEvent.time,
+      scorerId: updatedEvent.scorerId,
+      assisterId: updatedEvent.assisterId,
+    };
+
     // Create a new array with the updated event
     const newGameEvents = [
       ...gameEvents.slice(0, eventIndex),
-      updatedEvent,
+      cleanUpdatedEvent, // Use the cleaned event
       ...gameEvents.slice(eventIndex + 1)
     ];
 
@@ -1445,8 +1449,16 @@ export default function Home() {
             sortedEvents.forEach(event => {
                 const timeFormatted = formatTime(event.time);
                 const type = event.type === 'goal' ? 'Goal' : 'Opponent Goal';
-                const scorer = escapeCsvField(event.scorerName);
-                const assister = event.type === 'goal' ? escapeCsvField(event.assisterName) : '';
+                // Look up names dynamically using the game's availablePlayers
+                const scorerName = event.type === 'goal' 
+                  ? game.availablePlayers?.find(p => p.id === event.scorerId)?.name ?? event.scorerId // Fallback to ID if not found
+                  : game.opponentName || 'Opponent'; // Use game's opponent name for opponent goals
+                const assisterName = event.type === 'goal' && event.assisterId
+                  ? game.availablePlayers?.find(p => p.id === event.assisterId)?.name ?? event.assisterId // Fallback to ID
+                  : ''; // Empty if no assister ID or opponent goal
+                
+                const scorer = escapeCsvField(scorerName);
+                const assister = escapeCsvField(assisterName);
                 allRows.push(`${escapeCsvField(timeFormatted)}${DELIMITER}${escapeCsvField(type)}${DELIMITER}${scorer}${DELIMITER}${assister}`);
             });
         } else {
@@ -1574,8 +1586,16 @@ export default function Home() {
         sortedEvents.forEach(event => {
             const timeFormatted = formatTime(event.time);
             const type = event.type === 'goal' ? 'Goal' : 'Opponent Goal';
-            const scorer = escapeCsvField(event.scorerName);
-            const assister = event.type === 'goal' ? escapeCsvField(event.assisterName) : '';
+            // Look up names dynamically using the game's availablePlayers
+            const scorerName = event.type === 'goal' 
+              ? game.availablePlayers?.find(p => p.id === event.scorerId)?.name ?? event.scorerId // Fallback to ID if not found
+              : game.opponentName || 'Opponent'; // Use game's opponent name for opponent goals
+            const assisterName = event.type === 'goal' && event.assisterId
+              ? game.availablePlayers?.find(p => p.id === event.assisterId)?.name ?? event.assisterId // Fallback to ID
+              : ''; // Empty if no assister ID or opponent goal
+
+            const scorer = escapeCsvField(scorerName);
+            const assister = escapeCsvField(assisterName);
             rows.push(`${escapeCsvField(timeFormatted)}${DELIMITER}${escapeCsvField(type)}${DELIMITER}${scorer}${DELIMITER}${assister}`);
         });
       } else {
@@ -1648,18 +1668,6 @@ export default function Home() {
       saveStateToHistory({ availablePlayers: updatedAvailable, playersOnField: updatedOnField });
       console.log(`Removed player ${playerId} from roster and field.`);
     }
-  }, [availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField, saveStateToHistory]);
-
-  // --- NEW: Handler to Set Player Nickname ---
-  console.log('Before useCallback(handleSetPlayerNickname)');
-  const handleSetPlayerNickname = useCallback((playerId: string, nickname: string) => {
-    const updatedAvailable = availablePlayers.map(p => p.id === playerId ? { ...p, nickname: nickname } : p);
-    const updatedOnField = playersOnField.map(p => p.id === playerId ? { ...p, nickname: nickname } : p);
-
-    setAvailablePlayers(updatedAvailable);
-    setPlayersOnField(updatedOnField);
-    saveStateToHistory({ availablePlayers: updatedAvailable, playersOnField: updatedOnField });
-    console.log(`Set nickname for ${playerId} to ${nickname}`);
   }, [availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField, saveStateToHistory]);
 
   // --- NEW: Handler to Award Fair Play Card ---
@@ -1902,6 +1910,7 @@ export default function Home() {
           isOpen={isGoalLogModalOpen}
           onClose={handleToggleGoalLogModal}
           onLogGoal={handleAddGoalEvent}
+          onLogOpponentGoal={handleLogOpponentGoal} // ADDED: Pass the handler
           availablePlayers={availablePlayers}
           currentTime={timeElapsedInSeconds}
         />
@@ -1968,7 +1977,7 @@ export default function Home() {
           onSetPlayerNotes={handleSetPlayerNotes}
           onRemovePlayer={handleRemovePlayerFromRoster}
           onAddPlayer={handleAddPlayer} 
-          onSetPlayerNickname={handleSetPlayerNickname} // Pass new handler
+          // onRenamePlayer expects { name: string; nickname: string } from the hook now
           onAwardFairPlayCard={handleAwardFairPlayCard}
           // Pass selection state and handler
           selectedPlayerIds={selectedPlayerIds}

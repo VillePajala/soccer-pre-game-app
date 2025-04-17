@@ -9,7 +9,7 @@ import { GameEvent } from '@/app/page'; // Import the GameEvent type
 // Define props for PlayerBar
 interface PlayerBarProps {
   players: Player[];
-  onRenamePlayer: (playerId: string, newName: string) => void; // Add rename handler prop
+  onRenamePlayer: (playerId: string, playerData: { name: string; nickname: string }) => void; // Update type
   teamName: string;
   onTeamNameChange: (newName: string) => void;
   // Add prop to pass down touch drag start handler

@@ -13,7 +13,7 @@ interface PlayerDiskProps {
   isGoalie?: boolean; // Add goalie status prop
   // Bar specific props
   onPlayerDragStartFromBar?: (player: Player) => void;
-  onRenamePlayer?: (id: string, newName: string) => void;
+  onRenamePlayer?: (id: string, playerData: { name: string; nickname: string }) => void;
   selectedPlayerIdFromBar?: string | null;
   gameEvents: GameEvent[]; // Add gameEvents prop
   onPlayerTapInBar?: (player: Player) => void; // New prop for tap action
@@ -71,9 +71,8 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
       setIsEditing(false);
       const trimmedName = editedName.trim();
       if (trimmedName && trimmedName !== name && onRenamePlayer) {
-        onRenamePlayer(id, trimmedName);
+        onRenamePlayer(id, { name: trimmedName, nickname: trimmedName });
       }
-      // No need to reset editedName here, useEffect handles external changes
     }
   };
 

@@ -278,22 +278,16 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                 if (playerTotals[event.scorerId]) {
                     playerTotals[event.scorerId].goals += 1;
                 } else {
-                    // Handle player who scored but isn't in the current main roster
-                    playerTotals[event.scorerId] = { 
-                        name: event.scorerName || `Player ${event.scorerId}`, 
-                        goals: 1, assists: 0, goalieGames: 0, fairPlayCards: 0, appearances: 0
-                    };
+                    // Handle player who scored but isn't in the current main roster - REMOVED DYNAMIC ADDITION
+                    console.warn(`[AggregateStats] Scorer ID ${event.scorerId} found in old game event but not in current availablePlayers roster. Goal not counted in aggregate.`);
                 }
                 // Assister
                 if (event.assisterId) {
                     if (playerTotals[event.assisterId]) {
                         playerTotals[event.assisterId].assists += 1;
                     } else {
-                         // Handle player who assisted but isn't in the current main roster
-                         playerTotals[event.assisterId] = { 
-                             name: event.assisterName || `Player ${event.assisterId}`, 
-                             goals: 0, assists: 1, goalieGames: 0, fairPlayCards: 0, appearances: 0
-                        };
+                         // Handle player who assisted but isn't in the current main roster - REMOVED DYNAMIC ADDITION
+                         console.warn(`[AggregateStats] Assister ID ${event.assisterId} found in old game event but not in current availablePlayers roster. Assist not counted in aggregate.`);
                     }
                 }
             }
@@ -507,8 +501,8 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
     }
 
     const updatedTime = parseInt(editGoalTime, 10);
-    const updatedScorer = availablePlayers.find(p => p.id === editGoalScorerId);
-    const updatedAssister = editGoalAssisterId ? availablePlayers.find(p => p.id === editGoalAssisterId) : undefined;
+    const updatedScorerId = editGoalScorerId; // Use the ID directly
+    const updatedAssisterId = editGoalAssisterId; // Use the ID directly
 
     // Basic validation
     if (isNaN(updatedTime) || updatedTime < 0) {
@@ -516,19 +510,20 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
         // Optionally show user feedback
         return; // Don't save invalid time
     }
-    if (!updatedScorer) {
+    // Check if scorer ID is selected (cannot be empty string)
+    if (!updatedScorerId) {
         console.warn("Scorer must be selected for goal edit.");
         // Optionally show user feedback
-        return; // Don't save without scorer
+        return; // Don't save without scorer ID
     }
 
     const updatedEvent: GameEvent = {
-      ...originalGoal,
+      ...originalGoal, // Keep original type, id
       time: updatedTime,
-      scorerId: updatedScorer.id,
-      scorerName: updatedScorer.name,
-      assisterId: updatedAssister?.id,
-      assisterName: updatedAssister?.name,
+      scorerId: updatedScorerId,
+      // scorerName: updatedScorer.name, // REMOVED
+      assisterId: updatedAssisterId, // This can be undefined
+      // assisterName: updatedAssister?.name, // REMOVED
     };
 
     onUpdateGameEvent(updatedEvent); // Call parent handler to update state
@@ -750,7 +745,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   const renderTabContent = () => {
     switch(activeTab) {
       case 'season':
-        return (
+  return (
           <AggregateStatsDisplay 
             stats={seasonStats}
             teamTitleKey="gameStatsModal.seasonTeamStatsTitle"
@@ -789,398 +784,407 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
       default:
         return (
           // Existing Current Game Stats Layout
-          <div className="overflow-y-auto flex-grow scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-700 pr-2 space-y-6">
-            {/* Game Information Section */}
-            <section className="bg-slate-700/50 p-4 rounded-md relative group">
-              <div className="flex justify-center items-start mb-3"> 
-                <h3 className="text-xl font-semibold text-yellow-300">
-                  {t('gameStatsModal.gameInfoTitle', 'Game Information')}
-                </h3>
-              </div>
-
-              {isEditingInfo ? (
-                // --- Bulk Edit Mode ---
-                <div className="space-y-3">
-                  {/* Team vs Opponent */}
-                  <div className="grid grid-cols-2 gap-x-3 gap-y-2 items-center">
-                    <input type="text" value={teamName} disabled className="col-span-1 block w-full bg-slate-600 border border-slate-500 rounded-md shadow-sm py-1.5 px-3 text-sm opacity-70" />
-                     <input
-                      type="text"
-                      value={editOpponentName}
-                      onChange={(e) => setEditOpponentName(e.target.value)}
-                      placeholder={t('gameStatsModal.opponentPlaceholder', 'Opponent Name')}
-                      className="col-span-1 block w-full bg-slate-600 border border-slate-500 rounded-md shadow-sm py-1.5 px-3 text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    />
-                  </div>
-                   {/* Scores */}
-                   <div className="grid grid-cols-[1fr_auto_1fr] gap-x-3 gap-y-2 items-center">
-                      <input type="number" min="0" value={editHomeScore} onChange={(e) => setEditHomeScore(e.target.value)} className="col-span-1 block w-full bg-slate-600 border border-slate-500 rounded-md shadow-sm py-1.5 px-3 text-sm text-center focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
-                      <span className="text-lg font-semibold text-center"> - </span>
-                       <input type="number" min="0" value={editAwayScore} onChange={(e) => setEditAwayScore(e.target.value)} className="col-span-1 block w-full bg-slate-600 border border-slate-500 rounded-md shadow-sm py-1.5 px-3 text-sm text-center focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
-                  </div>
-                  {/* Date */}
-                  <div className="flex justify-center">
-                    <input type="date" value={editGameDate} onChange={(e) => setEditGameDate(e.target.value)} className="block bg-slate-600 border border-slate-500 rounded-md shadow-sm py-1.5 px-3 text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" />
-                  </div>
-                  {/* Save/Cancel Buttons */}
-                  <div className="flex justify-end space-x-2 pt-2">
-                      <button onClick={handleCancelEditInfo} className="px-3 py-1 bg-slate-500 hover:bg-slate-400 text-white rounded-md text-xs font-medium">{t('gameStatsModal.cancelButton', 'Cancel')}</button>
-                      <button onClick={handleSaveInfo} className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-xs font-medium">{t('gameStatsModal.saveButton', 'Save')}</button>
-                  </div>
-                </div>
-              ) : (
-                // --- View Mode (with Inline Editing) ---
-                <div className="space-y-1">
-                   {/* Edit All Button (only visible when not inline editing) */}
-                   {!inlineEditingField && (
-                       <button
-                          onClick={() => setIsEditingInfo(true)}
-                          className="absolute top-3 right-3 px-2 py-0.5 bg-slate-600 hover:bg-slate-500 text-white rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-                          title={t('gameStatsModal.editButton', 'Edit Info') ?? "Edit"}
-                          disabled={!!inlineEditingField} // Disable if inline editing is active
-                       >
-                           {t('gameStatsModal.editButton', 'Edit')}
-                       </button>
-                   )}
-                   {/* Score Line (Inline Editable) */}
-                  <div className="text-center text-lg font-semibold flex justify-center items-center gap-x-2">
-                    {/* Team Name (Readonly) */}
-                    <span>{teamName}</span>
-                    
-                    {/* Home Score (View or Inline Edit) */}
-                     {inlineEditingField === 'home' ? (
-                       <input
-                          ref={homeScoreInputRef}
-                          type="number"
-                          min="0"
-                          value={inlineEditValue}
-                          onChange={(e) => setInlineEditValue(e.target.value)}
-                          onBlur={handleSaveInlineEdit} 
-                          onKeyDown={handleInlineEditKeyDown}
-                          className="bg-slate-700 border border-indigo-500 rounded px-1 py-0 text-xl font-semibold text-center outline-none w-12 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                       />
-                     ) : (
-                       <span
-                         onClick={() => handleStartInlineEdit('home')}
-                         className="cursor-pointer hover:bg-slate-600/50 px-1 rounded border border-dashed border-slate-600 hover:border-indigo-400 text-xl"
-                         title={t('gameStatsModal.tapToEditScore', 'Tap to edit score') ?? "Tap to edit score"}
-                       >
-                         {homeScore}
-                       </span>
-                     )}
-
-                    <span className="mx-1"> - </span>
-
-                    {/* Away Score (View or Inline Edit) */}
-                     {inlineEditingField === 'away' ? (
-                       <input
-                          ref={awayScoreInputRef}
-                          type="number"
-                          min="0"
-                          value={inlineEditValue}
-                          onChange={(e) => setInlineEditValue(e.target.value)}
-                          onBlur={handleSaveInlineEdit}
-                          onKeyDown={handleInlineEditKeyDown}
-                          className="bg-slate-700 border border-indigo-500 rounded px-1 py-0 text-xl font-semibold text-center outline-none w-12 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                       />
-                     ) : (
-                       <span
-                         onClick={() => handleStartInlineEdit('away')}
-                         className="cursor-pointer hover:bg-slate-600/50 px-1 rounded border border-dashed border-slate-600 hover:border-indigo-400 text-xl"
-                         title={t('gameStatsModal.tapToEditScore', 'Tap to edit score') ?? "Tap to edit score"}
-                       >
-                         {awayScore}
-                       </span>
-                     )}
-                    
-                    {/* Opponent Name (View or Inline Edit) */}
-                     {inlineEditingField === 'opponent' ? (
-                       <input
-                          ref={opponentInputRef}
-                          type="text"
-                          value={inlineEditValue}
-                          onChange={(e) => setInlineEditValue(e.target.value)}
-                          onBlur={handleSaveInlineEdit} // Save on blur
-                          onKeyDown={handleInlineEditKeyDown}
-                          className="bg-slate-700 border border-indigo-500 rounded px-1 py-0 text-lg font-semibold text-center outline-none"
-                          size={Math.max(10, inlineEditValue.length)} // Basic dynamic width
-                       />
-                     ) : (
-                       <span
-                         onClick={() => handleStartInlineEdit('opponent')}
-                         className="cursor-pointer hover:bg-slate-600/50 px-1 rounded border border-dashed border-slate-600 hover:border-indigo-400"
-                         title={t('gameStatsModal.tapToEdit', 'Tap to edit') ?? "Tap to edit"}
-                       >
-                         {opponentName}
-                       </span>
-                     )}
-                  </div>
-
-                  {/* Game Date (View or Inline Edit) - Centered RE-ADDED */}
-                  <div className="flex justify-center mt-2"> 
-                    {inlineEditingField === 'date' ? (
-                        <input
-                           ref={dateInputRef}
-                           type="date"
-                           value={inlineEditValue}
-                           onChange={(e) => setInlineEditValue(e.target.value)}
-                           onBlur={handleSaveInlineEdit} // Save on blur
-                           onKeyDown={handleInlineEditKeyDown}
-                           className="bg-slate-700 border border-indigo-500 rounded px-1 py-0 text-sm text-slate-400 outline-none"
-                        />
-                    ) : (
-                      <p
-                        onClick={() => handleStartInlineEdit('date')}
-                        className="text-center text-sm text-slate-400 cursor-pointer hover:bg-slate-600/50 px-1 rounded inline-block border border-dashed border-slate-600 hover:border-indigo-400" 
-                        title={t('gameStatsModal.tapToEdit', 'Tap to edit') ?? "Tap to edit"}
-                      >
-                        {gameDate}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-            </section>
-
-            {/* Game Notes Section */}
-            <section className="bg-slate-700/50 p-4 rounded-md relative group">
-              <h3 className="text-xl font-semibold mb-3 text-yellow-300 text-center">
-                {t('gameStatsModal.notesTitle', 'Game Notes')}
+        <div className="overflow-y-auto flex-grow scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-700 pr-2 space-y-6">
+          {/* Game Information Section */}
+          <section className="bg-slate-700/50 p-4 rounded-md relative group">
+            <div className="flex justify-center items-start mb-3"> 
+              <h3 className="text-xl font-semibold text-yellow-300">
+                {t('gameStatsModal.gameInfoTitle', 'Game Information')}
               </h3>
-              
-              {isEditingNotes ? (
-                <div className="space-y-3">
-                  <textarea
-                    ref={notesTextareaRef}
-                    value={editGameNotes}
-                    onChange={(e) => setEditGameNotes(e.target.value)}
-                    placeholder={t('gameStatsModal.notesPlaceholder', 'Add game notes here...') ?? "Add game notes here..."}
-                    className="w-full h-32 bg-slate-600 border border-slate-500 rounded-md shadow-sm py-2 px-3 text-sm text-slate-200 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            </div>
+
+            {isEditingInfo ? (
+              // --- Bulk Edit Mode ---
+              <div className="space-y-3">
+                {/* Team vs Opponent */}
+                <div className="grid grid-cols-2 gap-x-3 gap-y-2 items-center">
+                  <input type="text" value={teamName} disabled className="col-span-1 block w-full bg-slate-600 border border-slate-500 rounded-md shadow-sm py-1.5 px-3 text-sm opacity-70" />
+                   <input
+                    type="text"
+                    value={editOpponentName}
+                    onChange={(e) => setEditOpponentName(e.target.value)}
+                    placeholder={t('gameStatsModal.opponentPlaceholder', 'Opponent Name')}
+                    className="col-span-1 block w-full bg-slate-600 border border-slate-500 rounded-md shadow-sm py-1.5 px-3 text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                   />
-                  <div className="flex justify-end space-x-2">
-                    <button onClick={handleCancelEditNotes} className="px-3 py-1 bg-slate-500 hover:bg-slate-400 text-white rounded-md text-xs font-medium">{t('gameStatsModal.cancelButton', 'Cancel')}</button>
-                    <button onClick={handleSaveNotes} className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-xs font-medium">{t('gameStatsModal.saveButton', 'Save')}</button>
-                  </div>
                 </div>
-              ) : (
-                <div 
-                  className="min-h-[50px] text-sm text-slate-300 px-1 whitespace-pre-wrap cursor-pointer hover:bg-slate-700/50 rounded border border-dashed border-slate-600 hover:border-indigo-400"
-                  onClick={() => {
-                    console.log('Notes area clicked!');
-                    setIsEditingNotes(true); 
-                  }}
-                  title={t('gameStatsModal.clickToEditNotes', 'Click to edit notes') ?? undefined}
-                >
-                  {gameNotes ? 
-                    gameNotes : 
-                    <span className="italic text-slate-400">{t('gameStatsModal.clickToEditNotes', 'Click to edit notes')}</span>
-                  }
+                 {/* Scores */}
+                 <div className="grid grid-cols-[1fr_auto_1fr] gap-x-3 gap-y-2 items-center">
+                    <input type="number" min="0" value={editHomeScore} onChange={(e) => setEditHomeScore(e.target.value)} className="col-span-1 block w-full bg-slate-600 border border-slate-500 rounded-md shadow-sm py-1.5 px-3 text-sm text-center focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                    <span className="text-lg font-semibold text-center"> - </span>
+                     <input type="number" min="0" value={editAwayScore} onChange={(e) => setEditAwayScore(e.target.value)} className="col-span-1 block w-full bg-slate-600 border border-slate-500 rounded-md shadow-sm py-1.5 px-3 text-sm text-center focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                 </div>
-              )}
-            </section>
-
-            {/* Player Stats Section */}
-            <section>
-              <h3 className="text-xl font-semibold mb-4 text-yellow-300 text-center">
-                {t('gameStatsModal.playerStatsTitle', 'Player Stats')}
-              </h3>
-
-              {/* Fair Play Award Dropdown - ADDED */}
-              {onAwardFairPlayCard && (
-                <div className="mb-3 flex items-center gap-2">
-                  <label htmlFor="fairPlaySelect" className="text-sm font-medium text-slate-300 whitespace-nowrap">
-                    {t('statsModal.awardFairPlayLabel', 'Fair Play Award:')}
-                  </label>
-                  <select
-                    id="fairPlaySelect"
-                    value={availablePlayers.find(p => selectedPlayerIds.includes(p.id) && p.receivedFairPlayCard)?.id || ''}
-                    onChange={(e) => onAwardFairPlayCard(e.target.value)}
-                    className="block w-full px-3 py-1.5 bg-slate-600 border border-slate-500 rounded-md shadow-sm text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  >
-                    <option value="">{t('statsModal.awardFairPlayNone', '- None -')}</option>
-                    {availablePlayers
-                      .filter(player => selectedPlayerIds.includes(player.id))
-                      .map(player => (
-                        <option key={player.id} value={player.id}>
-                          {player.name}
-                        </option>
-                    ))}
-                  </select>
+                {/* Date */}
+                <div className="flex justify-center">
+                  <input type="date" value={editGameDate} onChange={(e) => setEditGameDate(e.target.value)} className="block bg-slate-600 border border-slate-500 rounded-md shadow-sm py-1.5 px-3 text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" />
                 </div>
-              )}
-              {/* --------------------------------- */}
+                {/* Save/Cancel Buttons */}
+                <div className="flex justify-end space-x-2 pt-2">
+                    <button onClick={handleCancelEditInfo} className="px-3 py-1 bg-slate-500 hover:bg-slate-400 text-white rounded-md text-xs font-medium">{t('gameStatsModal.cancelButton', 'Cancel')}</button>
+                    <button onClick={handleSaveInfo} className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-xs font-medium">{t('gameStatsModal.saveButton', 'Save')}</button>
+                </div>
+              </div>
+            ) : (
+              // --- View Mode (with Inline Editing) ---
+              <div className="space-y-1">
+                 {/* Edit All Button (only visible when not inline editing) */}
+                 {!inlineEditingField && (
+                     <button
+                        onClick={() => setIsEditingInfo(true)}
+                        className="absolute top-3 right-3 px-2 py-0.5 bg-slate-600 hover:bg-slate-500 text-white rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                        title={t('gameStatsModal.editButton', 'Edit Info') ?? "Edit"}
+                        disabled={!!inlineEditingField} // Disable if inline editing is active
+                     >
+                         {t('gameStatsModal.editButton', 'Edit')}
+                     </button>
+                 )}
+                 {/* Score Line (Inline Editable) */}
+                <div className="text-center text-lg font-semibold flex justify-center items-center gap-x-2">
+                  {/* Team Name (Readonly) */}
+                  <span>{teamName}</span>
+                  
+                  {/* Home Score (View or Inline Edit) */}
+                   {inlineEditingField === 'home' ? (
+                     <input
+                        ref={homeScoreInputRef}
+                        type="number"
+                        min="0"
+                        value={inlineEditValue}
+                        onChange={(e) => setInlineEditValue(e.target.value)}
+                        onBlur={handleSaveInlineEdit} 
+                        onKeyDown={handleInlineEditKeyDown}
+                        className="bg-slate-700 border border-indigo-500 rounded px-1 py-0 text-xl font-semibold text-center outline-none w-12 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                     />
+                   ) : (
+                     <span
+                       onClick={() => handleStartInlineEdit('home')}
+                       className="cursor-pointer hover:bg-slate-600/50 px-1 rounded border border-dashed border-slate-600 hover:border-indigo-400 text-xl"
+                       title={t('gameStatsModal.tapToEditScore', 'Tap to edit score') ?? "Tap to edit score"}
+                     >
+                       {homeScore}
+                     </span>
+                   )}
 
-              {/* Filter Input */}
-              <div className="mb-3">
-                <input
-                  type="text"
-                  placeholder={t('gameStatsModal.filterPlaceholder', 'Filter players...') ?? "Filter players..."}
-                  value={filterText}
-                  onChange={handleFilterChange}
-                  className="w-full px-3 py-1.5 bg-slate-600 border border-slate-500 rounded-md shadow-sm text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  <span className="mx-1"> - </span>
+
+                  {/* Away Score (View or Inline Edit) */}
+                   {inlineEditingField === 'away' ? (
+                     <input
+                        ref={awayScoreInputRef}
+                        type="number"
+                        min="0"
+                        value={inlineEditValue}
+                        onChange={(e) => setInlineEditValue(e.target.value)}
+                        onBlur={handleSaveInlineEdit}
+                        onKeyDown={handleInlineEditKeyDown}
+                        className="bg-slate-700 border border-indigo-500 rounded px-1 py-0 text-xl font-semibold text-center outline-none w-12 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                     />
+                   ) : (
+                     <span
+                       onClick={() => handleStartInlineEdit('away')}
+                       className="cursor-pointer hover:bg-slate-600/50 px-1 rounded border border-dashed border-slate-600 hover:border-indigo-400 text-xl"
+                       title={t('gameStatsModal.tapToEditScore', 'Tap to edit score') ?? "Tap to edit score"}
+                     >
+                       {awayScore}
+                     </span>
+                   )}
+                  
+                  {/* Opponent Name (View or Inline Edit) */}
+                   {inlineEditingField === 'opponent' ? (
+                     <input
+                        ref={opponentInputRef}
+                        type="text"
+                        value={inlineEditValue}
+                        onChange={(e) => setInlineEditValue(e.target.value)}
+                        onBlur={handleSaveInlineEdit} // Save on blur
+                        onKeyDown={handleInlineEditKeyDown}
+                        className="bg-slate-700 border border-indigo-500 rounded px-1 py-0 text-lg font-semibold text-center outline-none"
+                        size={Math.max(10, inlineEditValue.length)} // Basic dynamic width
+                     />
+                   ) : (
+                     <span
+                       onClick={() => handleStartInlineEdit('opponent')}
+                       className="cursor-pointer hover:bg-slate-600/50 px-1 rounded border border-dashed border-slate-600 hover:border-indigo-400"
+                       title={t('gameStatsModal.tapToEdit', 'Tap to edit') ?? "Tap to edit"}
+                     >
+                       {opponentName}
+                     </span>
+                   )}
+                </div>
+
+                {/* Game Date (View or Inline Edit) - Centered RE-ADDED */}
+                <div className="flex justify-center mt-2"> 
+                  {inlineEditingField === 'date' ? (
+                      <input
+                         ref={dateInputRef}
+                         type="date"
+                         value={inlineEditValue}
+                         onChange={(e) => setInlineEditValue(e.target.value)}
+                         onBlur={handleSaveInlineEdit} // Save on blur
+                         onKeyDown={handleInlineEditKeyDown}
+                         className="bg-slate-700 border border-indigo-500 rounded px-1 py-0 text-sm text-slate-400 outline-none"
+                      />
+                  ) : (
+                    <p
+                      onClick={() => handleStartInlineEdit('date')}
+                      className="text-center text-sm text-slate-400 cursor-pointer hover:bg-slate-600/50 px-1 rounded inline-block border border-dashed border-slate-600 hover:border-indigo-400" 
+                      title={t('gameStatsModal.tapToEdit', 'Tap to edit') ?? "Tap to edit"}
+                    >
+                      {gameDate}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </section>
+
+          {/* Game Notes Section */}
+          <section className="bg-slate-700/50 p-4 rounded-md relative group">
+            <h3 className="text-xl font-semibold mb-3 text-yellow-300 text-center">
+              {t('gameStatsModal.notesTitle', 'Game Notes')}
+            </h3>
+            
+            {isEditingNotes ? (
+              <div className="space-y-3">
+                <textarea
+                  ref={notesTextareaRef}
+                  value={editGameNotes}
+                  onChange={(e) => setEditGameNotes(e.target.value)}
+                  placeholder={t('gameStatsModal.notesPlaceholder', 'Add game notes here...') ?? "Add game notes here..."}
+                  className="w-full h-32 bg-slate-600 border border-slate-500 rounded-md shadow-sm py-2 px-3 text-sm text-slate-200 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 />
+                <div className="flex justify-end space-x-2">
+                  <button onClick={handleCancelEditNotes} className="px-3 py-1 bg-slate-500 hover:bg-slate-400 text-white rounded-md text-xs font-medium">{t('gameStatsModal.cancelButton', 'Cancel')}</button>
+                  <button onClick={handleSaveNotes} className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-xs font-medium">{t('gameStatsModal.saveButton', 'Save')}</button>
+                </div>
               </div>
-              <div className="overflow-x-auto max-h-60">
-                <table className="min-w-full divide-y divide-slate-700">
-                  <thead className="bg-slate-700/50 sticky top-0 z-10"><tr>
-                    {/* Player Header (Sortable) */}
-                    <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('name')}>
-                       <div className="flex items-center">
-                         {t('gameStatsModal.playerHeader', 'Player')}
-                         {sortColumn === 'name' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1"/> : <FaSortDown className="ml-1"/>) : <FaSort className="ml-1 opacity-30"/>}
-                       </div>
-                    </th>
-                    {/* Goals Header (Sortable) */}
-                    <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-600/50 w-12" onClick={() => handleSort('goals')}>
-                       <div className="flex items-center justify-center">
-                         {t('gameStatsModal.goalsHeader', 'G')}
-                         {sortColumn === 'goals' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1"/> : <FaSortDown className="ml-1"/>) : <FaSort className="ml-1 opacity-30"/>}
-                       </div>
-                    </th>
-                    {/* Assists Header (Sortable) */}
-                    <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-600/50 w-12" onClick={() => handleSort('assists')}>
-                       <div className="flex items-center justify-center">
-                         {t('gameStatsModal.assistsHeader', 'A')}
-                         {sortColumn === 'assists' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1"/> : <FaSortDown className="ml-1"/>) : <FaSort className="ml-1 opacity-30"/>}
-                       </div>
-                    </th>
-                    {/* Total Header (Sortable) */}
-                    <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-600/50 w-12" onClick={() => handleSort('totalScore')}>
-                       <div className="flex items-center justify-center">
-                         {t('gameStatsModal.totalHeader', 'Pts')}
-                         {sortColumn === 'totalScore' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1"/> : <FaSortDown className="ml-1"/>) : <FaSort className="ml-1 opacity-30"/>}
-                       </div>
-                    </th>
-                  </tr></thead>
-                  <tbody className="bg-slate-800 divide-y divide-slate-700">
-                    {filteredAndSortedPlayerStats.length > 0 ? (
-                       filteredAndSortedPlayerStats.map((player) => (
-                        <tr key={player.id} className="border-b border-slate-700 hover:bg-slate-700/50">
-                          {/* Player Name Cell - Same settings */}
-                          <td className="py-1 px-3 text-xs text-slate-200 whitespace-nowrap">
-                            {player.name}
-                            {/* Goalie indicator */}
-                            {player.isGoalie && (
-                              <span
-                                className="inline-block ml-1.5 px-1 py-0.5 text-[9px] font-bold leading-none bg-amber-500 text-white rounded-sm align-middle"
-                                title={t('statsModal.goalieIndicator', 'Goalie')}
-                              >
-                                G
-                              </span>
-                            )}
-                            {/* Fair Play indicator */}
-                            {player.receivedFairPlayCard && (
-                              <span
-                                className="inline-block ml-1.5 px-1 py-0.5 text-[9px] font-bold leading-none bg-emerald-500 text-white rounded-sm align-middle"
-                                title={t('statsModal.fairPlayAwarded', 'Fair Play Award')}
-                              >
-                                FP
-                              </span>
-                            )}
-                          </td>
-                          {/* Stats Cells - Same smaller font/padding */}
-                          <td className="py-1 px-3 text-xs text-slate-300 text-center">{player.goals}</td>
-                          <td className="py-1 px-3 text-xs text-slate-300 text-center">{player.assists}</td>
-                          <td className="py-1 px-3 text-xs text-slate-300 text-center font-semibold">{player.totalScore}</td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        {/* No results row - Smaller font/padding */}
-                        <td colSpan={4} className="px-3 py-2 text-center text-xs text-slate-400 italic">
-                          {filterText ? t('gameStatsModal.noPlayersMatchFilter', 'No players match filter') : t('gameStatsModal.noPlayersYet', 'No players available')}
-                        </td>
-                      </tr>
-                    )}
-                     {/* Add a row for totals if desired */}
-                     {/* <tr className="bg-slate-700/50 font-bold">
-                         <td className="px-4 py-2 text-left text-sm uppercase">Total</td>
-                         <td className="px-4 py-2 text-center text-sm">{playerStats.reduce((sum, p) => sum + p.goals, 0)}</td>
-                         <td className="px-4 py-2 text-center text-sm">{playerStats.reduce((sum, p) => sum + p.assists, 0)}</td>
-                         <td className="px-4 py-2 text-center text-sm">{playerStats.reduce((sum, p) => sum + p.totalScore, 0)}</td>
-                     </tr> */}
-                  </tbody>
-                </table>
+            ) : (
+              <div 
+                className="min-h-[50px] text-sm text-slate-300 px-1 whitespace-pre-wrap cursor-pointer hover:bg-slate-700/50 rounded border border-dashed border-slate-600 hover:border-indigo-400"
+                onClick={() => {
+                  console.log('Notes area clicked!');
+                  setIsEditingNotes(true); 
+                }}
+                title={t('gameStatsModal.clickToEditNotes', 'Click to edit notes') ?? undefined}
+              >
+                {gameNotes ? 
+                  gameNotes : 
+                  <span className="italic text-slate-400">{t('gameStatsModal.clickToEditNotes', 'Click to edit notes')}</span>
+                }
               </div>
-            </section>
+            )}
+          </section>
 
-            {/* Goal Log Section */}
-            <section>
-              <h3 className="text-xl font-semibold mb-2 text-yellow-300 text-center">
-                {t('gameStatsModal.goalLogTitle', 'Goal Log')}
-              </h3>
-              {sortedGoals.length > 0 ? (
-                <ul className="space-y-1.5 text-sm max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-700 pr-1">
-                  {sortedGoals.map(goal => (
-                    <li key={goal.id} className={`p-2 rounded-md flex justify-between items-center min-h-[40px] ${goal.type === 'opponentGoal' ? 'bg-red-900/40' : 'bg-slate-700/50'}`}>
-                      {editingGoalId === goal.id && goal.type === 'goal' ? (
-                        // --- Edit Own Goal Mode ---
-                        <div className="flex-grow space-y-2" onKeyDown={handleGoalEditKeyDown}>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {/* Time Input */}
-                            <input 
-                              ref={goalTimeInputRef}
-                              type="number"
-                              min="0"
-                              value={editGoalTime}
-                              onChange={(e) => setEditGoalTime(e.target.value)}
-                              className="bg-slate-600 border border-indigo-500 rounded px-1 py-0.5 text-sm w-16 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                              placeholder={t('gameStatsModal.timePlaceholder', 'Secs') ?? "Secs"}
-                            />
-                            {/* Scorer Select */}
-                            <select 
-                              value={editGoalScorerId}
-                              onChange={(e) => setEditGoalScorerId(e.target.value)}
-                              className="bg-slate-600 border border-indigo-500 rounded px-1 py-0.5 text-sm min-w-[100px] max-w-[150px]"
-                            >
-                              <option value="" disabled>{t('gameStatsModal.selectScorer', 'Scorer...')}</option>
-                              {availablePlayers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                            </select>
-                            {/* Assister Select */}
-                            <select 
-                              value={editGoalAssisterId || ''} // Use empty string for "None"
-                              onChange={(e) => setEditGoalAssisterId(e.target.value || undefined)} // Set undefined if empty string
-                              className="bg-slate-600 border border-indigo-500 rounded px-1 py-0.5 text-sm min-w-[100px] max-w-[150px]"
-                            >
-                               <option value="">{t('gameStatsModal.selectAssister', 'Assister (None)')}</option>
-                               {availablePlayers.filter(p => p.id !== editGoalScorerId).map(p => <option key={p.id} value={p.id}>{p.name}</option>)} {/* Exclude scorer */}
-                            </select>
-                          </div>
-                          <div className="flex justify-end gap-2">
-                             <button onClick={handleCancelEditGoal} className="p-1 text-slate-400 hover:text-red-400" title={t('gameStatsModal.cancelButton', 'Cancel') ?? "Cancel"}><FaTimes /></button>
-                             <button onClick={handleSaveEditGoal} className="p-1 text-slate-400 hover:text-green-400" title={t('gameStatsModal.saveButton', 'Save') ?? "Save"}><FaSave /></button>
-                          </div>
-                        </div>
-                      ) : (
-                        // --- View Goal Mode (Own or Opponent) ---
-                        <>
-                          <span className="font-mono text-slate-400 mr-2">[{formatTime(goal.time)}]</span>
-                          <span className={`text-right flex-grow mr-2 ${goal.type === 'opponentGoal' ? 'text-red-400' : 'text-yellow-300'}`}>
-                            <span className="font-semibold">{goal.scorerName}</span>
-                            {goal.type === 'goal' && goal.assisterName && (
-                              <span className="text-slate-400 text-xs ml-1">({t('gameStatsModal.assistPrefix', 'A:')} {goal.assisterName})</span>
-                            )}
-                          </span>
-                          {goal.type === 'goal' && (
-                              <button 
-                                onClick={() => handleStartEditGoal(goal)}
-                                className="p-1 text-slate-400 hover:text-yellow-300" 
-                                title={t('gameStatsModal.editGoalButton', 'Edit Goal') ?? "Edit Goal"}
-                              >
-                                 <FaEdit />
-                              </button>
-                          )}
-                        </>
-                      )}
-                    </li>
+          {/* Player Stats Section */}
+          <section>
+            <h3 className="text-xl font-semibold mb-4 text-yellow-300 text-center">
+              {t('gameStatsModal.playerStatsTitle', 'Player Stats')}
+            </h3>
+
+            {/* Fair Play Award Dropdown - ADDED */}
+            {onAwardFairPlayCard && (
+              <div className="mb-3 flex items-center gap-2">
+                <label htmlFor="fairPlaySelect" className="text-sm font-medium text-slate-300 whitespace-nowrap">
+                  {t('statsModal.awardFairPlayLabel', 'Fair Play Award:')}
+                </label>
+                <select
+                  id="fairPlaySelect"
+                  value={availablePlayers.find(p => selectedPlayerIds.includes(p.id) && p.receivedFairPlayCard)?.id || ''}
+                  onChange={(e) => onAwardFairPlayCard(e.target.value)}
+                  className="block w-full px-3 py-1.5 bg-slate-600 border border-slate-500 rounded-md shadow-sm text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                  <option value="">{t('statsModal.awardFairPlayNone', '- None -')}</option>
+                  {availablePlayers
+                    .filter(player => selectedPlayerIds.includes(player.id))
+                    .map(player => (
+                      <option key={player.id} value={player.id}>
+                        {player.name}
+                      </option>
                   ))}
-                </ul>
-              ) : (
-                <p className="text-slate-400 italic text-sm">{t('gameStatsModal.noGoalsLogged', 'No goals logged yet.')}</p>
-              )}
-            </section>
+                </select>
+              </div>
+            )}
+            {/* --------------------------------- */}
 
-          </div>
+            {/* Filter Input */}
+            <div className="mb-3">
+              <input
+                type="text"
+                placeholder={t('gameStatsModal.filterPlaceholder', 'Filter players...') ?? "Filter players..."}
+                value={filterText}
+                onChange={handleFilterChange}
+                className="w-full px-3 py-1.5 bg-slate-600 border border-slate-500 rounded-md shadow-sm text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+            <div className="overflow-x-auto max-h-60">
+              <table className="min-w-full divide-y divide-slate-700">
+                <thead className="bg-slate-700/50 sticky top-0 z-10"><tr>
+                  {/* Player Header (Sortable) */}
+                  <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('name')}>
+                     <div className="flex items-center">
+                       {t('gameStatsModal.playerHeader', 'Player')}
+                       {sortColumn === 'name' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1"/> : <FaSortDown className="ml-1"/>) : <FaSort className="ml-1 opacity-30"/>}
+                     </div>
+                  </th>
+                  {/* Goals Header (Sortable) */}
+                  <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-600/50 w-12" onClick={() => handleSort('goals')}>
+                     <div className="flex items-center justify-center">
+                       {t('gameStatsModal.goalsHeader', 'G')}
+                       {sortColumn === 'goals' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1"/> : <FaSortDown className="ml-1"/>) : <FaSort className="ml-1 opacity-30"/>}
+                     </div>
+                  </th>
+                  {/* Assists Header (Sortable) */}
+                  <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-600/50 w-12" onClick={() => handleSort('assists')}>
+                     <div className="flex items-center justify-center">
+                       {t('gameStatsModal.assistsHeader', 'A')}
+                       {sortColumn === 'assists' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1"/> : <FaSortDown className="ml-1"/>) : <FaSort className="ml-1 opacity-30"/>}
+                     </div>
+                  </th>
+                  {/* Total Header (Sortable) */}
+                  <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-600/50 w-12" onClick={() => handleSort('totalScore')}>
+                     <div className="flex items-center justify-center">
+                       {t('gameStatsModal.totalHeader', 'Pts')}
+                       {sortColumn === 'totalScore' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1"/> : <FaSortDown className="ml-1"/>) : <FaSort className="ml-1 opacity-30"/>}
+                     </div>
+                  </th>
+                </tr></thead>
+                <tbody className="bg-slate-800 divide-y divide-slate-700">
+                  {filteredAndSortedPlayerStats.length > 0 ? (
+                     filteredAndSortedPlayerStats.map((player) => (
+                      <tr key={player.id} className="border-b border-slate-700 hover:bg-slate-700/50">
+                        {/* Player Name Cell - Same settings */}
+                        <td className="py-1 px-3 text-xs text-slate-200 whitespace-nowrap">
+                          {player.name}
+                          {/* Goalie indicator */}
+                          {player.isGoalie && (
+                            <span
+                              className="inline-block ml-1.5 px-1 py-0.5 text-[9px] font-bold leading-none bg-amber-500 text-white rounded-sm align-middle"
+                              title={t('statsModal.goalieIndicator', 'Goalie')}
+                            >
+                              G
+                            </span>
+                          )}
+                          {/* Fair Play indicator */}
+                          {player.receivedFairPlayCard && (
+                            <span
+                              className="inline-block ml-1.5 px-1 py-0.5 text-[9px] font-bold leading-none bg-emerald-500 text-white rounded-sm align-middle"
+                              title={t('statsModal.fairPlayAwarded', 'Fair Play Award')}
+                            >
+                              FP
+                            </span>
+                          )}
+                        </td>
+                        {/* Stats Cells - Same smaller font/padding */}
+                        <td className="py-1 px-3 text-xs text-slate-300 text-center">{player.goals}</td>
+                        <td className="py-1 px-3 text-xs text-slate-300 text-center">{player.assists}</td>
+                        <td className="py-1 px-3 text-xs text-slate-300 text-center font-semibold">{player.totalScore}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      {/* No results row - Smaller font/padding */}
+                      <td colSpan={4} className="px-3 py-2 text-center text-xs text-slate-400 italic">
+                        {filterText ? t('gameStatsModal.noPlayersMatchFilter', 'No players match filter') : t('gameStatsModal.noPlayersYet', 'No players available')}
+                      </td>
+                    </tr>
+                  )}
+                   {/* Add a row for totals if desired */}
+                   {/* <tr className="bg-slate-700/50 font-bold">
+                       <td className="px-4 py-2 text-left text-sm uppercase">Total</td>
+                       <td className="px-4 py-2 text-center text-sm">{playerStats.reduce((sum, p) => sum + p.goals, 0)}</td>
+                       <td className="px-4 py-2 text-center text-sm">{playerStats.reduce((sum, p) => sum + p.assists, 0)}</td>
+                       <td className="px-4 py-2 text-center text-sm">{playerStats.reduce((sum, p) => sum + p.totalScore, 0)}</td>
+                   </tr> */}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          {/* Goal Log Section */}
+          <section>
+            <h3 className="text-xl font-semibold mb-2 text-yellow-300 text-center">
+              {t('gameStatsModal.goalLogTitle', 'Goal Log')}
+            </h3>
+            {sortedGoals.length > 0 ? (
+              <ul className="space-y-1.5 text-sm max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-700 pr-1">
+                {sortedGoals.map(goal => (
+                  <li key={goal.id} className={`p-2 rounded-md flex justify-between items-center min-h-[40px] ${goal.type === 'opponentGoal' ? 'bg-red-900/40' : 'bg-slate-700/50'}`}>
+                    {editingGoalId === goal.id && goal.type === 'goal' ? (
+                      // --- Edit Own Goal Mode ---
+                      <div className="flex-grow space-y-2" onKeyDown={handleGoalEditKeyDown}>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {/* Time Input */}
+                          <input 
+                            ref={goalTimeInputRef}
+                            type="number"
+                            min="0"
+                            value={editGoalTime}
+                            onChange={(e) => setEditGoalTime(e.target.value)}
+                            className="bg-slate-600 border border-indigo-500 rounded px-1 py-0.5 text-sm w-16 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            placeholder={t('gameStatsModal.timePlaceholder', 'Secs') ?? "Secs"}
+                          />
+                          {/* Scorer Select */}
+                          <select 
+                            value={editGoalScorerId}
+                            onChange={(e) => setEditGoalScorerId(e.target.value)}
+                            className="bg-slate-600 border border-indigo-500 rounded px-1 py-0.5 text-sm min-w-[100px] max-w-[150px]"
+                          >
+                            <option value="" disabled>{t('gameStatsModal.selectScorer', 'Scorer...')}</option>
+                            {availablePlayers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                          </select>
+                          {/* Assister Select */}
+                          <select 
+                            value={editGoalAssisterId || ''} // Use empty string for "None"
+                            onChange={(e) => setEditGoalAssisterId(e.target.value || undefined)} // Set undefined if empty string
+                            className="bg-slate-600 border border-indigo-500 rounded px-1 py-0.5 text-sm min-w-[100px] max-w-[150px]"
+                          >
+                             <option value="">{t('gameStatsModal.selectAssister', 'Assister (None)')}</option>
+                             {availablePlayers.filter(p => p.id !== editGoalScorerId).map(p => <option key={p.id} value={p.id}>{p.name}</option>)} {/* Exclude scorer */}
+                          </select>
+                        </div>
+                        <div className="flex justify-end gap-2">
+                           <button onClick={handleCancelEditGoal} className="p-1 text-slate-400 hover:text-red-400" title={t('gameStatsModal.cancelButton', 'Cancel') ?? "Cancel"}><FaTimes /></button>
+                           <button onClick={handleSaveEditGoal} className="p-1 text-slate-400 hover:text-green-400" title={t('gameStatsModal.saveButton', 'Save') ?? "Save"}><FaSave /></button>
+                        </div>
+                      </div>
+                    ) : (
+                      // --- View Goal Mode (Own or Opponent) ---
+                      <>
+                        <span className="font-mono text-slate-400 mr-2">[{formatTime(goal.time)}]</span>
+                        <span className={`text-right flex-grow mr-2 ${goal.type === 'opponentGoal' ? 'text-red-400' : 'text-yellow-300'}`}>
+                            {/* Look up scorer name dynamically */}
+                            <span className="font-semibold">
+                              {goal.type === 'goal'
+                                ? availablePlayers.find(p => p.id === goal.scorerId)?.name ?? t('gameStatsModal.unknownPlayer', 'Unknown Player')
+                                : opponentName || t('gameStatsModal.opponentPlaceholder', 'Opponent') // Use opponentName prop for opponent goals
+                              }
+                            </span>
+                            {/* Look up assister name dynamically */}
+                            {goal.type === 'goal' && goal.assisterId && (
+                              <span className="text-slate-400 text-xs ml-1">
+                                ({t('gameStatsModal.assistPrefix', 'A:')} {availablePlayers.find(p => p.id === goal.assisterId)?.name ?? t('gameStatsModal.unknownPlayer', 'Unknown Player')})
+                              </span>
+                          )}
+                        </span>
+                        {goal.type === 'goal' && (
+                            <button 
+                              onClick={() => handleStartEditGoal(goal)}
+                              className="p-1 text-slate-400 hover:text-yellow-300" 
+                              title={t('gameStatsModal.editGoalButton', 'Edit Goal') ?? "Edit Goal"}
+                            >
+                               <FaEdit />
+                            </button>
+                        )}
+                      </>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-slate-400 italic text-sm">{t('gameStatsModal.noGoalsLogged', 'No goals logged yet.')}</p>
+            )}
+          </section>
+
+        </div>
         );
     }
   };
@@ -1195,7 +1199,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
             {t('gameStatsModal.title', 'Game Statistics')}
           </h2>
           {/* Close Button */}
-          <button 
+          <button
             onClick={onClose} 
             className="text-slate-400 hover:text-white transition-colors p-1 rounded-full hover:bg-slate-700"
             aria-label={t('common.close', 'Close')}
@@ -1207,7 +1211,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
         {/* Tab Buttons */} 
         <div className="flex border-b border-slate-700 bg-slate-800/50 px-2 pt-2">
           {['current', 'season', 'tournament', 'all'].map((tab) => (
-            <button 
+          <button
               key={tab}
               onClick={() => setActiveTab(tab as 'current' | 'season' | 'tournament' | 'all')}
               className={`px-4 py-2 text-sm font-medium rounded-t-md focus:outline-none transition-colors duration-150 ${ 
@@ -1217,7 +1221,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
               }`}
             >
               {t(`gameStatsModal.tab_${tab}`, tab.charAt(0).toUpperCase() + tab.slice(1))}
-            </button>
+          </button>
           ))}
         </div>
 
@@ -1231,13 +1235,13 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
         <div className="p-3 bg-slate-900 border-t border-slate-700 flex justify-end space-x-2">
           <button ...>
             Export JSON
-          </button>
+            </button>
           <button ...>
             Export EXCEL
           </button>
            <button ... >
              Reset Stats
-           </button>
+          </button>
         </div>
         */}
       </div>

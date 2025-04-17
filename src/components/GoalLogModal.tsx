@@ -8,6 +8,7 @@ interface GoalLogModalProps {
   isOpen: boolean;
   onClose: () => void;
   onLogGoal: (scorerId: string, assisterId?: string) => void; // For logging own team's goal
+  onLogOpponentGoal: (time: number) => void; // ADDED: Handler for opponent goal
   availablePlayers: Player[];
   currentTime: number; // timeElapsedInSeconds
 }
@@ -16,10 +17,14 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
   isOpen,
   onClose,
   onLogGoal,
+  onLogOpponentGoal, // ADDED: Destructure the new handler
   availablePlayers,
   currentTime,
 }) => {
-  const { t } = useTranslation();
+  // Explicitly request the default 'translation' namespace
+  const { t, i18n } = useTranslation('translation');
+  console.log('[GoalLogModal] Detected language:', i18n.language); // ADD DEBUG LOG
+  console.log('[GoalLogModal] Finnish Resources:', JSON.stringify(i18n.getResourceBundle('fi', 'translation'))); // ADD RESOURCE LOG
   const [scorerId, setScorerId] = useState<string>('');
   const [assisterId, setAssisterId] = useState<string>(''); // Empty string means no assist
 
@@ -45,6 +50,13 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
     if (scorerId) {
       onLogGoal(scorerId, assisterId || undefined); // Pass undefined if assisterId is empty
     }
+  };
+
+  // Handler for the new Opponent Goal button
+  const handleLogOpponentGoalClick = () => {
+    onLogOpponentGoal(currentTime); // Call the passed handler with the current time
+    // No need to reset local state as it's not used for opponent goal
+    // onClose(); // The handler in page.tsx already closes the modal
   };
 
   // Reset state when modal closes (or opens)
@@ -135,24 +147,33 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
             </select>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col space-y-2 pt-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 focus:ring-offset-slate-800"
-              >
-                {t('goalLogModal.cancelButton', 'Cancel')}
-              </button>
-              
-              <button
-                type="button"
-                onClick={handleLogOwnGoalClick}
-                disabled={!scorerId}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {t('goalLogModal.logButton', 'Log Goal')}
-              </button>
+          {/* Buttons */}
+          <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+            {/* Cancel Button */}
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full inline-flex justify-center rounded-md border border-slate-600 px-4 py-2 bg-slate-700 text-base font-medium text-slate-300 hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-slate-500 sm:text-sm transition-colors"
+            >
+              {t('common.cancelButton', 'Peruuta')}
+            </button>
+            {/* Log Opponent Goal Button - ADDED */}
+            <button
+              type="button"
+              onClick={handleLogOpponentGoalClick}
+              className="w-full inline-flex justify-center rounded-md border border-transparent px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-red-500 sm:text-sm transition-colors"
+            >
+              {t('goalLogModal.logOpponentGoalButtonShort', 'Opponent + 1')}
+            </button>
+            {/* Log Goal Button */}
+            <button
+              type="button"
+              onClick={handleLogOwnGoalClick}
+              disabled={!scorerId} // Disable if no scorer is selected
+              className="w-full inline-flex justify-center rounded-md border border-transparent px-4 py-2 bg-indigo-600 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed sm:text-sm transition-colors"
+            >
+              {t('goalLogModal.logGoalButton', 'Kirjaa Maali')}
+            </button>
           </div>
         </div>
       </div>
