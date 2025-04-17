@@ -417,7 +417,6 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     if (e.button !== 0) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
     const relPos = getRelativeEventPosition(e);
     if (!relPos) return;
 
@@ -480,8 +479,6 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const rect = canvas.getBoundingClientRect(); // Need CSS size
-
     const relPos = getRelativeEventPosition(e);
     if (!relPos) return;
 
