@@ -1710,31 +1710,31 @@ export default function Home() {
   // --- NEW: Handler to Award Fair Play Card ---
   console.log('Before useCallback(handleAwardFairPlayCard)');
   const handleAwardFairPlayCard = useCallback((playerId: string) => {
-    // If playerId is empty string, clear the award for everyone
-    const shouldClear = playerId === "";
+    // Find the player being clicked
+    const clickedPlayer = availablePlayers.find(p => p.id === playerId);
+    const currentStatus = clickedPlayer?.receivedFairPlayCard ?? false;
 
     const updatedAvailable = availablePlayers.map(p => ({
       ...p,
-      // Set to false if clearing OR if a different player ID is provided (implicitly handled by next condition)
-      // Set to true ONLY if this player's ID is provided AND we are not clearing
-      receivedFairPlayCard: !shouldClear && p.id === playerId ? true : false
+      // Toggle the status for the clicked player
+      // Keep others' status unchanged
+      receivedFairPlayCard: p.id === playerId ? !currentStatus : p.receivedFairPlayCard
     }));
     const updatedOnField = playersOnField.map(p => ({
       ...p,
       // Sync with availablePlayers logic
-      receivedFairPlayCard: !shouldClear && p.id === playerId ? true : false
+      receivedFairPlayCard: p.id === playerId ? !currentStatus : p.receivedFairPlayCard
     }));
 
     setAvailablePlayers(updatedAvailable);
     setPlayersOnField(updatedOnField);
     saveStateToHistory({ availablePlayers: updatedAvailable, playersOnField: updatedOnField });
 
-    if (shouldClear) {
-        console.log(`Cleared Fair Play Card award.`);
-    } else {
+    // Update logging for toggle action
+    if (playerId) {
         const awardedPlayer = updatedAvailable.find(p => p.id === playerId);
-        // Log awarding, not toggling
-        console.log(`Awarded Fair Play Card to ${awardedPlayer?.name ?? playerId}.`);
+        const action = !currentStatus ? 'Awarded' : 'Removed'; // Log award or removal
+        console.log(`${action} Fair Play Card ${!currentStatus ? 'to' : 'from'} ${awardedPlayer?.name ?? playerId}.`);
     }
   }, [availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField, saveStateToHistory]);
 
