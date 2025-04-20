@@ -111,6 +111,16 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName
   };
   // --- End New Handlers ---
 
+  // --- Effect: Finish team name editing if a player disk is selected ---
+  useEffect(() => {
+    // If editing team name AND a player disk becomes selected
+    if (isEditingTeamName && selectedPlayerIdFromBar) {
+      console.log("PlayerBar: Finishing team name edit because a player disk was selected.");
+      handleFinishEditingTeamName();
+    }
+    // Dependencies: We only care when these two states change in relation to each other.
+  }, [isEditingTeamName, selectedPlayerIdFromBar]);
+
   return (
     <div 
       className="bg-slate-900/85 backdrop-blur-md pl-4 pr-2 py-1 flex items-center flex-shrink-0 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-slate-700/80 scrollbar-track-slate-800/50 shadow-lg border-b border-slate-700/50"
@@ -172,7 +182,8 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName
           <PlayerDisk
             key={player.id}
             id={player.id}
-            name={player.nickname || player.name}
+            fullName={player.name}
+            nickname={player.nickname}
             color={player.color}
             isGoalie={player.isGoalie}
             onRenamePlayer={onRenamePlayer}

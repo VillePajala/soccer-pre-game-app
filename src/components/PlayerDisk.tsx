@@ -8,7 +8,8 @@ import {
 
 interface PlayerDiskProps {
   id: string;
-  name: string;
+  fullName: string;
+  nickname?: string;
   color?: string;
   isGoalie?: boolean; // Add goalie status prop
   // Bar specific props
@@ -32,7 +33,8 @@ const StatBadge: React.FC<{ count: number, bgColor: string, positionClasses: str
 
 const PlayerDisk: React.FC<PlayerDiskProps> = ({
   id,
-  name,
+  fullName,
+  nickname,
   color = '#7E22CE', // Default to purple-700 if no color passed
   isGoalie = false, // Default goalie status
   onPlayerDragStartFromBar,
@@ -43,13 +45,14 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
   onToggleGoalie // Destructure goalie toggle handler
 }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [editedName, setEditedName] = useState(name);
+  const [editedName, setEditedName] = useState(nickname || fullName);
   const inputRef = useRef<HTMLInputElement>(null);
+  const lastTapTimeRef = useRef<number>(0); // Ref for double-tap detection
   
-  // Update editedName if the name prop changes (e.g., via undo/redo)
+  // Update editedName if the props change (e.g., via undo/redo)
   useEffect(() => {
-    setEditedName(name);
-  }, [name]);
+    setEditedName(nickname || fullName);
+  }, [nickname, fullName]);
 
   // Focus input when editing starts
   useEffect(() => {
@@ -66,12 +69,20 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
     return { goals, assists };
   }, [gameEvents, id]);
 
-  const handleFinishEditing = () => {
+  const handleFinishEditing = (reason: string = "unknown") => { // Add reason param
     if (isEditing) {
+      console.log(`PlayerDisk (${id}): Finishing edit (Reason: ${reason}).`); // Add log
       setIsEditing(false);
-      const trimmedName = editedName.trim();
-      if (trimmedName && trimmedName !== name && onRenamePlayer) {
-        onRenamePlayer(id, { name: trimmedName, nickname: trimmedName });
+      const trimmedNickname = editedName.trim();
+      const originalDisplayName = nickname || fullName; // Get original display name
+
+      // Only call rename if the displayed name actually changed
+      if (trimmedNickname && trimmedNickname !== originalDisplayName && onRenamePlayer) {
+        console.log(`PlayerDisk (${id}): Calling onRenamePlayer with fullName: ${fullName}, nickname: ${trimmedNickname}`); // Log with full name
+        // Pass the original fullName and the new trimmedNickname
+        onRenamePlayer(id, { name: fullName, nickname: trimmedNickname }); 
+      } else if (trimmedNickname !== originalDisplayName) {
+          console.log(`PlayerDisk (${id}): Edit finished, but name unchanged or rename function missing.`); // Add log
       }
     }
   };
@@ -82,20 +93,39 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      handleFinishEditing();
+      handleFinishEditing("Enter key"); // Pass reason
     } else if (e.key === 'Escape') {
       setIsEditing(false);
-      setEditedName(name); // Reset to original name on Escape
+      setEditedName(nickname || fullName); // Reset to original nickname/name on Escape
+      console.log(`PlayerDisk (${id}): Edit cancelled (Escape key).`); // Log cancellation
     }
   };
 
-  // --- Simplified Event Handlers for Selection --- 
+  // --- NEW: Handler to explicitly start editing ---
+  const handleStartEditing = () => {
+    if (onRenamePlayer) { // Check if renaming is allowed
+      console.log(`PlayerDisk (${id}): Starting edit.`);
+      setIsEditing(true);
+    }
+  };
+
+  // --- Modified Event Handlers for Selection / Double-Click ---
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.button !== 0 || isEditing) return;
     e.preventDefault();
-    // Single click selects
-    if (onPlayerTapInBar) {
-      onPlayerTapInBar({ id, name, color, isGoalie });
+
+    const currentTime = Date.now();
+    if (currentTime - lastTapTimeRef.current < 300) {
+      // Double-click detected
+      handleStartEditing();
+      lastTapTimeRef.current = 0; // Reset tap time
+    } else {
+      // Single click selects
+      if (onPlayerTapInBar) {
+        // Pass correct player data including nickname
+        onPlayerTapInBar({ id, name: fullName, nickname, color, isGoalie }); 
+      }
+      lastTapTimeRef.current = currentTime;
     }
   };
 
@@ -107,9 +137,19 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
   const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
      if (isEditing) return;
      e.preventDefault();
-     // Simple tap selects
-     if (onPlayerTapInBar) {
-      onPlayerTapInBar({ id, name, color, isGoalie });
+
+     const currentTime = Date.now();
+     if (currentTime - lastTapTimeRef.current < 300) {
+       // Double-tap detected
+       handleStartEditing();
+       lastTapTimeRef.current = 0; // Reset tap time
+     } else {
+       // Simple tap selects
+       if (onPlayerTapInBar) {
+        // Pass correct player data including nickname
+        onPlayerTapInBar({ id, name: fullName, nickname, color, isGoalie });
+       }
+       lastTapTimeRef.current = currentTime;
      }
   };
 
@@ -124,7 +164,8 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
   // HTML Drag and Drop
   const handleDragStart = () => {
     if (!onPlayerDragStartFromBar) return;
-    const playerData = { id, name, color, isGoalie };
+    // Pass correct player data including nickname
+    const playerData: Player = { id, name: fullName, nickname, color, isGoalie }; 
     onPlayerDragStartFromBar(playerData);
   };
 
@@ -139,13 +180,26 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
   const defaultFillColor = color || '#7E22CE'; // Existing default purple
   const defaultTextColor = 'text-white';
 
+  console.log(`PlayerDisk Render (${id}): isEditing = ${isEditing}`); // Add log for render state
+
+  // --- EFFECT: Finish editing if selection changes --- 
+  useEffect(() => {
+    // If this disk is currently editing AND the selected ID changes to something else
+    if (isEditing && selectedPlayerIdFromBar !== id) {
+      console.log(`PlayerDisk (${id}): Finishing edit because selection changed to ${selectedPlayerIdFromBar}`);
+      handleFinishEditing('Selection Change');
+    }
+    // We only care about when the selection changes *away* from the edited disk,
+    // so we only need selectedPlayerIdFromBar and isEditing as dependencies.
+  }, [selectedPlayerIdFromBar, isEditing, id]); // Added id dependency for safety
+
   return (
     <div
       className={`relative ${diskSizeClasses} rounded-full flex flex-col items-center justify-center cursor-pointer shadow-lg m-2 transition-all duration-150 ease-in-out ${selectionRingClass}`}
       style={{ backgroundColor: isGoalie ? goalieFillColor : defaultFillColor }}
       draggable={isInBar && !isEditing}
       onDragStart={handleDragStart}
-      // Use simplified selection handlers
+      // Use modified selection handlers
       onMouseDown={isInBar ? handleMouseDown : undefined}
       onTouchStart={isInBar ? handleTouchStart : undefined} 
       onTouchEnd={isInBar ? handleTouchEnd : undefined}
@@ -171,15 +225,19 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
           type="text"
           value={editedName}
           onChange={handleInputChange}
-          onBlur={handleFinishEditing}
+          onBlur={() => handleFinishEditing("Blur")} // Pass reason for blur
           onKeyDown={handleKeyDown}
           className={`bg-transparent text-center font-semibold outline-none rounded ${inputPaddingClasses} ${inputWidthClass} ${textSizeClasses} text-white`}
+          // Add stopPropagation to prevent clicks *inside* the input interfering
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
         />
       ) : (
         <>
-          {/* Player Name */}
+          {/* Player Name - Display nickname or full name */}
           <span className={`font-semibold ${textSizeClasses} ${defaultTextColor} break-words text-center leading-tight max-w-full px-1`}>
-            {name}
+            {nickname || fullName}
           </span>
         </>
       )}
