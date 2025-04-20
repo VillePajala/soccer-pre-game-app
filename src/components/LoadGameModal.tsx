@@ -84,68 +84,107 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
           className="flex-grow mb-4 pr-2 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-700/50"
         >
           {savedGameIds.length > 0 ? (
-            <ul className="space-y-2">
+            <div className="space-y-4">
               {savedGameIds.map((gameId) => {
-                // Get the game data to display details
                 const gameData = savedGames[gameId];
-                const displayName = gameData 
-                  ? `${gameData.teamName || 'Team'} vs ${gameData.opponentName || 'Opponent'} (${gameData.gameDate || 'No Date'})`
-                  : gameId; // Fallback to gameId if data is somehow missing
+                if (!gameData) return null; // Skip if data is missing
+
+                // Determine game type display text and styling
+                const gameTypeDisplay = gameData.gameType === 'tournament' 
+                  ? t('saveGameModal.gameTypeTournament', 'Tournament') 
+                  : t('saveGameModal.gameTypeSeason', 'Season');
+                const gameTypeBgColor = gameData.gameType === 'tournament' ? 'bg-purple-600' : 'bg-blue-600';
+                const gameTypeTextColor = 'text-white'; // Use white text for both
+                
+                // Format date nicely (e.g., "Apr 20, 2025")
+                let formattedDate = t('common.noDate', 'No Date');
+                try {
+                    if (gameData.gameDate) {
+                        formattedDate = new Date(gameData.gameDate).toLocaleDateString(undefined, { 
+                            year: 'numeric', month: 'short', day: 'numeric' 
+                        });
+                    }
+                } catch (e) {
+                    console.error("Error formatting date:", gameData.gameDate, e);
+                    // Fallback to original string if formatting fails
+                    formattedDate = gameData.gameDate || formattedDate;
+                }
                 
                 return (
-                  <li key={gameId} className="relative flex items-center justify-between bg-slate-700/50 p-2 rounded-md">
-                    <button 
-                      onClick={() => { onLoad(gameId); onClose(); }}
-                      className="flex-grow text-left text-slate-100 text-[0.8rem] mr-2 p-1 rounded hover:bg-slate-600/50 focus:outline-none focus:ring-1 focus:ring-indigo-400 truncate" 
-                      title={`${t('loadGameModal.loadButtonTooltip', 'Load this game')}: ${displayName}`}
-                    >
-                      {displayName} {/* Display the constructed name */}
-                    </button>
+                  <div key={gameId} className="bg-slate-700/70 p-5 rounded-lg shadow-lg border border-slate-600/80 flex flex-col gap-4 transition-colors duration-150 hover:bg-slate-600/80">
                     
-                    <div className="flex-shrink-0">
-                      <button
-                        onClick={(e) => {
-                           e.stopPropagation(); 
-                           setOpenMenuId(openMenuId === gameId ? null : gameId);
-                        }}
-                        className="p-1.5 text-slate-300 rounded hover:bg-slate-600 hover:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-800"
-                        title={t('loadGameModal.actionsMenuTooltip', 'Actions') ?? 'Actions'}
-                      >
-                         <HiOutlineEllipsisVertical className="w-5 h-5" />
-                      </button>
-
-                      {openMenuId === gameId && (
-                         <div 
-                           ref={menuRef} 
-                           className={`absolute right-0 top-full mt-1 w-48 bg-slate-900 border border-slate-700 rounded-md shadow-lg z-50 py-1`}
-                         >
-                           
-                           <button 
-                              onClick={() => { onExportOneJson(gameId); setOpenMenuId(null); }} 
-                              className="w-full text-left px-3 py-1.5 text-sm text-slate-200 hover:bg-teal-700 flex items-center"
-                            >
-                              <HiOutlineDocumentText className="w-4 h-4 mr-2" /> {t('loadGameModal.exportJsonMenuItem', 'JSON')}
-                           </button>
-                           <button 
-                              onClick={() => { onExportOneCsv(gameId); setOpenMenuId(null); }} 
-                              className="w-full text-left px-3 py-1.5 text-sm text-slate-200 hover:bg-emerald-700 flex items-center"
-                            >
-                              <HiOutlineTableCells className="w-4 h-4 mr-2" /> {t('loadGameModal.exportExcelMenuItem', 'EXCEL')}
-                           </button>
-                           <div className="border-t border-slate-700 my-1"></div>
-                           <button 
-                              onClick={() => handleDeleteClick(gameId, displayName)} // Pass displayName to delete confirmation
-                              className="w-full text-left px-3 py-1.5 text-sm text-red-400 hover:bg-red-600 hover:text-white flex items-center"
-                           >
-                              <HiOutlineTrash className="w-4 h-4 mr-2" /> {t('loadGameModal.deleteMenuItem', 'Delete')}
-                           </button>
-                         </div>
-                      )}
+                    <div className="flex justify-between items-start mb-1">
+                      <h3 className="text-lg font-semibold text-slate-100 break-words mr-3">
+                        {gameData.teamName || 'Team'} vs {gameData.opponentName || 'Opponent'}
+                      </h3>
+                      <span className={`text-xs uppercase font-semibold tracking-wider ${gameTypeBgColor} ${gameTypeTextColor} px-2.5 py-1 rounded-full whitespace-nowrap shadow-sm`}>
+                        {gameTypeDisplay}
+                      </span>
                     </div>
-                  </li>
+                    
+                    <div className="flex justify-between items-center text-sm text-slate-300">
+                      <span className="text-slate-200">
+                        {formattedDate}
+                      </span>
+                      <span className="font-bold text-xl text-yellow-400 tracking-wider">
+                        {gameData.homeScore ?? 0} - {gameData.awayScore ?? 0}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between items-center mt-3 pt-4 border-t border-slate-600/60">
+                      <button 
+                        onClick={() => { onLoad(gameId); onClose(); }}
+                        className="flex-grow mr-4 px-4 py-2 bg-blue-600 text-white rounded-md shadow hover:bg-blue-700 transition duration-150 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-700 flex items-center justify-center"
+                      >
+                        <HiOutlineDocumentArrowDown className="w-5 h-5 mr-2" />
+                        {t('common.load', 'Load Game')}
+                      </button>
+                    
+                      <div className="relative flex-shrink-0">
+                        <button
+                          onClick={(e) => {
+                             e.stopPropagation(); 
+                             setOpenMenuId(openMenuId === gameId ? null : gameId);
+                          }}
+                          className="p-1.5 text-slate-300 rounded hover:bg-slate-600 hover:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-700"
+                          title={t('loadGameModal.actionsMenuTooltip', 'Actions') ?? 'Actions'}
+                        >
+                           <HiOutlineEllipsisVertical className="w-5 h-5" />
+                        </button>
+
+                        {openMenuId === gameId && (
+                           <div 
+                             ref={menuRef} 
+                             className={`absolute right-0 bottom-full mb-1 w-48 bg-slate-900 border border-slate-700 rounded-md shadow-lg z-50 py-1`}
+                           >
+                             
+                             <button 
+                                onClick={() => { onExportOneJson(gameId); setOpenMenuId(null); }} 
+                                className="w-full text-left px-3 py-1.5 text-sm text-slate-200 hover:bg-teal-700 flex items-center"
+                              >
+                                <HiOutlineDocumentText className="w-4 h-4 mr-2" /> {t('loadGameModal.exportJsonMenuItem', 'JSON')}
+                             </button>
+                             <button 
+                                onClick={() => { onExportOneCsv(gameId); setOpenMenuId(null); }} 
+                                className="w-full text-left px-3 py-1.5 text-sm text-slate-200 hover:bg-emerald-700 flex items-center"
+                              >
+                                <HiOutlineTableCells className="w-4 h-4 mr-2" /> {t('loadGameModal.exportExcelMenuItem', 'EXCEL')}
+                             </button>
+                             <div className="border-t border-slate-700 my-1"></div>
+                             <button 
+                                onClick={() => handleDeleteClick(gameId, `${gameData.teamName || 'Team'} vs ${gameData.opponentName || 'Opponent'}`)}
+                                className="w-full text-left px-3 py-1.5 text-sm text-red-400 hover:bg-red-600 hover:text-white flex items-center"
+                             >
+                                <HiOutlineTrash className="w-4 h-4 mr-2" /> {t('loadGameModal.deleteMenuItem', 'Delete')}
+                             </button>
+                           </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 );
               })}
-            </ul>
+            </div>
           ) : (
             <p className="text-slate-400 italic text-center py-4">
               {t('loadGameModal.noSavedGames', 'No saved games found.')}
