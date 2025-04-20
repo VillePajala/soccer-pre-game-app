@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SavedGamesCollection } from '@/app/page'; // Adjust path if necessary
+import { SavedGamesCollection, AppState } from '@/app/page'; // Adjust path if necessary, Import AppState
+import i18n from '../i18n'; // Import i18n directly
 import { 
   HiOutlineDocumentArrowDown, 
   HiOutlineEllipsisVertical,
@@ -39,10 +40,38 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [filterType, setFilterType] = useState<'all' | 'season' | 'tournament'>('all');
+  const [searchText, setSearchText] = useState<string>('');
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Get the list of actual saved game IDs (excluding the default/unsaved state)
-  const savedGameIds = Object.keys(savedGames).filter(id => id !== DEFAULT_GAME_ID);
+  const filteredGameIds = Object.keys(savedGames)
+    .filter(id => id !== DEFAULT_GAME_ID) // Exclude default
+    .filter(id => { // Filter by type
+      const gameData = savedGames[id];
+      if (!gameData) return false;
+      if (filterType === 'all') return true;
+      return gameData.gameType === filterType;
+    })
+    .filter(id => { // Filter by search text
+      const gameData = savedGames[id];
+      if (!gameData) return false;
+      if (!searchText) return true; // No search text, show all
+
+      const lowerSearchText = searchText.toLowerCase();
+      const teamName = (gameData.teamName || '').toLowerCase();
+      const opponentName = (gameData.opponentName || '').toLowerCase();
+      // Include date in search?
+      const gameDate = (gameData.gameDate || '').toLowerCase(); 
+      // Optionally format date before searching? 
+      // const formattedDate = gameData.gameDate ? new Date(gameData.gameDate).toLocaleDateString().toLowerCase() : '';
+
+      return (
+        teamName.includes(lowerSearchText) ||
+        opponentName.includes(lowerSearchText) ||
+        gameDate.includes(lowerSearchText)
+      );
+    });
 
   const handleDeleteClick = (gameId: string, gameName: string) => {
     // Use a confirmation dialog
@@ -71,6 +100,11 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
     };
   }, [openMenuId]);
 
+  const getFilterButtonLabel = (type: string) => {
+    // Simply reference the key directly in the most standard i18next format
+    return t(`loadGameModal.filter_${type}`, type.charAt(0).toUpperCase() + type.slice(1));
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -80,12 +114,40 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
           {t('loadGameModal.title', 'Load Game')}
         </h2>
 
+        {/* Filter Controls */}
+        <div className="mb-4 px-1 flex flex-col sm:flex-row gap-3 flex-shrink-0">
+          {/* Text Filter Input */}
+          <input 
+            type="text"
+            placeholder={t('loadGameModal.filterPlaceholder', 'Filter by name/date...')}
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            className="flex-grow px-3 py-1.5 bg-slate-600 border border-slate-500 rounded-md shadow-sm text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+          />
+          {/* Type Filter Buttons */}
+          <div className="flex items-center justify-center space-x-2 flex-shrink-0">
+            {['all', 'season', 'tournament'].map((type) => (
+              <button
+                key={type}
+                onClick={() => setFilterType(type as 'all' | 'season' | 'tournament')}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors duration-150 
+                  ${filterType === type 
+                    ? 'bg-indigo-600 text-white shadow-md' 
+                    : 'bg-slate-600 text-slate-300 hover:bg-slate-500'
+                  }`}
+              >
+                {getFilterButtonLabel(type)}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div 
           className="flex-grow mb-4 pr-2 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-700/50"
         >
-          {savedGameIds.length > 0 ? (
+          {filteredGameIds.length > 0 ? (
             <div className="space-y-4">
-              {savedGameIds.map((gameId) => {
+              {filteredGameIds.map((gameId) => {
                 const gameData = savedGames[gameId];
                 if (!gameData) return null; // Skip if data is missing
 
@@ -96,13 +158,28 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                 const gameTypeBgColor = gameData.gameType === 'tournament' ? 'bg-purple-600' : 'bg-blue-600';
                 const gameTypeTextColor = 'text-white'; // Use white text for both
                 
-                // Format date nicely (e.g., "Apr 20, 2025")
+                // Format date nicely (e.g., "Apr 20, 2025" in English or "20.4.2025" in Finnish)
                 let formattedDate = t('common.noDate', 'No Date');
                 try {
                     if (gameData.gameDate) {
-                        formattedDate = new Date(gameData.gameDate).toLocaleDateString(undefined, { 
-                            year: 'numeric', month: 'short', day: 'numeric' 
-                        });
+                        const dateObj = new Date(gameData.gameDate);
+                        const currentLanguage = i18n.language; // Get current language
+                        
+                        if (currentLanguage === 'fi') {
+                            // Finnish date format: DD.MM.YYYY
+                            formattedDate = dateObj.toLocaleDateString('fi-FI', {
+                                year: 'numeric', 
+                                month: 'numeric', 
+                                day: 'numeric'
+                            });
+                        } else {
+                            // English/default format: "Apr 20, 2025"
+                            formattedDate = dateObj.toLocaleDateString('en-US', { 
+                                year: 'numeric', 
+                                month: 'short', 
+                                day: 'numeric' 
+                            });
+                        }
                     }
                 } catch (e) {
                     console.error("Error formatting date:", gameData.gameDate, e);
@@ -137,7 +214,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                         className="flex-grow mr-4 px-4 py-2 bg-blue-600 text-white rounded-md shadow hover:bg-blue-700 transition duration-150 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-700 flex items-center justify-center"
                       >
                         <HiOutlineDocumentArrowDown className="w-5 h-5 mr-2" />
-                        {t('common.load', 'Load Game')}
+                        {t('loadGameModal.loadButton', 'Load Game')}
                       </button>
                     
                       <div className="relative flex-shrink-0">
@@ -187,7 +264,9 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
             </div>
           ) : (
             <p className="text-slate-400 italic text-center py-4">
-              {t('loadGameModal.noSavedGames', 'No saved games found.')}
+              {searchText || filterType !== 'all' 
+                ? t('loadGameModal.noFilterResults', 'No games match the current filter.')
+                : t('loadGameModal.noSavedGames', 'No saved games found.')}
             </p>
           )}
         </div>

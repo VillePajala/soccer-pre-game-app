@@ -240,6 +240,32 @@ if (!enTranslations.common) {
 }
 enTranslations.common.cancelButton = "Cancel";
 
+// Add load game modal translations if section doesn't exist
+if (!fiTranslations.loadGameModal) {
+  fiTranslations.loadGameModal = {};
+}
+
+// Add the filter translations for Finnish
+fiTranslations.loadGameModal.filter_all = "Kaikki";
+fiTranslations.loadGameModal.filter_season = "Sarja";
+fiTranslations.loadGameModal.filter_tournament = "Turnaus";
+fiTranslations.loadGameModal.filterPlaceholder = "Suodata nimellä/päivämäärällä...";
+fiTranslations.loadGameModal.loadButton = "Lataa Peli";
+fiTranslations.loadGameModal.noFilterResults = "Ei hakutuloksia.";
+
+// Add load game modal translations if section doesn't exist for English
+if (!enTranslations.loadGameModal) {
+  enTranslations.loadGameModal = {};
+}
+
+// Add the filter translations for English
+enTranslations.loadGameModal.filter_all = "All";
+enTranslations.loadGameModal.filter_season = "Season";
+enTranslations.loadGameModal.filter_tournament = "Tournament";
+enTranslations.loadGameModal.filterPlaceholder = "Filter by name/date...";
+enTranslations.loadGameModal.loadButton = "Load Game";
+enTranslations.loadGameModal.noFilterResults = "No games match the current filter.";
+
 // Generate a cache-busting version number
 // const cacheVersion = new Date().getTime();
 

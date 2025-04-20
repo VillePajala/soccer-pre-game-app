@@ -5,7 +5,13 @@
     "edit": "Muokkaa",
     "remove": "Poista",
     "closeButton": "Sulje",
-    "cancelButton": "Peruuta"
+    "cancelButton": "Peruuta",
+    "load": "Lataa",
+    "noDate": "Ei Päivämäärää",
+    "filterPlaceholder": "Suodata nimellä/päivämäärällä...",
+    "filter_all": "Kaikki",
+    "filter_season": "Sarja",
+    "filter_tournament": "Turnaus"
   },
   "controlBar": {
     "hardResetConfirmation": "Haluatko varmasti nollata koko sovelluksen? Kaikki tallennetut tiedot (pelaajat, tilastot, sijainnit) menetetään pysyvästi.",
@@ -26,7 +32,6 @@
     "tulospalveluP9": "P9 Alue Taso 1",
     "tulospalveluP9EK": "P/T 9 EK Kortteli (2016)",
     "saveGameAs": "Tallenna Peli Nimellä...",
-    "loadGame": "Lataa Peli",
     "startNewMatch": "Aloita Uusi Ottelu",
     "stats": "Tilastot",
     "training": "Harjoitusmateriaalit",
@@ -101,7 +106,8 @@
     "noTournamentGames": "Turnauspelejä ei ole vielä tallennettu.",
     "allTeamStatsTitle": "Kaikkien pelien joukkuetilastot",
     "allPlayerStatsTitle": "Kaikkien pelien pelaajatilastot",
-    "noSavedGames": "Pelejä ei ole vielä tallennettu."
+    "noSavedGames": "Pelejä ei ole vielä tallennettu.",
+    "noFilterResults": "Ei hakutuloksia."
   },
   "rosterSettingsModal": {
     "title": "Hallitse Kokoonpanoa",
@@ -141,7 +147,13 @@
     "exportAllExcelButton": "EXCEL",
     "exportAllJsonTooltip": "Vie kaikki pelit JSON-muodossa",
     "exportAllExcelTooltip": "Vie kaikki pelit CSV-tiedostoon (Excel-yhteensopiva)",
-    "closeButton": "Sulje"
+    "closeButton": "Sulje",
+    "filter_all": "Kaikki",
+    "filter_season": "Sarja",
+    "filter_tournament": "Turnaus",
+    "filterPlaceholder": "Suodata nimellä/päivämäärällä...",
+    "loadButton": "Lataa Peli",
+    "noFilterResults": "Ei hakutuloksia."
   },
   "saveGameModal": {
     "title": "Tallenna Peli Nimellä...",
@@ -351,5 +363,6 @@
     "skipButton": "Ohita",
     "startButton": "Aloita Peli",
     "opponentRequiredAlert": "Syötä vastustajan nimi."
-  }
+  },
+  "noFilterResults": "Ei hakutuloksia."
 } 
