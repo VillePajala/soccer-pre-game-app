@@ -29,6 +29,8 @@ interface GameStatsModalProps {
   gameDate: string;
   homeScore: number;
   awayScore: number;
+  gameLocation?: string;
+  gameTime?: string;
   availablePlayers: Player[];
   gameEvents: GameEvent[];
   gameNotes?: string; // Add optional game notes field
@@ -59,6 +61,8 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   gameDate,
   homeScore,
   awayScore,
+  gameLocation,
+  gameTime,
   availablePlayers,
   gameEvents,
   gameNotes = '', // Default to empty string
@@ -817,6 +821,22 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                 <div className="flex justify-center">
                   <input type="date" value={editGameDate} onChange={(e) => setEditGameDate(e.target.value)} className="block bg-slate-600 border border-slate-500 rounded-md shadow-sm py-1.5 px-3 text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" />
                 </div>
+                {/* Location */}
+                {gameLocation && (
+                  <div className="col-span-3 sm:col-span-1">
+                    <span className="font-semibold text-slate-400">{t('newGameSetupModal.locationLabel', 'Location')}:</span>
+                    <span className="ml-2 text-slate-200">{gameLocation}</span>
+                  </div>
+                )}
+
+                {/* Time */}
+                {gameTime && (
+                  <div className="col-span-3 sm:col-span-1">
+                    <span className="font-semibold text-slate-400">{t('newGameSetupModal.timeLabel', 'Time')}:</span>
+                    <span className="ml-2 text-slate-200">{gameTime}</span>
+                  </div>
+                )}
+                
                 {/* Save/Cancel Buttons */}
                 <div className="flex justify-end space-x-2 pt-2">
                     <button onClick={handleCancelEditInfo} className="px-3 py-1 bg-slate-500 hover:bg-slate-400 text-white rounded-md text-xs font-medium">{t('gameStatsModal.cancelButton', 'Cancel')}</button>

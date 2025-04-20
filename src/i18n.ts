@@ -65,6 +65,13 @@ fiTranslations.newGameSetupModal.gameTypeTournament = "Turnaus";
 fiTranslations.newGameSetupModal.skipButton = "Ohita";
 fiTranslations.newGameSetupModal.startButton = "Aloita Peli";
 fiTranslations.newGameSetupModal.opponentRequiredAlert = "Syötä vastustajan nimi.";
+// Add location and time translations
+fiTranslations.newGameSetupModal.locationLabel = "Paikka (Valinnainen)";
+fiTranslations.newGameSetupModal.locationPlaceholder = "esim. Kotikenttä, Stadion X";
+fiTranslations.newGameSetupModal.timeLabel = "Aika (TT:MM) (Valinnainen)";
+fiTranslations.newGameSetupModal.hourPlaceholder = "TT";
+fiTranslations.newGameSetupModal.minutePlaceholder = "MM";
+fiTranslations.newGameSetupModal.invalidTimeAlert = "Anna kelvollinen aika (Tunti 0-23, Minuutti 0-59) tai jätä molemmat kentät tyhjiksi.";
 
 // Add game stats modal translations
 if (!fiTranslations.gameStatsModal) {
@@ -175,6 +182,13 @@ enTranslations.newGameSetupModal.gameTypeTournament = "Tournament";
 enTranslations.newGameSetupModal.skipButton = "Skip";
 enTranslations.newGameSetupModal.startButton = "Start Game";
 enTranslations.newGameSetupModal.opponentRequiredAlert = "Please enter an opponent name.";
+// Add location and time translations
+enTranslations.newGameSetupModal.locationLabel = "Location (Optional)";
+enTranslations.newGameSetupModal.locationPlaceholder = "e.g., Home Field, Stadium X";
+enTranslations.newGameSetupModal.timeLabel = "Time (HH:MM) (Optional)";
+enTranslations.newGameSetupModal.hourPlaceholder = "HH";
+enTranslations.newGameSetupModal.minutePlaceholder = "MM";
+enTranslations.newGameSetupModal.invalidTimeAlert = "Please enter a valid time (Hour 0-23, Minute 0-59) or leave both fields empty.";
 
 // Add game stats modal translations for English
 if (!enTranslations.gameStatsModal) {

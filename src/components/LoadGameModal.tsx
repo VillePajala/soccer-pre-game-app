@@ -202,6 +202,13 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                     <div className="flex justify-between items-center text-sm text-slate-300">
                       <span className="text-slate-200">
                         {formattedDate}
+                        {/* Display location and time if available */}
+                        {gameData.gameLocation && (
+                            <span className="block text-xs text-slate-400 mt-1">{gameData.gameLocation}</span>
+                        )}
+                        {gameData.gameTime && (
+                            <span className="block text-xs text-slate-400 mt-1">{gameData.gameTime}</span>
+                        )}
                       </span>
                       <span className="font-bold text-xl text-yellow-400 tracking-wider">
                         {gameData.homeScore ?? 0} - {gameData.awayScore ?? 0}

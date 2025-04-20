@@ -74,6 +74,9 @@ export interface AppState {
   gameStatus: 'notStarted' | 'inProgress' | 'periodEnd' | 'gameEnd';
   selectedPlayerIds: string[]; // IDs of players selected for the current match
   gameType: GameType; // Add game type
+  // NEW: Optional fields for location and time
+  gameLocation?: string;
+  gameTime?: string; 
 }
 
 // Placeholder data - Initialize new fields
@@ -113,6 +116,8 @@ const initialState: AppState = {
   // Initialize selectedPlayerIds with all players from initial data
   selectedPlayerIds: initialAvailablePlayersData.map(p => p.id),
   gameType: 'season', // Default game type
+  gameLocation: '', // Initialize optional fields
+  gameTime: '', // Initialize optional fields
 };
 
 // Define new localStorage keys
@@ -222,6 +227,11 @@ export default function Home() {
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>(initialState.selectedPlayerIds); // Add state for selected player IDs
   console.log('Before useState(gameType)');
   const [gameType, setGameType] = useState<GameType>(initialState.gameType); // Add state for game type
+  // Add state for location and time
+  console.log('Before useState(gameLocation)');
+  const [gameLocation, setGameLocation] = useState<string>(initialState.gameLocation || '');
+  console.log('Before useState(gameTime)');
+  const [gameTime, setGameTime] = useState<string>(initialState.gameTime || '');
   // ... Timer state ...
   // ... Modal states ...
   // ... UI/Interaction states ...
@@ -976,72 +986,61 @@ export default function Home() {
   
   // NEW: Handler to actually reset state and set opponent/date/type from modal
   console.log('Before useCallback(handleFinalizeNewGame)');
-  const handleFinalizeNewGame = useCallback((newOpponentName: string, newGameDate: string, newGameType: GameType) => {
-    console.log(`Finalizing new game start. Opponent: ${newOpponentName}, Date: ${newGameDate}, Type: ${newGameType}`);
+  const handleFinalizeNewGame = useCallback((newOpponentName: string, newGameDate: string, newGameType: GameType, newGameLocation: string, newGameTime: string) => {
+    console.log(`Finalizing new game start. Opponent: ${newOpponentName}, Date: ${newGameDate}, Type: ${newGameType}, Location: ${newGameLocation}, Time: ${newGameTime}`);
 
-    // --- Reset State --- 
-    // Preserve roster (availablePlayers) but reset their goalie/card status
-    const resetAvailablePlayers = availablePlayers.map(p => ({ 
-      ...p, 
-      isGoalie: false, 
-      receivedFairPlayCard: false 
-    }));
-    setAvailablePlayers(resetAvailablePlayers);
-    
-    // Reset field state using hook setters
-    setPlayersOnField(initialState.playersOnField);
-    setOpponents(initialState.opponents);
-    setDrawings(initialState.drawings);
-    
-    // Reset other state managed directly in Home component
-    setShowPlayerNames(initialState.showPlayerNames);
-    // Keep existing teamName? Or reset?
-    // setTeamName(initialState.teamName); // Let's keep team name for now
-    setGameEvents(initialState.gameEvents);
-    setHomeScore(initialState.homeScore);
-    setAwayScore(initialState.awayScore);
-    setGameNotes(initialState.gameNotes);
-    setNumberOfPeriods(initialState.numberOfPeriods);
-    setPeriodDurationMinutes(initialState.periodDurationMinutes);
-    setCurrentPeriod(initialState.currentPeriod);
-    setGameStatus(initialState.gameStatus);
-    setSelectedPlayerIds(resetAvailablePlayers.map(p => p.id)); // Select all players from roster
+    // Reset session-specific state (players, timer, events, score, etc.)
+    // Create the specific initial state for the new game session
+    // Including the NEW location and time fields
+    const newInitialStateForHistory: AppState = {
+      playersOnField: [], // Reset player positions
+      opponents: [], // Reset opponents
+      drawings: [], // Clear drawings
+      availablePlayers: availablePlayers, // Keep the roster
+      showPlayerNames: true, // Default view
+      teamName: teamName, // Keep current team name
+      gameEvents: [], // Clear events
+      opponentName: newOpponentName, // Set new opponent
+      gameDate: newGameDate, // Set new date
+      homeScore: 0, // Reset score
+      awayScore: 0, // Reset score
+      gameNotes: '', // Clear notes
+      numberOfPeriods: 2, // Reset to default (or fetch from settings later)
+      periodDurationMinutes: subIntervalMinutes, // Reset to default (or fetch from settings later)
+      currentPeriod: 1, // Reset period
+      gameStatus: 'notStarted', // Reset status
+      selectedPlayerIds: availablePlayers.map(p => p.id), // Reselect all available players
+      gameType: newGameType, // Set game type
+      gameLocation: newGameLocation, // Set new location
+      gameTime: newGameTime, // Set new time
+    };
 
-    // Set the new opponent name, game date, and game type from the modal
-    setOpponentName(newOpponentName.trim() || t('gameStatsModal.opponentPlaceholder', 'Opponent'));
-    setGameDate(newGameDate || new Date().toISOString().split('T')[0]);
-    setGameType(newGameType); // Set the new game type
+    // Update component state directly from this new initial state
+    setPlayersOnField(newInitialStateForHistory.playersOnField);
+    setOpponents(newInitialStateForHistory.opponents);
+    setDrawings(newInitialStateForHistory.drawings);
+    // availablePlayers state remains the same (no change needed here)
+    setShowPlayerNames(newInitialStateForHistory.showPlayerNames);
+    setGameEvents(newInitialStateForHistory.gameEvents);
+    setOpponentName(newInitialStateForHistory.opponentName);
+    setGameDate(newInitialStateForHistory.gameDate);
+    setHomeScore(newInitialStateForHistory.homeScore);
+    setAwayScore(newInitialStateForHistory.awayScore);
+    setGameNotes(newInitialStateForHistory.gameNotes);
+    setNumberOfPeriods(newInitialStateForHistory.numberOfPeriods);
+    setPeriodDurationMinutes(newInitialStateForHistory.periodDurationMinutes);
+    setCurrentPeriod(newInitialStateForHistory.currentPeriod);
+    setGameStatus(newInitialStateForHistory.gameStatus);
+    setSelectedPlayerIds(newInitialStateForHistory.selectedPlayerIds);
+    setGameType(newInitialStateForHistory.gameType);
+    setGameLocation(newInitialStateForHistory.gameLocation || ''); // Set state for location, ensure string
+    setGameTime(newInitialStateForHistory.gameTime || ''); // Set state for time, ensure string
 
-    // Reset Timer
+    // Reset runtime states not part of AppState snapshot
     setTimeElapsedInSeconds(0);
     setIsTimerRunning(false);
-    setSubAlertLevel('none');
-    setNextSubDueTimeSeconds(subIntervalMinutes * 60); 
-    setCompletedIntervalDurations([]);
-    setLastSubConfirmationTimeSeconds(0);
-
-    // Reset History (Session Undo/Redo)
-    const newInitialStateForHistory: AppState = {
-      playersOnField: initialState.playersOnField,
-      opponents: initialState.opponents,
-      drawings: initialState.drawings,
-      availablePlayers: resetAvailablePlayers, // Use reset roster
-      showPlayerNames: initialState.showPlayerNames, 
-      teamName: teamName, // Keep current team name
-      gameEvents: initialState.gameEvents,
-      opponentName: newOpponentName.trim() || t('gameStatsModal.opponentPlaceholder', 'Opponent'),
-      gameDate: newGameDate || new Date().toISOString().split('T')[0],
-      homeScore: initialState.homeScore,
-      awayScore: initialState.awayScore,
-      gameNotes: initialState.gameNotes,
-      numberOfPeriods: initialState.numberOfPeriods,
-      periodDurationMinutes: initialState.periodDurationMinutes,
-      currentPeriod: initialState.currentPeriod,
-      gameStatus: initialState.gameStatus,
-      selectedPlayerIds: resetAvailablePlayers.map(p => p.id),
-      gameType: newGameType, // Use new game type
-    };
-    setHistory([newInitialStateForHistory]); 
+    setSubAlertLevel('none'); 
+    setHistory([newInitialStateForHistory]); // Start history with the new state
     setHistoryIndex(0);
     
     // Only automatically create a save file if user completed the setup form with an opponent name
@@ -1055,9 +1054,10 @@ export default function Home() {
       const formattedOpponent = newOpponentName.trim().replace(/\s+/g, '_');
       const defaultName = `${formattedTeam}_vs_${formattedOpponent}_${newGameDate || new Date().toISOString().split('T')[0]}`;
 
-      // Create a state snapshot
+      // Create a state snapshot using the new initial state we just created
       const currentSnapshot: AppState = {
         ...newInitialStateForHistory
+        // It already includes gameLocation and gameTime from the spread
       };
 
       // Save the game state
@@ -1212,10 +1212,11 @@ export default function Home() {
       console.log(`Saving as new game with ID: ${idToSave}`);
     }
 
-    let saveSuccess = false; // Flag to track success
+    let saveSuccess = false;
 
     try {
       // 1. Create the current game state snapshot
+      // Ensure location and time from component state are included
       const currentSnapshot: AppState = {
         playersOnField,
         opponents,
@@ -1224,7 +1225,6 @@ export default function Home() {
         showPlayerNames,
         teamName,
         gameEvents,
-        // Use the opponentName and gameDate from state for the snapshot
         opponentName: opponentName, 
         gameDate: gameDate,
         homeScore,
@@ -1234,8 +1234,10 @@ export default function Home() {
         periodDurationMinutes,
         currentPeriod,
         gameStatus,
-        selectedPlayerIds, // Make sure selectedPlayerIds are saved
-        gameType, // Include gameType in the saved state (use state variable)
+        selectedPlayerIds, 
+        gameType, 
+        gameLocation, // Include current gameLocation state
+        gameTime, // Include current gameTime state
       };
 
       // 2. Update the savedGames state and localStorage using the determined ID
@@ -1305,6 +1307,10 @@ export default function Home() {
         setPeriodDurationMinutes(stateToLoad.periodDurationMinutes || 10);
         setCurrentPeriod(stateToLoad.currentPeriod || 1);
         setGameStatus(stateToLoad.gameStatus || 'notStarted');
+        setSelectedPlayerIds(stateToLoad.selectedPlayerIds || []); // Load selected players or default to empty
+        setGameType(stateToLoad.gameType || 'season'); // Load game type or default to season
+        setGameLocation(stateToLoad.gameLocation || ''); // Load location or default to empty
+        setGameTime(stateToLoad.gameTime || ''); // Load time or default to empty
         
         // Reset session-specific state
         setHistory([stateToLoad]); // Start history with just the loaded state
@@ -1958,6 +1964,8 @@ export default function Home() {
           teamName={teamName}
           opponentName={opponentName}
           gameDate={gameDate}
+          gameLocation={gameLocation} // Pass gameLocation
+          gameTime={gameTime} // Pass gameTime
           homeScore={homeScore}
           awayScore={awayScore}
           availablePlayers={availablePlayers}
