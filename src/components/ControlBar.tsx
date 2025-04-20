@@ -26,7 +26,8 @@ import {
     HiOutlineFolderArrowDown,   // Icon for Save Game As...
     HiOutlineFolderOpen,       // Icon for Load Game...
     HiOutlineArrowPath,        // CORRECT Icon for Reset Stats
-    HiOutlineUsers            // Icon for Manage Roster
+    HiOutlineUsers,            // Icon for Manage Roster
+    HiOutlineArchiveBoxArrowDown // Use this for Quick Save
 } from 'react-icons/hi2'; // Using hi2 for Heroicons v2 Outline
 // Keep FaFutbol for now unless a good Heroicon alternative is found
 import { FaFutbol } from 'react-icons/fa';
@@ -62,6 +63,7 @@ interface ControlBarProps {
   onOpenLoadGameModal: () => void; // NEW PROP
   onStartNewGame: () => void; // CHANGED from onResetGameStats
   onOpenRosterModal: () => void; // Add prop for opening roster modal
+  onQuickSave: () => void; // Add prop for quick save
 }
 
 // Helper function to format time
@@ -97,7 +99,8 @@ const ControlBar: React.FC<ControlBarProps> = ({
   onOpenSaveGameModal, // Destructure new prop
   onOpenLoadGameModal, // Destructure new prop
   onStartNewGame, // CHANGED from onResetGameStats
-  onOpenRosterModal // Destructure the new prop
+  onOpenRosterModal, // Destructure the new prop
+  onQuickSave // Destructure quick save handler
 }) => {
   const { t, i18n } = useTranslation(); // Standard hook
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
@@ -251,6 +254,9 @@ const ControlBar: React.FC<ControlBarProps> = ({
                <div className="w-full flex-shrink-0 overflow-y-auto max-h-96">
                  <div className="py-1"> 
                    {/* Group 1: Game Management - Use t() */}
+                   <button onClick={wrapHandler(onQuickSave)} className="w-full flex items-center px-3 py-2 text-sm text-slate-200 hover:bg-slate-600">
+                     <HiOutlineArchiveBoxArrowDown className={menuIconSize} /> {t('controlBar.saveGame', 'Save')}
+                   </button>
                    <button onClick={wrapHandler(onOpenSaveGameModal)} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600">
                      <HiOutlineFolderArrowDown className={menuIconSize} />{t('controlBar.saveGameAs', 'Save Game As...')}
                    </button>

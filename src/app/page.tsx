@@ -1826,6 +1826,87 @@ export default function Home() {
   }, [t, currentGameId, savedGames, handleOpenSaveGameModal]); // Dependencies
   // ---- END MOVE handleStartNewGame UP ----
 
+  // --- NEW: Quick Save Handler ---
+  const handleQuickSaveGame = useCallback(() => {
+    if (currentGameId && currentGameId !== DEFAULT_GAME_ID) {
+      console.log(`Quick saving game with ID: ${currentGameId}`);
+      try {
+        // 1. Create the current game state snapshot
+        const currentSnapshot: AppState = {
+          playersOnField,
+          opponents,
+          drawings,
+          availablePlayers,
+          showPlayerNames,
+          teamName,
+          gameEvents,
+          opponentName,
+          gameDate,
+          homeScore,
+          awayScore,
+          gameNotes,
+          numberOfPeriods,
+          periodDurationMinutes,
+          currentPeriod,
+          gameStatus,
+          selectedPlayerIds,
+          gameType,
+          gameLocation,
+          gameTime,
+        };
+
+        // 2. Update the savedGames state and localStorage
+        const updatedSavedGames = { ...savedGames, [currentGameId]: currentSnapshot };
+        setSavedGames(updatedSavedGames);
+        localStorage.setItem(SAVED_GAMES_KEY, JSON.stringify(updatedSavedGames));
+
+        // 3. Update history to reflect the saved state
+        // This makes the quick save behave like loading a game, resetting undo/redo
+        setHistory([currentSnapshot]);
+        setHistoryIndex(0);
+
+        console.log(`Game quick saved successfully with ID: ${currentGameId}`);
+        // TODO: Add visual feedback (e.g., a toast notification)
+
+      } catch (error) {
+        console.error("Failed to quick save game state:", error);
+        alert("Error quick saving game.");
+      }
+    } else {
+      // If no valid current game ID, trigger the "Save As" modal
+      console.log("No current game ID, opening Save As modal instead.");
+      handleOpenSaveGameModal();
+    }
+  }, [
+    currentGameId,
+    savedGames,
+    playersOnField,
+    opponents,
+    drawings,
+    availablePlayers,
+    showPlayerNames,
+    teamName,
+    gameEvents,
+    opponentName,
+    gameDate,
+    homeScore,
+    awayScore,
+    gameNotes,
+    numberOfPeriods,
+    periodDurationMinutes,
+    currentPeriod,
+    gameStatus,
+    selectedPlayerIds,
+    gameType,
+    gameLocation,
+    gameTime,
+    setSavedGames,
+    setHistory,
+    setHistoryIndex,
+    handleOpenSaveGameModal // Added dependency
+  ]);
+  // --- END Quick Save Handler ---
+
   // Render null or a loading indicator until state is loaded
   // Note: Console log added before the check itself
   console.log('Before checking isLoaded');
@@ -1937,6 +2018,7 @@ export default function Home() {
           onOpenLoadGameModal={handleOpenLoadGameModal}
           onStartNewGame={handleStartNewGame}
           onOpenRosterModal={openRosterModal} // Pass the handler
+          onQuickSave={handleQuickSaveGame} // Pass the quick save handler
         />
         {/* Instructions Modal */}
         <InstructionsModal 

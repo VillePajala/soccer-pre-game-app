@@ -130,6 +130,7 @@ fiTranslations.controlBar.hardReset = "Nollaa Sovellus";
 fiTranslations.controlBar.backButton = "Takaisin";
 fiTranslations.controlBar.tulospalveluP9 = "P9 Alue Taso 1";
 fiTranslations.controlBar.tulospalveluP9EK = "P/T 9 EK Kortteli (2016)";
+fiTranslations.controlBar.saveGame = "Tallenna";
 
 // Add common namespace if missing
 if (!fiTranslations.common) {
@@ -247,6 +248,7 @@ enTranslations.controlBar.hardReset = "Hard Reset";
 enTranslations.controlBar.backButton = "Back";
 enTranslations.controlBar.tulospalveluP9 = "P9 Alue Taso 1";
 enTranslations.controlBar.tulospalveluP9EK = "P/T 9 EK Kortteli (2016)";
+enTranslations.controlBar.saveGame = "Save";
 
 // Add common namespace if missing
 if (!enTranslations.common) {
