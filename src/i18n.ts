@@ -37,6 +37,24 @@ if (!fiTranslations.timerOverlay) {
 }
 fiTranslations.timerOverlay.teamGoalButton = "Kirjaa maali";
 fiTranslations.timerOverlay.opponentGoalButton = "Vastustaja +1";
+fiTranslations.timerOverlay.startButton = "Aloita";
+fiTranslations.timerOverlay.pauseButton = "Tauko";
+fiTranslations.timerOverlay.resumeButton = "Jatka";
+fiTranslations.timerOverlay.startPeriodButton = "Aloita Jakso {{period}}";
+fiTranslations.timerOverlay.gameOverButton = "Peli Ohi";
+fiTranslations.timerOverlay.editOpponentNameTitle = "Klikkaa muokataksesi vastustajan nimeä";
+fiTranslations.timerOverlay.timeSinceLastSubCombined = "Viim. vaihto:";
+fiTranslations.timerOverlay.gameNotStarted = "Ottelu ei ole alkanut";
+fiTranslations.timerOverlay.halfTimeInProgress = "Puoliaika {{currentPeriod}}/2";
+fiTranslations.timerOverlay.gameEnded = "Peli Päättynyt";
+fiTranslations.timerOverlay.halfTimeEnded = "Puoliaika {{currentPeriod}} Päättynyt";
+fiTranslations.timerOverlay.resetButton = "Nollaa";
+fiTranslations.timerOverlay.periodsLabel = "Jaksot";
+fiTranslations.timerOverlay.durationLabel = "Kesto";
+fiTranslations.timerOverlay.subIntervalLabel = "Vaihtoväli";
+fiTranslations.timerOverlay.confirmSubButton = "Vaihto tehty";
+fiTranslations.timerOverlay.historyTitle = "Peliaikahistoria";
+fiTranslations.timerOverlay.intervalLogFormat = "P{{period}}: {{duration}}";
 
 // Add save game modal translations
 if (!fiTranslations.saveGameModal) {
@@ -155,6 +173,24 @@ if (!enTranslations.timerOverlay) {
 }
 enTranslations.timerOverlay.teamGoalButton = "Log Goal";
 enTranslations.timerOverlay.opponentGoalButton = "Opponent +1";
+enTranslations.timerOverlay.startButton = "Start";
+enTranslations.timerOverlay.pauseButton = "Pause";
+enTranslations.timerOverlay.resumeButton = "Resume";
+enTranslations.timerOverlay.startPeriodButton = "Start Period {{period}}";
+enTranslations.timerOverlay.gameOverButton = "Game Over";
+enTranslations.timerOverlay.editOpponentNameTitle = "Click to edit opponent name";
+enTranslations.timerOverlay.timeSinceLastSubCombined = "Last sub:";
+enTranslations.timerOverlay.gameNotStarted = "Game not started";
+enTranslations.timerOverlay.halfTimeInProgress = "Half Time {{currentPeriod}}/2";
+enTranslations.timerOverlay.gameEnded = "Game Ended";
+enTranslations.timerOverlay.halfTimeEnded = "End of Half Time {{currentPeriod}}";
+enTranslations.timerOverlay.resetButton = "Reset";
+enTranslations.timerOverlay.periodsLabel = "Periods";
+enTranslations.timerOverlay.durationLabel = "Duration";
+enTranslations.timerOverlay.subIntervalLabel = "Sub Interval";
+enTranslations.timerOverlay.confirmSubButton = "Confirm Sub";
+enTranslations.timerOverlay.historyTitle = "Play Time History";
+enTranslations.timerOverlay.intervalLogFormat = "P{{period}}: {{duration}}";
 
 // Add save game modal translations for English
 if (!enTranslations.saveGameModal) {

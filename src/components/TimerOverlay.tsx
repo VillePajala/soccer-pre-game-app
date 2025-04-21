@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaPlay, FaPause, FaUndo } from 'react-icons/fa'; // Import icons
 import { useTranslation } from 'react-i18next'; // Import translation hook
+import { IntervalLog } from '@/app/page'; // Import the IntervalLog interface
 
 // Helper function to format time (copied from ControlBar for now)
 // TODO: Consider moving to a shared utility file
@@ -16,7 +17,7 @@ interface TimerOverlayProps {
   timeElapsedInSeconds: number;
   subAlertLevel: 'none' | 'warning' | 'due';
   onSubstitutionMade: () => void;
-  completedIntervalDurations: number[];
+  completedIntervalDurations: IntervalLog[];
   subIntervalMinutes: number;
   onSetSubInterval: (minutes: number) => void;
   isTimerRunning: boolean;
@@ -231,9 +232,8 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
                         // For single period games, no text needed
                         ''
                     ) : (
-                        // For 2 periods (half times), just show which half time
-                        t('timerOverlay.halfTimeInProgress', 'Puoliaika {currentPeriod}/2')
-                            .replace('{currentPeriod}', String(currentPeriod))
+                        // Use t() interpolation directly
+                        t('timerOverlay.halfTimeInProgress', 'Half Time {{currentPeriod}}/2', { currentPeriod: currentPeriod })
                     )}
                 </span>
             )}
@@ -241,8 +241,8 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
                 <span className="text-base text-orange-400 font-medium">
                     {numberOfPeriods === 1 ? 
                         t('timerOverlay.gameEnded', 'Game Ended') :
-                        t('timerOverlay.halfTimeEnded', 'End of Half Time {currentPeriod}')
-                            .replace('{currentPeriod}', String(currentPeriod))
+                        // Use t() interpolation directly
+                        t('timerOverlay.halfTimeEnded', 'End of Half Time {{currentPeriod}}', { currentPeriod: currentPeriod })
                     }
                 </span>
             )}
@@ -269,7 +269,7 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
             disabled={timeElapsedInSeconds === 0 && gameStatus === 'notStarted'} // Only disable if truly at start
           >
             <FaUndo size={14}/>
-            <span>{t('timerControls.resetButton', 'Reset')}</span>
+            <span>{t('timerOverlay.resetButton', 'Reset')}</span>
           </button>
         </div>
         
@@ -365,10 +365,15 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
         {/* Play Time History - only show if there are entries */}
         {completedIntervalDurations.length > 0 && (
           <div className="bg-slate-800/60 backdrop-blur-sm p-3 rounded-lg w-full max-h-32 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-700/50">
-            <h3 className="text-sm font-semibold mb-1 text-center text-slate-300">{t('timerOverlay.historyTitle')}</h3>
+            <h3 className="text-sm font-semibold mb-1 text-center text-slate-300">{t('timerOverlay.historyTitle', 'Play Time History')}</h3>
             <ul className="list-none text-slate-400 text-sm text-center space-y-1">
-              {completedIntervalDurations.map((duration, index) => (
-                <li key={index}>{formatTime(duration)}</li>
+              {completedIntervalDurations.map((log, index) => (
+                <li key={log.timestamp || index}>
+                  {t('timerOverlay.intervalLogFormat', 'P{{period}}: {{duration}}', {
+                    period: log.period,
+                    duration: formatTime(log.duration)
+                  })}
+                </li>
               ))}
             </ul>
           </div>

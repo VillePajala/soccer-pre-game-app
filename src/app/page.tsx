@@ -52,6 +52,13 @@ export interface GameEvent {
   assisterId?: string;
 }
 
+// Define structure for substitution interval logs
+export interface IntervalLog {
+  duration: number;
+  period: number;
+  timestamp: number; // Game time (timeElapsedInSeconds) when the interval ended
+}
+
 // Define the structure for the application state (for history)
 export interface AppState {
   playersOnField: Player[];
@@ -77,6 +84,8 @@ export interface AppState {
   // NEW: Optional fields for location and time
   gameLocation?: string;
   gameTime?: string; 
+  completedIntervalDurations: IntervalLog[]; // Add completed interval logs
+  lastSubConfirmationTimeSeconds: number; // Add last substitution confirmation time
 }
 
 // Placeholder data - Initialize new fields
@@ -118,6 +127,8 @@ const initialState: AppState = {
   gameType: 'season', // Default game type
   gameLocation: '', // Initialize optional fields
   gameTime: '', // Initialize optional fields
+  completedIntervalDurations: [], // Initialize completed interval logs
+  lastSubConfirmationTimeSeconds: 0, // Initialize last substitution confirmation time
 };
 
 // Define new localStorage keys
@@ -263,7 +274,7 @@ export default function Home() {
   console.log('Before useState(subAlertLevel)');
   const [subAlertLevel, setSubAlertLevel] = useState<'none' | 'warning' | 'due'>('none'); 
   console.log('Before useState(completedIntervalDurations)');
-  const [completedIntervalDurations, setCompletedIntervalDurations] = useState<number[]>([]);
+  const [completedIntervalDurations, setCompletedIntervalDurations] = useState<IntervalLog[]>([]); // Use IntervalLog[]
   console.log('Before useState(lastSubConfirmationTimeSeconds)');
   const [lastSubConfirmationTimeSeconds, setLastSubConfirmationTimeSeconds] = useState<number>(0);
   
@@ -478,6 +489,10 @@ export default function Home() {
           gameStatus,
           selectedPlayerIds,
           gameType,
+          gameLocation,
+          gameTime,
+          completedIntervalDurations,
+          lastSubConfirmationTimeSeconds,
         };
 
         // 2. Read the *current* collection from localStorage
@@ -514,7 +529,9 @@ export default function Home() {
       gameEvents, opponentName, gameDate, homeScore, awayScore, gameNotes,
       numberOfPeriods, periodDurationMinutes, currentPeriod, gameStatus,
       selectedPlayerIds, // Add as dependency for saving
-      gameType // Add gameType to dependencies
+      gameType, // Add gameType to dependencies
+      completedIntervalDurations,
+      lastSubConfirmationTimeSeconds
     ]);
 
   // **** ADDED: Effect to prompt for setup if opponent name is default ****
@@ -753,7 +770,7 @@ export default function Home() {
       setGameStatus('inProgress');
       setCurrentPeriod(1);
       setTimeElapsedInSeconds(0); // Ensure timer starts from 0
-      setCompletedIntervalDurations([]);
+      setCompletedIntervalDurations([]); // Reset for a completely new game start
       setLastSubConfirmationTimeSeconds(0);
       setNextSubDueTimeSeconds(subIntervalMinutes * 60);
       setSubAlertLevel('none');
@@ -767,7 +784,7 @@ export default function Home() {
       // Reset sub timer for the new period relative to the end of the previous
       const previousPeriodEndTime = (nextPeriod - 1) * periodDurationMinutes * 60;
       setTimeElapsedInSeconds(previousPeriodEndTime); // Start timer from period end time
-      setCompletedIntervalDurations([]); // Clear history for new period
+      // DO NOT reset completedIntervalDurations here
       setLastSubConfirmationTimeSeconds(previousPeriodEndTime);
       setNextSubDueTimeSeconds(previousPeriodEndTime + (subIntervalMinutes * 60));
       setSubAlertLevel('none');
@@ -792,7 +809,7 @@ export default function Home() {
     setNextSubDueTimeSeconds(5 * 60);
     setSubAlertLevel('none');
     setLastSubConfirmationTimeSeconds(0);
-    setCompletedIntervalDurations([]);
+    setCompletedIntervalDurations([]); // Correctly reset here
     setCurrentPeriod(1);
     setGameStatus('notStarted'); // Reset game status
     console.log("Timer and game progress reset.");
@@ -803,9 +820,17 @@ export default function Home() {
     const duration = timeElapsedInSeconds - lastSubConfirmationTimeSeconds;
     const currentElapsedTime = timeElapsedInSeconds; // Capture current time *before* state updates
     const currentIntervalMins = subIntervalMinutes; // Capture interval
+    const currentPeriodNumber = currentPeriod; // Capture current period
+
+    // Create the log entry
+    const newIntervalLog: IntervalLog = {
+      duration: duration,
+      period: currentPeriodNumber,
+      timestamp: currentElapsedTime
+    };
     
     // Update non-alert states immediately
-    setCompletedIntervalDurations(prev => [duration, ...prev]); 
+    setCompletedIntervalDurations(prev => [newIntervalLog, ...prev]); // Add the new log object
     setLastSubConfirmationTimeSeconds(currentElapsedTime);
     
     // Calculate the next due time based on the previous one
@@ -1013,6 +1038,8 @@ export default function Home() {
       gameType: newGameType, // Set game type
       gameLocation: newGameLocation, // Set new location
       gameTime: newGameTime, // Set new time
+      completedIntervalDurations: [], // Reset interval logs for new game
+      lastSubConfirmationTimeSeconds: 0, // Reset last substitution confirmation time
     };
 
     // Update component state directly from this new initial state
@@ -1040,6 +1067,7 @@ export default function Home() {
     setTimeElapsedInSeconds(0);
     setIsTimerRunning(false);
     setSubAlertLevel('none'); 
+    setCompletedIntervalDurations([]); // Reset interval logs for new game
     setHistory([newInitialStateForHistory]); // Start history with the new state
     setHistoryIndex(0);
     
@@ -1238,6 +1266,8 @@ export default function Home() {
         gameType, 
         gameLocation, // Include current gameLocation state
         gameTime, // Include current gameTime state
+        completedIntervalDurations,
+        lastSubConfirmationTimeSeconds,
       };
 
       // 2. Update the savedGames state and localStorage using the determined ID
@@ -1853,6 +1883,8 @@ export default function Home() {
           gameType,
           gameLocation,
           gameTime,
+          completedIntervalDurations,
+          lastSubConfirmationTimeSeconds,
         };
 
         // 2. Update the savedGames state and localStorage
@@ -1947,7 +1979,7 @@ export default function Home() {
               timeElapsedInSeconds={timeElapsedInSeconds} 
               subAlertLevel={subAlertLevel}
               onSubstitutionMade={handleSubstitutionMade} 
-              completedIntervalDurations={completedIntervalDurations}
+              completedIntervalDurations={completedIntervalDurations} // This line should now pass IntervalLog[]
               subIntervalMinutes={subIntervalMinutes}
               onSetSubInterval={handleSetSubInterval}
               isTimerRunning={isTimerRunning}
