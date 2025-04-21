@@ -1268,9 +1268,8 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
         <div className="flex flex-col gap-2 p-3 border-t border-slate-700 bg-slate-800/60">
           {/* Row 1: Export Buttons */}
           <div className="flex gap-2">
-            {/* Conditionally render JSON export based on availability */}
-            {((activeTab === 'current' && onExportOneJson && currentGameId && currentGameId !== '__default_unsaved__') || 
-             (activeTab !== 'current' && onExportAllJson)) && (
+            {/* Conditionally render JSON export based on availability & tab */}
+            {(activeTab === 'current' && onExportOneJson && currentGameId && currentGameId !== '__default_unsaved__') || (activeTab !== 'current' && onExportAllJson) ? (
               <button
                 onClick={() => {
                   if (activeTab === 'current' && onExportOneJson && currentGameId) {
@@ -1289,10 +1288,9 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                 {/* Use static key/text */}
                 {t('gameStatsModal.exportJsonButton', 'Export JSON')}
               </button>
-            )}
-            {/* Conditionally render CSV export based on availability */}
-             {((activeTab === 'current' && onExportOneCsv && currentGameId && currentGameId !== '__default_unsaved__') || 
-             (activeTab !== 'current' && onExportAllCsv)) && (
+            ) : null}
+            {/* Conditionally render CSV export based on availability & tab */}
+             {(activeTab === 'current' && onExportOneCsv && currentGameId && currentGameId !== '__default_unsaved__') || (activeTab !== 'current' && onExportAllCsv) ? (
               <button
                 onClick={() => {
                     if (activeTab === 'current' && onExportOneCsv && currentGameId) {
@@ -1311,7 +1309,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                  {/* Use static key/text */}
                  {t('gameStatsModal.exportCsvButton', 'Export CSV')}
               </button>
-            )}
+            ) : null}
           </div>
 
           {/* Row 2: Close Button */}
