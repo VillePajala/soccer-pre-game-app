@@ -1224,8 +1224,8 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-      {/* Modal Content Wrapper - Adjusted max-height and added flex-col */}
-      <div className="bg-slate-800 rounded-lg shadow-xl w-full max-w-4xl border border-slate-600 max-h-[calc(100vh-theme(space.8))] flex flex-col overflow-hidden">
+      {/* Modal Content Wrapper - Use explicit height instead of max-height */}
+      <div className="bg-slate-800 rounded-lg shadow-xl w-full max-w-4xl border border-slate-600 h-[calc(100vh-theme(space.8))] flex flex-col overflow-hidden">
         {/* Modal Header */}
         <div className="flex justify-between items-center p-4 border-b border-slate-700">
           <h2 className="text-xl font-semibold text-yellow-300">
@@ -1286,11 +1286,8 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                 // flex-1 makes it share space in its row
                 className="flex-1 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-medium transition-colors shadow-sm min-h-9 flex items-center justify-center"
               >
-                {/* Dynamically change button text based on tab */}
-                {activeTab === 'current' 
-                  ? t('gameStatsModal.exportJsonButtonCurrent', 'Export Current JSON') 
-                  : t(`gameStatsModal.exportJsonButton_${activeTab}`, `Export ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} JSON`)
-                }
+                {/* Use static key/text */}
+                {t('gameStatsModal.exportJsonButton', 'Export JSON')}
               </button>
             )}
             {/* Conditionally render CSV export based on availability */}
@@ -1311,11 +1308,8 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                   // flex-1 makes it share space in its row
                   className="flex-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-xs font-medium transition-colors shadow-sm min-h-9 flex items-center justify-center"
               >
-                 {/* Dynamically change button text based on tab */}
-                 {activeTab === 'current' 
-                  ? t('gameStatsModal.exportCsvButtonCurrent', 'Export Current CSV') 
-                  : t(`gameStatsModal.exportCsvButton_${activeTab}`, `Export ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} CSV`)
-                 }
+                 {/* Use static key/text */}
+                 {t('gameStatsModal.exportCsvButton', 'Export CSV')}
               </button>
             )}
           </div>
