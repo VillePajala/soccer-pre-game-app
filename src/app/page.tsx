@@ -2110,6 +2110,8 @@ export default function Home() {
           // Pass selection state and handler
           selectedPlayerIds={selectedPlayerIds}
           onTogglePlayerSelection={handleTogglePlayerSelection}
+          teamName={teamName}
+          onTeamNameChange={handleTeamNameChange}
         />
 
       </div>

@@ -26,6 +26,8 @@ interface RosterSettingsModalProps {
   onAwardFairPlayCard?: (playerId: string) => void;
   selectedPlayerIds: string[];
   onTogglePlayerSelection: (playerId: string) => void;
+  teamName: string;
+  onTeamNameChange: (newName: string) => void;
 }
 
 const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
@@ -40,11 +42,18 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
   onAddPlayer,
   onAwardFairPlayCard,
   selectedPlayerIds,
-  onTogglePlayerSelection
+  onTogglePlayerSelection,
+  teamName,
+  onTeamNameChange
 }) => {
   const { t } = useTranslation();
   const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
   const [editPlayerData, setEditPlayerData] = useState<{ name: string; jerseyNumber: string; notes: string; nickname: string }>({ name: '', jerseyNumber: '', notes: '', nickname: '' });
+
+  // State for team name editing
+  const [isEditingTeamName, setIsEditingTeamName] = useState(false);
+  const [editedTeamName, setEditedTeamName] = useState(teamName);
+  const teamNameInputRef = useRef<HTMLInputElement>(null);
 
   // State for adding a new player
   const [isAddingPlayer, setIsAddingPlayer] = useState(false);
@@ -177,6 +186,40 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
   };
   // --- End New Player Handlers ---
 
+  // Handle team name input change
+  const handleTeamNameInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditedTeamName(e.target.value);
+  };
+
+  // Handle team name save
+  const handleSaveTeamName = () => {
+    if (editedTeamName.trim()) {
+      onTeamNameChange(editedTeamName.trim());
+    } else {
+      setEditedTeamName(teamName); // Reset to original if empty
+    }
+    setIsEditingTeamName(false);
+  };
+
+  // Handle cancel team name edit
+  const handleCancelTeamNameEdit = () => {
+    setEditedTeamName(teamName);
+    setIsEditingTeamName(false);
+  };
+
+  // Focus team name input when editing starts
+  useEffect(() => {
+    if (isEditingTeamName && teamNameInputRef.current) {
+      teamNameInputRef.current.focus();
+      teamNameInputRef.current.select();
+    }
+  }, [isEditingTeamName]);
+
+  // Update team name state when prop changes
+  useEffect(() => {
+    setEditedTeamName(teamName);
+  }, [teamName]);
+
   if (!isOpen) return null;
 
   return (
@@ -190,6 +233,51 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
             <HiOutlineXMark className="w-6 h-6" />
           </button> */}
         </div>
+
+        {/* Team Name Section */}
+        <section className="p-4 border-b border-slate-700 flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <div className="font-semibold text-slate-300 text-sm">{t('rosterSettingsModal.teamNameLabel', 'Team Name')}:</div>
+            {isEditingTeamName ? (
+              <div className="flex items-center">
+                <input
+                  ref={teamNameInputRef}
+                  type="text"
+                  value={editedTeamName}
+                  onChange={handleTeamNameInputChange}
+                  className="bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                />
+                <div className="flex ml-2">
+                  <button 
+                    onClick={handleSaveTeamName} 
+                    className="text-green-500 hover:text-green-400 p-1 rounded hover:bg-slate-600" 
+                    title={t('common.save', 'Save')}
+                  >
+                    <HiOutlineCheck className="w-5 h-5" />
+                  </button>
+                  <button 
+                    onClick={handleCancelTeamNameEdit} 
+                    className="text-red-500 hover:text-red-400 p-1 rounded hover:bg-slate-600" 
+                    title={t('common.cancel', 'Cancel')}
+                  >
+                    <HiOutlineXMark className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center">
+                <span className="text-slate-100">{teamName}</span>
+                <button 
+                  onClick={() => setIsEditingTeamName(true)} 
+                  className="text-blue-400 hover:text-blue-300 ml-2 p-1 rounded hover:bg-slate-700"
+                  title={t('common.edit', 'Edit')}
+                >
+                  <HiOutlinePencil className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </div>
+        </section>
 
         {/* Add Player Section - Moved here, below header, outside scroll */}
         <section className="p-4 border-b border-slate-700 flex-shrink-0">
