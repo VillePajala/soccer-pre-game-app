@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { GameType } from '@/components/SaveGameModal';
-import i18n from '../i18n'; // Import i18n instance
+import { GameType } from './SaveGameModal';
 
 interface NewGameSetupModalProps {
   isOpen: boolean;

@@ -119,7 +119,7 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName
       handleFinishEditingTeamName();
     }
     // Dependencies: We only care when these two states change in relation to each other.
-  }, [isEditingTeamName, selectedPlayerIdFromBar]);
+  }, [isEditingTeamName, selectedPlayerIdFromBar, handleFinishEditingTeamName]);
 
   return (
     <div 

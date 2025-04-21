@@ -49,26 +49,6 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const lastTapTimeRef = useRef<number>(0); // Ref for double-tap detection
   
-  // Update editedName if the props change (e.g., via undo/redo)
-  useEffect(() => {
-    setEditedName(nickname || fullName);
-  }, [nickname, fullName]);
-
-  // Focus input when editing starts
-  useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
-    }
-  }, [isEditing]);
-
-  // Calculate goals and assists for this player
-  const playerStats = useMemo(() => {
-    const goals = gameEvents.filter(event => event.type === 'goal' && event.scorerId === id).length;
-    const assists = gameEvents.filter(event => event.type === 'goal' && event.assisterId === id).length;
-    return { goals, assists };
-  }, [gameEvents, id]);
-
   const handleFinishEditing = (reason: string = "unknown") => { // Add reason param
     if (isEditing) {
       console.log(`PlayerDisk (${id}): Finishing edit (Reason: ${reason}).`); // Add log
@@ -86,6 +66,26 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
       }
     }
   };
+
+  // Update editedName if the props change (e.g., via undo/redo)
+  useEffect(() => {
+    setEditedName(nickname || fullName);
+  }, [nickname, fullName]);
+
+  // Focus input when editing starts
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing, handleFinishEditing]);
+
+  // Calculate goals and assists for this player
+  const playerStats = useMemo(() => {
+    const goals = gameEvents.filter(event => event.type === 'goal' && event.scorerId === id).length;
+    const assists = gameEvents.filter(event => event.type === 'goal' && event.assisterId === id).length;
+    return { goals, assists };
+  }, [gameEvents, id]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEditedName(e.target.value);

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SavedGamesCollection, AppState } from '@/app/page'; // Adjust path if necessary, Import AppState
+import { SavedGamesCollection, GameEvent } from '@/app/page'; // Remove AppState import
 import i18n from '../i18n'; // Import i18n directly
 import { 
   HiOutlineDocumentArrowDown, 

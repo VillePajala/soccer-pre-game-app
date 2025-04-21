@@ -463,7 +463,10 @@ export default function Home() {
         }
         setIsLoaded(true); // Mark loading as complete
     }
-  }, [setAvailablePlayers, setDrawings, setOpponents, setPlayersOnField, hasSkippedInitialSetup]); // <-- Add hasSkippedInitialSetup to dependency array
+  }, [setAvailablePlayers, setDrawings, setOpponents, setPlayersOnField, hasSkippedInitialSetup, 
+      // Add missing dependencies
+      gameLocation, gameTime, subIntervalMinutes
+  ]); 
 
   // --- Save state to localStorage --- 
   console.log('Before useEffect(auto-save)');
@@ -1161,7 +1164,11 @@ export default function Home() {
 
     console.log("Session state reset with new opponent/date/type.");
     setIsNewGameSetupModalOpen(false); // Close the setup modal
-  }, [availablePlayers, savedGames, setAvailablePlayers, setDrawings, setOpponents, setPlayersOnField, subIntervalMinutes, t, teamName]);
+  }, [availablePlayers, savedGames, 
+      // Remove unnecessary dependencies: setAvailablePlayers, subIntervalMinutes, t
+      // Keep: handleOpenSaveGameModal, setDrawings, setOpponents, setPlayersOnField, teamName
+      setDrawings, setOpponents, setPlayersOnField, teamName
+  ]);
 
   // NEW: Handler to cancel the new game setup
   console.log('Before useCallback(handleCancelNewGameSetup)');
