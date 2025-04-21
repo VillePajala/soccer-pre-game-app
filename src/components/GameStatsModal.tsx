@@ -44,6 +44,12 @@ interface GameStatsModalProps {
   onAwardFairPlayCard?: (playerId: string) => void; // Add Fair Play handler prop
   selectedPlayerIds: string[]; // Add prop for selected player IDs
   savedGames: SavedGamesCollection; // Add savedGames prop
+  // Export props
+  currentGameId: string | null; // Needed to know which game to export
+  onExportOneJson?: (gameId: string) => void;
+  onExportOneCsv?: (gameId: string) => void;
+  onExportAllJson?: (gameTypeFilter?: GameType) => void; // Bulk export JSON
+  onExportAllCsv?: (gameTypeFilter?: GameType) => void; // Bulk export CSV
 }
 
 // Helper to format time from seconds to MM:SS
@@ -75,6 +81,12 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   onAwardFairPlayCard, // Destructure the new prop
   selectedPlayerIds, // Destructure selected IDs
   savedGames, // Destructure savedGames prop
+  // Destructure export props
+  currentGameId,
+  onExportOneJson,
+  onExportOneCsv,
+  onExportAllJson, // Destructure bulk handlers
+  onExportAllCsv, // Destructure bulk handlers
 }) => {
   const { t } = useTranslation();
 
@@ -1250,20 +1262,69 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
           {renderTabContent()}
         </div>
 
-        {/* Modal Footer (Optional) - Example buttons removed as handlers are removed */}
-        {/* 
-        <div className="p-3 bg-slate-900 border-t border-slate-700 flex justify-end space-x-2">
-          <button ...>
-            Export JSON
-            </button>
-          <button ...>
-            Export EXCEL
-          </button>
-           <button ... >
-             Reset Stats
+        {/* Modal Footer - Add Export Buttons */}
+        <div className="flex justify-between items-center p-3 border-t border-slate-700 bg-slate-800/60">
+          {/* Export Button Group */}
+          <div className="flex gap-2">
+            {/* Conditionally render JSON export based on availability */}
+            {((activeTab === 'current' && onExportOneJson && currentGameId && currentGameId !== '__default_unsaved__') || 
+             (activeTab !== 'current' && onExportAllJson)) && (
+              <button
+                onClick={() => {
+                  if (activeTab === 'current' && onExportOneJson && currentGameId) {
+                    onExportOneJson(currentGameId);
+                  } else if (activeTab === 'season' && onExportAllJson) {
+                    onExportAllJson('season');
+                  } else if (activeTab === 'tournament' && onExportAllJson) {
+                    onExportAllJson('tournament');
+                  } else if (activeTab === 'all' && onExportAllJson) {
+                    onExportAllJson(); // No filter for 'all'
+                  }
+                }}
+                className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-medium transition-colors shadow-sm text-center"
+              >
+                {/* Dynamically change button text based on tab */}
+                {activeTab === 'current' 
+                  ? t('gameStatsModal.exportJsonButtonCurrent', 'Export Current JSON') 
+                  : t(`gameStatsModal.exportJsonButton_${activeTab}`, `Export ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} JSON`)
+                }
+              </button>
+            )}
+            {/* Conditionally render CSV export based on availability */}
+             {((activeTab === 'current' && onExportOneCsv && currentGameId && currentGameId !== '__default_unsaved__') || 
+             (activeTab !== 'current' && onExportAllCsv)) && (
+              <button
+                onClick={() => {
+                    if (activeTab === 'current' && onExportOneCsv && currentGameId) {
+                      onExportOneCsv(currentGameId);
+                    } else if (activeTab === 'season' && onExportAllCsv) {
+                      onExportAllCsv('season');
+                    } else if (activeTab === 'tournament' && onExportAllCsv) {
+                      onExportAllCsv('tournament');
+                    } else if (activeTab === 'all' && onExportAllCsv) {
+                      onExportAllCsv(); // No filter for 'all'
+                    }
+                  }}
+                className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-xs font-medium transition-colors shadow-sm text-center"
+              >
+                 {/* Dynamically change button text based on tab */}
+                 {activeTab === 'current' 
+                  ? t('gameStatsModal.exportCsvButtonCurrent', 'Export Current CSV') 
+                  : t(`gameStatsModal.exportCsvButton_${activeTab}`, `Export ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} CSV`)
+                 }
+              </button>
+            )}
+          </div>
+
+          {/* Close Button */}
+          <button 
+            onClick={onClose}
+            className="px-3 py-1 bg-slate-600 hover:bg-slate-500 text-white rounded-md text-xs font-medium transition-colors shadow-sm"
+          >
+            {t('gameStatsModal.closeButton', 'Close')}
           </button>
         </div>
-        */}
+
       </div>
     </div>
   );

@@ -84,6 +84,8 @@ export interface AppState {
   // NEW: Optional fields for location and time
   gameLocation?: string;
   gameTime?: string; 
+  // Timer related state to persist
+  subIntervalMinutes: number; // Add sub interval
   completedIntervalDurations: IntervalLog[]; // Add completed interval logs
   lastSubConfirmationTimeSeconds: number; // Add last substitution confirmation time
 }
@@ -127,6 +129,8 @@ const initialState: AppState = {
   gameType: 'season', // Default game type
   gameLocation: '', // Initialize optional fields
   gameTime: '', // Initialize optional fields
+  // Timer related state
+  subIntervalMinutes: 5, // Add sub interval with default
   completedIntervalDurations: [], // Initialize completed interval logs
   lastSubConfirmationTimeSeconds: 0, // Initialize last substitution confirmation time
 };
@@ -423,24 +427,23 @@ export default function Home() {
       setHomeScore(stateToApply.homeScore || 0);
       setAwayScore(stateToApply.awayScore || 0);
       setGameNotes(stateToApply.gameNotes || '');
-      setNumberOfPeriods(stateToApply.numberOfPeriods || 2);
-      setPeriodDurationMinutes(stateToApply.periodDurationMinutes || 10);
-      setCurrentPeriod(stateToApply.currentPeriod || 1);
-      setGameStatus(stateToApply.gameStatus || 'notStarted');
-      // ADDED: Load selected players, defaulting to all if empty/missing
-      setSelectedPlayerIds(
-        stateToApply.selectedPlayerIds && stateToApply.selectedPlayerIds.length > 0
-          ? stateToApply.selectedPlayerIds
-          : stateToApply.availablePlayers.map(p => p.id) // Default to all players in loaded state
-      );
-      // ADDED: Load game type, defaulting if missing
-      setGameType(stateToApply.gameType || 'season'); 
+      setNumberOfPeriods(stateToApply.numberOfPeriods || initialState.numberOfPeriods);
+      setPeriodDurationMinutes(stateToApply.periodDurationMinutes || initialState.periodDurationMinutes);
+      setCurrentPeriod(stateToApply.currentPeriod || initialState.currentPeriod);
+      setGameStatus(stateToApply.gameStatus || initialState.gameStatus);
+      setSubIntervalMinutes(stateToApply.subIntervalMinutes ?? initialState.subIntervalMinutes); // Load sub interval
+      // ... load selectedPlayerIds, gameType ...
+      setGameType(stateToApply.gameType || initialState.gameType); 
 
-      // Reset timer state when loading any game state initially?
+      // Reset timer runtime state when loading any game state initially
       setTimeElapsedInSeconds(0);
       setIsTimerRunning(false);
       setSubAlertLevel('none');
-      // Reset other timer/sub related state? Needs consideration.
+      setCompletedIntervalDurations(stateToApply.completedIntervalDurations ?? []); // Load completed intervals
+      setLastSubConfirmationTimeSeconds(stateToApply.lastSubConfirmationTimeSeconds ?? 0); // Load last sub time
+      // Calculate next sub due time based on loaded/initial state
+      const initialSubIntervalSec = (stateToApply.subIntervalMinutes ?? initialState.subIntervalMinutes) * 60;
+      setNextSubDueTimeSeconds(initialSubIntervalSec);
 
     } catch (error) {
       console.error("Failed to load or parse state from localStorage:", error);
@@ -491,6 +494,8 @@ export default function Home() {
           gameType,
           gameLocation,
           gameTime,
+          // Add timer related state
+          subIntervalMinutes,
           completedIntervalDurations,
           lastSubConfirmationTimeSeconds,
         };
@@ -736,8 +741,30 @@ export default function Home() {
       setAvailablePlayers(prevState.availablePlayers);
       setShowPlayerNames(prevState.showPlayerNames);
       setTeamName(prevState.teamName); // Undo team name
+      setGameEvents(prevState.gameEvents); // Restore game events
+      setHomeScore(prevState.homeScore); // Restore scores
+      setAwayScore(prevState.awayScore);
+      setOpponentName(prevState.opponentName);
+      setGameDate(prevState.gameDate);
+      setGameNotes(prevState.gameNotes);
+      setNumberOfPeriods(prevState.numberOfPeriods);
+      setPeriodDurationMinutes(prevState.periodDurationMinutes);
+      setCurrentPeriod(prevState.currentPeriod);
+      setGameStatus(prevState.gameStatus);
+      setSelectedPlayerIds(prevState.selectedPlayerIds);
+      setGameType(prevState.gameType);
+      setGameLocation(prevState.gameLocation ?? '');
+      setGameTime(prevState.gameTime ?? '');
+      setSubIntervalMinutes(prevState.subIntervalMinutes ?? 5); // Restore sub interval
+      setCompletedIntervalDurations(prevState.completedIntervalDurations ?? []); // Restore intervals
+      setLastSubConfirmationTimeSeconds(prevState.lastSubConfirmationTimeSeconds ?? 0); // Restore last sub time
+      // Recalculate next sub due time based on restored state?
+      // For simplicity, we might skip recalculating nextSubDueTimeSeconds on undo/redo
+      // It will naturally correct itself on the next sub or interval change.
+
       setHistoryIndex(prevStateIndex);
-      // Restore timer state if needed here too
+      // Restore timer runtime state if needed here too (timeElapsed, isRunning?)
+      // Generally, undo/redo shouldn't affect the running timer state.
     } else {
       console.log("Cannot undo: at beginning of history");
     }
@@ -755,8 +782,27 @@ export default function Home() {
       setAvailablePlayers(nextState.availablePlayers);
       setShowPlayerNames(nextState.showPlayerNames);
       setTeamName(nextState.teamName); // Redo team name
+      setGameEvents(nextState.gameEvents); // Restore game events
+      setHomeScore(nextState.homeScore); // Restore scores
+      setAwayScore(nextState.awayScore);
+      setOpponentName(nextState.opponentName);
+      setGameDate(nextState.gameDate);
+      setGameNotes(nextState.gameNotes);
+      setNumberOfPeriods(nextState.numberOfPeriods);
+      setPeriodDurationMinutes(nextState.periodDurationMinutes);
+      setCurrentPeriod(nextState.currentPeriod);
+      setGameStatus(nextState.gameStatus);
+      setSelectedPlayerIds(nextState.selectedPlayerIds);
+      setGameType(nextState.gameType);
+      setGameLocation(nextState.gameLocation ?? '');
+      setGameTime(nextState.gameTime ?? '');
+      setSubIntervalMinutes(nextState.subIntervalMinutes ?? 5); // Restore sub interval
+      setCompletedIntervalDurations(nextState.completedIntervalDurations ?? []); // Restore intervals
+      setLastSubConfirmationTimeSeconds(nextState.lastSubConfirmationTimeSeconds ?? 0); // Restore last sub time
+      // Similar to undo, skip recalculating nextSubDueTimeSeconds here.
+      
       setHistoryIndex(nextStateIndex);
-      // Restore timer state if needed here too
+      // Restore timer runtime state if needed here too
     } else {
       console.log("Cannot redo: at end of history");
     }
@@ -806,12 +852,13 @@ export default function Home() {
     setTimeElapsedInSeconds(0);
     setIsTimerRunning(false);
     setSubIntervalMinutes(5); // Reset sub interval to default
-    setNextSubDueTimeSeconds(5 * 60);
+    setNextSubDueTimeSeconds(5 * 60); // Reset based on default interval
     setSubAlertLevel('none');
     setLastSubConfirmationTimeSeconds(0);
     setCompletedIntervalDurations([]); // Correctly reset here
     setCurrentPeriod(1);
     setGameStatus('notStarted'); // Reset game status
+    // We don't save to history here, as this is a full reset, often preceding a new game setup
     console.log("Timer and game progress reset.");
   };
 
@@ -860,6 +907,8 @@ export default function Home() {
   const handleSetSubInterval = (minutes: number) => {
     const newMinutes = Math.max(1, minutes);
     setSubIntervalMinutes(newMinutes);
+    // Save the new interval to history
+    saveStateToHistory({ subIntervalMinutes: newMinutes });
 
     let currentElapsedTime = 0;
     setTimeElapsedInSeconds(prev => { 
@@ -1031,13 +1080,15 @@ export default function Home() {
       awayScore: 0, // Reset score
       gameNotes: '', // Clear notes
       numberOfPeriods: 2, // Reset to default (or fetch from settings later)
-      periodDurationMinutes: subIntervalMinutes, // Reset to default (or fetch from settings later)
+      periodDurationMinutes: 10, // Reset to default period duration
       currentPeriod: 1, // Reset period
       gameStatus: 'notStarted', // Reset status
       selectedPlayerIds: availablePlayers.map(p => p.id), // Reselect all available players
       gameType: newGameType, // Set game type
       gameLocation: newGameLocation, // Set new location
       gameTime: newGameTime, // Set new time
+      // Timer related state reset
+      subIntervalMinutes: 5, // Reset sub interval to default (e.g., 5)
       completedIntervalDurations: [], // Reset interval logs for new game
       lastSubConfirmationTimeSeconds: 0, // Reset last substitution confirmation time
     };
@@ -1266,6 +1317,8 @@ export default function Home() {
         gameType, 
         gameLocation, // Include current gameLocation state
         gameTime, // Include current gameTime state
+        // Add timer related state
+        subIntervalMinutes,
         completedIntervalDurations,
         lastSubConfirmationTimeSeconds,
       };
@@ -1401,36 +1454,46 @@ export default function Home() {
     }
   };
 
-  // Function to export all saved games as a single JSON file (RENAMED)
+  // Function to export all saved games as a single JSON file (RENAMED & PARAMETERIZED)
   console.log('Before handleExportAllGamesJson definition');
-  const handleExportAllGamesJson = () => {
-    if (Object.keys(savedGames).length === 0) {
-      alert(t('loadGameModal.noGamesToExport', 'No saved games to export.'));
-      return;
+  const handleExportAllGamesJson = (gameTypeFilter?: GameType) => {
+    const gameIdsToExport = Object.keys(savedGames).filter(id => 
+        id !== DEFAULT_GAME_ID && 
+        (!gameTypeFilter || savedGames[id]?.gameType === gameTypeFilter)
+    );
+
+    if (gameIdsToExport.length === 0) {
+        const filterText = gameTypeFilter ? `${gameTypeFilter} ` : '';
+        alert(t('loadGameModal.noGamesToExportFiltered', `No saved ${filterText}games to export.`, { context: gameTypeFilter }));
+        return;
     }
 
+    const gamesToExport = gameIdsToExport.reduce((acc, id) => {
+        acc[id] = savedGames[id];
+        return acc;
+    }, {} as SavedGamesCollection);
+
     try {
-      const jsonString = JSON.stringify(savedGames, null, 2); // Pretty-print JSON
+      const jsonString = JSON.stringify(gamesToExport, null, 2); // Export only filtered games
       const blob = new Blob([jsonString], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
 
-      // Generate filename with timestamp
+      // Generate filename with timestamp and filter
       const now = new Date();
       const timestamp = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
-      a.download = `SoccerApp_AllGames_${timestamp}.json`; // Keep .json extension
+      const filterName = gameTypeFilter ? gameTypeFilter.charAt(0).toUpperCase() + gameTypeFilter.slice(1) : 'All';
+      a.download = `SoccerApp_${filterName}Games_${timestamp}.json`; 
       
       a.href = url;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      console.log('All games exported successfully as JSON.');
-      // Optionally close the load modal after export
-      // handleCloseLoadGameModal(); 
+      console.log(`${filterName} games exported successfully as JSON.`);
     } catch (error) {
-      console.error('Failed to export all games as JSON:', error);
-      alert(t('loadGameModal.exportAllJsonError', 'Error exporting all games as JSON.')); // Updated error key
+      console.error(`Failed to export ${gameTypeFilter || 'all'} games as JSON:`, error);
+      alert(t('loadGameModal.exportAllJsonError', 'Error exporting games as JSON.')); // Generic error message
     }
   };
 
@@ -1454,23 +1517,28 @@ export default function Home() {
     const seconds = totalSeconds % 60;
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
+  
+  // Function to export all saved games as Excel/CSV (RENAMED & PARAMETERIZED)
+  console.log('Before handleExportAllGamesCsv definition');
+  const handleExportAllGamesCsv = (gameTypeFilter?: GameType) => {
+    const gameIdsToExport = Object.keys(savedGames).filter(id => 
+        id !== DEFAULT_GAME_ID && 
+        (!gameTypeFilter || savedGames[id]?.gameType === gameTypeFilter)
+    );
 
-  // Function to export all saved games as Excel/CSV
-  console.log('Before handleExportAllGamesExcel definition');
-  const handleExportAllGamesExcel = () => {
-    const gameIds = Object.keys(savedGames).filter(id => id !== DEFAULT_GAME_ID);
-    if (gameIds.length === 0) {
-      alert(t('loadGameModal.noGamesToExport', 'No saved games to export.'));
+    if (gameIdsToExport.length === 0) {
+      const filterText = gameTypeFilter ? `${gameTypeFilter} ` : '';
+      alert(t('loadGameModal.noGamesToExportFiltered', `No saved ${filterText}games to export.`, { context: gameTypeFilter }));
       return;
     }
-    console.log(`Starting Excel export for ${gameIds.length} games...`);
+    console.log(`Starting CSV export for ${gameIdsToExport.length} ${gameTypeFilter || 'all'} games...`);
 
     try {
       const allRows: string[] = [];
       const EOL = '\r\n'; // Use CRLF for Excel compatibility
       const DELIMITER = ';'; // Use semicolon for better Excel compatibility
 
-      gameIds.forEach((gameId, index) => {
+      gameIdsToExport.forEach((gameId, index) => {
         const game = savedGames[gameId];
         if (!game) return; // Skip if game data is missing
 
@@ -1487,6 +1555,29 @@ export default function Home() {
         allRows.push(`${escapeCsvField('Away Team:')}${DELIMITER}${escapeCsvField(game.opponentName)}`);
         allRows.push(`${escapeCsvField('Home Score:')}${DELIMITER}${escapeCsvField(game.homeScore)}`);
         allRows.push(`${escapeCsvField('Away Score:')}${DELIMITER}${escapeCsvField(game.awayScore)}`);
+        allRows.push(`${escapeCsvField('Location:')}${DELIMITER}${escapeCsvField(game.gameLocation)}`); // Added Location
+        allRows.push(`${escapeCsvField('Time:')}${DELIMITER}${escapeCsvField(game.gameTime)}`);     // Added Time
+        allRows.push(''); // Blank separator row
+
+        // --- Section: Game Settings ---
+        allRows.push('Game Settings');
+        allRows.push(`${escapeCsvField('Number of Periods:')}${DELIMITER}${escapeCsvField(game.numberOfPeriods)}`);
+        allRows.push(`${escapeCsvField('Period Duration (min):')}${DELIMITER}${escapeCsvField(game.periodDurationMinutes)}`);
+        allRows.push(`${escapeCsvField('Substitution Interval (min):')}${DELIMITER}${escapeCsvField(game.subIntervalMinutes ?? '?')} `); // Added Sub Interval
+        allRows.push(''); // Blank separator row
+
+        // --- Section: Substitution Intervals ---
+        allRows.push('Substitution Intervals');
+        allRows.push(`${escapeCsvField('Period')}${DELIMITER}${escapeCsvField('Duration (mm:ss)')}`);
+        const intervals = game.completedIntervalDurations || [];
+        if (intervals.length > 0) {
+          // Sort intervals by timestamp (which reflects end time)
+          intervals.sort((a, b) => a.timestamp - b.timestamp).forEach(log => {
+            allRows.push(`${escapeCsvField(log.period)}${DELIMITER}${escapeCsvField(formatTime(log.duration))}`);
+          });
+        } else {
+          allRows.push('No substitutions recorded');
+        }
         allRows.push(''); // Blank separator row
 
         // --- Section: Player Stats ---
@@ -1557,18 +1648,19 @@ export default function Home() {
       // Generate filename with timestamp
       const now = new Date();
       const timestamp = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
-      a.download = `SoccerApp_AllGames_${timestamp}.csv`; // Use .csv extension
+      const filterName = gameTypeFilter ? gameTypeFilter.charAt(0).toUpperCase() + gameTypeFilter.slice(1) : 'All'; // Corrected filterName usage
+      a.download = `SoccerApp_${filterName}Games_${timestamp}.csv`; // Use .csv extension and filter name
       
       a.href = url;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      console.log('All games exported successfully as CSV.');
+      console.log(`${filterName} games exported successfully as CSV.`);
 
     } catch (error) {
-      console.error('Failed to export all games as CSV:', error);
-      alert(t('loadGameModal.exportAllExcelError', 'Error exporting all games as CSV.'));
+      console.error(`Failed to export ${gameTypeFilter || 'all'} games as CSV:`, error);
+      alert(t('loadGameModal.exportAllExcelError', 'Error exporting games as CSV.'));
     }
   };
 
@@ -1622,6 +1714,29 @@ export default function Home() {
       rows.push(`${escapeCsvField('Away Team:')}${DELIMITER}${escapeCsvField(game.opponentName)}`);
       rows.push(`${escapeCsvField('Home Score:')}${DELIMITER}${escapeCsvField(game.homeScore)}`);
       rows.push(`${escapeCsvField('Away Score:')}${DELIMITER}${escapeCsvField(game.awayScore)}`);
+      rows.push(`${escapeCsvField('Location:')}${DELIMITER}${escapeCsvField(game.gameLocation)}`); // Added Location
+      rows.push(`${escapeCsvField('Time:')}${DELIMITER}${escapeCsvField(game.gameTime)}`);     // Added Time
+      rows.push('');
+
+      // --- Section: Game Settings ---
+      rows.push('Game Settings');
+      rows.push(`${escapeCsvField('Number of Periods:')}${DELIMITER}${escapeCsvField(game.numberOfPeriods)}`);
+      rows.push(`${escapeCsvField('Period Duration (min):')}${DELIMITER}${escapeCsvField(game.periodDurationMinutes)}`);
+      rows.push(`${escapeCsvField('Substitution Interval (min):')}${DELIMITER}${escapeCsvField(game.subIntervalMinutes ?? '?')} `); // Added Sub Interval
+      rows.push('');
+
+      // --- Section: Substitution Intervals ---
+      rows.push('Substitution Intervals');
+      rows.push(`${escapeCsvField('Period')}${DELIMITER}${escapeCsvField('Duration (mm:ss)')}`);
+      const intervals = game.completedIntervalDurations || [];
+      if (intervals.length > 0) {
+        // Sort intervals by timestamp (which reflects end time)
+        intervals.sort((a, b) => a.timestamp - b.timestamp).forEach(log => {
+          rows.push(`${escapeCsvField(log.period)}${DELIMITER}${escapeCsvField(formatTime(log.duration))}`);
+        });
+      } else {
+        rows.push('No substitutions recorded');
+      }
       rows.push('');
 
       // --- Section: Player Stats ---
@@ -1637,7 +1752,7 @@ export default function Home() {
         return { name: player.name, goals, assists, totalScore, fairPlay: player.receivedFairPlayCard };
       })
       // REMOVED filter: .filter(p => p.totalScore > 0) // Show all players now
-      .sort((a, b) => b.totalScore - a.totalScore || b.goals - a.goals);
+      .sort((a, b) => b.totalScore - a.totalScore || b.goals - a.goals); // Sort by points, then goals
       
       if (playerStats && playerStats.length > 0) {
         playerStats.forEach(player => {
@@ -1647,7 +1762,7 @@ export default function Home() {
       } else {
         rows.push('No player stats recorded');
       }
-      rows.push('');
+      rows.push(''); // Blank separator row
 
       // --- Section: Event Log ---
       // (Reusing logic similar to handleExportAllGamesExcel)
@@ -1883,6 +1998,8 @@ export default function Home() {
           gameType,
           gameLocation,
           gameTime,
+          // Add timer related state
+          subIntervalMinutes,
           completedIntervalDurations,
           lastSubConfirmationTimeSeconds,
         };
@@ -1935,7 +2052,10 @@ export default function Home() {
     setSavedGames,
     setHistory,
     setHistoryIndex,
-    handleOpenSaveGameModal // Added dependency
+    handleOpenSaveGameModal, // Added dependency
+    subIntervalMinutes,
+    completedIntervalDurations,
+    lastSubConfirmationTimeSeconds
   ]);
   // --- END Quick Save Handler ---
 
@@ -2094,6 +2214,11 @@ export default function Home() {
           onAwardFairPlayCard={handleAwardFairPlayCard} // Pass Fair Play handler
           selectedPlayerIds={selectedPlayerIds} // Pass selected player IDs
           savedGames={savedGames} // Pass saved games collection
+          currentGameId={currentGameId}
+          onExportOneJson={handleExportOneJson}
+          onExportOneCsv={handleExportOneCsv}
+          onExportAllJson={handleExportAllGamesJson} // Pass bulk JSON handler
+          onExportAllCsv={handleExportAllGamesCsv} // Pass bulk CSV handler (Corrected name)
         />
         {/* Save Game Modal - Updated to include gameType */}
         <SaveGameModal
@@ -2112,7 +2237,7 @@ export default function Home() {
           onLoad={handleLoadGame}
           onDelete={handleDeleteGame}
           onExportAllJson={handleExportAllGamesJson}
-          onExportAllExcel={handleExportAllGamesExcel}
+          onExportAllExcel={handleExportAllGamesCsv} // Pass renamed CSV handler
           onExportOneJson={handleExportOneJson}
           onExportOneCsv={handleExportOneCsv}
         />
