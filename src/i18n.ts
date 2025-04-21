@@ -130,6 +130,24 @@ fiTranslations.gameStatsModal.noTournamentGames = "Ei turnauspelejä tallennettu
 fiTranslations.gameStatsModal.allTeamStatsTitle = "Kaikki Joukkuetilastot";
 fiTranslations.gameStatsModal.allPlayerStatsTitle = "Kaikki Pelaajatilastot";
 fiTranslations.gameStatsModal.noSavedGames = "Ei tallennettuja pelejä.";
+fiTranslations.gameStatsModal.exportJsonButton = 'Lataa JSON';
+fiTranslations.gameStatsModal.exportExcelButton = 'Lataa EXCEL';
+fiTranslations.gameStatsModal.resetStatsButton = 'Nollaa';
+fiTranslations.gameStatsModal.levelScoreButton = 'Taso';
+fiTranslations.gameStatsModal.editGoalButton = 'Edit Goal';
+fiTranslations.gameStatsModal.saveButton = 'Save';
+fiTranslations.gameStatsModal.opponentPlaceholder = 'Opponent';
+fiTranslations.gameStatsModal.typeHeader = 'Type';
+fiTranslations.gameStatsModal.scorerHeader = 'Scorer';
+fiTranslations.gameStatsModal.assisterHeader = 'Assister';
+fiTranslations.gameStatsModal.exportJsonButtonCurrent = 'Vie Nykyinen JSON';
+fiTranslations.gameStatsModal.exportJsonButton_season = 'Vie Kausi JSON';
+fiTranslations.gameStatsModal.exportJsonButton_tournament = 'Vie Turnaus JSON';
+fiTranslations.gameStatsModal.exportJsonButton_all = 'Vie Kaikki JSON';
+fiTranslations.gameStatsModal.exportCsvButtonCurrent = 'Vie Nykyinen CSV';
+fiTranslations.gameStatsModal.exportCsvButton_season = 'Vie Kausi CSV';
+fiTranslations.gameStatsModal.exportCsvButton_tournament = 'Vie Turnaus CSV';
+fiTranslations.gameStatsModal.exportCsvButton_all = 'Vie Kaikki CSV';
 
 // Add control bar menu translations
 if (!fiTranslations.controlBar) {
@@ -266,6 +284,24 @@ enTranslations.gameStatsModal.noTournamentGames = "No tournament games saved.";
 enTranslations.gameStatsModal.allTeamStatsTitle = "All Team Stats";
 enTranslations.gameStatsModal.allPlayerStatsTitle = "All Player Stats";
 enTranslations.gameStatsModal.noSavedGames = "No saved games.";
+enTranslations.gameStatsModal.exportJsonButton = 'Export JSON';
+enTranslations.gameStatsModal.exportExcelButton = 'Export Excel';
+enTranslations.gameStatsModal.resetStatsButton = 'Reset Stats';
+enTranslations.gameStatsModal.levelScoreButton = 'Level Score';
+enTranslations.gameStatsModal.editGoalButton = 'Edit Goal';
+enTranslations.gameStatsModal.saveButton = 'Save';
+enTranslations.gameStatsModal.opponentPlaceholder = 'Opponent';
+enTranslations.gameStatsModal.typeHeader = 'Type';
+enTranslations.gameStatsModal.scorerHeader = 'Scorer';
+enTranslations.gameStatsModal.assisterHeader = 'Assister';
+enTranslations.gameStatsModal.exportJsonButtonCurrent = 'Export Current JSON';
+enTranslations.gameStatsModal.exportJsonButton_season = 'Export Season JSON';
+enTranslations.gameStatsModal.exportJsonButton_tournament = 'Export Tournament JSON';
+enTranslations.gameStatsModal.exportJsonButton_all = 'Export All JSON';
+enTranslations.gameStatsModal.exportCsvButtonCurrent = 'Export Current CSV';
+enTranslations.gameStatsModal.exportCsvButton_season = 'Export Season CSV';
+enTranslations.gameStatsModal.exportCsvButton_tournament = 'Export Tournament CSV';
+enTranslations.gameStatsModal.exportCsvButton_all = 'Export All CSV';
 
 // Add control bar menu translations for English
 if (!enTranslations.controlBar) {

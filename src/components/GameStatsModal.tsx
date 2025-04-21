@@ -653,7 +653,8 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
     };
 
     return (
-      <div className="space-y-6">
+      // Add min-height to ensure consistent footer position
+      <div className="space-y-6 min-h-[400px]">
         {/* Team Stats */}
         <section className="bg-slate-700/50 p-4 rounded-md">
           <h3 className="text-xl font-semibold text-yellow-300 mb-3 text-center">
@@ -1262,9 +1263,10 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
           {renderTabContent()}
         </div>
 
-        {/* Modal Footer - Add Export Buttons */}
-        <div className="flex justify-between items-center p-3 border-t border-slate-700 bg-slate-800/60">
-          {/* Export Button Group */}
+        {/* Modal Footer - Updated Layout */}
+        {/* Main container: flex-col for rows, gap between rows */}
+        <div className="flex flex-col gap-2 p-3 border-t border-slate-700 bg-slate-800/60">
+          {/* Row 1: Export Buttons */}
           <div className="flex gap-2">
             {/* Conditionally render JSON export based on availability */}
             {((activeTab === 'current' && onExportOneJson && currentGameId && currentGameId !== '__default_unsaved__') || 
@@ -1281,7 +1283,8 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                     onExportAllJson(); // No filter for 'all'
                   }
                 }}
-                className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-medium transition-colors shadow-sm text-center"
+                // flex-1 makes it share space in its row
+                className="flex-1 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-medium transition-colors shadow-sm min-h-9 flex items-center justify-center"
               >
                 {/* Dynamically change button text based on tab */}
                 {activeTab === 'current' 
@@ -1305,7 +1308,8 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                       onExportAllCsv(); // No filter for 'all'
                     }
                   }}
-                className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-xs font-medium transition-colors shadow-sm text-center"
+                  // flex-1 makes it share space in its row
+                  className="flex-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-xs font-medium transition-colors shadow-sm min-h-9 flex items-center justify-center"
               >
                  {/* Dynamically change button text based on tab */}
                  {activeTab === 'current' 
@@ -1316,10 +1320,11 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
             )}
           </div>
 
-          {/* Close Button */}
+          {/* Row 2: Close Button */}
+          {/* w-full makes it span the full width */}
           <button 
             onClick={onClose}
-            className="px-3 py-1 bg-slate-600 hover:bg-slate-500 text-white rounded-md text-xs font-medium transition-colors shadow-sm"
+            className="w-full px-3 py-1 bg-slate-600 hover:bg-slate-500 text-white rounded-md text-xs font-medium transition-colors shadow-sm min-h-9 flex items-center justify-center"
           >
             {t('gameStatsModal.closeButton', 'Close')}
           </button>
