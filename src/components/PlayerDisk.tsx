@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Player, GameEvent } from '@/app/page'; // Import Player & GameEvent type
 import {
     HiOutlineShieldCheck, // Goalie icon
@@ -49,7 +49,8 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const lastTapTimeRef = useRef<number>(0); // Ref for double-tap detection
   
-  const handleFinishEditing = (reason: string = "unknown") => { // Add reason param
+  // Wrap in useCallback
+  const handleFinishEditing = useCallback((reason: string = "unknown") => { // Add reason param
     if (isEditing) {
       console.log(`PlayerDisk (${id}): Finishing edit (Reason: ${reason}).`); // Add log
       setIsEditing(false);
@@ -65,7 +66,7 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
           console.log(`PlayerDisk (${id}): Edit finished, but name unchanged or rename function missing.`); // Add log
       }
     }
-  };
+  }, [isEditing, id, editedName, nickname, fullName, onRenamePlayer]); // Add dependencies
 
   // Update editedName if the props change (e.g., via undo/redo)
   useEffect(() => {

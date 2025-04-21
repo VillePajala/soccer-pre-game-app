@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import PlayerDisk from './PlayerDisk'; // Import the PlayerDisk component
 import { Player } from '@/app/page'; // Import the Player type
 import Image from 'next/image'; // ADDED Import
@@ -64,7 +64,8 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName
     }
   };
 
-  const handleFinishEditingTeamName = () => {
+  // Wrap in useCallback
+  const handleFinishEditingTeamName = useCallback(() => {
      if (isEditingTeamName) {
       setIsEditingTeamName(false);
       const trimmedName = editedTeamName.trim();
@@ -72,7 +73,7 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName
         onTeamNameChange(trimmedName); 
       }
     }
-  };
+  }, [isEditingTeamName, editedTeamName, teamName, onTeamNameChange]); // Add dependencies
 
   const handleTeamNameInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEditedTeamName(e.target.value);
