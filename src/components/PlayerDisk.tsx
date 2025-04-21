@@ -49,13 +49,13 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const lastTapTimeRef = useRef<number>(0); // Ref for double-tap detection
   
-  // Wrap in useCallback
-  const handleFinishEditing = useCallback((reason: string = "unknown") => { // Add reason param
+  // Wrap in useCallback - Remove editedName from dependencies
+  const handleFinishEditing = useCallback((reason: string = "unknown") => { 
     if (isEditing) {
       console.log(`PlayerDisk (${id}): Finishing edit (Reason: ${reason}).`); // Add log
       setIsEditing(false);
-      const trimmedNickname = editedName.trim();
-      const originalDisplayName = nickname || fullName; // Get original display name
+      const trimmedNickname = editedName.trim(); // Reads current state here
+      const originalDisplayName = nickname || fullName; // Get original from props
 
       // Only call rename if the displayed name actually changed
       if (trimmedNickname && trimmedNickname !== originalDisplayName && onRenamePlayer) {
@@ -66,7 +66,8 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
           console.log(`PlayerDisk (${id}): Edit finished, but name unchanged or rename function missing.`); // Add log
       }
     }
-  }, [isEditing, id, editedName, nickname, fullName, onRenamePlayer]); // Add dependencies
+    // Keep other stable dependencies
+  }, [isEditing, id, nickname, fullName, onRenamePlayer]); 
 
   // Update editedName if the props change (e.g., via undo/redo)
   useEffect(() => {
@@ -79,7 +80,8 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
       inputRef.current.focus();
       inputRef.current.select();
     }
-  }, [isEditing, handleFinishEditing]);
+    // Remove handleFinishEditing dependency, only needs isEditing
+  }, [isEditing]); 
 
   // Calculate goals and assists for this player
   const playerStats = useMemo(() => {
@@ -175,7 +177,7 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
   const diskSizeClasses = isInBar ? "w-16 h-16 p-1" : "w-20 h-20 p-2"; // Smaller size when in bar
   const textSizeClasses = isInBar ? "text-xs" : "text-sm";
   const inputPaddingClasses = isInBar ? "px-1 py-0.5" : "px-2 py-1";
-  const inputWidthClass = isInBar ? "w-14" : "w-16";
+  const inputWidthClass = isInBar ? "w-[56px]" : "w-[64px]"; // Use explicit pixel widths
   const selectionRingClass = selectedPlayerIdFromBar === id ? 'ring-4 ring-yellow-400 ring-offset-2 ring-offset-slate-900' : '';
   const goalieFillColor = '#F97316'; // Orange-500
   const defaultFillColor = color || '#7E22CE'; // Existing default purple
@@ -192,7 +194,8 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
     }
     // We only care about when the selection changes *away* from the edited disk,
     // so we only need selectedPlayerIdFromBar and isEditing as dependencies.
-  }, [selectedPlayerIdFromBar, isEditing, id]); // Added id dependency for safety
+    // Keep handleFinishEditing here as the effect CALLS it.
+  }, [selectedPlayerIdFromBar, isEditing, id, handleFinishEditing]); 
 
   return (
     <div
@@ -236,9 +239,9 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
         />
       ) : (
         <>
-          {/* Player Name - Display nickname or full name */}
+          {/* Player Name - Revert to displaying props */}
           <span className={`font-semibold ${textSizeClasses} ${defaultTextColor} break-words text-center leading-tight max-w-full px-1`}>
-            {nickname || fullName}
+            {nickname || fullName} {/* Revert to props */} 
           </span>
         </>
       )}
