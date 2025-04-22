@@ -1063,6 +1063,45 @@ export default function Home() {
     console.log("Updated game event:", updatedEvent.id);
   };
 
+  // Handler to delete a game event
+  console.log('Before handleDeleteGameEvent definition');
+  const handleDeleteGameEvent = (goalId: string) => {
+    console.log(`Attempting to delete game event: ${goalId}`);
+    const eventIndex = gameEvents.findIndex(e => e.id === goalId);
+    if (eventIndex === -1) {
+      console.error("Event to delete not found:", goalId);
+      return;
+    }
+
+    // Determine if the event was a home goal or away goal to adjust score
+    const eventToDelete = gameEvents[eventIndex];
+    let newHomeScore = homeScore;
+    let newAwayScore = awayScore;
+    if (eventToDelete.type === 'goal') {
+        newHomeScore = Math.max(0, homeScore - 1); // Decrement home score
+    } else if (eventToDelete.type === 'opponentGoal') {
+        newAwayScore = Math.max(0, awayScore - 1); // Decrement away score
+    }
+
+    // Create a new array excluding the deleted event
+    const newGameEvents = [
+      ...gameEvents.slice(0, eventIndex),
+      ...gameEvents.slice(eventIndex + 1)
+    ];
+
+    setGameEvents(newGameEvents);
+    // Update scores if they changed
+    if (newHomeScore !== homeScore) setHomeScore(newHomeScore);
+    if (newAwayScore !== awayScore) setAwayScore(newAwayScore);
+
+    // Save the state change to history
+    saveStateToHistory({ 
+        gameEvents: newGameEvents, 
+        homeScore: newHomeScore, 
+        awayScore: newAwayScore 
+    }); 
+    console.log("Deleted game event and updated state/history:", goalId);
+  };
   // --- Button/Action Handlers ---
   
   // RENAMED & UPDATED Handler: Just opens the setup modal after confirmation
@@ -2238,7 +2277,7 @@ export default function Home() {
           availablePlayers={availablePlayers}
           currentTime={timeElapsedInSeconds}
         />
-        {/* Game Stats Modal - REMOVE moved props */}
+        {/* Game Stats Modal - Restore props for now */}
         <GameStatsModal
           isOpen={isGameStatsModalOpen}
           onClose={handleToggleGameStatsModal}
@@ -2247,19 +2286,21 @@ export default function Home() {
           gameDate={gameDate}
           gameLocation={gameLocation}
           gameTime={gameTime}
+          gameNotes={gameNotes}
           homeScore={homeScore}
           awayScore={awayScore}
           availablePlayers={availablePlayers}
           gameEvents={gameEvents}
-          // gameNotes={gameNotes} // REMOVED
-          // onOpponentNameChange={handleOpponentNameChange} // REMOVED
-          // onGameDateChange={handleGameDateChange} // REMOVED
-          // onHomeScoreChange={handleHomeScoreChange} // REMOVED
-          // onAwayScoreChange={handleAwayScoreChange} // REMOVED
-          // onGameNotesChange={handleGameNotesChange} // REMOVED
-          // onUpdateGameEvent={handleUpdateGameEvent} // REMOVED
-          // onAwardFairPlayCard={handleAwardFairPlayCard} // REMOVED
+          onOpponentNameChange={handleOpponentNameChange}
+          onGameDateChange={handleGameDateChange}
+          onHomeScoreChange={handleHomeScoreChange}
+          onAwayScoreChange={handleAwayScoreChange}
+          onGameNotesChange={handleGameNotesChange}
+          onUpdateGameEvent={handleUpdateGameEvent}
+          onAwardFairPlayCard={handleAwardFairPlayCard}
+          onDeleteGameEvent={handleDeleteGameEvent}
           selectedPlayerIds={selectedPlayerIds}
+          savedGames={savedGames}
           currentGameId={currentGameId}
           seasonId={seasonId}
           tournamentId={tournamentId}
@@ -2322,33 +2363,31 @@ export default function Home() {
           isOpen={isGameSettingsModalOpen}
           onClose={handleCloseGameSettingsModal}
           currentGameId={currentGameId}
-          // ADD missing props
-          numPeriods={numberOfPeriods}
-          periodDurationMinutes={periodDurationMinutes}
-          onNumPeriodsChange={handleSetNumberOfPeriods}
-          onPeriodDurationChange={handleSetPeriodDuration}
           teamName={teamName}
           opponentName={opponentName}
           gameDate={gameDate}
           gameLocation={gameLocation}
           gameTime={gameTime}
           gameNotes={gameNotes}
-          homeScore={homeScore} // ADD
-          awayScore={awayScore} // ADD
-          seasonId={seasonId}
-          tournamentId={tournamentId}
+          homeScore={homeScore}
+          awayScore={awayScore}
+          onOpponentNameChange={handleOpponentNameChange}
+          onGameDateChange={handleGameDateChange}
+          onGameLocationChange={handleGameLocationChange}
+          onGameTimeChange={handleGameTimeChange}
+          onGameNotesChange={handleGameNotesChange}
+          onUpdateGameEvent={handleUpdateGameEvent}
+          onAwardFairPlayCard={handleAwardFairPlayCard}
+          onDeleteGameEvent={handleDeleteGameEvent}
           gameEvents={gameEvents}
           availablePlayers={availablePlayers}
           selectedPlayerIds={selectedPlayerIds}
-          // Pass handlers
-          onOpponentNameChange={handleOpponentNameChange}
-          onGameDateChange={handleGameDateChange}
-          onGameNotesChange={handleGameNotesChange}
-          onUpdateGameEvent={handleUpdateGameEvent} // Pass existing handler
-          onAwardFairPlayCard={handleAwardFairPlayCard} // Pass existing handler
-          // Pass new handlers
-          onGameLocationChange={handleGameLocationChange} // ADD
-          onGameTimeChange={handleGameTimeChange}         // ADD
+          seasonId={seasonId}
+          tournamentId={tournamentId}
+          numPeriods={numberOfPeriods}
+          periodDurationMinutes={periodDurationMinutes}
+          onNumPeriodsChange={handleSetNumberOfPeriods}
+          onPeriodDurationChange={handleSetPeriodDuration}
         />
 
       </div>

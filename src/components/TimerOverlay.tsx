@@ -273,7 +273,7 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
         <div className="bg-slate-800/80 backdrop-blur-sm p-3 rounded-lg w-full mb-4 space-y-4">
           {/* Substitution Interval Control (only when game not started) */}
           {gameStatus === 'notStarted' && (
-            <div className="flex items-center justify-center">
+              <div className="flex items-center justify-center">
               <span className={controlLabelStyle}>{t('timerOverlay.subIntervalLabel', 'Sub Interval:')}</span>
               <div className="flex items-center">
                 <button
@@ -289,9 +289,9 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
                   +
                 </button>
               </div>
-            </div>
-          )}
-          
+              </div>
+            )}
+            
           {/* Main Action Buttons Section - Improved layout */}
           <div className="flex flex-col space-y-3">
             {/* Primary Action Button - Remove pulsingClass */}
