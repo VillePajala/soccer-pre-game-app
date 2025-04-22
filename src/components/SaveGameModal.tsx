@@ -3,19 +3,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
-// Define the possible game types
-export type GameType = 'season' | 'tournament';
+// REMOVED GameType definition as it's no longer used here
+// export type GameType = 'season' | 'tournament'; 
 
 interface SaveGameModalProps {
   isOpen: boolean;
   onClose: () => void;
-  // Update onSave to accept gameType
-  onSave: (gameName: string, gameType: GameType) => void;
+  // Update onSave signature - no longer needs gameType
+  onSave: (gameName: string) => void; 
   // Pass current info to suggest a default name
   teamName?: string;
   opponentName?: string;
   gameDate?: string;
-  currentGameType?: GameType; // Add current game type prop
+  // REMOVED currentGameType prop
+  // currentGameType?: GameType; 
 }
 
 const SaveGameModal: React.FC<SaveGameModalProps> = ({
@@ -25,50 +26,49 @@ const SaveGameModal: React.FC<SaveGameModalProps> = ({
   teamName = '',
   opponentName = '',
   gameDate = '',
-  currentGameType = 'season', // Default to season if not provided
+  // REMOVED currentGameType prop usage
 }) => {
   const { t } = useTranslation();
   const [gameName, setGameName] = useState('');
-  // Initialize game type with current game type prop
-  const [gameType, setGameType] = useState<GameType>(currentGameType);
+  // REMOVED gameType state
+  // const [gameType, setGameType] = useState<GameType>(currentGameType);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Reset name input and update game type when modal opens
+  // Reset name input when modal opens
   useEffect(() => {
     if (isOpen) {
       // Construct default name if info is available
       let defaultName = '';
       if (teamName && opponentName && gameDate) {
-        // Format: Home_vs_Away_YYYY-MM-DD
         const formattedTeam = teamName.replace(/\\s+/g, '_');
         const formattedOpponent = opponentName.replace(/\\s+/g, '_');
         defaultName = `${formattedTeam}_vs_${formattedOpponent}_${gameDate}`;
       }
       
-      setGameName(defaultName); // Set the generated or empty name
-      setGameType(currentGameType); // Use the current game type instead of hardcoded 'season'
-      // Focus the input field shortly after modal opens
+      setGameName(defaultName); 
+      // REMOVED setGameType call
+      // setGameType(currentGameType); 
+      
       setTimeout(() => {
         inputRef.current?.focus();
-        inputRef.current?.select(); // Select the text for easy replacement
+        inputRef.current?.select(); 
       }, 100); 
     }
-  }, [isOpen, teamName, opponentName, gameDate, currentGameType]); // Add currentGameType to dependency array
+  }, [isOpen, teamName, opponentName, gameDate]); // REMOVED currentGameType from dependency array
 
   const handleSaveClick = () => {
     const trimmedName = gameName.trim();
     if (trimmedName) {
-      // Pass gameType to onSave
-      onSave(trimmedName, gameType);
-      onClose(); // Close modal after saving
+      // Call onSave without gameType
+      onSave(trimmedName); 
+      onClose(); 
     } else {
-      // Optionally show an error/prompt if the name is empty
       console.warn("Game name cannot be empty.");
-      inputRef.current?.focus(); // Refocus input
+      inputRef.current?.focus(); 
     }
   };
 
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement | HTMLInputElement>) => {
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => { // Simplified type
     if (event.key === 'Enter') {
       handleSaveClick();
     } else if (event.key === 'Escape') {
@@ -99,38 +99,6 @@ const SaveGameModal: React.FC<SaveGameModalProps> = ({
             placeholder={t('saveGameModal.placeholder', 'e.g., vs Lapa FC (Home)') ?? undefined}
             className="w-full px-3 py-2 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
           />
-        </div>
-
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-slate-300 mb-2">
-            {t('saveGameModal.gameTypeLabel', 'Game Type:')}
-          </label>
-          <div className="flex space-x-4">
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="radio"
-                name="gameType"
-                value="season"
-                checked={gameType === 'season'}
-                onChange={() => setGameType('season')}
-                onKeyDown={handleKeyDown}
-                className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-slate-500 bg-slate-700"
-              />
-              <span className="text-sm text-slate-200">{t('saveGameModal.gameTypeSeason', 'Season')}</span>
-            </label>
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="radio"
-                name="gameType"
-                value="tournament"
-                checked={gameType === 'tournament'}
-                onChange={() => setGameType('tournament')}
-                onKeyDown={handleKeyDown}
-                className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-slate-500 bg-slate-700"
-              />
-              <span className="text-sm text-slate-200">{t('saveGameModal.gameTypeTournament', 'Tournament')}</span>
-            </label>
-          </div>
         </div>
 
         <div className="flex justify-center space-x-3 mt-auto pt-4 border-t border-slate-700/50">
