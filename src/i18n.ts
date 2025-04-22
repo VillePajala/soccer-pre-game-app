@@ -379,7 +379,7 @@ if (!fiTranslations.gameSettingsModal) {
 // Now assign keys with actual Finnish
 fiTranslations.gameSettingsModal.title = "Pelin Asetukset";
 fiTranslations.gameSettingsModal.gameInfoTitle = "Ottelun Tiedot";
-fiTranslations.gameSettingsModal.fairPlayTitle = "RFair Play -kortti";
+fiTranslations.gameSettingsModal.fairPlayTitle = "Fair Play -kortti";
 fiTranslations.gameSettingsModal.awardFairPlayLabel = "Palkittu Pelaaja:";
 fiTranslations.gameSettingsModal.awardFairPlayNone = "- Ei Valittu -";
 fiTranslations.gameSettingsModal.notesTitle = "Muistiinpanot";
