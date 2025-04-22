@@ -173,6 +173,15 @@ if (!fiTranslations.common) {
   fiTranslations.common = {};
 }
 fiTranslations.common.cancelButton = "Peruuta";
+fiTranslations.common.cancelEdit = "Peruuta Muokkaukset";
+// ADD missing common keys used in GameSettingsModal labels with actual Finnish
+fiTranslations.common.opponent = "Vastustaja";
+fiTranslations.common.date = "Päivämäärä";
+fiTranslations.common.location = "Paikka";
+fiTranslations.common.time = "Aika";
+fiTranslations.common.home = "Koti";
+fiTranslations.common.away = "Vieras";
+fiTranslations.common.notSet = "Ei asetettu";
 
 // Add missing English translations
 if (!enTranslations.goalLogModal) {
@@ -353,6 +362,45 @@ enTranslations.loadGameModal.filter_tournament = "Tournament";
 enTranslations.loadGameModal.filterPlaceholder = "Filter by name/date...";
 enTranslations.loadGameModal.loadButton = "Load Game";
 enTranslations.loadGameModal.noFilterResults = "No games match the current filter.";
+
+// Add RosterSettingsModal translations if section doesn't exist
+if (!fiTranslations.rosterSettingsModal) {
+  fiTranslations.rosterSettingsModal = {};
+}
+fiTranslations.rosterSettingsModal.title = "Joukkueen Hallinta";
+fiTranslations.rosterSettingsModal.teamNameLabel = "Joukkueen Nimi:";
+
+// ADD GameSettingsModal translations (Ensure object exists first)
+if (!fiTranslations.gameSettingsModal) {
+  fiTranslations.gameSettingsModal = {};
+}
+// Now assign keys with actual Finnish
+fiTranslations.gameSettingsModal.title = "Pelin Asetukset";
+fiTranslations.gameSettingsModal.gameInfoTitle = "Ottelun Tiedot";
+fiTranslations.gameSettingsModal.fairPlayTitle = "Reilun Pelin Palkinto";
+fiTranslations.gameSettingsModal.awardFairPlayLabel = "Palkittu Pelaaja:";
+fiTranslations.gameSettingsModal.awardFairPlayNone = "- Ei Valittu -";
+fiTranslations.gameSettingsModal.notesTitle = "Muistiinpanot";
+fiTranslations.gameSettingsModal.notesPlaceholder = "Kirjoita muistiinpanoja...";
+fiTranslations.gameSettingsModal.noNotes = "Ei muistiinpanoja.";
+fiTranslations.gameSettingsModal.eventLogTitle = "Muokkaa Tapahtumia";
+fiTranslations.gameSettingsModal.noGoalsLogged = "Ei kirjattuja maaleja.";
+fiTranslations.gameSettingsModal.invalidTimeFormat = "Virheellinen aika (MM:SS)";
+fiTranslations.gameSettingsModal.scorerRequired = "Maalintekijä vaaditaan.";
+
+// Ensure common namespace exists before adding key
+if (!fiTranslations.common) {
+  fiTranslations.common = {};
+}
+fiTranslations.common.cancelEdit = "Peruuta Muokkaukset"; 
+// ADD missing common keys used in GameSettingsModal labels with actual Finnish
+fiTranslations.common.opponent = "Vastustaja";
+fiTranslations.common.date = "Päivämäärä";
+fiTranslations.common.location = "Paikka";
+fiTranslations.common.time = "Aika";
+fiTranslations.common.home = "Koti";
+fiTranslations.common.away = "Vieras";
+fiTranslations.common.notSet = "Ei asetettu";
 
 // Generate a cache-busting version number
 // const cacheVersion = new Date().getTime();

@@ -30,7 +30,7 @@ import {
     HiOutlineArchiveBoxArrowDown // Use this for Quick Save
 } from 'react-icons/hi2'; // Using hi2 for Heroicons v2 Outline
 // Keep FaFutbol for now unless a good Heroicon alternative is found
-import { FaFutbol } from 'react-icons/fa';
+import { FaFutbol, FaClock, FaPencilAlt, FaUsers, FaCog } from 'react-icons/fa';
 
 // Import translation hook
 import { useTranslation } from 'react-i18next';
@@ -64,6 +64,9 @@ interface ControlBarProps {
   onStartNewGame: () => void; // CHANGED from onResetGameStats
   onOpenRosterModal: () => void; // Add prop for opening roster modal
   onQuickSave: () => void; // Add prop for quick save
+  // ADD props for Game Settings Modal
+  onOpenGameSettingsModal: () => void;
+  isGameLoaded: boolean; // To enable/disable the settings button
 }
 
 // Helper function to format time
@@ -100,7 +103,10 @@ const ControlBar: React.FC<ControlBarProps> = ({
   onOpenLoadGameModal, // Destructure new prop
   onStartNewGame, // CHANGED from onResetGameStats
   onOpenRosterModal, // Destructure the new prop
-  onQuickSave // Destructure quick save handler
+  onQuickSave, // Destructure quick save handler
+  // ADD props for Game Settings Modal
+  onOpenGameSettingsModal,
+  isGameLoaded,
 }) => {
   const { t, i18n } = useTranslation(); // Standard hook
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
@@ -240,6 +246,16 @@ const ControlBar: React.FC<ControlBarProps> = ({
         title={t('controlBar.manageRoster', 'Manage Roster')}
       >
         <HiOutlineUsers className={iconSize}/>
+      </button>
+
+            {/* Game Settings Button */}
+            <button
+        onClick={onOpenGameSettingsModal}
+        disabled={!isGameLoaded}
+        className={`${baseButtonStyle} ${secondaryColor}`} // You can choose a different color if you prefer
+        title={isGameLoaded ? t('controlBar.gameSettingsTooltip', 'Edit current game details') : t('controlBar.gameSettingsDisabledTooltip', 'Load a game to edit settings')}
+      >
+        <FaPencilAlt className={iconSize} /> {/* Using FaPencilAlt as planned */}
       </button>
 
       {/* NEW Settings Button & Menu */}

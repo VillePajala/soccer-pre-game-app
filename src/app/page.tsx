@@ -13,6 +13,7 @@ import SaveGameModal from '@/components/SaveGameModal';
 import LoadGameModal from '@/components/LoadGameModal';
 import NewGameSetupModal from '@/components/NewGameSetupModal';
 import RosterSettingsModal from '@/components/RosterSettingsModal';
+import GameSettingsModal from '@/components/GameSettingsModal';
 import { useTranslation } from 'react-i18next';
 import { useGameState, UseGameStateReturn } from '@/hooks/useGameState';
 
@@ -327,6 +328,8 @@ export default function Home() {
   const [hasSkippedInitialSetup, setHasSkippedInitialSetup] = useState<boolean>(false); // <-- Add this state
   // Add state to track if new game setup should open after saving
   const [isStartingNewGameAfterSave, setIsStartingNewGameAfterSave] = useState<boolean>(false);
+  // ADD state for the new Game Settings modal
+  const [isGameSettingsModalOpen, setIsGameSettingsModalOpen] = useState<boolean>(false);
 
   // --- Handlers (Remaining in Home component or to be moved) ---
   // REMOVED: handlePlayerDrop (now comes from useGameState hook)
@@ -2081,6 +2084,29 @@ export default function Home() {
   ]);
   // --- END Quick Save Handler ---
 
+  // --- NEW: Handlers for Game Settings Modal --- (Placeholder open/close)
+  const handleOpenGameSettingsModal = () => {
+    // Add check: Only open if a game is loaded (not default)
+    if (currentGameId && currentGameId !== DEFAULT_GAME_ID) {
+      setIsGameSettingsModalOpen(true);
+    } else {
+      alert(t('gameSettings.noGameLoadedError', 'Cannot edit settings. No game loaded or current game is unsaved.') ?? 'No game loaded to edit settings.');
+    }
+  };
+  const handleCloseGameSettingsModal = () => {
+    setIsGameSettingsModalOpen(false);
+  };
+
+  // --- Placeholder Handlers for GameSettingsModal (will be implemented properly later) ---
+  const handleGameLocationChange = (location: string) => {
+    setGameLocation(location);
+    saveStateToHistory({ gameLocation: location });
+  };
+  const handleGameTimeChange = (time: string) => {
+    setGameTime(time);
+    saveStateToHistory({ gameTime: time });
+  };
+
   // Render null or a loading indicator until state is loaded
   // Note: Console log added before the check itself
   console.log('Before checking isLoaded');
@@ -2193,6 +2219,9 @@ export default function Home() {
           onStartNewGame={handleStartNewGame}
           onOpenRosterModal={openRosterModal} // Pass the handler
           onQuickSave={handleQuickSaveGame} // Pass the quick save handler
+          // ADD props for Game Settings button
+          onOpenGameSettingsModal={handleOpenGameSettingsModal}
+          isGameLoaded={currentGameId !== null && currentGameId !== DEFAULT_GAME_ID}
         />
         {/* Instructions Modal */}
         <InstructionsModal 
@@ -2213,7 +2242,7 @@ export default function Home() {
           availablePlayers={availablePlayers}
           currentTime={timeElapsedInSeconds}
         />
-        {/* Game Stats Modal */}
+        {/* Game Stats Modal - REMOVE moved props */}
         <GameStatsModal
           isOpen={isGameStatsModalOpen}
           onClose={handleToggleGameStatsModal}
@@ -2226,24 +2255,22 @@ export default function Home() {
           awayScore={awayScore}
           availablePlayers={availablePlayers}
           gameEvents={gameEvents}
-          gameNotes={gameNotes}
-          onOpponentNameChange={handleOpponentNameChange}
-          onGameDateChange={handleGameDateChange}
-          onHomeScoreChange={handleHomeScoreChange}
-          onAwayScoreChange={handleAwayScoreChange}
-          onGameNotesChange={handleGameNotesChange}
-          onUpdateGameEvent={handleUpdateGameEvent}
-          onAwardFairPlayCard={handleAwardFairPlayCard}
+          // gameNotes={gameNotes} // REMOVED
+          // onOpponentNameChange={handleOpponentNameChange} // REMOVED
+          // onGameDateChange={handleGameDateChange} // REMOVED
+          // onHomeScoreChange={handleHomeScoreChange} // REMOVED
+          // onAwayScoreChange={handleAwayScoreChange} // REMOVED
+          // onGameNotesChange={handleGameNotesChange} // REMOVED
+          // onUpdateGameEvent={handleUpdateGameEvent} // REMOVED
+          // onAwardFairPlayCard={handleAwardFairPlayCard} // REMOVED
           selectedPlayerIds={selectedPlayerIds}
           currentGameId={currentGameId}
-          // ADD seasonId and tournamentId props from page state
           seasonId={seasonId}
           tournamentId={tournamentId}
           onExportOneJson={handleExportOneJson}
           onExportOneCsv={handleExportOneCsv}
-          // REMOVED Bulk export props
         />
-        {/* Save Game Modal - REMOVED currentGameType prop */}
+        {/* Save Game Modal */}
         <SaveGameModal
           isOpen={isSaveGameModalOpen}
           onClose={handleCloseSaveGameModal}
@@ -2292,6 +2319,36 @@ export default function Home() {
           onTogglePlayerSelection={handleTogglePlayerSelection}
           teamName={teamName}
           onTeamNameChange={handleTeamNameChange}
+        />
+
+        {/* ADD the new Game Settings Modal - ADD missing props */}
+        <GameSettingsModal
+          isOpen={isGameSettingsModalOpen}
+          onClose={handleCloseGameSettingsModal}
+          currentGameId={currentGameId}
+          // ADD missing props
+          teamName={teamName}
+          opponentName={opponentName}
+          gameDate={gameDate}
+          gameLocation={gameLocation}
+          gameTime={gameTime}
+          gameNotes={gameNotes}
+          homeScore={homeScore} // ADD
+          awayScore={awayScore} // ADD
+          seasonId={seasonId}
+          tournamentId={tournamentId}
+          gameEvents={gameEvents}
+          availablePlayers={availablePlayers}
+          selectedPlayerIds={selectedPlayerIds}
+          // Pass handlers
+          onOpponentNameChange={handleOpponentNameChange}
+          onGameDateChange={handleGameDateChange}
+          onGameNotesChange={handleGameNotesChange}
+          onUpdateGameEvent={handleUpdateGameEvent} // Pass existing handler
+          onAwardFairPlayCard={handleAwardFairPlayCard} // Pass existing handler
+          // Pass new handlers
+          onGameLocationChange={handleGameLocationChange} // ADD
+          onGameTimeChange={handleGameTimeChange}         // ADD
         />
 
       </div>
