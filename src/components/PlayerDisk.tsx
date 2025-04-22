@@ -67,7 +67,8 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
       }
     }
     // Keep other stable dependencies
-  }, [isEditing, id, nickname, fullName, onRenamePlayer]); 
+    // ADD editedName to the dependency array
+  }, [isEditing, id, nickname, fullName, onRenamePlayer, editedName]); 
 
   // Update editedName if the props change (e.g., via undo/redo)
   useEffect(() => {
