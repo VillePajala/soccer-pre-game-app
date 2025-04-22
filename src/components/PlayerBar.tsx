@@ -9,7 +9,6 @@ import { GameEvent } from '@/app/page'; // Import the GameEvent type
 // Define props for PlayerBar
 interface PlayerBarProps {
   players: Player[];
-  onRenamePlayer: (playerId: string, playerData: { name: string; nickname: string }) => void; // Update type
   teamName: string;
   onTeamNameChange: (newName: string) => void;
   // Add prop to pass down touch drag start handler
@@ -37,7 +36,7 @@ interface PlayerBarProps {
 //   { id: 'p11', name: 'Player 11' },
 // ];
 
-const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName, onTeamNameChange, onPlayerDragStartFromBar, selectedPlayerIdFromBar, onBarBackgroundClick, gameEvents, onPlayerTapInBar, onToggleGoalie }) => { // Destructure players and rename handler from props
+const PlayerBar: React.FC<PlayerBarProps> = ({ players, teamName, onTeamNameChange, onPlayerDragStartFromBar, selectedPlayerIdFromBar, onBarBackgroundClick, gameEvents, onPlayerTapInBar, onToggleGoalie }) => { // Destructure players and rename handler from props
   const [isEditingTeamName, setIsEditingTeamName] = useState(false);
   const [editedTeamName, setEditedTeamName] = useState(teamName);
   const teamNameInputRef = useRef<HTMLInputElement>(null);
@@ -187,7 +186,6 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName
             nickname={player.nickname}
             color={player.color}
             isGoalie={player.isGoalie}
-            onRenamePlayer={onRenamePlayer}
             onPlayerDragStartFromBar={onPlayerDragStartFromBar}
             selectedPlayerIdFromBar={selectedPlayerIdFromBar}
             gameEvents={gameEvents}

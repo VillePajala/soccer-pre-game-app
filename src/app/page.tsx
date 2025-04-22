@@ -2353,20 +2353,24 @@ export default function Home() {
       <div className="flex flex-col h-full">
       {/* Top Player Bar - Filter players based on selection */}
       <PlayerBar
-        players={availablePlayers.filter(p => selectedPlayerIds.includes(p.id))} // Pass only selected players
-        onRenamePlayer={handleRenamePlayer} // Pass the handler from the hook
+        players={availablePlayers} // Pass the current list
         teamName={teamName}
         onTeamNameChange={handleTeamNameChange}
+        // CORRECT prop name back to onPlayerDragStartFromBar
         onPlayerDragStartFromBar={handlePlayerDragStartFromBar}
-        selectedPlayerIdFromBar={draggingPlayerFromBarInfo?.id}
-          onBarBackgroundClick={handleDeselectPlayer}
-          gameEvents={gameEvents}
-          onPlayerTapInBar={handlePlayerTapInBar}
-          onToggleGoalie={handleToggleGoalie} // Pass the handler from the hook
-        />
-        
-        {/* Main content */}
-        <main className="flex-1 relative overflow-hidden">
+        selectedPlayerIdFromBar={draggingPlayerFromBarInfo?.id} // Pass the selected ID
+        onBarBackgroundClick={handleDeselectPlayer} // Pass deselect handler
+        // REMOVE: onRenamePlayer prop
+        // onRenamePlayer={handleRenamePlayer} 
+        gameEvents={gameEvents} // Pass game events for badges
+        onPlayerTapInBar={handlePlayerTapInBar} // Pass the new tap handler
+        onToggleGoalie={handleToggleGoalie} // Pass the handler from the hook
+      />
+      
+      {/* Opponent Bar (Optional) */}
+
+      {/* Main content */}
+      <main className="flex-1 relative overflow-hidden">
         {showLargeTimerOverlay && (
           <TimerOverlay 
               // Pass all required props as defined in TimerOverlayProps

@@ -406,19 +406,19 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                               <input
                                 type="text"
                                 name="name"
-                                placeholder={t('rosterSettingsModal.playerNamePlaceholder', 'Player Name') || 'Player Name'}
-                                value={editPlayerData.name} // Use renamed state
-                                onChange={handleEditInputChange} // Use renamed handler
-                                className="bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 text-sm w-full focus:ring-indigo-500 focus:border-indigo-500 outline-none" // Style like GameStatsModal
-                                autoFocus
+                                value={editPlayerData.name}
+                                onChange={handleEditInputChange}
+                                className="flex-grow bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500 outline-none mr-2"
+                                placeholder={t('rosterSettingsModal.playerNamePlaceholder', 'Full Name') || 'Full Name'}
                               />
+                              {/* ADD Nickname Input */}
                               <input
                                 type="text"
                                 name="nickname"
-                                placeholder={t('rosterSettingsModal.nicknamePlaceholder', 'Nickname (for disc)') || 'Nickname (for disc)'}
-                                value={editPlayerData.nickname} // Use renamed state
-                                onChange={handleEditInputChange} // Use renamed handler
-                                className="bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 text-sm w-full focus:ring-indigo-500 focus:border-indigo-500 outline-none" // Style like GameStatsModal
+                                value={editPlayerData.nickname}
+                                onChange={handleEditInputChange}
+                                className="flex-grow bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500 outline-none mr-2"
+                                placeholder={t('rosterSettingsModal.nicknamePlaceholder', 'Nickname (Display Name)') || 'Nickname (Display Name)'}
                               />
                           </div>
                           {/* Jersey Input */}
@@ -426,9 +426,9 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                             type="text"
                             name="jerseyNumber"
                             placeholder="#"
-                            value={editPlayerData.jerseyNumber} // Use renamed state
-                            onChange={handleEditInputChange} // Use renamed handler
-                            className="bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 w-16 text-sm text-center focus:ring-indigo-500 focus:border-indigo-500 outline-none" // Style like GameStatsModal
+                            value={editPlayerData.jerseyNumber}
+                            onChange={handleEditInputChange}
+                            className="bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 w-16 text-sm text-center focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                             maxLength={3}
                           />
                         </div>
@@ -436,9 +436,9 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                         <textarea
                             name="notes"
                             placeholder={t('rosterSettingsModal.notesPlaceholder', 'Player notes...') || 'Player notes...'}
-                            value={editPlayerData.notes} // Use renamed state
-                            onChange={handleEditInputChange} // Use renamed handler
-                            className="bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 w-full text-sm h-16 resize-none scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-700 focus:ring-indigo-500 focus:border-indigo-500 outline-none" // Style like GameStatsModal
+                            value={editPlayerData.notes}
+                            onChange={handleEditInputChange}
+                            className="bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 w-full text-sm h-16 resize-none scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-700 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                             rows={2}
                           />
                         {/* Action Buttons (Save/Cancel) - Use Icons */}
