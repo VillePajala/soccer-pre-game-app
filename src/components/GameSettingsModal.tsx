@@ -68,9 +68,18 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
 }) => {
   const { t } = useTranslation();
 
+  // ADD Helper function definition INSIDE the component body
+  const formatDateFi = (isoDate: string): string => {
+    if (!isoDate || !/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) {
+      return isoDate || t('common.notSet', 'Not Set');
+    }
+    const parts = isoDate.split('-');
+    return `${parts[2]}.${parts[1]}.${parts[0]}`;
+  };
+
   // --- Local State for Edits ---
   const [localOpponentName, setLocalOpponentName] = useState(opponentName);
-  const [localGameDate, setLocalGameDate] = useState(gameDate);
+  const [localGameDate, setLocalGameDate] = useState(gameDate); // Stays YYYY-MM-DD
   const [localGameLocation, setLocalGameLocation] = useState(gameLocation || '');
   const [localGameTime, setLocalGameTime] = useState(gameTime || '');
   const [localGameNotes, setLocalGameNotes] = useState(gameNotes);
@@ -109,20 +118,22 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   // Initialize local state when modal opens or relevant props change
   useEffect(() => {
     if (isOpen) {
+      // Reset main local states
       setLocalOpponentName(opponentName);
       setLocalGameDate(gameDate);
       setLocalGameLocation(gameLocation || '');
       setLocalGameTime(gameTime || '');
       setLocalGameNotes(gameNotes);
       setLocalGameEvents(gameEvents);
-      // Find initial fair play winner from available players
+      // Find initial fair play winner
       const initialFairPlayWinner = availablePlayers.find(p => p.receivedFairPlayCard)?.id || null;
       setLocalFairPlayPlayerId(initialFairPlayWinner);
-      setEditingGoalId(null); // Ensure event editor is closed
-      setIsEditing(false); // Reset edit mode on modal open/prop change
+      
+      // Reset editing states
+      setEditingGoalId(null); 
+      setIsEditing(false); 
     } 
-    // No else needed, state persists while modal is closed but resets on open
-  }, [isOpen, opponentName, gameDate, gameLocation, gameTime, gameNotes, gameEvents, availablePlayers]);
+  }, [isOpen, opponentName, gameDate, gameLocation, gameTime, gameNotes, gameEvents, availablePlayers]); // Keep dependencies
 
   // Focus goal time input (if event editor becomes active)
   useEffect(() => {
@@ -200,6 +211,14 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
     else if (event.key === 'Escape') handleCancelEditGoal();
   }, [handleSaveEditGoal, handleCancelEditGoal]);
   
+  // --- Handler for Auto-Saving Fair Play ---
+  const handleFairPlayChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+      const selectedPlayerId = event.target.value || null; // Convert empty string value to null
+      setLocalFairPlayPlayerId(selectedPlayerId); // Update local state for UI
+      onAwardFairPlayCard(selectedPlayerId); // Call prop handler immediately
+      console.log("Fair Play award updated to:", selectedPlayerId); // Optional: Log change
+  }, [onAwardFairPlayCard, setLocalFairPlayPlayerId]);
+
   // --- Handlers for Edit Mode and Saving ---
   const handleEditClick = () => {
     setIsEditing(true);
@@ -229,12 +248,6 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
       onGameNotesChange(localGameNotes);
     }
     
-    // Compare Fair Play Award
-    const initialFairPlayWinner = availablePlayers.find(p => p.receivedFairPlayCard)?.id || null;
-    if (localFairPlayPlayerId !== initialFairPlayWinner) {
-        onAwardFairPlayCard(localFairPlayPlayerId);
-    }
-
     // Compare Game Events (simple length check first, then shallow content check)
     // A more robust diffing could be implemented if needed
     if (localGameEvents.length !== gameEvents.length || 
@@ -257,8 +270,9 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
         // How to handle deleted events? Need comparison logic and onDelete handler
     }
 
-    // setIsEditing(false); // REMOVE: Keep modal in edit mode after saving
+    setIsEditing(false); // RE-ADD: Exit edit mode after saving changes
     // Do not call onClose() here, let user close manually if needed
+     console.log("Save changes triggered, exiting edit mode."); // Update log message
   };
 
   const resetLocalState = () => {
@@ -268,8 +282,6 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
     setLocalGameTime(gameTime || '');
     setLocalGameNotes(gameNotes);
     setLocalGameEvents(gameEvents);
-    const initialFairPlayWinner = availablePlayers.find(p => p.receivedFairPlayCard)?.id || null;
-    setLocalFairPlayPlayerId(initialFairPlayWinner);
     setEditingGoalId(null);
     setIsEditing(false);
   };
@@ -323,9 +335,15 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                     <div>
                         <label htmlFor="settingsGameDate" className="block text-xs text-slate-400 font-medium mb-0.5">{t('common.date', 'Date')}</label>
                         {isEditing ? (
-                            <input id="settingsGameDate" type="date" value={localGameDate} onChange={(e) => setLocalGameDate(e.target.value)} className="w-full bg-slate-700 border border-slate-500 rounded px-2 py-1 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+                            <input 
+                                id="settingsGameDate" 
+                                type="date" 
+                                value={localGameDate}
+                                onChange={(e) => setLocalGameDate(e.target.value)}
+                                className="w-full bg-slate-700 border border-slate-500 rounded px-2 py-1 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500" 
+                            />
                          ) : (
-                            <p className="text-slate-100 pt-1 min-h-[28px]">{localGameDate}</p> // Display text
+                            <p className="text-slate-100 pt-1 min-h-[28px]">{formatDateFi(localGameDate)}</p> 
                         )}
                     </div>
                     {/* Scores (Display Only) */}
@@ -364,20 +382,15 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
             <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-700">
               <h3 className="text-lg font-semibold text-slate-200 mb-3">{t('gameSettingsModal.fairPlayTitle', 'Fair Play Award')}</h3>
               <div className="flex items-center gap-2">
-                <label htmlFor="settingsFairPlaySelect" className="text-sm font-medium text-slate-300 whitespace-nowrap">{t('gameSettingsModal.awardFairPlayLabel', 'Awarded To:')}</label>
-                {isEditing ? (
-                  <select
-                    id="settingsFairPlaySelect"
-                    value={localFairPlayPlayerId || ''} 
-                    onChange={(e) => setLocalFairPlayPlayerId(e.target.value || null)}
-                    className="block w-full px-3 py-1.5 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  >
-                    <option value="">{t('gameSettingsModal.awardFairPlayNone', '- None -')}</option>
-                    {availablePlayers.map(player => ( <option key={player.id} value={player.id}>{player.name}</option> ))} 
-                  </select>
-                 ) : (
-                    <p className="text-slate-100 pt-1 min-h-[34px]">{availablePlayers.find(p => p.id === localFairPlayPlayerId)?.name || t('gameSettingsModal.awardFairPlayNone', '- None -')}</p> // Display name
-                 )}
+                <select
+                  id="settingsFairPlaySelect"
+                  value={localFairPlayPlayerId || ''}
+                  onChange={handleFairPlayChange}
+                  className="block w-full px-3 py-1.5 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                  <option value="">{t('gameSettingsModal.awardFairPlayNone', '- None -')}</option>
+                  {availablePlayers.map(player => ( <option key={player.id} value={player.id}>{player.name}</option> ))}
+                </select>
               </div>
             </div>
 
@@ -462,31 +475,47 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
         </div> {/* End Modal Body Grid */}
 
         {/* Footer with Conditional Buttons */}
-        <div className="p-4 border-t border-slate-700 flex-shrink-0 flex justify-end items-center gap-3">
-          {/* Always show Close button */}
-          <button
-            onClick={onClose} // Close button always just closes the modal
-            className="px-4 py-2 bg-slate-600 text-white rounded hover:bg-slate-500 transition duration-150 text-sm"
-          >
-            {t('common.close', 'Close')} 
-          </button>
-          
-          {/* Show Save/Cancel Edit only when editing */}
+        <div className={`p-4 border-t border-slate-700 flex-shrink-0 ${
+          isEditing 
+            ? 'flex flex-col gap-2' 
+            : 'flex justify-end items-center gap-3' 
+        }`}>
+          {/* Edit Mode Layout */}
           {isEditing && (
             <>
+              {/* Row 1: Cancel and Save */}
+              <div className="flex gap-2 w-full">
+                <button
+                  onClick={handleCancelCurrentEdit} 
+                  className="flex-1 px-4 py-2 bg-slate-600 text-white rounded hover:bg-slate-500 transition duration-150 text-sm"
+                >
+                  {t('common.cancelEdit', 'Cancel Edit')} 
+                </button>
+                <button
+                  onClick={handleSaveChanges} 
+                  className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition duration-150 text-sm"
+                >
+                  {t('common.saveChanges', 'Save Changes')} 
+                </button>
+              </div>
+              {/* Row 2: Close */}
               <button
-                onClick={handleCancelCurrentEdit} // Use the renamed handler
-                className="px-4 py-2 bg-slate-600 text-white rounded hover:bg-slate-500 transition duration-150 text-sm"
+                onClick={onClose} 
+                className="w-full px-4 py-2 bg-slate-700 text-white rounded hover:bg-slate-600 transition duration-150 text-sm" // Different style for close in edit mode? Maybe darker.
               >
-                {t('common.cancelEdit', 'Cancel Edit')} 
-              </button>
-              <button
-                onClick={handleSaveChanges} // Save calls the handler
-                className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition duration-150 text-sm"
-              >
-                {t('common.saveChanges', 'Save Changes')} 
+                {t('common.close', 'Close')} 
               </button>
             </>
+          )}
+          
+          {/* Non-Edit Mode Layout */}
+          {!isEditing && (
+            <button
+              onClick={onClose} 
+              className="px-4 py-2 bg-slate-600 text-white rounded hover:bg-slate-500 transition duration-150 text-sm"
+            >
+              {t('common.close', 'Close')} 
+            </button>
           )}
         </div>
       </div>

@@ -173,7 +173,7 @@ if (!fiTranslations.common) {
   fiTranslations.common = {};
 }
 fiTranslations.common.cancelButton = "Peruuta";
-fiTranslations.common.cancelEdit = "Peruuta Muokkaukset";
+fiTranslations.common.cancelEdit = "Peruuta";
 // ADD missing common keys used in GameSettingsModal labels with actual Finnish
 fiTranslations.common.opponent = "Vastustaja";
 fiTranslations.common.date = "Päivämäärä";
@@ -182,6 +182,8 @@ fiTranslations.common.time = "Aika";
 fiTranslations.common.home = "Koti";
 fiTranslations.common.away = "Vieras";
 fiTranslations.common.notSet = "Ei asetettu";
+fiTranslations.common.close = "Sulje";
+fiTranslations.common.saveChanges = "Tallenna";
 
 // Add missing English translations
 if (!enTranslations.goalLogModal) {
@@ -377,7 +379,7 @@ if (!fiTranslations.gameSettingsModal) {
 // Now assign keys with actual Finnish
 fiTranslations.gameSettingsModal.title = "Pelin Asetukset";
 fiTranslations.gameSettingsModal.gameInfoTitle = "Ottelun Tiedot";
-fiTranslations.gameSettingsModal.fairPlayTitle = "Reilun Pelin Palkinto";
+fiTranslations.gameSettingsModal.fairPlayTitle = "RFair Play -kortti";
 fiTranslations.gameSettingsModal.awardFairPlayLabel = "Palkittu Pelaaja:";
 fiTranslations.gameSettingsModal.awardFairPlayNone = "- Ei Valittu -";
 fiTranslations.gameSettingsModal.notesTitle = "Muistiinpanot";
@@ -392,7 +394,7 @@ fiTranslations.gameSettingsModal.scorerRequired = "Maalintekijä vaaditaan.";
 if (!fiTranslations.common) {
   fiTranslations.common = {};
 }
-fiTranslations.common.cancelEdit = "Peruuta Muokkaukset"; 
+fiTranslations.common.cancelEdit = "Peruuta"; 
 // ADD missing common keys used in GameSettingsModal labels with actual Finnish
 fiTranslations.common.opponent = "Vastustaja";
 fiTranslations.common.date = "Päivämäärä";
