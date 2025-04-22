@@ -1210,28 +1210,26 @@ export default function Home() {
 
   // --- Handlers for Game Structure ---
   console.log('Before handleSetNumberOfPeriods definition');
-  const handleSetNumberOfPeriods = (periods: 1 | 2) => {
-    if (gameStatus === 'notStarted') {
-      setNumberOfPeriods(periods);
-      // No history save needed here, handled implicitly by timer start/reset?
-      // Or maybe save it immediately?
-      saveStateToHistory({ numberOfPeriods: periods }); // Let's save it
-      console.log(`Number of periods set to: ${periods}`);
+  const handleSetNumberOfPeriods = (periods: number) => { 
+    // Keep the check inside
+    if (periods === 1 || periods === 2) {
+      // Keep the type assertion for the state setter
+      const validPeriods = periods as (1 | 2); 
+      setNumberOfPeriods(validPeriods);
+      saveStateToHistory({ numberOfPeriods: validPeriods });
+      console.log(`Number of periods set to: ${validPeriods}`);
     } else {
-      console.log("Cannot change number of periods after game has started.");
+      console.warn(`Invalid number of periods attempted: ${periods}. Must be 1 or 2.`);
     }
   };
 
   console.log('Before handleSetPeriodDuration definition');
   const handleSetPeriodDuration = (minutes: number) => {
     const newMinutes = Math.max(1, minutes);
-    if (gameStatus === 'notStarted') {
-      setPeriodDurationMinutes(newMinutes);
-      saveStateToHistory({ periodDurationMinutes: newMinutes }); // Save immediately
-      console.log(`Period duration set to: ${newMinutes} minutes.`);
-    } else {
-      console.log("Cannot change period duration after game has started.");
-    }
+    setPeriodDurationMinutes(newMinutes);
+    saveStateToHistory({ periodDurationMinutes: newMinutes }); // Save immediately
+    console.log(`Period duration set to: ${newMinutes} minutes.`);
+    
   };
 
   // Training Resources Modal
@@ -2167,8 +2165,6 @@ export default function Home() {
               periodDurationMinutes={periodDurationMinutes}
               currentPeriod={currentPeriod}
               gameStatus={gameStatus}
-              onSetNumberOfPeriods={handleSetNumberOfPeriods}
-              onSetPeriodDuration={handleSetPeriodDuration}
               onOpponentNameChange={handleOpponentNameChange}
           />
         )}
@@ -2327,6 +2323,10 @@ export default function Home() {
           onClose={handleCloseGameSettingsModal}
           currentGameId={currentGameId}
           // ADD missing props
+          numPeriods={numberOfPeriods}
+          periodDurationMinutes={periodDurationMinutes}
+          onNumPeriodsChange={handleSetNumberOfPeriods}
+          onPeriodDurationChange={handleSetPeriodDuration}
           teamName={teamName}
           opponentName={opponentName}
           gameDate={gameDate}

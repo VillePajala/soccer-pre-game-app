@@ -23,6 +23,9 @@ interface GameSettingsModalProps {
   gameEvents: GameEvent[];
   availablePlayers: Player[];
   selectedPlayerIds: string[];
+  // ADD: Period and Duration props
+  numPeriods: number;
+  periodDurationMinutes: number;
   // --- Handlers for updating game data ---
   onOpponentNameChange: (name: string) => void;
   onGameDateChange: (date: string) => void;
@@ -31,6 +34,9 @@ interface GameSettingsModalProps {
   onGameNotesChange: (notes: string) => void;
   onUpdateGameEvent: (updatedEvent: GameEvent) => void;
   onAwardFairPlayCard: (playerId: string | null) => void;
+  // ADD: Period and Duration callbacks
+  onNumPeriodsChange: (num: number) => void;
+  onPeriodDurationChange: (minutes: number) => void;
 }
 
 // Helper to format time from seconds to MM:SS (moved from GameStatsModal)
@@ -65,6 +71,10 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   currentGameId,
   seasonId,
   tournamentId,
+  numPeriods,
+  periodDurationMinutes,
+  onNumPeriodsChange,
+  onPeriodDurationChange,
 }) => {
   const { t } = useTranslation();
 
@@ -85,6 +95,9 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   const [localGameNotes, setLocalGameNotes] = useState(gameNotes);
   const [localFairPlayPlayerId, setLocalFairPlayPlayerId] = useState<string | null>(null);
   const [localGameEvents, setLocalGameEvents] = useState<GameEvent[]>(gameEvents);
+  // ADD Local state for periods/duration
+  const [localNumPeriods, setLocalNumPeriods] = useState(numPeriods);
+  const [localPeriodDurationMinutes, setLocalPeriodDurationMinutes] = useState(periodDurationMinutes);
 
   // --- Edit Mode State ---
   const [isEditing, setIsEditing] = useState(false);
@@ -125,6 +138,9 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
       setLocalGameTime(gameTime || '');
       setLocalGameNotes(gameNotes);
       setLocalGameEvents(gameEvents);
+      // ADD Reset for periods/duration
+      setLocalNumPeriods(numPeriods);
+      setLocalPeriodDurationMinutes(periodDurationMinutes);
       // Find initial fair play winner
       const initialFairPlayWinner = availablePlayers.find(p => p.receivedFairPlayCard)?.id || null;
       setLocalFairPlayPlayerId(initialFairPlayWinner);
@@ -133,7 +149,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
       setEditingGoalId(null); 
       setIsEditing(false); 
     } 
-  }, [isOpen, opponentName, gameDate, gameLocation, gameTime, gameNotes, gameEvents, availablePlayers]); // Keep dependencies
+  }, [isOpen, opponentName, gameDate, gameLocation, gameTime, gameNotes, gameEvents, availablePlayers, numPeriods, periodDurationMinutes]); // Add new props to dependencies
 
   // Focus goal time input (if event editor becomes active)
   useEffect(() => {
@@ -247,6 +263,13 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
     if (localGameNotes !== (gameNotes || '')) {
       onGameNotesChange(localGameNotes);
     }
+    // ADD Check for periods/duration change
+    if (localNumPeriods !== numPeriods) {
+      onNumPeriodsChange(localNumPeriods);
+    }
+    if (localPeriodDurationMinutes !== periodDurationMinutes) {
+      onPeriodDurationChange(localPeriodDurationMinutes);
+    }
     
     // Compare Game Events (simple length check first, then shallow content check)
     // A more robust diffing could be implemented if needed
@@ -282,6 +305,9 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
     setLocalGameTime(gameTime || '');
     setLocalGameNotes(gameNotes);
     setLocalGameEvents(gameEvents);
+    // ADD Reset periods/duration
+    setLocalNumPeriods(numPeriods);
+    setLocalPeriodDurationMinutes(periodDurationMinutes);
     setEditingGoalId(null);
     setIsEditing(false);
   };
@@ -374,6 +400,55 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                         ) : (
                              <p className="text-slate-100 pt-1 min-h-[28px]">{localGameTime || t('common.notSet', 'Not Set')}</p> // Display text
                         )}
+                    </div>
+                    {/* ADD Period/Duration Controls */}
+                    <div className="grid grid-cols-2 gap-4 mt-3">
+                        {/* Number of Periods */}
+                        <div>
+                            <label className="block text-xs text-slate-400 font-medium mb-0.5">{t('timerOverlay.periodsLabel', 'Periods')}</label>
+                            {isEditing ? (
+                                <div className="flex items-center gap-2">
+                                    <button 
+                                        onClick={() => setLocalNumPeriods(prev => Math.max(1, prev - 1))} 
+                                        className="px-2 py-0.5 bg-slate-600 rounded hover:bg-slate-500 text-lg" 
+                                        aria-label="Decrease periods">
+                                        -
+                                    </button>
+                                    <span className="text-slate-100 font-medium w-6 text-center">{localNumPeriods}</span>
+                                    <button 
+                                        onClick={() => setLocalNumPeriods(prev => prev + 1)} 
+                                        className="px-2 py-0.5 bg-slate-600 rounded hover:bg-slate-500 text-lg" 
+                                        aria-label="Increase periods">
+                                        +
+                                    </button>
+                                </div>
+                            ) : (
+                                <p className="text-slate-100 pt-1 min-h-[28px]">{localNumPeriods}</p>
+                            )}
+                        </div>
+                        {/* Period Duration */}
+                        <div>
+                            <label className="block text-xs text-slate-400 font-medium mb-0.5">{t('timerOverlay.durationLabel', 'Duration')} (min)</label>
+                            {isEditing ? (
+                                <div className="flex items-center gap-2">
+                                     <button 
+                                        onClick={() => setLocalPeriodDurationMinutes(prev => Math.max(1, prev - 1))} 
+                                        className="px-2 py-0.5 bg-slate-600 rounded hover:bg-slate-500 text-lg" 
+                                        aria-label="Decrease duration">
+                                        -
+                                    </button>
+                                    <span className="text-slate-100 font-medium w-6 text-center">{localPeriodDurationMinutes}</span>
+                                    <button 
+                                        onClick={() => setLocalPeriodDurationMinutes(prev => prev + 1)} 
+                                        className="px-2 py-0.5 bg-slate-600 rounded hover:bg-slate-500 text-lg" 
+                                        aria-label="Increase duration">
+                                        +
+                                    </button>
+                                </div>
+                            ) : (
+                                <p className="text-slate-100 pt-1 min-h-[28px]">{localPeriodDurationMinutes}</p>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
