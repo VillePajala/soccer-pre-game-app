@@ -2235,7 +2235,6 @@ export default function Home() {
           onUpdateGameEvent={handleUpdateGameEvent}
           onAwardFairPlayCard={handleAwardFairPlayCard}
           selectedPlayerIds={selectedPlayerIds}
-          savedGames={savedGames}
           currentGameId={currentGameId}
           // ADD seasonId and tournamentId props from page state
           seasonId={seasonId}

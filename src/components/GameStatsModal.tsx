@@ -37,7 +37,6 @@ interface GameStatsModalProps {
   onUpdateGameEvent?: (updatedEvent: GameEvent) => void;
   onAwardFairPlayCard?: (playerId: string | null) => void; // Allow null for unsetting
   selectedPlayerIds: string[];
-  savedGames: SavedGamesCollection; // Kept for potential future use, not currently used
   currentGameId: string | null;
   seasonId?: string | null;
   tournamentId?: string | null;
@@ -74,7 +73,6 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   onUpdateGameEvent = () => { console.warn('onUpdateGameEvent handler not provided'); },
   onAwardFairPlayCard,
   selectedPlayerIds,
-  savedGames, // Not actively used after removing aggregation
   currentGameId,
   seasonId,
   tournamentId,
