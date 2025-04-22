@@ -729,10 +729,10 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
         <div className="p-4 border-t border-slate-700 flex justify-end items-center gap-3 flex-shrink-0">
            {/* JSON Export Button */}
            { (onExportOneJson || onExportAggregateJson) && (
-            <button
-              onClick={() => { 
+              <button
+                onClick={() => {
                   if (activeTab === 'currentGame' && currentGameId && onExportOneJson) {
-                      onExportOneJson(currentGameId);
+                    onExportOneJson(currentGameId);
                   } else if (activeTab !== 'currentGame' && onExportAggregateJson) {
                       onExportAggregateJson(processedGameIds, playerStats);
                   }
@@ -742,12 +742,12 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
               title={isExportDisabled ? t('gameStatsModal.exportNothingTooltip', 'No data to export for this view') : t('common.exportJson', 'Vie JSON') ?? undefined}
             >
                  {t('common.exportJson', 'Vie JSON')}
-            </button>
+              </button>
            )}
            {/* CSV Export Button */}
            { (onExportOneCsv || onExportAggregateCsv) && (
-            <button
-              onClick={() => { 
+              <button
+                onClick={() => {
                   if (activeTab === 'currentGame' && currentGameId && onExportOneCsv) {
                       onExportOneCsv(currentGameId);
                   } else if (activeTab !== 'currentGame' && onExportAggregateCsv) {
@@ -759,15 +759,15 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
               title={isExportDisabled ? t('gameStatsModal.exportNothingTooltip', 'No data to export for this view') : t('common.exportCsv', 'Vie CSV') ?? undefined}
             >
                  {t('common.exportCsv', 'Vie CSV')}
-            </button>
+              </button>
            )}
            {/* Close Button */}
-           <button 
-             onClick={onClose}
+          <button 
+            onClick={onClose}
              className="px-3 py-1.5 bg-slate-600 text-white rounded hover:bg-slate-500 transition duration-150 text-sm"
-           >
+          >
              {t('common.close', 'Sulje')} 
-           </button>
+          </button>
         </div>
       </div>
     </div>

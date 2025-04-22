@@ -45,15 +45,11 @@ interface ControlBarProps {
   onResetField: () => void;
   onClearDrawings: () => void;
   onAddOpponent: () => void;
-  // Timer props
-  timeElapsedInSeconds: number;
   showLargeTimerOverlay: boolean;
   onToggleLargeTimerOverlay: () => void;
-  // Add name visibility prop
   showPlayerNames: boolean;
   onToggleInstructions: () => void;
   onToggleTrainingResources: () => void; // Add prop for training modal
-  // Add Fullscreen props
   isFullscreen: boolean;
   onToggleFullScreen: () => void;
   onToggleGoalLogModal: () => void; // Add prop for goal modal
@@ -64,17 +60,9 @@ interface ControlBarProps {
   onStartNewGame: () => void; // CHANGED from onResetGameStats
   onOpenRosterModal: () => void; // Add prop for opening roster modal
   onQuickSave: () => void; // Add prop for quick save
-  // ADD props for Game Settings Modal
   onOpenGameSettingsModal: () => void;
   isGameLoaded: boolean; // To enable/disable the settings button
 }
-
-// Helper function to format time
-const formatTime = (totalSeconds: number): string => {
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-};
 
 const ControlBar: React.FC<ControlBarProps> = ({
   onUndo,
@@ -85,26 +73,21 @@ const ControlBar: React.FC<ControlBarProps> = ({
   onResetField,
   onClearDrawings,
   onAddOpponent,
-  // Timer props
-  timeElapsedInSeconds,
   showLargeTimerOverlay,
   onToggleLargeTimerOverlay,
-  // Destructure name visibility prop
   showPlayerNames,
   onToggleInstructions,
-  onToggleTrainingResources, // Destructure new prop
-  // Destructure Fullscreen props
+  onToggleTrainingResources,
   isFullscreen,
   onToggleFullScreen,
-  onToggleGoalLogModal, // Destructure goal modal handler
+  onToggleGoalLogModal,
   onToggleGameStatsModal,
-  onHardResetApp, // Destructure new prop
-  onOpenSaveGameModal, // Destructure new prop
-  onOpenLoadGameModal, // Destructure new prop
-  onStartNewGame, // CHANGED from onResetGameStats
-  onOpenRosterModal, // Destructure the new prop
-  onQuickSave, // Destructure quick save handler
-  // ADD props for Game Settings Modal
+  onHardResetApp,
+  onOpenSaveGameModal,
+  onOpenLoadGameModal,
+  onStartNewGame,
+  onOpenRosterModal,
+  onQuickSave,
   onOpenGameSettingsModal,
   isGameLoaded,
 }) => {
@@ -214,18 +197,14 @@ const ControlBar: React.FC<ControlBarProps> = ({
       </button>
 
       {/* --- Timer Controls (Inline) - Use Heroicons --- */}
-      {/* Toggle Overlay Button */}
+      {/* Toggle Overlay Button - Use green color */}
       <button
         onClick={onToggleLargeTimerOverlay}
-        className={`${baseButtonStyle} ${secondaryColor}`}
+        className={`${baseButtonStyle} bg-green-600 hover:bg-green-700 focus:ring-green-500`}
         title={t(showLargeTimerOverlay ? 'controlBar.toggleTimerOverlayHide' : 'controlBar.toggleTimerOverlayShow') ?? (showLargeTimerOverlay ? "Hide Large Timer" : "Show Large Timer")}
       >
           {showLargeTimerOverlay ? <HiOutlineStopCircle className={iconSize} /> : <HiOutlineClock className={iconSize} />}
       </button>
-      {/* Timer Display - Adjust padding/margin for alignment if needed */}
-      <span className="text-slate-200 font-semibold text-lg tabular-nums mx-1 px-2 py-1 h-10 flex items-center justify-center rounded bg-slate-800/60 min-w-[5ch]">
-        {formatTime(timeElapsedInSeconds)}
-      </span>
       {/* --- End Timer Controls --- */}
 
       {/* Conditionally render Fullscreen Button */}

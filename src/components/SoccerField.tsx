@@ -24,12 +24,21 @@ interface SoccerFieldProps {
   draggingPlayerFromBarInfo: Player | null; 
   onPlayerDropViaTouch: (relX: number, relY: number) => void; // Use relative coords
   onPlayerDragCancelViaTouch: () => void;
+  // ADD prop for timer display
+  timeElapsedInSeconds: number;
 }
 
 // Constants
 const PLAYER_RADIUS = 20;
 const DOUBLE_TAP_TIME_THRESHOLD = 300; // ms
 const DOUBLE_TAP_POS_THRESHOLD = 15; // pixels
+
+// Helper function to format time (defined locally for now)
+const formatTime = (totalSeconds: number): string => {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+};
 
 const SoccerField: React.FC<SoccerFieldProps> = ({
   players,
@@ -49,6 +58,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
   draggingPlayerFromBarInfo, 
   onPlayerDropViaTouch,
   onPlayerDragCancelViaTouch,
+  timeElapsedInSeconds
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDraggingPlayer, setIsDraggingPlayer] = useState<boolean>(false);
@@ -729,6 +739,11 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
         onDrop={handleDrop}
       />
       {/* Optional: Render player names/numbers as separate HTML elements over the canvas? */}
+
+      {/* ADD Timer Display */}
+      <div className="absolute top-2 right-2 bg-black/50 text-white text-xs font-mono px-2 py-1 rounded pointer-events-none select-none z-10">
+        {formatTime(timeElapsedInSeconds)}
+      </div>
     </div>
   );
 };

@@ -2418,6 +2418,8 @@ export default function Home() {
           draggingPlayerFromBarInfo={draggingPlayerFromBarInfo}
           onPlayerDropViaTouch={handlePlayerDropViaTouch}
           onPlayerDragCancelViaTouch={handlePlayerDragCancelViaTouch}
+          // ADD timeElapsedInSeconds prop
+          timeElapsedInSeconds={timeElapsedInSeconds}
         />
       </main>
 
@@ -2432,7 +2434,7 @@ export default function Home() {
         canUndo={canUndo}
         canRedo={canRedo}
         onResetField={handleResetField} 
-        timeElapsedInSeconds={timeElapsedInSeconds}
+        // Remove the timeElapsedInSeconds prop
         showLargeTimerOverlay={showLargeTimerOverlay}
         onToggleLargeTimerOverlay={handleToggleLargeTimerOverlay}
           onToggleInstructions={handleToggleInstructions}
