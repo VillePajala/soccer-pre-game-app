@@ -61,6 +61,16 @@ export interface IntervalLog {
   timestamp: number; // Unix timestamp when the interval ended
 }
 
+// ADD PlayerStatRow interface (copied from GameStatsModal for type safety)
+// Ideally, move this to a shared types file later
+export interface PlayerStatRow extends Player {
+  goals: number;
+  assists: number;
+  totalScore: number;
+  fpAwards?: number;
+  gamesPlayed: number;
+}
+
 // Define the structure for the application state (for history)
 export interface AppState {
   playersOnField: Player[];
@@ -2144,6 +2154,185 @@ export default function Home() {
     saveStateToHistory({ gameTime: time });
   };
 
+  // --- AGGREGATE EXPORT HANDLERS --- 
+  
+  // Helper to get Filter Name (Season/Tournament)
+  const getFilterContextName = (tab: string, filterId: string, seasons: Season[], tournaments: Tournament[]): string => {
+    if (tab === 'season' && filterId !== 'all') {
+        return seasons.find(s => s.id === filterId)?.name || filterId;
+    }
+    if (tab === 'tournament' && filterId !== 'all') {
+        return tournaments.find(t => t.id === filterId)?.name || filterId;
+    }
+    if (tab === 'overall') return 'Overall';
+    return 'Unknown Filter'; // Fallback
+  };
+  
+  console.log('Before handleExportAggregateJson definition');
+  const handleExportAggregateJson = useCallback((gameIds: string[], aggregateStats: PlayerStatRow[]) => {
+    console.log(`Exporting aggregate JSON for ${gameIds.length} games.`);
+    if (gameIds.length === 0) {
+        alert(t('export.noGamesInSelection', 'No games match the current filter.'));
+        return;
+    }
+
+    // Retrieve full game data for the included IDs
+    const gamesData = gameIds.reduce((acc, id) => {
+        if (savedGames[id]) {
+            acc[id] = savedGames[id];
+        }
+        return acc;
+    }, {} as SavedGamesCollection);
+
+    // Determine filter context (needs activeTab and filter IDs from GameStatsModal - this isn't ideal)
+    // For now, we'll just create a basic structure without the filter context
+    // TODO: Refactor to pass filter context from modal if needed in export filename/content
+
+    const exportData = {
+        exportedTimestamp: new Date().toISOString(),
+        // filterContext: { // Example of adding context later
+        //     tab: activeTab, 
+        //     filterId: activeTab === 'season' ? selectedSeasonIdFilter : activeTab === 'tournament' ? selectedTournamentIdFilter : null,
+        //     filterName: getFilterContextName(activeTab, ...)
+        // },
+        summaryStats: aggregateStats, // The calculated aggregate stats
+        games: gamesData // The detailed data for included games
+    };
+
+    try {
+        const jsonString = JSON.stringify(exportData, null, 2); 
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+
+        const now = new Date();
+        const timestamp = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
+        // Simplified filename for now
+        a.download = `SoccerApp_AggregateStats_${timestamp}.json`; 
+        
+        a.href = url;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        console.log(`Aggregate stats exported successfully as JSON.`);
+    } catch (error) {
+        console.error(`Failed to export aggregate stats as JSON:`, error);
+        alert(t('export.jsonError', 'Error exporting aggregate data as JSON.'));
+    }
+  }, [savedGames, t]); // Dependency on savedGames and t
+
+  console.log('Before handleExportAggregateCsv definition');
+  const handleExportAggregateCsv = useCallback((gameIds: string[], aggregateStats: PlayerStatRow[]) => {
+    console.log(`Exporting aggregate CSV for ${gameIds.length} games.`);
+     if (gameIds.length === 0) {
+        alert(t('export.noGamesInSelection', 'No games match the current filter.'));
+        return;
+    }
+
+    try {
+        const allRows: string[] = [];
+        const EOL = '\r\n'; 
+        const DELIMITER = ';'; 
+
+        // --- Section 1: Summary Info (Placeholder) ---
+        // TODO: Add filter context here if available
+        allRows.push(`${escapeCsvField('Export Type:')}${DELIMITER}${escapeCsvField('Aggregate Stats')}`);
+        allRows.push(`${escapeCsvField('Export Timestamp:')}${DELIMITER}${escapeCsvField(new Date().toISOString())}`);
+        allRows.push(``); // Blank line
+
+        // --- Section 2: Aggregated Player Stats ---
+        allRows.push(escapeCsvField('Aggregate Player Stats Summary'));
+        // Headers - Added GP
+        allRows.push([
+            escapeCsvField('Player'),
+            escapeCsvField('GP'), // Games Played
+            escapeCsvField('G'),  // Goals
+            escapeCsvField('A'),  // Assists
+            escapeCsvField('Pts'),// Points
+            escapeCsvField('FP') // Fair Play Awards
+        ].join(DELIMITER));
+        
+        // Data - Assuming aggregateStats is already sorted as desired by the modal
+        aggregateStats.forEach(player => {
+             allRows.push([
+                escapeCsvField(player.name),
+                escapeCsvField(player.gamesPlayed),
+                escapeCsvField(player.goals),
+                escapeCsvField(player.assists),
+                escapeCsvField(player.totalScore),
+                escapeCsvField(player.fpAwards ?? 0)
+             ].join(DELIMITER));
+        });
+        allRows.push(``); // Blank line
+
+        // --- Section 3: Detailed Game Data ---
+        allRows.push(escapeCsvField('Included Game Details'));
+        // Headers for game details
+        allRows.push([
+            escapeCsvField('Game ID'),
+            escapeCsvField('Date'),
+            escapeCsvField('Time'),
+            escapeCsvField('Location'),
+            escapeCsvField('Home Team'),
+            escapeCsvField('Away Team'),
+            escapeCsvField('Home Score'),
+            escapeCsvField('Away Score'),
+            escapeCsvField('Notes')
+            // Add other relevant fields from AppState if needed
+        ].join(DELIMITER));
+
+        // Data for each game
+        gameIds.forEach(id => {
+            const game = savedGames[id];
+            if (game) {
+                 allRows.push([
+                    escapeCsvField(id),
+                    escapeCsvField(game.gameDate),
+                    escapeCsvField(game.gameTime),
+                    escapeCsvField(game.gameLocation),
+                    escapeCsvField(game.teamName),
+                    escapeCsvField(game.opponentName),
+                    escapeCsvField(game.homeScore),
+                    escapeCsvField(game.awayScore),
+                    escapeCsvField(game.gameNotes)
+                 ].join(DELIMITER));
+            } else {
+                 allRows.push([
+                    escapeCsvField(id),
+                    escapeCsvField('Data not found')
+                 ].join(DELIMITER));
+            }
+        });
+        allRows.push(``); // Blank line
+        
+        // --- Section 4: Optional - Detailed Event Logs per Game (Skipped for brevity now) ---
+
+        // --- Combine and Download ---
+        const csvString = allRows.join(EOL);
+        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+
+        const now = new Date();
+        const timestamp = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
+        a.download = `SoccerApp_AggregateStats_${timestamp}.csv`; 
+        
+        a.href = url;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        console.log(`Aggregate stats exported successfully as CSV.`);
+
+    } catch (error) {
+        console.error(`Failed to export aggregate stats as CSV:`, error);
+        alert(t('export.csvError', 'Error exporting aggregate data as CSV.'));
+    }
+  }, [savedGames, t]); // Dependency on savedGames and t
+
+  // --- END AGGREGATE EXPORT HANDLERS ---
+
   // Render null or a loading indicator until state is loaded
   // Note: Console log added before the check itself
   console.log('Before checking isLoaded');
@@ -2306,6 +2495,9 @@ export default function Home() {
           tournamentId={tournamentId}
           onExportOneJson={handleExportOneJson}
           onExportOneCsv={handleExportOneCsv}
+          // ADD Aggregate export handlers
+          onExportAggregateJson={handleExportAggregateJson}
+          onExportAggregateCsv={handleExportAggregateCsv}
         />
         {/* Save Game Modal */}
         <SaveGameModal

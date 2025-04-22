@@ -7,7 +7,7 @@ import { Player, GameEvent, SavedGamesCollection, Season, Tournament, SEASONS_LI
 import { FaSort, FaSortUp, FaSortDown, FaEdit, FaSave, FaTimes, FaTrashAlt } from 'react-icons/fa';
 
 // Define the type for sortable columns
-type SortableColumn = 'name' | 'goals' | 'assists' | 'totalScore' | 'fpAwards';
+type SortableColumn = 'name' | 'goals' | 'assists' | 'totalScore' | 'fpAwards' | 'gamesPlayed';
 type SortDirection = 'asc' | 'desc';
 
 // Define tab types
@@ -18,6 +18,7 @@ interface PlayerStatRow extends Player {
   assists: number;
   totalScore: number;
   fpAwards?: number;
+  gamesPlayed: number;
 }
 
 interface GameStatsModalProps {
@@ -49,6 +50,9 @@ interface GameStatsModalProps {
   onExportOneJson?: (gameId: string) => void;
   onExportOneCsv?: (gameId: string) => void;
   onDeleteGameEvent?: (goalId: string) => void;
+  // ADD Props for aggregate export
+  onExportAggregateJson?: (gameIds: string[], aggregateStats: PlayerStatRow[]) => void;
+  onExportAggregateCsv?: (gameIds: string[], aggregateStats: PlayerStatRow[]) => void;
 }
 
 const GameStatsModal: React.FC<GameStatsModalProps> = ({
@@ -79,6 +83,8 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   onExportOneJson,
   onExportOneCsv,
   onDeleteGameEvent,
+  onExportAggregateJson,
+  onExportAggregateCsv,
 }) => {
   const { t, i18n } = useTranslation();
 
@@ -222,26 +228,39 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
       return null;
   }, [seasonId, tournamentId, seasons, tournaments]);
 
-  // REFACTORED Player Stats Calculation with Aggregation
-  const filteredAndSortedPlayerStats = useMemo(() => {
+  // Modify filteredAndSortedPlayerStats useMemo to also return the list of game IDs processed
+  const { processedGameIds, playerStats } = useMemo(() => {
     const playerStatsMap = new Map<string, { name: string; nickname?: string; isGoalie?: boolean; jerseyNumber?: string; notes?: string; gamesPlayed: number; goals: number; assists: number; totalScore: number; fpAwards: number }>();
-
-    // 1. Determine which games to process based on tab and filters
     let gamesToProcess: AppState[] = [];
-    const currentGameObject = savedGames[currentGameId || '']; // Get current game object if ID exists
+    const gameIdsProcessed: string[] = []; // Keep track of IDs
 
-    if (activeTab === 'currentGame' && currentGameObject) {
+    const currentGameObject = savedGames[currentGameId || '']; 
+
+    if (activeTab === 'currentGame' && currentGameObject && currentGameId) {
       gamesToProcess.push(currentGameObject);
+      gameIdsProcessed.push(currentGameId); // Add current game ID
     } else if (activeTab === 'season') {
-      gamesToProcess = Object.values(savedGames).filter(game => 
-        game.seasonId && (selectedSeasonIdFilter === 'all' || game.seasonId === selectedSeasonIdFilter)
-      );
+      Object.entries(savedGames).forEach(([id, game]) => {
+          if (game.seasonId && (selectedSeasonIdFilter === 'all' || game.seasonId === selectedSeasonIdFilter)) {
+              gamesToProcess.push(game);
+              gameIdsProcessed.push(id); // Add matching season game ID
+          }
+      });
     } else if (activeTab === 'tournament') {
-      gamesToProcess = Object.values(savedGames).filter(game => 
-        game.tournamentId && (selectedTournamentIdFilter === 'all' || game.tournamentId === selectedTournamentIdFilter)
-      );
+      Object.entries(savedGames).forEach(([id, game]) => {
+          if (game.tournamentId && (selectedTournamentIdFilter === 'all' || game.tournamentId === selectedTournamentIdFilter)) {
+              gamesToProcess.push(game);
+              gameIdsProcessed.push(id); // Add matching tournament game ID
+          }
+      });
     } else if (activeTab === 'overall') {
-      gamesToProcess = Object.values(savedGames);
+       Object.entries(savedGames).forEach(([id, game]) => {
+           // Assuming all saved games should be included in overall, maybe filter default?
+           if (id !== '__default_unsaved__') { // Exclude default placeholder if necessary
+              gamesToProcess.push(game);
+              gameIdsProcessed.push(id); // Add all valid game IDs
+           }
+       });
     }
 
     // 2. Aggregate stats from the selected games
@@ -311,6 +330,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
       assists: stats.assists,
       totalScore: stats.totalScore,
       fpAwards: stats.fpAwards,
+      gamesPlayed: stats.gamesPlayed,
       // relX, relY, color are not relevant for aggregate stats
     }));
 
@@ -340,18 +360,17 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
       return sortDirection === 'desc' ? comparison * -1 : comparison;
     });
 
-    return sortedStats;
+    // Return both the processed IDs and the sorted stats
+    return { processedGameIds: gameIdsProcessed, playerStats: sortedStats };
   }, [
     activeTab, 
-    savedGames, // Primary data source for aggregate tabs
-    currentGameId, // Needed to identify current game
+    savedGames, 
+    currentGameId, 
     selectedSeasonIdFilter, 
     selectedTournamentIdFilter, 
     filterText, 
     sortColumn, 
     sortDirection,
-    // Below are needed ONLY for the 'currentGame' tab, but easier to include
-    // Might cause unnecessary recalculations if only these change on aggregate tabs
     availablePlayers, 
     selectedPlayerIds, 
     gameEvents 
@@ -364,6 +383,16 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
     } 
     return [];
   }, [activeTab, localGameEvents]); // Depend on localGameEvents
+
+  // Determine if export should be disabled
+  const isExportDisabled = useMemo(() => {
+      if (activeTab === 'currentGame') {
+          return !currentGameId; // Disabled if no current game ID
+      } else {
+          // Disabled on aggregate tabs if no games were processed OR no aggregate export handler exists
+          return processedGameIds.length === 0 || (!onExportAggregateJson && !onExportAggregateCsv);
+      }
+  }, [activeTab, currentGameId, processedGameIds, onExportAggregateJson, onExportAggregateCsv]);
 
   // --- Handlers ---
   const handleSaveInfo = () => {
@@ -475,7 +504,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
         <div className="flex justify-between items-center p-4 border-b border-slate-700 flex-shrink-0">
           <h2 className="text-xl font-semibold text-yellow-300">{modalTitle}</h2>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-200 ml-auto pl-4" aria-label={t('common.close', 'Sulje')}><FaTimes size={20} /></button>
-        </div>
+            </div>
 
         {/* Tab Bar - MODIFIED: Add flex-grow to items */}
         <div className="flex-shrink-0 px-4 pt-3 pb-2 border-b border-slate-700 flex flex-wrap items-center gap-1">
@@ -576,30 +605,33 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                 <table className="w-full text-xs text-left text-slate-300">
                   <thead className="text-xs text-slate-400 uppercase bg-slate-700/50">
                     <tr>
-                      <th scope="col" className="px-2 py-2 cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('name')}> <div className="flex items-center">{t('common.player', 'Player')} {sortColumn === 'name' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1 w-3 h-3"/> : <FaSortDown className="ml-1 w-3 h-3"/>) : <FaSort className="ml-1 w-3 h-3 opacity-30"/>}</div> </th>
-                      <th scope="col" className="px-1 py-2 text-center cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('goals')}> <div className="flex items-center justify-center">{t('common.goalsShort', 'G')} {sortColumn === 'goals' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1 w-3 h-3"/> : <FaSortDown className="ml-1 w-3 h-3"/>) : <FaSort className="ml-1 w-3 h-3 opacity-30"/>}</div> </th>
-                      <th scope="col" className="px-1 py-2 text-center cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('assists')}> <div className="flex items-center justify-center">{t('common.assistsShort', 'A')} {sortColumn === 'assists' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1 w-3 h-3"/> : <FaSortDown className="ml-1 w-3 h-3"/>) : <FaSort className="ml-1 w-3 h-3 opacity-30"/>}</div> </th>
-                      <th scope="col" className="px-1 py-2 text-center cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('totalScore')}> <div className="flex items-center justify-center">{t('common.totalScoreShort', 'Pts')} {sortColumn === 'totalScore' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1 w-3 h-3"/> : <FaSortDown className="ml-1 w-3 h-3"/>) : <FaSort className="ml-1 w-3 h-3 opacity-30"/>}</div> </th>
-                      {/* ADD FP Column */} 
+                      <th scope="col" className="px-2 py-2 cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('name')}> <div className="flex items-center">{t('common.player', 'Pelaaja')} {sortColumn === 'name' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1 w-3 h-3"/> : <FaSortDown className="ml-1 w-3 h-3"/>) : <FaSort className="ml-1 w-3 h-3 opacity-30"/>}</div> </th>
+                      {/* ADD GP Column Header */}
+                      <th scope="col" className="px-1 py-2 text-center cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('gamesPlayed')}> <div className="flex items-center justify-center">{t('common.gamesPlayedShort', 'GP')} {sortColumn === 'gamesPlayed' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1 w-3 h-3"/> : <FaSortDown className="ml-1 w-3 h-3"/>) : <FaSort className="ml-1 w-3 h-3 opacity-30"/>}</div> </th>
+                      <th scope="col" className="px-1 py-2 text-center cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('goals')}> <div className="flex items-center justify-center">{t('common.goalsShort', 'M')} {sortColumn === 'goals' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1 w-3 h-3"/> : <FaSortDown className="ml-1 w-3 h-3"/>) : <FaSort className="ml-1 w-3 h-3 opacity-30"/>}</div> </th>
+                      <th scope="col" className="px-1 py-2 text-center cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('assists')}> <div className="flex items-center justify-center">{t('common.assistsShort', 'S')} {sortColumn === 'assists' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1 w-3 h-3"/> : <FaSortDown className="ml-1 w-3 h-3"/>) : <FaSort className="ml-1 w-3 h-3 opacity-30"/>}</div> </th>
+                      <th scope="col" className="px-1 py-2 text-center cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('totalScore')}> <div className="flex items-center justify-center">{t('common.totalScoreShort', 'P')} {sortColumn === 'totalScore' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1 w-3 h-3"/> : <FaSortDown className="ml-1 w-3 h-3"/>) : <FaSort className="ml-1 w-3 h-3 opacity-30"/>}</div> </th>
                       <th scope="col" className="px-1 py-2 text-center cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('fpAwards')}> <div className="flex items-center justify-center">{t('common.fairPlayShort', 'FP')} {sortColumn === 'fpAwards' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1 w-3 h-3"/> : <FaSortDown className="ml-1 w-3 h-3"/>) : <FaSort className="ml-1 w-3 h-3 opacity-30"/>}</div> </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredAndSortedPlayerStats.length > 0 ? ( filteredAndSortedPlayerStats.map((player) => (
+                    {playerStats.length > 0 ? ( playerStats.map((player) => (
                       <tr key={player.id} className="border-b border-slate-700 hover:bg-slate-700/40">
                         <td className="px-2 py-1.5 font-medium text-slate-100 whitespace-nowrap">
-                      {player.name}
-                                        {player.isGoalie && <span className="ml-1 px-0.5 text-[8px] bg-amber-500 text-white rounded-sm" title={t('gameStatsModal.goalieIndicator', 'Goalie')}>G</span>}
-                                        {player.receivedFairPlayCard && activeTab === 'currentGame' && <span className="ml-1 px-0.5 text-[8px] bg-emerald-500 text-white rounded-sm" title={t('gameStatsModal.fairPlayAwarded', 'Fair Play Award')}>FP</span>}
-                          </td>
-                                    <td className="px-1 py-1.5 text-center">{player.goals}</td>
-                                    <td className="px-1 py-1.5 text-center">{player.assists}</td>
-                                    <td className="px-1 py-1.5 text-center font-semibold">{player.totalScore}</td>
-                                    <td className="px-1 py-1.5 text-center">{player.fpAwards ?? 0}</td>
-                          </tr>
+                          {player.name}
+                          {player.isGoalie && <span className="ml-1 px-0.5 text-[8px] bg-amber-500 text-white rounded-sm" title={t('gameStatsModal.goalieIndicator', 'Maalivahti')}>M</span>}
+                          {player.receivedFairPlayCard && activeTab === 'currentGame' && <span className="ml-1 px-0.5 text-[8px] bg-emerald-500 text-white rounded-sm" title={t('gameStatsModal.fairPlayAwarded', 'Fair Play -palkinto')}>FP</span>}
+                        </td>
+                        {/* ADD GP Data Cell */}
+                        <td className="px-1 py-1.5 text-center">{player.gamesPlayed}</td>
+                        <td className="px-1 py-1.5 text-center">{player.goals}</td>
+                        <td className="px-1 py-1.5 text-center">{player.assists}</td>
+                        <td className="px-1 py-1.5 text-center font-semibold">{player.totalScore}</td>
+                        <td className="px-1 py-1.5 text-center">{player.fpAwards ?? 0}</td>
+                      </tr>
                     ))) : (
-                                <tr><td colSpan={5} className="text-center py-3 text-slate-400 italic">{filterText ? t('common.noPlayersMatchFilter', 'No players match filter') : t('common.noPlayersSelected', 'No players selected')}</td></tr>
-                            )}
+                      <tr><td colSpan={6} className="text-center py-3 text-slate-400 italic">{filterText ? t('common.noPlayersMatchFilter', 'Ei pelaajia hakusuodattimella') : t('common.noPlayersSelected', 'Ei pelaajia valittuna')}</td></tr>
+                    )}
                   </tbody>
                 </table>
             </div>
@@ -693,32 +725,49 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
         </div>
         </div>
 
-        {/* Footer */}
+        {/* Footer - Update button logic */}
         <div className="p-4 border-t border-slate-700 flex justify-end items-center gap-3 flex-shrink-0">
-           {/* ADD: Export buttons conditional on tab? Maybe always export current game? */} 
-           {activeTab === 'currentGame' && currentGameId && onExportOneJson && (
-          <button
-                   onClick={() => onExportOneJson(currentGameId)} 
-                   className="px-3 py-1.5 bg-teal-700 text-white rounded hover:bg-teal-600 transition duration-150 text-sm"
-               >
-                   {t('common.exportJson', 'Export JSON')}
-          </button>
+           {/* JSON Export Button */}
+           { (onExportOneJson || onExportAggregateJson) && (
+            <button
+              onClick={() => { 
+                  if (activeTab === 'currentGame' && currentGameId && onExportOneJson) {
+                      onExportOneJson(currentGameId);
+                  } else if (activeTab !== 'currentGame' && onExportAggregateJson) {
+                      onExportAggregateJson(processedGameIds, playerStats);
+                  }
+              }}
+              className="px-3 py-1.5 bg-teal-700 text-white rounded hover:bg-teal-600 transition duration-150 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-teal-900"
+              disabled={isExportDisabled || (activeTab === 'currentGame' ? !onExportOneJson : !onExportAggregateJson)} 
+              title={isExportDisabled ? t('gameStatsModal.exportNothingTooltip', 'No data to export for this view') : t('common.exportJson', 'Vie JSON') ?? undefined}
+            >
+                 {t('common.exportJson', 'Vie JSON')}
+            </button>
            )}
-           {activeTab === 'currentGame' && currentGameId && onExportOneCsv && (
-              <button
-                   onClick={() => onExportOneCsv(currentGameId)} 
-                   className="px-3 py-1.5 bg-teal-700 text-white rounded hover:bg-teal-600 transition duration-150 text-sm"
-               >
-                   {t('common.exportCsv', 'Export CSV')}
-              </button>
+           {/* CSV Export Button */}
+           { (onExportOneCsv || onExportAggregateCsv) && (
+            <button
+              onClick={() => { 
+                  if (activeTab === 'currentGame' && currentGameId && onExportOneCsv) {
+                      onExportOneCsv(currentGameId);
+                  } else if (activeTab !== 'currentGame' && onExportAggregateCsv) {
+                      onExportAggregateCsv(processedGameIds, playerStats);
+                  }
+              }}
+              className="px-3 py-1.5 bg-teal-700 text-white rounded hover:bg-teal-600 transition duration-150 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-teal-900"
+              disabled={isExportDisabled || (activeTab === 'currentGame' ? !onExportOneCsv : !onExportAggregateCsv)}
+              title={isExportDisabled ? t('gameStatsModal.exportNothingTooltip', 'No data to export for this view') : t('common.exportCsv', 'Vie CSV') ?? undefined}
+            >
+                 {t('common.exportCsv', 'Vie CSV')}
+            </button>
            )}
-           {/* TODO: Add Export All functionality for aggregate tabs */} 
-          <button 
-            onClick={onClose}
-            className="px-3 py-1.5 bg-slate-600 text-white rounded hover:bg-slate-500 transition duration-150 text-sm"
-          >
-            {t('common.close', 'Close')} 
-          </button>
+           {/* Close Button */}
+           <button 
+             onClick={onClose}
+             className="px-3 py-1.5 bg-slate-600 text-white rounded hover:bg-slate-500 transition duration-150 text-sm"
+           >
+             {t('common.close', 'Sulje')} 
+           </button>
         </div>
       </div>
     </div>
