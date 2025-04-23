@@ -1220,11 +1220,7 @@ export default function Home() {
   
   // NEW: Handler to cancel the new game setup
   console.log('Before useCallback(handleCancelNewGameSetup)');
-  const handleCancelNewGameSetup = useCallback(() => {
-    console.log("New game setup cancelled.");
-    setHasSkippedInitialSetup(true); // <-- Add the skip flag logic here
-    setIsNewGameSetupModalOpen(false);
-  }, []);
+  
 
   // Handler to open/close the stats modal
   const handleToggleGameStatsModal = () => {
@@ -2130,13 +2126,14 @@ export default function Home() {
   // --- END Quick Save Handler ---
 
   // --- NEW: Handlers for Game Settings Modal --- (Placeholder open/close)
+  console.log('Before useCallback(handleOpenGameSettingsModal)');
   const handleOpenGameSettingsModal = () => {
-    // Add check: Only open if a game is loaded (not default)
-    if (currentGameId && currentGameId !== DEFAULT_GAME_ID) {
+    // REMOVE check: No longer needed as we always generate an ID
+    // if (currentGameId && currentGameId !== DEFAULT_GAME_ID) {
       setIsGameSettingsModalOpen(true);
-    } else {
-      alert(t('gameSettings.noGameLoadedError', 'Cannot edit settings. No game loaded or current game is unsaved.') ?? 'No game loaded to edit settings.');
-    }
+    // } else {
+    //   alert(t('gameSettings.noGameLoadedError', 'Cannot edit settings. No game loaded or current game is unsaved.') ?? 'No game loaded to edit settings.');
+    // }
   };
   const handleCloseGameSettingsModal = () => {
     setIsGameSettingsModalOpen(false);
@@ -2411,22 +2408,83 @@ export default function Home() {
     setHistory([newGameState]);
     setHistoryIndex(0);
 
-    // Clear the current game ID setting
-    setCurrentGameId(DEFAULT_GAME_ID);
+    // ** Auto-generate ID and set it **
+    const newGameId = `game_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    setCurrentGameId(newGameId); // Set the new ID immediately
+    console.log(`New game initialized with ID: ${newGameId}. Auto-save will handle persistence.`);
+
     // Close the setup modal
     setIsNewGameSetupModalOpen(false);
     // Reset the flag indicating intent to start new game after save
     setIsStartingNewGameAfterSave(false);
-  }, [
-      // Add ALL state setters used above to the dependency array
-      setPlayersOnField, setOpponents, setDrawings, setAvailablePlayers,
-      setShowPlayerNames, setTeamName, setGameEvents, setOpponentName, setGameDate,
-      setHomeScore, setAwayScore, setGameNotes, setNumberOfPeriods, setPeriodDurationMinutes,
-      setCurrentPeriod, setGameStatus, setSelectedPlayerIds, setSeasonId, setTournamentId,
-      setGameLocation, setGameTime, setSubIntervalMinutes, setCompletedIntervalDurations,
-      setLastSubConfirmationTimeSeconds, setTimeElapsedInSeconds, setIsTimerRunning,
-      setHistory, setHistoryIndex, teamName // Include teamName as it's read directly
+  },
+  [
+    // All the dependencies for handleStartNewGameWithSetup...
+    initialState,
+    setPlayersOnField,
+    setOpponents,
+    setDrawings,
+    setAvailablePlayers,
+    setShowPlayerNames,
+    setTeamName,
+    setGameEvents,
+    setOpponentName,
+    setGameDate,
+    setHomeScore,
+    setAwayScore,
+    setGameNotes,
+    setNumberOfPeriods,
+    setPeriodDurationMinutes,
+    setCurrentPeriod,
+    setGameStatus,
+    setSelectedPlayerIds,
+    setSeasonId,
+    setTournamentId,
+    setGameLocation,
+    setGameTime,
+    setSubIntervalMinutes,
+    setCompletedIntervalDurations,
+    setLastSubConfirmationTimeSeconds,
+    setTimeElapsedInSeconds,
+    setHistory, 
+    setHistoryIndex,
+    setCurrentGameId,
+    teamName,
+    // No need for setIsNewGameSetupModalOpen, setIsStartingNewGameAfterSave here as they are set within
   ]);
+
+  // ** REVERT handleCancelNewGameSetup TO ORIGINAL **
+  console.log('Before useCallback(handleCancelNewGameSetup)');
+  const handleCancelNewGameSetup = useCallback(() => {
+    console.log("New game setup skipped/cancelled. Initializing default game state.");
+
+    // Initialize with default values similar to handleStartNewGameWithSetup
+    const defaultOpponent = ''; // Empty opponent name
+    const defaultDate = new Date().toISOString().split('T')[0]; // Current date
+    const defaultLocation = '';
+    const defaultTime = '';
+    const defaultSeasonId = null;
+    const defaultTournamentId = null;
+    const defaultNumPeriods = 2;
+    const defaultPeriodDuration = 10;
+
+    // Call the main setup function with defaults
+    // This will now generate a new unique ID
+    handleStartNewGameWithSetup(
+        defaultOpponent,
+        defaultDate,
+        defaultLocation,
+        defaultTime,
+        defaultSeasonId,
+        defaultTournamentId,
+        defaultNumPeriods as 1 | 2,
+        defaultPeriodDuration
+    );
+
+    setHasSkippedInitialSetup(true); // Still mark as skipped if needed elsewhere
+    // setIsNewGameSetupModalOpen(false); // No longer needed, handleStartNewGameWithSetup closes it
+
+  }, [handleStartNewGameWithSetup, setHasSkippedInitialSetup]); // Update dependencies
 
   // Render null or a loading indicator until state is loaded
   // Note: Console log added before the check itself
@@ -2546,7 +2604,7 @@ export default function Home() {
           onQuickSave={handleQuickSaveGame} // Pass the quick save handler
           // ADD props for Game Settings button
           onOpenGameSettingsModal={handleOpenGameSettingsModal}
-          isGameLoaded={currentGameId !== null && currentGameId !== DEFAULT_GAME_ID}
+          isGameLoaded={isLoaded} // <-- CHANGE THIS LINE
         />
         {/* Instructions Modal */}
         <InstructionsModal 
