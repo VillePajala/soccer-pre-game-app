@@ -180,10 +180,6 @@ export interface Tournament {
   // Add more fields later if needed (e.g., date, location)
 }
 
-// Define new localStorage keys for seasons and tournaments
-export const SEASONS_LIST_KEY = 'soccerSeasonsList';
-export const TOURNAMENTS_LIST_KEY = 'soccerTournamentsList';
-
 // Define a default Game ID for the initial/unsaved state
 const DEFAULT_GAME_ID = '__default_unsaved__';
 

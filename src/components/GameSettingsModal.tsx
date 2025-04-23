@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaTimes, FaEdit, FaSave, FaTrashAlt, FaCalendarAlt, FaClock, FaMapMarkerAlt } from 'react-icons/fa';
-import { Player, GameEvent, Season, Tournament, SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY } from '@/app/page'; // Adjust path as needed
+import { Player, GameEvent, Season, Tournament } from '@/app/page'; // Adjust path as needed
+import { SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY } from '@/config/constants';
 
 interface GameSettingsModalProps {
   isOpen: boolean;

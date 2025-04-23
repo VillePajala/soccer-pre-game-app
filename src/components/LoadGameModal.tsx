@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SavedGamesCollection, Season, Tournament, SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY } from '@/app/page'; // Removed unused GameEvent
+import { SavedGamesCollection, Season, Tournament } from '@/app/page'; // Removed unused GameEvent
+import { SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY } from '@/config/constants';
 import i18n from '../i18n'; // Import i18n directly
 import { 
   HiOutlineDocumentArrowDown, 
@@ -11,6 +12,8 @@ import {
   HiOutlineDocumentText,
   HiOutlineTableCells
 } from 'react-icons/hi2';
+import { FaTimes, FaUpload, FaDownload, FaTrash, FaExclamationTriangle, FaSearch } from 'react-icons/fa';
+import { useGameState } from '@/hooks/useGameState';
 
 interface LoadGameModalProps {
   isOpen: boolean;
