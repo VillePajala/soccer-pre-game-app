@@ -210,6 +210,8 @@ fiTranslations.common.away = "Vieras";
 fiTranslations.common.notSet = "Ei asetettu";
 fiTranslations.common.close = "Sulje";
 fiTranslations.common.saveChanges = "Tallenna";
+fiTranslations.common.edit = "Muokkaa";
+fiTranslations.common.remove = "Poista";
 
 // Add missing English translations
 if (!enTranslations.goalLogModal) {
@@ -390,6 +392,19 @@ if (!enTranslations.common) {
   enTranslations.common = {};
 }
 enTranslations.common.cancelButton = "Cancel";
+enTranslations.common.cancelEdit = "Cancel";
+// ADD missing common keys for English
+enTranslations.common.opponent = "Opponent";
+enTranslations.common.date = "Date";
+enTranslations.common.location = "Location";
+enTranslations.common.time = "Time";
+enTranslations.common.home = "Home";
+enTranslations.common.away = "Away";
+enTranslations.common.notSet = "Not Set";
+enTranslations.common.close = "Close";
+enTranslations.common.saveChanges = "Save";
+enTranslations.common.edit = "Edit";
+enTranslations.common.remove = "Remove";
 
 // Add load game modal translations if section doesn't exist
 if (!fiTranslations.loadGameModal) {
@@ -423,6 +438,22 @@ if (!fiTranslations.rosterSettingsModal) {
 }
 fiTranslations.rosterSettingsModal.title = "Joukkueen Hallinta";
 fiTranslations.rosterSettingsModal.teamNameLabel = "Joukkueen Nimi:";
+// Add other keys as needed
+fiTranslations.rosterSettingsModal.selectHeader = "VAL";
+fiTranslations.rosterSettingsModal.goalieHeader = "MV";
+fiTranslations.rosterSettingsModal.nameHeader = "Nimi";
+fiTranslations.rosterSettingsModal.jerseyHeader = "Numero";
+fiTranslations.rosterSettingsModal.fairPlayHeader = "FP";
+fiTranslations.rosterSettingsModal.actions = "Toiminnot";
+fiTranslations.rosterSettingsModal.playerNamePlaceholder = "Pelaajan Nimi";
+fiTranslations.rosterSettingsModal.nicknamePlaceholder = "Lempinimi (näytöllä)";
+fiTranslations.rosterSettingsModal.nameRequired = "Pelaajan nimi ei voi olla tyhjä.";
+fiTranslations.rosterSettingsModal.notesPlaceholder = "Pelaajan muistiinpanot...";
+fiTranslations.rosterSettingsModal.addPlayerButton = "Lisää Pelaaja";
+fiTranslations.rosterSettingsModal.toggleSelection = "Valitse/Poista valinta otteluun";
+fiTranslations.rosterSettingsModal.unsetGoalie = "Poista MV-status";
+fiTranslations.rosterSettingsModal.setGoalie = "Aseta Maalivahdiksi";
+fiTranslations.rosterSettingsModal.hasNotes = "Muistiinpanoja";
 
 // ADD GameSettingsModal translations (Ensure object exists first)
 if (!fiTranslations.gameSettingsModal) {

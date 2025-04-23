@@ -2701,8 +2701,8 @@ export default function Home() {
           onRemovePlayer={handleRemovePlayerFromRoster}
           onAddPlayer={handleAddPlayer} 
           // onRenamePlayer expects { name: string; nickname: string } from the hook now
-          onAwardFairPlayCard={handleAwardFairPlayCard}
-          // Pass selection state and handler
+          // onAwardFairPlayCard was removed
+          // Pass selection state and handler (RE-ADD this)
           selectedPlayerIds={selectedPlayerIds}
           onTogglePlayerSelection={handleTogglePlayerSelection}
           teamName={teamName}

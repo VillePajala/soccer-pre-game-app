@@ -164,6 +164,17 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   const [selectedSeasonIdFilter, setSelectedSeasonIdFilter] = useState<string | 'all'>('all');
   const [selectedTournamentIdFilter, setSelectedTournamentIdFilter] = useState<string | 'all'>('all');
   const [localGameEvents, setLocalGameEvents] = useState<GameEvent[]>(gameEvents); // Ensure local copy for editing/deleting
+  const [localFairPlayPlayerId, setLocalFairPlayPlayerId] = useState<string | null>(null);
+
+  // ** Calculate initial winner ID using useMemo **
+  const initialFairPlayWinnerId = useMemo(() => {
+      console.log("[GameStatsModal] Recalculating initialFairPlayWinnerId. availablePlayers:", availablePlayers);
+      const winner = availablePlayers.find(p => p.receivedFairPlayCard);
+      console.log("[GameStatsModal] Found winner object:", winner);
+      const winnerId = winner?.id || null;
+      console.log("[GameStatsModal] Determined initialFairPlayWinnerId:", winnerId);
+      return winnerId;
+  }, [availablePlayers]);
 
   // --- Effects ---
   // Load seasons/tournaments
@@ -222,6 +233,12 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   useEffect(() => {
       setLocalGameEvents(gameEvents); 
   }, [gameEvents]);
+
+  // ** ADD Separate Effect to Sync local state with calculated initial ID **
+  useEffect(() => {
+      console.log("[GameStatsModal] Syncing localFairPlayPlayerId with initialFairPlayWinnerId:", initialFairPlayWinnerId);
+      setLocalFairPlayPlayerId(initialFairPlayWinnerId);
+  }, [initialFairPlayWinnerId]);
 
   // --- Calculations ---
   const currentContextName = useMemo(() => {
@@ -373,9 +390,10 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
     filterText, 
     sortColumn, 
     sortDirection,
-    availablePlayers, 
+    availablePlayers,
     selectedPlayerIds, 
-    gameEvents 
+    gameEvents,
+    localFairPlayPlayerId
   ]);
 
   // Use localGameEvents for display
@@ -467,19 +485,17 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   };
   const handleGoalEditKeyDown = (event: React.KeyboardEvent) => { if (event.key === 'Enter') handleSaveEditGoal(); else if (event.key === 'Escape') handleCancelEditGoal(); }
 
-  // ADD Handler to delete goal event locally and call parent handler
-  const handleDeleteLocalGoalEvent = useCallback((goalId: string) => {
-    if (!onDeleteGameEvent) {
-        console.warn("onDeleteGameEvent handler not provided");
-        return;
+  // Wrap call in check
+  const triggerDeleteEvent = (goalId: string) => {
+    // Combine checks for clarity and add non-null assertion
+    if (onDeleteGameEvent && typeof onDeleteGameEvent === 'function') { 
+      onDeleteGameEvent!(goalId); // ADD non-null assertion (!)
+      setLocalGameEvents(prevEvents => prevEvents.filter(event => event.id !== goalId));
+      console.log(`Locally deleted event ${goalId} and called parent handler.`);
+    } else {
+      console.warn("Delete handler (onDeleteGameEvent) not available or not a function.");
     }
-    // Optional: Add confirmation dialog
-    if (window.confirm(t('gameStatsModal.confirmDeleteEvent', 'Are you sure you want to delete this event?'))) {
-        setLocalGameEvents(prev => prev.filter(event => event.id !== goalId));
-        onDeleteGameEvent(goalId); // Call the handler passed from page.tsx
-        console.log(`Deleted event: ${goalId}`);
-    }
-  }, [onDeleteGameEvent, t]); // Add dependencies
+  };
 
   // --- Dynamic Title based on Tab ---
   const modalTitle = useMemo(() => {
@@ -491,6 +507,18 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
       default: return t('gameStatsModal.titleCurrentGame', 'Ottelutilastot');
     }
   }, [activeTab, t]);
+
+  // ** UPDATE Fair Play Handler **
+  const handleFairPlayChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedPlayerId = event.target.value || null; // Get selected ID (or null if default option)
+    setLocalFairPlayPlayerId(selectedPlayerId); // Update local state immediately for UI responsiveness
+    if (onAwardFairPlayCard && typeof onAwardFairPlayCard === 'function') {
+        onAwardFairPlayCard(selectedPlayerId); // Call the prop handler to update global state
+        console.log("Fair Play award updated locally and globally to:", selectedPlayerId);
+    } else {
+        console.warn("onAwardFairPlayCard handler not provided.");
+    }
+  }, [onAwardFairPlayCard]); // Dependency on the prop handler
 
   if (!isOpen) return null;
 
@@ -585,21 +613,6 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
             {/* Player Stats Table Section - Always Visible */}
             <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-700">
               <h3 className="text-lg font-semibold text-slate-200 mb-3">{t('gameStatsModal.playerStatsTitle', 'Player Statistics')}</h3>
-              {/* Fair Play Select - Only for Current Game? Or show aggregate? Hide for now in aggregate */} 
-              {activeTab === 'currentGame' && onAwardFairPlayCard && (
-              <div className="mb-3 flex items-center gap-2">
-                  <label htmlFor="fairPlaySelect" className="text-sm font-medium text-slate-300 whitespace-nowrap">{t('gameStatsModal.awardFairPlayLabel', 'Fair Play Award:')}</label>
-                <select
-                  id="fairPlaySelect"
-                  value={availablePlayers.find(p => selectedPlayerIds.includes(p.id) && p.receivedFairPlayCard)?.id || ''}
-                    onChange={(e) => onAwardFairPlayCard(e.target.value || null)} // Pass null if unselected
-                  className="block w-full px-3 py-1.5 bg-slate-600 border border-slate-500 rounded-md shadow-sm text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                >
-                    <option value="">{t('gameStatsModal.awardFairPlayNone', '- None -')}</option>
-                    {availablePlayers.filter(player => selectedPlayerIds.includes(player.id)).map(player => ( <option key={player.id} value={player.id}>{player.name}</option> ))}
-                </select>
-              </div>
-            )}
               {/* Filter Input - Always visible */} 
               <input type="text" placeholder={t('common.filterByName', 'Filter...') ?? "Filter..."} value={filterText} onChange={handleFilterChange} className="w-full px-3 py-1.5 mb-3 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" />
               {/* Player Table */} 
@@ -676,15 +689,15 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                                   ) : (
                                     <div className="flex gap-1 justify-center">
                                       <button onClick={() => handleStartEditGoal(goal)} className="p-1 text-slate-400 hover:text-slate-200" title={t('common.edit') ?? 'Edit'}><FaEdit size={12}/></button>
-                                      {/* ADD Delete Button */} 
-                                      {onDeleteGameEvent && (
-                                          <button 
-                                              onClick={() => handleDeleteLocalGoalEvent(goal.id)} 
-                                              className="p-1 text-red-500 hover:text-red-400" 
-                                              title={t('common.delete') ?? 'Delete'}
-                                          >
-                                              <FaTrashAlt size={11}/>
-                                          </button>
+                                      {/* Use wrapper function with check */}
+                                      {( 
+                                        <button 
+                                          onClick={() => triggerDeleteEvent(goal.id)} 
+                                          className="p-1 text-red-500 hover:text-red-400 ml-1 disabled:opacity-50 disabled:cursor-not-allowed" 
+                                          title={t('common.delete', 'Delete') ?? undefined}
+                                        >
+                                          <FaTrashAlt size={11}/>
+                                        </button>
                                       )}
                                     </div>
                                   )
