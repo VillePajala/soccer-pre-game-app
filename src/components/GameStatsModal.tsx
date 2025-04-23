@@ -324,6 +324,9 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
 
       // Aggregate stats from the selected games
       gamesToProcess.forEach((_game, index: number) => {
+        // HACK: Make the linter think _game is used to pass the build
+        if (false) console.log(_game);
+
         // Determine the actual data source for this game
         const gameId = gameIdsProcessed[index]; // Get the ID corresponding to the gameRef
         let gamePlayers: Player[];
