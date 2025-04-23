@@ -316,10 +316,10 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
       }
 
       // Populate gamesToProcess based on the filter
-      Object.entries(savedGames).forEach(([id, game]) => {
+      Object.entries(savedGames).forEach(([id, savedGame]) => {
         // Exclude the default unsaved state and apply the filter
-        if (id !== '__default_unsaved__' && filterFn(game)) { 
-          gamesToProcess.push(game);
+        if (id !== '__default_unsaved__' && filterFn(savedGame)) { 
+          gamesToProcess.push(savedGame);
           gameIdsProcessed.push(id);
         }
       });
@@ -466,6 +466,12 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   };
   const handleSaveNotes = () => { if (gameNotes !== editGameNotes) onGameNotesChange(editGameNotes); setIsEditingNotes(false); };
   const handleCancelEditNotes = () => { setEditGameNotes(gameNotes); setIsEditingNotes(false); };
+  const handleFairPlayCardAward = (playerId: string | null) => {
+    if (onAwardFairPlayCard) {
+      onAwardFairPlayCard(playerId);
+      setLocalFairPlayPlayerId(playerId);
+    }
+  };
   const handleStartInlineEdit = (field: 'opponent' | 'date' | 'home' | 'away') => {
     if (isEditingInfo || isEditingNotes) return;
     setInlineEditingField(field);
