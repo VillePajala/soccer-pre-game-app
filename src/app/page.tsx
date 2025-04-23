@@ -2334,6 +2334,100 @@ export default function Home() {
 
   // --- END AGGREGATE EXPORT HANDLERS ---
 
+  // --- Handler that is called when setup modal is confirmed ---
+  console.log('Before useCallback(handleStartNewGameWithSetup)');
+  const handleStartNewGameWithSetup = useCallback((
+    opponentName: string, 
+    gameDate: string, 
+    gameLocation: string, 
+    gameTime: string,
+    seasonId: string | null,
+    tournamentId: string | null,
+    numPeriods: 1 | 2, 
+    periodDuration: number
+  ) => {
+    console.log("Starting new game with setup:", { opponentName, gameDate, gameLocation, gameTime, seasonId, tournamentId, numPeriods, periodDuration });
+    
+    // Manually construct the new game state
+    const newGameState: AppState = {
+        ...initialState, // Start with base defaults
+        opponentName: opponentName,
+        gameDate: gameDate,
+        gameLocation: gameLocation,
+        gameTime: gameTime,
+        seasonId: seasonId || '',
+        tournamentId: tournamentId || '',
+        numberOfPeriods: numPeriods,
+        periodDurationMinutes: periodDuration,
+        // Reset dynamic parts
+        playersOnField: [],
+        opponents: [],
+        drawings: [],
+        gameEvents: [],
+        homeScore: 0,
+        awayScore: 0,
+        currentPeriod: 1,
+        gameStatus: 'notStarted',
+        completedIntervalDurations: [],
+        lastSubConfirmationTimeSeconds: 0,
+        availablePlayers: initialState.availablePlayers,
+        selectedPlayerIds: initialState.availablePlayers.map(p => p.id),
+        teamName: teamName, // Keep current team name
+        showPlayerNames: true,
+        gameNotes: '',
+        subIntervalMinutes: initialState.subIntervalMinutes,
+    };
+
+    // Call individual state setters from useGameState hook and others
+    setPlayersOnField(newGameState.playersOnField);
+    setOpponents(newGameState.opponents);
+    setDrawings(newGameState.drawings);
+    setAvailablePlayers(newGameState.availablePlayers);
+    setShowPlayerNames(newGameState.showPlayerNames);
+    setTeamName(newGameState.teamName);
+    setGameEvents(newGameState.gameEvents);
+    setOpponentName(newGameState.opponentName);
+    setGameDate(newGameState.gameDate);
+    setHomeScore(newGameState.homeScore);
+    setAwayScore(newGameState.awayScore);
+    setGameNotes(newGameState.gameNotes);
+    setNumberOfPeriods(newGameState.numberOfPeriods);
+    setPeriodDurationMinutes(newGameState.periodDurationMinutes);
+    setCurrentPeriod(newGameState.currentPeriod);
+    setGameStatus(newGameState.gameStatus);
+    setSelectedPlayerIds(newGameState.selectedPlayerIds);
+    setSeasonId(newGameState.seasonId);
+    setTournamentId(newGameState.tournamentId);
+    // ADD default fallbacks for optional properties
+    setGameLocation(newGameState.gameLocation ?? ''); 
+    setGameTime(newGameState.gameTime ?? '');
+    setSubIntervalMinutes(newGameState.subIntervalMinutes ?? initialState.subIntervalMinutes ?? 5); // Default to initial state or 5
+    setCompletedIntervalDurations(newGameState.completedIntervalDurations || []);
+    setLastSubConfirmationTimeSeconds(newGameState.lastSubConfirmationTimeSeconds || 0);
+    // Reset timer state directly
+    setTimeElapsedInSeconds(0);
+
+    // Manually reset history state
+    setHistory([newGameState]);
+    setHistoryIndex(0);
+
+    // Clear the current game ID setting
+    setCurrentGameId(DEFAULT_GAME_ID);
+    // Close the setup modal
+    setIsNewGameSetupModalOpen(false);
+    // Reset the flag indicating intent to start new game after save
+    setIsStartingNewGameAfterSave(false);
+  }, [
+      // Add ALL state setters used above to the dependency array
+      setPlayersOnField, setOpponents, setDrawings, setAvailablePlayers,
+      setShowPlayerNames, setTeamName, setGameEvents, setOpponentName, setGameDate,
+      setHomeScore, setAwayScore, setGameNotes, setNumberOfPeriods, setPeriodDurationMinutes,
+      setCurrentPeriod, setGameStatus, setSelectedPlayerIds, setSeasonId, setTournamentId,
+      setGameLocation, setGameTime, setSubIntervalMinutes, setCompletedIntervalDurations,
+      setLastSubConfirmationTimeSeconds, setTimeElapsedInSeconds, setIsTimerRunning,
+      setHistory, setHistoryIndex, teamName // Include teamName as it's read directly
+  ]);
+
   // Render null or a loading indicator until state is loaded
   // Note: Console log added before the check itself
   console.log('Before checking isLoaded');

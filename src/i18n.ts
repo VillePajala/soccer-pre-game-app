@@ -90,6 +90,27 @@ fiTranslations.newGameSetupModal.timeLabel = "Aika (TT:MM) (Valinnainen)";
 fiTranslations.newGameSetupModal.hourPlaceholder = "TT";
 fiTranslations.newGameSetupModal.minutePlaceholder = "MM";
 fiTranslations.newGameSetupModal.invalidTimeAlert = "Anna kelvollinen aika (Tunti 0-23, Minuutti 0-59) tai jätä molemmat kentät tyhjiksi.";
+// --- Add Missing Finnish Translations ---
+fiTranslations.newGameSetupModal.seasonLabel = "Kausi:";
+fiTranslations.newGameSetupModal.tournamentLabel = "Turnaus:";
+fiTranslations.newGameSetupModal.createButton = "Luo Uusi";
+fiTranslations.newGameSetupModal.selectSeasonOption = "-- Valitse Kausi --";
+fiTranslations.newGameSetupModal.selectTournamentOption = "-- Valitse Turnaus --";
+fiTranslations.newGameSetupModal.newSeasonPlaceholder = "Syötä uuden kauden nimi...";
+fiTranslations.newGameSetupModal.newTournamentPlaceholder = "Syötä uuden turnauksen nimi...";
+fiTranslations.newGameSetupModal.addButton = "Lisää";
+fiTranslations.newGameSetupModal.cancelButton = "Peruuta";
+fiTranslations.newGameSetupModal.newSeasonNameRequired = "Anna uuden kauden nimi tai valitse olemassa oleva.";
+fiTranslations.newGameSetupModal.newTournamentNameRequired = "Anna uuden turnauksen nimi tai valitse olemassa oleva.";
+fiTranslations.newGameSetupModal.duplicateSeasonName = "Tämän niminen kausi on jo olemassa.";
+fiTranslations.newGameSetupModal.duplicateTournamentName = "Tämän niminen turnaus on jo olemassa.";
+fiTranslations.newGameSetupModal.errorAddingSeason = "Virhe uuden kauden lisäämisessä.";
+fiTranslations.newGameSetupModal.errorAddingTournament = "Virhe uuden turnauksen lisäämisessä.";
+fiTranslations.newGameSetupModal.createNewSeasonTitle = "Luo Uusi Kausi";
+fiTranslations.newGameSetupModal.createNewTournamentTitle = "Luo Uusi Turnaus";
+fiTranslations.newGameSetupModal.cancelAddTitle = "Peruuta Lisäys";
+fiTranslations.newGameSetupModal.periodsLabel = "Jaksot";
+fiTranslations.newGameSetupModal.durationLabel = "Kesto (min)";
 
 // Add game stats modal translations
 if (!fiTranslations.gameStatsModal) {
@@ -260,6 +281,27 @@ enTranslations.newGameSetupModal.timeLabel = "Time (HH:MM) (Optional)";
 enTranslations.newGameSetupModal.hourPlaceholder = "HH";
 enTranslations.newGameSetupModal.minutePlaceholder = "MM";
 enTranslations.newGameSetupModal.invalidTimeAlert = "Please enter a valid time (Hour 0-23, Minute 0-59) or leave both fields empty.";
+// --- Add Missing English Translations ---
+enTranslations.newGameSetupModal.seasonLabel = "Season:";
+enTranslations.newGameSetupModal.tournamentLabel = "Tournament:";
+enTranslations.newGameSetupModal.createButton = "Create New";
+enTranslations.newGameSetupModal.selectSeasonOption = "-- Select Season --";
+enTranslations.newGameSetupModal.selectTournamentOption = "-- Select Tournament --";
+enTranslations.newGameSetupModal.newSeasonPlaceholder = "Enter new season name...";
+enTranslations.newGameSetupModal.newTournamentPlaceholder = "Enter new tournament name...";
+enTranslations.newGameSetupModal.addButton = "Add";
+enTranslations.newGameSetupModal.cancelButton = "Cancel";
+enTranslations.newGameSetupModal.newSeasonNameRequired = "Please enter a name for the new season or select an existing one.";
+enTranslations.newGameSetupModal.newTournamentNameRequired = "Please enter a name for the new tournament or select an existing one.";
+enTranslations.newGameSetupModal.duplicateSeasonName = "A season with this name already exists.";
+enTranslations.newGameSetupModal.duplicateTournamentName = "A tournament with this name already exists.";
+enTranslations.newGameSetupModal.errorAddingSeason = "Error adding new season.";
+enTranslations.newGameSetupModal.errorAddingTournament = "Error adding new tournament.";
+enTranslations.newGameSetupModal.createNewSeasonTitle = "Create New Season";
+enTranslations.newGameSetupModal.createNewTournamentTitle = "Create New Tournament";
+enTranslations.newGameSetupModal.cancelAddTitle = "Cancel Add";
+enTranslations.newGameSetupModal.periodsLabel = "Periods";
+enTranslations.newGameSetupModal.durationLabel = "Duration (min)";
 
 // Add game stats modal translations for English
 if (!enTranslations.gameStatsModal) {
