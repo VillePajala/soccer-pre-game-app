@@ -21,12 +21,10 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
   availablePlayers,
   currentTime,
 }) => {
-  // REMOVE i18n
   const { t } = useTranslation(); 
 
   const [scorerId, setScorerId] = useState<string>('');
   const [assisterId, setAssisterId] = useState<string>(''); // Empty string means no assist
-  const [activeTab, setActiveTab] = useState('home'); // 'home' or 'opponent'
 
   // Format time MM:SS
   const formatTime = (timeInSeconds: number): string => {

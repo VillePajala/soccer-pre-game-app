@@ -43,7 +43,6 @@ interface GameStatsModalProps {
   onAwayScoreChange: (score: number) => void;
   onGameNotesChange?: (notes: string) => void;
   onUpdateGameEvent?: (updatedEvent: GameEvent) => void;
-  onAwardFairPlayCard?: (playerId: string | null) => void; // Allow null for unsetting
   selectedPlayerIds: string[];
   savedGames: SavedGamesCollection; // Kept for potential future use, not currently used
   currentGameId: string | null;
@@ -77,7 +76,6 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   onAwayScoreChange,
   onGameNotesChange = () => {},
   onUpdateGameEvent = () => { console.warn('onUpdateGameEvent handler not provided'); },
-  onAwardFairPlayCard,
   selectedPlayerIds,
   savedGames, // Not actively used after removing aggregation
   currentGameId,
@@ -325,7 +323,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
       });
 
       // Aggregate stats from the selected games
-      gamesToProcess.forEach((gameRef: AppState, index: number) => {
+      gamesToProcess.forEach((/* gameRef */ _: AppState, index: number) => {
         // Determine the actual data source for this game
         const gameId = gameIdsProcessed[index]; // Get the ID corresponding to the gameRef
         let gamePlayers: Player[];

@@ -431,7 +431,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
     }
 
     handleCancelInlineEdit(); // Close editor after save attempt
-  }, [inlineEditingField, inlineEditValue, localOpponentName, localGameDate, localGameLocation, localGameTime, localHour, localMinute, gameTime, localPeriodDurationMinutes, localGameNotes, onOpponentNameChange, onGameDateChange, onGameLocationChange, onGameTimeChange, onPeriodDurationChange, onGameNotesChange, t, handleCancelInlineEdit]);
+  }, [inlineEditingField, inlineEditValue, localOpponentName, localGameDate, localGameLocation, localHour, localMinute, gameTime, localPeriodDurationMinutes, localGameNotes, onOpponentNameChange, onGameDateChange, onGameLocationChange, onGameTimeChange, onPeriodDurationChange, onGameNotesChange, t, handleCancelInlineEdit]);
 
   // *** ADD Specific Blur Handler for Time Inputs ***
   const handleTimeBlur = useCallback(() => {
