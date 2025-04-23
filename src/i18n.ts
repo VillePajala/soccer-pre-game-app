@@ -167,6 +167,11 @@ fiTranslations.controlBar.backButton = "Takaisin";
 fiTranslations.controlBar.tulospalveluP9 = "P9 Alue Taso 1";
 fiTranslations.controlBar.tulospalveluP9EK = "P/T 9 EK Kortteli (2016)";
 fiTranslations.controlBar.saveGame = "Tallenna";
+fiTranslations.controlBar.manageRoster = "Hallinnoi Kokoonpanoa";
+fiTranslations.controlBar.gameSettingsTooltip = "Peliasetukset";
+fiTranslations.controlBar.exportData = "Vie Tiedot";
+fiTranslations.controlBar.enterFullscreen = "Koko Näyttö";
+fiTranslations.controlBar.exitFullscreen = "Poistu Koko Näytöltä";
 
 // Add common namespace if missing
 if (!fiTranslations.common) {
@@ -329,9 +334,14 @@ enTranslations.controlBar.appGuide = "App Guide";
 enTranslations.controlBar.language = "Language";
 enTranslations.controlBar.hardReset = "Hard Reset";
 enTranslations.controlBar.backButton = "Back";
-enTranslations.controlBar.tulospalveluP9 = "P9 Alue Taso 1";
-enTranslations.controlBar.tulospalveluP9EK = "P/T 9 EK Kortteli (2016)";
+enTranslations.controlBar.tulospalveluP9 = "P9 Region Level 1";
+enTranslations.controlBar.tulospalveluP9EK = "P/T 9 EK Block (2016)";
 enTranslations.controlBar.saveGame = "Save";
+enTranslations.controlBar.manageRoster = "Manage Roster";
+enTranslations.controlBar.gameSettingsTooltip = "Game Settings";
+enTranslations.controlBar.exportData = "Export Data";
+enTranslations.controlBar.enterFullscreen = "Enter Fullscreen";
+enTranslations.controlBar.exitFullscreen = "Exit Fullscreen";
 
 // Add common namespace if missing
 if (!enTranslations.common) {
