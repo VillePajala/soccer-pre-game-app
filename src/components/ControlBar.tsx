@@ -29,12 +29,11 @@ import {
     HiOutlineUsers,            // Icon for Manage Roster
     HiOutlineArchiveBoxArrowDown, // Use this for Quick Save
     // ADD New Icons
-    HiOutlineTrophy,           // For Log Goal
     HiOutlineAdjustmentsHorizontal, // For Game Settings
     HiOutlineDocumentArrowDown   // For Export Data
 } from 'react-icons/hi2'; // Using hi2 for Heroicons v2 Outline
-// RE-ADD FaFutbol
-import { FaClock, FaUsers, FaCog, FaFutbol } from 'react-icons/fa';
+// REMOVE FaClock, FaUsers, FaCog (FaFutbol remains)
+import { FaFutbol } from 'react-icons/fa';
 
 // Import translation hook
 import { useTranslation } from 'react-i18next';

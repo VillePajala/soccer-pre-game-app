@@ -259,7 +259,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
       console.log("Fair Play award updated to:", selectedPlayerId); // Optional: Log change
   }, [onAwardFairPlayCard, setLocalFairPlayPlayerId]);
 
-  // --- Modified resetLocalState (no longer needs setIsEditing) ---
+  // RE-ADD resetLocalState function (was incorrectly marked as unused)
   const resetLocalState = () => {
     setLocalOpponentName(opponentName);
     setLocalGameDate(gameDate);
@@ -274,9 +274,10 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
     setEditingGoalId(null);
   };
 
-  // ADD Style constants for consistency
-  const cardStyle = "bg-slate-800/60 rounded-lg shadow-md p-4 mb-4"; // Increased padding
-  const sectionTitleStyle = "text-lg font-semibold text-slate-100 mb-3 border-b border-slate-700 pb-1"; // Bolder and bottom border
+  // Keep these unused for now if original error was correct, but needed for subsequent code
+  // const cardStyle = "bg-slate-800/60 rounded-lg shadow-md p-4 mb-4"; // Increased padding
+  // const sectionTitleStyle = "text-lg font-semibold text-slate-100 mb-3 border-b border-slate-700 pb-1"; // Bolder and bottom border
+  // RE-ADD necessary style constants
   const labelStyle = "text-xs font-medium text-slate-400 uppercase flex items-center mb-0.5"; // Adjusted for icon alignment
   const valueStyle = "text-base text-slate-100 font-medium";
   const editInputStyle = "block w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 text-sm";

@@ -231,7 +231,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   // Modify filteredAndSortedPlayerStats useMemo to also return the list of game IDs processed
   const { processedGameIds, playerStats } = useMemo(() => {
     const playerStatsMap = new Map<string, { name: string; nickname?: string; isGoalie?: boolean; jerseyNumber?: string; notes?: string; gamesPlayed: number; goals: number; assists: number; totalScore: number; fpAwards: number }>();
-    let gamesToProcess: AppState[] = [];
+    const gamesToProcess: AppState[] = []; 
     const gameIdsProcessed: string[] = []; // Keep track of IDs
 
     const currentGameObject = savedGames[currentGameId || '']; 

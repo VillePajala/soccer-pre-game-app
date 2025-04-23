@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { Player, GameEvent } from '@/app/page'; // Import Player & GameEvent type
 import {
     HiOutlineShieldCheck, // Goalie icon
@@ -42,8 +42,6 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
   onPlayerTapInBar,
   onToggleGoalie // Destructure goalie toggle handler
 }) => {
-  const lastTapTimeRef = useRef<number>(0); // Ref for double-tap detection (NOW ONLY FOR SELECTION)
-
   // Calculate goals and assists for this player
   const playerStats = useMemo(() => {
     const goals = gameEvents.filter(event => event.type === 'goal' && event.scorerId === id).length;

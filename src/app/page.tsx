@@ -1540,7 +1540,8 @@ export default function Home() {
       // Generate filename with timestamp and filter
       const now = new Date();
       const timestamp = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
-      const filterName = 'All';
+      // REMOVE unused filterName variable
+      // const filterName = 'All';
       a.download = `SoccerApp_AllGames_${timestamp}.json`; 
       
       a.href = url;
@@ -1702,7 +1703,8 @@ export default function Home() {
       // Generate filename with timestamp
       const now = new Date();
       const timestamp = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
-      const filterName = 'All'; // Corrected filterName usage
+      // REMOVE unused filterName variable
+      // const filterName = 'All'; // Corrected filterName usage
       a.download = `SoccerApp_AllGames_${timestamp}.csv`; // Use .csv extension and filter name
       
       a.href = url;
