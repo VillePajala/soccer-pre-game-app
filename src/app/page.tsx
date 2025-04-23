@@ -2418,7 +2418,6 @@ export default function Home() {
     setIsStartingNewGameAfterSave(false);
   }, [
     // All the dependencies for handleStartNewGameWithSetup...
-    initialState,
     setPlayersOnField,
     setOpponents,
     setDrawings,
