@@ -16,6 +16,7 @@ type SortDirection = 'asc' | 'desc';
 type StatsTab = 'currentGame' | 'season' | 'tournament' | 'overall';
 
 interface PlayerStatRow extends Player {
+  id: string;
   goals: number;
   assists: number;
   totalScore: number;
@@ -249,118 +250,130 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
 
   // Modify filteredAndSortedPlayerStats useMemo to also return the list of game IDs processed
   const { processedGameIds, playerStats } = useMemo(() => {
-    const playerStatsMap = new Map<string, { name: string; nickname?: string; isGoalie?: boolean; jerseyNumber?: string; notes?: string; gamesPlayed: number; goals: number; assists: number; totalScore: number; fpAwards: number }>();
-    const gamesToProcess: AppState[] = []; 
-    const gameIdsProcessed: string[] = []; // Keep track of IDs
+    console.log('[GameStatsModal] Recalculating playerStats. Tab:', activeTab, 'Deps changed:', { activeTab, savedGames: savedGames && Object.keys(savedGames).length, currentGameId, selectedSeasonIdFilter, selectedTournamentIdFilter, filterText, sortColumn, sortDirection, availablePlayers: availablePlayers?.length, selectedPlayerIds: selectedPlayerIds?.length, gameEvents: gameEvents?.length });
+    
+    const playerStatsMap = new Map<string, PlayerStatRow>(); // Use PlayerStatRow type here for clarity
+    let gameIdsProcessed: string[] = [];
 
-    const currentGameObject = savedGames[currentGameId || '']; 
+    // --- Handle CURRENT GAME directly using props --- 
+    if (activeTab === 'currentGame') {
+      if (currentGameId) {
+        gameIdsProcessed.push(currentGameId); // Track the current game ID
+      }
+      // Use DIRECT props for current game stats
+      (availablePlayers || []).forEach((player: Player) => {
+        // Filter by selectedPlayerIds for CURRENT game stats
+        if (!selectedPlayerIds.includes(player.id)) {
+          return; // Skip player if not selected for this match
+        }
 
-    if (activeTab === 'currentGame' && currentGameObject && currentGameId) {
-      gamesToProcess.push(currentGameObject);
-      gameIdsProcessed.push(currentGameId); // Add current game ID
-    } else if (activeTab === 'season') {
-      Object.entries(savedGames).forEach(([id, game]) => {
-          if (game.seasonId && (selectedSeasonIdFilter === 'all' || game.seasonId === selectedSeasonIdFilter)) {
-              gamesToProcess.push(game);
-              gameIdsProcessed.push(id); // Add matching season game ID
-          }
-      });
-    } else if (activeTab === 'tournament') {
-      Object.entries(savedGames).forEach(([id, game]) => {
-          if (game.tournamentId && (selectedTournamentIdFilter === 'all' || game.tournamentId === selectedTournamentIdFilter)) {
-              gamesToProcess.push(game);
-              gameIdsProcessed.push(id); // Add matching tournament game ID
-          }
-      });
-    } else if (activeTab === 'overall') {
-       Object.entries(savedGames).forEach(([id, game]) => {
-           // Assuming all saved games should be included in overall, maybe filter default?
-           if (id !== '__default_unsaved__') { // Exclude default placeholder if necessary
-              gamesToProcess.push(game);
-              gameIdsProcessed.push(id); // Add all valid game IDs
-           }
-       });
-    }
+        // Calculate goals/assists using direct gameEvents prop
+        const goals = (gameEvents || []).filter(e => e.type === 'goal' && e.scorerId === player.id).length;
+        const assists = (gameEvents || []).filter(e => e.type === 'goal' && e.assisterId === player.id).length;
+        const totalScore = goals + assists;
 
-    // 2. Aggregate stats from the selected games
-    gamesToProcess.forEach((game: AppState) => {
-      const gamePlayers = game.availablePlayers || [];
-      const gameEvents = game.gameEvents || [];
-      
-      gamePlayers.forEach((player: Player) => {
+        // Read Fair Play status directly from the player object in the availablePlayers prop
+        const fpAwardCount = player.receivedFairPlayCard ? 1 : 0;
+
+        // Initialize/Update stats in the map
         let stats = playerStatsMap.get(player.id);
         if (!stats) {
-          // Initialize player stats if first time encountered
-          stats = { 
-            name: player.name, 
-            nickname: player.nickname,
-            isGoalie: player.isGoalie, // Keep latest goalie status? Or most common?
-            jerseyNumber: player.jerseyNumber, // Keep latest jersey?
-            notes: player.notes, // Combine notes? Keep latest?
-            gamesPlayed: 0, 
+          stats = {
+            ...player, // Initialize with player details from availablePlayers prop
+            goals: 0,
+            assists: 0,
+            totalScore: 0,
+            fpAwards: 0,
+            gamesPlayed: 1, // Current game counts as 1 game played
+          };
+        }
+        // Important: These should ADD to existing values, though for current game it starts at 0
+        stats.goals += goals; 
+        stats.assists += assists;
+        stats.totalScore += totalScore;
+        stats.fpAwards = (stats.fpAwards ?? 0) + fpAwardCount;
+        // gamesPlayed is initialized to 1 and doesn't increment further for current game tab
+
+        playerStatsMap.set(player.id, stats);
+      });
+    } 
+    // --- Handle AGGREGATE stats using savedGames prop --- 
+    else {
+      const gamesToProcess: AppState[] = [];
+      let filterFn: (game: AppState) => boolean;
+
+      switch (activeTab) {
+        case 'season':
+          filterFn = (game) => !!game.seasonId && (selectedSeasonIdFilter === 'all' || game.seasonId === selectedSeasonIdFilter);
+          break;
+        case 'tournament':
+          filterFn = (game) => !!game.tournamentId && (selectedTournamentIdFilter === 'all' || game.tournamentId === selectedTournamentIdFilter);
+          break;
+        case 'overall':
+        default: // Fallback to overall
+          filterFn = (game) => true; // Include all valid games
+          break;
+      }
+
+      // Populate gamesToProcess based on the filter
+      Object.entries(savedGames).forEach(([id, game]) => {
+        // Exclude the default unsaved state and apply the filter
+        if (id !== '__default_unsaved__' && filterFn(game)) { 
+          gamesToProcess.push(game);
+          gameIdsProcessed.push(id);
+        }
+      });
+
+      // Aggregate stats from the selected games
+      gamesToProcess.forEach((game: AppState) => {
+        const gamePlayers = game.availablePlayers || [];
+        const gameEvents = game.gameEvents || [];
+
+        gamePlayers.forEach((player: Player) => {
+          // For aggregate stats, we consider all players in the game's roster
+          const goals = gameEvents.filter(e => e.type === 'goal' && e.scorerId === player.id).length;
+          const assists = gameEvents.filter(e => e.type === 'goal' && e.assisterId === player.id).length;
+          const totalScore = goals + assists;
+          const fpAwardCount = player.receivedFairPlayCard ? 1 : 0;
+
+          let stats = playerStatsMap.get(player.id);
+          if (!stats) {
+            stats = {
+              ...player,
             goals: 0, 
             assists: 0, 
-            totalScore: 0, 
-            fpAwards: 0 
-          };
+              totalScore: 0,
+              fpAwards: 0,
+              gamesPlayed: 0,
+            };
+          }
+
+          stats.goals += goals;
+          stats.assists += assists;
+          stats.totalScore += totalScore;
+          stats.fpAwards = (stats.fpAwards ?? 0) + fpAwardCount;
+          stats.gamesPlayed += 1; // Increment games played for each game processed
+
           playerStatsMap.set(player.id, stats);
-        }
-
-        // Increment games played (ensure player is selected for the game if needed?)
-        // For simplicity, count if player exists in game's availablePlayers
-        stats.gamesPlayed += 1; 
-
-        // Aggregate goals and assists from this game's events
-        const playerGoals = gameEvents.filter((e: GameEvent) => e.type === 'goal' && e.scorerId === player.id).length;
-        const playerAssists = gameEvents.filter((e: GameEvent) => e.type === 'goal' && e.assisterId === player.id).length;
-        
-        stats.goals += playerGoals;
-        stats.assists += playerAssists;
-        stats.totalScore = stats.goals + stats.assists; // Recalculate total score
-
-        // Aggregate Fair Play awards
-        if (player.receivedFairPlayCard) {
-          stats.fpAwards += 1;
-        }
-        
-        // Update potentially changing player info (take latest encountered version for now)
-        stats.name = player.name; // Keep name updated
-        stats.nickname = player.nickname;
-        stats.isGoalie = player.isGoalie;
-        stats.jerseyNumber = player.jerseyNumber;
-        // Notes aggregation strategy TBD - keep latest for now
-        stats.notes = player.notes; 
-        
+        });
       });
-    });
+    }
 
-    // 3. Convert map to array, incorporating original player ID
-    const allPlayerStats: PlayerStatRow[] = Array.from(playerStatsMap.entries()).map(([id, stats]) => ({
-      id: id, // Add the player ID back
-      ...stats,
-      // Explicitly list properties to match PlayerStatRow, 
-      // gamesPlayed is not part of PlayerStatRow currently
-      name: stats.name,
-      nickname: stats.nickname,
-      isGoalie: stats.isGoalie,
-      jerseyNumber: stats.jerseyNumber,
-      notes: stats.notes,
-      goals: stats.goals,
-      assists: stats.assists,
-      totalScore: stats.totalScore,
-      fpAwards: stats.fpAwards,
-      gamesPlayed: stats.gamesPlayed,
-      // relX, relY, color are not relevant for aggregate stats
-    }));
+    // --- Convert map to array, filter, and sort (applies to both current and aggregate) ---
+    const allPlayerStats: PlayerStatRow[] = Array.from(playerStatsMap.values()); // No need to map again if map stores PlayerStatRow
 
-    // 4. Apply text filtering
+    // Apply text filtering
     const filteredStats = filterText
-      ? allPlayerStats.filter(player => player.name.toLowerCase().includes(filterText.toLowerCase()))
+      ? allPlayerStats.filter(player => 
+          (player.name?.toLowerCase() || '').includes(filterText.toLowerCase()) ||
+          (player.nickname?.toLowerCase() || '').includes(filterText.toLowerCase()) ||
+          (player.jerseyNumber?.toString() || '').includes(filterText.toLowerCase())
+        )
       : allPlayerStats;
 
-    // 5. Apply sorting
+    // Apply sorting
     const sortedStats = [...filteredStats].sort((a, b) => {
-      const sortCol = sortColumn as keyof PlayerStatRow; // Type assertion needed
+      const sortCol = sortColumn as keyof PlayerStatRow;
       const valA = a[sortCol];
       const valB = b[sortCol];
       let comparison = 0;
@@ -393,7 +406,6 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
     availablePlayers,
     selectedPlayerIds, 
     gameEvents,
-    localFairPlayPlayerId
   ]);
 
   // Use localGameEvents for display
@@ -492,7 +504,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
       onDeleteGameEvent!(goalId); // ADD non-null assertion (!)
       setLocalGameEvents(prevEvents => prevEvents.filter(event => event.id !== goalId));
       console.log(`Locally deleted event ${goalId} and called parent handler.`);
-    } else {
+      } else {
       console.warn("Delete handler (onDeleteGameEvent) not available or not a function.");
     }
   };
@@ -515,7 +527,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
     if (onAwardFairPlayCard && typeof onAwardFairPlayCard === 'function') {
         onAwardFairPlayCard(selectedPlayerId); // Call the prop handler to update global state
         console.log("Fair Play award updated locally and globally to:", selectedPlayerId);
-    } else {
+            } else {
         console.warn("onAwardFairPlayCard handler not provided.");
     }
   }, [onAwardFairPlayCard]); // Dependency on the prop handler
@@ -525,9 +537,9 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   // Helper for tab button styling - Reduce horizontal padding
   const getTabStyle = (tabName: StatsTab) => {
     return `px-2 py-1.5 text-sm font-medium rounded-md transition-colors ${activeTab === tabName ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`;
-  };
+    };
 
-  return (
+    return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
       <div className="bg-slate-800 rounded-lg shadow-xl w-full h-[95vh] flex flex-col border border-slate-600">
         {/* Header */}
@@ -569,7 +581,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
               ))}
             </select>
           )}
-        </div>
+      </div>
 
         {/* Body: Adjusted conditional rendering */}
         <div className="p-4 flex-grow overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-700/50 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -582,7 +594,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                 <div className="flex justify-between items-center mb-3">
                     <h3 className="text-lg font-semibold text-slate-200">{t('gameStatsModal.gameInfoTitle', 'Ottelun Tiedot')}</h3>
                     <div className="flex items-center gap-2">
-                        {isEditingInfo ? (
+            {isEditingInfo ? (
                             <>
                                 <button onClick={handleSaveInfo} className="p-1.5 text-green-400 hover:text-green-300 rounded bg-slate-700 hover:bg-slate-600" title={t('common.saveChanges') ?? 'Tallenna'}><FaSave /></button>
                                 <button onClick={handleCancelEditInfo} className="p-1.5 text-red-400 hover:text-red-300 rounded bg-slate-700 hover:bg-slate-600" title={t('common.cancel') ?? 'Peruuta'}><FaTimes /></button>
@@ -606,8 +618,8 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                     <div className="p-2 col-span-2 sm:col-span-2"> <span className="block text-xs text-slate-400 font-medium mb-0.5">{t('common.location', 'Paikka')}</span> <span className="text-slate-100">{gameLocation || t('common.notSet', 'Ei asetettu')}</span> </div>
                 {/* Time */}
                     <div className="p-2 col-span-2 sm:col-span-2"> <span className="block text-xs text-slate-400 font-medium mb-0.5">{t('common.time', 'Aika')}</span> <span className="text-slate-100">{gameTime || t('common.notSet', 'Ei asetettu')}</span> </div>
-              </div>
-              </div>
+                  </div>
+                </div>
             )}
 
             {/* Player Stats Table Section - Always Visible */}
@@ -649,9 +661,9 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                     )}
                   </tbody>
                 </table>
-            </div>
-                     </div>
-                     </div>
+                </div>
+                </div>
+              </div>
 
           {/* Right Column - Event Log / Notes (Current Only) */} 
           <div>
@@ -685,8 +697,8 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                                     <div className="flex gap-1 justify-center">
                                       <button onClick={handleSaveEditGoal} className="p-1 text-green-400 hover:text-green-300" title={t('common.save') ?? 'Save'}><FaSave size={12}/></button>
                                       <button onClick={handleCancelEditGoal} className="p-1 text-red-400 hover:text-red-300" title={t('common.cancel') ?? 'Cancel'}><FaTimes size={12}/></button>
-                     </div>
-                                  ) : (
+              </div>
+            ) : (
                                     <div className="flex gap-1 justify-center">
                                       <button onClick={() => handleStartEditGoal(goal)} className="p-1 text-slate-400 hover:text-slate-200" title={t('common.edit') ?? 'Edit'}><FaEdit size={12}/></button>
                                       {/* Use wrapper function with check */}
@@ -699,7 +711,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                                           <FaTrashAlt size={11}/>
                                         </button>
                                       )}
-                                    </div>
+              </div>
                                   )
                           )}
                         </td>

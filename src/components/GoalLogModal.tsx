@@ -23,8 +23,8 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
 }) => {
   // Explicitly request the default 'translation' namespace
   const { t, i18n } = useTranslation('translation');
-  console.log('[GoalLogModal] Detected language:', i18n.language); // ADD DEBUG LOG
-  console.log('[GoalLogModal] Finnish Resources:', JSON.stringify(i18n.getResourceBundle('fi', 'translation'))); // ADD RESOURCE LOG
+  //console.log('[GoalLogModal] Detected language:', i18n.language); // ADD DEBUG LOG
+  //console.log('[GoalLogModal] Finnish Resources:', JSON.stringify(i18n.getResourceBundle('fi', 'translation'))); // ADD RESOURCE LOG
   const [scorerId, setScorerId] = useState<string>('');
   const [assisterId, setAssisterId] = useState<string>(''); // Empty string means no assist
 
