@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import SoccerField from '@/components/SoccerField';
 import PlayerBar from '@/components/PlayerBar';
 import ControlBar from '@/components/ControlBar';
@@ -2215,7 +2215,7 @@ export default function Home() {
         console.error(`Failed to export aggregate stats as JSON:`, error);
         alert(t('export.jsonError', 'Error exporting aggregate data as JSON.'));
     }
-  }, [savedGames, t, seasons, tournaments]); // Dependency on savedGames and t
+  }, [savedGames, t]); // REMOVED: seasons, tournaments
 
   const handleExportAggregateCsv = useCallback((gameIds: string[], aggregateStats: PlayerStatRow[]) => {
     console.log(`Exporting aggregate CSV for ${gameIds.length} games.`);
@@ -2323,7 +2323,7 @@ export default function Home() {
         console.error(`Failed to export aggregate stats as CSV:`, error);
         alert(t('export.csvError', 'Error exporting aggregate data as CSV.'));
     }
-  }, [savedGames, t, seasons, tournaments]); // Dependency on savedGames and t
+  }, [savedGames, t]); // REMOVED: seasons, tournaments
 
   // --- END AGGREGATE EXPORT HANDLERS ---
 
@@ -2412,8 +2412,7 @@ export default function Home() {
     setIsNewGameSetupModalOpen(false);
     // Reset the flag indicating intent to start new game after save
     setIsStartingNewGameAfterSave(false);
-  },
-  [
+  }, [
     // All the dependencies for handleStartNewGameWithSetup...
     initialState,
     setPlayersOnField,

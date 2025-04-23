@@ -21,12 +21,12 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
   availablePlayers,
   currentTime,
 }) => {
-  // Explicitly request the default 'translation' namespace
-  const { t, i18n } = useTranslation('translation');
-  //console.log('[GoalLogModal] Detected language:', i18n.language); // ADD DEBUG LOG
-  //console.log('[GoalLogModal] Finnish Resources:', JSON.stringify(i18n.getResourceBundle('fi', 'translation'))); // ADD RESOURCE LOG
+  // REMOVE i18n
+  const { t } = useTranslation(); 
+
   const [scorerId, setScorerId] = useState<string>('');
   const [assisterId, setAssisterId] = useState<string>(''); // Empty string means no assist
+  const [activeTab, setActiveTab] = useState('home'); // 'home' or 'opponent'
 
   // Format time MM:SS
   const formatTime = (timeInSeconds: number): string => {

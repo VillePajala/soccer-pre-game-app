@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next';
 import { FaTimes, FaEdit, FaSave, FaTrashAlt, FaCalendarAlt, FaClock, FaMapMarkerAlt } from 'react-icons/fa';
 import { Player, GameEvent, Season, Tournament } from '@/app/page'; // Adjust path as needed
 import { SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY } from '@/config/constants';
-import { HiPencil, HiCheck, HiOutlineClock, HiOutlineMapPin, HiOutlineCalendarDays, HiOutlineUsers, HiOutlineTrash } from 'react-icons/hi2';
 
 interface GameSettingsModalProps {
   isOpen: boolean;
@@ -360,7 +359,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
     setInlineEditValue('');
   };
 
-  const handleSaveInlineEdit = () => {
+  const handleSaveInlineEdit = useCallback(() => {
     if (!inlineEditingField) return;
 
     const trimmedValue = inlineEditValue.trim();
@@ -432,7 +431,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
     }
 
     handleCancelInlineEdit(); // Close editor after save attempt
-  };
+  }, [inlineEditingField, inlineEditValue, localOpponentName, localGameDate, localGameLocation, localGameTime, localHour, localMinute, gameTime, localPeriodDurationMinutes, localGameNotes, onOpponentNameChange, onGameDateChange, onGameLocationChange, onGameTimeChange, onPeriodDurationChange, onGameNotesChange, t, handleCancelInlineEdit]);
 
   // *** ADD Specific Blur Handler for Time Inputs ***
   const handleTimeBlur = useCallback(() => {

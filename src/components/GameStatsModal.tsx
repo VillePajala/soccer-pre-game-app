@@ -239,7 +239,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   useEffect(() => {
       console.log("[GameStatsModal:useEffectSync] Syncing localFairPlayPlayerId. Current local:", localFairPlayPlayerId, "New initial:", initialFairPlayWinnerId);
       setLocalFairPlayPlayerId(initialFairPlayWinnerId);
-  }, [initialFairPlayWinnerId]); // Removed localFairPlayPlayerId dependency to avoid potential loops, sync should only depend on the calculated initial value
+  }, [initialFairPlayWinnerId, localFairPlayPlayerId]);
 
   // --- Calculations ---
   const currentContextName = useMemo(() => {
@@ -253,7 +253,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
     console.log('[GameStatsModal] Recalculating playerStats. Tab:', activeTab, 'Deps changed:', { activeTab, savedGames: savedGames && Object.keys(savedGames).length, currentGameId, selectedSeasonIdFilter, selectedTournamentIdFilter, filterText, sortColumn, sortDirection, availablePlayers: availablePlayers?.length, selectedPlayerIds: selectedPlayerIds?.length, gameEvents: gameEvents?.length });
     
     const playerStatsMap = new Map<string, PlayerStatRow>(); // Use PlayerStatRow type here for clarity
-    let gameIdsProcessed: string[] = [];
+    const gameIdsProcessed: string[] = [];
 
     // --- Handle CURRENT GAME directly using props --- 
     if (activeTab === 'currentGame') {
@@ -330,7 +330,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
         const gameId = gameIdsProcessed[index]; // Get the ID corresponding to the gameRef
         let gamePlayers: Player[];
         let gameEventsToUse: GameEvent[];
-        let useCurrentProps = gameId === currentGameId;
+        const useCurrentProps = gameId === currentGameId;
 
         if (useCurrentProps) {
           // Use live props for the current game
@@ -544,18 +544,6 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
       default: return t('gameStatsModal.titleCurrentGame', 'Ottelutilastot');
     }
   }, [activeTab, t]);
-
-  // ** UPDATE Fair Play Handler **
-  const handleFairPlayChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedPlayerId = event.target.value || null; // Get selected ID (or null if default option)
-    setLocalFairPlayPlayerId(selectedPlayerId); // Update local state immediately for UI responsiveness
-    if (onAwardFairPlayCard && typeof onAwardFairPlayCard === 'function') {
-        onAwardFairPlayCard(selectedPlayerId); // Call the prop handler to update global state
-        console.log("Fair Play award updated locally and globally to:", selectedPlayerId);
-            } else {
-        console.warn("onAwardFairPlayCard handler not provided.");
-    }
-  }, [onAwardFairPlayCard]); // Dependency on the prop handler
 
   if (!isOpen) return null;
 
