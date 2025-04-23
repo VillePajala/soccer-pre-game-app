@@ -2148,27 +2148,30 @@ export default function Home() {
 
   // --- Placeholder Handlers for GameSettingsModal (will be implemented properly later) ---
   const handleGameLocationChange = (location: string) => {
+    // REVERT to original
     setGameLocation(location);
     saveStateToHistory({ gameLocation: location });
   };
   const handleGameTimeChange = (time: string) => {
+    // REVERT to original
     setGameTime(time);
     saveStateToHistory({ gameTime: time });
   };
 
   // --- AGGREGATE EXPORT HANDLERS --- 
   
+  // ENSURE this function is commented out
   // Helper to get Filter Name (Season/Tournament)
-  const getFilterContextName = (tab: string, filterId: string, seasons: Season[], tournaments: Tournament[]): string => {
-    if (tab === 'season' && filterId !== 'all') {
-        return seasons.find(s => s.id === filterId)?.name || filterId;
-    }
-    if (tab === 'tournament' && filterId !== 'all') {
-        return tournaments.find(t => t.id === filterId)?.name || filterId;
-    }
-    if (tab === 'overall') return 'Overall';
-    return 'Unknown Filter'; // Fallback
-  };
+  // const getFilterContextName = (tab: string, filterId: string, seasons: Season[], tournaments: Tournament[]): string => {
+  //   if (tab === 'season' && filterId !== 'all') {
+  //       return seasons.find(s => s.id === filterId)?.name || filterId;
+  //   }
+  //   if (tab === 'tournament' && filterId !== 'all') {
+  //       return tournaments.find(t => t.id === filterId)?.name || filterId;
+  //   }
+  //   if (tab === 'overall') return 'Overall';
+  //   return 'Unknown Filter'; // Fallback
+  // };
   
   console.log('Before handleExportAggregateJson definition');
   const handleExportAggregateJson = useCallback((gameIds: string[], aggregateStats: PlayerStatRow[]) => {

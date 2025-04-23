@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Player, GameEvent } from '@/app/page'; // Import Player & GameEvent type
 import {
     HiOutlineShieldCheck, // Goalie icon

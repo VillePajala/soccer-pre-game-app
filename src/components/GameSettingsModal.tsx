@@ -259,20 +259,20 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
       console.log("Fair Play award updated to:", selectedPlayerId); // Optional: Log change
   }, [onAwardFairPlayCard, setLocalFairPlayPlayerId]);
 
-  // RE-ADD resetLocalState function (was incorrectly marked as unused)
-  const resetLocalState = () => {
-    setLocalOpponentName(opponentName);
-    setLocalGameDate(gameDate);
-    setLocalGameLocation(gameLocation || '');
-    setLocalGameTime(gameTime || '');
-    setLocalGameNotes(gameNotes);
-    setLocalGameEvents(gameEvents);
-    setLocalNumPeriods(numPeriods);
-    setLocalPeriodDurationMinutes(periodDurationMinutes);
-    const initialFairPlayWinner = availablePlayers.find(p => p.receivedFairPlayCard)?.id || null;
-    setLocalFairPlayPlayerId(initialFairPlayWinner);
-    setEditingGoalId(null);
-  };
+  // ENSURE resetLocalState function is commented out (unused variable)
+  // const resetLocalState = () => {
+  //   setLocalOpponentName(opponentName);
+  //   setLocalGameDate(gameDate);
+  //   setLocalGameLocation(gameLocation || '');
+  //   setLocalGameTime(gameTime || '');
+  //   setLocalGameNotes(gameNotes);
+  //   setLocalGameEvents(gameEvents);
+  //   setLocalNumPeriods(numPeriods);
+  //   setLocalPeriodDurationMinutes(periodDurationMinutes);
+  //   const initialFairPlayWinner = availablePlayers.find(p => p.receivedFairPlayCard)?.id || null;
+  //   setLocalFairPlayPlayerId(initialFairPlayWinner);
+  //   setEditingGoalId(null);
+  // };
 
   // Keep these unused for now if original error was correct, but needed for subsequent code
   // const cardStyle = "bg-slate-800/60 rounded-lg shadow-md p-4 mb-4"; // Increased padding
