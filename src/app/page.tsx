@@ -2215,7 +2215,7 @@ export default function Home() {
         console.error(`Failed to export aggregate stats as JSON:`, error);
         alert(t('export.jsonError', 'Error exporting aggregate data as JSON.'));
     }
-  }, [savedGames, t]); // REMOVED: seasons, tournaments
+  }, [savedGames, t, seasons, tournaments]); // REMOVED: seasons, tournaments
 
   const handleExportAggregateCsv = useCallback((gameIds: string[], aggregateStats: PlayerStatRow[]) => {
     console.log(`Exporting aggregate CSV for ${gameIds.length} games.`);
@@ -2323,7 +2323,7 @@ export default function Home() {
         console.error(`Failed to export aggregate stats as CSV:`, error);
         alert(t('export.csvError', 'Error exporting aggregate data as CSV.'));
     }
-  }, [savedGames, t]); // REMOVED: seasons, tournaments
+  }, [savedGames, t, seasons, tournaments]); // REMOVED: seasons, tournaments
 
   // --- END AGGREGATE EXPORT HANDLERS ---
 
