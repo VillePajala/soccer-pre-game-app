@@ -325,16 +325,41 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
       });
 
       // Aggregate stats from the selected games
-      gamesToProcess.forEach((game: AppState) => {
-        const gamePlayers = game.availablePlayers || [];
-        const gameEvents = game.gameEvents || [];
+      gamesToProcess.forEach((gameRef: AppState, index: number) => {
+        // Determine the actual data source for this game
+        const gameId = gameIdsProcessed[index]; // Get the ID corresponding to the gameRef
+        let gamePlayers: Player[];
+        let gameEventsToUse: GameEvent[];
+        let useCurrentProps = gameId === currentGameId;
 
+        if (useCurrentProps) {
+          // Use live props for the current game
+          console.log(`[Stats Aggregation] Using LIVE props for current game: ${gameId}`);
+          gamePlayers = availablePlayers || []; // Use prop directly
+          gameEventsToUse = gameEvents || []; // Use prop directly
+        } else {
+          // Use data from savedGames for other games
+          // console.log(`[Stats Aggregation] Using savedGames data for game: ${gameId}`);
+          const savedGameData = savedGames[gameId];
+          if (!savedGameData) {
+            console.warn(`[Stats Aggregation] Saved game data not found for ID: ${gameId}. Skipping.`);
+            return; // Skip if data unexpectedly missing
+          }
+          gamePlayers = savedGameData.availablePlayers || [];
+          gameEventsToUse = savedGameData.gameEvents || [];
+        }
+
+        // --- Proceed with calculations using gamePlayers and gameEventsToUse ---
         gamePlayers.forEach((player: Player) => {
           // For aggregate stats, we consider all players in the game's roster
-          const goals = gameEvents.filter(e => e.type === 'goal' && e.scorerId === player.id).length;
-          const assists = gameEvents.filter(e => e.type === 'goal' && e.assisterId === player.id).length;
+          const goals = gameEventsToUse.filter(e => e.type === 'goal' && e.scorerId === player.id).length;
+          const assists = gameEventsToUse.filter(e => e.type === 'goal' && e.assisterId === player.id).length;
           const totalScore = goals + assists;
-          const fpAwardCount = player.receivedFairPlayCard ? 1 : 0;
+          // Use the correct source for fair play status
+          const playerFpStatus = useCurrentProps 
+              ? (availablePlayers.find(p => p.id === player.id)?.receivedFairPlayCard ?? false) // Check live prop
+              : (player.receivedFairPlayCard ?? false); // Check player object from saved game data
+          const fpAwardCount = playerFpStatus ? 1 : 0; 
 
           let stats = playerStatsMap.get(player.id);
           if (!stats) {
