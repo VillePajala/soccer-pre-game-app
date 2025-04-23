@@ -354,10 +354,11 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
     setEditingGoalId(null); // Ensure goal editor is closed
   };
 
-  const handleCancelInlineEdit = () => {
+  // Wrap handleCancelInlineEdit in useCallback
+  const handleCancelInlineEdit = useCallback(() => {
     setInlineEditingField(null);
     setInlineEditValue('');
-  };
+  }, []); // No dependencies needed as it only uses setters
 
   const handleSaveInlineEdit = useCallback(() => {
     if (!inlineEditingField) return;
