@@ -309,7 +309,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
           break;
         case 'overall':
         default: // Fallback to overall
-          filterFn = (game) => true; // Include all valid games
+          filterFn = (_game) => true; // Renamed 'game' to '_game' as it's unused in this specific branch
           break;
       }
 
