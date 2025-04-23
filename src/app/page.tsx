@@ -377,7 +377,7 @@ export default function Home() {
     }
     setSavedGames(loadedGames);
 
-    // --- ADD Loading for Seasons and Tournaments --- 
+    // --- ADD Loading for Seasons and Tournaments ---
     try {
       const storedSeasons = localStorage.getItem(SEASONS_LIST_KEY);
       const loadedSeasons = storedSeasons ? JSON.parse(storedSeasons) : [];
@@ -450,12 +450,12 @@ export default function Home() {
     setIsLoaded(true);
     console.log('Initial load complete. isLoaded set to true.');
 
-  }, []); // Run only once on mount
+  }, [initialState, setPlayersOnField, setOpponents, setDrawings, setAvailablePlayers]); // Run only once on mount - ADDED missing setters
 
-  // --- Save state to localStorage --- 
+  // --- Save state to localStorage ---
   useEffect(() => {
     // Only auto-save if loaded AND we have a proper game ID (not the default unsaved one)
-    if (isLoaded && currentGameId && currentGameId !== DEFAULT_GAME_ID) { 
+    if (isLoaded && currentGameId && currentGameId !== DEFAULT_GAME_ID) {
       console.log(`Auto-saving state for game ID: ${currentGameId}`);
       try {
         // 1. Create the current game state snapshot (excluding history)
@@ -497,9 +497,9 @@ export default function Home() {
         }
         
         // 3. Update the specific game in the collection
-        const updatedSavedGamesCollection = { 
-          ...allSavedGames, 
-          [currentGameId]: currentSnapshot 
+        const updatedSavedGamesCollection = {
+          ...allSavedGames,
+          [currentGameId]: currentSnapshot
         };
 
         // 4. Save the updated collection back to localStorage
@@ -516,13 +516,17 @@ export default function Home() {
       console.log("Not auto-saving as this is an unsaved game (no ID assigned yet)");
     }
     // Dependencies: Only include state that defines the current game, plus isLoaded and currentGameId
-  }, [isLoaded, currentGameId, 
+  }, [isLoaded, currentGameId,
       playersOnField, opponents, drawings, availablePlayers, showPlayerNames, teamName,
       gameEvents, opponentName, gameDate, homeScore, awayScore, gameNotes,
       numberOfPeriods, periodDurationMinutes, currentPeriod, gameStatus,
       selectedPlayerIds, // Add as dependency for saving
       seasonId, // Add season ID to dependencies
       tournamentId, // Add tournament ID to dependencies
+      // ADD missing dependencies
+      gameLocation, 
+      gameTime, 
+      subIntervalMinutes, 
       completedIntervalDurations,
       lastSubConfirmationTimeSeconds
     ]);
@@ -622,7 +626,7 @@ export default function Home() {
       )
     );
     // State saved on move end
-  // ADDED dependency based on ESLint warning (line 517)
+  // ADDED dependency based on ESLint warning (line 517) -> ADDED missing dependency
   }, [setPlayersOnField]);
 
   const handlePlayerMoveEnd = useCallback(() => {
@@ -1161,7 +1165,7 @@ export default function Home() {
       console.log("Session state reset with new game info.");
       setIsNewGameSetupModalOpen(false); // Close the setup modal
       // Dependencies updated to reflect parameters and used state
-    }, [availablePlayers, savedGames, setDrawings, setOpponents, setPlayersOnField, teamName, initialState.numberOfPeriods, initialState.periodDurationMinutes, initialState.subIntervalMinutes]);
+    }, [availablePlayers, savedGames, setDrawings, setOpponents, setPlayersOnField, teamName]);
   
   // NEW: Handler to cancel the new game setup
   // const handleCancelNewGameSetup = useCallback(() => { // REMOVED this line
