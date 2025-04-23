@@ -41,6 +41,9 @@ interface GameSettingsModalProps {
   // ADD: Period and Duration callbacks
   onNumPeriodsChange: (num: number) => void;
   onPeriodDurationChange: (minutes: number) => void;
+  // ADD new handlers for Season/Tournament
+  onSeasonIdChange: (seasonId: string | null) => void;
+  onTournamentIdChange: (tournamentId: string | null) => void;
 }
 
 // Helper to format time from seconds to MM:SS (moved from GameStatsModal)
@@ -80,6 +83,8 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   periodDurationMinutes,
   onNumPeriodsChange,
   onPeriodDurationChange,
+  onSeasonIdChange,
+  onTournamentIdChange,
 }) => {
   const { t } = useTranslation();
 
@@ -102,6 +107,11 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   // ADD Local state for periods/duration
   const [localNumPeriods, setLocalNumPeriods] = useState(numPeriods);
   const [localPeriodDurationMinutes, setLocalPeriodDurationMinutes] = useState(periodDurationMinutes);
+  // ADD Local state for Season/Tournament
+  const [localSeasonId, setLocalSeasonId] = useState<string | null>(null);
+  const [localTournamentId, setLocalTournamentId] = useState<string | null>(null);
+  // ADD Radio button state
+  const [associationType, setAssociationType] = useState<'none' | 'season' | 'tournament'>('none');
 
   // State for event editor within the modal
   const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
@@ -158,6 +168,19 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
       // ADD Reset for periods/duration
       setLocalNumPeriods(numPeriods);
       setLocalPeriodDurationMinutes(periodDurationMinutes);
+      // Initialize local Season/Tournament ID from props
+      setLocalSeasonId(seasonId || null);
+      setLocalTournamentId(tournamentId || null);
+      
+      // Determine initial association type based on props
+      if (seasonId) {
+        setAssociationType('season');
+      } else if (tournamentId) {
+        setAssociationType('tournament');
+      } else {
+        setAssociationType('none');
+      }
+
       // Parse gameTime into HH and MM
       if (gameTime && gameTime.includes(':')) {
         const [hours, minutes] = gameTime.split(':');
@@ -170,7 +193,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
       // Reset editing states
       setEditingGoalId(null); 
     } 
-  }, [isOpen, opponentName, gameDate, gameLocation, gameTime, gameNotes, gameEvents, numPeriods, periodDurationMinutes]); // Add new props to dependencies
+  }, [isOpen, opponentName, gameDate, gameLocation, gameTime, gameNotes, gameEvents, numPeriods, periodDurationMinutes, seasonId, tournamentId]); // Add seasonId, tournamentId to dependencies
 
   // Focus goal time input (if event editor becomes active)
   useEffect(() => {
@@ -467,6 +490,8 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
     onGameNotesChange(localGameNotes);
     onNumPeriodsChange(localNumPeriods);
     onPeriodDurationChange(localPeriodDurationMinutes);
+    onSeasonIdChange(localSeasonId);
+    onTournamentIdChange(localTournamentId);
     onClose();
   };
 
@@ -623,6 +648,98 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                 )}
               </div>
               
+              {/* --- REPLACE Season / Tournament Dropdowns with Radio Group --- */}
+              <div className={`${gridItemStyle} col-span-2`}>
+                <span className={labelStyle}>{t('gameSettingsModal.associationLabel', 'Link to')}:</span>
+                <div className="flex items-center space-x-4 mt-1">
+                  {/* Radio: None */}
+                  <label className="flex items-center space-x-1.5 cursor-pointer">
+                    <input 
+                      type="radio" 
+                      name="associationType"
+                      value="none"
+                      checked={associationType === 'none'}
+                      onChange={() => {
+                        setAssociationType('none');
+                        setLocalSeasonId(null);
+                        setLocalTournamentId(null);
+                      }}
+                      className="form-radio h-4 w-4 text-indigo-600 transition duration-150 ease-in-out border-slate-500 focus:ring-indigo-500"
+                    />
+                    <span className="text-sm text-slate-200">{t('common.none', 'None')}</span>
+                  </label>
+                  {/* Radio: Season */}
+                  <label className="flex items-center space-x-1.5 cursor-pointer">
+                    <input 
+                      type="radio" 
+                      name="associationType"
+                      value="season"
+                      checked={associationType === 'season'}
+                      onChange={() => {
+                        setAssociationType('season');
+                        setLocalTournamentId(null); // Clear other ID
+                      }}
+                      className="form-radio h-4 w-4 text-indigo-600 transition duration-150 ease-in-out border-slate-500 focus:ring-indigo-500"
+                    />
+                    <span className="text-sm text-slate-200">{t('gameSettingsModal.seasonLabel', 'Season')}</span>
+                  </label>
+                  {/* Radio: Tournament */}
+                  <label className="flex items-center space-x-1.5 cursor-pointer">
+                    <input 
+                      type="radio" 
+                      name="associationType"
+                      value="tournament"
+                      checked={associationType === 'tournament'}
+                      onChange={() => {
+                        setAssociationType('tournament');
+                        setLocalSeasonId(null); // Clear other ID
+                      }}
+                      className="form-radio h-4 w-4 text-indigo-600 transition duration-150 ease-in-out border-slate-500 focus:ring-indigo-500"
+                    />
+                    <span className="text-sm text-slate-200">{t('gameSettingsModal.tournamentLabel', 'Tournament')}</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Conditional Season Dropdown */}
+              {associationType === 'season' && (
+                <div className={`${gridItemStyle} col-span-2`}>
+                  <label htmlFor="seasonSelect" className={`${labelStyle} sr-only`}>{t('gameSettingsModal.seasonLabel', 'Season')}</label> {/* Screen reader only label */} 
+                  <select 
+                    id="seasonSelect"
+                    value={localSeasonId || ''} 
+                    onChange={(e) => setLocalSeasonId(e.target.value || null)} // Only update season ID
+                    className={`${editSelectStyle} mt-1`}
+                    disabled={!!inlineEditingField || !!editingGoalId} 
+                  >
+                    <option value="">{t('gameSettingsModal.selectSeason', '- Select Season -')}</option>
+                    {seasons.map(s => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Conditional Tournament Dropdown */}
+              {associationType === 'tournament' && (
+                <div className={`${gridItemStyle} col-span-2`}>
+                  <label htmlFor="tournamentSelect" className={`${labelStyle} sr-only`}>{t('gameSettingsModal.tournamentLabel', 'Tournament')}</label> {/* Screen reader only label */} 
+                  <select 
+                    id="tournamentSelect"
+                    value={localTournamentId || ''} 
+                    onChange={(e) => setLocalTournamentId(e.target.value || null)} // Only update tournament ID
+                    className={`${editSelectStyle} mt-1`}
+                    disabled={!!inlineEditingField || !!editingGoalId}
+                  >
+                    <option value="">{t('gameSettingsModal.selectTournament', '- Select Tournament -')}</option>
+                    {tournaments.map(t => (
+                      <option key={t.id} value={t.id}>{t.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {/* --- END Radio Group / Conditional Dropdowns --- */}
+
               {/* Game Structure - Periods (Keep direct edit) */}
               <div className={gridItemStyle}>
                 <span className={labelStyle}>{t('gameSettingsModal.periodsLabel', 'Periods')}</span>
@@ -654,7 +771,6 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                     onBlur={handleSaveInlineEdit} // Use common save handler
                     onKeyDown={handleInlineEditKeyDown} // Use common keydown handler
                     className={editInputStyle}
-                    min="1"
                   />
                 ) : (
                   <span className={`${valueStyle} p-1.5 rounded hover:bg-slate-700/50 cursor-pointer`} onClick={() => handleStartInlineEdit('duration')}>

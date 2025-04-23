@@ -646,7 +646,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                       <tr key={player.id} className="border-b border-slate-700 hover:bg-slate-700/40">
                         <td className="px-2 py-1.5 font-medium text-slate-100 whitespace-nowrap">
                           {player.name}
-                          {player.isGoalie && <span className="ml-1 px-0.5 text-[8px] bg-amber-500 text-white rounded-sm" title={t('gameStatsModal.goalieIndicator', 'Maalivahti')}>M</span>}
+                          {player.isGoalie && activeTab === 'currentGame' && <span className="ml-1 px-0.5 text-[8px] bg-amber-500 text-white rounded-sm" title={t('gameStatsModal.goalieIndicator', 'Maalivahti')}>M</span>}
                           {player.receivedFairPlayCard && activeTab === 'currentGame' && <span className="ml-1 px-0.5 text-[8px] bg-emerald-500 text-white rounded-sm" title={t('gameStatsModal.fairPlayAwarded', 'Fair Play -palkinto')}>FP</span>}
                         </td>
                         {/* ADD GP Data Cell */}

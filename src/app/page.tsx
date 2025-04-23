@@ -154,6 +154,8 @@ const initialState: AppState = {
 // Define new localStorage keys
 const SAVED_GAMES_KEY = 'savedSoccerGames';
 const APP_SETTINGS_KEY = 'soccerAppSettings';
+const SEASONS_LIST_KEY = 'soccerSeasons';
+const TOURNAMENTS_LIST_KEY = 'soccerTournaments';
 
 // Define structure for settings
 interface AppSettings {
@@ -265,6 +267,9 @@ export default function Home() {
   // Persistence state
   const [savedGames, setSavedGames] = useState<SavedGamesCollection>({});
   const [currentGameId, setCurrentGameId] = useState<string | null>(DEFAULT_GAME_ID);
+  // ADD State for seasons/tournaments lists
+  const [seasons, setSeasons] = useState<Season[]>([]);
+  const [tournaments, setTournaments] = useState<Tournament[]>([]);
 
   // --- Timer State (Still needed here) ---
   const [timeElapsedInSeconds, setTimeElapsedInSeconds] = useState<number>(0);
@@ -371,6 +376,22 @@ export default function Home() {
       console.error('Failed to load or parse saved games:', error);
     }
     setSavedGames(loadedGames);
+
+    // --- ADD Loading for Seasons and Tournaments --- 
+    try {
+      const storedSeasons = localStorage.getItem(SEASONS_LIST_KEY);
+      const loadedSeasons = storedSeasons ? JSON.parse(storedSeasons) : [];
+      setSeasons(loadedSeasons);
+      console.log('Loaded seasons:', loadedSeasons.length);
+    } catch (error) { console.error("Failed to load seasons:", error); setSeasons([]); }
+    
+    try {
+      const storedTournaments = localStorage.getItem(TOURNAMENTS_LIST_KEY);
+      const loadedTournaments = storedTournaments ? JSON.parse(storedTournaments) : [];
+      setTournaments(loadedTournaments);
+      console.log('Loaded tournaments:', loadedTournaments.length);
+    } catch (error) { console.error("Failed to load tournaments:", error); setTournaments([]); }
+    // --- END Loading for Seasons and Tournaments ---
 
     // 2. Load app settings to find the last game ID
     let loadedSettings: AppSettings | null = null;
@@ -1209,6 +1230,8 @@ export default function Home() {
         console.log("Performing hard reset...");
         localStorage.removeItem(SAVED_GAMES_KEY);
         localStorage.removeItem(APP_SETTINGS_KEY);
+        localStorage.removeItem(SEASONS_LIST_KEY);
+        localStorage.removeItem(TOURNAMENTS_LIST_KEY);
         window.location.reload();
       } catch (error) {
         console.error("Error during hard reset:", error);
@@ -1433,9 +1456,19 @@ export default function Home() {
     }
 
     const gamesToExport = gameIdsToExport.reduce((acc, id) => {
-        acc[id] = savedGames[id];
+        const gameData = savedGames[id];
+        if (gameData) {
+            // Add names alongside IDs
+            const seasonName = gameData.seasonId ? seasons.find(s => s.id === gameData.seasonId)?.name : null;
+            const tournamentName = gameData.tournamentId ? tournaments.find(t => t.id === gameData.tournamentId)?.name : null;
+            acc[id] = {
+                ...gameData,
+                seasonName: seasonName,
+                tournamentName: tournamentName
+            };
+        }
         return acc;
-    }, {} as SavedGamesCollection);
+    }, {} as SavedGamesCollection & { [key: string]: { seasonName?: string | null, tournamentName?: string | null } }); // Adjust type slightly
 
     try {
       const jsonString = JSON.stringify(gamesToExport, null, 2); // Export only filtered games
@@ -1515,6 +1548,11 @@ export default function Home() {
         allRows.push(`${escapeCsvField('Away Score:')}${DELIMITER}${escapeCsvField(game.awayScore)}`);
         allRows.push(`${escapeCsvField('Location:')}${DELIMITER}${escapeCsvField(game.gameLocation)}`); // Added Location
         allRows.push(`${escapeCsvField('Time:')}${DELIMITER}${escapeCsvField(game.gameTime)}`);     // Added Time
+        // --- ADD Season/Tournament Info --- 
+        const seasonName = game.seasonId ? seasons.find(s => s.id === game.seasonId)?.name : '';
+        const tournamentName = game.tournamentId ? tournaments.find(t => t.id === game.tournamentId)?.name : '';
+        allRows.push(`${escapeCsvField('Season:')}${DELIMITER}${escapeCsvField(seasonName || (game.seasonId ? game.seasonId : 'None'))}`);
+        allRows.push(`${escapeCsvField('Tournament:')}${DELIMITER}${escapeCsvField(tournamentName || (game.tournamentId ? game.tournamentId : 'None'))}`);
         allRows.push(''); // Blank separator row
 
         // --- Section: Game Settings ---
@@ -1632,7 +1670,17 @@ export default function Home() {
     }
     console.log(`Exporting game ${gameId} as JSON...`);
     try {
-      const jsonString = JSON.stringify({ [gameId]: gameData }, null, 2); // Export as { gameId: gameData }
+      // Add names alongside IDs
+      const seasonName = gameData.seasonId ? seasons.find(s => s.id === gameData.seasonId)?.name : null;
+      const tournamentName = gameData.tournamentId ? tournaments.find(t => t.id === gameData.tournamentId)?.name : null;
+      const exportObject = {
+          [gameId]: {
+              ...gameData,
+              seasonName: seasonName,
+              tournamentName: tournamentName
+          }
+      };
+      const jsonString = JSON.stringify(exportObject, null, 2); // Export the enhanced object
       const blob = new Blob([jsonString], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -1673,6 +1721,11 @@ export default function Home() {
       rows.push(`${escapeCsvField('Away Score:')}${DELIMITER}${escapeCsvField(game.awayScore)}`);
       rows.push(`${escapeCsvField('Location:')}${DELIMITER}${escapeCsvField(game.gameLocation)}`); // Added Location
       rows.push(`${escapeCsvField('Time:')}${DELIMITER}${escapeCsvField(game.gameTime)}`);     // Added Time
+      // --- ADD Season/Tournament Info --- 
+      const seasonNameOne = game.seasonId ? seasons.find(s => s.id === game.seasonId)?.name : '';
+      const tournamentNameOne = game.tournamentId ? tournaments.find(t => t.id === game.tournamentId)?.name : '';
+      rows.push(`${escapeCsvField('Season:')}${DELIMITER}${escapeCsvField(seasonNameOne || (game.seasonId ? game.seasonId : 'None'))}`);
+      rows.push(`${escapeCsvField('Tournament:')}${DELIMITER}${escapeCsvField(tournamentNameOne || (game.tournamentId ? game.tournamentId : 'None'))}`);
       rows.push('');
 
       // --- Section: Game Settings ---
@@ -2069,6 +2122,25 @@ export default function Home() {
     saveStateToHistory({ gameTime: time });
   };
 
+  // --- NEW Handlers for Setting Season/Tournament ID ---
+  const handleSetSeasonId = (newSeasonId: string | null) => {
+    const idToSet = newSeasonId || ''; // Ensure empty string instead of null
+    setSeasonId(idToSet);
+    // If setting a season, clear the tournament
+    if (idToSet) setTournamentId(''); 
+    saveStateToHistory({ seasonId: idToSet, tournamentId: idToSet ? '' : tournamentId });
+    console.log(`[page.tsx] Set Season ID to: ${idToSet}. Cleared Tournament ID.`);
+  };
+
+  const handleSetTournamentId = (newTournamentId: string | null) => {
+    const idToSet = newTournamentId || ''; // Ensure empty string instead of null
+    setTournamentId(idToSet);
+    // If setting a tournament, clear the season
+    if (idToSet) setSeasonId('');
+    saveStateToHistory({ tournamentId: idToSet, seasonId: idToSet ? '' : seasonId });
+    console.log(`[page.tsx] Set Tournament ID to: ${idToSet}. Cleared Season ID.`);
+  };
+
   // --- AGGREGATE EXPORT HANDLERS --- 
   
   // ENSURE this function is commented out
@@ -2093,11 +2165,19 @@ export default function Home() {
 
     // Retrieve full game data for the included IDs
     const gamesData = gameIds.reduce((acc, id) => {
-        if (savedGames[id]) {
-            acc[id] = savedGames[id];
+        const gameData = savedGames[id];
+        if (gameData) {
+            // Add names alongside IDs
+            const seasonName = gameData.seasonId ? seasons.find(s => s.id === gameData.seasonId)?.name : null;
+            const tournamentName = gameData.tournamentId ? tournaments.find(t => t.id === gameData.tournamentId)?.name : null;
+            acc[id] = {
+                ...gameData,
+                seasonName: seasonName,
+                tournamentName: tournamentName
+            };
         }
         return acc;
-    }, {} as SavedGamesCollection);
+    }, {} as SavedGamesCollection & { [key: string]: { seasonName?: string | null, tournamentName?: string | null } });
 
     // Determine filter context (needs activeTab and filter IDs from GameStatsModal - this isn't ideal)
     // For now, we'll just create a basic structure without the filter context
@@ -2135,7 +2215,7 @@ export default function Home() {
         console.error(`Failed to export aggregate stats as JSON:`, error);
         alert(t('export.jsonError', 'Error exporting aggregate data as JSON.'));
     }
-  }, [savedGames, t]); // Dependency on savedGames and t
+  }, [savedGames, t, seasons, tournaments]); // Dependency on savedGames and t
 
   const handleExportAggregateCsv = useCallback((gameIds: string[], aggregateStats: PlayerStatRow[]) => {
     console.log(`Exporting aggregate CSV for ${gameIds.length} games.`);
@@ -2243,7 +2323,7 @@ export default function Home() {
         console.error(`Failed to export aggregate stats as CSV:`, error);
         alert(t('export.csvError', 'Error exporting aggregate data as CSV.'));
     }
-  }, [savedGames, t]); // Dependency on savedGames and t
+  }, [savedGames, t, seasons, tournaments]); // Dependency on savedGames and t
 
   // --- END AGGREGATE EXPORT HANDLERS ---
 
@@ -2651,6 +2731,9 @@ export default function Home() {
           periodDurationMinutes={periodDurationMinutes}
           onNumPeriodsChange={handleSetNumberOfPeriods}
           onPeriodDurationChange={handleSetPeriodDuration}
+          // Pass the new handlers
+          onSeasonIdChange={handleSetSeasonId}
+          onTournamentIdChange={handleSetTournamentId}
         />
 
       </div>
