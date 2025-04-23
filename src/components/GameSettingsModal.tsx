@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { FaTimes, FaEdit, FaSave, FaTrashAlt, FaCalendarAlt, FaClock, FaMapMarkerAlt } from 'react-icons/fa';
 import { Player, GameEvent, Season, Tournament } from '@/app/page'; // Adjust path as needed
 import { SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY } from '@/config/constants';
+import { HiPencil, HiCheck, HiOutlineClock, HiOutlineMapPin, HiOutlineCalendarDays, HiOutlineUsers, HiOutlineTrash } from 'react-icons/hi2';
 
 interface GameSettingsModalProps {
   isOpen: boolean;
@@ -126,6 +127,10 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
 
+  // NEW state for separate HH/MM inputs
+  const [localHour, setLocalHour] = useState<string>('');
+  const [localMinute, setLocalMinute] = useState<string>('');
+
   // --- MOVED Effects ---
   // Load seasons/tournaments
   useEffect(() => {
@@ -154,6 +159,15 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
       // ADD Reset for periods/duration
       setLocalNumPeriods(numPeriods);
       setLocalPeriodDurationMinutes(periodDurationMinutes);
+      // Parse gameTime into HH and MM
+      if (gameTime && gameTime.includes(':')) {
+        const [hours, minutes] = gameTime.split(':');
+        setLocalHour(hours);
+        setLocalMinute(minutes);
+      } else {
+        setLocalHour('');
+        setLocalMinute('');
+      }
       // Find initial fair play winner
       const initialFairPlayWinner = availablePlayers.find(p => p.receivedFairPlayCard)?.id || null;
       setLocalFairPlayPlayerId(initialFairPlayWinner);
@@ -347,10 +361,27 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
           }
           break;
         case 'time':
-          if (trimmedValue !== localGameTime) {
-            onGameTimeChange(trimmedValue);
-            setLocalGameTime(trimmedValue);
+          // ** FIX: Read from localHour/localMinute, validate, format **
+          const hour = parseInt(localHour, 10);
+          const minute = parseInt(localMinute, 10);
+          let formattedTime = '';
+
+          if (localHour === '' && localMinute === '') {
+            formattedTime = ''; // Both empty is valid
+          } else if (!isNaN(hour) && !isNaN(minute) && hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
+            formattedTime = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+          } else {
+            // Invalid input - alert user and DON'T save/close editor?
+            alert(t('newGameSetupModal.invalidTimeAlert', 'Please enter a valid time (HH 0-23, MM 0-59) or leave both fields empty.'));
+            // Maybe focus the invalid field?
+            return; // Prevent closing the editor if time is invalid
           }
+          
+          // Compare formatted time with original prop to see if changed
+          if (formattedTime !== (gameTime || '')) { // Compare with original prop, defaulting prop to '' if undefined
+            onGameTimeChange(formattedTime);
+          }
+          // No need to update localGameTime state as it was removed
           break;
         case 'duration':
           const duration = parseInt(trimmedValue);
@@ -378,6 +409,19 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
     handleCancelInlineEdit(); // Close editor after save attempt
   };
 
+  // *** ADD Specific Blur Handler for Time Inputs ***
+  const handleTimeBlur = useCallback(() => {
+    // Only trigger save/validation attempt if BOTH fields have been touched/filled
+    if (localHour.trim() !== '' && localMinute.trim() !== '') {
+      handleSaveInlineEdit();
+    } else {
+      // If one is empty, likely tabbing between fields, do nothing on blur
+      console.log("Time blur ignored, fields potentially incomplete.");
+      // We might still want to close the editor if focus moves completely outside?
+      // For now, let's require Enter/Escape or blurring after both are filled.
+    }
+  }, [localHour, localMinute, handleSaveInlineEdit]); // Add dependencies
+
   const handleInlineEditKeyDown = (event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (event.key === 'Enter') {
         // For notes (textarea), Enter might be needed for newlines. Require Shift+Enter or handle differently?
@@ -391,6 +435,38 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
     } else if (event.key === 'Escape') {
         handleCancelInlineEdit();
     }
+  };
+
+  const handleSaveChanges = () => {
+    console.log("Saving changes from GameSettingsModal");
+    onOpponentNameChange(localOpponentName);
+    onGameDateChange(localGameDate);
+    onGameLocationChange(localGameLocation);
+    
+    // Combine localHour and localMinute into gameTime string
+    const hour = parseInt(localHour, 10);
+    const minute = parseInt(localMinute, 10);
+    let combinedTime = '';
+
+    if (localHour === '' && localMinute === '') {
+      combinedTime = ''; // Both empty is valid (no time set)
+    } else if (!isNaN(hour) && !isNaN(minute) && hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
+      combinedTime = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+    } else {
+      // Invalid time - maybe alert user or prevent save? For now, don't update.
+      // alert(t('newGameSetupModal.invalidTimeAlert', 'Please enter a valid time (HH 0-23, MM 0-59) or leave both fields empty.'));
+      console.warn("Invalid time entered, not saving time change.", { localHour, localMinute });
+      // Optionally reset local state or keep invalid input?
+      // FIX: Default to empty string if invalid, not original prop value
+      combinedTime = ''; // Revert to empty string if invalid
+    }
+    onGameTimeChange(combinedTime);
+
+    onGameNotesChange(localGameNotes);
+    onNumPeriodsChange(localNumPeriods);
+    onPeriodDurationChange(localPeriodDurationMinutes);
+    onAwardFairPlayCard(localFairPlayPlayerId);
+    onClose();
   };
 
   if (!isOpen) return null;
@@ -489,15 +565,33 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                 </span>
                 {/* Restore conditional rendering */} 
                 {inlineEditingField === 'time' ? (
-                  <input 
-                    ref={timeInputRef}
-                    type="time"
-                    value={inlineEditValue} // Use inlineEditValue
-                    onChange={(e) => setInlineEditValue(e.target.value)} // Update inlineEditValue
-                    onBlur={handleSaveInlineEdit} // Use common save handler
-                    onKeyDown={handleInlineEditKeyDown} // Use common keydown handler
-                    className={editInputStyle}
-                  />
+                  <div className="flex items-center space-x-1">
+                    <input 
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={2}
+                      value={localHour}
+                      onChange={(e) => setLocalHour(e.target.value.replace(/[^0-9]/g, ''))}
+                      onBlur={handleTimeBlur} // USE NEW HANDLER
+                      onKeyDown={handleInlineEditKeyDown}
+                      placeholder={t('newGameSetupModal.hourPlaceholder', 'HH') ?? undefined}
+                      className="w-12 px-2 py-1 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-slate-100 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 text-center"
+                    />
+                    <span className="text-slate-400">:</span>
+                    <input 
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={2}
+                      value={localMinute}
+                      onChange={(e) => setLocalMinute(e.target.value.replace(/[^0-9]/g, ''))}
+                      onBlur={handleTimeBlur} // USE NEW HANDLER
+                      onKeyDown={handleInlineEditKeyDown}
+                      placeholder={t('newGameSetupModal.minutePlaceholder', 'MM') ?? undefined}
+                      className="w-12 px-2 py-1 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-slate-100 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 text-center"
+                    />
+                  </div>
                 ) : (
                   <span className={`${valueStyle} p-1.5 rounded hover:bg-slate-700/50 cursor-pointer`} onClick={() => handleStartInlineEdit('time')}>
                     {localGameTime || t('common.notSet', 'Not Set')}
@@ -682,7 +776,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
         {/* --- Footer --- RESTORE this section */}
         <div className="flex justify-end pt-4 mt-auto border-t border-slate-700 flex-shrink-0">
              <button
-               onClick={onClose} 
+               onClick={handleSaveChanges} 
                className="px-4 py-2 rounded bg-slate-600 text-slate-200 hover:bg-slate-500 transition-colors text-sm font-medium"
              >
                {t('common.close', 'Close')} 
