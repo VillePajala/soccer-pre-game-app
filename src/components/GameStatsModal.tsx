@@ -323,7 +323,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
       });
 
       // Aggregate stats from the selected games
-      gamesToProcess.forEach((_, index: number) => {
+      gamesToProcess.forEach((_game, index: number) => {
         // Determine the actual data source for this game
         const gameId = gameIdsProcessed[index]; // Get the ID corresponding to the gameRef
         let gamePlayers: Player[];
