@@ -450,7 +450,7 @@ export default function Home() {
     setIsLoaded(true);
     console.log('Initial load complete. isLoaded set to true.');
 
-  }, [initialState, setPlayersOnField, setOpponents, setDrawings, setAvailablePlayers]); // Run only once on mount - ADDED missing setters
+  }, [setPlayersOnField, setOpponents, setDrawings, setAvailablePlayers]); // Run only once on mount - REMOVED initialState, ADDED missing setters
 
   // --- Save state to localStorage ---
   useEffect(() => {
@@ -627,7 +627,7 @@ export default function Home() {
     );
     // State saved on move end
   // ADDED dependency based on ESLint warning (line 517) -> ADDED missing dependency
-  }, [setPlayersOnField]);
+  }, []); // REMOVED setPlayersOnField - This was incorrect. The lint error was for the NEXT hook. Adding it here was wrong. Let's fix the correct hook now.
 
   const handlePlayerMoveEnd = useCallback(() => {
     saveStateToHistory({ playersOnField });
@@ -636,9 +636,9 @@ export default function Home() {
   const handlePlayerRemove = useCallback((playerId: string) => {
     console.log(`Removing player ${playerId} from field`);
     const updatedPlayersOnField = playersOnField.filter(p => p.id !== playerId);
-    setPlayersOnField(updatedPlayersOnField);
+    setPlayersOnField(updatedPlayersOnField); // <-- THIS is the hook that uses setPlayersOnField
     saveStateToHistory({ playersOnField: updatedPlayersOnField });
-  }, [playersOnField, saveStateToHistory]); // Add dependencies
+  }, [playersOnField, saveStateToHistory, setPlayersOnField]); // Add dependencies - Correctly added setPlayersOnField here
   
 
 
