@@ -2327,7 +2327,7 @@ export default function Home() {
         console.error(`Failed to export aggregate stats as CSV:`, error);
         alert(t('export.csvError', 'Error exporting aggregate data as CSV.'));
     }
-  }, [savedGames, t, seasons, tournaments]); // REMOVED: seasons, tournaments
+  }, [savedGames, t]); // Correctly removed seasons and tournaments
 
   // --- END AGGREGATE EXPORT HANDLERS ---
 
@@ -2640,7 +2640,6 @@ export default function Home() {
           onAwayScoreChange={handleAwayScoreChange}
           onGameNotesChange={handleGameNotesChange}
           onUpdateGameEvent={handleUpdateGameEvent}
-          onAwardFairPlayCard={handleAwardFairPlayCard}
           onDeleteGameEvent={handleDeleteGameEvent}
           selectedPlayerIds={selectedPlayerIds}
           savedGames={savedGames}
@@ -2723,7 +2722,7 @@ export default function Home() {
           onGameTimeChange={handleGameTimeChange}
           onGameNotesChange={handleGameNotesChange}
           onUpdateGameEvent={handleUpdateGameEvent}
-          onAwardFairPlayCard={handleAwardFairPlayCard}
+          onAwardFairPlayCard={handleAwardFairPlayCard} // Pass the required handler
           onDeleteGameEvent={handleDeleteGameEvent}
           gameEvents={gameEvents}
           availablePlayers={availablePlayers}
