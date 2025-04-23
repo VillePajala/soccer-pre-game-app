@@ -234,14 +234,14 @@ const ControlBar: React.FC<ControlBarProps> = ({
           {isSettingsMenuOpen && (
             <div 
                // Position between PlayerBar and ControlBar with slightly more padding
-               // Change top-24 to top-[6.5rem]
-               className={`fixed top-[6.5rem] bottom-14 left-4 right-4 pb-4 bg-slate-800/90 backdrop-blur-sm rounded-t-lg shadow-xl z-50 border-x border-t border-slate-600 overflow-hidden /* removed max-h */ transition-all duration-200 ease-in-out transform ${isSettingsMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full'}`}
+               // REMOVE overflow-hidden to allow inner scrolling
+               className={`fixed top-[6.5rem] bottom-14 left-4 right-4 pb-4 bg-slate-800/90 backdrop-blur-sm rounded-t-lg shadow-xl z-50 border-x border-t border-slate-600 /* removed overflow-hidden */ transition-all duration-200 ease-in-out transform ${isSettingsMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full'}`}
             >
-               {/* Wrapper for Menu Views */}
-               <div className={`flex transition-transform duration-200 ease-out ${menuView === 'tulospalvelu' ? '-translate-x-full' : 'translate-x-0'}`}>
+               {/* Wrapper for Menu Views - ADD h-full */}
+               <div className={`flex transition-transform duration-200 ease-out h-full ${menuView === 'tulospalvelu' ? '-translate-x-full' : 'translate-x-0'}`}>
                
                  {/* --- Main Menu View --- */}
-                 <div className="w-full flex-shrink-0 overflow-y-auto">
+                 <div className="w-full flex-shrink-0 overflow-y-auto h-full">
                    <div className="py-1"> 
 
                      {/* Group 1: Game Management */} 
@@ -323,7 +323,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
                  </div>{/* End Main Menu View */}
 
                  {/* --- RE-ADD Tulospalvelu View --- */}
-                 <div className="w-full flex-shrink-0 overflow-y-auto">
+                 <div className="w-full flex-shrink-0 overflow-y-auto h-full">
                    <div className="py-1"> 
                      <button onClick={() => setMenuView('main')} className="w-full flex items-center px-3 py-2 text-sm text-slate-300 hover:bg-slate-600 hover:text-slate-100 mb-1 border-b border-slate-600/50">
                        <HiOutlineChevronLeft className="w-4 h-4 mr-2" />
