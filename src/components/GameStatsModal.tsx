@@ -43,6 +43,7 @@ interface GameStatsModalProps {
   onAwayScoreChange: (score: number) => void;
   onGameNotesChange?: (notes: string) => void;
   onUpdateGameEvent?: (updatedEvent: GameEvent) => void;
+  onAwardFairPlayCard?: (playerId: string | null) => void;
   selectedPlayerIds: string[];
   savedGames: SavedGamesCollection; // Kept for potential future use, not currently used
   currentGameId: string | null;
@@ -76,6 +77,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   onAwayScoreChange,
   onGameNotesChange = () => {},
   onUpdateGameEvent = () => { console.warn('onUpdateGameEvent handler not provided'); },
+  onAwardFairPlayCard = () => { console.warn('onAwardFairPlayCard handler not provided'); },
   selectedPlayerIds,
   savedGames, // Not actively used after removing aggregation
   currentGameId,
