@@ -12,8 +12,9 @@ import {
   HiOutlineDocumentText,
   HiOutlineTableCells
 } from 'react-icons/hi2';
-import { FaTimes, FaUpload, FaDownload, FaTrash, FaExclamationTriangle, FaSearch } from 'react-icons/fa';
-import { useGameState } from '@/hooks/useGameState';
+// REMOVE unused Fa icons and useGameState hook
+// import { FaTimes, FaUpload, FaDownload, FaTrash, FaExclamationTriangle, FaSearch } from 'react-icons/fa';
+// import { useGameState } from '@/hooks/useGameState';
 
 interface LoadGameModalProps {
   isOpen: boolean;

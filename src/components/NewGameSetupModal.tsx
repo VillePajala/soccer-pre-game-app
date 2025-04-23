@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Season, Tournament, SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY } from '../app/page';
+import { Season, Tournament } from '../app/page';
+import { SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY } from '@/config/constants';
 import { HiPlusCircle } from 'react-icons/hi';
 
 interface NewGameSetupModalProps {
