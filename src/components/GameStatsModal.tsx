@@ -169,11 +169,11 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
 
   // ** Calculate initial winner ID using useMemo **
   const initialFairPlayWinnerId = useMemo(() => {
-      console.log("[GameStatsModal] Recalculating initialFairPlayWinnerId. availablePlayers:", availablePlayers);
+      console.log("[GameStatsModal:useMemo] Calculating initialFairPlayWinnerId. availablePlayers prop:", JSON.stringify(availablePlayers.map(p => ({id: p.id, name: p.name, fp: p.receivedFairPlayCard}))));
       const winner = availablePlayers.find(p => p.receivedFairPlayCard);
-      console.log("[GameStatsModal] Found winner object:", winner);
+      console.log("[GameStatsModal:useMemo] Found winner object:", winner);
       const winnerId = winner?.id || null;
-      console.log("[GameStatsModal] Determined initialFairPlayWinnerId:", winnerId);
+      console.log("[GameStatsModal:useMemo] Determined initialFairPlayWinnerId:", winnerId);
       return winnerId;
   }, [availablePlayers]);
 
@@ -237,9 +237,9 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
 
   // ** ADD Separate Effect to Sync local state with calculated initial ID **
   useEffect(() => {
-      console.log("[GameStatsModal] Syncing localFairPlayPlayerId with initialFairPlayWinnerId:", initialFairPlayWinnerId);
+      console.log("[GameStatsModal:useEffectSync] Syncing localFairPlayPlayerId. Current local:", localFairPlayPlayerId, "New initial:", initialFairPlayWinnerId);
       setLocalFairPlayPlayerId(initialFairPlayWinnerId);
-  }, [initialFairPlayWinnerId]);
+  }, [initialFairPlayWinnerId]); // Removed localFairPlayPlayerId dependency to avoid potential loops, sync should only depend on the calculated initial value
 
   // --- Calculations ---
   const currentContextName = useMemo(() => {

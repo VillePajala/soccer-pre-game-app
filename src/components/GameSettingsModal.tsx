@@ -98,7 +98,6 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   const [localGameLocation, setLocalGameLocation] = useState(gameLocation || '');
   const [localGameTime, setLocalGameTime] = useState(gameTime || '');
   const [localGameNotes, setLocalGameNotes] = useState(gameNotes);
-  const [localFairPlayPlayerId, setLocalFairPlayPlayerId] = useState<string | null>(null);
   const [localGameEvents, setLocalGameEvents] = useState<GameEvent[]>(gameEvents);
   // ADD Local state for periods/duration
   const [localNumPeriods, setLocalNumPeriods] = useState(numPeriods);
@@ -168,14 +167,10 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
         setLocalHour('');
         setLocalMinute('');
       }
-      // Find initial fair play winner
-      const initialFairPlayWinner = availablePlayers.find(p => p.receivedFairPlayCard)?.id || null;
-      setLocalFairPlayPlayerId(initialFairPlayWinner);
-      
       // Reset editing states
       setEditingGoalId(null); 
     } 
-  }, [isOpen, opponentName, gameDate, gameLocation, gameTime, gameNotes, gameEvents, availablePlayers, numPeriods, periodDurationMinutes]); // Add new props to dependencies
+  }, [isOpen, opponentName, gameDate, gameLocation, gameTime, gameNotes, gameEvents, numPeriods, periodDurationMinutes]); // Add new props to dependencies
 
   // Focus goal time input (if event editor becomes active)
   useEffect(() => {
@@ -193,6 +188,11 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   }, [inlineEditingField]);
 
   // --- Calculations ---
+  const currentFairPlayPlayerId = useMemo(() => {
+    console.log("[GameSettingsModal:useMemoFP] Calculating currentFairPlayPlayerId from props:", JSON.stringify(availablePlayers.map(p => ({id: p.id, fp: p.receivedFairPlayCard}))));
+    return availablePlayers.find(p => p.receivedFairPlayCard)?.id || null;
+  }, [availablePlayers]);
+
   const currentContextName = useMemo(() => {
     if (seasonId) return seasons.find(s => s.id === seasonId)?.name;
     if (tournamentId) return tournaments.find(t => t.id === tournamentId)?.name;
@@ -268,11 +268,13 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   
   // --- Handler for Auto-Saving Fair Play ---
   const handleFairPlayChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
-      const selectedPlayerId = event.target.value || null; // Convert empty string value to null
-      setLocalFairPlayPlayerId(selectedPlayerId); // Update local state for UI
-      onAwardFairPlayCard(selectedPlayerId); // Call prop handler immediately
-      console.log("Fair Play award updated to:", selectedPlayerId); // Optional: Log change
-  }, [onAwardFairPlayCard, setLocalFairPlayPlayerId]);
+    const selectedPlayerId = event.target.value || null; // Get selected ID (or null if default option)
+    // Call the prop handler to update global state in page.tsx
+    if (onAwardFairPlayCard && typeof onAwardFairPlayCard === 'function') {
+        onAwardFairPlayCard(selectedPlayerId);
+        console.log("[GameSettingsModal] Fair Play award selection changed - calling parent handler with:", selectedPlayerId);
+    }
+  }, [onAwardFairPlayCard]);
 
   // ENSURE resetLocalState function is commented out (unused variable)
   // const resetLocalState = () => {
@@ -465,7 +467,6 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
     onGameNotesChange(localGameNotes);
     onNumPeriodsChange(localNumPeriods);
     onPeriodDurationChange(localPeriodDurationMinutes);
-    onAwardFairPlayCard(localFairPlayPlayerId);
     onClose();
   };
 
@@ -672,7 +673,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
               <label htmlFor="fairPlaySelect" className={`${labelStyle} mb-1`}>{t('gameSettingsModal.awardFairPlayLabel', 'Awarded Player:')}</label>
               <select
                 id="fairPlaySelect"
-                value={localFairPlayPlayerId || ''} 
+                value={currentFairPlayPlayerId ?? ''} 
                 onChange={handleFairPlayChange}
                 className={editSelectStyle}
                 disabled={!currentGameId} 

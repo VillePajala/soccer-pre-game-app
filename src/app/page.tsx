@@ -1812,6 +1812,11 @@ export default function Home() {
 
   // --- NEW: Handler to Award Fair Play Card ---
   const handleAwardFairPlayCard = useCallback((playerId: string | null) => {
+      // <<< ADD LOG HERE >>>
+      console.log(`[page.tsx] handleAwardFairPlayCard called with playerId: ${playerId}`);
+      console.log(`[page.tsx] availablePlayers BEFORE update:`, JSON.stringify(availablePlayers.map(p => ({id: p.id, fp: p.receivedFairPlayCard}))));
+      console.log(`[page.tsx] playersOnField BEFORE update:`, JSON.stringify(playersOnField.map(p => ({id: p.id, fp: p.receivedFairPlayCard}))));
+
       if (!currentGameId || currentGameId === DEFAULT_GAME_ID) {
           console.warn("Cannot award fair play card in unsaved/default state.");
           return; // Prevent awarding in default state
@@ -1839,21 +1844,34 @@ export default function Home() {
 
       // Award the new card if a playerId is provided (and it's different from the one just cleared)
       if (playerId && playerId !== currentlyAwardedPlayerId) {
+          // <<< MODIFY LOGGING HERE >>>
           updatedAvailablePlayers = updatedAvailablePlayers.map(p =>
               p.id === playerId ? { ...p, receivedFairPlayCard: true } : p
           );
           updatedPlayersOnField = updatedPlayersOnField.map(p =>
               p.id === playerId ? { ...p, receivedFairPlayCard: true } : p
           );
+          console.log(`[page.tsx] Awarding card to ${playerId}`);
+      } else {
+          // <<< ADD LOG HERE >>>
+          console.log(`[page.tsx] Clearing card (or toggling off). PlayerId: ${playerId}, Currently Awarded: ${currentlyAwardedPlayerId}`);
       }
       // If playerId is null, we only cleared the existing card.
       // If playerId is the same as currentlyAwardedPlayerId, we cleared it and don't re-award.
 
+      // <<< ADD LOG HERE >>>
+      console.log(`[page.tsx] availablePlayers AFTER update logic:`, JSON.stringify(updatedAvailablePlayers.map(p => ({id: p.id, fp: p.receivedFairPlayCard}))));
+      console.log(`[page.tsx] playersOnField AFTER update logic:`, JSON.stringify(updatedPlayersOnField.map(p => ({id: p.id, fp: p.receivedFairPlayCard}))));
+
+      // <<< ADD LOG HERE >>>
+      console.log(`[page.tsx] Calling setAvailablePlayers and setPlayersOnField...`);
       setAvailablePlayers(updatedAvailablePlayers);
       setPlayersOnField(updatedPlayersOnField);
+      // <<< ADD LOG HERE >>>
+      console.log(`[page.tsx] Calling saveStateToHistory...`);
       saveStateToHistory({ availablePlayers: updatedAvailablePlayers, playersOnField: updatedPlayersOnField });
 
-      console.log(`Updated Fair Play card award. ${playerId ? `Awarded to ${playerId}` : 'Cleared'}`);
+      console.log(`[page.tsx] Updated Fair Play card award. ${playerId ? `Awarded to ${playerId}` : 'Cleared'}`);
   }, [availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField, saveStateToHistory, currentGameId]);
 
   // --- NEW: Handler to Toggle Player Selection for Current Match ---
