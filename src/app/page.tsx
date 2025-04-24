@@ -459,7 +459,7 @@ export default function Home() {
     setIsLoaded(true);
     console.log('Initial load complete. isLoaded set to true.');
 
-  }, [setPlayersOnField, setOpponents, setDrawings, setAvailablePlayers]); // Run only once on mount - REMOVED initialState, ADDED missing setters
+  }, [setPlayersOnField, setOpponents, setDrawings, setAvailablePlayers]); // Run only once on mount
 
   // *** ADDED: Central useEffect for loading state based on currentGameId ***
   useEffect(() => {
@@ -542,7 +542,7 @@ export default function Home() {
       console.log('[Loading Effect] State applied successfully.');
     }
 
-  }, [currentGameId, savedGames]); // Dependencies: Run when ID or saved data changes
+  }, [currentGameId, savedGames]); // Keep dependencies simple - only react to ID or data change
 
   // --- Save state to localStorage ---
   useEffect(() => {
@@ -607,21 +607,15 @@ export default function Home() {
     } else if (isLoaded && currentGameId === DEFAULT_GAME_ID) {
       console.log("Not auto-saving as this is an unsaved game (no ID assigned yet)");
     }
-    // Dependencies: REMOVE numberOfPeriods, periodDurationMinutes
+    // Dependencies: Include all state variables that are part of the saved snapshot
   }, [isLoaded, currentGameId,
       playersOnField, opponents, drawings, availablePlayers, showPlayerNames, teamName,
       gameEvents, opponentName, gameDate, homeScore, awayScore, gameNotes,
-      // REMOVED: numberOfPeriods, periodDurationMinutes
+      numberOfPeriods, periodDurationMinutes, // ADDED back dependencies
       currentPeriod, gameStatus,
-      selectedPlayerIds, // Add as dependency for saving
-      seasonId, // Add season ID to dependencies
-      tournamentId, // Add tournament ID to dependencies
-      // ADD missing dependencies
-      gameLocation, 
-      gameTime, 
-      subIntervalMinutes, 
-      completedIntervalDurations,
-      lastSubConfirmationTimeSeconds
+      selectedPlayerIds, seasonId, tournamentId, 
+      gameLocation, gameTime, subIntervalMinutes, 
+      completedIntervalDurations, lastSubConfirmationTimeSeconds
     ]);
 
   // **** ADDED: Effect to prompt for setup if opponent name is default ****
@@ -708,7 +702,6 @@ export default function Home() {
     } else {
       console.error(`Dropped player with ID ${playerId} not found in availablePlayers.`);
     }
-  // ADDED dependencies based on ESLint warning
   }, [availablePlayers, handlePlayerDrop]); 
 
   const handlePlayerMove = useCallback((playerId: string, relX: number, relY: number) => {
@@ -719,8 +712,7 @@ export default function Home() {
       )
     );
     // State saved on move end
-  // ADDED dependency based on ESLint warning (line 517) -> ADDED missing dependency
-  }, []); // REMOVED setPlayersOnField - This was incorrect. The lint error was for the NEXT hook. Adding it here was wrong. Let's fix the correct hook now.
+  }, [setPlayersOnField]); // ADDED setPlayersOnField dependency
 
   const handlePlayerMoveEnd = useCallback(() => {
     saveStateToHistory({ playersOnField });
@@ -729,9 +721,9 @@ export default function Home() {
   const handlePlayerRemove = useCallback((playerId: string) => {
     console.log(`Removing player ${playerId} from field`);
     const updatedPlayersOnField = playersOnField.filter(p => p.id !== playerId);
-    setPlayersOnField(updatedPlayersOnField); // <-- THIS is the hook that uses setPlayersOnField
+    setPlayersOnField(updatedPlayersOnField); 
     saveStateToHistory({ playersOnField: updatedPlayersOnField });
-  }, [playersOnField, saveStateToHistory, setPlayersOnField]); // Add dependencies - Correctly added setPlayersOnField here
+  }, [playersOnField, saveStateToHistory, setPlayersOnField]); 
   
 
 
@@ -743,8 +735,7 @@ export default function Home() {
     setDrawings([]);
     // Save reset state to history
     saveStateToHistory({ playersOnField: [], opponents: [], drawings: [] });
-  // ADDED dependencies based on ESLint warning (line 538)
-  }, [saveStateToHistory, setDrawings, setOpponents, setPlayersOnField]);
+  }, [saveStateToHistory, setDrawings, setOpponents, setPlayersOnField]); 
 
   // --- Touch Drag from Bar Handlers (Updated for relative coords) ---
   const handlePlayerDragStartFromBar = useCallback((playerInfo: Player) => {

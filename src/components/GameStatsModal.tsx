@@ -3,7 +3,7 @@
 import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 // Import Season/Tournament types and keys
-import { Player, GameEvent, SavedGamesCollection, Season, Tournament, AppState } from '@/app/page';
+import { Player, GameEvent, SavedGamesCollection, Season, Tournament } from '@/app/page';
 // ADD new import for keys
 import { SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY } from '@/config/constants';
 import { FaSort, FaSortUp, FaSortDown, FaEdit, FaSave, FaTimes, FaTrashAlt } from 'react-icons/fa';
@@ -355,12 +355,9 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
     savedGames, 
     currentGameId, 
     selectedPlayerIds, 
-    selectedSeasonIdFilter, 
-    selectedTournamentIdFilter,
     filterText, 
     sortColumn, 
     sortDirection, 
-    t,
     availablePlayers
   ]);
 
