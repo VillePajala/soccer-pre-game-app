@@ -88,7 +88,7 @@ const InstallPrompt: React.FC = () => {
   return (
     <div className={styles.installPrompt}>
       <p className={styles.installPromptText}>
-        Install PEPO App for a better, faster experience and offline access!
+        Install Coaching Companion for a better, faster experience and offline access!
       </p>
       <div className={styles.installPromptButtons}>
         <button 

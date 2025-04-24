@@ -3,13 +3,13 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import PlayerDisk from './PlayerDisk'; // Import the PlayerDisk component
 import { Player } from '@/app/page'; // Import the Player type
-import Image from 'next/image'; // ADDED Import
+// REMOVED unused import
+// import Image from 'next/image'; 
 import { GameEvent } from '@/app/page'; // Import the GameEvent type
 
 // Define props for PlayerBar
 interface PlayerBarProps {
   players: Player[];
-  onRenamePlayer: (playerId: string, playerData: { name: string; nickname: string }) => void; // Update type
   teamName: string;
   onTeamNameChange: (newName: string) => void;
   // Add prop to pass down touch drag start handler
@@ -37,7 +37,7 @@ interface PlayerBarProps {
 //   { id: 'p11', name: 'Player 11' },
 // ];
 
-const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName, onTeamNameChange, onPlayerDragStartFromBar, selectedPlayerIdFromBar, onBarBackgroundClick, gameEvents, onPlayerTapInBar, onToggleGoalie }) => { // Destructure players and rename handler from props
+const PlayerBar: React.FC<PlayerBarProps> = ({ players, teamName, onTeamNameChange, onPlayerDragStartFromBar, selectedPlayerIdFromBar, onBarBackgroundClick, gameEvents, onPlayerTapInBar, onToggleGoalie }) => { // Destructure players and rename handler from props
   const [isEditingTeamName, setIsEditingTeamName] = useState(false);
   const [editedTeamName, setEditedTeamName] = useState(teamName);
   const teamNameInputRef = useRef<HTMLInputElement>(null);
@@ -142,14 +142,13 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName
           }
         }}
       >
-        <Image 
-          src="/pepo-logo.png" 
-          alt="PEPO Logo" 
-          width={48}
-          height={48}
-          className="mb-0.5 flex-shrink-0"
-          priority
-        />
+        <div className="flex-shrink-0 mr-2">
+          <img
+            className="h-9 w-9"
+            src="/pepo-logo.png"
+            alt="Coaching Companion Logo"
+          />
+        </div>
         {isEditingTeamName ? (
           <input
             ref={teamNameInputRef}
@@ -187,7 +186,6 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, onRenamePlayer, teamName
             nickname={player.nickname}
             color={player.color}
             isGoalie={player.isGoalie}
-            onRenamePlayer={onRenamePlayer}
             onPlayerDragStartFromBar={onPlayerDragStartFromBar}
             selectedPlayerIdFromBar={selectedPlayerIdFromBar}
             gameEvents={gameEvents}

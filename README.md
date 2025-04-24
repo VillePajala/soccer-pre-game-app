@@ -1,4 +1,4 @@
-# Pro Soccer Coach
+# Coaching Companion
 
 A web application designed for soccer coaches to manage game timing, track statistics, visualize player positions, and access relevant team resources during matches.
 

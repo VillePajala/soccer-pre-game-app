@@ -23,7 +23,6 @@ interface RosterSettingsModalProps {
   onSetPlayerNotes: (playerId: string, notes: string) => void;
   onRemovePlayer: (playerId: string) => void;
   onAddPlayer: (playerData: { name: string; jerseyNumber: string; notes: string; nickname: string }) => void;
-  onAwardFairPlayCard?: (playerId: string) => void;
   selectedPlayerIds: string[];
   onTogglePlayerSelection: (playerId: string) => void;
   teamName: string;
@@ -40,7 +39,6 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
   onSetPlayerNotes,
   onRemovePlayer,
   onAddPlayer,
-  onAwardFairPlayCard,
   selectedPlayerIds,
   onTogglePlayerSelection,
   teamName,
@@ -368,10 +366,9 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                    <span className="w-[20px] text-center mr-3" title={t('rosterSettingsModal.goalieHeader', 'Maalivahti') || 'Maalivahti'}>{t('rosterSettingsModal.goalieHeader', 'MV')}</span>
                    <span className="flex-grow min-w-0">{t('rosterSettingsModal.nameHeader', 'Nimi')}</span>
                 </div>
-                {/* Right side: #, Fair Play, Actions Spacer */}
+                {/* Right side: #, Actions Spacer */} 
                 <div className="flex items-center space-x-2 flex-shrink-0">
-                    <span className="w-6 text-center" title={t('rosterSettingsModal.jerseyHeader', 'Numero') || 'Numero'}>#</span> {/* Width w-6 */}
-                    <span className="w-6 text-center" title={t('rosterSettingsModal.fairPlayHeader', 'Fair Play') || 'Fair Play'}>FP</span> {/* Width w-6, Changed text to FP */}
+                    <span className="w-6 text-center" title={t('rosterSettingsModal.jerseyHeader', 'Numero') || 'Numero'}>{t('rosterSettingsModal.jerseyHeader', '#')}</span>
                     <span className="w-8"></span> {/* Invisible spacer w-8 for Actions button */}
                 </div>
              </div>
@@ -406,19 +403,19 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                               <input
                                 type="text"
                                 name="name"
-                                placeholder={t('rosterSettingsModal.playerNamePlaceholder', 'Player Name') || 'Player Name'}
-                                value={editPlayerData.name} // Use renamed state
-                                onChange={handleEditInputChange} // Use renamed handler
-                                className="bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 text-sm w-full focus:ring-indigo-500 focus:border-indigo-500 outline-none" // Style like GameStatsModal
-                                autoFocus
+                                value={editPlayerData.name}
+                                onChange={handleEditInputChange}
+                                className="flex-grow bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500 outline-none mr-2"
+                                placeholder={t('rosterSettingsModal.playerNamePlaceholder', 'Full Name') || 'Full Name'}
                               />
+                              {/* ADD Nickname Input */}
                               <input
                                 type="text"
                                 name="nickname"
-                                placeholder={t('rosterSettingsModal.nicknamePlaceholder', 'Nickname (for disc)') || 'Nickname (for disc)'}
-                                value={editPlayerData.nickname} // Use renamed state
-                                onChange={handleEditInputChange} // Use renamed handler
-                                className="bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 text-sm w-full focus:ring-indigo-500 focus:border-indigo-500 outline-none" // Style like GameStatsModal
+                                value={editPlayerData.nickname}
+                                onChange={handleEditInputChange}
+                                className="flex-grow bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500 outline-none mr-2"
+                                placeholder={t('rosterSettingsModal.nicknamePlaceholder', 'Nickname (Display Name)') || 'Nickname (Display Name)'}
                               />
                           </div>
                           {/* Jersey Input */}
@@ -426,9 +423,9 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                             type="text"
                             name="jerseyNumber"
                             placeholder="#"
-                            value={editPlayerData.jerseyNumber} // Use renamed state
-                            onChange={handleEditInputChange} // Use renamed handler
-                            className="bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 w-16 text-sm text-center focus:ring-indigo-500 focus:border-indigo-500 outline-none" // Style like GameStatsModal
+                            value={editPlayerData.jerseyNumber}
+                            onChange={handleEditInputChange}
+                            className="bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 w-16 text-sm text-center focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                             maxLength={3}
                           />
                         </div>
@@ -436,9 +433,9 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                         <textarea
                             name="notes"
                             placeholder={t('rosterSettingsModal.notesPlaceholder', 'Player notes...') || 'Player notes...'}
-                            value={editPlayerData.notes} // Use renamed state
-                            onChange={handleEditInputChange} // Use renamed handler
-                            className="bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 w-full text-sm h-16 resize-none scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-700 focus:ring-indigo-500 focus:border-indigo-500 outline-none" // Style like GameStatsModal
+                            value={editPlayerData.notes}
+                            onChange={handleEditInputChange}
+                            className="bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 w-full text-sm h-16 resize-none scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-700 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                             rows={2}
                           />
                         {/* Action Buttons (Save/Cancel) - Use Icons */}
@@ -486,17 +483,6 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                           )}
                           {/* Jersey # - Smaller */}
                           <span className="text-xs text-slate-400 flex-shrink-0">{player.jerseyNumber ? `#${player.jerseyNumber}` : ''}</span>
-                          {/* Fair Play Badge */}
-                          {onAwardFairPlayCard && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); onAwardFairPlayCard(player.id); }}
-                              className={`p-1 rounded text-xs transition-all duration-150 flex-shrink-0 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 ${player.receivedFairPlayCard ? 'bg-emerald-500 text-white shadow-md hover:bg-emerald-600 focus:ring-emerald-400' : 'border border-slate-600 text-slate-400 hover:border-emerald-500 hover:text-emerald-500 focus:ring-emerald-500'}`}
-                              style={{ minWidth: '24px', height: '24px' }}
-                              title={player.receivedFairPlayCard ? t('rosterSettingsModal.removeFairPlay', 'Remove Fair Play') : t('rosterSettingsModal.awardFairPlay', 'Award Fair Play Card')}
-                            >
-                              <span className={`font-bold text-[10px] leading-none ${player.receivedFairPlayCard ? 'text-white' : 'text-emerald-500'}`}>FP</span>
-                            </button>
-                          )}
                           {/* Actions Menu Button */}
                           <div className="relative">
                             <button
@@ -514,6 +500,7 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                                 className="absolute right-0 top-full mt-1 w-32 bg-slate-700 border border-slate-600 rounded-md shadow-lg z-10 py-1"
                                 onClick={(e) => e.stopPropagation()}
                               >
+                                {/* Use t() for button text */}
                                 <button onClick={() => { handleStartEdit(player.id); setActionsMenuPlayerId(null); }} className="flex items-center w-full px-3 py-1.5 text-sm text-blue-300 hover:bg-slate-600 disabled:opacity-50" disabled={isAddingPlayer || !!editingPlayerId}>
                                  <HiOutlinePencil className="w-4 h-4 mr-2" /> {t('common.edit', 'Edit')}
                                 </button>

@@ -34,8 +34,6 @@ interface TimerOverlayProps {
   periodDurationMinutes: number;
   currentPeriod: number;
   gameStatus: 'notStarted' | 'inProgress' | 'periodEnd' | 'gameEnd';
-  onSetNumberOfPeriods: (periods: 1 | 2) => void;
-  onSetPeriodDuration: (minutes: number) => void;
   lastSubTime: number | null;
   onOpponentNameChange: (name: string) => void;
 }
@@ -61,8 +59,6 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
   periodDurationMinutes = 10,
   currentPeriod = 1,
   gameStatus = 'notStarted',
-  onSetNumberOfPeriods = () => { console.warn('onSetNumberOfPeriods handler not provided'); },
-  onSetPeriodDuration = () => { console.warn('onSetPeriodDuration handler not provided'); },
   lastSubTime = null,
   onOpponentNameChange = () => { console.warn('onOpponentNameChange handler not provided'); },
 }) => {
@@ -275,48 +271,11 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
         
         {/* Game Setup & Interval Controls Section */}
         <div className="bg-slate-800/80 backdrop-blur-sm p-3 rounded-lg w-full mb-4 space-y-4">
-          {/* Game Structure Controls (only when game not started) */}
+          {/* Substitution Interval Control (only when game not started) */}
           {gameStatus === 'notStarted' && (
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2 items-center">
-              {/* Number of Periods */}
               <div className="flex items-center justify-center">
-                <span className={controlLabelStyle}>{t('timerOverlay.periodsLabel', 'Periods')}</span>
-                <button 
-                    onClick={() => onSetNumberOfPeriods(1)} 
-                    className={`${controlButtonStyle} ${numberOfPeriods === 1 ? 'bg-indigo-600 border-2 border-indigo-400' : 'border-2 border-transparent'}`}>
-                    1
-                </button>
-                <button 
-                    onClick={() => onSetNumberOfPeriods(2)} 
-                    className={`${controlButtonStyle} ${numberOfPeriods === 2 ? 'bg-indigo-600 border-2 border-indigo-400' : 'border-2 border-transparent'}`}>
-                    2
-                </button>
-              </div>
-              {/* Period Duration */}
-              <div className="flex items-center justify-center">
-                <span className={controlLabelStyle}>{t('timerOverlay.durationLabel', 'Duration')}</span>
-                <button
-                  onClick={() => onSetPeriodDuration(periodDurationMinutes - 1)}
-                  disabled={periodDurationMinutes <= 1}
-                  className={controlButtonStyle} aria-label="Decrease period duration">
-                  -
-                </button>
-                <span className={controlValueStyle}>{periodDurationMinutes}</span>
-                <button 
-                  onClick={() => onSetPeriodDuration(periodDurationMinutes + 1)}
-                  className={controlButtonStyle} aria-label="Increase period duration">
-                  +
-                </button>
-              </div>
-            </div>
-          )}
-          
-          {/* Main Action Buttons Section - Improved layout */}
-          <div className="flex flex-col space-y-3">
-            {/* ONLY SHOW INTERVAL SETTINGS WHEN GAME NOT STARTED */}
-            {gameStatus === 'notStarted' && (
-              <div className="flex items-center justify-center">
-                <span className={controlLabelStyle}>{t('timerOverlay.subIntervalLabel', 'Sub Interval')}</span>
+              <span className={controlLabelStyle}>{t('timerOverlay.subIntervalLabel', 'Sub Interval:')}</span>
+              <div className="flex items-center">
                 <button
                   onClick={() => onSetSubInterval(subIntervalMinutes - 1)}
                   disabled={subIntervalMinutes <= 1}
@@ -330,8 +289,11 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
                   +
                 </button>
               </div>
+              </div>
             )}
             
+          {/* Main Action Buttons Section - Improved layout */}
+          <div className="flex flex-col space-y-3">
             {/* Primary Action Button - Remove pulsingClass */}
             <div className="flex justify-center">
               <button 

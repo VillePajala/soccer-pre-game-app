@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SavedGamesCollection } from '@/app/page'; // Removed unused GameEvent
+import { SavedGamesCollection, Season, Tournament } from '@/app/page'; // Removed unused GameEvent
+import { SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY } from '@/config/constants';
 import i18n from '../i18n'; // Import i18n directly
 import { 
   HiOutlineDocumentArrowDown, 
@@ -11,6 +12,9 @@ import {
   HiOutlineDocumentText,
   HiOutlineTableCells
 } from 'react-icons/hi2';
+// REMOVE unused Fa icons and useGameState hook
+// import { FaTimes, FaUpload, FaDownload, FaTrash, FaExclamationTriangle, FaSearch } from 'react-icons/fa';
+// import { useGameState } from '@/hooks/useGameState';
 
 interface LoadGameModalProps {
   isOpen: boolean;
@@ -40,36 +44,55 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  const [filterType, setFilterType] = useState<'all' | 'season' | 'tournament'>('all');
   const [searchText, setSearchText] = useState<string>('');
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Get the list of actual saved game IDs (excluding the default/unsaved state)
+  // State for seasons and tournaments
+  const [seasons, setSeasons] = useState<Season[]>([]);
+  const [tournaments, setTournaments] = useState<Tournament[]>([]);
+
+  // Load seasons and tournaments on mount or when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      try {
+        const storedSeasons = localStorage.getItem(SEASONS_LIST_KEY);
+        setSeasons(storedSeasons ? JSON.parse(storedSeasons) : []);
+      } catch (error) {
+        console.error("Failed to load or parse seasons:", error);
+        setSeasons([]); 
+      }
+      try {
+        const storedTournaments = localStorage.getItem(TOURNAMENTS_LIST_KEY);
+        setTournaments(storedTournaments ? JSON.parse(storedTournaments) : []);
+      } catch (error) {
+        console.error("Failed to load or parse tournaments:", error);
+        setTournaments([]);
+      }
+    }
+  }, [isOpen]);
+
+  // Filter logic updated to only use searchText
   const filteredGameIds = Object.keys(savedGames)
-    .filter(id => id !== DEFAULT_GAME_ID) // Exclude default
-    .filter(id => { // Filter by type
+    .filter(id => id !== DEFAULT_GAME_ID) 
+    .filter(id => { 
       const gameData = savedGames[id];
       if (!gameData) return false;
-      if (filterType === 'all') return true;
-      return gameData.gameType === filterType;
-    })
-    .filter(id => { // Filter by search text
-      const gameData = savedGames[id];
-      if (!gameData) return false;
-      if (!searchText) return true; // No search text, show all
+      if (!searchText) return true; 
 
       const lowerSearchText = searchText.toLowerCase();
       const teamName = (gameData.teamName || '').toLowerCase();
       const opponentName = (gameData.opponentName || '').toLowerCase();
-      // Include date in search?
       const gameDate = (gameData.gameDate || '').toLowerCase(); 
-      // Optionally format date before searching? 
-      // const formattedDate = gameData.gameDate ? new Date(gameData.gameDate).toLocaleDateString().toLowerCase() : '';
+      // Also search in season/tournament names
+      const seasonName = seasons.find(s => s.id === gameData.seasonId)?.name.toLowerCase() || '';
+      const tournamentName = tournaments.find(tourn => tourn.id === gameData.tournamentId)?.name.toLowerCase() || '';
 
       return (
         teamName.includes(lowerSearchText) ||
         opponentName.includes(lowerSearchText) ||
-        gameDate.includes(lowerSearchText)
+        gameDate.includes(lowerSearchText) ||
+        seasonName.includes(lowerSearchText) || // Search season name
+        tournamentName.includes(lowerSearchText) // Search tournament name
       );
     });
 
@@ -100,11 +123,6 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
     };
   }, [openMenuId]);
 
-  const getFilterButtonLabel = (type: string) => {
-    // Simply reference the key directly in the most standard i18next format
-    return t(`loadGameModal.filter_${type}`, type.charAt(0).toUpperCase() + type.slice(1));
-  };
-
   if (!isOpen) return null;
 
   return (
@@ -116,30 +134,13 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
 
         {/* Filter Controls */}
         <div className="mb-4 px-1 flex flex-col sm:flex-row gap-3 flex-shrink-0">
-          {/* Text Filter Input */}
           <input 
             type="text"
-            placeholder={t('loadGameModal.filterPlaceholder', 'Filter by name/date...')}
+            placeholder={t('loadGameModal.filterPlaceholder', 'Filter by name/date/season/tournament...')}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             className="flex-grow px-3 py-1.5 bg-slate-600 border border-slate-500 rounded-md shadow-sm text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
           />
-          {/* Type Filter Buttons */}
-          <div className="flex items-center justify-center space-x-2 flex-shrink-0">
-            {['all', 'season', 'tournament'].map((type) => (
-              <button
-                key={type}
-                onClick={() => setFilterType(type as 'all' | 'season' | 'tournament')}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors duration-150 
-                  ${filterType === type 
-                    ? 'bg-indigo-600 text-white shadow-md' 
-                    : 'bg-slate-600 text-slate-300 hover:bg-slate-500'
-                  }`}
-              >
-                {getFilterButtonLabel(type)}
-              </button>
-            ))}
-          </div>
         </div>
 
         <div 
@@ -151,12 +152,11 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                 const gameData = savedGames[gameId];
                 if (!gameData) return null; // Skip if data is missing
 
-                // Determine game type display text and styling
-                const gameTypeDisplay = gameData.gameType === 'tournament' 
-                  ? t('saveGameModal.gameTypeTournament', 'Tournament') 
-                  : t('saveGameModal.gameTypeSeason', 'Season');
-                const gameTypeBgColor = gameData.gameType === 'tournament' ? 'bg-purple-600' : 'bg-blue-600';
-                const gameTypeTextColor = 'text-white'; // Use white text for both
+                // Find Season/Tournament Name
+                const season = seasons.find(s => s.id === gameData.seasonId);
+                const tournament = tournaments.find(tourn => tourn.id === gameData.tournamentId);
+                const contextName = season?.name || tournament?.name;
+                const contextType = season ? 'Season' : (tournament ? 'Tournament' : null);
                 
                 // Format date nicely (e.g., "Apr 20, 2025" in English or "20.4.2025" in Finnish)
                 let formattedDate = t('common.noDate', 'No Date');
@@ -194,9 +194,13 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                       <h3 className="text-lg font-semibold text-slate-100 break-words mr-3">
                         {gameData.teamName || 'Team'} vs {gameData.opponentName || 'Opponent'}
                       </h3>
-                      <span className={`text-xs uppercase font-semibold tracking-wider ${gameTypeBgColor} ${gameTypeTextColor} px-2.5 py-1 rounded-full whitespace-nowrap shadow-sm`}>
-                        {gameTypeDisplay}
-                      </span>
+                      {/* Display Season/Tournament Name if available */}
+                      {contextName && contextType && (
+                        <span className={`text-xs uppercase font-semibold tracking-wider ${contextType === 'Tournament' ? 'bg-purple-600' : 'bg-blue-600'} text-white px-2.5 py-1 rounded-full whitespace-nowrap shadow-sm`}>
+                           {/* Show the actual name, maybe truncate if too long? */}
+                           {contextName}
+                        </span>
+                      )}
                     </div>
                     
                     <div className="flex justify-between items-center text-sm text-slate-300">
@@ -271,7 +275,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
             </div>
           ) : (
             <p className="text-slate-400 italic text-center py-4">
-              {searchText || filterType !== 'all' 
+              {searchText 
                 ? t('loadGameModal.noFilterResults', 'No games match the current filter.')
                 : t('loadGameModal.noSavedGames', 'No saved games found.')}
             </p>
@@ -286,7 +290,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
           <div className="flex space-x-2 justify-center">
             <button
               onClick={onExportAllJson}
-              disabled={Object.keys(savedGames).length === 0}
+              disabled={filteredGameIds.length === 0}
               className="px-4 py-2 min-w-[120px] justify-center bg-teal-600 text-white rounded hover:bg-teal-700 transition duration-150 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
               title={t('loadGameModal.exportAllJsonTooltip', 'Export all games to JSON') ?? "Export all games to JSON"}
             >
@@ -296,7 +300,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
 
             <button
               onClick={onExportAllExcel}
-              disabled={Object.keys(savedGames).length === 0}
+              disabled={filteredGameIds.length === 0}
               className="px-4 py-2 min-w-[120px] justify-center bg-emerald-600 text-white rounded hover:bg-emerald-700 transition duration-150 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
               title={t('loadGameModal.exportAllExcelTooltip', 'Export all games to a CSV file (Excel compatible)') ?? "Export Excel"}
             >
