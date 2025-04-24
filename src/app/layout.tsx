@@ -6,7 +6,7 @@ import ClientWrapper from "@/components/ClientWrapper";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Pro Soccer Coach",
+  title: "Coaching Companion",
   description: "Soccer Tactics and Timer App for Coaches",
   icons: {
     icon: '/pepo-logo.png',

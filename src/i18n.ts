@@ -169,6 +169,7 @@ fiTranslations.gameStatsModal.exportCsvButtonCurrent = 'Vie Nykyinen CSV';
 fiTranslations.gameStatsModal.exportCsvButton_season = 'Vie Kausi CSV';
 fiTranslations.gameStatsModal.exportCsvButton_tournament = 'Vie Turnaus CSV';
 fiTranslations.gameStatsModal.exportCsvButton_all = 'Vie Kaikki CSV';
+fiTranslations.gameStatsModal.titleOverall = 'Kokonaistilastot';
 
 // Add control bar menu translations
 if (!fiTranslations.controlBar) {
@@ -362,6 +363,7 @@ enTranslations.gameStatsModal.exportCsvButtonCurrent = 'Export Current CSV';
 enTranslations.gameStatsModal.exportCsvButton_season = 'Export Season CSV';
 enTranslations.gameStatsModal.exportCsvButton_tournament = 'Export Tournament CSV';
 enTranslations.gameStatsModal.exportCsvButton_all = 'Export All CSV';
+enTranslations.gameStatsModal.titleOverall = 'Overall Stats';
 
 // Add control bar menu translations for English
 if (!enTranslations.controlBar) {

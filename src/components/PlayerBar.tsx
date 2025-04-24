@@ -141,14 +141,13 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, teamName, onTeamNameChan
           }
         }}
       >
-        <Image 
-          src="/pepo-logo.png" 
-          alt="PEPO Logo" 
-          width={48}
-          height={48}
-          className="mb-0.5 flex-shrink-0"
-          priority
-        />
+        <div className="flex-shrink-0 mr-2">
+          <img
+            className="h-9 w-9"
+            src="/pepo-logo.png"
+            alt="Coaching Companion Logo"
+          />
+        </div>
         {isEditingTeamName ? (
           <input
             ref={teamNameInputRef}
