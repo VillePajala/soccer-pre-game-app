@@ -48,9 +48,9 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   const [newTournamentName, setNewTournamentName] = useState('');
   const newTournamentInputRef = useRef<HTMLInputElement>(null);
 
-  // ADD state for periods and duration
+  // state for periods and duration
   const [localNumPeriods, setLocalNumPeriods] = useState<1 | 2>(2); // Default 2 periods
-  const [localPeriodDurationMinutes, setLocalPeriodDurationMinutes] = useState<number>(10); // Default 10 minutes
+  const [localPeriodDurationString, setLocalPeriodDurationString] = useState<string>('10'); // Default 10 minutes as string
 
   useEffect(() => {
     if (isOpen) {
@@ -67,9 +67,9 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
       setNewSeasonName('');
       setShowNewTournamentInput(false);
       setNewTournamentName('');
-      // ADD Reset for period/duration
+      // Reset for period/duration
       setLocalNumPeriods(2);
-      setLocalPeriodDurationMinutes(10);
+      setLocalPeriodDurationString(String(10));
 
       // Load seasons and tournaments from localStorage
       try {
@@ -258,6 +258,9 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
 
     const finalGameTime = (gameHour && gameMinute) ? `${gameHour.padStart(2, '0')}:${gameMinute.padStart(2, '0')}` : '';
 
+    // Parse duration string into number before calling onStart
+    const finalDuration = Math.max(1, parseInt(localPeriodDurationString, 10) || 1);
+
     // Call the onStart prop with ALL collected data
     onStart(
       trimmedOpponentName,
@@ -267,7 +270,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
       selectedSeasonId,
       selectedTournamentId,
       localNumPeriods, // Pass the selected number of periods
-      localPeriodDurationMinutes // Pass the selected period duration
+      finalDuration    // Pass the parsed and validated number duration
     );
   };
 
@@ -556,9 +559,9 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
               <input
                 type="number"
                 id="periodDurationInput"
-                value={localPeriodDurationMinutes}
-                onChange={(e) => setLocalPeriodDurationMinutes(Math.max(1, parseInt(e.target.value) || 1))} // Ensure positive integer
-                onKeyDown={handleKeyDown} // Reuse existing keydown
+                value={localPeriodDurationString}
+                onChange={(e) => setLocalPeriodDurationString(e.target.value)}
+                onKeyDown={handleKeyDown}
                 min="1"
                 className="w-full px-3 py-1.5 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               />
