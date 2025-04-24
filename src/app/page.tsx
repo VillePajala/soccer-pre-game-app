@@ -460,7 +460,7 @@ export default function Home() {
     console.log('Initial load complete. isLoaded set to true.');
 
   // ADD missing dependencies AGAIN
-  }, [setPlayersOnField, setOpponents, setDrawings, setAvailablePlayers]); // Run only once on mount
+    }, [setPlayersOnField, setOpponents, setDrawings, setAvailablePlayers]);
 
   // *** ADDED: Central useEffect for loading state based on currentGameId ***
   useEffect(() => {
@@ -1155,100 +1155,6 @@ export default function Home() {
   // NEW: Handler to actually reset state and set opponent/date/type from modal
   // Update signature to accept seasonId/tournamentId from the modal
     // Update signature to accept seasonId/tournamentId from the modal
-    const handleFinalizeNewGame = useCallback((newOpponentName: string, newGameDate: string, newGameLocation: string, newGameTime: string, selectedSeasonId: string | null, selectedTournamentId: string | null, numPeriods: 1 | 2, periodDuration: number) => {
-      console.log(`Finalizing new game start. Opponent: ${newOpponentName}, Date: ${newGameDate}, SeasonID: ${selectedSeasonId}, TournamentID: ${selectedTournamentId}, Location: ${newGameLocation}, Time: ${newGameTime}, Periods: ${numPeriods}, Duration: ${periodDuration}`); // Added Periods/Duration to log
-  
-      const newInitialStateForHistory: AppState = {
-          playersOnField: [],
-          opponents: [],
-          drawings: [],
-          availablePlayers: availablePlayers, // <<< CHANGE: Use current state instead of initialState
-          teamName: teamName, // Keep current team name
-          gameEvents: [],
-          opponentName: newOpponentName,
-          gameDate: newGameDate,
-          homeScore: 0,
-          awayScore: 0,
-          gameNotes: '',
-          numberOfPeriods: numPeriods, // USE PARAMETER
-          periodDurationMinutes: periodDuration, // USE PARAMETER
-          currentPeriod: 1,
-          gameStatus: 'notStarted',
-          selectedPlayerIds: availablePlayers.map(p => p.id), // Default select all
-          seasonId: selectedSeasonId ?? '',
-          tournamentId: selectedTournamentId ?? '',
-          gameLocation: newGameLocation,
-          gameTime: newGameTime,
-          showPlayerNames: true, // Default
-          subIntervalMinutes: initialState.subIntervalMinutes ?? 5, // Default sub interval
-          completedIntervalDurations: [], // Always start with empty
-          lastSubConfirmationTimeSeconds: 0, // Always start with 0
-      };
-  
-      // Update component state directly from this new initial state
-      setPlayersOnField(newInitialStateForHistory.playersOnField);
-      setOpponents(newInitialStateForHistory.opponents);
-      setDrawings(newInitialStateForHistory.drawings);
-      setShowPlayerNames(newInitialStateForHistory.showPlayerNames);
-      setTeamName(newInitialStateForHistory.teamName);
-      setGameEvents(newInitialStateForHistory.gameEvents);
-      setOpponentName(newInitialStateForHistory.opponentName);
-      setGameDate(newInitialStateForHistory.gameDate);
-      setHomeScore(newInitialStateForHistory.homeScore);
-      setAwayScore(newInitialStateForHistory.awayScore);
-      setGameNotes(newInitialStateForHistory.gameNotes);
-      setNumberOfPeriods(newInitialStateForHistory.numberOfPeriods); // Uses value from new state
-      setPeriodDurationMinutes(newInitialStateForHistory.periodDurationMinutes); // Uses value from new state
-      setCurrentPeriod(newInitialStateForHistory.currentPeriod);
-      setGameStatus(newInitialStateForHistory.gameStatus);
-      setSelectedPlayerIds(newInitialStateForHistory.selectedPlayerIds);
-      setSeasonId(newInitialStateForHistory.seasonId);
-      setTournamentId(newInitialStateForHistory.tournamentId);
-      setGameLocation(newInitialStateForHistory.gameLocation ?? '');
-      setGameTime(newInitialStateForHistory.gameTime ?? '');
-      setSubIntervalMinutes(newInitialStateForHistory.subIntervalMinutes ?? 5);
-      setCompletedIntervalDurations(newInitialStateForHistory.completedIntervalDurations ?? []);
-      setLastSubConfirmationTimeSeconds(newInitialStateForHistory.lastSubConfirmationTimeSeconds ?? 0);
-      // Ensure roster is set correctly (if availablePlayers changed)
-      setAvailablePlayers(newInitialStateForHistory.availablePlayers); 
-
-      // Reset session timer state
-      setTimeElapsedInSeconds(0);
-      setIsTimerRunning(false);
-      setSubAlertLevel('none');
-  
-      // Reset history
-      setHistory([newInitialStateForHistory]);
-      setHistoryIndex(0);
-  
-      // Auto-save logic - Should now save the correct initial state
-      const newGameId = `game_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-      const updatedSavedGames = {
-          ...savedGames,
-          [newGameId]: newInitialStateForHistory // Save the correctly constructed state
-      };
-      setSavedGames(updatedSavedGames);
-      localStorage.setItem(SAVED_GAMES_KEY, JSON.stringify(updatedSavedGames));
-
-      setCurrentGameId(newGameId);
-      const currentSettings: AppSettings = { currentGameId: newGameId };
-      localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(currentSettings));
-
-      console.log(`Automatically created save file with correct settings (ID: ${newGameId})`);
-       
-      console.log("Session state reset with new game info.");
-      setIsNewGameSetupModalOpen(false); // Close the setup modal
-      // Dependencies updated to reflect parameters and used state
-    }, [availablePlayers, savedGames, setDrawings, setOpponents, setPlayersOnField, teamName, 
-        // Add all the setters used within the function
-        setAvailablePlayers, setShowPlayerNames, setGameEvents, setOpponentName, setGameDate,
-        setHomeScore, setAwayScore, setGameNotes, setNumberOfPeriods, setPeriodDurationMinutes,
-        setCurrentPeriod, setGameStatus, setSelectedPlayerIds, setSeasonId, setTournamentId,
-        setGameLocation, setGameTime, setSubIntervalMinutes, setCompletedIntervalDurations,
-        setLastSubConfirmationTimeSeconds, setTimeElapsedInSeconds, setIsTimerRunning, 
-        setSubAlertLevel, setHistory, setHistoryIndex, setSavedGames, setCurrentGameId, 
-        setIsNewGameSetupModalOpen, // REMOVED initialState 
-    ]);
   
   // NEW: Handler to cancel the new game setup
   // const handleCancelNewGameSetup = useCallback(() => { // REMOVED this line
