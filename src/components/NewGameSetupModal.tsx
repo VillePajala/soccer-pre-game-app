@@ -398,7 +398,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                 ))}
               </select>
             ) : (
-              <div className="flex space-x-2 items-center">
+              <div className="flex flex-col space-y-2 items-stretch"> 
                 <input 
                   ref={newSeasonInputRef}
                   type="text"
@@ -406,22 +406,24 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                   onChange={(e) => setNewSeasonName(e.target.value)}
                   onKeyDown={handleNewSeasonKeyDown}
                   placeholder={t('newGameSetupModal.newSeasonPlaceholder', 'Enter new season name...') ?? undefined}
-                  className="flex-grow px-3 py-1.5 bg-slate-600 border border-slate-400 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                  className="px-3 py-1.5 bg-slate-600 border border-slate-400 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                 />
-                <button 
-                  onClick={handleAddNewSeason} 
-                  className="px-3 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm whitespace-nowrap"
-                  disabled={!newSeasonName.trim()}
-                >
-                    {t('newGameSetupModal.addButton', 'Add')}
-                </button>
-                <button 
-                    onClick={() => setShowNewSeasonInput(false)} 
-                    className="px-3 py-1.5 bg-slate-600 text-white rounded hover:bg-slate-500 text-sm whitespace-nowrap"
-                    title={t('newGameSetupModal.cancelAddTitle', 'Cancel Add') ?? undefined}
-                 >
-                     {t('newGameSetupModal.cancelButton', 'Cancel')}
-                 </button>
+                <div className="flex justify-end space-x-2"> 
+                    <button 
+                        onClick={handleAddNewSeason} 
+                        className="px-4 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm"
+                        disabled={!newSeasonName.trim()}
+                    >
+                        {t('newGameSetupModal.addButton', 'Add')}
+                    </button>
+                    <button 
+                        onClick={() => setShowNewSeasonInput(false)} 
+                        className="px-4 py-1.5 bg-slate-600 text-white rounded hover:bg-slate-500 text-sm"
+                        title={t('newGameSetupModal.cancelAddTitle', 'Cancel Add') ?? undefined}
+                    >
+                        {t('newGameSetupModal.cancelButton', 'Cancel')}
+                    </button>
+                </div>
               </div>
             )}
           </div>
@@ -461,7 +463,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                   ))}
                   </select>
               ) : (
-                  <div className="flex space-x-2 items-center">
+                  <div className="flex flex-col space-y-2 items-stretch"> 
                       <input 
                           ref={newTournamentInputRef}
                           type="text"
@@ -469,22 +471,24 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                           onChange={(e) => setNewTournamentName(e.target.value)}
                           onKeyDown={handleNewTournamentKeyDown}
                           placeholder={t('newGameSetupModal.newTournamentPlaceholder', 'Enter new tournament name...') ?? undefined}
-                          className="flex-grow px-3 py-1.5 bg-slate-600 border border-slate-400 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                          className="px-3 py-1.5 bg-slate-600 border border-slate-400 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                       />
-                      <button 
-                          onClick={handleAddNewTournament} 
-                          className="px-3 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm whitespace-nowrap"
-                          disabled={!newTournamentName.trim()}
-                      >
-                          {t('newGameSetupModal.addButton', 'Add')}
-                      </button>
-                      <button 
-                          onClick={() => setShowNewTournamentInput(false)} 
-                          className="px-3 py-1.5 bg-slate-600 text-white rounded hover:bg-slate-500 text-sm whitespace-nowrap"
-                          title={t('newGameSetupModal.cancelAddTitle', 'Cancel Add') ?? undefined}
-                      >
-                          {t('newGameSetupModal.cancelButton', 'Cancel')}
-                      </button>
+                      <div className="flex justify-end space-x-2"> 
+                          <button 
+                              onClick={handleAddNewTournament} 
+                              className="px-4 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm"
+                              disabled={!newTournamentName.trim()}
+                          >
+                              {t('newGameSetupModal.addButton', 'Add')}
+                          </button>
+                          <button 
+                              onClick={() => setShowNewTournamentInput(false)} 
+                              className="px-4 py-1.5 bg-slate-600 text-white rounded hover:bg-slate-500 text-sm"
+                              title={t('newGameSetupModal.cancelAddTitle', 'Cancel Add') ?? undefined}
+                          >
+                              {t('newGameSetupModal.cancelButton', 'Cancel')}
+                          </button>
+                      </div>
                   </div>
               )}
           </div>
