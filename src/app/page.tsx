@@ -2516,35 +2516,20 @@ export default function Home() {
 
   // ** REVERT handleCancelNewGameSetup TO ORIGINAL **
   const handleCancelNewGameSetup = useCallback(() => {
-    console.log("New game setup skipped/cancelled. Initializing default game state.");
-
-    // Initialize with default values similar to handleStartNewGameWithSetup
-    const defaultOpponent = ''; // Empty opponent name
-    const defaultDate = new Date().toISOString().split('T')[0]; // Current date
-    const defaultLocation = '';
-    const defaultTime = '';
-    const defaultSeasonId = null;
-    const defaultTournamentId = null;
-    const defaultNumPeriods = 2;
-    const defaultPeriodDuration = 10;
-
-    // Call the main setup function with defaults
-    // This will now generate a new unique ID
-    handleStartNewGameWithSetup(
-        defaultOpponent,
-        defaultDate,
-        defaultLocation,
-        defaultTime,
-        defaultSeasonId,
-        defaultTournamentId,
-        defaultNumPeriods as 1 | 2,
-        defaultPeriodDuration
-    );
+    console.log("New game setup skipped/cancelled.");
+    // REMOVED call to handleStartNewGameWithSetup
+    // // Initialize with default values similar to handleStartNewGameWithSetup
+    // const defaultOpponent = ''; // Empty opponent name
+    // ... (rest of default value setup removed)
+    // // Call the main setup function with defaults
+    // handleStartNewGameWithSetup(
+    //     ...
+    // );
 
     setHasSkippedInitialSetup(true); // Still mark as skipped if needed elsewhere
-    // setIsNewGameSetupModalOpen(false); // No longer needed, handleStartNewGameWithSetup closes it
+    setIsNewGameSetupModalOpen(false); // ADDED: Explicitly close the modal
 
-  }, [handleStartNewGameWithSetup, setHasSkippedInitialSetup]); // Update dependencies
+  }, [setHasSkippedInitialSetup, setIsNewGameSetupModalOpen]); // Updated dependencies
 
   // Render null or a loading indicator until state is loaded
   // Note: Console log added before the check itself
