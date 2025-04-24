@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import PlayerDisk from './PlayerDisk'; // Import the PlayerDisk component
 import { Player } from '@/app/page'; // Import the Player type
-import Image from 'next/image'; // ADDED Import
+// REMOVED unused import
+// import Image from 'next/image'; 
 import { GameEvent } from '@/app/page'; // Import the GameEvent type
 
 // Define props for PlayerBar
