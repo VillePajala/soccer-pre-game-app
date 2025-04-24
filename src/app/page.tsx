@@ -459,7 +459,7 @@ export default function Home() {
     setIsLoaded(true);
     console.log('Initial load complete. isLoaded set to true.');
 
-  // ADD missing dependencies
+  // ADD missing dependencies AGAIN
   }, [setPlayersOnField, setOpponents, setDrawings, setAvailablePlayers]); // Run only once on mount
 
   // *** ADDED: Central useEffect for loading state based on currentGameId ***
