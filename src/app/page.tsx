@@ -1053,6 +1053,8 @@ export default function Home() {
     
     setGameEvents(newGameEvents);
     setHomeScore(newHomeScore); // Update the home score
+    // REMOVED: Force new reference for availablePlayers state as well
+    // setAvailablePlayers(prev => [...prev]); 
     saveStateToHistory({ 
       gameEvents: newGameEvents,
       homeScore: newHomeScore // Include updated score in history
@@ -1077,6 +1079,8 @@ export default function Home() {
 
     setGameEvents(newGameEvents);
     setAwayScore(newAwayScore);
+    // REMOVED: Force new reference for availablePlayers state as well
+    // setAvailablePlayers(prev => [...prev]);
     saveStateToHistory({ 
       gameEvents: newGameEvents, 
       awayScore: newAwayScore 
@@ -1166,7 +1170,7 @@ export default function Home() {
           playersOnField: [],
           opponents: [],
           drawings: [],
-          availablePlayers: availablePlayers, // Keep current roster?
+          availablePlayers: availablePlayers, // <<< CHANGE: Use current state instead of initialState
           teamName: teamName, // Keep current team name
           gameEvents: [],
           opponentName: newOpponentName,
