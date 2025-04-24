@@ -248,191 +248,188 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
 
   // Modify filteredAndSortedPlayerStats useMemo to also return the list of game IDs processed
   const { processedGameIds, playerStats } = useMemo(() => {
-    console.log('[GameStatsModal] Recalculating playerStats. Tab:', activeTab, 'Deps changed:', { activeTab, savedGames: savedGames && Object.keys(savedGames).length, currentGameId, selectedSeasonIdFilter, selectedTournamentIdFilter, filterText, sortColumn, sortDirection, availablePlayers: availablePlayers?.length, selectedPlayerIds: selectedPlayerIds?.length, gameEvents: gameEvents?.length });
-    
-    const playerStatsMap = new Map<string, PlayerStatRow>(); // Use PlayerStatRow type here for clarity
-    const gameIdsProcessed: string[] = [];
+    // Use allGames state which includes the current game's snapshot
+    const allGames = { ...savedGames };
 
-    // --- Handle CURRENT GAME directly using props --- 
-    if (activeTab === 'currentGame') {
-      if (currentGameId) {
-        gameIdsProcessed.push(currentGameId); // Track the current game ID
+    // Determine the list of game IDs to process based on the active tab and filters
+    let filteredGameIds: string[] = [];
+
+    if (activeTab === 'currentGame' && currentGameId) {
+      filteredGameIds = [currentGameId];
+      // Add current game state if not already saved (or if it's the default game)
+      if (!allGames[currentGameId] || currentGameId === '__default_unsaved__') {
+        // Create a snapshot of the current game state
+        const currentGameSnapshot: AppState = {
+          // Collect all props needed for AppState that are passed to the modal
+          playersOnField: [], // Not directly needed for stats, can be empty
+          opponents: [], // Not directly needed for stats, can be empty
+          drawings: [], // Not directly needed for stats, can be empty
+          availablePlayers: availablePlayers, // Current roster
+          showPlayerNames: false, // Not relevant for stats
+          teamName: teamName,
+          gameEvents: localGameEvents, // Use local copy
+          opponentName: opponentName,
+          gameDate: gameDate,
+          homeScore: homeScore,
+          awayScore: awayScore,
+          gameNotes: gameNotes,
+          numberOfPeriods: 2, // Assuming default, not passed
+          periodDurationMinutes: 10, // Assuming default, not passed
+          currentPeriod: 1, // Assuming default, not passed
+          gameStatus: 'notStarted', // Assuming default, not passed
+          selectedPlayerIds: selectedPlayerIds, // Current selection
+          seasonId: seasonId ?? '',
+          tournamentId: tournamentId ?? '',
+          gameLocation: gameLocation ?? '',
+          gameTime: gameTime ?? '',
+          // Add potentially missing timer states with defaults
+          subIntervalMinutes: 5, // Default or fetch if available
+          completedIntervalDurations: [], // Default or fetch if available
+          lastSubConfirmationTimeSeconds: 0 // Default or fetch if available
+        };
+        allGames[currentGameId] = currentGameSnapshot;
       }
-      // Use DIRECT props for current game stats
-      (availablePlayers || []).forEach((player: Player) => {
-        // Filter by selectedPlayerIds for CURRENT game stats
-        if (!selectedPlayerIds.includes(player.id)) {
-          return; // Skip player if not selected for this match
-        }
-
-        // Calculate goals/assists using direct gameEvents prop
-        const goals = (gameEvents || []).filter(e => e.type === 'goal' && e.scorerId === player.id).length;
-        const assists = (gameEvents || []).filter(e => e.type === 'goal' && e.assisterId === player.id).length;
-        const totalScore = goals + assists;
-
-        // Read Fair Play status directly from the player object in the availablePlayers prop
-        const fpAwardCount = player.receivedFairPlayCard ? 1 : 0;
-
-        // Initialize/Update stats in the map
-        let stats = playerStatsMap.get(player.id);
-        if (!stats) {
-          stats = {
-            ...player, // Initialize with player details from availablePlayers prop
-            goals: 0,
-            assists: 0,
-            totalScore: 0,
-            fpAwards: 0,
-            gamesPlayed: 1, // Current game counts as 1 game played
-          };
-        }
-        // Important: These should ADD to existing values, though for current game it starts at 0
-        stats.goals += goals; 
-        stats.assists += assists;
-        stats.totalScore += totalScore;
-        stats.fpAwards = (stats.fpAwards ?? 0) + fpAwardCount;
-        // gamesPlayed is initialized to 1 and doesn't increment further for current game tab
-
-        playerStatsMap.set(player.id, stats);
-      });
-    } 
-    // --- Handle AGGREGATE stats using savedGames prop --- 
-    else {
-      const gamesToProcess: AppState[] = [];
-      let filterFn: (game: AppState) => boolean;
-
-      switch (activeTab) {
-        case 'season':
-          filterFn = (game) => !!game.seasonId && (selectedSeasonIdFilter === 'all' || game.seasonId === selectedSeasonIdFilter);
-          break;
-        case 'tournament':
-          filterFn = (game) => !!game.tournamentId && (selectedTournamentIdFilter === 'all' || game.tournamentId === selectedTournamentIdFilter);
-          break;
-        case 'overall':
-        default: // Fallback to overall
-          // HACK: Make linter think _game is used in this specific lambda
-          filterFn = (_game) => { if (false) console.log(_game); return true; }; 
-          break;
-      }
-
-      // Populate gamesToProcess based on the filter
-      Object.entries(savedGames).forEach(([id, savedGame]) => {
-        // Exclude the default unsaved state and apply the filter
-        if (id !== '__default_unsaved__' && filterFn(savedGame)) { 
-          gamesToProcess.push(savedGame);
-          gameIdsProcessed.push(id);
-        }
-      });
-
-      // Aggregate stats from the selected games
-      gamesToProcess.forEach((_game, index: number) => {
-        // HACK: Make the linter think _game is used to pass the build
-        if (false) console.log(_game);
-
-        // Determine the actual data source for this game
-        const gameId = gameIdsProcessed[index]; // Get the ID corresponding to the gameRef
-        let gamePlayers: Player[];
-        let gameEventsToUse: GameEvent[];
-        const useCurrentProps = gameId === currentGameId;
-
-        if (useCurrentProps) {
-          // Use live props for the current game
-          console.log(`[Stats Aggregation] Using LIVE props for current game: ${gameId}`);
-          gamePlayers = availablePlayers || []; // Use prop directly
-          gameEventsToUse = gameEvents || []; // Use prop directly
-        } else {
-          // Use data from savedGames for other games
-          // console.log(`[Stats Aggregation] Using savedGames data for game: ${gameId}`);
-          const savedGameData = savedGames[gameId];
-          if (!savedGameData) {
-            console.warn(`[Stats Aggregation] Saved game data not found for ID: ${gameId}. Skipping.`);
-            return; // Skip if data unexpectedly missing
-          }
-          gamePlayers = savedGameData.availablePlayers || [];
-          gameEventsToUse = savedGameData.gameEvents || [];
-        }
-
-        // --- Proceed with calculations using gamePlayers and gameEventsToUse ---
-        gamePlayers.forEach((player: Player) => {
-          // For aggregate stats, we consider all players in the game's roster
-          const goals = gameEventsToUse.filter(e => e.type === 'goal' && e.scorerId === player.id).length;
-          const assists = gameEventsToUse.filter(e => e.type === 'goal' && e.assisterId === player.id).length;
-          const totalScore = goals + assists;
-          // Use the correct source for fair play status
-          const playerFpStatus = useCurrentProps 
-              ? (availablePlayers.find(p => p.id === player.id)?.receivedFairPlayCard ?? false) // Check live prop
-              : (player.receivedFairPlayCard ?? false); // Check player object from saved game data
-          const fpAwardCount = playerFpStatus ? 1 : 0; 
-
-          let stats = playerStatsMap.get(player.id);
-          if (!stats) {
-            stats = {
-              ...player,
-            goals: 0, 
-            assists: 0, 
-              totalScore: 0,
-              fpAwards: 0,
-              gamesPlayed: 0,
-            };
-          }
-
-          stats.goals += goals;
-          stats.assists += assists;
-          stats.totalScore += totalScore;
-          stats.fpAwards = (stats.fpAwards ?? 0) + fpAwardCount;
-          stats.gamesPlayed += 1; // Increment games played for each game processed
-
-          playerStatsMap.set(player.id, stats);
-        });
-      });
+    } else if (activeTab === 'season' && selectedSeasonIdFilter !== 'all') {
+      filteredGameIds = Object.keys(allGames).filter(id => allGames[id]?.seasonId === selectedSeasonIdFilter);
+    } else if (activeTab === 'tournament' && selectedTournamentIdFilter !== 'all') {
+      filteredGameIds = Object.keys(allGames).filter(id => allGames[id]?.tournamentId === selectedTournamentIdFilter);
+    } else if (activeTab === 'overall') {
+      filteredGameIds = Object.keys(allGames).filter(id => id !== '__default_unsaved__'); // Exclude the default placeholder
     }
 
-    // --- Convert map to array, filter, and sort (applies to both current and aggregate) ---
-    const allPlayerStats: PlayerStatRow[] = Array.from(playerStatsMap.values()); // No need to map again if map stores PlayerStatRow
+    // Deduplicate game IDs (important if currentGameId is also in savedGames)
+    filteredGameIds = [...new Set(filteredGameIds)];
 
-    // Apply text filtering
-    const filteredStats = filterText
-      ? allPlayerStats.filter(player => 
-          (player.name?.toLowerCase() || '').includes(filterText.toLowerCase()) ||
-          (player.nickname?.toLowerCase() || '').includes(filterText.toLowerCase()) ||
-          (player.jerseyNumber?.toString() || '').includes(filterText.toLowerCase())
-        )
-      : allPlayerStats;
-
-    // Apply sorting
-    const sortedStats = [...filteredStats].sort((a, b) => {
-      const sortCol = sortColumn as keyof PlayerStatRow;
-      const valA = a[sortCol];
-      const valB = b[sortCol];
-      let comparison = 0;
-
-      if (sortCol === 'name') {
-          comparison = String(valA ?? '').localeCompare(String(valB ?? ''));
-      } else if (typeof valA === 'number' && typeof valB === 'number') {
-          comparison = valA - valB;
-      } else if (typeof valA === 'boolean' && typeof valB === 'boolean') {
-          comparison = (valA === valB) ? 0 : (valA ? -1 : 1); // Handle boolean sort if needed
-                } else {
-          // Fallback comparison for potentially mixed types or undefined numbers
-          comparison = (valA ?? -Infinity) > (valB ?? -Infinity) ? 1 : -1;
-      }
-      
-      return sortDirection === 'desc' ? comparison * -1 : comparison;
+    // --- Player Aggregation Logic ---
+    // 1. Get the definitive list of *all* players across all saved games AND the current roster
+    const allPlayerIds = new Set<string>();
+    availablePlayers.forEach(p => allPlayerIds.add(p.id)); // Start with current roster
+    Object.values(allGames).forEach(game => {
+        game?.availablePlayers?.forEach(p => allPlayerIds.add(p.id));
     });
 
-    // Return both the processed IDs and the sorted stats
-    return { processedGameIds: gameIdsProcessed, playerStats: sortedStats };
+    // 2. Create a map to store the latest known player data (name, jersey, etc.)
+    const playerInfoMap = new Map<string, Player>();
+    // Prioritize current roster info
+    availablePlayers.forEach(p => playerInfoMap.set(p.id, p));
+    // Fill in missing info from saved games (older data)
+    Object.values(allGames).forEach(game => {
+        game?.availablePlayers?.forEach(p => {
+            if (!playerInfoMap.has(p.id)) {
+                playerInfoMap.set(p.id, p);
+            }
+        });
+    });
+
+    // 3. Calculate stats for each player across the filtered games
+    const calculatedStats: PlayerStatRow[] = Array.from(allPlayerIds).map(playerId => {
+      const player = playerInfoMap.get(playerId)!; // Get latest player info
+      let gamesPlayed = 0;
+      let goals = 0;
+      let assists = 0;
+      let fpAwards = 0;
+
+      filteredGameIds.forEach(gameId => {
+        const game = allGames[gameId];
+        // Skip if game data is missing or if player list/selection list is missing for that game
+        if (!game || !game.availablePlayers || !game.selectedPlayerIds) return;
+
+        // *** THE FIX: Check if player was SELECTED for this game ***
+        const playerWasSelected = game.selectedPlayerIds.includes(player.id);
+
+        if (playerWasSelected) {
+          gamesPlayed++; // Increment GP only if player was selected for this game
+
+          // Calculate goals/assists
+          game.gameEvents?.forEach(event => {
+            if (event.type === 'goal') {
+              if (event.scorerId === player.id) goals++;
+              if (event.assisterId === player.id) assists++;
+            }
+          });
+
+          // Check for fair play award - Needs the player object *from that specific game's roster*
+          const playerInThisGameRoster = game.availablePlayers.find(p => p.id === player.id);
+          if (playerInThisGameRoster?.receivedFairPlayCard) {
+            fpAwards++;
+          }
+        }
+      });
+
+      return {
+        ...player, // Spread the latest player info
+        goals,
+        assists,
+        totalScore: goals + assists,
+        fpAwards: fpAwards,
+        gamesPlayed,
+      };
+    });
+
+    // --- Filtering and Sorting ---
+    let finalStats = calculatedStats;
+    // Apply text filter (if any)
+    if (filterText) {
+      const lowerFilter = filterText.toLowerCase();
+      finalStats = finalStats.filter(p =>
+        p.name.toLowerCase().includes(lowerFilter) ||
+        (p.nickname && p.nickname.toLowerCase().includes(lowerFilter)) ||
+        (p.jerseyNumber && p.jerseyNumber.includes(lowerFilter))
+      );
+    }
+
+    // Apply sorting
+    finalStats.sort((a, b) => {
+      let compareA = a[sortColumn];
+      let compareB = b[sortColumn];
+
+      // Handle specific types
+      if (sortColumn === 'name') {
+        compareA = a.nickname || a.name; // Sort by nickname if available
+        compareB = b.nickname || b.name;
+      } else if (sortColumn === 'fpAwards') {
+          compareA = a.fpAwards ?? 0;
+          compareB = b.fpAwards ?? 0;
+      } else {
+        // For other numeric columns (goals, assists, totalScore, gamesPlayed)
+        // Ensure we compare numbers, defaulting undefined/null to 0 for sorting
+        compareA = (typeof compareA === 'number' ? compareA : 0);
+        compareB = (typeof compareB === 'number' ? compareB : 0);
+      }
+
+      // Perform comparison
+      let comparison = 0;
+      if (typeof compareA === 'string' && typeof compareB === 'string') {
+         // Case-insensitive string sort for name
+         comparison = compareA.localeCompare(compareB);
+      } else if (typeof compareA === 'number' && typeof compareB === 'number') {
+         // Standard number sort
+         comparison = compareA - compareB;
+      } 
+      // Add a fallback comparison if types somehow still mismatch after normalization
+      // This shouldn't be strictly necessary with the normalization above but adds safety
+      else {
+         comparison = String(compareA).localeCompare(String(compareB));
+      }
+
+      return sortDirection === 'asc' ? comparison : comparison * -1;
+    });
+
+    return { processedGameIds: filteredGameIds, playerStats: finalStats };
   }, [
+    // Dependencies
     activeTab, 
+    currentGameId,
     savedGames, 
-    currentGameId, 
     selectedSeasonIdFilter, 
     selectedTournamentIdFilter, 
-    filterText, 
+    availablePlayers,
+    localGameEvents, // Use local events for current game snapshot
+    teamName, opponentName, gameDate, homeScore, awayScore, gameNotes, // For snapshot
+    selectedPlayerIds, seasonId, tournamentId, gameLocation, gameTime, // For snapshot
     sortColumn, 
     sortDirection,
-    availablePlayers,
-    selectedPlayerIds, 
-    gameEvents,
+    filterText
   ]);
 
   // Use localGameEvents for display

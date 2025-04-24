@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import SoccerField from '@/components/SoccerField';
 import PlayerBar from '@/components/PlayerBar';
 import ControlBar from '@/components/ControlBar';
@@ -297,6 +297,15 @@ export default function Home() {
   const [isStartingNewGameAfterSave, setIsStartingNewGameAfterSave] = useState<boolean>(false); // <<< RE-ADD THIS LINE
   // ADD state for the new Game Settings modal
   const [isGameSettingsModalOpen, setIsGameSettingsModalOpen] = useState<boolean>(false);
+
+  // --- Derived State for Filtered Players ---
+  const playersForCurrentGame = useMemo(() => {
+    // Ensure both lists are ready before filtering
+    if (!availablePlayers || !selectedPlayerIds) {
+        return [];
+    }
+    return availablePlayers.filter(p => selectedPlayerIds.includes(p.id));
+  }, [availablePlayers, selectedPlayerIds]);
 
   // --- Handlers (Remaining in Home component or to be moved) ---
   // REMOVED: handlePlayerDrop (now comes from useGameState hook)
@@ -2500,7 +2509,7 @@ export default function Home() {
       <div className="flex flex-col h-full">
       {/* Top Player Bar - Filter players based on selection */}
       <PlayerBar
-        players={availablePlayers} // Pass the current list
+        players={playersForCurrentGame} // Pass the filtered list
         teamName={teamName}
         onTeamNameChange={handleTeamNameChange}
         // CORRECT prop name back to onPlayerDragStartFromBar
