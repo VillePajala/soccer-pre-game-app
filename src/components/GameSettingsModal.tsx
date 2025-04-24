@@ -43,6 +43,18 @@ interface GameSettingsModalProps {
   // ADD new handlers for Season/Tournament
   onSeasonIdChange: (seasonId: string | null) => void;
   onTournamentIdChange: (tournamentId: string | null) => void;
+  savedGames: Record<string, {
+    opponentName: string;
+    gameDate: string;
+    gameLocation?: string;
+    gameTime?: string;
+    gameNotes?: string;
+    numberOfPeriods: number;
+    periodDurationMinutes: number;
+    seasonId?: string | null;
+    tournamentId?: string | null;
+    gameEvents?: GameEvent[];
+  }>;
 }
 
 // Helper to format time from seconds to MM:SS (moved from GameStatsModal)
@@ -84,6 +96,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   onPeriodDurationChange,
   onSeasonIdChange,
   onTournamentIdChange,
+  savedGames,
 }) => {
   const { t } = useTranslation();
 
@@ -156,43 +169,79 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
 
   // Initialize local state when modal opens or relevant props change
   useEffect(() => {
-    if (isOpen) {
-      // Reset main local states
-      setLocalOpponentName(opponentName);
-      setLocalGameDate(gameDate);
-      setLocalGameLocation(gameLocation || '');
-      setLocalGameTime(gameTime || '');
-      setLocalGameNotes(gameNotes);
-      setLocalGameEvents(gameEvents);
-      // ADD Reset for periods/duration
-      setLocalNumPeriods(numPeriods);
-      setLocalPeriodDurationMinutes(periodDurationMinutes);
-      // Initialize local Season/Tournament ID from props
-      setLocalSeasonId(seasonId || null);
-      setLocalTournamentId(tournamentId || null);
-      
-      // Determine initial association type based on props
-      if (seasonId) {
-        setAssociationType('season');
-      } else if (tournamentId) {
-        setAssociationType('tournament');
-      } else {
-        setAssociationType('none');
-      }
+    console.log('[GameSettingsModal Effect Triggered]', { 
+      isOpen, 
+      currentGameId, 
+      savedGamesExists: !!savedGames, 
+      entryExists: !!(savedGames && currentGameId && savedGames[currentGameId]) 
+    });
 
-      // Parse gameTime into HH and MM
-      if (gameTime && gameTime.includes(':')) {
-        const [hours, minutes] = gameTime.split(':');
-        setLocalHour(hours);
-        setLocalMinute(minutes);
+    if (isOpen && currentGameId) {
+      const gameDataFromSaved = savedGames ? savedGames[currentGameId] : undefined;
+
+      if (gameDataFromSaved) {
+        // PRIMARY PATH: Data found in savedGames prop - use it directly
+        console.log('[GameSettingsModal Effect] Syncing local state using savedGames data for ID:', currentGameId);
+        setLocalOpponentName(gameDataFromSaved.opponentName || '');
+        setLocalGameDate(gameDataFromSaved.gameDate || new Date().toISOString().split('T')[0]);
+        setLocalGameLocation(gameDataFromSaved.gameLocation || '');
+        setLocalGameTime(gameDataFromSaved.gameTime || '');
+        setLocalGameNotes(gameDataFromSaved.gameNotes || '');
+        setLocalGameEvents(gameDataFromSaved.gameEvents || []);
+        setLocalNumPeriods(gameDataFromSaved.numberOfPeriods || 2);
+        setLocalPeriodDurationMinutes(gameDataFromSaved.periodDurationMinutes || 10);
+        setLocalSeasonId(gameDataFromSaved.seasonId || null);
+        setLocalTournamentId(gameDataFromSaved.tournamentId || null);
+
+        // Determine association type based on fetched state
+        if (gameDataFromSaved.seasonId) setAssociationType('season');
+        else if (gameDataFromSaved.tournamentId) setAssociationType('tournament');
+        else setAssociationType('none');
+        
+        // Parse gameTime from fetched state
+        const fetchedTime = gameDataFromSaved.gameTime || '';
+        if (fetchedTime && fetchedTime.includes(':')) { const [h, m] = fetchedTime.split(':'); setLocalHour(h); setLocalMinute(m); } 
+        else { setLocalHour(''); setLocalMinute(''); }
+
       } else {
-        setLocalHour('');
-        setLocalMinute('');
+        // FALLBACK PATH: Data NOT found in savedGames (likely first render after new game creation)
+        // Use the direct props passed from page.tsx as they should reflect the set state calls.
+        console.warn(`[GameSettingsModal Effect] Game state for ID ${currentGameId} not found in savedGames. Using direct props as fallback.`);
+        setLocalOpponentName(opponentName);
+        setLocalGameDate(gameDate);
+        setLocalGameLocation(gameLocation || '');
+        setLocalGameTime(gameTime || '');
+        setLocalGameNotes(gameNotes);
+        setLocalGameEvents(gameEvents); 
+        setLocalNumPeriods(numPeriods); // Use direct prop
+        setLocalPeriodDurationMinutes(periodDurationMinutes); // Use direct prop
+        setLocalSeasonId(seasonId || null);
+        setLocalTournamentId(tournamentId || null);
+
+        // Determine association type based on direct props
+        if (seasonId) setAssociationType('season');
+        else if (tournamentId) setAssociationType('tournament');
+        else setAssociationType('none');
+
+        // Parse gameTime from direct prop
+        if (gameTime && gameTime.includes(':')) { const [h, m] = gameTime.split(':'); setLocalHour(h); setLocalMinute(m); } 
+        else { setLocalHour(''); setLocalMinute(''); }
       }
-      // Reset editing states
+      
+      // Always reset inline editing state when context might have changed
+      setInlineEditingField(null);
+      setInlineEditValue('');
       setEditingGoalId(null); 
-    } 
-  }, [isOpen, opponentName, gameDate, gameLocation, gameTime, gameNotes, gameEvents, numPeriods, periodDurationMinutes, seasonId, tournamentId]); // Add seasonId, tournamentId to dependencies
+
+    } else if (isOpen) {
+      console.log('[GameSettingsModal Effect] Skipping sync: Modal open, but no currentGameId.');
+    }
+
+  }, [isOpen, currentGameId, savedGames, 
+      // Include direct props as dependencies for the fallback logic
+      opponentName, gameDate, gameLocation, gameTime, gameNotes, gameEvents, 
+      numPeriods, periodDurationMinutes, seasonId, tournamentId
+     ]); // Dependencies include core props and direct props for fallback
 
   // Focus goal time input (if event editor becomes active)
   useEffect(() => {
@@ -464,35 +513,40 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
 
   const handleSaveChanges = () => {
     console.log("Saving changes from GameSettingsModal");
-    onOpponentNameChange(localOpponentName);
-    onGameDateChange(localGameDate);
-    onGameLocationChange(localGameLocation);
-    
-    // Combine localHour and localMinute into gameTime string
+    // Save explicitly edited fields
+    if (localOpponentName !== opponentName) onOpponentNameChange(localOpponentName);
+    if (localGameDate !== gameDate) onGameDateChange(localGameDate);
+    if (localGameLocation !== (gameLocation || '')) onGameLocationChange(localGameLocation);
+    if (localGameNotes !== (gameNotes || '')) onGameNotesChange(localGameNotes);
+
+    // Combine localHour and localMinute into gameTime string for comparison/saving
     const hour = parseInt(localHour, 10);
     const minute = parseInt(localMinute, 10);
     let combinedTime = '';
-
     if (localHour === '' && localMinute === '') {
-      combinedTime = ''; // Both empty is valid (no time set)
+      combinedTime = ''; 
     } else if (!isNaN(hour) && !isNaN(minute) && hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
       combinedTime = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
     } else {
-      // Invalid time - maybe alert user or prevent save? For now, don't update.
-      // alert(t('newGameSetupModal.invalidTimeAlert', 'Please enter a valid time (HH 0-23, MM 0-59) or leave both fields empty.'));
-      console.warn("Invalid time entered, not saving time change.", { localHour, localMinute });
-      // Optionally reset local state or keep invalid input?
-      // FIX: Default to empty string if invalid, not original prop value
-      combinedTime = ''; // Revert to empty string if invalid
+      // If time is invalid upon closing, maybe revert to original or keep empty?
+      // Let's revert to the original gameTime prop for safety on close.
+      console.warn("Invalid time entered, reverting time change on close.", { localHour, localMinute });
+      combinedTime = gameTime || ''; // Revert to original prop value
     }
-    onGameTimeChange(combinedTime);
+    // Only call the update handler if the valid combined time is different from the original prop
+    if (combinedTime !== (gameTime || '')) {
+      onGameTimeChange(combinedTime);
+    }
 
-    onGameNotesChange(localGameNotes);
-    onNumPeriodsChange(localNumPeriods);
-    onPeriodDurationChange(localPeriodDurationMinutes);
-    onSeasonIdChange(localSeasonId);
-    onTournamentIdChange(localTournamentId);
-    onClose();
+    // Save Season/Tournament links if they changed
+    if (localSeasonId !== (seasonId || null)) onSeasonIdChange(localSeasonId);
+    if (localTournamentId !== (tournamentId || null)) onTournamentIdChange(localTournamentId);
+
+    // REMOVED: Do not call period/duration handlers on general save/close
+    // onNumPeriodsChange(localNumPeriods);
+    // onPeriodDurationChange(localPeriodDurationMinutes);
+    
+    onClose(); // Close the modal
   };
 
   if (!isOpen) return null;

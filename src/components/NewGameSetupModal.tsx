@@ -256,32 +256,18 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
         return;
     }
 
-    // If user typed a name but didn't click Add, maybe add it automatically?
-    // For now, we assume they clicked Add or selected existing.
-    // We rely on selectedSeasonId/selectedTournamentId being set correctly by the handlers.
+    const finalGameTime = (gameHour && gameMinute) ? `${gameHour.padStart(2, '0')}:${gameMinute.padStart(2, '0')}` : '';
 
-    const hour = parseInt(gameHour, 10);
-    const minute = parseInt(gameMinute, 10);
-    let combinedTime = '';
-
-    if (gameHour === '' && gameMinute === '') {
-      combinedTime = '';
-    } else if (!isNaN(hour) && !isNaN(minute) && hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
-      combinedTime = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-    } else {
-      alert(t('newGameSetupModal.invalidTimeAlert', 'Please enter a valid time (Hour 0-23, Minute 0-59) or leave both fields empty.'));
-      return;
-    }
-
+    // Call the onStart prop with ALL collected data
     onStart(
-        trimmedOpponentName, 
-        gameDate, 
-        gameLocation.trim(), 
-        combinedTime,
-        selectedSeasonId, 
-        selectedTournamentId,
-        localNumPeriods,
-        localPeriodDurationMinutes
+      trimmedOpponentName,
+      gameDate,
+      gameLocation.trim(),
+      finalGameTime,
+      selectedSeasonId,
+      selectedTournamentId,
+      localNumPeriods, // Pass the selected number of periods
+      localPeriodDurationMinutes // Pass the selected period duration
     );
   };
 

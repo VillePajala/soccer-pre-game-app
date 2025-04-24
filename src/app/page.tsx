@@ -461,6 +461,89 @@ export default function Home() {
 
   }, [setPlayersOnField, setOpponents, setDrawings, setAvailablePlayers]); // Run only once on mount - REMOVED initialState, ADDED missing setters
 
+  // *** ADDED: Central useEffect for loading state based on currentGameId ***
+  useEffect(() => {
+    console.log('[Loading Effect] Running due to change in currentGameId or savedGames.', { currentGameId });
+    
+    // Determine the state to load
+    let stateToLoad: AppState | null = null;
+    if (currentGameId && currentGameId !== DEFAULT_GAME_ID && savedGames[currentGameId]) {
+      console.log(`[Loading Effect] Found state for game ID: ${currentGameId} in savedGames.`);
+      stateToLoad = savedGames[currentGameId];
+    } else if (currentGameId === DEFAULT_GAME_ID) {
+      console.log('[Loading Effect] currentGameId is DEFAULT_GAME_ID, using initial state.');
+      stateToLoad = initialState;
+    } else {
+      console.warn(`[Loading Effect] No valid state found for currentGameId: ${currentGameId}. Falling back to initial state.`);
+      stateToLoad = initialState;
+      // Optional: Reset currentGameId if state was missing for a specific ID?
+      // setCurrentGameId(DEFAULT_GAME_ID); 
+    }
+
+    // Apply the loaded state using individual state setters
+    if (stateToLoad) {
+      console.log('[Loading Effect] Applying loaded state:', stateToLoad);
+      setPlayersOnField(stateToLoad.playersOnField || []);
+      setOpponents(stateToLoad.opponents || []);
+      setDrawings(stateToLoad.drawings || []);
+      setAvailablePlayers(stateToLoad.availablePlayers || []);
+      setShowPlayerNames(stateToLoad.showPlayerNames ?? true);
+      setTeamName(stateToLoad.teamName || initialState.teamName);
+      setGameEvents(stateToLoad.gameEvents || []);
+      setOpponentName(stateToLoad.opponentName || initialState.opponentName);
+      setGameDate(stateToLoad.gameDate || initialState.gameDate);
+      setHomeScore(stateToLoad.homeScore || 0);
+      setAwayScore(stateToLoad.awayScore || 0);
+      setGameNotes(stateToLoad.gameNotes || '');
+      setNumberOfPeriods(stateToLoad.numberOfPeriods || initialState.numberOfPeriods);
+      setPeriodDurationMinutes(stateToLoad.periodDurationMinutes || initialState.periodDurationMinutes);
+      setCurrentPeriod(stateToLoad.currentPeriod || initialState.currentPeriod);
+      setGameStatus(stateToLoad.gameStatus || initialState.gameStatus);
+      setSelectedPlayerIds(stateToLoad.selectedPlayerIds || initialState.selectedPlayerIds || []);
+      setSeasonId(stateToLoad.seasonId ?? '');
+      setTournamentId(stateToLoad.tournamentId ?? '');
+      setGameLocation(stateToLoad.gameLocation || '');
+      setGameTime(stateToLoad.gameTime || '');
+      setSubIntervalMinutes(stateToLoad.subIntervalMinutes ?? initialState.subIntervalMinutes ?? 5);
+      setCompletedIntervalDurations(stateToLoad.completedIntervalDurations ?? initialState.completedIntervalDurations ?? []);
+      setLastSubConfirmationTimeSeconds(stateToLoad.lastSubConfirmationTimeSeconds ?? initialState.lastSubConfirmationTimeSeconds ?? 0);
+
+      // Reset session-specific state based on loaded game status
+      // Always reset timer state when loading any game state
+      setTimeElapsedInSeconds(0); // Reset timer to 0 on load
+      setIsTimerRunning(false); // Ensure timer is paused on load
+      
+      // Recalculate next sub time based on loaded state
+      const lastSubTime = stateToLoad.lastSubConfirmationTimeSeconds ?? 0;
+      const intervalMins = stateToLoad.subIntervalMinutes ?? 5;
+      const intervalSecs = intervalMins * 60;
+
+      // If loading a started game, set next sub time relative to the last sub time.
+      // If loading a notStarted game, set next sub time relative to 0.
+      let nextDue = intervalSecs; // Default for notStarted
+      if (stateToLoad.gameStatus !== 'notStarted' && lastSubTime > 0) {
+          // Calculate based on last sub time
+          nextDue = Math.ceil((lastSubTime + 1) / intervalSecs) * intervalSecs;
+          if (nextDue <= lastSubTime) { // Ensure next due is in the future relative to last sub
+              nextDue += intervalSecs;
+          } 
+      } else if (stateToLoad.gameStatus !== 'notStarted' && lastSubTime === 0) {
+          // Game started, but no subs made yet, next due is simply the interval
+          nextDue = intervalSecs;
+      }
+      // If status is notStarted, nextDue remains intervalSecs from the default above
+
+      setNextSubDueTimeSeconds(nextDue);
+      setSubAlertLevel('none'); // Reset alert on load
+
+      // Reset history to start with the loaded state
+      setHistory([stateToLoad]);
+      setHistoryIndex(0);
+      console.log('[Loading Effect] State applied successfully.');
+    }
+
+  }, [currentGameId, savedGames]); // Dependencies: Run when ID or saved data changes
+
   // --- Save state to localStorage ---
   useEffect(() => {
     // Only auto-save if loaded AND we have a proper game ID (not the default unsaved one)
@@ -481,8 +564,8 @@ export default function Home() {
           homeScore,
           awayScore,
           gameNotes,
-          numberOfPeriods,
-          periodDurationMinutes,
+          numberOfPeriods, // Read current state
+          periodDurationMinutes, // Read current state
           currentPeriod,
           gameStatus,
           selectedPlayerIds,
@@ -524,11 +607,12 @@ export default function Home() {
     } else if (isLoaded && currentGameId === DEFAULT_GAME_ID) {
       console.log("Not auto-saving as this is an unsaved game (no ID assigned yet)");
     }
-    // Dependencies: Only include state that defines the current game, plus isLoaded and currentGameId
+    // Dependencies: REMOVE numberOfPeriods, periodDurationMinutes
   }, [isLoaded, currentGameId,
       playersOnField, opponents, drawings, availablePlayers, showPlayerNames, teamName,
       gameEvents, opponentName, gameDate, homeScore, awayScore, gameNotes,
-      numberOfPeriods, periodDurationMinutes, currentPeriod, gameStatus,
+      // REMOVED: numberOfPeriods, periodDurationMinutes
+      currentPeriod, gameStatus,
       selectedPlayerIds, // Add as dependency for saving
       seasonId, // Add season ID to dependencies
       tournamentId, // Add tournament ID to dependencies
@@ -1075,39 +1159,37 @@ export default function Home() {
   // NEW: Handler to actually reset state and set opponent/date/type from modal
   // Update signature to accept seasonId/tournamentId from the modal
     // Update signature to accept seasonId/tournamentId from the modal
-    const handleFinalizeNewGame = useCallback((newOpponentName: string, newGameDate: string, newGameLocation: string, newGameTime: string, selectedSeasonId: string | null, selectedTournamentId: string | null) => {
-      console.log(`Finalizing new game start. Opponent: ${newOpponentName}, Date: ${newGameDate}, SeasonID: ${selectedSeasonId}, TournamentID: ${selectedTournamentId}, Location: ${newGameLocation}, Time: ${newGameTime}`);
+    const handleFinalizeNewGame = useCallback((newOpponentName: string, newGameDate: string, newGameLocation: string, newGameTime: string, selectedSeasonId: string | null, selectedTournamentId: string | null, numPeriods: 1 | 2, periodDuration: number) => {
+      console.log(`Finalizing new game start. Opponent: ${newOpponentName}, Date: ${newGameDate}, SeasonID: ${selectedSeasonId}, TournamentID: ${selectedTournamentId}, Location: ${newGameLocation}, Time: ${newGameTime}, Periods: ${numPeriods}, Duration: ${periodDuration}`); // Added Periods/Duration to log
   
       const newInitialStateForHistory: AppState = {
-        ...initialState,
-        playersOnField: [],
-        opponents: [],
-        drawings: [],
-        availablePlayers: availablePlayers,
-        teamName: teamName,
-        gameEvents: [],
-        opponentName: newOpponentName,
-        gameDate: newGameDate,
-        homeScore: 0,
-        awayScore: 0,
-        gameNotes: '',
-        numberOfPeriods: initialState.numberOfPeriods,
-        periodDurationMinutes: initialState.periodDurationMinutes,
-        currentPeriod: 1,
-        gameStatus: 'notStarted',
-        selectedPlayerIds: availablePlayers.map(p => p.id),
-        // Use the IDs passed from the modal
-        seasonId: selectedSeasonId ?? '',
-        tournamentId: selectedTournamentId ?? '',
-        gameLocation: newGameLocation,
-        gameTime: newGameTime,
-        // Ensure defaults are applied when creating new game state
-        subIntervalMinutes: initialState.subIntervalMinutes ?? 5,
-        completedIntervalDurations: [], // Always start with empty for a new game
-        lastSubConfirmationTimeSeconds: 0, // Always start with 0 for a new game
+          playersOnField: [],
+          opponents: [],
+          drawings: [],
+          availablePlayers: availablePlayers, // Keep current roster?
+          teamName: teamName, // Keep current team name
+          gameEvents: [],
+          opponentName: newOpponentName,
+          gameDate: newGameDate,
+          homeScore: 0,
+          awayScore: 0,
+          gameNotes: '',
+          numberOfPeriods: numPeriods, // USE PARAMETER
+          periodDurationMinutes: periodDuration, // USE PARAMETER
+          currentPeriod: 1,
+          gameStatus: 'notStarted',
+          selectedPlayerIds: availablePlayers.map(p => p.id), // Default select all
+          seasonId: selectedSeasonId ?? '',
+          tournamentId: selectedTournamentId ?? '',
+          gameLocation: newGameLocation,
+          gameTime: newGameTime,
+          showPlayerNames: true, // Default
+          subIntervalMinutes: initialState.subIntervalMinutes ?? 5, // Default sub interval
+          completedIntervalDurations: [], // Always start with empty
+          lastSubConfirmationTimeSeconds: 0, // Always start with 0
       };
   
-      // Update component state directly from this new initial state, ensuring defaults
+      // Update component state directly from this new initial state
       setPlayersOnField(newInitialStateForHistory.playersOnField);
       setOpponents(newInitialStateForHistory.opponents);
       setDrawings(newInitialStateForHistory.drawings);
@@ -1119,21 +1201,21 @@ export default function Home() {
       setHomeScore(newInitialStateForHistory.homeScore);
       setAwayScore(newInitialStateForHistory.awayScore);
       setGameNotes(newInitialStateForHistory.gameNotes);
-      setNumberOfPeriods(newInitialStateForHistory.numberOfPeriods);
-      setPeriodDurationMinutes(newInitialStateForHistory.periodDurationMinutes);
+      setNumberOfPeriods(newInitialStateForHistory.numberOfPeriods); // Uses value from new state
+      setPeriodDurationMinutes(newInitialStateForHistory.periodDurationMinutes); // Uses value from new state
       setCurrentPeriod(newInitialStateForHistory.currentPeriod);
       setGameStatus(newInitialStateForHistory.gameStatus);
       setSelectedPlayerIds(newInitialStateForHistory.selectedPlayerIds);
       setSeasonId(newInitialStateForHistory.seasonId);
       setTournamentId(newInitialStateForHistory.tournamentId);
-      // Use ?? '' for potentially undefined string values from initialState
       setGameLocation(newInitialStateForHistory.gameLocation ?? '');
       setGameTime(newInitialStateForHistory.gameTime ?? '');
-      // Ensure sub-timer state is also reset using the guaranteed defaults
       setSubIntervalMinutes(newInitialStateForHistory.subIntervalMinutes ?? 5);
       setCompletedIntervalDurations(newInitialStateForHistory.completedIntervalDurations ?? []);
       setLastSubConfirmationTimeSeconds(newInitialStateForHistory.lastSubConfirmationTimeSeconds ?? 0);
-  
+      // Ensure roster is set correctly (if availablePlayers changed)
+      setAvailablePlayers(newInitialStateForHistory.availablePlayers); 
+
       // Reset session timer state
       setTimeElapsedInSeconds(0);
       setIsTimerRunning(false);
@@ -1143,38 +1225,34 @@ export default function Home() {
       setHistory([newInitialStateForHistory]);
       setHistoryIndex(0);
   
-      // Auto-save logic
-      if (newOpponentName.trim()) {
-        const newGameId = `game_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-        const formattedTeam = teamName.replace(/\s+/g, '_');
-        const formattedOpponent = newOpponentName.trim().replace(/\s+/g, '_');
-        const defaultName = `${formattedTeam}_vs_${formattedOpponent}_${newGameDate || new Date().toISOString().split('T')[0]}`;
-  
-        const currentSnapshot: AppState = {
-          ...newInitialStateForHistory
-        };
-  
-        const updatedSavedGames = {
+      // Auto-save logic - Should now save the correct initial state
+      const newGameId = `game_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      const updatedSavedGames = {
           ...savedGames,
-          [newGameId]: currentSnapshot
-        };
-        setSavedGames(updatedSavedGames);
-        localStorage.setItem(SAVED_GAMES_KEY, JSON.stringify(updatedSavedGames));
-  
-        setCurrentGameId(newGameId);
-        const currentSettings: AppSettings = { currentGameId: newGameId };
-        localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(currentSettings));
-  
-        console.log(`Automatically created save file: ${defaultName} (ID: ${newGameId})`);
-      } else {
-        setCurrentGameId(DEFAULT_GAME_ID);
-        console.log("Setup skipped or incomplete - no auto-save created. User will need to save manually.");
-      }
-  
+          [newGameId]: newInitialStateForHistory // Save the correctly constructed state
+      };
+      setSavedGames(updatedSavedGames);
+      localStorage.setItem(SAVED_GAMES_KEY, JSON.stringify(updatedSavedGames));
+
+      setCurrentGameId(newGameId);
+      const currentSettings: AppSettings = { currentGameId: newGameId };
+      localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(currentSettings));
+
+      console.log(`Automatically created save file with correct settings (ID: ${newGameId})`);
+       
       console.log("Session state reset with new game info.");
       setIsNewGameSetupModalOpen(false); // Close the setup modal
       // Dependencies updated to reflect parameters and used state
-    }, [availablePlayers, savedGames, setDrawings, setOpponents, setPlayersOnField, teamName]);
+    }, [availablePlayers, savedGames, setDrawings, setOpponents, setPlayersOnField, teamName, 
+        // Add all the setters used within the function
+        setAvailablePlayers, setShowPlayerNames, setGameEvents, setOpponentName, setGameDate,
+        setHomeScore, setAwayScore, setGameNotes, setNumberOfPeriods, setPeriodDurationMinutes,
+        setCurrentPeriod, setGameStatus, setSelectedPlayerIds, setSeasonId, setTournamentId,
+        setGameLocation, setGameTime, setSubIntervalMinutes, setCompletedIntervalDurations,
+        setLastSubConfirmationTimeSeconds, setTimeElapsedInSeconds, setIsTimerRunning, 
+        setSubAlertLevel, setHistory, setHistoryIndex, setSavedGames, setCurrentGameId, 
+        setIsNewGameSetupModalOpen, initialState // Keep initialState for defaults like sub interval
+    ]);
   
   // NEW: Handler to cancel the new game setup
   // const handleCancelNewGameSetup = useCallback(() => { // REMOVED this line
@@ -2342,121 +2420,103 @@ export default function Home() {
 
   // --- Handler that is called when setup modal is confirmed ---
   const handleStartNewGameWithSetup = useCallback((
-    opponentName: string, 
-    gameDate: string, 
-    gameLocation: string, 
+    opponentName: string,
+    gameDate: string,
+    gameLocation: string,
     gameTime: string,
     seasonId: string | null,
     tournamentId: string | null,
-    numPeriods: 1 | 2, 
-    periodDuration: number
+    numPeriods: 1 | 2, // Parameter
+    periodDuration: number // Parameter
   ) => {
-    console.log("Starting new game with setup:", { opponentName, gameDate, gameLocation, gameTime, seasonId, tournamentId, numPeriods, periodDuration });
-    
-    // Manually construct the new game state
-    const newGameState: AppState = {
-        ...initialState, // Start with base defaults
-        opponentName: opponentName,
-        gameDate: gameDate,
-        gameLocation: gameLocation,
-        gameTime: gameTime,
-        seasonId: seasonId || '',
-        tournamentId: tournamentId || '',
-        numberOfPeriods: numPeriods,
-        periodDurationMinutes: periodDuration,
-        // Reset dynamic parts
-        playersOnField: [],
-        opponents: [],
-        drawings: [],
-        gameEvents: [],
-        homeScore: 0,
-        awayScore: 0,
-        currentPeriod: 1,
-        gameStatus: 'notStarted',
-        completedIntervalDurations: [],
-        lastSubConfirmationTimeSeconds: 0,
-        availablePlayers: initialState.availablePlayers,
-        selectedPlayerIds: initialState.availablePlayers.map(p => p.id),
-        teamName: teamName, // Keep current team name
-        showPlayerNames: true,
-        gameNotes: '',
-        subIntervalMinutes: initialState.subIntervalMinutes,
-    };
+      // ADD LOGGING HERE:
+      console.log('[handleStartNewGameWithSetup] Received Params:', { numPeriods, periodDuration });
+      console.log('[handleStartNewGameWithSetup] Current initialState ref:', { 
+          periods: initialState.numberOfPeriods, 
+          duration: initialState.periodDurationMinutes 
+      });
 
-    // Call individual state setters from useGameState hook and others
-    setPlayersOnField(newGameState.playersOnField);
-    setOpponents(newGameState.opponents);
-    setDrawings(newGameState.drawings);
-    setAvailablePlayers(newGameState.availablePlayers);
-    setShowPlayerNames(newGameState.showPlayerNames);
-    setTeamName(newGameState.teamName);
-    setGameEvents(newGameState.gameEvents);
-    setOpponentName(newGameState.opponentName);
-    setGameDate(newGameState.gameDate);
-    setHomeScore(newGameState.homeScore);
-    setAwayScore(newGameState.awayScore);
-    setGameNotes(newGameState.gameNotes);
-    setNumberOfPeriods(newGameState.numberOfPeriods);
-    setPeriodDurationMinutes(newGameState.periodDurationMinutes);
-    setCurrentPeriod(newGameState.currentPeriod);
-    setGameStatus(newGameState.gameStatus);
-    setSelectedPlayerIds(newGameState.selectedPlayerIds);
-    setSeasonId(newGameState.seasonId);
-    setTournamentId(newGameState.tournamentId);
-    // ADD default fallbacks for optional properties
-    setGameLocation(newGameState.gameLocation ?? ''); 
-    setGameTime(newGameState.gameTime ?? '');
-    setSubIntervalMinutes(newGameState.subIntervalMinutes ?? initialState.subIntervalMinutes ?? 5); // Default to initial state or 5
-    setCompletedIntervalDurations(newGameState.completedIntervalDurations || []);
-    setLastSubConfirmationTimeSeconds(newGameState.lastSubConfirmationTimeSeconds || 0);
-    // Reset timer state directly
-    setTimeElapsedInSeconds(0);
+      // 1. Manually construct the new game state EXPLICITLY
+      const newGameState: AppState = {
+          opponentName: opponentName,
+          gameDate: gameDate,
+          gameLocation: gameLocation,
+          gameTime: gameTime,
+          seasonId: seasonId || '',
+          tournamentId: tournamentId || '',
+          numberOfPeriods: numPeriods, // Use parameter
+          periodDurationMinutes: periodDuration, // Use parameter
+          homeScore: 0, 
+          awayScore: 0, 
+          gameNotes: '', 
+          teamName: teamName, // Use current teamName state
+          // Roster/Player State - Use TOP-LEVEL initialState defaults
+          availablePlayers: initialState.availablePlayers, 
+          selectedPlayerIds: initialState.availablePlayers.map(p => p.id), 
+          playersOnField: [], 
+          opponents: [], 
+          showPlayerNames: true, 
+          drawings: [],
+          gameEvents: [],
+          currentPeriod: 1,
+          gameStatus: 'notStarted',
+          // Timer/Sub State - Use TOP-LEVEL initialState defaults
+          subIntervalMinutes: initialState.subIntervalMinutes ?? 5,
+          completedIntervalDurations: [],
+          lastSubConfirmationTimeSeconds: 0,
+      };
+      
+      // Log the constructed state *before* saving
+      console.log('[handleStartNewGameWithSetup] Constructed newGameState:', { 
+          periods: newGameState.numberOfPeriods, 
+          duration: newGameState.periodDurationMinutes 
+      });
 
-    // Manually reset history state
-    setHistory([newGameState]);
-    setHistoryIndex(0);
+      // ... (rest of the function: save, set ID, etc.)
+      // 2. Auto-generate ID
+      const newGameId = `game_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  
+      // 3. Explicitly save the new game state immediately to state and localStorage
+      try {
+        const updatedSavedGames = { 
+          ...savedGames, 
+          [newGameId]: newGameState 
+        };
+        setSavedGames(updatedSavedGames); 
+        localStorage.setItem(SAVED_GAMES_KEY, JSON.stringify(updatedSavedGames));
+        console.log(`Explicitly saved initial state for new game ID: ${newGameId}`);
+  
+        const currentSettings: AppSettings = { currentGameId: newGameId };
+        localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(currentSettings));
+        console.log(`Updated app settings with new game ID: ${newGameId}`);
+  
+      } catch (error) {
+         console.error("Error explicitly saving new game state:", error);
+      }
+  
+      // 4. Reset History with the new state
+      setHistory([newGameState]); 
+      setHistoryIndex(0);
+      
+      // 5. Set the current game ID - This will trigger the loading useEffect
+      setCurrentGameId(newGameId); 
+      console.log(`Set current game ID to: ${newGameId}. Loading useEffect will sync component state.`);
+  
+      // Close the setup modal
+      setIsNewGameSetupModalOpen(false); 
+      setIsStartingNewGameAfterSave(false); 
 
-    // ** Auto-generate ID and set it **
-    const newGameId = `game_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    setCurrentGameId(newGameId); // Set the new ID immediately
-    console.log(`New game initialized with ID: ${newGameId}. Auto-save will handle persistence.`);
-
-    // Close the setup modal
-    setIsNewGameSetupModalOpen(false);
-    // Reset the flag indicating intent to start new game after save
-    setIsStartingNewGameAfterSave(false);
   }, [
-    // All the dependencies for handleStartNewGameWithSetup...
-    setPlayersOnField,
-    setOpponents,
-    setDrawings,
-    setAvailablePlayers,
-    setShowPlayerNames,
-    setTeamName,
-    setGameEvents,
-    setOpponentName,
-    setGameDate,
-    setHomeScore,
-    setAwayScore,
-    setGameNotes,
-    setNumberOfPeriods,
-    setPeriodDurationMinutes,
-    setCurrentPeriod,
-    setGameStatus,
-    setSelectedPlayerIds,
-    setSeasonId,
-    setTournamentId,
-    setGameLocation,
-    setGameTime,
-    setSubIntervalMinutes,
-    setCompletedIntervalDurations,
-    setLastSubConfirmationTimeSeconds,
-    setTimeElapsedInSeconds,
+    // Keep necessary dependencies
+    initialState, // Make sure initialState is included if referenced directly
+    teamName, 
+    savedGames, 
+    setSavedGames, 
     setHistory, 
-    setHistoryIndex,
-    setCurrentGameId,
-    teamName,
-    // No need for setIsNewGameSetupModalOpen, setIsStartingNewGameAfterSave here as they are set within
+    setHistoryIndex, 
+    setCurrentGameId, 
+    setIsNewGameSetupModalOpen, 
+    setIsStartingNewGameAfterSave
   ]);
 
   // ** REVERT handleCancelNewGameSetup TO ORIGINAL **
@@ -2744,6 +2804,7 @@ export default function Home() {
           // Pass the new handlers
           onSeasonIdChange={handleSetSeasonId}
           onTournamentIdChange={handleSetTournamentId}
+          savedGames={savedGames} // Pass the savedGames state down
         />
 
       </div>
