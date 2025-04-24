@@ -472,6 +472,18 @@ fiTranslations.gameSettingsModal.eventLogTitle = "Muokkaa Tapahtumia";
 fiTranslations.gameSettingsModal.noGoalsLogged = "Ei kirjattuja maaleja.";
 fiTranslations.gameSettingsModal.invalidTimeFormat = "Virheellinen aika (MM:SS)";
 fiTranslations.gameSettingsModal.scorerRequired = "Maalintekijä vaaditaan.";
+// Add missing keys for the GameSettingsModal
+fiTranslations.gameSettingsModal.periodsLabel = "Jaksot";
+fiTranslations.gameSettingsModal.durationLabel = "Kesto (min)";
+fiTranslations.gameSettingsModal.seasonLabel = "Kausi";
+fiTranslations.gameSettingsModal.tournamentLabel = "Turnaus";
+fiTranslations.gameSettingsModal.associationLabel = "Linkitä";
+fiTranslations.gameSettingsModal.selectSeason = "- Valitse Kausi -";
+fiTranslations.gameSettingsModal.selectTournament = "- Valitse Turnaus -";
+fiTranslations.gameSettingsModal.noPlayerSelected = "- Valitse Pelaaja -";
+fiTranslations.gameSettingsModal.confirmDeleteEvent = "Haluatko varmasti poistaa tämän tapahtuman?";
+fiTranslations.gameSettingsModal.invalidDuration = "Keston täytyy olla positiivinen luku.";
+fiTranslations.gameSettingsModal.locationPlaceholder = "Esim. Kaupunki, Kenttä";
 
 // Ensure common namespace exists before adding key
 if (!fiTranslations.common) {
@@ -486,6 +498,20 @@ fiTranslations.common.time = "Aika";
 fiTranslations.common.home = "Koti";
 fiTranslations.common.away = "Vieras";
 fiTranslations.common.notSet = "Ei asetettu";
+fiTranslations.common.none = "Ei mikään";  // Add missing "None" translation
+fiTranslations.common.save = "Tallenna";
+fiTranslations.common.cancel = "Peruuta";
+fiTranslations.common.delete = "Poista";
+fiTranslations.common.close = "Sulje";
+fiTranslations.common.edit = "Muokkaa";
+fiTranslations.common.scorer = "Maalintekijä";
+fiTranslations.common.assist = "Syöttäjä";
+fiTranslations.common.selectPlayer = "Valitse pelaaja...";
+fiTranslations.common.noAssist = "Ei syöttäjää";
+fiTranslations.common.goal = "Maali";
+fiTranslations.common.opponentGoal = "Vast. Maali";
+fiTranslations.common.type = "Tyyppi";
+fiTranslations.common.saveError = "Virhe tallennettaessa muutoksia.";
 
 // Generate a cache-busting version number
 // const cacheVersion = new Date().getTime();
