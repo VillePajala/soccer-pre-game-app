@@ -76,7 +76,6 @@ export interface AppState {
   playersOnField: Player[];
   opponents: Opponent[]; 
   drawings: Point[][];
-  availablePlayers: Player[]; // Available players don't need coordinates
   showPlayerNames: boolean; 
   teamName: string; 
   gameEvents: GameEvent[]; // Add game events to state
@@ -123,7 +122,6 @@ const initialState: AppState = {
   playersOnField: [], // Start with no players on field
   opponents: [], // Start with no opponents
   drawings: [],
-  availablePlayers: initialAvailablePlayersData, // Use the updated initial data
   showPlayerNames: true,
   teamName: "My Team",
   gameEvents: [], // Initialize game events as empty array
@@ -137,7 +135,7 @@ const initialState: AppState = {
   numberOfPeriods: 2,
   periodDurationMinutes: 10, // Default to 10 minutes
   currentPeriod: 1,
-  gameStatus: 'notStarted',
+  gameStatus: 'notStarted', // Initialize game status
   // Initialize selectedPlayerIds with all players from initial data
   selectedPlayerIds: initialAvailablePlayersData.map(p => p.id),
   // gameType: 'season', // REMOVED
@@ -156,6 +154,7 @@ const SAVED_GAMES_KEY = 'savedSoccerGames';
 const APP_SETTINGS_KEY = 'soccerAppSettings';
 const SEASONS_LIST_KEY = 'soccerSeasons';
 const TOURNAMENTS_LIST_KEY = 'soccerTournaments';
+const MASTER_ROSTER_KEY = 'soccerMasterRoster'; // <<< NEW KEY for global roster
 
 // Define structure for settings
 interface AppSettings {
@@ -371,6 +370,28 @@ export default function Home() {
   // --- Load state from localStorage on mount (REVISED) ---
   useEffect(() => {
     console.log('Initial Load Effect Triggered');
+
+    // +++ NEW: Load Master Roster +++
+    let loadedMasterRoster: Player[] = [];
+    try {
+        const rosterJson = localStorage.getItem(MASTER_ROSTER_KEY);
+        if (rosterJson) {
+            loadedMasterRoster = JSON.parse(rosterJson);
+            console.log(`Loaded master roster from localStorage: ${loadedMasterRoster.length} players`);
+        } else {
+            console.log('No master roster found in localStorage, using initial data.');
+            loadedMasterRoster = initialAvailablePlayersData; // Use default
+            localStorage.setItem(MASTER_ROSTER_KEY, JSON.stringify(loadedMasterRoster)); // Save default
+        }
+    } catch (error) {
+        console.error('Failed to load or parse master roster:', error);
+        // Fallback to initial data in case of error
+        loadedMasterRoster = initialAvailablePlayersData;
+    }
+    // Set the global roster state
+    setAvailablePlayers(loadedMasterRoster);
+    // +++ END NEW: Load Master Roster +++
+
     // 1. Load saved games collection
     let loadedGames: SavedGamesCollection = {};
     try {
@@ -433,7 +454,7 @@ export default function Home() {
     setPlayersOnField(stateToApply.playersOnField);
     setOpponents(stateToApply.opponents || []);
     setDrawings(stateToApply.drawings);
-    setAvailablePlayers(stateToApply.availablePlayers);
+    // REMOVED: setAvailablePlayers(stateToApply.availablePlayers);
     setShowPlayerNames(stateToApply.showPlayerNames);
     setTeamName(stateToApply.teamName || initialState.teamName);
     setGameEvents(stateToApply.gameEvents || []);
@@ -487,7 +508,7 @@ export default function Home() {
       setPlayersOnField(stateToLoad.playersOnField || []);
       setOpponents(stateToLoad.opponents || []);
       setDrawings(stateToLoad.drawings || []);
-      setAvailablePlayers(stateToLoad.availablePlayers || []);
+      // REMOVED: setAvailablePlayers(stateToLoad.availablePlayers || []);
       setShowPlayerNames(stateToLoad.showPlayerNames ?? true);
       setTeamName(stateToLoad.teamName || initialState.teamName);
       setGameEvents(stateToLoad.gameEvents || []);
@@ -556,7 +577,7 @@ export default function Home() {
           playersOnField,
           opponents,
           drawings,
-          availablePlayers,
+          // REMOVED: availablePlayers,
           showPlayerNames,
           teamName,
           gameEvents,
@@ -592,7 +613,7 @@ export default function Home() {
         // 3. Update the specific game in the collection
         const updatedSavedGamesCollection = {
           ...allSavedGames,
-          [currentGameId]: currentSnapshot
+          [currentGameId]: currentSnapshot // Use idToSave here
         };
 
         // 4. Save the updated collection back to localStorage
@@ -610,7 +631,8 @@ export default function Home() {
     }
     // Dependencies: Include all state variables that are part of the saved snapshot
   }, [isLoaded, currentGameId,
-      playersOnField, opponents, drawings, availablePlayers, showPlayerNames, teamName,
+      playersOnField, opponents, drawings, // REMOVED: availablePlayers,
+      showPlayerNames, teamName,
       gameEvents, opponentName, gameDate, homeScore, awayScore, gameNotes,
       numberOfPeriods, periodDurationMinutes, // ADDED back dependencies
       currentPeriod, gameStatus,
@@ -623,12 +645,17 @@ export default function Home() {
   useEffect(() => {
     // Only run this check after the initial load is complete
     // and if the user hasn't explicitly skipped the setup
-    // and the modal isn't already open (e.g., from the load effect)
-    if (isLoaded && opponentName === 'Opponent' && !hasSkippedInitialSetup && !isNewGameSetupModalOpen) {
+    // REMOVED CHECK: and the modal isn't already open (e.g., from the load effect)
+    // Check if opponent name is still the default after loading, and we haven't skipped.
+    if (isLoaded && opponentName === 'Opponent' && !hasSkippedInitialSetup) {
       console.log('Opponent name is default after load, prompting for setup...');
+      // Avoid reopening if it was just closed by the setup function
+      // We might need a more robust check here later if this isn't enough.
+      // For now, relying on opponentName having been updated by the load effect.
       setIsNewGameSetupModalOpen(true);
     }
-  }, [isLoaded, opponentName, hasSkippedInitialSetup, isNewGameSetupModalOpen]); // Dependencies for the check
+    // REMOVED isNewGameSetupModalOpen from dependencies
+  }, [isLoaded, opponentName, hasSkippedInitialSetup]); // Dependencies for the check
 
   // --- Fullscreen API Logic ---
   const handleFullscreenChange = useCallback(() => {
@@ -800,7 +827,7 @@ export default function Home() {
       setPlayersOnField(prevState.playersOnField);
       setOpponents(prevState.opponents);
       setDrawings(prevState.drawings);
-      setAvailablePlayers(prevState.availablePlayers);
+      // REMOVED: setAvailablePlayers(prevState.availablePlayers);
       setShowPlayerNames(prevState.showPlayerNames);
       setTeamName(prevState.teamName); // Undo team name
       setGameEvents(prevState.gameEvents); // Restore game events
@@ -841,7 +868,7 @@ export default function Home() {
       setPlayersOnField(nextState.playersOnField);
       setOpponents(nextState.opponents);
       setDrawings(nextState.drawings);
-      setAvailablePlayers(nextState.availablePlayers);
+      // REMOVED: setAvailablePlayers(nextState.availablePlayers);
       setShowPlayerNames(nextState.showPlayerNames);
       setTeamName(nextState.teamName); // Redo team name
       setGameEvents(nextState.gameEvents); // Restore game events
@@ -1282,7 +1309,7 @@ export default function Home() {
         playersOnField,
         opponents,
         drawings,
-        availablePlayers,
+        // REMOVED: availablePlayers,
         showPlayerNames,
         teamName,
         gameEvents,
@@ -1359,7 +1386,7 @@ export default function Home() {
         setPlayersOnField(stateToLoad.playersOnField);
         setOpponents(stateToLoad.opponents || []);
         setDrawings(stateToLoad.drawings);
-        setAvailablePlayers(stateToLoad.availablePlayers);
+        // REMOVED: setAvailablePlayers(stateToLoad.availablePlayers || []);
         setShowPlayerNames(stateToLoad.showPlayerNames);
         setTeamName(stateToLoad.teamName || initialState.teamName);
         setGameEvents(stateToLoad.gameEvents || []);
@@ -1573,15 +1600,17 @@ export default function Home() {
         allRows.push('Player Stats');
         // Add Fair Play column header
         allRows.push(`${escapeCsvField('Player')}${DELIMITER}${escapeCsvField('Goals')}${DELIMITER}${escapeCsvField('Assists')}${DELIMITER}${escapeCsvField('Points')}${DELIMITER}${escapeCsvField('Fair Play')}`);
-        const playerStats = game.availablePlayers?.map(player => {
+        // Use the GLOBAL availablePlayers state here
+        const playerStats = availablePlayers.map((player: Player) => { // <-- Use global state
           const goals = game.gameEvents?.filter(e => e.type === 'goal' && e.scorerId === player.id).length || 0;
           const assists = game.gameEvents?.filter(e => e.type === 'goal' && e.assisterId === player.id).length || 0;
           const totalScore = goals + assists;
-          // Include fairPlay status
-          return { name: player.name, goals, assists, totalScore, fairPlay: player.receivedFairPlayCard };
+          // Include fairPlay status - check if player is IN the global roster
+          const globalPlayer = availablePlayers.find(p => p.id === player.id); // Re-check existence
+          return { name: player.name, goals, assists, totalScore, fairPlay: globalPlayer?.receivedFairPlayCard };
         })
         // REMOVED filter: .filter(p => p.totalScore > 0) // Show all players now
-        .sort((a, b) => b.totalScore - a.totalScore || b.goals - a.goals); // Sort by points, then goals
+        .sort((a: any, b: any) => b.totalScore - a.totalScore || b.goals - a.goals); // Sort by points, then goals
         
         if (playerStats && playerStats.length > 0) {
             playerStats.forEach(player => {
@@ -1603,11 +1632,12 @@ export default function Home() {
                 const timeFormatted = formatTime(event.time);
                 const type = event.type === 'goal' ? 'Goal' : 'Opponent Goal';
                 // Look up names dynamically using the game's availablePlayers
-                const scorerName = event.type === 'goal' 
-                  ? game.availablePlayers?.find(p => p.id === event.scorerId)?.name ?? event.scorerId // Fallback to ID if not found
+                // Look up names dynamically using the GLOBAL availablePlayers state
+                const scorerName = event.type === 'goal'
+                  ? availablePlayers.find(p => p.id === event.scorerId)?.name ?? event.scorerId // <-- Use global state
                   : game.opponentName || 'Opponent'; // Use game's opponent name for opponent goals
                 const assisterName = event.type === 'goal' && event.assisterId
-                  ? game.availablePlayers?.find(p => p.id === event.assisterId)?.name ?? event.assisterId // Fallback to ID
+                  ? availablePlayers.find(p => p.id === event.assisterId)?.name ?? event.assisterId // <-- Use global state
                   : ''; // Empty if no assister ID or opponent goal
                 
                 const scorer = escapeCsvField(scorerName);
@@ -1747,15 +1777,17 @@ export default function Home() {
       rows.push('Player Stats');
       // Add Fair Play column header
       rows.push(`${escapeCsvField('Player')}${DELIMITER}${escapeCsvField('Goals')}${DELIMITER}${escapeCsvField('Assists')}${DELIMITER}${escapeCsvField('Points')}${DELIMITER}${escapeCsvField('Fair Play')}`);
-      const playerStats = game.availablePlayers?.map(player => {
+      // Use the GLOBAL availablePlayers state here
+      const playerStats = availablePlayers.map((player: Player) => { // <-- Use global state
         const goals = game.gameEvents?.filter(e => e.type === 'goal' && e.scorerId === player.id).length || 0;
         const assists = game.gameEvents?.filter(e => e.type === 'goal' && e.assisterId === player.id).length || 0;
         const totalScore = goals + assists;
-        // Include fairPlay status
-        return { name: player.name, goals, assists, totalScore, fairPlay: player.receivedFairPlayCard };
+        // Include fairPlay status - check if player is IN the global roster
+        const globalPlayer = availablePlayers.find(p => p.id === player.id); // Re-check existence
+        return { name: player.name, goals, assists, totalScore, fairPlay: globalPlayer?.receivedFairPlayCard };
       })
       // REMOVED filter: .filter(p => p.totalScore > 0) // Show all players now
-      .sort((a, b) => b.totalScore - a.totalScore || b.goals - a.goals); // Sort by points, then goals
+      .sort((a: any, b: any) => b.totalScore - a.totalScore || b.goals - a.goals); // Sort by points, then goals
       
       if (playerStats && playerStats.length > 0) {
         playerStats.forEach(player => {
@@ -1778,11 +1810,12 @@ export default function Home() {
             const timeFormatted = formatTime(event.time);
             const type = event.type === 'goal' ? 'Goal' : 'Opponent Goal';
             // Look up names dynamically using the game's availablePlayers
-            const scorerName = event.type === 'goal' 
-              ? game.availablePlayers?.find(p => p.id === event.scorerId)?.name ?? event.scorerId // Fallback to ID if not found
+            // Look up names dynamically using the GLOBAL availablePlayers state
+            const scorerName = event.type === 'goal'
+              ? availablePlayers.find(p => p.id === event.scorerId)?.name ?? event.scorerId // <-- Use global state
               : game.opponentName || 'Opponent'; // Use game's opponent name for opponent goals
             const assisterName = event.type === 'goal' && event.assisterId
-              ? game.availablePlayers?.find(p => p.id === event.assisterId)?.name ?? event.assisterId // Fallback to ID
+              ? availablePlayers.find(p => p.id === event.assisterId)?.name ?? event.assisterId // <-- Use global state
               : ''; // Empty if no assister ID or opponent goal
 
             const scorer = escapeCsvField(scorerName);
@@ -1830,7 +1863,10 @@ export default function Home() {
 
     setAvailablePlayers(updatedAvailable);
     setPlayersOnField(updatedOnField);
-    saveStateToHistory({ availablePlayers: updatedAvailable, playersOnField: updatedOnField });
+    // Save updated global roster
+    localStorage.setItem(MASTER_ROSTER_KEY, JSON.stringify(updatedAvailable));
+    // Save only playersOnField change to game history (if needed)
+    saveStateToHistory({ playersOnField: updatedOnField });
     console.log(`Set jersey number for ${playerId} to ${number}`);
   }, [availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField, saveStateToHistory]);
 
@@ -1839,22 +1875,31 @@ export default function Home() {
     // Notes likely don't need to be tracked for playersOnField unless displayed there
 
     setAvailablePlayers(updatedAvailable);
-    // setPlayersOnField(updatedOnField); // Only if notes are added to PlayerOnField type
-    saveStateToHistory({ availablePlayers: updatedAvailable /*, playersOnField: updatedOnField */ });
+    // Save updated global roster
+    localStorage.setItem(MASTER_ROSTER_KEY, JSON.stringify(updatedAvailable));
+    // No game history change needed for notes unless they affect playersOnField
+    // saveStateToHistory({ availablePlayers: updatedAvailable /*, playersOnField: updatedOnField */ });
     console.log(`Set notes for ${playerId}`);
+    // Removed playersOnField dependencies as they aren't used
   }, [availablePlayers, setAvailablePlayers, /* playersOnField, setPlayersOnField, */ saveStateToHistory]);
 
   const handleRemovePlayerFromRoster = useCallback((playerId: string) => {
     if (window.confirm(`Are you sure you want to remove player ${availablePlayers.find(p=>p.id === playerId)?.name ?? playerId} from the roster? This cannot be undone easily.`)) {
       const updatedAvailable = availablePlayers.filter(p => p.id !== playerId);
       const updatedOnField = playersOnField.filter(p => p.id !== playerId); // Also remove from field
+      const updatedSelectedIds = selectedPlayerIds.filter(id => id !== playerId); // Also remove from selection
 
       setAvailablePlayers(updatedAvailable);
       setPlayersOnField(updatedOnField);
-      saveStateToHistory({ availablePlayers: updatedAvailable, playersOnField: updatedOnField });
-      console.log(`Removed player ${playerId} from roster and field.`);
+      setSelectedPlayerIds(updatedSelectedIds); // Update selection state
+      // Save updated global roster
+      localStorage.setItem(MASTER_ROSTER_KEY, JSON.stringify(updatedAvailable));
+      // Save field and selection changes to game history
+      saveStateToHistory({ playersOnField: updatedOnField, selectedPlayerIds: updatedSelectedIds });
+      console.log(`Removed player ${playerId} from roster, field, and selection.`);
     }
-  }, [availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField, saveStateToHistory]);
+    // Added selectedPlayerIds and setSelectedPlayerIds dependencies
+  }, [availablePlayers, playersOnField, selectedPlayerIds, setAvailablePlayers, setPlayersOnField, setSelectedPlayerIds, saveStateToHistory]);
 
   // --- NEW: Handler to Award Fair Play Card ---
   const handleAwardFairPlayCard = useCallback((playerId: string | null) => {
@@ -1913,9 +1958,12 @@ export default function Home() {
       console.log(`[page.tsx] Calling setAvailablePlayers and setPlayersOnField...`);
       setAvailablePlayers(updatedAvailablePlayers);
       setPlayersOnField(updatedPlayersOnField);
+      // Save updated global roster
+      localStorage.setItem(MASTER_ROSTER_KEY, JSON.stringify(updatedAvailablePlayers));
       // <<< ADD LOG HERE >>>
-      console.log(`[page.tsx] Calling saveStateToHistory...`);
-      saveStateToHistory({ availablePlayers: updatedAvailablePlayers, playersOnField: updatedPlayersOnField });
+      console.log(`[page.tsx] Calling saveStateToHistory... ONLY for playersOnField`);
+      // Save ONLY the playersOnField change to the game history, not the global roster
+      saveStateToHistory({ playersOnField: updatedPlayersOnField });
 
       console.log(`[page.tsx] Updated Fair Play card award. ${playerId ? `Awarded to ${playerId}` : 'Cleared'}`);
   }, [availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField, saveStateToHistory, currentGameId]);
@@ -1941,7 +1989,7 @@ export default function Home() {
   // --- Handler to Add a Player to the Roster (Updated) ---
   const handleAddPlayer = useCallback((playerData: { name: string; jerseyNumber: string; notes: string; nickname: string }) => {
     const newPlayer: Player = {
-        id: `player-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`, 
+        id: `player-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         name: playerData.name,
         nickname: playerData.nickname, // Add nickname
         jerseyNumber: playerData.jerseyNumber,
@@ -1952,9 +2000,16 @@ export default function Home() {
 
     const updatedAvailable = [...availablePlayers, newPlayer];
     setAvailablePlayers(updatedAvailable); // Update state hook
-    saveStateToHistory({ availablePlayers: updatedAvailable }); // Save to session history
-    console.log(`Added new player: ${newPlayer.name} (ID: ${newPlayer.id})`);
-  }, [availablePlayers, setAvailablePlayers, saveStateToHistory]);
+    // Save updated global roster
+    localStorage.setItem(MASTER_ROSTER_KEY, JSON.stringify(updatedAvailable));
+    // Add the new player to the current game's selection automatically
+    const updatedSelectedIds = [...selectedPlayerIds, newPlayer.id];
+    setSelectedPlayerIds(updatedSelectedIds);
+    // Save the selection change to game history
+    saveStateToHistory({ selectedPlayerIds: updatedSelectedIds });
+    console.log(`Added new player: ${newPlayer.name} (ID: ${newPlayer.id}). Saved roster and updated selection.`);
+    // Added selectedPlayerIds, setSelectedPlayerIds dependencies
+  }, [availablePlayers, selectedPlayerIds, setAvailablePlayers, setSelectedPlayerIds, saveStateToHistory]);
 
   // ---- MOVE handleStartNewGame UP ----
   const handleStartNewGame = useCallback(() => {
@@ -2009,7 +2064,7 @@ export default function Home() {
           playersOnField,
           opponents,
           drawings,
-          availablePlayers,
+          // REMOVED: availablePlayers,
           showPlayerNames,
           teamName,
           gameEvents,
@@ -2061,7 +2116,7 @@ export default function Home() {
     playersOnField,
     opponents,
     drawings,
-    availablePlayers,
+    // REMOVED: availablePlayers,
     showPlayerNames,
     teamName,
     gameEvents,
@@ -2333,10 +2388,7 @@ export default function Home() {
   ) => {
       // ADD LOGGING HERE:
       console.log('[handleStartNewGameWithSetup] Received Params:', { numPeriods, periodDuration });
-      console.log('[handleStartNewGameWithSetup] Current initialState ref:', { 
-          periods: initialState.numberOfPeriods, 
-          duration: initialState.periodDurationMinutes 
-      });
+      // No need to log initialState references anymore
 
       // 1. Manually construct the new game state EXPLICITLY
       const newGameState: AppState = {
@@ -2348,76 +2400,78 @@ export default function Home() {
           tournamentId: tournamentId || '',
           numberOfPeriods: numPeriods, // Use parameter
           periodDurationMinutes: periodDuration, // Use parameter
-          homeScore: 0, 
-          awayScore: 0, 
-          gameNotes: '', 
+          homeScore: 0,
+          awayScore: 0,
+          gameNotes: '',
           teamName: teamName, // Use current teamName state
-          // Roster/Player State - Use TOP-LEVEL initialState defaults
-          availablePlayers: initialState.availablePlayers, 
-          selectedPlayerIds: initialState.availablePlayers.map(p => p.id), 
-          playersOnField: [], 
-          opponents: [], 
-          showPlayerNames: true, 
-          drawings: [],
-          gameEvents: [],
-          currentPeriod: 1,
-          gameStatus: 'notStarted',
-          // Timer/Sub State - Use TOP-LEVEL initialState defaults
+          // Roster/Player State - Roster is global
+          // REMOVED: availablePlayers: availablePlayers,
+          selectedPlayerIds: availablePlayers.map(p => p.id), // <-- BASE ON CURRENT GLOBAL ROSTER
+          playersOnField: [], // Always start with empty field
+          opponents: [], // Always start with empty opponents
+          showPlayerNames: true, // Default visibility
+          drawings: [], // Always start with empty drawings
+          gameEvents: [], // Always start with empty events
+          currentPeriod: 1, // Always start at period 1
+          gameStatus: 'notStarted', // Always start as not started
+          // Timer/Sub State - Use TOP-LEVEL initialState defaults (or current settings?)
+          // Let's stick with initialState defaults for timer/sub settings for now
           subIntervalMinutes: initialState.subIntervalMinutes ?? 5,
-          completedIntervalDurations: [],
-          lastSubConfirmationTimeSeconds: 0,
+          completedIntervalDurations: [], // Always reset intervals
+          lastSubConfirmationTimeSeconds: 0, // Always reset last sub time
       };
-      
+
       // Log the constructed state *before* saving
-      console.log('[handleStartNewGameWithSetup] Constructed newGameState:', { 
-          periods: newGameState.numberOfPeriods, 
-          duration: newGameState.periodDurationMinutes 
+      console.log('[handleStartNewGameWithSetup] Constructed newGameState:', {
+          periods: newGameState.numberOfPeriods,
+          duration: newGameState.periodDurationMinutes,
+          // REMOVED: numAvailablePlayers: newGameState.availablePlayers.length // Log roster size
       });
 
-      // ... (rest of the function: save, set ID, etc.)
       // 2. Auto-generate ID
       const newGameId = `game_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-  
+
       // 3. Explicitly save the new game state immediately to state and localStorage
       try {
-        const updatedSavedGames = { 
-          ...savedGames, 
-          [newGameId]: newGameState 
+        const updatedSavedGames = {
+          ...savedGames,
+          [newGameId]: newGameState
         };
-        setSavedGames(updatedSavedGames); 
+        setSavedGames(updatedSavedGames);
         localStorage.setItem(SAVED_GAMES_KEY, JSON.stringify(updatedSavedGames));
         console.log(`Explicitly saved initial state for new game ID: ${newGameId}`);
-  
+
         const currentSettings: AppSettings = { currentGameId: newGameId };
         localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(currentSettings));
         console.log(`Updated app settings with new game ID: ${newGameId}`);
-  
+
       } catch (error) {
          console.error("Error explicitly saving new game state:", error);
       }
-  
+
       // 4. Reset History with the new state
-      setHistory([newGameState]); 
+      setHistory([newGameState]);
       setHistoryIndex(0);
-      
+
       // 5. Set the current game ID - This will trigger the loading useEffect
-      setCurrentGameId(newGameId); 
+      setCurrentGameId(newGameId);
       console.log(`Set current game ID to: ${newGameId}. Loading useEffect will sync component state.`);
-  
+
       // Close the setup modal
-      setIsNewGameSetupModalOpen(false); 
-      setIsStartingNewGameAfterSave(false); 
+      setIsNewGameSetupModalOpen(false);
+      setIsStartingNewGameAfterSave(false);
 
   }, [
     // Keep necessary dependencies
-    initialState, // Make sure initialState is included if referenced directly
-    teamName, 
-    savedGames, 
-    setSavedGames, 
-    setHistory, 
-    setHistoryIndex, 
-    setCurrentGameId, 
-    setIsNewGameSetupModalOpen, 
+    teamName,
+    savedGames,
+    availablePlayers, // Still need availablePlayers to derive selectedPlayerIds
+    initialState.subIntervalMinutes, // Explicitly depend on the default value used
+    setSavedGames,
+    setHistory,
+    setHistoryIndex,
+    setCurrentGameId,
+    setIsNewGameSetupModalOpen,
     setIsStartingNewGameAfterSave
   ]);
 
@@ -2555,7 +2609,7 @@ export default function Home() {
           onQuickSave={handleQuickSaveGame} // Pass the quick save handler
           // ADD props for Game Settings button
           onOpenGameSettingsModal={handleOpenGameSettingsModal}
-          isGameLoaded={isLoaded} // <-- CHANGE THIS LINE
+          isGameLoaded={!!(currentGameId && currentGameId !== DEFAULT_GAME_ID)} // <-- CHECK FOR VALID GAME ID
         />
         {/* Instructions Modal */}
         <InstructionsModal 
