@@ -459,6 +459,7 @@ export default function Home() {
     setIsLoaded(true);
     console.log('Initial load complete. isLoaded set to true.');
 
+  // ADD missing dependencies
   }, [setPlayersOnField, setOpponents, setDrawings, setAvailablePlayers]); // Run only once on mount
 
   // *** ADDED: Central useEffect for loading state based on currentGameId ***
@@ -1246,7 +1247,7 @@ export default function Home() {
         setGameLocation, setGameTime, setSubIntervalMinutes, setCompletedIntervalDurations,
         setLastSubConfirmationTimeSeconds, setTimeElapsedInSeconds, setIsTimerRunning, 
         setSubAlertLevel, setHistory, setHistoryIndex, setSavedGames, setCurrentGameId, 
-        setIsNewGameSetupModalOpen, initialState // Keep initialState for defaults like sub interval
+        setIsNewGameSetupModalOpen, // REMOVED initialState 
     ]);
   
   // NEW: Handler to cancel the new game setup
@@ -2529,6 +2530,7 @@ export default function Home() {
     setHasSkippedInitialSetup(true); // Still mark as skipped if needed elsewhere
     setIsNewGameSetupModalOpen(false); // ADDED: Explicitly close the modal
 
+  // REMOVED initialState from dependencies
   }, [setHasSkippedInitialSetup, setIsNewGameSetupModalOpen]); // Updated dependencies
 
   // Render null or a loading indicator until state is loaded
@@ -2726,7 +2728,7 @@ export default function Home() {
         {isNewGameSetupModalOpen && (
           <NewGameSetupModal
             isOpen={isNewGameSetupModalOpen}
-            onStart={handleFinalizeNewGame} // Prop type matches function signature now
+            onStart={handleStartNewGameWithSetup} // CORRECTED Handler
             onCancel={handleCancelNewGameSetup} 
           />
         )}
