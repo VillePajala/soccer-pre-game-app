@@ -145,32 +145,35 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
             </select>
           </div>
 
-          {/* Buttons */}
+          {/* Buttons - Reverted container to grid, kept new order */}
           <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
-            {/* Cancel Button */}
-            <button
-              type="button"
-              onClick={onClose}
-              className="w-full inline-flex justify-center rounded-md border border-slate-600 px-4 py-2 bg-slate-700 text-base font-medium text-slate-300 hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-slate-500 sm:text-sm transition-colors"
-            >
-              {t('common.cancelButton', 'Peruuta')}
-            </button>
-            {/* Log Opponent Goal Button - ADDED */}
-            <button
-              type="button"
-              onClick={handleLogOpponentGoalClick}
-              className="w-full inline-flex justify-center rounded-md border border-transparent px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-red-500 sm:text-sm transition-colors"
-            >
-              {t('goalLogModal.logOpponentGoalButtonShort', 'Opponent + 1')}
-            </button>
-            {/* Log Goal Button */}
-            <button
+            {/* 1. Log Goal Button - Original styles */}
+            <button 
               type="button"
               onClick={handleLogOwnGoalClick}
               disabled={!scorerId} // Disable if no scorer is selected
               className="w-full inline-flex justify-center rounded-md border border-transparent px-4 py-2 bg-indigo-600 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed sm:text-sm transition-colors"
             >
               {t('goalLogModal.logGoalButton', 'Kirjaa Maali')}
+            </button>
+
+            {/* 2. Log Opponent Goal Button - Original styles */}
+            <button 
+              type="button"
+              onClick={handleLogOpponentGoalClick}
+              className="w-full inline-flex justify-center rounded-md border border-transparent px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-red-500 sm:text-sm transition-colors"
+              title={t('goalLogModal.logOpponentGoalTooltip', 'Record a goal for the opponent at the current game time') ?? undefined}
+            >
+              {t('goalLogModal.logOpponentGoalButtonShort', 'Opponent + 1')} 
+            </button>
+            
+            {/* 3. Cancel Button - Original styles */}
+            <button 
+              type="button"
+              onClick={onClose}
+              className="w-full inline-flex justify-center rounded-md border border-slate-600 px-4 py-2 bg-slate-700 text-base font-medium text-slate-300 hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-slate-500 sm:text-sm transition-colors"
+            >
+              {t('common.cancelButton', 'Peruuta')}
             </button>
           </div>
         </div>
