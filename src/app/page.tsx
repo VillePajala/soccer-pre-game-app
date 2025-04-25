@@ -565,7 +565,7 @@ export default function Home() {
       console.log('[Loading Effect] State applied successfully.');
     }
 
-  }, [currentGameId, savedGames]); // Keep dependencies simple - only react to ID or data change
+  }, [currentGameId, savedGames, setPlayersOnField, setOpponents, setDrawings, setAvailablePlayers, setShowPlayerNames, setTeamName, setGameEvents, setOpponentName, setGameDate, setHomeScore, setAwayScore, setGameNotes, setNumberOfPeriods, setPeriodDurationMinutes, setCurrentPeriod, setGameStatus, setSelectedPlayerIds, setSeasonId, setTournamentId, setGameLocation, setGameTime, setSubIntervalMinutes, setCompletedIntervalDurations, setLastSubConfirmationTimeSeconds, setTimeElapsedInSeconds, setIsTimerRunning, setNextSubDueTimeSeconds, setSubAlertLevel, setHistory, setHistoryIndex]); // Keep dependencies simple - only react to ID or data change
 
   // --- Save state to localStorage ---
   useEffect(() => {
@@ -2653,7 +2653,6 @@ export default function Home() {
           onToggleGoalLogModal={handleToggleGoalLogModal}
           onToggleGameStatsModal={handleToggleGameStatsModal}
           onHardResetApp={handleHardResetApp}
-          onOpenSaveGameModal={handleOpenSaveGameModal}
           onOpenLoadGameModal={handleOpenLoadGameModal}
           onStartNewGame={handleStartNewGame}
           onOpenRosterModal={openRosterModal} // Pass the handler

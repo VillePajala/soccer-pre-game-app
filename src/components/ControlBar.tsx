@@ -23,7 +23,7 @@ import {
     HiOutlineChevronRight, // Chevron for submenu
     HiOutlineChevronLeft, // Chevron for Back button
     HiOutlineExclamationTriangle, // Icon for Hard Reset
-    HiOutlineFolderArrowDown,   // Icon for Save Game As...
+    // HiOutlineFolderArrowDown,   // Icon for Save Game As... (COMMENTED OUT)
     HiOutlineFolderOpen,       // Icon for Load Game...
     HiOutlineArrowPath,        // CORRECT Icon for Reset Stats
     HiOutlineUsers,            // Icon for Manage Roster
@@ -58,7 +58,7 @@ interface ControlBarProps {
   onToggleGoalLogModal: () => void; // Add prop for goal modal
   onToggleGameStatsModal: () => void;
   onHardResetApp: () => void; // Add the new prop type
-  onOpenSaveGameModal: () => void; // NEW PROP
+  // onOpenSaveGameModal: () => void; // REMOVED - Button commented out
   onOpenLoadGameModal: () => void; // NEW PROP
   onStartNewGame: () => void; // CHANGED from onResetGameStats
   onOpenRosterModal: () => void; // Add prop for opening roster modal
@@ -86,7 +86,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   onToggleGoalLogModal,
   onToggleGameStatsModal,
   onHardResetApp,
-  onOpenSaveGameModal,
+  // onOpenSaveGameModal, // REMOVED
   onOpenLoadGameModal,
   onStartNewGame,
   onOpenRosterModal,
