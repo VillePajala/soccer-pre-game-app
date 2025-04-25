@@ -2776,7 +2776,6 @@ export default function Home() {
           onDeleteGameEvent={handleDeleteGameEvent}
           gameEvents={gameEvents}
           availablePlayers={availablePlayers}
-          selectedPlayerIds={selectedPlayerIds}
           seasonId={seasonId}
           tournamentId={tournamentId}
           numPeriods={numberOfPeriods}
@@ -2786,7 +2785,6 @@ export default function Home() {
           // Pass the new handlers
           onSeasonIdChange={handleSetSeasonId}
           onTournamentIdChange={handleSetTournamentId}
-          // REMOVED: savedGames={savedGames} // Prop no longer exists on modal
         />
 
       </div>

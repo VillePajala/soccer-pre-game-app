@@ -10,6 +10,7 @@ interface GameSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   // --- Data for the current game ---
+  currentGameId: string | null;
   teamName: string;
   opponentName: string;
   gameDate: string;
@@ -54,6 +55,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   isOpen,
   onClose,
   // Destructure props
+  currentGameId,
   teamName,
   opponentName,
   gameDate,
