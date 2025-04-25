@@ -68,3 +68,17 @@ body > div {
     opacity: 0;
   }
 }
+
+/* Fix for radio buttons */
+.form-radio {
+  appearance: radio !important;
+  -webkit-appearance: radio !important;
+  -moz-appearance: radio !important;
+  pointer-events: auto !important;
+  opacity: 1 !important;
+  position: static !important;
+  display: inline-block !important;
+  width: 1rem !important;
+  height: 1rem !important;
+  cursor: pointer !important;
+}

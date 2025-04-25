@@ -187,6 +187,7 @@ const DEFAULT_GAME_ID = '__default_unsaved__';
 
 
 export default function Home() {
+  console.log('--- page.tsx RENDER ---'); // <<< ADD RENDER LOG
   const { t } = useTranslation(); // Get translation function
 
   // --- History Management (Still needed here for now) ---
@@ -636,8 +637,8 @@ export default function Home() {
       gameEvents, opponentName, gameDate, homeScore, awayScore, gameNotes,
       numberOfPeriods, periodDurationMinutes, // ADDED back dependencies
       currentPeriod, gameStatus,
-      selectedPlayerIds, seasonId, tournamentId, 
-      gameLocation, gameTime, subIntervalMinutes, 
+      selectedPlayerIds, seasonId, tournamentId, // <<< ENSURE seasonId & tournamentId ARE HERE
+      gameLocation, gameTime, subIntervalMinutes,
       completedIntervalDurations, lastSubConfirmationTimeSeconds
     ]);
 
@@ -1196,6 +1197,7 @@ export default function Home() {
 
   // Placeholder handlers for updating game info (will be passed to modal)
   const handleOpponentNameChange = (newName: string) => {
+    console.log('[page.tsx] handleOpponentNameChange called with:', newName); // <<< ADD LOG
     setOpponentName(newName);
     saveStateToHistory({ opponentName: newName });
   };
@@ -1452,10 +1454,46 @@ export default function Home() {
 
       console.log(`Game ${gameId} deleted.`);
 
-      // If the deleted game was the currently loaded one, load the default state
+      // If the deleted game was the currently loaded one, reset to initial state
       if (currentGameId === gameId) {
-        console.log("Currently loaded game was deleted. Loading default state.");
-        handleLoadGame(DEFAULT_GAME_ID); // Load the default (might be empty or last unsaved)
+        console.log("Currently loaded game was deleted. Resetting to initial state.");
+        
+        // Apply initial state directly instead of trying to load DEFAULT_GAME_ID
+        setPlayersOnField(initialState.playersOnField);
+        setOpponents(initialState.opponents);
+        setDrawings(initialState.drawings);
+        setShowPlayerNames(initialState.showPlayerNames);
+        setTeamName(initialState.teamName);
+        setGameEvents(initialState.gameEvents);
+        setOpponentName(initialState.opponentName);
+        setGameDate(initialState.gameDate);
+        setHomeScore(initialState.homeScore);
+        setAwayScore(initialState.awayScore);
+        setGameNotes(initialState.gameNotes);
+        setNumberOfPeriods(initialState.numberOfPeriods);
+        setPeriodDurationMinutes(initialState.periodDurationMinutes);
+        setCurrentPeriod(initialState.currentPeriod);
+        setGameStatus(initialState.gameStatus);
+        setSelectedPlayerIds(initialState.selectedPlayerIds);
+        setSeasonId(initialState.seasonId);
+        setTournamentId(initialState.tournamentId);
+        setGameLocation(initialState.gameLocation || '');
+        setGameTime(initialState.gameTime || '');
+        setSubIntervalMinutes(initialState.subIntervalMinutes ?? 5);
+        setCompletedIntervalDurations(initialState.completedIntervalDurations ?? []);
+        setLastSubConfirmationTimeSeconds(initialState.lastSubConfirmationTimeSeconds ?? 0);
+
+        // Reset session-specific state
+        setHistory([initialState]);
+        setHistoryIndex(0);
+        setTimeElapsedInSeconds(0);
+        setIsTimerRunning(false);
+        setSubAlertLevel('none');
+
+        // Update current game ID to DEFAULT_GAME_ID
+        setCurrentGameId(DEFAULT_GAME_ID);
+        const currentSettings: AppSettings = { currentGameId: DEFAULT_GAME_ID };
+        localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(currentSettings));
       }
       // Keep the modal open after delete? Or close? Let's keep it open for now.
       // handleCloseLoadGameModal(); 
@@ -2171,23 +2209,25 @@ export default function Home() {
   };
 
   // --- NEW Handlers for Setting Season/Tournament ID ---
-  const handleSetSeasonId = (newSeasonId: string | null) => {
+  const handleSetSeasonId = useCallback((newSeasonId: string | null) => {
     const idToSet = newSeasonId || ''; // Ensure empty string instead of null
+    console.log('[page.tsx] handleSetSeasonId called with:', idToSet);
     setSeasonId(idToSet);
-    // If setting a season, clear the tournament
-    if (idToSet) setTournamentId(''); 
-    saveStateToHistory({ seasonId: idToSet, tournamentId: idToSet ? '' : tournamentId });
-    console.log(`[page.tsx] Set Season ID to: ${idToSet}. Cleared Tournament ID.`);
-  };
+    // --- Re-enable clearing other ID --- 
+    if (idToSet) setTournamentId('');
+    // -----------------------------------
+    saveStateToHistory({ seasonId: idToSet, tournamentId: idToSet ? '' : tournamentId }); // <<< RE-ENABLE HISTORY
+  }, [setSeasonId, setTournamentId, saveStateToHistory, tournamentId]); // <<< Update dependencies
 
-  const handleSetTournamentId = (newTournamentId: string | null) => {
+  const handleSetTournamentId = useCallback((newTournamentId: string | null) => {
     const idToSet = newTournamentId || ''; // Ensure empty string instead of null
+    console.log('[page.tsx] handleSetTournamentId called with:', idToSet);
     setTournamentId(idToSet);
-    // If setting a tournament, clear the season
+    // --- Re-enable clearing other ID --- 
     if (idToSet) setSeasonId('');
-    saveStateToHistory({ tournamentId: idToSet, seasonId: idToSet ? '' : seasonId });
-    console.log(`[page.tsx] Set Tournament ID to: ${idToSet}. Cleared Season ID.`);
-  };
+    // -----------------------------------
+    saveStateToHistory({ tournamentId: idToSet, seasonId: idToSet ? '' : seasonId }); // <<< RE-ENABLE HISTORY
+  }, [setTournamentId, setSeasonId, saveStateToHistory, seasonId]); // <<< Update dependencies
 
   // --- AGGREGATE EXPORT HANDLERS --- 
   
@@ -2746,7 +2786,7 @@ export default function Home() {
           // Pass the new handlers
           onSeasonIdChange={handleSetSeasonId}
           onTournamentIdChange={handleSetTournamentId}
-          savedGames={savedGames} // Pass the savedGames state down
+          // REMOVED: savedGames={savedGames} // Prop no longer exists on modal
         />
 
       </div>
