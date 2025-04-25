@@ -3,9 +3,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import PlayerDisk from './PlayerDisk'; // Import the PlayerDisk component
 import { Player } from '@/app/page'; // Import the Player type
+import Image from 'next/image'; // RE-ADD Import
+import { GameEvent } from '@/app/page'; // Import the GameEvent type
 // REMOVED unused import
 // import Image from 'next/image'; 
-import { GameEvent } from '@/app/page'; // Import the GameEvent type
 
 // Define props for PlayerBar
 interface PlayerBarProps {
@@ -143,10 +144,13 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, teamName, onTeamNameChan
         }}
       >
         <div className="flex-shrink-0 mr-2">
-          <img
+          <Image
             className="h-9 w-9"
             src="/pepo-logo.png"
             alt="Coaching Companion Logo"
+            width={36}
+            height={36}
+            priority
           />
         </div>
         {isEditingTeamName ? (

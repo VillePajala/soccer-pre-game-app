@@ -23,7 +23,7 @@ import {
     HiOutlineChevronRight, // Chevron for submenu
     HiOutlineChevronLeft, // Chevron for Back button
     HiOutlineExclamationTriangle, // Icon for Hard Reset
-    HiOutlineFolderArrowDown,   // Icon for Save Game As...
+    // HiOutlineFolderArrowDown,   // Icon for Save Game As... (COMMENTED OUT)
     HiOutlineFolderOpen,       // Icon for Load Game...
     HiOutlineArrowPath,        // CORRECT Icon for Reset Stats
     HiOutlineUsers,            // Icon for Manage Roster
@@ -58,7 +58,7 @@ interface ControlBarProps {
   onToggleGoalLogModal: () => void; // Add prop for goal modal
   onToggleGameStatsModal: () => void;
   onHardResetApp: () => void; // Add the new prop type
-  onOpenSaveGameModal: () => void; // NEW PROP
+  // onOpenSaveGameModal: () => void; // REMOVED - Button commented out
   onOpenLoadGameModal: () => void; // NEW PROP
   onStartNewGame: () => void; // CHANGED from onResetGameStats
   onOpenRosterModal: () => void; // Add prop for opening roster modal
@@ -86,7 +86,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   onToggleGoalLogModal,
   onToggleGameStatsModal,
   onHardResetApp,
-  onOpenSaveGameModal,
+  // onOpenSaveGameModal, // REMOVED
   onOpenLoadGameModal,
   onStartNewGame,
   onOpenRosterModal,
@@ -248,27 +248,27 @@ const ControlBar: React.FC<ControlBarProps> = ({
                        <button onClick={wrapHandler(onQuickSave)} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600/75">
                          <HiOutlineArchiveBoxArrowDown className={menuIconSize} /> {t('controlBar.saveGame', 'Save')}
                        </button>
-                       <button onClick={wrapHandler(onOpenSaveGameModal)} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600/75">
-                         <HiOutlineFolderArrowDown className={menuIconSize} />{t('controlBar.saveGameAs', 'Save Game As...')}
-                       </button>
+                       {/* <button onClick={wrapHandler(onOpenSaveGameModal)} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600/75">
+                         <HiOutlineFolderArrowDown className={menuIconSize} /> {t('controlBar.saveGameAs', 'Save As...')}
+                       </button> */}
                        <button onClick={wrapHandler(onOpenLoadGameModal)} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600/75">
-                         <HiOutlineFolderOpen className={menuIconSize} />{t('controlBar.loadGame', 'Load Game')}
+                         <HiOutlineFolderOpen className={menuIconSize} /> {t('controlBar.loadGame', 'Load Game...')}
                        </button>
-                       <button onClick={handleStartNewGame} className="w-full flex items-center px-3 py-2 text-sm text-orange-400 hover:bg-orange-900/50" data-testid="start-new-game-button">
-                         <HiOutlineArrowPath className={menuIconSize} /><span className="font-medium">{t('controlBar.startNewMatch', 'Start New Match')}</span>
+                       <button onClick={handleStartNewGame} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600/75">
+                         <HiOutlineArrowPath className={menuIconSize} /> {t('controlBar.newGame', 'New Game')}
                        </button>
                      </div>
                      
-                     {/* ADD Subtle Divider */}
-                     <hr className="border-slate-600/75 my-1 mx-3" />
+                     {/* Divider */}
+                     <div className="my-1 border-t border-slate-600/75"></div>
 
-                     {/* Group 2: Current Game Setup */}
+                     {/* Group 2: Roster & Settings */}
                      <div className="py-1">
-                       <button onClick={wrapHandler(onOpenRosterModal)} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600/75">
-                         <HiOutlineUsers className={menuIconSize}/> {t('controlBar.manageRoster', 'Manage Roster')}
+                       <button onClick={wrapHandler(onOpenGameSettingsModal)} className={`w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600/75 ${!isGameLoaded ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={!isGameLoaded}>
+                         <HiOutlineAdjustmentsHorizontal className={menuIconSize} /> {t('controlBar.gameSettings', 'Game Settings')}
                        </button>
-                       <button onClick={wrapHandler(onOpenGameSettingsModal)} disabled={!isGameLoaded} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600/75 disabled:opacity-50 disabled:text-slate-400 disabled:hover:bg-transparent">
-                         <HiOutlineAdjustmentsHorizontal className={menuIconSize}/> {t('controlBar.gameSettingsTooltip', 'Game Settings')}
+                       <button onClick={wrapHandler(onOpenRosterModal)} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600/75">
+                         <HiOutlineUsers className={menuIconSize} /> {t('controlBar.manageRoster', 'Manage Roster')}
                        </button>
                      </div>
 
