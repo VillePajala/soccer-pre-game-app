@@ -76,6 +76,7 @@ export interface AppState {
   playersOnField: Player[];
   opponents: Opponent[]; 
   drawings: Point[][];
+  availablePlayers: Player[]; // <<< RE-ADD: Roster at the time of saving
   showPlayerNames: boolean; 
   teamName: string; 
   gameEvents: GameEvent[]; // Add game events to state
@@ -122,6 +123,7 @@ const initialState: AppState = {
   playersOnField: [], // Start with no players on field
   opponents: [], // Start with no opponents
   drawings: [],
+  availablePlayers: initialAvailablePlayersData, // <<< ADD: Use initial data here
   showPlayerNames: true,
   teamName: "My Team",
   gameEvents: [], // Initialize game events as empty array
@@ -580,7 +582,7 @@ export default function Home() {
           playersOnField,
           opponents,
           drawings,
-          // REMOVED: availablePlayers,
+          availablePlayers, // <<< ADD BACK: Include roster available *at time of save*
           showPlayerNames,
           teamName,
           gameEvents,
@@ -1314,7 +1316,7 @@ export default function Home() {
         playersOnField,
         opponents,
         drawings,
-        // REMOVED: availablePlayers,
+        availablePlayers, // <<< ADD BACK: Include roster available *at time of save*
         showPlayerNames,
         teamName,
         gameEvents,
@@ -2066,7 +2068,7 @@ export default function Home() {
           playersOnField,
           opponents,
           drawings,
-          // REMOVED: availablePlayers,
+          availablePlayers, // <<< ADD BACK: Include roster available *at time of save*
           showPlayerNames,
           teamName,
           gameEvents,
@@ -2120,7 +2122,7 @@ export default function Home() {
     playersOnField,
     opponents,
     drawings,
-    // REMOVED: availablePlayers,
+    availablePlayers,
     showPlayerNames,
     teamName,
     gameEvents,
@@ -2410,8 +2412,7 @@ export default function Home() {
           awayScore: 0,
           gameNotes: '',
           teamName: teamName, // Use current teamName state
-          // Roster/Player State - Roster is global
-          // REMOVED: availablePlayers: availablePlayers,
+          availablePlayers: availablePlayers, // <<< ADD: Use current global roster
           selectedPlayerIds: availablePlayers.map(p => p.id), // <-- BASE ON CURRENT GLOBAL ROSTER
           playersOnField: [], // Always start with empty field
           opponents: [], // Always start with empty opponents

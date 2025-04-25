@@ -264,6 +264,14 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   const { stats: playerStats, gameIds: processedGameIds } = useMemo(() => {
     console.log("Recalculating player stats...", { activeTab, filterText, selectedSeasonIdFilter, selectedTournamentIdFilter, gameEvents: activeTab === 'currentGame' ? gameEvents : null, savedGames: activeTab !== 'currentGame' ? savedGames : null });
 
+    // <<< LOG: Inputs for aggregate calculation >>>
+    console.log('[Stats Aggregate] Inputs:', {
+        activeTab,
+        selectedSeasonIdFilter,
+        selectedTournamentIdFilter,
+        savedGamesKeys: Object.keys(savedGames || {}),
+    });
+
     // Initialize stats map - MODIFIED: Initialize differently based on tab
     const statsMap: { [key: string]: PlayerStatRow } = {};
     let relevantGameEvents: GameEvent[] = [];
@@ -314,10 +322,15 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
         return false; // Default case, should not happen
       });
 
+      // <<< LOG: Result of game filtering >>>
+      console.log('[Stats Aggregate] Filtered processedGameIds:', processedGameIds);
+
       // Aggregate views: Build statsMap from players across ALL relevant games first
       console.log('[Stats Aggregate] Initializing statsMap for aggregate view...'); // <<< LOG 1
       processedGameIds.forEach(gameId => {
           const game: SavedGame | undefined = savedGames?.[gameId];
+          // <<< ADD LOG to inspect game object >>>
+          console.log(`[Stats Aggregate] Checking game: ${gameId}`, { gameExists: !!game, hasAvailablePlayers: !!game?.availablePlayers, playerCount: game?.availablePlayers?.length });
           game?.availablePlayers?.forEach((playerInGame: Player) => {
               if (!statsMap[playerInGame.id]) {
                   // Add player to map if not already present
