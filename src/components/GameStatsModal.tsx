@@ -264,14 +264,6 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   const { stats: playerStats, gameIds: processedGameIds } = useMemo(() => {
     console.log("Recalculating player stats...", { activeTab, filterText, selectedSeasonIdFilter, selectedTournamentIdFilter, gameEvents: activeTab === 'currentGame' ? gameEvents : null, savedGames: activeTab !== 'currentGame' ? savedGames : null });
 
-    // <<< LOG: Inputs for aggregate calculation >>>
-    console.log('[Stats Aggregate] Inputs:', {
-        activeTab,
-        selectedSeasonIdFilter,
-        selectedTournamentIdFilter,
-        savedGamesKeys: Object.keys(savedGames || {}),
-    });
-
     // Initialize stats map - MODIFIED: Initialize differently based on tab
     const statsMap: { [key: string]: PlayerStatRow } = {};
     let relevantGameEvents: GameEvent[] = [];
@@ -322,15 +314,9 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
         return false; // Default case, should not happen
       });
 
-      // <<< LOG: Result of game filtering >>>
-      console.log('[Stats Aggregate] Filtered processedGameIds:', processedGameIds);
-
       // Aggregate views: Build statsMap from players across ALL relevant games first
-      console.log('[Stats Aggregate] Initializing statsMap for aggregate view...'); // <<< LOG 1
       processedGameIds.forEach(gameId => {
           const game: SavedGame | undefined = savedGames?.[gameId];
-          // <<< ADD LOG to inspect game object >>>
-          console.log(`[Stats Aggregate] Checking game: ${gameId}`, { gameExists: !!game, hasAvailablePlayers: !!game?.availablePlayers, playerCount: game?.availablePlayers?.length });
           game?.availablePlayers?.forEach((playerInGame: Player) => {
               if (!statsMap[playerInGame.id]) {
                   // Add player to map if not already present
@@ -345,7 +331,6 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
               }
           });
       });
-      console.log('[Stats Aggregate] Populated statsMap:', JSON.parse(JSON.stringify(statsMap))); // <<< LOG 2 (Deep copy for logging)
 
       // Collect events from the filtered games
       relevantGameEvents = processedGameIds.flatMap(id => (savedGames?.[id] as SavedGame)?.gameEvents || []); // USE TYPE ASSERTION
@@ -374,34 +359,22 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
     // Process relevant events
     relevantGameEvents.forEach(event => {
       if (event.type === 'goal') {
-        // <<< LOG 3: Log each goal event
-        console.log(`[Stats Aggregate] Processing event: ${event.id}, type: ${event.type}, scorer: ${event.scorerId}, assister: ${event.assisterId}`);
         if (event.scorerId && statsMap[event.scorerId]) {
-          // <<< LOG 4: Check if scorer found
-          console.log(`[Stats Aggregate] Scorer ${event.scorerId} FOUND in statsMap. Incrementing goals.`);
           statsMap[event.scorerId].goals = (statsMap[event.scorerId].goals || 0) + 1;
           statsMap[event.scorerId].totalScore = (statsMap[event.scorerId].totalScore || 0) + 1;
         } else if (event.scorerId) {
-            // <<< LOG 5: Scorer not found
-            console.log(`[Stats Aggregate] Scorer ${event.scorerId} NOT FOUND in statsMap.`);
         }
         if (event.assisterId && statsMap[event.assisterId]) {
-          // <<< LOG 6: Check if assister found
-          console.log(`[Stats Aggregate] Assister ${event.assisterId} FOUND in statsMap. Incrementing assists.`);
           statsMap[event.assisterId].assists = (statsMap[event.assisterId].assists || 0) + 1;
           statsMap[event.assisterId].totalScore = (statsMap[event.assisterId].totalScore || 0) + 1;
         } else if (event.assisterId) {
-            // <<< LOG 7: Assister not found
-            console.log(`[Stats Aggregate] Assister ${event.assisterId} NOT FOUND in statsMap.`);
         }
       }
       // Add calculations for other stats if needed
     });
 
-    console.log("[Stats Aggregate] Final statsMap before filter/sort:", JSON.parse(JSON.stringify(statsMap))); // <<< LOG 8
-
     // Filter and sort
-    let filteredAndSortedStats = Object.values(statsMap)
+    const filteredAndSortedStats = Object.values(statsMap)
       .filter(player => player.name.toLowerCase().includes(filterText.toLowerCase()));
 
     // Apply sorting
@@ -446,7 +419,6 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
       });
     }
 
-    console.log("Calculated Player Stats:", filteredAndSortedStats);
     // Return both stats and the processed game IDs
     return { stats: filteredAndSortedStats, gameIds: processedGameIds };
 

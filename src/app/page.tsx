@@ -485,6 +485,7 @@ export default function Home() {
     console.log('Initial load complete. isLoaded set to true.');
 
   // Ensure this runs only ONCE on mount by using an empty dependency array
+  // eslint-disable-next-line react-hooks/exhaustive-deps 
   }, []);
 
   // --- Effect to load game state when currentGameId changes or savedGames updates ---
@@ -636,7 +637,7 @@ export default function Home() {
     }
     // Dependencies: Include all state variables that are part of the saved snapshot
   }, [isLoaded, currentGameId,
-      playersOnField, opponents, drawings, // REMOVED: availablePlayers,
+      playersOnField, opponents, drawings, availablePlayers, // <<< ADD availablePlayers
       showPlayerNames, teamName,
       gameEvents, opponentName, gameDate, homeScore, awayScore, gameNotes,
       numberOfPeriods, periodDurationMinutes, // ADDED back dependencies

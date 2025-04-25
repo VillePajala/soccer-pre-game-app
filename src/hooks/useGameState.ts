@@ -186,7 +186,7 @@ export function useGameState({ initialState, saveStateToHistory, masterRosterKey
         setPlayersOnField([...updatedOnField]); // Use spread for safety
         console.log('[useGameState:handleToggleGoalie] State setters called.');
         saveStateToHistory({ playersOnField: updatedOnField });
-    }, [availablePlayers, playersOnField, saveStateToHistory, masterRosterKey]);
+    }, [availablePlayers, playersOnField, saveStateToHistory]);
 
     // ... (more handlers will be moved here later)
 
