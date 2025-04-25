@@ -740,128 +740,130 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
             {/* Make the table container scrollable horizontally if needed */}
             <div className="max-h-60 overflow-y-auto overflow-x-auto pr-2 scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-900/50">
               {sortedEvents.length > 0 ? (
-                <table className="w-full text-sm text-left table-fixed"> {/* Added table-layout: fixed */}<thead className="text-xs text-slate-400 uppercase bg-slate-700/50 sticky top-0 z-10">
-                        <tr>
-                      <th scope="col" className="px-3 py-2">{t('gameSettingsModal.logTime', 'Time')}</th>
-                      <th scope="col" className="px-3 py-2">{t('gameSettingsModal.logType', 'Type')}</th>
-                      <th scope="col" className="px-3 py-2">{t('gameSettingsModal.logScorer', 'Scorer')}</th>
-                      <th scope="col" className="px-3 py-2">{t('gameSettingsModal.logAssister', 'Assister')}</th>
-                      <th scope="col" className="px-3 py-2 text-right">{t('common.actions', 'Actions')}</th>
-                        </tr>
-                    </thead>
-                  <tbody className="text-slate-200">
-                    {sortedEvents.map((event) => {
-                      const isEditing = editingGoalId === event.id;
-                      const scorer = event.type === 'goal' ? availablePlayers.find(p => p.id === event.scorerId) : null;
-                      const assister = event.type === 'goal' ? availablePlayers.find(p => p.id === event.assisterId) : null;
-                      const eventTypeDisplay = event.type === 'goal'
-                          ? t('gameSettingsModal.logTypeGoal', 'Goal')
-                          : t('gameSettingsModal.logTypeOpponentGoal', 'Opponent Goal');
+                <>
+                  <table className="w-full text-sm text-left table-fixed"> {/* Added table-layout: fixed */}<thead className="text-xs text-slate-400 uppercase bg-slate-700/50 sticky top-0 z-10">
+                      <tr>
+                    <th scope="col" className="px-3 py-2">{t('gameSettingsModal.logTime', 'Time')}</th>
+                    <th scope="col" className="px-3 py-2">{t('gameSettingsModal.logType', 'Type')}</th>
+                    <th scope="col" className="px-3 py-2">{t('gameSettingsModal.logScorer', 'Scorer')}</th>
+                    <th scope="col" className="px-3 py-2">{t('gameSettingsModal.logAssister', 'Assister')}</th>
+                    <th scope="col" className="px-3 py-2 text-right">{t('common.actions', 'Actions')}</th>
+                      </tr>
+                  </thead>
+                <tbody className="text-slate-200">
+                  {sortedEvents.map((event) => {
+                    const isEditing = editingGoalId === event.id;
+                    const scorer = event.type === 'goal' ? availablePlayers.find(p => p.id === event.scorerId) : null;
+                    const assister = event.type === 'goal' ? availablePlayers.find(p => p.id === event.assisterId) : null;
+                    const eventTypeDisplay = event.type === 'goal'
+                        ? t('gameSettingsModal.logTypeGoal', 'Goal')
+                        : t('gameSettingsModal.logTypeOpponentGoal', 'Opponent Goal');
 
-                                return (
-                        <tr key={event.id} className={`border-b border-slate-700 ${isEditing ? 'bg-slate-700/60' : 'hover:bg-slate-700/40'}`}>
-                          {/* Time Column */}
-                          <td className="px-3 py-2 whitespace-nowrap">
-                            {isEditing ? (
-                              <input
-                                ref={goalTimeInputRef}
-                                type="text" // Use text to allow MM:SS format
-                                value={editGoalTime}
-                                onChange={(e) => setEditGoalTime(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' ? handleSaveGoal(event.id) : e.key === 'Escape' ? handleCancelEditGoal() : null}
-                                className={`${editInputStyle} w-16 px-1 py-0.5 text-xs`} /* Smaller input for table */ 
-                                placeholder="MM:SS"
-                              />
-                            ) : (
-                              formatTime(event.time)
-                            )}
-                          </td>
-                          {/* Type Column */}
-                          <td className="px-3 py-2"><span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${event.type === 'goal' ? 'bg-green-700/70 text-green-100' : 'bg-red-700/70 text-red-100'}`}>{eventTypeDisplay}</span></td>
-                          {/* Scorer Column */}
-                          <td className="px-3 py-2">
-                            {isEditing && event.type === 'goal' ? (
-                              <select
-                                value={editGoalScorerId}
-                                onChange={(e) => setEditGoalScorerId(e.target.value)}
-                                className={`${editSelectStyle} py-0.5 text-xs max-w-[150px]`} /* Smaller select */ 
+                              return (
+                      <tr key={event.id} className={`border-b border-slate-700 ${isEditing ? 'bg-slate-700/60' : 'hover:bg-slate-700/40'}`}>
+                        {/* Time Column */}
+                        <td className="px-3 py-2 whitespace-nowrap">
+                          {isEditing ? (
+                            <input
+                              ref={goalTimeInputRef}
+                              type="text" // Use text to allow MM:SS format
+                              value={editGoalTime}
+                              onChange={(e) => setEditGoalTime(e.target.value)}
+                              onKeyDown={(e) => e.key === 'Enter' ? handleSaveGoal(event.id) : e.key === 'Escape' ? handleCancelEditGoal() : null}
+                              className={`${editInputStyle} w-16 px-1 py-0.5 text-xs`} /* Smaller input for table */ 
+                              placeholder="MM:SS"
+                            />
+                          ) : (
+                            formatTime(event.time)
+                          )}
+                        </td>
+                        {/* Type Column */}
+                        <td className="px-3 py-2"><span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${event.type === 'goal' ? 'bg-green-700/70 text-green-100' : 'bg-red-700/70 text-red-100'}`}>{eventTypeDisplay}</span></td>
+                        {/* Scorer Column */}
+                        <td className="px-3 py-2">
+                          {isEditing && event.type === 'goal' ? (
+                            <select
+                              value={editGoalScorerId}
+                              onChange={(e) => setEditGoalScorerId(e.target.value)}
+                              className={`${editSelectStyle} py-0.5 text-xs max-w-[150px]`} /* Smaller select */ 
+                            >
+                              <option value="">{t('gameSettingsModal.selectScorer', 'Select Scorer...')}</option>
+                              {availablePlayers.sort((a,b) => a.name.localeCompare(b.name)).map(p => <option key={p.id} value={p.id}>{p.name}</option>)} 
+                            </select>
+                          ) : event.type === 'goal' ? (
+                            scorer?.name || t('gameSettingsModal.unknownPlayer', 'Unknown Player')
+                          ) : (
+                            opponentName // Show opponent name for their goals
+                          )}
+                        </td>
+                        {/* Assister Column */}
+                        <td className="px-3 py-2">
+                          {isEditing && event.type === 'goal' ? (
+                            <select
+                              value={editGoalAssisterId || ''}
+                              onChange={(e) => setEditGoalAssisterId(e.target.value || undefined)}
+                              className={`${editSelectStyle} py-0.5 text-xs max-w-[150px]`} /* Smaller select */ 
+                            >
+                              <option value="">{t('gameSettingsModal.selectAssister', 'Select Assister (Optional)...')}</option>
+                              {availablePlayers.filter(p => p.id !== editGoalScorerId).sort((a,b) => a.name.localeCompare(b.name)).map(p => <option key={p.id} value={p.id}>{p.name}</option>)} 
+                            </select>
+                          ) : (
+                            assister?.name || ''
+                          )}
+                        </td>
+                        {/* Actions Column */}
+                        <td className="px-3 py-2 text-right">
+                          {isEditing ? (
+                            <div className="flex items-center justify-end space-x-2"> 
+                              <button
+                                onClick={() => handleSaveGoal(event.id)}
+                                className="text-green-400 hover:text-green-300"
+                                title={t('common.save', 'Save')}
                               >
-                                <option value="">{t('gameSettingsModal.selectScorer', 'Select Scorer...')}</option>
-                                {availablePlayers.sort((a,b) => a.name.localeCompare(b.name)).map(p => <option key={p.id} value={p.id}>{p.name}</option>)} 
-                              </select>
-                            ) : event.type === 'goal' ? (
-                              scorer?.name || t('gameSettingsModal.unknownPlayer', 'Unknown Player')
-                            ) : (
-                              opponentName // Show opponent name for their goals
-                            )}
-                          </td>
-                          {/* Assister Column */}
-                          <td className="px-3 py-2">
-                            {isEditing && event.type === 'goal' ? (
-                              <select
-                                value={editGoalAssisterId || ''}
-                                onChange={(e) => setEditGoalAssisterId(e.target.value || undefined)}
-                                className={`${editSelectStyle} py-0.5 text-xs max-w-[150px]`} /* Smaller select */ 
+                                <FaSave size={14}/>
+                              </button>
+                              <button
+                                onClick={handleCancelEditGoal}
+                                className="text-slate-400 hover:text-slate-300"
+                                title={t('common.cancel', 'Cancel')}
                               >
-                                <option value="">{t('gameSettingsModal.selectAssister', 'Select Assister (Optional)...')}</option>
-                                {availablePlayers.filter(p => p.id !== editGoalScorerId).sort((a,b) => a.name.localeCompare(b.name)).map(p => <option key={p.id} value={p.id}>{p.name}</option>)} 
-                              </select>
-                            ) : (
-                              assister?.name || ''
-                            )}
-                          </td>
-                          {/* Actions Column */}
-                          <td className="px-3 py-2 text-right">
-                            {isEditing ? (
-                              <div className="flex items-center justify-end space-x-2"> 
-                                <button
-                                  onClick={() => handleSaveGoal(event.id)}
-                                  className="text-green-400 hover:text-green-300"
-                                  title={t('common.save', 'Save')}
-                                >
-                                  <FaSave size={14}/>
-                                </button>
-                                <button
-                                  onClick={handleCancelEditGoal}
-                                  className="text-slate-400 hover:text-slate-300"
-                                  title={t('common.cancel', 'Cancel')}
-                                >
-                                  <FaTimes size={14}/>
-                                </button>
-                                                    </div>
-                                                ) : (
-                              <div className="flex items-center justify-end space-x-2"> 
-                                {event.type === 'goal' && ( // Only allow editing player goals for now
-                                    <button
-                                      onClick={() => handleEditGoal(event)}
-                                      className="text-slate-400 hover:text-indigo-400"
-                                      title={t('common.edit', 'Edit')}
-                                      disabled={!!editingGoalId} // Disable if another edit is active
-                                  >
-                                      <FaEdit size={14}/>
-                                  </button>
-                                )}
-                                {onDeleteGameEvent && ( // Conditionally render delete button
-                                              <button 
-                                    onClick={() => handleDeleteGoal(event.id)}
-                                    className="text-slate-400 hover:text-red-500"
-                                    title={t('common.delete', 'Delete')}
+                                <FaTimes size={14}/>
+                              </button>
+                                                  </div>
+                                              ) : (
+                            <div className="flex items-center justify-end space-x-2"> 
+                              {event.type === 'goal' && ( // Only allow editing player goals for now
+                                  <button
+                                    onClick={() => handleEditGoal(event)}
+                                    className="text-slate-400 hover:text-indigo-400"
+                                    title={t('common.edit', 'Edit')}
                                     disabled={!!editingGoalId} // Disable if another edit is active
-                                  >
-                                    <FaTrashAlt size={13}/>
-                                              </button>
-                                )}
-                              </div>
-                                            )}
-                                        </td>
-                                    </tr>
-                                ); 
-                    })}
-                    </tbody>
-                </table>
-              ) : (
-                <p className="text-center text-slate-500 italic py-4">{t('gameSettingsModal.noEvents', 'No goals logged yet.')}</p>
-              )}
+                                >
+                                    <FaEdit size={14}/>
+                                </button>
+                              )}
+                              {onDeleteGameEvent && ( // Conditionally render delete button
+                                            <button 
+                                  onClick={() => handleDeleteGoal(event.id)}
+                                  className="text-slate-400 hover:text-red-500"
+                                  title={t('common.delete', 'Delete')}
+                                  disabled={!!editingGoalId} // Disable if another edit is active
+                                >
+                                  <FaTrashAlt size={13}/>
+                                            </button>
+                              )}
+                            </div>
+                                          )}
+                                      </td>
+                                  </tr>
+                              ); 
+                  })}
+                  </tbody>
+              </table>
+              </>
+            ) : (
+              <p className="text-center text-slate-500 italic py-4">{t('gameSettingsModal.noEvents', 'No goals logged yet.')}</p>
+            )}
             </div>
           </div>
         </div> {/* End Scrollable Content Area */} 
