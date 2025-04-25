@@ -283,20 +283,20 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
             // --- Add Player Form - Apply styles ---
             <div className="p-3 rounded-md bg-slate-700/50 border border-slate-600 space-y-2">
                {/* Row 1: Icon, Name/Nickname, Jersey */}
-               <div className="flex items-start space-x-3">
+               <div className="flex items-start space-x-2 flex-wrap sm:flex-nowrap">
                   {/* Placeholder Icon */}
-                  <div className="p-1.5 rounded text-slate-500 mt-1">
+                  <div className="p-1.5 rounded text-slate-500 mt-1 flex-shrink-0">
                       <HiOutlineUserCircle className="w-5 h-5" />
                   </div>
                   {/* Name & Nickname Inputs */}
-                  <div className="flex flex-col space-y-1 flex-grow">
+                  <div className="flex flex-col space-y-1 flex-grow min-w-0 mr-2">
                       <input
                         type="text"
                         name="name"
                         placeholder={t('rosterSettingsModal.playerNamePlaceholder', 'Player Name') || 'Player Name'}
                         value={newPlayerData.name}
                         onChange={handleNewPlayerInputChange}
-                        className="bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 text-sm w-full focus:ring-indigo-500 focus:border-indigo-500 outline-none" // Style match
+                        className="w-full bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500 outline-none" 
                         autoFocus
                       />
                       <input
@@ -305,7 +305,7 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                         placeholder={t('rosterSettingsModal.nicknamePlaceholder', 'Nickname (for disc)') || 'Nickname (for disc)'}
                         value={newPlayerData.nickname}
                         onChange={handleNewPlayerInputChange}
-                        className="bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 text-sm w-full focus:ring-indigo-500 focus:border-indigo-500 outline-none" // Style match
+                        className="w-full bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500 outline-none" 
                       />
                   </div>
                   {/* Jersey Input */}
@@ -315,7 +315,7 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                     placeholder="#"
                     value={newPlayerData.jerseyNumber}
                     onChange={handleNewPlayerInputChange}
-                    className="bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 w-16 text-sm text-center focus:ring-indigo-500 focus:border-indigo-500 outline-none" // Style match
+                    className="bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 w-14 text-sm text-center focus:ring-indigo-500 focus:border-indigo-500 outline-none flex-shrink-0" 
                     maxLength={3}
                   />
                 </div>
@@ -381,51 +381,50 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                     className={`p-2 rounded-md border ${editingPlayerId === player.id ? 'bg-slate-700 border-indigo-500' : 'bg-slate-800/60 border-slate-600 hover:border-slate-500'}`}
                   >
                     {editingPlayerId === player.id ? (
-                      // --- Editing View - Apply GameStatsModal input styles --- 
+                      // --- Editing View - Apply GameStatsModal input styles ---
                       <div className="flex flex-col space-y-2">
-                        {/* Row 1: Goalie, Name/Nickname, Jersey */} 
-                        <div className="flex items-start space-x-3"> 
-                          {/* Goalie Toggle Button */}
+                        {/* Row 1: Goalie, Name/Nickname, Jersey */}
+                        <div className="flex items-start space-x-2 flex-wrap sm:flex-nowrap">
+                          {/* Goalie Toggle Button - Keep flex-shrink-0 */}
                           <button
                               title={player.isGoalie ? t('rosterSettingsModal.unsetGoalie', 'Unset Goalie') : t('rosterSettingsModal.setGoalie', 'Set Goalie')}
                               onClick={() => onToggleGoalie(player.id)}
-                              className={`p-1 rounded text-xs transition-all duration-150 flex-shrink-0 flex items-center justify-center mt-1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-700 ${ 
+                              className={`p-1 rounded text-xs transition-all duration-150 flex-shrink-0 flex items-center justify-center mt-1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-700 ${
                                   player.isGoalie
                                       ? 'bg-amber-500 text-white shadow-md hover:bg-amber-600 focus:ring-amber-400'
-                                      : 'border border-slate-600 text-slate-400 hover:border-amber-500 hover:text-amber-500 focus:ring-amber-500' 
+                                      : 'border border-slate-600 text-slate-400 hover:border-amber-500 hover:text-amber-500 focus:ring-amber-500'
                               }`}
                               style={{ minWidth: '24px', height: '24px' }}
                           >
                             <span className={`font-bold text-[10px] leading-none ${player.isGoalie ? 'text-white' : 'text-amber-500 group-hover:text-amber-400'}`}>G</span>
                           </button>
-                          {/* Name & Nickname Inputs */} 
-                          <div className="flex flex-col space-y-1 flex-grow">
+                          {/* Name & Nickname Inputs - Ensure it can shrink and doesn't push jersey */}
+                          <div className="flex flex-col space-y-1 flex-grow flex-shrink min-w-0">
                               <input
                                 type="text"
                                 name="name"
                                 value={editPlayerData.name}
                                 onChange={handleEditInputChange}
-                                className="flex-grow bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500 outline-none mr-2"
+                                className="w-full bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                                 placeholder={t('rosterSettingsModal.playerNamePlaceholder', 'Full Name') || 'Full Name'}
                               />
-                              {/* ADD Nickname Input */}
                               <input
                                 type="text"
                                 name="nickname"
                                 value={editPlayerData.nickname}
                                 onChange={handleEditInputChange}
-                                className="flex-grow bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500 outline-none mr-2"
+                                className="w-full bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                                 placeholder={t('rosterSettingsModal.nicknamePlaceholder', 'Nickname (Display Name)') || 'Nickname (Display Name)'}
                               />
                           </div>
-                          {/* Jersey Input */}
+                          {/* Jersey Input - Keep flex-shrink-0 and defined width */}
                           <input
                             type="text"
                             name="jerseyNumber"
                             placeholder="#"
                             value={editPlayerData.jerseyNumber}
                             onChange={handleEditInputChange}
-                            className="bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 w-16 text-sm text-center focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                            className="bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 w-14 text-sm text-center focus:ring-indigo-500 focus:border-indigo-500 outline-none flex-shrink-0"
                             maxLength={3}
                           />
                         </div>
