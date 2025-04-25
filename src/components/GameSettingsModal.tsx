@@ -496,24 +496,24 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                   <FaMapMarkerAlt className="mr-1.5 text-slate-500" size={12} />
                   {t('gameSettingsModal.location', 'Location')}:
                 </span>
-                   {inlineEditingField === 'location' ? (
-                    <input 
-                        ref={locationInputRef}
-                      type="text"
+                {inlineEditingField === 'location' ? (
+                  <input 
+                    ref={locationInputRef}
+                    type="text"
                         value={inlineEditValue}
                         onChange={(e) => setInlineEditValue(e.target.value)}
                       onKeyDown={handleInlineEditKeyDown}
                         onBlur={handleConfirmInlineEdit} // CONFIRM on blur
                         className={editInputStyle} /* Use defined style */
                         placeholder={t('common.optional', 'Optional')}
-                      />
-                  ) : (
+                  />
+                ) : (
                       <span className={`${valueStyle} p-1.5 rounded hover:bg-slate-700/50 cursor-pointer block truncate`} title={gameLocation || t('common.notSet', 'Not Set')} onClick={() => handleStartInlineEdit('location')}>
                         {gameLocation || <span className="text-slate-500 italic">{t('common.notSet', 'Not Set')}</span>}
                   </span>
                 )}
               </div>
-
+              
               {/* Game Time - Separate Inputs (Apply consistent input styles) */}
               <div className={gridItemStyle}>
                 <span className={labelStyle}>
@@ -521,7 +521,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                   {t('gameSettingsModal.time', 'Time')}:
                 </span>
                    <span className="flex items-center space-x-1 mt-1"> {/* Added spacing & margin */} 
-                  <input 
+                    <input 
                           type="number"
                           min="0"
                           max="23"
@@ -532,7 +532,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                           placeholder={t('common.hourShort', 'HH')}
                       />
                       <span className="text-slate-400">:</span>
-                      <input
+                    <input 
                           type="number"
                           min="0"
                           max="59"
@@ -549,32 +549,32 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
               <div className={gridItemStyle}>
                 <span className={labelStyle}>{t('common.score', 'Score')}:</span>
                 <span className={valueStyle}>{teamName} {homeScore} - {awayScore} {opponentName}</span>
-              </div>
+                </div>
 
               {/* Periods (Use buttons like StatsModal?) - Let's use buttons for consistency */}
               <div className={gridItemStyle}>
                   <span className={labelStyle}>{t('gameSettingsModal.periods', 'Periods')}:</span>
-                  <div className="flex items-center space-x-2 mt-1"> 
-                      {[1, 2].map(num => (
-                          <button
-                              key={num}
+                <div className="flex items-center space-x-2 mt-1">
+                  {[1, 2].map(num => (
+                    <button 
+                      key={num}
                               onClick={() => onNumPeriodsChange(num as 1 | 2)}
                               className={`px-3 py-1 rounded text-sm transition-colors ${numPeriods === num ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
                           >
-                              {num}
-                          </button>
-                      ))}
-                  </div>
+                      {num}
+                    </button>
+                  ))}
+                </div>
               </div>
 
                {/* Period Duration */}
               <div className={gridItemStyle}>
                   <span className={labelStyle}>{t('gameSettingsModal.duration', 'Duration')}:</span>
-                   {inlineEditingField === 'duration' ? (
+                {inlineEditingField === 'duration' ? (
                       <div className="flex items-center">
-                        <input
-                          ref={durationInputRef}
-                          type="number"
+                  <input 
+                    ref={durationInputRef}
+                    type="number"
                           min="1"
                           step="1"
                           value={inlineEditValue} // Use temporary edit value
@@ -595,7 +595,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
               {/* Fair Play Card */}
               <div className={`${gridItemStyle} md:col-span-2`}> {/* Span across columns */} 
                    <span className={labelStyle}>{t('gameSettingsModal.fairPlayCard', 'Fair Play')}:</span>
-                  <select
+              <select
                     value={fairPlayPlayerId || ''}
                     onChange={(e) => onAwardFairPlayCard(e.target.value || null)}
                     className={`${editSelectStyle} mt-1`} /* Use defined style */
@@ -604,10 +604,10 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                     {availablePlayers.sort((a, b) => a.name.localeCompare(b.name)).map(p => (
                       <option key={p.id} value={p.id}>
                         {p.name} {p.jerseyNumber ? `(#${p.jerseyNumber})` : ''}
-                      </option>
-                    ))}
-                  </select>
-              </div>
+                    </option>
+                  ))}
+              </select>
+            </div>
 
               {/* Season/Tournament Association */}
               <div className={`${gridItemStyle} md:col-span-2 pt-3 mt-2 border-t border-slate-700`}> {/* Span, add padding/border */}
@@ -663,7 +663,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                     >
                       {t('gameSettingsModal.associationTournament', 'Tournament')}
                     </button>
-                  </div>
+          </div>
               {associationType === 'season' && (
                   <select 
                       value={seasonId || ''} /* Default to empty string */ 
@@ -736,19 +736,20 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
 
           {/* Event Log Section - Apply Card Styles */}
           <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-700">
-            <h3 className="text-lg font-semibold text-slate-200 mb-3">{t('gameSettingsModal.eventLog', 'Event Log')}</h3>
+            <h3 className="text-lg font-semibold text-slate-200 mb-3">{t('gameSettingsModal.eventLog', 'Tapahtumaloki')}</h3>
             {/* Make the table container scrollable horizontally if needed */}
             <div className="max-h-60 overflow-y-auto overflow-x-auto pr-2 scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-900/50">
               {sortedEvents.length > 0 ? (
-                  <table className="w-full text-sm text-left table-fixed"> {/* Added table-layout: fixed */}<thead className="text-xs text-slate-400 uppercase bg-slate-700/50 sticky top-0 z-10">
+                  <table className="w-full text-sm text-left table-fixed">
+                     <thead className="text-xs text-slate-400 uppercase bg-slate-700/50 sticky top-0 z-10">
                       <tr>
-                    <th scope="col" className="px-3 py-2">{t('gameSettingsModal.logTime', 'Time')}</th>
-                    <th scope="col" className="px-3 py-2">{t('gameSettingsModal.logType', 'Type')}</th>
+                    <th scope="col" className="px-3 py-2">{t('gameSettingsModal.logTime', 'Aika')}</th>
+                    <th scope="col" className="px-3 py-2">{t('gameSettingsModal.logType', 'Tyyppi')}</th>
                     <th scope="col" className="px-3 py-2">{t('gameSettingsModal.logScorer', 'Scorer')}</th>
                     <th scope="col" className="px-3 py-2">{t('gameSettingsModal.logAssister', 'Assister')}</th>
                     <th scope="col" className="px-3 py-2 text-right">{t('common.actions', 'Actions')}</th>
-                      </tr>
-                  </thead>
+                        </tr>
+                    </thead>
                 <tbody className="text-slate-200">
                   {sortedEvents.map((event) => {
                     const isEditing = editingGoalId === event.id;
@@ -758,7 +759,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                         ? t('gameSettingsModal.logTypeGoal', 'Goal')
                         : t('gameSettingsModal.logTypeOpponentGoal', 'Opponent Goal');
 
-                              return (
+                                return (
                       <tr key={event.id} className={`border-b border-slate-700 ${isEditing ? 'bg-slate-700/60' : 'hover:bg-slate-700/40'}`}>
                         {/* Time Column */}
                         <td className="px-3 py-2 whitespace-nowrap">
@@ -828,8 +829,8 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                               >
                                 <FaTimes size={14}/>
                               </button>
-                                                  </div>
-                                              ) : (
+                                                    </div>
+                                                ) : (
                             <div className="flex items-center justify-end space-x-2"> 
                               {event.type === 'goal' && ( // Only allow editing player goals for now
                                   <button
@@ -842,23 +843,23 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                                 </button>
                               )}
                               {onDeleteGameEvent && ( // Conditionally render delete button
-                                            <button 
+                                              <button 
                                   onClick={() => handleDeleteGoal(event.id)}
                                   className="text-slate-400 hover:text-red-500"
                                   title={t('common.delete', 'Delete')}
                                   disabled={!!editingGoalId} // Disable if another edit is active
                                 >
                                   <FaTrashAlt size={13}/>
-                                            </button>
+                                              </button>
                               )}
                             </div>
-                                          )}
-                                      </td>
-                                  </tr>
-                              ); 
+                                            )}
+                                        </td>
+                                    </tr>
+                                ); 
                   })}
-                  </tbody>
-              </table>
+                    </tbody>
+                </table>
             ) : (
               <p className="text-center text-slate-500 italic py-4">{t('gameSettingsModal.noEvents', 'No goals logged yet.')}</p>
             )}

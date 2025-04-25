@@ -255,7 +255,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
                          <HiOutlineFolderOpen className={menuIconSize} /> {t('controlBar.loadGame', 'Load Game...')}
                        </button>
                        <button onClick={handleStartNewGame} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600/75">
-                         <HiOutlineArrowPath className={menuIconSize} /> {t('controlBar.newGame', 'New Game')}
+                         <HiOutlineArrowPath className={menuIconSize} /> {t('controlBar.newGameButton', 'New Game')}
                        </button>
                      </div>
                      
@@ -265,7 +265,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
                      {/* Group 2: Roster & Settings */}
                      <div className="py-1">
                        <button onClick={wrapHandler(onOpenGameSettingsModal)} className={`w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600/75 ${!isGameLoaded ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={!isGameLoaded}>
-                         <HiOutlineAdjustmentsHorizontal className={menuIconSize} /> {t('controlBar.gameSettings', 'Game Settings')}
+                         <HiOutlineAdjustmentsHorizontal className={menuIconSize} /> {t('controlBar.gameSettingsButton', 'Game Settings')}
                        </button>
                        <button onClick={wrapHandler(onOpenRosterModal)} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600/75">
                          <HiOutlineUsers className={menuIconSize} /> {t('controlBar.manageRoster', 'Manage Roster')}

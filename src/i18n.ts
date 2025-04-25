@@ -194,6 +194,8 @@ fiTranslations.controlBar.gameSettingsTooltip = "Peliasetukset";
 fiTranslations.controlBar.exportData = "Vie Tiedot";
 fiTranslations.controlBar.enterFullscreen = "Koko Näyttö";
 fiTranslations.controlBar.exitFullscreen = "Poistu Koko Näytöltä";
+fiTranslations.controlBar.newGameButton = "Uusi Peli";
+fiTranslations.controlBar.gameSettingsButton = "Otteluasetukset";
 
 // Add common namespace if missing
 if (!fiTranslations.common) {
@@ -364,6 +366,7 @@ enTranslations.gameStatsModal.exportCsvButton_season = 'Export Season CSV';
 enTranslations.gameStatsModal.exportCsvButton_tournament = 'Export Tournament CSV';
 enTranslations.gameStatsModal.exportCsvButton_all = 'Export All CSV';
 enTranslations.gameStatsModal.titleOverall = 'Overall Stats';
+enTranslations.gameStatsModal.editNotes = 'Edit Notes';
 
 // Add control bar menu translations for English
 if (!enTranslations.controlBar) {
@@ -388,6 +391,8 @@ enTranslations.controlBar.gameSettingsTooltip = "Game Settings";
 enTranslations.controlBar.exportData = "Export Data";
 enTranslations.controlBar.enterFullscreen = "Enter Fullscreen";
 enTranslations.controlBar.exitFullscreen = "Exit Fullscreen";
+enTranslations.controlBar.newGameButton = "New Game";
+enTranslations.controlBar.gameSettingsButton = "Game Settings";
 
 // Add common namespace if missing
 if (!enTranslations.common) {
@@ -487,33 +492,70 @@ fiTranslations.gameSettingsModal.confirmDeleteEvent = "Haluatko varmasti poistaa
 fiTranslations.gameSettingsModal.invalidDuration = "Keston täytyy olla positiivinen luku.";
 fiTranslations.gameSettingsModal.locationPlaceholder = "Esim. Kaupunki, Kenttä";
 
+// <<< ADD MISSING GAME INFO LABELS >>>
+fiTranslations.gameSettingsModal.gameInfo = "Ottelun Tiedot";
+fiTranslations.gameSettingsModal.opponent = "Vastustaja";
+fiTranslations.gameSettingsModal.date = "Päivämäärä";
+fiTranslations.gameSettingsModal.location = "Paikka";
+fiTranslations.gameSettingsModal.time = "Aika";
+fiTranslations.gameSettingsModal.periods = "Jaksot"; // Key used in component
+fiTranslations.gameSettingsModal.duration = "Kesto"; // Key used in component
+fiTranslations.gameSettingsModal.fairPlayCard = "Fair Play"; // Key used in component
+// Add keys for association buttons/labels if they don't exist
+fiTranslations.gameSettingsModal.associationNone = "Ei Mikään";
+fiTranslations.gameSettingsModal.associationSeason = "Kausi/Sarja";
+fiTranslations.gameSettingsModal.associationTournament = "Turnaus";
+fiTranslations.gameSettingsModal.noneAwarded = "-- Ei Palkittu --"; // For Fair Play dropdown
+
+
+// <<< ADD MISSING GAME NOTES & EVENT LOG LABELS >>>
+fiTranslations.gameSettingsModal.notes = "Muistiinpanot"; // Title for Game Notes
+fiTranslations.gameSettingsModal.eventLog = "Tapahtumaloki"; // Title for Event Log
+fiTranslations.gameSettingsModal.logTime = "Aika"; // Event log header
+fiTranslations.gameSettingsModal.logType = "Tyyppi"; // Event log header
+fiTranslations.gameSettingsModal.logScorer = "Tekijä"; // Event log header (more general than Scorer)
+fiTranslations.gameSettingsModal.logAssister = "Syöttäjä"; // Event log header
+fiTranslations.gameSettingsModal.logTypeGoal = "Maali"; // Event type text
+fiTranslations.gameSettingsModal.logTypeOpponentGoal = "Vast. Maali"; // Event type text
+fiTranslations.gameSettingsModal.selectScorer = "Valitse Tekijä..."; // Dropdown placeholder
+fiTranslations.gameSettingsModal.selectAssister = "Valitse Syöttäjä (Valinnainen)..."; // Dropdown placeholder
+fiTranslations.gameSettingsModal.unknownPlayer = "Tuntematon Pelaaja"; // Fallback text
+
 // Ensure common namespace exists before adding key
 if (!fiTranslations.common) {
   fiTranslations.common = {};
 }
 fiTranslations.common.cancelEdit = "Peruuta"; 
 // ADD missing common keys used in GameSettingsModal labels with actual Finnish
-fiTranslations.common.opponent = "Vastustaja";
-fiTranslations.common.date = "Päivämäärä";
-fiTranslations.common.location = "Paikka";
-fiTranslations.common.time = "Aika";
-fiTranslations.common.home = "Koti";
-fiTranslations.common.away = "Vieras";
-fiTranslations.common.notSet = "Ei asetettu";
-fiTranslations.common.none = "Ei mikään";  // Add missing "None" translation
-fiTranslations.common.save = "Tallenna";
-fiTranslations.common.cancel = "Peruuta";
-fiTranslations.common.delete = "Poista";
-fiTranslations.common.close = "Sulje";
-fiTranslations.common.edit = "Muokkaa";
-fiTranslations.common.scorer = "Maalintekijä";
-fiTranslations.common.assist = "Syöttäjä";
-fiTranslations.common.selectPlayer = "Valitse pelaaja...";
-fiTranslations.common.noAssist = "Ei syöttäjää";
-fiTranslations.common.goal = "Maali";
-fiTranslations.common.opponentGoal = "Vast. Maali";
-fiTranslations.common.type = "Tyyppi";
-fiTranslations.common.saveError = "Virhe tallennettaessa muutoksia.";
+fiTranslations.common.opponent = "Vastustaja"; // Already exists
+fiTranslations.common.date = "Päivämäärä"; // Already exists
+fiTranslations.common.location = "Paikka"; // Already exists
+fiTranslations.common.time = "Aika"; // Already exists
+fiTranslations.common.home = "Koti"; // Already exists
+fiTranslations.common.away = "Vieras"; // Already exists
+fiTranslations.common.notSet = "Ei asetettu"; // Already exists
+fiTranslations.common.none = "Ei mikään";  // Already exists
+fiTranslations.common.save = "Tallenna"; // Already exists
+fiTranslations.common.cancel = "Peruuta"; // Already exists
+fiTranslations.common.delete = "Poista"; // Already exists
+fiTranslations.common.close = "Sulje"; // Already exists
+fiTranslations.common.edit = "Muokkaa"; // Already exists
+fiTranslations.common.scorer = "Maalintekijä"; // Already exists
+fiTranslations.common.assist = "Syöttäjä"; // Already exists
+fiTranslations.common.selectPlayer = "Valitse pelaaja..."; // Already exists
+fiTranslations.common.noAssist = "Ei syöttäjää"; // Already exists
+fiTranslations.common.goal = "Maali"; // Already exists
+fiTranslations.common.opponentGoal = "Vast. Maali"; // Already exists
+fiTranslations.common.type = "Tyyppi"; // Already exists
+fiTranslations.common.saveError = "Virhe tallennettaessa muutoksia."; // Already exists
+
+// <<< ADD MISSING COMMON LABELS >>>
+fiTranslations.common.score = "Tulos";
+fiTranslations.common.minutesShort = "min";
+fiTranslations.common.hourShort = "TT";
+fiTranslations.common.minuteShort = "MM";
+fiTranslations.common.optional = "(Valinnainen)";
+fiTranslations.common.actions = "Toiminnot"; // Event log header
 
 // Generate a cache-busting version number
 // const cacheVersion = new Date().getTime();
