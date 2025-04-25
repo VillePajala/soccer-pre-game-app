@@ -381,43 +381,45 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                     className={`p-2 rounded-md border ${editingPlayerId === player.id ? 'bg-slate-700 border-indigo-500' : 'bg-slate-800/60 border-slate-600 hover:border-slate-500'}`}
                   >
                     {editingPlayerId === player.id ? (
-                      // --- Editing View - Apply GameStatsModal input styles ---
+                      // --- Editing View - Apply GameStatsModal input styles --- 
                       <div className="flex flex-col space-y-2">
-                        {/* Row 1: Goalie, Name/Nickname, Jersey */}
-                        <div className="flex items-start space-x-2 flex-wrap sm:flex-nowrap">
-                          {/* Goalie Toggle Button - Keep flex-shrink-0 */}
+                        {/* Row 1: Goalie Button, Name Input */}
+                        <div className="flex items-center space-x-2">
+                          {/* Goalie Toggle Button */}
                           <button
                               title={player.isGoalie ? t('rosterSettingsModal.unsetGoalie', 'Unset Goalie') : t('rosterSettingsModal.setGoalie', 'Set Goalie')}
                               onClick={() => onToggleGoalie(player.id)}
-                              className={`p-1 rounded text-xs transition-all duration-150 flex-shrink-0 flex items-center justify-center mt-1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-700 ${
+                              className={`p-1 rounded text-xs transition-all duration-150 flex-shrink-0 flex items-center justify-center mt-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-700 ${ 
                                   player.isGoalie
                                       ? 'bg-amber-500 text-white shadow-md hover:bg-amber-600 focus:ring-amber-400'
-                                      : 'border border-slate-600 text-slate-400 hover:border-amber-500 hover:text-amber-500 focus:ring-amber-500'
+                                      : 'border border-slate-600 text-slate-400 hover:border-amber-500 hover:text-amber-500 focus:ring-amber-500' 
                               }`}
                               style={{ minWidth: '24px', height: '24px' }}
                           >
                             <span className={`font-bold text-[10px] leading-none ${player.isGoalie ? 'text-white' : 'text-amber-500 group-hover:text-amber-400'}`}>G</span>
                           </button>
-                          {/* Name & Nickname Inputs - Ensure it can shrink and doesn't push jersey */}
-                          <div className="flex flex-col space-y-1 flex-grow flex-shrink min-w-0">
-                              <input
-                                type="text"
-                                name="name"
-                                value={editPlayerData.name}
-                                onChange={handleEditInputChange}
-                                className="w-full bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                                placeholder={t('rosterSettingsModal.playerNamePlaceholder', 'Full Name') || 'Full Name'}
-                              />
-                              <input
-                                type="text"
-                                name="nickname"
-                                value={editPlayerData.nickname}
-                                onChange={handleEditInputChange}
-                                className="w-full bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                                placeholder={t('rosterSettingsModal.nicknamePlaceholder', 'Nickname (Display Name)') || 'Nickname (Display Name)'}
-                              />
-                          </div>
-                          {/* Jersey Input - Keep flex-shrink-0 and defined width */}
+                          {/* Name Input */}
+                          <input
+                            type="text"
+                            name="name"
+                            value={editPlayerData.name}
+                            onChange={handleEditInputChange}
+                            className="w-full bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                            placeholder={t('rosterSettingsModal.playerNamePlaceholder', 'Full Name') || 'Full Name'}
+                          />
+                        </div>
+                        {/* Row 2: Nickname Input, Jersey Input */}
+                        <div className="flex items-center space-x-2">
+                          {/* Nickname Input - Takes remaining space */}
+                          <input
+                            type="text"
+                            name="nickname"
+                            value={editPlayerData.nickname}
+                            onChange={handleEditInputChange}
+                            className="flex-grow min-w-0 bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                            placeholder={t('rosterSettingsModal.nicknamePlaceholder', 'Nickname (Display Name)') || 'Nickname (Display Name)'}
+                          />
+                          {/* Jersey Input - Fixed small width */}
                           <input
                             type="text"
                             name="jerseyNumber"
@@ -428,7 +430,7 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                             maxLength={3}
                           />
                         </div>
-                        {/* Notes Textarea */}
+                        {/* Row 3: Notes Textarea */}
                         <textarea
                             name="notes"
                             placeholder={t('rosterSettingsModal.notesPlaceholder', 'Player notes...') || 'Player notes...'}
@@ -437,7 +439,7 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                             className="bg-slate-600 border border-slate-500 text-slate-100 rounded px-2 py-1 w-full text-sm h-16 resize-none scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-700 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                             rows={2}
                           />
-                        {/* Action Buttons (Save/Cancel) - Use Icons */}
+                        {/* Row 4: Action Buttons (Save/Cancel) */}
                         <div className="flex justify-end space-x-2 pt-1">
                           <button onClick={() => handleSaveEdit(player.id)} className="text-green-500 hover:text-green-400 p-1.5 rounded hover:bg-slate-600" title={t('common.save', 'Save') || 'Save'}>
                             <HiOutlineCheck className="w-5 h-5" />
