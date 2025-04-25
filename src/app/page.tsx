@@ -481,8 +481,8 @@ export default function Home() {
     setIsLoaded(true);
     console.log('Initial load complete. isLoaded set to true.');
 
-  // ADD missing dependencies AGAIN
-    }, [setPlayersOnField, setOpponents, setDrawings, setAvailablePlayers]);
+  // ADD missing dependencies
+  }, [setPlayersOnField, setOpponents, setDrawings, setAvailablePlayers]);
 
   // *** ADDED: Central useEffect for loading state based on currentGameId ***
   useEffect(() => {
@@ -1648,7 +1648,7 @@ export default function Home() {
           return { name: player.name, goals, assists, totalScore, fairPlay: globalPlayer?.receivedFairPlayCard };
         })
         // REMOVED filter: .filter(p => p.totalScore > 0) // Show all players now
-        .sort((a: any, b: any) => b.totalScore - a.totalScore || b.goals - a.goals); // Sort by points, then goals
+        .sort((a, b) => b.totalScore - a.totalScore || b.goals - a.goals); // Sort by points, then goals
         
         if (playerStats && playerStats.length > 0) {
             playerStats.forEach(player => {
@@ -1825,7 +1825,7 @@ export default function Home() {
         return { name: player.name, goals, assists, totalScore, fairPlay: globalPlayer?.receivedFairPlayCard };
       })
       // REMOVED filter: .filter(p => p.totalScore > 0) // Show all players now
-      .sort((a: any, b: any) => b.totalScore - a.totalScore || b.goals - a.goals); // Sort by points, then goals
+      .sort((a, b) => b.totalScore - a.totalScore || b.goals - a.goals); // Sort by points, then goals
       
       if (playerStats && playerStats.length > 0) {
         playerStats.forEach(player => {
@@ -2089,7 +2089,7 @@ export default function Home() {
       // If user cancels the second confirmation, reset the flag
       setIsStartingNewGameAfterSave(false);
     }
-  }, [t, currentGameId, savedGames, handleOpenSaveGameModal]); // Dependencies
+  }, [t, currentGameId, savedGames, handleOpenSaveGameModal, setIsStartingNewGameAfterSave, setIsNewGameSetupModalOpen]); // Dependencies updated
   // ---- END MOVE handleStartNewGame UP ----
 
   // --- NEW: Quick Save Handler ---
@@ -2506,7 +2506,7 @@ export default function Home() {
     teamName,
     savedGames,
     availablePlayers, // Still need availablePlayers to derive selectedPlayerIds
-    initialState.subIntervalMinutes, // Explicitly depend on the default value used
+    // initialState.subIntervalMinutes, // Removing this dependency
     setSavedGames,
     setHistory,
     setHistoryIndex,

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaTimes, FaEdit, FaSave, FaTrashAlt, FaCalendarAlt, FaClock, FaMapMarkerAlt } from 'react-icons/fa';
 import { Player, GameEvent, Season, Tournament } from '@/app/page'; // Adjust path as needed
@@ -10,7 +10,6 @@ interface GameSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   // --- Data for the current game ---
-  currentGameId: string | null;
   teamName: string;
   opponentName: string;
   gameDate: string;
@@ -23,7 +22,7 @@ interface GameSettingsModalProps {
   awayScore: number;
   gameEvents: GameEvent[];
   availablePlayers: Player[];
-  selectedPlayerIds: string[];
+  selectedPlayerOptions: string[];
   // ADD: Period and Duration props
   numPeriods: number;
   periodDurationMinutes: number;
@@ -74,8 +73,6 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   onDeleteGameEvent,
   gameEvents,
   availablePlayers,
-  selectedPlayerIds,
-  currentGameId,
   seasonId,
   tournamentId,
   numPeriods,
@@ -84,6 +81,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   onPeriodDurationChange,
   onSeasonIdChange,
   onTournamentIdChange,
+  selectedPlayerOptions,
 }) => {
   console.log('[GameSettingsModal Render] Props received:', { seasonId, tournamentId });
   const { t } = useTranslation();
@@ -148,26 +146,18 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
 
   // ADD Effect to sync local time state with incoming prop (Conditionally)
   useEffect(() => {
-      const [propHour = '', propMinute = ''] = (gameTime || ':').split(':');
-      const formattedPropTime = `${propHour.padStart(2,'0')}:${propMinute.padStart(2,'0')}`;
-      const formattedLocalTime = `${localHour.padStart(2,'0')}:${localMinute.padStart(2,'0')}`;
-
-      // Only update local state if the prop represents a different VALID time
-      // or if the prop is empty and local isn't, or vice-versa
-      const isValidPropTime = /^([01]\d|2[0-3]):([0-5]\d)$/.test(formattedPropTime);
-      const isPropEmpty = propHour === '' && propMinute === '';
-      const isLocalEmpty = localHour === '' && localMinute === '';
-
-      if ((isValidPropTime || isPropEmpty) && formattedPropTime !== formattedLocalTime && !isLocalEmpty) {
-           console.log(`Syncing local time state from prop: ${propHour}:${propMinute}`); // Optional log
-           setLocalHour(propHour);
-           setLocalMinute(propMinute);
-      } else if (isPropEmpty && !isLocalEmpty) {
-           console.log(`Syncing local time state from prop (clearing): ${propHour}:${propMinute}`); // Optional log
-           setLocalHour('');
-           setLocalMinute('');
+    if (gameTime) {
+      const parts = gameTime.split(':');
+      if (parts.length === 2) {
+        setLocalHour(parts[0]);
+        setLocalMinute(parts[1]);
       }
-  // Depend only on gameTime prop to avoid loops caused by local state update
+    } else {
+      // Reset local state when gameTime is empty
+      setLocalHour('');
+      setLocalMinute('');
+    }
+  // Include all dependencies that this effect uses
   }, [gameTime]);
 
   // Focus goal time input (Keep this)
@@ -193,32 +183,6 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   }, [inlineEditingField]);
 
   // --- Event Handlers ---
-
-  const handleAssociationTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newType = event.target.value as 'none' | 'season' | 'tournament';
-    console.log('[GameSettingsModal] Association type changed to:', newType);
-    // setAssociationType(newType); // Let parent state dictate via props
-
-    // Clear the irrelevant ID when changing type
-    if (newType === 'none') {
-      console.log('[GameSettingsModal] Setting both IDs to null');
-      onSeasonIdChange(null);
-      onTournamentIdChange(null);
-    } else if (newType === 'season') {
-      console.log('[GameSettingsModal] Setting tournamentId to null, keeping seasonId');
-      onTournamentIdChange(null);
-      // Optionally set a default season if none selected? Or leave as is?
-      if (!seasonId && seasons.length > 0) {
-          // onSeasonIdChange(seasons[0].id); // Auto-select first? Might be confusing.
-      }
-    } else if (newType === 'tournament') {
-      console.log('[GameSettingsModal] Setting seasonId to null, keeping tournamentId');
-      onSeasonIdChange(null);
-      if (!tournamentId && tournaments.length > 0) {
-          // onTournamentIdChange(tournaments[0].id); // Auto-select first?
-      }
-    }
-  };
 
   const handleSeasonChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const newId = event.target.value;
