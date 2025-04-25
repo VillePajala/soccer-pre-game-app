@@ -740,9 +740,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
             {/* Make the table container scrollable horizontally if needed */}
             <div className="max-h-60 overflow-y-auto overflow-x-auto pr-2 scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-900/50">
               {sortedEvents.length > 0 ? (
-                <table className="w-full text-sm text-left table-fixed"> {/* Added table-layout: fixed */}
-                  {/* Use styles from StatsModal table */}
-                    <thead className="text-xs text-slate-400 uppercase bg-slate-700/50 sticky top-0 z-10">
+                <table className="w-full text-sm text-left table-fixed"> {/* Added table-layout: fixed */}<thead className="text-xs text-slate-400 uppercase bg-slate-700/50 sticky top-0 z-10">
                         <tr>
                       <th scope="col" className="px-3 py-2">{t('gameSettingsModal.logTime', 'Time')}</th>
                       <th scope="col" className="px-3 py-2">{t('gameSettingsModal.logType', 'Type')}</th>

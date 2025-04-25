@@ -12,6 +12,7 @@ import {
 interface UseGameStateArgs {
     initialState: AppState; // Pass the global initial state
     saveStateToHistory: (newState: Partial<AppState>) => void; // Callback to save changes
+    masterRosterKey: string; // <<< Add the key argument
 }
 
 // Define the structure of the object returned by the hook
@@ -40,7 +41,7 @@ export interface UseGameStateReturn {
     handleToggleGoalie: (playerId: string) => void;
 }
 
-export function useGameState({ initialState, saveStateToHistory }: UseGameStateArgs): UseGameStateReturn {
+export function useGameState({ initialState, saveStateToHistory, masterRosterKey }: UseGameStateArgs): UseGameStateReturn {
     // --- State Management ---
     const [playersOnField, setPlayersOnField] = useState<Player[]>(initialState.playersOnField);
     const [opponents, setOpponents] = useState<Opponent[]>(initialState.opponents);
@@ -149,9 +150,19 @@ export function useGameState({ initialState, saveStateToHistory }: UseGameStateA
         // Save to session history
         saveStateToHistory({ 
             playersOnField: updatedPlayersOnField 
+            // NOTE: availablePlayers isn't part of the per-game history snapshot
         });
+        // --- ADDED: Save updated roster to localStorage --- 
+        try {
+            localStorage.setItem(masterRosterKey, JSON.stringify(updatedAvailablePlayers));
+            console.log(`Saved updated roster to localStorage for player ${playerId}.`);
+        } catch (error) {
+            console.error("Failed to save master roster after rename:", error);
+            // Optionally notify the user about the save failure
+        }
+        // ------------------------------------------------
         console.log(`Updated name/nickname for player ${playerId} to ${playerData.name} / ${playerData.nickname}`);
-    }, [availablePlayers, playersOnField, saveStateToHistory]);
+    }, [availablePlayers, playersOnField, saveStateToHistory, setAvailablePlayers, setPlayersOnField, masterRosterKey]); // Added setters to dependency array
 
     // --- Add Goalie Handler Here ---
     const handleToggleGoalie = useCallback((playerId: string) => {
@@ -175,7 +186,7 @@ export function useGameState({ initialState, saveStateToHistory }: UseGameStateA
         setPlayersOnField([...updatedOnField]); // Use spread for safety
         console.log('[useGameState:handleToggleGoalie] State setters called.');
         saveStateToHistory({ playersOnField: updatedOnField });
-    }, [availablePlayers, playersOnField, saveStateToHistory]);
+    }, [availablePlayers, playersOnField, saveStateToHistory, masterRosterKey]);
 
     // ... (more handlers will be moved here later)
 

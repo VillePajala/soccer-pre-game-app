@@ -24,6 +24,16 @@ interface PlayerStatRow extends Player {
   gamesPlayed: number;
 }
 
+// ADD Minimal interface for saved game structure used in this component
+interface SavedGame {
+  availablePlayers?: Player[];
+  selectedPlayerIds?: string[];
+  seasonId?: string | null;
+  tournamentId?: string | null;
+  gameEvents?: GameEvent[];
+  // Note: Add other properties from AppState if they are accessed via 'game' variable below
+}
+
 interface GameStatsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -251,114 +261,194 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   }, [seasonId, tournamentId, seasons, tournaments]);
 
   // Modify filteredAndSortedPlayerStats useMemo to also return the list of game IDs processed
-  const { processedGameIds, playerStats } = useMemo(() => {
-    console.log("[GameStatsModal useMemo] Recalculating playerStats. ActiveTab:", activeTab, "Filter:", filterText);
+  const { stats: playerStats, gameIds: processedGameIds } = useMemo(() => {
+    console.log("Recalculating player stats...", { activeTab, filterText, selectedSeasonIdFilter, selectedTournamentIdFilter, gameEvents: activeTab === 'currentGame' ? gameEvents : null, savedGames: activeTab !== 'currentGame' ? savedGames : null });
 
+    // Initialize stats map - MODIFIED: Initialize differently based on tab
+    const statsMap: { [key: string]: PlayerStatRow } = {};
     let relevantGameEvents: GameEvent[] = [];
-    let relevantAvailablePlayers: Player[] = [];
-    let relevantSelectedPlayerIds: string[] = [];
-    let processedGameIds: string[] = [];
+    let processedGameIds: string[] = []; // Keep track of games considered for GP calc
 
-    // Determine which games and players to consider based on the active tab
-    if (activeTab === 'currentGame' && currentGameId) {
-      relevantGameEvents = gameEvents || []; // Use direct prop
-      relevantAvailablePlayers = availablePlayers || []; // Use direct prop
-      relevantSelectedPlayerIds = selectedPlayerIds || [];
-      processedGameIds = [currentGameId];
-      console.log("[GameStatsModal useMemo] Using current game data. Events:", relevantGameEvents.length, "Players:", relevantAvailablePlayers.length);
+    if (activeTab === 'currentGame') {
+      // Current game: Initialize from availablePlayers prop
+      availablePlayers.forEach(player => {
+          statsMap[player.id] = {
+              ...player,
+              goals: 0,
+              assists: 0,
+              totalScore: 0,
+              fpAwards: 0,
+              gamesPlayed: 0,
+          };
+      });
+
+      relevantGameEvents = gameEvents || [];
+      if (currentGameId) {
+        processedGameIds = [currentGameId]; // Current game is the only one processed
+         // Update GP for players in the current game
+        selectedPlayerIds?.forEach(playerId => {
+          if (statsMap[playerId]) {
+            statsMap[playerId].gamesPlayed = 1;
+          }
+        });
+      }
     } else {
-      // Logic for 'season', 'tournament', 'overall' using savedGames (simplified for clarity)
-      const gameIdsToProcess: string[] = Object.keys(savedGames || {}); // Placeholder
-      // ... (complex filtering logic based on selectedSeasonIdFilter/selectedTournamentIdFilter)
-      processedGameIds = gameIdsToProcess;
+      // Handle 'season', 'tournament', 'overall' tabs
+      const allGameIds = Object.keys(savedGames || {});
+      
+      // Filter game IDs based on tab and selected filter
+      processedGameIds = allGameIds.filter(gameId => {
+        const game: SavedGame | undefined = savedGames?.[gameId];
+        if (!game) return false;
 
-      relevantGameEvents = processedGameIds.flatMap(id => savedGames?.[id]?.gameEvents || []);
-      // Aggregate players? For now, let's assume we use the *current* availablePlayers list for all tabs
-      relevantAvailablePlayers = availablePlayers || [];
-      relevantSelectedPlayerIds = relevantAvailablePlayers.map(p => p.id); // Assume all players are relevant for aggregate stats
-      console.log(`[GameStatsModal useMemo] Using aggregate data. Tab: ${activeTab}, Games: ${processedGameIds.length}, Total Events: ${relevantGameEvents.length}`);
+        if (activeTab === 'season') {
+          // Include game if filter is 'all' or game's seasonId matches
+          return selectedSeasonIdFilter === 'all' || game.seasonId === selectedSeasonIdFilter;
+        } else if (activeTab === 'tournament') {
+          // Include game if filter is 'all' or game's tournamentId matches
+          return selectedTournamentIdFilter === 'all' || game.tournamentId === selectedTournamentIdFilter;
+        } else if (activeTab === 'overall') {
+          // Include all games for 'overall'
+          return true;
+        }
+        return false; // Default case, should not happen
+      });
+
+      // Aggregate views: Build statsMap from players across ALL relevant games first
+      console.log('[Stats Aggregate] Initializing statsMap for aggregate view...'); // <<< LOG 1
+      processedGameIds.forEach(gameId => {
+          const game: SavedGame | undefined = savedGames?.[gameId];
+          game?.availablePlayers?.forEach((playerInGame: Player) => {
+              if (!statsMap[playerInGame.id]) {
+                  // Add player to map if not already present
+                  statsMap[playerInGame.id] = {
+                      ...playerInGame, // Use data from the saved game player object
+                      goals: 0,
+                      assists: 0,
+                      totalScore: 0,
+                      fpAwards: 0,
+                      gamesPlayed: 0,
+                  };
+              }
+          });
+      });
+      console.log('[Stats Aggregate] Populated statsMap:', JSON.parse(JSON.stringify(statsMap))); // <<< LOG 2 (Deep copy for logging)
+
+      // Collect events from the filtered games
+      relevantGameEvents = processedGameIds.flatMap(id => (savedGames?.[id] as SavedGame)?.gameEvents || []); // USE TYPE ASSERTION
+
+      // Calculate Games Played and FP Awards for aggregate views
+      processedGameIds.forEach(gameId => {
+        const game: SavedGame | undefined = savedGames?.[gameId];
+        if (game) {
+            // Existing GP calculation
+            game.selectedPlayerIds?.forEach(playerId => {
+              if (statsMap[playerId]) {
+                // Increment gamesPlayed only if the player exists in the main availablePlayers list
+                statsMap[playerId].gamesPlayed = (statsMap[playerId].gamesPlayed || 0) + 1;
+              }
+            });
+            // ADD FP Award Calculation by checking Player object in saved game
+            game.availablePlayers?.forEach((playerInGame: Player) => {
+                if (playerInGame.receivedFairPlayCard && statsMap[playerInGame.id]) {
+                    statsMap[playerInGame.id].fpAwards = (statsMap[playerInGame.id].fpAwards || 0) + 1;
+                }
+            });
+        }
+      });
     }
 
-    // Initialize stats map
-    const statsMap: { [playerId: string]: PlayerStatRow } = {};
-    relevantAvailablePlayers.forEach(player => {
-      // Only include players selected for the current game if on the current game tab
-      if (activeTab === 'currentGame' && !relevantSelectedPlayerIds.includes(player.id)) {
-          return; 
-      }
-      statsMap[player.id] = {
-        ...player,
-        goals: 0,
-        assists: 0,
-        totalScore: 0,
-        fpAwards: player.receivedFairPlayCard ? 1 : 0, // Simplified: count FP card from player object
-        gamesPlayed: 0, // This will be calculated later if needed for aggregate views
-      };
-    });
-
-    // Calculate stats from events
+    // Process relevant events
     relevantGameEvents.forEach(event => {
       if (event.type === 'goal') {
+        // <<< LOG 3: Log each goal event
+        console.log(`[Stats Aggregate] Processing event: ${event.id}, type: ${event.type}, scorer: ${event.scorerId}, assister: ${event.assisterId}`);
         if (event.scorerId && statsMap[event.scorerId]) {
-          statsMap[event.scorerId].goals += 1;
-          statsMap[event.scorerId].totalScore += 1;
+          // <<< LOG 4: Check if scorer found
+          console.log(`[Stats Aggregate] Scorer ${event.scorerId} FOUND in statsMap. Incrementing goals.`);
+          statsMap[event.scorerId].goals = (statsMap[event.scorerId].goals || 0) + 1;
+          statsMap[event.scorerId].totalScore = (statsMap[event.scorerId].totalScore || 0) + 1;
+        } else if (event.scorerId) {
+            // <<< LOG 5: Scorer not found
+            console.log(`[Stats Aggregate] Scorer ${event.scorerId} NOT FOUND in statsMap.`);
         }
         if (event.assisterId && statsMap[event.assisterId]) {
-          statsMap[event.assisterId].assists += 1;
-          // Note: Total score usually only counts goals, but adjust if needed
+          // <<< LOG 6: Check if assister found
+          console.log(`[Stats Aggregate] Assister ${event.assisterId} FOUND in statsMap. Incrementing assists.`);
+          statsMap[event.assisterId].assists = (statsMap[event.assisterId].assists || 0) + 1;
+          statsMap[event.assisterId].totalScore = (statsMap[event.assisterId].totalScore || 0) + 1;
+        } else if (event.assisterId) {
+            // <<< LOG 7: Assister not found
+            console.log(`[Stats Aggregate] Assister ${event.assisterId} NOT FOUND in statsMap.`);
         }
       }
-      // Add calculations for other stats if needed (e.g., games played for aggregate)
+      // Add calculations for other stats if needed
     });
 
-    // Convert map to array
-    let calculatedStats = Object.values(statsMap);
+    console.log("[Stats Aggregate] Final statsMap before filter/sort:", JSON.parse(JSON.stringify(statsMap))); // <<< LOG 8
 
-    // Apply text filter
-    if (filterText) {
-      const lowerFilter = filterText.toLowerCase();
-      calculatedStats = calculatedStats.filter(player =>
-        player.name.toLowerCase().includes(lowerFilter) ||
-        (player.nickname && player.nickname.toLowerCase().includes(lowerFilter)) ||
-        (player.jerseyNumber && player.jerseyNumber.includes(lowerFilter))
-      );
-    }
+    // Filter and sort
+    let filteredAndSortedStats = Object.values(statsMap)
+      .filter(player => player.name.toLowerCase().includes(filterText.toLowerCase()));
 
     // Apply sorting
-    calculatedStats.sort((a, b) => {
-      let compareA: string | number | boolean | undefined;
-      let compareB: string | number | boolean | undefined;
+    if (sortColumn) {
+      filteredAndSortedStats.sort((a, b) => {
+        let aValue: string | number = '';
+        let bValue: string | number = '';
 
-      switch (sortColumn) {
-        case 'name': compareA = a.nickname || a.name; compareB = b.nickname || b.name; break;
-        case 'goals': compareA = a.goals; compareB = b.goals; break;
-        case 'assists': compareA = a.assists; compareB = b.assists; break;
-        case 'totalScore': compareA = a.totalScore; compareB = b.totalScore; break;
-        case 'fpAwards': compareA = a.fpAwards ?? 0; compareB = b.fpAwards ?? 0; break;
-        case 'gamesPlayed': compareA = a.gamesPlayed; compareB = b.gamesPlayed; break;
-        default: return 0;
-      }
+        switch (sortColumn) {
+            case 'name':
+                aValue = a.name.toLowerCase();
+                bValue = b.name.toLowerCase();
+                break;
+            case 'goals':
+                aValue = a.goals;
+                bValue = b.goals;
+                break;
+            case 'assists':
+                aValue = a.assists;
+                bValue = b.assists;
+                break;
+            case 'totalScore':
+                aValue = a.totalScore;
+                bValue = b.totalScore;
+                break;
+            case 'fpAwards':
+                aValue = a.fpAwards ?? 0;
+                bValue = b.fpAwards ?? 0;
+                break;
+             case 'gamesPlayed': // Add sorting for gamesPlayed
+                 aValue = a.gamesPlayed;
+                 bValue = b.gamesPlayed;
+                 break;
+        }
 
-      // Handle potential undefined/null if necessary, though types should prevent it here
-      compareA = compareA ?? (typeof compareB === 'string' ? '' : 0);
-      compareB = compareB ?? (typeof compareA === 'string' ? '' : 0);
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          return sortDirection === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+        } else if (typeof aValue === 'number' && typeof bValue === 'number') {
+          return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+        }
+        return 0;
+      });
+    }
 
-      if (compareA < compareB) return sortDirection === 'asc' ? -1 : 1;
-      if (compareA > compareB) return sortDirection === 'asc' ? 1 : -1;
-      return 0;
-    });
+    console.log("Calculated Player Stats:", filteredAndSortedStats);
+    // Return both stats and the processed game IDs
+    return { stats: filteredAndSortedStats, gameIds: processedGameIds };
 
-    return { processedGameIds, playerStats: calculatedStats };
   }, [
-    activeTab, 
-    gameEvents, 
-    savedGames, 
-    currentGameId, 
-    selectedPlayerIds, 
-    filterText, 
-    sortColumn, 
-    sortDirection, 
-    availablePlayers
+    activeTab,
+    gameEvents,
+    savedGames,
+    availablePlayers,
+    sortColumn,
+    sortDirection,
+    filterText,
+    selectedSeasonIdFilter, // Add dependency
+    selectedTournamentIdFilter, // Add dependency
+    currentGameId,
+    selectedPlayerIds // Add dependency for GP calculation in currentGame
   ]);
 
   // Use localGameEvents for display

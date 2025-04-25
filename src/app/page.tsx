@@ -237,7 +237,7 @@ export default function Home() {
     handleOpponentRemove,
     handleRenamePlayer, // Destructure the handler
     handleToggleGoalie // Destructure the goalie handler
-  }: UseGameStateReturn = useGameState({ initialState, saveStateToHistory });
+  }: UseGameStateReturn = useGameState({ initialState, saveStateToHistory, masterRosterKey: MASTER_ROSTER_KEY }); // <<< Pass the key
 
   // --- State Management (Remaining in Home component) ---
   const [showPlayerNames, setShowPlayerNames] = useState<boolean>(initialState.showPlayerNames);
@@ -382,7 +382,7 @@ export default function Home() {
         } else {
             console.log('No master roster found in localStorage, using initial data.');
             loadedMasterRoster = initialAvailablePlayersData; // Use default
-            localStorage.setItem(MASTER_ROSTER_KEY, JSON.stringify(loadedMasterRoster)); // Save default
+            // REMOVED: localStorage.setItem(MASTER_ROSTER_KEY, JSON.stringify(loadedMasterRoster)); // Save default
         }
     } catch (error) {
         console.error('Failed to load or parse master roster:', error);
@@ -390,6 +390,7 @@ export default function Home() {
         loadedMasterRoster = initialAvailablePlayersData;
     }
     // Set the global roster state
+    console.log('[Initial Load] Attempting to get roster from localStorage key:', MASTER_ROSTER_KEY); // <<< LOG
     setAvailablePlayers(loadedMasterRoster);
     // +++ END NEW: Load Master Roster +++
 
@@ -481,10 +482,11 @@ export default function Home() {
     setIsLoaded(true);
     console.log('Initial load complete. isLoaded set to true.');
 
-  // ADD missing dependencies
-  }, [setPlayersOnField, setOpponents, setDrawings, setAvailablePlayers]);
+  // Ensure this runs only ONCE on mount by using an empty dependency array
+  }, []);
 
-  // *** ADDED: Central useEffect for loading state based on currentGameId ***
+  // --- Effect to load game state when currentGameId changes or savedGames updates ---
+  // ADD dependencies for all state setters used inside
   useEffect(() => {
     console.log('[Loading Effect] Running due to change in currentGameId or savedGames.', { currentGameId });
     
@@ -1932,7 +1934,9 @@ export default function Home() {
       setPlayersOnField(updatedOnField);
       setSelectedPlayerIds(updatedSelectedIds); // Update selection state
       // Save updated global roster
+      console.log('[Remove Player] Attempting to save roster to localStorage...'); // <<< LOG
       localStorage.setItem(MASTER_ROSTER_KEY, JSON.stringify(updatedAvailable));
+      console.log('[Remove Player] Roster saved to localStorage.'); // <<< LOG
       // Save field and selection changes to game history
       saveStateToHistory({ playersOnField: updatedOnField, selectedPlayerIds: updatedSelectedIds });
       console.log(`Removed player ${playerId} from roster, field, and selection.`);
@@ -2040,7 +2044,9 @@ export default function Home() {
     const updatedAvailable = [...availablePlayers, newPlayer];
     setAvailablePlayers(updatedAvailable); // Update state hook
     // Save updated global roster
+    console.log('[Add Player] Attempting to save roster to localStorage...'); // <<< LOG
     localStorage.setItem(MASTER_ROSTER_KEY, JSON.stringify(updatedAvailable));
+    console.log('[Add Player] Roster saved to localStorage.'); // <<< LOG
     // Add the new player to the current game's selection automatically
     const updatedSelectedIds = [...selectedPlayerIds, newPlayer.id];
     setSelectedPlayerIds(updatedSelectedIds);
