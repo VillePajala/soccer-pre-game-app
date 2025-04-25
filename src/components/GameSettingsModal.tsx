@@ -22,7 +22,6 @@ interface GameSettingsModalProps {
   awayScore: number;
   gameEvents: GameEvent[];
   availablePlayers: Player[];
-  selectedPlayerOptions: string[];
   // ADD: Period and Duration props
   numPeriods: number;
   periodDurationMinutes: number;
@@ -81,7 +80,6 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   onPeriodDurationChange,
   onSeasonIdChange,
   onTournamentIdChange,
-  selectedPlayerOptions,
 }) => {
   console.log('[GameSettingsModal Render] Props received:', { seasonId, tournamentId });
   const { t } = useTranslation();
