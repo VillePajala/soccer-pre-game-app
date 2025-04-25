@@ -83,7 +83,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   onSeasonIdChange,
   onTournamentIdChange,
 }) => {
-  console.log('[GameSettingsModal Render] Props received:', { seasonId, tournamentId });
+  console.log('[GameSettingsModal Render] Props received:', { seasonId, tournamentId, currentGameId });
   const { t } = useTranslation();
 
   // Helper function definition INSIDE the component body
