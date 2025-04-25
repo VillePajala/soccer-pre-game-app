@@ -294,7 +294,7 @@ export default function Home() {
   const [isRosterModalOpen, setIsRosterModalOpen] = useState<boolean>(false); // State for the new modal
   const [hasSkippedInitialSetup, setHasSkippedInitialSetup] = useState<boolean>(false); // <-- Add this state
   // Add state to track if new game setup should open after saving
-  const [isStartingNewGameAfterSave, setIsStartingNewGameAfterSave] = useState<boolean>(false); // <<< RE-ADD THIS LINE
+  // const [isStartingNewGameAfterSave, setIsStartingNewGameAfterSave] = useState<boolean>(false); // <<< REMOVE THIS LINE
   // ADD state for the new Game Settings modal
   const [isGameSettingsModalOpen, setIsGameSettingsModalOpen] = useState<boolean>(false);
 
@@ -1302,7 +1302,8 @@ export default function Home() {
       console.log(`Saving as new game with ID: ${idToSave}`);
     }
 
-    let saveSuccess = false;
+    // REMOVED: No longer need saveSuccess flag here for the new game flow
+    // let saveSuccess = false; 
 
     try {
       // 1. Create the current game state snapshot
@@ -1359,22 +1360,22 @@ export default function Home() {
       // History for the newly saved/overwritten game should start fresh
       setHistory([currentSnapshot]);
       setHistoryIndex(0);
-      saveSuccess = true; // Mark save as successful
+      // REMOVED: saveSuccess = true; 
 
     } catch (error) {
       console.error("Failed to save game state:", error);
       alert("Error saving game."); // Notify user
-      saveSuccess = false;
+      // REMOVED: saveSuccess = false;
     }
 
     handleCloseSaveGameModal(); // Close save modal regardless of success/error
 
-    // If save was successful AND we were intending to start a new game, open the setup modal
-    if (saveSuccess && isStartingNewGameAfterSave) {
-      console.log("Save successful, opening new game setup modal...");
-      setIsNewGameSetupModalOpen(true);
-      setIsStartingNewGameAfterSave(false); // Reset the flag
-    }
+    // REMOVED: Logic to open new game modal after saving
+    // if (saveSuccess && isStartingNewGameAfterSave) {
+    //   console.log("Save successful, opening new game setup modal...");
+    //   setIsNewGameSetupModalOpen(true);
+    //   setIsStartingNewGameAfterSave(false); // Reset the flag
+    // }
   };
 
   // Function to handle loading a selected game
@@ -2049,49 +2050,6 @@ export default function Home() {
     // Added selectedPlayerIds, setSelectedPlayerIds dependencies
   }, [availablePlayers, selectedPlayerIds, setAvailablePlayers, setSelectedPlayerIds, saveStateToHistory]);
 
-  // ---- MOVE handleStartNewGame UP ----
-  const handleStartNewGame = useCallback(() => {
-    // Check if the current game is potentially unsaved (not the default ID and not null)
-    if (currentGameId && currentGameId !== DEFAULT_GAME_ID) {
-      // Prompt to save first
-      const gameData = savedGames[currentGameId]; // Safe to access due to check above
-      const gameIdentifier = gameData?.teamName 
-                             ? `${gameData.teamName} vs ${gameData.opponentName}` 
-                             : `ID: ${currentGameId}`;
-                             
-      const saveConfirmation = window.confirm(
-        t('controlBar.saveBeforeNewPrompt', 
-          `Save changes to the current game "${gameIdentifier}" before starting a new one?`, 
-          { gameName: gameIdentifier }
-        ) + "\n\n[OK = Save & Continue] [Cancel = Discard & Continue]"
-      );
-
-      if (saveConfirmation) {
-        // User chose OK (Save) -> Set flag, open save modal, and stop here.
-        // handleSaveGame will handle opening the new game modal after save.
-        console.log("User chose to save before starting new game.");
-        setIsStartingNewGameAfterSave(true);
-        handleOpenSaveGameModal();
-        return; // Stop the flow here; saving process takes over
-      } else {
-        // User chose Cancel (Discard) -> Proceed to next confirmation
-        console.log("Discarding current game changes to start new game.");
-        // Reset the flag just in case (shouldn't be needed, but good practice)
-        setIsStartingNewGameAfterSave(false);
-      }
-    }
-
-    // Confirmation for actually starting new game (shown always after discard, or directly if default game)
-    if (window.confirm(t('controlBar.startNewMatchConfirmation', 'Are you sure you want to start a new match? Any unsaved progress will be lost.') ?? 'Are you sure?')) {
-      console.log("Start new game confirmed, opening setup modal..." );
-      setIsNewGameSetupModalOpen(true); // Open the setup modal
-    } else {
-      // If user cancels the second confirmation, reset the flag
-      setIsStartingNewGameAfterSave(false);
-    }
-  }, [t, currentGameId, savedGames, handleOpenSaveGameModal, setIsStartingNewGameAfterSave, setIsNewGameSetupModalOpen]); // Dependencies updated
-  // ---- END MOVE handleStartNewGame UP ----
-
   // --- NEW: Quick Save Handler ---
   const handleQuickSaveGame = useCallback(() => {
     if (currentGameId && currentGameId !== DEFAULT_GAME_ID) {
@@ -2145,8 +2103,10 @@ export default function Home() {
       }
     } else {
       // If no valid current game ID, trigger the "Save As" modal
-      console.log("No current game ID, opening Save As modal instead.");
-      handleOpenSaveGameModal();
+      // Note: This case might not be reachable if Quick Save button is only enabled for loaded games,
+      // but kept for robustness.
+      console.log("No current game ID, opening Save As modal instead for Quick Save.");
+      handleOpenSaveGameModal(); 
     }
   }, [
     currentGameId,
@@ -2175,7 +2135,7 @@ export default function Home() {
     setSavedGames,
     setHistory,
     setHistoryIndex,
-    handleOpenSaveGameModal, // Added dependency
+    handleOpenSaveGameModal, // Keep dependency: used in else block
     subIntervalMinutes,
     completedIntervalDurations,
     lastSubConfirmationTimeSeconds
@@ -2499,7 +2459,7 @@ export default function Home() {
 
       // Close the setup modal
       setIsNewGameSetupModalOpen(false);
-      setIsStartingNewGameAfterSave(false);
+      // REMOVED: setIsStartingNewGameAfterSave(false);
 
   }, [
     // Keep necessary dependencies
@@ -2512,7 +2472,7 @@ export default function Home() {
     setHistoryIndex,
     setCurrentGameId,
     setIsNewGameSetupModalOpen,
-    setIsStartingNewGameAfterSave
+    // setIsStartingNewGameAfterSave
   ]);
 
   // ** REVERT handleCancelNewGameSetup TO ORIGINAL **
@@ -2532,6 +2492,57 @@ export default function Home() {
 
   // REMOVED initialState from dependencies
   }, [setHasSkippedInitialSetup, setIsNewGameSetupModalOpen]); // Updated dependencies
+
+  // --- Start New Game Handler (Uses Quick Save) ---
+  const handleStartNewGame = useCallback(() => {
+    // Check if the current game is potentially unsaved (not the default ID and not null)
+    if (currentGameId && currentGameId !== DEFAULT_GAME_ID) {
+      // Prompt to save first
+      const gameData = savedGames[currentGameId]; // Safe to access due to check above
+      const gameIdentifier = gameData?.teamName 
+                             ? `${gameData.teamName} vs ${gameData.opponentName}` 
+                             : `ID: ${currentGameId}`;
+                             
+      const saveConfirmation = window.confirm(
+        t('controlBar.saveBeforeNewPrompt', 
+          `Save changes to the current game "${gameIdentifier}" before starting a new one?`, 
+          { gameName: gameIdentifier }
+        ) + "\n\n[OK = Save & Continue] [Cancel = Discard & Continue]"
+      );
+
+      if (saveConfirmation) {
+        // User chose OK (Save) -> Call Quick Save, then open setup modal.
+        console.log("User chose to Quick Save before starting new game.");
+        handleQuickSaveGame(); // Call quick save directly
+        setIsNewGameSetupModalOpen(true); // Open setup modal immediately after
+        // No need to return here; flow continues after quick save
+      } else {
+        // User chose Cancel (Discard) -> Proceed to next confirmation
+        console.log("Discarding current game changes to start new game.");
+        // Confirmation for actually starting new game (ONLY shown if user DISCARDED previous game)
+        if (window.confirm(t('controlBar.startNewMatchConfirmation', 'Are you sure you want to start a new match? Any unsaved progress will be lost.') ?? 'Are you sure?')) {
+          console.log("Start new game confirmed after discarding, opening setup modal...");
+          setIsNewGameSetupModalOpen(true); // Open the setup modal
+        } 
+        // If user cancels this second confirmation, do nothing.
+        // Exit the function after handling the discard path.
+        return;
+      }
+    } else {
+      // If no real game is loaded, proceed directly to the main confirmation
+       if (window.confirm(t('controlBar.startNewMatchConfirmation', 'Are you sure you want to start a new match? Any unsaved progress will be lost.') ?? 'Are you sure?')) {
+         console.log("Start new game confirmed (no prior game to save), opening setup modal...");
+         setIsNewGameSetupModalOpen(true); // Open the setup modal
+       }
+       // If user cancels this confirmation, do nothing.
+       // Exit the function after handling the no-game-loaded path.
+       return; 
+    }
+    // Note: This part of the code is now only reachable if the user chose 'OK (Save & Continue)'
+    // because the other paths explicitly return earlier.
+
+  }, [t, currentGameId, savedGames, handleOpenSaveGameModal, handleQuickSaveGame, setIsNewGameSetupModalOpen]); 
+  // --- END Start New Game Handler ---
 
   // Render null or a loading indicator until state is loaded
   // Note: Console log added before the check itself
