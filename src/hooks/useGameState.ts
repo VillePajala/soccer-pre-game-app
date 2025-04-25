@@ -45,7 +45,7 @@ export function useGameState({ initialState, saveStateToHistory }: UseGameStateA
     const [playersOnField, setPlayersOnField] = useState<Player[]>(initialState.playersOnField);
     const [opponents, setOpponents] = useState<Opponent[]>(initialState.opponents);
     const [drawings, setDrawings] = useState<Point[][]>(initialState.drawings);
-    const [availablePlayers, setAvailablePlayers] = useState<Player[]>(initialState.availablePlayers);
+    const [availablePlayers, setAvailablePlayers] = useState<Player[]>([]); // Initialize with empty array
     // ... (more state will be moved here)
 
     // --- Handlers ---
@@ -148,7 +148,6 @@ export function useGameState({ initialState, saveStateToHistory }: UseGameStateA
         setPlayersOnField(updatedPlayersOnField);
         // Save to session history
         saveStateToHistory({ 
-            availablePlayers: updatedAvailablePlayers, 
             playersOnField: updatedPlayersOnField 
         });
         console.log(`Updated name/nickname for player ${playerId} to ${playerData.name} / ${playerData.nickname}`);
@@ -175,8 +174,8 @@ export function useGameState({ initialState, saveStateToHistory }: UseGameStateA
         setAvailablePlayers([...updatedAvailable]); // Use spread for safety
         setPlayersOnField([...updatedOnField]); // Use spread for safety
         console.log('[useGameState:handleToggleGoalie] State setters called.');
-        saveStateToHistory({ availablePlayers: updatedAvailable, playersOnField: updatedOnField });
-    }, [availablePlayers, playersOnField, saveStateToHistory]); // Dependencies are correct now
+        saveStateToHistory({ playersOnField: updatedOnField });
+    }, [availablePlayers, playersOnField, saveStateToHistory]);
 
     // ... (more handlers will be moved here later)
 
