@@ -8,7 +8,9 @@ import { HiPlusCircle } from 'react-icons/hi';
 
 interface NewGameSetupModalProps {
   isOpen: boolean;
+  initialPlayerSelection: string[] | null;
   onStart: (
+    initialSelectedPlayerIds: string[],
     opponentName: string, 
     gameDate: string, 
     gameLocation: string, 
@@ -23,6 +25,7 @@ interface NewGameSetupModalProps {
 
 const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   isOpen,
+  initialPlayerSelection,
   onStart,
   onCancel,
 }) => {
@@ -261,16 +264,35 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
     // Parse duration string into number before calling onStart
     const finalDuration = Math.max(1, parseInt(localPeriodDurationString, 10) || 1);
 
+    // Period duration validation
+    const periodDurationMinutes = parseInt(localPeriodDurationString, 10);
+    if (isNaN(periodDurationMinutes) || periodDurationMinutes <= 0) {
+        alert(t('newGameSetupModal.invalidPeriodDuration', 'Period duration must be a positive number.'));
+        return;
+    }
+    
+    console.log("Starting game with:", {
+        opponent: trimmedOpponentName,
+        date: gameDate,
+        location: gameLocation,
+        time: finalGameTime,
+        season: selectedSeasonId,
+        tournament: selectedTournamentId,
+        numPeriods: localNumPeriods,
+        periodDuration: periodDurationMinutes
+    });
+
     // Call the onStart prop with ALL collected data
     onStart(
+      initialPlayerSelection || [], // Pass empty array if null
       trimmedOpponentName,
       gameDate,
-      gameLocation.trim(),
+      gameLocation,
       finalGameTime,
       selectedSeasonId,
       selectedTournamentId,
       localNumPeriods, // Pass the selected number of periods
-      finalDuration    // Pass the parsed and validated number duration
+      periodDurationMinutes    // Pass the parsed and validated number duration
     );
   };
 

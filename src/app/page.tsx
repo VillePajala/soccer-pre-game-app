@@ -300,6 +300,9 @@ export default function Home() {
   // ADD state for the new Game Settings modal
   const [isGameSettingsModalOpen, setIsGameSettingsModalOpen] = useState<boolean>(false);
 
+  // <<< ADD State to hold player IDs for the next new game >>>
+  const [playerIdsForNewGame, setPlayerIdsForNewGame] = useState<string[] | null>(null);
+
   // --- Derived State for Filtered Players ---
   const playersForCurrentGame = useMemo(() => {
     // Ensure both lists are ready before filtering
@@ -2386,6 +2389,7 @@ export default function Home() {
 
   // --- Handler that is called when setup modal is confirmed ---
   const handleStartNewGameWithSetup = useCallback((
+    initialSelectedPlayerIds: string[],
     opponentName: string,
     gameDate: string,
     gameLocation: string,
@@ -2398,6 +2402,11 @@ export default function Home() {
       // ADD LOGGING HERE:
       console.log('[handleStartNewGameWithSetup] Received Params:', { numPeriods, periodDuration });
       // No need to log initialState references anymore
+
+      // Determine the player selection for the new game
+      const finalSelectedPlayerIds = initialSelectedPlayerIds && initialSelectedPlayerIds.length > 0 
+          ? initialSelectedPlayerIds 
+          : availablePlayers.map(p => p.id); // Fallback to all players if none provided
 
       // 1. Manually construct the new game state EXPLICITLY
       const newGameState: AppState = {
@@ -2414,7 +2423,7 @@ export default function Home() {
           gameNotes: '',
           teamName: teamName, // Use current teamName state
           availablePlayers: availablePlayers, // <<< ADD: Use current global roster
-          selectedPlayerIds: availablePlayers.map(p => p.id), // <-- BASE ON CURRENT GLOBAL ROSTER
+          selectedPlayerIds: finalSelectedPlayerIds, // <-- USE PASSED OR FALLBACK
           playersOnField: [], // Always start with empty field
           opponents: [], // Always start with empty opponents
           showPlayerNames: true, // Default visibility
@@ -2530,6 +2539,8 @@ export default function Home() {
         // Confirmation for actually starting new game (ONLY shown if user DISCARDED previous game)
         if (window.confirm(t('controlBar.startNewMatchConfirmation', 'Are you sure you want to start a new match? Any unsaved progress will be lost.') ?? 'Are you sure?')) {
           console.log("Start new game confirmed after discarding, opening setup modal...");
+          // <<< SET default player selection (all players) >>>
+          setPlayerIdsForNewGame(availablePlayers.map(p => p.id));
           setIsNewGameSetupModalOpen(true); // Open the setup modal
         } 
         // If user cancels this second confirmation, do nothing.
@@ -2540,6 +2551,8 @@ export default function Home() {
       // If no real game is loaded, proceed directly to the main confirmation
        if (window.confirm(t('controlBar.startNewMatchConfirmation', 'Are you sure you want to start a new match? Any unsaved progress will be lost.') ?? 'Are you sure?')) {
          console.log("Start new game confirmed (no prior game to save), opening setup modal...");
+         // <<< SET default player selection (all players) >>>
+         setPlayerIdsForNewGame(availablePlayers.map(p => p.id));
          setIsNewGameSetupModalOpen(true); // Open the setup modal
        }
        // If user cancels this confirmation, do nothing.
@@ -2548,8 +2561,14 @@ export default function Home() {
     }
     // Note: This part of the code is now only reachable if the user chose 'OK (Save & Continue)'
     // because the other paths explicitly return earlier.
+    // <<< SET player selection based on current game BEFORE opening modal >>>
+    setPlayerIdsForNewGame(selectedPlayerIds); // Use the current selection
+    setIsNewGameSetupModalOpen(true); // Open setup modal (moved here for save & continue path)
 
-  }, [t, currentGameId, savedGames, handleOpenSaveGameModal, handleQuickSaveGame, setIsNewGameSetupModalOpen]); 
+  }, [t, currentGameId, savedGames, handleOpenSaveGameModal, handleQuickSaveGame, setIsNewGameSetupModalOpen, 
+      // <<< ADD dependencies >>>
+      availablePlayers, selectedPlayerIds, setPlayerIdsForNewGame
+     ]); 
   // --- END Start New Game Handler ---
 
   // Render null or a loading indicator until state is loaded
@@ -2746,6 +2765,7 @@ export default function Home() {
         {isNewGameSetupModalOpen && (
           <NewGameSetupModal
             isOpen={isNewGameSetupModalOpen}
+            initialPlayerSelection={playerIdsForNewGame} // <<< Pass the state here
             onStart={handleStartNewGameWithSetup} // CORRECTED Handler
             onCancel={handleCancelNewGameSetup} 
           />
