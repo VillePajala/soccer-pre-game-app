@@ -266,7 +266,6 @@ export default function Home() {
   // ... UI/Interaction states ...
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
   const [draggingPlayerFromBarInfo, setDraggingPlayerFromBarInfo] = useState<Player | null>(null);
-  const [isFullscreen, setIsFullscreen] = useState<boolean>(false); // RE-ADD Fullscreen state
   // Persistence state
   const [savedGames, setSavedGames] = useState<SavedGamesCollection>({});
   const [currentGameId, setCurrentGameId] = useState<string | null>(DEFAULT_GAME_ID);
@@ -666,70 +665,6 @@ export default function Home() {
     }
     // REMOVED isNewGameSetupModalOpen from dependencies
   }, [isLoaded, opponentName, hasSkippedInitialSetup]); // Dependencies for the check
-
-  // --- Fullscreen API Logic ---
-  const handleFullscreenChange = useCallback(() => {
-    setIsFullscreen(!!document.fullscreenElement);
-  }, []);
-
-  useEffect(() => {
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    document.addEventListener('webkitfullscreenchange', handleFullscreenChange); // Safari/Chrome
-    document.addEventListener('mozfullscreenchange', handleFullscreenChange); // Firefox
-    document.addEventListener('MSFullscreenChange', handleFullscreenChange); // IE/Edge
-
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
-      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
-      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
-    };
-  }, [handleFullscreenChange]);
-
-  const toggleFullScreen = async () => {
-    const elem = document.documentElement; // Target the whole page
-
-    if (!document.fullscreenElement) {
-      try {
-        if (elem.requestFullscreen) {
-          await elem.requestFullscreen();
-        } else if ('webkitRequestFullscreen' in elem && typeof elem.webkitRequestFullscreen === 'function') { /* Safari */
-          await elem.webkitRequestFullscreen();
-        } else if ('msRequestFullscreen' in elem && typeof elem.msRequestFullscreen === 'function') { /* IE11 */
-          await elem.msRequestFullscreen();
-        }
-        setIsFullscreen(true);
-      } catch (err) {
-        // Type check for error handling
-        if (err instanceof Error) {
-            console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
-        } else {
-            console.error(`An unknown error occurred attempting to enable full-screen mode:`, err);
-        }
-        setIsFullscreen(false); // Ensure state is correct if request fails
-      }
-    } else {
-      try {
-        if (document.exitFullscreen) {
-          await document.exitFullscreen();
-        } else if ('webkitExitFullscreen' in document && typeof document.webkitExitFullscreen === 'function') { /* Safari */
-          await document.webkitExitFullscreen();
-        } else if ('msExitFullscreen' in document && typeof document.msExitFullscreen === 'function') { /* IE11 */
-          await document.msExitFullscreen();
-        }
-        setIsFullscreen(false);
-      } catch (err) {
-        // Type check for error handling
-         if (err instanceof Error) {
-             console.error(`Error attempting to disable full-screen mode: ${err.message} (${err.name})`);
-         } else {
-             console.error(`An unknown error occurred attempting to disable full-screen mode:`, err);
-         }
-         // State might already be false due to event listener, but set explicitly just in case
-         setIsFullscreen(false);
-      }
-    }
-  };
 
   // --- Player Management Handlers (Updated for relative coords) ---
   // Wrapped handleDropOnField in useCallback as suggested (line 500)
