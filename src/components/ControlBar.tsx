@@ -201,6 +201,28 @@ const ControlBar: React.FC<ControlBarProps> = ({
         <button onClick={onToggleGoalLogModal} className={`${baseButtonStyle} ${logGoalColor}`} title={t('controlBar.logGoal', 'Log Goal') ?? "Log Goal"}>
             <FaFutbol size={20} />
         </button>
+
+        {/* <<< ADD Roster Settings Button >>> */}
+        <button 
+            onClick={onOpenRosterModal}
+            className={`${baseButtonStyle} ${secondaryColor}`}
+            title={t('controlBar.rosterSettings', 'Roster Settings') ?? "Roster Settings"}
+        >
+            <HiOutlineUsers className={iconSize} />
+        </button>
+
+        {/* <<< ADD Game Settings Button >>> */}
+        <button 
+            onClick={onOpenGameSettingsModal} 
+            // Disable if no game is loaded? Keep enabled for consistency?
+            // Let's keep it enabled, the modal itself might handle the state.
+            // disabled={!isGameLoaded} 
+            className={`${baseButtonStyle} ${secondaryColor}`}
+            title={t('controlBar.gameSettings', 'Game Settings') ?? "Game Settings"}
+        >
+            <HiOutlineAdjustmentsHorizontal className={iconSize} />
+        </button>
+
         {/* Toggle Overlay Button */}
         <button
           onClick={onToggleLargeTimerOverlay}
@@ -209,8 +231,9 @@ const ControlBar: React.FC<ControlBarProps> = ({
         >
             {showLargeTimerOverlay ? <HiOutlineStopCircle className={iconSize} /> : <HiOutlineClock className={iconSize} />}
         </button>
+        {/* <<< REMOVE Fullscreen Button Block >>> */}
         {/* RE-ADD Fullscreen Button Here, Conditionally Rendered */}
-        {!isPWA && (
+        {/* {!isPWA && (
           <button 
             onClick={onToggleFullScreen}
             className={`${baseButtonStyle} ${secondaryColor}`}
@@ -218,7 +241,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
           >
             {isFullscreen ? <HiOutlineArrowsPointingIn className={iconSize} /> : <HiOutlineArrowsPointingOut className={iconSize} />}
           </button>
-        )}
+        )} */}
         {/* Settings Menu Button (REMAINING) */}
         <div className="relative" ref={settingsMenuRef}>
           <button
@@ -300,22 +323,15 @@ const ControlBar: React.FC<ControlBarProps> = ({
                      {/* ADD Subtle Divider */}
                      <hr className="border-slate-600/75 my-1 mx-3" />
                      
-                     {/* Group 4: Application Settings/Help */} 
-                     <div className="py-1">
-                       {/* Add Fullscreen Toggle Here if not PWA */}
-                       {!isPWA && (
-                         <button onClick={wrapHandler(onToggleFullScreen)} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600/75">
-                           {isFullscreen ? <HiOutlineArrowsPointingIn className={menuIconSize} /> : <HiOutlineArrowsPointingOut className={menuIconSize} />} {isFullscreen ? t('controlBar.exitFullscreen', 'Exit Fullscreen') : t('controlBar.enterFullscreen', 'Enter Fullscreen')}
-                         </button>
-                       )}
-                       <button onClick={wrapHandler(onToggleInstructions)} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600/75">
-                         <HiOutlineQuestionMarkCircle className={menuIconSize} />{t('controlBar.appGuide', 'App Guide')}
-                       </button>
+                     {/* Group 4: General Settings & Actions (Revised) */}
+                     <div className="border-t border-slate-600/50 pt-1 mt-1">
+                       {/* Language Toggle */}
                        <button onClick={handleLanguageToggle} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600/75">
-                         <HiOutlineLanguage className={menuIconSize} />{t('controlBar.language', 'Language')} ({i18n.language === 'en' ? 'FI' : 'EN'})
+                         <HiOutlineLanguage className={menuIconSize} /> {t('controlBar.toggleLanguage')} ({i18n.language === 'en' ? 'FI' : 'EN'})
                        </button>
+                       {/* Hard Reset */}
                        <button onClick={wrapHandler(onHardResetApp)} className="w-full flex items-center px-3 py-2 text-sm text-red-400 hover:bg-red-900/50">
-                         <HiOutlineExclamationTriangle className={menuIconSize} /><span className="font-medium">{t('controlBar.hardReset', 'Hard Reset')}</span>
+                         <HiOutlineExclamationTriangle className={menuIconSize} /> {t('controlBar.hardReset', 'Hard Reset App')}
                        </button>
                      </div>
                    </div> 
