@@ -2591,8 +2591,9 @@ export default function Home() {
       {/* Top Player Bar - Filter players based on selection */}
       <PlayerBar
         players={playersForCurrentGame} // Pass the filtered list
-        teamName={teamName}
-        onTeamNameChange={handleTeamNameChange}
+        // <<< Remove teamName and onTeamNameChange props again >>>
+        // teamName={teamName}
+        // onTeamNameChange={handleTeamNameChange}
         // CORRECT prop name back to onPlayerDragStartFromBar
         onPlayerDragStartFromBar={handlePlayerDragStartFromBar}
         selectedPlayerIdFromBar={draggingPlayerFromBarInfo?.id} // Pass the selected ID
@@ -2685,10 +2686,10 @@ export default function Home() {
         // Remove the timeElapsedInSeconds prop
         showLargeTimerOverlay={showLargeTimerOverlay}
         onToggleLargeTimerOverlay={handleToggleLargeTimerOverlay}
-          onToggleInstructions={handleToggleInstructions}
           onToggleTrainingResources={handleToggleTrainingResources}
-          isFullscreen={isFullscreen}
-          onToggleFullScreen={toggleFullScreen}
+          // REMOVE Unused Props
+          // isFullscreen={isFullscreen}
+          // onToggleFullScreen={toggleFullScreen}
           onToggleGoalLogModal={handleToggleGoalLogModal}
           onToggleGameStatsModal={handleToggleGameStatsModal}
           onHardResetApp={handleHardResetApp}
