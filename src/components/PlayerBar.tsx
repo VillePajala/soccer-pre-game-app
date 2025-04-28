@@ -125,7 +125,7 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, teamName, onTeamNameChan
 
   return (
     <div 
-      className="bg-slate-900/85 backdrop-blur-md pl-4 pr-2 py-1 flex items-center flex-shrink-0 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-slate-700/80 scrollbar-track-slate-800/50 shadow-lg border-b border-slate-700/50"
+      className="bg-slate-900/85 backdrop-blur-md pl-4 pr-2 py-0.5 flex items-center space-x-3 flex-shrink-0 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-slate-700/80 scrollbar-track-slate-800/50 shadow-lg border-b border-slate-700/50"
       onClick={(e) => {
         // Check if the click target is the div itself (the background)
         if (e.target === e.currentTarget && onBarBackgroundClick) {
@@ -135,7 +135,7 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, teamName, onTeamNameChan
     >
       {/* Team Name Display/Edit */}
       <div 
-        className="flex flex-col items-center flex-shrink-0 mr-4 py-1"
+        className="flex flex-col items-center flex-shrink-0 py-0.5"
         onClick={() => {
           // Also deselect player when clicking the logo/team name area
           if (onBarBackgroundClick) {
@@ -180,7 +180,7 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, teamName, onTeamNameChan
       </div>
 
       {/* Separator */}
-      <div className="border-l border-slate-600 h-16 mx-2 self-center"></div>
+      <div className="border-l border-slate-600 h-16 self-center"></div>
 
       {/* Player Disks */}
       <div className="flex items-center space-x-1"> 

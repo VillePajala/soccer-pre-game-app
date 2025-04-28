@@ -108,7 +108,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
 
   // --- RE-ADD BUTTON STYLES --- 
   // Consistent Button Styles - Adjusted active state
-  const baseButtonStyle = "text-slate-100 font-semibold py-2 px-2 w-10 h-10 flex items-center justify-center rounded-md shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900";
+  const baseButtonStyle = "text-slate-100 font-semibold py-1.5 px-2 w-9 h-9 flex items-center justify-center rounded-md shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900";
   
   // Specific Colors - Added specific hover backgrounds
   const secondaryColor = "bg-slate-700 hover:bg-slate-600 focus:ring-slate-500";
@@ -150,7 +150,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
     };
   }, [isSettingsMenuOpen]);
 
-  const iconSize = "w-6 h-6"; // Standard icon size class
+  const iconSize = "w-5 h-5"; // Standard icon size class
   const menuIconSize = "w-5 h-5 mr-2"; // Smaller icon size for menu items
 
   // Helper to wrap handlers to also close the menu & reset view
@@ -199,7 +199,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
       <div className="flex items-center gap-2">
         {/* Log Goal (Moved Here, Use FaFutbol Icon) */}
         <button onClick={onToggleGoalLogModal} className={`${baseButtonStyle} ${logGoalColor}`} title={t('controlBar.logGoal', 'Log Goal') ?? "Log Goal"}>
-            <FaFutbol size={20} />
+            <FaFutbol size={18} />
         </button>
 
         {/* <<< ADD Roster Settings Button >>> */}

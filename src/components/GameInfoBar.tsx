@@ -95,7 +95,7 @@ const GameInfoBar: React.FC<GameInfoBarProps> = ({
   const inputClasses = "bg-transparent border-none outline-none text-slate-100 text-sm font-medium px-1 py-0 focus:bg-slate-700 rounded";
 
   return (
-    <div className="bg-slate-900 px-4 py-1.5 text-slate-200 flex justify-center items-center text-sm shadow-md z-30 min-h-[3rem]">
+    <div className="bg-slate-900 px-4 py-1 text-slate-200 flex justify-center items-center text-sm shadow-md min-h-[2.5rem]">
       {/* Center Content: Teams and Score */}
       <div className="flex items-center space-x-3 font-medium">
         {/* Home Team Name - Make Editable */}
@@ -122,8 +122,8 @@ const GameInfoBar: React.FC<GameInfoBarProps> = ({
           )}
         </div>
 
-        {/* Score */}
-        <span className="bg-slate-700 px-2 py-0.5 rounded text-yellow-300 text-base font-bold">
+        {/* Score - Reduce text size slightly? */}
+        <span className="bg-slate-700 px-2 py-0.5 rounded text-yellow-300 text-sm font-bold">
           {homeScore} - {awayScore}
         </span>
 
