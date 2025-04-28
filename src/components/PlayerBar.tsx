@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import PlayerDisk from './PlayerDisk'; // Import the PlayerDisk component
 import { Player } from '@/app/page'; // Import the Player type
 import Image from 'next/image'; // RE-ADD Import
