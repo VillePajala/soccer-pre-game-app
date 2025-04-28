@@ -145,14 +145,16 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, teamName, onTeamNameChan
       >
         <div className="flex-shrink-0 mr-2">
           <Image
-            className="h-9 w-9"
+            className="h-16 w-16"
             src="/pepo-logo.png"
             alt="Coaching Companion Logo"
-            width={36}
-            height={36}
+            width={64}
+            height={64}
             priority
           />
         </div>
+        {/* <<< RE-ADD and COMMENT OUT Team Name Display/Edit Block >>> */}
+        {/*
         {isEditingTeamName ? (
           <input
             ref={teamNameInputRef}
@@ -167,14 +169,14 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, teamName, onTeamNameChan
         ) : (
           <h2 
             className="text-yellow-400 text-base font-semibold cursor-pointer hover:text-yellow-300 truncate"
-            // Use NEW handlers for double-click/tap
             onClick={handleTeamNameClick}
             onTouchEnd={handleTeamNameTouchEnd}
             title="Double-click or double-tap to edit team name"
           >
-            {teamName}
+            {teamName} // Need teamName prop back if uncommented
           </h2>
         )}
+        */}
       </div>
 
       {/* Separator */}
