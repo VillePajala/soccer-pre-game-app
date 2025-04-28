@@ -302,13 +302,17 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
         if (!game) return false;
 
         if (activeTab === 'season') {
-          // Include game if filter is 'all' or game's seasonId matches
-          return selectedSeasonIdFilter === 'all' || game.seasonId === selectedSeasonIdFilter;
+          // Stricter Check: If 'all', include only if it has a seasonId AND NOT a tournamentId.
+          return selectedSeasonIdFilter === 'all'
+            ? game.seasonId != null && (game.tournamentId == null || game.tournamentId === '')
+            : game.seasonId === selectedSeasonIdFilter;
         } else if (activeTab === 'tournament') {
-          // Include game if filter is 'all' or game's tournamentId matches
-          return selectedTournamentIdFilter === 'all' || game.tournamentId === selectedTournamentIdFilter;
+          // Stricter Check: If 'all', include only if it has a tournamentId AND NOT a seasonId.
+          return selectedTournamentIdFilter === 'all'
+            ? game.tournamentId != null && (game.seasonId == null || game.seasonId === '')
+            : game.tournamentId === selectedTournamentIdFilter;
         } else if (activeTab === 'overall') {
-          // Include all games for 'overall'
+          // Overall still includes everything
           return true;
         }
         return false; // Default case, should not happen
@@ -344,13 +348,13 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
               if (statsMap[playerId]) {
                 // Increment gamesPlayed only if the player exists in the main availablePlayers list
                 statsMap[playerId].gamesPlayed = (statsMap[playerId].gamesPlayed || 0) + 1;
-              }
-            });
-            // ADD FP Award Calculation by checking Player object in saved game
-            game.availablePlayers?.forEach((playerInGame: Player) => {
-                if (playerInGame.receivedFairPlayCard && statsMap[playerInGame.id]) {
-                    statsMap[playerInGame.id].fpAwards = (statsMap[playerInGame.id].fpAwards || 0) + 1;
-                }
+                 // ADD FP Award Calculation by checking Player object in saved game
+                game.availablePlayers?.forEach((playerInGame: Player) => {
+                    if (playerInGame.receivedFairPlayCard && statsMap[playerInGame.id]) {
+                        statsMap[playerInGame.id].fpAwards = (statsMap[playerInGame.id].fpAwards || 0) + 1;
+                    }
+                });
+               }
             });
         }
       });
