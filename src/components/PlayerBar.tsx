@@ -11,16 +11,12 @@ import { GameEvent } from '@/app/page'; // Import the GameEvent type
 // Define props for PlayerBar
 interface PlayerBarProps {
   players: Player[];
-  teamName: string;
-  onTeamNameChange: (newName: string) => void;
-  // Add prop to pass down touch drag start handler
   onPlayerDragStartFromBar?: (player: Player) => void;
-  // ID of the player currently being dragged from the bar
   selectedPlayerIdFromBar?: string | null; 
-  onBarBackgroundClick?: () => void; // Add prop for background click
-  gameEvents: GameEvent[]; // Add gameEvents prop
-  onPlayerTapInBar?: (player: Player) => void; // Add the new prop type
-  onToggleGoalie?: (playerId: string) => void; // Add goalie toggle handler prop
+  onBarBackgroundClick?: () => void;
+  gameEvents: GameEvent[];
+  onPlayerTapInBar?: (player: Player) => void;
+  onToggleGoalie?: (playerId: string) => void;
 }
 
 // Placeholder data - this would eventually come from state/localStorage
@@ -38,44 +34,7 @@ interface PlayerBarProps {
 //   { id: 'p11', name: 'Player 11' },
 // ];
 
-const PlayerBar: React.FC<PlayerBarProps> = ({ players, teamName, onPlayerDragStartFromBar, selectedPlayerIdFromBar, onBarBackgroundClick, gameEvents, onPlayerTapInBar, onToggleGoalie }) => { // Destructure players and rename handler from props
-  // REMOVE State and Refs for Team Name Editing
-  // const [isEditingTeamName, setIsEditingTeamName] = useState(false);
-  // const [editedTeamName, setEditedTeamName] = useState(teamName);
-  // const teamNameInputRef = useRef<HTMLInputElement>(null);
-  // const teamNameLastTapTimeRef = useRef<number>(0);
-
-  // Effect to update local state if prop changes (e.g., undo/redo)
-  // useEffect(() => {
-  //   setEditedTeamName(teamName);
-  // }, [teamName]);
-
-  // Focus input when editing starts
-  // useEffect(() => {
-  //   if (isEditingTeamName && teamNameInputRef.current) {
-  //     teamNameInputRef.current.focus();
-  //     teamNameInputRef.current.select();
-  //   }
-  // }, [isEditingTeamName]);
-
-  // --- New Handlers for Double Click/Tap Team Name Edit ---
-  // const handleStartEditingTeamName = () => { ... };
-  // const handleFinishEditingTeamName = useCallback(() => { ... }, [...]);
-  // const handleTeamNameInputChange = (e: React.ChangeEvent<HTMLInputElement>) => { ... };
-  // const handleTeamNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => { ... };
-  // const handleTeamNameClick = () => { ... };
-  // const handleTeamNameTouchEnd = () => { ... };
-  // --- End New Handlers ---
-
-  // --- Effect: Finish team name editing if a player disk is selected ---
-  // const handleTeamNameClick = () => { ... };
-  // const handleTeamNameTouchEnd = () => { ... };
-  // const handleTeamNameInputChange = (e: React.ChangeEvent<HTMLInputElement>) => { ... };
-  // const handleTeamNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => { ... };
-  // const handleTeamNameClick = () => { ... };
-  // const handleTeamNameTouchEnd = () => { ... };
-  // --- End Effect: Finish team name editing if a player disk is selected ---
-
+const PlayerBar: React.FC<PlayerBarProps> = ({ players, onPlayerDragStartFromBar, selectedPlayerIdFromBar, onBarBackgroundClick, gameEvents, onPlayerTapInBar, onToggleGoalie }) => {
   return (
     <div 
       className="bg-slate-900/85 backdrop-blur-md pl-4 pr-2 py-0.5 flex items-center space-x-3 flex-shrink-0 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-slate-700/80 scrollbar-track-slate-800/50 shadow-lg border-b border-slate-700/50"
@@ -106,30 +65,6 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, teamName, onPlayerDragSt
             priority
           />
         </div>
-        {/* <<< RE-ADD and COMMENT OUT Team Name Display/Edit Block >>> */}
-        {/*
-        {isEditingTeamName ? (
-          <input
-            ref={teamNameInputRef}
-            type="text"
-            value={editedTeamName}
-            onChange={handleTeamNameInputChange}
-            onBlur={handleFinishEditingTeamName}
-            onKeyDown={handleTeamNameKeyDown}
-            className="bg-slate-700 text-yellow-400 text-base font-semibold outline-none rounded px-2 py-0.5 w-24"
-            onClick={(e) => e.stopPropagation()} 
-          />
-        ) : (
-          <h2 
-            className="text-yellow-400 text-base font-semibold cursor-pointer hover:text-yellow-300 truncate"
-            onClick={handleTeamNameClick}
-            onTouchEnd={handleTeamNameTouchEnd}
-            title="Double-click or double-tap to edit team name"
-          >
-            {teamName} // Need teamName prop back if uncommented
-          </h2>
-        )}
-        */}
       </div>
 
       {/* Separator */}
