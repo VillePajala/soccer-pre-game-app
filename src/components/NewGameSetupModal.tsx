@@ -261,9 +261,6 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
 
     const finalGameTime = (gameHour && gameMinute) ? `${gameHour.padStart(2, '0')}:${gameMinute.padStart(2, '0')}` : '';
 
-    // Parse duration string into number before calling onStart
-    const finalDuration = Math.max(1, parseInt(localPeriodDurationString, 10) || 1);
-
     // Period duration validation
     const periodDurationMinutes = parseInt(localPeriodDurationString, 10);
     if (isNaN(periodDurationMinutes) || periodDurationMinutes <= 0) {

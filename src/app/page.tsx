@@ -1928,7 +1928,7 @@ export default function Home() {
     // saveStateToHistory({ availablePlayers: updatedAvailable /*, playersOnField: updatedOnField */ });
     console.log(`Set notes for ${playerId}`);
     // Removed playersOnField dependencies as they aren't used
-  }, [availablePlayers, setAvailablePlayers, /* playersOnField, setPlayersOnField, */ saveStateToHistory]);
+  }, [availablePlayers, setAvailablePlayers, /* playersOnField, setPlayersOnField, */ /* saveStateToHistory */]);
 
   const handleRemovePlayerFromRoster = useCallback((playerId: string) => {
     if (window.confirm(`Are you sure you want to remove player ${availablePlayers.find(p=>p.id === playerId)?.name ?? playerId} from the roster? This cannot be undone easily.`)) {
@@ -2565,7 +2565,7 @@ export default function Home() {
     setPlayerIdsForNewGame(selectedPlayerIds); // Use the current selection
     setIsNewGameSetupModalOpen(true); // Open setup modal (moved here for save & continue path)
 
-  }, [t, currentGameId, savedGames, handleOpenSaveGameModal, handleQuickSaveGame, setIsNewGameSetupModalOpen, 
+  }, [t, currentGameId, savedGames, /* handleOpenSaveGameModal, */ handleQuickSaveGame, setIsNewGameSetupModalOpen, 
       // <<< ADD dependencies >>>
       availablePlayers, selectedPlayerIds, setPlayerIdsForNewGame
      ]); 
