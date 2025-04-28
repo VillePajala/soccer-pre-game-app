@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PlayerDisk from './PlayerDisk'; // Import the PlayerDisk component
 import { Player } from '@/app/page'; // Import the Player type
 import Image from 'next/image'; // RE-ADD Import
@@ -38,25 +38,25 @@ interface PlayerBarProps {
 //   { id: 'p11', name: 'Player 11' },
 // ];
 
-const PlayerBar: React.FC<PlayerBarProps> = ({ players, teamName, onTeamNameChange, onPlayerDragStartFromBar, selectedPlayerIdFromBar, onBarBackgroundClick, gameEvents, onPlayerTapInBar, onToggleGoalie }) => { // Destructure players and rename handler from props
-  const [isEditingTeamName, setIsEditingTeamName] = useState(false);
-  const [editedTeamName, setEditedTeamName] = useState(teamName);
-  const teamNameInputRef = useRef<HTMLInputElement>(null);
-  // Ref for team name double-tap detection
-  const teamNameLastTapTimeRef = useRef<number>(0);
+const PlayerBar: React.FC<PlayerBarProps> = ({ players, teamName, onPlayerDragStartFromBar, selectedPlayerIdFromBar, onBarBackgroundClick, gameEvents, onPlayerTapInBar, onToggleGoalie }) => { // Destructure players and rename handler from props
+  // REMOVE State and Refs for Team Name Editing
+  // const [isEditingTeamName, setIsEditingTeamName] = useState(false);
+  // const [editedTeamName, setEditedTeamName] = useState(teamName);
+  // const teamNameInputRef = useRef<HTMLInputElement>(null);
+  // const teamNameLastTapTimeRef = useRef<number>(0);
 
   // Effect to update local state if prop changes (e.g., undo/redo)
-  useEffect(() => {
-    setEditedTeamName(teamName);
-  }, [teamName]);
+  // useEffect(() => {
+  //   setEditedTeamName(teamName);
+  // }, [teamName]);
 
   // Focus input when editing starts
-  useEffect(() => {
-    if (isEditingTeamName && teamNameInputRef.current) {
-      teamNameInputRef.current.focus();
-      teamNameInputRef.current.select();
-    }
-  }, [isEditingTeamName]);
+  // useEffect(() => {
+  //   if (isEditingTeamName && teamNameInputRef.current) {
+  //     teamNameInputRef.current.focus();
+  //     teamNameInputRef.current.select();
+  //   }
+  // }, [isEditingTeamName]);
 
   // --- New Handlers for Double Click/Tap Team Name Edit ---
   // const handleStartEditingTeamName = () => { ... };
