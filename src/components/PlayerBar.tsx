@@ -58,70 +58,23 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, teamName, onTeamNameChan
     }
   }, [isEditingTeamName]);
 
-  const handleStartEditingTeamName = () => {
-     if (!isEditingTeamName) {
-      setEditedTeamName(teamName);
-      setIsEditingTeamName(true);
-    }
-  };
-
-  // Wrap in useCallback
-  const handleFinishEditingTeamName = useCallback(() => {
-     if (isEditingTeamName) {
-      setIsEditingTeamName(false);
-      const trimmedName = editedTeamName.trim();
-      if (trimmedName && trimmedName !== teamName) {
-        onTeamNameChange(trimmedName); 
-      }
-    }
-  }, [isEditingTeamName, editedTeamName, teamName, onTeamNameChange]); // Add dependencies
-
-  const handleTeamNameInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditedTeamName(e.target.value);
-  };
-
-  const handleTeamNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handleFinishEditingTeamName();
-    } else if (e.key === 'Escape') {
-      setIsEditingTeamName(false);
-      setEditedTeamName(teamName);
-    }
-  };
-
   // --- New Handlers for Double Click/Tap Team Name Edit ---
-  const handleTeamNameClick = () => {
-    const currentTime = Date.now();
-    if (currentTime - teamNameLastTapTimeRef.current < 300) {
-      // Double click detected
-      handleStartEditingTeamName();
-      teamNameLastTapTimeRef.current = 0; // Reset tap time
-    } else {
-      teamNameLastTapTimeRef.current = currentTime;
-    }
-  };
-
-  const handleTeamNameTouchEnd = () => {
-    const currentTime = Date.now();
-    if (currentTime - teamNameLastTapTimeRef.current < 300) {
-      // Double tap detected
-      handleStartEditingTeamName();
-      teamNameLastTapTimeRef.current = 0; // Reset tap time
-    } else {
-      teamNameLastTapTimeRef.current = currentTime;
-    }
-  };
+  // const handleStartEditingTeamName = () => { ... };
+  // const handleFinishEditingTeamName = useCallback(() => { ... }, [...]);
+  // const handleTeamNameInputChange = (e: React.ChangeEvent<HTMLInputElement>) => { ... };
+  // const handleTeamNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => { ... };
+  // const handleTeamNameClick = () => { ... };
+  // const handleTeamNameTouchEnd = () => { ... };
   // --- End New Handlers ---
 
   // --- Effect: Finish team name editing if a player disk is selected ---
-  useEffect(() => {
-    // If editing team name AND a player disk becomes selected
-    if (isEditingTeamName && selectedPlayerIdFromBar) {
-      console.log("PlayerBar: Finishing team name edit because a player disk was selected.");
-      handleFinishEditingTeamName();
-    }
-    // Dependencies: We only care when these two states change in relation to each other.
-  }, [isEditingTeamName, selectedPlayerIdFromBar, handleFinishEditingTeamName]);
+  // const handleTeamNameClick = () => { ... };
+  // const handleTeamNameTouchEnd = () => { ... };
+  // const handleTeamNameInputChange = (e: React.ChangeEvent<HTMLInputElement>) => { ... };
+  // const handleTeamNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => { ... };
+  // const handleTeamNameClick = () => { ... };
+  // const handleTeamNameTouchEnd = () => { ... };
+  // --- End Effect: Finish team name editing if a player disk is selected ---
 
   return (
     <div 

@@ -2,13 +2,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 
-// Helper function to format time (MM:SS)
-const formatTime = (totalSeconds: number): string => {
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-};
-
 interface GameInfoBarProps {
   teamName: string;
   opponentName: string;

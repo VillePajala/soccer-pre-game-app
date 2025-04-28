@@ -12,10 +12,7 @@ import {
     HiOutlineUserPlus,
     HiOutlineStopCircle,
     HiOutlineClock,
-    HiOutlineArrowsPointingOut, // Replaces FaExpand
-    HiOutlineArrowsPointingIn,  // Replaces FaCompress
     HiOutlineClipboardDocumentList, // Replaces FaClipboardList
-    HiOutlineQuestionMarkCircle,
     HiOutlineLanguage,
     HiOutlineCog6Tooth, // Settings icon
     HiOutlineBookOpen, // Import for Training Resources
@@ -51,10 +48,7 @@ interface ControlBarProps {
   showLargeTimerOverlay: boolean;
   onToggleLargeTimerOverlay: () => void;
   showPlayerNames: boolean;
-  onToggleInstructions: () => void;
   onToggleTrainingResources: () => void; // Add prop for training modal
-  isFullscreen: boolean;
-  onToggleFullScreen: () => void;
   onToggleGoalLogModal: () => void; // Add prop for goal modal
   onToggleGameStatsModal: () => void;
   onHardResetApp: () => void; // Add the new prop type
@@ -79,10 +73,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   showLargeTimerOverlay,
   onToggleLargeTimerOverlay,
   showPlayerNames,
-  onToggleInstructions,
   onToggleTrainingResources,
-  isFullscreen,
-  onToggleFullScreen,
   onToggleGoalLogModal,
   onToggleGameStatsModal,
   onHardResetApp,
@@ -98,14 +89,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
   const [menuView, setMenuView] = useState<'main' | 'tulospalvelu'>('main'); // NEW state for menu view
   const settingsMenuRef = useRef<HTMLDivElement>(null);
-  const [isPWA, setIsPWA] = useState(false); // State to track PWA standalone mode
   
-  // Check PWA standalone mode on mount
-  useEffect(() => {
-    // This check only works client-side after the component mounts
-    setIsPWA(window.matchMedia('(display-mode: standalone)').matches);
-  }, []);
-
   // --- RE-ADD BUTTON STYLES --- 
   // Consistent Button Styles - Adjusted active state
   const baseButtonStyle = "text-slate-100 font-semibold py-1.5 px-2 w-9 h-9 flex items-center justify-center rounded-md shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900";
@@ -231,17 +215,6 @@ const ControlBar: React.FC<ControlBarProps> = ({
         >
             {showLargeTimerOverlay ? <HiOutlineStopCircle className={iconSize} /> : <HiOutlineClock className={iconSize} />}
         </button>
-        {/* <<< REMOVE Fullscreen Button Block >>> */}
-        {/* RE-ADD Fullscreen Button Here, Conditionally Rendered */}
-        {/* {!isPWA && (
-          <button 
-            onClick={onToggleFullScreen}
-            className={`${baseButtonStyle} ${secondaryColor}`}
-            title={isFullscreen ? t('controlBar.exitFullscreen', 'Exit Fullscreen') : t('controlBar.enterFullscreen', 'Enter Fullscreen')}
-          >
-            {isFullscreen ? <HiOutlineArrowsPointingIn className={iconSize} /> : <HiOutlineArrowsPointingOut className={iconSize} />}
-          </button>
-        )} */}
         {/* Settings Menu Button (REMAINING) */}
         <div className="relative" ref={settingsMenuRef}>
           <button
