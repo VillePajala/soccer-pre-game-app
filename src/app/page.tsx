@@ -16,6 +16,7 @@ import RosterSettingsModal from '@/components/RosterSettingsModal';
 import GameSettingsModal from '@/components/GameSettingsModal';
 import { useTranslation } from 'react-i18next';
 import { useGameState, UseGameStateReturn } from '@/hooks/useGameState';
+import GameInfoBar from '@/components/GameInfoBar';
 
 // Define the Player type - Use relative coordinates
 export interface Player {
@@ -2603,6 +2604,17 @@ export default function Home() {
         onToggleGoalie={handleToggleGoalie} // Pass the handler from the hook
       />
       
+      {/* <<< ADD the GameInfoBar here >>> */}
+      <GameInfoBar 
+        teamName={teamName}
+        opponentName={opponentName}
+        homeScore={homeScore}
+        awayScore={awayScore}
+        // <<< REMOVE timeElapsedInSeconds prop >>>
+        onTeamNameChange={handleTeamNameChange}
+        onOpponentNameChange={handleOpponentNameChange}
+      />
+
       {/* Opponent Bar (Optional) */}
 
       {/* Main content */}
