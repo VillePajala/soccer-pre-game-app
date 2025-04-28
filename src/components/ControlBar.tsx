@@ -59,6 +59,7 @@ interface ControlBarProps {
   onQuickSave: () => void; // Add prop for quick save
   onOpenGameSettingsModal: () => void;
   isGameLoaded: boolean; // To enable/disable the settings button
+  onPlaceAllPlayers: () => void; // New prop for placing all players on the field
 }
 
 const ControlBar: React.FC<ControlBarProps> = ({
@@ -84,6 +85,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   onQuickSave,
   onOpenGameSettingsModal,
   isGameLoaded,
+  onPlaceAllPlayers,
 }) => {
   const { t, i18n } = useTranslation(); // Standard hook
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
@@ -167,6 +169,9 @@ const ControlBar: React.FC<ControlBarProps> = ({
       <div className="flex items-center gap-2">
         <button onClick={onToggleNames} className={`${baseButtonStyle} ${secondaryColor}`} title={t(showPlayerNames ? 'controlBar.toggleNamesHide' : 'controlBar.toggleNamesShow') ?? (showPlayerNames ? "Hide Names" : "Show Names")}>
             {showPlayerNames ? <HiOutlineEyeSlash className={iconSize}/> : <HiOutlineEye className={iconSize}/>}
+        </button>
+        <button onClick={onPlaceAllPlayers} className={`${baseButtonStyle} bg-indigo-600 hover:bg-indigo-500 focus:ring-indigo-500`} title={t('controlBar.placeAllPlayers') ?? "Place All Players on Field"}>
+            <HiOutlineUsers className={iconSize}/>
         </button>
         <button onClick={onClearDrawings} className={`${baseButtonStyle} ${clearColor}`} title={t('controlBar.clearDrawings') ?? "Clear Drawings"}>
             <HiOutlineBackspace className={iconSize}/>

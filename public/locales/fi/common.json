@@ -10,6 +10,7 @@
   "controlBar.resetField": "Nollaa kenttä",
   "controlBar.clearDrawings": "Tyhjennä piirrokset",
   "controlBar.addOpponent": "Lisää vastustaja",
+  "controlBar.placeAllPlayers": "Sijoita kaikki pelaajat kentälle",
   "controlBar.timerStart": "Käynnistä",
   "controlBar.timerPause": "Tauko",
   "controlBar.timerReset": "Nollaa",
@@ -73,6 +74,7 @@
     "controlBar": {
       "undoRedo": "Peruuta/tee uudelleen toimintosi.",
       "toggleNames": "Näytä/piilota pelaajien nimet kentällä.",
+      "placeAllPlayers": "Sijoita automaattisesti kaikki valitut pelaajat kentälle peliformaatioon.",
       "clearDrawings": "Poista kaikki piirretyt viivat.",
       "addOpponent": "Lisää vastustajamerkki kentän keskelle.",
       "resetField": "Tyhjennä kaikki pelaajat, vastustajat ja piirrokset kentältä.",

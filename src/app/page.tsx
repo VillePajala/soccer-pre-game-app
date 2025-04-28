@@ -2507,6 +2507,119 @@ export default function Home() {
      ]); 
   // --- END Start New Game Handler ---
 
+  // New handler to place all selected players on the field at once
+  const handlePlaceAllPlayers = useCallback(() => {
+    // Get the list of selected players who are not yet on the field
+    const selectedButNotOnField = selectedPlayerIds.filter(id => 
+      !playersOnField.some(fieldPlayer => fieldPlayer.id === id)
+    );
+    
+    if (selectedButNotOnField.length === 0) {
+      // All selected players are already on the field
+      console.log('All selected players are already on the field');
+      return;
+    }
+
+    // Find the corresponding player objects from availablePlayers
+    const playersToPlace = selectedButNotOnField
+      .map(id => availablePlayers.find(p => p.id === id))
+      .filter((p): p is Player => p !== undefined);
+    
+    console.log(`Placing ${playersToPlace.length} players on the field...`);
+
+    // Define a reasonable soccer formation based on number of players
+    // For simplicity, we'll use these common formations:
+    // 3-4 players: simple triangle or diamond
+    // 5-7 players: 2-3-1 or 2-3-2 formation
+    // 8+ players: 3-3-2 or 3-4-1 formation
+    
+    // Calculate positions for players in a reasonable soccer formation
+    const newFieldPlayers: Player[] = [...playersOnField]; // Start with existing players
+    
+    // Find if there's a goalie in the players to place
+    const goalieIndex = playersToPlace.findIndex(p => p.isGoalie);
+    let goalie: Player | null = null;
+    
+    if (goalieIndex !== -1) {
+      // Remove goalie from the array and handle separately
+      goalie = playersToPlace.splice(goalieIndex, 1)[0];
+    }
+    
+    // Place goalie first if one exists
+    if (goalie) {
+      // Place at the goal line, slightly offset from center
+      newFieldPlayers.push({
+        ...goalie,
+        relX: 0.5,
+        relY: 0.95 // Near our own goal line
+      });
+    }
+    
+    // Determine formation based on remaining players
+    const remainingCount = playersToPlace.length;
+    let positions: { relX: number, relY: number }[] = [];
+    
+    if (remainingCount <= 3) {
+      // Simple triangle/diamond formation for 1-3 players (not including goalie)
+      if (remainingCount >= 1) positions.push({ relX: 0.5, relY: 0.8 }); // Defender
+      if (remainingCount >= 2) positions.push({ relX: 0.5, relY: 0.5 }); // Midfielder
+      if (remainingCount >= 3) positions.push({ relX: 0.5, relY: 0.3 }); // Forward
+    } 
+    else if (remainingCount <= 7) {
+      // 2-3-1 or 2-3-2 formation for 6-7 players (not including goalie)
+      // Defenders
+      positions.push({ relX: 0.3, relY: 0.8 });
+      positions.push({ relX: 0.7, relY: 0.8 });
+      
+      // Midfielders
+      positions.push({ relX: 0.25, relY: 0.6 });
+      positions.push({ relX: 0.5, relY: 0.55 });
+      positions.push({ relX: 0.75, relY: 0.6 });
+      
+      // Forwards
+      positions.push({ relX: 0.35, relY: 0.3 });
+      if (remainingCount >= 7) positions.push({ relX: 0.65, relY: 0.3 });
+    }
+    else {
+      // 3-4-1 or 3-3-2 formation for 8+ players (not including goalie)
+      // Defenders
+      positions.push({ relX: 0.25, relY: 0.85 });
+      positions.push({ relX: 0.5, relY: 0.8 });
+      positions.push({ relX: 0.75, relY: 0.85 });
+      
+      // Midfielders
+      positions.push({ relX: 0.2, relY: 0.6 });
+      positions.push({ relX: 0.4, relY: 0.55 });
+      positions.push({ relX: 0.6, relY: 0.55 });
+      positions.push({ relX: 0.8, relY: 0.6 });
+      
+      // Forwards
+      positions.push({ relX: 0.5, relY: 0.3 });
+      if (remainingCount >= 9) positions.push({ relX: 0.35, relY: 0.3 });
+      if (remainingCount >= 10) positions.push({ relX: 0.65, relY: 0.3 });
+    }
+    
+    // Take only the positions we need for the remaining players
+    positions = positions.slice(0, remainingCount);
+    
+    // Add player in each position
+    playersToPlace.forEach((player, index) => {
+      if (index < positions.length) {
+        newFieldPlayers.push({
+          ...player,
+          relX: positions[index].relX,
+          relY: positions[index].relY
+        });
+      }
+    });
+    
+    // Update players on field
+    setPlayersOnField(newFieldPlayers);
+    saveStateToHistory({ playersOnField: newFieldPlayers });
+    
+    console.log(`Successfully placed ${playersToPlace.length} players on the field`);
+  }, [playersOnField, selectedPlayerIds, availablePlayers, saveStateToHistory, setPlayersOnField]);
+
   // Render null or a loading indicator until state is loaded
   // Note: Console log added before the check itself
   if (!isLoaded) {
@@ -2635,6 +2748,7 @@ export default function Home() {
           // ADD props for Game Settings button
           onOpenGameSettingsModal={handleOpenGameSettingsModal}
           isGameLoaded={!!(currentGameId && currentGameId !== DEFAULT_GAME_ID)} // <-- CHECK FOR VALID GAME ID
+          onPlaceAllPlayers={handlePlaceAllPlayers} // New prop for placing all players
         />
         {/* Instructions Modal */}
         <InstructionsModal 

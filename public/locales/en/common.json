@@ -10,6 +10,7 @@
   "controlBar.resetField": "Reset Field",
   "controlBar.clearDrawings": "Clear Drawings",
   "controlBar.addOpponent": "Add Opponent",
+  "controlBar.placeAllPlayers": "Place All Players on Field",
   "controlBar.timerStart": "Start",
   "controlBar.timerPause": "Pause",
   "controlBar.timerReset": "Reset",
@@ -73,6 +74,7 @@
     "controlBar": {
       "undoRedo": "Step backward/forward through your actions.",
       "toggleNames": "Show/hide player names on the field.",
+      "placeAllPlayers": "Automatically place all selected players on the field in a formation.",
       "clearDrawings": "Remove all drawn lines.",
       "addOpponent": "Add an opponent marker to the center of the field.",
       "resetField": "Clear all players, opponents, and drawings from the field.",
