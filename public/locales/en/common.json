@@ -264,5 +264,11 @@
     "cancelButton": "Cancel",
     "startButton": "Start Game",
     "opponentRequiredAlert": "Please enter an opponent name."
+  },
+  "rosterPrompt": {
+    "message": "Set up your roster now?",
+    "confirm": "Yes",
+    "dismissTooltip": "Dismiss",
+    "confirmTooltip": "Open Roster Settings"
   }
 } 

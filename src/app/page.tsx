@@ -302,6 +302,35 @@ export default function Home() {
 
   // <<< ADD State to hold player IDs for the next new game >>>
   const [playerIdsForNewGame, setPlayerIdsForNewGame] = useState<string[] | null>(null);
+  // <<< ADD State for the roster prompt toast >>>
+  const [showRosterPrompt, setShowRosterPrompt] = useState<boolean>(false);
+
+  // <<< ADD Effect for auto-dismissing the roster prompt >>>
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+    if (showRosterPrompt) {
+      timer = setTimeout(() => {
+        setShowRosterPrompt(false);
+        // Optionally mark as dismissed for the session here too if auto-dismiss should count
+        // sessionStorage.setItem('rosterPromptDismissed', 'true'); 
+      }, 8000); // Auto-dismiss after 8 seconds
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [showRosterPrompt]);
+
+  // <<< ADD Handler to dismiss the prompt and remember for the session >>>
+  const dismissRosterPrompt = () => {
+    setShowRosterPrompt(false);
+    sessionStorage.setItem('rosterPromptDismissed', 'true');
+  };
+
+  // <<< ADD Handler for clicking 'Yes' on the prompt >>>
+  const handleConfirmRosterPrompt = () => {
+    dismissRosterPrompt(); // Dismiss the prompt first
+    openRosterModal();     // Then open the roster modal
+  };
 
   // --- Derived State for Filtered Players ---
   const playersForCurrentGame = useMemo(() => {
@@ -2414,6 +2443,11 @@ export default function Home() {
       setIsNewGameSetupModalOpen(false);
       // REMOVED: setIsStartingNewGameAfterSave(false);
 
+      // <<< Trigger the roster prompt if not dismissed this session >>>
+      if (!sessionStorage.getItem('rosterPromptDismissed')) {
+        setShowRosterPrompt(true);
+      }
+
   }, [
     // Keep necessary dependencies
     teamName,
@@ -2425,6 +2459,7 @@ export default function Home() {
     setHistoryIndex,
     setCurrentGameId,
     setIsNewGameSetupModalOpen,
+    setShowRosterPrompt, // <<< ADD setShowRosterPrompt dependency
     // setIsStartingNewGameAfterSave
   ]);
 
@@ -2888,6 +2923,41 @@ export default function Home() {
         />
 
       </div>
+
+      {/* <<< ADD Roster Prompt Toast >>> */}
+      <div 
+        className={`
+          fixed bottom-16 right-4 bg-indigo-600/90 backdrop-blur-sm text-white 
+          rounded-lg shadow-lg p-3 transition-all duration-300 ease-in-out
+          ${showRosterPrompt ? 'translate-y-0 opacity-100' : 'translate-y-12 opacity-0 pointer-events-none'}
+          flex items-center gap-3 max-w-xs z-50
+        `}
+      >
+        <div className="flex-1">
+          <p className="text-sm font-medium">
+            {t('rosterPrompt.message', 'Set up your roster now?')}
+          </p>
+        </div>
+        <div className="flex gap-2 items-center">
+          <button 
+            onClick={handleConfirmRosterPrompt} 
+            className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded text-xs"
+            title={t('rosterPrompt.confirmTooltip', 'Open Roster Settings') ?? undefined}
+          >
+            {t('rosterPrompt.confirm', 'Yes')}
+          </button>
+          <button 
+            onClick={dismissRosterPrompt} 
+            className="p-1 text-white/70 hover:text-white"
+            title={t('rosterPrompt.dismissTooltip', 'Dismiss') ?? undefined}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
     </div>
   );
 }
