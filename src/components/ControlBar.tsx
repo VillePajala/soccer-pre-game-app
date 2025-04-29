@@ -29,8 +29,8 @@ import {
     HiOutlineAdjustmentsHorizontal, // For Game Settings
     HiOutlineDocumentArrowDown,   // For Export Data
     HiOutlineSquares2X2,       // For Place All Players on Field
-    HiOutlineXCircle,
-    HiOutlineRectangleGroup,
+    // HiOutlineXCircle, // REMOVE unused
+    // HiOutlineRectangleGroup, // REMOVE unused
 } from 'react-icons/hi2'; // Using hi2 for Heroicons v2 Outline
 // REMOVE FaClock, FaUsers, FaCog (FaFutbol remains)
 import { FaFutbol } from 'react-icons/fa';
