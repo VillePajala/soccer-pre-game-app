@@ -26,6 +26,7 @@ interface LoadGameModalProps {
   onExportAllExcel: () => void;
   onExportOneJson: (gameId: string) => void;
   onExportOneCsv: (gameId: string) => void;
+  currentGameId?: string; // Add prop for currently loaded game
 }
 
 // Define the default game ID constant if not imported (consider sharing from page.tsx)
@@ -41,6 +42,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
   onExportAllExcel,
   onExportOneJson,
   onExportOneCsv,
+  currentGameId,
 }) => {
   const { t } = useTranslation();
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -197,7 +199,14 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                 }
                 
                 return (
-                  <div key={gameId} className="bg-slate-700/70 p-5 rounded-lg shadow-lg border border-slate-600/80 flex flex-col gap-4 transition-colors duration-150 hover:bg-slate-600/80">
+                  <div 
+                    key={gameId} 
+                    className={`bg-slate-700/70 p-5 rounded-lg shadow-lg border transition-colors duration-150 hover:bg-slate-600/80 ${
+                      currentGameId === gameId 
+                        ? 'border-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.4)]' 
+                        : 'border-slate-600/80'
+                    } flex flex-col gap-4`}
+                  >
                     
                     <div className="flex justify-between items-start mb-1">
                       <h3 className="text-lg font-semibold text-slate-100 break-words mr-3">
@@ -211,6 +220,12 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                         </span>
                       )}
                     </div>
+                    
+                    {currentGameId === gameId && (
+                      <div className="bg-yellow-400/20 border border-yellow-400/30 rounded-md p-1.5 text-xs text-yellow-300 font-medium text-center mb-2">
+                        {t('loadGameModal.currentlyOpen', 'Currently Open')}
+                      </div>
+                    )}
                     
                     <div className="flex justify-between items-center text-sm text-slate-300">
                       <span className="text-slate-200">

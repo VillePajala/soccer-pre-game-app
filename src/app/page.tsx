@@ -2853,6 +2853,7 @@ export default function Home() {
           onExportAllExcel={handleExportAllGamesCsv} // Pass renamed CSV handler
           onExportOneJson={handleExportOneJson}
           onExportOneCsv={handleExportOneCsv}
+          currentGameId={currentGameId || undefined} // Convert null to undefined
         />
 
         {/* Conditionally render the New Game Setup Modal */}
