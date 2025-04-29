@@ -100,11 +100,33 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
     .sort((a, b) => {
       const gameA = savedGames[a];
       const gameB = savedGames[b];
-      // Sort by date in descending order (newest first)
-      if (!gameA.gameDate && !gameB.gameDate) return 0;
-      if (!gameA.gameDate) return 1; // If A has no date, it goes at the end
-      if (!gameB.gameDate) return -1; // If B has no date, it goes at the end
-      return new Date(gameB.gameDate).getTime() - new Date(gameA.gameDate).getTime();
+      
+      // Primary sort: by date in descending order (newest first)
+      const dateA = gameA.gameDate ? new Date(gameA.gameDate).getTime() : 0;
+      const dateB = gameB.gameDate ? new Date(gameB.gameDate).getTime() : 0;
+
+      if (dateB !== dateA) {
+        // Handle cases where one date is missing (put games without date last)
+        if (!dateA) return 1;
+        if (!dateB) return -1;
+        return dateB - dateA;
+      }
+
+      // Secondary sort: by timestamp in game ID (descending, newest first)
+      // Extract timestamp assuming format "game_TIMESTAMP_RANDOM"
+      try {
+        const timestampA = parseInt(a.split('_')[1], 10);
+        const timestampB = parseInt(b.split('_')[1], 10);
+        
+        if (!isNaN(timestampA) && !isNaN(timestampB)) {
+          return timestampB - timestampA;
+        }
+      } catch (error) {
+        console.warn("Could not parse timestamps from game IDs for secondary sort:", a, b, error);
+      }
+      
+      // Fallback if dates are equal and timestamps can't be parsed
+      return 0; 
     });
 
   const handleDeleteClick = (gameId: string, gameName: string) => {
@@ -201,67 +223,73 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                 return (
                   <div 
                     key={gameId} 
-                    className={`bg-slate-700/70 p-5 rounded-lg shadow-lg border transition-colors duration-150 hover:bg-slate-600/80 ${
+                    className={`bg-slate-700/70 p-3 rounded-lg shadow-lg border transition-colors duration-150 hover:bg-slate-600/80 ${
                       currentGameId === gameId 
                         ? 'border-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.4)]' 
                         : 'border-slate-600/80'
-                    } flex flex-col gap-4`}
+                    }`}
                   >
-                    
-                    <div className="flex justify-between items-start mb-1">
-                      <h3 className="text-lg font-semibold text-slate-100 break-words mr-3">
-                        {gameData.teamName || 'Team'} vs {gameData.opponentName || 'Opponent'}
-                      </h3>
-                      {/* Display Season/Tournament Name if available */}
-                      {contextName && contextType && (
-                        <span className={`text-xs uppercase font-semibold tracking-wider ${contextType === 'Tournament' ? 'bg-purple-600' : 'bg-blue-600'} text-white px-2.5 py-1 rounded-full whitespace-nowrap shadow-sm`}>
-                           {/* Show the actual name, maybe truncate if too long? */}
-                           {contextName}
-                        </span>
-                      )}
-                    </div>
-                    
-                    {currentGameId === gameId && (
-                      <div className="bg-yellow-400/20 border border-yellow-400/30 rounded-md p-1.5 text-xs text-yellow-300 font-medium text-center mb-2">
-                        {t('loadGameModal.currentlyOpen', 'Currently Open')}
+                    {/* Row 1: Team Names, Badge, Score */}
+                    <div className="flex items-start justify-between gap-3 mb-1.5">
+                      {/* Left: Team names and optional badge */}
+                      <div className="flex-1 min-w-0"> {/* min-w-0 helps truncation */}
+                        <h3 className="text-sm font-semibold text-slate-100 truncate">
+                          {gameData.teamName || 'Team'} vs {gameData.opponentName || 'Opponent'}
+                        </h3>
+                        {contextName && contextType && (
+                          <span className={`inline-block mt-0.5 text-2xs uppercase font-medium tracking-wide ${contextType === 'Tournament' ? 'bg-purple-600/80' : 'bg-blue-600/80'} text-white/90 px-1.5 py-0.5 rounded whitespace-nowrap shadow-sm`}>
+                            {contextName}
+                          </span>
+                        )}
                       </div>
-                    )}
-                    
-                    <div className="flex justify-between items-center text-sm text-slate-300">
-                      <span className="text-slate-200">
-                        {formattedDate}
-                        {/* Display location and time if available */}
-                        {gameData.gameLocation && (
-                            <span className="block text-xs text-slate-400 mt-1">{gameData.gameLocation}</span>
-                        )}
-                        {gameData.gameTime && (
-                            <span className="block text-xs text-slate-400 mt-1">{gameData.gameTime}</span>
-                        )}
-                      </span>
-                      <span className="font-bold text-xl text-yellow-400 tracking-wider">
+                      {/* Right: Score */}
+                      <span className="font-bold text-lg text-yellow-400 tracking-wider flex-shrink-0 pt-px">
                         {gameData.homeScore ?? 0} - {gameData.awayScore ?? 0}
                       </span>
                     </div>
 
-                    <div className="flex justify-between items-center mt-3 pt-4 border-t border-slate-600/60">
+                    {/* Row 2: Date/Location/Time and Status */}
+                    <div className="flex items-center text-xs text-slate-300 mb-2.5">
+                      {currentGameId === gameId && (
+                        <span className="inline-flex items-center bg-yellow-500/90 text-slate-900 text-2xs font-bold px-1.5 py-0.5 rounded-sm mr-1.5 shadow-sm">
+                          {t('loadGameModal.currentlyOpenShort', 'OPEN')}
+                        </span>
+                      )}
+                      <span className="truncate"> {/* Allow date line to truncate */}
+                        {formattedDate}
+                        {(gameData.gameLocation || gameData.gameTime) && ' • '}
+                        {gameData.gameLocation && (
+                          <span className="text-slate-400">{gameData.gameLocation}</span>
+                        )}
+                        {gameData.gameLocation && gameData.gameTime && ' • '}
+                        {gameData.gameTime && (
+                          <span className="text-slate-400">{gameData.gameTime}</span>
+                        )}
+                      </span>
+                    </div>
+
+                    {/* Row 3: Actions */}
+                    <div className="flex items-center pt-1.5 border-t border-slate-600/40">
+                      {/* Load Button */}
                       <button 
                         onClick={() => { onLoad(gameId); onClose(); }}
-                        className="flex-grow mr-4 px-4 py-2 bg-blue-600 text-white rounded-md shadow hover:bg-blue-700 transition duration-150 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-700 flex items-center justify-center"
+                        className="flex-grow mr-2 px-2.5 py-1.5 bg-blue-600 text-white rounded-md shadow hover:bg-blue-700 transition duration-150 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-blue-400 focus:ring-offset-1 focus:ring-offset-slate-700 flex items-center justify-center"
                       >
-                        <HiOutlineDocumentArrowDown className="w-5 h-5 mr-2" />
+                        <HiOutlineDocumentArrowDown className="w-3.5 h-3.5 mr-1" />
                         {t('loadGameModal.loadButton', 'Load Game')}
                       </button>
                     
+                      {/* Actions Menu */}                      
                       <div className="relative flex-shrink-0">
                         <button
                           onClick={(e) => {
                              e.stopPropagation(); 
                              setOpenMenuId(openMenuId === gameId ? null : gameId);
                           }}
-                          className="p-1.5 text-slate-300 rounded hover:bg-slate-600 hover:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-700"
+                          className="p-1.5 text-slate-300 rounded hover:bg-slate-600 hover:text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-400 focus:ring-offset-1 focus:ring-offset-slate-700"
                           title={t('loadGameModal.actionsMenuTooltip', 'Actions') ?? 'Actions'}
                         >
-                           <HiOutlineEllipsisVertical className="w-5 h-5" />
+                           <HiOutlineEllipsisVertical className="w-4 h-4" />
                         </button>
 
                         {openMenuId === gameId && (
@@ -272,22 +300,22 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                              
                              <button 
                                 onClick={() => { onExportOneJson(gameId); setOpenMenuId(null); }} 
-                                className="w-full text-left px-3 py-1.5 text-sm text-slate-200 hover:bg-teal-700 flex items-center"
+                                className="w-full text-left px-3 py-1.5 text-xs text-slate-200 hover:bg-teal-700 flex items-center"
                               >
-                                <HiOutlineDocumentText className="w-4 h-4 mr-2" /> {t('loadGameModal.exportJsonMenuItem', 'JSON')}
+                                <HiOutlineDocumentText className="w-3.5 h-3.5 mr-2" /> {t('loadGameModal.exportJsonMenuItem', 'JSON')}
                              </button>
                              <button 
                                 onClick={() => { onExportOneCsv(gameId); setOpenMenuId(null); }} 
-                                className="w-full text-left px-3 py-1.5 text-sm text-slate-200 hover:bg-emerald-700 flex items-center"
+                                className="w-full text-left px-3 py-1.5 text-xs text-slate-200 hover:bg-emerald-700 flex items-center"
                               >
-                                <HiOutlineTableCells className="w-4 h-4 mr-2" /> {t('loadGameModal.exportExcelMenuItem', 'EXCEL')}
+                                <HiOutlineTableCells className="w-3.5 h-3.5 mr-2" /> {t('loadGameModal.exportExcelMenuItem', 'EXCEL')}
                              </button>
                              <div className="border-t border-slate-700 my-1"></div>
                              <button 
                                 onClick={() => handleDeleteClick(gameId, `${gameData.teamName || 'Team'} vs ${gameData.opponentName || 'Opponent'}`)}
-                                className="w-full text-left px-3 py-1.5 text-sm text-red-400 hover:bg-red-600 hover:text-white flex items-center"
+                                className="w-full text-left px-3 py-1.5 text-xs text-red-400 hover:bg-red-600 hover:text-white flex items-center"
                              >
-                                <HiOutlineTrash className="w-4 h-4 mr-2" /> {t('loadGameModal.deleteMenuItem', 'Delete')}
+                                <HiOutlineTrash className="w-3.5 h-3.5 mr-2" /> {t('loadGameModal.deleteMenuItem', 'Delete')}
                              </button>
                            </div>
                         )}
