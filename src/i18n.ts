@@ -196,6 +196,7 @@ fiTranslations.controlBar.enterFullscreen = "Koko Näyttö";
 fiTranslations.controlBar.exitFullscreen = "Poistu Koko Näytöltä";
 fiTranslations.controlBar.newGameButton = "Uusi Peli";
 fiTranslations.controlBar.gameSettingsButton = "Otteluasetukset";
+fiTranslations.controlBar.toggleLanguage = "Vaihda Englantiin";
 
 // Add common namespace if missing
 if (!fiTranslations.common) {
@@ -393,6 +394,7 @@ enTranslations.controlBar.enterFullscreen = "Enter Fullscreen";
 enTranslations.controlBar.exitFullscreen = "Exit Fullscreen";
 enTranslations.controlBar.newGameButton = "New Game";
 enTranslations.controlBar.gameSettingsButton = "Game Settings";
+enTranslations.controlBar.toggleLanguage = "Switch to Finnish";
 
 // Add common namespace if missing
 if (!enTranslations.common) {

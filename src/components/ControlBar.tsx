@@ -239,106 +239,110 @@ const ControlBar: React.FC<ControlBarProps> = ({
           {/* Settings Dropdown Menu (REORGANIZED) */}
           {isSettingsMenuOpen && (
             <div 
-               // Position between PlayerBar and ControlBar with slightly more padding
-               // REMOVE overflow-hidden to allow inner scrolling
-               className={`fixed top-[6.5rem] bottom-14 left-4 right-4 pb-4 bg-slate-800/90 backdrop-blur-sm rounded-t-lg shadow-xl z-50 border-x border-t border-slate-600 /* removed overflow-hidden */ transition-all duration-200 ease-in-out transform ${isSettingsMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full'}`}
+               // Adjust position higher up to not overlap control bar too much
+               className={`fixed top-auto bottom-10 left-4 right-4 pt-1 pb-2 mt-auto mb-0 max-h-[85%] bg-slate-800/98 backdrop-blur-sm rounded-t-md shadow-xl z-50 border-x border-t border-slate-600/50 overflow-hidden transition-all duration-200 ease-in-out transform ${isSettingsMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full'}`}
             >
-               {/* Wrapper for Menu Views - ADD h-full */}
-               <div className={`flex transition-transform duration-200 ease-out h-full ${menuView === 'tulospalvelu' ? '-translate-x-full' : 'translate-x-0'}`}>
-               
-                 {/* --- Main Menu View --- */}
-                 <div className="w-full flex-shrink-0 overflow-y-auto h-full">
-                   <div className="py-1"> 
-
-                     {/* Group 1: Game Management */} 
-                     <div className="py-1">
-                       <button onClick={wrapHandler(onQuickSave)} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600/75">
-                         <HiOutlineArchiveBoxArrowDown className={menuIconSize} /> {t('controlBar.saveGame', 'Save')}
-                       </button>
-                       {/* <button onClick={wrapHandler(onOpenSaveGameModal)} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600/75">
-                         <HiOutlineFolderArrowDown className={menuIconSize} /> {t('controlBar.saveGameAs', 'Save As...')}
-                       </button> */}
-                       <button onClick={wrapHandler(onOpenLoadGameModal)} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600/75">
-                         <HiOutlineFolderOpen className={menuIconSize} /> {t('controlBar.loadGame', 'Load Game...')}
-                       </button>
-                       <button onClick={handleStartNewGame} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600/75">
-                         <HiOutlineArrowPath className={menuIconSize} /> {t('controlBar.newGameButton', 'New Game')}
-                       </button>
-                     </div>
-                     
-                     {/* Divider */}
-                     <div className="my-1 border-t border-slate-600/75"></div>
-
-                     {/* Group 2: Roster & Settings */}
-                     <div className="py-1">
-                       <button onClick={wrapHandler(onOpenGameSettingsModal)} className={`w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600/75 ${!isGameLoaded ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={!isGameLoaded}>
-                         <HiOutlineAdjustmentsHorizontal className={menuIconSize} /> {t('controlBar.gameSettingsButton', 'Game Settings')}
-                       </button>
-                       <button onClick={wrapHandler(onOpenRosterModal)} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600/75">
-                         <HiOutlineUsers className={menuIconSize} /> {t('controlBar.manageRoster', 'Manage Roster')}
-                       </button>
-                     </div>
-
-                     {/* ADD Subtle Divider */}
-                     <hr className="border-slate-600/75 my-1 mx-3" />
-                     
-                     {/* Group 3: Information/Export */} 
-                     <div className="py-1">
-                       <button onClick={wrapHandler(onToggleGameStatsModal)} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600/75">
-                         <HiOutlineClipboardDocumentList className={menuIconSize} />{t('controlBar.stats', 'Stats')}
-                       </button>
-                       <button onClick={wrapHandler(onToggleTrainingResources)} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600/75">
-                         <HiOutlineBookOpen className={menuIconSize} />{t('controlBar.training', 'Training')}
-                       </button>
-                       {/* Export Data - Link to Load Modal for now, as it has Export All */} 
-                       <button onClick={wrapHandler(onOpenLoadGameModal)} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600/75">
-                         <HiOutlineDocumentArrowDown className={menuIconSize} />{t('controlBar.exportData', 'Export Data')}
-                       </button>
-                       <a href="https://taso.palloliitto.fi" target="_blank" rel="noopener noreferrer" className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600/75" onClick={wrapHandler(() => {})}>
-                         <HiOutlineArrowTopRightOnSquare className={menuIconSize} />{t('controlBar.tasoLink', 'Taso')}
-                       </a>
-                       {/* RE-ADD Button to navigate to Tulospalvelu submenu */}
-                       <button onClick={() => setMenuView('tulospalvelu')} className="w-full flex items-center justify-between px-3 py-2 text-sm text-slate-100 hover:bg-slate-600/75">
-                         <span className="flex items-center"><HiOutlineArrowTopRightOnSquare className={menuIconSize} />{t('controlBar.tulospalveluLink', 'Tulospalvelu')}</span>
-                         <HiOutlineChevronRight className="w-4 h-4" />
-                       </button>
-                     </div>
-
-                     {/* ADD Subtle Divider */}
-                     <hr className="border-slate-600/75 my-1 mx-3" />
-                     
-                     {/* Group 4: General Settings & Actions (Revised) */}
-                     <div className="border-t border-slate-600/50 pt-1 mt-1">
-                       {/* Language Toggle */}
-                       <button onClick={handleLanguageToggle} className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-600/75">
-                         <HiOutlineLanguage className={menuIconSize} /> {t('controlBar.toggleLanguage')} ({i18n.language === 'en' ? 'FI' : 'EN'})
-                       </button>
-                       {/* Hard Reset */}
-                       <button onClick={wrapHandler(onHardResetApp)} className="w-full flex items-center px-3 py-2 text-sm text-red-400 hover:bg-red-900/50">
-                         <HiOutlineExclamationTriangle className={menuIconSize} /> {t('controlBar.hardReset', 'Hard Reset App')}
-                       </button>
-                     </div>
-                   </div> 
-                 </div>{/* End Main Menu View */}
-
-                 {/* --- RE-ADD Tulospalvelu View --- */}
-                 <div className="w-full flex-shrink-0 overflow-y-auto h-full">
-                   <div className="py-1"> 
-                     <button onClick={() => setMenuView('main')} className="w-full flex items-center px-3 py-2 text-sm text-slate-300 hover:bg-slate-600 hover:text-slate-100 mb-1 border-b border-slate-600/50">
-                       <HiOutlineChevronLeft className="w-4 h-4 mr-2" />
-                       {t('controlBar.backButton', 'Back')}
-                     </button>
-                     <a href="https://tulospalvelu.palloliitto.fi/category/P91!Itajp25/tables" target="_blank" rel="noopener noreferrer" className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-500" onClick={wrapHandler(() => {})}>
-                       <HiOutlineArrowTopRightOnSquare className="w-4 h-4 mr-2 opacity-70" />
-                       {t('controlBar.tulospalveluP9', 'P9 Alue Taso 1')}
-                     </a>
-                     <a href="https://tulospalvelu.palloliitto.fi/category/P9EKK!splita_ekk25/tables" target="_blank" rel="noopener noreferrer" className="w-full flex items-center px-3 py-2 text-sm text-slate-100 hover:bg-slate-500 border-t border-slate-500/50" onClick={wrapHandler(() => {})}>
-                       <HiOutlineArrowTopRightOnSquare className="w-4 h-4 mr-2 opacity-70" />
-                       {t('controlBar.tulospalveluP9EK', 'P/T 9 EK Kortteli (2016)')}
-                     </a>
-                   </div>
-                 </div>{/* End Tulospalvelu View */} 
+               {/* Wrapper for Menu Views */}
+               <div className={`flex w-[200%] transition-transform duration-200 ease-out ${menuView === 'tulospalvelu' ? 'transform -translate-x-1/2' : ''}`}>
                  
+                   {/* --- Main Menu View --- */}
+                   <div className="w-1/2 flex-shrink-0 overflow-y-auto max-h-[85vh]">
+                     <div className="py-1"> 
+  
+                       {/* Group 1: Game Management */} 
+                       <div className="py-0.5">
+                         <button onClick={wrapHandler(onQuickSave)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
+                           <HiOutlineArchiveBoxArrowDown className={menuIconSize} /> {t('controlBar.saveGame', 'Save')}
+                         </button>
+                         <button onClick={wrapHandler(onOpenLoadGameModal)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
+                           <HiOutlineFolderOpen className={menuIconSize} /> {t('controlBar.loadGame', 'Load Game...')}
+                         </button>
+                         <button onClick={handleStartNewGame} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
+                           <HiOutlineArrowPath className={menuIconSize} /> {t('controlBar.newGameButton', 'New Game')}
+                         </button>
+                       </div>
+                       
+                       {/* Divider - slightly more visible */}
+                       <div className="my-1 border-t border-slate-600/40"></div>
+  
+                       {/* Group 2: Roster & Settings */}
+                       <div className="py-0.5">
+                         <button onClick={wrapHandler(onOpenGameSettingsModal)} className={`w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75 ${!isGameLoaded ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={!isGameLoaded}>
+                           <HiOutlineAdjustmentsHorizontal className={menuIconSize} /> {t('controlBar.gameSettingsButton', 'Game Settings')}
+                         </button>
+                         <button onClick={wrapHandler(onOpenRosterModal)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
+                           <HiOutlineUsers className={menuIconSize} /> {t('controlBar.manageRoster', 'Manage Roster')}
+                         </button>
+                       </div>
+
+                       {/* ADD Subtle Divider - slightly more visible */}
+                       <hr className="border-slate-600/40 my-1 mx-2" />
+                     
+                       {/* Group 3: Information/Export */} 
+                       <div className="py-0.5">
+                         <button onClick={wrapHandler(onToggleGameStatsModal)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
+                           <HiOutlineClipboardDocumentList className={menuIconSize} />{t('controlBar.stats', 'Stats')}
+                         </button>
+                         <button onClick={wrapHandler(onToggleTrainingResources)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
+                           <HiOutlineBookOpen className={menuIconSize} />{t('controlBar.training', 'Training')}
+                         </button>
+                         {/* Export Data - Link to Load Modal for now, as it has Export All */} 
+                         <button onClick={wrapHandler(onOpenLoadGameModal)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
+                           <HiOutlineDocumentArrowDown className={menuIconSize} />{t('controlBar.exportData', 'Export Data')}
+                         </button>
+                       </div>
+                       
+                       {/* ADD Subtle Divider - slightly more visible */}
+                       <hr className="border-slate-600/40 my-1 mx-2" />
+                       
+                       {/* Group 4: External Links */}
+                       <div className="py-0.5">
+                         <a href="https://taso.palloliitto.fi" target="_blank" rel="noopener noreferrer" className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75" onClick={wrapHandler(() => {})}>
+                           <HiOutlineArrowTopRightOnSquare className={menuIconSize} />{t('controlBar.tasoLink', 'Taso')}
+                         </a>
+                         {/* Button to navigate to Tulospalvelu submenu */}
+                         <button onClick={() => setMenuView('tulospalvelu')} className="w-full flex items-center justify-between px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
+                           <span className="flex items-center"><HiOutlineArrowTopRightOnSquare className={menuIconSize} />{t('controlBar.tulospalveluLink', 'Tulospalvelu')}</span>
+                           <HiOutlineChevronRight className="w-4 h-4" />
+                         </button>
+                       </div>
+
+                       {/* ADD Subtle Divider - slightly more visible */}
+                       <hr className="border-slate-600/40 my-1 mx-2" />
+                       
+                       {/* Group 5: Settings & Actions (Revised) */}
+                       <div className="py-0.5">
+                         {/* Language Toggle - Fix translation */}
+                         <button onClick={handleLanguageToggle} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
+                           <HiOutlineLanguage className={menuIconSize} /> 
+                           {t('controlBar.toggleLanguage', i18n.language === 'en' ? 'Switch to Finnish' : 'Vaihda Englantiin')} ({i18n.language === 'en' ? 'FI' : 'EN'})
+                         </button>
+                         {/* Hard Reset */}
+                         <button onClick={wrapHandler(onHardResetApp)} className="w-full flex items-center px-3 py-1.5 text-sm text-red-400 hover:bg-red-900/50">
+                           <HiOutlineExclamationTriangle className={menuIconSize} /> {t('controlBar.hardReset', 'Hard Reset App')}
+                         </button>
+                       </div>
+                     </div> 
+                   </div>{/* End Main Menu View */}
+
+                   {/* --- Tulospalvelu View --- */}
+                   <div className="w-1/2 flex-shrink-0 overflow-y-auto max-h-[85vh]">
+                     <div className="py-1"> 
+                       <button onClick={() => setMenuView('main')} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-600 hover:text-slate-100 mb-1 border-b border-slate-600/50">
+                         <HiOutlineChevronLeft className="w-4 h-4 mr-2" />
+                         {t('controlBar.backButton', 'Back')}
+                       </button>
+                       <a href="https://tulospalvelu.palloliitto.fi/category/P91!Itajp25/tables" target="_blank" rel="noopener noreferrer" className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-500" onClick={wrapHandler(() => {})}>
+                         <HiOutlineArrowTopRightOnSquare className="w-4 h-4 mr-2 opacity-70" />
+                         {t('controlBar.tulospalveluP9', 'P9 Alue Taso 1')}
+                       </a>
+                       <a href="https://tulospalvelu.palloliitto.fi/category/P9EKK!splita_ekk25/tables" target="_blank" rel="noopener noreferrer" className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-500 border-t border-slate-500/50" onClick={wrapHandler(() => {})}>
+                         <HiOutlineArrowTopRightOnSquare className="w-4 h-4 mr-2 opacity-70" />
+                         {t('controlBar.tulospalveluP9EK', 'P/T 9 EK Kortteli (2016)')}
+                       </a>
+                     </div>
+                   </div>{/* End Tulospalvelu View */} 
+                   
                </div> {/* End inner wrapper */} 
             </div>
           )}
