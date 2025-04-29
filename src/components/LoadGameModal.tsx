@@ -94,6 +94,15 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
         seasonName.includes(lowerSearchText) || // Search season name
         tournamentName.includes(lowerSearchText) // Search tournament name
       );
+    })
+    .sort((a, b) => {
+      const gameA = savedGames[a];
+      const gameB = savedGames[b];
+      // Sort by date in descending order (newest first)
+      if (!gameA.gameDate && !gameB.gameDate) return 0;
+      if (!gameA.gameDate) return 1; // If A has no date, it goes at the end
+      if (!gameB.gameDate) return -1; // If B has no date, it goes at the end
+      return new Date(gameB.gameDate).getTime() - new Date(gameA.gameDate).getTime();
     });
 
   const handleDeleteClick = (gameId: string, gameName: string) => {
