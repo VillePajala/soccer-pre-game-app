@@ -303,34 +303,28 @@ export default function Home() {
   // <<< ADD State to hold player IDs for the next new game >>>
   const [playerIdsForNewGame, setPlayerIdsForNewGame] = useState<string[] | null>(null);
   // <<< ADD State for the roster prompt toast >>>
-  const [showRosterPrompt, setShowRosterPrompt] = useState<boolean>(false);
+  // const [showRosterPrompt, setShowRosterPrompt] = useState<boolean>(false);
+  // <<< ADD State for roster button highlight >>>
+  const [highlightRosterButton, setHighlightRosterButton] = useState<boolean>(false);
 
-  // <<< ADD Effect for auto-dismissing the roster prompt >>>
+  // <<< ADD Effect for auto-removing the highlight >>>
   useEffect(() => {
+    console.log('[Effect:HighlightTimeout] Running. highlightRosterButton:', highlightRosterButton); // Log effect run
     let timer: NodeJS.Timeout | null = null;
-    if (showRosterPrompt) {
+    if (highlightRosterButton) {
+      console.log('[Effect:HighlightTimeout] Setting timeout to remove highlight.'); // Log timeout setup
       timer = setTimeout(() => {
-        setShowRosterPrompt(false);
-        // Optionally mark as dismissed for the session here too if auto-dismiss should count
-        // sessionStorage.setItem('rosterPromptDismissed', 'true'); 
-      }, 8000); // Auto-dismiss after 8 seconds
+        console.log('[Effect:HighlightTimeout] Timeout fired. Setting highlightRosterButton to false.'); // Log timeout fire
+        setHighlightRosterButton(false);
+      }, 15000); // Remove highlight after 15 seconds
     }
     return () => {
-      if (timer) clearTimeout(timer);
+      if (timer) {
+        console.log('[Effect:HighlightTimeout] Cleanup: Clearing timeout.'); // Log cleanup
+        clearTimeout(timer);
+      }
     };
-  }, [showRosterPrompt]);
-
-  // <<< ADD Handler to dismiss the prompt and remember for the session >>>
-  const dismissRosterPrompt = () => {
-    setShowRosterPrompt(false);
-    sessionStorage.setItem('rosterPromptDismissed', 'true');
-  };
-
-  // <<< ADD Handler for clicking 'Yes' on the prompt >>>
-  const handleConfirmRosterPrompt = () => {
-    dismissRosterPrompt(); // Dismiss the prompt first
-    openRosterModal();     // Then open the roster modal
-  };
+  }, [highlightRosterButton]);
 
   // --- Derived State for Filtered Players ---
   const playersForCurrentGame = useMemo(() => {
@@ -1865,7 +1859,11 @@ export default function Home() {
   // --- END INDIVIDUAL GAME EXPORT HANDLERS ---
 
   // --- Roster Management Handlers ---
-  const openRosterModal = () => setIsRosterModalOpen(true);
+  const openRosterModal = () => {
+    console.log('[openRosterModal] Called. Setting highlightRosterButton to false.'); // Log modal open
+    setIsRosterModalOpen(true);
+    setHighlightRosterButton(false); // <<< Remove highlight when modal is opened
+  };
   const closeRosterModal = () => setIsRosterModalOpen(false);
 
   
@@ -2441,12 +2439,10 @@ export default function Home() {
 
       // Close the setup modal
       setIsNewGameSetupModalOpen(false);
-      // REMOVED: setIsStartingNewGameAfterSave(false);
 
-      // <<< Trigger the roster prompt if not dismissed this session >>>
-      if (!sessionStorage.getItem('rosterPromptDismissed')) {
-        setShowRosterPrompt(true);
-      }
+      // <<< Trigger the roster button highlight >>>
+      console.log('[handleStartNewGameWithSetup] Setting highlightRosterButton to true.'); // Log highlight trigger
+      setHighlightRosterButton(true);
 
   }, [
     // Keep necessary dependencies
@@ -2459,8 +2455,7 @@ export default function Home() {
     setHistoryIndex,
     setCurrentGameId,
     setIsNewGameSetupModalOpen,
-    setShowRosterPrompt, // <<< ADD setShowRosterPrompt dependency
-    // setIsStartingNewGameAfterSave
+    setHighlightRosterButton, // <<< ADD setHighlightRosterButton dependency
   ]);
 
   // ** REVERT handleCancelNewGameSetup TO ORIGINAL **
@@ -2664,6 +2659,7 @@ export default function Home() {
   }
 
   // Final console log before returning the main JSX
+  console.log('[Home Render] highlightRosterButton:', highlightRosterButton); // Log state on render
   return (
     // Main container with flex column layout
     <div className="flex flex-col h-screen bg-gray-900 text-white relative">
@@ -2755,7 +2751,7 @@ export default function Home() {
         />
       </main>
 
-        {/* Control Bar */}
+      {/* Control Bar */}
       <ControlBar
         onAddOpponent={handleAddOpponent} // Pass handler from hook
         onClearDrawings={handleClearDrawings} // Correctly passed here
@@ -2769,22 +2765,23 @@ export default function Home() {
         // Remove the timeElapsedInSeconds prop
         showLargeTimerOverlay={showLargeTimerOverlay}
         onToggleLargeTimerOverlay={handleToggleLargeTimerOverlay}
-          onToggleTrainingResources={handleToggleTrainingResources}
-          // REMOVE Unused Props
-          // isFullscreen={isFullscreen}
-          // onToggleFullScreen={toggleFullScreen}
-          onToggleGoalLogModal={handleToggleGoalLogModal}
-          onToggleGameStatsModal={handleToggleGameStatsModal}
-          onHardResetApp={handleHardResetApp}
-          onOpenLoadGameModal={handleOpenLoadGameModal}
-          onStartNewGame={handleStartNewGame}
-          onOpenRosterModal={openRosterModal} // Pass the handler
-          onQuickSave={handleQuickSaveGame} // Pass the quick save handler
-          // ADD props for Game Settings button
-          onOpenGameSettingsModal={handleOpenGameSettingsModal}
-          isGameLoaded={!!(currentGameId && currentGameId !== DEFAULT_GAME_ID)} // <-- CHECK FOR VALID GAME ID
-          onPlaceAllPlayers={handlePlaceAllPlayers} // New prop for placing all players
-        />
+        onToggleTrainingResources={handleToggleTrainingResources}
+        // REMOVE Unused Props
+        // isFullscreen={isFullscreen}
+        // onToggleFullScreen={toggleFullScreen}
+        onToggleGoalLogModal={handleToggleGoalLogModal}
+        onToggleGameStatsModal={handleToggleGameStatsModal}
+        onHardResetApp={handleHardResetApp}
+        onOpenLoadGameModal={handleOpenLoadGameModal}
+        onStartNewGame={handleStartNewGame}
+        onOpenRosterModal={openRosterModal} // Pass the handler
+        onQuickSave={handleQuickSaveGame} // Pass the quick save handler
+        // ADD props for Game Settings button
+        onOpenGameSettingsModal={handleOpenGameSettingsModal}
+        isGameLoaded={!!(currentGameId && currentGameId !== DEFAULT_GAME_ID)} // <-- CHECK FOR VALID GAME ID
+        onPlaceAllPlayers={handlePlaceAllPlayers} // New prop for placing all players
+        highlightRosterButton={highlightRosterButton} // <<< PASS THE HIGHLIGHT PROP
+      />
         {/* Instructions Modal */}
         <InstructionsModal 
           isOpen={isInstructionsOpen} 
@@ -2925,7 +2922,7 @@ export default function Home() {
       </div>
 
       {/* <<< ADD Roster Prompt Toast >>> */}
-      <div 
+      {/* <div 
         className={`
           fixed bottom-16 right-4 bg-indigo-600/90 backdrop-blur-sm text-white 
           rounded-lg shadow-lg p-3 transition-all duration-300 ease-in-out
@@ -2956,7 +2953,7 @@ export default function Home() {
             </svg>
           </button>
         </div>
-      </div>
+      </div> */}
 
     </div>
   );

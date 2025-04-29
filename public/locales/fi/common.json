@@ -255,11 +255,5 @@
     "cancelButton": "Peruuta",
     "startButton": "Aloita Ottelu",
     "opponentRequiredAlert": "Syötä vastustajan nimi."
-  },
-  "rosterPrompt": {
-    "message": "Määritetäänkö kokoonpano nyt?",
-    "confirm": "Kyllä",
-    "dismissTooltip": "Ohita",
-    "confirmTooltip": "Avaa kokoonpanoasetukset"
   }
 } 

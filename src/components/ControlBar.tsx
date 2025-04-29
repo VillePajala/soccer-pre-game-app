@@ -27,7 +27,9 @@ import {
     HiOutlineArchiveBoxArrowDown, // Use this for Quick Save
     // ADD New Icons
     HiOutlineAdjustmentsHorizontal, // For Game Settings
-    HiOutlineDocumentArrowDown   // For Export Data
+    HiOutlineDocumentArrowDown,   // For Export Data
+    HiOutlineSquares2X2,       // For Place All Players on Field
+    HiOutlineViewfinderCircle  // Another option for Place All Players
 } from 'react-icons/hi2'; // Using hi2 for Heroicons v2 Outline
 // REMOVE FaClock, FaUsers, FaCog (FaFutbol remains)
 import { FaFutbol } from 'react-icons/fa';
@@ -60,6 +62,7 @@ interface ControlBarProps {
   onOpenGameSettingsModal: () => void;
   isGameLoaded: boolean; // To enable/disable the settings button
   onPlaceAllPlayers: () => void; // New prop for placing all players on the field
+  highlightRosterButton: boolean; // <<< ADD prop for highlighting
 }
 
 const ControlBar: React.FC<ControlBarProps> = ({
@@ -86,8 +89,10 @@ const ControlBar: React.FC<ControlBarProps> = ({
   onOpenGameSettingsModal,
   isGameLoaded,
   onPlaceAllPlayers,
+  highlightRosterButton, // <<< Receive prop
 }) => {
   const { t, i18n } = useTranslation(); // Standard hook
+  console.log('[ControlBar Render] Received highlightRosterButton prop:', highlightRosterButton); // <<< Log prop value
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
   const [menuView, setMenuView] = useState<'main' | 'tulospalvelu'>('main'); // NEW state for menu view
   const settingsMenuRef = useRef<HTMLDivElement>(null);
@@ -171,7 +176,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
             {showPlayerNames ? <HiOutlineEyeSlash className={iconSize}/> : <HiOutlineEye className={iconSize}/>}
         </button>
         <button onClick={onPlaceAllPlayers} className={`${baseButtonStyle} bg-indigo-600 hover:bg-indigo-500 focus:ring-indigo-500`} title={t('controlBar.placeAllPlayers') ?? "Place All Players on Field"}>
-            <HiOutlineUsers className={iconSize}/>
+            <HiOutlineSquares2X2 className={iconSize}/>
         </button>
         <button onClick={onClearDrawings} className={`${baseButtonStyle} ${clearColor}`} title={t('controlBar.clearDrawings') ?? "Clear Drawings"}>
             <HiOutlineBackspace className={iconSize}/>
@@ -193,8 +198,9 @@ const ControlBar: React.FC<ControlBarProps> = ({
 
         {/* <<< ADD Roster Settings Button >>> */}
         <button 
+            id="roster-button" // Add an ID for potential coach mark targeting later
             onClick={onOpenRosterModal}
-            className={`${baseButtonStyle} ${secondaryColor}`}
+            className={`${baseButtonStyle} ${highlightRosterButton ? 'bg-indigo-600 hover:bg-indigo-500 focus:ring-indigo-500 animate-pulse' : secondaryColor}`}
             title={t('controlBar.rosterSettings', 'Roster Settings') ?? "Roster Settings"}
         >
             <HiOutlineUsers className={iconSize} />
