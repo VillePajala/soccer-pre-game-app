@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SavedGamesCollection, Season, Tournament } from '@/app/page'; // Removed unused GameEvent
 import { SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY } from '@/config/constants';
@@ -10,7 +10,8 @@ import {
   HiOutlineEllipsisVertical,
   HiOutlineTrash,
   HiOutlineDocumentText,
-  HiOutlineTableCells
+  HiOutlineTableCells,
+  HiOutlineXCircle
 } from 'react-icons/hi2';
 // REMOVE unused Fa icons and useGameState hook
 // import { FaTimes, FaUpload, FaDownload, FaTrash, FaExclamationTriangle, FaSearch } from 'react-icons/fa';
@@ -47,6 +48,8 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
   const { t } = useTranslation();
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [searchText, setSearchText] = useState<string>('');
+  const [filterType, setFilterType] = useState<'season' | 'tournament' | null>(null);
+  const [filterId, setFilterId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // State for seasons and tournaments
@@ -74,60 +77,71 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
   }, [isOpen]);
 
   // Filter logic updated to only use searchText
-  const filteredGameIds = Object.keys(savedGames)
-    .filter(id => id !== DEFAULT_GAME_ID) 
-    .filter(id => { 
-      const gameData = savedGames[id];
-      if (!gameData) return false;
-      if (!searchText) return true; 
-
-      const lowerSearchText = searchText.toLowerCase();
-      const teamName = (gameData.teamName || '').toLowerCase();
-      const opponentName = (gameData.opponentName || '').toLowerCase();
-      const gameDate = (gameData.gameDate || '').toLowerCase(); 
-      // Also search in season/tournament names
-      const seasonName = seasons.find(s => s.id === gameData.seasonId)?.name.toLowerCase() || '';
-      const tournamentName = tournaments.find(tourn => tourn.id === gameData.tournamentId)?.name.toLowerCase() || '';
-
-      return (
-        teamName.includes(lowerSearchText) ||
-        opponentName.includes(lowerSearchText) ||
-        gameDate.includes(lowerSearchText) ||
-        seasonName.includes(lowerSearchText) || // Search season name
-        tournamentName.includes(lowerSearchText) // Search tournament name
-      );
-    })
-    .sort((a, b) => {
-      const gameA = savedGames[a];
-      const gameB = savedGames[b];
-      
-      // Primary sort: by date in descending order (newest first)
-      const dateA = gameA.gameDate ? new Date(gameA.gameDate).getTime() : 0;
-      const dateB = gameB.gameDate ? new Date(gameB.gameDate).getTime() : 0;
-
-      if (dateB !== dateA) {
-        // Handle cases where one date is missing (put games without date last)
-        if (!dateA) return 1;
-        if (!dateB) return -1;
-        return dateB - dateA;
-      }
-
-      // Secondary sort: by timestamp in game ID (descending, newest first)
-      // Extract timestamp assuming format "game_TIMESTAMP_RANDOM"
-      try {
-        const timestampA = parseInt(a.split('_')[1], 10);
-        const timestampB = parseInt(b.split('_')[1], 10);
-        
-        if (!isNaN(timestampA) && !isNaN(timestampB)) {
-          return timestampB - timestampA;
+  const filteredGameIds = useMemo(() => {
+    return Object.keys(savedGames)
+      .filter(id => id !== DEFAULT_GAME_ID)
+      .filter(id => { // Filter by Search Text
+        const gameData = savedGames[id];
+        if (!gameData) return false;
+        if (!searchText) return true;
+        const lowerSearchText = searchText.toLowerCase();
+        const teamName = (gameData.teamName || '').toLowerCase();
+        const opponentName = (gameData.opponentName || '').toLowerCase();
+        const gameDate = (gameData.gameDate || '').toLowerCase();
+        const seasonName = seasons.find(s => s.id === gameData.seasonId)?.name.toLowerCase() || '';
+        const tournamentName = tournaments.find(tourn => tourn.id === gameData.tournamentId)?.name.toLowerCase() || '';
+        return (
+          teamName.includes(lowerSearchText) ||
+          opponentName.includes(lowerSearchText) ||
+          gameDate.includes(lowerSearchText) ||
+          seasonName.includes(lowerSearchText) ||
+          tournamentName.includes(lowerSearchText)
+        );
+      })
+      .filter(id => { // Filter by Active Season/Tournament Badge
+        if (!filterType || !filterId) return true; // No badge filter active
+        const gameData = savedGames[id];
+        if (!gameData) return false;
+        if (filterType === 'season') {
+          return gameData.seasonId === filterId;
         }
-      } catch (error) {
-        console.warn("Could not parse timestamps from game IDs for secondary sort:", a, b, error);
-      }
-      
-      // Fallback if dates are equal and timestamps can't be parsed
-      return 0; 
-    });
+        if (filterType === 'tournament') {
+          return gameData.tournamentId === filterId;
+        }
+        return false; // Should not happen
+      })
+      .sort((a, b) => {
+        const gameA = savedGames[a];
+        const gameB = savedGames[b];
+        
+        // Primary sort: by date in descending order (newest first)
+        const dateA = gameA.gameDate ? new Date(gameA.gameDate).getTime() : 0;
+        const dateB = gameB.gameDate ? new Date(gameB.gameDate).getTime() : 0;
+
+        if (dateB !== dateA) {
+          // Handle cases where one date is missing (put games without date last)
+          if (!dateA) return 1;
+          if (!dateB) return -1;
+          return dateB - dateA;
+        }
+
+        // Secondary sort: by timestamp in game ID (descending, newest first)
+        // Extract timestamp assuming format "game_TIMESTAMP_RANDOM"
+        try {
+          const timestampA = parseInt(a.split('_')[1], 10);
+          const timestampB = parseInt(b.split('_')[1], 10);
+          
+          if (!isNaN(timestampA) && !isNaN(timestampB)) {
+            return timestampB - timestampA;
+          }
+        } catch (error) {
+          console.warn("Could not parse timestamps from game IDs for secondary sort:", a, b, error);
+        }
+        
+        // Fallback if dates are equal and timestamps can't be parsed
+        return 0; 
+      });
+  }, [savedGames, searchText, seasons, tournaments, filterType, filterId]); // Added dependencies
 
   const handleDeleteClick = (gameId: string, gameName: string) => {
     // Use a confirmation dialog
@@ -156,6 +170,29 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
     };
   }, [openMenuId]);
 
+  // --- Event Handlers ---
+  const handleBadgeClick = (type: 'season' | 'tournament', id: string) => {
+    if (filterType === type && filterId === id) {
+      // Clicked the currently active filter badge, so clear it
+      setFilterType(null);
+      setFilterId(null);
+    } else {
+      // Set new filter
+      setFilterType(type);
+      setFilterId(id);
+    }
+  };
+  
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newSearchText = e.target.value;
+    setSearchText(newSearchText);
+    // If search text is cleared, also clear badge filter
+    if (!newSearchText) {
+      setFilterType(null);
+      setFilterId(null);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -166,14 +203,34 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
         </h2>
 
         {/* Filter Controls */}
-        <div className="mb-4 px-1 flex flex-col sm:flex-row gap-3 flex-shrink-0">
+        <div className="mb-4 px-1 flex flex-col sm:flex-row gap-3 flex-shrink-0 items-center">
           <input 
             type="text"
             placeholder={t('loadGameModal.filterPlaceholder', 'Filter by name/date/season/tournament...')}
             value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
+            onChange={handleSearchChange}
             className="flex-grow px-3 py-1.5 bg-slate-600 border border-slate-500 rounded-md shadow-sm text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
           />
+          {/* Show active filter if set */}
+          {(filterType && filterId) && (
+            <div className="flex items-center gap-1 bg-slate-600/50 px-2 py-1 rounded text-xs flex-shrink-0">
+              <span className="text-slate-300">
+                {filterType === 'season' ? t('common.season', 'Season') : t('common.tournament', 'Tournament')}:
+              </span>
+              <span className="font-medium text-slate-100">
+                {filterType === 'season' 
+                  ? seasons.find(s => s.id === filterId)?.name 
+                  : tournaments.find(t => t.id === filterId)?.name}
+              </span>
+              <button 
+                onClick={() => { setFilterType(null); setFilterId(null); }} 
+                className="ml-1 text-slate-400 hover:text-red-400"
+                title={t('loadGameModal.clearFilterTooltip', 'Clear filter') ?? 'Clear filter'}
+              >
+                <HiOutlineXCircle className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
         </div>
 
         <div 
@@ -190,6 +247,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                 const tournament = tournaments.find(tourn => tourn.id === gameData.tournamentId);
                 const contextName = season?.name || tournament?.name;
                 const contextType = season ? 'Season' : (tournament ? 'Tournament' : null);
+                const contextId = season?.id || tournament?.id;
                 
                 // Format date nicely (e.g., "Apr 20, 2025" in English or "20.4.2025" in Finnish)
                 let formattedDate = t('common.noDate', 'No Date');
@@ -236,10 +294,16 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                         <h3 className="text-sm font-semibold text-slate-100 truncate">
                           {gameData.teamName || 'Team'} vs {gameData.opponentName || 'Opponent'}
                         </h3>
-                        {contextName && contextType && (
-                          <span className={`inline-block mt-0.5 text-2xs uppercase font-medium tracking-wide ${contextType === 'Tournament' ? 'bg-purple-600/80' : 'bg-blue-600/80'} text-white/90 px-1.5 py-0.5 rounded whitespace-nowrap shadow-sm`}>
+                        {contextName && contextType && contextId && (
+                          <button 
+                            onClick={() => handleBadgeClick(contextType.toLowerCase() as ('season' | 'tournament'), contextId)}
+                            className={`inline-block mt-0.5 text-2xs uppercase font-medium tracking-wide ${contextType === 'Tournament' ? 'bg-purple-600/80' : 'bg-blue-600/80'} text-white/90 px-1.5 py-0.5 rounded whitespace-nowrap shadow-sm transition-opacity hover:opacity-80 ${
+                              filterType === contextType.toLowerCase() && filterId === contextId ? 'ring-2 ring-offset-1 ring-offset-slate-700 ring-yellow-400' : ''
+                            }`}
+                            title={t('loadGameModal.filterByTooltip', 'Filter by {{name}}', { name: contextName }) ?? `Filter by ${contextName}`}
+                          >
                             {contextName}
-                          </span>
+                          </button>
                         )}
                       </div>
                       {/* Right: Score */}
