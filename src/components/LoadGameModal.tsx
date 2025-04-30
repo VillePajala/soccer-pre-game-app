@@ -11,7 +11,8 @@ import {
   HiOutlineTrash,
   HiOutlineDocumentText,
   HiOutlineTableCells,
-  HiOutlineXCircle
+  HiOutlineXCircle,
+  HiOutlineDocumentArrowUp,
 } from 'react-icons/hi2';
 // REMOVE unused Fa icons and useGameState hook
 // import { FaTimes, FaUpload, FaDownload, FaTrash, FaExclamationTriangle, FaSearch } from 'react-icons/fa';
@@ -27,6 +28,7 @@ interface LoadGameModalProps {
   onExportAllExcel: () => void;
   onExportOneJson: (gameId: string) => void;
   onExportOneCsv: (gameId: string) => void;
+  onImportJson: (jsonContent: string) => void;
   currentGameId?: string; // Add prop for currently loaded game
 }
 
@@ -43,6 +45,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
   onExportAllExcel,
   onExportOneJson,
   onExportOneCsv,
+  onImportJson,
   currentGameId,
 }) => {
   const { t } = useTranslation();
@@ -51,6 +54,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
   const [filterType, setFilterType] = useState<'season' | 'tournament' | null>(null);
   const [filterId, setFilterId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // State for seasons and tournaments
   const [seasons, setSeasons] = useState<Season[]>([]);
@@ -193,48 +197,142 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
     }
   };
 
+  // --- Step 1: Handlers for Import Button ---
+  const handleImportButtonClick = () => {
+    // Trigger the hidden file input
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      console.log('No file selected');
+      return;
+    }
+
+    console.log(`Attempting to read file: ${file.name}, size: ${file.size}`);
+
+    // --- Step 2: Use FileReader to read content ---
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      try {
+        const jsonContent = e.target?.result as string;
+        if (jsonContent) {
+          console.log('File read successfully, calling onImportJson.');
+          onImportJson(jsonContent); // Pass the content string to the handler prop
+        } else {
+          console.error('FileReader error: Result is null or empty.');
+          alert(t('loadGameModal.importReadError', 'Error reading file content.'));
+        }
+      } catch (error) {
+        console.error('Error processing file content:', error);
+        alert(t('loadGameModal.importProcessError', 'Error processing file content.'));
+      }
+    };
+
+    reader.onerror = () => {
+      console.error('FileReader error:', reader.error);
+      alert(t('loadGameModal.importReadError', 'Error reading file content.'));
+    };
+
+    reader.readAsText(file); // Read the file as text
+    // --- End Step 2 --- 
+
+    // Clear the input value to allow re-selecting the same file
+    event.target.value = ''; // Use empty string instead of null
+  };
+  // --- End Step 1 Handlers ---
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-start justify-center z-50 p-4">
-      <div className="bg-slate-800 rounded-lg shadow-xl p-5 w-full max-w-lg border border-slate-600 flex flex-col max-h-[calc(100vh-theme(space.8))] overflow-hidden min-h-[calc(100vh-theme(space.8))]">
-        <h2 className="text-xl font-semibold mb-6 text-yellow-300 flex-shrink-0 text-center">
-          {t('loadGameModal.title', 'Load Game')}
+    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-start justify-center z-50 p-4 pt-8 sm:pt-4">
+      {/* Added pt-8 for small screens to avoid overlap with potential mobile top bars */}
+      <div className="bg-slate-800 rounded-lg shadow-xl p-5 w-full max-w-xl border border-slate-600 flex flex-col max-h-[calc(100vh-theme(space.16))] sm:max-h-[calc(100vh-theme(space.8))] overflow-hidden">
+        {/* Adjusted max-h for padding top */}
+        <h2 className="text-xl font-semibold mb-4 text-yellow-300 flex-shrink-0 text-center">
+          {t('loadGameModal.title', 'Load / Manage Games')}
         </h2>
 
-        {/* Filter Controls */}
+        {/* Filter & Action Row */}
         <div className="mb-4 px-1 flex flex-col sm:flex-row gap-3 flex-shrink-0 items-center">
-          <input 
+          {/* Search Input */}
+          <input
             type="text"
             placeholder={t('loadGameModal.filterPlaceholder', 'Filter by name/date/season/tournament...')}
             value={searchText}
             onChange={handleSearchChange}
-            className="flex-grow px-3 py-1.5 bg-slate-600 border border-slate-500 rounded-md shadow-sm text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            className="flex-grow px-3 py-1.5 bg-slate-600 border border-slate-500 rounded-md shadow-sm text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 w-full sm:w-auto"
           />
-          {/* Show active filter if set */}
-          {(filterType && filterId) && (
-            <div className="flex items-center gap-1 bg-slate-600/50 px-2 py-1 rounded text-xs flex-shrink-0">
-              <span className="text-slate-300">
-                {filterType === 'season' ? t('common.season', 'Season') : t('common.tournament', 'Tournament')}:
-              </span>
-              <span className="font-medium text-slate-100">
-                {filterType === 'season' 
-                  ? seasons.find(s => s.id === filterId)?.name 
-                  : tournaments.find(t => t.id === filterId)?.name}
-              </span>
-              <button 
-                onClick={() => { setFilterType(null); setFilterId(null); }} 
-                className="ml-1 text-slate-400 hover:text-red-400"
-                title={t('loadGameModal.clearFilterTooltip', 'Clear filter') ?? 'Clear filter'}
-              >
-                <HiOutlineXCircle className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          )}
+
+          {/* Import/Export Buttons */}
+          <div className="flex gap-2 flex-shrink-0">
+            {/* Hidden File Input */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileSelected}
+              accept=".json"
+              style={{ display: 'none' }} // Visually hide the input
+              id="import-json-input"
+            />
+            {/* Import Button */}
+            <button
+              onClick={handleImportButtonClick}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-blue-500 transition-colors"
+              title={t('loadGameModal.importTooltip', 'Import games from JSON file') ?? 'Import games from JSON file'}
+            >
+              <HiOutlineDocumentArrowUp className="w-4 h-4" />
+              {t('loadGameModal.importButton', 'Import')}
+            </button>
+            {/* Export All JSON */}
+            <button
+              onClick={onExportAllJson}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-md text-xs font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-teal-500 transition-colors"
+              title={t('loadGameModal.exportAllJsonTooltip', 'Export all games as JSON') ?? 'Export all games as JSON'}
+            >
+              <HiOutlineDocumentArrowDown className="w-4 h-4" />
+              {t('loadGameModal.exportAllJsonButton', 'Export JSON')}
+            </button>
+             {/* Export All CSV */}
+             <button
+              onClick={onExportAllExcel}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-xs font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-emerald-500 transition-colors"
+              title={t('loadGameModal.exportAllExcelTooltip', 'Export all games as CSV (Excel compatible)') ?? 'Export all games as CSV'}
+            >
+               <HiOutlineTableCells className="w-4 h-4" />
+               {t('loadGameModal.exportAllExcelButton', 'Export CSV')}
+            </button>
+          </div>
         </div>
 
-        <div 
-          className="flex-grow mb-4 pr-2 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-700/50"
+        {/* Active Filter Badge (if applicable) */}
+        {(filterType && filterId) && (
+           <div className="mb-3 px-1 flex justify-center flex-shrink-0">
+              <div className="flex items-center gap-1 bg-slate-600/50 px-2 py-1 rounded text-xs flex-shrink-0">
+                <span className="text-slate-300">
+                  {filterType === 'season' ? t('common.season', 'Season') : t('common.tournament', 'Tournament')}:
+                </span>
+                <span className="font-medium text-slate-100">
+                  {filterType === 'season'
+                    ? seasons.find(s => s.id === filterId)?.name
+                    : tournaments.find(t => t.id === filterId)?.name}
+                </span>
+                <button
+                  onClick={() => { setFilterType(null); setFilterId(null); }}
+                  className="ml-1 text-slate-400 hover:text-red-400"
+                  title={t('loadGameModal.clearFilterTooltip', 'Clear filter') ?? 'Clear filter'}
+                >
+                  <HiOutlineXCircle className="w-3.5 h-3.5" />
+                </button>
+              </div>
+           </div>
+        )}
+
+        {/* Game List Area */}
+        <div
+          className="flex-grow mb-4 pr-2 -mr-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-700/50"
         >
           {filteredGameIds.length > 0 ? (
             <div className="space-y-4">
@@ -355,37 +453,36 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                              e.stopPropagation(); 
                              setOpenMenuId(openMenuId === gameId ? null : gameId);
                           }}
-                          className="p-1.5 text-slate-300 rounded hover:bg-slate-600 hover:text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-400 focus:ring-offset-1 focus:ring-offset-slate-700"
-                          title={t('loadGameModal.actionsMenuTooltip', 'Actions') ?? 'Actions'}
+                          className="p-1.5 text-slate-400 hover:text-slate-200 rounded-full hover:bg-slate-600/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-indigo-500"
                         >
-                           <HiOutlineEllipsisVertical className="w-4 h-4" />
+                           <HiOutlineEllipsisVertical className="w-5 h-5" />
                         </button>
 
                         {openMenuId === gameId && (
                            <div 
                              ref={menuRef} 
-                             className={`absolute right-0 bottom-full mb-1 w-48 bg-slate-900 border border-slate-700 rounded-md shadow-lg z-50 py-1`}
+                             className={`absolute right-0 mt-2 w-48 bg-slate-700 rounded-md shadow-lg py-1 z-10 border border-slate-600`}
                            >
                              
                              <button 
-                                onClick={() => { onExportOneJson(gameId); setOpenMenuId(null); }} 
-                                className="w-full text-left px-3 py-1.5 text-xs text-slate-200 hover:bg-teal-700 flex items-center"
+                                onClick={(e) => { e.stopPropagation(); onExportOneJson(gameId); setOpenMenuId(null); }} 
+                                className="w-full text-left px-4 py-2 text-sm text-slate-200 hover:bg-slate-600 flex items-center gap-2"
                               >
-                                <HiOutlineDocumentText className="w-3.5 h-3.5 mr-2" /> {t('loadGameModal.exportJsonMenuItem', 'JSON')}
+                                <HiOutlineDocumentText className="w-4 h-4"/> {t('loadGameModal.exportJson', 'Export JSON')}
                              </button>
                              <button 
-                                onClick={() => { onExportOneCsv(gameId); setOpenMenuId(null); }} 
-                                className="w-full text-left px-3 py-1.5 text-xs text-slate-200 hover:bg-emerald-700 flex items-center"
+                                onClick={(e) => { e.stopPropagation(); onExportOneCsv(gameId); setOpenMenuId(null); }} 
+                                className="w-full text-left px-4 py-2 text-sm text-slate-200 hover:bg-slate-600 flex items-center gap-2"
                               >
-                                <HiOutlineTableCells className="w-3.5 h-3.5 mr-2" /> {t('loadGameModal.exportExcelMenuItem', 'EXCEL')}
-                             </button>
-                             <div className="border-t border-slate-700 my-1"></div>
-                             <button 
-                                onClick={() => handleDeleteClick(gameId, `${displayHomeTeamName} vs ${displayAwayTeamName}`)}
-                                className="w-full text-left px-3 py-1.5 text-xs text-red-400 hover:bg-red-600 hover:text-white flex items-center"
-                             >
-                                <HiOutlineTrash className="w-3.5 h-3.5 mr-2" /> {t('loadGameModal.deleteMenuItem', 'Delete')}
-                             </button>
+                                 <HiOutlineTableCells className="w-4 h-4"/> {t('loadGameModal.exportCsv', 'Export CSV')}
+                              </button>
+                              <div className="my-1 h-px bg-slate-600"></div> {/* Separator */}
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); handleDeleteClick(gameId, displayHomeTeamName + ' vs ' + displayAwayTeamName); }}
+                                className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/20 flex items-center gap-2"
+                              >
+                                <HiOutlineTrash className="w-4 h-4"/> {t('loadGameModal.delete', 'Delete Game')}
+                              </button>
                            </div>
                         )}
                       </div>
@@ -395,49 +492,20 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
               })}
             </div>
           ) : (
-            <p className="text-slate-400 italic text-center py-4">
-              {searchText 
-                ? t('loadGameModal.noFilterResults', 'No games match the current filter.')
-                : t('loadGameModal.noSavedGames', 'No saved games found.')}
+            <p className="text-slate-400 text-center py-8">
+              {t('loadGameModal.noGamesFound', 'No saved games match your filter.')}
             </p>
           )}
         </div>
 
-        <div className="mt-6 pt-4 border-t border-slate-600 flex-shrink-0">
-          <h3 className="text-sm font-medium text-center text-slate-400 mb-3">
-            {t('loadGameModal.exportAllTitle', 'Download All Games')}
-          </h3>
-          
-          <div className="flex space-x-2 justify-center">
+        {/* Close Button */}
+        <div className="mt-auto pt-4 flex justify-end flex-shrink-0 border-t border-slate-700/50">
             <button
-              onClick={onExportAllJson}
-              disabled={filteredGameIds.length === 0}
-              className="px-4 py-2 min-w-[120px] justify-center bg-teal-600 text-white rounded hover:bg-teal-700 transition duration-150 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-              title={t('loadGameModal.exportAllJsonTooltip', 'Export all games to JSON') ?? "Export all games to JSON"}
+              onClick={onClose}
+              className="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-slate-100 rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-indigo-500"
             >
-              <HiOutlineDocumentArrowDown className="w-5 h-5 mr-1.5" />
-              {t('loadGameModal.exportAllJsonButton', 'JSON')}
+              {t('common.close', 'Close')}
             </button>
-
-            <button
-              onClick={onExportAllExcel}
-              disabled={filteredGameIds.length === 0}
-              className="px-4 py-2 min-w-[120px] justify-center bg-emerald-600 text-white rounded hover:bg-emerald-700 transition duration-150 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-              title={t('loadGameModal.exportAllExcelTooltip', 'Export all games to a CSV file (Excel compatible)') ?? "Export Excel"}
-            >
-              <HiOutlineDocumentArrowDown className="w-5 h-5 mr-1.5" />
-              {t('loadGameModal.exportAllExcelButton', 'EXCEL')}
-            </button>
-          </div>
-          
-          <div className="mt-4 flex justify-center">
-             <button
-               onClick={onClose}
-               className="px-4 py-2 min-w-[248px] justify-center bg-slate-700 text-slate-300 rounded hover:bg-slate-600 hover:text-slate-100 transition duration-150 text-sm flex items-center"
-             >
-               {t('loadGameModal.closeButton', 'Close')}
-             </button>
-          </div>
         </div>
       </div>
     </div>
