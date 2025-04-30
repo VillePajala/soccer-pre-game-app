@@ -2753,6 +2753,7 @@ export default function Home() {
         opponentName={opponentName}
         homeScore={homeScore}
         awayScore={awayScore}
+        homeOrAway={homeOrAway} // Pass the prop
         // <<< REMOVE timeElapsedInSeconds prop >>>
         onTeamNameChange={handleTeamNameChange}
         onOpponentNameChange={handleOpponentNameChange}

@@ -9,6 +9,7 @@ interface GameInfoBarProps {
   awayScore: number;
   onTeamNameChange: (newName: string) => void;
   onOpponentNameChange: (newName: string) => void;
+  homeOrAway: 'home' | 'away';
 }
 
 const GameInfoBar: React.FC<GameInfoBarProps> = ({
@@ -18,26 +19,27 @@ const GameInfoBar: React.FC<GameInfoBarProps> = ({
   awayScore,
   onTeamNameChange,
   onOpponentNameChange,
+  homeOrAway,
 }) => {
-  const [editingField, setEditingField] = useState<'team' | 'opponent' | null>(null);
+  const [editingField, setEditingField] = useState<'left' | 'right' | null>(null);
   const [editValue, setEditValue] = useState<string>('');
   const teamInputRef = useRef<HTMLInputElement>(null);
   const opponentInputRef = useRef<HTMLInputElement>(null);
-  const [lastTapInfo, setLastTapInfo] = useState<{ time: number; target: 'team' | 'opponent' | null }>({ time: 0, target: null });
+  const [lastTapInfo, setLastTapInfo] = useState<{ time: number; target: 'left' | 'right' | null }>({ time: 0, target: null });
 
   useEffect(() => {
-    if (editingField === 'team') {
+    if (editingField === 'left') {
       teamInputRef.current?.focus();
       teamInputRef.current?.select();
-    } else if (editingField === 'opponent') {
+    } else if (editingField === 'right') {
       opponentInputRef.current?.focus();
       opponentInputRef.current?.select();
     }
   }, [editingField]);
 
-  const handleStartEdit = (field: 'team' | 'opponent') => {
-    setEditingField(field);
-    setEditValue(field === 'team' ? teamName : opponentName);
+  const handleStartEdit = (side: 'left' | 'right') => {
+    setEditingField(side);
+    setEditValue(side === 'left' ? teamName : opponentName);
   };
 
   const handleCancelEdit = () => {
@@ -48,14 +50,22 @@ const GameInfoBar: React.FC<GameInfoBarProps> = ({
   const handleSaveEdit = () => {
     if (!editingField) return;
     const trimmedValue = editValue.trim();
-    if (trimmedValue) { // Only save if not empty
-      if (editingField === 'team') {
-        onTeamNameChange(trimmedValue);
+    if (trimmedValue) {
+      if (editingField === 'left') {
+        if (homeOrAway === 'home') {
+          onTeamNameChange(trimmedValue);
+        } else {
+          onOpponentNameChange(trimmedValue);
+        }
       } else {
-        onOpponentNameChange(trimmedValue);
+        if (homeOrAway === 'home') {
+          onOpponentNameChange(trimmedValue);
+        } else {
+          onTeamNameChange(trimmedValue);
+        }
       }
     }
-    handleCancelEdit(); // Reset state after save/attempt
+    handleCancelEdit();
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -70,30 +80,32 @@ const GameInfoBar: React.FC<GameInfoBarProps> = ({
     }
   };
 
-  const handleTap = (target: 'team' | 'opponent') => {
+  const handleTap = (side: 'left' | 'right') => {
     const now = Date.now();
-    const DOUBLE_TAP_DELAY = 300; // Milliseconds
+    const DOUBLE_TAP_DELAY = 300;
 
-    if (lastTapInfo.target === target && (now - lastTapInfo.time) < DOUBLE_TAP_DELAY) {
-      // Double tap detected
-      handleStartEdit(target);
-      // Reset tap info
+    if (lastTapInfo.target === side && (now - lastTapInfo.time) < DOUBLE_TAP_DELAY) {
+      handleStartEdit(side);
       setLastTapInfo({ time: 0, target: null });
     } else {
-      // First tap or too slow, record new tap info
-      setLastTapInfo({ time: now, target: target });
+      setLastTapInfo({ time: now, target: side });
     }
   };
 
   const inputClasses = "bg-transparent border-none outline-none text-slate-100 text-sm font-medium px-1 py-0 focus:bg-slate-700 rounded";
 
+  const leftTeamName = homeOrAway === 'home' ? teamName : opponentName;
+  const rightTeamName = homeOrAway === 'home' ? opponentName : teamName;
+  const leftScore = homeScore;
+  const rightScore = awayScore;
+
   return (
     <div className="bg-slate-900 px-4 py-1 text-slate-200 flex justify-center items-center text-sm shadow-md min-h-[2.5rem]">
       {/* Center Content: Teams and Score */}
       <div className="flex items-center space-x-3 font-medium">
-        {/* Home Team Name - Make Editable */}
-        <div className="text-right" title={editingField !== 'team' ? "Double-click to edit" : undefined}>
-          {editingField === 'team' ? (
+        {/* Left Team Name */}
+        <div className="text-right" title={editingField !== 'left' ? "Double-click to edit" : undefined}>
+          {editingField === 'left' ? (
             <input
               ref={teamInputRef}
               type="text"
@@ -106,23 +118,23 @@ const GameInfoBar: React.FC<GameInfoBarProps> = ({
           ) : (
             <span 
               className="truncate cursor-pointer hover:bg-slate-700/50 p-1 rounded" 
-              onTouchEnd={() => handleTap('team')}
-              onDoubleClick={() => handleStartEdit('team')}
-              title={teamName}
+              onTouchEnd={() => handleTap('left')}
+              onDoubleClick={() => handleStartEdit('left')}
+              title={leftTeamName}
             >
-              {teamName}
+              {leftTeamName}
             </span>
           )}
         </div>
 
-        {/* Score - Reduce text size slightly? */}
+        {/* Score */}
         <span className="bg-slate-700 px-2 py-0.5 rounded text-yellow-300 text-sm font-bold">
-          {homeScore} - {awayScore}
+          {leftScore} - {rightScore}
         </span>
 
-        {/* Away Team Name - Make Editable */}
-        <div className="text-left" title={editingField !== 'opponent' ? "Double-click to edit" : undefined}>
-          {editingField === 'opponent' ? (
+        {/* Right Team Name */}
+        <div className="text-left" title={editingField !== 'right' ? "Double-click to edit" : undefined}>
+          {editingField === 'right' ? (
             <input
               ref={opponentInputRef}
               type="text"
@@ -135,11 +147,11 @@ const GameInfoBar: React.FC<GameInfoBarProps> = ({
           ) : (
             <span 
               className="truncate cursor-pointer hover:bg-slate-700/50 p-1 rounded" 
-              onTouchEnd={() => handleTap('opponent')}
-              onDoubleClick={() => handleStartEdit('opponent')}
-              title={opponentName}
+              onTouchEnd={() => handleTap('right')}
+              onDoubleClick={() => handleStartEdit('right')}
+              title={rightTeamName}
             >
-              {opponentName}
+              {rightTeamName}
             </span>
           )}
         </div>
