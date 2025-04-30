@@ -2721,7 +2721,7 @@ export default function Home() {
     let importedGames: SavedGamesCollection = {};
     let skippedCount = 0;
     let importedCount = 0;
-    let newGamesToAdd: SavedGamesCollection = {};
+    const newGamesToAdd: SavedGamesCollection = {}; // <-- Fix: Use const
 
     try {
       importedGames = JSON.parse(jsonContent);

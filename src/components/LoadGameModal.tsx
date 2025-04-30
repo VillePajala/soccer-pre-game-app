@@ -231,7 +231,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
       }
     };
 
-    reader.onerror = (e) => {
+    reader.onerror = () => {
       console.error('FileReader error:', reader.error);
       alert(t('loadGameModal.importReadError', 'Error reading file content.'));
     };
