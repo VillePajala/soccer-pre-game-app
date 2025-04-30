@@ -2713,6 +2713,82 @@ export default function Home() {
     console.log(`Successfully placed ${playersToPlace.length} players on the field`);
   }, [playersOnField, selectedPlayerIds, availablePlayers, saveStateToHistory, setPlayersOnField]);
 
+  // --- END Quick Save Handler ---
+
+  // --- Step 3: Handler for Importing Games ---
+  const handleImportGamesFromJson = useCallback((jsonContent: string) => {
+    console.log("handleImportGamesFromJson called.");
+    let importedGames: SavedGamesCollection = {};
+    let skippedCount = 0;
+    let importedCount = 0;
+    let newGamesToAdd: SavedGamesCollection = {};
+
+    try {
+      importedGames = JSON.parse(jsonContent);
+      
+      // Basic Validation: Is it an object?
+      if (typeof importedGames !== 'object' || importedGames === null || Array.isArray(importedGames)) {
+        throw new Error("Invalid format: Imported data is not a valid game collection object.");
+      }
+
+      console.log(`Parsed ${Object.keys(importedGames).length} games from JSON.`);
+
+      // Iterate and merge (skip existing)
+      for (const gameId in importedGames) {
+        // Add extra check for safety
+        if (Object.prototype.hasOwnProperty.call(importedGames, gameId)) {
+          // Basic validation of gameData structure (can be expanded)
+          const gameData = importedGames[gameId];
+          if (typeof gameData !== 'object' || gameData === null || !gameData.teamName || !gameData.gameDate) {
+             console.warn(`Skipping game ${gameId} due to invalid/missing core properties.`);
+             skippedCount++;
+             continue; // Skip invalid game data
+          }
+
+          if (savedGames[gameId]) {
+            // Game ID already exists, skip it
+            console.log(`Skipping import for existing game ID: ${gameId}`);
+            skippedCount++;
+          } else {
+            // Game ID is new, add it
+            console.log(`Marking new game for import: ${gameId}`);
+            newGamesToAdd[gameId] = gameData;
+            importedCount++;
+          }
+        }
+      }
+
+      // Apply updates if new games were found
+      if (importedCount > 0) {
+        console.log(`Adding ${importedCount} new games to state and localStorage.`);
+        const updatedSavedGames = { ...savedGames, ...newGamesToAdd };
+        setSavedGames(updatedSavedGames);
+        localStorage.setItem(SAVED_GAMES_KEY, JSON.stringify(updatedSavedGames));
+        alert(t('loadGameModal.importSuccess', 
+                  `Successfully imported ${importedCount} game(s). Skipped ${skippedCount} game(s) with existing IDs.`)
+              ?.replace('{importedCount}', String(importedCount))
+              ?.replace('{skippedCount}', String(skippedCount)) ?? `Imported: ${importedCount}, Skipped: ${skippedCount}`);
+      } else if (skippedCount > 0) {
+        alert(t('loadGameModal.importSkippedOnly', 
+                   `Import complete. Skipped ${skippedCount} game(s) because they already exist.`)
+                ?.replace('{skippedCount}', String(skippedCount)) ?? `Skipped all ${skippedCount} existing games.`);
+      } else {
+        alert(t('loadGameModal.importNoNewGames', 'No new games found in the file to import.'));
+      }
+
+    } catch (error) {
+      console.error("Failed to import games:", error);
+      // Use explicit check for Error type
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      alert(t('loadGameModal.importError', 'Import failed: {errorMessage}')
+            ?.replace('{errorMessage}', errorMessage) ?? `Import failed: ${errorMessage}`);
+    }
+
+  }, [savedGames, setSavedGames, t]); // Include t in dependencies
+  // --- End Step 3 --- 
+
+  // --- NEW: Handlers for Game Settings Modal --- (Placeholder open/close)
+  
   // Render null or a loading indicator until state is loaded
   // Note: Console log added before the check itself
   if (!isLoaded) {
