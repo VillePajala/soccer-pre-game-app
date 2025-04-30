@@ -2163,6 +2163,12 @@ export default function Home() {
     saveStateToHistory({ gameTime: time });
   };
 
+  // Add handler for home/away status
+  const handleSetHomeOrAway = (status: 'home' | 'away') => {
+    setHomeOrAway(status);
+    saveStateToHistory({ homeOrAway: status });
+  };
+
   // --- NEW Handlers for Setting Season/Tournament ID ---
   const handleSetSeasonId = useCallback((newSeasonId: string | null) => {
     const idToSet = newSeasonId || ''; // Ensure empty string instead of null
@@ -2941,6 +2947,9 @@ export default function Home() {
           // Pass the new handlers
           onSeasonIdChange={handleSetSeasonId}
           onTournamentIdChange={handleSetTournamentId}
+          // <<< ADD: Pass Home/Away state and handler >>>
+          homeOrAway={homeOrAway}
+          onSetHomeOrAway={handleSetHomeOrAway}
         />
 
       </div>
