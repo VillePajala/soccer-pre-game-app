@@ -2877,6 +2877,7 @@ export default function Home() {
           gameNotes={gameNotes}
           homeScore={homeScore}
           awayScore={awayScore}
+          homeOrAway={homeOrAway} // Pass the prop
           availablePlayers={availablePlayers}
           gameEvents={gameEvents}
           onOpponentNameChange={handleOpponentNameChange}
