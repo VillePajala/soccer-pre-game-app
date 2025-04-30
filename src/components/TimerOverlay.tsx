@@ -29,6 +29,7 @@ interface TimerOverlayProps {
   opponentName: string;
   homeScore: number;
   awayScore: number;
+  homeOrAway: 'home' | 'away';
   // Game Structure props
   numberOfPeriods: 1 | 2;
   periodDurationMinutes: number;
@@ -54,6 +55,7 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
   opponentName = "Opponent",
   homeScore = 0,
   awayScore = 0,
+  homeOrAway,
   // Game Structure props
   numberOfPeriods = 2,
   periodDurationMinutes = 10,
@@ -161,13 +163,17 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
   };
   // --- End Handlers ---
 
+  // Determine display names
+  const displayHomeTeamName = homeOrAway === 'home' ? teamName : opponentName;
+  const displayAwayTeamName = homeOrAway === 'home' ? opponentName : teamName;
+
   return (
     <div className={`fixed inset-0 z-40 flex flex-col items-center p-4 pt-12 ${bgColor} backdrop-blur-lg`}>
       <div className="w-full max-w-lg flex flex-col items-center">
         {/* Game Score Display - MOVED TO TOP ABOVE TIMER */}
         <div className="bg-slate-800/70 px-5 py-2 rounded-lg mb-4">
           <div className="flex items-center justify-center gap-3 text-xl font-semibold">
-            <span className="text-slate-100">{teamName}</span>
+            <span className="text-slate-100">{displayHomeTeamName}</span>
             <span className={`text-2xl font-bold ${homeScore > awayScore ? 'text-green-400' : 'text-slate-100'}`}>{homeScore}</span>
             <span className="text-slate-500">-</span>
             <span className={`text-2xl font-bold ${awayScore > homeScore ? 'text-red-400' : 'text-slate-100'}`}>{awayScore}</span>
@@ -189,7 +195,7 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
                     onClick={handleStartEditingOpponent} // Click to edit
                     title={t('timerOverlay.editOpponentNameTitle', 'Click to edit opponent name') ?? undefined}
                 >
-                    {opponentName}
+                    {displayAwayTeamName}
                 </span>
             )}
             {/* --- End Opponent Name --- */}
@@ -309,14 +315,14 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
               <button 
                 onClick={onToggleGoalLogModal} 
                 className={`${secondaryActionStyle} flex-1`}
-                title={`${teamName} maali`}
+                title={`${displayHomeTeamName} ${t('timerOverlay.goalSuffix', 'goal')}`}
               >
                 {t('timerOverlay.teamGoalButton', 'Kirjaa maali')}
               </button>
               <button 
                 onClick={onRecordOpponentGoal} 
                 className={`${dangerActionStyle} flex-1`}
-                title={`${opponentName} maali`}
+                title={`${displayAwayTeamName} ${t('timerOverlay.goalSuffix', 'goal')}`}
               >
                 {t('timerOverlay.opponentGoalButton', 'Vastustaja +1')}
               </button>

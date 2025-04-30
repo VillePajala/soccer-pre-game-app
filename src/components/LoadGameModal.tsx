@@ -249,6 +249,10 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                 const contextType = season ? 'Season' : (tournament ? 'Tournament' : null);
                 const contextId = season?.id || tournament?.id;
                 
+                // Determine display names based on the specific game's homeOrAway setting
+                const displayHomeTeamName = gameData.homeOrAway === 'home' ? (gameData.teamName || 'Team') : (gameData.opponentName || 'Opponent');
+                const displayAwayTeamName = gameData.homeOrAway === 'home' ? (gameData.opponentName || 'Opponent') : (gameData.teamName || 'Team');
+
                 // Format date nicely (e.g., "Apr 20, 2025" in English or "20.4.2025" in Finnish)
                 let formattedDate = t('common.noDate', 'No Date');
                 try {
@@ -292,7 +296,8 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                       {/* Left: Team names and optional badge */}
                       <div className="flex-1 min-w-0"> {/* min-w-0 helps truncation */}
                         <h3 className="text-sm font-semibold text-slate-100 truncate">
-                          {gameData.teamName || 'Team'} vs {gameData.opponentName || 'Opponent'}
+                          {/* Use display names */}
+                          {displayHomeTeamName} vs {displayAwayTeamName}
                         </h3>
                         {contextName && contextType && contextId && (
                           <button 
@@ -376,7 +381,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                              </button>
                              <div className="border-t border-slate-700 my-1"></div>
                              <button 
-                                onClick={() => handleDeleteClick(gameId, `${gameData.teamName || 'Team'} vs ${gameData.opponentName || 'Opponent'}`)}
+                                onClick={() => handleDeleteClick(gameId, `${displayHomeTeamName} vs ${displayAwayTeamName}`)}
                                 className="w-full text-left px-3 py-1.5 text-xs text-red-400 hover:bg-red-600 hover:text-white flex items-center"
                              >
                                 <HiOutlineTrash className="w-3.5 h-3.5 mr-2" /> {t('loadGameModal.deleteMenuItem', 'Delete')}

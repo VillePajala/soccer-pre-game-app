@@ -42,6 +42,7 @@ interface GameStatsModalProps {
   gameDate: string;
   homeScore: number;
   awayScore: number;
+  homeOrAway: 'home' | 'away';
   gameLocation?: string;
   gameTime?: string;
   availablePlayers: Player[];
@@ -75,6 +76,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   gameDate,
   homeScore,
   awayScore,
+  homeOrAway,
   gameLocation,
   gameTime,
   availablePlayers,
@@ -458,6 +460,10 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
       }
   }, [activeTab, currentGameId, processedGameIds, onExportAggregateJson, onExportAggregateCsv]);
 
+  // Determine display names based on home/away
+  const displayHomeTeamName = homeOrAway === 'home' ? teamName : opponentName;
+  const displayAwayTeamName = homeOrAway === 'home' ? opponentName : teamName;
+
   // --- Handlers ---
   const handleSaveInfo = () => {
       const home = parseInt(editHomeScore), away = parseInt(editAwayScore);
@@ -630,10 +636,18 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                     <div className={`p-2 rounded ${inlineEditingField === 'opponent' ? '' : 'hover:bg-slate-700/50 cursor-pointer'}`} onDoubleClick={() => !isEditingInfo && !isEditingNotes && handleStartInlineEdit('opponent')} title={!isEditingInfo && !isEditingNotes ? t('gameStatsModal.doubleClickToEdit', 'Klikkaa muokataksesi') ?? undefined : undefined}> <span className="block text-xs text-slate-400 font-medium mb-0.5">{t('common.opponent', 'Vastustaja')}</span> {inlineEditingField === 'opponent' ? ( <input ref={opponentInputRef} type="text" value={inlineEditValue} onChange={(e) => setInlineEditValue(e.target.value)} onBlur={handleSaveInlineEdit} onKeyDown={handleInlineEditKeyDown} className="w-full bg-slate-600 border border-slate-500 rounded px-1 py-0.5 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder={t('gameStatsModal.opponentPlaceholder', 'Vastustaja...') ?? undefined} /> ) : ( <span className="text-slate-100 font-medium">{opponentName}</span> )} </div>
                 {/* Date - USE formatDisplayDate */}
                     <div className={`p-2 rounded ${inlineEditingField === 'date' ? '' : 'hover:bg-slate-700/50 cursor-pointer'}`} onDoubleClick={() => !isEditingInfo && !isEditingNotes && handleStartInlineEdit('date')} title={!isEditingInfo && !isEditingNotes ? t('gameStatsModal.doubleClickToEdit', 'Klikkaa muokataksesi') ?? undefined : undefined}> <span className="block text-xs text-slate-400 font-medium mb-0.5">{t('common.date', 'Päivämäärä')}</span> {inlineEditingField === 'date' ? ( <input ref={dateInputRef} type="date" value={inlineEditValue} onChange={(e) => setInlineEditValue(e.target.value)} onBlur={handleSaveInlineEdit} onKeyDown={handleInlineEditKeyDown} className="w-full bg-slate-600 border border-slate-500 rounded px-1 py-0.5 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500" /> ) : ( <span className="text-slate-100 font-medium">{formatDisplayDate(gameDate)}</span> )} </div>
-                    {/* Home Score */}
-                    <div className={`p-2 rounded ${inlineEditingField === 'home' ? '' : 'hover:bg-slate-700/50 cursor-pointer'}`} onDoubleClick={() => !isEditingInfo && !isEditingNotes && handleStartInlineEdit('home')} title={!isEditingInfo && !isEditingNotes ? t('gameStatsModal.doubleClickToEdit', 'Klikkaa muokataksesi') ?? undefined : undefined}> <span className="block text-xs text-slate-400 font-medium mb-0.5">{teamName || t('common.home', 'Koti')}</span> {inlineEditingField === 'home' ? ( <input ref={homeScoreInputRef} type="number" value={inlineEditValue} min="0" onChange={(e) => setInlineEditValue(e.target.value)} onBlur={handleSaveInlineEdit} onKeyDown={handleInlineEditKeyDown} className="w-full bg-slate-600 border border-slate-500 rounded px-1 py-0.5 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500" /> ) : ( <span className="text-slate-100 font-medium text-lg">{homeScore}</span> )} </div>
-                    {/* Away Score */}
-                    <div className={`p-2 rounded ${inlineEditingField === 'away' ? '' : 'hover:bg-slate-700/50 cursor-pointer'}`} onDoubleClick={() => !isEditingInfo && !isEditingNotes && handleStartInlineEdit('away')} title={!isEditingInfo && !isEditingNotes ? t('gameStatsModal.doubleClickToEdit', 'Klikkaa muokataksesi') ?? undefined : undefined}> <span className="block text-xs text-slate-400 font-medium mb-0.5">{opponentName || t('common.away', 'Vieras')}</span> {inlineEditingField === 'away' ? ( <input ref={awayScoreInputRef} type="number" value={inlineEditValue} min="0" onChange={(e) => setInlineEditValue(e.target.value)} onBlur={handleSaveInlineEdit} onKeyDown={handleInlineEditKeyDown} className="w-full bg-slate-600 border border-slate-500 rounded px-1 py-0.5 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500" /> ) : ( <span className="text-slate-100 font-medium text-lg">{awayScore}</span> )} </div>
+                    {/* Home Score -> Left Score Display */}
+                    <div className={`p-2 rounded ${inlineEditingField === 'home' ? '' : 'hover:bg-slate-700/50 cursor-pointer'}`} onDoubleClick={() => !isEditingInfo && !isEditingNotes && handleStartInlineEdit('home')} title={!isEditingInfo && !isEditingNotes ? t('gameStatsModal.doubleClickToEdit', 'Klikkaa muokataksesi') ?? undefined : undefined}>
+                      {/* Use displayHomeTeamName */}
+                      <span className="block text-xs text-slate-400 font-medium mb-0.5">{displayHomeTeamName || t('common.home', 'Koti')}</span> 
+                      {inlineEditingField === 'home' ? ( <input ref={homeScoreInputRef} type="number" value={inlineEditValue} min="0" onChange={(e) => setInlineEditValue(e.target.value)} onBlur={handleSaveInlineEdit} onKeyDown={handleInlineEditKeyDown} className="w-full bg-slate-600 border border-slate-500 rounded px-1 py-0.5 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500" /> ) : ( <span className="text-slate-100 font-medium text-lg">{homeScore}</span> )} 
+                    </div>
+                    {/* Away Score -> Right Score Display */}
+                    <div className={`p-2 rounded ${inlineEditingField === 'away' ? '' : 'hover:bg-slate-700/50 cursor-pointer'}`} onDoubleClick={() => !isEditingInfo && !isEditingNotes && handleStartInlineEdit('away')} title={!isEditingInfo && !isEditingNotes ? t('gameStatsModal.doubleClickToEdit', 'Klikkaa muokataksesi') ?? undefined : undefined}> 
+                      {/* Use displayAwayTeamName */}
+                      <span className="block text-xs text-slate-400 font-medium mb-0.5">{displayAwayTeamName || t('common.away', 'Vieras')}</span> 
+                      {inlineEditingField === 'away' ? ( <input ref={awayScoreInputRef} type="number" value={inlineEditValue} min="0" onChange={(e) => setInlineEditValue(e.target.value)} onBlur={handleSaveInlineEdit} onKeyDown={handleInlineEditKeyDown} className="w-full bg-slate-600 border border-slate-500 rounded px-1 py-0.5 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500" /> ) : ( <span className="text-slate-100 font-medium text-lg">{awayScore}</span> )} 
+                    </div>
                 {/* Location */}
                     <div className="p-2 col-span-2 sm:col-span-2"> <span className="block text-xs text-slate-400 font-medium mb-0.5">{t('common.location', 'Paikka')}</span> <span className="text-slate-100">{gameLocation || t('common.notSet', 'Ei asetettu')}</span> </div>
                 {/* Time */}

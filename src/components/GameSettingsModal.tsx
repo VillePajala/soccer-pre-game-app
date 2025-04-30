@@ -42,6 +42,9 @@ interface GameSettingsModalProps {
   // ADD new handlers for Season/Tournament
   onSeasonIdChange: (seasonId: string | null) => void;
   onTournamentIdChange: (tournamentId: string | null) => void;
+  // <<< ADD: Home/Away props >>>
+  homeOrAway: 'home' | 'away';
+  onSetHomeOrAway: (status: 'home' | 'away') => void;
 }
 
 // Helper to format time from seconds to MM:SS
@@ -82,6 +85,9 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   onPeriodDurationChange,
   onSeasonIdChange,
   onTournamentIdChange,
+  // <<< Destructure new props >>>
+  homeOrAway,
+  onSetHomeOrAway,
 }) => {
   console.log('[GameSettingsModal Render] Props received:', { seasonId, tournamentId, currentGameId });
   const { t } = useTranslation();
@@ -464,6 +470,35 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                     {/* Edit icon can be implicitly shown via hover bg */}
                   </span>
                 )}
+              </div>
+
+              {/* Home/Away Status - Step 5a */}
+              <div className={gridItemStyle}>
+                <span className={labelStyle}>{t('gameSettingsModal.venue', 'Venue')}:</span>
+                <div className="flex items-center space-x-4 bg-slate-800/60 border border-slate-700 rounded-md p-1 mt-0.5"> {/* Adjust bg/padding */} 
+                  <label className={`flex-1 text-center px-2 py-0.5 rounded cursor-pointer transition-colors duration-150 text-sm ${homeOrAway === 'home' ? 'bg-blue-600 text-white shadow-inner' : 'bg-slate-700 hover:bg-slate-600'}`}>
+                    <input 
+                      type="radio"
+                      name="modalHomeOrAway"
+                      value="home"
+                      checked={homeOrAway === 'home'}
+                      onChange={() => onSetHomeOrAway('home')}
+                      className="sr-only"
+                    />
+                    {t('general.home', 'Home')}
+                  </label>
+                  <label className={`flex-1 text-center px-2 py-0.5 rounded cursor-pointer transition-colors duration-150 text-sm ${homeOrAway === 'away' ? 'bg-teal-600 text-white shadow-inner' : 'bg-slate-700 hover:bg-slate-600'}`}>
+                    <input 
+                      type="radio"
+                      name="modalHomeOrAway"
+                      value="away"
+                      checked={homeOrAway === 'away'}
+                      onChange={() => onSetHomeOrAway('away')}
+                      className="sr-only"
+                    />
+                    {t('general.away', 'Away')}
+                  </label>
+                </div>
               </div>
 
               {/* Game Date */}
