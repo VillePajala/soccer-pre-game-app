@@ -2380,7 +2380,8 @@ export default function Home() {
     seasonId: string | null,
     tournamentId: string | null,
     numPeriods: 1 | 2, // Parameter
-    periodDuration: number // Parameter
+    periodDuration: number, // Parameter
+    homeOrAway: 'home' | 'away' // <<< Step 4b: Add parameter
   ) => {
       // ADD LOGGING HERE:
       console.log('[handleStartNewGameWithSetup] Received Params:', { numPeriods, periodDuration });
@@ -2405,6 +2406,7 @@ export default function Home() {
           awayScore: 0,
           gameNotes: '',
           teamName: teamName, // Use current teamName state
+          homeOrAway: homeOrAway, // <<< Step 4b: Use parameter value
           availablePlayers: availablePlayers, // <<< ADD: Use current global roster
           selectedPlayerIds: finalSelectedPlayerIds, // <-- USE PASSED OR FALLBACK
           playersOnField: [], // Always start with empty field
@@ -2419,7 +2421,6 @@ export default function Home() {
           subIntervalMinutes: initialState.subIntervalMinutes ?? 5,
           completedIntervalDurations: [], // Always reset intervals
           lastSubConfirmationTimeSeconds: 0, // Always reset last sub time
-          homeOrAway: initialState.homeOrAway,
       };
 
       // Log the constructed state *before* saving
@@ -2477,6 +2478,7 @@ export default function Home() {
     setCurrentGameId,
     setIsNewGameSetupModalOpen,
     setHighlightRosterButton, // <<< ADD setHighlightRosterButton dependency
+    homeOrAway, // <<< USE Parameter value
   ]);
 
   // ** REVERT handleCancelNewGameSetup TO ORIGINAL **
