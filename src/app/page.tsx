@@ -2782,6 +2782,7 @@ export default function Home() {
               opponentName={opponentName}
               homeScore={homeScore}
               awayScore={awayScore}
+              homeOrAway={homeOrAway} // Pass prop
               // Last substitution time
               lastSubTime={lastSubConfirmationTimeSeconds}
               // Game Structure props & handlers
