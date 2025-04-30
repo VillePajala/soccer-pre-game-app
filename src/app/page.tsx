@@ -87,6 +87,7 @@ export interface AppState {
   homeScore: number;
   awayScore: number;
   gameNotes: string; // Add game notes to state
+  homeOrAway: 'home' | 'away'; // <<< Step 1: Add field
   // Add game structure state
   numberOfPeriods: 1 | 2;
   periodDurationMinutes: number;
@@ -134,6 +135,7 @@ const initialState: AppState = {
   homeScore: 0,
   awayScore: 0,
   gameNotes: '', // Initialize game notes as empty string
+  homeOrAway: 'home', // <<< Step 1: Initialize field
   // Initialize game structure
   numberOfPeriods: 2,
   periodDurationMinutes: 10, // Default to 10 minutes
