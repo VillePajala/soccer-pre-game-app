@@ -274,6 +274,8 @@ export default function Home() {
   // ADD State for seasons/tournaments lists
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  // <<< ADD: State for home/away status >>>
+  const [homeOrAway, setHomeOrAway] = useState<'home' | 'away'>(initialState.homeOrAway);
 
   // --- Timer State (Still needed here) ---
   const [timeElapsedInSeconds, setTimeElapsedInSeconds] = useState<number>(0);
@@ -508,6 +510,8 @@ export default function Home() {
     setTournamentId(stateToApply.tournamentId ?? '');
     setGameLocation(stateToApply.gameLocation || '');
     setGameTime(stateToApply.gameTime || '');
+    // <<< ADD: Load home/away status (initial load) >>>
+    setHomeOrAway(stateToApply.homeOrAway ?? initialState.homeOrAway);
 
     setIsLoaded(true);
     console.log('Initial load complete. isLoaded set to true.');
@@ -563,6 +567,8 @@ export default function Home() {
       setSubIntervalMinutes(stateToLoad.subIntervalMinutes ?? initialState.subIntervalMinutes ?? 5);
       setCompletedIntervalDurations(stateToLoad.completedIntervalDurations ?? initialState.completedIntervalDurations ?? []);
       setLastSubConfirmationTimeSeconds(stateToLoad.lastSubConfirmationTimeSeconds ?? initialState.lastSubConfirmationTimeSeconds ?? 0);
+      // <<< ADD: Load home/away status (game load) >>>
+      setHomeOrAway(stateToLoad.homeOrAway ?? initialState.homeOrAway);
 
       // Reset session-specific state based on loaded game status
       // Always reset timer state when loading any game state
@@ -598,7 +604,7 @@ export default function Home() {
       console.log('[Loading Effect] State applied successfully.');
     }
 
-  }, [currentGameId, savedGames, setPlayersOnField, setOpponents, setDrawings, setAvailablePlayers, setShowPlayerNames, setTeamName, setGameEvents, setOpponentName, setGameDate, setHomeScore, setAwayScore, setGameNotes, setNumberOfPeriods, setPeriodDurationMinutes, setCurrentPeriod, setGameStatus, setSelectedPlayerIds, setSeasonId, setTournamentId, setGameLocation, setGameTime, setSubIntervalMinutes, setCompletedIntervalDurations, setLastSubConfirmationTimeSeconds, setTimeElapsedInSeconds, setIsTimerRunning, setNextSubDueTimeSeconds, setSubAlertLevel, setHistory, setHistoryIndex]); // Keep dependencies simple - only react to ID or data change
+  }, [currentGameId, savedGames, setPlayersOnField, setOpponents, setDrawings, setAvailablePlayers, setShowPlayerNames, setTeamName, setGameEvents, setOpponentName, setGameDate, setHomeScore, setAwayScore, setGameNotes, setNumberOfPeriods, setPeriodDurationMinutes, setCurrentPeriod, setGameStatus, setSelectedPlayerIds, setSeasonId, setTournamentId, setGameLocation, setGameTime, setSubIntervalMinutes, setCompletedIntervalDurations, setLastSubConfirmationTimeSeconds, setTimeElapsedInSeconds, setIsTimerRunning, setNextSubDueTimeSeconds, setSubAlertLevel, setHistory, setHistoryIndex, setHomeOrAway]); // Keep dependencies simple - only react to ID or data change
 
   // --- Save state to localStorage ---
   useEffect(() => {
@@ -633,6 +639,7 @@ export default function Home() {
           subIntervalMinutes,
           completedIntervalDurations,
           lastSubConfirmationTimeSeconds,
+          homeOrAway,
         };
 
         // 2. Read the *current* collection from localStorage
@@ -672,7 +679,7 @@ export default function Home() {
       currentPeriod, gameStatus,
       selectedPlayerIds, seasonId, tournamentId, // <<< ENSURE seasonId & tournamentId ARE HERE
       gameLocation, gameTime, subIntervalMinutes,
-      completedIntervalDurations, lastSubConfirmationTimeSeconds
+      completedIntervalDurations, lastSubConfirmationTimeSeconds, homeOrAway
     ]);
 
   // **** ADDED: Effect to prompt for setup if opponent name is default ****
@@ -818,6 +825,8 @@ export default function Home() {
       setSubIntervalMinutes(prevState.subIntervalMinutes ?? 5); // Restore sub interval
       setCompletedIntervalDurations(prevState.completedIntervalDurations ?? []); // Restore intervals
       setLastSubConfirmationTimeSeconds(prevState.lastSubConfirmationTimeSeconds ?? 0); // Restore last sub time
+      // <<< ADD: Restore home/away status (undo) >>>
+      setHomeOrAway(prevState.homeOrAway);
       // Recalculate next sub due time based on restored state?
       // For simplicity, we might skip recalculating nextSubDueTimeSeconds on undo/redo
       // It will naturally correct itself on the next sub or interval change.
@@ -859,6 +868,8 @@ export default function Home() {
       setSubIntervalMinutes(nextState.subIntervalMinutes ?? 5); // Restore sub interval
       setCompletedIntervalDurations(nextState.completedIntervalDurations ?? []); // Restore intervals
       setLastSubConfirmationTimeSeconds(nextState.lastSubConfirmationTimeSeconds ?? 0); // Restore last sub time
+      // <<< ADD: Restore home/away status (redo) >>>
+      setHomeOrAway(nextState.homeOrAway);
       // Similar to undo, skip recalculating nextSubDueTimeSeconds here.
       
       setHistoryIndex(nextStateIndex);
@@ -1303,6 +1314,7 @@ export default function Home() {
         subIntervalMinutes,
         completedIntervalDurations,
         lastSubConfirmationTimeSeconds,
+        homeOrAway,
       };
 
       // 2. Update the savedGames state and localStorage using the determined ID
@@ -1380,6 +1392,8 @@ export default function Home() {
         setSubIntervalMinutes(stateToLoad.subIntervalMinutes ?? initialState.subIntervalMinutes ?? 5);
         setCompletedIntervalDurations(stateToLoad.completedIntervalDurations ?? initialState.completedIntervalDurations ?? []);
         setLastSubConfirmationTimeSeconds(stateToLoad.lastSubConfirmationTimeSeconds ?? initialState.lastSubConfirmationTimeSeconds ?? 0);
+        // <<< ADD: Load home/away status (game load) >>>
+        setHomeOrAway(stateToLoad.homeOrAway ?? initialState.homeOrAway);
 
         // Reset session-specific state
         setHistory([stateToLoad]);
@@ -1452,6 +1466,8 @@ export default function Home() {
         setSubIntervalMinutes(initialState.subIntervalMinutes ?? 5);
         setCompletedIntervalDurations(initialState.completedIntervalDurations ?? []);
         setLastSubConfirmationTimeSeconds(initialState.lastSubConfirmationTimeSeconds ?? 0);
+        // <<< ADD: Reset home/away status (delete game) >>>
+        setHomeOrAway(initialState.homeOrAway);
 
         // Reset session-specific state
         setHistory([initialState]);
@@ -2059,6 +2075,7 @@ export default function Home() {
           subIntervalMinutes,
           completedIntervalDurations,
           lastSubConfirmationTimeSeconds,
+          homeOrAway,
         };
 
         // 2. Update the savedGames state and localStorage
@@ -2115,7 +2132,8 @@ export default function Home() {
     handleOpenSaveGameModal, // Keep dependency: used in else block
     subIntervalMinutes,
     completedIntervalDurations,
-    lastSubConfirmationTimeSeconds
+    lastSubConfirmationTimeSeconds,
+    homeOrAway
   ]);
   // --- END Quick Save Handler ---
 
@@ -2401,6 +2419,7 @@ export default function Home() {
           subIntervalMinutes: initialState.subIntervalMinutes ?? 5,
           completedIntervalDurations: [], // Always reset intervals
           lastSubConfirmationTimeSeconds: 0, // Always reset last sub time
+          homeOrAway: initialState.homeOrAway,
       };
 
       // Log the constructed state *before* saving
