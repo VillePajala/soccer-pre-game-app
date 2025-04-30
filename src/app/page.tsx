@@ -1049,15 +1049,27 @@ export default function Home() {
     };
 
     const newGameEvents = [...gameEvents, newEvent];
-    const newHomeScore = homeScore + 1; // Increment home score when logging a goal
+    // const newHomeScore = homeScore + 1; // Increment home score when logging a goal -- OLD LOGIC
+    let newHomeScore = homeScore;
+    let newAwayScore = awayScore;
+
+    if (homeOrAway === 'home') {
+      newHomeScore += 1;
+    } else {
+      newAwayScore += 1;
+    }
     
     setGameEvents(newGameEvents);
-    setHomeScore(newHomeScore); // Update the home score
+    // setHomeScore(newHomeScore); // Update the home score -- OLD LOGIC
+    setHomeScore(newHomeScore);
+    setAwayScore(newAwayScore);
     // REMOVED: Force new reference for availablePlayers state as well
     // setAvailablePlayers(prev => [...prev]); 
     saveStateToHistory({ 
       gameEvents: newGameEvents,
-      homeScore: newHomeScore // Include updated score in history
+      // homeScore: newHomeScore // Include updated score in history -- OLD LOGIC
+      homeScore: newHomeScore,
+      awayScore: newAwayScore
     });
     setIsGoalLogModalOpen(false); // Close modal after logging
   };
@@ -1075,15 +1087,27 @@ export default function Home() {
     };
 
     const newGameEvents = [...gameEvents, newEvent];
-    const newAwayScore = awayScore + 1;
+    // const newAwayScore = awayScore + 1; -- OLD LOGIC
+    let newHomeScore = homeScore;
+    let newAwayScore = awayScore;
+
+    if (homeOrAway === 'home') {
+      newAwayScore += 1;
+    } else {
+      newHomeScore += 1;
+    }
 
     setGameEvents(newGameEvents);
+    // setAwayScore(newAwayScore); -- OLD LOGIC
+    setHomeScore(newHomeScore);
     setAwayScore(newAwayScore);
     // REMOVED: Force new reference for availablePlayers state as well
     // setAvailablePlayers(prev => [...prev]);
     saveStateToHistory({ 
       gameEvents: newGameEvents, 
-      awayScore: newAwayScore 
+      // awayScore: newAwayScore -- OLD LOGIC
+      homeScore: newHomeScore,
+      awayScore: newAwayScore
     });
     setIsGoalLogModalOpen(false); // Close modal after logging
   };
@@ -1131,9 +1155,19 @@ export default function Home() {
     let newHomeScore = homeScore;
     let newAwayScore = awayScore;
     if (eventToDelete.type === 'goal') {
-        newHomeScore = Math.max(0, homeScore - 1); // Decrement home score
+        // newHomeScore = Math.max(0, homeScore - 1); // Decrement home score -- OLD LOGIC
+        if (homeOrAway === 'home') {
+          newHomeScore = Math.max(0, homeScore - 1);
+        } else {
+          newAwayScore = Math.max(0, awayScore - 1);
+        }
     } else if (eventToDelete.type === 'opponentGoal') {
-        newAwayScore = Math.max(0, awayScore - 1); // Decrement away score
+        // newAwayScore = Math.max(0, awayScore - 1); // Decrement away score -- OLD LOGIC
+        if (homeOrAway === 'home') {
+          newAwayScore = Math.max(0, awayScore - 1);
+        } else {
+          newHomeScore = Math.max(0, homeScore - 1);
+        }
     }
 
     // Create a new array excluding the deleted event
