@@ -210,13 +210,37 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
       return;
     }
 
-    console.log(`File selected: ${file.name}, size: ${file.size}`);
-    // Placeholder for now - Step 2 will read the file content
-    // For now, just call the prop to show connection (can test with dummy string)
-    // onImportJson(`Placeholder content for ${file.name}`); 
+    console.log(`Attempting to read file: ${file.name}, size: ${file.size}`);
+
+    // --- Step 2: Use FileReader to read content ---
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      try {
+        const jsonContent = e.target?.result as string;
+        if (jsonContent) {
+          console.log('File read successfully, calling onImportJson.');
+          onImportJson(jsonContent); // Pass the content string to the handler prop
+        } else {
+          console.error('FileReader error: Result is null or empty.');
+          alert(t('loadGameModal.importReadError', 'Error reading file content.'));
+        }
+      } catch (error) {
+        console.error('Error processing file content:', error);
+        alert(t('loadGameModal.importProcessError', 'Error processing file content.'));
+      }
+    };
+
+    reader.onerror = (e) => {
+      console.error('FileReader error:', reader.error);
+      alert(t('loadGameModal.importReadError', 'Error reading file content.'));
+    };
+
+    reader.readAsText(file); // Read the file as text
+    // --- End Step 2 --- 
 
     // Clear the input value to allow re-selecting the same file
-    event.target.value = '';
+    event.target.value = ''; // Use empty string instead of null
   };
   // --- End Step 1 Handlers ---
 
