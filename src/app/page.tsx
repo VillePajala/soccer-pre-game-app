@@ -2995,6 +2995,7 @@ export default function Home() {
           onExportAllExcel={handleExportAllGamesCsv} // Pass renamed CSV handler
           onExportOneJson={handleExportOneJson}
           onExportOneCsv={handleExportOneCsv}
+          onImportJson={handleImportGamesFromJson} // <-- Step 4: Pass the handler prop
           currentGameId={currentGameId || undefined} // Convert null to undefined
         />
 
