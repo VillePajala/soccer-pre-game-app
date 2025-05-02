@@ -2445,9 +2445,10 @@ export default function Home() {
   // --- Handler that is called when setup modal is confirmed ---
   const handleStartNewGameWithSetup = useCallback((
     initialSelectedPlayerIds: string[],
-    opponentName: string,
-    gameDate: string,
-    gameLocation: string,
+    homeTeamName: string, // <-- Add parameter
+    opponentName: string, 
+    gameDate: string, 
+    gameLocation: string, 
     gameTime: string,
     seasonId: string | null,
     tournamentId: string | null,
@@ -2477,7 +2478,7 @@ export default function Home() {
           homeScore: 0,
           awayScore: 0,
           gameNotes: '',
-          teamName: teamName, // Use current teamName state
+          teamName: homeTeamName, // Use current teamName state
           homeOrAway: homeOrAway, // <<< Step 4b: Use parameter value
           availablePlayers: availablePlayers, // <<< ADD: Use current global roster
           selectedPlayerIds: finalSelectedPlayerIds, // <-- USE PASSED OR FALLBACK
