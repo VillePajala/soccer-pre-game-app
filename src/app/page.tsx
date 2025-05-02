@@ -16,6 +16,7 @@ import RosterSettingsModal from '@/components/RosterSettingsModal';
 import GameSettingsModal from '@/components/GameSettingsModal';
 import { useTranslation } from 'react-i18next';
 import { useGameState, UseGameStateReturn } from '@/hooks/useGameState';
+import GameInfoBar from '@/components/GameInfoBar';
 
 // Define the Player type - Use relative coordinates
 export interface Player {
@@ -86,6 +87,7 @@ export interface AppState {
   homeScore: number;
   awayScore: number;
   gameNotes: string; // Add game notes to state
+  homeOrAway: 'home' | 'away'; // <<< Step 1: Add field
   // Add game structure state
   numberOfPeriods: 1 | 2;
   periodDurationMinutes: number;
@@ -133,6 +135,7 @@ const initialState: AppState = {
   homeScore: 0,
   awayScore: 0,
   gameNotes: '', // Initialize game notes as empty string
+  homeOrAway: 'home', // <<< Step 1: Initialize field
   // Initialize game structure
   numberOfPeriods: 2,
   periodDurationMinutes: 10, // Default to 10 minutes
@@ -265,13 +268,14 @@ export default function Home() {
   // ... UI/Interaction states ...
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
   const [draggingPlayerFromBarInfo, setDraggingPlayerFromBarInfo] = useState<Player | null>(null);
-  const [isFullscreen, setIsFullscreen] = useState<boolean>(false); // RE-ADD Fullscreen state
   // Persistence state
   const [savedGames, setSavedGames] = useState<SavedGamesCollection>({});
   const [currentGameId, setCurrentGameId] = useState<string | null>(DEFAULT_GAME_ID);
   // ADD State for seasons/tournaments lists
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  // <<< ADD: State for home/away status >>>
+  const [homeOrAway, setHomeOrAway] = useState<'home' | 'away'>(initialState.homeOrAway);
 
   // --- Timer State (Still needed here) ---
   const [timeElapsedInSeconds, setTimeElapsedInSeconds] = useState<number>(0);
@@ -299,6 +303,32 @@ export default function Home() {
   // const [isStartingNewGameAfterSave, setIsStartingNewGameAfterSave] = useState<boolean>(false); // <<< REMOVE THIS LINE
   // ADD state for the new Game Settings modal
   const [isGameSettingsModalOpen, setIsGameSettingsModalOpen] = useState<boolean>(false);
+
+  // <<< ADD State to hold player IDs for the next new game >>>
+  const [playerIdsForNewGame, setPlayerIdsForNewGame] = useState<string[] | null>(null);
+  // <<< ADD State for the roster prompt toast >>>
+  // const [showRosterPrompt, setShowRosterPrompt] = useState<boolean>(false);
+  // <<< ADD State for roster button highlight >>>
+  const [highlightRosterButton, setHighlightRosterButton] = useState<boolean>(false);
+
+  // <<< ADD Effect for auto-removing the highlight >>>
+  useEffect(() => {
+    console.log('[Effect:HighlightTimeout] Running. highlightRosterButton:', highlightRosterButton); // Log effect run
+    let timer: NodeJS.Timeout | null = null;
+    if (highlightRosterButton) {
+      console.log('[Effect:HighlightTimeout] Setting timeout to remove highlight.'); // Log timeout setup
+      timer = setTimeout(() => {
+        console.log('[Effect:HighlightTimeout] Timeout fired. Setting highlightRosterButton to false.'); // Log timeout fire
+        setHighlightRosterButton(false);
+      }, 15000); // Remove highlight after 15 seconds
+    }
+    return () => {
+      if (timer) {
+        console.log('[Effect:HighlightTimeout] Cleanup: Clearing timeout.'); // Log cleanup
+        clearTimeout(timer);
+      }
+    };
+  }, [highlightRosterButton]);
 
   // --- Derived State for Filtered Players ---
   const playersForCurrentGame = useMemo(() => {
@@ -480,6 +510,8 @@ export default function Home() {
     setTournamentId(stateToApply.tournamentId ?? '');
     setGameLocation(stateToApply.gameLocation || '');
     setGameTime(stateToApply.gameTime || '');
+    // <<< ADD: Load home/away status (initial load) >>>
+    setHomeOrAway(stateToApply.homeOrAway ?? initialState.homeOrAway);
 
     setIsLoaded(true);
     console.log('Initial load complete. isLoaded set to true.');
@@ -535,6 +567,8 @@ export default function Home() {
       setSubIntervalMinutes(stateToLoad.subIntervalMinutes ?? initialState.subIntervalMinutes ?? 5);
       setCompletedIntervalDurations(stateToLoad.completedIntervalDurations ?? initialState.completedIntervalDurations ?? []);
       setLastSubConfirmationTimeSeconds(stateToLoad.lastSubConfirmationTimeSeconds ?? initialState.lastSubConfirmationTimeSeconds ?? 0);
+      // <<< ADD: Load home/away status (game load) >>>
+      setHomeOrAway(stateToLoad.homeOrAway ?? initialState.homeOrAway);
 
       // Reset session-specific state based on loaded game status
       // Always reset timer state when loading any game state
@@ -570,7 +604,7 @@ export default function Home() {
       console.log('[Loading Effect] State applied successfully.');
     }
 
-  }, [currentGameId, savedGames, setPlayersOnField, setOpponents, setDrawings, setAvailablePlayers, setShowPlayerNames, setTeamName, setGameEvents, setOpponentName, setGameDate, setHomeScore, setAwayScore, setGameNotes, setNumberOfPeriods, setPeriodDurationMinutes, setCurrentPeriod, setGameStatus, setSelectedPlayerIds, setSeasonId, setTournamentId, setGameLocation, setGameTime, setSubIntervalMinutes, setCompletedIntervalDurations, setLastSubConfirmationTimeSeconds, setTimeElapsedInSeconds, setIsTimerRunning, setNextSubDueTimeSeconds, setSubAlertLevel, setHistory, setHistoryIndex]); // Keep dependencies simple - only react to ID or data change
+  }, [currentGameId, savedGames, setPlayersOnField, setOpponents, setDrawings, setAvailablePlayers, setShowPlayerNames, setTeamName, setGameEvents, setOpponentName, setGameDate, setHomeScore, setAwayScore, setGameNotes, setNumberOfPeriods, setPeriodDurationMinutes, setCurrentPeriod, setGameStatus, setSelectedPlayerIds, setSeasonId, setTournamentId, setGameLocation, setGameTime, setSubIntervalMinutes, setCompletedIntervalDurations, setLastSubConfirmationTimeSeconds, setTimeElapsedInSeconds, setIsTimerRunning, setNextSubDueTimeSeconds, setSubAlertLevel, setHistory, setHistoryIndex, setHomeOrAway]); // Keep dependencies simple - only react to ID or data change
 
   // --- Save state to localStorage ---
   useEffect(() => {
@@ -605,6 +639,7 @@ export default function Home() {
           subIntervalMinutes,
           completedIntervalDurations,
           lastSubConfirmationTimeSeconds,
+          homeOrAway,
         };
 
         // 2. Read the *current* collection from localStorage
@@ -644,7 +679,7 @@ export default function Home() {
       currentPeriod, gameStatus,
       selectedPlayerIds, seasonId, tournamentId, // <<< ENSURE seasonId & tournamentId ARE HERE
       gameLocation, gameTime, subIntervalMinutes,
-      completedIntervalDurations, lastSubConfirmationTimeSeconds
+      completedIntervalDurations, lastSubConfirmationTimeSeconds, homeOrAway
     ]);
 
   // **** ADDED: Effect to prompt for setup if opponent name is default ****
@@ -662,70 +697,6 @@ export default function Home() {
     }
     // REMOVED isNewGameSetupModalOpen from dependencies
   }, [isLoaded, opponentName, hasSkippedInitialSetup]); // Dependencies for the check
-
-  // --- Fullscreen API Logic ---
-  const handleFullscreenChange = useCallback(() => {
-    setIsFullscreen(!!document.fullscreenElement);
-  }, []);
-
-  useEffect(() => {
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    document.addEventListener('webkitfullscreenchange', handleFullscreenChange); // Safari/Chrome
-    document.addEventListener('mozfullscreenchange', handleFullscreenChange); // Firefox
-    document.addEventListener('MSFullscreenChange', handleFullscreenChange); // IE/Edge
-
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
-      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
-      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
-    };
-  }, [handleFullscreenChange]);
-
-  const toggleFullScreen = async () => {
-    const elem = document.documentElement; // Target the whole page
-
-    if (!document.fullscreenElement) {
-      try {
-        if (elem.requestFullscreen) {
-          await elem.requestFullscreen();
-        } else if ('webkitRequestFullscreen' in elem && typeof elem.webkitRequestFullscreen === 'function') { /* Safari */
-          await elem.webkitRequestFullscreen();
-        } else if ('msRequestFullscreen' in elem && typeof elem.msRequestFullscreen === 'function') { /* IE11 */
-          await elem.msRequestFullscreen();
-        }
-        setIsFullscreen(true);
-      } catch (err) {
-        // Type check for error handling
-        if (err instanceof Error) {
-            console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
-        } else {
-            console.error(`An unknown error occurred attempting to enable full-screen mode:`, err);
-        }
-        setIsFullscreen(false); // Ensure state is correct if request fails
-      }
-    } else {
-      try {
-        if (document.exitFullscreen) {
-          await document.exitFullscreen();
-        } else if ('webkitExitFullscreen' in document && typeof document.webkitExitFullscreen === 'function') { /* Safari */
-          await document.webkitExitFullscreen();
-        } else if ('msExitFullscreen' in document && typeof document.msExitFullscreen === 'function') { /* IE11 */
-          await document.msExitFullscreen();
-        }
-        setIsFullscreen(false);
-      } catch (err) {
-        // Type check for error handling
-         if (err instanceof Error) {
-             console.error(`Error attempting to disable full-screen mode: ${err.message} (${err.name})`);
-         } else {
-             console.error(`An unknown error occurred attempting to disable full-screen mode:`, err);
-         }
-         // State might already be false due to event listener, but set explicitly just in case
-         setIsFullscreen(false);
-      }
-    }
-  };
 
   // --- Player Management Handlers (Updated for relative coords) ---
   // Wrapped handleDropOnField in useCallback as suggested (line 500)
@@ -854,6 +825,8 @@ export default function Home() {
       setSubIntervalMinutes(prevState.subIntervalMinutes ?? 5); // Restore sub interval
       setCompletedIntervalDurations(prevState.completedIntervalDurations ?? []); // Restore intervals
       setLastSubConfirmationTimeSeconds(prevState.lastSubConfirmationTimeSeconds ?? 0); // Restore last sub time
+      // <<< ADD: Restore home/away status (undo) >>>
+      setHomeOrAway(prevState.homeOrAway);
       // Recalculate next sub due time based on restored state?
       // For simplicity, we might skip recalculating nextSubDueTimeSeconds on undo/redo
       // It will naturally correct itself on the next sub or interval change.
@@ -895,6 +868,8 @@ export default function Home() {
       setSubIntervalMinutes(nextState.subIntervalMinutes ?? 5); // Restore sub interval
       setCompletedIntervalDurations(nextState.completedIntervalDurations ?? []); // Restore intervals
       setLastSubConfirmationTimeSeconds(nextState.lastSubConfirmationTimeSeconds ?? 0); // Restore last sub time
+      // <<< ADD: Restore home/away status (redo) >>>
+      setHomeOrAway(nextState.homeOrAway);
       // Similar to undo, skip recalculating nextSubDueTimeSeconds here.
       
       setHistoryIndex(nextStateIndex);
@@ -1074,15 +1049,27 @@ export default function Home() {
     };
 
     const newGameEvents = [...gameEvents, newEvent];
-    const newHomeScore = homeScore + 1; // Increment home score when logging a goal
+    // const newHomeScore = homeScore + 1; // Increment home score when logging a goal -- OLD LOGIC
+    let newHomeScore = homeScore;
+    let newAwayScore = awayScore;
+
+    if (homeOrAway === 'home') {
+      newHomeScore += 1;
+    } else {
+      newAwayScore += 1;
+    }
     
     setGameEvents(newGameEvents);
-    setHomeScore(newHomeScore); // Update the home score
+    // setHomeScore(newHomeScore); // Update the home score -- OLD LOGIC
+    setHomeScore(newHomeScore);
+    setAwayScore(newAwayScore);
     // REMOVED: Force new reference for availablePlayers state as well
     // setAvailablePlayers(prev => [...prev]); 
     saveStateToHistory({ 
       gameEvents: newGameEvents,
-      homeScore: newHomeScore // Include updated score in history
+      // homeScore: newHomeScore // Include updated score in history -- OLD LOGIC
+      homeScore: newHomeScore,
+      awayScore: newAwayScore
     });
     setIsGoalLogModalOpen(false); // Close modal after logging
   };
@@ -1100,15 +1087,27 @@ export default function Home() {
     };
 
     const newGameEvents = [...gameEvents, newEvent];
-    const newAwayScore = awayScore + 1;
+    // const newAwayScore = awayScore + 1; -- OLD LOGIC
+    let newHomeScore = homeScore;
+    let newAwayScore = awayScore;
+
+    if (homeOrAway === 'home') {
+      newAwayScore += 1;
+    } else {
+      newHomeScore += 1;
+    }
 
     setGameEvents(newGameEvents);
+    // setAwayScore(newAwayScore); -- OLD LOGIC
+    setHomeScore(newHomeScore);
     setAwayScore(newAwayScore);
     // REMOVED: Force new reference for availablePlayers state as well
     // setAvailablePlayers(prev => [...prev]);
     saveStateToHistory({ 
       gameEvents: newGameEvents, 
-      awayScore: newAwayScore 
+      // awayScore: newAwayScore -- OLD LOGIC
+      homeScore: newHomeScore,
+      awayScore: newAwayScore
     });
     setIsGoalLogModalOpen(false); // Close modal after logging
   };
@@ -1156,9 +1155,19 @@ export default function Home() {
     let newHomeScore = homeScore;
     let newAwayScore = awayScore;
     if (eventToDelete.type === 'goal') {
-        newHomeScore = Math.max(0, homeScore - 1); // Decrement home score
+        // newHomeScore = Math.max(0, homeScore - 1); // Decrement home score -- OLD LOGIC
+        if (homeOrAway === 'home') {
+          newHomeScore = Math.max(0, homeScore - 1);
+        } else {
+          newAwayScore = Math.max(0, awayScore - 1);
+        }
     } else if (eventToDelete.type === 'opponentGoal') {
-        newAwayScore = Math.max(0, awayScore - 1); // Decrement away score
+        // newAwayScore = Math.max(0, awayScore - 1); // Decrement away score -- OLD LOGIC
+        if (homeOrAway === 'home') {
+          newAwayScore = Math.max(0, awayScore - 1);
+        } else {
+          newHomeScore = Math.max(0, homeScore - 1);
+        }
     }
 
     // Create a new array excluding the deleted event
@@ -1339,6 +1348,7 @@ export default function Home() {
         subIntervalMinutes,
         completedIntervalDurations,
         lastSubConfirmationTimeSeconds,
+        homeOrAway,
       };
 
       // 2. Update the savedGames state and localStorage using the determined ID
@@ -1416,6 +1426,8 @@ export default function Home() {
         setSubIntervalMinutes(stateToLoad.subIntervalMinutes ?? initialState.subIntervalMinutes ?? 5);
         setCompletedIntervalDurations(stateToLoad.completedIntervalDurations ?? initialState.completedIntervalDurations ?? []);
         setLastSubConfirmationTimeSeconds(stateToLoad.lastSubConfirmationTimeSeconds ?? initialState.lastSubConfirmationTimeSeconds ?? 0);
+        // <<< ADD: Load home/away status (game load) >>>
+        setHomeOrAway(stateToLoad.homeOrAway ?? initialState.homeOrAway);
 
         // Reset session-specific state
         setHistory([stateToLoad]);
@@ -1488,6 +1500,8 @@ export default function Home() {
         setSubIntervalMinutes(initialState.subIntervalMinutes ?? 5);
         setCompletedIntervalDurations(initialState.completedIntervalDurations ?? []);
         setLastSubConfirmationTimeSeconds(initialState.lastSubConfirmationTimeSeconds ?? 0);
+        // <<< ADD: Reset home/away status (delete game) >>>
+        setHomeOrAway(initialState.homeOrAway);
 
         // Reset session-specific state
         setHistory([initialState]);
@@ -1897,7 +1911,11 @@ export default function Home() {
   // --- END INDIVIDUAL GAME EXPORT HANDLERS ---
 
   // --- Roster Management Handlers ---
-  const openRosterModal = () => setIsRosterModalOpen(true);
+  const openRosterModal = () => {
+    console.log('[openRosterModal] Called. Setting highlightRosterButton to false.'); // Log modal open
+    setIsRosterModalOpen(true);
+    setHighlightRosterButton(false); // <<< Remove highlight when modal is opened
+  };
   const closeRosterModal = () => setIsRosterModalOpen(false);
 
   
@@ -1925,7 +1943,7 @@ export default function Home() {
     // saveStateToHistory({ availablePlayers: updatedAvailable /*, playersOnField: updatedOnField */ });
     console.log(`Set notes for ${playerId}`);
     // Removed playersOnField dependencies as they aren't used
-  }, [availablePlayers, setAvailablePlayers, /* playersOnField, setPlayersOnField, */ saveStateToHistory]);
+  }, [availablePlayers, setAvailablePlayers, /* playersOnField, setPlayersOnField, */ /* saveStateToHistory */]);
 
   const handleRemovePlayerFromRoster = useCallback((playerId: string) => {
     if (window.confirm(`Are you sure you want to remove player ${availablePlayers.find(p=>p.id === playerId)?.name ?? playerId} from the roster? This cannot be undone easily.`)) {
@@ -2091,6 +2109,7 @@ export default function Home() {
           subIntervalMinutes,
           completedIntervalDurations,
           lastSubConfirmationTimeSeconds,
+          homeOrAway,
         };
 
         // 2. Update the savedGames state and localStorage
@@ -2147,7 +2166,8 @@ export default function Home() {
     handleOpenSaveGameModal, // Keep dependency: used in else block
     subIntervalMinutes,
     completedIntervalDurations,
-    lastSubConfirmationTimeSeconds
+    lastSubConfirmationTimeSeconds,
+    homeOrAway
   ]);
   // --- END Quick Save Handler ---
 
@@ -2175,6 +2195,12 @@ export default function Home() {
     // REVERT to original
     setGameTime(time);
     saveStateToHistory({ gameTime: time });
+  };
+
+  // Add handler for home/away status
+  const handleSetHomeOrAway = (status: 'home' | 'away') => {
+    setHomeOrAway(status);
+    saveStateToHistory({ homeOrAway: status });
   };
 
   // --- NEW Handlers for Setting Season/Tournament ID ---
@@ -2386,6 +2412,7 @@ export default function Home() {
 
   // --- Handler that is called when setup modal is confirmed ---
   const handleStartNewGameWithSetup = useCallback((
+    initialSelectedPlayerIds: string[],
     opponentName: string,
     gameDate: string,
     gameLocation: string,
@@ -2393,11 +2420,17 @@ export default function Home() {
     seasonId: string | null,
     tournamentId: string | null,
     numPeriods: 1 | 2, // Parameter
-    periodDuration: number // Parameter
+    periodDuration: number, // Parameter
+    homeOrAway: 'home' | 'away' // <<< Step 4b: Add parameter
   ) => {
       // ADD LOGGING HERE:
       console.log('[handleStartNewGameWithSetup] Received Params:', { numPeriods, periodDuration });
       // No need to log initialState references anymore
+
+      // Determine the player selection for the new game
+      const finalSelectedPlayerIds = initialSelectedPlayerIds && initialSelectedPlayerIds.length > 0 
+          ? initialSelectedPlayerIds 
+          : availablePlayers.map(p => p.id); // Fallback to all players if none provided
 
       // 1. Manually construct the new game state EXPLICITLY
       const newGameState: AppState = {
@@ -2413,8 +2446,9 @@ export default function Home() {
           awayScore: 0,
           gameNotes: '',
           teamName: teamName, // Use current teamName state
+          homeOrAway: homeOrAway, // <<< Step 4b: Use parameter value
           availablePlayers: availablePlayers, // <<< ADD: Use current global roster
-          selectedPlayerIds: availablePlayers.map(p => p.id), // <-- BASE ON CURRENT GLOBAL ROSTER
+          selectedPlayerIds: finalSelectedPlayerIds, // <-- USE PASSED OR FALLBACK
           playersOnField: [], // Always start with empty field
           opponents: [], // Always start with empty opponents
           showPlayerNames: true, // Default visibility
@@ -2467,7 +2501,10 @@ export default function Home() {
 
       // Close the setup modal
       setIsNewGameSetupModalOpen(false);
-      // REMOVED: setIsStartingNewGameAfterSave(false);
+
+      // <<< Trigger the roster button highlight >>>
+      console.log('[handleStartNewGameWithSetup] Setting highlightRosterButton to true.'); // Log highlight trigger
+      setHighlightRosterButton(true);
 
   }, [
     // Keep necessary dependencies
@@ -2480,7 +2517,8 @@ export default function Home() {
     setHistoryIndex,
     setCurrentGameId,
     setIsNewGameSetupModalOpen,
-    // setIsStartingNewGameAfterSave
+    setHighlightRosterButton, // <<< ADD setHighlightRosterButton dependency
+    homeOrAway, // <<< USE Parameter value
   ]);
 
   // ** REVERT handleCancelNewGameSetup TO ORIGINAL **
@@ -2530,6 +2568,8 @@ export default function Home() {
         // Confirmation for actually starting new game (ONLY shown if user DISCARDED previous game)
         if (window.confirm(t('controlBar.startNewMatchConfirmation', 'Are you sure you want to start a new match? Any unsaved progress will be lost.') ?? 'Are you sure?')) {
           console.log("Start new game confirmed after discarding, opening setup modal...");
+          // <<< SET default player selection (all players) >>>
+          setPlayerIdsForNewGame(availablePlayers.map(p => p.id));
           setIsNewGameSetupModalOpen(true); // Open the setup modal
         } 
         // If user cancels this second confirmation, do nothing.
@@ -2540,6 +2580,8 @@ export default function Home() {
       // If no real game is loaded, proceed directly to the main confirmation
        if (window.confirm(t('controlBar.startNewMatchConfirmation', 'Are you sure you want to start a new match? Any unsaved progress will be lost.') ?? 'Are you sure?')) {
          console.log("Start new game confirmed (no prior game to save), opening setup modal...");
+         // <<< SET default player selection (all players) >>>
+         setPlayerIdsForNewGame(availablePlayers.map(p => p.id));
          setIsNewGameSetupModalOpen(true); // Open the setup modal
        }
        // If user cancels this confirmation, do nothing.
@@ -2548,10 +2590,205 @@ export default function Home() {
     }
     // Note: This part of the code is now only reachable if the user chose 'OK (Save & Continue)'
     // because the other paths explicitly return earlier.
+    // <<< SET player selection based on current game BEFORE opening modal >>>
+    setPlayerIdsForNewGame(selectedPlayerIds); // Use the current selection
+    setIsNewGameSetupModalOpen(true); // Open setup modal (moved here for save & continue path)
 
-  }, [t, currentGameId, savedGames, handleOpenSaveGameModal, handleQuickSaveGame, setIsNewGameSetupModalOpen]); 
+  }, [t, currentGameId, savedGames, /* handleOpenSaveGameModal, */ handleQuickSaveGame, setIsNewGameSetupModalOpen, 
+      // <<< ADD dependencies >>>
+      availablePlayers, selectedPlayerIds, setPlayerIdsForNewGame
+     ]); 
   // --- END Start New Game Handler ---
 
+  // New handler to place all selected players on the field at once
+  const handlePlaceAllPlayers = useCallback(() => {
+    // Get the list of selected players who are not yet on the field
+    const selectedButNotOnField = selectedPlayerIds.filter(id => 
+      !playersOnField.some(fieldPlayer => fieldPlayer.id === id)
+    );
+    
+    if (selectedButNotOnField.length === 0) {
+      // All selected players are already on the field
+      console.log('All selected players are already on the field');
+      return;
+    }
+
+    // Find the corresponding player objects from availablePlayers
+    const playersToPlace = selectedButNotOnField
+      .map(id => availablePlayers.find(p => p.id === id))
+      .filter((p): p is Player => p !== undefined);
+    
+    console.log(`Placing ${playersToPlace.length} players on the field...`);
+
+    // Define a reasonable soccer formation based on number of players
+    // For simplicity, we'll use these common formations:
+    // 3-4 players: simple triangle or diamond
+    // 5-7 players: 2-3-1 or 2-3-2 formation
+    // 8+ players: 3-3-2 or 3-4-1 formation
+    
+    // Calculate positions for players in a reasonable soccer formation
+    const newFieldPlayers: Player[] = [...playersOnField]; // Start with existing players
+    
+    // Find if there's a goalie in the players to place
+    const goalieIndex = playersToPlace.findIndex(p => p.isGoalie);
+    let goalie: Player | null = null;
+    
+    if (goalieIndex !== -1) {
+      // Remove goalie from the array and handle separately
+      goalie = playersToPlace.splice(goalieIndex, 1)[0];
+    }
+    
+    // Place goalie first if one exists
+    if (goalie) {
+      // Place at the goal line, slightly offset from center
+      newFieldPlayers.push({
+        ...goalie,
+        relX: 0.5,
+        relY: 0.95 // Near our own goal line
+      });
+    }
+    
+    // Determine formation based on remaining players
+    const remainingCount = playersToPlace.length;
+    let positions: { relX: number, relY: number }[] = [];
+    
+    if (remainingCount <= 3) {
+      // Simple triangle/diamond formation for 1-3 players (not including goalie)
+      if (remainingCount >= 1) positions.push({ relX: 0.5, relY: 0.8 }); // Defender
+      if (remainingCount >= 2) positions.push({ relX: 0.5, relY: 0.5 }); // Midfielder
+      if (remainingCount >= 3) positions.push({ relX: 0.5, relY: 0.3 }); // Forward
+    } 
+    else if (remainingCount <= 7) {
+      // 2-3-1 or 2-3-2 formation for 6-7 players (not including goalie)
+      // Defenders
+      positions.push({ relX: 0.3, relY: 0.8 });
+      positions.push({ relX: 0.7, relY: 0.8 });
+      
+      // Midfielders
+      positions.push({ relX: 0.25, relY: 0.6 });
+      positions.push({ relX: 0.5, relY: 0.55 });
+      positions.push({ relX: 0.75, relY: 0.6 });
+      
+      // Forwards
+      positions.push({ relX: 0.35, relY: 0.3 });
+      if (remainingCount >= 7) positions.push({ relX: 0.65, relY: 0.3 });
+    }
+    else {
+      // 3-4-1 or 3-3-2 formation for 8+ players (not including goalie)
+      // Defenders
+      positions.push({ relX: 0.25, relY: 0.85 });
+      positions.push({ relX: 0.5, relY: 0.8 });
+      positions.push({ relX: 0.75, relY: 0.85 });
+      
+      // Midfielders
+      positions.push({ relX: 0.2, relY: 0.6 });
+      positions.push({ relX: 0.4, relY: 0.55 });
+      positions.push({ relX: 0.6, relY: 0.55 });
+      positions.push({ relX: 0.8, relY: 0.6 });
+      
+      // Forwards
+      positions.push({ relX: 0.5, relY: 0.3 });
+      if (remainingCount >= 9) positions.push({ relX: 0.35, relY: 0.3 });
+      if (remainingCount >= 10) positions.push({ relX: 0.65, relY: 0.3 });
+    }
+    
+    // Take only the positions we need for the remaining players
+    positions = positions.slice(0, remainingCount);
+    
+    // Add player in each position
+    playersToPlace.forEach((player, index) => {
+      if (index < positions.length) {
+        newFieldPlayers.push({
+          ...player,
+          relX: positions[index].relX,
+          relY: positions[index].relY
+        });
+      }
+    });
+    
+    // Update players on field
+    setPlayersOnField(newFieldPlayers);
+    saveStateToHistory({ playersOnField: newFieldPlayers });
+    
+    console.log(`Successfully placed ${playersToPlace.length} players on the field`);
+  }, [playersOnField, selectedPlayerIds, availablePlayers, saveStateToHistory, setPlayersOnField]);
+
+  // --- END Quick Save Handler ---
+
+  // --- Step 3: Handler for Importing Games ---
+  const handleImportGamesFromJson = useCallback((jsonContent: string) => {
+    console.log("handleImportGamesFromJson called.");
+    let importedGames: SavedGamesCollection = {};
+    let skippedCount = 0;
+    let importedCount = 0;
+    const newGamesToAdd: SavedGamesCollection = {}; // <-- Fix: Use const
+
+    try {
+      importedGames = JSON.parse(jsonContent);
+      
+      // Basic Validation: Is it an object?
+      if (typeof importedGames !== 'object' || importedGames === null || Array.isArray(importedGames)) {
+        throw new Error("Invalid format: Imported data is not a valid game collection object.");
+      }
+
+      console.log(`Parsed ${Object.keys(importedGames).length} games from JSON.`);
+
+      // Iterate and merge (skip existing)
+      for (const gameId in importedGames) {
+        // Add extra check for safety
+        if (Object.prototype.hasOwnProperty.call(importedGames, gameId)) {
+          // Basic validation of gameData structure (can be expanded)
+          const gameData = importedGames[gameId];
+          if (typeof gameData !== 'object' || gameData === null || !gameData.teamName || !gameData.gameDate) {
+             console.warn(`Skipping game ${gameId} due to invalid/missing core properties.`);
+             skippedCount++;
+             continue; // Skip invalid game data
+          }
+
+          if (savedGames[gameId]) {
+            // Game ID already exists, skip it
+            console.log(`Skipping import for existing game ID: ${gameId}`);
+            skippedCount++;
+          } else {
+            // Game ID is new, add it
+            console.log(`Marking new game for import: ${gameId}`);
+            newGamesToAdd[gameId] = gameData;
+            importedCount++;
+          }
+        }
+      }
+
+      // Apply updates if new games were found
+      if (importedCount > 0) {
+        console.log(`Adding ${importedCount} new games to state and localStorage.`);
+        const updatedSavedGames = { ...savedGames, ...newGamesToAdd };
+        setSavedGames(updatedSavedGames);
+        localStorage.setItem(SAVED_GAMES_KEY, JSON.stringify(updatedSavedGames));
+        alert(t('loadGameModal.importSuccess', 
+                  `Successfully imported ${importedCount} game(s). Skipped ${skippedCount} game(s) with existing IDs.`)
+              ?.replace('{importedCount}', String(importedCount))
+              ?.replace('{skippedCount}', String(skippedCount)) ?? `Imported: ${importedCount}, Skipped: ${skippedCount}`);
+      } else if (skippedCount > 0) {
+        alert(t('loadGameModal.importSkippedOnly', 
+                   `Import complete. Skipped ${skippedCount} game(s) because they already exist.`)
+                ?.replace('{skippedCount}', String(skippedCount)) ?? `Skipped all ${skippedCount} existing games.`);
+      } else {
+        alert(t('loadGameModal.importNoNewGames', 'No new games found in the file to import.'));
+      }
+
+    } catch (error) {
+      console.error("Failed to import games:", error);
+      // Use explicit check for Error type
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      alert(t('loadGameModal.importError', 'Import failed: {errorMessage}')
+            ?.replace('{errorMessage}', errorMessage) ?? `Import failed: ${errorMessage}`);
+    }
+
+  }, [savedGames, setSavedGames, t]); // Include t in dependencies
+  // --- End Step 3 --- 
+
+  // --- NEW: Handlers for Game Settings Modal --- (Placeholder open/close)
+  
   // Render null or a loading indicator until state is loaded
   // Note: Console log added before the check itself
   if (!isLoaded) {
@@ -2561,6 +2798,7 @@ export default function Home() {
   }
 
   // Final console log before returning the main JSX
+  console.log('[Home Render] highlightRosterButton:', highlightRosterButton); // Log state on render
   return (
     // Main container with flex column layout
     <div className="flex flex-col h-screen bg-gray-900 text-white relative">
@@ -2571,8 +2809,9 @@ export default function Home() {
       {/* Top Player Bar - Filter players based on selection */}
       <PlayerBar
         players={playersForCurrentGame} // Pass the filtered list
-        teamName={teamName}
-        onTeamNameChange={handleTeamNameChange}
+        // <<< Remove teamName and onTeamNameChange props again >>>
+        // teamName={teamName}
+        // onTeamNameChange={handleTeamNameChange}
         // CORRECT prop name back to onPlayerDragStartFromBar
         onPlayerDragStartFromBar={handlePlayerDragStartFromBar}
         selectedPlayerIdFromBar={draggingPlayerFromBarInfo?.id} // Pass the selected ID
@@ -2584,6 +2823,18 @@ export default function Home() {
         onToggleGoalie={handleToggleGoalie} // Pass the handler from the hook
       />
       
+      {/* <<< ADD the GameInfoBar here >>> */}
+      <GameInfoBar 
+        teamName={teamName}
+        opponentName={opponentName}
+        homeScore={homeScore}
+        awayScore={awayScore}
+        homeOrAway={homeOrAway} // Pass the prop
+        // <<< REMOVE timeElapsedInSeconds prop >>>
+        onTeamNameChange={handleTeamNameChange}
+        onOpponentNameChange={handleOpponentNameChange}
+      />
+
       {/* Opponent Bar (Optional) */}
 
       {/* Main content */}
@@ -2607,6 +2858,7 @@ export default function Home() {
               opponentName={opponentName}
               homeScore={homeScore}
               awayScore={awayScore}
+              homeOrAway={homeOrAway} // Pass prop
               // Last substitution time
               lastSubTime={lastSubConfirmationTimeSeconds}
               // Game Structure props & handlers
@@ -2640,7 +2892,7 @@ export default function Home() {
         />
       </main>
 
-        {/* Control Bar */}
+      {/* Control Bar */}
       <ControlBar
         onAddOpponent={handleAddOpponent} // Pass handler from hook
         onClearDrawings={handleClearDrawings} // Correctly passed here
@@ -2654,21 +2906,23 @@ export default function Home() {
         // Remove the timeElapsedInSeconds prop
         showLargeTimerOverlay={showLargeTimerOverlay}
         onToggleLargeTimerOverlay={handleToggleLargeTimerOverlay}
-          onToggleInstructions={handleToggleInstructions}
-          onToggleTrainingResources={handleToggleTrainingResources}
-          isFullscreen={isFullscreen}
-          onToggleFullScreen={toggleFullScreen}
-          onToggleGoalLogModal={handleToggleGoalLogModal}
-          onToggleGameStatsModal={handleToggleGameStatsModal}
-          onHardResetApp={handleHardResetApp}
-          onOpenLoadGameModal={handleOpenLoadGameModal}
-          onStartNewGame={handleStartNewGame}
-          onOpenRosterModal={openRosterModal} // Pass the handler
-          onQuickSave={handleQuickSaveGame} // Pass the quick save handler
-          // ADD props for Game Settings button
-          onOpenGameSettingsModal={handleOpenGameSettingsModal}
-          isGameLoaded={!!(currentGameId && currentGameId !== DEFAULT_GAME_ID)} // <-- CHECK FOR VALID GAME ID
-        />
+        onToggleTrainingResources={handleToggleTrainingResources}
+        // REMOVE Unused Props
+        // isFullscreen={isFullscreen}
+        // onToggleFullScreen={toggleFullScreen}
+        onToggleGoalLogModal={handleToggleGoalLogModal}
+        onToggleGameStatsModal={handleToggleGameStatsModal}
+        onHardResetApp={handleHardResetApp}
+        onOpenLoadGameModal={handleOpenLoadGameModal}
+        onStartNewGame={handleStartNewGame}
+        onOpenRosterModal={openRosterModal} // Pass the handler
+        onQuickSave={handleQuickSaveGame} // Pass the quick save handler
+        // ADD props for Game Settings button
+        onOpenGameSettingsModal={handleOpenGameSettingsModal}
+        isGameLoaded={!!(currentGameId && currentGameId !== DEFAULT_GAME_ID)} // <-- CHECK FOR VALID GAME ID
+        onPlaceAllPlayers={handlePlaceAllPlayers} // New prop for placing all players
+        highlightRosterButton={highlightRosterButton} // <<< PASS THE HIGHLIGHT PROP
+      />
         {/* Instructions Modal */}
         <InstructionsModal 
           isOpen={isInstructionsOpen} 
@@ -2700,6 +2954,7 @@ export default function Home() {
           gameNotes={gameNotes}
           homeScore={homeScore}
           awayScore={awayScore}
+          homeOrAway={homeOrAway} // Pass the prop
           availablePlayers={availablePlayers}
           gameEvents={gameEvents}
           onOpponentNameChange={handleOpponentNameChange}
@@ -2740,12 +2995,15 @@ export default function Home() {
           onExportAllExcel={handleExportAllGamesCsv} // Pass renamed CSV handler
           onExportOneJson={handleExportOneJson}
           onExportOneCsv={handleExportOneCsv}
+          onImportJson={handleImportGamesFromJson} // <-- Step 4: Pass the handler prop
+          currentGameId={currentGameId || undefined} // Convert null to undefined
         />
 
         {/* Conditionally render the New Game Setup Modal */}
         {isNewGameSetupModalOpen && (
           <NewGameSetupModal
             isOpen={isNewGameSetupModalOpen}
+            initialPlayerSelection={playerIdsForNewGame} // <<< Pass the state here
             onStart={handleStartNewGameWithSetup} // CORRECTED Handler
             onCancel={handleCancelNewGameSetup} 
           />
@@ -2803,9 +3061,47 @@ export default function Home() {
           // Pass the new handlers
           onSeasonIdChange={handleSetSeasonId}
           onTournamentIdChange={handleSetTournamentId}
+          // <<< ADD: Pass Home/Away state and handler >>>
+          homeOrAway={homeOrAway}
+          onSetHomeOrAway={handleSetHomeOrAway}
         />
 
       </div>
+
+      {/* <<< ADD Roster Prompt Toast >>> */}
+      {/* <div 
+        className={`
+          fixed bottom-16 right-4 bg-indigo-600/90 backdrop-blur-sm text-white 
+          rounded-lg shadow-lg p-3 transition-all duration-300 ease-in-out
+          ${showRosterPrompt ? 'translate-y-0 opacity-100' : 'translate-y-12 opacity-0 pointer-events-none'}
+          flex items-center gap-3 max-w-xs z-50
+        `}
+      >
+        <div className="flex-1">
+          <p className="text-sm font-medium">
+            {t('rosterPrompt.message', 'Set up your roster now?')}
+          </p>
+        </div>
+        <div className="flex gap-2 items-center">
+          <button 
+            onClick={handleConfirmRosterPrompt} 
+            className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded text-xs"
+            title={t('rosterPrompt.confirmTooltip', 'Open Roster Settings') ?? undefined}
+          >
+            {t('rosterPrompt.confirm', 'Yes')}
+          </button>
+          <button 
+            onClick={dismissRosterPrompt} 
+            className="p-1 text-white/70 hover:text-white"
+            title={t('rosterPrompt.dismissTooltip', 'Dismiss') ?? undefined}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div> */}
+
     </div>
   );
 }

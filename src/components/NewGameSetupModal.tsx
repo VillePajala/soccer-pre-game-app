@@ -8,7 +8,9 @@ import { HiPlusCircle } from 'react-icons/hi';
 
 interface NewGameSetupModalProps {
   isOpen: boolean;
+  initialPlayerSelection: string[] | null;
   onStart: (
+    initialSelectedPlayerIds: string[],
     opponentName: string, 
     gameDate: string, 
     gameLocation: string, 
@@ -16,13 +18,15 @@ interface NewGameSetupModalProps {
     seasonId: string | null,
     tournamentId: string | null,
     numPeriods: 1 | 2, 
-    periodDuration: number
+    periodDuration: number,
+    homeOrAway: 'home' | 'away'
   ) => void;
   onCancel: () => void;
 }
 
 const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   isOpen,
+  initialPlayerSelection,
   onStart,
   onCancel,
 }) => {
@@ -52,6 +56,9 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   const [localNumPeriods, setLocalNumPeriods] = useState<1 | 2>(2); // Default 2 periods
   const [localPeriodDurationString, setLocalPeriodDurationString] = useState<string>('10'); // Default 10 minutes as string
 
+  // <<< Step 4a: State for Home/Away >>>
+  const [localHomeOrAway, setLocalHomeOrAway] = useState<'home' | 'away'>('home');
+
   useEffect(() => {
     if (isOpen) {
       // Reset form fields
@@ -70,6 +77,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
       // Reset for period/duration
       setLocalNumPeriods(2);
       setLocalPeriodDurationString(String(10));
+      // <<< Step 4a: Reset Home/Away >>>
 
       // Load seasons and tournaments from localStorage
       try {
@@ -258,19 +266,37 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
 
     const finalGameTime = (gameHour && gameMinute) ? `${gameHour.padStart(2, '0')}:${gameMinute.padStart(2, '0')}` : '';
 
-    // Parse duration string into number before calling onStart
-    const finalDuration = Math.max(1, parseInt(localPeriodDurationString, 10) || 1);
+    // Period duration validation
+    const periodDurationMinutes = parseInt(localPeriodDurationString, 10);
+    if (isNaN(periodDurationMinutes) || periodDurationMinutes <= 0) {
+        alert(t('newGameSetupModal.invalidPeriodDuration', 'Period duration must be a positive number.'));
+        return;
+    }
+    
+    console.log("Starting game with:", {
+        opponent: trimmedOpponentName,
+        date: gameDate,
+        location: gameLocation,
+        time: finalGameTime,
+        season: selectedSeasonId,
+        tournament: selectedTournamentId,
+        numPeriods: localNumPeriods,
+        periodDuration: periodDurationMinutes,
+        homeOrAway: localHomeOrAway
+    });
 
     // Call the onStart prop with ALL collected data
     onStart(
+      initialPlayerSelection || [], // Pass empty array if null
       trimmedOpponentName,
       gameDate,
-      gameLocation.trim(),
+      gameLocation,
       finalGameTime,
       selectedSeasonId,
       selectedTournamentId,
       localNumPeriods, // Pass the selected number of periods
-      finalDuration    // Pass the parsed and validated number duration
+      periodDurationMinutes,    // Pass the parsed and validated number duration
+      localHomeOrAway         // <<< Step 4a: Pass value
     );
   };
 
@@ -572,6 +598,38 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
             </div>
           </div>
           {/* END Game Structure Settings */}
+
+          {/* --- Home/Away Selection --- */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-slate-300 mb-1">
+              {t('newGameSetupModal.venueLabel', 'Venue')} *
+            </label>
+            <div className="flex items-center space-x-4 bg-slate-700 border border-slate-500 rounded-md p-1.5">
+              <label className={`flex-1 text-center px-3 py-1 rounded cursor-pointer transition-colors duration-150 ${localHomeOrAway === 'home' ? 'bg-indigo-600 text-white' : 'bg-slate-600 hover:bg-slate-500'}`}>
+                <input 
+                  type="radio"
+                  name="homeOrAway"
+                  value="home"
+                  checked={localHomeOrAway === 'home'}
+                  onChange={() => setLocalHomeOrAway('home')}
+                  className="sr-only" // Hide the actual radio button
+                />
+                {t('general.home', 'Home')}
+              </label>
+              <label className={`flex-1 text-center px-3 py-1 rounded cursor-pointer transition-colors duration-150 ${localHomeOrAway === 'away' ? 'bg-indigo-600 text-white' : 'bg-slate-600 hover:bg-slate-500'}`}>
+                <input 
+                  type="radio"
+                  name="homeOrAway"
+                  value="away"
+                  checked={localHomeOrAway === 'away'}
+                  onChange={() => setLocalHomeOrAway('away')}
+                  className="sr-only"
+                />
+                {t('general.away', 'Away')}
+              </label>
+            </div>
+          </div>
+          {/* --- End Home/Away Selection --- */}
         </div>
 
         <div className="flex justify-center space-x-3 mt-auto pt-4 border-t border-slate-700 flex-shrink-0"> 

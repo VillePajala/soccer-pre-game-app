@@ -304,6 +304,9 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
         context.fillText(player.nickname || player.name, absX, absY);
       }
     });
+
+    // --- Restore context --- 
+    context.restore();
   }, [players, opponents, drawings, showPlayerNames]); // Remove gameEvents dependency
 
   // Add the new ResizeObserver effect
@@ -739,9 +742,9 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
         onDrop={handleDrop}
       />
       {/* Optional: Render player names/numbers as separate HTML elements over the canvas? */}
-
-      {/* ADD Timer Display */}
-      <div className="absolute top-2 right-2 bg-black/50 text-white text-xs font-mono px-2 py-1 rounded pointer-events-none select-none z-10">
+      
+      {/* <<< Change Timer Position to Bottom-Right >>> */}
+      <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs font-mono px-2 py-1 rounded pointer-events-none select-none z-10">
         {formatTime(timeElapsedInSeconds)}
       </div>
     </div>

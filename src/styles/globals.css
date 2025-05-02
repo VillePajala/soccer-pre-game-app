@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Add custom styles or overrides here */
+body {
+  overscroll-behavior: none; /* Prevent pull-to-refresh/scroll bouncing */
+}
+
+/* Optional: Add custom scrollbar styles if desired */
+.scrollbar-thin {
+  scrollbar-width: thin; /* Firefox */
+}
+
+.scrollbar-thumb-slate-700\/80::-webkit-scrollbar-thumb {
+  background-color: rgba(51, 65, 85, 0.8); /* slate-700 with 80% opacity */
+  border-radius: 4px;
+}
+
+.scrollbar-thumb-slate-700\/80 {
+  scrollbar-color: rgba(51, 65, 85, 0.8) transparent; /* thumb track */
+}
+
+.scrollbar-track-slate-800\/50::-webkit-scrollbar-track {
+  background-color: rgba(30, 41, 59, 0.5); /* slate-800 with 50% opacity */
+  border-radius: 4px;
+} 
