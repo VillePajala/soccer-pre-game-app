@@ -404,6 +404,38 @@ export default function Home() {
   useEffect(() => {
     console.log('Initial Load Effect Triggered');
 
+    // +++ MIGRATION: Move data from old List keys to new keys +++
+    try {
+      // Check for old tournament list key
+      const oldTournamentsJson = localStorage.getItem('soccerTournamentsList');
+      if (oldTournamentsJson) {
+        console.log('Found old tournament data under soccerTournamentsList - migrating...');
+        const oldTournaments = JSON.parse(oldTournamentsJson);
+        if (Array.isArray(oldTournaments) && oldTournaments.length > 0) {
+          localStorage.setItem(TOURNAMENTS_LIST_KEY, oldTournamentsJson);
+          console.log(`Migrated ${oldTournaments.length} tournaments to ${TOURNAMENTS_LIST_KEY}`);
+          // Optionally remove old data after migration
+          // localStorage.removeItem('soccerTournamentsList');
+        }
+      }
+
+      // Check for old season list key
+      const oldSeasonsJson = localStorage.getItem('soccerSeasonsList');
+      if (oldSeasonsJson) {
+        console.log('Found old season data under soccerSeasonsList - migrating...');
+        const oldSeasons = JSON.parse(oldSeasonsJson);
+        if (Array.isArray(oldSeasons) && oldSeasons.length > 0) {
+          localStorage.setItem(SEASONS_LIST_KEY, oldSeasonsJson);
+          console.log(`Migrated ${oldSeasons.length} seasons to ${SEASONS_LIST_KEY}`);
+          // Optionally remove old data after migration
+          // localStorage.removeItem('soccerSeasonsList');
+        }
+      }
+    } catch (error) {
+      console.error('Error during data migration:', error);
+    }
+    // +++ END MIGRATION +++
+
     // +++ NEW: Load Master Roster +++
     let loadedMasterRoster: Player[] = [];
     try {
