@@ -1,6 +1,6 @@
 {
-    "name": "Coaching Companion",
-    "short_name": "Coaching Companion",
+    "name": "[IMP] Coaching Companion",
+    "short_name": "[IMP] CoachComp",
     "description": "Soccer Tactics and Timer App for Coaches",
     "start_url": "/",
     "display": "fullscreen",
