@@ -1,4 +1,4 @@
-import { AppState, SavedGamesCollection, Season, Tournament, Player } from '@/app/page'; // Adjust path if needed
+import { SavedGamesCollection, Season, Tournament, Player } from '@/app/page'; // Remove AppState as it's not used
 // Import the constants from the central file
 import { 
   SAVED_GAMES_KEY, 
@@ -48,17 +48,13 @@ export const exportFullBackup = () => {
       if (itemJson) {
         try {
           // Assign parsed data directly to the correct key in backupData.localStorage
-          // Ensure the key type is correctly inferred or cast if necessary
-          // The keys are now guaranteed to be one of the imported constants
           backupData.localStorage[key as keyof FullBackupData['localStorage']] = JSON.parse(itemJson);
           console.log(`Backed up data for key: ${key}`);
         } catch (error) {
           console.error(`Error parsing localStorage item for key ${key}:`, error);
-          // Store null or an error marker if parsing fails? For now, just skip.
         }
       } else {
         console.log(`No data found for key: ${key}, skipping.`);
-        // Ensure the key exists with null value if needed, or simply omit it
         backupData.localStorage[key as keyof FullBackupData['localStorage']] = null;
       }
     });
@@ -119,21 +115,17 @@ export const importFullBackup = (jsonContent: string): boolean => {
     // --- Overwrite localStorage ---
     const keysToRestore = Object.keys(backupData.localStorage) as Array<keyof FullBackupData['localStorage']>;
 
-    // Add explicit type for key
     keysToRestore.forEach((key: keyof FullBackupData['localStorage']) => {
       const dataToRestore = backupData.localStorage[key];
       if (dataToRestore !== undefined && dataToRestore !== null) {
         try {
-          // Use the imported constant keys for restoring
           localStorage.setItem(key, JSON.stringify(dataToRestore));
           console.log(`Restored data for key: ${key}`);
-        } catch (innerError) { // Use different variable name for inner catch
+        } catch (innerError) { 
           console.error(`Error stringifying or setting localStorage item for key ${key}:`, innerError);
-          // Optionally stop the process or collect errors
           throw new Error(`Failed to restore data for key ${key}. Aborting import.`);
         }
       } else if (localStorage.getItem(key)) {
-        // If the backup explicitly had null/undefined for a key that exists locally, remove it
         localStorage.removeItem(key);
         console.log(`Removed existing data for key: ${key} as it was not present in the backup.`);
       }
