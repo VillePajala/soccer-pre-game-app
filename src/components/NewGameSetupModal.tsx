@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Season, Tournament } from '../app/page';
-import { SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY } from '@/config/constants';
+import { SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY, LAST_HOME_TEAM_NAME_KEY } from '@/config/constants';
 import { HiPlusCircle } from 'react-icons/hi';
 
 interface NewGameSetupModalProps {
@@ -11,6 +11,7 @@ interface NewGameSetupModalProps {
   initialPlayerSelection: string[] | null;
   onStart: (
     initialSelectedPlayerIds: string[],
+    homeTeamName: string,
     opponentName: string, 
     gameDate: string, 
     gameLocation: string, 
@@ -31,11 +32,13 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   onCancel,
 }) => {
   const { t } = useTranslation();
+  const [homeTeamName, setHomeTeamName] = useState('');
   const [opponentName, setOpponentName] = useState('');
   const [gameDate, setGameDate] = useState(new Date().toISOString().split('T')[0]);
   const [gameLocation, setGameLocation] = useState('');
   const [gameHour, setGameHour] = useState<string>('');
   const [gameMinute, setGameMinute] = useState<string>('');
+  const homeTeamInputRef = useRef<HTMLInputElement>(null);
   const opponentInputRef = useRef<HTMLInputElement>(null);
 
   // State for seasons and tournaments
@@ -61,6 +64,11 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
+      // --- Load last used home team name ---
+      const lastUsedHomeTeam = localStorage.getItem(LAST_HOME_TEAM_NAME_KEY);
+      setHomeTeamName(lastUsedHomeTeam || ''); // Set from storage or default to empty
+      // --- End Load ---
+
       // Reset form fields
       setOpponentName('');
       setGameDate(new Date().toISOString().split('T')[0]);
@@ -95,9 +103,9 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
         setTournaments([]);
       }
 
-      // Focus opponent name input
+      // Focus home team name input instead of opponent
       setTimeout(() => {
-        opponentInputRef.current?.focus();
+        homeTeamInputRef.current?.focus();
       }, 100);
     }
   }, [isOpen]);
@@ -245,7 +253,16 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
 
 
   const handleStartClick = () => {
+    const trimmedHomeTeamName = homeTeamName.trim();
     const trimmedOpponentName = opponentName.trim();
+
+    // Validate home team name
+    if (!trimmedHomeTeamName) {
+      alert(t('newGameSetupModal.homeTeamRequiredAlert', 'Please enter a home team name.'));
+      homeTeamInputRef.current?.focus();
+      return;
+    }
+
     if (!trimmedOpponentName) {
       alert(t('newGameSetupModal.opponentRequiredAlert', 'Please enter an opponent name.'));
       opponentInputRef.current?.focus();
@@ -274,6 +291,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
     }
     
     console.log("Starting game with:", {
+        homeTeam: trimmedHomeTeamName,
         opponent: trimmedOpponentName,
         date: gameDate,
         location: gameLocation,
@@ -288,6 +306,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
     // Call the onStart prop with ALL collected data
     onStart(
       initialPlayerSelection || [], // Pass empty array if null
+      trimmedHomeTeamName,
       trimmedOpponentName,
       gameDate,
       gameLocation,
@@ -298,6 +317,15 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
       periodDurationMinutes,    // Pass the parsed and validated number duration
       localHomeOrAway         // <<< Step 4a: Pass value
     );
+
+    // <<< --- Save last used home team name on success ---
+    try {
+        localStorage.setItem(LAST_HOME_TEAM_NAME_KEY, trimmedHomeTeamName);
+    } catch (error) {
+        console.error("Failed to save last home team name:", error); 
+        // Non-critical error, don't need to alert user
+    }
+    // <<< --- End Save ---
   };
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
@@ -358,6 +386,23 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
         </h2>
         
         <div className="flex-grow overflow-y-auto pr-3 -mr-3 scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-700/50">
+          <div className="mb-4">
+            <label htmlFor="home-team-name" className="block text-sm font-medium text-slate-300 mb-1">
+              {t('newGameSetupModal.homeTeamLabel', 'Home Team Name: *')}
+            </label>
+            <input
+              ref={homeTeamInputRef}
+              type="text"
+              id="home-team-name"
+              value={homeTeamName}
+              onChange={(e) => setHomeTeamName(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={t('newGameSetupModal.homeTeamPlaceholder', 'Enter home team name') ?? ''}
+              className="w-full px-3 py-1.5 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              required
+            />
+          </div>
+
           <div className="mb-4">
             <label htmlFor="opponentNameInput" className="block text-sm font-medium text-slate-300 mb-1">
               {t('newGameSetupModal.opponentLabel')} *

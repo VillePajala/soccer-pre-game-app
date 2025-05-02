@@ -112,6 +112,11 @@ fiTranslations.newGameSetupModal.cancelAddTitle = "Peruuta Lisäys";
 fiTranslations.newGameSetupModal.periodsLabel = "Jaksot";
 fiTranslations.newGameSetupModal.durationLabel = "Kesto (min)";
 
+// <<< Add translations for Home Team Name field >>>
+fiTranslations.newGameSetupModal.homeTeamLabel = "Oman joukkueen nimi: *";
+fiTranslations.newGameSetupModal.homeTeamPlaceholder = "Syötä oman joukkueen nimi";
+fiTranslations.newGameSetupModal.homeTeamRequiredAlert = "Syötä oman joukkueen nimi.";
+
 // Add game stats modal translations
 if (!fiTranslations.gameStatsModal) {
   fiTranslations.gameStatsModal = {};

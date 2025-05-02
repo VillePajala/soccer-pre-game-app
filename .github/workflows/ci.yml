@@ -1,0 +1,47 @@
+name: CI Checks and Tests
+
+on:
+  # Run on pushes to the master branch (e.g., after a merge)
+  push:
+    branches: [ master ]
+  # Run on pull requests targeting the master branch
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  test:
+    name: Run E2E Tests
+    runs-on: ubuntu-latest # Use a standard Linux environment
+    timeout-minutes: 15 # Add a timeout for the job
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20' # Use Node.js version 20.x
+        cache: 'npm' # Enable caching for npm dependencies
+
+    - name: Install dependencies
+      run: npm ci # Use 'ci' for cleaner installs in CI environments
+
+    - name: Install Playwright Browsers and OS dependencies
+      run: npx playwright install --with-deps # Installs browsers and needed libraries
+
+    - name: Run Playwright tests
+      run: npm run test:e2e
+
+    # Optional: Upload test results artifact (useful for debugging failures)
+    - name: Upload Playwright report
+      if: always() # Run this step even if tests fail
+      uses: actions/upload-artifact@v4
+      with:
+        name: playwright-report
+        path: playwright-report/
+        retention-days: 7 # Keep reports for 7 days
+
+    # Optional: Add build step to catch build errors
+    # - name: Run Build Check
+    #   run: npm run build 
