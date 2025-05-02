@@ -17,6 +17,8 @@ import {
 // REMOVE unused Fa icons and useGameState hook
 // import { FaTimes, FaUpload, FaDownload, FaTrash, FaExclamationTriangle, FaSearch } from 'react-icons/fa';
 // import { useGameState } from '@/hooks/useGameState';
+// Import the new backup functions
+import { exportFullBackup, importFullBackup } from '@/utils/fullBackup'; 
 
 interface LoadGameModalProps {
   isOpen: boolean;
@@ -55,6 +57,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
   const [filterId, setFilterId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const restoreFileInputRef = useRef<HTMLInputElement>(null); // Ref for the restore input
 
   // State for seasons and tournaments
   const [seasons, setSeasons] = useState<Season[]>([]);
@@ -243,6 +246,43 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
     event.target.value = ''; // Use empty string instead of null
   };
   // --- End Step 1 Handlers ---
+
+  // --- Handler for Full Restore ---
+  const handleRestoreBackupClick = () => {
+    restoreFileInputRef.current?.click();
+  };
+
+  const handleRestoreFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const jsonContent = e.target?.result as string;
+        if (jsonContent) {
+          // Call the imported function
+          const success = importFullBackup(jsonContent);
+          if (success) {
+            // Optionally close modal immediately, though reload handles it
+            // onClose(); 
+          }
+        } else {
+          alert(t('loadGameModal.importReadError', 'Error reading file content.'));
+        }
+      } catch (error) { 
+        console.error('Error processing restore file:', error);
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        alert(`${t('loadGameModal.importProcessError', 'Error processing file content.')}: ${errorMsg}`);
+      }
+    };
+    reader.onerror = () => {
+      alert(t('loadGameModal.importReadError', 'Error reading file content.'));
+    };
+    reader.readAsText(file);
+    event.target.value = ''; // Clear input
+  };
+  // --- End Full Restore Handler ---
 
   if (!isOpen) return null;
 
@@ -498,8 +538,43 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
           )}
         </div>
 
+        {/* --- NEW: Application Backup & Restore Section --- */}
+        <div className="mt-3 pt-3 border-t border-slate-600/80 flex-shrink-0 px-2 bg-slate-700/40 rounded-lg">
+          <div className="flex gap-3 justify-center">
+            {/* Backup Button - Reduced padding */}
+            <button
+              onClick={exportFullBackup} // Call the imported function directly
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-md text-xs font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-green-500 transition-colors"
+              title={t('loadGameModal.backupTooltip', 'Create a full backup file') ?? 'Create a full backup file'}
+            >
+              <HiOutlineDocumentArrowDown className="w-4 h-4" />
+              {t('loadGameModal.backupButton', 'Backup All Data')}
+            </button>
+
+            {/* Hidden File Input for Restore */}
+            <input
+              type="file"
+              ref={restoreFileInputRef}
+              onChange={handleRestoreFileSelected}
+              accept=".json"
+              style={{ display: 'none' }}
+              id="restore-backup-input"
+            />
+            {/* Restore Button - Reduced padding */}
+            <button
+              onClick={handleRestoreBackupClick}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-md text-xs font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-red-500 transition-colors"
+              title={t('loadGameModal.restoreTooltip', 'Restore data from a backup file') ?? 'Restore data from a backup file'}
+            >
+              <HiOutlineDocumentArrowUp className="w-4 h-4" />
+              {t('loadGameModal.restoreButton', 'Restore from Backup')}
+            </button>
+          </div>
+        </div>
+        {/* --- END: Application Backup & Restore Section --- */}
+
         {/* Close Button */}
-        <div className="mt-auto pt-4 flex justify-end flex-shrink-0 border-t border-slate-700/50">
+        <div className="mt-3 pt-4 flex justify-end flex-shrink-0 border-t border-slate-700/50">
             <button
               onClick={onClose}
               className="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-slate-100 rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-indigo-500"
