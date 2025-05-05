@@ -17,6 +17,15 @@ const localStorageMock = (() => {
     removeItem: jest.fn((key: string) => { delete store[key]; }),
     clear: jest.fn(() => { store = {}; }),
     getAll: jest.fn(() => store), // Expose method to check the whole store
+    // Add mockImplementation to clear mocks
+    mockClear: jest.fn(() => { 
+      store = {}; // Ensure store is cleared
+      localStorageMock.getItem.mockClear();
+      localStorageMock.setItem.mockClear();
+      localStorageMock.removeItem.mockClear();
+      localStorageMock.clear.mockClear(); 
+      localStorageMock.getAll.mockClear();
+    }),
     // Fix any type - use unknown for generic error
     throwErrorOnSet: jest.fn((key: string, error: unknown = new Error('Storage error')) => {
       localStorageMock.setItem.mockImplementationOnce((k, v) => {
@@ -102,14 +111,17 @@ type RosterData = Array<RosterPlayer>;
 
 describe('importFullBackup', () => {
   beforeEach(() => {
-    localStorageMock.clear.mockClear();
-    localStorageMock.setItem.mockClear();
-    localStorageMock.clear();
-    (window.confirm as jest.Mock).mockClear();
-    (window.location.reload as jest.Mock).mockClear();
+    // Call the mockClear method we added to reset everything
+    localStorageMock.mockClear(); 
+    // Ensure window object uses the fresh mock (might be redundant but safe)
+    Object.defineProperty(window, 'localStorage', { value: localStorageMock, writable: true }); 
+
+    // Reset other mocks used in this suite
+    (window.confirm as jest.Mock)?.mockClear();
+    (window.location.reload as jest.Mock)?.mockClear();
     setTimeoutSpy.mockClear();
-    clearTimeoutSpy.mockClear();
-    jest.useRealTimers(); // Ensure real timers are used unless explicitly faked
+    clearTimeoutSpy.mockClear(); // Ensure clearTimeout is also cleared
+    jest.useRealTimers(); // Default to real timers
   });
 
   // Test Case 1: Successfully restores valid data
@@ -173,30 +185,34 @@ describe('importFullBackup', () => {
     alertMock.mockRestore();
   });
 
-  // Test Case 2: User cancels the confirmation prompt
-  it('should return false and not modify localStorage if user cancels confirmation', () => {
-     // Arrange: Define valid backup data (content doesn't strictly matter here)
-     const validBackupData = { meta: { schema: 1 }, localStorage: { [SAVED_GAMES_KEY]: { game1: {} } } };
-     const backupJson = JSON.stringify(validBackupData);
-     
-     // Pre-populate with initial data
-     const initialSavedGames = { gameX: { id: 'gameX' } };
-     localStorageMock.setItem(SAVED_GAMES_KEY, JSON.stringify(initialSavedGames));
+  // Test Case 2: User cancels the import confirmation
+  it('should return false and not modify localStorage when user cancels import', () => {
+    // Arrange
+    const validBackupData = { meta: { schema: 1 }, localStorage: { [SAVED_GAMES_KEY]: { game1: {} } } };
+    const backupJson = JSON.stringify(validBackupData);
+    const initialSavedGames = { gameX: { id: 'gameX' } };
+    localStorageMock.setItem(SAVED_GAMES_KEY, JSON.stringify(initialSavedGames)); // Set initial data
+    const initialStoreState = { ...localStorageMock.getAll() }; // Capture initial state
 
-     // Mock window.confirm to return false (user cancels)
-     (window.confirm as jest.Mock).mockReturnValue(false);
-     const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
+    (window.confirm as jest.Mock).mockReturnValue(false); // User cancels
+    const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
 
-     // Act
-     const result = importFullBackup(backupJson);
-     
-     // Assert
-     expect(result).toBe(false); // Function should indicate cancellation
-     expect(window.confirm).toHaveBeenCalledTimes(1);
-     expect(localStorageMock.getAll()).toEqual(initialSavedGames); // LocalStorage should be unchanged
-     expect(window.location.reload).not.toHaveBeenCalled(); // Reload should not be called
-     expect(alertMock).not.toHaveBeenCalled();
-     alertMock.mockRestore();
+    // Act
+    const result = importFullBackup(backupJson);
+
+    // Assert
+    expect(result).toBe(false);
+    expect(window.confirm).toHaveBeenCalledTimes(1);
+    // Assert that no modification methods were called after cancellation
+    expect(localStorageMock.setItem).toHaveBeenCalledTimes(1); // Only the initial setup call
+    expect(localStorageMock.removeItem).not.toHaveBeenCalled();
+    expect(localStorageMock.clear).not.toHaveBeenCalled();
+    // Optionally, double-check the state if the above passes
+    // expect(localStorageMock.getAll()).toEqual(initialStoreState);
+
+    expect(window.location.reload).not.toHaveBeenCalled();
+    expect(alertMock).not.toHaveBeenCalled();
+    alertMock.mockRestore();
   });
 
   // Test Case 3: Invalid JSON input
@@ -331,14 +347,15 @@ describe('importFullBackup', () => {
 
   // Test Case 8: Partial backup data (some keys missing but valid format)
   it('should successfully import partial backup data with only some keys present', () => {
+    jest.useFakeTimers(); // Use FAKE timers for this test
     // Arrange: Define partial backup data with valid structure but only some keys
     const partialBackupData = {
       meta: { schema: 1, exportedAt: new Date().toISOString() },
       localStorage: {
-        // Only include games and settings, omit roster, seasons, and tournaments
-        [SAVED_GAMES_KEY]: { game1: { id: 'game1', teamName: 'Partial Test' } },
-        [APP_SETTINGS_KEY]: { currentGameId: 'game1' }
-        // Intentionally omitting: MASTER_ROSTER_KEY, SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY
+         // Only include games and settings, omit roster, seasons, and tournaments
+         [SAVED_GAMES_KEY]: { game1: { id: 'game1', teamName: 'Partial Test' } },
+         [APP_SETTINGS_KEY]: { currentGameId: 'game1' }
+         // Intentionally omitting: MASTER_ROSTER_KEY, SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY
       }
     };
     const backupJson = JSON.stringify(partialBackupData);
@@ -370,11 +387,13 @@ describe('importFullBackup', () => {
     // Verify alert and reload were called
     expect(alertMock).toHaveBeenCalledWith('Full backup restored successfully! The application will now reload.');
     
-    // Verify reload was scheduled
-    expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
+    // Advance timers to see if reload would have been called
+    jest.advanceTimersByTime(500);
+    expect(window.location.reload).toHaveBeenCalledTimes(1); // Still check reload
     
-    // Restore mocks
+    // Restore mocks and timers
     alertMock.mockRestore();
+    jest.useRealTimers(); // Restore real timers
   });
 
   // Add more tests for edge cases:

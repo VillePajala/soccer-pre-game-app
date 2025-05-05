@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, within, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import LoadGameModal from './LoadGameModal';
 import { SavedGamesCollection, Season, Tournament, AppState } from '@/app/page';
@@ -249,12 +249,12 @@ describe('LoadGameModal Integration', () => {
     const optionsButton = within(eaglesGameContainer).getByTitle('Options');
     fireEvent.click(optionsButton);
 
-    // Find and click the delete button (might appear globally or within a menu)
+    // Find and click the delete button
     const deleteButton = await screen.findByRole('button', { name: /Delete/i });
     fireEvent.click(deleteButton);
 
     // Assertions
-    expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining('Eagles vs Hawks')); // Keep confirm check
+    expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining('Eagles vs Hawks'));
     expect(mockHandlers.onDelete).toHaveBeenCalledWith('game_1659223456_def');
   });
 

@@ -556,7 +556,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                               </button>
                               <div className="my-1 h-px bg-slate-600"></div> {/* Separator */}
                               <button 
-                                onClick={(e) => { e.stopPropagation(); handleDeleteClick(gameId, displayHomeTeamName + ' vs ' + displayAwayTeamName); }}
+                                onClick={(e) => { e.stopPropagation(); handleDeleteClick(gameId, (gameData.teamName || 'Team') + ' vs ' + (gameData.opponentName || 'Opponent')); }}
                                 className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/20 flex items-center gap-2"
                               >
                                 <HiOutlineTrash className="w-4 h-4"/> {t('loadGameModal.delete', 'Delete Game')}
