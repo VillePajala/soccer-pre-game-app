@@ -1,66 +1,80 @@
 import { AppState } from '@/app/page';
 
 // Define placeholder functions for the logic being tested.
-// Replace these with actual imports when the implementation exists.
-const validateGameState = (state: any): boolean => {
-  // Basic placeholder: Check for essential properties
-  return typeof state === 'object' && state !== null &&
-         typeof state.teamName === 'string' &&
-         typeof state.opponentName === 'string' &&
-         typeof state.gameDate === 'string' &&
-         Array.isArray(state.playersOnField) &&
-         Array.isArray(state.availablePlayers) &&
-         typeof state.homeScore === 'number' &&
-         typeof state.awayScore === 'number' &&
-         (state.homeOrAway === 'home' || state.homeOrAway === 'away') &&
-         (state.numberOfPeriods === 1 || state.numberOfPeriods === 2) &&
-         typeof state.periodDurationMinutes === 'number' && state.periodDurationMinutes > 0 &&
-         typeof state.currentPeriod === 'number' &&
-         ['notStarted', 'inProgress', 'periodEnd', 'gameEnd'].includes(state.gameStatus) &&
-         typeof state.showPlayerNames === 'boolean' &&
-         Array.isArray(state.selectedPlayerIds) &&
-         Array.isArray(state.opponents) &&
-         Array.isArray(state.drawings) &&
-         Array.isArray(state.gameEvents);
+// Use unknown for state parameter and perform type checking inside if needed
+const validateGameState = (state: unknown): boolean => {
+  // Type guard to ensure state is a usable object
+  if (typeof state !== 'object' || state === null) return false;
+  
+  // Cast to Partial<AppState> for easier property access, assuming validate
+  // handles potentially missing properties gracefully.
+  const gameState = state as Partial<AppState>; 
+  
+  // Basic placeholder validation logic (copied from before)
+  return typeof gameState.teamName === 'string' &&
+         typeof gameState.opponentName === 'string' &&
+         typeof gameState.gameDate === 'string' &&
+         Array.isArray(gameState.playersOnField) &&
+         Array.isArray(gameState.availablePlayers) &&
+         typeof gameState.homeScore === 'number' &&
+         typeof gameState.awayScore === 'number' &&
+         (gameState.homeOrAway === 'home' || gameState.homeOrAway === 'away') &&
+         (gameState.numberOfPeriods === 1 || gameState.numberOfPeriods === 2) &&
+         typeof gameState.periodDurationMinutes === 'number' && gameState.periodDurationMinutes > 0 &&
+         typeof gameState.currentPeriod === 'number' &&
+         ['notStarted', 'inProgress', 'periodEnd', 'gameEnd'].includes(gameState.gameStatus as string) && // Cast gameStatus for includes check
+         typeof gameState.showPlayerNames === 'boolean' &&
+         Array.isArray(gameState.selectedPlayerIds) &&
+         Array.isArray(gameState.opponents) &&
+         Array.isArray(gameState.drawings) &&
+         Array.isArray(gameState.gameEvents);
 };
 
 const CURRENT_SCHEMA_VERSION = 1;
 
-const migrateGameState = (state: any): GameState => {
-  // Basic placeholder migration: ensure required fields and set schema version
+// Use unknown for state parameter
+const migrateGameState = (state: unknown): GameState => {
+  // Type guard
+  if (typeof state !== 'object' || state === null) {
+      // Handle invalid input, maybe return a default state or throw error
+      // For placeholder, let's return a default-like structure
+      console.error("Invalid state passed to migrateGameState");
+      state = {}; // Reset to empty object to allow defaults below
+  }
+
+  const currentState = state as Partial<GameState>; // Cast for property access
+
+  // Basic placeholder migration (copied from before)
   const newState: GameState = {
-    // Defaults for all fields in AppState
-    teamName: state.teamName ?? "Default Team",
-    opponentName: state.opponentName ?? "Default Opponent",
-    gameDate: state.gameDate ?? new Date().toISOString().split('T')[0],
-    homeOrAway: state.homeOrAway ?? "home",
-    homeScore: state.homeScore ?? 0,
-    awayScore: state.awayScore ?? 0,
-    numberOfPeriods: state.numberOfPeriods ?? 2,
-    periodDurationMinutes: state.periodDurationMinutes ?? 10,
-    currentPeriod: state.currentPeriod ?? 1,
-    gameStatus: state.gameStatus ?? "notStarted",
-    playersOnField: Array.isArray(state.playersOnField) ? state.playersOnField : [],
-    availablePlayers: Array.isArray(state.availablePlayers) ? state.availablePlayers : [],
-    selectedPlayerIds: Array.isArray(state.selectedPlayerIds) ? state.selectedPlayerIds : [],
-    opponents: Array.isArray(state.opponents) ? state.opponents : [],
-    drawings: Array.isArray(state.drawings) ? state.drawings : [],
-    gameEvents: Array.isArray(state.gameEvents) ? state.gameEvents : [],
-    showPlayerNames: state.showPlayerNames ?? true,
-    seasonId: state.seasonId ?? "",
-    tournamentId: state.tournamentId ?? "",
-    gameNotes: state.gameNotes ?? "",
-    subIntervalMinutes: state.subIntervalMinutes ?? 5,
-    completedIntervalDurations: Array.isArray(state.completedIntervalDurations) ? state.completedIntervalDurations : [],
-    lastSubConfirmationTimeSeconds: state.lastSubConfirmationTimeSeconds ?? 0,
-    gameLocation: state.gameLocation ?? "",
-    gameTime: state.gameTime ?? "",
-    // Spread the original state to keep other fields
-    ...state, 
-    
-    // Ensure schemaVersion is always set correctly AFTER spreading
-    schemaVersion: CURRENT_SCHEMA_VERSION, 
+    teamName: currentState.teamName ?? "Default Team",
+    opponentName: currentState.opponentName ?? "Default Opponent",
+    gameDate: currentState.gameDate ?? new Date().toISOString().split('T')[0],
+    homeOrAway: currentState.homeOrAway ?? "home",
+    homeScore: currentState.homeScore ?? 0,
+    awayScore: currentState.awayScore ?? 0,
+    numberOfPeriods: currentState.numberOfPeriods ?? 2,
+    periodDurationMinutes: currentState.periodDurationMinutes ?? 10,
+    currentPeriod: currentState.currentPeriod ?? 1,
+    gameStatus: currentState.gameStatus ?? "notStarted",
+    playersOnField: Array.isArray(currentState.playersOnField) ? currentState.playersOnField : [],
+    availablePlayers: Array.isArray(currentState.availablePlayers) ? currentState.availablePlayers : [],
+    selectedPlayerIds: Array.isArray(currentState.selectedPlayerIds) ? currentState.selectedPlayerIds : [],
+    opponents: Array.isArray(currentState.opponents) ? currentState.opponents : [],
+    drawings: Array.isArray(currentState.drawings) ? currentState.drawings : [],
+    gameEvents: Array.isArray(currentState.gameEvents) ? currentState.gameEvents : [],
+    showPlayerNames: currentState.showPlayerNames ?? true,
+    seasonId: currentState.seasonId ?? "",
+    tournamentId: currentState.tournamentId ?? "",
+    gameNotes: currentState.gameNotes ?? "",
+    subIntervalMinutes: currentState.subIntervalMinutes ?? 5,
+    completedIntervalDurations: Array.isArray(currentState.completedIntervalDurations) ? currentState.completedIntervalDurations : [],
+    lastSubConfirmationTimeSeconds: currentState.lastSubConfirmationTimeSeconds ?? 0,
+    gameLocation: currentState.gameLocation ?? "",
+    gameTime: currentState.gameTime ?? "",
+    ...currentState, // Spread original state
+    schemaVersion: CURRENT_SCHEMA_VERSION, // Ensure current schema version
   };
+
   // Ensure array fields are definitely arrays after spread
   newState.playersOnField = Array.isArray(newState.playersOnField) ? newState.playersOnField : [];
   newState.availablePlayers = Array.isArray(newState.availablePlayers) ? newState.availablePlayers : [];
@@ -124,7 +138,7 @@ describe('validateGameState', () => {
 
   it('should return false if required string fields are missing or not strings', () => {
     expect(validateGameState(createValidGameState({ teamName: undefined }))).toBe(false);
-    // Pass null directly, no need to cast to Partial if createValidGameState handles it
+    // Cast invalid values to any within the test data object
     expect(validateGameState(createValidGameState({ opponentName: null as any }))).toBe(false);
     expect(validateGameState(createValidGameState({ gameDate: 123 as any }))).toBe(false);
   });
@@ -135,12 +149,14 @@ describe('validateGameState', () => {
   });
 
   it('should return false if enum fields have invalid values', () => {
+      // Cast invalid values to any within the test data object
       expect(validateGameState(createValidGameState({ homeOrAway: 'center' as any }))).toBe(false);
       expect(validateGameState(createValidGameState({ gameStatus: 'paused' as any }))).toBe(false);
       expect(validateGameState(createValidGameState({ numberOfPeriods: 3 as any }))).toBe(false);
   });
 
   it('should return false if required array fields are missing or not arrays', () => {
+    // Cast invalid values to any within the test data object
     expect(validateGameState(createValidGameState({ playersOnField: null as any }))).toBe(false);
     expect(validateGameState(createValidGameState({ availablePlayers: "player" as any }))).toBe(false);
   });
@@ -181,6 +197,8 @@ describe('migrateGameState', () => {
   });
 
   it('should add default values for newly added fields during migration from undefined version', () => {
+    // Define old state as Partial, avoid `as any` for player objects if possible
+    // If Player type is complex, using `any` within the test data might be acceptable
     const oldState: Partial<GameState> = {
       teamName: "Old Team",
       opponentName: "Old Opp",
@@ -192,8 +210,8 @@ describe('migrateGameState', () => {
       periodDurationMinutes: 8,
       currentPeriod: 2,
       gameStatus: "periodEnd",
-      playersOnField: [{ id: 'p1', name: 'Old Player' } as any],
-      availablePlayers: [{ id: 'p1', name: 'Old Player' } as any, { id: 'p2', name: 'Old Bench'} as any],
+      playersOnField: [{ id: 'p1', name: 'Old Player' }], // Keep simple object for test
+      availablePlayers: [{ id: 'p1', name: 'Old Player' }, { id: 'p2', name: 'Old Bench'}],
       selectedPlayerIds: ['p1'],
       opponents: [],
       drawings: [],
@@ -201,7 +219,8 @@ describe('migrateGameState', () => {
       showPlayerNames: false,
     };
 
-    const migratedState = migrateGameState(oldState as GameState);
+    // Cast only when calling the function if necessary
+    const migratedState = migrateGameState(oldState as GameState); 
 
     expect(migratedState.teamName).toBe("Old Team");
     expect(migratedState.showPlayerNames).toBe(false);

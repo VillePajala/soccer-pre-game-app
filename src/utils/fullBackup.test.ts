@@ -58,28 +58,13 @@ window.URL.revokeObjectURL = jest.fn((url: string) => {
 const mockLink = {
   href: '',
   download: '',
-  // Fix any type - use () => void for click
   click: jest.fn() as jest.Mock<() => void>,
-  // Fix any type - use (type: string, listener: EventListenerOrEventListenerObject | null, options?: boolean | AddEventListenerOptions | undefined) => void
-  // For simplicity in mock, can use jest.Mock<any>
-  addEventListener: jest.fn() as jest.Mock<any>,
-  // Fix any type - use (type: string, listener: EventListenerOrEventListenerObject | null, options?: boolean | EventListenerOptions | undefined) => void
-  // For simplicity in mock, can use jest.Mock<any>
-  removeEventListener: jest.fn() as jest.Mock<any>,
-  // Fix any type - use () => boolean
-  dispatchEvent: jest.fn() as jest.Mock<() => boolean>,
-  style: {} as CSSStyleDeclaration, // Add style property
+  // Use a more general mock signature for event listeners
+  addEventListener: jest.fn() as jest.Mock<(...args: any[]) => any>,
+  removeEventListener: jest.fn() as jest.Mock<(...args: any[]) => any>,
+  dispatchEvent: jest.fn() as jest.Mock<(...args: any[]) => boolean>,
+  style: {} as CSSStyleDeclaration,
 };
-
-// Fix any type - use specific return type for createElement
-const createElementSpy = jest.spyOn(document, 'createElement').mockImplementation((tagName: string): HTMLElement => {
-  if (tagName === 'a') {
-    return mockLink as unknown as HTMLAnchorElement; // Return the mock link
-  }
-  // Fallback for other elements if needed, though test focuses on 'a'
-  return document.createElement(tagName);
-});
-
 
 // Mock document.body.appendChild/removeChild
 document.body.appendChild = jest.fn();
@@ -117,12 +102,9 @@ type TournamentData = Array<{id?: string, name?: string, [key: string]: any}>;
 type RosterData = Array<{id: string, name?: string, [key: string]: any}>;
 
 describe('importFullBackup', () => {
-  let alertSpy: jest.SpyInstance;
-
   beforeEach(() => {
     localStorageMock.clear.mockClear();
     localStorageMock.setItem.mockClear();
-    alertSpy = jest.spyOn(window, 'alert');
     localStorageMock.clear();
     (window.confirm as jest.Mock).mockClear();
     (window.location.reload as jest.Mock).mockClear();
@@ -156,7 +138,7 @@ describe('importFullBackup', () => {
     // Mock window.confirm to return true (user confirms)
     (window.confirm as jest.Mock).mockReturnValue(true);
     
-    // Mock alert
+    // Mock alert directly for this test if needed, or rely on the global mock
     const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
 
     // Act: Call the import function

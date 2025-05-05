@@ -40,14 +40,17 @@ jest.mock('react-i18next', () => ({
       'common.options': 'Options',
     };
     return {
-      t: (key: string, params?: Record<string, any>): string => {
+      t: (key: string, params?: Record<string, unknown>): string => {
         let translation = translations[key as keyof typeof translations] || key;
         if (params && translation) {
           Object.keys(params).forEach((paramKey) => {
-            translation = translation.replace(`{{${paramKey}}}`, params[paramKey]);
-            if (typeof params[paramKey] === 'object' && params[paramKey] !== null) {
-               Object.keys(params[paramKey]).forEach((nestedKey) => {
-                 translation = translation.replace(`{{${nestedKey}}}`, params[paramKey][nestedKey]);
+            translation = translation.replace(`{{${paramKey}}}`, String(params[paramKey]));
+            
+            const paramValue = params[paramKey];
+            if (typeof paramValue === 'object' && paramValue !== null) {
+               Object.keys(paramValue).forEach((nestedKey) => {
+                 const nestedValue = (paramValue as Record<string, unknown>)[nestedKey];
+                 translation = translation.replace(`{{${nestedKey}}}`, String(nestedValue));
                });
             }
           });

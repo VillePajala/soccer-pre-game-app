@@ -2541,16 +2541,14 @@ export default function Home() {
 
   }, [
     // Keep necessary dependencies
-    teamName,
     savedGames,
-    availablePlayers, // Still need availablePlayers to derive selectedPlayerIds
-    // initialState.subIntervalMinutes, // Removing this dependency
+    availablePlayers, 
     setSavedGames,
     setHistory,
     setHistoryIndex,
     setCurrentGameId,
     setIsNewGameSetupModalOpen,
-    setHighlightRosterButton, // <<< ADD setHighlightRosterButton dependency
+    setHighlightRosterButton, 
   ]);
 
   // ** REVERT handleCancelNewGameSetup TO ORIGINAL **

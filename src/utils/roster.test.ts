@@ -103,10 +103,12 @@ function setGoalie(playerId: string, isGoalie: boolean = true): Player {
   
   // Remove goalie status from current goalie (if exists)
   if (currentGoalieIndex !== -1) {
-    updatedRoster[currentGoalieIndex] = { 
-      ...updatedRoster[currentGoalieIndex], 
+    const rosterWithoutOldGoalie = [...updatedRoster];
+    rosterWithoutOldGoalie[currentGoalieIndex] = { 
+      ...rosterWithoutOldGoalie[currentGoalieIndex], 
       isGoalie: false 
     };
+    updatedRoster = rosterWithoutOldGoalie;
   }
   
   // Set goalie status for target player
@@ -115,36 +117,39 @@ function setGoalie(playerId: string, isGoalie: boolean = true): Player {
     throw new Error(`Player with ID ${playerId} not found`);
   }
   
-  updatedRoster[playerIndex] = { 
-    ...updatedRoster[playerIndex], 
+  const finalRoster = [...updatedRoster];
+  finalRoster[playerIndex] = { 
+    ...finalRoster[playerIndex], 
     isGoalie 
   };
   
   // Save updated roster
-  saveRoster(updatedRoster);
+  saveRoster(finalRoster);
   
-  return updatedRoster[playerIndex];
+  return finalRoster[playerIndex];
 }
 
-function validatePlayer(player: any): { isValid: boolean; errors: string[] } {
+function validatePlayer(player: unknown): { isValid: boolean; errors: string[] } {
   const errors: string[] = [];
 
-  // Check if player is an object
+  // Type guard for player object
   if (typeof player !== 'object' || player === null) {
     return { isValid: false, errors: ['Player must be an object'] };
   }
+  // Cast to Partial<Player> after type guard for property access
+  const playerObj = player as Partial<Player>; 
 
   // Check required string properties
-  if (typeof player.id !== 'string' || player.id.trim() === '') {
+  if (typeof playerObj.id !== 'string' || playerObj.id.trim() === '') {
     errors.push('Player must have a valid ID');
   }
 
-  if (typeof player.name !== 'string' || player.name.trim() === '') {
+  if (typeof playerObj.name !== 'string' || playerObj.name.trim() === '') {
     errors.push('Player must have a name');
   }
 
   // Check optional properties with defaults
-  if (player.isGoalie !== undefined && typeof player.isGoalie !== 'boolean') {
+  if (playerObj.isGoalie !== undefined && typeof playerObj.isGoalie !== 'boolean') {
     errors.push('isGoalie must be a boolean');
   }
 
@@ -160,7 +165,8 @@ describe('Player Validation', () => {
   });
 
   it('should invalidate a player object without an ID', () => {
-    const { id, ...playerWithoutId } = createPlayer();
+    const playerWithoutId = createPlayer();
+    delete (playerWithoutId as Partial<Player>).id;
     const validation = validatePlayer(playerWithoutId);
     expect(validation.isValid).toBe(false);
     expect(validation.errors).toContain('Player must have a valid ID');
@@ -175,7 +181,7 @@ describe('Player Validation', () => {
 
   it('should invalidate a player object with incorrect property types', () => {
     const invalidPlayer = createPlayer({
-      isGoalie: 'yes' as any // Should be boolean
+      isGoalie: 'yes' as any
     });
     
     const validation = validatePlayer(invalidPlayer);
