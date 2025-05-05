@@ -455,13 +455,15 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                 // DEBUG: Log gameData just before returning JSX for this item
                 console.log(`[LoadGameModal Render Map] Rendering item for gameId: ${gameId}`);
                 
+                const isCurrentlyLoaded = gameId === currentGameId;
+                const isMenuOpen = openMenuId === gameId;
+
                 return (
-                  <div 
-                    key={gameId} 
+                  <div
+                    key={gameId}
+                    data-testid={`game-item-${gameId}`}
                     className={`bg-slate-700/70 p-3 rounded-lg shadow-lg border transition-colors duration-150 hover:bg-slate-600/80 ${
-                      currentGameId === gameId 
-                        ? 'border-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.4)]' 
-                        : 'border-slate-600/80'
+                      isCurrentlyLoaded ? 'border-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.4)]' : 'border-slate-600/80'
                     }`}
                   >
                     {/* Row 1: Team Names, Badge, Score */}
@@ -492,7 +494,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
 
                     {/* Row 2: Date/Location/Time and Status */}
                     <div className="flex items-center text-xs text-slate-300 mb-2.5">
-                      {currentGameId === gameId && (
+                      {isCurrentlyLoaded && (
                         <span className="inline-flex items-center bg-yellow-500/90 text-slate-900 text-2xs font-bold px-1.5 py-0.5 rounded-sm mr-1.5 shadow-sm">
                           {t('loadGameModal.currentlyOpenShort', 'OPEN')}
                         </span>
@@ -526,7 +528,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                         <button
                           onClick={(e) => {
                              e.stopPropagation(); 
-                             setOpenMenuId(openMenuId === gameId ? null : gameId);
+                             setOpenMenuId(isMenuOpen ? null : gameId);
                           }}
                           className="p-1.5 text-slate-400 hover:text-slate-200 rounded-full hover:bg-slate-600/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-indigo-500"
                           title={t('common.options', 'Options')}
@@ -534,7 +536,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                            <HiOutlineEllipsisVertical className="w-5 h-5" />
                         </button>
 
-                        {openMenuId === gameId && (
+                        {isMenuOpen && (
                            <div 
                              ref={menuRef} 
                              className={`absolute right-0 mt-2 w-48 bg-slate-700 rounded-md shadow-lg py-1 z-10 border border-slate-600`}

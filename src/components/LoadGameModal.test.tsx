@@ -229,8 +229,7 @@ describe('LoadGameModal Integration', () => {
   });
 
   it('deletes a game when delete is confirmed', async () => {
-    // Setup mock AFTER verifying initial render
-    
+    // Render the component
     render(
       <LoadGameModal
         isOpen={true}
@@ -239,32 +238,29 @@ describe('LoadGameModal Integration', () => {
       />
     );
 
-    // Use waitFor to ensure the element is present before proceeding
-    let eaglesGameContainer: HTMLElement | null = null;
-    await waitFor(() => {
-      eaglesGameContainer = screen.getByText('Eagles vs Hawks').closest('.space-y-4 > div');
-      expect(eaglesGameContainer).toBeInTheDocument(); 
-    }, { timeout: 3000 });
+    // Find the specific game item container using data-testid
+    const eaglesGameContainer = await screen.findByTestId('game-item-game_1659223456_def');
+    expect(eaglesGameContainer).toBeInTheDocument();
 
-    if (!eaglesGameContainer) throw new Error('Eagles game container not found after wait');
-    
     // Setup confirm mock now
     (window.confirm as jest.Mock).mockReturnValueOnce(true);
 
+    // Find and click the options button WITHIN the container
     const optionsButton = within(eaglesGameContainer).getByTitle('Options');
     fireEvent.click(optionsButton);
-    
+
+    // Find and click the delete button (might appear globally or within a menu)
     const deleteButton = await screen.findByRole('button', { name: /Delete/i });
     fireEvent.click(deleteButton);
 
-    expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining('Eagles vs Hawks'));
+    // Assertions
+    expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining('Eagles vs Hawks')); // Keep confirm check
     expect(mockHandlers.onDelete).toHaveBeenCalledWith('game_1659223456_def');
   });
 
   it('does not delete a game when delete is cancelled', async () => {
-    // Setup mock AFTER verifying initial render
-
-     render(
+    // Render
+    render(
       <LoadGameModal
         isOpen={true}
         savedGames={createSampleGames()}
@@ -272,24 +268,22 @@ describe('LoadGameModal Integration', () => {
       />
     );
 
-    // Use waitFor again
-    let eaglesGameContainer: HTMLElement | null = null;
-    await waitFor(() => {
-      eaglesGameContainer = screen.getByText('Eagles vs Hawks').closest('.space-y-4 > div');
-      expect(eaglesGameContainer).toBeInTheDocument(); 
-    }, { timeout: 3000 });
+    // Find the specific game item container using data-testid
+    const eaglesGameContainer = await screen.findByTestId('game-item-game_1659223456_def');
+    expect(eaglesGameContainer).toBeInTheDocument();
 
-    if (!eaglesGameContainer) throw new Error('Eagles game container not found after wait');
-    
     // Setup confirm mock now
-    (window.confirm as jest.Mock).mockReturnValueOnce(false); 
+    (window.confirm as jest.Mock).mockReturnValueOnce(false);
 
+    // Find and click the options button WITHIN the container
     const optionsButton = within(eaglesGameContainer).getByTitle('Options');
     fireEvent.click(optionsButton);
 
+    // Find and click the delete button
     const deleteButton = await screen.findByRole('button', { name: /Delete/i });
     fireEvent.click(deleteButton);
 
+    // Assertions
     expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining('Eagles vs Hawks'));
     expect(mockHandlers.onDelete).not.toHaveBeenCalled();
   });
@@ -312,7 +306,7 @@ describe('LoadGameModal Integration', () => {
     expect(screen.queryByText('Eagles vs Hawks')).not.toBeInTheDocument(); 
   });
 
-  it('filters games by tournament badge when clicked', async () => { 
+  it('filters games by tournament badge when clicked', async () => {
     render(
       <LoadGameModal
         isOpen={true}
@@ -321,12 +315,14 @@ describe('LoadGameModal Integration', () => {
       />
     );
 
-    const tournamentBadge = await screen.findByRole('button', { name: /Summer Cup/i }); 
+    // Find and click the tournament badge
+    const tournamentBadge = await screen.findByRole('button', { name: /Summer Cup/i });
     fireEvent.click(tournamentBadge);
 
-    // Use findByText directly after click
-    expect(screen.queryByText('Lions vs Tigers')).not.toBeInTheDocument();
-    expect(await screen.findByText('Eagles vs Hawks', {}, { timeout: 3000 })).toBeInTheDocument();
+    // Assert that the correct game item IS present using data-testid
+    expect(await screen.findByTestId('game-item-game_1659223456_def')).toBeInTheDocument();
+    // Assert that the incorrect game item IS NOT present using data-testid
+    expect(screen.queryByTestId('game-item-game_1659123456_abc')).not.toBeInTheDocument();
   });
 
   it('indicates currently loaded game with a badge', () => {
