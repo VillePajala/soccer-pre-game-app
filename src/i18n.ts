@@ -432,6 +432,8 @@ fiTranslations.loadGameModal.filter_tournament = "Turnaus";
 fiTranslations.loadGameModal.filterPlaceholder = "Suodata nimellä/päivämäärällä...";
 fiTranslations.loadGameModal.loadButton = "Lataa Peli";
 fiTranslations.loadGameModal.noFilterResults = "Ei hakutuloksia.";
+fiTranslations.loadGameModal.backupButton = "Varmuuskopioi Kaikki Tiedot";
+fiTranslations.loadGameModal.restoreButton = "Palauta Varmuuskopiosta";
 
 // Add load game modal translations if section doesn't exist for English
 if (!enTranslations.loadGameModal) {
@@ -445,6 +447,8 @@ enTranslations.loadGameModal.filter_tournament = "Tournament";
 enTranslations.loadGameModal.filterPlaceholder = "Filter by name/date...";
 enTranslations.loadGameModal.loadButton = "Load Game";
 enTranslations.loadGameModal.noFilterResults = "No games match the current filter.";
+enTranslations.loadGameModal.backupButton = "Backup All Data";
+enTranslations.loadGameModal.restoreButton = "Restore from Backup";
 
 // Add RosterSettingsModal translations if section doesn't exist
 if (!fiTranslations.rosterSettingsModal) {

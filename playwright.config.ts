@@ -34,7 +34,13 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { 
+        ...devices['Desktop Chrome'],
+        // Add launch options to disable PWA install prompt
+        launchOptions: {
+          args: ['--disable-features=DesktopPwaInstallPrompt']
+        }
+      },
     },
 
     // {

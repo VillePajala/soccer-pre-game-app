@@ -35,25 +35,29 @@ test.describe('Data Persistence - Core Functionality', () => {
     const opponentTeamName = 'Away Tigers';
 
     // --- Action: Create a New Game ---
-    // Reload page to ensure clean state AFTER clearing storage
-    await page.goto('/'); 
+    // Go to page (clears storage via beforeEach)
+    // Optional: Reload after storage clear if needed
+    await page.reload(); 
+    console.log('Page reloaded after storage clear.');
 
-    // Wait for the main page content to be generally available
-    await expect(page.getByRole('button', { name: 'Aloita Peli' })).toBeVisible({ timeout: 10000 });
+    // Wait for the setup modal to appear automatically
+    console.log('Waiting for New Game Setup modal...');
+    const setupModalHeading = page.getByRole('heading', { name: 'Uuden Pelin Asetukset' });
+    await expect(setupModalHeading).toBeVisible({ timeout: 10000 });
+    console.log('New Game Setup modal is visible.');
 
-    await page.getByRole('button', { name: 'Aloita Peli' }).click();
-
-    // Wait for the modal/setup screen to appear (using the new label)
-    const homeTeamLabelFinnish = 'Oman joukkueen nimi: *'; // <-- Use updated Finnish label
+    // Find the labels/inputs within the modal
+    const homeTeamLabelFinnish = 'Oman joukkueen nimi: *';
     const opponentLabelFinnish = 'Vastustajan Nimi: *';
     
-    await expect(page.getByLabel(homeTeamLabelFinnish)).toBeVisible(); // Use updated label
-
     // Fill both fields
     await page.getByLabel(homeTeamLabelFinnish).fill(yourTeamName);
     await page.getByLabel(opponentLabelFinnish).fill(opponentTeamName);
+    console.log('Filled team names.');
 
+    // Click the "Aloita Peli" button *inside the modal*
     await page.getByRole('button', { name: 'Aloita Peli' }).click();
+    console.log('Clicked Start Game button in modal.');
 
     // Wait for the game screen to load (e.g., look for the score)
     await expect(page.getByText('0 - 0')).toBeVisible(); 
