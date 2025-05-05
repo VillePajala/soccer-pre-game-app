@@ -124,282 +124,274 @@ describe('importFullBackup', () => {
     jest.useRealTimers(); // Default to real timers
   });
 
-  // Test Case 1: Successfully restores valid data
-  it('should successfully restore valid backup data and overwrite localStorage', () => {
-    // Arrange: Define valid backup data
-    const validBackupData = {
-      meta: { schema: 1, exportedAt: new Date().toISOString() },
-      localStorage: {
-        [SAVED_GAMES_KEY]: { game1: { id: 'game1', teamName: 'Test', opponentName: 'Opponent', homeScore: 1, awayScore: 0 } },
-        [APP_SETTINGS_KEY]: { currentGameId: 'game1' },
-        [SEASONS_LIST_KEY]: [{ id: 's1', name: 'Test Season' }],
-        [TOURNAMENTS_LIST_KEY]: null, // Test null value
-        [MASTER_ROSTER_KEY]: [{ id: 'p1', name: 'Player 1' }],
-        // Key not present in backup constants but exists in source file localStorage
-        'someOtherOldKey': 'should be removed if present initially' 
-      }
-    };
-    const backupJson = JSON.stringify(validBackupData);
+  describe('Success Scenarios', () => {
+    it('should successfully restore valid backup data and overwrite localStorage', () => {
+      // Arrange: Define valid backup data
+      const validBackupData = {
+        meta: { schema: 1, exportedAt: new Date().toISOString() },
+        localStorage: {
+          [SAVED_GAMES_KEY]: { game1: { id: 'game1', teamName: 'Test', opponentName: 'Opponent', homeScore: 1, awayScore: 0 } },
+          [APP_SETTINGS_KEY]: { currentGameId: 'game1' },
+          [SEASONS_LIST_KEY]: [{ id: 's1', name: 'Test Season' }],
+          [TOURNAMENTS_LIST_KEY]: null, // Test null value
+          [MASTER_ROSTER_KEY]: [{ id: 'p1', name: 'Player 1' }],
+          // Key not present in backup constants but exists in source file localStorage
+          'someOtherOldKey': 'should be removed if present initially' 
+        }
+      };
+      const backupJson = JSON.stringify(validBackupData);
 
-    // Pre-populate localStorage with some different data to ensure overwrite
-    localStorageMock.setItem(SAVED_GAMES_KEY, JSON.stringify({ gameX: { id: 'gameX' } }));
-    localStorageMock.setItem(APP_SETTINGS_KEY, JSON.stringify({ currentGameId: 'gameX' }));
-    localStorageMock.setItem('someOtherOldKey', 'initial value');
+      // Pre-populate localStorage with some different data to ensure overwrite
+      localStorageMock.setItem(SAVED_GAMES_KEY, JSON.stringify({ gameX: { id: 'gameX' } }));
+      localStorageMock.setItem(APP_SETTINGS_KEY, JSON.stringify({ currentGameId: 'gameX' }));
+      localStorageMock.setItem('someOtherOldKey', 'initial value');
 
-    // Mock window.confirm to return true (user confirms)
-    (window.confirm as jest.Mock).mockReturnValue(true);
-    
-    // Mock alert directly for this test if needed, or rely on the global mock
-    const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
+      // Mock window.confirm to return true (user confirms)
+      (window.confirm as jest.Mock).mockReturnValue(true);
+      
+      // Mock alert directly for this test if needed, or rely on the global mock
+      const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
 
-    // Act: Call the import function
-    const result = importFullBackup(backupJson);
-
-    // Assert: Check results
-    expect(result).toBe(true); // Function should indicate success (before reload)
-    
-    // Verify localStorage content matches the backup data
-    expect(JSON.parse(localStorageMock.getItem(SAVED_GAMES_KEY)!)).toEqual(validBackupData.localStorage[SAVED_GAMES_KEY]);
-    expect(JSON.parse(localStorageMock.getItem(APP_SETTINGS_KEY)!)).toEqual(validBackupData.localStorage[APP_SETTINGS_KEY]);
-    expect(JSON.parse(localStorageMock.getItem(SEASONS_LIST_KEY)!)).toEqual(validBackupData.localStorage[SEASONS_LIST_KEY]);
-    expect(localStorageMock.getItem(TOURNAMENTS_LIST_KEY)).toBeNull(); // Check null was handled
-    expect(JSON.parse(localStorageMock.getItem(MASTER_ROSTER_KEY)!)).toEqual(validBackupData.localStorage[MASTER_ROSTER_KEY]);
-    
-    // Verify the non-backup key was removed (because the function iterates only over keys in the backup's localStorage)
-    // The value here comes from the backup file, not the initial value set
-    expect(localStorageMock.getItem('someOtherOldKey')).toBe(JSON.stringify(validBackupData.localStorage.someOtherOldKey));
-    
-    // Verify confirmation was called
-    expect(window.confirm).toHaveBeenCalledTimes(1);
-    expect(alertMock).toHaveBeenCalledWith('Full backup restored successfully! The application will now reload.');
-
-    // Verify reload was scheduled via setTimeout
-    expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
-    expect(setTimeoutSpy).toHaveBeenLastCalledWith(expect.any(Function), 500);
-
-    // Verify the function passed to setTimeout calls reload
-    const reloadCallback = setTimeoutSpy.mock.calls[0][0]; // Get the callback function
-    reloadCallback(); // Execute the callback
-    expect(window.location.reload).toHaveBeenCalledTimes(1); // Now check if reload was called
-
-    alertMock.mockRestore();
-  });
-
-  // Test Case 2: User cancels the import confirmation
-  it('should return false and not modify localStorage when user cancels import', () => {
-    // Arrange
-    const validBackupData = { meta: { schema: 1 }, localStorage: { [SAVED_GAMES_KEY]: { game1: {} } } };
-    const backupJson = JSON.stringify(validBackupData);
-    const initialSavedGames = { gameX: { id: 'gameX' } };
-    localStorageMock.setItem(SAVED_GAMES_KEY, JSON.stringify(initialSavedGames)); // Set initial data
-    const initialStoreState = { ...localStorageMock.getAll() }; // Capture initial state
-
-    (window.confirm as jest.Mock).mockReturnValue(false); // User cancels
-    const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
-
-    // Act
-    const result = importFullBackup(backupJson);
-
-    // Assert
-    expect(result).toBe(false);
-    expect(window.confirm).toHaveBeenCalledTimes(1);
-    // Assert that no modification methods were called after cancellation
-    expect(localStorageMock.setItem).toHaveBeenCalledTimes(1); // Only the initial setup call
-    expect(localStorageMock.removeItem).not.toHaveBeenCalled();
-    expect(localStorageMock.clear).not.toHaveBeenCalled();
-    // Optionally, double-check the state if the above passes
-    // expect(localStorageMock.getAll()).toEqual(initialStoreState);
-
-    expect(window.location.reload).not.toHaveBeenCalled();
-    expect(alertMock).not.toHaveBeenCalled();
-    alertMock.mockRestore();
-  });
-
-  // Test Case 3: Invalid JSON input
-  it('should return false and not modify localStorage for invalid JSON input', () => {
-    // Arrange
-    const invalidJson = "{ invalid json";
-
-    // Mock window.alert to suppress it during test
-    const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
-
-    // Act
-    const result = importFullBackup(invalidJson);
-
-    // Assert
-    expect(result).toBe(false);
-    expect(localStorageMock.getAll()).toEqual({}); // Storage unchanged
-    expect(window.confirm).not.toHaveBeenCalled(); // Confirmation shouldn't be reached
-    expect(alertMock).toHaveBeenCalledWith(expect.stringContaining('Error importing full backup:')); // Check alert
-    expect(window.location.reload).not.toHaveBeenCalled();
-
-    // Restore alert mock
-    alertMock.mockRestore();
-  });
-  
-  // Test Case 4: Missing 'meta' field
-  it('should return false and show error for missing meta field', () => {
-    // Arrange
-    const backupData = { localStorage: {} }; // Missing meta
-    const backupJson = JSON.stringify(backupData);
-
-    // Mock window.alert to suppress it during test
-    const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
-
-    // Act
-    const result = importFullBackup(backupJson);
-
-    // Assert
-    expect(result).toBe(false);
-    expect(localStorageMock.getAll()).toEqual({});
-    expect(window.confirm).not.toHaveBeenCalled();
-    expect(alertMock).toHaveBeenCalledWith(expect.stringContaining('Missing \'meta\' information'));
-    expect(window.location.reload).not.toHaveBeenCalled();
-    alertMock.mockRestore();
-  });
-
-  // Test Case 5: Unsupported schema version
-  it('should return false and show error for unsupported schema version', () => {
-    // Arrange
-    const backupData = { meta: { schema: 2 }, localStorage: {} }; 
-    const backupJson = JSON.stringify(backupData);
-
-    // Mock window.alert to suppress it during test
-    const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
-
-    // Act
-    const result = importFullBackup(backupJson);
-
-    // Assert
-    expect(result).toBe(false);
-    expect(localStorageMock.getAll()).toEqual({});
-    expect(window.confirm).not.toHaveBeenCalled();
-    expect(alertMock).toHaveBeenCalledWith(expect.stringContaining('Unsupported schema version: 2'));
-    expect(window.location.reload).not.toHaveBeenCalled();
-    alertMock.mockRestore();
-  });
-  
-  // Test Case 6: Missing 'localStorage' field
-   it('should return false and show error for missing localStorage field', () => {
-    // Arrange
-    const backupData = { meta: { schema: 1 } }; // Missing localStorage
-    const backupJson = JSON.stringify(backupData);
-
-    // Mock window.alert to suppress it during test
-    const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
-
-    // Act
-    const result = importFullBackup(backupJson);
-
-    // Assert
-    expect(result).toBe(false);
-    expect(localStorageMock.getAll()).toEqual({});
-    expect(window.confirm).not.toHaveBeenCalled();
-    expect(alertMock).toHaveBeenCalledWith(expect.stringContaining('Missing \'localStorage\' data object'));
-    expect(window.location.reload).not.toHaveBeenCalled();
-    alertMock.mockRestore();
-  });
-
-  // Test Case 7: localStorage quota exceeded error
-  it('should return false and show error when localStorage quota is exceeded', () => {
-    // Arrange: Define valid backup data
-    const validBackupData = {
-      meta: { schema: 1, exportedAt: new Date().toISOString() },
-      localStorage: {
-        [SAVED_GAMES_KEY]: { game1: { id: 'game1', teamName: 'Test', opponentName: 'Opponent' } },
-        [APP_SETTINGS_KEY]: { currentGameId: 'game1' }
-      }
-    };
-    const backupJson = JSON.stringify(validBackupData);
-
-    // Mock window.confirm to return true (user confirms)
-    (window.confirm as jest.Mock).mockReturnValue(true);
-    
-    // Mock localStorage.setItem to throw quota exceeded error for one specific key
-    // Use a more targeted approach to only mock for a specific key
-    const originalSetItem = localStorageMock.setItem;
-    localStorageMock.setItem = jest.fn().mockImplementation((key, value) => {
-      if (key === SAVED_GAMES_KEY) {
-        throw localStorageMock.getQuotaExceededError();
-      }
-      return originalSetItem(key, value);
-    });
-    
-    // Mock alert
-    const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
-
-    try {
       // Act: Call the import function
       const result = importFullBackup(backupJson);
 
       // Assert: Check results
-      expect(result).toBe(false); // Function should indicate failure
-      expect(localStorageMock.setItem).toHaveBeenCalled();
-      // The actual error message from the implementation contains a different text
-      expect(alertMock).toHaveBeenCalledWith(expect.stringContaining('Error importing full backup: Failed to restore data for key'));
-      expect(window.location.reload).not.toHaveBeenCalled();
-    } finally {
-      // Always restore the mock, even if the test fails
-      localStorageMock.setItem = originalSetItem;
+      expect(result).toBe(true); // Function should indicate success (before reload)
+      
+      // Verify localStorage content matches the backup data
+      expect(JSON.parse(localStorageMock.getItem(SAVED_GAMES_KEY)!)).toEqual(validBackupData.localStorage[SAVED_GAMES_KEY]);
+      expect(JSON.parse(localStorageMock.getItem(APP_SETTINGS_KEY)!)).toEqual(validBackupData.localStorage[APP_SETTINGS_KEY]);
+      expect(JSON.parse(localStorageMock.getItem(SEASONS_LIST_KEY)!)).toEqual(validBackupData.localStorage[SEASONS_LIST_KEY]);
+      expect(localStorageMock.getItem(TOURNAMENTS_LIST_KEY)).toBeNull(); // Check null was handled
+      expect(JSON.parse(localStorageMock.getItem(MASTER_ROSTER_KEY)!)).toEqual(validBackupData.localStorage[MASTER_ROSTER_KEY]);
+      
+      // Verify the non-backup key was removed (because the function iterates only over keys in the backup's localStorage)
+      // The value here comes from the backup file, not the initial value set
+      expect(localStorageMock.getItem('someOtherOldKey')).toBe(JSON.stringify(validBackupData.localStorage.someOtherOldKey));
+      
+      // Verify confirmation was called
+      expect(window.confirm).toHaveBeenCalledTimes(1);
+      expect(alertMock).toHaveBeenCalledWith('Full backup restored successfully! The application will now reload.');
+
+      // Verify reload was scheduled via setTimeout
+      expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
+      expect(setTimeoutSpy).toHaveBeenLastCalledWith(expect.any(Function), 500);
+
+      // Verify the function passed to setTimeout calls reload
+      const reloadCallback = setTimeoutSpy.mock.calls[0][0]; // Get the callback function
+      reloadCallback(); // Execute the callback
+      expect(window.location.reload).toHaveBeenCalledTimes(1); // Now check if reload was called
+
       alertMock.mockRestore();
-    }
+    });
+
+    it('should successfully import partial backup data with only some keys present', () => {
+      jest.useFakeTimers(); // Use FAKE timers for this test
+      // Arrange: Define partial backup data with valid structure but only some keys
+      const partialBackupData = {
+        meta: { schema: 1, exportedAt: new Date().toISOString() },
+        localStorage: {
+           // Only include games and settings, omit roster, seasons, and tournaments
+           [SAVED_GAMES_KEY]: { game1: { id: 'game1', teamName: 'Partial Test' } },
+           [APP_SETTINGS_KEY]: { currentGameId: 'game1' }
+           // Intentionally omitting: MASTER_ROSTER_KEY, SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY
+        }
+      };
+      const backupJson = JSON.stringify(partialBackupData);
+      
+      // Pre-populate localStorage with some existing data that should be preserved
+      // for keys not in the backup
+      const existingRoster = [{ id: 'existing1', name: 'Existing Player' }];
+      localStorageMock.setItem(MASTER_ROSTER_KEY, JSON.stringify(existingRoster));
+      
+      // Mock window.confirm to return true (user confirms)
+      (window.confirm as jest.Mock).mockReturnValue(true);
+      
+      // Mock alert
+      const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
+
+      // Act: Call the import function
+      const result = importFullBackup(backupJson);
+
+      // Assert: Check results
+      expect(result).toBe(true); // Function should indicate success
+      
+      // Verify backup keys were imported
+      expect(JSON.parse(localStorageMock.getItem(SAVED_GAMES_KEY)!)).toEqual(partialBackupData.localStorage[SAVED_GAMES_KEY]);
+      expect(JSON.parse(localStorageMock.getItem(APP_SETTINGS_KEY)!)).toEqual(partialBackupData.localStorage[APP_SETTINGS_KEY]);
+      
+      // Verify keys not in backup were preserved
+      expect(JSON.parse(localStorageMock.getItem(MASTER_ROSTER_KEY)!)).toEqual(existingRoster);
+      
+      // Verify alert and reload were called
+      expect(alertMock).toHaveBeenCalledWith('Full backup restored successfully! The application will now reload.');
+      
+      // Advance timers to see if reload would have been called
+      jest.advanceTimersByTime(500);
+      expect(window.location.reload).toHaveBeenCalledTimes(1); // Still check reload
+      
+      // Restore mocks and timers
+      alertMock.mockRestore();
+      jest.useRealTimers(); // Restore real timers
+    });
   });
 
-  // Test Case 8: Partial backup data (some keys missing but valid format)
-  it('should successfully import partial backup data with only some keys present', () => {
-    jest.useFakeTimers(); // Use FAKE timers for this test
-    // Arrange: Define partial backup data with valid structure but only some keys
-    const partialBackupData = {
-      meta: { schema: 1, exportedAt: new Date().toISOString() },
-      localStorage: {
-         // Only include games and settings, omit roster, seasons, and tournaments
-         [SAVED_GAMES_KEY]: { game1: { id: 'game1', teamName: 'Partial Test' } },
-         [APP_SETTINGS_KEY]: { currentGameId: 'game1' }
-         // Intentionally omitting: MASTER_ROSTER_KEY, SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY
+  describe('User Cancellation', () => {
+    it('should return false and not modify localStorage when user cancels import', () => {
+      // Arrange
+      const validBackupData = { meta: { schema: 1 }, localStorage: { [SAVED_GAMES_KEY]: { game1: {} } } };
+      const backupJson = JSON.stringify(validBackupData);
+      const initialSavedGames = { gameX: { id: 'gameX' } };
+      localStorageMock.setItem(SAVED_GAMES_KEY, JSON.stringify(initialSavedGames)); // Set initial data
+      // const initialStoreState = { ...localStorageMock.getAll() }; // Capture initial state (removed as unused for now)
+
+      (window.confirm as jest.Mock).mockReturnValue(false); // User cancels
+      const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
+
+      // Act
+      const result = importFullBackup(backupJson);
+
+      // Assert
+      expect(result).toBe(false);
+      expect(window.confirm).toHaveBeenCalledTimes(1);
+      // Assert that no modification methods were called beyond the initial setup
+      expect(localStorageMock.setItem).toHaveBeenCalledTimes(1); // Only the initial setup call
+      expect(localStorageMock.removeItem).not.toHaveBeenCalled();
+      expect(localStorageMock.clear).not.toHaveBeenCalled();
+      expect(window.location.reload).not.toHaveBeenCalled();
+      expect(alertMock).not.toHaveBeenCalled();
+      alertMock.mockRestore();
+    });
+  });
+
+  describe('Validation Errors', () => {
+    it('should return false and not modify localStorage for invalid JSON input', () => {
+      // Arrange
+      const invalidJson = "{ invalid json";
+
+      // Mock window.alert to suppress it during test
+      const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
+
+      // Act
+      const result = importFullBackup(invalidJson);
+
+      // Assert
+      expect(result).toBe(false);
+      expect(localStorageMock.getAll()).toEqual({}); // Storage unchanged
+      expect(window.confirm).not.toHaveBeenCalled(); // Confirmation shouldn't be reached
+      expect(alertMock).toHaveBeenCalledWith(expect.stringContaining('Error importing full backup:')); // Check alert
+      expect(window.location.reload).not.toHaveBeenCalled();
+
+      // Restore alert mock
+      alertMock.mockRestore();
+    });
+    
+    it('should return false and show error for missing meta field', () => {
+      // Arrange
+      const backupData = { localStorage: {} }; // Missing meta
+      const backupJson = JSON.stringify(backupData);
+
+      // Mock window.alert to suppress it during test
+      const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
+
+      // Act
+      const result = importFullBackup(backupJson);
+
+      // Assert
+      expect(result).toBe(false);
+      expect(localStorageMock.getAll()).toEqual({});
+      expect(window.confirm).not.toHaveBeenCalled();
+      expect(alertMock).toHaveBeenCalledWith(expect.stringContaining('Missing \'meta\' information'));
+      expect(window.location.reload).not.toHaveBeenCalled();
+      alertMock.mockRestore();
+    });
+
+    it('should return false and show error for unsupported schema version', () => {
+      // Arrange
+      const backupData = { meta: { schema: 2 }, localStorage: {} }; 
+      const backupJson = JSON.stringify(backupData);
+
+      // Mock window.alert to suppress it during test
+      const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
+
+      // Act
+      const result = importFullBackup(backupJson);
+
+      // Assert
+      expect(result).toBe(false);
+      expect(localStorageMock.getAll()).toEqual({});
+      expect(window.confirm).not.toHaveBeenCalled();
+      expect(alertMock).toHaveBeenCalledWith(expect.stringContaining('Unsupported schema version: 2'));
+      expect(window.location.reload).not.toHaveBeenCalled();
+      alertMock.mockRestore();
+    });
+    
+    it('should return false and show error for missing localStorage field', () => {
+      // Arrange
+      const backupData = { meta: { schema: 1 } }; // Missing localStorage
+      const backupJson = JSON.stringify(backupData);
+
+      // Mock window.alert to suppress it during test
+      const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
+
+      // Act
+      const result = importFullBackup(backupJson);
+
+      // Assert
+      expect(result).toBe(false);
+      expect(localStorageMock.getAll()).toEqual({});
+      expect(window.confirm).not.toHaveBeenCalled();
+      expect(alertMock).toHaveBeenCalledWith(expect.stringContaining('Missing \'localStorage\' data object'));
+      expect(window.location.reload).not.toHaveBeenCalled();
+      alertMock.mockRestore();
+    });
+  });
+
+  describe('Runtime Errors', () => {
+    it('should return false and show error when localStorage quota is exceeded', () => {
+      // Arrange: Define valid backup data
+      const validBackupData = {
+        meta: { schema: 1, exportedAt: new Date().toISOString() },
+        localStorage: {
+          [SAVED_GAMES_KEY]: { game1: { id: 'game1', teamName: 'Test', opponentName: 'Opponent' } },
+          [APP_SETTINGS_KEY]: { currentGameId: 'game1' }
+        }
+      };
+      const backupJson = JSON.stringify(validBackupData);
+
+      // Mock window.confirm to return true (user confirms)
+      (window.confirm as jest.Mock).mockReturnValue(true);
+      
+      // Mock localStorage.setItem to throw quota exceeded error for one specific key
+      // Use a more targeted approach to only mock for a specific key
+      const originalSetItem = localStorageMock.setItem;
+      localStorageMock.setItem = jest.fn().mockImplementation((key, value) => {
+        if (key === SAVED_GAMES_KEY) {
+          throw localStorageMock.getQuotaExceededError();
+        }
+        return originalSetItem(key, value);
+      });
+      
+      // Mock alert
+      const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
+
+      try {
+        // Act: Call the import function
+        const result = importFullBackup(backupJson);
+
+        // Assert: Check results
+        expect(result).toBe(false); // Function should indicate failure
+        expect(localStorageMock.setItem).toHaveBeenCalled();
+        // The actual error message from the implementation contains a different text
+        expect(alertMock).toHaveBeenCalledWith(expect.stringContaining('Error importing full backup: Failed to restore data for key'));
+        expect(window.location.reload).not.toHaveBeenCalled();
+      } finally {
+        // Always restore the mock, even if the test fails
+        localStorageMock.setItem = originalSetItem;
+        alertMock.mockRestore();
       }
-    };
-    const backupJson = JSON.stringify(partialBackupData);
-    
-    // Pre-populate localStorage with some existing data that should be preserved
-    // for keys not in the backup
-    const existingRoster = [{ id: 'existing1', name: 'Existing Player' }];
-    localStorageMock.setItem(MASTER_ROSTER_KEY, JSON.stringify(existingRoster));
-    
-    // Mock window.confirm to return true (user confirms)
-    (window.confirm as jest.Mock).mockReturnValue(true);
-    
-    // Mock alert
-    const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
-
-    // Act: Call the import function
-    const result = importFullBackup(backupJson);
-
-    // Assert: Check results
-    expect(result).toBe(true); // Function should indicate success
-    
-    // Verify backup keys were imported
-    expect(JSON.parse(localStorageMock.getItem(SAVED_GAMES_KEY)!)).toEqual(partialBackupData.localStorage[SAVED_GAMES_KEY]);
-    expect(JSON.parse(localStorageMock.getItem(APP_SETTINGS_KEY)!)).toEqual(partialBackupData.localStorage[APP_SETTINGS_KEY]);
-    
-    // Verify keys not in backup were preserved
-    expect(JSON.parse(localStorageMock.getItem(MASTER_ROSTER_KEY)!)).toEqual(existingRoster);
-    
-    // Verify alert and reload were called
-    expect(alertMock).toHaveBeenCalledWith('Full backup restored successfully! The application will now reload.');
-    
-    // Advance timers to see if reload would have been called
-    jest.advanceTimersByTime(500);
-    expect(window.location.reload).toHaveBeenCalledTimes(1); // Still check reload
-    
-    // Restore mocks and timers
-    alertMock.mockRestore();
-    jest.useRealTimers(); // Restore real timers
+    });
   });
-
-  // Add more tests for edge cases:
-  // - Backup data contains keys not expected (should they be ignored or cause error?) -> Handled by typing, seems okay.
-  // - Backup data is valid JSON but contains malformed data *within* a value (e.g., invalid game object) -> The function seems to trust JSON.parse worked, maybe add tests if needed.
-  // - localStorage.setItem throws an error (e.g., quota exceeded) -> Function currently aborts, test this?
 }); 
 
 // --- New Describe Block for exportFullBackup ---

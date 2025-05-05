@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent, within, act, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import LoadGameModal from './LoadGameModal';
 import { SavedGamesCollection, Season, Tournament, AppState } from '@/app/page';
@@ -8,15 +8,15 @@ import { SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY } from '@/config/constants';
 // Improved Mock for react-i18next hook
 jest.mock('react-i18next', () => ({
   useTranslation: () => {
-    const translations = {
-      'loadGameModal.title': 'Load Game',
-      'loadGameModal.searchPlaceholder': 'Search games by name, opponent, or date...',
+    const translations: Record<string, string> = {
+      'loadGameModal.title': 'Load / Manage Games',
+      'loadGameModal.searchPlaceholder': 'Filter games...',
       'loadGameModal.noGames': 'No saved games found',
       'loadGameModal.backupAllButton': 'Backup All Data',
       'loadGameModal.restoreButton': 'Restore from Backup',
-      'loadGameModal.importButton': 'Import JSON',
-      'loadGameModal.exportAllJsonButton': 'Export All (JSON)',
-      'loadGameModal.exportAllExcelButton': 'Export All (Excel)',
+      'loadGameModal.importButton': 'Import',
+      'loadGameModal.exportAllJsonButton': 'Export JSON',
+      'loadGameModal.exportAllExcelButton': 'Export CSV',
       'loadGameModal.backupButton': 'Backup All Data',
       'loadGameModal.close': 'Close',
       'loadGameModal.deleteConfirm': 'Are you sure you want to delete the saved game "{gameName}"? This action cannot be undone.',
@@ -25,7 +25,7 @@ jest.mock('react-i18next', () => ({
       'loadGameModal.gameInfo': '{{teamName}} vs {{opponentName}}',
       'loadGameModal.gameDateLabel': 'Date:',
       'loadGameModal.scoreLabel': 'Score:',
-      'loadGameModal.loadButton': 'Load',
+      'loadGameModal.loadButton': 'Load Game',
       'loadGameModal.exportJsonButton': 'Export JSON',
       'loadGameModal.exportCsvButton': 'Export CSV',
       'loadGameModal.deleteButton': 'Delete',
@@ -38,21 +38,26 @@ jest.mock('react-i18next', () => ({
       'loadGameModal.restoreTooltip': 'Restore application data from a full backup file (JSON)',
       'common.close': 'Close',
       'common.options': 'Options',
+      'loadGameModal.noSavedGames': 'No games have been saved yet.',
+      'loadGameModal.noGamesFound': 'No saved games match your filter.',
     };
     return {
-      t: (key: string, params?: Record<string, unknown>): string => {
-        let translation = translations[key as keyof typeof translations] || key;
-        if (params && translation) {
-          Object.keys(params).forEach((paramKey) => {
-            translation = translation.replace(`{{${paramKey}}}`, String(params[paramKey]));
-            
-            const paramValue = params[paramKey];
-            if (typeof paramValue === 'object' && paramValue !== null) {
-               Object.keys(paramValue).forEach((nestedKey) => {
-                 const nestedValue = (paramValue as Record<string, unknown>)[nestedKey];
-                 translation = translation.replace(`{{${nestedKey}}}`, String(nestedValue));
-               });
-            }
+      t: (key: string, fallbackOrParams?: string | Record<string, unknown>): string => {
+        let options: { replace?: Record<string, unknown>, defaultValue?: string } = {};
+        let fallback = '';
+
+        if (typeof fallbackOrParams === 'string') {
+          fallback = fallbackOrParams;
+        } else if (typeof fallbackOrParams === 'object') {
+          options = fallbackOrParams as { replace?: Record<string, unknown>, defaultValue?: string };
+          fallback = options.defaultValue || key;
+        }
+
+        let translation = translations[key] || fallback;
+
+        if (options.replace && translation) {
+          Object.keys(options.replace).forEach((paramKey) => {
+            translation = translation.replace(`{{${paramKey}}}`, String(options.replace![paramKey]));
           });
         }
         return translation;
@@ -119,8 +124,16 @@ const createSampleGames = (): SavedGamesCollection => ({
   } as unknown as AppState,
 });
 
-describe('LoadGameModal Integration', () => {
-  // Define types for mocks
+// Define sampleSeasons and sampleTournaments
+const sampleSeasons: Season[] = [
+  { id: 'season_1', name: 'Spring League' },
+  { id: 'season_2', name: 'Fall Season' },
+];
+const sampleTournaments: Tournament[] = [
+  { id: 'tourn_1', name: 'Summer Cup' }, 
+];
+
+describe('LoadGameModal', () => {
   let localStorageMock: {
     getItem: jest.Mock;
     setItem: jest.Mock;
@@ -138,17 +151,6 @@ describe('LoadGameModal Integration', () => {
     onExportOneCsv: jest.Mock;
     onImportJson: jest.Mock;
   };
-
-  // Sample data defined outside beforeEach
-  const sampleGames = createSampleGames();
-  const sampleSeasons: Season[] = [
-    { id: 'season_1', name: 'Spring League' },
-    { id: 'season_2', name: 'Fall Season' },
-  ];
-  const sampleTournaments: Tournament[] = [
-    // Adjust based on Tournament type definition (assuming no seasonId)
-    { id: 'tourn_1', name: 'Summer Cup' }, 
-  ];
 
   beforeEach(() => {
     // Setup localStorage mock inline
@@ -181,163 +183,411 @@ describe('LoadGameModal Integration', () => {
     };
   });
 
-  // Test: renders the component with saved games list
-  it('renders the component with saved games list', async () => {
-    // Pass sampleGames via props
-    render(
-      <LoadGameModal
-        isOpen={true}
-        savedGames={sampleGames} // Pass games data directly
-        {...mockHandlers}
-      />
-    );
-    // ... assertions using findByText ...
+  describe('Rendering', () => {
+    it('renders the component with saved games list', async () => {
+      render(<LoadGameModal isOpen={true} savedGames={createSampleGames()} {...mockHandlers} />);
+      
+      // Find container and assert names are within it using findByText
+      const lionsContainer = await screen.findByTestId('game-item-game_1659123456_abc');
+      expect(await within(lionsContainer).findByText('Lions')).toBeInTheDocument();
+      expect(await within(lionsContainer).findByText('Tigers')).toBeInTheDocument();
+
+      const eaglesContainer = await screen.findByTestId('game-item-game_1659223456_def');
+      expect(await within(eaglesContainer).findByText('Eagles')).toBeInTheDocument();
+      expect(await within(eaglesContainer).findByText('Hawks')).toBeInTheDocument();
+    });
+
+    it('indicates currently loaded game with a badge', () => {
+      render(
+        <LoadGameModal
+          isOpen={true}
+          savedGames={createSampleGames()}
+          currentGameId="game_1659123456_abc"
+          {...mockHandlers}
+        />
+      );
+      // Use data-testid selector and assert type
+      const loadedGameContainer = screen.getByText('Lions vs Tigers').closest('[data-testid^="game-item-"]') as HTMLElement;
+      expect(loadedGameContainer).toBeInTheDocument(); 
+      // Use within with the asserted HTMLElement
+      expect(within(loadedGameContainer).getByText('Loaded')).toBeInTheDocument(); 
+    });
+
+    it('displays a message when there are no saved games', () => {
+      render(
+        <LoadGameModal
+          isOpen={true}
+          savedGames={{}} // Pass empty object
+          {...mockHandlers}
+        />
+      );
+      // Check for the specific "no saved games yet" message
+      expect(screen.getByText(/No games have been saved yet/i)).toBeInTheDocument();
+      // Ensure no game items are rendered
+      expect(screen.queryByTestId(/game-item-/)).not.toBeInTheDocument();
+    });
+
+    it('displays a message when filters match no games', async () => {
+      render(<LoadGameModal isOpen={true} savedGames={createSampleGames()} {...mockHandlers} />);
+      const searchInput = screen.getByPlaceholderText(/Filter games/i);
+      fireEvent.change(searchInput, { target: { value: 'NonExistentTeam' } });
+      // Check for the specific "no games match filter" message
+      expect(await screen.findByText(/No saved games match your filter/i)).toBeInTheDocument();
+      expect(screen.queryByTestId(/game-item-/)).not.toBeInTheDocument();
+    });
   });
 
-  it('filters games based on search input', async () => {
-    render(
-      <LoadGameModal
-        isOpen={true}
-        savedGames={createSampleGames()}
-        {...mockHandlers}
-      />
-    );
+  describe('Filtering', () => {
+    it('filters games based on search input', async () => {
+      render(<LoadGameModal isOpen={true} savedGames={createSampleGames()} {...mockHandlers} />); 
+      const searchInput = screen.getByPlaceholderText(/Filter games/i);
+      fireEvent.change(searchInput, { target: { value: 'Lions' } });
+      // Wait for potential re-renders
+      expect(await screen.findByText('Lions vs Tigers')).toBeInTheDocument();
+      expect(screen.queryByText('Eagles vs Hawks')).not.toBeInTheDocument();
+    });
 
-    const searchInput = screen.getByPlaceholderText('Filter games...');
-    fireEvent.change(searchInput, { target: { value: 'Lions' } });
+    it('filters games by season badge when clicked', async () => {
+      render(<LoadGameModal isOpen={true} savedGames={createSampleGames()} {...mockHandlers} />);
+      const seasonBadge = await screen.findByRole('button', { name: /Spring League/i });
+      fireEvent.click(seasonBadge);
+      expect(await screen.findByTestId('game-item-game_1659123456_abc')).toBeInTheDocument();
+      expect(screen.queryByTestId('game-item-game_1659223456_def')).not.toBeInTheDocument();
+    });
 
-    expect(screen.getByText('Lions vs Tigers')).toBeInTheDocument();
-    expect(screen.queryByText('Eagles vs Hawks')).not.toBeInTheDocument();
+    it('filters games by tournament badge when clicked', async () => {
+      render(<LoadGameModal isOpen={true} savedGames={createSampleGames()} {...mockHandlers} />);
+      const tournamentBadge = await screen.findByRole('button', { name: /Summer Cup/i });
+      fireEvent.click(tournamentBadge);
+      expect(await screen.findByTestId('game-item-game_1659223456_def')).toBeInTheDocument();
+      expect(screen.queryByTestId('game-item-game_1659123456_abc')).not.toBeInTheDocument();
+    });
+
+    it('clears badge filter when badge is clicked again', async () => {
+       render(<LoadGameModal isOpen={true} savedGames={createSampleGames()} {...mockHandlers} />);
+       const seasonBadge = await screen.findByRole('button', { name: /Spring League/i });
+       fireEvent.click(seasonBadge); // Apply filter
+       expect(screen.queryByTestId('game-item-game_1659223456_def')).not.toBeInTheDocument();
+       fireEvent.click(seasonBadge); // Click again to clear
+       expect(await screen.findByTestId('game-item-game_1659223456_def')).toBeInTheDocument(); // Other game should reappear
+    });
+
+    it('clears badge filter when search text is cleared', async () => {
+      render(<LoadGameModal isOpen={true} savedGames={createSampleGames()} {...mockHandlers} />);
+      const seasonBadge = await screen.findByRole('button', { name: /Spring League/i });
+      fireEvent.click(seasonBadge); // Apply badge filter
+      expect(screen.queryByTestId('game-item-game_1659223456_def')).not.toBeInTheDocument();
+      
+      const searchInput = screen.getByPlaceholderText(/Filter games/i);
+      fireEvent.change(searchInput, { target: { value: 'test' } }); // Enter search text
+      fireEvent.change(searchInput, { target: { value: '' } }); // Clear search text
+
+      // Both items should be visible again as filters are cleared
+      expect(await screen.findByTestId('game-item-game_1659123456_abc')).toBeInTheDocument();
+      expect(await screen.findByTestId('game-item-game_1659223456_def')).toBeInTheDocument();
+    });
   });
 
-  it('loads a game when the Load button is clicked', () => {
-    render(
-      <LoadGameModal
-        isOpen={true}
-        savedGames={createSampleGames()}
-        {...mockHandlers}
-      />
-    );
+  describe('Game Actions (Load/Delete)', () => {
+    it('loads a game when the Load button is clicked', async () => {
+      render(<LoadGameModal isOpen={true} savedGames={createSampleGames()} {...mockHandlers} />);
+      const lionsGameContainer = await screen.findByTestId('game-item-game_1659123456_abc');
+      const loadButton = within(lionsGameContainer).getByRole('button', { name: /Load/i });
+      fireEvent.click(loadButton);
+      expect(mockHandlers.onLoad).toHaveBeenCalledWith('game_1659123456_abc');
+      expect(mockHandlers.onClose).toHaveBeenCalled(); // Also check if modal closes
+    });
 
-    const lionsGameContainer = screen.getByText('Lions vs Tigers').closest('.space-y-4 > div') as HTMLElement;
-    if (!lionsGameContainer) throw new Error('Lions game container not found');
+    it('deletes a game when delete is confirmed', async () => {
+      render(<LoadGameModal isOpen={true} savedGames={createSampleGames()} {...mockHandlers} />);
+      const eaglesGameContainer = await screen.findByTestId('game-item-game_1659223456_def');
+      (window.confirm as jest.Mock).mockReturnValueOnce(true);
+      const optionsButton = within(eaglesGameContainer).getByTitle('Options');
+      fireEvent.click(optionsButton);
+      const deleteButton = await screen.findByRole('button', { name: /Delete/i });
+      fireEvent.click(deleteButton);
+      expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining('Eagles vs Hawks'));
+      expect(mockHandlers.onDelete).toHaveBeenCalledWith('game_1659223456_def');
+    });
 
-    const loadButton = within(lionsGameContainer).getByRole('button', { name: /Load/i });
-    fireEvent.click(loadButton);
-
-    expect(mockHandlers.onLoad).toHaveBeenCalledWith('game_1659123456_abc');
+    it('does not delete a game when delete is cancelled', async () => {
+      render(<LoadGameModal isOpen={true} savedGames={createSampleGames()} {...mockHandlers} />);
+      const eaglesGameContainer = await screen.findByTestId('game-item-game_1659223456_def');
+      (window.confirm as jest.Mock).mockReturnValueOnce(false);
+      const optionsButton = within(eaglesGameContainer).getByTitle('Options');
+      fireEvent.click(optionsButton);
+      const deleteButton = await screen.findByRole('button', { name: /Delete/i });
+      fireEvent.click(deleteButton);
+      expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining('Eagles vs Hawks'));
+      expect(mockHandlers.onDelete).not.toHaveBeenCalled();
+    });
   });
 
-  it('deletes a game when delete is confirmed', async () => {
-    // Render the component
-    render(
-      <LoadGameModal
-        isOpen={true}
-        savedGames={createSampleGames()}
-        {...mockHandlers}
-      />
-    );
+  describe('Import/Export/Backup Actions', () => {
+    // Individual game exports
+    it('calls onExportOneJson when Export JSON is clicked', async () => {
+       const gameIdToTest = 'game_1659123456_abc';
+       render(<LoadGameModal isOpen={true} savedGames={createSampleGames()} {...mockHandlers} />);
+       const gameContainer = await screen.findByTestId(`game-item-${gameIdToTest}`);
+       const optionsButton = within(gameContainer).getByTitle('Options');
+       
+       fireEvent.click(optionsButton);
+       
+       // Wait for the menu container using the new data-testid
+       const menuContainer = await screen.findByTestId(`game-item-menu-${gameIdToTest}`);
+       
+       // Find the button WITHIN the menu container
+       const exportJsonButton = within(menuContainer).getByRole('button', { name: /^Export JSON$/i }); 
+       fireEvent.click(exportJsonButton);
+       
+       expect(mockHandlers.onExportOneJson).toHaveBeenCalledWith(gameIdToTest);
+    });
 
-    // Find the specific game item container using data-testid
-    const eaglesGameContainer = await screen.findByTestId('game-item-game_1659223456_def');
-    expect(eaglesGameContainer).toBeInTheDocument();
+    it('calls onExportOneCsv when Export CSV is clicked', async () => {
+       const gameIdToTest = 'game_1659123456_abc';
+       render(<LoadGameModal isOpen={true} savedGames={createSampleGames()} {...mockHandlers} />);
+       const gameContainer = await screen.findByTestId(`game-item-${gameIdToTest}`);
+       const optionsButton = within(gameContainer).getByTitle('Options');
+       
+       fireEvent.click(optionsButton);
 
-    // Setup confirm mock now
-    (window.confirm as jest.Mock).mockReturnValueOnce(true);
+       // Wait for the menu container
+       const menuContainer = await screen.findByTestId(`game-item-menu-${gameIdToTest}`);
+       
+       // Find the button WITHIN the menu container
+       const exportCsvButton = within(menuContainer).getByRole('button', { name: /^Export CSV$/i });
+       fireEvent.click(exportCsvButton);
+       
+       expect(mockHandlers.onExportOneCsv).toHaveBeenCalledWith(gameIdToTest);
+    });
 
-    // Find and click the options button WITHIN the container
-    const optionsButton = within(eaglesGameContainer).getByTitle('Options');
-    fireEvent.click(optionsButton);
+    // Global actions
+    it('calls onExportAllJson when global Export JSON is clicked', () => {
+      render(<LoadGameModal isOpen={true} savedGames={createSampleGames()} {...mockHandlers} />);
+      const exportAllJsonButton = screen.getByRole('button', { name: /Export JSON$/i }); 
+      fireEvent.click(exportAllJsonButton);
+      expect(mockHandlers.onExportAllJson).toHaveBeenCalled();
+    });
 
-    // Find and click the delete button
-    const deleteButton = await screen.findByRole('button', { name: /Delete/i });
-    fireEvent.click(deleteButton);
+    it('calls onExportAllExcel when global Export CSV is clicked', () => {
+      render(<LoadGameModal isOpen={true} savedGames={createSampleGames()} {...mockHandlers} />);
+      const exportAllExcelButton = screen.getByRole('button', { name: /Export CSV$/i }); 
+      fireEvent.click(exportAllExcelButton);
+      expect(mockHandlers.onExportAllExcel).toHaveBeenCalled();
+    });
 
-    // Assertions
-    expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining('Eagles vs Hawks'));
-    expect(mockHandlers.onDelete).toHaveBeenCalledWith('game_1659223456_def');
-  });
+    it('calls exportFullBackup when Backup All Data is clicked', () => {
+      render(<LoadGameModal isOpen={true} savedGames={createSampleGames()} {...mockHandlers} />);
+      const backupButton = screen.getByRole('button', { name: /Backup All Data/i });
+      fireEvent.click(backupButton);
+      expect(require('@/utils/fullBackup').exportFullBackup).toHaveBeenCalled();
+    });
 
-  it('does not delete a game when delete is cancelled', async () => {
-    // Render
-    render(
-      <LoadGameModal
-        isOpen={true}
-        savedGames={createSampleGames()}
-        {...mockHandlers}
-      />
-    );
+    it('triggers file input click when Import button is clicked', () => {
+       render(<LoadGameModal isOpen={true} savedGames={{}} {...mockHandlers} />);
+       const fileInput = screen.getByTestId('import-json-input') as HTMLInputElement;
+       const clickSpy = jest.spyOn(fileInput, 'click').mockImplementation(() => {});
+       const importButton = screen.getByRole('button', { name: /^Import$/i });
+       fireEvent.click(importButton);
+       expect(clickSpy).toHaveBeenCalledTimes(1);
+       clickSpy.mockRestore();
+    });
 
-    // Find the specific game item container using data-testid
-    const eaglesGameContainer = await screen.findByTestId('game-item-game_1659223456_def');
-    expect(eaglesGameContainer).toBeInTheDocument();
+    it('triggers file input click when Restore button is clicked', () => {
+       render(<LoadGameModal isOpen={true} savedGames={{}} {...mockHandlers} />);
+       const restoreInput = screen.getByTestId('restore-backup-input') as HTMLInputElement;
+       const clickSpy = jest.spyOn(restoreInput, 'click').mockImplementation(() => {});
+       const restoreButton = screen.getByRole('button', { name: /Restore from Backup/i });
+       fireEvent.click(restoreButton);
+       expect(clickSpy).toHaveBeenCalledTimes(1);
+       clickSpy.mockRestore();
+    });
 
-    // Setup confirm mock now
-    (window.confirm as jest.Mock).mockReturnValueOnce(false);
+    describe('File Handling (Import/Restore)', () => {
+      let fileInput: HTMLInputElement;
+      let restoreInput: HTMLInputElement;
+      let alertSpy: jest.SpyInstance;
 
-    // Find and click the options button WITHIN the container
-    const optionsButton = within(eaglesGameContainer).getByTitle('Options');
-    fireEvent.click(optionsButton);
+      beforeEach(() => {
+        render(
+            <LoadGameModal isOpen={true} savedGames={createSampleGames()} {...mockHandlers} />
+        );
+        fileInput = screen.getByTestId('import-json-input') as HTMLInputElement;
+        restoreInput = screen.getByTestId('restore-backup-input') as HTMLInputElement;
+        alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {});
+      });
 
-    // Find and click the delete button
-    const deleteButton = await screen.findByRole('button', { name: /Delete/i });
-    fireEvent.click(deleteButton);
+      afterEach(() => {
+        alertSpy.mockRestore();
+      });
 
-    // Assertions
-    expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining('Eagles vs Hawks'));
-    expect(mockHandlers.onDelete).not.toHaveBeenCalled();
-  });
+      it('calls onImportJson with file content on successful import file selection', async () => {
+        const fileContent = JSON.stringify({ gameData: 'test' });
+        const file = new File([fileContent], 'import.json', { type: 'application/json' });
+        const mockReadAsText = jest.fn();
+        let capturedOnload: ((event: ProgressEvent<FileReader>) => void) | null = null;
+        const mockReader = {
+          set onload(handler: ((event: ProgressEvent<FileReader>) => void) | null) { capturedOnload = handler; },
+          onerror: null,
+          readAsText: mockReadAsText,
+          result: fileContent
+        };
+        const fileReaderSpy = jest.spyOn(window, 'FileReader').mockImplementation(() => mockReader as any);
+        
+        await act(async () => {
+          fireEvent.change(fileInput, { target: { files: [file] } });
+          if (capturedOnload) {
+             capturedOnload({ target: mockReader } as any); // Use 'as any' for type compatibility
+          }
+        });
 
-  it('filters games by season badge when clicked', async () => {
-    render(
-      <LoadGameModal
-        isOpen={true}
-        savedGames={createSampleGames()}
-        {...mockHandlers}
-      />
-    );
+        expect(mockReadAsText).toHaveBeenCalledWith(file);
+        expect(mockHandlers.onImportJson).toHaveBeenCalledWith(fileContent);
+        expect(alertSpy).not.toHaveBeenCalled();
+        fileReaderSpy.mockRestore();
+      });
 
-    // Find the season badge using the CORRECT name
-    const seasonBadge = await screen.findByRole('button', { name: /Spring League/i }); // Corrected name
-    fireEvent.click(seasonBadge);
+      it('shows alert on FileReader error during import', async () => {
+        const file = new File(['{}'], 'error.json', { type: 'application/json' });
+        const mockReadAsText = jest.fn();
+        let capturedOnerror: (() => void) | null = null;
+        const mockReader = {
+          onload: null,
+          set onerror(handler: (() => void) | null) { capturedOnerror = handler; },
+          readAsText: mockReadAsText,
+          error: new Error('Mock read error')
+        };
+        const fileReaderSpy = jest.spyOn(window, 'FileReader').mockImplementation(() => mockReader as any);
 
-    // Assertions
-    expect(await screen.findByText('Lions vs Tigers')).toBeInTheDocument();
-    expect(screen.queryByText('Eagles vs Hawks')).not.toBeInTheDocument(); 
-  });
+        await act(async () => {
+          fireEvent.change(fileInput, { target: { files: [file] } });
+          if (capturedOnerror) {
+             capturedOnerror();
+          }
+        });
 
-  it('filters games by tournament badge when clicked', async () => {
-    render(
-      <LoadGameModal
-        isOpen={true}
-        savedGames={sampleGames} // Pass games data
-        {...mockHandlers}
-      />
-    );
+        expect(mockReadAsText).toHaveBeenCalledWith(file);
+        expect(mockHandlers.onImportJson).not.toHaveBeenCalled();
+        expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining('Error reading file content'));
+        fileReaderSpy.mockRestore();
+      });
 
-    // Find and click the tournament badge
-    const tournamentBadge = await screen.findByRole('button', { name: /Summer Cup/i });
-    fireEvent.click(tournamentBadge);
+      it('shows alert on JSON processing error during import', async () => {
+         const invalidJsonContent = 'invalid json';
+         const file = new File([invalidJsonContent], 'invalid.json', { type: 'application/json' });
+         // Mock onImportJson to throw an error to simulate processing failure
+         mockHandlers.onImportJson.mockImplementationOnce(() => { throw new Error("Simulated processing error"); });
+         const mockReadAsText = jest.fn();
+         let capturedOnload: ((event: ProgressEvent<FileReader>) => void) | null = null;
+         const mockReader = { 
+           set onload(handler: ((event: ProgressEvent<FileReader>) => void) | null) { capturedOnload = handler; },
+           readAsText: mockReadAsText, 
+           result: invalidJsonContent 
+         };
+         const fileReaderSpy = jest.spyOn(window, 'FileReader').mockImplementation(() => mockReader as any);
 
-    // Assert that the correct game item IS present using data-testid
-    expect(await screen.findByTestId('game-item-game_1659223456_def')).toBeInTheDocument();
-    // Assert that the incorrect game item IS NOT present using data-testid
-    expect(screen.queryByTestId('game-item-game_1659123456_abc')).not.toBeInTheDocument();
-  });
+         await act(async () => {
+            fireEvent.change(fileInput, { target: { files: [file] } });
+            if (capturedOnload) {
+               capturedOnload({ target: mockReader } as any); // Use 'as any'
+            }
+         });
+         
+         // The alert should come from the catch block within handleFileSelected
+         expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining('Error processing file content')); 
+         fileReaderSpy.mockRestore();
+      });
 
-  it('indicates currently loaded game with a badge', () => {
-    render(
-      <LoadGameModal
-        isOpen={true}
-        savedGames={createSampleGames()}
-        currentGameId="game_1659123456_abc"
-        {...mockHandlers}
-      />
-    );
+      // Similar tests for handleRestoreFileSelected...
+      it('calls importFullBackup with file content on successful restore file selection', async () => {
+         const fileContent = JSON.stringify({ meta: { schema: 1 }, localStorage: {} });
+         const file = new File([fileContent], 'backup.json', { type: 'application/json' });
+         const importFullBackupMock = require('@/utils/fullBackup').importFullBackup;
+         const mockReadAsText = jest.fn();
+         let capturedOnload: ((event: ProgressEvent<FileReader>) => void) | null = null;
+         const mockReader = { 
+           set onload(handler: ((event: ProgressEvent<FileReader>) => void) | null) { capturedOnload = handler; },
+           readAsText: mockReadAsText, 
+           result: fileContent 
+         };
+         const fileReaderSpy = jest.spyOn(window, 'FileReader').mockImplementation(() => mockReader as any);
+         
+         await act(async () => {
+           fireEvent.change(restoreInput, { target: { files: [file] } });
+           if (capturedOnload) {
+             capturedOnload({ target: mockReader } as any); // Use 'as any'
+           }
+         });
 
-    const loadedGameContainer = screen.getByText('Lions vs Tigers').closest('.space-y-4 > div') as HTMLElement;
-    if (!loadedGameContainer) throw new Error('Loaded game container not found');
+         expect(mockReadAsText).toHaveBeenCalledWith(file);
+         expect(importFullBackupMock).toHaveBeenCalledWith(fileContent);
+         expect(alertSpy).not.toHaveBeenCalled();
+         fileReaderSpy.mockRestore();
+      });
 
-    expect(within(loadedGameContainer).getByText('Loaded')).toBeInTheDocument(); 
+      it('shows alert on FileReader error during restore', async () => {
+          const file = new File(['{}'], 'restore_error.json', { type: 'application/json' });
+          const importFullBackupMock = require('@/utils/fullBackup').importFullBackup;
+          const mockReadAsText = jest.fn();
+          let capturedOnerror: (() => void) | null = null;
+          // Do not define capturedOnload here for the error case
+          const mockReader = { 
+            // Do not provide an onload setter/getter for this error simulation
+            set onerror(handler: (() => void) | null) { 
+              capturedOnerror = handler;
+            },
+            readAsText: mockReadAsText, 
+            error: new Error('Mock restore read error') 
+          };
+          const fileReaderSpy = jest.spyOn(window, 'FileReader').mockImplementation(() => mockReader as any);
+
+          await act(async () => {
+            fireEvent.change(restoreInput, { target: { files: [file] } });
+            // Trigger onerror
+            if (capturedOnerror) {
+               capturedOnerror();
+            } else {
+               throw new Error("FileReader onerror handler was not set by the component"); 
+            }
+            // Do not attempt to trigger onload
+          });
+
+          expect(mockReadAsText).toHaveBeenCalledWith(file);
+          expect(importFullBackupMock).not.toHaveBeenCalled(); // Assert it wasn't called
+          expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining('Error reading file content'));
+          fileReaderSpy.mockRestore();
+      });
+
+      it('shows alert from importFullBackup on processing error during restore', async () => {
+         const fileContent = 'invalid json'; // Content that causes importFullBackup to fail
+         const file = new File([fileContent], 'restore_invalid.json', { type: 'application/json' });
+         const importFullBackupMock = require('@/utils/fullBackup').importFullBackup;
+         importFullBackupMock.mockImplementationOnce(() => { 
+           // Simulate importFullBackup showing its own alert and returning false
+           window.alert('Error importing full backup: Invalid format...'); 
+           return false; 
+         });
+         const mockReadAsText = jest.fn();
+         let capturedOnload: ((event: ProgressEvent<FileReader>) => void) | null = null;
+         const mockReader = { 
+           set onload(handler: ((event: ProgressEvent<FileReader>) => void) | null) { capturedOnload = handler; },
+           readAsText: mockReadAsText, 
+           result: fileContent 
+         };
+         const fileReaderSpy = jest.spyOn(window, 'FileReader').mockImplementation(() => mockReader as any);
+
+         await act(async () => {
+            fireEvent.change(restoreInput, { target: { files: [file] } });
+            if (capturedOnload) {
+               capturedOnload({ target: mockReader } as any); // Use 'as any'
+            }
+         });
+
+         expect(importFullBackupMock).toHaveBeenCalledWith(fileContent);
+         // Check the alert spy specifically for the message from importFullBackup
+         expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining('Error importing full backup: Invalid format...')); 
+         fileReaderSpy.mockRestore();
+      });
+    });
   });
 }); 

@@ -52,9 +52,12 @@ export const exportFullBackup = () => {
           console.log(`Backed up data for key: ${key}`);
         } catch (error) {
           console.error(`Error parsing localStorage item for key ${key}:`, error);
+          // Explicitly set to null on parsing error
+          backupData.localStorage[key as keyof FullBackupData['localStorage']] = null; 
         }
       } else {
-        console.log(`No data found for key: ${key}, skipping.`);
+        // Explicitly set to null if item doesn't exist
+        console.log(`No data found for key: ${key}, setting to null.`); 
         backupData.localStorage[key as keyof FullBackupData['localStorage']] = null;
       }
     });

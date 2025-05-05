@@ -241,11 +241,11 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
   const handleFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) {
-      console.log('No file selected');
+      // console.log('No file selected'); // Removed log
       return;
     }
 
-    console.log(`Attempting to read file: ${file.name}, size: ${file.size}`);
+    // console.log(`Attempting to read file: ${file.name}, size: ${file.size}`); // Removed log
 
     // --- Step 2: Use FileReader to read content ---
     const reader = new FileReader();
@@ -254,7 +254,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
       try {
         const jsonContent = e.target?.result as string;
         if (jsonContent) {
-          console.log('File read successfully, calling onImportJson.');
+          // console.log('File read successfully, calling onImportJson.'); // Removed log
           onImportJson(jsonContent); // Pass the content string to the handler prop
         } else {
           console.error('FileReader error: Result is null or empty.');
@@ -346,8 +346,9 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
               ref={fileInputRef}
               onChange={handleFileSelected}
               accept=".json"
-              style={{ display: 'none' }} // Visually hide the input
+              style={{ display: 'none' }}
               id="import-json-input"
+              data-testid="import-json-input"
             />
             {/* Import Button */}
             <button
@@ -452,9 +453,6 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                     formattedDate = gameData.gameDate || formattedDate;
                 }
                 
-                // DEBUG: Log gameData just before returning JSX for this item
-                console.log(`[LoadGameModal Render Map] Rendering item for gameId: ${gameId}`);
-                
                 const isCurrentlyLoaded = gameId === currentGameId;
                 const isMenuOpen = openMenuId === gameId;
 
@@ -540,6 +538,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                            <div 
                              ref={menuRef} 
                              className={`absolute right-0 mt-2 w-48 bg-slate-700 rounded-md shadow-lg py-1 z-10 border border-slate-600`}
+                             data-testid={`game-item-menu-${gameId}`}
                            >
                              
                              <button 
@@ -571,7 +570,9 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
             </div>
           ) : (
             <p className="text-slate-400 text-center py-8">
-              {t('loadGameModal.noGamesFound', 'No saved games match your filter.')}
+              {searchText || filterType 
+                 ? t('loadGameModal.noGamesFound', 'No saved games match your filter.') 
+                 : t('loadGameModal.noSavedGames', 'No games have been saved yet.')}
             </p>
           )}
         </div>
@@ -597,6 +598,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
               accept=".json"
               style={{ display: 'none' }}
               id="restore-backup-input"
+              data-testid="restore-backup-input"
             />
             {/* Restore Button - Reduced padding */}
             <button
