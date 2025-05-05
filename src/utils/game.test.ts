@@ -137,28 +137,51 @@ describe('validateGameState', () => {
   });
 
   it('should return false if required string fields are missing or not strings', () => {
-    expect(validateGameState(createValidGameState({ teamName: undefined }))).toBe(false);
-    // Cast invalid values to any within the test data object
-    expect(validateGameState(createValidGameState({ opponentName: null as any }))).toBe(false);
-    expect(validateGameState(createValidGameState({ gameDate: 123 as any }))).toBe(false);
+    let state = createValidGameState();
+    delete (state as Partial<GameState>).teamName; // Test missing
+    expect(validateGameState(state)).toBe(false);
+
+    state = createValidGameState();
+    state.opponentName = null as any; // Test null
+    expect(validateGameState(state)).toBe(false);
+
+    state = createValidGameState();
+    state.gameDate = 123 as any; // Test wrong type
+    expect(validateGameState(state)).toBe(false);
   });
 
   it('should return false if required number fields are missing or not numbers', () => {
-    expect(validateGameState(createValidGameState({ homeScore: undefined }))).toBe(false);
-    expect(validateGameState(createValidGameState({ awayScore: 'one' as any }))).toBe(false);
+    let state = createValidGameState();
+    delete (state as Partial<GameState>).homeScore; // Test missing
+    expect(validateGameState(state)).toBe(false);
+
+    state = createValidGameState();
+    state.awayScore = 'one' as any; // Test wrong type
+    expect(validateGameState(state)).toBe(false);
   });
 
   it('should return false if enum fields have invalid values', () => {
-      // Cast invalid values to any within the test data object
-      expect(validateGameState(createValidGameState({ homeOrAway: 'center' as any }))).toBe(false);
-      expect(validateGameState(createValidGameState({ gameStatus: 'paused' as any }))).toBe(false);
-      expect(validateGameState(createValidGameState({ numberOfPeriods: 3 as any }))).toBe(false);
+    let state = createValidGameState();
+    state.homeOrAway = 'center' as any; // Test invalid enum
+    expect(validateGameState(state)).toBe(false);
+
+    state = createValidGameState();
+    state.gameStatus = 'paused' as any; // Test invalid enum
+    expect(validateGameState(state)).toBe(false);
+
+    state = createValidGameState();
+    state.numberOfPeriods = 3 as any; // Test invalid enum
+    expect(validateGameState(state)).toBe(false);
   });
 
   it('should return false if required array fields are missing or not arrays', () => {
-    // Cast invalid values to any within the test data object
-    expect(validateGameState(createValidGameState({ playersOnField: null as any }))).toBe(false);
-    expect(validateGameState(createValidGameState({ availablePlayers: "player" as any }))).toBe(false);
+    let state = createValidGameState();
+    state.playersOnField = null as any; // Test null
+    expect(validateGameState(state)).toBe(false);
+
+    state = createValidGameState();
+    state.availablePlayers = "player" as any; // Test wrong type
+    expect(validateGameState(state)).toBe(false);
   });
 
   it('should return true even if optional fields are missing', () => {

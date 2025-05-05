@@ -180,11 +180,17 @@ describe('Player Validation', () => {
   });
 
   it('should invalidate a player object with incorrect property types', () => {
-    const invalidPlayer = createPlayer({
-      isGoalie: 'yes' as any
-    });
+    // Manually construct the invalid object for this test
+    const invalidPlayer = {
+      id: `player-${Date.now()}`,
+      name: 'Invalid Type Player',
+      jerseyNumber: '1',
+      isGoalie: 'yes', // Intentionally wrong type
+      notes: ''
+    };
     
-    const validation = validatePlayer(invalidPlayer);
+    // Cast the whole object to any before passing to validator for the test
+    const validation = validatePlayer(invalidPlayer as any);
     expect(validation.isValid).toBe(false);
     expect(validation.errors).toContain('isGoalie must be a boolean');
   });

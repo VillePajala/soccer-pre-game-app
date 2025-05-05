@@ -54,18 +54,6 @@ window.URL.revokeObjectURL = jest.fn((url: string) => {
   delete mockBlobStore[url];
 });
 
-// Mock document.createElement('a') and its click method
-const mockLink = {
-  href: '',
-  download: '',
-  click: jest.fn() as jest.Mock<() => void>,
-  // Use a more general mock signature for event listeners
-  addEventListener: jest.fn() as jest.Mock<(...args: any[]) => any>,
-  removeEventListener: jest.fn() as jest.Mock<(...args: any[]) => any>,
-  dispatchEvent: jest.fn() as jest.Mock<(...args: any[]) => boolean>,
-  style: {} as CSSStyleDeclaration,
-};
-
 // Mock document.body.appendChild/removeChild
 document.body.appendChild = jest.fn();
 document.body.removeChild = jest.fn();
@@ -84,22 +72,20 @@ window.location = {
   reload: jest.fn(), // Add mock reload function
 };
 
-// Mock setTimeout/clearTimeout
-const setTimeout = jest.spyOn(global, 'setTimeout');
-const clearTimeout = jest.spyOn(global, 'clearTimeout');
+// Mock setTimeout/clearTimeout - Use unknown or omit type for spies
+const setTimeoutSpy = jest.spyOn(global, 'setTimeout'); // Let Jest infer type
+const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
 
-// Define test data types to prevent implicit any errors
-interface GameData {
-  [key: string]: any;
+// Define test data types using unknown
+interface GameData { 
+  [key: string]: unknown; 
 }
-
-interface SettingsData {
-  [key: string]: any;
+interface SettingsData { 
+  [key: string]: unknown; 
 }
-
-type SeasonData = Array<{id: string, name: string, [key: string]: any}>;
-type TournamentData = Array<{id?: string, name?: string, [key: string]: any}>;
-type RosterData = Array<{id: string, name?: string, [key: string]: any}>;
+type SeasonData = Array<{id: string, name: string, [key: string]: unknown}>;
+type TournamentData = Array<{id?: string, name?: string, [key: string]: unknown}>;
+type RosterData = Array<{id: string, name?: string, [key: string]: unknown}>;
 
 describe('importFullBackup', () => {
   beforeEach(() => {
@@ -108,8 +94,8 @@ describe('importFullBackup', () => {
     localStorageMock.clear();
     (window.confirm as jest.Mock).mockClear();
     (window.location.reload as jest.Mock).mockClear();
-    setTimeout.mockClear();
-    clearTimeout.mockClear();
+    setTimeoutSpy.mockClear();
+    clearTimeoutSpy.mockClear();
     jest.useRealTimers(); // Ensure real timers are used unless explicitly faked
   });
 
@@ -163,11 +149,11 @@ describe('importFullBackup', () => {
     expect(alertMock).toHaveBeenCalledWith('Full backup restored successfully! The application will now reload.');
 
     // Verify reload was scheduled via setTimeout
-    expect(setTimeout).toHaveBeenCalledTimes(1);
-    expect(setTimeout).toHaveBeenLastCalledWith(expect.any(Function), 500);
+    expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
+    expect(setTimeoutSpy).toHaveBeenLastCalledWith(expect.any(Function), 500);
 
     // Verify the function passed to setTimeout calls reload
-    const reloadCallback = setTimeout.mock.calls[0][0]; // Get the callback function
+    const reloadCallback = setTimeoutSpy.mock.calls[0][0]; // Get the callback function
     reloadCallback(); // Execute the callback
     expect(window.location.reload).toHaveBeenCalledTimes(1); // Now check if reload was called
 
@@ -372,7 +358,7 @@ describe('importFullBackup', () => {
     expect(alertMock).toHaveBeenCalledWith('Full backup restored successfully! The application will now reload.');
     
     // Verify reload was scheduled
-    expect(setTimeout).toHaveBeenCalledTimes(1);
+    expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
     
     // Restore mocks
     alertMock.mockRestore();
