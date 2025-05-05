@@ -83,14 +83,9 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
     }
   }, [isOpen]);
 
-  // DEBUG: Log the received savedGames prop
-  console.log('[LoadGameModal] Received savedGames keys:', Object.keys(savedGames));
-
   // Filter logic updated to only use searchText
   const filteredGameIds = useMemo(() => {
     const initialIds = Object.keys(savedGames).filter(id => id !== DEFAULT_GAME_ID);
-    // DEBUG: Log initial IDs before filtering
-    console.log('[LoadGameModal useMemo] Initial game IDs:', initialIds);
     
     const filteredBySearch = initialIds.filter(id => { 
       const gameData = savedGames[id];
@@ -110,41 +105,22 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
         tournamentName.includes(lowerSearchText)
       );
     });
-    // DEBUG: Log IDs after search filter
-    console.log('[LoadGameModal useMemo] IDs after search filter:', filteredBySearch);
 
     const filteredByBadge = filteredBySearch.filter(id => { 
-      // DEBUG: Log check for specific game ID during badge filter
-      if (id === 'game_1659223456_def') {
-        console.log(`[LoadGameModal useMemo Badge Filter] Checking game ${id} (Eagles vs Hawks)`);
-        console.log(`  - filterType: ${filterType}, filterId: ${filterId}`);
-      }
-
-      if (!filterType || !filterId) return true; // No badge filter active
+      if (!filterType || !filterId) return true;
       const gameData = savedGames[id];
       if (!gameData) return false;
 
       let match = false;
       if (filterType === 'season') {
         match = gameData.seasonId === filterId;
-        if (id === 'game_1659223456_def') {
-          console.log(`  - Comparing filterId (${filterId}) with gameData.seasonId (${gameData.seasonId}) -> ${match}`);
-        }
       }
       if (filterType === 'tournament') {
         match = gameData.tournamentId === filterId;
-        if (id === 'game_1659223456_def') {
-          console.log(`  - Comparing filterId (${filterId}) with gameData.tournamentId (${gameData.tournamentId}) -> ${match}`);
-        }
       }
 
-      if (id === 'game_1659223456_def') {
-         console.log(`  - Badge filter result for ${id}: ${match}`);
-      }
       return match;
     });
-    // DEBUG: Log IDs after badge filter
-    console.log('[LoadGameModal useMemo] IDs after badge filter:', filteredByBadge);
 
     const sortedIds = filteredByBadge.sort((a, b) => {
       const gameA = savedGames[a];
@@ -177,8 +153,6 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
       // Fallback if dates are equal and timestamps can't be parsed
       return 0; 
     });
-    // DEBUG: Log final sorted IDs
-    console.log('[LoadGameModal useMemo] Final sorted game IDs:', sortedIds);
     return sortedIds;
   }, [savedGames, searchText, seasons, tournaments, filterType, filterId]);
 
@@ -241,21 +215,16 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
   const handleFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) {
-      // console.log('No file selected'); // Removed log
       return;
     }
 
-    // console.log(`Attempting to read file: ${file.name}, size: ${file.size}`); // Removed log
-
-    // --- Step 2: Use FileReader to read content ---
     const reader = new FileReader();
 
     reader.onload = (e) => {
       try {
         const jsonContent = e.target?.result as string;
         if (jsonContent) {
-          // console.log('File read successfully, calling onImportJson.'); // Removed log
-          onImportJson(jsonContent); // Pass the content string to the handler prop
+          onImportJson(jsonContent);
         } else {
           console.error('FileReader error: Result is null or empty.');
           alert(t('loadGameModal.importReadError', 'Error reading file content.'));
@@ -271,11 +240,8 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
       alert(t('loadGameModal.importReadError', 'Error reading file content.'));
     };
 
-    reader.readAsText(file); // Read the file as text
-    // --- End Step 2 --- 
-
-    // Clear the input value to allow re-selecting the same file
-    event.target.value = ''; // Use empty string instead of null
+    reader.readAsText(file);
+    event.target.value = '';
   };
   // --- End Step 1 Handlers ---
 

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 import { 
     SAVED_GAMES_KEY, 
     APP_SETTINGS_KEY, 
@@ -9,14 +9,15 @@ import {
 } from '../src/config/constants';
 
 // Helper function to get all relevant localStorage data from the browser context
-async function getLocalStorageData(page: any) {
+async function getLocalStorageData(page: Page): Promise<Record<string, any>> {
     return await page.evaluate(({ keys }: { keys: string[] }) => {
         const data: { [key: string]: any } = {};
         keys.forEach((key: string) => {
             const item = localStorage.getItem(key);
             try {
                 data[key] = item ? JSON.parse(item) : null;
-            } catch (e) {
+            } catch (parseError) {
+                console.warn(`Failed to parse localStorage item ${key}:`, parseError);
                 data[key] = item; // Store as raw string if JSON parse fails
             }
         });
@@ -40,7 +41,7 @@ test.describe('Data Safety - Backup & Restore', () => {
              [MASTER_ROSTER_KEY]: [{ id: 'p1', name: 'Test Player' }],
              [LAST_HOME_TEAM_NAME_KEY]: 'Test Team'
         };
-        await page.evaluate((data: any) => {
+        await page.evaluate((data: Record<string, any>) => {
              for (const key in data) {
                  if (data[key] !== null && data[key] !== undefined) {
                      localStorage.setItem(key, JSON.stringify(data[key]));
@@ -54,21 +55,6 @@ test.describe('Data Safety - Backup & Restore', () => {
         // --- Reload page to load initial data --- 
         await page.reload();
         console.log('Page reloaded after setting localStorage.');
-
-        // --- Handle the initial New Game Setup modal --- 
-        // Wait for the modal to appear (it always does on start)
-        console.log('Waiting for New Game Setup modal...');
-        const setupModalHeading = page.getByRole('heading', { name: 'Uuden Pelin Asetukset' });
-        await expect(setupModalHeading).toBeVisible({ timeout: 10000 });
-        console.log('New Game Setup modal is visible.');
-
-        // Click "Ohita" (Skip) to close it and reveal the main view
-        await page.getByRole('button', { name: 'Ohita' }).click();
-        console.log('Clicked Skip ("Ohita") button.');
-
-        // Wait for the modal overlay to disappear
-        await expect(page.locator('div.fixed.inset-0.bg-black.bg-opacity-70')).not.toBeVisible({ timeout: 5000 });
-        console.log('New Game Setup modal closed, main view should be accessible.');
     });
 
     test('should generate a backup file containing all relevant localStorage data', async ({ page }) => {
@@ -84,8 +70,12 @@ test.describe('Data Safety - Backup & Restore', () => {
         };
 
         // --- 2. Trigger Backup --- 
-        // Click settings button using title attribute locator (NO force needed now)
-        await page.locator('button[title="controlBar.settings"]').click(); // Removed force: true
+        const settingsButtonLocator = page.locator('button[title="controlBar.settings"]');
+        
+        // Wait for the button to be visible before clicking
+        await expect(settingsButtonLocator).toBeVisible({ timeout: 10000 }); 
+        console.log('Settings button is visible.');
+        await settingsButtonLocator.click();
         console.log('Clicked settings button.');
 
         // <<< RE-ADD EXPLICIT WAIT for menu dropdown >>>
@@ -126,11 +116,11 @@ test.describe('Data Safety - Backup & Restore', () => {
         expect(backupFileContentString, 'Should have captured backup content string via download').not.toBe('');
 
         // Parse the captured data
-        let downloadedBackupData: any; 
+        let downloadedBackupData: Record<string, any>; 
         try {
             downloadedBackupData = JSON.parse(backupFileContentString);
-        } catch (e: any) { 
-            throw new Error(`Failed to parse downloaded backup JSON: ${e.message}`);
+        } catch (parseError: any) { 
+            throw new Error(`Failed to parse downloaded backup JSON: ${parseError.message}`);
         }
 
         console.log('Successfully captured and parsed backup data via download event.');
@@ -176,11 +166,10 @@ test.describe('Data Safety - Backup & Restore', () => {
         };
         
         // Apply State A to localStorage
-        await page.evaluate((data: any) => {
+        await page.evaluate((data: Record<string, any>) => {
             for (const key in data) {
-                // Cast data to any for string indexing
-                if ((data as any)[key] !== null && (data as any)[key] !== undefined) {
-                     localStorage.setItem(key, JSON.stringify((data as any)[key]));
+                if (data[key] !== null && data[key] !== undefined) {
+                     localStorage.setItem(key, JSON.stringify(data[key]));
                  } else {
                      localStorage.removeItem(key);
                  }
@@ -202,8 +191,14 @@ test.describe('Data Safety - Backup & Restore', () => {
             window.location.reload = () => { console.log("Prevented page reload during test"); }; // Prevent reload
         });
         
-        // Open settings and load game dialog
-        await page.locator('button[title="controlBar.settings"]').click();
+        const settingsButtonLocator = page.locator('button[title="controlBar.settings"]');
+        
+        // Wait for the button to be visible before clicking
+        await expect(settingsButtonLocator).toBeVisible({ timeout: 10000 });
+        console.log('Settings button is visible for restore test.');
+        await settingsButtonLocator.click();
+        console.log('Clicked settings button for restore test.');
+
         await page.getByText('Lataa Peli').click();
         await expect(page.getByRole('heading', { name: /Lataa Peli/i })).toBeVisible();
         
@@ -234,11 +229,11 @@ test.describe('Data Safety - Backup & Restore', () => {
         console.log('Successfully captured real backup data via download event');
         
         // Parse the captured data
-        let capturedBackupData: any; // Use any or define a proper type/interface
+        let capturedBackupData: Record<string, any>; 
         try {
             capturedBackupData = JSON.parse(backupFileContentString);
-        } catch (e: any) { // Add type for error object
-            throw new Error(`Failed to parse captured backup JSON: ${e.message}`);
+        } catch (parseError: any) { 
+            throw new Error(`Failed to parse captured backup JSON: ${parseError.message}`);
         }
         
         // Basic structure checks on the *captured* data
@@ -272,11 +267,10 @@ test.describe('Data Safety - Backup & Restore', () => {
         };
         
         // Apply State B to localStorage
-        await page.evaluate((data: any) => {
+        await page.evaluate((data: Record<string, any>) => {
             for (const key in data) {
-                // Cast data to any for string indexing
-                if ((data as any)[key] !== null && (data as any)[key] !== undefined) {
-                     localStorage.setItem(key, JSON.stringify((data as any)[key]));
+                if (data[key] !== null && data[key] !== undefined) {
+                     localStorage.setItem(key, JSON.stringify(data[key]));
                  } else {
                      localStorage.removeItem(key);
                  }

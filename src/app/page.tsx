@@ -17,6 +17,8 @@ import GameSettingsModal from '@/components/GameSettingsModal';
 import { useTranslation } from 'react-i18next';
 import { useGameState, UseGameStateReturn } from '@/hooks/useGameState';
 import GameInfoBar from '@/components/GameInfoBar';
+// Import roster utility functions
+import { getMasterRoster, addPlayerToRoster, updatePlayerInRoster, removePlayerFromRoster, setPlayerGoalieStatus } from '@/utils/rosterUtils';
 
 // Define the Player type - Use relative coordinates
 export interface Player {
@@ -241,7 +243,6 @@ export default function Home() {
     handleOpponentMoveEnd,
     handleOpponentRemove,
     handleRenamePlayer, // Destructure the handler
-    handleToggleGoalie // Destructure the goalie handler
   }: UseGameStateReturn = useGameState({ initialState, saveStateToHistory, masterRosterKey: MASTER_ROSTER_KEY }); // <<< Pass the key
 
   // --- State Management (Remaining in Home component) ---
@@ -716,22 +717,18 @@ export default function Home() {
 
   // **** ADDED: Effect to prompt for setup if opponent name is default ****
   useEffect(() => {
-    // Only run this check after the initial load is complete
+    // Reverted check: Only run this check after the initial load is complete
     // and if the user hasn't explicitly skipped the setup
-    // REMOVED CHECK: and the modal isn't already open (e.g., from the load effect)
     // Check if opponent name is still the default after loading, and we haven't skipped.
     if (isLoaded && opponentName === 'Opponent' && !hasSkippedInitialSetup) {
-      console.log('Opponent name is default after load, prompting for setup...');
-      // Avoid reopening if it was just closed by the setup function
-      // We might need a more robust check here later if this isn't enough.
-      // For now, relying on opponentName having been updated by the load effect.
+      // console.log('Opponent name is default after load, prompting for setup...');
       setIsNewGameSetupModalOpen(true);
     }
-    // REMOVED isNewGameSetupModalOpen from dependencies
-  }, [isLoaded, opponentName, hasSkippedInitialSetup]); // Dependencies for the check
+  // Reverted dependency array
+  }, [isLoaded, opponentName, hasSkippedInitialSetup]); 
 
   // --- Player Management Handlers (Updated for relative coords) ---
-  // Wrapped handleDropOnField in useCallback as suggested (line 500)
+  // Wrapped handleDropOnField in useCallback as suggested
   const handleDropOnField = useCallback((playerId: string, relX: number, relY: number) => {
     const droppedPlayer = availablePlayers.find(p => p.id === playerId);
     if (droppedPlayer) {
@@ -1435,7 +1432,7 @@ export default function Home() {
         // Apply the loaded state
         setPlayersOnField(stateToLoad.playersOnField);
         setOpponents(stateToLoad.opponents || []);
-        setDrawings(stateToLoad.drawings);
+        setDrawings(stateToLoad.drawings || []);
         // REMOVED: setAvailablePlayers(stateToLoad.availablePlayers || []);
         setShowPlayerNames(stateToLoad.showPlayerNames);
         setTeamName(stateToLoad.teamName || initialState.teamName);
@@ -1952,50 +1949,105 @@ export default function Home() {
 
   
   const handleSetJerseyNumber = useCallback((playerId: string, number: string) => {
-    const updatedAvailable = availablePlayers.map(p => p.id === playerId ? { ...p, jerseyNumber: number } : p);
-    const updatedOnField = playersOnField.map(p => p.id === playerId ? { ...p, jerseyNumber: number } : p);
-
-    setAvailablePlayers(updatedAvailable);
-    setPlayersOnField(updatedOnField);
-    // Save updated global roster
-    localStorage.setItem(MASTER_ROSTER_KEY, JSON.stringify(updatedAvailable));
-    // Save only playersOnField change to game history (if needed)
-    saveStateToHistory({ playersOnField: updatedOnField });
-    console.log(`Set jersey number for ${playerId} to ${number}`);
-  }, [availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField, saveStateToHistory]);
+    const updatedPlayer = updatePlayerInRoster(playerId, { jerseyNumber: number });
+    if (updatedPlayer) {
+      // Update local state based on the successful utility call result
+      setAvailablePlayers(prev => prev.map(p => p.id === playerId ? updatedPlayer : p));
+      setPlayersOnField(prev => prev.map(p => p.id === playerId ? { ...p, jerseyNumber: number } : p)); // Update field too
+      saveStateToHistory({ playersOnField: playersOnField.map(p => p.id === playerId ? { ...p, jerseyNumber: number } : p) });
+      console.log(`Set jersey number for ${playerId} to ${number}`);
+    } else {
+      console.error(`Failed to update jersey number for player ${playerId}`);
+      // Optionally show error to user
+    }
+  }, [playersOnField, saveStateToHistory]); // Removed availablePlayers/setAvailablePlayers dependency
 
   const handleSetPlayerNotes = useCallback((playerId: string, notes: string) => {
-    const updatedAvailable = availablePlayers.map(p => p.id === playerId ? { ...p, notes: notes } : p);
-    // Notes likely don't need to be tracked for playersOnField unless displayed there
-
-    setAvailablePlayers(updatedAvailable);
-    // Save updated global roster
-    localStorage.setItem(MASTER_ROSTER_KEY, JSON.stringify(updatedAvailable));
-    // No game history change needed for notes unless they affect playersOnField
-    // saveStateToHistory({ availablePlayers: updatedAvailable /*, playersOnField: updatedOnField */ });
-    console.log(`Set notes for ${playerId}`);
-    // Removed playersOnField dependencies as they aren't used
-  }, [availablePlayers, setAvailablePlayers, /* playersOnField, setPlayersOnField, */ /* saveStateToHistory */]);
+    const updatedPlayer = updatePlayerInRoster(playerId, { notes: notes });
+    if (updatedPlayer) {
+       setAvailablePlayers(prev => prev.map(p => p.id === playerId ? updatedPlayer : p));
+       console.log(`Set notes for ${playerId}`);
+       // No game history change needed unless notes affect playersOnField display
+    } else {
+      console.error(`Failed to update notes for player ${playerId}`);
+    }
+  }, [/* availablePlayers, setAvailablePlayers */]); // Removed dependencies
 
   const handleRemovePlayerFromRoster = useCallback((playerId: string) => {
-    if (window.confirm(`Are you sure you want to remove player ${availablePlayers.find(p=>p.id === playerId)?.name ?? playerId} from the roster? This cannot be undone easily.`)) {
-      const updatedAvailable = availablePlayers.filter(p => p.id !== playerId);
-      const updatedOnField = playersOnField.filter(p => p.id !== playerId); // Also remove from field
-      const updatedSelectedIds = selectedPlayerIds.filter(id => id !== playerId); // Also remove from selection
+    const playerName = availablePlayers.find(p => p.id === playerId)?.name ?? playerId;
+    if (window.confirm(t('common.confirmRemovePlayer', `Are you sure you want to remove player {{playerName}} from the roster? This cannot be undone easily.`, { playerName }))) {
+      const success = removePlayerFromRoster(playerId);
+      if (success) {
+        // Update local state based on successful removal
+        const updatedAvailable = availablePlayers.filter(p => p.id !== playerId);
+        const updatedOnField = playersOnField.filter(p => p.id !== playerId);
+        const updatedSelectedIds = selectedPlayerIds.filter(id => id !== playerId);
 
-      setAvailablePlayers(updatedAvailable);
-      setPlayersOnField(updatedOnField);
-      setSelectedPlayerIds(updatedSelectedIds); // Update selection state
-      // Save updated global roster
-      console.log('[Remove Player] Attempting to save roster to localStorage...'); // <<< LOG
-      localStorage.setItem(MASTER_ROSTER_KEY, JSON.stringify(updatedAvailable));
-      console.log('[Remove Player] Roster saved to localStorage.'); // <<< LOG
-      // Save field and selection changes to game history
-      saveStateToHistory({ playersOnField: updatedOnField, selectedPlayerIds: updatedSelectedIds });
-      console.log(`Removed player ${playerId} from roster, field, and selection.`);
+        setAvailablePlayers(updatedAvailable);
+        setPlayersOnField(updatedOnField);
+        setSelectedPlayerIds(updatedSelectedIds);
+        saveStateToHistory({ playersOnField: updatedOnField, selectedPlayerIds: updatedSelectedIds });
+        console.log(`Removed player ${playerId} from roster, field, and selection.`);
+      } else {
+        console.error(`Failed to remove player ${playerId} from roster.`);
+        // Optionally show error
+      }
     }
-    // Added selectedPlayerIds and setSelectedPlayerIds dependencies
-  }, [availablePlayers, playersOnField, selectedPlayerIds, setAvailablePlayers, setPlayersOnField, setSelectedPlayerIds, saveStateToHistory]);
+  }, [availablePlayers, playersOnField, selectedPlayerIds, saveStateToHistory, t]); // Removed set state dependencies
+
+  // Use addPlayerToRoster utility
+  const handleAddPlayer = useCallback((playerData: { name: string; jerseyNumber: string; notes: string; nickname: string }) => {
+    const addedPlayer = addPlayerToRoster(playerData); 
+    if (addedPlayer) {
+      // Update local state with the player returned by the utility
+      setAvailablePlayers(prev => [...prev, addedPlayer]);
+      // Add to selection and history
+      const updatedSelectedIds = [...selectedPlayerIds, addedPlayer.id];
+      setSelectedPlayerIds(updatedSelectedIds);
+      saveStateToHistory({ selectedPlayerIds: updatedSelectedIds });
+      console.log(`Added new player: ${addedPlayer.name} (ID: ${addedPlayer.id}). Saved roster and updated selection.`);
+    } else {
+      console.error(`Failed to add player ${playerData.name} to roster.`);
+      // Optionally show error
+    }
+  }, [selectedPlayerIds, saveStateToHistory]); // Removed availablePlayers/setAvailablePlayers dependency
+
+  // --- Goalie Toggle Handler --- 
+  const handleToggleGoalie = useCallback((playerId: string) => {
+    const player = availablePlayers.find(p => p.id === playerId);
+    if (!player) return;
+    const targetGoalieStatus = !player.isGoalie;
+    
+    // Use utility function
+    const updatedPlayer = setPlayerGoalieStatus(playerId, targetGoalieStatus);
+    
+    if (updatedPlayer) {
+        // Update availablePlayers state based on the full roster returned by utility
+        setAvailablePlayers(getMasterRoster()); // Re-fetch the whole roster to ensure sync
+        
+        // Update playersOnField state
+        setPlayersOnField(prev => prev.map(p => {
+            if (p.id === playerId) return { ...p, isGoalie: targetGoalieStatus };
+            // If we are setting a new goalie, ensure any other player on field is unset
+            if (targetGoalieStatus && p.isGoalie) return { ...p, isGoalie: false }; 
+            return p;
+        }));
+
+        // Save the field change to history (availablePlayers change is global)
+        // Must re-calculate the updated field state accurately here
+        const newPlayersOnField = playersOnField.map(p => {
+             if (p.id === playerId) return { ...p, isGoalie: targetGoalieStatus };
+             if (targetGoalieStatus && p.isGoalie) return { ...p, isGoalie: false };
+             return p;
+         });
+        saveStateToHistory({ playersOnField: newPlayersOnField });
+
+    } else {
+        console.error(`Failed to toggle goalie status for player ${playerId}`);
+    }
+  }, [availablePlayers, playersOnField, saveStateToHistory]); // Removed set state dependencies
+
+  // --- END Roster Management Handlers ---
 
   // --- NEW: Handler to Award Fair Play Card ---
   const handleAwardFairPlayCard = useCallback((playerId: string | null) => {
@@ -2081,33 +2133,6 @@ export default function Home() {
     saveStateToHistory({ selectedPlayerIds: newSelectedIds }); // Save selection to history
     console.log(`Updated selected players: ${newSelectedIds.length} players`);
   }, [selectedPlayerIds, saveStateToHistory]); // Dependencies
-
-  // --- Handler to Add a Player to the Roster (Updated) ---
-  const handleAddPlayer = useCallback((playerData: { name: string; jerseyNumber: string; notes: string; nickname: string }) => {
-    const newPlayer: Player = {
-        id: `player-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-        name: playerData.name,
-        nickname: playerData.nickname, // Add nickname
-        jerseyNumber: playerData.jerseyNumber,
-        notes: playerData.notes,
-        isGoalie: false, // Default new players to not be goalies
-        // relX, relY will be undefined initially
-    };
-
-    const updatedAvailable = [...availablePlayers, newPlayer];
-    setAvailablePlayers(updatedAvailable); // Update state hook
-    // Save updated global roster
-    console.log('[Add Player] Attempting to save roster to localStorage...'); // <<< LOG
-    localStorage.setItem(MASTER_ROSTER_KEY, JSON.stringify(updatedAvailable));
-    console.log('[Add Player] Roster saved to localStorage.'); // <<< LOG
-    // Add the new player to the current game's selection automatically
-    const updatedSelectedIds = [...selectedPlayerIds, newPlayer.id];
-    setSelectedPlayerIds(updatedSelectedIds);
-    // Save the selection change to game history
-    saveStateToHistory({ selectedPlayerIds: updatedSelectedIds });
-    console.log(`Added new player: ${newPlayer.name} (ID: ${newPlayer.id}). Saved roster and updated selection.`);
-    // Added selectedPlayerIds, setSelectedPlayerIds dependencies
-  }, [availablePlayers, selectedPlayerIds, setAvailablePlayers, setSelectedPlayerIds, saveStateToHistory]);
 
   // --- NEW: Quick Save Handler ---
   const handleQuickSaveGame = useCallback(() => {
