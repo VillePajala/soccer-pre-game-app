@@ -435,7 +435,7 @@ describe('LoadGameModal', () => {
           readAsText: mockReadAsText,
           result: fileContent
         };
-        const fileReaderSpy = jest.spyOn(window, 'FileReader').mockImplementation(() => mockReader as any);
+        const fileReaderSpy = jest.spyOn(window, 'FileReader').mockImplementation(() => mockReader as unknown as FileReader);
         
         await act(async () => {
           fireEvent.change(fileInput, { target: { files: [file] } });
@@ -460,7 +460,7 @@ describe('LoadGameModal', () => {
           readAsText: mockReadAsText,
           error: new Error('Mock read error')
         };
-        const fileReaderSpy = jest.spyOn(window, 'FileReader').mockImplementation(() => mockReader as any);
+        const fileReaderSpy = jest.spyOn(window, 'FileReader').mockImplementation(() => mockReader as unknown as FileReader);
 
         await act(async () => {
           fireEvent.change(fileInput, { target: { files: [file] } });
@@ -486,7 +486,7 @@ describe('LoadGameModal', () => {
            readAsText: mockReadAsText, 
            result: invalidJsonContent 
          };
-         const fileReaderSpy = jest.spyOn(window, 'FileReader').mockImplementation(() => mockReader as any);
+         const fileReaderSpy = jest.spyOn(window, 'FileReader').mockImplementation(() => mockReader as unknown as FileReader);
 
          await act(async () => {
             fireEvent.change(fileInput, { target: { files: [file] } });
@@ -510,7 +510,7 @@ describe('LoadGameModal', () => {
            readAsText: mockReadAsText, 
            result: fileContent 
          };
-         const fileReaderSpy = jest.spyOn(window, 'FileReader').mockImplementation(() => mockReader as any);
+         const fileReaderSpy = jest.spyOn(window, 'FileReader').mockImplementation(() => mockReader as unknown as FileReader);
          
          await act(async () => {
            fireEvent.change(restoreInput, { target: { files: [file] } });
@@ -525,14 +525,11 @@ describe('LoadGameModal', () => {
          fileReaderSpy.mockRestore();
       });
 
-      // TODO: Skipping this test - reliably mocking FileReader.onerror without triggering onload 
-      // proves difficult with current setup. Consider E2E test for this path.
       it.skip('shows alert on FileReader error during restore', async () => {
           const file = new File(['{}'], 'restore_error.json', { type: 'application/json' });
           const { importFullBackup: importFullBackupMock } = jest.requireMock('@/utils/fullBackup');
-          
           const readAsTextSpy = jest.spyOn(FileReader.prototype, 'readAsText');
-          let capturedOnError: ((ev: ProgressEvent<FileReader>) => any) | null = null; // Use correct type
+          let capturedOnError: ((ev: ProgressEvent<FileReader>) => void) | null = null;
 
           readAsTextSpy.mockImplementation(function(this: FileReader) {
             if (typeof this.onerror === 'function') {
@@ -542,7 +539,7 @@ describe('LoadGameModal', () => {
             }
             if (capturedOnError) {
                Object.defineProperty(this, 'error', { value: new Error('Mock read error') });
-               capturedOnError({} as ProgressEvent<FileReader>); // Call with dummy event
+               capturedOnError({} as ProgressEvent<FileReader>);
             }
           });
 
@@ -577,7 +574,7 @@ describe('LoadGameModal', () => {
            readAsText: mockReadAsText, 
            result: fileContent 
          };
-         const fileReaderSpy = jest.spyOn(window, 'FileReader').mockImplementation(() => mockReader as any);
+         const fileReaderSpy = jest.spyOn(window, 'FileReader').mockImplementation(() => mockReader as unknown as FileReader);
 
          await act(async () => {
             fireEvent.change(restoreInput, { target: { files: [file] } });

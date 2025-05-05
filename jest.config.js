@@ -1,35 +1,35 @@
-module.exports = {
-  preset: 'ts-jest', // Re-add the preset
-  testEnvironment: 'jsdom', // Use jsdom for browser-like environment (mocks localStorage, etc.)
-  testPathIgnorePatterns: [
-    '<rootDir>/node_modules/',
-    '<rootDir>/.next/',
-    '<rootDir>/tests/' // Ignore Playwright tests in the 'tests' directory
-  ],
+import nextJest from 'next/jest.js'; // Use .js extension
+
+const createJestConfig = nextJest({
+  // Provide the path to your Next.js app to load next.config.js and .env files in your test environment
+  dir: './',
+});
+
+// Add any custom config to be passed to Jest
+/** @type {import('jest').Config} */
+const customJestConfig = {
+  // Add more setup options before each test is run
+  setupFilesAfterEnv: ['<rootDir>/src/setupTests.js'], // Keep using .js
+  
+  testEnvironment: 'jest-environment-jsdom',
   moduleNameMapper: {
-    // Handle module path aliases (like @/) if you have them in tsconfig.json
-    // Example: '^@/(.*)$': '<rootDir>/src/$1'
-    // Adjust this line based on your actual tsconfig.json path aliases
-    '^@/(.*)$': '<rootDir>/src/$1' 
+    '^@/(.*)$': '<rootDir>/src/$1',
   },
-  // Setup file to run before each test for global mocks and DOM matchers
-  setupFilesAfterEnv: ['<rootDir>/src/setupTests.js'],
-  // Use babel-jest to transform js, jsx, ts, and tsx files
-  transform: {
-    // Use ts-jest for ts and tsx files, configuring JSX handling
-    '^.+\\.(ts|tsx)$': ['ts-jest', {
-      // Explicitly tell ts-jest to use react-jsx within its tsconfig override
-      tsconfig: {
-        jsx: 'react-jsx',
-        // Import helpers is sometimes needed with module interop issues
-        importHelpers: true, 
-      }
-    }],
-    // If you have other file types requiring transformation (e.g., CSS modules), add them here
-  },
-  // Correctly escaped regex for ignore patterns
-  transformIgnorePatterns: [
-    '/node_modules/', // Keep ignoring node_modules by default
-    '\\\\.pnp\\\\.[^\\\\]+$', // Correctly escape backslashes for .pnp.js
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/.next/',
+    '<rootDir>/tests/', // Ignore Playwright specs
   ],
-}; 
+  collectCoverageFrom: [
+    'src/**/*.{js,jsx,ts,tsx}',
+    '!src/**/*.d.ts',
+    '!src/**/*.stories.{js,jsx,ts,tsx}'
+  ],
+  // Add transform for ts-jest if needed, but next/jest should handle it
+  // transform: {
+  //   '^.+\\.(ts|tsx)$?': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.json' }],
+  // },
+};
+
+// createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
+export default createJestConfig(customJestConfig); 
