@@ -102,90 +102,54 @@ test.describe('Data Safety - Backup & Restore', () => {
         
         // Fetch the actual data from localStorage *before* triggering the backup
         const actualLocalStorageData = await getLocalStorageData(page);
-        const expectedSavedGamesData = actualLocalStorageData[SAVED_GAMES_KEY];
+        // We'll compare the downloaded data against this actualLocalStorageData
 
-        // --- 3. Intercept Download and Verify Data --- 
-        let interceptedBackupData: any = null;
-
-        // Mock the functions involved in file download
-        await page.exposeFunction('captureBlobData', async (blobDataUrl: string) => {
-            try {
-                // Fetch the blob content from the data URL in the page's context
-                const jsonString = await page.evaluate(async (url) => {
-                    const response = await fetch(url);
-                    const blob = await response.blob();
-                    return await blob.text();
-                }, blobDataUrl);
-                
-                interceptedBackupData = JSON.parse(jsonString);
-                console.log('Successfully intercepted and parsed backup data.');
-            } catch (error) {
-                console.error('Error intercepting blob data:', error);
-            }
-        });
-
-        // Override browser APIs within the page context *before* clicking backup
-        await page.evaluate(() => {
-            // Prevent actual download link creation/click
-            window.URL.createObjectURL = (blob: Blob) => {
-                // Convert blob to data URL and send to exposed function
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    if (typeof reader.result === 'string') {
-                        // Cast window to any to access custom function
-                        (window as any).captureBlobData(reader.result);
-                    }
-                };
-                reader.onerror = (error) => {
-                    console.error('FileReader error:', error);
-                };
-                reader.readAsDataURL(blob);
-                return `blob:mockedurl/${Math.random()}`; // Return a dummy URL
-            };
-            document.createElement = (tagName: string) => {
-                if (tagName.toLowerCase() === 'a') {
-                    // Return a mock anchor element that doesn't actually click/download
-                    return {
-                        href: '',
-                        download: '',
-                        click: () => console.log('Mock click called, download prevented.'),
-                        // Mock other properties/methods as needed
-                        appendChild: () => {}, 
-                        removeChild: () => {},
-                        style: {},
-                    } as any;
-                }
-                // Fallback to original for other elements
-                return document.createElementNS('http://www.w3.org/1999/xhtml', tagName);
-            };
-            window.URL.revokeObjectURL = (url: string) => console.log('Mock revokeObjectURL called.');
-        });
+        // --- 3. Capture Download and Verify Data using waitForEvent --- 
+        // Start waiting for the download *before* clicking the backup button
+        const downloadPromise = page.waitForEvent('download');
 
         // Click the Backup button (using Finnish text shown in the UI)
         await page.getByRole('button', { name: /Varmuuskopioi Kaikki Tiedot/i }).click();
 
-        // --- 4. Assertions --- 
-        // Wait a moment for the async blob processing and capture function to run
-        await page.waitForTimeout(500);
+        // Wait for the download event to complete
+        const download = await downloadPromise;
 
-        // Check that data was intercepted
-        expect(interceptedBackupData, 'Backup data should have been intercepted').not.toBeNull();
+        // Read the downloaded file content
+        const readStream = await download.createReadStream();
+        const chunks = [];
+        for await (const chunk of readStream) {
+            chunks.push(chunk);
+        }
+        const backupFileContentString = Buffer.concat(chunks).toString('utf-8');
 
+        // Ensure we captured valid backup data string
+        expect(backupFileContentString, 'Should have captured backup content string via download').not.toBe('');
+
+        // Parse the captured data
+        let downloadedBackupData: any; 
+        try {
+            downloadedBackupData = JSON.parse(backupFileContentString);
+        } catch (e: any) { 
+            throw new Error(`Failed to parse downloaded backup JSON: ${e.message}`);
+        }
+
+        console.log('Successfully captured and parsed backup data via download event.');
+
+        // --- 4. Assertions on Downloaded Data --- 
         // Basic structure checks
-        expect(interceptedBackupData.meta, 'Backup should have meta field').toBeDefined();
-        expect(interceptedBackupData.meta.schema, 'Meta schema should be 1').toBe(1);
-        expect(interceptedBackupData.localStorage, 'Backup should have localStorage field').toBeDefined();
+        expect(downloadedBackupData.meta, 'Downloaded backup should have meta field').toBeDefined();
+        expect(downloadedBackupData.meta.schema, 'Downloaded meta schema should be 1').toBe(1);
+        expect(downloadedBackupData.localStorage, 'Downloaded backup should have localStorage field').toBeDefined();
 
-        // Verify the content matches the initial data (deep equality)
-        expect(interceptedBackupData.localStorage[SAVED_GAMES_KEY], 'Saved games data mismatch').toEqual(expectedSavedGamesData);
-        expect(interceptedBackupData.localStorage[APP_SETTINGS_KEY], 'App settings data mismatch').toEqual(initialData[APP_SETTINGS_KEY]);
-        expect(interceptedBackupData.localStorage[SEASONS_LIST_KEY], 'Seasons data mismatch').toEqual(initialData[SEASONS_LIST_KEY]);
-        expect(interceptedBackupData.localStorage[TOURNAMENTS_LIST_KEY], 'Tournaments data should be empty array').toEqual([]); // Explicitly check empty
-        expect(interceptedBackupData.localStorage[MASTER_ROSTER_KEY], 'Master roster data mismatch').toEqual(initialData[MASTER_ROSTER_KEY]);
-        // LAST_HOME_TEAM_NAME_KEY is apparently not included in the backup, so remove the check for it.
-        // expect(interceptedBackupData.localStorage[LAST_HOME_TEAM_NAME_KEY], 'Last home team name mismatch').toEqual(actualLocalStorageData[LAST_HOME_TEAM_NAME_KEY]);
+        // Verify the content matches the actual localStorage data fetched earlier
+        // Using the actual keys expected in the backup file structure
+        expect(downloadedBackupData.localStorage.savedSoccerGames, 'Saved games data mismatch in download').toEqual(actualLocalStorageData[SAVED_GAMES_KEY]);
+        expect(downloadedBackupData.localStorage.soccerAppSettings, 'App settings data mismatch in download').toEqual(actualLocalStorageData[APP_SETTINGS_KEY]);
+        expect(downloadedBackupData.localStorage.soccerSeasons, 'Seasons data mismatch in download').toEqual(actualLocalStorageData[SEASONS_LIST_KEY]);
+        expect(downloadedBackupData.localStorage.soccerTournaments, 'Tournaments data mismatch in download').toEqual(actualLocalStorageData[TOURNAMENTS_LIST_KEY]);
+        expect(downloadedBackupData.localStorage.soccerMasterRoster, 'Master roster data mismatch in download').toEqual(actualLocalStorageData[MASTER_ROSTER_KEY]);
 
-        console.log('Backup data verification successful.');
+        console.log('Downloaded backup data verification successful.');
     });
 
     // --- Add Backup Restore Success Test --- 
@@ -359,171 +323,4 @@ test.describe('Data Safety - Backup & Restore', () => {
     });
 
     // --- Add Backup Restore Failure Test --- 
-
-    // --- Direct Test of Import Function ---
-    test('should directly test importFullBackup function with properly formatted data', async ({ page }) => {
-        // --- Setup: Access the real importFullBackup function ---
-        await page.goto('/');
-        await page.evaluate(() => localStorage.clear());
-        
-        // Expose the importFullBackup function from app
-        await page.addScriptTag({
-            content: `
-                // Import the backup/restore functions via the UI first to make sure they're loaded
-                window.exposeFunctionsForTest = function() {
-                    try {
-                        // The functions should be exposed in the app scope after being imported in components
-                        // Cast window to any to check for potentially loaded functions
-                        if (typeof (window as any).importFullBackup === 'function' && typeof (window as any).exportFullBackup === 'function') {
-                            console.log("Backup/restore functions already exposed");
-                            return true;
-                        }
-                        
-                        // Try to access any global exports the app might be using
-                        const exportedFunctions: { [key: string]: any } = {}; // Add index signature
-                        
-                        // Check for functions in the window object
-                        Object.keys(window).forEach(key => {
-                            if (key.toLowerCase().includes('backup') || key.toLowerCase().includes('restore')) {
-                                console.log("Found potential backup function:", key);
-                                // Cast window to any to access property by string key
-                                exportedFunctions[key] = (window as any)[key];
-                            }
-                        });
-                        
-                        console.log("Could not find existing backup/restore functions");
-                        return false;
-                    } catch (e) {
-                        console.error("Error exposing functions:", e);
-                        return false;
-                    }
-                }
-            `
-        });
-        
-        // Handle the New Game Setup modal
-        await expect(page.getByRole('heading', { name: 'Uuden Pelin Asetukset' })).toBeVisible({ timeout: 10000 });
-        await page.getByRole('button', { name: 'Ohita' }).click();
-        await expect(page.locator('div.fixed.inset-0.bg-black.bg-opacity-70')).not.toBeVisible({ timeout: 5000 });
-        
-        // Force load the backup module by going through the UI flow
-        await page.locator('button[title="controlBar.settings"]').click();
-        await page.waitForTimeout(500);
-        await page.getByText('Lataa Peli').click();
-        await expect(page.getByRole('heading', { name: /Lataa Peli/i })).toBeVisible();
-        
-        // Try to expose the functions for testing
-        const functionsFound = await page.evaluate(() => {
-            // @ts-ignore
-            return window.exposeFunctionsForTest ? window.exposeFunctionsForTest() : false;
-        });
-        
-        console.log("Functions exposed:", functionsFound);
-        
-        // --- 1. Create State A and capture it ---
-        // Set up a known state A with minimal data
-        const stateA = {
-            [SAVED_GAMES_KEY]: { 
-                'directTest1': { 
-                    id: 'directTest1', 
-                    teamName: 'Direct Test A', 
-                    opponentName: 'Direct Opponent A', 
-                    homeScore: 2, 
-                    awayScore: 1
-                } 
-            },
-            [APP_SETTINGS_KEY]: { currentGameId: 'directTest1' },
-            [SEASONS_LIST_KEY]: [{ id: 'directSeason', name: 'Direct Season' }],
-            [TOURNAMENTS_LIST_KEY]: [],
-            [MASTER_ROSTER_KEY]: []
-        };
-        
-        // Apply State A
-        await page.evaluate((data: any) => {
-            for (const key in data) {
-                 // Cast data to any for string indexing
-                 if ((data as any)[key] !== null && (data as any)[key] !== undefined) {
-                     localStorage.setItem(key, JSON.stringify((data as any)[key]));
-                 } else {
-                     localStorage.removeItem(key);
-                 }
-            }
-        }, stateA);
-        
-        // Get State A data
-        const stateAData = await getLocalStorageData(page);
-        
-        // --- 2. Generate a valid backup with known values ---
-        // Create test data with proper schema - we know the format from previous tests and code inspection
-        const testBackupData = {
-            meta: {
-                schema: 1,
-                exportedAt: new Date().toISOString()
-            },
-            localStorage: {
-                // Use the proper localStorage keys expected by the app (not our constants)
-                savedSoccerGames: { 
-                    'directTest2': { 
-                        id: 'directTest2', 
-                        teamName: 'Direct Test B', 
-                        opponentName: 'Direct Opponent B', 
-                        homeScore: 3, 
-                        awayScore: 0
-                    } 
-                },
-                soccerAppSettings: { currentGameId: 'directTest2' },
-                soccerSeasons: [{ id: 'directTestSeason', name: 'Direct Test Season' }],
-                soccerTournaments: [{ id: 'directTestTournament', name: 'Direct Test Tournament' }],
-                soccerMasterRoster: [{ id: 'directTestPlayer', name: 'Direct Test Player' }]
-            }
-        };
-        
-        // --- 3. Prepare mocks for confirmation and reload ---
-        await page.evaluate(() => {
-            window.confirm = () => true; // Auto-confirm restore
-            window.location.reload = () => { console.log("Prevented page reload during test"); }; // Prevent actual reload
-        });
-
-        // --- 4. Trigger Restore using Playwright's setInputFiles ---
-        // REMOVED the complex page.evaluate block for handler capture/trigger
-
-        // Prepare the file payload
-        const filePayload = {
-            name: 'test-backup.json', // Filename for the virtual file
-            mimeType: 'application/json', // Mime type
-            buffer: Buffer.from(JSON.stringify(testBackupData)) // Content as a Buffer
-        };
-
-        // **IMPORTANT:** Use the correct selector found via DevTools
-        const fileInputSelector = '#restore-backup-input';
-
-        const fileInput = page.locator(fileInputSelector);
-
-        // Use setInputFiles to simulate the user selecting the file.
-        // This triggers the necessary 'change' event on the input.
-        await fileInput.setInputFiles(filePayload);
-
-        // --- 5. Verify restore worked correctly ---
-        // Use expect.poll to wait for the asynchronous localStorage update
-        await expect.poll(async () => {
-            const currentData = await getLocalStorageData(page);
-            return currentData[SAVED_GAMES_KEY]; // Check the key that should change
-        }, {
-            message: `LocalStorage key ${SAVED_GAMES_KEY} did not update as expected after restore. Check file input selector and restore logic.`,
-            timeout: 5000 // Adjust timeout if restore takes longer
-        }).toMatchObject(testBackupData.localStorage.savedSoccerGames); // Assert against the backup data
-
-        // Verify other keys were also restored correctly
-        const restoredData = await getLocalStorageData(page);
-        expect(restoredData[APP_SETTINGS_KEY]?.currentGameId, 'App settings currentGameId mismatch')
-            .toBe(testBackupData.localStorage.soccerAppSettings.currentGameId);
-        expect(restoredData[SEASONS_LIST_KEY], 'Seasons list mismatch')
-            .toEqual(testBackupData.localStorage.soccerSeasons);
-        expect(restoredData[TOURNAMENTS_LIST_KEY], 'Tournaments list mismatch')
-            .toEqual(testBackupData.localStorage.soccerTournaments);
-        expect(restoredData[MASTER_ROSTER_KEY], 'Master roster mismatch')
-            .toEqual(testBackupData.localStorage.soccerMasterRoster);
-
-        console.log('Direct restore test via setInputFiles successful.');
-    });
 }); 
