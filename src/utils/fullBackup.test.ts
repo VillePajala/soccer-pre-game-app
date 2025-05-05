@@ -65,12 +65,12 @@ window.alert = jest.fn();
 Object.defineProperty(window, 'confirm', { value: jest.fn() });
 
 // Mock window.location.reload safely
-// Explicitly type originalLocation
 const originalLocation: Location = window.location;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 delete (window as any).location; // Need to delete first to reassign
 window.location = { 
-  ...originalLocation, // Spread original properties
-  reload: jest.fn(), // Add mock reload function
+  ...originalLocation, 
+  reload: jest.fn(), 
 };
 
 // Mock setTimeout/clearTimeout - Let Jest infer the spy types
