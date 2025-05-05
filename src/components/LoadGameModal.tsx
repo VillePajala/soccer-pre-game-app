@@ -83,72 +83,104 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
     }
   }, [isOpen]);
 
+  // DEBUG: Log the received savedGames prop
+  console.log('[LoadGameModal] Received savedGames keys:', Object.keys(savedGames));
+
   // Filter logic updated to only use searchText
   const filteredGameIds = useMemo(() => {
-    return Object.keys(savedGames)
-      .filter(id => id !== DEFAULT_GAME_ID)
-      .filter(id => { // Filter by Search Text
-        const gameData = savedGames[id];
-        if (!gameData) return false;
-        if (!searchText) return true;
-        const lowerSearchText = searchText.toLowerCase();
-        const teamName = (gameData.teamName || '').toLowerCase();
-        const opponentName = (gameData.opponentName || '').toLowerCase();
-        const gameDate = (gameData.gameDate || '').toLowerCase();
-        const seasonName = seasons.find(s => s.id === gameData.seasonId)?.name.toLowerCase() || '';
-        const tournamentName = tournaments.find(tourn => tourn.id === gameData.tournamentId)?.name.toLowerCase() || '';
-        return (
-          teamName.includes(lowerSearchText) ||
-          opponentName.includes(lowerSearchText) ||
-          gameDate.includes(lowerSearchText) ||
-          seasonName.includes(lowerSearchText) ||
-          tournamentName.includes(lowerSearchText)
-        );
-      })
-      .filter(id => { // Filter by Active Season/Tournament Badge
-        if (!filterType || !filterId) return true; // No badge filter active
-        const gameData = savedGames[id];
-        if (!gameData) return false;
-        if (filterType === 'season') {
-          return gameData.seasonId === filterId;
-        }
-        if (filterType === 'tournament') {
-          return gameData.tournamentId === filterId;
-        }
-        return false; // Should not happen
-      })
-      .sort((a, b) => {
-        const gameA = savedGames[a];
-        const gameB = savedGames[b];
-        
-        // Primary sort: by date in descending order (newest first)
-        const dateA = gameA.gameDate ? new Date(gameA.gameDate).getTime() : 0;
-        const dateB = gameB.gameDate ? new Date(gameB.gameDate).getTime() : 0;
+    const initialIds = Object.keys(savedGames).filter(id => id !== DEFAULT_GAME_ID);
+    // DEBUG: Log initial IDs before filtering
+    console.log('[LoadGameModal useMemo] Initial game IDs:', initialIds);
+    
+    const filteredBySearch = initialIds.filter(id => { 
+      const gameData = savedGames[id];
+      if (!gameData) return false;
+      if (!searchText) return true;
+      const lowerSearchText = searchText.toLowerCase();
+      const teamName = (gameData.teamName || '').toLowerCase();
+      const opponentName = (gameData.opponentName || '').toLowerCase();
+      const gameDate = (gameData.gameDate || '').toLowerCase();
+      const seasonName = seasons.find(s => s.id === gameData.seasonId)?.name.toLowerCase() || '';
+      const tournamentName = tournaments.find(tourn => tourn.id === gameData.tournamentId)?.name.toLowerCase() || '';
+      return (
+        teamName.includes(lowerSearchText) ||
+        opponentName.includes(lowerSearchText) ||
+        gameDate.includes(lowerSearchText) ||
+        seasonName.includes(lowerSearchText) ||
+        tournamentName.includes(lowerSearchText)
+      );
+    });
+    // DEBUG: Log IDs after search filter
+    console.log('[LoadGameModal useMemo] IDs after search filter:', filteredBySearch);
 
-        if (dateB !== dateA) {
-          // Handle cases where one date is missing (put games without date last)
-          if (!dateA) return 1;
-          if (!dateB) return -1;
-          return dateB - dateA;
-        }
+    const filteredByBadge = filteredBySearch.filter(id => { 
+      // DEBUG: Log check for specific game ID during badge filter
+      if (id === 'game_1659223456_def') {
+        console.log(`[LoadGameModal useMemo Badge Filter] Checking game ${id} (Eagles vs Hawks)`);
+        console.log(`  - filterType: ${filterType}, filterId: ${filterId}`);
+      }
 
-        // Secondary sort: by timestamp in game ID (descending, newest first)
-        // Extract timestamp assuming format "game_TIMESTAMP_RANDOM"
-        try {
-          const timestampA = parseInt(a.split('_')[1], 10);
-          const timestampB = parseInt(b.split('_')[1], 10);
-          
-          if (!isNaN(timestampA) && !isNaN(timestampB)) {
-            return timestampB - timestampA;
-          }
-        } catch (error) {
-          console.warn("Could not parse timestamps from game IDs for secondary sort:", a, b, error);
+      if (!filterType || !filterId) return true; // No badge filter active
+      const gameData = savedGames[id];
+      if (!gameData) return false;
+
+      let match = false;
+      if (filterType === 'season') {
+        match = gameData.seasonId === filterId;
+        if (id === 'game_1659223456_def') {
+          console.log(`  - Comparing filterId (${filterId}) with gameData.seasonId (${gameData.seasonId}) -> ${match}`);
         }
+      }
+      if (filterType === 'tournament') {
+        match = gameData.tournamentId === filterId;
+        if (id === 'game_1659223456_def') {
+          console.log(`  - Comparing filterId (${filterId}) with gameData.tournamentId (${gameData.tournamentId}) -> ${match}`);
+        }
+      }
+
+      if (id === 'game_1659223456_def') {
+         console.log(`  - Badge filter result for ${id}: ${match}`);
+      }
+      return match;
+    });
+    // DEBUG: Log IDs after badge filter
+    console.log('[LoadGameModal useMemo] IDs after badge filter:', filteredByBadge);
+
+    const sortedIds = filteredByBadge.sort((a, b) => {
+      const gameA = savedGames[a];
+      const gameB = savedGames[b];
+      
+      // Primary sort: by date in descending order (newest first)
+      const dateA = gameA.gameDate ? new Date(gameA.gameDate).getTime() : 0;
+      const dateB = gameB.gameDate ? new Date(gameB.gameDate).getTime() : 0;
+
+      if (dateB !== dateA) {
+        // Handle cases where one date is missing (put games without date last)
+        if (!dateA) return 1;
+        if (!dateB) return -1;
+        return dateB - dateA;
+      }
+
+      // Secondary sort: by timestamp in game ID (descending, newest first)
+      // Extract timestamp assuming format "game_TIMESTAMP_RANDOM"
+      try {
+        const timestampA = parseInt(a.split('_')[1], 10);
+        const timestampB = parseInt(b.split('_')[1], 10);
         
-        // Fallback if dates are equal and timestamps can't be parsed
-        return 0; 
-      });
-  }, [savedGames, searchText, seasons, tournaments, filterType, filterId]); // Added dependencies
+        if (!isNaN(timestampA) && !isNaN(timestampB)) {
+          return timestampB - timestampA;
+        }
+      } catch (error) {
+        console.warn("Could not parse timestamps from game IDs for secondary sort:", a, b, error);
+      }
+      
+      // Fallback if dates are equal and timestamps can't be parsed
+      return 0; 
+    });
+    // DEBUG: Log final sorted IDs
+    console.log('[LoadGameModal useMemo] Final sorted game IDs:', sortedIds);
+    return sortedIds;
+  }, [savedGames, searchText, seasons, tournaments, filterType, filterId]);
 
   const handleDeleteClick = (gameId: string, gameName: string) => {
     // Use a confirmation dialog
@@ -378,7 +410,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
             <div className="space-y-4">
               {filteredGameIds.map((gameId) => {
                 const gameData = savedGames[gameId];
-                if (!gameData) return null; // Skip if data is missing
+                if (!gameData) return null; 
 
                 // Find Season/Tournament Name
                 const season = seasons.find(s => s.id === gameData.seasonId);
@@ -419,6 +451,9 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                     // Fallback to original string if formatting fails
                     formattedDate = gameData.gameDate || formattedDate;
                 }
+                
+                // DEBUG: Log gameData just before returning JSX for this item
+                console.log(`[LoadGameModal Render Map] Rendering item for gameId: ${gameId}`);
                 
                 return (
                   <div 
@@ -494,6 +529,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                              setOpenMenuId(openMenuId === gameId ? null : gameId);
                           }}
                           className="p-1.5 text-slate-400 hover:text-slate-200 rounded-full hover:bg-slate-600/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-indigo-500"
+                          title={t('common.options', 'Options')}
                         >
                            <HiOutlineEllipsisVertical className="w-5 h-5" />
                         </button>
