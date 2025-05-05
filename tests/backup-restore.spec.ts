@@ -207,9 +207,10 @@ test.describe('Data Safety - Backup & Restore', () => {
         await page.getByText('Lataa Peli').click();
         await expect(page.getByRole('heading', { name: /Lataa Peli/i })).toBeVisible();
         
-        // Get State A from localStorage *before* backup for later comparison during restore
-        const stateAData = await getLocalStorageData(page);
-        console.log('Captured original State A data for later verification');
+        // Get the ACTUAL localStorage state *just before* triggering the backup
+        // This will include stateA + any state from beforeEach
+        const preBackupState = await getLocalStorageData(page);
+        console.log('Captured pre-backup state for verification');
         
         // Start waiting for the download *before* clicking the button
         const downloadPromise = page.waitForEvent('download');
@@ -245,13 +246,14 @@ test.describe('Data Safety - Backup & Restore', () => {
         expect(capturedBackupData.meta.schema, 'Captured meta schema should be 1').toBe(1);
         expect(capturedBackupData.localStorage, 'Captured backup should have localStorage field').toBeDefined();
         
-        // Verify the captured backup content matches State A (using the actual keys from backup structure)
-        expect(capturedBackupData.localStorage.savedSoccerGames, 'Saved games data mismatch in captured backup').toEqual(stateA[SAVED_GAMES_KEY]);
-        expect(capturedBackupData.localStorage.soccerAppSettings, 'App settings data mismatch in captured backup').toEqual(stateA[APP_SETTINGS_KEY]);
-        expect(capturedBackupData.localStorage.soccerSeasons, 'Seasons data mismatch in captured backup').toEqual(stateA[SEASONS_LIST_KEY]);
-        expect(capturedBackupData.localStorage.soccerTournaments, 'Tournaments data mismatch in captured backup').toEqual(stateA[TOURNAMENTS_LIST_KEY]);
-        expect(capturedBackupData.localStorage.soccerMasterRoster, 'Master roster data mismatch in captured backup').toEqual(stateA[MASTER_ROSTER_KEY]);
-        
+        // Verify the captured backup content matches the preBackupState
+        expect(capturedBackupData.localStorage.savedSoccerGames, 'Saved games data mismatch in captured backup').toEqual(preBackupState[SAVED_GAMES_KEY]);
+        expect(capturedBackupData.localStorage.soccerAppSettings, 'App settings data mismatch in captured backup').toEqual(preBackupState[APP_SETTINGS_KEY]);
+        expect(capturedBackupData.localStorage.soccerSeasons, 'Seasons data mismatch in captured backup').toEqual(preBackupState[SEASONS_LIST_KEY]);
+        expect(capturedBackupData.localStorage.soccerTournaments, 'Tournaments data mismatch in captured backup').toEqual(preBackupState[TOURNAMENTS_LIST_KEY]);
+        expect(capturedBackupData.localStorage.soccerMasterRoster, 'Master roster data mismatch in captured backup').toEqual(preBackupState[MASTER_ROSTER_KEY]);
+        console.log('Verified captured backup matches pre-backup state.');
+
         // --- 3. Change to a different state (State B) ---
         const stateB = {
             [SAVED_GAMES_KEY]: { 
@@ -285,7 +287,7 @@ test.describe('Data Safety - Backup & Restore', () => {
         // Verify we are indeed in State B before restore
         const stateBData = await getLocalStorageData(page);
         expect(stateBData[SAVED_GAMES_KEY], 'Should be in State B before restore').toEqual(stateB[SAVED_GAMES_KEY]);
-        expect(stateBData[SAVED_GAMES_KEY]).not.toEqual(stateAData[SAVED_GAMES_KEY]); // Double check it's different from A
+        expect(stateBData[SAVED_GAMES_KEY]).not.toEqual(preBackupState[SAVED_GAMES_KEY]); // Check different from pre-backup
         
         // --- 4. Restore from backup using setInputFiles ---
         // Prepare the file payload using the *string content captured earlier*
@@ -302,24 +304,24 @@ test.describe('Data Safety - Backup & Restore', () => {
         // Set the input - this triggers the app's restore logic
         await fileInput.setInputFiles(filePayload);
         
-        // --- 5. Verify we're back to State A ---
+        // --- 5. Verify we're back to the preBackupState ---
         // Use expect.poll for reliable waiting
         await expect.poll(async () => {
             const currentData = await getLocalStorageData(page);
-            return currentData[SAVED_GAMES_KEY]; // Check a key that should revert to State A
+            return currentData[SAVED_GAMES_KEY];
         }, {
-            message: `LocalStorage key ${SAVED_GAMES_KEY} did not revert to State A after restore`,
+            message: `LocalStorage key ${SAVED_GAMES_KEY} did not revert to pre-backup state after restore`,
             timeout: 5000
-        }).toEqual(stateAData[SAVED_GAMES_KEY]); // Compare against originally captured State A
-        
-        // Verify all other keys also match the original State A data
+        }).toEqual(preBackupState[SAVED_GAMES_KEY]); // Compare against the state captured *before* backup
+
+        // Verify all other keys also match the preBackupState
         const restoredData = await getLocalStorageData(page);
-        expect(restoredData[APP_SETTINGS_KEY], 'App settings not restored correctly').toEqual(stateAData[APP_SETTINGS_KEY]);
-        expect(restoredData[SEASONS_LIST_KEY], 'Seasons list not restored correctly').toEqual(stateAData[SEASONS_LIST_KEY]);
-        expect(restoredData[TOURNAMENTS_LIST_KEY], 'Tournaments list not restored correctly').toEqual(stateAData[TOURNAMENTS_LIST_KEY]);
-        expect(restoredData[MASTER_ROSTER_KEY], 'Master roster not restored correctly').toEqual(stateAData[MASTER_ROSTER_KEY]);
-        
-        console.log('Successfully verified restore returned to State A using downloaded backup');
+        expect(restoredData[APP_SETTINGS_KEY], 'App settings not restored correctly').toEqual(preBackupState[APP_SETTINGS_KEY]);
+        expect(restoredData[SEASONS_LIST_KEY], 'Seasons list not restored correctly').toEqual(preBackupState[SEASONS_LIST_KEY]);
+        expect(restoredData[TOURNAMENTS_LIST_KEY], 'Tournaments list not restored correctly').toEqual(preBackupState[TOURNAMENTS_LIST_KEY]);
+        expect(restoredData[MASTER_ROSTER_KEY], 'Master roster not restored correctly').toEqual(preBackupState[MASTER_ROSTER_KEY]);
+
+        console.log('Successfully verified restore returned to pre-backup state using downloaded backup');
     });
 
     // --- Add Backup Restore Failure Test --- 
