@@ -65,7 +65,8 @@ window.alert = jest.fn();
 Object.defineProperty(window, 'confirm', { value: jest.fn() });
 
 // Mock window.location.reload safely
-const originalLocation = window.location;
+// Explicitly type originalLocation
+const originalLocation: Location = window.location;
 delete (window as any).location; // Need to delete first to reassign
 window.location = { 
   ...originalLocation, // Spread original properties
