@@ -72,9 +72,9 @@ window.location = {
   reload: jest.fn(), // Add mock reload function
 };
 
-// Mock setTimeout/clearTimeout - Explicitly type spies
-const setTimeoutSpy = jest.spyOn(global, 'setTimeout') as jest.SpyInstance<NodeJS.Timeout, [callback: (...args: any[]) => void, ms?: number | undefined, ...args: any[]]>;
-const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout') as jest.SpyInstance<void, [timeoutId?: NodeJS.Timeout | undefined]>;
+// Mock setTimeout/clearTimeout - Let Jest infer the spy types
+const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
+const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
 
 // Define test data types using unknown
 // Replace empty interfaces with direct usage of Record
