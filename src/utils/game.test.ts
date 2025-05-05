@@ -142,11 +142,11 @@ describe('validateGameState', () => {
     expect(validateGameState(state)).toBe(false);
 
     state = createValidGameState();
-    state.opponentName = null as any; // Test null
+    state.opponentName = null as any; // Test null - keep 'as any' here for the test
     expect(validateGameState(state)).toBe(false);
 
     state = createValidGameState();
-    state.gameDate = 123 as any; // Test wrong type
+    state.gameDate = 123 as any; // Test wrong type - keep 'as any' here for the test
     expect(validateGameState(state)).toBe(false);
   });
 
@@ -156,31 +156,31 @@ describe('validateGameState', () => {
     expect(validateGameState(state)).toBe(false);
 
     state = createValidGameState();
-    state.awayScore = 'one' as any; // Test wrong type
+    state.awayScore = 'one' as any; // Test wrong type - keep 'as any' here for the test
     expect(validateGameState(state)).toBe(false);
   });
 
   it('should return false if enum fields have invalid values', () => {
     let state = createValidGameState();
-    state.homeOrAway = 'center' as any; // Test invalid enum
+    state.homeOrAway = 'center' as any; // Test invalid enum - keep 'as any' here for the test
     expect(validateGameState(state)).toBe(false);
 
     state = createValidGameState();
-    state.gameStatus = 'paused' as any; // Test invalid enum
+    state.gameStatus = 'paused' as any; // Test invalid enum - keep 'as any' here for the test
     expect(validateGameState(state)).toBe(false);
 
     state = createValidGameState();
-    state.numberOfPeriods = 3 as any; // Test invalid enum
+    state.numberOfPeriods = 3 as any; // Test invalid enum - keep 'as any' here for the test
     expect(validateGameState(state)).toBe(false);
   });
 
   it('should return false if required array fields are missing or not arrays', () => {
     let state = createValidGameState();
-    state.playersOnField = null as any; // Test null
+    state.playersOnField = null as any; // Test null - keep 'as any' here for the test
     expect(validateGameState(state)).toBe(false);
 
     state = createValidGameState();
-    state.availablePlayers = "player" as any; // Test wrong type
+    state.availablePlayers = "player" as any; // Test wrong type - keep 'as any' here for the test
     expect(validateGameState(state)).toBe(false);
   });
 
@@ -220,8 +220,6 @@ describe('migrateGameState', () => {
   });
 
   it('should add default values for newly added fields during migration from undefined version', () => {
-    // Define old state as Partial, avoid `as any` for player objects if possible
-    // If Player type is complex, using `any` within the test data might be acceptable
     const oldState: Partial<GameState> = {
       teamName: "Old Team",
       opponentName: "Old Opp",
@@ -233,7 +231,8 @@ describe('migrateGameState', () => {
       periodDurationMinutes: 8,
       currentPeriod: 2,
       gameStatus: "periodEnd",
-      playersOnField: [{ id: 'p1', name: 'Old Player' }], // Keep simple object for test
+      // Keep simple object structures for players in test data
+      playersOnField: [{ id: 'p1', name: 'Old Player' }], 
       availablePlayers: [{ id: 'p1', name: 'Old Player' }, { id: 'p2', name: 'Old Bench'}],
       selectedPlayerIds: ['p1'],
       opponents: [],
@@ -242,7 +241,6 @@ describe('migrateGameState', () => {
       showPlayerNames: false,
     };
 
-    // Cast only when calling the function if necessary
     const migratedState = migrateGameState(oldState as GameState); 
 
     expect(migratedState.teamName).toBe("Old Team");

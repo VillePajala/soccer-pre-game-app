@@ -77,15 +77,26 @@ const setTimeoutSpy = jest.spyOn(global, 'setTimeout'); // Let Jest infer type
 const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
 
 // Define test data types using unknown
-interface GameData { 
-  [key: string]: unknown; 
+interface GameData extends Record<string, unknown> {} // Use Record for index signature
+interface SettingsData extends Record<string, unknown> {} // Use Record
+
+// More specific types for array elements
+interface SeasonObject extends Record<string, unknown> {
+  id: string;
+  name: string;
 }
-interface SettingsData { 
-  [key: string]: unknown; 
+interface TournamentObject extends Record<string, unknown> {
+  id?: string;
+  name?: string;
 }
-type SeasonData = Array<{id: string, name: string, [key: string]: unknown}>;
-type TournamentData = Array<{id?: string, name?: string, [key: string]: unknown}>;
-type RosterData = Array<{id: string, name?: string, [key: string]: unknown}>;
+interface RosterPlayer extends Record<string, unknown> {
+  id: string;
+  name?: string;
+}
+
+type SeasonData = Array<SeasonObject>;
+type TournamentData = Array<TournamentObject>;
+type RosterData = Array<RosterPlayer>;
 
 describe('importFullBackup', () => {
   beforeEach(() => {

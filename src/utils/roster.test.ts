@@ -189,8 +189,8 @@ describe('Player Validation', () => {
       notes: ''
     };
     
-    // Cast the whole object to any before passing to validator for the test
-    const validation = validatePlayer(invalidPlayer as any);
+    // Cast the whole object to any before passing to validator for the test - REMOVE CAST
+    const validation = validatePlayer(invalidPlayer); 
     expect(validation.isValid).toBe(false);
     expect(validation.errors).toContain('isGoalie must be a boolean');
   });
