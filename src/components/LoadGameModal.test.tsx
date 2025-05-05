@@ -1,10 +1,9 @@
 import React from 'react';
-import { render, screen, fireEvent, within, findByText, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, within, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import LoadGameModal from './LoadGameModal';
 import { SavedGamesCollection, Season, Tournament, AppState } from '@/app/page';
-import { SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY, SAVED_GAMES_KEY } from '@/config/constants';
-import { HiOutlineEllipsisVertical } from 'react-icons/hi2';
+import { SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY } from '@/config/constants';
 
 // Improved Mock for react-i18next hook
 jest.mock('react-i18next', () => ({
@@ -45,9 +44,7 @@ jest.mock('react-i18next', () => ({
         let translation = translations[key as keyof typeof translations] || key;
         if (params && translation) {
           Object.keys(params).forEach((paramKey) => {
-            // Handle simple replacement
             translation = translation.replace(`{{${paramKey}}}`, params[paramKey]);
-            // Handle nested objects/defaults (e.g., { gameName: 'Game 1' })
             if (typeof params[paramKey] === 'object' && params[paramKey] !== null) {
                Object.keys(params[paramKey]).forEach((nestedKey) => {
                  translation = translation.replace(`{{${nestedKey}}}`, params[paramKey][nestedKey]);
@@ -211,7 +208,7 @@ describe('LoadGameModal Integration', () => {
   });
 
   it('loads a game when the Load button is clicked', () => {
-    const { container } = render(
+    render(
       <LoadGameModal
         isOpen={true}
         savedGames={createSampleGames()}
@@ -330,7 +327,7 @@ describe('LoadGameModal Integration', () => {
   });
 
   it('indicates currently loaded game with a badge', () => {
-    const { container } = render(
+    render(
       <LoadGameModal
         isOpen={true}
         savedGames={createSampleGames()}

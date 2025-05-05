@@ -8,18 +8,85 @@ import {
   MASTER_ROSTER_KEY 
 } from '@/config/constants'; // Using path alias from jest.config.js
 
-// Mock localStorage (Jest uses jsdom which provides a basic mock)
+// Mock localStorage globally for all tests in this file
 const localStorageMock = (() => {
-  let store: { [key: string]: string } = {};
+  let store: Record<string, string> = {};
   return {
-    getItem: (key: string) => store[key] || null,
-    setItem: (key: string, value: string) => { store[key] = value.toString(); },
-    removeItem: (key: string) => { delete store[key]; },
-    clear: () => { store = {}; },
-    getStore: () => store // Helper to inspect the mock store
+    getItem: jest.fn((key: string) => store[key] || null),
+    setItem: jest.fn((key: string, value: string) => { store[key] = String(value); }),
+    removeItem: jest.fn((key: string) => { delete store[key]; }),
+    clear: jest.fn(() => { store = {}; }),
+    getAll: jest.fn(() => store), // Expose method to check the whole store
+    // Fix any type - use unknown for generic error
+    throwErrorOnSet: jest.fn((key: string, error: unknown = new Error('Storage error')) => {
+      localStorageMock.setItem.mockImplementationOnce((k, v) => {
+        if (k === key) throw error;
+        store[k] = String(v);
+      });
+    }),
+    getQuotaExceededError: jest.fn(() => {
+      // Simulate DOMException for quota exceeded by creating a similar object
+      const error = {
+        name: 'QuotaExceededError',
+        message: 'Simulated Quota Exceeded', // Add a message
+        // code: 22, // code is often read-only, might not be needed for checks
+      };
+      return error; // Return the mock error object
+    }),
+    length: { // Mock length property if needed by code under test
+      get: jest.fn(() => Object.keys(store).length)
+    },
+    key: jest.fn((index: number) => Object.keys(store)[index] || null)
   };
 })();
+
 Object.defineProperty(window, 'localStorage', { value: localStorageMock });
+
+// Mock URL.createObjectURL and revokeObjectURL
+// Fix any types - use specific function signatures
+const mockBlobStore: Record<string, Blob> = {};
+window.URL.createObjectURL = jest.fn((blob: Blob): string => {
+  const url = `blob:mock/${Math.random()}`;
+  mockBlobStore[url] = blob;
+  return url;
+});
+window.URL.revokeObjectURL = jest.fn((url: string) => {
+  delete mockBlobStore[url];
+});
+
+// Mock document.createElement('a') and its click method
+const mockLink = {
+  href: '',
+  download: '',
+  // Fix any type - use () => void for click
+  click: jest.fn() as jest.Mock<() => void>,
+  // Fix any type - use (type: string, listener: EventListenerOrEventListenerObject | null, options?: boolean | AddEventListenerOptions | undefined) => void
+  // For simplicity in mock, can use jest.Mock<any>
+  addEventListener: jest.fn() as jest.Mock<any>,
+  // Fix any type - use (type: string, listener: EventListenerOrEventListenerObject | null, options?: boolean | EventListenerOptions | undefined) => void
+  // For simplicity in mock, can use jest.Mock<any>
+  removeEventListener: jest.fn() as jest.Mock<any>,
+  // Fix any type - use () => boolean
+  dispatchEvent: jest.fn() as jest.Mock<() => boolean>,
+  style: {} as CSSStyleDeclaration, // Add style property
+};
+
+// Fix any type - use specific return type for createElement
+const createElementSpy = jest.spyOn(document, 'createElement').mockImplementation((tagName: string): HTMLElement => {
+  if (tagName === 'a') {
+    return mockLink as unknown as HTMLAnchorElement; // Return the mock link
+  }
+  // Fallback for other elements if needed, though test focuses on 'a'
+  return document.createElement(tagName);
+});
+
+
+// Mock document.body.appendChild/removeChild
+document.body.appendChild = jest.fn();
+document.body.removeChild = jest.fn();
+
+// Mock window.alert
+window.alert = jest.fn();
 
 // Mock window.confirm
 Object.defineProperty(window, 'confirm', { value: jest.fn() });
@@ -50,8 +117,12 @@ type TournamentData = Array<{id?: string, name?: string, [key: string]: any}>;
 type RosterData = Array<{id: string, name?: string, [key: string]: any}>;
 
 describe('importFullBackup', () => {
+  let alertSpy: jest.SpyInstance;
+
   beforeEach(() => {
-    // Reset mocks and localStorage before each test
+    localStorageMock.clear.mockClear();
+    localStorageMock.setItem.mockClear();
+    alertSpy = jest.spyOn(window, 'alert');
     localStorageMock.clear();
     (window.confirm as jest.Mock).mockClear();
     (window.location.reload as jest.Mock).mockClear();
@@ -130,7 +201,6 @@ describe('importFullBackup', () => {
      // Pre-populate with initial data
      const initialSavedGames = { gameX: { id: 'gameX' } };
      localStorageMock.setItem(SAVED_GAMES_KEY, JSON.stringify(initialSavedGames));
-     const initialStore = { ...localStorageMock.getStore() }; // Capture initial state
 
      // Mock window.confirm to return false (user cancels)
      (window.confirm as jest.Mock).mockReturnValue(false);
@@ -142,7 +212,7 @@ describe('importFullBackup', () => {
      // Assert
      expect(result).toBe(false); // Function should indicate cancellation
      expect(window.confirm).toHaveBeenCalledTimes(1);
-     expect(localStorageMock.getStore()).toEqual(initialStore); // LocalStorage should be unchanged
+     expect(localStorageMock.getAll()).toEqual(initialSavedGames); // LocalStorage should be unchanged
      expect(window.location.reload).not.toHaveBeenCalled(); // Reload should not be called
      expect(alertMock).not.toHaveBeenCalled();
      alertMock.mockRestore();
@@ -152,7 +222,6 @@ describe('importFullBackup', () => {
   it('should return false and not modify localStorage for invalid JSON input', () => {
     // Arrange
     const invalidJson = "{ invalid json";
-    const initialStore = { ...localStorageMock.getStore() };
 
     // Mock window.alert to suppress it during test
     const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
@@ -162,7 +231,7 @@ describe('importFullBackup', () => {
 
     // Assert
     expect(result).toBe(false);
-    expect(localStorageMock.getStore()).toEqual(initialStore); // Storage unchanged
+    expect(localStorageMock.getAll()).toEqual({}); // Storage unchanged
     expect(window.confirm).not.toHaveBeenCalled(); // Confirmation shouldn't be reached
     expect(alertMock).toHaveBeenCalledWith(expect.stringContaining('Error importing full backup:')); // Check alert
     expect(window.location.reload).not.toHaveBeenCalled();
@@ -176,7 +245,8 @@ describe('importFullBackup', () => {
     // Arrange
     const backupData = { localStorage: {} }; // Missing meta
     const backupJson = JSON.stringify(backupData);
-    const initialStore = { ...localStorageMock.getStore() };
+
+    // Mock window.alert to suppress it during test
     const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
 
     // Act
@@ -184,7 +254,7 @@ describe('importFullBackup', () => {
 
     // Assert
     expect(result).toBe(false);
-    expect(localStorageMock.getStore()).toEqual(initialStore);
+    expect(localStorageMock.getAll()).toEqual({});
     expect(window.confirm).not.toHaveBeenCalled();
     expect(alertMock).toHaveBeenCalledWith(expect.stringContaining('Missing \'meta\' information'));
     expect(window.location.reload).not.toHaveBeenCalled();
@@ -196,7 +266,8 @@ describe('importFullBackup', () => {
     // Arrange
     const backupData = { meta: { schema: 2 }, localStorage: {} }; 
     const backupJson = JSON.stringify(backupData);
-    const initialStore = { ...localStorageMock.getStore() };
+
+    // Mock window.alert to suppress it during test
     const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
 
     // Act
@@ -204,7 +275,7 @@ describe('importFullBackup', () => {
 
     // Assert
     expect(result).toBe(false);
-    expect(localStorageMock.getStore()).toEqual(initialStore);
+    expect(localStorageMock.getAll()).toEqual({});
     expect(window.confirm).not.toHaveBeenCalled();
     expect(alertMock).toHaveBeenCalledWith(expect.stringContaining('Unsupported schema version: 2'));
     expect(window.location.reload).not.toHaveBeenCalled();
@@ -216,7 +287,8 @@ describe('importFullBackup', () => {
     // Arrange
     const backupData = { meta: { schema: 1 } }; // Missing localStorage
     const backupJson = JSON.stringify(backupData);
-    const initialStore = { ...localStorageMock.getStore() };
+
+    // Mock window.alert to suppress it during test
     const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
 
     // Act
@@ -224,7 +296,7 @@ describe('importFullBackup', () => {
 
     // Assert
     expect(result).toBe(false);
-    expect(localStorageMock.getStore()).toEqual(initialStore);
+    expect(localStorageMock.getAll()).toEqual({});
     expect(window.confirm).not.toHaveBeenCalled();
     expect(alertMock).toHaveBeenCalledWith(expect.stringContaining('Missing \'localStorage\' data object'));
     expect(window.location.reload).not.toHaveBeenCalled();
@@ -242,8 +314,7 @@ describe('importFullBackup', () => {
       }
     };
     const backupJson = JSON.stringify(validBackupData);
-    const initialStore = { ...localStorageMock.getStore() };
-    
+
     // Mock window.confirm to return true (user confirms)
     (window.confirm as jest.Mock).mockReturnValue(true);
     
@@ -252,7 +323,7 @@ describe('importFullBackup', () => {
     const originalSetItem = localStorageMock.setItem;
     localStorageMock.setItem = jest.fn().mockImplementation((key, value) => {
       if (key === SAVED_GAMES_KEY) {
-        throw new Error('QuotaExceededError: The quota has been exceeded.');
+        throw localStorageMock.getQuotaExceededError();
       }
       return originalSetItem(key, value);
     });

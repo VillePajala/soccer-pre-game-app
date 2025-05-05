@@ -1139,7 +1139,7 @@ export default function Home() {
       gameEvents: newGameEvents, 
       // awayScore: newAwayScore -- OLD LOGIC
       homeScore: newHomeScore,
-      awayScore: newAwayScore
+      awayScore: newAwayScore 
     });
     setIsGoalLogModalOpen(false); // Close modal after logging
   };
@@ -2446,9 +2446,9 @@ export default function Home() {
   const handleStartNewGameWithSetup = useCallback((
     initialSelectedPlayerIds: string[],
     homeTeamName: string, // <-- Add parameter
-    opponentName: string, 
-    gameDate: string, 
-    gameLocation: string, 
+    opponentName: string,
+    gameDate: string,
+    gameLocation: string,
     gameTime: string,
     seasonId: string | null,
     tournamentId: string | null,
@@ -2551,7 +2551,6 @@ export default function Home() {
     setCurrentGameId,
     setIsNewGameSetupModalOpen,
     setHighlightRosterButton, // <<< ADD setHighlightRosterButton dependency
-    homeOrAway, // <<< USE Parameter value
   ]);
 
   // ** REVERT handleCancelNewGameSetup TO ORIGINAL **
@@ -2821,7 +2820,7 @@ export default function Home() {
   // --- End Step 3 --- 
 
   // --- NEW: Handlers for Game Settings Modal --- (Placeholder open/close)
-  
+
   // Render null or a loading indicator until state is loaded
   // Note: Console log added before the check itself
   if (!isLoaded) {

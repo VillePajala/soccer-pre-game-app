@@ -1,4 +1,4 @@
-require('@testing-library/jest-dom');
+import '@testing-library/jest-dom';
 
 // Mock window.location if needed by tests
 const originalLocation = window.location;

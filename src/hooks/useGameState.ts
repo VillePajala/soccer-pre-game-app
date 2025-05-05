@@ -170,23 +170,29 @@ export function useGameState({ initialState, saveStateToHistory, masterRosterKey
         const currentGoalie = availablePlayers.find(p => p.isGoalie && p.id !== playerId);
         
         const updatedAvailable = availablePlayers.map(p => {
-          if (p.id === playerId) return { ...p, isGoalie: !p.isGoalie };
+          // Explicitly handle undefined case for isGoalie
+          const currentIsGoalie = p.isGoalie ?? false;
+          if (p.id === playerId) return { ...p, isGoalie: !currentIsGoalie }; 
+          // When unsetting the current goalie, explicitly set to false
           if (currentGoalie && p.id === currentGoalie.id) return { ...p, isGoalie: false };
           return p;
         });
         
         const updatedOnField = playersOnField.map(p => {
-          if (p.id === playerId) return { ...p, isGoalie: !p.isGoalie };
+          // Explicitly handle undefined case for isGoalie
+          const currentIsGoalie = p.isGoalie ?? false;
+          if (p.id === playerId) return { ...p, isGoalie: !currentIsGoalie };
+          // When unsetting the current goalie, explicitly set to false
           if (currentGoalie && p.id === currentGoalie.id) return { ...p, isGoalie: false };
           return p;
         });
     
         console.log('[useGameState:handleToggleGoalie] Attempting to set state...');
-        setAvailablePlayers([...updatedAvailable]); // Use spread for safety
-        setPlayersOnField([...updatedOnField]); // Use spread for safety
+        setAvailablePlayers([...updatedAvailable]); 
+        setPlayersOnField([...updatedOnField]); 
         console.log('[useGameState:handleToggleGoalie] State setters called.');
         saveStateToHistory({ playersOnField: updatedOnField });
-    }, [availablePlayers, playersOnField, saveStateToHistory]);
+    }, [availablePlayers, playersOnField, saveStateToHistory, setAvailablePlayers, setPlayersOnField]);
 
     // ... (more handlers will be moved here later)
 

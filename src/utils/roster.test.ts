@@ -391,4 +391,26 @@ describe('Roster Persistence', () => {
     // Player3 should be removed
     expect(roster.find(p => p.id === player3.id)).toBeUndefined();
   });
+
+  it('persists roster changes to localStorage', () => {
+    // Fix: Pass arguments as override object to createPlayer
+    const initialRoster = [
+      createPlayer({ id: 'p1', name: 'Alice' }), 
+      createPlayer({ id: 'p2', name: 'Bob' })
+    ];
+    localStorageMock.setItem(MASTER_ROSTER_KEY, JSON.stringify(initialRoster));
+
+    // Fix: Use the correct function name 'addPlayer' and ensure player object matches Player type
+    const newPlayer = createPlayer({ name: 'Charlie', jerseyNumber: '3', nickname: 'Chuck', notes: '' });
+    addPlayer(newPlayer); 
+
+    const storedRosterJson = localStorageMock.getItem(MASTER_ROSTER_KEY);
+    expect(storedRosterJson).not.toBeNull();
+    const storedRoster = JSON.parse(storedRosterJson!);
+    expect(storedRoster).toHaveLength(3);
+    // Find the added player by name/nickname as ID is random
+    const addedPlayer = storedRoster.find((p: Player) => p.name === 'Charlie');
+    expect(addedPlayer).toBeDefined();
+    expect(addedPlayer.nickname).toBe('Chuck');
+  });
 }); 
