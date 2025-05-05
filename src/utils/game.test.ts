@@ -142,11 +142,13 @@ describe('validateGameState', () => {
     expect(validateGameState(state)).toBe(false);
 
     state = createValidGameState();
-    state.opponentName = null as any; // Test null - keep 'as any' here for the test
+    // @ts-expect-error // Intentionally testing invalid type
+    state.opponentName = null;
     expect(validateGameState(state)).toBe(false);
 
     state = createValidGameState();
-    state.gameDate = 123 as any; // Test wrong type - keep 'as any' here for the test
+    // @ts-expect-error // Intentionally testing invalid type
+    state.gameDate = 123;
     expect(validateGameState(state)).toBe(false);
   });
 
@@ -156,31 +158,37 @@ describe('validateGameState', () => {
     expect(validateGameState(state)).toBe(false);
 
     state = createValidGameState();
-    state.awayScore = 'one' as any; // Test wrong type - keep 'as any' here for the test
+    // @ts-expect-error // Intentionally testing invalid type
+    state.awayScore = 'one';
     expect(validateGameState(state)).toBe(false);
   });
 
   it('should return false if enum fields have invalid values', () => {
     let state = createValidGameState();
-    state.homeOrAway = 'center' as any; // Test invalid enum - keep 'as any' here for the test
+    // @ts-expect-error // Intentionally testing invalid type
+    state.homeOrAway = 'center';
     expect(validateGameState(state)).toBe(false);
 
     state = createValidGameState();
-    state.gameStatus = 'paused' as any; // Test invalid enum - keep 'as any' here for the test
+    // @ts-expect-error // Intentionally testing invalid type
+    state.gameStatus = 'paused';
     expect(validateGameState(state)).toBe(false);
 
     state = createValidGameState();
-    state.numberOfPeriods = 3 as any; // Test invalid enum - keep 'as any' here for the test
+    // @ts-expect-error // Intentionally testing invalid type
+    state.numberOfPeriods = 3;
     expect(validateGameState(state)).toBe(false);
   });
 
   it('should return false if required array fields are missing or not arrays', () => {
     let state = createValidGameState();
-    state.playersOnField = null as any; // Test null - keep 'as any' here for the test
+    // @ts-expect-error // Intentionally testing invalid type
+    state.playersOnField = null;
     expect(validateGameState(state)).toBe(false);
 
     state = createValidGameState();
-    state.availablePlayers = "player" as any; // Test wrong type - keep 'as any' here for the test
+    // @ts-expect-error // Intentionally testing invalid type
+    state.availablePlayers = "player";
     expect(validateGameState(state)).toBe(false);
   });
 

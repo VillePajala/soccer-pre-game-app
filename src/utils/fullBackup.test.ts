@@ -72,13 +72,14 @@ window.location = {
   reload: jest.fn(), // Add mock reload function
 };
 
-// Mock setTimeout/clearTimeout - Use unknown or omit type for spies
-const setTimeoutSpy = jest.spyOn(global, 'setTimeout'); // Let Jest infer type
-const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+// Mock setTimeout/clearTimeout - Explicitly type spies
+const setTimeoutSpy = jest.spyOn(global, 'setTimeout') as jest.SpyInstance<NodeJS.Timeout, [callback: (...args: any[]) => void, ms?: number | undefined, ...args: any[]]>;
+const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout') as jest.SpyInstance<void, [timeoutId?: NodeJS.Timeout | undefined]>;
 
 // Define test data types using unknown
-interface GameData extends Record<string, unknown> {} // Use Record for index signature
-interface SettingsData extends Record<string, unknown> {} // Use Record
+// Replace empty interfaces with direct usage of Record
+// interface GameData extends Record<string, unknown> {}
+// interface SettingsData extends Record<string, unknown> {}
 
 // More specific types for array elements
 interface SeasonObject extends Record<string, unknown> {
@@ -435,11 +436,11 @@ describe('exportFullBackup', () => {
   });
 
   it('should gather all relevant keys from localStorage and structure the backup data correctly', () => {
-    // Arrange: Populate localStorage with test data
-    const gamesData: GameData = { game1: { id: 'game1', teamName: 'Team Export' } };
-    const settingsData: SettingsData = { currentGameId: 'game1' };
+    // Arrange: Use Record directly
+    const gamesData: Record<string, unknown> = { game1: { id: 'game1', teamName: 'Team Export' } };
+    const settingsData: Record<string, unknown> = { currentGameId: 'game1' };
     const seasonsData: SeasonData = [{ id: 'sExp', name: 'Export Season' }];
-    const tournamentsData: TournamentData = []; // Empty array
+    const tournamentsData: TournamentData = [];
     const rosterData: RosterData = [{ id: 'pExp', name: 'Export Player' }];
 
     localStorageMock.setItem(SAVED_GAMES_KEY, JSON.stringify(gamesData));
@@ -498,7 +499,7 @@ describe('exportFullBackup', () => {
 
   it('should handle missing keys in localStorage by setting them to null in the backup', () => {
     // Arrange: Only populate some keys
-    const gamesData: GameData = { game2: { id: 'game2' } };
+    const gamesData: Record<string, unknown> = { game2: { id: 'game2' } };
     const rosterData: RosterData = [{ id: 'pOnly' }];
     localStorageMock.setItem(SAVED_GAMES_KEY, JSON.stringify(gamesData));
     localStorageMock.setItem(MASTER_ROSTER_KEY, JSON.stringify(rosterData));
@@ -542,7 +543,7 @@ describe('exportFullBackup', () => {
 
   it('should handle invalid JSON in localStorage for a specific key gracefully', () => {
     // Arrange: Put valid data for most, invalid for one
-    const gamesData: GameData = { gameValid: { id: 'valid' } };
+    const gamesData: Record<string, unknown> = { gameValid: { id: 'valid' } };
     const invalidSettingsJson = '{ "currentGameId": "bad", '; // Invalid JSON
     const rosterData: RosterData = [{ id: 'pValid' }];
 
