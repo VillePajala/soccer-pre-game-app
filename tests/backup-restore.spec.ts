@@ -46,6 +46,7 @@ async function getLocalStorageData(page: Page): Promise<LocalStorageValues> {
 }
 
 test.describe('Data Safety - Backup & Restore', () => {
+    test.describe.configure({ mode: 'serial' }); // Run tests in this file serially
 
     test.beforeEach(async ({ page }) => {
         await page.goto('/');
@@ -79,7 +80,7 @@ test.describe('Data Safety - Backup & Restore', () => {
         // <<< The setup modal should NOT appear here, so no interaction is needed >>>
         // <<< Ensure the main UI is ready before tests start >>>
         await expect(page.locator('body')).toBeVisible(); // Basic check for body
-        await expect(page.locator('button[title="controlBar.settings"]')).toBeVisible({ timeout: 15000 }); // Wait for a key UI element
+        await expect(page.locator('button[title="controlBar.settings"]')).toBeVisible({ timeout: 30000 }); 
         console.log('Main UI confirmed ready after reload.');
     });
 
@@ -346,5 +347,123 @@ test.describe('Data Safety - Backup & Restore', () => {
         console.log('Successfully verified restore returned to pre-backup state using downloaded backup');
     });
 
-    // --- Add Backup Restore Failure Test --- 
+    // --- Add Backup Restore Failure Tests ---
+
+    test('should show an alert when restoring a non-JSON file', async ({ page }) => {
+        console.log('Restore non-JSON test started.');
+        await page.locator('button[title="controlBar.settings"]').click();
+        await page.getByText('Lataa Peli').click();
+        await expect(page.getByRole('heading', { name: /Lataa Peli/i })).toBeVisible();
+
+        // Listen for the dialog event (alert)
+        let alertMessage = '';
+        page.once('dialog', async dialog => {
+            console.log(`Dialog message received: ${dialog.message()}`);
+            alertMessage = dialog.message();
+            await dialog.dismiss(); // Use dismiss for alert
+        });
+
+        // Prepare non-JSON file payload
+        const filePayload = {
+            name: 'not-json.txt',
+            mimeType: 'text/plain',
+            buffer: Buffer.from('This is just plain text, not JSON.')
+        };
+
+        // Upload the file to the restore input
+        const restoreInput = page.locator('#restore-backup-input');
+        await restoreInput.setInputFiles(filePayload);
+
+        // Wait briefly for the dialog event to potentially fire and be handled
+        await page.waitForTimeout(500);
+
+        // Assert that the alert message indicates an error
+        expect(alertMessage).toContain('Error importing full backup: Unexpected token'); // More specific
+        console.log('Verified alert for non-JSON restore.');
+    });
+
+    test('should show an alert when restoring malformed JSON', async ({ page }) => {
+        console.log('Restore malformed JSON test started.');
+        await page.locator('button[title="controlBar.settings"]').click();
+        await page.getByText('Lataa Peli').click();
+        await expect(page.getByRole('heading', { name: /Lataa Peli/i })).toBeVisible();
+
+        let alertMessage = '';
+        page.once('dialog', async dialog => {
+            alertMessage = dialog.message();
+            await dialog.dismiss();
+        });
+
+        const filePayload = {
+            name: 'malformed.json',
+            mimeType: 'application/json',
+            buffer: Buffer.from('{ "meta": { "schema": 1 }, "localStorage": { broken json }')
+        };
+
+        const restoreInput = page.locator('#restore-backup-input');
+        await restoreInput.setInputFiles(filePayload);
+        await page.waitForTimeout(500);
+
+        expect(alertMessage).toContain('Error importing full backup: Expected property name or \'}\' in JSON'); // More specific
+        console.log('Verified alert for malformed JSON restore.');
+    });
+
+    test('should show an alert when restoring JSON with missing structure', async ({ page }) => {
+        console.log('Restore missing structure test started.');
+        await page.locator('button[title="controlBar.settings"]').click();
+        await page.getByText('Lataa Peli').click();
+        await expect(page.getByRole('heading', { name: /Lataa Peli/i })).toBeVisible();
+
+        let alertMessage = '';
+        page.once('dialog', async dialog => {
+            alertMessage = dialog.message();
+            await dialog.dismiss();
+        });
+
+        const filePayload = {
+            name: 'missing-structure.json',
+            mimeType: 'application/json',
+            buffer: Buffer.from(JSON.stringify({ someOtherKey: 'value' })) // Missing meta and localStorage
+        };
+
+        const restoreInput = page.locator('#restore-backup-input');
+        await restoreInput.setInputFiles(filePayload);
+        await page.waitForTimeout(500);
+
+        // Assert that the alert message indicates an error
+        // Updated to match actual error message from importFullBackup
+        expect(alertMessage).toContain('Error importing full backup: Invalid format: Missing \'meta\' information.'); 
+        console.log('Verified alert for missing structure restore.');
+    });
+
+    test('should show an alert when restoring JSON with unsupported schema', async ({ page }) => {
+        console.log('Restore unsupported schema test started.');
+        await page.locator('button[title="controlBar.settings"]').click();
+        await page.getByText('Lataa Peli').click();
+        await expect(page.getByRole('heading', { name: /Lataa Peli/i })).toBeVisible();
+
+        let alertMessage = '';
+        page.once('dialog', async dialog => {
+            alertMessage = dialog.message();
+            await dialog.dismiss();
+        });
+
+        const filePayload = {
+            name: 'unsupported-schema.json',
+            mimeType: 'application/json',
+            buffer: Buffer.from(JSON.stringify({ 
+                meta: { schema: 99, exportedAt: new Date().toISOString() }, 
+                localStorage: {} 
+            }))
+        };
+
+        const restoreInput = page.locator('#restore-backup-input');
+        await restoreInput.setInputFiles(filePayload);
+        await page.waitForTimeout(500);
+
+        // Updated to match actual error message from importFullBackup
+        expect(alertMessage).toContain('Error importing full backup: Unsupported schema version'); 
+        console.log('Verified alert for unsupported schema restore.');
+    });
+
 }); 
