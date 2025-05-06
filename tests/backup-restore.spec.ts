@@ -16,7 +16,7 @@ interface LocalStorageValues {
   [TOURNAMENTS_LIST_KEY]?: Array<object> | null;
   [MASTER_ROSTER_KEY]?: Array<object> | null;
   [LAST_HOME_TEAM_NAME_KEY]?: string | null;
-  [key: string]: any; // Allow other keys, keep 'any' here for flexibility
+  [key: string]: unknown; // Use unknown instead of any for better type safety
 }
 
 // Define structure for the backup file format
@@ -61,7 +61,7 @@ test.describe('Data Safety - Backup & Restore', () => {
              [MASTER_ROSTER_KEY]: [{ id: 'p1', name: 'Test Player' }],
              [LAST_HOME_TEAM_NAME_KEY]: 'Test Team'
         };
-        await page.evaluate((data: Record<string, any>) => {
+        await page.evaluate((data: Partial<LocalStorageValues>) => {
              for (const key in data) {
                  if (data[key] !== null && data[key] !== undefined) {
                      localStorage.setItem(key, JSON.stringify(data[key]));
@@ -197,7 +197,7 @@ test.describe('Data Safety - Backup & Restore', () => {
         };
         
         // Apply State A to localStorage
-        await page.evaluate((data: Record<string, any>) => {
+        await page.evaluate((data: Partial<LocalStorageValues>) => {
             for (const key in data) {
                 if (data[key] !== null && data[key] !== undefined) {
                      localStorage.setItem(key, JSON.stringify(data[key]));
@@ -215,8 +215,8 @@ test.describe('Data Safety - Backup & Restore', () => {
         await page.evaluate(() => {
             // Only need to mock confirm and reload here
             window.confirm = () => true; // Always confirm for the restore later
-            // Cast window to any for custom properties
-            (window as any).__originalReload = window.location.reload;
+            // Cast window to explicitly add the property for the test
+            (window as Window & typeof globalThis & { __originalReload?: typeof window.location.reload }).__originalReload = window.location.reload;
             window.location.reload = () => { console.log("Prevented page reload during test"); }; // Prevent reload
         });
         
@@ -295,7 +295,7 @@ test.describe('Data Safety - Backup & Restore', () => {
         };
         
         // Apply State B to localStorage
-        await page.evaluate((data: Record<string, any>) => {
+        await page.evaluate((data: Partial<LocalStorageValues>) => {
             for (const key in data) {
                 if (data[key] !== null && data[key] !== undefined) {
                      localStorage.setItem(key, JSON.stringify(data[key]));

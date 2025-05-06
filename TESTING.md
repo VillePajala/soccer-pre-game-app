@@ -67,8 +67,19 @@ We employ a three-layered testing approach:
       * ✅ Handles missing keys by setting them to null.
       * ✅ Handles invalid JSON in a localStorage item gracefully (logs error, sets value to null).
       * ✅ Verifies correct Blob creation and download link triggering.
-  * **`src/components/LoadGameModal.test.tsx`**:
-    * ✅ Renders the basic list of saved games correctly (checks heading content).
+  * **`src/utils/game.test.ts`**:
+    * ✅ Validates game state structure (`validateGameState`).
+    * ✅ Handles `localStorage` interactions: `saveGame`, `loadGame`, `deleteGame`.
+    * ✅ Tests persistence scenarios: saving multiple games, overwriting, deleting non-existent.
+    * ✅ Includes helper for creating valid game state (`createValidGameState`).
+  * **`src/utils/roster.test.ts`**:
+    * ✅ Validates player data structure (`validatePlayer`).
+    * ✅ Handles `localStorage` interactions: `getRoster`, `saveRoster`, `addPlayer`, `updatePlayer`, `removePlayer`.
+    * ✅ Tests goalie assignment logic (`setGoalie`).
+    * ✅ Tests persistence scenarios: empty roster, adding/updating/removing players.
+    * ✅ Includes helper for creating players (`createPlayer`).
+  * **`src/components/LoadGameModal.test.tsx`**: (Integration Test)
+    * ✅ Renders the basic list of saved games correctly.
     * ✅ Indicates the currently loaded game via a badge.
     * ✅ Displays appropriate messages for empty list / no filter match.
     * ✅ Filters games based on search input.
@@ -82,11 +93,11 @@ We employ a three-layered testing approach:
     * ✅ Calls `exportFullBackup` mock when `Backup All Data` is clicked.
     * ✅ Handles successful file selection for import (calls `onImportJson`).
     * ✅ Handles successful file selection for restore (calls `importFullBackup` mock).
-    * ✅ Shows alert on `FileReader` read errors (for both import and restore).
+    * ✅ Shows alert on `FileReader` read errors during import.
     * ✅ Shows alert on JSON processing errors during import.
     * ✅ Shows alert propagated from `importFullBackup` on processing errors during restore.
-    * (Skipped: Test for `FileReader.onerror` during restore due to mocking difficulty).
-* **Configuration:** `jest.config.js` uses `next/jest` preset, environment (`jsdom`), path aliases (`moduleNameMapper`), and ignores the Playwright test directory (`testPathIgnorePatterns`).
+    * (Skipped: Test for `FileReader.onerror` during restore).
+* **Configuration:** `jest.config.js` uses `next/jest` preset, environment (`jsdom`), path aliases (`moduleNameMapper`), and ignores the Playwright test directory (`testPathIgnorePatterns`). Configured with Babel (`babel-jest`) for TSX/JSX transformation.
 
 ## End-to-End Tests (Playwright)
 
@@ -105,55 +116,40 @@ We employ a three-layered testing approach:
 ### Completed
 
 * **Infrastructure:**
-  * ✅ Created a combined test command `npm run test:all` to run both Jest and Playwright tests
+  * ✅ Created a combined test command `npm run test:all`
   * ✅ Updated TESTING.md documentation with clear test type definitions
+  * ✅ Configured Jest + Babel + React Testing Library for integration tests (`LoadGameModal.test.tsx`)
 
 * **Unit & Integration Tests:**
-  * ✅ Fixed and improved `fullBackup.test.ts` to properly test both import and export functionality
-  * ✅ Added proper mocking for browser APIs (URL, document, localStorage)
-  * ✅ Added comprehensive error case handling tests for backup/restore
-  * ✅ Added localStorage quota exceeded error handling test
-  * ✅ Added partial backup data handling test
-  * ✅ Created `game.test.ts` with tests for game data validation, state management, and persistence
-  * ✅ Implemented robust test utilities for game state creation and validation
+  * ✅ Fixed and improved `fullBackup.test.ts` (import/export, errors, quota, partial data)
+  * ✅ Added proper mocking for browser APIs (URL, document, localStorage, etc.)
+  * ✅ Created `game.test.ts` with tests for validation, state management, persistence
+  * ✅ Created `roster.test.ts` with tests for validation, CRUD, goalie logic, persistence
+  * ✅ Implemented and fixed integration tests for `LoadGameModal.test.tsx` (rendering, filtering, actions, import/export/backup triggers, basic file handling - 1 skipped)
 
 * **E2E Tests:**
-  * ✅ Basic backup and restore functionality tests
-  * ✅ Initial game creation persistence test
+  * ✅ Basic backup generation and successful restore (`backup-restore.spec.ts`)
+  * ✅ Initial game creation persistence (`data-persistence.spec.ts`)
+  * ✅ Fixed localization issue in `backup-restore.spec.ts` close button locator
+  * ✅ Cleaned up `any` types in `backup-restore.spec.ts`
 
 ## Next Steps
 
 Based on our testing plan and current progress, here are the immediate next steps:
 
-### Unit Testing
-
-1. **Setup for integration testing**:
-   * Configure the Jest environment for testing interactions between components
-   * Create shared mocks for common game state dependencies
-
-2. **Create Roster Management Tests**:
-   * Create `roster.test.ts` to test player management functionality
-   * Test player addition, modification, and removal
-   * Test player statistics calculations
-
-### E2E Testing
-
-1. **Enhance `backup-restore.spec.ts`**:
-   * Add tests for handling invalid backup files
-   * Test error messages and user notifications
-
-2. **Expand `data-persistence.spec.ts`**:
-   * Test complete game lifecycle including updates and deletion
-   * Test game filtering and listing functionality
+1. **Unskip Integration Test:** Implement the skipped test `shows alert on FileReader error during restore` in `src/components/LoadGameModal.test.tsx`.
+2. **E2E Test - Backup/Restore Failures:** Enhance `tests/backup-restore.spec.ts` by adding tests for handling invalid/malformed backup files during restore and verifying user feedback.
+3. **E2E Test - Data Persistence:** Expand `tests/data-persistence.spec.ts` to cover the full game lifecycle (update, delete) and potentially roster interactions via the UI.
+4. **Expand Integration Tests:** Add integration tests for other key components (e.g., `GameSettingsModal`, `RosterManagement`).
+5. **(Optional) Configure Coverage Reporting:** Set up Jest (`--coverage`) and/or Playwright to generate code coverage reports to identify untested code paths.
 
 ### Implementation Plan
 
 For the next development cycle, we should focus on:
 
-1. Roster management unit tests (`roster.test.ts`) - Priority
-2. Enhanced backup/restore E2E tests - Secondary focus
-
-Both of these align with our data security focus, ensuring game data is properly managed and that backup/restore functionality is robust against various error scenarios.
+1. Unskipping the `LoadGameModal` test - Quick win
+2. E2E tests for backup/restore failures - High priority for robustness
+3. E2E tests for game data persistence (update/delete) - Core functionality
 
 ## Testing Improvement Plan
 
@@ -163,93 +159,85 @@ This outlines the next steps to achieve better test coverage, with a comprehensi
 
 **Priority 1: Enhance Backup/Restore Coverage**
 
-1. **Expand `fullBackup.test.ts`**:
-   * Add test for `importFullBackup` handling localStorage quota exceeded errors
-   * Add test for partial backup data (some keys missing but format valid)
+1. **Expand `fullBackup.test.ts`**: ✅ Done
 
 **Priority 2: Game Management Unit Tests**
 
-2. **Create `game.test.ts`**:
-   * Test game creation/modification/deletion functions
-   * Test game data validation
-   * Test game associated stats calculations
+2. **Create `game.test.ts`**: ✅ Done
 
 **Priority 3: Roster Management Unit Tests**
 
-3. **Create `roster.test.ts`**:
-   * Test player CRUD operations
-   * Test roster data serialization/deserialization
-   * Test player stats calculations
+3. **Create `roster.test.ts`**: ✅ Done
 
 **Priority 4: Season/Tournament Unit Tests**
 
 4. **Create `seasons.test.ts`** and/or **`tournaments.test.ts`**:
-   * Test CRUD operations for seasons/tournaments
-   * Test game associations with seasons/tournaments
-   * Test season/tournament data validation
+    * Test CRUD operations for seasons/tournaments
+    * Test game associations with seasons/tournaments
+    * Test season/tournament data validation
 
 ### Integration Testing Plan (Jest)
 
-**Priority 1: Data Store Integration Tests**
+**Priority 1: Component Integration Tests (Expand)**
 
-1. **Create `dataStore.test.ts`**:
-   * Test interactions between game service and localStorage
-   * Test interactions between roster service and localStorage
-   * Test interactions between seasons/tournaments services and localStorage
+1. **`LoadGameModal.test.tsx`**: ✅ Mostly done (1 skipped test)
+2. **Create integration tests for other key components**:
+    * Test `GameSettingsModal` component
+    * Test `RosterManagement` component interactions
+    * Test components related to seasons/tournaments
 
-**Priority 2: Component Integration Tests**
+**Priority 2: Data Store Integration Tests**
 
-2. **Create integration tests for key components**:
-   * Test game form components with game services
-   * Test roster components with roster services
-   * Test season/tournament components with their respective services
+3. **Create `dataStore.test.ts`** (or similar):
+    * Test interactions between game service and localStorage
+    * Test interactions between roster service and localStorage
+    * Test interactions between seasons/tournaments services and localStorage
 
 **Priority 3: Cross-Service Integration Tests**
 
-3. **Create tests for service interactions**:
-   * Test game service with roster service (player assignments)
-   * Test game service with season/tournament services (game categorization)
+4. **Create tests for service interactions**:
+    * Test game service with roster service (player assignments)
+    * Test game service with season/tournament services (game categorization)
 
 ### E2E Testing Plan (Playwright)
 
 **Priority 1: Enhance Backup/Restore E2E Tests**
 
-1. **Expand `backup-restore.spec.ts`**:
-   * Test attempting to restore invalid files (non-JSON, malformed JSON)
-   * Test restoring backups with missing fields or incorrect schema
-   * Verify error handling shows appropriate messages to users
-   * Test the backup process includes all necessary app data
+1. **Expand `backup-restore.spec.ts`**: (Next Step)
+    * Test attempting to restore invalid files (non-JSON, malformed JSON)
+    * Test restoring backups with missing fields or incorrect schema
+    * Verify error handling shows appropriate messages to users
+    * Test the backup process includes all necessary app data (Refine existing check)
 
 **Priority 2: Game Data Persistence E2E Tests**
 
-2. **Expand `data-persistence.spec.ts`**:
-   * Test complete game lifecycle (create, load, update, save)
-   * Test game deletion and cleanup in localStorage
-   * Test game filtering and sorting
-   * Verify persistence between app sessions
+2. **Expand `data-persistence.spec.ts`**: (Next Step)
+    * Test complete game lifecycle (create ✅, load, update, save, delete)
+    * Test game filtering and sorting in the Load Game modal via UI
+    * Verify persistence between app sessions
 
 **Priority 3: Roster Management E2E Tests**
 
 3. **Create `roster.spec.ts`**:
-   * Test adding players through the UI
-   * Test editing player details
-   * Test removing players
-   * Verify player assignments to games
+    * Test adding players through the UI
+    * Test editing player details
+    * Test removing players
+    * Verify player assignments to games
 
 **Priority 4: Season/Tournament E2E Tests**
 
 4. **Create `seasons-tournaments.spec.ts`**:
-   * Test season/tournament creation
-   * Test assigning games to seasons/tournaments
-   * Test filtering games by season/tournament
-   * Test season/tournament deletion with associated games
+    * Test season/tournament creation
+    * Test assigning games to seasons/tournaments
+    * Test filtering games by season/tournament
+    * Test season/tournament deletion with associated games
 
 **Priority 5: Cross-Feature E2E Tests**
 
 5. **Create `data-integrity.spec.ts`**:
-   * Test complex scenarios involving multiple features
-   * Test backup/restore with complete application data
-   * Test app behavior after multiple data manipulations
+    * Test complex scenarios involving multiple features
+    * Test backup/restore with complete application data
+    * Test app behavior after multiple data manipulations
 
 ## Implementation Strategy
 
