@@ -40,7 +40,12 @@ test.describe('Data Persistence - Core Functionality', () => {
     await page.reload(); 
     console.log('Page reloaded after storage clear.');
 
-    // Wait for the setup modal to appear automatically
+    // Wait for the main UI (e.g., Control Bar) to be ready first
+    const controlBar = page.locator('.bg-slate-800.p-2.shadow-md'); // Use ControlBar classes
+    await expect(controlBar).toBeVisible({ timeout: 15000 }); // Increased timeout slightly
+    console.log('Control Bar is visible.');
+
+    // Now check for the setup modal heading
     console.log('Waiting for New Game Setup modal...');
     const setupModalHeading = page.getByRole('heading', { name: 'Uuden Pelin Asetukset' });
     await expect(setupModalHeading).toBeVisible({ timeout: 10000 });

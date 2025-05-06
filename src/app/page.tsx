@@ -277,6 +277,9 @@ export default function Home() {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   // <<< ADD: State for home/away status >>>
   const [homeOrAway, setHomeOrAway] = useState<'home' | 'away'>(initialState.homeOrAway);
+  const [initialLoadComplete, setInitialLoadComplete] = useState<boolean>(false); // <<< New state
+  const [hasSkippedInitialSetup, setHasSkippedInitialSetup] = useState<boolean>(false);
+  const [isGameSettingsModalOpen, setIsGameSettingsModalOpen] = useState<boolean>(false); // <<< ADDED State Declaration
 
   // --- Timer State (Still needed here) ---
   const [timeElapsedInSeconds, setTimeElapsedInSeconds] = useState<number>(0);
@@ -299,11 +302,6 @@ export default function Home() {
   const [isSaveGameModalOpen, setIsSaveGameModalOpen] = useState<boolean>(false);
   const [isLoadGameModalOpen, setIsLoadGameModalOpen] = useState<boolean>(false);
   const [isRosterModalOpen, setIsRosterModalOpen] = useState<boolean>(false); // State for the new modal
-  const [hasSkippedInitialSetup, setHasSkippedInitialSetup] = useState<boolean>(false); // <-- Add this state
-  // Add state to track if new game setup should open after saving
-  // const [isStartingNewGameAfterSave, setIsStartingNewGameAfterSave] = useState<boolean>(false); // <<< REMOVE THIS LINE
-  // ADD state for the new Game Settings modal
-  const [isGameSettingsModalOpen, setIsGameSettingsModalOpen] = useState<boolean>(false);
 
   // <<< ADD State to hold player IDs for the next new game >>>
   const [playerIdsForNewGame, setPlayerIdsForNewGame] = useState<string[] | null>(null);
@@ -547,7 +545,8 @@ export default function Home() {
     setHomeOrAway(stateToApply.homeOrAway ?? initialState.homeOrAway);
 
     setIsLoaded(true);
-    console.log('Initial load complete. isLoaded set to true.');
+    setInitialLoadComplete(true); // <<< Set flag here
+    console.log('Initial load complete. Flags set.');
 
   // Ensure this runs only ONCE on mount by using an empty dependency array
   // eslint-disable-next-line react-hooks/exhaustive-deps 
@@ -715,17 +714,21 @@ export default function Home() {
       completedIntervalDurations, lastSubConfirmationTimeSeconds, homeOrAway
     ]);
 
-  // **** ADDED: Effect to prompt for setup if opponent name is default ****
+  // **** ADDED: Effect to prompt for setup if default game ID is loaded ****
   useEffect(() => {
-    // Reverted check: Only run this check after the initial load is complete
-    // and if the user hasn't explicitly skipped the setup
-    // Check if opponent name is still the default after loading, and we haven't skipped.
-    if (isLoaded && opponentName === 'Opponent' && !hasSkippedInitialSetup) {
-      // console.log('Opponent name is default after load, prompting for setup...');
+    console.log('[Modal Trigger Effect] Running. initialLoadComplete:', initialLoadComplete, 'hasSkipped:', hasSkippedInitialSetup);
+    // Only run the check *after* initial load is fully complete and setup hasn't been skipped
+    if (initialLoadComplete && !hasSkippedInitialSetup) {
+      // Check currentGameId *inside* the effect body
+      if (currentGameId === DEFAULT_GAME_ID) {
+        console.log('Default game ID loaded, prompting for setup...');
       setIsNewGameSetupModalOpen(true);
+      } else {
+        console.log('Not prompting: Specific game loaded.');
     }
-  // Reverted dependency array
-  }, [isLoaded, opponentName, hasSkippedInitialSetup]); 
+    }
+  // Depend only on load completion and skip status
+  }, [initialLoadComplete, hasSkippedInitialSetup, currentGameId]); // <<< Added currentGameId dependency back to re-check if it changes later
 
   // --- Player Management Handlers (Updated for relative coords) ---
   // Wrapped handleDropOnField in useCallback as suggested
@@ -1955,7 +1958,7 @@ export default function Home() {
       setAvailablePlayers(prev => prev.map(p => p.id === playerId ? updatedPlayer : p));
       setPlayersOnField(prev => prev.map(p => p.id === playerId ? { ...p, jerseyNumber: number } : p)); // Update field too
       saveStateToHistory({ playersOnField: playersOnField.map(p => p.id === playerId ? { ...p, jerseyNumber: number } : p) });
-      console.log(`Set jersey number for ${playerId} to ${number}`);
+    console.log(`Set jersey number for ${playerId} to ${number}`);
     } else {
       console.error(`Failed to update jersey number for player ${playerId}`);
       // Optionally show error to user
@@ -1966,7 +1969,7 @@ export default function Home() {
     const updatedPlayer = updatePlayerInRoster(playerId, { notes: notes });
     if (updatedPlayer) {
        setAvailablePlayers(prev => prev.map(p => p.id === playerId ? updatedPlayer : p));
-       console.log(`Set notes for ${playerId}`);
+    console.log(`Set notes for ${playerId}`);
        // No game history change needed unless notes affect playersOnField display
     } else {
       console.error(`Failed to update notes for player ${playerId}`);
@@ -1979,15 +1982,15 @@ export default function Home() {
       const success = removePlayerFromRoster(playerId);
       if (success) {
         // Update local state based on successful removal
-        const updatedAvailable = availablePlayers.filter(p => p.id !== playerId);
+      const updatedAvailable = availablePlayers.filter(p => p.id !== playerId);
         const updatedOnField = playersOnField.filter(p => p.id !== playerId);
         const updatedSelectedIds = selectedPlayerIds.filter(id => id !== playerId);
 
-        setAvailablePlayers(updatedAvailable);
-        setPlayersOnField(updatedOnField);
+      setAvailablePlayers(updatedAvailable);
+      setPlayersOnField(updatedOnField);
         setSelectedPlayerIds(updatedSelectedIds);
-        saveStateToHistory({ playersOnField: updatedOnField, selectedPlayerIds: updatedSelectedIds });
-        console.log(`Removed player ${playerId} from roster, field, and selection.`);
+      saveStateToHistory({ playersOnField: updatedOnField, selectedPlayerIds: updatedSelectedIds });
+      console.log(`Removed player ${playerId} from roster, field, and selection.`);
       } else {
         console.error(`Failed to remove player ${playerId} from roster.`);
         // Optionally show error
@@ -2228,18 +2231,12 @@ export default function Home() {
   ]);
   // --- END Quick Save Handler ---
 
-  // --- NEW: Handlers for Game Settings Modal --- (Placeholder open/close)
-  
+  // --- NEW: Handlers for Game Settings Modal --- 
   const handleOpenGameSettingsModal = () => {
-    // REMOVE check: No longer needed as we always generate an ID
-    // if (currentGameId && currentGameId !== DEFAULT_GAME_ID) {
-      setIsGameSettingsModalOpen(true);
-    // } else {
-    //   alert(t('gameSettings.noGameLoadedError', 'Cannot edit settings. No game loaded or current game is unsaved.') ?? 'No game loaded to edit settings.');
-    // }
+      setIsGameSettingsModalOpen(true); // Corrected State Setter
   };
   const handleCloseGameSettingsModal = () => {
-    setIsGameSettingsModalOpen(false);
+    setIsGameSettingsModalOpen(false); // Corrected State Setter
   };
 
   // --- Placeholder Handlers for GameSettingsModal (will be implemented properly later) ---
@@ -3086,7 +3083,7 @@ export default function Home() {
 
         {/* ADD the new Game Settings Modal - ADD missing props */}
         <GameSettingsModal
-          isOpen={isGameSettingsModalOpen}
+          isOpen={isGameSettingsModalOpen} // Corrected State Variable
           onClose={handleCloseGameSettingsModal}
           currentGameId={currentGameId}
           teamName={teamName}
