@@ -502,6 +502,19 @@ export default function Home() {
     const lastGameId = loadedSettings?.currentGameId ?? DEFAULT_GAME_ID;
     setCurrentGameId(lastGameId);
 
+    // If we have a specific game ID AND that game's data exists in loadedGames,
+    // then we know a game will be loaded, so we can skip the initial setup.
+    if (lastGameId !== DEFAULT_GAME_ID && loadedGames && loadedGames[lastGameId]) {
+      console.log(`[Initial Load] Valid game ID (${lastGameId}) found with data. Setting hasSkippedInitialSetup to true.`);
+      setHasSkippedInitialSetup(true);
+    } else {
+      // If it's the default game ID, or the specific game ID's data is missing,
+      // ensure hasSkippedInitialSetup is false so the modal logic can proceed.
+      // This also handles the case where loadedGames might be undefined or empty.
+      console.log(`[Initial Load] No valid game to load (ID: ${lastGameId}, loadedGames available: ${!!loadedGames}, data for ID exists: ${!!(loadedGames && loadedGames[lastGameId])}). Setting hasSkippedInitialSetup to false.`);
+      setHasSkippedInitialSetup(false); 
+    }
+
     // 3. Load the state of the last game (or default if none/error)
     const loadedState = loadedGames[lastGameId] ?? null;
     if (loadedState) {
