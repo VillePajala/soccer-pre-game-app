@@ -111,6 +111,7 @@ We employ a three-layered testing approach:
     * ✅ `should save a newly created game to localStorage`: Verifies that creating a new game via the initial setup modal correctly saves the game data and updates app settings in `localStorage`.
     * ✅ `should load an existing game and verify its data`: Seeds localStorage, loads the game via UI, and verifies data display and app settings.
     * ✅ `should update game details and verify persistence`: Seeds localStorage with a game, updates its notes via the Game Settings modal, and verifies the update in localStorage and after a page reload.
+    * ✅ `should delete a game and verify its removal`: Seeds localStorage with multiple games, deletes one via the UI, and verifies its removal from `localStorage` and the UI, while ensuring other games remain and `currentGameId` is updated appropriately.
 * **Techniques:** Uses standard Playwright locators (`getByRole`, `getByText`, ID selectors), `page.waitForEvent('download')` for backups, `locator.setInputFiles()` for restores, and `expect.poll()` for reliably waiting on asynchronous state changes.
 
 ## Progress Report
@@ -137,13 +138,16 @@ We employ a three-layered testing approach:
   * ✅ Implemented game loading persistence (`data-persistence.spec.ts`)
   * ✅ Implemented game update persistence (notes) (`data-persistence.spec.ts`)
   * ✅ Implemented E2E tests for backup/restore failure scenarios (non-JSON, malformed JSON, missing structure, unsupported schema) in `backup-restore.spec.ts`
+  * ✅ Implemented E2E test for game deletion (`data-persistence.spec.ts`)
+  * ✅ Refactored initial setup modal logic in `app/page.tsx` for more predictable behavior.
+  * ✅ Simplified E2E tests in `data-persistence.spec.ts` and `backup-restore.spec.ts` by removing redundant modal handling due to improved startup logic.
 
 ## Next Steps
 
 Based on our testing plan and current progress, here are the immediate next steps:
 
 1. **Unskip Integration Test:** Implement the skipped test `shows alert on FileReader error during restore` in `src/components/LoadGameModal.test.tsx`.
-2. **E2E Test - Data Persistence:** Expand `tests/data-persistence.spec.ts` to cover the full game lifecycle (delete) and potentially roster interactions via the UI.
+2. **E2E Test - Data Persistence:** (Considered largely complete for now, focusing on create, load, update, delete. Further enhancements can be new items.)
 3. **Expand Integration Tests:** Add integration tests for other key components (e.g., `GameSettingsModal`, `RosterManagement`).
 4. **(Optional) Configure Coverage Reporting:** Set up Jest (`--coverage`) and/or Playwright to generate code coverage reports to identify untested code paths.
 
@@ -152,8 +156,8 @@ Based on our testing plan and current progress, here are the immediate next step
 For the next development cycle, we should focus on:
 
 1. Unskipping the `LoadGameModal` test - Quick win
-2. E2E tests for game data persistence (delete) - Core functionality
-3. E2E tests for roster management - Core functionality (New addition, was previously under `data-persistence.spec.ts` expansion)
+2. E2E tests for roster management - Core functionality (New addition, was previously under `data-persistence.spec.ts` expansion)
+3. Integration tests for `GameSettingsModal` and `RosterManagement` - Core components
 
 ## Testing Improvement Plan
 
@@ -216,7 +220,7 @@ This outlines the next steps to achieve better test coverage, with a comprehensi
 **Priority 2: Game Data Persistence E2E Tests**
 
 2. **Expand `data-persistence.spec.ts`**: (Next Step)
-    * Test complete game lifecycle (create ✅, load ✅, update ✅, save ✅, delete)
+    * Test complete game lifecycle (create ✅, load ✅, update ✅, save ✅, delete ✅)
     * Test game filtering and sorting in the Load Game modal via UI
     * Verify persistence between app sessions
 
@@ -242,11 +246,3 @@ This outlines the next steps to achieve better test coverage, with a comprehensi
     * Test complex scenarios involving multiple features
     * Test backup/restore with complete application data
     * Test app behavior after multiple data manipulations
-
-## Implementation Strategy
-
-1. For each feature area, implement unit tests first to ensure individual functions work correctly
-2. Follow with integration tests to verify components and services work together
-3. Complete with E2E tests to verify the UI integration and user flows
-4. Implement in small batches, focusing on one feature area at a time
-5. Run the full test suite after each implementation to ensure no regressions 

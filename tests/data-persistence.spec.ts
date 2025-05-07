@@ -238,28 +238,11 @@ test.describe('Data Persistence - Core Functionality', () => {
     await page.reload();
     console.log('Page reloaded after seeding localStorage for update test.');
 
-    // FIRST: Handle potential unexpected setup modal immediately after reload
-    const setupModalHeadingLocatorUpdateTest = page.getByRole('heading', { name: 'Uuden Pelin Asetukset' });
-    const newGameSetupModalUpdateTest = page.getByTestId('new-game-setup-modal');
-    try {
-      await expect(setupModalHeadingLocatorUpdateTest).toBeVisible({ timeout: 10000 }); 
-      console.log('Unexpected setup modal found (update test), attempting to close it...');
-      const homeTeamLabelFinnish = 'Oman joukkueen nimi: *';
-      const opponentLabelFinnish = 'Vastustajan Nimi: *';
-      await page.getByLabel(homeTeamLabelFinnish).fill('Workaround Home Update'); 
-      await page.getByLabel(opponentLabelFinnish).fill('Workaround Away Update'); 
-      await page.getByRole('button', { name: 'Aloita Peli' }).click();
-      await expect(newGameSetupModalUpdateTest).not.toBeVisible({ timeout: 5000 }); 
-      console.log('Closed unexpected setup modal (update test).');
-    } catch {
-      console.log('Setup modal did not appear (update test, expected behavior or handled).');
-    }
-    await page.waitForTimeout(250); // Brief pause for UI to settle
-
-    // THEN: Wait for main UI (settings button)
-    const settingsButtonUpdateTest = page.locator('button[title="controlBar.settings"]'); // Use a different const name
-    await expect(settingsButtonUpdateTest).toBeVisible({ timeout: 30000 });
-    console.log('Main UI is ready (update test).');
+    // Modal handling removed as app/page.tsx logic should prevent it.
+    // Directly wait for a known UI element to ensure page readiness.
+    const settingsButtonUpdateTest = page.locator('button[title="controlBar.settings"]');
+    await expect(settingsButtonUpdateTest).toBeVisible({ timeout: 30000 }); // Increased timeout for reliability
+    console.log('Main UI is ready (update test), setup modal did not appear as expected.');
 
     // --- Action: Update Game Notes ---
     // Open Game Settings modal (assuming there's a button for it)
@@ -407,26 +390,11 @@ test.describe('Data Persistence - Core Functionality', () => {
     await page.reload();
     console.log('Page reloaded after seeding for delete test.');
 
-    // Handle potential setup modal
-    const setupModalHeadingLocatorDelete = page.getByRole('heading', { name: 'Uuden Pelin Asetukset' });
-    const newGameSetupModalDelete = page.getByTestId('new-game-setup-modal');
-    try {
-      await expect(setupModalHeadingLocatorDelete).toBeVisible({ timeout: 10000 });
-      console.log('Unexpected setup modal found (delete test), attempting to close it...');
-      await page.getByLabel('Oman joukkueen nimi: *').fill('Workaround Home Delete');
-      await page.getByLabel('Vastustajan Nimi: *').fill('Workaround Away Delete');
-      await page.getByRole('button', { name: 'Aloita Peli' }).click();
-      await expect(newGameSetupModalDelete).not.toBeVisible({ timeout: 5000 });
-      console.log('Closed unexpected setup modal (delete test).');
-    } catch {
-      console.log('Setup modal did not appear (delete test, expected or handled).');
-    }
-    await page.waitForTimeout(250); 
-
-    // Ensure main UI is ready
+    // Modal handling removed as app/page.tsx logic should prevent it.
+    // Directly wait for a known UI element to ensure page readiness.
     const settingsButtonDeleteTest = page.locator('button[title="controlBar.settings"]');
-    await expect(settingsButtonDeleteTest).toBeVisible({ timeout: 30000 });
-    console.log('Main UI is ready (delete test).');
+    await expect(settingsButtonDeleteTest).toBeVisible({ timeout: 30000 }); // Increased timeout for reliability
+    console.log('Main UI is ready (delete test), setup modal did not appear as expected.');
 
     // --- Action: Navigate to Load Game Modal and Delete Game ---
     await settingsButtonDeleteTest.click();

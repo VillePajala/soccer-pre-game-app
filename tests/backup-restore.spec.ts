@@ -80,23 +80,9 @@ test.describe('Data Safety - Backup & Restore', () => {
         await page.waitForTimeout(500); // Increased from 250ms if it was there, or added.
         console.log('Page reloaded and waited, now checking for setup modal in backup/restore suite.');
         
-        // Handle potential unexpected setup modal (copied from data-persistence.spec.ts)
-        const setupModalHeadingLocator = page.getByRole('heading', { name: 'Uuden Pelin Asetukset' });
-        const newGameSetupModal = page.getByTestId('new-game-setup-modal'); // Ensure this test ID exists or adjust
-        try {
-          await expect(setupModalHeadingLocator).toBeVisible({ timeout: 10000 }); // Check if modal appears
-          console.log('Unexpected setup modal found in backup/restore suite, attempting to close it...');
-          const homeTeamLabelFinnish = 'Oman joukkueen nimi: *';
-          const opponentLabelFinnish = 'Vastustajan Nimi: *';
-          await page.getByLabel(homeTeamLabelFinnish).fill('Workaround Home BR'); 
-          await page.getByLabel(opponentLabelFinnish).fill('Workaround Away BR'); 
-          await page.getByRole('button', { name: 'Aloita Peli' }).click();
-          await expect(newGameSetupModal).not.toBeVisible({ timeout: 5000 }); 
-          console.log('Closed unexpected setup modal in backup/restore suite.');
-        } catch {
-          console.log('Setup modal did not appear in backup/restore suite (expected or handled).');
-        }
-        await page.waitForTimeout(250); // Brief pause for UI to settle
+        // Modal handling try/catch block removed as app/page.tsx logic should prevent it appearing
+        // when a game (currentGameId: 'game1') is seeded.
+        console.log('Setup modal is not expected to appear in backup/restore suite beforeEach due to seeded currentGameId.');
 
         // --- Ensure the main UI is ready before tests start ---
         await expect(page.locator('body')).toBeVisible(); // Basic check for body
