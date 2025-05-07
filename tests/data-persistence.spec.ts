@@ -355,4 +355,157 @@ test.describe('Data Persistence - Core Functionality', () => {
 
   });
 
+  test('should delete a game and verify its removal', async ({ page }) => {
+    const gameIdToDelete = 'delete_test_game_789';
+    const gameNameToDelete = 'Game To Delete';
+    const gameIdToKeep = 'keep_test_game_012';
+    const gameNameToKeep = 'Game To Keep';
+    let initialCurrentGameId: string | null = null; // Variable to store initial currentGameId
+
+    // --- Setup: Seed localStorage with two games ---
+    await page.evaluate(({ gtdId, gtdName, gtkId, gtkName, sGamesKey, appSetKey }) => {
+      const gameToDelete: AppState = {
+        id: gtdId,
+        teamName: gtdName,
+        opponentName: 'Opponent Delete',
+        homeScore: 1,
+        awayScore: 0,
+      };
+      const gameToKeep: AppState = {
+        id: gtkId,
+        teamName: gtkName,
+        opponentName: 'Opponent Keep',
+        homeScore: 2,
+        awayScore: 2,
+      };
+      const initialSavedGames: SavedGamesCollection = {
+        [gtdId]: gameToDelete,
+        [gtkId]: gameToKeep,
+      };
+      const appSettingsToSeed: AppSettings = { currentGameId: gtdId }; 
+      initialCurrentGameId = appSettingsToSeed.currentGameId; // Store for later comparison (this line won't work as evaluate runs in browser)
+
+      localStorage.setItem(sGamesKey, JSON.stringify(initialSavedGames));
+      localStorage.setItem(appSetKey, JSON.stringify(appSettingsToSeed));
+      console.log('Seeded localStorage for delete test with two games.');
+    }, { 
+        gtdId: gameIdToDelete, 
+        gtdName: gameNameToDelete,
+        gtkId: gameIdToKeep,
+        gtkName: gameNameToKeep,
+        sGamesKey: SAVED_GAMES_KEY, 
+        appSetKey: APP_SETTINGS_KEY 
+    });
+    
+    // Fetch initial currentGameId after page.evaluate
+    const initialAppSettingsBeforeAction = await page.evaluate(({ appSetKey }) => {
+        const as = localStorage.getItem(appSetKey);
+        return as ? JSON.parse(as) as AppSettings : null;
+    }, { appSetKey: APP_SETTINGS_KEY });
+    initialCurrentGameId = initialAppSettingsBeforeAction?.currentGameId ?? null;
+
+    await page.reload();
+    console.log('Page reloaded after seeding for delete test.');
+
+    // Handle potential setup modal
+    const setupModalHeadingLocatorDelete = page.getByRole('heading', { name: 'Uuden Pelin Asetukset' });
+    const newGameSetupModalDelete = page.getByTestId('new-game-setup-modal');
+    try {
+      await expect(setupModalHeadingLocatorDelete).toBeVisible({ timeout: 10000 });
+      console.log('Unexpected setup modal found (delete test), attempting to close it...');
+      await page.getByLabel('Oman joukkueen nimi: *').fill('Workaround Home Delete');
+      await page.getByLabel('Vastustajan Nimi: *').fill('Workaround Away Delete');
+      await page.getByRole('button', { name: 'Aloita Peli' }).click();
+      await expect(newGameSetupModalDelete).not.toBeVisible({ timeout: 5000 });
+      console.log('Closed unexpected setup modal (delete test).');
+    } catch {
+      console.log('Setup modal did not appear (delete test, expected or handled).');
+    }
+    await page.waitForTimeout(250); 
+
+    // Ensure main UI is ready
+    const settingsButtonDeleteTest = page.locator('button[title="controlBar.settings"]');
+    await expect(settingsButtonDeleteTest).toBeVisible({ timeout: 30000 });
+    console.log('Main UI is ready (delete test).');
+
+    // --- Action: Navigate to Load Game Modal and Delete Game ---
+    await settingsButtonDeleteTest.click();
+    await page.getByText('Lataa Peli').click();
+    const loadGameModalHeadingDelete = page.getByRole('heading', { name: /Lataa Peli/i });
+    await expect(loadGameModalHeadingDelete).toBeVisible();
+    console.log('Load Game modal is visible (delete test).');
+
+    // Listen for and accept the confirmation dialog
+    page.on('dialog', async dialog => {
+        console.log(`Dialog message for delete: "${dialog.message()}" - Accepting.`);
+        await dialog.accept();
+    });
+
+    // Locate the game item to delete and its delete button
+    const gameItemToDelete = page.getByTestId(`game-item-${gameIdToDelete}`);
+    await expect(gameItemToDelete).toBeVisible();
+    console.log(`Found game item to delete: ${gameNameToDelete}`);
+    
+    // 1. Click the options menu button within the game item
+    // Assuming it has a title attribute based on LoadGameModal.tsx
+    const optionsButton = gameItemToDelete.locator('button[title="Options"], button[title="Valinnat"]'); // Add Finnish translation if needed
+    await expect(optionsButton).toBeVisible();
+    await optionsButton.click();
+    console.log('Clicked options menu button.');
+
+    // 2. Now locate and click the Delete button (likely visible globally or within a menu container)
+    // Use the translation key from LoadGameModal.tsx
+    const deleteButton = page.getByRole('button', { name: /Delete Game|Poista Peli/i }); 
+    await expect(deleteButton).toBeVisible({ timeout: 5000 }); // Wait for menu item to appear
+    await deleteButton.click();
+    console.log(`Clicked delete button for game: ${gameNameToDelete}`);
+
+    // --- Assertions ---
+    // 1. UI Verification: Game to delete is gone, game to keep remains
+    await expect(gameItemToDelete).not.toBeVisible({ timeout: 5000 });
+    console.log(`Verified game item ${gameNameToDelete} is no longer visible in modal.`);
+    
+    const gameItemToKeep = page.getByTestId(`game-item-${gameIdToKeep}`);
+    await expect(gameItemToKeep).toBeVisible();
+    console.log(`Verified game item ${gameNameToKeep} is still visible in modal.`);
+
+    // 2. LocalStorage Verification
+    const { savedGamesAfterDelete, appSettingsAfterDelete } = await page.evaluate(({ sGamesKey, appSetKey }) => {
+      const sg = localStorage.getItem(sGamesKey);
+      const as = localStorage.getItem(appSetKey);
+      return {
+        savedGamesAfterDelete: sg ? JSON.parse(sg) as SavedGamesCollection : null,
+        appSettingsAfterDelete: as ? JSON.parse(as) as AppSettings : null,
+      };
+    }, { sGamesKey: SAVED_GAMES_KEY, appSetKey: APP_SETTINGS_KEY });
+
+    expect(savedGamesAfterDelete, 'Saved games collection should still exist').not.toBeNull();
+    expect(savedGamesAfterDelete?.[gameIdToDelete], `Game ${gameIdToDelete} should be removed from localStorage`).toBeUndefined();
+    expect(savedGamesAfterDelete?.[gameIdToKeep], `Game ${gameIdToKeep} should still exist in localStorage`).toBeDefined();
+    expect(savedGamesAfterDelete?.[gameIdToKeep]?.teamName).toBe(gameNameToKeep);
+    console.log('Verified localStorage: game deleted, other game remains.');
+
+    // If the deleted game was the current game, currentGameId should become null
+    // or if the list is empty. If other games exist, it might pick one - depends on app logic.
+    // Since we explicitly set it to gameIdToDelete, we expect it to be null if no other game auto-loads.
+    // If one auto-loads (e.g. gameIdToKeep), it would be gameIdToKeep.
+    // For now, assuming it becomes null or is NOT gameIdToDelete.
+    if (initialCurrentGameId === gameIdToDelete) { // Now using the correctly scoped variable
+        expect(appSettingsAfterDelete?.currentGameId, 'currentGameId should be null or not the deleted gameId if deleted game was current').not.toBe(gameIdToDelete);
+        // More specific check if it should be null:
+        // expect(appSettingsAfterDelete?.currentGameId).toBeNull(); 
+        // Or if it should be the other game:
+        // expect(appSettingsAfterDelete?.currentGameId).toBe(gameIdToKeep);
+        console.log(`currentGameId is now: ${appSettingsAfterDelete?.currentGameId}. Verified it is not the deleted game's ID.`);
+    }
+    
+    // Close the modal
+    // Locate the modal first, e.g., by its heading or a data-testid if available for the modal container
+    const loadGameModal = page.locator('div.fixed.inset-0').filter({ has: page.getByRole('heading', { name: /Lataa Peli/i }) });
+    // Use force:true as a workaround for potential pointer-event interception
+    await loadGameModal.getByRole('button', { name: /Sulje/i }).click({ force: true }); 
+    await expect(loadGameModalHeadingDelete).not.toBeVisible({ timeout: 5000 });
+    console.log('Closed Load Game modal after delete test.');
+  });
+
 }); 

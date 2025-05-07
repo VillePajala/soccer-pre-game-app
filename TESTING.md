@@ -109,6 +109,8 @@ We employ a three-layered testing approach:
     * ✅ `should successfully restore data from a valid backup file`: Verifies the full cycle of backup generation (via download), state change, and successful restore using the generated backup file via `setInputFiles`, ensuring the state returns correctly.
   * `tests/data-persistence.spec.ts`:
     * ✅ `should save a newly created game to localStorage`: Verifies that creating a new game via the initial setup modal correctly saves the game data and updates app settings in `localStorage`.
+    * ✅ `should load an existing game and verify its data`: Seeds localStorage, loads the game via UI, and verifies data display and app settings.
+    * ✅ `should update game details and verify persistence`: Seeds localStorage with a game, updates its notes via the Game Settings modal, and verifies the update in localStorage and after a page reload.
 * **Techniques:** Uses standard Playwright locators (`getByRole`, `getByText`, ID selectors), `page.waitForEvent('download')` for backups, `locator.setInputFiles()` for restores, and `expect.poll()` for reliably waiting on asynchronous state changes.
 
 ## Progress Report
@@ -132,24 +134,26 @@ We employ a three-layered testing approach:
   * ✅ Initial game creation persistence (`data-persistence.spec.ts`)
   * ✅ Fixed localization issue in `backup-restore.spec.ts` close button locator
   * ✅ Cleaned up `any` types in `backup-restore.spec.ts`
+  * ✅ Implemented game loading persistence (`data-persistence.spec.ts`)
+  * ✅ Implemented game update persistence (notes) (`data-persistence.spec.ts`)
+  * ✅ Implemented E2E tests for backup/restore failure scenarios (non-JSON, malformed JSON, missing structure, unsupported schema) in `backup-restore.spec.ts`
 
 ## Next Steps
 
 Based on our testing plan and current progress, here are the immediate next steps:
 
 1. **Unskip Integration Test:** Implement the skipped test `shows alert on FileReader error during restore` in `src/components/LoadGameModal.test.tsx`.
-2. **E2E Test - Backup/Restore Failures:** Enhance `tests/backup-restore.spec.ts` by adding tests for handling invalid/malformed backup files during restore and verifying user feedback.
-3. **E2E Test - Data Persistence:** Expand `tests/data-persistence.spec.ts` to cover the full game lifecycle (update, delete) and potentially roster interactions via the UI.
-4. **Expand Integration Tests:** Add integration tests for other key components (e.g., `GameSettingsModal`, `RosterManagement`).
-5. **(Optional) Configure Coverage Reporting:** Set up Jest (`--coverage`) and/or Playwright to generate code coverage reports to identify untested code paths.
+2. **E2E Test - Data Persistence:** Expand `tests/data-persistence.spec.ts` to cover the full game lifecycle (delete) and potentially roster interactions via the UI.
+3. **Expand Integration Tests:** Add integration tests for other key components (e.g., `GameSettingsModal`, `RosterManagement`).
+4. **(Optional) Configure Coverage Reporting:** Set up Jest (`--coverage`) and/or Playwright to generate code coverage reports to identify untested code paths.
 
 ### Implementation Plan
 
 For the next development cycle, we should focus on:
 
 1. Unskipping the `LoadGameModal` test - Quick win
-2. E2E tests for backup/restore failures - High priority for robustness
-3. E2E tests for game data persistence (update/delete) - Core functionality
+2. E2E tests for game data persistence (delete) - Core functionality
+3. E2E tests for roster management - Core functionality (New addition, was previously under `data-persistence.spec.ts` expansion)
 
 ## Testing Improvement Plan
 
@@ -203,16 +207,16 @@ This outlines the next steps to achieve better test coverage, with a comprehensi
 
 **Priority 1: Enhance Backup/Restore E2E Tests**
 
-1. **Expand `backup-restore.spec.ts`**: (Next Step)
-    * Test attempting to restore invalid files (non-JSON, malformed JSON)
-    * Test restoring backups with missing fields or incorrect schema
-    * Verify error handling shows appropriate messages to users
+1. **Expand `backup-restore.spec.ts`**: 
+    * Test attempting to restore invalid files (non-JSON, malformed JSON) ✅
+    * Test restoring backups with missing fields or incorrect schema ✅
+    * Verify error handling shows appropriate messages to users ✅
     * Test the backup process includes all necessary app data (Refine existing check)
 
 **Priority 2: Game Data Persistence E2E Tests**
 
 2. **Expand `data-persistence.spec.ts`**: (Next Step)
-    * Test complete game lifecycle (create ✅, load, update, save, delete)
+    * Test complete game lifecycle (create ✅, load ✅, update ✅, save ✅, delete)
     * Test game filtering and sorting in the Load Game modal via UI
     * Verify persistence between app sessions
 
