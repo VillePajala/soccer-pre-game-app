@@ -10,6 +10,7 @@ interface AppState {
   // Add other fields minimaly needed for tests if any
   homeScore?: number;
   awayScore?: number;
+  gameNotes?: string;
 }
 
 interface SavedGamesCollection {
@@ -21,7 +22,7 @@ interface AppSettings {
 }
 
 test.describe('Data Persistence - Core Functionality', () => {
-  // REMOVED: test.describe.configure({ mode: 'serial' }); 
+  test.describe.configure({ mode: 'serial' }); 
 
   // REMOVED: let createdGameId: string | null = null;
   // REMOVED: Shared team name consts
@@ -138,31 +139,30 @@ test.describe('Data Persistence - Core Functionality', () => {
     await page.reload();
     console.log('Page reloaded after seeding localStorage.');
 
-    // Wait for main UI (settings button), ensuring setup modal doesn't appear
-    const settingsButton = page.locator('button[title="controlBar.settings"]');
-    await expect(settingsButton).toBeVisible({ timeout: 30000 });
-    console.log('Main UI is ready, setup modal did not appear.');
-
-    // Re-add workaround: Handle unexpected setup modal appearance after reload+seed
+    // FIRST: Handle potential unexpected setup modal immediately after reload
     const setupModalHeadingLocator = page.getByRole('heading', { name: 'Uuden Pelin Asetukset' });
+    const newGameSetupModal = page.getByTestId('new-game-setup-modal');
     try {
-      await expect(setupModalHeadingLocator).toBeVisible({ timeout: 5000 }); // Check if it appears quickly
-      console.log('Unexpected setup modal found after seed+reload, attempting to close it...');
-      // Use existing team names to close it quickly
+      // Check if the modal is open by trying to see its heading
+      await expect(setupModalHeadingLocator).toBeVisible({ timeout: 10000 });
+      console.log('Unexpected setup modal found after seed/reload, attempting to close it...');
       const homeTeamLabelFinnish = 'Oman joukkueen nimi: *';
       const opponentLabelFinnish = 'Vastustajan Nimi: *';
-      // Use different names than the target game to avoid confusion if creation happens
-      await page.getByLabel(homeTeamLabelFinnish).fill('Workaround Home'); 
-      await page.getByLabel(opponentLabelFinnish).fill('Workaround Away'); 
+      await page.getByLabel(homeTeamLabelFinnish).fill('Workaround Home Load'); 
+      await page.getByLabel(opponentLabelFinnish).fill('Workaround Away Load'); 
       await page.getByRole('button', { name: 'Aloita Peli' }).click();
-      await expect(setupModalHeadingLocator).not.toBeVisible({ timeout: 5000 }); // Confirm it closed
-      console.log('Closed unexpected setup modal (after seed+reload).');
-      // Need to wait for the *actual* settings button to be ready again after this
-      await expect(settingsButton).toBeVisible({ timeout: 10000 }); 
+      // Wait for the modal wrapper to not be visible/present
+      await expect(newGameSetupModal).not.toBeVisible({ timeout: 5000 }); 
+      console.log('Closed unexpected setup modal (after seed/reload).');
     } catch {
-      // If it didn't appear within the timeout, that's good, continue
-      console.log('Setup modal did not appear after seed+reload (expected behavior).');
+      console.log('Setup modal did not appear after seed/reload (expected behavior or handled).');
     }
+    await page.waitForTimeout(250); // Brief pause for UI to settle if modal just closed
+
+    // THEN: Wait for main UI (settings button)
+    const settingsButton = page.locator('button[title="controlBar.settings"]');
+    await expect(settingsButton).toBeVisible({ timeout: 30000 });
+    console.log('Main UI is ready, setup modal did not appear or was handled.');
 
     // --- Action: Navigate and Load Game ---
     await settingsButton.click();
@@ -198,6 +198,161 @@ test.describe('Data Persistence - Core Functionality', () => {
 
     expect(appSettings?.currentGameId, 'Loaded game ID should be set in app settings').toBe(testGameId); // Use testGameId
     console.log('localStorage appSettings correctly updated after load.');
+  });
+
+  test('should update game details and verify persistence', async ({ page }) => {
+    const testGameId = 'update_test_game_456';
+    const yourTeamName = 'Home Update Test';
+    const opponentTeamName = 'Away Update Test';
+    const initialNotes = 'Initial game notes.';
+    const updatedNotes = 'These notes have been updated!';
+
+    // --- Setup: Seed localStorage directly with the game loaded ---
+    await page.evaluate(({ gameId, teamName, opponentName, initialNotes, savedGamesKey, appSettingsKey }) => {
+      const gameToLoad: AppState = {
+        id: gameId,
+        teamName: teamName,
+        opponentName: opponentName,
+        homeScore: 0, 
+        awayScore: 0,
+        gameNotes: initialNotes,
+        // Add other necessary initial fields if needed
+      };
+      const initialSavedGames: SavedGamesCollection = { [gameId]: gameToLoad };
+      // Start with this game ID already set as current
+      const initialAppSettings: AppSettings = { currentGameId: gameId }; 
+
+      localStorage.setItem(savedGamesKey, JSON.stringify(initialSavedGames));
+      localStorage.setItem(appSettingsKey, JSON.stringify(initialAppSettings));
+      console.log('Seeded localStorage for update test');
+    }, { 
+        gameId: testGameId, 
+        teamName: yourTeamName, 
+        opponentName: opponentTeamName, 
+        initialNotes: initialNotes,
+        savedGamesKey: SAVED_GAMES_KEY, 
+        appSettingsKey: APP_SETTINGS_KEY 
+    });
+
+    // Reload page to apply seeded storage
+    await page.reload();
+    console.log('Page reloaded after seeding localStorage for update test.');
+
+    // FIRST: Handle potential unexpected setup modal immediately after reload
+    const setupModalHeadingLocatorUpdateTest = page.getByRole('heading', { name: 'Uuden Pelin Asetukset' });
+    const newGameSetupModalUpdateTest = page.getByTestId('new-game-setup-modal');
+    try {
+      await expect(setupModalHeadingLocatorUpdateTest).toBeVisible({ timeout: 10000 }); 
+      console.log('Unexpected setup modal found (update test), attempting to close it...');
+      const homeTeamLabelFinnish = 'Oman joukkueen nimi: *';
+      const opponentLabelFinnish = 'Vastustajan Nimi: *';
+      await page.getByLabel(homeTeamLabelFinnish).fill('Workaround Home Update'); 
+      await page.getByLabel(opponentLabelFinnish).fill('Workaround Away Update'); 
+      await page.getByRole('button', { name: 'Aloita Peli' }).click();
+      await expect(newGameSetupModalUpdateTest).not.toBeVisible({ timeout: 5000 }); 
+      console.log('Closed unexpected setup modal (update test).');
+    } catch {
+      console.log('Setup modal did not appear (update test, expected behavior or handled).');
+    }
+    await page.waitForTimeout(250); // Brief pause for UI to settle
+
+    // THEN: Wait for main UI (settings button)
+    const settingsButtonUpdateTest = page.locator('button[title="controlBar.settings"]'); // Use a different const name
+    await expect(settingsButtonUpdateTest).toBeVisible({ timeout: 30000 });
+    console.log('Main UI is ready (update test).');
+
+    // --- Action: Update Game Notes ---
+    // Open Game Settings modal (assuming there's a button for it)
+    // Adjust locator based on actual button (e.g., title, icon, text)
+    const gameSettingsButton = page.locator('button[title="Game Settings"]'); // THIS SEEMS OK
+    await gameSettingsButton.click();
+    console.log('Clicked Game Settings button.');
+
+    // Wait for modal to appear. The notes section is what we interact with first.
+    // The heading for notes is "Game Notes" (or its translation)
+    const notesHeadingLocator = page.getByRole('heading', { name: /Game Notes|Muistiinpanot/i });
+    await expect(notesHeadingLocator).toBeVisible({ timeout: 10000 });
+    console.log('Game Settings modal is visible, notes section heading found.');
+
+    // Click the edit button next to the "Game Notes" heading to enable editing
+    // The edit button is a direct sibling or near the heading, often just an icon
+    // Looking for a button near the heading. The GameSettingsModal has <FaEdit />
+    // const editNotesButton = notesHeadingLocator.locator('xpath=following-sibling::button[1]'); // Assuming it's the first button sibling
+    // A more robust locator might be needed if the structure is different or if there's a specific title/aria-label for the edit button.
+    // For now, let's try with a more direct approach if the above is too fragile:
+    // Locate the button that triggers the inline edit for notes.
+    // In GameSettingsModal.tsx, this is a button with an FaEdit icon.
+    // We can find the h3, then its parent, then the button within that parent that has the edit icon.
+    // Or, if the button has a unique accessible name or title, use that.
+    // Let's assume the button has an accessible name like "Edit" or a title.
+    // From the code, the button is: <button onClick={() => handleStartInlineEdit('notes')} ...><FaEdit .../></button>
+    // A more specific locator could be:
+    // const editNotesButton = page.locator('h3:has-text("Game Notes")').locator('..').getByRole('button').filter({ has: page.locator('svg[data-icon="edit"]') });
+    // For now, let's try a more general approach of finding the button next to the heading.
+    // It's the button that, when clicked, calls handleStartInlineEdit('notes').
+    // This button contains an <FaEdit /> icon.
+    const notesEditButton = notesHeadingLocator.getByRole('button');
+    await expect(notesEditButton).toBeVisible({timeout: 5000});
+    await notesEditButton.click();
+    console.log('Clicked edit notes button.');
+
+    // The textarea is revealed after clicking the edit button.
+    // It will have a value, so getByPlaceholder will not work.
+    // Locate it structurally within the notes section.
+    const notesSection = notesHeadingLocator.locator('xpath=ancestor::div[contains(@class, "p-4") and contains(@class, "rounded-lg")]');
+    const notesTextarea = notesSection.locator('textarea');
+    await expect(notesTextarea).toBeVisible({ timeout: 10000 });
+    console.log('Game Notes textarea is now visible.');
+
+    // Verify initial notes are present
+    await expect(notesTextarea).toHaveValue(initialNotes);
+    console.log('Verified initial notes.');
+
+    // Fill with updated notes
+    await notesTextarea.fill(updatedNotes);
+    console.log('Filled updated notes.');
+
+    // Save/Close the modal. Locate the save button within the notesSection.
+    // Name should be exactly "Save" or "Tallenna"
+    const saveButton = notesSection.getByRole('button', { name: /^(Save|Tallenna)$/i });
+    await saveButton.click();
+    await expect(notesTextarea).not.toBeVisible({ timeout: 5000 }); // Wait for modal to close
+    console.log('Closed Game Settings modal.');
+
+    // --- Assertion 1: Verify localStorage update ---
+    const savedGames = await page.evaluate(({ savedGamesKey }) => {
+      const savedGamesJson = localStorage.getItem(savedGamesKey);
+      return savedGamesJson ? JSON.parse(savedGamesJson) as SavedGamesCollection : null;
+    }, { savedGamesKey: SAVED_GAMES_KEY });
+
+    expect(savedGames, 'Saved games collection should still exist').not.toBeNull();
+    const updatedGameData = savedGames?.[testGameId];
+    expect(updatedGameData, 'Updated game data should exist').toBeDefined();
+    expect(updatedGameData?.gameNotes, 'Game notes in localStorage should be updated').toBe(updatedNotes);
+    console.log('Verified game notes updated in localStorage.');
+
+    // --- Assertion 2: Verify persistence after reload ---
+    console.log('Reloading page to verify persistence...');
+    await page.reload();
+    await expect(settingsButtonUpdateTest).toBeVisible({ timeout: 30000 }); // Wait for UI again
+
+    // Re-open Game Settings
+    await gameSettingsButton.click();
+    // ADD: Need to click edit notes button again
+    await expect(notesHeadingLocator).toBeVisible({ timeout: 10000 });
+    await notesEditButton.click(); // Click edit again to show textarea
+    await expect(notesTextarea).toBeVisible({ timeout: 10000 });
+    
+    // Verify updated notes are still there
+    await expect(notesTextarea).toHaveValue(updatedNotes);
+    console.log('Verified updated notes persist in UI after reload.');
+
+    // Close modal again
+    // Use the same specific saveButton locator here
+    const saveButtonAgain = notesSection.getByRole('button', { name: /^(Save|Tallenna)$/i });
+    await saveButtonAgain.click(); 
+    await expect(notesTextarea).not.toBeVisible({ timeout: 5000 });
+
   });
 
 }); 
