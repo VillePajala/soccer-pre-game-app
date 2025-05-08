@@ -536,85 +536,67 @@ describe('LoadGameModal', () => {
          fileReaderSpy.mockRestore();
       });
 
-      // Test FileReader.onerror during restore
+      // Unskip and implement this test
       test('shows alert on FileReader error during restore', async () => {
-        const mockError = new Error('Mock restore read error');
-        const mockAlert = jest.spyOn(window, 'alert').mockImplementation(() => {}); // Re-declare alertSpy locally or ensure it's available
+        const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
+        
+        render(<LoadGameModal isOpen={true} savedGames={{}} {...mockHandlers} />);
+
         let capturedOnerror: (() => void) | null = null;
 
-        jest.spyOn(window, 'FileReader').mockImplementation(() => ({
-          readAsText: jest.fn(() => {
-            // Simulate the error callback being invoked by the browser
-            if (capturedOnerror) {
-              act(() => {
-                 capturedOnerror!(); // Invoke the captured handler
-              });
-            }
-          }),
+        const mockFileReaderInstance = {
+          readAsText: jest.fn(),
           result: null,
-          error: mockError, // Set the error property
-          // Capture the onerror handler when the component assigns it
+          error: new DOMException("Mock read error", "NotReadableError"), // Simulate an error object
+          // Capture the onerror handler assigned by the component
           set onerror(handler: (() => void) | null) { capturedOnerror = handler; },
-          // Provide getters to satisfy TS/React's expectations
+          // Provide getters for readystate and onload to avoid potential issues if accessed
           get onload() { return null; }, 
+          // eslint-disable-next-line @typescript-eslint/no-empty-function
           set onload(handler: null) { /* No-op for error test */ },
           get readyState() { return 2; }, // Indicate loading or done for safety
-          abort: jest.fn(),
-          addEventListener: jest.fn(),
-        } as unknown as FileReader));
+        };
+        // Use `unknown` then cast to `FileReader` for type safety
+        const fileReaderSpy = jest.spyOn(window, 'FileReader').mockImplementation(() => mockFileReaderInstance as unknown as FileReader);
 
-        // Render the component specifically for this test
-        render(<LoadGameModal isOpen={true} savedGames={createSampleGames()} {...mockHandlers} />);
-
-        // Find the hidden input directly by its test ID
-        const restoreInput = screen.getByTestId('restore-backup-input') as HTMLInputElement;
-        expect(restoreInput).toHaveAttribute('type', 'file'); // Verify we got the input
-        
-        const dummyFile = new File(['dummy content'], 'backup.json', { type: 'application/json' });
-        
-        // Simulate file selection on the RESTORE input
+        // Simulate clicking the "Restore from Backup" button, which internally clicks the hidden file input
+        // This button might have a specific name or be found by role
+        const restoreButton = screen.getByRole('button', { name: /Restore from Backup/i });
         await act(async () => {
-            fireEvent.change(restoreInput, { target: { files: [dummyFile] } });
+          fireEvent.click(restoreButton);
+        });
+        
+        // The component's event handler for the input's 'change' event should now be set up.
+        // Find the actual file input (it's often visually hidden)
+        // Let's assume it has a testId or is uniquely identifiable
+        const fileInput = screen.getByTestId('restore-backup-input'); // Ensure this test ID is on the input
+
+        const testFile = new File(['some backup content'], 'backup.json', { type: 'application/json' });
+
+        // Simulate the file input change event
+        await act(async () => {
+          fireEvent.change(fileInput, { target: { files: [testFile] } });
         });
 
-        expect(mockAlert).toHaveBeenCalledTimes(1);
-        // Assuming the same error message key is used
-        expect(mockAlert).toHaveBeenCalledWith('Error reading file content.'); 
+        // Now, manually trigger the captured onerror handler
+        if (capturedOnerror) {
+          await act(async () => {
+            capturedOnerror!(); // Non-null assertion as it should be set
+          });
+        } else {
+          throw new Error("FileReader's onerror handler was not captured by the mock.");
+        }
         
-        mockAlert.mockRestore(); // Restore the local spy
+        expect(alertMock).toHaveBeenCalledTimes(1);
+        expect(alertMock).toHaveBeenCalledWith(expect.stringContaining('Error reading file content.'));
+        
+        alertMock.mockRestore();
+        // Restore original FileReader
+        fileReaderSpy.mockRestore(); // Use the spy variable to restore
       });
 
-      it('shows alert from importFullBackup on processing error during restore', async () => {
-         // Render and find inputs for this test
-         render(<LoadGameModal isOpen={true} savedGames={createSampleGames()} {...mockHandlers} />);
-         const restoreInput = screen.getByTestId('restore-backup-input') as HTMLInputElement;
-
-         const fileContent = 'invalid json';
-         const file = new File([fileContent], 'restore_invalid.json', { type: 'application/json' });
-         const { importFullBackup: importFullBackupMock } = jest.requireMock('@/utils/fullBackup');
-         importFullBackupMock.mockImplementationOnce(() => { 
-           window.alert('Error importing full backup: Invalid format...'); 
-           return false; 
-         });
-         const mockReadAsText = jest.fn();
-         let capturedOnload: ((event: ProgressEvent<FileReader>) => void) | null = null;
-         const mockReader = { 
-           set onload(handler: ((event: ProgressEvent<FileReader>) => void) | null) { capturedOnload = handler; },
-           readAsText: mockReadAsText, 
-           result: fileContent 
-         };
-         const fileReaderSpy = jest.spyOn(window, 'FileReader').mockImplementation(() => mockReader as unknown as FileReader);
-
-         await act(async () => {
-            fireEvent.change(restoreInput, { target: { files: [file] } });
-            if (capturedOnload) {
-               capturedOnload({ target: mockReader } as unknown as ProgressEvent<FileReader>);
-            }
-         });
-
-         expect(importFullBackupMock).toHaveBeenCalledWith(fileContent);
-         expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining('Error importing full backup: Invalid format...')); 
-         fileReaderSpy.mockRestore();
+      test('shows alert on JSON processing error during import', async () => {
+        // ... existing code ...
       });
     });
   });

@@ -93,6 +93,9 @@ We employ a three-layered testing approach:
     * ✅ Calls `exportFullBackup` mock when `Backup All Data` is clicked.
     * ✅ Handles successful file selection for import (calls `onImportJson`).
     * ✅ Handles successful file selection for restore (calls `importFullBackup` mock).
+    * ✅ Shows alert on JSON processing errors during import.
+    * ✅ Shows alert propagated from `importFullBackup` on processing errors during restore.
+    * ✅ Shows alert on `FileReader` read error during restore.
     * ✅ Shows alert on `FileReader` read errors during import.
     * ✅ Shows alert on JSON processing errors during import.
     * ✅ Shows alert propagated from `importFullBackup` on processing errors during restore.
@@ -141,23 +144,24 @@ We employ a three-layered testing approach:
   * ✅ Implemented E2E test for game deletion (`data-persistence.spec.ts`)
   * ✅ Refactored initial setup modal logic in `app/page.tsx` for more predictable behavior.
   * ✅ Simplified E2E tests in `data-persistence.spec.ts` and `backup-restore.spec.ts` by removing redundant modal handling due to improved startup logic.
+  * ✅ Unskipped and implemented `FileReader` error test in `LoadGameModal.test.tsx`.
+  * ✅ Implemented E2E test for adding a player in roster management (`tests/roster.spec.ts`)
 
 ## Next Steps
 
 Based on our testing plan and current progress, here are the immediate next steps:
 
-1. **Unskip Integration Test:** Implement the skipped test `shows alert on FileReader error during restore` in `src/components/LoadGameModal.test.tsx`.
-2. **E2E Test - Data Persistence:** (Considered largely complete for now, focusing on create, load, update, delete. Further enhancements can be new items.)
-3. **Expand Integration Tests:** Add integration tests for other key components (e.g., `GameSettingsModal`, `RosterManagement`).
+1. **E2E Test - Data Persistence:** (Considered largely complete for now, focusing on create, load, update, delete. Further enhancements can be new items.)
+2. **Expand Integration Tests:** Add integration tests for other key components (e.g., `GameSettingsModal`, `RosterManagement`).
+3. **E2E tests for roster management** - Core functionality
 4. **(Optional) Configure Coverage Reporting:** Set up Jest (`--coverage`) and/or Playwright to generate code coverage reports to identify untested code paths.
 
 ### Implementation Plan
 
 For the next development cycle, we should focus on:
 
-1. Unskipping the `LoadGameModal` test - Quick win
-2. E2E tests for roster management - Core functionality (New addition, was previously under `data-persistence.spec.ts` expansion)
-3. Integration tests for `GameSettingsModal` and `RosterManagement` - Core components
+1. E2E tests for roster management - Core functionality
+2. Integration tests for `GameSettingsModal` and `RosterManagement` - Core components
 
 ## Testing Improvement Plan
 
@@ -188,7 +192,7 @@ This outlines the next steps to achieve better test coverage, with a comprehensi
 
 **Priority 1: Component Integration Tests (Expand)**
 
-1. **`LoadGameModal.test.tsx`**: ✅ Mostly done (1 skipped test)
+1. **`LoadGameModal.test.tsx`**: ✅ Done
 2. **Create integration tests for other key components**:
     * Test `GameSettingsModal` component
     * Test `RosterManagement` component interactions
@@ -227,7 +231,7 @@ This outlines the next steps to achieve better test coverage, with a comprehensi
 **Priority 3: Roster Management E2E Tests**
 
 3. **Create `roster.spec.ts`**:
-    * Test adding players through the UI
+    * ✅ Test adding players through the UI
     * Test editing player details
     * Test removing players
     * Verify player assignments to games

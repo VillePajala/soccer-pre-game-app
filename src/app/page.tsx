@@ -1976,7 +1976,7 @@ export default function Home() {
       console.error(`Failed to update jersey number for player ${playerId}`);
       // Optionally show error to user
     }
-  }, [playersOnField, saveStateToHistory]); // Removed availablePlayers/setAvailablePlayers dependency
+  }, [playersOnField, saveStateToHistory, setAvailablePlayers, setPlayersOnField]); // ADDED missing setters
 
   const handleSetPlayerNotes = useCallback((playerId: string, notes: string) => {
     const updatedPlayer = updatePlayerInRoster(playerId, { notes: notes });
@@ -1987,7 +1987,7 @@ export default function Home() {
     } else {
       console.error(`Failed to update notes for player ${playerId}`);
     }
-  }, [/* availablePlayers, setAvailablePlayers */]); // Removed dependencies
+  }, [setAvailablePlayers]); // ADDED setAvailablePlayers dependency
 
   const handleRemovePlayerFromRoster = useCallback((playerId: string) => {
     const playerName = availablePlayers.find(p => p.id === playerId)?.name ?? playerId;
@@ -2009,7 +2009,7 @@ export default function Home() {
         // Optionally show error
       }
     }
-  }, [availablePlayers, playersOnField, selectedPlayerIds, saveStateToHistory, t]); // Removed set state dependencies
+  }, [availablePlayers, playersOnField, selectedPlayerIds, saveStateToHistory, t, setAvailablePlayers, setPlayersOnField, setSelectedPlayerIds]); // ADDED missing state setters
 
   // Use addPlayerToRoster utility
   const handleAddPlayer = useCallback((playerData: { name: string; jerseyNumber: string; notes: string; nickname: string }) => {
@@ -2026,7 +2026,7 @@ export default function Home() {
       console.error(`Failed to add player ${playerData.name} to roster.`);
       // Optionally show error
     }
-  }, [selectedPlayerIds, saveStateToHistory]); // Removed availablePlayers/setAvailablePlayers dependency
+  }, [selectedPlayerIds, saveStateToHistory, setAvailablePlayers, setSelectedPlayerIds]); // ADDED missing setters // Removed availablePlayers/setAvailablePlayers dependency
 
   // --- Goalie Toggle Handler --- 
   const handleToggleGoalie = useCallback((playerId: string) => {
@@ -2061,7 +2061,7 @@ export default function Home() {
     } else {
         console.error(`Failed to toggle goalie status for player ${playerId}`);
     }
-  }, [availablePlayers, playersOnField, saveStateToHistory]); // Removed set state dependencies
+  }, [availablePlayers, playersOnField, saveStateToHistory, setAvailablePlayers, setPlayersOnField]); // Added missing setters // Removed set state dependencies
 
   // --- END Roster Management Handlers ---
 
