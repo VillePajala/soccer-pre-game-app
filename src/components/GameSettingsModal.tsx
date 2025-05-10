@@ -4,9 +4,10 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaTimes, FaEdit, FaSave, FaTrashAlt, FaCalendarAlt, FaClock, FaMapMarkerAlt } from 'react-icons/fa';
 import { Player, GameEvent, Season, Tournament } from '@/app/page'; // Adjust path as needed
-import { SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY } from '@/config/constants';
+import { getSeasons as utilGetSeasons } from '@/utils/seasons';
+import { getTournaments as utilGetTournaments } from '@/utils/tournaments';
 
-interface GameSettingsModalProps {
+export interface GameSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   // --- Data for the current game ---
@@ -135,12 +136,14 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       try {
-        const storedSeasons = localStorage.getItem(SEASONS_LIST_KEY);
-        setSeasons(storedSeasons ? JSON.parse(storedSeasons) : []);
+        // const storedSeasons = localStorage.getItem(SEASONS_LIST_KEY);
+        // setSeasons(storedSeasons ? JSON.parse(storedSeasons) : []);
+        setSeasons(utilGetSeasons());
       } catch (error) { console.error("Failed to load seasons:", error); setSeasons([]); }
       try {
-        const storedTournaments = localStorage.getItem(TOURNAMENTS_LIST_KEY);
-        setTournaments(storedTournaments ? JSON.parse(storedTournaments) : []);
+        // const storedTournaments = localStorage.getItem(TOURNAMENTS_LIST_KEY);
+        // setTournaments(storedTournaments ? JSON.parse(storedTournaments) : []);
+        setTournaments(utilGetTournaments());
       } catch (error) { console.error("Failed to load tournaments:", error); setTournaments([]); }
     }
   }, [isOpen]);
@@ -357,32 +360,30 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
 
   // Handlers for separate HH/MM time inputs (Refactored)
   const handleHourChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const newHour = e.target.value; // Don't pad here
-      // Basic validation for input characters
+      const newHour = e.target.value; 
       if (/^\d{0,2}$/.test(newHour)) { 
-        setLocalHour(newHour); // Update local state immediately
-        // Also call parent handler (consider debouncing later if needed)
+        setLocalHour(newHour); 
         const finalHour = newHour.padStart(2, '0');
-        if (/^([01]\d|2[0-3])$/.test(finalHour) || finalHour === '00') {
+        // Corrected condition for clearing
+        if (newHour === '' && (localMinute === '' || localMinute === '00')) {
+            onGameTimeChange('');
+        } else if (/^([01]\d|2[0-3])$/.test(finalHour) || finalHour === '00') {
             onGameTimeChange(`${finalHour}:${localMinute.padStart(2,'0')}`);
-        } else if (newHour === '' && localMinute === '') {
-            onGameTimeChange(''); // Clear if both empty
-        } // Otherwise, might be incomplete input, don't call parent yet
+        }
       }
   };
 
   const handleMinuteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const newMinute = e.target.value; // Don't pad here
-      // Basic validation for input characters
+      const newMinute = e.target.value; 
       if (/^\d{0,2}$/.test(newMinute)) { 
-        setLocalMinute(newMinute); // Update local state immediately
-         // Also call parent handler (consider debouncing later if needed)
+        setLocalMinute(newMinute); 
         const finalMinute = newMinute.padStart(2, '0');
-        if (/^[0-5]\d$/.test(finalMinute)) {
+        // Corrected condition for clearing
+        if (newMinute === '' && (localHour === '' || localHour === '00')) {
+            onGameTimeChange('');
+        } else if (/^[0-5]\d$/.test(finalMinute) || finalMinute === '00') {
             onGameTimeChange(`${localHour.padStart(2,'0')}:${finalMinute}`);
-        } else if (localHour === '' && newMinute === '') {
-            onGameTimeChange(''); // Clear if both empty
-        } // Otherwise, might be incomplete input, don't call parent yet
+        }
       }
   };
 
@@ -396,8 +397,15 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
 
   // Determine association type based on props
    const associationType = useMemo(() => {
-        if (seasonId) return 'season';
-        if (tournamentId) return 'tournament';
+        // If seasonId is not null and not undefined (i.e., it has been interacted with, 
+        // potentially set to "" to show the dropdown), it should be 'season' mode.
+        if (seasonId !== null && seasonId !== undefined) {
+            return 'season';
+        }
+        // If tournamentId is not null and not undefined, and season is not active, it's 'tournament' mode.
+        if (tournamentId !== null && tournamentId !== undefined) {
+            return 'tournament';
+        }
         return 'none';
     }, [seasonId, tournamentId]);
 
@@ -731,7 +739,8 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
               {inlineEditingField !== 'notes' && (
                 <button
                   onClick={() => handleStartInlineEdit('notes')}
-                  className="text-xs text-slate-400 hover:text-indigo-400 flex items-center" /* Smaller edit button */ 
+                  className="text-xs text-slate-400 hover:text-indigo-400 flex items-center"
+                  aria-label={t('gameSettingsModal.editNotes', 'Edit Notes')}
                 >
                    <FaEdit className="inline mr-1" size={12}/>
                 </button>

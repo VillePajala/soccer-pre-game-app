@@ -248,15 +248,15 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                 <div className="flex ml-2">
                   <button 
                     onClick={handleSaveTeamName} 
-                    className="text-green-500 hover:text-green-400 p-1 rounded hover:bg-slate-600" 
-                    title={t('common.save', 'Save')}
+                    title={t('rosterSettingsModal.saveTeamName', 'Save Team Name')}
+                    className="text-green-500 hover:text-green-400 p-1 rounded hover:bg-slate-700"
                   >
                     <HiOutlineCheck className="w-5 h-5" />
                   </button>
                   <button 
                     onClick={handleCancelTeamNameEdit} 
-                    className="text-red-500 hover:text-red-400 p-1 rounded hover:bg-slate-600" 
-                    title={t('common.cancel', 'Cancel')}
+                    title={t('rosterSettingsModal.cancelEditTeamName', 'Cancel Edit Team Name')}
+                    className="text-red-500 hover:text-red-400 p-1 rounded hover:bg-slate-700 ml-1"
                   >
                     <HiOutlineXMark className="w-5 h-5" />
                   </button>

@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SavedGamesCollection, Season, Tournament } from '@/app/page'; // Removed unused GameEvent
-import { SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY } from '@/config/constants';
 import i18n from '../i18n'; // Import i18n directly
 import { 
   HiOutlineDocumentArrowDown, 
@@ -19,6 +18,9 @@ import {
 // import { useGameState } from '@/hooks/useGameState';
 // Import the new backup functions
 import { exportFullBackup, importFullBackup } from '@/utils/fullBackup'; 
+// Import new utility functions
+import { getSeasons as utilGetSeasons } from '@/utils/seasons';
+import { getTournaments as utilGetTournaments } from '@/utils/tournaments';
 
 interface LoadGameModalProps {
   isOpen: boolean;
@@ -67,17 +69,17 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       try {
-        const storedSeasons = localStorage.getItem(SEASONS_LIST_KEY);
-        setSeasons(storedSeasons ? JSON.parse(storedSeasons) : []);
-      } catch (error) {
-        console.error("Failed to load or parse seasons:", error);
+        const loadedSeasons = utilGetSeasons();
+        setSeasons(loadedSeasons);
+      } catch (error) { // Should be rare as utilGetSeasons handles its own try/catch
+        console.error("Error loading seasons via utility:", error);
         setSeasons([]); 
       }
       try {
-        const storedTournaments = localStorage.getItem(TOURNAMENTS_LIST_KEY);
-        setTournaments(storedTournaments ? JSON.parse(storedTournaments) : []);
-      } catch (error) {
-        console.error("Failed to load or parse tournaments:", error);
+        const loadedTournaments = utilGetTournaments();
+        setTournaments(loadedTournaments);
+      } catch (error) { // Should be rare as utilGetTournaments handles its own try/catch
+        console.error("Error loading tournaments via utility:", error);
         setTournaments([]);
       }
     }

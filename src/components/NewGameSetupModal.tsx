@@ -3,8 +3,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Season, Tournament } from '../app/page';
-import { SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY, LAST_HOME_TEAM_NAME_KEY } from '@/config/constants';
+import { LAST_HOME_TEAM_NAME_KEY } from '@/config/constants';
 import { HiPlusCircle } from 'react-icons/hi';
+import { getSeasons as utilGetSeasons, addSeason as utilAddSeason } from '@/utils/seasons';
+import { getTournaments as utilGetTournaments, addTournament as utilAddTournament } from '@/utils/tournaments';
 
 interface NewGameSetupModalProps {
   isOpen: boolean;
@@ -87,19 +89,19 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
       setLocalPeriodDurationString(String(10));
       // <<< Step 4a: Reset Home/Away >>>
 
-      // Load seasons and tournaments from localStorage
+      // Load seasons and tournaments using utility functions
       try {
-        const storedSeasons = localStorage.getItem(SEASONS_LIST_KEY);
-        setSeasons(storedSeasons ? JSON.parse(storedSeasons) : []);
-      } catch (error) {
-        console.error("Failed to load or parse seasons:", error);
+        const loadedSeasons = utilGetSeasons();
+        setSeasons(loadedSeasons);
+      } catch (error) { // Should be rare as utilGetSeasons handles its own try/catch
+        console.error("Error loading seasons via utility:", error);
         setSeasons([]);
       }
       try {
-        const storedTournaments = localStorage.getItem(TOURNAMENTS_LIST_KEY);
-        setTournaments(storedTournaments ? JSON.parse(storedTournaments) : []);
-      } catch (error) {
-        console.error("Failed to load or parse tournaments:", error);
+        const loadedTournaments = utilGetTournaments();
+        setTournaments(loadedTournaments);
+      } catch (error) { // Should be rare as utilGetTournaments handles its own try/catch
+        console.error("Error loading tournaments via utility:", error);
         setTournaments([]);
       }
 
@@ -169,30 +171,15 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
       return;
     }
 
-    const newId = `season_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-    const newSeason: Season = { id: newId, name: trimmedName };
-
     try {
-      // 1. Load current seasons
-      const storedSeasons = localStorage.getItem(SEASONS_LIST_KEY);
-      const currentSeasons: Season[] = storedSeasons ? JSON.parse(storedSeasons) : [];
+      // Use utility function to add season
+      const updatedSeasons = utilAddSeason(trimmedName);
       
-      // Check for duplicate names (optional but recommended)
-      if (currentSeasons.some(s => s.name.toLowerCase() === trimmedName.toLowerCase())) {
-          alert(t('newGameSetupModal.duplicateSeasonName', 'A season with this name already exists.'));
-          newSeasonInputRef.current?.focus();
-          return;
-      }
-
-      // 2. Add new season
-      const updatedSeasons = [...currentSeasons, newSeason];
-
-      // 3. Save updated list
-      localStorage.setItem(SEASONS_LIST_KEY, JSON.stringify(updatedSeasons));
-
-      // 4. Update component state
+      // Update component state
       setSeasons(updatedSeasons);
-      setSelectedSeasonId(newId); // Automatically select the new season
+      // Find the newly added season to get its ID for selection
+      const newSeason = updatedSeasons.find(s => s.name === trimmedName);
+      setSelectedSeasonId(newSeason ? newSeason.id : null);
       setSelectedTournamentId(null); // Ensure tournament is deselected
       setNewSeasonName(''); // Clear input
       setShowNewSeasonInput(false); // Hide input field
@@ -201,7 +188,18 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
 
     } catch (error) {
       console.error("Failed to save new season:", error);
-      alert(t('newGameSetupModal.errorAddingSeason', 'Error adding new season. See console for details.'));
+      if (error instanceof Error) {
+        // Handle specific error messages from the utility function
+        if (error.message === 'Season name cannot be empty.' || error.message === 'A season with this name already exists.') {
+          alert(t('newGameSetupModal.errorAddingSeasonUserFriendly', error.message)); // Provide a more user-friendly translation
+        } else {
+          alert(t('newGameSetupModal.errorAddingSeasonGeneric', 'Error adding new season. See console for details.'));
+        }
+      } else {
+        // Fallback for non-Error types
+        alert(t('newGameSetupModal.errorAddingSeasonGeneric', 'An unexpected error occurred.'));
+      }
+      newSeasonInputRef.current?.focus();
     }
   };
 
@@ -214,30 +212,15 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
       return;
     }
 
-    const newId = `tournament_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-    const newTournament: Tournament = { id: newId, name: trimmedName };
-
     try {
-      // 1. Load current tournaments
-      const storedTournaments = localStorage.getItem(TOURNAMENTS_LIST_KEY);
-      const currentTournaments: Tournament[] = storedTournaments ? JSON.parse(storedTournaments) : [];
+      // Use utility function to add tournament
+      const updatedTournaments = utilAddTournament(trimmedName);
 
-      // Check for duplicate names (optional but recommended)
-      if (currentTournaments.some(t => t.name.toLowerCase() === trimmedName.toLowerCase())) {
-          alert(t('newGameSetupModal.duplicateTournamentName', 'A tournament with this name already exists.'));
-          newTournamentInputRef.current?.focus();
-          return;
-      }
-
-      // 2. Add new tournament
-      const updatedTournaments = [...currentTournaments, newTournament];
-
-      // 3. Save updated list
-      localStorage.setItem(TOURNAMENTS_LIST_KEY, JSON.stringify(updatedTournaments));
-
-      // 4. Update component state
+      // Update component state
       setTournaments(updatedTournaments);
-      setSelectedTournamentId(newId); // Automatically select the new tournament
+      // Find the newly added tournament to get its ID for selection
+      const newTournament = updatedTournaments.find(t => t.name === trimmedName);
+      setSelectedTournamentId(newTournament ? newTournament.id : null);
       setSelectedSeasonId(null); // Ensure season is deselected
       setNewTournamentName(''); // Clear input
       setShowNewTournamentInput(false); // Hide input field
@@ -246,7 +229,18 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
 
     } catch (error) {
       console.error("Failed to save new tournament:", error);
-      alert(t('newGameSetupModal.errorAddingTournament', 'Error adding new tournament. See console for details.'));
+      if (error instanceof Error) {
+        // Handle specific error messages from the utility function
+        if (error.message === 'Tournament name cannot be empty.' || error.message === 'A tournament with this name already exists.') {
+          alert(t('newGameSetupModal.errorAddingTournamentUserFriendly', error.message));
+        } else {
+          alert(t('newGameSetupModal.errorAddingTournamentGeneric', 'Error adding new tournament. See console for details.'));
+        }
+      } else {
+        // Fallback for non-Error types
+        alert(t('newGameSetupModal.errorAddingTournamentGeneric', 'An unexpected error occurred.'));
+      }
+      newTournamentInputRef.current?.focus();
     }
   };
   // --- End Handlers for Create New ---
