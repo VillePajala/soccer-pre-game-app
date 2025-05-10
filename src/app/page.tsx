@@ -19,6 +19,17 @@ import { useGameState, UseGameStateReturn } from '@/hooks/useGameState';
 import GameInfoBar from '@/components/GameInfoBar';
 // Import roster utility functions
 import { getMasterRoster, addPlayerToRoster, updatePlayerInRoster, removePlayerFromRoster, setPlayerGoalieStatus } from '@/utils/rosterUtils';
+// Import game persistence utility functions
+import {
+  getAllSavedGames,
+  // getGameById, // Not directly used in these initial effects, but good to have if needed later
+  saveGame,
+  deleteGame,
+  saveAllGames,
+  getCurrentGameIdSetting,
+  saveCurrentGameIdSetting,
+  performHardReset,
+} from '@/utils/gamePersistence';
 
 // Define the Player type - Use relative coordinates
 export interface Player {
@@ -157,8 +168,8 @@ const initialState: AppState = {
 };
 
 // Define new localStorage keys
-const SAVED_GAMES_KEY = 'savedSoccerGames';
-const APP_SETTINGS_KEY = 'soccerAppSettings';
+export const SAVED_GAMES_KEY = 'savedSoccerGames';
+export const APP_SETTINGS_KEY = 'soccerAppSettings';
 const SEASONS_LIST_KEY = 'soccerSeasons';
 const TOURNAMENTS_LIST_KEY = 'soccerTournaments';
 const MASTER_ROSTER_KEY = 'soccerMasterRoster'; // <<< NEW KEY for global roster
@@ -189,7 +200,7 @@ export interface Tournament {
 }
 
 // Define a default Game ID for the initial/unsaved state
-const DEFAULT_GAME_ID = '__default_unsaved__';
+export const DEFAULT_GAME_ID = '__default_unsaved__';
 
 
 
@@ -457,24 +468,14 @@ export default function Home() {
     setAvailablePlayers(loadedMasterRoster);
     // +++ END NEW: Load Master Roster +++
 
-    // 1. Load saved games collection
-    let loadedGames: SavedGamesCollection = {};
-    try {
-      const savedGamesJson = localStorage.getItem(SAVED_GAMES_KEY);
-      if (savedGamesJson) {
-        loadedGames = JSON.parse(savedGamesJson);
-        console.log('Loaded saved games from localStorage:', Object.keys(loadedGames).length, 'games');
-      } else {
-        console.log('No saved games found in localStorage.');
-      }
-    } catch (error) {
-      console.error('Failed to load or parse saved games:', error);
-    }
+    // 1. Load saved games collection using utility
+    const loadedGames = getAllSavedGames();
+    console.log('Loaded saved games using utility:', Object.keys(loadedGames).length, 'games');
     setSavedGames(loadedGames);
 
     // --- ADD Loading for Seasons and Tournaments ---
     try {
-      const storedSeasons = localStorage.getItem(SEASONS_LIST_KEY);
+      const storedSeasons = localStorage.getItem(SEASONS_LIST_KEY); // Keep direct for now, or create season utils
       const loadedSeasons = storedSeasons ? JSON.parse(storedSeasons) : [];
       setSeasons(loadedSeasons);
       console.log('Loaded seasons:', loadedSeasons.length);
@@ -488,18 +489,9 @@ export default function Home() {
     } catch (error) { console.error("Failed to load tournaments:", error); setTournaments([]); }
     // --- END Loading for Seasons and Tournaments ---
 
-    // 2. Load app settings to find the last game ID
-    let loadedSettings: AppSettings | null = null;
-    try {
-      const settingsJson = localStorage.getItem(APP_SETTINGS_KEY);
-      if (settingsJson) {
-        loadedSettings = JSON.parse(settingsJson);
-        console.log('Loaded app settings:', loadedSettings);
-      }
-    } catch (error) {
-      console.error('Failed to load or parse app settings:', error);
-    }
-    const lastGameId = loadedSettings?.currentGameId ?? DEFAULT_GAME_ID;
+    // 2. Load app settings to find the last game ID using utility
+    const lastGameId = getCurrentGameIdSetting();
+    console.log('Loaded last game ID using utility:', lastGameId);
     setCurrentGameId(lastGameId);
 
     // If we have a specific game ID AND that game's data exists in loadedGames,
@@ -687,30 +679,15 @@ export default function Home() {
           homeOrAway,
         };
 
-        // 2. Read the *current* collection from localStorage
-        let allSavedGames: SavedGamesCollection = {};
-        const savedGamesJSON = localStorage.getItem(SAVED_GAMES_KEY);
-        if (savedGamesJSON) {
-          try {
-            allSavedGames = JSON.parse(savedGamesJSON);
-          } catch (e) { console.error("Error parsing saved games from localStorage:", e); }
-        }
+        // 2. Save the game snapshot using utility
+        saveGame(currentGameId, currentSnapshot);
         
-        // 3. Update the specific game in the collection
-        const updatedSavedGamesCollection = {
-          ...allSavedGames,
-          [currentGameId]: currentSnapshot // Use idToSave here
-        };
-
-        // 4. Save the updated collection back to localStorage
-        localStorage.setItem(SAVED_GAMES_KEY, JSON.stringify(updatedSavedGamesCollection));
-        
-        // 5. Save App Settings (only the current game ID)
-        const currentSettings: AppSettings = { currentGameId };
-        localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(currentSettings));
+        // 3. Save App Settings (only the current game ID) using utility
+        saveCurrentGameIdSetting(currentGameId);
 
       } catch (error) {
         console.error("Failed to auto-save state to localStorage:", error);
+        alert("Error saving game."); // Notify user
       }
     } else if (isLoaded && currentGameId === DEFAULT_GAME_ID) {
       console.log("Not auto-saving as this is an unsaved game (no ID assigned yet)");
@@ -1308,15 +1285,14 @@ export default function Home() {
   const handleHardResetApp = useCallback(() => {
     if (window.confirm(t('controlBar.hardResetConfirmation') ?? "Are you sure you want to completely reset the application? All saved data (players, stats, positions) will be permanently lost.")) {
       try {
-        console.log("Performing hard reset...");
-        localStorage.removeItem(SAVED_GAMES_KEY);
-        localStorage.removeItem(APP_SETTINGS_KEY);
-        localStorage.removeItem(SEASONS_LIST_KEY);
-        localStorage.removeItem(TOURNAMENTS_LIST_KEY);
+        console.log("Performing hard reset using utility...");
+        performHardReset(); // Use utility function
+        // The following season/tournament keys are not part of gamePersistence, handle separately if needed or move them to gamePersistence.
+        // localStorage.removeItem(SEASONS_LIST_KEY); 
+        // localStorage.removeItem(TOURNAMENTS_LIST_KEY);
         window.location.reload();
       } catch (error) {
         console.error("Error during hard reset:", error);
-        // Optionally show an error message to the user
         alert("Failed to reset application data.");
       }
     }
@@ -1508,20 +1484,20 @@ export default function Home() {
     }
 
     try {
-      // Create a new collection excluding the deleted game
+      deleteGame(gameId); // Use utility function to delete from localStorage
+
+      // Update local state for immediate UI responsiveness
       const updatedSavedGames = { ...savedGames };
       delete updatedSavedGames[gameId];
+      setSavedGames(updatedSavedGames);
 
-      setSavedGames(updatedSavedGames); // Update state
-      localStorage.setItem(SAVED_GAMES_KEY, JSON.stringify(updatedSavedGames)); // Update storage
-
-      console.log(`Game ${gameId} deleted.`);
+      console.log(`Game ${gameId} deleted from state and persistence.`);
 
       // If the deleted game was the currently loaded one, reset to initial state
       if (currentGameId === gameId) {
         console.log("Currently loaded game was deleted. Resetting to initial state.");
         
-        // Apply initial state directly instead of trying to load DEFAULT_GAME_ID
+        // Apply initial state directly
         setPlayersOnField(initialState.playersOnField);
         setOpponents(initialState.opponents);
         setDrawings(initialState.drawings);
@@ -2786,49 +2762,42 @@ export default function Home() {
     let importedGames: SavedGamesCollection = {};
     let skippedCount = 0;
     let importedCount = 0;
-    const newGamesToAdd: SavedGamesCollection = {}; // <-- Fix: Use const
+    const newGamesToImport: SavedGamesCollection = {}; // Renamed to avoid conflict
 
     try {
       importedGames = JSON.parse(jsonContent);
       
-      // Basic Validation: Is it an object?
       if (typeof importedGames !== 'object' || importedGames === null || Array.isArray(importedGames)) {
         throw new Error("Invalid format: Imported data is not a valid game collection object.");
       }
 
       console.log(`Parsed ${Object.keys(importedGames).length} games from JSON.`);
 
-      // Iterate and merge (skip existing)
       for (const gameId in importedGames) {
-        // Add extra check for safety
         if (Object.prototype.hasOwnProperty.call(importedGames, gameId)) {
-          // Basic validation of gameData structure (can be expanded)
           const gameData = importedGames[gameId];
           if (typeof gameData !== 'object' || gameData === null || !gameData.teamName || !gameData.gameDate) {
              console.warn(`Skipping game ${gameId} due to invalid/missing core properties.`);
              skippedCount++;
-             continue; // Skip invalid game data
+             continue; 
           }
 
           if (savedGames[gameId]) {
-            // Game ID already exists, skip it
             console.log(`Skipping import for existing game ID: ${gameId}`);
             skippedCount++;
           } else {
-            // Game ID is new, add it
             console.log(`Marking new game for import: ${gameId}`);
-            newGamesToAdd[gameId] = gameData;
+            newGamesToImport[gameId] = gameData;
             importedCount++;
           }
         }
       }
 
-      // Apply updates if new games were found
       if (importedCount > 0) {
-        console.log(`Adding ${importedCount} new games to state and localStorage.`);
-        const updatedSavedGames = { ...savedGames, ...newGamesToAdd };
-        setSavedGames(updatedSavedGames);
-        localStorage.setItem(SAVED_GAMES_KEY, JSON.stringify(updatedSavedGames));
+        console.log(`Adding ${importedCount} new games to state and localStorage using saveAllGames.`);
+        const updatedSavedGames = { ...savedGames, ...newGamesToImport };
+        saveAllGames(updatedSavedGames); // Use utility function to save all merged games
+        setSavedGames(updatedSavedGames); // Also update local state for immediate UI responsiveness
         alert(t('loadGameModal.importSuccess', 
                   `Successfully imported ${importedCount} game(s). Skipped ${skippedCount} game(s) with existing IDs.`)
               ?.replace('{importedCount}', String(importedCount))
@@ -2843,13 +2812,12 @@ export default function Home() {
 
     } catch (error) {
       console.error("Failed to import games:", error);
-      // Use explicit check for Error type
       const errorMessage = error instanceof Error ? error.message : String(error);
       alert(t('loadGameModal.importError', 'Import failed: {errorMessage}')
             ?.replace('{errorMessage}', errorMessage) ?? `Import failed: ${errorMessage}`);
     }
 
-  }, [savedGames, setSavedGames, t]); // Include t in dependencies
+  }, [savedGames, setSavedGames, t]); 
   // --- End Step 3 --- 
 
   // --- NEW: Handlers for Game Settings Modal --- (Placeholder open/close)
