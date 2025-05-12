@@ -2,8 +2,9 @@
 
 import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-// Import Season/Tournament types and keys
-import { Player, GameEvent, SavedGamesCollection, Season, Tournament } from '@/app/page';
+// Import types from the types directory
+import { Player, PlayerStatRow, Season, Tournament } from '@/types';
+import { GameEvent, SavedGamesCollection } from '@/app/page';
 // ADD new import for keys
 import { SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY } from '@/config/constants';
 import { FaSort, FaSortUp, FaSortDown, FaEdit, FaSave, FaTimes, FaTrashAlt } from 'react-icons/fa';
@@ -14,15 +15,6 @@ type SortDirection = 'asc' | 'desc';
 
 // Define tab types
 type StatsTab = 'currentGame' | 'season' | 'tournament' | 'overall';
-
-interface PlayerStatRow extends Player {
-  id: string;
-  goals: number;
-  assists: number;
-  totalScore: number;
-  fpAwards?: number;
-  gamesPlayed: number;
-}
 
 // ADD Minimal interface for saved game structure used in this component
 interface SavedGame {

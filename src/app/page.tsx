@@ -21,29 +21,20 @@ import GameInfoBar from '@/components/GameInfoBar';
 import { getMasterRoster, addPlayerToRoster, updatePlayerInRoster, removePlayerFromRoster, setPlayerGoalieStatus } from '@/utils/rosterUtils';
 // Import game persistence utility functions
 import {
-  getAllSavedGames,
-  // getGameById, // Not directly used in these initial effects, but good to have if needed later
   saveGame,
   deleteGame,
   saveAllGames,
-  getCurrentGameIdSetting,
   saveCurrentGameIdSetting,
   performHardReset,
 } from '@/utils/gamePersistence';
-
-// Define the Player type - Use relative coordinates
-export interface Player {
-  id: string;
-  name: string; // Full name
-  nickname?: string; // Optional nickname (e.g., first name) for display on disc
-  relX?: number; // Relative X (0.0 to 1.0)
-  relY?: number; // Relative Y (0.0 to 1.0)
-  color?: string; // Optional: Specific color for the disk
-  isGoalie?: boolean; // Optional: Is this player the goalie?
-  jerseyNumber?: string; // Optional: Player's jersey number
-  notes?: string; // Optional: Notes specific to this player
-  receivedFairPlayCard?: boolean; // Optional: Did this player receive the fair play card?
-}
+// Import utility functions for seasons and tournaments
+import { getSeasons as utilGetSeasons } from '@/utils/seasons';
+import { getTournaments as utilGetTournaments } from '@/utils/tournaments';
+import { getMasterRoster as utilGetMasterRoster } from '@/utils/masterRoster';
+import { getSavedGames as utilGetSavedGames, GameData } from '@/utils/savedGames';
+import { getCurrentGameIdSetting } from '@/utils/appSettings';
+// Import Player from types directory
+import { Player, Season, Tournament } from '@/types';
 
 // Define the Point type for drawing - Use relative coordinates
 export interface Point {
@@ -73,16 +64,6 @@ export interface IntervalLog {
   period: number;
   duration: number; // Duration in seconds
   timestamp: number; // Unix timestamp when the interval ended
-}
-
-// ADD PlayerStatRow interface (copied from GameStatsModal for type safety)
-// Ideally, move this to a shared types file later
-export interface PlayerStatRow extends Player {
-  goals: number;
-  assists: number;
-  totalScore: number;
-  fpAwards?: number;
-  gamesPlayed: number;
 }
 
 // Define the structure for the application state (for history)
@@ -184,19 +165,6 @@ interface AppSettings {
 // Define structure for saved games collection
 export interface SavedGamesCollection {
   [gameId: string]: AppState; // Use AppState for the game state structure
-}
-
-// NEW: Define structure for Seasons and Tournaments
-export interface Season {
-  id: string; // Unique identifier (e.g., 'season_2024_spring')
-  name: string; // User-friendly name (e.g., "Spring League 2024")
-  // Add more fields later if needed (e.g., startDate, endDate)
-}
-
-export interface Tournament {
-  id: string; // Unique identifier (e.g., 'tournament_summer_cup_2024')
-  name: string; // User-friendly name (e.g., "Summer Cup 2024")
-  // Add more fields later if needed (e.g., date, location)
 }
 
 // Define a default Game ID for the initial/unsaved state
@@ -423,109 +391,147 @@ export default function Home() {
         const oldTournaments = JSON.parse(oldTournamentsJson);
         if (Array.isArray(oldTournaments) && oldTournaments.length > 0) {
           localStorage.setItem(TOURNAMENTS_LIST_KEY, oldTournamentsJson);
-          console.log(`Migrated ${oldTournaments.length} tournaments to ${TOURNAMENTS_LIST_KEY}`);
-          // Optionally remove old data after migration
-          // localStorage.removeItem('soccerTournamentsList');
+          console.log('Migrated tournament data to new key');
         }
       }
 
-      // Check for old season list key
+      // Check for old seasons list key
       const oldSeasonsJson = localStorage.getItem('soccerSeasonsList');
       if (oldSeasonsJson) {
         console.log('Found old season data under soccerSeasonsList - migrating...');
         const oldSeasons = JSON.parse(oldSeasonsJson);
         if (Array.isArray(oldSeasons) && oldSeasons.length > 0) {
           localStorage.setItem(SEASONS_LIST_KEY, oldSeasonsJson);
-          console.log(`Migrated ${oldSeasons.length} seasons to ${SEASONS_LIST_KEY}`);
-          // Optionally remove old data after migration
-          // localStorage.removeItem('soccerSeasonsList');
+          console.log('Migrated season data to new key');
         }
       }
-    } catch (error) {
-      console.error('Error during data migration:', error);
+    } catch (migrationError) {
+      console.error('Error during data migration:', migrationError);
     }
-    // +++ END MIGRATION +++
 
-    // +++ NEW: Load Master Roster +++
-    let loadedMasterRoster: Player[] = [];
+    // Load stored seasons using utility function
     try {
-        const rosterJson = localStorage.getItem(MASTER_ROSTER_KEY);
-        if (rosterJson) {
-            loadedMasterRoster = JSON.parse(rosterJson);
-            console.log(`Loaded master roster from localStorage: ${loadedMasterRoster.length} players`);
-        } else {
-            console.log('No master roster found in localStorage, using initial data.');
-            loadedMasterRoster = initialAvailablePlayersData; // Use default
-            // REMOVED: localStorage.setItem(MASTER_ROSTER_KEY, JSON.stringify(loadedMasterRoster)); // Save default
-        }
-    } catch (error) {
-        console.error('Failed to load or parse master roster:', error);
-        // Fallback to initial data in case of error
-        loadedMasterRoster = initialAvailablePlayersData;
-    }
-    // Set the global roster state
-    console.log('[Initial Load] Attempting to get roster from localStorage key:', MASTER_ROSTER_KEY); // <<< LOG
-    setAvailablePlayers(loadedMasterRoster);
-    // +++ END NEW: Load Master Roster +++
-
-    // 1. Load saved games collection using utility
-    const loadedGames = getAllSavedGames();
-    console.log('Loaded saved games using utility:', Object.keys(loadedGames).length, 'games');
-    setSavedGames(loadedGames);
-
-    // --- ADD Loading for Seasons and Tournaments ---
-    try {
-      const storedSeasons = localStorage.getItem(SEASONS_LIST_KEY); // Keep direct for now, or create season utils
-      const loadedSeasons = storedSeasons ? JSON.parse(storedSeasons) : [];
+      const loadedSeasons = utilGetSeasons();
       setSeasons(loadedSeasons);
-      console.log('Loaded seasons:', loadedSeasons.length);
-    } catch (error) { console.error("Failed to load seasons:", error); setSeasons([]); }
-    
+    } catch (error) {
+      console.error('Error loading seasons:', error);
+      setSeasons([]);
+    }
+
+    // Load stored tournaments using utility function
     try {
-      const storedTournaments = localStorage.getItem(TOURNAMENTS_LIST_KEY);
-      const loadedTournaments = storedTournaments ? JSON.parse(storedTournaments) : [];
+      const loadedTournaments = utilGetTournaments();
       setTournaments(loadedTournaments);
-      console.log('Loaded tournaments:', loadedTournaments.length);
-    } catch (error) { console.error("Failed to load tournaments:", error); setTournaments([]); }
-    // --- END Loading for Seasons and Tournaments ---
-
-    // 2. Load app settings to find the last game ID using utility
-    const lastGameId = getCurrentGameIdSetting();
-    console.log('Loaded last game ID using utility:', lastGameId);
-    setCurrentGameId(lastGameId);
-
-    // If we have a specific game ID AND that game's data exists in loadedGames,
-    // then we know a game will be loaded, so we can skip the initial setup.
-    if (lastGameId !== DEFAULT_GAME_ID && loadedGames && loadedGames[lastGameId]) {
-      console.log(`[Initial Load] Valid game ID (${lastGameId}) found with data. Setting hasSkippedInitialSetup to true.`);
-      setHasSkippedInitialSetup(true);
-    } else {
-      // If it's the default game ID, or the specific game ID's data is missing,
-      // ensure hasSkippedInitialSetup is false so the modal logic can proceed.
-      // This also handles the case where loadedGames might be undefined or empty.
-      console.log(`[Initial Load] No valid game to load (ID: ${lastGameId}, loadedGames available: ${!!loadedGames}, data for ID exists: ${!!(loadedGames && loadedGames[lastGameId])}). Setting hasSkippedInitialSetup to false.`);
-      setHasSkippedInitialSetup(false); 
+    } catch (error) {
+      console.error('Error loading tournaments:', error);
+      setTournaments([]);
     }
 
-    // 3. Load the state of the last game (or default if none/error)
-    const loadedState = loadedGames[lastGameId] ?? null;
-    if (loadedState) {
-      console.log(`Loading state for game ID: ${lastGameId}`);
-    } else if (lastGameId !== DEFAULT_GAME_ID) {
-      console.warn(`State for last game ID (${lastGameId}) not found in saved games. Loading default.`);
-      setCurrentGameId(DEFAULT_GAME_ID); // Fallback to default ID if state is missing
+    // Load master player roster using utility function
+    try {
+      const roster = utilGetMasterRoster();
+      setAvailablePlayers(roster);
+    } catch (error) {
+      console.error('Error loading master player roster:', error);
+      setAvailablePlayers([]);
     }
 
-    // 4. Apply the loaded or initial state
-    const stateToApply = loadedState ?? initialState;
+    // Load saved games using utility function
+    try {
+      const savedGamesData = utilGetSavedGames();
+      setSavedGames(savedGamesData);
+    } catch (error) {
+      console.error('Error loading saved games:', error);
+      setSavedGames({});
+    }
+
+    // Load app settings and current game
+    try {
+      const currentGameId = getCurrentGameIdSetting();
+      
+      if (currentGameId && currentGameId !== DEFAULT_GAME_ID) {
+        console.log(`Restoring game with ID: ${currentGameId}`);
+        setCurrentGameId(currentGameId);
+        
+        // Check if we have the game data
+        const savedGamesData = utilGetSavedGames();
+        if (savedGamesData[currentGameId]) {
+          // We found the game, so we can skip initial setup
+          setHasSkippedInitialSetup(true);
+          
+          // Load the game state
+          const gameState = savedGamesData[currentGameId];
+          // Use type assertion to handle the type mismatch
+          loadGameStateFromData(gameState as unknown as GameData);
+        } else {
+          // The game ID doesn't exist in saved games
+          console.warn(`Game with ID ${currentGameId} not found in saved games`);
+          setHasSkippedInitialSetup(false);
+          setCurrentGameId(DEFAULT_GAME_ID);
+          loadGameStateFromData(null); // Load default state
+        }
+      } else {
+        // No current game ID or it's the default
+        setHasSkippedInitialSetup(false);
+        setCurrentGameId(DEFAULT_GAME_ID);
+        loadGameStateFromData(null); // Load default state
+      }
+    } catch (error) {
+      console.error('Error loading current game:', error);
+      setHasSkippedInitialSetup(false);
+      setCurrentGameId(DEFAULT_GAME_ID);
+      loadGameStateFromData(null); // Load default state
+    }
+    
+    // Set flags to indicate loading is complete
+    setIsLoaded(true);
+    setInitialLoadComplete(true);
+    console.log('Initial load complete. Flags set.');
+    
+  }, []);
+
+  // Helper function to load game state from game data
+  const loadGameStateFromData = (gameData: GameData | null) => {
+    // Apply the loaded or initial state
+    const stateToApply = gameData ? 
+      // Convert GameData to partial AppState for compatibility
+      {
+        playersOnField: gameData.playersOnField || [],
+        opponents: gameData.opponents || [],
+        drawings: gameData.drawings || [],
+        showPlayerNames: gameData.showPlayerNames || false,
+        teamName: gameData.homeTeam || initialState.teamName,
+        gameEvents: gameData.events || [],
+        opponentName: gameData.awayTeam || initialState.opponentName,
+        gameDate: gameData.date || initialState.gameDate,
+        homeScore: gameData.homeScore || 0,
+        awayScore: gameData.awayScore || 0,
+        gameNotes: gameData.notes || '',
+        numberOfPeriods: gameData.numberOfPeriods || initialState.numberOfPeriods,
+        periodDurationMinutes: gameData.periodDuration || initialState.periodDurationMinutes,
+        currentPeriod: gameData.currentPeriod || initialState.currentPeriod,
+        gameStatus: gameData.gameStatus || initialState.gameStatus,
+        subIntervalMinutes: gameData.subIntervalMinutes ?? initialState.subIntervalMinutes ?? 5,
+        completedIntervalDurations: gameData.completedIntervalDurations ?? initialState.completedIntervalDurations ?? [],
+        lastSubConfirmationTimeSeconds: gameData.lastSubConfirmationTimeSeconds ?? initialState.lastSubConfirmationTimeSeconds ?? 0,
+        selectedPlayerIds: gameData.selectedPlayerIds || [],
+        seasonId: gameData.seasonId ?? '',
+        tournamentId: gameData.tournamentId ?? '',
+        gameLocation: gameData.location || '',
+        gameTime: gameData.time || '',
+        homeOrAway: gameData.teamOnLeft ?? initialState.homeOrAway,
+        availablePlayers: gameData.availablePlayers || [] // Ensure this field exists
+      } as AppState 
+      : initialState;
+    
     setHistory([stateToApply]);
     setHistoryIndex(0);
 
-    setPlayersOnField(stateToApply.playersOnField);
+    setPlayersOnField(stateToApply.playersOnField || []);
     setOpponents(stateToApply.opponents || []);
-    setDrawings(stateToApply.drawings);
-    // REMOVED: setAvailablePlayers(stateToApply.availablePlayers);
-    setShowPlayerNames(stateToApply.showPlayerNames);
+    setDrawings(stateToApply.drawings || []);
+    // Available players are loaded separately from master roster
+    setShowPlayerNames(stateToApply.showPlayerNames || false);
     setTeamName(stateToApply.teamName || initialState.teamName);
     setGameEvents(stateToApply.gameEvents || []);
     setOpponentName(stateToApply.opponentName || initialState.opponentName);
@@ -537,7 +543,6 @@ export default function Home() {
     setPeriodDurationMinutes(stateToApply.periodDurationMinutes || initialState.periodDurationMinutes);
     setCurrentPeriod(stateToApply.currentPeriod || initialState.currentPeriod);
     setGameStatus(stateToApply.gameStatus || initialState.gameStatus);
-    // FIX: Add final default values
     setSubIntervalMinutes(stateToApply.subIntervalMinutes ?? initialState.subIntervalMinutes ?? 5);
     setCompletedIntervalDurations(stateToApply.completedIntervalDurations ?? initialState.completedIntervalDurations ?? []);
     setLastSubConfirmationTimeSeconds(stateToApply.lastSubConfirmationTimeSeconds ?? initialState.lastSubConfirmationTimeSeconds ?? 0);
@@ -546,16 +551,8 @@ export default function Home() {
     setTournamentId(stateToApply.tournamentId ?? '');
     setGameLocation(stateToApply.gameLocation || '');
     setGameTime(stateToApply.gameTime || '');
-    // <<< ADD: Load home/away status (initial load) >>>
     setHomeOrAway(stateToApply.homeOrAway ?? initialState.homeOrAway);
-
-    setIsLoaded(true);
-    setInitialLoadComplete(true); // <<< Set flag here
-    console.log('Initial load complete. Flags set.');
-
-  // Ensure this runs only ONCE on mount by using an empty dependency array
-  // eslint-disable-next-line react-hooks/exhaustive-deps 
-  }, []);
+  };
 
   // --- Effect to load game state when currentGameId changes or savedGames updates ---
   // ADD dependencies for all state setters used inside
@@ -2282,7 +2279,7 @@ export default function Home() {
   //   return 'Unknown Filter'; // Fallback
   // };
   
-  const handleExportAggregateJson = useCallback((gameIds: string[], aggregateStats: PlayerStatRow[]) => {
+  const handleExportAggregateJson = useCallback((gameIds: string[], aggregateStats: import('@/types').PlayerStatRow[]) => {
     console.log(`Exporting aggregate JSON for ${gameIds.length} games.`);
     if (gameIds.length === 0) {
         alert(t('export.noGamesInSelection', 'No games match the current filter.'));
@@ -2343,7 +2340,7 @@ export default function Home() {
     }
   }, [savedGames, t, seasons, tournaments]); // REMOVED: seasons, tournaments
 
-  const handleExportAggregateCsv = useCallback((gameIds: string[], aggregateStats: PlayerStatRow[]) => {
+  const handleExportAggregateCsv = useCallback((gameIds: string[], aggregateStats: import('@/types').PlayerStatRow[]) => {
     console.log(`Exporting aggregate CSV for ${gameIds.length} games.`);
      if (gameIds.length === 0) {
         alert(t('export.noGamesInSelection', 'No games match the current filter.'));

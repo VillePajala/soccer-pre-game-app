@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Season, Tournament } from '../app/page';
-import { LAST_HOME_TEAM_NAME_KEY } from '@/config/constants';
+import { Season, Tournament } from '@/types';
+import { getLastHomeTeamName, saveLastHomeTeamName } from '@/utils/appSettings';
 import { HiPlusCircle } from 'react-icons/hi';
 import { getSeasons as utilGetSeasons, addSeason as utilAddSeason } from '@/utils/seasons';
 import { getTournaments as utilGetTournaments, addTournament as utilAddTournament } from '@/utils/tournaments';
@@ -66,9 +66,9 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      // --- Load last used home team name ---
-      const lastUsedHomeTeam = localStorage.getItem(LAST_HOME_TEAM_NAME_KEY);
-      setHomeTeamName(lastUsedHomeTeam || ''); // Set from storage or default to empty
+      // --- Load last used home team name using utility function ---
+      const lastUsedHomeTeam = getLastHomeTeamName();
+      setHomeTeamName(lastUsedHomeTeam || ''); // Set from utility or default to empty
       // --- End Load ---
 
       // Reset form fields
@@ -312,9 +312,9 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
       localHomeOrAway         // <<< Step 4a: Pass value
     );
 
-    // <<< --- Save last used home team name on success ---
+    // <<< --- Save last used home team name on success using utility function ---
     try {
-        localStorage.setItem(LAST_HOME_TEAM_NAME_KEY, trimmedHomeTeamName);
+        saveLastHomeTeamName(trimmedHomeTeamName);
     } catch (error) {
         console.error("Failed to save last home team name:", error); 
         // Non-critical error, don't need to alert user

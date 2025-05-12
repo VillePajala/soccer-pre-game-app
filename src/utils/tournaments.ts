@@ -1,5 +1,5 @@
 import { TOURNAMENTS_LIST_KEY } from '@/config/constants';
-import type { Tournament } from '../app/page'; // Import Tournament type
+import type { Tournament } from '@/types'; // Import Tournament type from shared types
 
 // Define the Tournament type (consider moving to a shared types file)
 // export interface Tournament { // Remove local definition

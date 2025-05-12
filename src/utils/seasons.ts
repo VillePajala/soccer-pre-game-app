@@ -1,5 +1,5 @@
 import { SEASONS_LIST_KEY } from '@/config/constants';
-import type { Season } from '../app/page'; // Import Season type
+import type { Season } from '@/types'; // Import Season type from shared types
 
 // Define the Season type (consider moving to a shared types file if not already there)
 // export interface Season { // Remove local definition

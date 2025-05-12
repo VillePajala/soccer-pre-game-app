@@ -3,9 +3,11 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaTimes, FaEdit, FaSave, FaTrashAlt, FaCalendarAlt, FaClock, FaMapMarkerAlt } from 'react-icons/fa';
-import { Player, GameEvent, Season, Tournament } from '@/app/page'; // Adjust path as needed
-import { getSeasons as utilGetSeasons } from '@/utils/seasons';
-import { getTournaments as utilGetTournaments } from '@/utils/tournaments';
+import { Season, Tournament, Player } from '@/types'; // Import Player from types
+import { GameEvent } from '@/app/page'; // Import GameEvent from page for type compatibility
+import { getSeasons } from '@/utils/seasons';
+import { getTournaments } from '@/utils/tournaments';
+import { updateGameDetails, updateGameEvent, removeGameEvent } from '@/utils/savedGames'; // Import savedGames utility functions
 
 export interface GameSettingsModalProps {
   isOpen: boolean;
@@ -132,25 +134,29 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
 
   // --- Effects ---
 
-  // Load seasons/tournaments
+  // Load seasons/tournaments using utility functions
   useEffect(() => {
     if (isOpen) {
       try {
-        // const storedSeasons = localStorage.getItem(SEASONS_LIST_KEY);
-        // setSeasons(storedSeasons ? JSON.parse(storedSeasons) : []);
-        setSeasons(utilGetSeasons());
-      } catch (error) { console.error("Failed to load seasons:", error); setSeasons([]); }
+        const loadedSeasons = getSeasons();
+        setSeasons(loadedSeasons);
+      } catch (error) {
+        console.error('Error loading seasons:', error);
+        setSeasons([]);
+      }
       try {
-        // const storedTournaments = localStorage.getItem(TOURNAMENTS_LIST_KEY);
-        // setTournaments(storedTournaments ? JSON.parse(storedTournaments) : []);
-        setTournaments(utilGetTournaments());
-      } catch (error) { console.error("Failed to load tournaments:", error); setTournaments([]); }
+        const loadedTournaments = getTournaments();
+        setTournaments(loadedTournaments);
+      } catch (error) {
+        console.error('Error loading tournaments:', error);
+        setTournaments([]);
+      }
     }
   }, [isOpen]);
 
   // Effect to update localGameEvents if the prop changes from parent (e.g., undo/redo)
   useEffect(() => {
-        setLocalGameEvents(gameEvents); 
+    setLocalGameEvents(gameEvents); 
   }, [gameEvents]);
 
   // ADD Effect to sync local time state with incoming prop (Conditionally)
@@ -196,11 +202,27 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   const handleSeasonChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const newId = event.target.value;
     onSeasonIdChange(newId === 'none' || !newId ? null : newId);
+    
+    // Update game details in storage using utility function
+    if (currentGameId) {
+      updateGameDetails(currentGameId, {
+        seasonId: newId === 'none' || !newId ? null : newId,
+        tournamentId: null // Set tournamentId to null when season is selected
+      });
+    }
   };
 
   const handleTournamentChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const newId = event.target.value;
     onTournamentIdChange(newId === 'none' || !newId ? null : newId);
+    
+    // Update game details in storage using utility function
+    if (currentGameId) {
+      updateGameDetails(currentGameId, {
+        tournamentId: newId === 'none' || !newId ? null : newId,
+        seasonId: null // Set seasonId to null when tournament is selected
+      });
+    }
   };
 
   // Handle Goal Event Editing
@@ -256,6 +278,22 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
     // Call the prop handler to update the main state
     onUpdateGameEvent(updatedEvent);
 
+    // Update the event in storage using utility function
+    if (currentGameId) {
+      // Find the index of the event in the array
+      const eventIndex = localGameEvents.findIndex(e => e.id === goalId);
+      if (eventIndex !== -1) {
+        // Use the updatedEvent directly with the correct type
+        updateGameEvent(currentGameId, eventIndex, {
+          id: updatedEvent.id,
+          type: updatedEvent.type,
+          time: updatedEvent.time,
+          scorerId: updatedEvent.scorerId,
+          assisterId: updatedEvent.assisterId
+        });
+      }
+    }
+
     handleCancelEditGoal(); // Exit editing mode
   };
 
@@ -263,11 +301,20 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   const handleDeleteGoal = (goalId: string) => {
     if (onDeleteGameEvent) {
       if (window.confirm(t('gameSettingsModal.confirmDeleteEvent', 'Are you sure you want to delete this event? This cannot be undone.'))) {
-         // Update local state immediately
-      setLocalGameEvents(prevEvents => prevEvents.filter(event => event.id !== goalId));
-      // Call parent handler
-      onDeleteGameEvent(goalId);
-    }
+        // Update local state immediately
+        setLocalGameEvents(prevEvents => prevEvents.filter(event => event.id !== goalId));
+        // Call parent handler
+        onDeleteGameEvent(goalId);
+        
+        // Delete the event from storage using utility function
+        if (currentGameId) {
+          // Find the index of the event in the array
+          const eventIndex = localGameEvents.findIndex(e => e.id === goalId);
+          if (eventIndex !== -1) {
+            removeGameEvent(currentGameId, eventIndex);
+          }
+        }
+      }
     }
   };
 
@@ -292,48 +339,74 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
     const trimmedValue = inlineEditValue.trim();
 
     try {
-        switch (inlineEditingField) {
+      switch (inlineEditingField) {
         case 'opponent':
-                console.log('[GameSettingsModal] Attempting to save opponent name:', trimmedValue);
-                if (trimmedValue) onOpponentNameChange(trimmedValue);
-                else alert(t('gameSettingsModal.opponentNameRequired', "Opponent name cannot be empty."));
+          console.log('[GameSettingsModal] Attempting to save opponent name:', trimmedValue);
+          if (trimmedValue) {
+            onOpponentNameChange(trimmedValue);
+            // Update game details in storage using utility function
+            if (currentGameId) {
+              updateGameDetails(currentGameId, { awayTeam: trimmedValue });
+            }
+          } else {
+            alert(t('gameSettingsModal.opponentNameRequired', "Opponent name cannot be empty."));
+          }
           break;
         case 'date':
-                // Basic validation for YYYY-MM-DD
-                if (/^\d{4}-\d{2}-\d{2}$/.test(trimmedValue)) {
+          // Basic validation for YYYY-MM-DD
+          if (/^\d{4}-\d{2}-\d{2}$/.test(trimmedValue)) {
             onGameDateChange(trimmedValue);
-                } else {
-                    alert(t('gameSettingsModal.invalidDateFormat', "Invalid date format. Use YYYY-MM-DD."));
+            // Update game details in storage using utility function
+            if (currentGameId) {
+              updateGameDetails(currentGameId, { date: trimmedValue });
+            }
+          } else {
+            alert(t('gameSettingsModal.invalidDateFormat', "Invalid date format. Use YYYY-MM-DD."));
           }
           break;
         case 'location':
-                onGameLocationChange(trimmedValue); // Allow empty location
+          onGameLocationChange(trimmedValue); // Allow empty location
+          // Update game details in storage using utility function
+          if (currentGameId) {
+            updateGameDetails(currentGameId, { location: trimmedValue });
+          }
           break;
         case 'time':
-                 // Basic validation for HH:MM
-                 if (/^([01]\d|2[0-3]):([0-5]\d)$/.test(trimmedValue) || trimmedValue === '') {
-                     onGameTimeChange(trimmedValue); // Allow empty time
+          // Basic validation for HH:MM
+          if (/^([01]\d|2[0-3]):([0-5]\d)$/.test(trimmedValue) || trimmedValue === '') {
+            onGameTimeChange(trimmedValue); // Allow empty time
+            // Update game details in storage using utility function
+            if (currentGameId) {
+              updateGameDetails(currentGameId, { time: trimmedValue });
+            }
           } else {
-                     alert(t('gameSettingsModal.invalidTimeFormatInline', "Invalid time format. Use HH:MM (24-hour)."));
-                 }
+            alert(t('gameSettingsModal.invalidTimeFormatInline', "Invalid time format. Use HH:MM (24-hour)."));
+          }
           break;
         case 'duration':
-                const duration = parseInt(trimmedValue, 10);
-                if (!isNaN(duration) && duration > 0) {
+          const duration = parseInt(trimmedValue, 10);
+          if (!isNaN(duration) && duration > 0) {
             onPeriodDurationChange(duration);
-                } else {
-                    alert(t('gameSettingsModal.invalidDurationFormat', "Period duration must be a positive number."));
+            // Update game details in storage using utility function
+            if (currentGameId) {
+              updateGameDetails(currentGameId, { periodDuration: duration });
+            }
+          } else {
+            alert(t('gameSettingsModal.invalidDurationFormat', "Period duration must be a positive number."));
           }
           break;
         case 'notes':
-                onGameNotesChange(inlineEditValue); // Keep original spacing/newlines
+          onGameNotesChange(inlineEditValue); // Keep original spacing/newlines
+          // Update game details in storage using utility function
+          if (currentGameId) {
+            updateGameDetails(currentGameId, { notes: inlineEditValue });
+          }
           break;
       }
     } catch (error) {
-        console.error("Error saving inline edit:", error);
-        alert(t('common.saveError', "An error occurred while saving."));
+      console.error("Error saving inline edit:", error);
+      alert(t('common.saveError', "An error occurred while saving."));
     }
-
 
     setInlineEditingField(null); // Exit inline edit mode
     setInlineEditValue('');
@@ -348,43 +421,61 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   const handleInlineEditKeyDown = (event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (event.key === 'Enter') {
       // Allow Shift+Enter for newlines in textarea
-        if (inlineEditingField === 'notes' && event.shiftKey) {
-            return;
-        } 
+      if (inlineEditingField === 'notes' && event.shiftKey) {
+        return;
+      } 
       event.preventDefault(); // Prevent default form submission/newline
       handleConfirmInlineEdit();
     } else if (event.key === 'Escape') {
-        handleCancelInlineEdit();
+      handleCancelInlineEdit();
     }
   };
 
   // Handlers for separate HH/MM time inputs (Refactored)
   const handleHourChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const newHour = e.target.value; 
-      if (/^\d{0,2}$/.test(newHour)) { 
-        setLocalHour(newHour); 
-        const finalHour = newHour.padStart(2, '0');
-        // Corrected condition for clearing
-        if (newHour === '' && (localMinute === '' || localMinute === '00')) {
-            onGameTimeChange('');
-        } else if (/^([01]\d|2[0-3])$/.test(finalHour) || finalHour === '00') {
-            onGameTimeChange(`${finalHour}:${localMinute.padStart(2,'0')}`);
+    const newHour = e.target.value; 
+    if (/^\d{0,2}$/.test(newHour)) { 
+      setLocalHour(newHour); 
+      const finalHour = newHour.padStart(2, '0');
+      // Corrected condition for clearing
+      if (newHour === '' && (localMinute === '' || localMinute === '00')) {
+        onGameTimeChange('');
+        // Update game details in storage using utility function
+        if (currentGameId) {
+          updateGameDetails(currentGameId, { time: '' });
+        }
+      } else if (/^([01]\d|2[0-3])$/.test(finalHour) || finalHour === '00') {
+        const newTime = `${finalHour}:${localMinute.padStart(2,'0')}`;
+        onGameTimeChange(newTime);
+        // Update game details in storage using utility function
+        if (currentGameId) {
+          updateGameDetails(currentGameId, { time: newTime });
         }
       }
+    }
   };
 
   const handleMinuteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const newMinute = e.target.value; 
-      if (/^\d{0,2}$/.test(newMinute)) { 
-        setLocalMinute(newMinute); 
-        const finalMinute = newMinute.padStart(2, '0');
-        // Corrected condition for clearing
-        if (newMinute === '' && (localHour === '' || localHour === '00')) {
-            onGameTimeChange('');
-        } else if (/^[0-5]\d$/.test(finalMinute) || finalMinute === '00') {
-            onGameTimeChange(`${localHour.padStart(2,'0')}:${finalMinute}`);
+    const newMinute = e.target.value; 
+    if (/^\d{0,2}$/.test(newMinute)) { 
+      setLocalMinute(newMinute); 
+      const finalMinute = newMinute.padStart(2, '0');
+      // Corrected condition for clearing
+      if (newMinute === '' && (localHour === '' || localHour === '00')) {
+        onGameTimeChange('');
+        // Update game details in storage using utility function
+        if (currentGameId) {
+          updateGameDetails(currentGameId, { time: '' });
+        }
+      } else if (/^[0-5]\d$/.test(finalMinute) || finalMinute === '00') {
+        const newTime = `${localHour.padStart(2,'0')}:${finalMinute}`;
+        onGameTimeChange(newTime);
+        // Update game details in storage using utility function
+        if (currentGameId) {
+          updateGameDetails(currentGameId, { time: newTime });
         }
       }
+    }
   };
 
   // --- ADDED Memoized Values (Moved Here) ---
@@ -396,18 +487,18 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   }, [availablePlayers]);
 
   // Determine association type based on props
-   const associationType = useMemo(() => {
-        // If seasonId is not null and not undefined (i.e., it has been interacted with, 
-        // potentially set to "" to show the dropdown), it should be 'season' mode.
-        if (seasonId !== null && seasonId !== undefined) {
-            return 'season';
-        }
-        // If tournamentId is not null and not undefined, and season is not active, it's 'tournament' mode.
-        if (tournamentId !== null && tournamentId !== undefined) {
-            return 'tournament';
-        }
-        return 'none';
-    }, [seasonId, tournamentId]);
+  const associationType = useMemo(() => {
+    // If seasonId is not null and not undefined (i.e., it has been interacted with, 
+    // potentially set to "" to show the dropdown), it should be 'season' mode.
+    if (seasonId !== null && seasonId !== undefined) {
+      return 'season';
+    }
+    // If tournamentId is not null and not undefined, and season is not active, it's 'tournament' mode.
+    if (tournamentId !== null && tournamentId !== undefined) {
+      return 'tournament';
+    }
+    return 'none';
+  }, [seasonId, tournamentId]);
 
   // --- Render Logic ---
 

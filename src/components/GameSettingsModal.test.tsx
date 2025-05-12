@@ -3,8 +3,12 @@ import { render, screen, fireEvent, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import GameSettingsModal from './GameSettingsModal';
 import { type GameSettingsModalProps } from './GameSettingsModal';
-import { Player, GameEvent, Season, Tournament } from '@/app/page'; // Adjust path if needed
+import { Player, Season, Tournament } from '@/types';
+import { GameEvent } from '@/app/page';
 import { SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY } from '@/config/constants';
+import { getSeasons } from '@/utils/seasons';
+import { getTournaments } from '@/utils/tournaments';
+import { updateGameDetails, updateGameEvent, removeGameEvent } from '@/utils/savedGames';
 
 // Mock i18n
 jest.mock('react-i18next', () => ({
@@ -28,6 +32,21 @@ const mockOnPeriodDurationChange = jest.fn();
 const mockOnSeasonIdChange = jest.fn();
 const mockOnTournamentIdChange = jest.fn();
 const mockOnSetHomeOrAway = jest.fn();
+
+// Mock all utility functions
+jest.mock('@/utils/seasons', () => ({
+  getSeasons: jest.fn(),
+}));
+
+jest.mock('@/utils/tournaments', () => ({
+  getTournaments: jest.fn(),
+}));
+
+jest.mock('@/utils/savedGames', () => ({
+  updateGameDetails: jest.fn(),
+  updateGameEvent: jest.fn(),
+  removeGameEvent: jest.fn(),
+}));
 
 // Sample Data
 const mockPlayers: Player[] = [
@@ -108,6 +127,12 @@ describe('<GameSettingsModal />', () => {
         [SEASONS_LIST_KEY]: JSON.stringify(mockSeasons),
         [TOURNAMENTS_LIST_KEY]: JSON.stringify(mockTournaments)
     });
+    // Setup default responses for mocked functions
+    (getSeasons as jest.Mock).mockReturnValue(mockSeasons);
+    (getTournaments as jest.Mock).mockReturnValue(mockTournaments);
+    (updateGameDetails as jest.Mock).mockReturnValue({ id: 'game123' });
+    (updateGameEvent as jest.Mock).mockReturnValue({ id: 'game123' });
+    (removeGameEvent as jest.Mock).mockReturnValue({ id: 'game123' });
   });
 
   test('renders the modal when isOpen is true', () => {
@@ -802,4 +827,222 @@ describe('<GameSettingsModal />', () => {
     // - Interaction with opponent goals (if editable/deletable)
   });
 
+  it('loads seasons and tournaments when opened', async () => {
+    render(<GameSettingsModal {...defaultProps} />);
+    
+    // Verify the utility functions were called
+    expect(getSeasons).toHaveBeenCalled();
+    expect(getTournaments).toHaveBeenCalled();
+
+    // Check if season appears in dropdown when selected
+    const seasonElement = await screen.findByText('Spring League 2024');
+    expect(seasonElement).toBeInTheDocument();
+  });
+
+  it('calls updateGameDetails when editing opponent name', async () => {
+    render(<GameSettingsModal {...defaultProps} />);
+    
+    // Find the opponent name element and click to edit
+    const opponentElement = screen.getByText('Away Team');
+    fireEvent.click(opponentElement);
+    
+    // Find the input and change the value
+    const inputElement = screen.getByDisplayValue('Away Team');
+    fireEvent.change(inputElement, { target: { value: 'New Opponent' } });
+    fireEvent.blur(inputElement);
+    
+    // Check if the utility function was called with the right parameters
+    expect(updateGameDetails).toHaveBeenCalledWith('game123', { awayTeam: 'New Opponent' });
+    expect(mockOnOpponentNameChange).toHaveBeenCalledWith('New Opponent');
+  });
+
+  it('calls updateGameDetails when editing game date', async () => {
+    render(<GameSettingsModal {...defaultProps} />);
+    
+    // Find the date element and click to edit
+    const dateElement = screen.getByText('2024-07-31');
+    fireEvent.click(dateElement);
+    
+    // Find the input and change the value
+    const inputElement = screen.getByDisplayValue('2024-07-31');
+    fireEvent.change(inputElement, { target: { value: '2024-08-01' } });
+    fireEvent.blur(inputElement);
+    
+    // Check if the utility function was called with the right parameters
+    expect(updateGameDetails).toHaveBeenCalledWith('game123', { date: '2024-08-01' });
+    expect(mockOnGameDateChange).toHaveBeenCalledWith('2024-08-01');
+  });
+
+  it('calls updateGameDetails when editing game location', async () => {
+    render(<GameSettingsModal {...defaultProps} />);
+    
+    // Find the location element and click to edit
+    const locationElement = screen.getByText('Central Park');
+    fireEvent.click(locationElement);
+    
+    // Find the input and change the value
+    const inputElement = screen.getByDisplayValue('Central Park');
+    fireEvent.change(inputElement, { target: { value: 'New Stadium' } });
+    fireEvent.blur(inputElement);
+    
+    // Check if the utility function was called with the right parameters
+    expect(updateGameDetails).toHaveBeenCalledWith('game123', { location: 'New Stadium' });
+    expect(mockOnGameLocationChange).toHaveBeenCalledWith('New Stadium');
+  });
+
+  it('calls updateGameDetails when changing time inputs', async () => {
+    render(<GameSettingsModal {...defaultProps} />);
+    
+    // Find the hour and minute inputs
+    const hourInput = screen.getByPlaceholderText('HH');
+    const minuteInput = screen.getByPlaceholderText('MM');
+    
+    // Change the hour
+    fireEvent.change(hourInput, { target: { value: '19' } });
+    
+    // Check if the utility function was called with the right parameters
+    expect(updateGameDetails).toHaveBeenCalledWith('game123', { time: '19:30' });
+    expect(mockOnGameTimeChange).toHaveBeenCalledWith('19:30');
+
+    // Change the minute
+    fireEvent.change(minuteInput, { target: { value: '45' } });
+    
+    // Check again
+    expect(updateGameDetails).toHaveBeenCalledWith('game123', { time: '19:45' });
+    expect(mockOnGameTimeChange).toHaveBeenCalledWith('19:45');
+  });
+
+  it('calls updateGameDetails when editing game notes', async () => {
+    render(<GameSettingsModal {...defaultProps} />);
+    
+    // Click edit button for notes (since it has an explicit edit button)
+    const editButton = screen.getByLabelText('Edit Notes');
+    fireEvent.click(editButton);
+    
+    // Find the textarea and change the value
+    const textareaElement = screen.getByDisplayValue('Regular season match');
+    fireEvent.change(textareaElement, { target: { value: 'Updated notes here' } });
+    
+    // Find the save button and click it
+    const saveButton = screen.getByText('Save Notes');
+    fireEvent.click(saveButton);
+    
+    // Check if the utility function was called with the right parameters
+    expect(updateGameDetails).toHaveBeenCalledWith('game123', { notes: 'Updated notes here' });
+    expect(mockOnGameNotesChange).toHaveBeenCalledWith('Updated notes here');
+  });
+
+  it('calls updateGameEvent when editing a goal', async () => {
+    render(<GameSettingsModal {...defaultProps} />);
+    
+    // Find a goal event and click the edit button
+    const editButtons = screen.getAllByTitle('Edit');
+    fireEvent.click(editButtons[0]);
+    
+    // Change time
+    const timeInput = screen.getByPlaceholderText('MM:SS');
+    fireEvent.change(timeInput, { target: { value: '06:30' } });
+    
+    // Change scorer (assuming the first one is selected initially)
+    const scorerSelect = screen.getByText('Select Scorer...');
+    fireEvent.change(scorerSelect.parentElement as HTMLSelectElement, { target: { value: 'p2' } });
+    
+    // Save the changes
+    const saveButton = screen.getByTitle('Save');
+    fireEvent.click(saveButton);
+    
+    // Calculate the expected time in seconds (6 minutes 30 seconds = 390 seconds)
+    const expectedTimeInSeconds = 390;
+    
+    // Check if the utility function was called with the right parameters
+    expect(updateGameEvent).toHaveBeenCalledWith('game123', 0, expect.objectContaining({
+      id: 'goal1',
+      time: expectedTimeInSeconds,
+      scorerId: 'p2',
+    }));
+    
+    expect(mockOnUpdateGameEvent).toHaveBeenCalledWith(expect.objectContaining({
+      id: 'goal1',
+      time: expectedTimeInSeconds,
+      scorerId: 'p2',
+    }));
+  });
+
+  it('calls removeGameEvent when deleting a goal', async () => {
+    // Mock confirm to return true
+    window.confirm = jest.fn(() => true);
+    
+    render(<GameSettingsModal {...defaultProps} />);
+    
+    // Find a goal event and click the delete button
+    const deleteButtons = screen.getAllByTitle('Delete');
+    fireEvent.click(deleteButtons[0]);
+    
+    // Check if confirmation was shown
+    expect(window.confirm).toHaveBeenCalled();
+    
+    // Check if the utility function was called with the right parameters
+    expect(removeGameEvent).toHaveBeenCalledWith('game123', 0);
+    expect(mockOnDeleteGameEvent).toHaveBeenCalledWith('goal1');
+  });
+
+  it('changes season and calls utility function when season dropdown changes', async () => {
+    render(<GameSettingsModal {...defaultProps} />);
+    
+    // Find the season dropdown and change selection
+    const seasonSelect = screen.getByText('-- Select Season --');
+    fireEvent.change(seasonSelect.parentElement as HTMLSelectElement, { target: { value: 'Spring League 2024' } });
+    
+    // Check if the utility function was called with the right parameters
+    expect(updateGameDetails).toHaveBeenCalledWith('game123', {
+      seasonId: 'Spring League 2024',
+      tournamentId: null
+    });
+    
+    expect(mockOnSeasonIdChange).toHaveBeenCalledWith('Spring League 2024');
+  });
+
+  it('handles errors gracefully when utility functions throw', async () => {
+    // Setup error mocks
+    console.error = jest.fn();
+    window.alert = jest.fn();
+    
+    (updateGameDetails as jest.Mock).mockImplementation(() => {
+      throw new Error('Update failed');
+    });
+    
+    render(<GameSettingsModal {...defaultProps} />);
+    
+    // Find the opponent name element and click to edit
+    const opponentElement = screen.getByText('Away Team');
+    fireEvent.click(opponentElement);
+    
+    // Find the input and change the value
+    const inputElement = screen.getByDisplayValue('Away Team');
+    fireEvent.change(inputElement, { target: { value: 'New Opponent' } });
+    fireEvent.blur(inputElement);
+    
+    // Check if error was logged and alert was shown
+    expect(console.error).toHaveBeenCalled();
+    expect(window.alert).toHaveBeenCalled();
+  });
+
+  it('does not call utility functions when currentGameId is null', async () => {
+    render(<GameSettingsModal {...defaultProps} currentGameId={null} />);
+    
+    // Find the opponent name element and click to edit
+    const opponentElement = screen.getByText('Away Team');
+    fireEvent.click(opponentElement);
+    
+    // Find the input and change the value
+    const inputElement = screen.getByDisplayValue('Away Team');
+    fireEvent.change(inputElement, { target: { value: 'New Opponent' } });
+    fireEvent.blur(inputElement);
+    
+    // Should still call the callback prop
+    expect(mockOnOpponentNameChange).toHaveBeenCalledWith('New Opponent');
+    
+    // But should not call the utility function
+    expect(updateGameDetails).not.toHaveBeenCalled();
+  });
 }); 
