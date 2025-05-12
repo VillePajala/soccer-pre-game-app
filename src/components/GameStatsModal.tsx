@@ -6,7 +6,12 @@ import { useTranslation } from 'react-i18next';
 import { Player, PlayerStatRow, Season, Tournament } from '@/types';
 import { GameEvent, SavedGamesCollection } from '@/app/page';
 // ADD new import for keys
-import { SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY } from '@/config/constants';
+// import { SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY } from '@/config/constants';
+// <<< REMOVE unused key imports
+// import { SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY } from '@/config/constants';
+// <<< ADD imports for utility functions >>>
+import { getSeasons as utilGetSeasons } from '@/utils/seasons';
+import { getTournaments as utilGetTournaments } from '@/utils/tournaments';
 import { FaSort, FaSortUp, FaSortDown, FaEdit, FaSave, FaTimes, FaTrashAlt } from 'react-icons/fa';
 
 // Define the type for sortable columns
@@ -188,12 +193,14 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       try {
-        const storedSeasons = localStorage.getItem(SEASONS_LIST_KEY);
-        setSeasons(storedSeasons ? JSON.parse(storedSeasons) : []);
+        // <<< Use utility function >>>
+        const loadedSeasons = utilGetSeasons();
+        setSeasons(loadedSeasons);
       } catch (error) { console.error("Failed to load seasons:", error); setSeasons([]); }
       try {
-        const storedTournaments = localStorage.getItem(TOURNAMENTS_LIST_KEY);
-        setTournaments(storedTournaments ? JSON.parse(storedTournaments) : []);
+        // <<< Use utility function >>>
+        const loadedTournaments = utilGetTournaments();
+        setTournaments(loadedTournaments);
       } catch (error) { console.error("Failed to load tournaments:", error); setTournaments([]); }
     }
   }, [isOpen]);

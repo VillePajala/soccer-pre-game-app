@@ -115,6 +115,7 @@ We employ a three-layered testing approach:
       * ✅ Tests backup/restore functionality.
       * ✅ Handles various error scenarios (FileReader errors, JSON parsing errors).
       * ✅ Refactored to use `seasons.ts` and `tournaments.ts` utilities for loading season/tournament filter data.
+      * ✅ Verified tests mock utility functions (`getSeasons`, `getTournaments`, `fullBackup`) and rely on props for core data (`savedGames`, `onDelete`, etc.).
 
     * **`src/components/RosterSettingsModal.test.tsx`**:
       * ✅ Renders correctly when open/closed.
@@ -136,6 +137,12 @@ We employ a three-layered testing approach:
       * ✅ Tests home/away team toggle.
       * ✅ Tests season and tournament associations.
       * ✅ Refactored to use `seasons.ts` and `tournaments.ts` utilities for loading season/tournament selection lists.
+
+    * **`src/components/GameStatsModal.test.tsx`** (New - or needs description update):
+      * ✅ Renders modal and basic game info.
+      * ✅ Loads seasons/tournaments using mocked utility functions (`getSeasons`, `getTournaments`).
+      * ✅ Displays current game stats table and event log.
+      * 🚧 Needs tests for tab switching, filtering, sorting, editing info/notes/events, export, Fair Play.
 
     * **`src/components/NewGameSetupModal.test.tsx`** (Assumed - check if test file exists):
       * 🚧 (Tests might need update/creation if not already covering new season/tournament creation via utils)
@@ -347,191 +354,4 @@ The following components currently lack test coverage:
 
 1. **Components:**
    * `ControlBar.tsx`
-   * `NewGameSetupModal.tsx`
-   * `GameInfoBar.tsx`
-   * `GameStatsModal.tsx`
-   * `PlayerBar.tsx`
-   * `SoccerField.tsx`
-   * `TimerOverlay.tsx`
-   * `SaveGameModal.tsx`
-   * `PlayerDisk.tsx`
-   * `InstallPrompt.tsx`
-   * `GoalLogModal.tsx`
-   * `ServiceWorkerRegistration.tsx`
-   * `TrainingResourcesModal.tsx`
-   * `InstructionsModal.tsx`
-   * `I18nInitializer.tsx`
-
-2. **Features:**
-   * Service Worker functionality
-   * PWA installation
-   * Internationalization (i18n)
-   * Training resources
-   * Game instructions
-   * Goal logging
-   * Timer functionality
-   * Field player interactions
-
-## Next Steps
-
-1. **Expand Integration Tests:**
-   * Add tests for missing components listed above.
-   * Prioritize core gameplay components (`SoccerField`, `TimerOverlay`, `GameStatsModal`).
-   * Add tests for PWA features (`InstallPrompt`, `ServiceWorkerRegistration`).
-
-2. **Expand E2E Tests:**
-   * Add tests for season/tournament management.
-   * Add tests for game statistics and reporting.
-   * Add tests for multi-game scenarios.
-   * Add tests for PWA installation and offline functionality.
-
-3. **Improve Test Coverage:**
-   * Add tests for edge cases and error scenarios.
-   * Add tests for internationalization (i18n).
-   * Add tests for accessibility features.
-   * Add tests for offline functionality.
-
-4. **Test Infrastructure:**
-   * Set up continuous integration for automated testing.
-   * Configure test coverage reporting.
-   * Add performance testing.
-   * Add visual regression testing for UI components.
-
-## Supabase Migration Testing Requirements
-
-### 1. Data Model Validation Tests
-
-#### Unit Tests
-* **`src/utils/dataValidation.test.ts`** (New)
-  * ✅ Test validation of all data types against Supabase schema
-  * ✅ Test handling of invalid data types
-  * ✅ Test data transformation functions
-  * ✅ Test null/undefined handling
-  * ✅ Test required field validation
-
-#### Integration Tests
-* **`src/utils/dataMigration.test.ts`** (New)
-  * ✅ Test localStorage to Supabase data transformation
-  * ✅ Test Supabase to localStorage data transformation (for offline support)
-  * ✅ Test data type conversion and validation
-  * ✅ Test handling of missing or malformed data
-
-### 2. Migration Process Tests
-
-#### Unit Tests
-* **`src/utils/migrationManager.test.ts`** (New)
-  * ✅ Test migration process initialization
-  * ✅ Test progress tracking
-  * ✅ Test error handling and recovery
-  * ✅ Test migration state management
-  * ✅ Test cleanup procedures
-
-#### Integration Tests
-* **`src/utils/migrationService.test.ts`** (New)
-  * ✅ Test complete migration flow
-  * ✅ Test partial migration scenarios
-  * ✅ Test rollback procedures
-  * ✅ Test data integrity verification
-  * ✅ Test concurrent migration attempts
-
-### 3. User Data Isolation Tests
-
-#### Unit Tests
-* **`src/utils/userDataService.test.ts`** (New)
-  * ✅ Test user data access control
-  * ✅ Test data scoping to user ID
-  * ✅ Test multi-user data isolation
-  * ✅ Test user authentication state handling
-
-#### E2E Tests
-* **`tests/user-data-isolation.spec.ts`** (New)
-  * ✅ Test user-specific data access
-  * ✅ Test data isolation between users
-  * ✅ Test authentication state affecting data access
-  * ✅ Test data migration for new users
-  * ✅ Test data migration for existing users
-
-### 4. Migration E2E Tests
-
-* **`tests/migration-flow.spec.ts`** (New)
-  * ✅ Test complete migration process
-  * ✅ Test migration with existing data
-  * ✅ Test migration with no existing data
-  * ✅ Test migration with partial data
-  * ✅ Test migration error handling
-  * ✅ Test migration progress indicators
-  * ✅ Test data verification after migration
-
-### 5. Performance Tests
-
-* **`tests/migration-performance.spec.ts`** (New)
-  * ✅ Test migration speed with large datasets
-  * ✅ Test memory usage during migration
-  * ✅ Test network usage during migration
-  * ✅ Test concurrent operations during migration
-
-### 6. Error Handling Tests
-
-* **`tests/migration-error-handling.spec.ts`** (New)
-  * ✅ Test network failure scenarios
-  * ✅ Test authentication failure scenarios
-  * ✅ Test data corruption scenarios
-  * ✅ Test partial migration failure scenarios
-  * ✅ Test recovery procedures
-
-### Implementation Priority
-
-1. **Phase 1: Data Validation**
-   * Implement data validation tests
-   * Implement data transformation tests
-   * Verify all data types match Supabase schema
-
-2. **Phase 2: Migration Process**
-   * Implement migration manager tests
-   * Implement migration service tests
-   * Test complete migration flow
-
-3. **Phase 3: User Data**
-   * Implement user data isolation tests
-   * Test multi-user scenarios
-   * Verify authentication integration
-
-4. **Phase 4: E2E Testing**
-   * Implement migration flow tests
-   * Test error handling
-   * Test performance scenarios
-
-### Test Data Requirements
-
-* Create test datasets for:
-  * Empty database
-  * Small dataset (1-10 records)
-  * Medium dataset (100-1000 records)
-  * Large dataset (10000+ records)
-  * Corrupted data
-  * Malformed data
-  * Mixed data types
-  * Special characters and Unicode
-  * Maximum field lengths
-
-### Test Environment Setup
-
-* Create separate test environments for:
-  * Local development
-  * Staging
-  * Production
-* Configure test databases with:
-  * Supabase test instance
-  * Clerk test instance
-  * Mock authentication
-  * Test data seeding
-
-### Monitoring and Reporting
-
-* Implement test coverage reporting
-* Track migration success rates
-* Monitor performance metrics
-* Log error scenarios
-* Generate test reports
-
-This testing plan should be implemented before proceeding with the Supabase migration to ensure data integrity and system reliability.
+   * `

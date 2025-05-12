@@ -2,8 +2,8 @@ import React from 'react';
 import { render, screen, fireEvent, within, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import LoadGameModal from './LoadGameModal';
-import { SavedGamesCollection, Season, Tournament, AppState } from '@/app/page';
-import { SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY } from '@/config/constants';
+import { SavedGamesCollection, AppState } from '@/app/page';
+import { Season, Tournament } from '@/types';
 
 // Improved Mock for react-i18next hook
 jest.mock('react-i18next', () => ({
@@ -79,10 +79,24 @@ jest.mock('../i18n', () => ({
   }
 }));
 
+// Import the mocked modules
+import * as seasonsUtils from '@/utils/seasons';
+import * as tournamentsUtils from '@/utils/tournaments';
+import * as fullBackupUtils from '@/utils/fullBackup';
+
 // Mock fullBackup functions
 jest.mock('@/utils/fullBackup', () => ({
   exportFullBackup: jest.fn(),
   importFullBackup: jest.fn().mockReturnValue(true),
+}));
+
+// <<< ADD MOCKS for season/tournament utilities >>>
+jest.mock('@/utils/seasons', () => ({
+  getSeasons: jest.fn(),
+}));
+
+jest.mock('@/utils/tournaments', () => ({
+  getTournaments: jest.fn(),
 }));
 
 // Setup for jest-dom - Should be handled by setupTests.js, but keep for clarity
@@ -139,7 +153,6 @@ describe('LoadGameModal', () => {
     setItem: jest.Mock;
     removeItem: jest.Mock;
     clear: jest.Mock;
-    getAll: () => Record<string, string>;
   };
   let mockHandlers: {
     onClose: jest.Mock;
@@ -153,23 +166,28 @@ describe('LoadGameModal', () => {
   };
 
   beforeEach(() => {
-    // Setup localStorage mock inline
+    // Setup localStorage mock inline - Keep for potential future non-data uses?
+    // Or remove entirely if only used for data?
+    // For now, keep a basic mock but don't populate season/tournament keys.
     let store: Record<string, string> = {};
     localStorageMock = {
       getItem: jest.fn(key => store[key] || null),
       setItem: jest.fn((key, value) => { store[key] = String(value); }),
       removeItem: jest.fn(key => { delete store[key]; }),
       clear: jest.fn(() => { store = {}; }),
-      getAll: () => store,
     };
     Object.defineProperty(window, 'localStorage', { value: localStorageMock });
     
+    // Clear mocks
     (window.confirm as jest.Mock).mockClear();
+    (fullBackupUtils.exportFullBackup as jest.Mock).mockClear();
+    (fullBackupUtils.importFullBackup as jest.Mock).mockClear();
+    (seasonsUtils.getSeasons as jest.Mock).mockClear();
+    (tournamentsUtils.getTournaments as jest.Mock).mockClear();
 
-    // Pre-populate localStorage 
-    localStorageMock.setItem(SEASONS_LIST_KEY, JSON.stringify(sampleSeasons));
-    localStorageMock.setItem(TOURNAMENTS_LIST_KEY, JSON.stringify(sampleTournaments));
-    // Note: SAVED_GAMES_KEY is NOT pre-populated here, assuming it's passed via props
+    // <<< MOCK utility function return values >>>
+    (seasonsUtils.getSeasons as jest.Mock).mockReturnValue(sampleSeasons);
+    (tournamentsUtils.getTournaments as jest.Mock).mockReturnValue(sampleTournaments);
 
     mockHandlers = {
       onClose: jest.fn(),
@@ -248,44 +266,58 @@ describe('LoadGameModal', () => {
       expect(screen.queryByText('Eagles vs Hawks')).not.toBeInTheDocument();
     });
 
-    it('filters games by season badge when clicked', async () => {
+    it('filters games by clicking season badge', async () => {
       render(<LoadGameModal isOpen={true} savedGames={createSampleGames()} {...mockHandlers} />);
-      const seasonBadge = await screen.findByRole('button', { name: /Spring League/i });
+      // <<< VERIFY season utility was called >>>
+      expect(seasonsUtils.getSeasons).toHaveBeenCalled();
+
+      const seasonBadge = await screen.findByText('Spring League');
       fireEvent.click(seasonBadge);
       expect(await screen.findByTestId('game-item-game_1659123456_abc')).toBeInTheDocument();
       expect(screen.queryByTestId('game-item-game_1659223456_def')).not.toBeInTheDocument();
     });
 
-    it('filters games by tournament badge when clicked', async () => {
+    it('filters games by clicking tournament badge', async () => {
       render(<LoadGameModal isOpen={true} savedGames={createSampleGames()} {...mockHandlers} />);
-      const tournamentBadge = await screen.findByRole('button', { name: /Summer Cup/i });
+      // <<< VERIFY tournament utility was called >>>
+      expect(tournamentsUtils.getTournaments).toHaveBeenCalled();
+
+      const tournamentBadge = await screen.findByText('Summer Cup');
       fireEvent.click(tournamentBadge);
       expect(await screen.findByTestId('game-item-game_1659223456_def')).toBeInTheDocument();
       expect(screen.queryByTestId('game-item-game_1659123456_abc')).not.toBeInTheDocument();
     });
 
-    it('clears badge filter when badge is clicked again', async () => {
-       render(<LoadGameModal isOpen={true} savedGames={createSampleGames()} {...mockHandlers} />);
-       const seasonBadge = await screen.findByRole('button', { name: /Spring League/i });
-       fireEvent.click(seasonBadge); // Apply filter
-       expect(screen.queryByTestId('game-item-game_1659223456_def')).not.toBeInTheDocument();
-       fireEvent.click(seasonBadge); // Click again to clear
-       expect(await screen.findByTestId('game-item-game_1659223456_def')).toBeInTheDocument(); // Other game should reappear
+    it('clears badge filter by clicking the active badge again', async () => {
+      render(<LoadGameModal isOpen={true} savedGames={createSampleGames()} {...mockHandlers} />);
+      const seasonBadge = await screen.findByText('Spring League');
+      fireEvent.click(seasonBadge); // Apply filter
+      expect(screen.queryByTestId('game-item-game_1659223456_def')).not.toBeInTheDocument();
+      fireEvent.click(seasonBadge); // Click again to clear
+      expect(await screen.findByTestId('game-item-game_1659223456_def')).toBeInTheDocument(); // Other game should reappear
     });
 
-    it('clears badge filter when search text is cleared', async () => {
+    it('clears badge filter when search input is cleared', async () => {
       render(<LoadGameModal isOpen={true} savedGames={createSampleGames()} {...mockHandlers} />);
-      const seasonBadge = await screen.findByRole('button', { name: /Spring League/i });
-      fireEvent.click(seasonBadge); // Apply badge filter
-      expect(screen.queryByTestId('game-item-game_1659223456_def')).not.toBeInTheDocument();
       
-      const searchInput = screen.getByPlaceholderText(/Filter games/i);
-      fireEvent.change(searchInput, { target: { value: 'test' } }); // Enter search text
-      fireEvent.change(searchInput, { target: { value: '' } }); // Clear search text
+      // Apply badge filter first
+      const seasonBadge = await screen.findByText('Spring League');
+      fireEvent.click(seasonBadge);
+      expect(screen.getByText('Lions vs Tigers')).toBeInTheDocument();
+      expect(screen.queryByText(/Hawks vs Eagles/)).not.toBeInTheDocument();
 
-      // Both items should be visible again as filters are cleared
-      expect(await screen.findByTestId('game-item-game_1659123456_abc')).toBeInTheDocument();
-      expect(await screen.findByTestId('game-item-game_1659223456_def')).toBeInTheDocument();
+      // Add search text
+      const searchInput = screen.getByPlaceholderText(/Filter games/i);
+      fireEvent.change(searchInput, { target: { value: 'Lion' } });
+      expect(screen.getByText('Lions vs Tigers')).toBeInTheDocument();
+
+      // Clear search text
+      fireEvent.change(searchInput, { target: { value: '' } });
+
+      // Both games should be visible again, indicating filter is cleared
+      expect(screen.getByText('Lions vs Tigers')).toBeInTheDocument();
+      // Use findByText for the second game as it might re-render
+      expect(await screen.findByText(/Hawks vs Eagles/)).toBeInTheDocument();
     });
   });
 

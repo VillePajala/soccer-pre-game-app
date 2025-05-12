@@ -136,9 +136,9 @@ We've already made progress in centralizing data access for certain entities:
 | 1.4.2.1 | Add tests for GameSettingsModal | ✅ Completed | 2024-08-01 | Created comprehensive tests for utility function integration and component behavior |
 | 1.4.3 | Refactor NewGameSetupModal | ✅ Completed | 2024-08-02 | Replaced direct localStorage access with utility functions for team name persistence |
 | 1.4.3.1 | Add tests for NewGameSetupModal | ✅ Completed | 2024-08-02 | Created comprehensive tests for utility function integration with proper test isolation |
-| 1.4.4 | Refactor LoadGameModal | 🔄 Next | | Will be the next component to refactor |
-| 1.4.5 | Refactor GameStatsModal | 📝 Planned | | |
-| 1.5  | Implement error handling patterns | 📝 Planned | | |
+| 1.4.4 | Refactor LoadGameModal | ✅ Completed | 2024-08-02 | Verified component uses utility functions/props; updated tests to mock utilities. |
+| 1.4.5 | Refactor GameStatsModal | ✅ Completed | 2024-08-02 | Component refactored to use getSeasons/getTournaments utilities; tests already correctly mock these. |
+| 1.5  | Implement error handling patterns | 🔄 Next | | Will be the next step. |
 | 2.1  | Make utility functions return Promises | 📝 Planned | | |
 | 2.2  | Update components for async operations | 📝 Planned | | |
 | 2.3  | Add loading states | 📝 Planned | | |
