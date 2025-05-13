@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import GameSettingsModal from './GameSettingsModal';
 import { type GameSettingsModalProps } from './GameSettingsModal';
@@ -9,11 +10,45 @@ import { SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY } from '@/config/constants';
 import { getSeasons } from '@/utils/seasons';
 import { getTournaments } from '@/utils/tournaments';
 import { updateGameDetails, updateGameEvent, removeGameEvent } from '@/utils/savedGames';
+import * as rosterUtils from '@/utils/masterRoster';
 
 // Mock i18n
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, fallback: string) => fallback || key,
+    t: (key: string, options?: { val: number | string }) => {
+      if (options?.val !== undefined) {
+        return key.replace('{{val}}', String(options.val));
+      }
+      if (key === 'common.dateFormat') return 'yyyy-MM-dd';
+      if (key === 'common.timeFormat') return 'HH:mm';
+      if (key === 'common.none') return 'None';
+      if (key === 'common.home') return 'Home';
+      if (key === 'common.away') return 'Away';
+      if (key === 'common.edit') return 'Edit';
+      if (key === 'common.save') return 'Save';
+      if (key === 'common.cancel') return 'Cancel';
+      if (key === 'gameSettingsModal.opponentNamePlaceholder') return 'Enter opponent name';
+      if (key === 'gameSettingsModal.locationPlaceholder') return 'Enter location';
+      if (key === 'gameSettingsModal.timePlaceholder') return 'Enter time (HH:MM)';
+      if (key === 'gameSettingsModal.gameNotesPlaceholder') return 'Enter game notes...';
+      if (key === 'gameSettingsModal.addGoal') return 'Add Goal';
+      if (key === 'gameSettingsModal.scorer') return 'Scorer';
+      if (key === 'gameSettingsModal.assister') return 'Assister (Optional)';
+      if (key === 'gameSettingsModal.noPlayerSelected') return '-- Select Player --';
+      if (key === 'gameSettingsModal.confirmDeleteEvent') return 'Are you sure you want to delete this event?';
+      if (key === 'gameSettingsModal.fairPlayAward') return 'Fair Play Award';
+      if (key === 'gameSettingsModal.awardTo') return 'Award To';
+      if (key === 'gameSettingsModal.clearAward') return 'Clear Award';
+      if (key === 'gameSettingsModal.noPlayersAvailable') return 'No players available';
+      if (key === 'gameSettingsModal.selectSeason') return '-- Select Season --';
+      if (key === 'gameSettingsModal.selectTournament') return '-- Select Tournament --';
+      if (key === 'gameSettingsModal.periods') return 'Periods';
+      if (key === 'gameSettingsModal.durationPerPeriod') return 'Duration (min)';
+      if (key === 'gameSettingsModal.associationSeason') return 'Season/League';
+      if (key === 'gameSettingsModal.associationNone') return 'None';
+      if (key === 'gameSettingsModal.associationTournament') return 'Tournament';
+      return key;
+    },
   }),
 }));
 
@@ -36,16 +71,27 @@ const mockOnSetHomeOrAway = jest.fn();
 // Mock all utility functions
 jest.mock('@/utils/seasons', () => ({
   getSeasons: jest.fn(),
+  addSeason: jest.fn(),
+  updateSeason: jest.fn(),
+  deleteSeason: jest.fn(),
 }));
 
 jest.mock('@/utils/tournaments', () => ({
   getTournaments: jest.fn(),
+  addTournament: jest.fn(),
+  updateTournament: jest.fn(),
+  deleteTournament: jest.fn(),
 }));
 
 jest.mock('@/utils/savedGames', () => ({
   updateGameDetails: jest.fn(),
   updateGameEvent: jest.fn(),
   removeGameEvent: jest.fn(),
+}));
+
+// Mock roster utils specifically for getMasterRoster in relevant tests
+jest.mock('@/utils/masterRoster', () => ({
+  getMasterRoster: jest.fn(),
 }));
 
 // Sample Data
@@ -133,6 +179,7 @@ describe('<GameSettingsModal />', () => {
     (updateGameDetails as jest.Mock).mockReturnValue({ id: 'game123' });
     (updateGameEvent as jest.Mock).mockReturnValue({ id: 'game123' });
     (removeGameEvent as jest.Mock).mockReturnValue({ id: 'game123' });
+    (rosterUtils.getMasterRoster as jest.Mock).mockReturnValue(mockPlayers);
   });
 
   test('renders the modal when isOpen is true', () => {
@@ -156,76 +203,93 @@ describe('<GameSettingsModal />', () => {
     expect(screen.queryByRole('heading', { name: /Game Settings|Pelin Asetukset/i })).not.toBeInTheDocument();
   });
 
-  test('calls onClose when the close button is clicked', () => {
+  test('calls onClose when the close button is clicked', async () => {
     render(<GameSettingsModal {...defaultProps} />);
     const footer = screen.getByText(/Close|Sulje/i).closest('div[class*="justify-end pt-4"]');
     expect(footer).toBeInTheDocument();
     expect(footer).toBeInstanceOf(HTMLElement);
     if (!footer) throw new Error("Modal footer not found or not an HTMLElement");
-    const closeButtonInFooter = within(footer as HTMLElement).getByRole('button', { name: /Close|Sulje/i });
-    fireEvent.click(closeButtonInFooter);
+    const closeButtonInFooter = within(footer as HTMLElement).getByRole('button', { 
+      name: (name) => /close|sulje/i.test(name)
+    });
+    await userEvent.click(closeButtonInFooter);
     expect(mockOnClose).toHaveBeenCalledTimes(1);
   });
 
   test('calls onOpponentNameChange when opponent name input changes and is saved via blur', async () => {
-      const { rerender } = render(<GameSettingsModal {...defaultProps} />); 
-      const gameInfoSection = screen.getByRole('heading', { name: /Game Info/i }).closest('div');
+      const user = userEvent.setup();
+      const { rerender } = render(<GameSettingsModal {...defaultProps} />);
+      const gameInfoSection = screen.getByRole('heading', { 
+        name: (name) => /game info/i.test(name) 
+      }).closest('div');
       if (!gameInfoSection) throw new Error("Game Info section not found");
 
       const opponentNameDisplaySpan = within(gameInfoSection).getByText(defaultProps.opponentName);
-      fireEvent.click(opponentNameDisplaySpan);
+      await user.click(opponentNameDisplaySpan);
 
       const opponentInput = within(gameInfoSection).getByDisplayValue(defaultProps.opponentName);
       expect(opponentInput).toBeInTheDocument();
-      
+
       const newOpponentName = 'New Opponent FC';
-      fireEvent.change(opponentInput, { target: { value: newOpponentName } });
-      fireEvent.blur(opponentInput); 
-      
+      await user.clear(opponentInput);
+      await user.type(opponentInput, newOpponentName);
+      await user.click(screen.getByRole('heading', { 
+        name: (name) => /game settings|pelin asetukset/i.test(name) 
+      }));
+
       expect(mockOnOpponentNameChange).toHaveBeenCalledWith(newOpponentName.trim());
-      
+
       rerender(<GameSettingsModal {...defaultProps} opponentName={newOpponentName.trim()} />);
       
       expect(screen.queryByDisplayValue(newOpponentName)).not.toBeInTheDocument();
-      expect(await within(gameInfoSection).findByText(newOpponentName.trim())).toBeInTheDocument(); 
+      expect(await within(gameInfoSection).findByText(newOpponentName.trim())).toBeInTheDocument();
   });
 
   test('calls onGameDateChange when date input changes and is saved via blur', async () => {
+      const user = userEvent.setup();
       const { rerender } = render(<GameSettingsModal {...defaultProps} />);
-      const gameInfoSection = screen.getByRole('heading', { name: /Game Info/i }).closest('div');
+      const gameInfoSection = screen.getByRole('heading', { 
+        name: (name) => /game info/i.test(name) 
+      }).closest('div');
       if (!gameInfoSection) throw new Error("Game Info section not found");
 
       const gameDateDisplaySpan = within(gameInfoSection).getByText(formatDateForDisplayTest(defaultProps.gameDate));
-      fireEvent.click(gameDateDisplaySpan);
+      await user.click(gameDateDisplaySpan);
       
-      const dateInput = within(gameInfoSection).getByDisplayValue(defaultProps.gameDate); 
+      const dateInput = within(gameInfoSection).getByDisplayValue(defaultProps.gameDate);
       expect(dateInput).toBeInTheDocument();
 
       const newDateISO = '2024-08-01';
       fireEvent.change(dateInput, { target: { value: newDateISO } });
-      fireEvent.blur(dateInput); 
+      await user.click(screen.getByRole('heading', { 
+        name: (name) => /game settings|pelin asetukset/i.test(name) 
+      }));
 
       expect(mockOnGameDateChange).toHaveBeenCalledWith(newDateISO);
-      
+
       rerender(<GameSettingsModal {...defaultProps} gameDate={newDateISO} />);
       
-      expect(screen.queryByDisplayValue(newDateISO)).not.toBeInTheDocument(); 
-      expect(await within(gameInfoSection).findByText(formatDateForDisplayTest(newDateISO))).toBeInTheDocument(); 
+      expect(screen.queryByDisplayValue(newDateISO)).not.toBeInTheDocument();
+      expect(await within(gameInfoSection).findByText(formatDateForDisplayTest(newDateISO))).toBeInTheDocument();
   });
 
   test('cancels opponent name edit correctly via Escape key', async () => {
+    const user = userEvent.setup();
     render(<GameSettingsModal {...defaultProps} />);
-    const gameInfoSection = screen.getByRole('heading', { name: /Game Info/i }).closest('div');
+    const gameInfoSection = screen.getByRole('heading', { 
+      name: (name) => /game info/i.test(name) 
+    }).closest('div');
     if (!gameInfoSection) throw new Error("Game Info section not found");
 
     const opponentNameDisplaySpan = within(gameInfoSection).getByText(defaultProps.opponentName);
-    fireEvent.click(opponentNameDisplaySpan);
+    await user.click(opponentNameDisplaySpan);
 
     const opponentInput = within(gameInfoSection).getByDisplayValue(defaultProps.opponentName);
     const tempOpponentName = 'Temporary Name';
-    fireEvent.change(opponentInput, { target: { value: tempOpponentName } });
+    await user.clear(opponentInput);
+    await user.type(opponentInput, tempOpponentName);
 
-    fireEvent.keyDown(opponentInput, { key: 'Escape', code: 'Escape' }); // Trigger cancel
+    await user.keyboard('{Escape}');
 
     expect(screen.queryByDisplayValue(tempOpponentName)).not.toBeInTheDocument();
     expect(within(gameInfoSection).getByText(defaultProps.opponentName)).toBeInTheDocument();
@@ -233,19 +297,22 @@ describe('<GameSettingsModal />', () => {
   });
   
   test('cancels game date edit correctly via Escape key', async () => {
+    const user = userEvent.setup();
     render(<GameSettingsModal {...defaultProps} />);
-    const gameInfoSection = screen.getByRole('heading', { name: /Game Info/i }).closest('div');
+    const gameInfoSection = screen.getByRole('heading', { 
+      name: (name) => /game info/i.test(name) 
+    }).closest('div');
     if (!gameInfoSection) throw new Error("Game Info section not found");
     
     const gameDateDisplaySpan = within(gameInfoSection).getByText(formatDateForDisplayTest(defaultProps.gameDate));
-    fireEvent.click(gameDateDisplaySpan);
+    await user.click(gameDateDisplaySpan);
 
     // Input type="date" value should be in YYYY-MM-DD format
     const dateInput = within(gameInfoSection).getByDisplayValue(defaultProps.gameDate);
     const tempDateISO = '2025-01-01';
     fireEvent.change(dateInput, { target: { value: tempDateISO } });
 
-    fireEvent.keyDown(dateInput, { key: 'Escape', code: 'Escape' }); // Trigger cancel
+    await user.keyboard('{Escape}');
 
     expect(screen.queryByDisplayValue(tempDateISO)).not.toBeInTheDocument(); 
     expect(within(gameInfoSection).getByText(formatDateForDisplayTest(defaultProps.gameDate))).toBeInTheDocument(); 
@@ -254,20 +321,26 @@ describe('<GameSettingsModal />', () => {
 
   // Test for Game Location Change
   test('calls onGameLocationChange when location input changes and is saved via blur', async () => {
+    const user = userEvent.setup();
     const { rerender } = render(<GameSettingsModal {...defaultProps} />);
-    const gameInfoSection = screen.getByRole('heading', { name: /Game Info/i }).closest('div');
+    const gameInfoSection = screen.getByRole('heading', { 
+      name: (name) => /game info/i.test(name) 
+    }).closest('div');
     if (!gameInfoSection) throw new Error("Game Info section not found");
 
     // Find the display span (assuming it doesn't have a specific title for edit)
     const locationDisplaySpan = within(gameInfoSection).getByText(defaultProps.gameLocation!);
-    fireEvent.click(locationDisplaySpan);
+    await user.click(locationDisplaySpan);
 
     const locationInput = within(gameInfoSection).getByDisplayValue(defaultProps.gameLocation!);
     expect(locationInput).toBeInTheDocument();
 
     const newLocation = 'New Stadium';
-    fireEvent.change(locationInput, { target: { value: newLocation } });
-    fireEvent.blur(locationInput); // Trigger save via blur
+    await user.clear(locationInput);
+    await user.type(locationInput, newLocation);
+    await user.click(screen.getByRole('heading', { 
+      name: (name) => /game settings|pelin asetukset/i.test(name) 
+    }));
 
     expect(mockOnGameLocationChange).toHaveBeenCalledWith(newLocation.trim());
 
@@ -278,18 +351,22 @@ describe('<GameSettingsModal />', () => {
   });
 
   test('cancels game location edit correctly via Escape key', async () => {
+    const user = userEvent.setup();
     render(<GameSettingsModal {...defaultProps} />);
-    const gameInfoSection = screen.getByRole('heading', { name: /Game Info/i }).closest('div');
+    const gameInfoSection = screen.getByRole('heading', { 
+      name: (name) => /game info/i.test(name) 
+    }).closest('div');
     if (!gameInfoSection) throw new Error("Game Info section not found");
 
     const locationDisplaySpan = within(gameInfoSection).getByText(defaultProps.gameLocation!);
-    fireEvent.click(locationDisplaySpan);
+    await user.click(locationDisplaySpan);
 
     const locationInput = within(gameInfoSection).getByDisplayValue(defaultProps.gameLocation!);
     const tempLocation = 'Temporary Location';
-    fireEvent.change(locationInput, { target: { value: tempLocation } });
+    await user.clear(locationInput);
+    await user.type(locationInput, tempLocation);
 
-    fireEvent.keyDown(locationInput, { key: 'Escape', code: 'Escape' }); // Trigger cancel
+    await user.keyboard('{Escape}');
 
     expect(screen.queryByDisplayValue(tempLocation)).not.toBeInTheDocument();
     expect(within(gameInfoSection).getByText(defaultProps.gameLocation!)).toBeInTheDocument();
@@ -298,8 +375,11 @@ describe('<GameSettingsModal />', () => {
 
   // Test for Game Time Change 
   test('calls onGameTimeChange when hour input changes', async () => {
+    const user = userEvent.setup();
     render(<GameSettingsModal {...defaultProps} />);
-    const gameInfoSection = screen.getByRole('heading', { name: /Game Info/i }).closest('div');
+    const gameInfoSection = screen.getByRole('heading', { 
+      name: (name) => /game info/i.test(name) 
+    }).closest('div');
     if (!gameInfoSection) throw new Error("Game Info section not found");
 
     const hourInput = within(gameInfoSection).getByPlaceholderText(/HH/i);
@@ -308,15 +388,19 @@ describe('<GameSettingsModal />', () => {
     expect(hourInput).toBeInTheDocument();
     
     const newHour = '09';
-    fireEvent.change(hourInput, { target: { value: newHour } });
+    await user.clear(hourInput);
+    await user.type(hourInput, newHour);
 
     // Check if the callback was called with the correctly formatted time
-    expect(mockOnGameTimeChange).toHaveBeenCalledWith(`${newHour}:${initialMinute}`);
+    expect(mockOnGameTimeChange).toHaveBeenLastCalledWith(`${newHour}:${initialMinute}`);
   });
 
   test('calls onGameTimeChange when minute input changes', async () => {
+    const user = userEvent.setup();
     render(<GameSettingsModal {...defaultProps} />);
-    const gameInfoSection = screen.getByRole('heading', { name: /Game Info/i }).closest('div');
+    const gameInfoSection = screen.getByRole('heading', { 
+      name: (name) => /game info/i.test(name) 
+    }).closest('div');
     if (!gameInfoSection) throw new Error("Game Info section not found");
 
     const minuteInput = within(gameInfoSection).getByPlaceholderText(/MM/i);
@@ -325,46 +409,57 @@ describe('<GameSettingsModal />', () => {
     expect(minuteInput).toBeInTheDocument();
 
     const newMinute = '45';
-    fireEvent.change(minuteInput, { target: { value: newMinute } });
+    await user.clear(minuteInput);
+    await user.type(minuteInput, newMinute);
 
     // Check if the callback was called with the correctly formatted time
-    expect(mockOnGameTimeChange).toHaveBeenCalledWith(`${initialHour}:${newMinute}`);
+    expect(mockOnGameTimeChange).toHaveBeenLastCalledWith(`${initialHour}:${newMinute}`);
   });
   
   test('calls onGameTimeChange with empty string when both inputs are cleared', async () => {
+      const user = userEvent.setup();
       render(<GameSettingsModal {...defaultProps} />);
-      const gameInfoSection = screen.getByRole('heading', { name: /Game Info/i }).closest('div');
+      const gameInfoSection = screen.getByRole('heading', { 
+        name: (name) => /game info/i.test(name) 
+      }).closest('div');
       if (!gameInfoSection) throw new Error("Game Info section not found");
       
       const hourInput = within(gameInfoSection).getByPlaceholderText(/HH/i);
       const minuteInput = within(gameInfoSection).getByPlaceholderText(/MM/i);
 
-      fireEvent.change(hourInput, { target: { value: '' } });
-      // Callback might be called with partial time here, we check the final state
-      fireEvent.change(minuteInput, { target: { value: '' } });
+      await user.clear(hourInput);
+      await user.clear(minuteInput);
 
       expect(mockOnGameTimeChange).toHaveBeenLastCalledWith('');
   });
 
   // Test for Game Notes Change
   test('updates game notes correctly when saved', async () => {
+    const user = userEvent.setup();
     const { rerender } = render(<GameSettingsModal {...defaultProps} />);
-    const notesSection = screen.getByRole('heading', { name: /Game Notes/i }).closest('div');
+    const notesSection = screen.getByRole('heading', { 
+      name: (name) => /game notes/i.test(name) 
+    }).closest('div');
     if (!notesSection) throw new Error("Notes section not found");
 
     // Find the edit button within the notes header
-    const editButton = within(notesSection).getByRole('button', { name: /Edit Notes/i });
-    fireEvent.click(editButton);
+    const editButton = within(notesSection).getByRole('button', { 
+      name: (name) => /edit notes/i.test(name) 
+    });
+    await user.click(editButton);
 
     const notesTextarea = within(notesSection).getByDisplayValue(defaultProps.gameNotes!);
     expect(notesTextarea).toBeInTheDocument();
 
-    const newNotes = 'Updated game strategy.\nFocus on defense.';
-    fireEvent.change(notesTextarea, { target: { value: newNotes } });
+    const newNotes = 'Updated game strategy.\\nFocus on defense.';
+    await user.clear(notesTextarea);
+    await user.type(notesTextarea, newNotes);
 
     // Find and click the specific Save Notes button for the textarea
-    const saveButton = within(notesSection).getByRole('button', { name: /Save Notes/i });
-    fireEvent.click(saveButton);
+    const saveButton = within(notesSection).getByRole('button', { 
+      name: (name) => /save notes/i.test(name) 
+    });
+    await user.click(saveButton);
 
     expect(mockOnGameNotesChange).toHaveBeenCalledWith(newNotes);
 
@@ -385,20 +480,28 @@ describe('<GameSettingsModal />', () => {
   });
 
   test('cancels game notes edit correctly', async () => {
+    const user = userEvent.setup();
     render(<GameSettingsModal {...defaultProps} />);
-    const notesSection = screen.getByRole('heading', { name: /Game Notes/i }).closest('div');
+    const notesSection = screen.getByRole('heading', { 
+      name: (name) => /game notes/i.test(name) 
+    }).closest('div');
     if (!notesSection) throw new Error("Notes section not found");
 
-    const editButton = within(notesSection).getByRole('button', { name: /Edit Notes/i });
-    fireEvent.click(editButton);
+    const editButton = within(notesSection).getByRole('button', { 
+      name: (name) => /edit notes/i.test(name) 
+    });
+    await user.click(editButton);
 
     const notesTextarea = within(notesSection).getByDisplayValue(defaultProps.gameNotes!);
     const tempNotes = 'Temporary notes...';
-    fireEvent.change(notesTextarea, { target: { value: tempNotes } });
+    await user.clear(notesTextarea);
+    await user.type(notesTextarea, tempNotes);
 
     // Find and click the cancel button for the textarea
-    const cancelButton = within(notesSection).getByRole('button', { name: /Cancel/i });
-    fireEvent.click(cancelButton);
+    const cancelButton = within(notesSection).getByRole('button', { 
+      name: (name) => /cancel/i.test(name) 
+    });
+    await user.click(cancelButton);
 
     // Textarea should be gone, original notes should be displayed
     expect(screen.queryByDisplayValue(tempNotes)).not.toBeInTheDocument();
@@ -408,21 +511,27 @@ describe('<GameSettingsModal />', () => {
 
   // Test for Period Duration Change
   test('calls onPeriodDurationChange when duration input changes and is saved via blur', async () => {
+    const user = userEvent.setup();
     const { rerender } = render(<GameSettingsModal {...defaultProps} />);
-    const gameInfoSection = screen.getByRole('heading', { name: /Game Info/i }).closest('div');
+    const gameInfoSection = screen.getByRole('heading', { 
+      name: (name) => /game info/i.test(name) 
+    }).closest('div');
     if (!gameInfoSection) throw new Error("Game Info section not found");
 
     // Find the display span for duration (e.g., "15 min")
     const durationDisplaySpan = within(gameInfoSection).getByText(`${defaultProps.periodDurationMinutes} min`);
-    fireEvent.click(durationDisplaySpan);
+    await user.click(durationDisplaySpan);
 
     // Find the input by its current value
     const durationInput = within(gameInfoSection).getByDisplayValue(String(defaultProps.periodDurationMinutes));
     expect(durationInput).toBeInTheDocument();
 
     const newDuration = 20;
-    fireEvent.change(durationInput, { target: { value: String(newDuration) } });
-    fireEvent.blur(durationInput); // Trigger save via blur
+    await user.clear(durationInput);
+    await user.type(durationInput, String(newDuration));
+    await user.click(screen.getByRole('heading', { 
+      name: (name) => /game settings|pelin asetukset/i.test(name) 
+    }));
 
     expect(mockOnPeriodDurationChange).toHaveBeenCalledWith(newDuration);
 
@@ -434,18 +543,22 @@ describe('<GameSettingsModal />', () => {
   });
 
   test('cancels period duration edit correctly via Escape key', async () => {
+    const user = userEvent.setup();
     render(<GameSettingsModal {...defaultProps} />);
-    const gameInfoSection = screen.getByRole('heading', { name: /Game Info/i }).closest('div');
+    const gameInfoSection = screen.getByRole('heading', { 
+      name: (name) => /game info/i.test(name) 
+    }).closest('div');
     if (!gameInfoSection) throw new Error("Game Info section not found");
 
     const durationDisplaySpan = within(gameInfoSection).getByText(`${defaultProps.periodDurationMinutes} min`);
-    fireEvent.click(durationDisplaySpan);
+    await user.click(durationDisplaySpan);
 
     const durationInput = within(gameInfoSection).getByDisplayValue(String(defaultProps.periodDurationMinutes));
     const tempDuration = 99;
-    fireEvent.change(durationInput, { target: { value: String(tempDuration) } });
+    await user.clear(durationInput);
+    await user.type(durationInput, String(tempDuration));
 
-    fireEvent.keyDown(durationInput, { key: 'Escape', code: 'Escape' }); // Trigger cancel
+    await user.keyboard('{Escape}');
 
     expect(screen.queryByDisplayValue(String(tempDuration))).not.toBeInTheDocument();
     expect(within(gameInfoSection).getByText(`${defaultProps.periodDurationMinutes} min`)).toBeInTheDocument();
@@ -454,38 +567,37 @@ describe('<GameSettingsModal />', () => {
 
   // Test for Home/Away Toggle
   test('calls onSetHomeOrAway when Home/Away toggle is changed', async () => {
+    const user = userEvent.setup();
     // Initial state is 'home'
     render(<GameSettingsModal {...defaultProps} />); 
-    const gameInfoSection = screen.getByRole('heading', { name: /Game Info/i }).closest('div');
+    const gameInfoSection = screen.getByRole('heading', { 
+      name: (name) => /game info/i.test(name) 
+    }).closest('div');
     if (!gameInfoSection) throw new Error("Game Info section not found");
 
     const awayLabel = within(gameInfoSection).getByLabelText(/Away/i);
     expect(awayLabel).toBeInTheDocument(); // Ensure the label is found
 
     // Click the Away label/button
-    fireEvent.click(awayLabel);
+    await user.click(awayLabel);
 
     // Check if the callback was triggered correctly
     expect(mockOnSetHomeOrAway).toHaveBeenCalledWith('away');
-
-    // Optional: Rerender with new state and check UI update
-    // const { rerender } = render(<GameSettingsModal {...defaultProps} />); // If render wasn't destructured earlier
-    // rerender(<GameSettingsModal {...defaultProps} homeOrAway={'away'} />);
-    // Find the away input again and check if it's checked (more complex due to sr-only)
-    // Check if the associated label has the active style
-    // expect(awayLabel).toHaveClass('bg-teal-600'); // Example check
   });
 
   // Test for Season/Tournament Association
   test('displays season dropdown when Season/League button is clicked', async () => {
+    const user = userEvent.setup();
     const { rerender } = render(<GameSettingsModal {...defaultProps} />);
     const associationSection = screen.getByText((content, element) => {
       return element?.tagName.toLowerCase() === 'span' && /^Association/i.test(content);
     }).closest('div');
     if (!associationSection) throw new Error("Association section not found");
 
-    const seasonButton = within(associationSection).getByRole('button', { name: /Season\/League/i });
-    fireEvent.click(seasonButton);
+    const seasonButton = within(associationSection).getByRole('button', { 
+      name: 'Season/League'
+    });
+    await user.click(seasonButton);
 
     // Rerender with seasonId set to empty string to show the dropdown
     rerender(<GameSettingsModal {...defaultProps} seasonId="" />);
@@ -495,20 +607,23 @@ describe('<GameSettingsModal />', () => {
   });
   
   test('calls onSeasonIdChange when a season is selected', async () => {
+    const user = userEvent.setup();
     const { rerender } = render(<GameSettingsModal {...defaultProps} seasonId={null} />); 
     const associationSection = screen.getByText((content, element) => {
       return element?.tagName.toLowerCase() === 'span' && /^Association/i.test(content);
     }).closest('div');
     if (!associationSection) throw new Error("Association section not found");
     
-    const seasonButton = within(associationSection).getByRole('button', { name: /Season\/League/i });
-    fireEvent.click(seasonButton);
+    const seasonButton = within(associationSection).getByRole('button', { 
+      name: 'Season/League'
+    });
+    await user.click(seasonButton);
 
     // Rerender with seasonId set to empty string to show the dropdown before selection
     rerender(<GameSettingsModal {...defaultProps} seasonId="" />);
 
     const seasonSelect = await within(associationSection).findByRole('combobox');
-    fireEvent.change(seasonSelect, { target: { value: mockSeasons[0].id } });
+    await user.selectOptions(seasonSelect, mockSeasons[0].id);
     expect(mockOnSeasonIdChange).toHaveBeenCalledWith(mockSeasons[0].id);
 
     // Rerender with the selected season ID and verify selection
@@ -518,28 +633,34 @@ describe('<GameSettingsModal />', () => {
   });
   
   test('calls onSeasonIdChange with null when None button is clicked after season selected', async () => {
+      const user = userEvent.setup();
       render(<GameSettingsModal {...defaultProps} seasonId={mockSeasons[0].id} />);        
       const associationSection = screen.getByText((content, element) => {
         return element?.tagName.toLowerCase() === 'span' && /^Association/i.test(content);
       }).closest('div');
       if (!associationSection) throw new Error("Association section not found");
 
-      const noneButton = within(associationSection).getByRole('button', { name: /None/i });
-      fireEvent.click(noneButton);
+      const noneButton = within(associationSection).getByRole('button', { 
+        name: 'None'
+      });
+      await user.click(noneButton);
       expect(mockOnSeasonIdChange).toHaveBeenCalledWith(null);
       expect(mockOnTournamentIdChange).toHaveBeenCalledWith(null);
   });
 
   // --- ADD TOURNAMENT TESTS HERE ---
   test('displays tournament dropdown when Tournament button is clicked', async () => {
-    const { rerender } = render(<GameSettingsModal {...defaultProps} />); 
+    const user = userEvent.setup();
+    const { rerender } = render(<GameSettingsModal {...defaultProps} />);
     const associationSection = screen.getByText((content, element) => {
       return element?.tagName.toLowerCase() === 'span' && /^Association/i.test(content);
     }).closest('div');
     if (!associationSection) throw new Error("Association section not found");
 
-    const tournamentButton = within(associationSection).getByRole('button', { name: /Tournament/i });
-    fireEvent.click(tournamentButton);
+    const tournamentButton = within(associationSection).getByRole('button', { 
+      name: 'Tournament'
+    });
+    await user.click(tournamentButton);
 
     rerender(<GameSettingsModal {...defaultProps} tournamentId="" />); // Show dropdown
 
@@ -548,19 +669,22 @@ describe('<GameSettingsModal />', () => {
   });
 
   test('calls onTournamentIdChange when a tournament is selected', async () => {
+    const user = userEvent.setup();
     const { rerender } = render(<GameSettingsModal {...defaultProps} tournamentId={null} />); 
     const associationSection = screen.getByText((content, element) => {
       return element?.tagName.toLowerCase() === 'span' && /^Association/i.test(content);
     }).closest('div');
     if (!associationSection) throw new Error("Association section not found");
     
-    const tournamentButton = within(associationSection).getByRole('button', { name: /Tournament/i });
-    fireEvent.click(tournamentButton);
+    const tournamentButton = within(associationSection).getByRole('button', { 
+      name: 'Tournament'
+    });
+    await user.click(tournamentButton);
 
     rerender(<GameSettingsModal {...defaultProps} tournamentId="" />); // Show dropdown
 
     const tournamentSelect = await within(associationSection).findByRole('combobox');
-    fireEvent.change(tournamentSelect, { target: { value: mockTournaments[0].id } });
+    await user.selectOptions(tournamentSelect, mockTournaments[0].id);
     expect(mockOnTournamentIdChange).toHaveBeenCalledWith(mockTournaments[0].id);
 
     rerender(<GameSettingsModal {...defaultProps} tournamentId={mockTournaments[0].id} />);
@@ -569,6 +693,7 @@ describe('<GameSettingsModal />', () => {
   });
   
   test('calls onTournamentIdChange with null when None button is clicked after tournament selected', async () => {
+      const user = userEvent.setup();
       render(<GameSettingsModal {...defaultProps} tournamentId={mockTournaments[0].id} />);        
       const associationSection = screen.getByText((content, element) => {
         return element?.tagName.toLowerCase() === 'span' && /^Association/i.test(content);
@@ -576,36 +701,46 @@ describe('<GameSettingsModal />', () => {
       if (!associationSection) throw new Error("Association section not found");
 
       // Click None button (it should be active because a tournament is selected)
-      const noneButton = within(associationSection).getByRole('button', { name: /None/i });
-      fireEvent.click(noneButton);
+      const noneButton = within(associationSection).getByRole('button', { 
+        name: 'None'
+      });
+      await user.click(noneButton);
       expect(mockOnTournamentIdChange).toHaveBeenCalledWith(null);
       expect(mockOnSeasonIdChange).toHaveBeenCalledWith(null); // Also clears season
   });
 
   // --- ADD NUMBER OF PERIODS TESTS HERE ---
-  test('calls onNumPeriodsChange with 1 when period 1 button is clicked', () => {
+  test('calls onNumPeriodsChange with 1 when period 1 button is clicked', async () => {
+    const user = userEvent.setup();
     render(<GameSettingsModal {...defaultProps} numPeriods={2} />); // Start with 2 periods
-    const gameInfoSection = screen.getByRole('heading', { name: /Game Info/i }).closest('div');
+    const gameInfoSection = screen.getByRole('heading', { 
+      name: (name) => /game info/i.test(name) 
+    }).closest('div');
     if (!gameInfoSection) throw new Error("Game Info section not found");
 
     const period1Button = within(gameInfoSection).getByRole('button', { name: '1' });
-    fireEvent.click(period1Button);
+    await user.click(period1Button);
     expect(mockOnNumPeriodsChange).toHaveBeenCalledWith(1);
   });
 
-  test('calls onNumPeriodsChange with 2 when period 2 button is clicked', () => {
+  test('calls onNumPeriodsChange with 2 when period 2 button is clicked', async () => {
+    const user = userEvent.setup();
     render(<GameSettingsModal {...defaultProps} numPeriods={1} />); // Start with 1 period
-    const gameInfoSection = screen.getByRole('heading', { name: /Game Info/i }).closest('div');
+    const gameInfoSection = screen.getByRole('heading', { 
+      name: (name) => /game info/i.test(name) 
+    }).closest('div');
     if (!gameInfoSection) throw new Error("Game Info section not found");
 
     const period2Button = within(gameInfoSection).getByRole('button', { name: '2' });
-    fireEvent.click(period2Button);
+    await user.click(period2Button);
     expect(mockOnNumPeriodsChange).toHaveBeenCalledWith(2);
   });
 
   test('period buttons reflect current numPeriods prop', () => {
     const { rerender } = render(<GameSettingsModal {...defaultProps} numPeriods={1} />); 
-    const gameInfoSection = screen.getByRole('heading', { name: /Game Info/i }).closest('div');
+    const gameInfoSection = screen.getByRole('heading', { 
+      name: (name) => /game info/i.test(name) 
+    }).closest('div');
     if (!gameInfoSection) throw new Error("Game Info section not found");
 
     let period1Button = within(gameInfoSection).getByRole('button', { name: '1' });
@@ -635,6 +770,7 @@ describe('<GameSettingsModal />', () => {
     };
 
     test('successfully edits an event scorer', async () => {
+      const user = userEvent.setup();
       const { rerender } = render(<GameSettingsModal {...defaultProps} />);
       
       // Find the row for the event we want to edit using its time
@@ -646,8 +782,10 @@ describe('<GameSettingsModal />', () => {
       expect(within(eventRow).getByText(originalScorerName!)).toBeInTheDocument();
 
       // Find and click the Edit button within that specific row
-      const editButton = within(eventRow).getByRole('button', { name: /Edit|Muokkaa/i });
-      fireEvent.click(editButton);
+      const editButton = within(eventRow).getByRole('button', { 
+        name: (name) => /edit|muokkaa/i.test(name) 
+      });
+      await user.click(editButton);
 
       // Verify input fields are now visible in the row
       expect(within(eventRow).getByPlaceholderText(/MM:SS/i)).toBeInTheDocument(); // Time input
@@ -665,12 +803,12 @@ describe('<GameSettingsModal />', () => {
       // For now, just ensuring it's found is part of the original test's structure implicitly.
 
       // Change the scorer
-      fireEvent.change(scorerSelect, { target: { value: newScorer.id } });
+      await user.selectOptions(scorerSelect, newScorer.id);
       expect(scorerSelect).toHaveValue(newScorer.id); // Check if change reflected
 
       // Find and click the Save button for the event row
       const saveEventButton = within(eventRow).getByRole('button', { name: /Save|Tallenna/i });
-      fireEvent.click(saveEventButton);
+      await user.click(saveEventButton);
 
       // Assert that the mock function was called with the correct updated event data
       const expectedUpdatedEvent: Partial<GameEvent> = {
@@ -694,7 +832,8 @@ describe('<GameSettingsModal />', () => {
     });
 
     test('successfully edits an event time', async () => {
-      const { rerender } = render(<GameSettingsModal {...defaultProps} />); 
+      const user = userEvent.setup();
+      const { rerender } = render(<GameSettingsModal {...defaultProps} />);
       const eventToEdit = defaultProps.gameEvents.find(e => e.type === 'goal' && e.scorerId === 'p1')!;
       const originalTimeFormatted = formatTimeTest(eventToEdit.time);
 
@@ -703,18 +842,19 @@ describe('<GameSettingsModal />', () => {
       if (!eventRow) throw new Error("Event row not found for editing time");
 
       const editButton = within(eventRow).getByRole('button', { name: /Edit|Muokkaa/i });
-      fireEvent.click(editButton);
+      await user.click(editButton);
 
       const timeInput = within(eventRow).getByDisplayValue(originalTimeFormatted);
       expect(timeInput).toBeInTheDocument();
 
       const newTimeFormatted = '05:30';
       const newTimeInSeconds = (5 * 60) + 30; // 330 seconds
-      fireEvent.change(timeInput, { target: { value: newTimeFormatted } });
+      await user.clear(timeInput);
+      await user.type(timeInput, newTimeFormatted);
       expect(timeInput).toHaveValue(newTimeFormatted);
 
       const saveEventButton = within(eventRow).getByRole('button', { name: /Save|Tallenna/i });
-      fireEvent.click(saveEventButton);
+      await user.click(saveEventButton);
 
       const expectedUpdatedEvent: Partial<GameEvent> = {
         id: eventToEdit.id,
@@ -734,7 +874,8 @@ describe('<GameSettingsModal />', () => {
     });
 
     test('successfully edits an event assister', async () => {
-      const { rerender } = render(<GameSettingsModal {...defaultProps} />); 
+      const user = userEvent.setup();
+      const { rerender } = render(<GameSettingsModal {...defaultProps} />);
       // Use the first event which is a goal by p1, initially no assister in mockGameEvents
       const eventToEdit = defaultProps.gameEvents.find(e => e.type === 'goal' && e.scorerId === 'p1')!;
       const scorerName = mockPlayers.find(p => p.id === eventToEdit.scorerId)?.name;
@@ -746,25 +887,23 @@ describe('<GameSettingsModal />', () => {
 
       // Verify scorer is present, assister column should be initially empty for this event
       expect(within(eventRow).getByText(scorerName!)).toBeInTheDocument();
-      // const assisterCells = within(eventRow).getAllByRole('cell'); // Removed unused variable
-      // Assister is typically the 4th cell (index 3): Time, Type, Scorer, Assister
       // Initial check: Assister cell should be empty or not contain a player name if no assister
       // This specific check depends on how empty assisters are rendered.
       // For now, we proceed to edit.
 
       const editButton = within(eventRow).getByRole('button', { name: /Edit|Muokkaa/i });
-      fireEvent.click(editButton);
+      await user.click(editButton);
 
       const allSelectsInRow = within(eventRow).getAllByRole('combobox');
       const assisterSelect = allSelectsInRow[1]; // Assister select is the second
       expect(assisterSelect).toBeInTheDocument();
       expect(assisterSelect).toHaveValue(''); // Initially no assister selected for this event
 
-      fireEvent.change(assisterSelect, { target: { value: newAssister.id } });
+      await user.selectOptions(assisterSelect, newAssister.id);
       expect(assisterSelect).toHaveValue(newAssister.id);
 
       const saveEventButton = within(eventRow).getByRole('button', { name: /Save|Tallenna/i });
-      fireEvent.click(saveEventButton);
+      await user.click(saveEventButton);
 
       const expectedUpdatedEvent: Partial<GameEvent> = {
         id: eventToEdit.id,
@@ -784,10 +923,11 @@ describe('<GameSettingsModal />', () => {
     });
 
     test('successfully deletes an event', async () => {
+      const user = userEvent.setup();
       // Mock window.confirm
       const mockConfirm = jest.spyOn(window, 'confirm').mockReturnValue(true);
 
-      const { rerender } = render(<GameSettingsModal {...defaultProps} />); 
+      const { rerender } = render(<GameSettingsModal {...defaultProps} />);
       const eventToDelete = defaultProps.gameEvents.find(e => e.type === 'goal' && e.scorerId === 'p1')!;
       const eventTimeFormatted = formatTimeTest(eventToDelete.time);
 
@@ -799,7 +939,7 @@ describe('<GameSettingsModal />', () => {
       // Find and click the Delete button within that row
       // The delete button has a title like "Delete" or "Poista"
       const deleteButton = within(eventRow).getByRole('button', { name: /Delete|Poista/i });
-      fireEvent.click(deleteButton);
+      await user.click(deleteButton);
 
       // Check that window.confirm was called
       expect(mockConfirm).toHaveBeenCalledTimes(1);
@@ -840,16 +980,18 @@ describe('<GameSettingsModal />', () => {
   });
 
   it('calls updateGameDetails when editing opponent name', async () => {
+    const user = userEvent.setup();
     render(<GameSettingsModal {...defaultProps} />);
     
     // Find the opponent name element and click to edit
     const opponentElement = screen.getByText('Away Team');
-    fireEvent.click(opponentElement);
+    await user.click(opponentElement);
     
     // Find the input and change the value
     const inputElement = screen.getByDisplayValue('Away Team');
-    fireEvent.change(inputElement, { target: { value: 'New Opponent' } });
-    fireEvent.blur(inputElement);
+    await user.clear(inputElement);
+    await user.type(inputElement, 'New Opponent');
+    await user.click(screen.getByRole('heading', { name: /Game Settings|Pelin Asetukset/i }));
     
     // Check if the utility function was called with the right parameters
     expect(updateGameDetails).toHaveBeenCalledWith('game123', { awayTeam: 'New Opponent' });
@@ -857,16 +999,18 @@ describe('<GameSettingsModal />', () => {
   });
 
   it('calls updateGameDetails when editing game date', async () => {
+    const user = userEvent.setup();
     render(<GameSettingsModal {...defaultProps} />);
     
     // Find the date element and click to edit
     const dateElement = screen.getByText('2024-07-31');
-    fireEvent.click(dateElement);
+    await user.click(dateElement);
     
     // Find the input and change the value
     const inputElement = screen.getByDisplayValue('2024-07-31');
-    fireEvent.change(inputElement, { target: { value: '2024-08-01' } });
-    fireEvent.blur(inputElement);
+    await user.clear(inputElement);
+    await user.type(inputElement, '2024-08-01');
+    await user.click(screen.getByRole('heading', { name: /Game Settings|Pelin Asetukset/i }));
     
     // Check if the utility function was called with the right parameters
     expect(updateGameDetails).toHaveBeenCalledWith('game123', { date: '2024-08-01' });
@@ -874,16 +1018,18 @@ describe('<GameSettingsModal />', () => {
   });
 
   it('calls updateGameDetails when editing game location', async () => {
+    const user = userEvent.setup();
     render(<GameSettingsModal {...defaultProps} />);
     
     // Find the location element and click to edit
     const locationElement = screen.getByText('Central Park');
-    fireEvent.click(locationElement);
+    await user.click(locationElement);
     
     // Find the input and change the value
     const inputElement = screen.getByDisplayValue('Central Park');
-    fireEvent.change(inputElement, { target: { value: 'New Stadium' } });
-    fireEvent.blur(inputElement);
+    await user.clear(inputElement);
+    await user.type(inputElement, 'New Stadium');
+    await user.click(screen.getByRole('heading', { name: /Game Settings|Pelin Asetukset/i }));
     
     // Check if the utility function was called with the right parameters
     expect(updateGameDetails).toHaveBeenCalledWith('game123', { location: 'New Stadium' });
@@ -891,6 +1037,7 @@ describe('<GameSettingsModal />', () => {
   });
 
   it('calls updateGameDetails when changing time inputs', async () => {
+    const user = userEvent.setup();
     render(<GameSettingsModal {...defaultProps} />);
     
     // Find the hour and minute inputs
@@ -898,34 +1045,38 @@ describe('<GameSettingsModal />', () => {
     const minuteInput = screen.getByPlaceholderText('MM');
     
     // Change the hour
-    fireEvent.change(hourInput, { target: { value: '19' } });
+    await user.clear(hourInput);
+    await user.type(hourInput, '19');
     
     // Check if the utility function was called with the right parameters
-    expect(updateGameDetails).toHaveBeenCalledWith('game123', { time: '19:30' });
-    expect(mockOnGameTimeChange).toHaveBeenCalledWith('19:30');
+    expect(updateGameDetails).toHaveBeenLastCalledWith('game123', { time: '19:30' });
+    expect(mockOnGameTimeChange).toHaveBeenLastCalledWith('19:30');
 
     // Change the minute
-    fireEvent.change(minuteInput, { target: { value: '45' } });
+    await user.clear(minuteInput);
+    await user.type(minuteInput, '45');
     
     // Check again
-    expect(updateGameDetails).toHaveBeenCalledWith('game123', { time: '19:45' });
-    expect(mockOnGameTimeChange).toHaveBeenCalledWith('19:45');
+    expect(updateGameDetails).toHaveBeenLastCalledWith('game123', { time: '19:45' });
+    expect(mockOnGameTimeChange).toHaveBeenLastCalledWith('19:45');
   });
 
   it('calls updateGameDetails when editing game notes', async () => {
+    const user = userEvent.setup();
     render(<GameSettingsModal {...defaultProps} />);
     
     // Click edit button for notes (since it has an explicit edit button)
-    const editButton = screen.getByLabelText('Edit Notes');
-    fireEvent.click(editButton);
+    const editButton = screen.getByLabelText('gameSettingsModal.editNotes');
+    await user.click(editButton);
     
     // Find the textarea and change the value
     const textareaElement = screen.getByDisplayValue('Regular season match');
-    fireEvent.change(textareaElement, { target: { value: 'Updated notes here' } });
+    await user.clear(textareaElement);
+    await user.type(textareaElement, 'Updated notes here');
     
     // Find the save button and click it
     const saveButton = screen.getByText('Save Notes');
-    fireEvent.click(saveButton);
+    await user.click(saveButton);
     
     // Check if the utility function was called with the right parameters
     expect(updateGameDetails).toHaveBeenCalledWith('game123', { notes: 'Updated notes here' });
@@ -933,23 +1084,25 @@ describe('<GameSettingsModal />', () => {
   });
 
   it('calls updateGameEvent when editing a goal', async () => {
+    const user = userEvent.setup();
     render(<GameSettingsModal {...defaultProps} />);
     
     // Find a goal event and click the edit button
     const editButtons = screen.getAllByTitle('Edit');
-    fireEvent.click(editButtons[0]);
+    await user.click(editButtons[0]);
     
     // Change time
     const timeInput = screen.getByPlaceholderText('MM:SS');
-    fireEvent.change(timeInput, { target: { value: '06:30' } });
+    await user.clear(timeInput);
+    await user.type(timeInput, '06:30');
     
-    // Change scorer (assuming the first one is selected initially)
-    const scorerSelect = screen.getByText('Select Scorer...');
-    fireEvent.change(scorerSelect.parentElement as HTMLSelectElement, { target: { value: 'p2' } });
+    // Change scorer
+    const scorerSelect = within(timeInput.closest('tr')!).getAllByRole('combobox')[0];
+    await user.selectOptions(scorerSelect, 'p2');
     
     // Save the changes
-    const saveButton = screen.getByTitle('Save');
-    fireEvent.click(saveButton);
+    const saveButton = within(timeInput.closest('tr')!).getByTitle('Save');
+    await user.click(saveButton);
     
     // Calculate the expected time in seconds (6 minutes 30 seconds = 390 seconds)
     const expectedTimeInSeconds = 390;
@@ -969,14 +1122,15 @@ describe('<GameSettingsModal />', () => {
   });
 
   it('calls removeGameEvent when deleting a goal', async () => {
+    const user = userEvent.setup();
     // Mock confirm to return true
     window.confirm = jest.fn(() => true);
     
     render(<GameSettingsModal {...defaultProps} />);
     
     // Find a goal event and click the delete button
-    const deleteButtons = screen.getAllByTitle('Delete');
-    fireEvent.click(deleteButtons[0]);
+    const deleteButtons = screen.getAllByTitle('common.delete');
+    await user.click(deleteButtons[0]);
     
     // Check if confirmation was shown
     expect(window.confirm).toHaveBeenCalled();
@@ -987,22 +1141,27 @@ describe('<GameSettingsModal />', () => {
   });
 
   it('changes season and calls utility function when season dropdown changes', async () => {
+    const user = userEvent.setup();
     render(<GameSettingsModal {...defaultProps} />);
     
     // Find the season dropdown and change selection
-    const seasonSelect = screen.getByText('-- Select Season --');
-    fireEvent.change(seasonSelect.parentElement as HTMLSelectElement, { target: { value: 'Spring League 2024' } });
-    
+    const seasonButton = screen.getByRole('button', { name: 'Season/League' });
+    await user.click(seasonButton);
+
+    const seasonSelect = screen.getByRole('combobox');
+    await user.selectOptions(seasonSelect, mockSeasons[0].id);
+
     // Check if the utility function was called with the right parameters
     expect(updateGameDetails).toHaveBeenCalledWith('game123', {
-      seasonId: 'Spring League 2024',
+      seasonId: mockSeasons[0].id,
       tournamentId: null
     });
     
-    expect(mockOnSeasonIdChange).toHaveBeenCalledWith('Spring League 2024');
+    expect(mockOnSeasonIdChange).toHaveBeenCalledWith(mockSeasons[0].id);
   });
 
   it('handles errors gracefully when utility functions throw', async () => {
+    const user = userEvent.setup();
     // Setup error mocks
     console.error = jest.fn();
     window.alert = jest.fn();
@@ -1014,13 +1173,16 @@ describe('<GameSettingsModal />', () => {
     render(<GameSettingsModal {...defaultProps} />);
     
     // Find the opponent name element and click to edit
-    const opponentElement = screen.getByText('Away Team');
-    fireEvent.click(opponentElement);
+    const gameInfoSectionError = screen.getByRole('heading', { name: 'gameSettingsModal.gameInfo' }).closest('div');
+    if (!gameInfoSectionError) throw new Error("Game Info section not found in error test");
+    const opponentElement = within(gameInfoSectionError).getByText('Away Team'); // Scope within game info
+    await user.click(opponentElement);
     
     // Find the input and change the value
     const inputElement = screen.getByDisplayValue('Away Team');
-    fireEvent.change(inputElement, { target: { value: 'New Opponent' } });
-    fireEvent.blur(inputElement);
+    await user.clear(inputElement);
+    await user.type(inputElement, 'New Opponent');
+    await user.click(screen.getByRole('heading', { name: /Game Settings|Pelin Asetukset/i }));
     
     // Check if error was logged and alert was shown
     expect(console.error).toHaveBeenCalled();
@@ -1028,16 +1190,20 @@ describe('<GameSettingsModal />', () => {
   });
 
   it('does not call utility functions when currentGameId is null', async () => {
+    const user = userEvent.setup();
     render(<GameSettingsModal {...defaultProps} currentGameId={null} />);
     
     // Find the opponent name element and click to edit
-    const opponentElement = screen.getByText('Away Team');
-    fireEvent.click(opponentElement);
+    const gameInfoSectionNullId = screen.getByRole('heading', { name: 'gameSettingsModal.gameInfo' }).closest('div');
+    if (!gameInfoSectionNullId) throw new Error("Game Info section not found in null id test");
+    const opponentElement = within(gameInfoSectionNullId).getByText('Away Team'); // Scope within game info
+    await user.click(opponentElement);
     
     // Find the input and change the value
     const inputElement = screen.getByDisplayValue('Away Team');
-    fireEvent.change(inputElement, { target: { value: 'New Opponent' } });
-    fireEvent.blur(inputElement);
+    await user.clear(inputElement);
+    await user.type(inputElement, 'New Opponent');
+    await user.click(screen.getByRole('heading', { name: /Game Settings|Pelin Asetukset/i }));
     
     // Should still call the callback prop
     expect(mockOnOpponentNameChange).toHaveBeenCalledWith('New Opponent');

@@ -100,6 +100,7 @@ We employ a three-layered testing approach:
       * ✅ Tests CRUD operations: `addTournament`, `updateTournament`, `deleteTournament`.
       * ✅ Validates tournament data (e.g., unique names, non-empty names).
       * ✅ Verifies correct array manipulation and persistence.
+      * ✅ Verified alignment with defined error handling strategy (return values, error logging).
 
   * **Component Tests:**
     * **`src/components/LoadGameModal.test.tsx`**:

@@ -73,29 +73,29 @@ describe('Master Roster Utilities', () => {
   });
 
   describe('saveMasterRoster', () => {
-    it('should save the roster to localStorage', () => {
-      saveMasterRoster(mockPlayers);
-      
+    it('should save the roster to localStorage and return true', () => {
+      const result = saveMasterRoster(mockPlayers);
+      expect(result).toBe(true);
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
         MASTER_ROSTER_KEY,
         JSON.stringify(mockPlayers)
       );
     });
 
-    it('should log error if localStorage throws', () => {
+    it('should return false and log error if localStorage throws', () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       const error = new Error('Storage quota exceeded');
       localStorageMock.setItem.mockImplementation(() => { throw error; });
       
-      saveMasterRoster(mockPlayers);
-      
-      expect(consoleSpy).toHaveBeenCalled();
+      const result = saveMasterRoster(mockPlayers);
+      expect(result).toBe(false);
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('[saveMasterRoster]'), error);
       consoleSpy.mockRestore();
     });
   });
 
   describe('addPlayerToRoster', () => {
-    it('should add a player to the roster with generated ID', () => {
+    it('should add a player to the roster and return the player object', () => {
       // Mock getCurrentRoster to return empty array
       localStorageMock.getItem.mockReturnValue(JSON.stringify([]));
       
@@ -110,16 +110,40 @@ describe('Master Roster Utilities', () => {
       // Verify localStorage was updated
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
         MASTER_ROSTER_KEY,
-        expect.any(String)
+        expect.stringContaining('New Player')
       );
     });
 
-    it('should return null if player name is empty', () => {
-      const playerData = { name: '' };
+    it('should trim whitespace from player name', () => {
+      localStorageMock.getItem.mockReturnValue(JSON.stringify([]));
+      const playerData = { name: '  Trimmed Player  ' };
+      const result = addPlayerToRoster(playerData);
+      expect(result).not.toBeNull();
+      expect(result?.name).toBe('Trimmed Player');
+    });
+
+    it('should return null and log error if player name is empty', () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const playerData = { name: '   ' };
       const result = addPlayerToRoster(playerData);
       
       expect(result).toBeNull();
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Player name cannot be empty'));
       expect(localStorageMock.setItem).not.toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+
+    it('should return null if saving fails during add', () => {
+      localStorageMock.getItem.mockReturnValue(JSON.stringify([]));
+      localStorageMock.setItem.mockImplementationOnce(() => { throw new Error('Save failed'); });
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+      const playerData = { name: 'Valid Player' };
+      const result = addPlayerToRoster(playerData);
+
+      expect(result).toBeNull();
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('[saveMasterRoster]'));
+      consoleSpy.mockRestore();
     });
   });
 
@@ -128,7 +152,7 @@ describe('Master Roster Utilities', () => {
       localStorageMock.getItem.mockReturnValue(JSON.stringify(mockPlayers));
     });
 
-    it('should update an existing player', () => {
+    it('should update an existing player and return the updated object', () => {
       const updateData = { name: 'Updated Name', jerseyNumber: '99' };
       const result = updatePlayerInRoster('player_1', updateData);
       
@@ -144,21 +168,58 @@ describe('Master Roster Utilities', () => {
       );
     });
 
-    it('should return null if player not found', () => {
+    it('should trim whitespace from updated player name', () => {
+      const updateData = { name: '  Trimmed Update   ' };
+      const result = updatePlayerInRoster('player_1', updateData);
+      expect(result).not.toBeNull();
+      expect(result?.name).toBe('Trimmed Update');
+      expect(localStorageMock.setItem).toHaveBeenCalledWith(
+        MASTER_ROSTER_KEY,
+        expect.stringContaining('Trimmed Update')
+      );
+    });
+
+    it('should return null and log error if player not found', () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       const updateData = { name: 'Updated Name' };
       const result = updatePlayerInRoster('non_existent_id', updateData);
       
       expect(result).toBeNull();
-      // localStorage should not be updated
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Player with ID non_existent_id not found'));
       expect(localStorageMock.setItem).not.toHaveBeenCalled();
+      consoleSpy.mockRestore();
     });
 
-    it('should not allow empty player name', () => {
-      const updateData = { name: '' };
+    it('should return null and log error if updated player name is empty', () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const updateData = { name: '   ' };
       const result = updatePlayerInRoster('player_1', updateData);
       
       expect(result).toBeNull();
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Player name cannot be empty'));
       expect(localStorageMock.setItem).not.toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+
+    it('should return null if saving fails during update', () => {
+      localStorageMock.setItem.mockImplementationOnce(() => { throw new Error('Save failed'); });
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+      const updateData = { name: 'Valid Update' };
+      const result = updatePlayerInRoster('player_1', updateData);
+
+      expect(result).toBeNull();
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('[saveMasterRoster]'));
+      consoleSpy.mockRestore();
+    });
+
+    it('should return null and log error if playerId is invalid', () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const result = updatePlayerInRoster('', { name: 'Test' });
+      expect(result).toBeNull();
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Player ID cannot be empty'));
+      expect(localStorageMock.setItem).not.toHaveBeenCalled();
+      consoleSpy.mockRestore();
     });
   });
 
@@ -179,11 +240,34 @@ describe('Master Roster Utilities', () => {
       );
     });
 
-    it('should return false if player not found', () => {
+    it('should return false and log error if player not found', () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       const result = removePlayerFromRoster('non_existent_id');
       
       expect(result).toBe(false);
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Player with ID non_existent_id not found'));
       expect(localStorageMock.setItem).not.toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+
+    it('should return false if saving fails during remove', () => {
+      localStorageMock.setItem.mockImplementationOnce(() => { throw new Error('Save failed'); });
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+      const result = removePlayerFromRoster('player_1');
+
+      expect(result).toBe(false);
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('[saveMasterRoster]'));
+      consoleSpy.mockRestore();
+    });
+
+    it('should return false and log error if playerId is invalid', () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const result = removePlayerFromRoster('');
+      expect(result).toBe(false);
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Player ID cannot be empty'));
+      expect(localStorageMock.setItem).not.toHaveBeenCalled();
+      consoleSpy.mockRestore();
     });
   });
 
@@ -192,7 +276,7 @@ describe('Master Roster Utilities', () => {
       localStorageMock.getItem.mockReturnValue(JSON.stringify(mockPlayers));
     });
 
-    it('should update goalie status to true', () => {
+    it('should update goalie status and return updated player', () => {
       const result = setPlayerGoalieStatus('player_1', true);
       
       expect(result).not.toBeNull();
@@ -205,12 +289,12 @@ describe('Master Roster Utilities', () => {
       expect(updatedPlayer.isGoalie).toBe(true);
     });
 
-    it('should update goalie status to false', () => {
-      // player_2 is already goalie
-      const result = setPlayerGoalieStatus('player_2', false);
-      
-      expect(result).not.toBeNull();
-      expect(result?.isGoalie).toBe(false);
+    it('should return null if the player is not found', () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const result = setPlayerGoalieStatus('non_existent_id', true);
+      expect(result).toBeNull();
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Player with ID non_existent_id not found'));
+      consoleSpy.mockRestore();
     });
   });
 
@@ -219,7 +303,7 @@ describe('Master Roster Utilities', () => {
       localStorageMock.getItem.mockReturnValue(JSON.stringify(mockPlayers));
     });
 
-    it('should update fair play card status', () => {
+    it('should update fair play card status and return updated player', () => {
       const result = setPlayerFairPlayCardStatus('player_1', true);
       
       expect(result).not.toBeNull();
@@ -230,6 +314,14 @@ describe('Master Roster Utilities', () => {
       const updatedRoster = JSON.parse(updatedRosterString);
       const updatedPlayer = updatedRoster.find((p: Player) => p.id === 'player_1');
       expect(updatedPlayer.receivedFairPlayCard).toBe(true);
+    });
+
+    it('should return null if the player is not found', () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const result = setPlayerFairPlayCardStatus('non_existent_id', true);
+      expect(result).toBeNull();
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Player with ID non_existent_id not found'));
+      consoleSpy.mockRestore();
     });
   });
 }); 
