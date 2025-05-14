@@ -10,139 +10,135 @@ import type { Tournament } from '@/types'; // Import Tournament type from shared
 
 /**
  * Retrieves all tournaments from localStorage.
- * @returns An array of Tournament objects.
+ * @returns A promise that resolves to an array of Tournament objects.
  */
-export const getTournaments = (): Tournament[] => {
+export const getTournaments = async (): Promise<Tournament[]> => {
   try {
     const tournamentsJson = localStorage.getItem(TOURNAMENTS_LIST_KEY);
-    // Ensure null/undefined check before parsing
     if (!tournamentsJson) {
-      return [];
+      return Promise.resolve([]);
     }
-    return JSON.parse(tournamentsJson) as Tournament[];
+    return Promise.resolve(JSON.parse(tournamentsJson) as Tournament[]);
   } catch (error) {
     console.error('[getTournaments] Error getting tournaments from localStorage:', error);
-    return [];
+    return Promise.resolve([]);
   }
 };
 
 /**
  * Saves an array of tournaments to localStorage, overwriting any existing tournaments.
  * @param tournaments - The array of Tournament objects to save.
- * @returns {boolean} True if successful, false otherwise.
+ * @returns A promise that resolves to true if successful, false otherwise.
  */
-export const saveTournaments = (tournaments: Tournament[]): boolean => {
+export const saveTournaments = async (tournaments: Tournament[]): Promise<boolean> => {
   try {
     localStorage.setItem(TOURNAMENTS_LIST_KEY, JSON.stringify(tournaments));
-    return true;
+    return Promise.resolve(true);
   } catch (error) {
     console.error('[saveTournaments] Error saving tournaments to localStorage:', error);
-    return false;
+    return Promise.resolve(false);
   }
 };
 
 /**
  * Adds a new tournament to the list of tournaments in localStorage.
  * @param newTournamentName - The name of the new tournament.
- * @returns The newly created Tournament object, or null if validation/save fails.
+ * @returns A promise that resolves to the newly created Tournament object, or null if validation/save fails.
  */
-export const addTournament = (newTournamentName: string): Tournament | null => {
+export const addTournament = async (newTournamentName: string): Promise<Tournament | null> => {
   const trimmedName = newTournamentName.trim();
   if (!trimmedName) {
     console.error('[addTournament] Validation failed: Tournament name cannot be empty.');
-    return null;
+    return Promise.resolve(null);
   }
 
   try {
-    const currentTournaments = getTournaments();
+    const currentTournaments = await getTournaments();
     if (currentTournaments.some(t => t.name.toLowerCase() === trimmedName.toLowerCase())) {
       console.error(`[addTournament] Validation failed: A tournament with name "${trimmedName}" already exists.`);
-      return null;
+      return Promise.resolve(null);
     }
     const newTournament: Tournament = {
       id: `tournament_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
       name: trimmedName,
     };
     const updatedTournaments = [...currentTournaments, newTournament];
-    const success = saveTournaments(updatedTournaments);
+    const success = await saveTournaments(updatedTournaments);
 
     if (!success) {
-      return null;
+      return Promise.resolve(null);
     }
-
-    return newTournament;
+    return Promise.resolve(newTournament);
   } catch (error) {
     console.error('[addTournament] Unexpected error adding tournament:', error);
-    return null;
+    return Promise.resolve(null);
   }
 };
 
 /**
  * Updates an existing tournament in localStorage.
- * @param updatedTournament - The Tournament object with updated details.
- * @returns The updated Tournament object, or null if not found or save fails.
+ * @param updatedTournamentData - The Tournament object with updated details.
+ * @returns A promise that resolves to the updated Tournament object, or null if not found or save fails.
  */
-export const updateTournament = (updatedTournament: Tournament): Tournament | null => {
-  if (!updatedTournament || !updatedTournament.id || !updatedTournament.name?.trim()) {
+export const updateTournament = async (updatedTournamentData: Tournament): Promise<Tournament | null> => {
+  if (!updatedTournamentData || !updatedTournamentData.id || !updatedTournamentData.name?.trim()) {
     console.error('[updateTournament] Invalid tournament data provided for update.');
-    return null;
+    return Promise.resolve(null);
   }
-  const trimmedName = updatedTournament.name.trim();
+  const trimmedName = updatedTournamentData.name.trim();
 
   try {
-    const currentTournaments = getTournaments();
-    const tournamentIndex = currentTournaments.findIndex(t => t.id === updatedTournament.id);
+    const currentTournaments = await getTournaments();
+    const tournamentIndex = currentTournaments.findIndex(t => t.id === updatedTournamentData.id);
 
     if (tournamentIndex === -1) {
-      console.error(`[updateTournament] Tournament with ID ${updatedTournament.id} not found.`);
-      return null;
+      console.error(`[updateTournament] Tournament with ID ${updatedTournamentData.id} not found.`);
+      return Promise.resolve(null);
     }
 
-    if (currentTournaments.some(t => t.id !== updatedTournament.id && t.name.toLowerCase() === trimmedName.toLowerCase())) {
+    if (currentTournaments.some(t => t.id !== updatedTournamentData.id && t.name.toLowerCase() === trimmedName.toLowerCase())) {
       console.error(`[updateTournament] Validation failed: Another tournament with name "${trimmedName}" already exists.`);
-      return null;
+      return Promise.resolve(null);
     }
 
-    const updatedTournaments = [...currentTournaments];
-    updatedTournaments[tournamentIndex] = { ...updatedTournament, name: trimmedName };
+    const tournamentsToUpdate = [...currentTournaments];
+    tournamentsToUpdate[tournamentIndex] = { ...updatedTournamentData, name: trimmedName };
 
-    const success = saveTournaments(updatedTournaments);
+    const success = await saveTournaments(tournamentsToUpdate);
 
     if (!success) {
-      return null;
+      return Promise.resolve(null);
     }
-
-    return updatedTournaments[tournamentIndex];
+    return Promise.resolve(tournamentsToUpdate[tournamentIndex]);
   } catch (error) {
     console.error('[updateTournament] Unexpected error updating tournament:', error);
-    return null;
+    return Promise.resolve(null);
   }
 };
 
 /**
  * Deletes a tournament from localStorage by its ID.
  * @param tournamentId - The ID of the tournament to delete.
- * @returns {boolean} True if successful, false if not found or error occurs.
+ * @returns A promise that resolves to true if successful, false if not found or error occurs.
  */
-export const deleteTournament = (tournamentId: string): boolean => {
+export const deleteTournament = async (tournamentId: string): Promise<boolean> => {
   if (!tournamentId) {
     console.error('[deleteTournament] Invalid tournament ID provided.');
-    return false;
+    return Promise.resolve(false);
   }
   try {
-    const currentTournaments = getTournaments();
+    const currentTournaments = await getTournaments();
     const updatedTournaments = currentTournaments.filter(t => t.id !== tournamentId);
 
     if (updatedTournaments.length === currentTournaments.length) {
       console.error(`[deleteTournament] Tournament with id ${tournamentId} not found.`);
-      return false;
+      return Promise.resolve(false);
     }
 
-    const success = saveTournaments(updatedTournaments);
-    return success;
-
+    const success = await saveTournaments(updatedTournaments);
+    return Promise.resolve(success);
   } catch (error) {
     console.error('[deleteTournament] Unexpected error deleting tournament:', error);
-    return false;
+    return Promise.resolve(false);
   }
 }; 

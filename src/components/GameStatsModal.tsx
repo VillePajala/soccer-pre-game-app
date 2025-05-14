@@ -189,22 +189,23 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   // --- Effects ---
   // Load seasons/tournaments
   useEffect(() => {
-    if (isOpen) {
-      try {
-        // <<< Use utility function >>>
-        const loadedSeasons = utilGetSeasons();
-        setSeasons(loadedSeasons);
-      } catch { 
-        // console.error("Failed to load seasons:", error); setSeasons([]); 
+    const loadData = async () => { 
+      if (isOpen) {
+        try {
+          const loadedSeasons = await utilGetSeasons(); 
+          setSeasons(loadedSeasons);
+        } catch (error) { 
+          console.error("Failed to load seasons:", error); setSeasons([]); 
+        }
+        try {
+          const loadedTournaments = await utilGetTournaments(); // Await the async call
+          setTournaments(loadedTournaments);
+        } catch (error) { 
+          console.error("Failed to load tournaments:", error); setTournaments([]); 
+        }
       }
-      try {
-        // <<< Use utility function >>>
-        const loadedTournaments = utilGetTournaments();
-        setTournaments(loadedTournaments);
-      } catch { 
-        // console.error("Failed to load tournaments:", error); setTournaments([]); 
-      }
-    }
+    };
+    loadData(); 
   }, [isOpen]);
 
   // Reset edit state

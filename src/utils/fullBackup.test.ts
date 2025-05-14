@@ -51,12 +51,29 @@ const localStorageMock = (() => {
 
 Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 
+// Define an interface for Blob that we expect to have a .text() method in tests
+interface BlobWithText extends Blob {
+  text: () => Promise<string>;
+}
+
 // Mock URL.createObjectURL and revokeObjectURL
-// Fix any types - use specific function signatures
-const mockBlobStore: Record<string, Blob> = {};
+const mockBlobStore: Record<string, BlobWithText> = {}; // Store BlobWithText
 window.URL.createObjectURL = jest.fn((blob: Blob): string => {
   const url = `blob:mock/${Math.random()}`;
-  mockBlobStore[url] = blob;
+  const blobToAugment = blob as BlobWithText; // Cast to our test-specific type
+
+  // Augment the blob with a text() method if it's missing for testing purposes
+  if (typeof blobToAugment.text !== 'function') {
+    blobToAugment.text = jest.fn(async () => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsText(blob); // Use original blob for readAsText
+      });
+    });
+  }
+  mockBlobStore[url] = blobToAugment; // Store the (potentially augmented) blob
   return url;
 });
 window.URL.revokeObjectURL = jest.fn((url: string) => {
@@ -87,9 +104,9 @@ const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
 const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
 
 // Define test data types using unknown
-// Replace empty interfaces with direct usage of Record
-// interface GameData extends Record<string, unknown> {}
-// interface SettingsData extends Record<string, unknown> {}
+// Remove unused types
+// REMOVE: interface GameData extends Record<string, unknown> {}
+// REMOVE: interface SettingsData extends Record<string, unknown> {}
 
 // More specific types for array elements
 interface SeasonObject extends Record<string, unknown> {
@@ -105,11 +122,15 @@ interface RosterPlayer extends Record<string, unknown> {
   name?: string;
 }
 
-type SeasonData = Array<SeasonObject>;
-type TournamentData = Array<TournamentObject>;
-type RosterData = Array<RosterPlayer>;
+// REMOVE: type SeasonData = Array<SeasonObject>;
+// REMOVE: type TournamentData = Array<TournamentObject>;
+// REMOVE: type RosterData = Array<RosterPlayer>;
 
 describe('importFullBackup', () => {
+  let consoleErrorSpy: jest.SpyInstance;
+  let consoleWarnSpy: jest.SpyInstance;
+  let consoleLogSpy: jest.SpyInstance;
+
   beforeEach(() => {
     // Call the mockClear method we added to reset everything
     localStorageMock.mockClear(); 
@@ -118,10 +139,23 @@ describe('importFullBackup', () => {
 
     // Reset other mocks used in this suite
     (window.confirm as jest.Mock)?.mockClear();
+    (window.alert as jest.Mock)?.mockClear(); // Clear global alert mock if it was set
     (window.location.reload as jest.Mock)?.mockClear();
     setTimeoutSpy.mockClear();
     clearTimeoutSpy.mockClear(); // Ensure clearTimeout is also cleared
     jest.useRealTimers(); // Default to real timers
+
+    // Mock console methods for this describe block
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    // Restore console spies
+    consoleErrorSpy.mockRestore();
+    consoleWarnSpy.mockRestore();
+    consoleLogSpy.mockRestore();
   });
 
   describe('Success Scenarios', () => {
@@ -149,8 +183,8 @@ describe('importFullBackup', () => {
       // Mock window.confirm to return true (user confirms)
       (window.confirm as jest.Mock).mockReturnValue(true);
       
-      // Mock alert directly for this test if needed, or rely on the global mock
-      const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
+      // Alert is globally mocked in beforeEach for this test suite now
+      // REMOVE: const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
 
       // Act: Call the import function
       const result = importFullBackup(backupJson);
@@ -171,7 +205,7 @@ describe('importFullBackup', () => {
       
       // Verify confirmation was called
       expect(window.confirm).toHaveBeenCalledTimes(1);
-      expect(alertMock).toHaveBeenCalledWith('Full backup restored successfully! The application will now reload.');
+      expect(window.alert).toHaveBeenCalledWith('Full backup restored successfully! The application will now reload.');
 
       // Verify reload was scheduled via setTimeout
       expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
@@ -181,8 +215,6 @@ describe('importFullBackup', () => {
       const reloadCallback = setTimeoutSpy.mock.calls[0][0]; // Get the callback function
       reloadCallback(); // Execute the callback
       expect(window.location.reload).toHaveBeenCalledTimes(1); // Now check if reload was called
-
-      alertMock.mockRestore();
     });
 
     it('should successfully import partial backup data with only some keys present', () => {
@@ -207,8 +239,8 @@ describe('importFullBackup', () => {
       // Mock window.confirm to return true (user confirms)
       (window.confirm as jest.Mock).mockReturnValue(true);
       
-      // Mock alert
-      const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
+      // Alert is globally mocked
+      // REMOVE: const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
 
       // Act: Call the import function
       const result = importFullBackup(backupJson);
@@ -224,14 +256,14 @@ describe('importFullBackup', () => {
       expect(JSON.parse(localStorageMock.getItem(MASTER_ROSTER_KEY)!)).toEqual(existingRoster);
       
       // Verify alert and reload were called
-      expect(alertMock).toHaveBeenCalledWith('Full backup restored successfully! The application will now reload.');
+      expect(window.alert).toHaveBeenCalledWith('Full backup restored successfully! The application will now reload.');
       
       // Advance timers to see if reload would have been called
       jest.advanceTimersByTime(500);
       expect(window.location.reload).toHaveBeenCalledTimes(1); // Still check reload
       
       // Restore mocks and timers
-      alertMock.mockRestore();
+      // REMOVE: alertMock.mockRestore(); // Handled in afterEach
       jest.useRealTimers(); // Restore real timers
     });
   });
@@ -396,217 +428,151 @@ describe('importFullBackup', () => {
 
 // --- New Describe Block for exportFullBackup ---
 describe('exportFullBackup', () => {
-  // Define spies for download-related browser APIs
-  let createObjectUrlSpy: jest.SpyInstance;
-  let revokeObjectUrlSpy: jest.SpyInstance;
-  let createElementSpy: jest.SpyInstance;
-  let appendChildSpy: jest.SpyInstance;
-  let removeChildSpy: jest.SpyInstance;
-  let clickSpy: jest.Mock; // Mock for the anchor click
+  let consoleErrorSpy: jest.SpyInstance;
+  let consoleWarnSpy: jest.SpyInstance;
+  let consoleLogSpy: jest.SpyInstance;
+  let clickSpy: jest.Mock;
+  let originalCreateElement: typeof document.createElement;
+  let dateSpy: jest.SpyInstance; // To hold the Date spy instance
 
   beforeEach(() => {
-    // Reset localStorage before each export test
-    localStorageMock.clear();
-
-    // Set up spies for DOM manipulation
-    clickSpy = jest.fn();
+    localStorageMock.mockClear();
+    Object.defineProperty(window, 'localStorage', { value: localStorageMock, writable: true });
     
-    // Spy on document.body methods instead of replacing body
-    appendChildSpy = jest.spyOn(document.body, 'appendChild').mockImplementation(() => document.body);
-    removeChildSpy = jest.spyOn(document.body, 'removeChild').mockImplementation((node) => node);
+    (window.URL.createObjectURL as jest.Mock).mockClear();
+    (window.URL.revokeObjectURL as jest.Mock).mockClear();
+    (document.body.appendChild as jest.Mock).mockClear();
+    (document.body.removeChild as jest.Mock).mockClear();
+    (window.alert as jest.Mock)?.mockClear();
 
-    // Mock document.createElement specifically for 'a' tags
-    createElementSpy = jest.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+    clickSpy = jest.fn();
+    originalCreateElement = document.createElement;
+    document.createElement = jest.fn((tagName: string): HTMLElement => {
       if (tagName.toLowerCase() === 'a') {
-        // Return a mock anchor element with the click spy
-        const mockAnchor = document.createElementNS('http://www.w3.org/1999/xhtml', 'a') as HTMLAnchorElement;
-        // Add our spy to the mock element
+        const mockAnchor = originalCreateElement.call(document, 'a') as HTMLAnchorElement;
         mockAnchor.click = clickSpy;
+        Object.defineProperty(mockAnchor, 'href', { writable: true, value: '' });
+        Object.defineProperty(mockAnchor, 'download', { writable: true, value: '' });
+        Object.defineProperty(mockAnchor, 'style', { writable: true, value: {} });
         return mockAnchor;
       }
-      // Default document element creation
-      return document.createElementNS('http://www.w3.org/1999/xhtml', tagName);
-    });
-
-    // Mock URL methods
-    global.URL = {
-      createObjectURL: jest.fn().mockReturnValue('blob:mockedurl/123'),
-      revokeObjectURL: jest.fn(),
-      // Include other URL properties if needed by your tests
-    } as unknown as typeof URL;
-    
-    createObjectUrlSpy = global.URL.createObjectURL as jest.Mock;
-    revokeObjectUrlSpy = global.URL.revokeObjectURL as jest.Mock;
-
-    // Mock alert
-    jest.spyOn(window, 'alert').mockImplementation(() => {});
+      return originalCreateElement.call(document, tagName);
+    }) as jest.Mock;
   });
 
   afterEach(() => {
-    // Restore all mocks
-    jest.restoreAllMocks();
+    consoleErrorSpy.mockRestore();
+    consoleWarnSpy.mockRestore();
+    consoleLogSpy.mockRestore();
+    document.createElement = originalCreateElement;
+    if (dateSpy) {
+      dateSpy.mockRestore(); // Restore Date spy if it was created
+    }
   });
 
-  it('should gather all relevant keys from localStorage and structure the backup data correctly', () => {
-    // Arrange: Use Record directly
-    const gamesData: Record<string, unknown> = { game1: { id: 'game1', teamName: 'Team Export' } };
-    const settingsData: Record<string, unknown> = { currentGameId: 'game1' };
-    const seasonsData: SeasonData = [{ id: 'sExp', name: 'Export Season' }];
-    const tournamentsData: TournamentData = [];
-    const rosterData: RosterData = [{ id: 'pExp', name: 'Export Player' }];
+  it('should trigger download with correct filename and content type', () => {
+    localStorageMock.setItem(SAVED_GAMES_KEY, JSON.stringify({ test: 'data' }));
+    const expectedDate = new Date(2023, 0, 15, 10, 30, 0); // Fixed date
+    // Store the spy instance to restore it in afterEach
+    dateSpy = jest.spyOn(global, 'Date').mockImplementation(() => expectedDate);
+
+    exportFullBackup();
+
+    expect(window.URL.createObjectURL).toHaveBeenCalledTimes(1);
+    expect(document.createElement).toHaveBeenCalledWith('a');
+    
+    const mockAnchor = (document.createElement as jest.Mock).mock.results[0].value;
+    expect(mockAnchor.download).toBe('SoccerApp_Backup_20230115_103000.json'); // Check filename
+    expect(document.body.appendChild).toHaveBeenCalledWith(mockAnchor);
+    expect(clickSpy).toHaveBeenCalledTimes(1);
+    expect(document.body.removeChild).toHaveBeenCalledWith(mockAnchor);
+    expect(window.URL.revokeObjectURL).toHaveBeenCalledWith(expect.any(String));
+    expect(window.alert).toHaveBeenCalledWith('Full backup exported successfully!');
+    
+    // No need to restore dateSpy here, afterEach will handle it.
+  });
+
+  it('should correctly structure backup data including meta and all localStorage keys', async () => {
+    // Arrange
+    const gamesData = { game1: { id: 'g1', name: 'Game One' } };
+    const settingsData = { theme: 'dark' };
+    const rosterDataDb: RosterPlayer[] = [{ id: 'p1', name: 'Player One' }];
+    const seasonsDataDb: SeasonObject[] = [{ id: 's1', name: 'Season One' }];
+    const tournamentsDataDb: TournamentObject[] = [{ id: 't1', name: 'Tournament One' }];
 
     localStorageMock.setItem(SAVED_GAMES_KEY, JSON.stringify(gamesData));
     localStorageMock.setItem(APP_SETTINGS_KEY, JSON.stringify(settingsData));
-    localStorageMock.setItem(SEASONS_LIST_KEY, JSON.stringify(seasonsData));
-    localStorageMock.setItem(TOURNAMENTS_LIST_KEY, JSON.stringify(tournamentsData));
-    localStorageMock.setItem(MASTER_ROSTER_KEY, JSON.stringify(rosterData));
+    localStorageMock.setItem(MASTER_ROSTER_KEY, JSON.stringify(rosterDataDb));
+    localStorageMock.setItem(SEASONS_LIST_KEY, JSON.stringify(seasonsDataDb));
+    localStorageMock.setItem(TOURNAMENTS_LIST_KEY, JSON.stringify(tournamentsDataDb));
+    // localStorageMock.setItem('someOtherCustomKey', JSON.stringify({ custom: 'value' })); // This key is not in APP_DATA_KEYS, so it won't be backed up.
 
-    // Act: Call the export function
     exportFullBackup();
 
-    // Assert: Verify the download mechanism was triggered correctly
-    expect(createObjectUrlSpy).toHaveBeenCalledTimes(1);
-    expect(createElementSpy).toHaveBeenCalledWith('a');
-    expect(appendChildSpy).toHaveBeenCalledTimes(1); // Check if the link was added to body
-    expect(clickSpy).toHaveBeenCalledTimes(1); // Check if download was triggered
-    expect(removeChildSpy).toHaveBeenCalledTimes(1); // Check if link was removed
-    expect(revokeObjectUrlSpy).toHaveBeenCalledWith('blob:mockedurl/123');
-    expect(window.alert).toHaveBeenCalledWith('Full backup exported successfully!');
-
-    // Assert: Verify the content of the Blob passed to createObjectURL
-    const blobArgument = createObjectUrlSpy.mock.calls[0][0] as Blob;
+    expect(window.URL.createObjectURL).toHaveBeenCalledTimes(1);
+    const blobArgument = (window.URL.createObjectURL as jest.Mock).mock.calls[0][0] as BlobWithText;
     expect(blobArgument).toBeInstanceOf(Blob);
     expect(blobArgument.type).toBe('application/json');
 
-    // Read the blob content to check the JSON data structure
-    return new Promise<void>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        try {
-          const jsonString = reader.result as string;
-          const backupData = JSON.parse(jsonString);
+    const blobText = await blobArgument.text();
+    const backupData = JSON.parse(blobText);
 
-          // Check meta structure
-          expect(backupData.meta).toBeDefined();
-          expect(backupData.meta.schema).toBe(1);
-          expect(backupData.meta.exportedAt).toMatch(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/); // ISO format
-
-          // Check localStorage structure
-          expect(backupData.localStorage).toBeDefined();
-          expect(backupData.localStorage[SAVED_GAMES_KEY]).toEqual(gamesData);
-          expect(backupData.localStorage[APP_SETTINGS_KEY]).toEqual(settingsData);
-          expect(backupData.localStorage[SEASONS_LIST_KEY]).toEqual(seasonsData);
-          expect(backupData.localStorage[TOURNAMENTS_LIST_KEY]).toEqual(tournamentsData);
-          expect(backupData.localStorage[MASTER_ROSTER_KEY]).toEqual(rosterData);
-
-          resolve();
-        } catch (error) {
-          reject(error);
-        }
-      };
-      reader.onerror = reject;
-      reader.readAsText(blobArgument);
-    });
+    expect(backupData.meta).toBeDefined();
+    expect(backupData.meta.schema).toBe(1);
+    expect(backupData.meta.exportedAt).toBeDefined();
+    
+    expect(backupData.localStorage[SAVED_GAMES_KEY]).toEqual(gamesData);
+    expect(backupData.localStorage[APP_SETTINGS_KEY]).toEqual(settingsData);
+    expect(backupData.localStorage[MASTER_ROSTER_KEY]).toEqual(rosterDataDb);
+    expect(backupData.localStorage[SEASONS_LIST_KEY]).toEqual(seasonsDataDb);
+    expect(backupData.localStorage[TOURNAMENTS_LIST_KEY]).toEqual(tournamentsDataDb);
+    // expect(backupData.localStorage['someOtherCustomKey']).toEqual({ custom: 'value' }); // This key is not expected now.
+    expect(backupData.localStorage['someOtherCustomKey']).toBeUndefined(); // Explicitly check it's not there
   });
 
-  it('should handle missing keys in localStorage by setting them to null in the backup', () => {
-    // Arrange: Only populate some keys
-    const gamesData: Record<string, unknown> = { game2: { id: 'game2' } };
-    const rosterData: RosterData = [{ id: 'pOnly' }];
-    localStorageMock.setItem(SAVED_GAMES_KEY, JSON.stringify(gamesData));
-    localStorageMock.setItem(MASTER_ROSTER_KEY, JSON.stringify(rosterData));
-    // APP_SETTINGS_KEY, SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY are missing
+  it('should handle missing localStorage keys by setting them to null in backup', async () => {
+    localStorageMock.setItem(SAVED_GAMES_KEY, JSON.stringify({ game1: 'data' }));
 
-    // Act
     exportFullBackup();
 
-    // Assert: Focus on the blob content
-    expect(createObjectUrlSpy).toHaveBeenCalledTimes(1);
-    const blobArgument = createObjectUrlSpy.mock.calls[0][0] as Blob;
+    expect(window.URL.createObjectURL).toHaveBeenCalledTimes(1);
+    const blobArgument = (window.URL.createObjectURL as jest.Mock).mock.calls[0][0] as Blob;
+    const blobText = await blobArgument.text();
+    const backupData = JSON.parse(blobText);
 
-    return new Promise<void>((resolve, reject) => {
-       const reader = new FileReader();
-       reader.onloadend = () => {
-         try {
-           const jsonString = reader.result as string;
-           const backupData = JSON.parse(jsonString);
-
-           // Check meta structure
-           expect(backupData.meta).toBeDefined();
-           expect(backupData.meta.schema).toBe(1);
-
-           // Check localStorage structure - missing keys should be null
-           expect(backupData.localStorage).toBeDefined();
-           expect(backupData.localStorage[SAVED_GAMES_KEY]).toEqual(gamesData);
-           expect(backupData.localStorage[APP_SETTINGS_KEY]).toBeNull(); // Should be null
-           expect(backupData.localStorage[SEASONS_LIST_KEY]).toBeNull(); // Should be null
-           expect(backupData.localStorage[TOURNAMENTS_LIST_KEY]).toBeNull(); // Should be null
-           expect(backupData.localStorage[MASTER_ROSTER_KEY]).toEqual(rosterData);
-
-           resolve();
-         } catch (error) {
-           reject(error);
-         }
-       };
-       reader.onerror = reject;
-       reader.readAsText(blobArgument);
-     });
+    expect(backupData.localStorage[SAVED_GAMES_KEY]).toEqual({ game1: 'data' });
+    expect(backupData.localStorage[APP_SETTINGS_KEY]).toBeNull();
+    expect(backupData.localStorage[MASTER_ROSTER_KEY]).toBeNull();
+    expect(backupData.localStorage[SEASONS_LIST_KEY]).toBeNull();
+    expect(backupData.localStorage[TOURNAMENTS_LIST_KEY]).toBeNull();
   });
 
-  it('should handle invalid JSON in localStorage for a specific key gracefully', () => {
-    // Arrange: Put valid data for most, invalid for one
-    const gamesData: Record<string, unknown> = { gameValid: { id: 'valid' } };
-    const invalidSettingsJson = '{ "currentGameId": "bad", '; // Invalid JSON
-    const rosterData: RosterData = [{ id: 'pValid' }];
-
+  it('should log an error and set value to null if a localStorage item is malformed JSON', async () => {
+    const gamesData = { game1: 'valid data' };
+    const rosterDataDb: RosterPlayer[] = [{ id: 'p1', name: 'Valid Player' }]; // Use defined type
     localStorageMock.setItem(SAVED_GAMES_KEY, JSON.stringify(gamesData));
-    localStorageMock.setItem(APP_SETTINGS_KEY, invalidSettingsJson); // Invalid data
-    localStorageMock.setItem(MASTER_ROSTER_KEY, JSON.stringify(rosterData));
+    localStorageMock.setItem(APP_SETTINGS_KEY, 'this is not json');
+    localStorageMock.setItem(MASTER_ROSTER_KEY, JSON.stringify(rosterDataDb));
 
-    // Spy on console.error to check if the parsing error was logged
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
-    // Act
     exportFullBackup();
 
-    // Assert: Check blob content and error logging
-    expect(createObjectUrlSpy).toHaveBeenCalledTimes(1);
-    const blobArgument = createObjectUrlSpy.mock.calls[0][0] as Blob;
+    expect(window.URL.createObjectURL).toHaveBeenCalledTimes(1);
+    const blobArgument = (window.URL.createObjectURL as jest.Mock).mock.calls[0][0] as Blob;
 
-    // Check that console.error was called for the invalid key
     expect(consoleErrorSpy).toHaveBeenCalledWith(
       expect.stringContaining(`Error parsing localStorage item for key ${APP_SETTINGS_KEY}`),
-      expect.any(SyntaxError) // Or specific error type if known
+      expect.any(SyntaxError) 
     );
 
-    return new Promise<void>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        try {
-          const jsonString = reader.result as string;
-          const backupData = JSON.parse(jsonString);
-
-          // Verify other keys were backed up correctly
-          expect(backupData.localStorage[SAVED_GAMES_KEY]).toEqual(gamesData);
-          expect(backupData.localStorage[MASTER_ROSTER_KEY]).toEqual(rosterData);
-
-          // Instead of checking for null, check if the property exists or has the right type
-          // The implementation might set it to null, undefined, or omit it entirely
-          expect(
-            backupData.localStorage[APP_SETTINGS_KEY] === null || 
-            backupData.localStorage[APP_SETTINGS_KEY] === undefined
-          ).toBeTruthy();
-
-          resolve();
-        } catch (error) {
-          reject(error);
-        }
-      };
-      reader.onerror = reject;
-      reader.readAsText(blobArgument);
-    }).finally(() => {
-      consoleErrorSpy.mockRestore(); // Clean up spy
-    });
+    const blobText = await blobArgument.text();
+    const backupData = JSON.parse(blobText);
+    
+    expect(backupData.localStorage[SAVED_GAMES_KEY]).toEqual(gamesData);
+    expect(backupData.localStorage[MASTER_ROSTER_KEY]).toEqual(rosterDataDb);
+    expect(backupData.localStorage[APP_SETTINGS_KEY]).toBeNull();
   });
-
-}); 
+});

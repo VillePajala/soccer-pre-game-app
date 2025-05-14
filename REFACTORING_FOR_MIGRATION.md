@@ -138,10 +138,11 @@ We've already made progress in centralizing data access for certain entities:
 | 1.4.3.1 | Add tests for NewGameSetupModal | ✅ Completed | 2024-08-02 | Created comprehensive tests for utility function integration with proper test isolation |
 | 1.4.4 | Refactor LoadGameModal | ✅ Completed | 2024-08-02 | Verified component uses utility functions/props; updated tests to mock utilities. |
 | 1.4.5 | Refactor GameStatsModal | ✅ Completed | 2024-08-02 | Component refactored to use getSeasons/getTournaments utilities; tests already correctly mock these. |
-| 1.5  | Implement error handling patterns | 🔄 In Progress | | Implemented for seasons.ts and tournaments.ts. Next: masterRoster.ts |
+| 1.5  | Implement error handling patterns | ✅ Completed | 2024-08-03 | Implemented for seasons.ts and tournaments.ts. Reviewed masterRoster.ts, which already aligns. |
 | 1.5.1 | Refactor src/utils/seasons.ts error handling | ✅ Completed | 2024-08-02 | Aligned with defined error handling strategy (return null/false, console.error). Tests updated. |
 | 1.5.2 | Refactor src/utils/tournaments.ts error handling | ✅ Completed | 2024-08-03 | Aligned with defined error handling strategy. Tests updated to match new logging and error details, successfully refactored to test by controlling localStorage mock directly. |
-| 2.1  | Make utility functions return Promises | 📝 Planned | | |
+| 1.5.3 | Review src/utils/masterRoster.ts error handling | ✅ Completed | 2024-08-03 | Error handling patterns (return values, console.error with prefixes) already align with strategy. Tests cover error paths. |
+| 2.1  | Make utility functions return Promises | 🔄 In Progress |          | Refactored src/utils/appSettings.ts. Components using it (NewGameSetupModal.tsx) and its tests updated. Refactored src/utils/seasons.ts. Components using it (NewGameSetupModal.tsx, GameStatsModal.tsx) and their tests updated. Refactored src/utils/tournaments.ts. Components using it (NewGameSetupModal.tsx, GameStatsModal.tsx) and their tests updated. Refactored src/utils/masterRoster.ts and its tests. |
 | 2.2  | Update components for async operations | 📝 Planned | | |
 | 2.3  | Add loading states | 📝 Planned | | |
 | 2.4  | Implement error states | 📝 Planned | | |

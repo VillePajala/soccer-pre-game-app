@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent, within, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import NewGameSetupModal from './NewGameSetupModal';
 import { getLastHomeTeamName, saveLastHomeTeamName } from '@/utils/appSettings';
@@ -25,7 +25,7 @@ jest.mock('@/utils/tournaments', () => ({
 // Mock i18n
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, fallback: string) => fallback || key,
+    t: (key: string, fallback?: string) => fallback || key,
   }),
 }));
 
@@ -39,159 +39,158 @@ describe('NewGameSetupModal', () => {
     onCancel: mockOnCancel,
   };
 
-  const mockSeasons = [
+  const mockSeasonsData = [
     { id: 'season1', name: 'Spring 2024' },
     { id: 'season2', name: 'Summer 2024' }
   ];
 
-  const mockTournaments = [
+  const mockTournamentsData = [
     { id: 'tournament1', name: 'City Cup' },
     { id: 'tournament2', name: 'Regional Tournament' }
   ];
 
-  // Reset all mocks before each test
+  let consoleErrorSpy: jest.SpyInstance;
+  let consoleWarnSpy: jest.SpyInstance;
+  let consoleLogSpy: jest.SpyInstance;
+
   beforeEach(() => {
     jest.clearAllMocks();
     
-    // Setup default mock return values
-    (getLastHomeTeamName as jest.Mock).mockReturnValue('Last Team');
-    (getSeasons as jest.Mock).mockReturnValue(mockSeasons);
-    (getTournaments as jest.Mock).mockReturnValue(mockTournaments);
-    (addSeason as jest.Mock).mockImplementation((name) => {
+    (getLastHomeTeamName as jest.Mock).mockResolvedValue('Last Team');
+    (saveLastHomeTeamName as jest.Mock).mockResolvedValue(true);
+
+    (getSeasons as jest.Mock).mockResolvedValue(mockSeasonsData);
+    (getTournaments as jest.Mock).mockResolvedValue(mockTournamentsData);
+    
+    (addSeason as jest.Mock).mockImplementation(async (name) => {
       const newSeason = { id: `new-${name}`, name };
-      return [...mockSeasons, newSeason];
+      return Promise.resolve(newSeason);
     });
-    (addTournament as jest.Mock).mockImplementation((name) => {
+    (addTournament as jest.Mock).mockImplementation(async (name) => {
       const newTournament = { id: `new-${name}`, name };
-      return [...mockTournaments, newTournament];
+      return Promise.resolve(newTournament);
     });
+
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
   });
 
-  test('loads the last home team name from appSettings utility', () => {
+  afterEach(() => {
+    consoleErrorSpy.mockRestore();
+    consoleWarnSpy.mockRestore();
+    consoleLogSpy.mockRestore();
+  });
+
+  test('loads the last home team name from appSettings utility and populates input', async () => {
     render(<NewGameSetupModal {...defaultProps} />);
     
-    // Check if the utility function was called
     expect(getLastHomeTeamName).toHaveBeenCalled();
     
-    // Verify the home team input is populated with the value from getLastHomeTeamName
-    const homeTeamInput = screen.getByLabelText(/Home Team Name/i);
-    expect(homeTeamInput).toHaveValue('Last Team');
+    await waitFor(() => {
+      const homeTeamInput = screen.getByLabelText(/Home Team Name/i);
+      expect(homeTeamInput).toHaveValue('Last Team');
+    });
   });
 
-  test('loads seasons and tournaments using utility functions when opened', () => {
+  test('loads seasons and tournaments using utility functions when opened', async () => {
     render(<NewGameSetupModal {...defaultProps} />);
     
-    // Verify the utility functions were called
-    expect(getSeasons).toHaveBeenCalled();
-    expect(getTournaments).toHaveBeenCalled();
+    await waitFor(() => expect(getSeasons).toHaveBeenCalled());
+    await waitFor(() => expect(getTournaments).toHaveBeenCalled());
     
-    // Check if the seasons and tournaments appear in the dropdowns
-    expect(screen.getByText('Spring 2024')).toBeInTheDocument();
-    expect(screen.getByText('City Cup')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Spring 2024')).toBeInTheDocument();
+      expect(screen.getByText('City Cup')).toBeInTheDocument();
+    });
   });
 
-  test('saves last home team name using utility function on start', () => {
+  test('saves last home team name using utility function on start', async () => {
     render(<NewGameSetupModal {...defaultProps} />);
     
-    // Update home team name
     const homeTeamInput = screen.getByLabelText(/Home Team Name/i);
     fireEvent.change(homeTeamInput, { target: { value: 'New Team Name' } });
     
-    // Fill required opponent field
     const opponentInput = screen.getByLabelText(/Opponent/i);
     fireEvent.change(opponentInput, { target: { value: 'Opponent Team' } });
     
-    // Click start button
     const startButton = screen.getByText(/Start/i);
     fireEvent.click(startButton);
     
-    // Verify utility function was called with the correct value
-    expect(saveLastHomeTeamName).toHaveBeenCalledWith('New Team Name');
+    await waitFor(() => {
+      expect(saveLastHomeTeamName).toHaveBeenCalledWith('New Team Name');
+    });
     
-    // Verify onStart callback was called with appropriate params
     expect(mockOnStart).toHaveBeenCalledWith(
       expect.arrayContaining(['player1', 'player2']),
       'New Team Name',
       'Opponent Team',
-      expect.any(String), // date
+      expect.any(String),
       '',
       '',
       null,
       null,
-      2, // default periods
-      10, // default duration
-      'home' // default venue
+      2, 
+      10, 
+      'home' 
     );
   });
 
-  test('adds a new season using utility function', () => {
+  test('adds a new season using utility function', async () => {
     render(<NewGameSetupModal {...defaultProps} />);
     
-    // Find the season section first by its label
     const seasonSection = screen.getByText('Season:').closest('div');
     if (!seasonSection) throw new Error('Season section not found');
     
-    // Click create new season button within the season section
-    const createSeasonButton = within(seasonSection).getByText(/Create New/);
-    fireEvent.click(createSeasonButton);
+    fireEvent.click(within(seasonSection).getByText(/Create New/));
     
-    // Enter new season name
     const seasonNameInput = screen.getByPlaceholderText(/Enter new season name/i);
     fireEvent.change(seasonNameInput, { target: { value: 'Fall 2024' } });
     
-    // Click add button
-    const addButton = screen.getByText(/Add/i);
-    fireEvent.click(addButton);
+    fireEvent.click(screen.getByText(/Add/i));
     
-    // Verify utility function was called with correct params
-    expect(addSeason).toHaveBeenCalledWith('Fall 2024');
+    await waitFor(() => expect(addSeason).toHaveBeenCalledWith('Fall 2024'));
+    
+    await waitFor(() => {
+        expect(screen.getByText('Fall 2024')).toBeInTheDocument();
+    });
   });
 
-  test('adds a new tournament using utility function', () => {
+  test('adds a new tournament using utility function', async () => {
     render(<NewGameSetupModal {...defaultProps} />);
     
-    // Find tournament section and click create new button
     const allCreateButtons = screen.getAllByText(/Create New/, { selector: 'button' });
-    // The second button should be for tournament
     fireEvent.click(allCreateButtons[1]);
     
-    // Enter new tournament name
     const tournamentNameInput = screen.getByPlaceholderText(/Enter new tournament name/i);
     fireEvent.change(tournamentNameInput, { target: { value: 'National Cup' } });
     
-    // Click add button
-    const addButton = screen.getByText(/Add/i);
-    fireEvent.click(addButton);
+    fireEvent.click(screen.getByText(/Add/i));
     
-    // Verify utility function was called with correct params
-    expect(addTournament).toHaveBeenCalledWith('National Cup');
+    await waitFor(() => expect(addTournament).toHaveBeenCalledWith('National Cup'));
+    await waitFor(() => {
+        expect(screen.getByText('National Cup')).toBeInTheDocument();
+    });
   });
 
-  test('does not call onStart if home team name is empty', () => {
+  test('does not call onStart if home team name is empty, and saveLastHomeTeamName is not called', async () => {
     render(<NewGameSetupModal {...defaultProps} />);
     
-    // Clear home team name
     const homeTeamInput = screen.getByLabelText(/Home Team Name/i);
     fireEvent.change(homeTeamInput, { target: { value: '' } });
     
-    // Fill opponent name
     const opponentInput = screen.getByLabelText(/Opponent/i);
     fireEvent.change(opponentInput, { target: { value: 'Opponent Team' } });
     
-    // Mock window.alert
     window.alert = jest.fn();
     
-    // Click start button
     const startButton = screen.getByText(/Start/i);
     fireEvent.click(startButton);
     
-    // Verify utility function was not called
+    await screen.findByText(/Start/i);
+
     expect(saveLastHomeTeamName).not.toHaveBeenCalled();
-    
-    // Verify onStart callback was not called
     expect(mockOnStart).not.toHaveBeenCalled();
-    
-    // Verify alert was shown
     expect(window.alert).toHaveBeenCalled();
   });
 

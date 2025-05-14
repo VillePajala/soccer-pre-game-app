@@ -4,12 +4,14 @@ import '@testing-library/jest-dom'; // For extended matchers
 // import userEvent from '@testing-library/user-event'; // Consider using userEvent if fireEvent has issues after installing @testing-library/user-event
 
 import RosterSettingsModal from './RosterSettingsModal';
-import { Player } from '../app/page'; // Corrected path relative to components/
+import type { Player } from '@/types'; // Corrected path relative to components/
 
-// Mock necessary hooks or context if used within the component
-// jest.mock('../hooks/useSomeHook', () => ({
-//   useSomeHook: () => ({ someValue: 'mocked' }),
-// }));
+// Mock i18n specifically for this test file to silence warnings
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, fallback?: string | undefined) => fallback || key,
+  }),
+}));
 
 // Mock functions passed as props
 const mockOnClose = jest.fn();

@@ -65,51 +65,55 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   const [localHomeOrAway, setLocalHomeOrAway] = useState<'home' | 'away'>('home');
 
   useEffect(() => {
-    if (isOpen) {
-      // --- Load last used home team name using utility function ---
-      const lastUsedHomeTeam = getLastHomeTeamName();
-      setHomeTeamName(lastUsedHomeTeam || ''); // Set from utility or default to empty
-      // --- End Load ---
+    const loadInitialData = async () => {
+      if (isOpen) {
+        // --- Load last used home team name using utility function ---
+        try {
+          const lastUsedHomeTeam = await getLastHomeTeamName();
+          setHomeTeamName(lastUsedHomeTeam || '');
+        } catch (error) {
+          console.error("Failed to load last home team name:", error);
+          setHomeTeamName('');
+        }
+        // --- End Load ---
 
-      // Reset form fields
-      setOpponentName('');
-      setGameDate(new Date().toISOString().split('T')[0]);
-      setGameLocation('');
-      setGameHour('');
-      setGameMinute('');
-      setSelectedSeasonId(null);
-      setSelectedTournamentId(null);
-      // Reset create new inputs
-      setShowNewSeasonInput(false);
-      setNewSeasonName('');
-      setShowNewTournamentInput(false);
-      setNewTournamentName('');
-      // Reset for period/duration
-      setLocalNumPeriods(2);
-      setLocalPeriodDurationString(String(10));
-      // <<< Step 4a: Reset Home/Away >>>
+        // Reset form fields
+        setOpponentName('');
+        setGameDate(new Date().toISOString().split('T')[0]);
+        setGameLocation('');
+        setGameHour('');
+        setGameMinute('');
+        setSelectedSeasonId(null);
+        setSelectedTournamentId(null);
+        setShowNewSeasonInput(false);
+        setNewSeasonName('');
+        setShowNewTournamentInput(false);
+        setNewTournamentName('');
+        setLocalNumPeriods(2);
+        setLocalPeriodDurationString(String(10));
 
-      // Load seasons and tournaments using utility functions
-      try {
-        const loadedSeasons = utilGetSeasons();
-        setSeasons(loadedSeasons);
-      } catch (error) { // Should be rare as utilGetSeasons handles its own try/catch
-        console.error("Error loading seasons via utility:", error);
-        setSeasons([]);
+        // Load seasons and tournaments using utility functions
+        try {
+          const loadedSeasons = await utilGetSeasons(); 
+          setSeasons(loadedSeasons);
+        } catch (error) { 
+          console.error("Error loading seasons via utility:", error);
+          setSeasons([]);
+        }
+        try {
+          const loadedTournaments = await utilGetTournaments(); // Now async
+          setTournaments(loadedTournaments);
+        } catch (error) { 
+          console.error("Error loading tournaments via utility:", error);
+          setTournaments([]);
+        }
+
+        setTimeout(() => {
+          homeTeamInputRef.current?.focus();
+        }, 100);
       }
-      try {
-        const loadedTournaments = utilGetTournaments();
-        setTournaments(loadedTournaments);
-      } catch (error) { // Should be rare as utilGetTournaments handles its own try/catch
-        console.error("Error loading tournaments via utility:", error);
-        setTournaments([]);
-      }
-
-      // Focus home team name input instead of opponent
-      setTimeout(() => {
-        homeTeamInputRef.current?.focus();
-      }, 100);
-    }
+    };
+    loadInitialData();
   }, [isOpen]);
 
   // Focus input when create new section appears
@@ -163,7 +167,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   };
 
   // Implement Add New Season logic
-  const handleAddNewSeason = () => {
+  const handleAddNewSeason = async () => {
     const trimmedName = newSeasonName.trim();
     if (!trimmedName) {
       alert(t('newGameSetupModal.newSeasonNameRequired', 'Please enter a name for the new season.'));
@@ -172,31 +176,24 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
     }
 
     try {
-      // Use utility function to add season
-      const updatedSeasons = utilAddSeason(trimmedName);
+      const newSeason = await utilAddSeason(trimmedName);
       
-      // Update component state
-      setSeasons(updatedSeasons);
-      // Find the newly added season to get its ID for selection
-      const newSeason = updatedSeasons.find(s => s.name === trimmedName);
-      setSelectedSeasonId(newSeason ? newSeason.id : null);
-      setSelectedTournamentId(null); // Ensure tournament is deselected
-      setNewSeasonName(''); // Clear input
-      setShowNewSeasonInput(false); // Hide input field
-
-      console.log("Added new season:", newSeason);
-
-    } catch (error) {
-      console.error("Failed to save new season:", error);
-      if (error instanceof Error) {
-        // Handle specific error messages from the utility function
-        if (error.message === 'Season name cannot be empty.' || error.message === 'A season with this name already exists.') {
-          alert(t('newGameSetupModal.errorAddingSeasonUserFriendly', error.message)); // Provide a more user-friendly translation
-        } else {
-          alert(t('newGameSetupModal.errorAddingSeasonGeneric', 'Error adding new season. See console for details.'));
-        }
+      if (newSeason) {
+        setSeasons(prevSeasons => [...prevSeasons, newSeason]);
+        setSelectedSeasonId(newSeason.id);
+        setSelectedTournamentId(null);
+        setNewSeasonName(''); 
+        setShowNewSeasonInput(false); 
+        console.log("Added new season:", newSeason);
       } else {
-        // Fallback for non-Error types
+        console.warn("utilAddSeason returned null, season might not have been added or error handled by utility.");
+      }
+
+    } catch (error) { 
+      console.error("Failed to save new season (unexpected error):", error);
+      if (error instanceof Error) {
+        alert(t('newGameSetupModal.errorAddingSeasonGeneric', 'Error adding new season. See console for details.'));
+      } else {
         alert(t('newGameSetupModal.errorAddingSeasonGeneric', 'An unexpected error occurred.'));
       }
       newSeasonInputRef.current?.focus();
@@ -204,7 +201,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   };
 
   // Implement Add New Tournament logic
-  const handleAddNewTournament = () => {
+  const handleAddNewTournament = async () => {
     const trimmedName = newTournamentName.trim();
     if (!trimmedName) {
       alert(t('newGameSetupModal.newTournamentNameRequired', 'Please enter a name for the new tournament.'));
@@ -213,31 +210,24 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
     }
 
     try {
-      // Use utility function to add tournament
-      const updatedTournaments = utilAddTournament(trimmedName);
+      const newTournament = await utilAddTournament(trimmedName); // Now async
 
-      // Update component state
-      setTournaments(updatedTournaments);
-      // Find the newly added tournament to get its ID for selection
-      const newTournament = updatedTournaments.find(t => t.name === trimmedName);
-      setSelectedTournamentId(newTournament ? newTournament.id : null);
-      setSelectedSeasonId(null); // Ensure season is deselected
-      setNewTournamentName(''); // Clear input
-      setShowNewTournamentInput(false); // Hide input field
-
-      console.log("Added new tournament:", newTournament);
-
-    } catch (error) {
-      console.error("Failed to save new tournament:", error);
-      if (error instanceof Error) {
-        // Handle specific error messages from the utility function
-        if (error.message === 'Tournament name cannot be empty.' || error.message === 'A tournament with this name already exists.') {
-          alert(t('newGameSetupModal.errorAddingTournamentUserFriendly', error.message));
-        } else {
-          alert(t('newGameSetupModal.errorAddingTournamentGeneric', 'Error adding new tournament. See console for details.'));
-        }
+      if (newTournament) {
+        setTournaments(prevTournaments => [...prevTournaments, newTournament]);
+        setSelectedTournamentId(newTournament.id); 
+        setSelectedSeasonId(null); 
+        setNewTournamentName(''); 
+        setShowNewTournamentInput(false); 
+        console.log("Added new tournament:", newTournament);
       } else {
-        // Fallback for non-Error types
+        console.warn("utilAddTournament returned null, tournament might not have been added or error handled by utility.");
+      }
+
+    } catch (error) { 
+      console.error("Failed to save new tournament (unexpected error):", error);
+      if (error instanceof Error) {
+        alert(t('newGameSetupModal.errorAddingTournamentGeneric', 'Error adding new tournament. See console for details.'));
+      } else {
         alert(t('newGameSetupModal.errorAddingTournamentGeneric', 'An unexpected error occurred.'));
       }
       newTournamentInputRef.current?.focus();
@@ -246,19 +236,18 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   // --- End Handlers for Create New ---
 
 
-  const handleStartClick = () => {
+  const handleStartClick = async () => {
     const trimmedHomeTeamName = homeTeamName.trim();
     const trimmedOpponentName = opponentName.trim();
 
-    // Validate home team name
     if (!trimmedHomeTeamName) {
-      alert(t('newGameSetupModal.homeTeamRequiredAlert', 'Please enter a home team name.'));
+      alert(t('newGameSetupModal.homeTeamNameRequired', 'Home Team Name is required.') || 'Home Team Name is required.');
       homeTeamInputRef.current?.focus();
       return;
     }
 
     if (!trimmedOpponentName) {
-      alert(t('newGameSetupModal.opponentRequiredAlert', 'Please enter an opponent name.'));
+      alert(t('newGameSetupModal.opponentNameRequired', 'Opponent Name is required.') || 'Opponent Name is required.');
       opponentInputRef.current?.focus();
       return;
     }
@@ -275,51 +264,44 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
         return;
     }
 
-    const finalGameTime = (gameHour && gameMinute) ? `${gameHour.padStart(2, '0')}:${gameMinute.padStart(2, '0')}` : '';
+    // Format game time properly
+    const formattedHour = gameHour.padStart(2, '0');
+    const formattedMinute = gameMinute.padStart(2, '0');
+    const gameTime = (gameHour && gameMinute) ? `${formattedHour}:${formattedMinute}` : '';
 
-    // Period duration validation
-    const periodDurationMinutes = parseInt(localPeriodDurationString, 10);
-    if (isNaN(periodDurationMinutes) || periodDurationMinutes <= 0) {
-        alert(t('newGameSetupModal.invalidPeriodDuration', 'Period duration must be a positive number.'));
+    // Validate period duration
+    const duration = parseInt(localPeriodDurationString, 10);
+    if (isNaN(duration) || duration <= 0) {
+        alert(t('newGameSetupModal.invalidPeriodDuration', 'Period duration must be a positive number.') || 'Period duration must be a positive number.');
         return;
     }
-    
-    console.log("Starting game with:", {
-        homeTeam: trimmedHomeTeamName,
-        opponent: trimmedOpponentName,
-        date: gameDate,
-        location: gameLocation,
-        time: finalGameTime,
-        season: selectedSeasonId,
-        tournament: selectedTournamentId,
-        numPeriods: localNumPeriods,
-        periodDuration: periodDurationMinutes,
-        homeOrAway: localHomeOrAway
-    });
 
-    // Call the onStart prop with ALL collected data
+    // --- Save last used home team name using utility function ---
+    try {
+      await saveLastHomeTeamName(trimmedHomeTeamName);
+    } catch (error) {
+      console.error("Failed to save last home team name:", error);
+      // Continue without blocking, as this is not critical for starting the game
+    }
+    // --- End Save ---
+
+    const selectedPlayers = initialPlayerSelection || [];
+    // Call the onStart callback from props
     onStart(
-      initialPlayerSelection || [], // Pass empty array if null
+      selectedPlayers,
       trimmedHomeTeamName,
       trimmedOpponentName,
       gameDate,
-      gameLocation,
-      finalGameTime,
+      gameLocation.trim(),
+      gameTime,
       selectedSeasonId,
       selectedTournamentId,
-      localNumPeriods, // Pass the selected number of periods
-      periodDurationMinutes,    // Pass the parsed and validated number duration
-      localHomeOrAway         // <<< Step 4a: Pass value
+      localNumPeriods,
+      duration, // use validated duration
+      localHomeOrAway // <<< Step 4a: Pass Home/Away >>>
     );
 
-    // <<< --- Save last used home team name on success using utility function ---
-    try {
-        saveLastHomeTeamName(trimmedHomeTeamName);
-    } catch (error) {
-        console.error("Failed to save last home team name:", error); 
-        // Non-critical error, don't need to alert user
-    }
-    // <<< --- End Save ---
+    // Modal will be closed by parent component after onStart
   };
 
   const handleKeyDown = (event: React.KeyboardEvent) => {

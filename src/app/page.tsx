@@ -152,7 +152,7 @@ const initialState: AppState = {
 export const SAVED_GAMES_KEY = 'savedSoccerGames';
 export const APP_SETTINGS_KEY = 'soccerAppSettings';
 const SEASONS_LIST_KEY = 'soccerSeasons';
-const TOURNAMENTS_LIST_KEY = 'soccerTournaments';
+// const TOURNAMENTS_LIST_KEY = 'soccerTournaments'; // Removed unused variable
 const MASTER_ROSTER_KEY = 'soccerMasterRoster'; // <<< NEW KEY for global roster
 
 // Define structure for settings
@@ -256,7 +256,7 @@ export default function Home() {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   // <<< ADD: State for home/away status >>>
   const [homeOrAway, setHomeOrAway] = useState<'home' | 'away'>(initialState.homeOrAway);
-  const [initialLoadComplete, setInitialLoadComplete] = useState<boolean>(false); // <<< New state
+  const [initialLoadComplete, setInitialLoadComplete] = useState<boolean>(false);
   const [hasSkippedInitialSetup, setHasSkippedInitialSetup] = useState<boolean>(false);
   const [isGameSettingsModalOpen, setIsGameSettingsModalOpen] = useState<boolean>(false); // <<< ADDED State Declaration
 
@@ -310,11 +310,15 @@ export default function Home() {
 
   // --- Derived State for Filtered Players ---
   const playersForCurrentGame = useMemo(() => {
-    // Ensure both lists are ready before filtering
-    if (!availablePlayers || !selectedPlayerIds) {
-        return [];
+    if (!Array.isArray(availablePlayers)) {
+      console.warn('[MEMO playersForCurrentGame] availablePlayers is not an array. Returning []. Value:', availablePlayers);
+      return [];
     }
-    return availablePlayers.filter(p => selectedPlayerIds.includes(p.id));
+    if (!selectedPlayerIds || selectedPlayerIds.length === 0) {
+        return availablePlayers; 
+    }
+    const gamePlayers = availablePlayers.filter(player => selectedPlayerIds.includes(player.id));
+    return gamePlayers;
   }, [availablePlayers, selectedPlayerIds]);
 
   // --- Handlers (Remaining in Home component or to be moved) ---
@@ -380,126 +384,104 @@ export default function Home() {
 
   // --- Load state from localStorage on mount (REVISED) ---
   useEffect(() => {
-    console.log('Initial Load Effect Triggered');
-
-    // +++ MIGRATION: Move data from old List keys to new keys +++
-    try {
-      // Check for old tournament list key
-      const oldTournamentsJson = localStorage.getItem('soccerTournamentsList');
-      if (oldTournamentsJson) {
-        console.log('Found old tournament data under soccerTournamentsList - migrating...');
-        const oldTournaments = JSON.parse(oldTournamentsJson);
-        if (Array.isArray(oldTournaments) && oldTournaments.length > 0) {
-          localStorage.setItem(TOURNAMENTS_LIST_KEY, oldTournamentsJson);
-          console.log('Migrated tournament data to new key');
+    const loadInitialAppData = async () => {
+      console.log('[EFFECT init] Loading initial application data...');
+      // Simple migration for old data keys (if any) - Run once
+      try {
+        const oldRosterJson = localStorage.getItem('availablePlayers');
+        if (oldRosterJson) {
+          console.log('[EFFECT init] Migrating old roster data...');
+          localStorage.setItem(MASTER_ROSTER_KEY, oldRosterJson);
+          localStorage.removeItem('availablePlayers');
         }
-      }
-
-      // Check for old seasons list key
-      const oldSeasonsJson = localStorage.getItem('soccerSeasonsList');
-      if (oldSeasonsJson) {
-        console.log('Found old season data under soccerSeasonsList - migrating...');
-        const oldSeasons = JSON.parse(oldSeasonsJson);
-        if (Array.isArray(oldSeasons) && oldSeasons.length > 0) {
+        const oldSeasonsJson = localStorage.getItem('soccerSeasonsList');
+        if (oldSeasonsJson) {
+          console.log('[EFFECT init] Migrating old seasons data...');
           localStorage.setItem(SEASONS_LIST_KEY, oldSeasonsJson);
-          console.log('Migrated season data to new key');
         }
+      } catch (migrationError) {
+        console.error('[EFFECT init] Error during data migration:', migrationError);
       }
-    } catch (migrationError) {
-      console.error('Error during data migration:', migrationError);
-    }
 
-    // Load stored seasons using utility function
-    try {
-      const loadedSeasons = utilGetSeasons();
-      setSeasons(loadedSeasons);
-    } catch (error) {
-      console.error('Error loading seasons:', error);
-      setSeasons([]);
-    }
+      // 1. Load Master Roster
+      try {
+        const roster = await utilGetMasterRoster();
+        console.log('[EFFECT init] Master Roster loaded:', roster);
+        setAvailablePlayers(Array.isArray(roster) ? roster : []);
+      } catch (error) {
+        console.error('[EFFECT init] Error loading master player roster:', error);
+        setAvailablePlayers([]);
+      }
 
-    // Load stored tournaments using utility function
-    try {
-      const loadedTournaments = utilGetTournaments();
-      setTournaments(loadedTournaments);
-    } catch (error) {
-      console.error('Error loading tournaments:', error);
-      setTournaments([]);
-    }
+      // 2. Load Seasons
+      try {
+        const loadedSeasons = await utilGetSeasons();
+        setSeasons(Array.isArray(loadedSeasons) ? loadedSeasons : []);
+      } catch (error) {
+        console.error('[EFFECT init] Error loading seasons:', error);
+        setSeasons([]);
+      }
 
-    // Load master player roster using utility function
-    try {
-      const roster = utilGetMasterRoster();
-      setAvailablePlayers(roster);
-    } catch (error) {
-      console.error('Error loading master player roster:', error);
-      setAvailablePlayers([]);
-    }
+      // 3. Load Tournaments
+      try {
+        const loadedTournaments = await utilGetTournaments();
+        setTournaments(Array.isArray(loadedTournaments) ? loadedTournaments : []);
+      } catch (error) {
+        console.error('[EFFECT init] Error loading tournaments:', error);
+        setTournaments([]);
+      }
 
-    // Load saved games using utility function
-    try {
-      const savedGamesData = utilGetSavedGames();
-      setSavedGames(savedGamesData);
-    } catch (error) {
-      console.error('Error loading saved games:', error);
-      setSavedGames({});
-    }
-
-    // Load app settings and current game
-    try {
-      const currentGameId = getCurrentGameIdSetting();
+      // 4. Load All Saved Games (to have them ready for selection)
+      let currentSavedGames: SavedGamesCollection = {};
+      try {
+        currentSavedGames = await utilGetSavedGames() || {};
+        setSavedGames(currentSavedGames);
+      } catch (error) {
+        console.error('[EFFECT init] Error loading all saved games:', error);
+        setSavedGames({});
+      }
       
-      if (currentGameId && currentGameId !== DEFAULT_GAME_ID) {
-        console.log(`Restoring game with ID: ${currentGameId}`);
-        setCurrentGameId(currentGameId);
+      // 5. Load App Settings (like last game ID) & Restore Last Game State
+      try {
+        const lastGameIdSetting = await getCurrentGameIdSetting();
+        console.log('[EFFECT init] Last Game ID from settings:', lastGameIdSetting);
         
-        // Check if we have the game data
-        const savedGamesData = utilGetSavedGames();
-        if (savedGamesData[currentGameId]) {
-          // We found the game, so we can skip initial setup
-          setHasSkippedInitialSetup(true);
-          
-          // Load the game state
-          const gameState = savedGamesData[currentGameId];
-          // Use type assertion to handle the type mismatch
-          loadGameStateFromData(gameState as unknown as GameData);
+        if (lastGameIdSetting && lastGameIdSetting !== DEFAULT_GAME_ID && currentSavedGames[lastGameIdSetting]) {
+          console.log(`[EFFECT init] Restoring last saved game: ${lastGameIdSetting}`);
+          setCurrentGameId(lastGameIdSetting);
+          setHasSkippedInitialSetup(true); 
         } else {
-          // The game ID doesn't exist in saved games
-          console.warn(`Game with ID ${currentGameId} not found in saved games`);
-          setHasSkippedInitialSetup(false);
+          if (lastGameIdSetting && lastGameIdSetting !== DEFAULT_GAME_ID) {
+            console.warn(`[EFFECT init] Last game ID ${lastGameIdSetting} not found in saved games. Loading default.`);
+          }
           setCurrentGameId(DEFAULT_GAME_ID);
-          loadGameStateFromData(null); // Load default state
+          loadGameStateFromData(null, true); 
         }
-      } else {
-        // No current game ID or it's the default
-        setHasSkippedInitialSetup(false);
+      } catch (error) {
+        console.error('[EFFECT init] Error loading current game settings or restoring game:', error);
         setCurrentGameId(DEFAULT_GAME_ID);
-        loadGameStateFromData(null); // Load default state
+        loadGameStateFromData(null, true); 
       }
-    } catch (error) {
-      console.error('Error loading current game:', error);
-      setHasSkippedInitialSetup(false);
-      setCurrentGameId(DEFAULT_GAME_ID);
-      loadGameStateFromData(null); // Load default state
-    }
-    
-    // Set flags to indicate loading is complete
-    setIsLoaded(true);
-    setInitialLoadComplete(true);
-    console.log('Initial load complete. Flags set.');
-    
-  }, []);
+      
+      setIsLoaded(true);
+      setInitialLoadComplete(true);
+      console.log('[EFFECT init] Initial application data load complete.');
+    };
+
+    loadInitialAppData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setAvailablePlayers]); // setAvailablePlayers from useGameState is generally stable.
 
   // Helper function to load game state from game data
-  const loadGameStateFromData = (gameData: GameData | null) => {
-    // Apply the loaded or initial state
+  const loadGameStateFromData = (gameData: GameData | null, isInitialDefaultLoad = false) => {
+    console.log('[LOAD GAME STATE] Called with gameData:', gameData, 'isInitialDefaultLoad:', isInitialDefaultLoad);
+
     const stateToApply = gameData ? 
-      // Convert GameData to partial AppState for compatibility
       {
         playersOnField: gameData.playersOnField || [],
         opponents: gameData.opponents || [],
         drawings: gameData.drawings || [],
-        showPlayerNames: gameData.showPlayerNames || false,
+        showPlayerNames: gameData.showPlayerNames === undefined ? initialState.showPlayerNames : gameData.showPlayerNames,
         teamName: gameData.homeTeam || initialState.teamName,
         gameEvents: gameData.events || [],
         opponentName: gameData.awayTeam || initialState.opponentName,
@@ -511,134 +493,108 @@ export default function Home() {
         periodDurationMinutes: gameData.periodDuration || initialState.periodDurationMinutes,
         currentPeriod: gameData.currentPeriod || initialState.currentPeriod,
         gameStatus: gameData.gameStatus || initialState.gameStatus,
-        subIntervalMinutes: gameData.subIntervalMinutes ?? initialState.subIntervalMinutes ?? 5,
-        completedIntervalDurations: gameData.completedIntervalDurations ?? initialState.completedIntervalDurations ?? [],
-        lastSubConfirmationTimeSeconds: gameData.lastSubConfirmationTimeSeconds ?? initialState.lastSubConfirmationTimeSeconds ?? 0,
+        subIntervalMinutes: gameData.subIntervalMinutes ?? initialState.subIntervalMinutes ?? 5, // Added final fallback
+        completedIntervalDurations: gameData.completedIntervalDurations ?? initialState.completedIntervalDurations ?? [], // Added final fallback
+        lastSubConfirmationTimeSeconds: gameData.lastSubConfirmationTimeSeconds ?? initialState.lastSubConfirmationTimeSeconds ?? 0, // Added final fallback
         selectedPlayerIds: gameData.selectedPlayerIds || [],
         seasonId: gameData.seasonId ?? '',
         tournamentId: gameData.tournamentId ?? '',
         gameLocation: gameData.location || '',
         gameTime: gameData.time || '',
         homeOrAway: gameData.teamOnLeft ?? initialState.homeOrAway,
-        availablePlayers: gameData.availablePlayers || [] // Ensure this field exists
-      } as AppState 
+      } as Partial<AppState> 
       : initialState;
     
-    setHistory([stateToApply]);
+    const historyState: AppState = {
+      ...(isInitialDefaultLoad ? initialState : stateToApply as AppState),
+      availablePlayers: availablePlayers, // Always use the current master roster for history snapshots
+      playersOnField: stateToApply.playersOnField || initialState.playersOnField,
+      opponents: stateToApply.opponents || initialState.opponents,
+      drawings: stateToApply.drawings || initialState.drawings,
+      showPlayerNames: stateToApply.showPlayerNames === undefined ? initialState.showPlayerNames : stateToApply.showPlayerNames,
+      teamName: stateToApply.teamName || initialState.teamName,
+      gameEvents: stateToApply.gameEvents || initialState.gameEvents,
+      opponentName: stateToApply.opponentName || initialState.opponentName,
+      gameDate: stateToApply.gameDate || initialState.gameDate,
+      homeScore: stateToApply.homeScore ?? initialState.homeScore,
+      awayScore: stateToApply.awayScore ?? initialState.awayScore,
+      gameNotes: stateToApply.gameNotes || initialState.gameNotes,
+      homeOrAway: stateToApply.homeOrAway || initialState.homeOrAway,
+      numberOfPeriods: stateToApply.numberOfPeriods || initialState.numberOfPeriods,
+      periodDurationMinutes: stateToApply.periodDurationMinutes || initialState.periodDurationMinutes,
+      currentPeriod: stateToApply.currentPeriod || initialState.currentPeriod,
+      gameStatus: stateToApply.gameStatus || initialState.gameStatus,
+      selectedPlayerIds: stateToApply.selectedPlayerIds || initialState.selectedPlayerIds,
+      seasonId: stateToApply.seasonId ?? initialState.seasonId,
+      tournamentId: stateToApply.tournamentId ?? initialState.tournamentId,
+      gameLocation: stateToApply.gameLocation || initialState.gameLocation,
+      gameTime: stateToApply.gameTime || initialState.gameTime,
+      subIntervalMinutes: stateToApply.subIntervalMinutes ?? initialState.subIntervalMinutes ?? 5,
+      completedIntervalDurations: stateToApply.completedIntervalDurations ?? initialState.completedIntervalDurations ?? [],
+      lastSubConfirmationTimeSeconds: stateToApply.lastSubConfirmationTimeSeconds ?? initialState.lastSubConfirmationTimeSeconds ?? 0,
+    };
+
+    setHistory([historyState]);
     setHistoryIndex(0);
 
     setPlayersOnField(stateToApply.playersOnField || []);
     setOpponents(stateToApply.opponents || []);
     setDrawings(stateToApply.drawings || []);
-    // Available players are loaded separately from master roster
-    setShowPlayerNames(stateToApply.showPlayerNames || false);
+    setShowPlayerNames(stateToApply.showPlayerNames === undefined ? initialState.showPlayerNames : stateToApply.showPlayerNames);
     setTeamName(stateToApply.teamName || initialState.teamName);
     setGameEvents(stateToApply.gameEvents || []);
     setOpponentName(stateToApply.opponentName || initialState.opponentName);
     setGameDate(stateToApply.gameDate || initialState.gameDate);
-    setHomeScore(stateToApply.homeScore || 0);
-    setAwayScore(stateToApply.awayScore || 0);
+    setHomeScore(stateToApply.homeScore ?? 0);
+    setAwayScore(stateToApply.awayScore ?? 0);
     setGameNotes(stateToApply.gameNotes || '');
     setNumberOfPeriods(stateToApply.numberOfPeriods || initialState.numberOfPeriods);
     setPeriodDurationMinutes(stateToApply.periodDurationMinutes || initialState.periodDurationMinutes);
     setCurrentPeriod(stateToApply.currentPeriod || initialState.currentPeriod);
     setGameStatus(stateToApply.gameStatus || initialState.gameStatus);
-    setSubIntervalMinutes(stateToApply.subIntervalMinutes ?? initialState.subIntervalMinutes ?? 5);
-    setCompletedIntervalDurations(stateToApply.completedIntervalDurations ?? initialState.completedIntervalDurations ?? []);
-    setLastSubConfirmationTimeSeconds(stateToApply.lastSubConfirmationTimeSeconds ?? initialState.lastSubConfirmationTimeSeconds ?? 0);
-    setSelectedPlayerIds(stateToApply.selectedPlayerIds || []);
+    setSubIntervalMinutes(stateToApply.subIntervalMinutes ?? initialState.subIntervalMinutes ?? 5); // Ensure non-undefined fallback
+    setCompletedIntervalDurations(stateToApply.completedIntervalDurations ?? initialState.completedIntervalDurations ?? []); // Ensure non-undefined fallback
+    setLastSubConfirmationTimeSeconds(stateToApply.lastSubConfirmationTimeSeconds ?? initialState.lastSubConfirmationTimeSeconds ?? 0); // Ensure non-undefined fallback
+    setSelectedPlayerIds(stateToApply.selectedPlayerIds || []); // These are game-specific
     setSeasonId(stateToApply.seasonId ?? '');
     setTournamentId(stateToApply.tournamentId ?? '');
     setGameLocation(stateToApply.gameLocation || '');
     setGameTime(stateToApply.gameTime || '');
-    setHomeOrAway(stateToApply.homeOrAway ?? initialState.homeOrAway);
+    setHomeOrAway(stateToApply.homeOrAway || initialState.homeOrAway);
+
+    // If specific gameData was loaded, its availablePlayers might be different
+    // from the master roster. This is for historical accuracy of that game.
+    // The global `availablePlayers` (from useGameState, set by master roster load) is used for PlayerBar.
+    // The `gameData.availablePlayers` is used if we need to know who *was* available when that game was saved.
+    // For `playersForCurrentGame`, it should use the master `availablePlayers` filtered by `selectedPlayerIds`.
+    console.log('[LOAD GAME STATE] Finished applying state. Current master availablePlayers:', availablePlayers);
   };
 
   // --- Effect to load game state when currentGameId changes or savedGames updates ---
-  // ADD dependencies for all state setters used inside
   useEffect(() => {
-    console.log('[Loading Effect] Running due to change in currentGameId or savedGames.', { currentGameId });
-    
-    // Determine the state to load
-    let stateToLoad: AppState | null = null;
+    console.log('[EFFECT game load] currentGameId or savedGames changed:', { currentGameId });
+    if (!initialLoadComplete) {
+      console.log('[EFFECT game load] Initial load not complete, skipping game state application.');
+      return; 
+    }
+
+    let gameToLoad: GameData | null = null;
     if (currentGameId && currentGameId !== DEFAULT_GAME_ID && savedGames[currentGameId]) {
-      console.log(`[Loading Effect] Found state for game ID: ${currentGameId} in savedGames.`);
-      stateToLoad = savedGames[currentGameId];
-    } else if (currentGameId === DEFAULT_GAME_ID) {
-      console.log('[Loading Effect] currentGameId is DEFAULT_GAME_ID, using initial state.');
-      stateToLoad = initialState;
+      console.log(`[EFFECT game load] Found game data for ${currentGameId}`);
+      gameToLoad = savedGames[currentGameId] as unknown as GameData; // Cast if necessary
     } else {
-      console.warn(`[Loading Effect] No valid state found for currentGameId: ${currentGameId}. Falling back to initial state.`);
-      stateToLoad = initialState;
-      // Optional: Reset currentGameId if state was missing for a specific ID?
-      // setCurrentGameId(DEFAULT_GAME_ID); 
+      console.log('[EFFECT game load] No specific game to load or ID is default. Applying default game state.');
+      // No specific game to load from savedGames, ensure defaults are applied
+      // loadGameStateFromData(null) will apply initialState defaults.
+      // The master `availablePlayers` is already set by the initial app load effect.
     }
+    // Call loadGameStateFromData; it handles null correctly (applies initialState)
+    // This will set up the game-specific details (scores, events, selected players for *that* game)
+    // but will NOT overwrite the master availablePlayers roster.
+    loadGameStateFromData(gameToLoad);
 
-    // Apply the loaded state using individual state setters
-    if (stateToLoad) {
-      console.log('[Loading Effect] Applying loaded state:', stateToLoad);
-      setPlayersOnField(stateToLoad.playersOnField || []);
-      setOpponents(stateToLoad.opponents || []);
-      setDrawings(stateToLoad.drawings || []);
-      // REMOVED: setAvailablePlayers(stateToLoad.availablePlayers || []);
-      setShowPlayerNames(stateToLoad.showPlayerNames ?? true);
-      setTeamName(stateToLoad.teamName || initialState.teamName);
-      setGameEvents(stateToLoad.gameEvents || []);
-      setOpponentName(stateToLoad.opponentName || initialState.opponentName);
-      setGameDate(stateToLoad.gameDate || initialState.gameDate);
-      setHomeScore(stateToLoad.homeScore || 0);
-      setAwayScore(stateToLoad.awayScore || 0);
-      setGameNotes(stateToLoad.gameNotes || '');
-      setNumberOfPeriods(stateToLoad.numberOfPeriods || initialState.numberOfPeriods);
-      setPeriodDurationMinutes(stateToLoad.periodDurationMinutes || initialState.periodDurationMinutes);
-      setCurrentPeriod(stateToLoad.currentPeriod || initialState.currentPeriod);
-      setGameStatus(stateToLoad.gameStatus || initialState.gameStatus);
-      setSelectedPlayerIds(stateToLoad.selectedPlayerIds || initialState.selectedPlayerIds || []);
-      setSeasonId(stateToLoad.seasonId ?? '');
-      setTournamentId(stateToLoad.tournamentId ?? '');
-      setGameLocation(stateToLoad.gameLocation || '');
-      setGameTime(stateToLoad.gameTime || '');
-      setSubIntervalMinutes(stateToLoad.subIntervalMinutes ?? initialState.subIntervalMinutes ?? 5);
-      setCompletedIntervalDurations(stateToLoad.completedIntervalDurations ?? initialState.completedIntervalDurations ?? []);
-      setLastSubConfirmationTimeSeconds(stateToLoad.lastSubConfirmationTimeSeconds ?? initialState.lastSubConfirmationTimeSeconds ?? 0);
-      // <<< ADD: Load home/away status (game load) >>>
-      setHomeOrAway(stateToLoad.homeOrAway ?? initialState.homeOrAway);
-
-      // Reset session-specific state based on loaded game status
-      // Always reset timer state when loading any game state
-      setTimeElapsedInSeconds(0); // Reset timer to 0 on load
-      setIsTimerRunning(false); // Ensure timer is paused on load
-      
-      // Recalculate next sub time based on loaded state
-      const lastSubTime = stateToLoad.lastSubConfirmationTimeSeconds ?? 0;
-      const intervalMins = stateToLoad.subIntervalMinutes ?? 5;
-      const intervalSecs = intervalMins * 60;
-
-      // If loading a started game, set next sub time relative to the last sub time.
-      // If loading a notStarted game, set next sub time relative to 0.
-      let nextDue = intervalSecs; // Default for notStarted
-      if (stateToLoad.gameStatus !== 'notStarted' && lastSubTime > 0) {
-          // Calculate based on last sub time
-          nextDue = Math.ceil((lastSubTime + 1) / intervalSecs) * intervalSecs;
-          if (nextDue <= lastSubTime) { // Ensure next due is in the future relative to last sub
-              nextDue += intervalSecs;
-          } 
-      } else if (stateToLoad.gameStatus !== 'notStarted' && lastSubTime === 0) {
-          // Game started, but no subs made yet, next due is simply the interval
-          nextDue = intervalSecs;
-      }
-      // If status is notStarted, nextDue remains intervalSecs from the default above
-
-      setNextSubDueTimeSeconds(nextDue);
-      setSubAlertLevel('none'); // Reset alert on load
-
-      // Reset history to start with the loaded state
-      setHistory([stateToLoad]);
-      setHistoryIndex(0);
-      console.log('[Loading Effect] State applied successfully.');
-    }
-
-  }, [currentGameId, savedGames, setPlayersOnField, setOpponents, setDrawings, setAvailablePlayers, setShowPlayerNames, setTeamName, setGameEvents, setOpponentName, setGameDate, setHomeScore, setAwayScore, setGameNotes, setNumberOfPeriods, setPeriodDurationMinutes, setCurrentPeriod, setGameStatus, setSelectedPlayerIds, setSeasonId, setTournamentId, setGameLocation, setGameTime, setSubIntervalMinutes, setCompletedIntervalDurations, setLastSubConfirmationTimeSeconds, setTimeElapsedInSeconds, setIsTimerRunning, setNextSubDueTimeSeconds, setSubAlertLevel, setHistory, setHistoryIndex, setHomeOrAway]); // Keep dependencies simple - only react to ID or data change
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentGameId, savedGames, initialLoadComplete]); // IMPORTANT: initialLoadComplete ensures this runs after master roster is loaded.
 
   // --- Save state to localStorage ---
   useEffect(() => {

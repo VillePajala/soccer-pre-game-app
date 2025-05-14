@@ -147,8 +147,8 @@ const renderComponent = (props: TestProps) => {
 
 describe('GameStatsModal', () => {
   beforeEach(async () => {
-    mockGetSeasons.mockReturnValue(sampleSeasonsData);
-    mockGetTournaments.mockReturnValue(sampleTournamentsData);
+    mockGetSeasons.mockResolvedValue(sampleSeasonsData);
+    mockGetTournaments.mockResolvedValue(sampleTournamentsData);
     await i18n.changeLanguage('fi');
   });
 

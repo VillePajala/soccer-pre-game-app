@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Player } from '@/app/page'; // Import Player type
+import type { Player } from '@/types'; // Import Player type from the central types file
 import {
     HiOutlineXMark,
     HiOutlineCheck,

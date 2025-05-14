@@ -66,49 +66,49 @@ describe('Tournament Management Utilities (localStorage)', () => {
   ];
 
   describe('getTournaments', () => {
-    it('should return an empty array if no tournaments are in localStorage', () => {
+    it('should return an empty array if no tournaments are in localStorage', async () => {
       // localStorageMock.getItem will return null by default if store is empty
-      expect(getTournaments()).toEqual([]);
+      expect(await getTournaments()).toEqual([]);
       expect(localStorageMock.getItem).toHaveBeenCalledWith(TOURNAMENTS_LIST_KEY);
     });
 
-    it('should return tournaments from localStorage if they exist', () => {
+    it('should return tournaments from localStorage if they exist', async () => {
       store[TOURNAMENTS_LIST_KEY] = JSON.stringify(sampleTournaments);
-      expect(getTournaments()).toEqual(sampleTournaments);
+      expect(await getTournaments()).toEqual(sampleTournaments);
       expect(localStorageMock.getItem).toHaveBeenCalledWith(TOURNAMENTS_LIST_KEY);
     });
 
-    it('should return an empty array and log an error if localStorage data is malformed', () => {
+    it('should return an empty array and log an error if localStorage data is malformed', async () => {
       localStorageMock.getItem.mockReturnValue('invalid-json-format');
-      expect(getTournaments()).toEqual([]);
+      expect(await getTournaments()).toEqual([]);
       expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('[getTournaments] Error getting tournaments from localStorage:'), expect.any(SyntaxError));
     });
   });
 
   describe('saveTournaments (direct test of the utility)', () => {
-    it('should save tournaments to localStorage and return true', () => {
-      const result = saveTournaments(sampleTournaments);
+    it('should save tournaments to localStorage and return true', async () => {
+      const result = await saveTournaments(sampleTournaments);
       expect(result).toBe(true);
       expect(localStorageMock.setItem).toHaveBeenCalledWith(TOURNAMENTS_LIST_KEY, JSON.stringify(sampleTournaments));
       expect(JSON.parse(store[TOURNAMENTS_LIST_KEY])).toEqual(sampleTournaments);
     });
 
-    it('should overwrite existing tournaments and return true', () => {
+    it('should overwrite existing tournaments and return true', async () => {
       const initialTournaments: Tournament[] = [{ id: 't0', name: 'Old Cup' }];
       store[TOURNAMENTS_LIST_KEY] = JSON.stringify(initialTournaments); 
 
-      const result = saveTournaments(sampleTournaments);
+      const result = await saveTournaments(sampleTournaments);
       expect(result).toBe(true);
       expect(localStorageMock.setItem).toHaveBeenCalledWith(TOURNAMENTS_LIST_KEY, JSON.stringify(sampleTournaments));
       expect(JSON.parse(store[TOURNAMENTS_LIST_KEY])).toEqual(sampleTournaments);
     });
 
-    it('should return false and log an error if saving fails (localStorage.setItem throws)', () => {
+    it('should return false and log an error if saving fails (localStorage.setItem throws)', async () => {
       const errorMsg = 'Storage full';
       localStorageMock.setItem.mockImplementationOnce(() => { 
         throw new Error(errorMsg); 
       });
-      const result = saveTournaments(sampleTournaments);
+      const result = await saveTournaments(sampleTournaments);
       expect(result).toBe(false);
       expect(localStorageMock.setItem).toHaveBeenCalledWith(TOURNAMENTS_LIST_KEY, JSON.stringify(sampleTournaments));
       expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('[saveTournaments] Error saving tournaments to localStorage:'), expect.objectContaining({ message: errorMsg }));
@@ -116,14 +116,14 @@ describe('Tournament Management Utilities (localStorage)', () => {
   });
 
   describe('addTournament', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       // Start with an empty list of tournaments in localStorage for most add tests
       store[TOURNAMENTS_LIST_KEY] = JSON.stringify([]);
     });
     
-    it('should add a new tournament, save it, and return the new object', () => {
+    it('should add a new tournament, save it, and return the new object', async () => {
       const newTournamentName = 'Newcomers Trophy';
-      const newTournament = addTournament(newTournamentName);
+      const newTournament = await addTournament(newTournamentName);
       
       expect(newTournament).not.toBeNull();
       expect(newTournament?.name).toBe(newTournamentName);
@@ -134,7 +134,7 @@ describe('Tournament Management Utilities (localStorage)', () => {
       expect(storedTournaments[0]).toEqual(expect.objectContaining({ name: newTournamentName }));
     });
 
-    it('should add to an existing list, save it, and return the new object', () => {
+    it('should add to an existing list, save it, and return the new object', async () => {
       store[TOURNAMENTS_LIST_KEY] = JSON.stringify([sampleTournaments[0]]); // Prime with one tournament
       
       const newTournamentName = 'Invitational Cup';

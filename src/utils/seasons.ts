@@ -10,151 +10,135 @@ import type { Season } from '@/types'; // Import Season type from shared types
 
 /**
  * Retrieves all seasons from localStorage.
- * @returns An array of Season objects.
+ * @returns A promise that resolves to an array of Season objects.
  */
-export const getSeasons = (): Season[] => {
+export const getSeasons = async (): Promise<Season[]> => {
   try {
     const seasonsJson = localStorage.getItem(SEASONS_LIST_KEY);
-    // Ensure null/undefined check before parsing
     if (!seasonsJson) {
-      return [];
+      return Promise.resolve([]);
     }
-    return JSON.parse(seasonsJson) as Season[]; // Assume valid structure or let catch handle
+    return Promise.resolve(JSON.parse(seasonsJson) as Season[]);
   } catch (error) {
     console.error('[getSeasons] Error reading seasons from localStorage:', error);
-    return []; // Return empty array on error
+    return Promise.resolve([]); // Resolve with empty array on error
   }
 };
 
 /**
  * Saves an array of seasons to localStorage, overwriting any existing seasons.
  * @param seasons - The array of Season objects to save.
- * @returns {boolean} True if successful, false otherwise.
+ * @returns A promise that resolves to true if successful, false otherwise.
  */
-export const saveSeasons = (seasons: Season[]): boolean => {
+export const saveSeasons = async (seasons: Season[]): Promise<boolean> => {
   try {
     localStorage.setItem(SEASONS_LIST_KEY, JSON.stringify(seasons));
-    return true;
+    return Promise.resolve(true);
   } catch (error) {
     console.error('[saveSeasons] Error saving seasons to localStorage:', error);
-    // Handle potential errors, e.g., localStorage quota exceeded
-    return false;
+    return Promise.resolve(false);
   }
 };
 
 /**
  * Adds a new season to the list of seasons in localStorage.
  * @param newSeasonName - The name of the new season.
- * @returns The newly created Season object, or null if validation/save fails.
+ * @returns A promise that resolves to the newly created Season object, or null if validation/save fails.
  */
-export const addSeason = (newSeasonName: string): Season | null => {
+export const addSeason = async (newSeasonName: string): Promise<Season | null> => {
   const trimmedName = newSeasonName.trim();
   if (!trimmedName) {
     console.error('[addSeason] Validation failed: Season name cannot be empty.');
-    // throw new Error('Season name cannot be empty.'); // Replaced throw
-    return null;
+    return Promise.resolve(null);
   }
 
   try {
-    const currentSeasons = getSeasons(); // getSeasons handles its own errors
+    const currentSeasons = await getSeasons();
     if (currentSeasons.some(s => s.name.toLowerCase() === trimmedName.toLowerCase())) {
       console.error(`[addSeason] Validation failed: A season with name "${trimmedName}" already exists.`);
-      // throw new Error('A season with this name already exists.'); // Replaced throw
-      return null;
+      return Promise.resolve(null);
     }
     const newSeason: Season = {
       id: `season_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
       name: trimmedName,
     };
     const updatedSeasons = [...currentSeasons, newSeason];
-    const success = saveSeasons(updatedSeasons); // saveSeasons handles its own errors
+    const success = await saveSeasons(updatedSeasons);
 
     if (!success) {
-      // Error already logged by saveSeasons
-      return null;
+      return Promise.resolve(null);
     }
-
-    return newSeason; // Return the new season object on success
+    return Promise.resolve(newSeason);
   } catch (error) {
-    // Catch unexpected errors during the add process itself (less likely now)
     console.error('[addSeason] Unexpected error adding season:', error);
-    return null;
+    return Promise.resolve(null);
   }
 };
 
 /**
  * Updates an existing season in localStorage.
  * @param updatedSeason - The Season object with updated details.
- * @returns The updated Season object, or null if not found or save fails.
+ * @returns A promise that resolves to the updated Season object, or null if not found or save fails.
  */
-export const updateSeason = (updatedSeason: Season): Season | null => {
-  if (!updatedSeason || !updatedSeason.id || !updatedSeason.name?.trim()) {
+export const updateSeason = async (updatedSeasonData: Season): Promise<Season | null> => {
+  if (!updatedSeasonData || !updatedSeasonData.id || !updatedSeasonData.name?.trim()) {
     console.error('[updateSeason] Invalid season data provided for update.');
-    return null;
+    return Promise.resolve(null);
   }
-  const trimmedName = updatedSeason.name.trim();
+  const trimmedName = updatedSeasonData.name.trim();
 
   try {
-    const currentSeasons = getSeasons();
-    const seasonIndex = currentSeasons.findIndex(s => s.id === updatedSeason.id);
+    const currentSeasons = await getSeasons();
+    const seasonIndex = currentSeasons.findIndex(s => s.id === updatedSeasonData.id);
 
     if (seasonIndex === -1) {
-      console.error(`[updateSeason] Season with ID ${updatedSeason.id} not found.`);
-      // throw new Error('Season not found for update.'); // Replaced throw
-      return null;
+      console.error(`[updateSeason] Season with ID ${updatedSeasonData.id} not found.`);
+      return Promise.resolve(null);
     }
 
-    // Check for name conflict (only if name changed and conflicts with *another* season)
-    if (currentSeasons.some(s => s.id !== updatedSeason.id && s.name.toLowerCase() === trimmedName.toLowerCase())) {
+    if (currentSeasons.some(s => s.id !== updatedSeasonData.id && s.name.toLowerCase() === trimmedName.toLowerCase())) {
       console.error(`[updateSeason] Validation failed: Another season with name "${trimmedName}" already exists.`);
-      return null;
+      return Promise.resolve(null);
     }
 
-    const updatedSeasons = [...currentSeasons];
-    // Ensure we only update the name if it changed to the trimmed version
-    updatedSeasons[seasonIndex] = { ...updatedSeason, name: trimmedName }; 
+    const seasonsToUpdate = [...currentSeasons];
+    seasonsToUpdate[seasonIndex] = { ...updatedSeasonData, name: trimmedName }; 
 
-    const success = saveSeasons(updatedSeasons);
+    const success = await saveSeasons(seasonsToUpdate);
 
     if (!success) {
-      // Error already logged by saveSeasons
-      return null;
+      return Promise.resolve(null);
     }
-
-    return updatedSeasons[seasonIndex]; // Return the updated season object
+    return Promise.resolve(seasonsToUpdate[seasonIndex]);
   } catch (error) {
-    // Catch unexpected errors during the update process
     console.error('[updateSeason] Unexpected error updating season:', error);
-    return null;
+    return Promise.resolve(null);
   }
 };
 
 /**
  * Deletes a season from localStorage by its ID.
  * @param seasonId - The ID of the season to delete.
- * @returns {boolean} True if successful, false if not found or error occurs.
+ * @returns A promise that resolves to true if successful, false if not found or error occurs.
  */
-export const deleteSeason = (seasonId: string): boolean => {
+export const deleteSeason = async (seasonId: string): Promise<boolean> => {
   if (!seasonId) {
      console.error('[deleteSeason] Invalid season ID provided.');
-     return false;
+     return Promise.resolve(false);
   }
   try {
-    const currentSeasons = getSeasons();
+    const currentSeasons = await getSeasons();
     const updatedSeasons = currentSeasons.filter(s => s.id !== seasonId);
 
     if (updatedSeasons.length === currentSeasons.length) {
-      // Log error if seasonId was not found
       console.error(`[deleteSeason] Season with id ${seasonId} not found.`);
-      return false; // Indicate failure: Not found
+      return Promise.resolve(false);
     }
 
-    const success = saveSeasons(updatedSeasons);
-    return success; // Return success status from saveSeasons
-
+    const success = await saveSeasons(updatedSeasons);
+    return Promise.resolve(success);
   } catch (error) {
-    // Catch unexpected errors during the delete process
     console.error('[deleteSeason] Unexpected error deleting season:', error);
-    return false;
+    return Promise.resolve(false);
   }
 }; 

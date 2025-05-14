@@ -5,16 +5,16 @@ import type { Player } from '@/types';
  * Retrieves the master roster of players from localStorage.
  * @returns An array of Player objects.
  */
-export const getMasterRoster = (): Player[] => {
+export const getMasterRoster = async (): Promise<Player[]> => {
   try {
     const rosterJson = localStorage.getItem(MASTER_ROSTER_KEY);
     if (!rosterJson) {
-      return [];
+      return Promise.resolve([]);
     }
-    return JSON.parse(rosterJson) as Player[];
+    return Promise.resolve(JSON.parse(rosterJson) as Player[]);
   } catch (error) {
     console.error('[getMasterRoster] Error getting master roster from localStorage:', error);
-    return []; // Return empty array on error
+    return Promise.resolve([]); // Return empty array on error
   }
 };
 
@@ -23,14 +23,14 @@ export const getMasterRoster = (): Player[] => {
  * @param players - The array of Player objects to save.
  * @returns {boolean} True if successful, false otherwise.
  */
-export const saveMasterRoster = (players: Player[]): boolean => {
+export const saveMasterRoster = async (players: Player[]): Promise<boolean> => {
   try {
     localStorage.setItem(MASTER_ROSTER_KEY, JSON.stringify(players));
-    return true;
+    return Promise.resolve(true);
   } catch (error) {
     console.error('[saveMasterRoster] Error saving master roster to localStorage:', error);
     // Handle potential errors, e.g., localStorage quota exceeded
-    return false;
+    return Promise.resolve(false);
   }
 };
 
@@ -39,21 +39,21 @@ export const saveMasterRoster = (players: Player[]): boolean => {
  * @param playerData - The player data to add. Must contain at least a name.
  * @returns The new Player object with generated ID, or null if operation failed.
  */
-export const addPlayerToRoster = (playerData: { 
+export const addPlayerToRoster = async (playerData: {
   name: string;
   nickname?: string;
   jerseyNumber?: string;
   notes?: string;
-}): Player | null => {
+}): Promise<Player | null> => {
   const trimmedName = playerData.name?.trim();
   if (!trimmedName) {
     console.error('[addPlayerToRoster] Validation Failed: Player name cannot be empty.');
-    return null;
+    return Promise.resolve(null);
   }
-  
+
   try {
-    const currentRoster = getMasterRoster();
-    
+    const currentRoster = await getMasterRoster();
+
     // Create new player with unique ID
     const newPlayer: Player = {
       id: `player_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
@@ -64,19 +64,19 @@ export const addPlayerToRoster = (playerData: {
       isGoalie: false, // Default to not goalie
       receivedFairPlayCard: false, // Default to not having received fair play card
     };
-    
+
     const updatedRoster = [...currentRoster, newPlayer];
-    const success = saveMasterRoster(updatedRoster);
-    
+    const success = await saveMasterRoster(updatedRoster);
+
     if (!success) {
       // Error logged by saveMasterRoster
-      return null;
+      return Promise.resolve(null);
     }
-    
-    return newPlayer;
+
+    return Promise.resolve(newPlayer);
   } catch (error) {
     console.error('[addPlayerToRoster] Unexpected error adding player:', error);
-    return null;
+    return Promise.resolve(null);
   }
 };
 
@@ -86,22 +86,22 @@ export const addPlayerToRoster = (playerData: {
  * @param updateData - The player data to update.
  * @returns The updated Player object, or null if player not found or operation failed.
  */
-export const updatePlayerInRoster = (
-  playerId: string, 
+export const updatePlayerInRoster = async (
+  playerId: string,
   updateData: Partial<Omit<Player, 'id'>>
-): Player | null => {
+): Promise<Player | null> => {
   if (!playerId) {
     console.error('[updatePlayerInRoster] Validation Failed: Player ID cannot be empty.');
-    return null;
+    return Promise.resolve(null);
   }
 
   try {
-    const currentRoster = getMasterRoster();
+    const currentRoster = await getMasterRoster();
     const playerIndex = currentRoster.findIndex(p => p.id === playerId);
     
     if (playerIndex === -1) {
       console.error(`[updatePlayerInRoster] Player with ID ${playerId} not found.`);
-      return null;
+      return Promise.resolve(null);
     }
     
     // Create updated player object
@@ -113,7 +113,7 @@ export const updatePlayerInRoster = (
     // Ensure name is not empty if it's being updated
     if (updateData.name !== undefined && !updatedPlayer.name?.trim()) {
       console.error('[updatePlayerInRoster] Validation Failed: Player name cannot be empty.');
-      return null;
+      return Promise.resolve(null);
     }
     // Ensure name is trimmed if updated
     if (updatedPlayer.name) {
@@ -123,17 +123,17 @@ export const updatePlayerInRoster = (
     // Update roster
     const updatedRoster = [...currentRoster];
     updatedRoster[playerIndex] = updatedPlayer;
-    const success = saveMasterRoster(updatedRoster);
+    const success = await saveMasterRoster(updatedRoster);
     
     if (!success) {
       // Error logged by saveMasterRoster
-      return null;
+      return Promise.resolve(null);
     }
 
-    return updatedPlayer;
+    return Promise.resolve(updatedPlayer);
   } catch (error) {
     console.error('[updatePlayerInRoster] Unexpected error updating player:', error);
-    return null;
+    return Promise.resolve(null);
   }
 };
 
@@ -142,27 +142,27 @@ export const updatePlayerInRoster = (
  * @param playerId - The ID of the player to remove.
  * @returns True if player was successfully removed, false otherwise.
  */
-export const removePlayerFromRoster = (playerId: string): boolean => {
+export const removePlayerFromRoster = async (playerId: string): Promise<boolean> => {
   if (!playerId) {
     console.error('[removePlayerFromRoster] Validation Failed: Player ID cannot be empty.');
-    return false;
+    return Promise.resolve(false);
   }
 
   try {
-    const currentRoster = getMasterRoster();
+    const currentRoster = await getMasterRoster();
     const updatedRoster = currentRoster.filter(p => p.id !== playerId);
     
     if (updatedRoster.length === currentRoster.length) {
       console.error(`[removePlayerFromRoster] Player with ID ${playerId} not found.`);
-      return false;
+      return Promise.resolve(false);
     }
     
-    const success = saveMasterRoster(updatedRoster);
-    return success;
+    const success = await saveMasterRoster(updatedRoster);
+    return Promise.resolve(success);
 
   } catch (error) {
     console.error('[removePlayerFromRoster] Unexpected error removing player:', error);
-    return false;
+    return Promise.resolve(false);
   }
 };
 
@@ -172,10 +172,10 @@ export const removePlayerFromRoster = (playerId: string): boolean => {
  * @param isGoalie - Whether the player should be marked as a goalie.
  * @returns The updated Player object, or null if player not found or operation failed.
  */
-export const setPlayerGoalieStatus = (
+export const setPlayerGoalieStatus = async (
   playerId: string,
   isGoalie: boolean
-): Player | null => {
+): Promise<Player | null> => {
   return updatePlayerInRoster(playerId, { isGoalie });
 };
 
@@ -185,9 +185,9 @@ export const setPlayerGoalieStatus = (
  * @param receivedFairPlayCard - Whether the player should be marked as having received the fair play card.
  * @returns The updated Player object, or null if player not found or operation failed.
  */
-export const setPlayerFairPlayCardStatus = (
+export const setPlayerFairPlayCardStatus = async (
   playerId: string,
   receivedFairPlayCard: boolean
-): Player | null => {
+): Promise<Player | null> => {
   return updatePlayerInRoster(playerId, { receivedFairPlayCard });
 }; 

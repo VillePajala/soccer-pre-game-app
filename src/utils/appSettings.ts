@@ -21,110 +21,135 @@ const DEFAULT_APP_SETTINGS: AppSettings = {
 
 /**
  * Gets the application settings from localStorage
- * @returns The application settings
+ * @returns A promise that resolves to the application settings
  */
-export const getAppSettings = (): AppSettings => {
+export const getAppSettings = async (): Promise<AppSettings> => {
   try {
     const settingsJson = localStorage.getItem(APP_SETTINGS_KEY);
     if (!settingsJson) {
-      return DEFAULT_APP_SETTINGS;
+      return Promise.resolve(DEFAULT_APP_SETTINGS);
     }
     
     const settings = JSON.parse(settingsJson);
-    return { ...DEFAULT_APP_SETTINGS, ...settings };
+    return Promise.resolve({ ...DEFAULT_APP_SETTINGS, ...settings });
   } catch (error) {
     console.error('Error getting app settings from localStorage:', error);
-    return DEFAULT_APP_SETTINGS;
+    return Promise.resolve(DEFAULT_APP_SETTINGS); // Resolve with default on error
   }
 };
 
 /**
  * Saves the application settings to localStorage
  * @param settings - The settings to save
+ * @returns A promise that resolves to true if successful, false otherwise
  */
-export const saveAppSettings = (settings: AppSettings): void => {
+export const saveAppSettings = async (settings: AppSettings): Promise<boolean> => {
   try {
     localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(settings));
+    return Promise.resolve(true);
   } catch (error) {
     console.error('Error saving app settings to localStorage:', error);
+    return Promise.resolve(false);
   }
 };
 
 /**
  * Updates specific application settings while preserving others
  * @param settingsUpdate - Partial settings to update
- * @returns The updated settings
+ * @returns A promise that resolves to the updated settings
  */
-export const updateAppSettings = (settingsUpdate: Partial<AppSettings>): AppSettings => {
+export const updateAppSettings = async (settingsUpdate: Partial<AppSettings>): Promise<AppSettings> => {
   try {
-    const currentSettings = getAppSettings();
+    // Wait for getAppSettings to resolve
+    const currentSettings = await getAppSettings();
     const updatedSettings = { ...currentSettings, ...settingsUpdate };
-    saveAppSettings(updatedSettings);
-    return updatedSettings;
+    // Wait for saveAppSettings to resolve
+    await saveAppSettings(updatedSettings);
+    return Promise.resolve(updatedSettings);
   } catch (error) {
     console.error('Error updating app settings:', error);
-    return getAppSettings(); // Return current settings in case of error
+    // Wait for getAppSettings to resolve before returning
+    return Promise.resolve(await getAppSettings()); // Return current settings in case of error
   }
 };
 
 /**
  * Gets the current game ID
- * @returns The current game ID, or null if not set
+ * @returns A promise that resolves to the current game ID, or null if not set
  */
-export const getCurrentGameIdSetting = (): string | null => {
-  return getAppSettings().currentGameId;
+export const getCurrentGameIdSetting = async (): Promise<string | null> => {
+  // Wait for getAppSettings to resolve
+  const settings = await getAppSettings();
+  return Promise.resolve(settings.currentGameId);
 };
 
 /**
  * Saves the current game ID setting
  * @param gameId - The game ID to save
+ * @returns A promise that resolves to true if successful, false otherwise
  */
-export const saveCurrentGameIdSetting = (gameId: string | null): void => {
-  updateAppSettings({ currentGameId: gameId });
+export const saveCurrentGameIdSetting = async (gameId: string | null): Promise<boolean> => {
+  try {
+    // Wait for updateAppSettings to resolve
+    await updateAppSettings({ currentGameId: gameId });
+    return Promise.resolve(true);
+  } catch {
+    // updateAppSettings already logs errors. We indicate failure here.
+    return Promise.resolve(false);
+  }
 };
 
 /**
  * Gets the last used home team name
- * @returns The last home team name, or empty string if not set
+ * @returns A promise that resolves to the last home team name, or empty string if not set
  */
-export const getLastHomeTeamName = (): string => {
+export const getLastHomeTeamName = async (): Promise<string> => {
   try {
     // Try the modern approach first (using appSettings)
-    const settings = getAppSettings();
+    // Wait for getAppSettings to resolve
+    const settings = await getAppSettings();
     if (settings.lastHomeTeamName) {
-      return settings.lastHomeTeamName;
+      return Promise.resolve(settings.lastHomeTeamName);
     }
     
     // Fall back to legacy approach (using dedicated key)
     const legacyValue = localStorage.getItem(LAST_HOME_TEAM_NAME_KEY);
-    return legacyValue || '';
+    return Promise.resolve(legacyValue || '');
   } catch (error) {
     console.error('Error getting last home team name:', error);
-    return '';
+    return Promise.resolve('');
   }
 };
 
 /**
  * Saves the last used home team name
  * @param teamName - The team name to save
+ * @returns A promise that resolves to true if successful, false otherwise
  */
-export const saveLastHomeTeamName = (teamName: string): void => {
+export const saveLastHomeTeamName = async (teamName: string): Promise<boolean> => {
   try {
     // Save in both the modern way and legacy way for backwards compatibility
-    updateAppSettings({ lastHomeTeamName: teamName });
-    localStorage.setItem(LAST_HOME_TEAM_NAME_KEY, teamName);
+    // Wait for updateAppSettings to resolve
+    await updateAppSettings({ lastHomeTeamName: teamName });
+    localStorage.setItem(LAST_HOME_TEAM_NAME_KEY, teamName); // Legacy sync save
+    return Promise.resolve(true);
   } catch (error) {
     console.error('Error saving last home team name:', error);
+    return Promise.resolve(false);
   }
 };
 
 /**
  * Clears all application settings, resetting to defaults
+ * @returns A promise that resolves to true if successful, false otherwise
  */
-export const resetAppSettings = (): void => {
+export const resetAppSettings = async (): Promise<boolean> => {
   try {
-    saveAppSettings(DEFAULT_APP_SETTINGS);
+    // Wait for saveAppSettings to resolve
+    const success = await saveAppSettings(DEFAULT_APP_SETTINGS);
+    return Promise.resolve(success);
   } catch (error) {
     console.error('Error resetting app settings:', error);
+    return Promise.resolve(false);
   }
 }; 
