@@ -140,7 +140,7 @@ We've already made progress in centralizing data access for certain entities:
 | 1.4.5 | Refactor GameStatsModal | ✅ Completed | 2024-08-02 | Component refactored to use getSeasons/getTournaments utilities; tests already correctly mock these. |
 | 1.5  | Implement error handling patterns | 🔄 In Progress | | Implemented for seasons.ts and tournaments.ts. Next: masterRoster.ts |
 | 1.5.1 | Refactor src/utils/seasons.ts error handling | ✅ Completed | 2024-08-02 | Aligned with defined error handling strategy (return null/false, console.error). Tests updated. |
-| 1.5.2 | Refactor src/utils/tournaments.ts error handling | ✅ Completed | 2024-08-02 | Aligned with defined error handling strategy. Tests updated to match new logging and error details. |
+| 1.5.2 | Refactor src/utils/tournaments.ts error handling | ✅ Completed | 2024-08-03 | Aligned with defined error handling strategy. Tests updated to match new logging and error details, successfully refactored to test by controlling localStorage mock directly. |
 | 2.1  | Make utility functions return Promises | 📝 Planned | | |
 | 2.2  | Update components for async operations | 📝 Planned | | |
 | 2.3  | Add loading states | 📝 Planned | | |

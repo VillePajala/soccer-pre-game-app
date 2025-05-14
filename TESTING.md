@@ -102,6 +102,7 @@ We employ a three-layered testing approach:
       * ✅ Validates tournament data (e.g., unique names, non-empty names, valid IDs).
       * ✅ Verifies correct array manipulation and persistence.
       * ✅ Aligned with defined error handling strategy (return values null/false, console.error logging with prefixes for all error types including parsing, saving, validation for empty/duplicate names, non-existent items, invalid data, and save failures during operations).
+      * ✅ All tests passing after refactoring to test by controlling `localStorage` mocks directly, resolving previous mocking complexities.
 
   * **Component Tests:**
     * **`src/components/LoadGameModal.test.tsx`**:
@@ -284,6 +285,7 @@ This outlines the next steps to achieve better test coverage, with a comprehensi
    * ✅ Test `localStorage` interactions (get, save).
    * ✅ Test CRUD operations (add, update, delete).
    * ✅ Test data validation (unique names, non-empty names).
+   * ✅ `tournaments.test.ts` is fully passing and stable.
 
 ### Integration Testing Plan (Jest)
 
