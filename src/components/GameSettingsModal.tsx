@@ -137,20 +137,23 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   // Load seasons/tournaments using utility functions
   useEffect(() => {
     if (isOpen) {
-      try {
-        const loadedSeasons = getSeasons();
-        setSeasons(loadedSeasons);
-      } catch (error) {
-        console.error('Error loading seasons:', error);
-        setSeasons([]);
-      }
-      try {
-        const loadedTournaments = getTournaments();
-        setTournaments(loadedTournaments);
-      } catch (error) {
-        console.error('Error loading tournaments:', error);
-        setTournaments([]);
-      }
+      const fetchModalData = async () => {
+        try {
+          const loadedSeasonsData = await getSeasons();
+          setSeasons(Array.isArray(loadedSeasonsData) ? loadedSeasonsData : []);
+        } catch (error) {
+          console.error('Error loading seasons:', error);
+          setSeasons([]);
+        }
+        try {
+          const loadedTournamentsData = await getTournaments();
+          setTournaments(Array.isArray(loadedTournamentsData) ? loadedTournamentsData : []);
+        } catch (error) {
+          console.error('Error loading tournaments:', error);
+          setTournaments([]);
+        }
+      };
+      fetchModalData();
     }
   }, [isOpen]);
 

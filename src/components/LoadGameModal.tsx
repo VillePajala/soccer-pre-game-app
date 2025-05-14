@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SavedGamesCollection, Season, Tournament } from '@/app/page'; // Removed unused GameEvent
+import { SavedGamesCollection } from '@/app/page'; // Keep this if SavedGamesCollection is from here
+import { Season, Tournament } from '@/types'; // Corrected import path
 import i18n from '../i18n'; // Import i18n directly
 import { 
   HiOutlineDocumentArrowDown, 
@@ -68,20 +69,23 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
   // Load seasons and tournaments on mount or when modal opens
   useEffect(() => {
     if (isOpen) {
-      try {
-        const loadedSeasons = utilGetSeasons();
-        setSeasons(loadedSeasons);
-      } catch (error) { // Should be rare as utilGetSeasons handles its own try/catch
-        console.error("Error loading seasons via utility:", error);
-        setSeasons([]); 
-      }
-      try {
-        const loadedTournaments = utilGetTournaments();
-        setTournaments(loadedTournaments);
-      } catch (error) { // Should be rare as utilGetTournaments handles its own try/catch
-        console.error("Error loading tournaments via utility:", error);
-        setTournaments([]);
-      }
+      const fetchModalData = async () => {
+        try {
+          const loadedSeasonsData = await utilGetSeasons();
+          setSeasons(Array.isArray(loadedSeasonsData) ? loadedSeasonsData : []);
+        } catch (error) {
+          console.error("Error loading seasons via utility:", error);
+          setSeasons([]); 
+        }
+        try {
+          const loadedTournamentsData = await utilGetTournaments();
+          setTournaments(Array.isArray(loadedTournamentsData) ? loadedTournamentsData : []);
+        } catch (error) {
+          console.error("Error loading tournaments via utility:", error);
+          setTournaments([]);
+        }
+      };
+      fetchModalData();
     }
   }, [isOpen]);
 
