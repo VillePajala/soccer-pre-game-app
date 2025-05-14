@@ -74,10 +74,15 @@ describe('PlayerBar', () => {
   it('indicates goalies correctly', () => {
     render(<PlayerBar {...defaultProps} />);
     
-    // The goalie (Jane) should have a different visual indicator
-    // This test will be more component-specific based on how you indicate goalies
+    // The goalie (Jane) should have a different visual indicator (background color)
     const janeDisk = screen.getByText('Jane').closest('div');
     expect(janeDisk).toBeInTheDocument();
-    // Further assertions would depend on the specific visual indication used
+    expect(janeDisk).toHaveStyle('background-color: #F97316'); // Goalie color from PlayerDisk.tsx
+
+    // Optionally, check a non-goalie's color
+    const johnDisk = screen.getByText('John').closest('div');
+    expect(johnDisk).toBeInTheDocument();
+    // John's color is #FF0000 (red)
+    expect(johnDisk).toHaveStyle('background-color: #FF0000'); 
   });
 }); 

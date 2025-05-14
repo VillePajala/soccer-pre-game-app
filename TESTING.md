@@ -94,13 +94,14 @@ We employ a three-layered testing approach:
       * ✅ Tests CRUD operations: `addSeason`, `updateSeason`, `deleteSeason`.
       * ✅ Validates season data (e.g., unique names, non-empty names).
       * ✅ Verifies correct array manipulation and persistence.
+      * ✅ Aligned with defined error handling strategy (return values null/false, console.error logging with prefixes, validation for empty/duplicate names, save failures).
 
     * **`src/utils/tournaments.test.ts`** (New):
       * ✅ Handles `localStorage` interactions for tournaments: `getTournaments`, `saveTournaments`.
       * ✅ Tests CRUD operations: `addTournament`, `updateTournament`, `deleteTournament`.
-      * ✅ Validates tournament data (e.g., unique names, non-empty names).
+      * ✅ Validates tournament data (e.g., unique names, non-empty names, valid IDs).
       * ✅ Verifies correct array manipulation and persistence.
-      * ✅ Verified alignment with defined error handling strategy (return values, error logging).
+      * ✅ Aligned with defined error handling strategy (return values null/false, console.error logging with prefixes for all error types including parsing, saving, validation for empty/duplicate names, non-existent items, invalid data, and save failures during operations).
 
   * **Component Tests:**
     * **`src/components/LoadGameModal.test.tsx`**:

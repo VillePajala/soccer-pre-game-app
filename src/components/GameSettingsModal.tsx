@@ -92,7 +92,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   homeOrAway,
   onSetHomeOrAway,
 }) => {
-  console.log('[GameSettingsModal Render] Props received:', { seasonId, tournamentId, currentGameId });
+  // console.log('[GameSettingsModal Render] Props received:', { seasonId, tournamentId, currentGameId });
   const { t } = useTranslation();
 
   // Helper function definition INSIDE the component body
@@ -341,7 +341,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
     try {
       switch (inlineEditingField) {
         case 'opponent':
-          console.log('[GameSettingsModal] Attempting to save opponent name:', trimmedValue);
+          // console.log('[GameSettingsModal] Attempting to save opponent name:', trimmedValue);
           if (trimmedValue) {
             onOpponentNameChange(trimmedValue);
             // Update game details in storage using utility function
@@ -751,7 +751,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                     {/* None button */}
                     <button
                       onClick={() => {
-                        console.log('[GameSettingsModal] Association button clicked: none');
+                        // console.log('[GameSettingsModal] Association button clicked: none');
                         onSeasonIdChange(null);
                         onTournamentIdChange(null);
                       }}
@@ -763,11 +763,8 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                     {/* Season button */}
                     <button
                       onClick={() => {
-                        console.log('[GameSettingsModal] Association button clicked: season');
-                        onTournamentIdChange(null);
-                        // If season is already selected, keep it selected (don't toggle off)
-                        if (associationType !== 'season' && seasons.length > 0) {
-                          // If we have seasons and this is a new selection, select the first one
+                        // console.log('[GameSettingsModal] Association button clicked: season');
+                        if (seasons && seasons.length > 0) {
                           onSeasonIdChange(seasons[0].id);
                         } else if (associationType !== 'season') {
                           // Just set empty seasonId to show the dropdown
@@ -782,11 +779,8 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                     {/* Tournament button */}
                     <button
                       onClick={() => {
-                        console.log('[GameSettingsModal] Association button clicked: tournament');
-                        onSeasonIdChange(null);
-                        // If tournament is already selected, keep it selected (don't toggle off)
-                        if (associationType !== 'tournament' && tournaments.length > 0) {
-                          // If we have tournaments and this is a new selection, select the first one
+                        // console.log('[GameSettingsModal] Association button clicked: tournament');
+                        if (tournaments && tournaments.length > 0) {
                           onTournamentIdChange(tournaments[0].id);
                         } else if (associationType !== 'tournament') {
                           // Just set empty tournamentId to show the dropdown

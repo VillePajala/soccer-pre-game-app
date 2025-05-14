@@ -29,7 +29,11 @@ describe('App Settings Utilities', () => {
 
   // Reset mocks before each test
   beforeEach(() => {
-    jest.clearAllMocks();
+    localStorageMock.getItem.mockReset();
+    localStorageMock.setItem.mockReset();
+    localStorageMock.clear.mockReset();
+    localStorageMock.removeItem.mockReset();
+    localStorageMock.key.mockReset();
   });
 
   describe('getAppSettings', () => {
@@ -75,6 +79,22 @@ describe('App Settings Utilities', () => {
       
       consoleSpy.mockRestore();
     });
+
+    it('should handle localStorage errors', () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const error = new Error('Storage quota exceeded');
+      
+      // Store original implementation and set temporary one for this test
+      const originalSetItem = localStorageMock.setItem;
+      localStorageMock.setItem = jest.fn(() => { throw error; }); // Use jest.fn() for direct assignment
+      
+      saveAppSettings({ currentGameId: 'game123' });
+      
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Error saving app settings'), error);
+      
+      localStorageMock.setItem = originalSetItem; // Restore original implementation
+      consoleSpy.mockRestore();
+    });
   });
 
   describe('saveAppSettings', () => {
@@ -91,18 +111,6 @@ describe('App Settings Utilities', () => {
         APP_SETTINGS_KEY,
         JSON.stringify(settings)
       );
-    });
-
-    it('should handle localStorage errors', () => {
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-      const error = new Error('Storage quota exceeded');
-      localStorageMock.setItem.mockImplementation(() => { throw error; });
-      
-      saveAppSettings({ currentGameId: 'game123' });
-      
-      expect(consoleSpy).toHaveBeenCalled();
-      
-      consoleSpy.mockRestore();
     });
   });
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import GameStatsModal from './GameStatsModal';
 import { Player, Season, Tournament } from '@/types';
@@ -157,19 +157,41 @@ describe('GameStatsModal', () => {
   });
 
   test('renders modal title and basic game info when open', () => {
-    renderComponent(getDefaultProps());
+    const props = getDefaultProps();
+    renderComponent(props);
     expect(screen.getByRole('heading', { name: i18n.t('gameStatsModal.title') })).toBeInTheDocument();
-    expect(screen.getByText('Test Team')).toBeInTheDocument();
-    expect(screen.getByText('Rivals')).toBeInTheDocument();
-    expect(screen.getByText((content, element) => {
-      if (!element || element.tagName.toLowerCase() !== 'span' || !element.parentElement) return false;
-      return (element.parentElement.textContent?.includes(i18n.t('common.home')) ?? false) && content === '2';
-    })).toBeInTheDocument();
-    expect(screen.getByText((content, element) => {
-      if (!element || element.tagName.toLowerCase() !== 'span' || !element.parentElement) return false;
-      return (element.parentElement.textContent?.includes(i18n.t('common.away')) ?? false) && content === '1';
-    })).toBeInTheDocument();
-    expect(screen.getByText(/2\.8\.2024/)).toBeInTheDocument();
+    
+    const gameInfoSection = screen.getByRole('heading', { name: i18n.t('gameStatsModal.gameInfoTitle') }).parentElement?.parentElement;
+    expect(gameInfoSection).toBeInTheDocument();
+    if (!(gameInfoSection instanceof HTMLElement)) throw new Error("Game info section not found or not an HTMLElement");
+
+    // Team names are present as labels for their scores, and also for the opponent block
+    expect(within(gameInfoSection).getAllByText(props.teamName).length).toBeGreaterThanOrEqual(1);
+    expect(within(gameInfoSection).getAllByText(props.opponentName).length).toBeGreaterThanOrEqual(1);
+    
+    // Date is still present
+    expect(within(gameInfoSection).getByText(/2\.8\.2024/)).toBeInTheDocument();
+
+    // Score verification based on the new structure
+    // Home Score: Label is Home Team Name, next sibling is the score
+    const homeTeamNameLabelForScore = within(gameInfoSection).getByText((content, element) => {
+      return element?.tagName.toLowerCase() === 'span' && 
+             element.textContent === (props.homeOrAway === 'home' ? props.teamName : props.opponentName) &&
+             element.nextElementSibling?.textContent === String(props.homeScore);
+    });
+    expect(homeTeamNameLabelForScore).toBeInTheDocument();
+    const homeScoreElement = homeTeamNameLabelForScore.nextElementSibling;
+    expect(homeScoreElement).toHaveTextContent(String(props.homeScore));
+
+    // Away Score: Label is Away Team Name, next sibling is the score
+    const awayTeamNameLabelForScore = within(gameInfoSection).getByText((content, element) => {
+      return element?.tagName.toLowerCase() === 'span' && 
+             element.textContent === (props.homeOrAway === 'home' ? props.opponentName : props.teamName) &&
+             element.nextElementSibling?.textContent === String(props.awayScore);
+    });
+    expect(awayTeamNameLabelForScore).toBeInTheDocument();
+    const awayScoreElement = awayTeamNameLabelForScore.nextElementSibling;
+    expect(awayScoreElement).toHaveTextContent(String(props.awayScore));
   });
 
   test('loads seasons and tournaments using utility functions on mount', async () => {
@@ -182,25 +204,53 @@ describe('GameStatsModal', () => {
 
   test('displays current game stats by default', () => {
     renderComponent(getDefaultProps());
-    expect(screen.getByRole('tab', { name: i18n.t('gameStatsModal.tabs.currentGame'), selected: true })).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: i18n.t('common.player') })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: 'Alice' })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: 'Bob' })).toBeInTheDocument();
-    const aliceRow = screen.getByRole('row', { name: /Alice/i });
-    expect(aliceRow).toHaveTextContent('1');
-    expect(aliceRow).toHaveTextContent('1');
-    expect(aliceRow).toHaveTextContent('2');
+    expect(screen.getByRole('button', { name: i18n.t('gameStatsModal.tabs.currentGame'), pressed: true })).toBeInTheDocument();
+
+    const playerStatsSection = screen.getByRole('heading', { name: i18n.t('gameStatsModal.playerStatsTitle') }).closest('div');
+    expect(playerStatsSection).toBeInTheDocument();
+    if (!(playerStatsSection instanceof HTMLElement)) throw new Error("Player stats section not found or not an HTMLElement");
+
+    expect(within(playerStatsSection).getByRole('columnheader', { name: i18n.t('common.player') })).toBeInTheDocument();
+    expect(within(playerStatsSection).getByRole('cell', { name: 'Alice' })).toBeInTheDocument();
+    expect(within(playerStatsSection).getByRole('cell', { name: /Bob/ })).toBeInTheDocument();
+    
+    const aliceRow = within(playerStatsSection).getByRole('row', { name: /Alice/i });
+    if (!aliceRow) throw new Error("Row for Alice not found");
+    // Alice: 1 Goal, 0 Assists = 1 Point. GP is 1. FP is 0.
+    expect(aliceRow).toHaveTextContent('Alice'); // Name
+    expect(aliceRow).toHaveTextContent('1');    // GP
+    expect(aliceRow).toHaveTextContent('1');    // Goals
+    expect(aliceRow).toHaveTextContent('0');    // Assists
+    expect(aliceRow).toHaveTextContent('1');    // Total Points
   });
 
   test('displays game event log correctly', () => {
     renderComponent(getDefaultProps());
-    expect(screen.getByRole('heading', { name: i18n.t('gameStatsModal.eventLogTitle') })).toBeInTheDocument();
-    expect(screen.getByText(/02:00/)).toBeInTheDocument();
-    expect(screen.getByText(/Maali - Alice \(Syöttäjä: Bob\)/)).toBeInTheDocument();
-    expect(screen.getByText(/05:00/)).toBeInTheDocument();
-    expect(screen.getByText(i18n.t('common.opponentGoal'))).toBeInTheDocument();
-    expect(screen.getByText(/08:20/)).toBeInTheDocument();
-    expect(screen.getByText(/Maali - Bob/)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Goal Log' })).toBeInTheDocument();
+    
+    const eventLogSectionParent = screen.getByRole('heading', { name: 'Goal Log' }).parentElement;
+    expect(eventLogSectionParent).toBeInTheDocument();
+    if(!(eventLogSectionParent instanceof HTMLElement)) throw new Error("Event log section parent not found or not an HTMLElement");
+
+    const eventLogTable = within(eventLogSectionParent).getByRole('table');
+    
+    const firstGoalRow = within(eventLogTable).getByText('02:00').closest('tr');
+    if (!firstGoalRow) throw new Error("First goal row (02:00) not found");
+    expect(within(firstGoalRow).getByText('Maali')).toBeInTheDocument();
+    expect(within(firstGoalRow).getByText('Alice')).toBeInTheDocument(); 
+    expect(within(firstGoalRow).getByText('Bob')).toBeInTheDocument();   
+
+    const secondGoalRow = within(eventLogTable).getByText('05:00').closest('tr');
+    if (!secondGoalRow) throw new Error("Second goal row (05:00) not found");
+    expect(within(secondGoalRow).getByText(i18n.t('common.opponentGoal'))).toBeInTheDocument();
+    expect(within(secondGoalRow).getByText(getDefaultProps().opponentName)).toBeInTheDocument(); 
+
+    const thirdGoalRow = within(eventLogTable).getByText('08:20').closest('tr');
+    if (!thirdGoalRow) throw new Error("Third goal row (08:20) not found");
+    expect(within(thirdGoalRow).getByText('Maali')).toBeInTheDocument();
+    expect(within(thirdGoalRow).getByText('Bob')).toBeInTheDocument(); 
+    const assisterCellsInThirdRow = within(thirdGoalRow).getAllByRole('cell');
+    expect(assisterCellsInThirdRow[3].textContent).toBe(''); 
   });
 
   // Add more tests for:

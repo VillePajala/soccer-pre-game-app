@@ -84,7 +84,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   onHomeScoreChange,
   onAwayScoreChange,
   onGameNotesChange = () => {},
-  onUpdateGameEvent = () => { console.warn('onUpdateGameEvent handler not provided'); },
+  onUpdateGameEvent = () => { /* console.warn('onUpdateGameEvent handler not provided'); */ },
   selectedPlayerIds,
   savedGames, // Not actively used after removing aggregation
   currentGameId,
@@ -99,23 +99,21 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   const { t, i18n } = useTranslation();
 
   // <<< ADD DIAGNOSTIC LOG >>>
-  console.log('[GameStatsModal Render] gameEvents prop:', JSON.stringify(gameEvents));
-  console.log('[GameStatsModal Render] availablePlayers prop ref check:', availablePlayers); // Log reference too
+  // console.log('[GameStatsModal Render] gameEvents prop:', JSON.stringify(gameEvents));
+  // console.log('[GameStatsModal Render] availablePlayers prop ref check:', availablePlayers); // Log reference too
 
   // REVISED formatDisplayDate definition without date-fns
   const formatDisplayDate = useCallback((isoDate: string): string => {
     if (!isoDate) return t('common.notSet', 'Ei asetettu');
     try {
-      // Basic validation for YYYY-MM-DD format before creating Date
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) {
-        console.warn(`Invalid date format received: ${isoDate}`);
+      if (isoDate.length !== 10) { // Basic check for YYYY-MM-DD format
+        // console.warn(`Invalid date format received: ${isoDate}`);
         return isoDate;
       }
-      const date = new Date(isoDate); 
-      // Check if Date object is valid (accounts for invalid dates like 2023-02-30)
+      const date = new Date(isoDate);
       if (isNaN(date.getTime())) {
-          console.warn(`Invalid date value received: ${isoDate}`);
-          return isoDate; 
+        // console.warn(`Invalid date value received: ${isoDate}`);
+        return isoDate;
       }
 
       const currentLanguage = i18n.language;
@@ -134,9 +132,9 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
           year: 'numeric' 
         });
       }
-    } catch (e) {
-      console.error("Error formatting date:", e);
-      return isoDate; // Fallback to original string on error
+    } catch {
+      // console.error("Error formatting date:", e);
+      return 'Date Error';
     }
   }, [i18n.language, t]); // Dependencies: language and t function
 
@@ -180,11 +178,11 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
 
   // ** Calculate initial winner ID using useMemo **
   const initialFairPlayWinnerId = useMemo(() => {
-      console.log("[GameStatsModal:useMemo] Calculating initialFairPlayWinnerId. availablePlayers prop:", JSON.stringify(availablePlayers.map(p => ({id: p.id, name: p.name, fp: p.receivedFairPlayCard}))));
+      // console.log("[GameStatsModal:useMemo] Calculating initialFairPlayWinnerId. availablePlayers prop:", JSON.stringify(availablePlayers.map(p => ({id: p.id, name: p.name, fp: p.receivedFairPlayCard}))));
       const winner = availablePlayers.find(p => p.receivedFairPlayCard);
-      console.log("[GameStatsModal:useMemo] Found winner object:", winner);
+      // console.log("[GameStatsModal:useMemo] Found winner object:", winner);
       const winnerId = winner?.id || null;
-      console.log("[GameStatsModal:useMemo] Determined initialFairPlayWinnerId:", winnerId);
+      // console.log("[GameStatsModal:useMemo] Determined initialFairPlayWinnerId:", winnerId);
       return winnerId;
   }, [availablePlayers]);
 
@@ -196,12 +194,16 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
         // <<< Use utility function >>>
         const loadedSeasons = utilGetSeasons();
         setSeasons(loadedSeasons);
-      } catch (error) { console.error("Failed to load seasons:", error); setSeasons([]); }
+      } catch { 
+        // console.error("Failed to load seasons:", error); setSeasons([]); 
+      }
       try {
         // <<< Use utility function >>>
         const loadedTournaments = utilGetTournaments();
         setTournaments(loadedTournaments);
-      } catch (error) { console.error("Failed to load tournaments:", error); setTournaments([]); }
+      } catch { 
+        // console.error("Failed to load tournaments:", error); setTournaments([]); 
+      }
     }
   }, [isOpen]);
 
@@ -250,7 +252,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
 
   // ** ADD Separate Effect to Sync local state with calculated initial ID **
   useEffect(() => {
-      console.log("[GameStatsModal:useEffectSync] Syncing localFairPlayPlayerId. Current local:", localFairPlayPlayerId, "New initial:", initialFairPlayWinnerId);
+      // console.log("[GameStatsModal:useEffectSync] Syncing localFairPlayPlayerId. Current local:", localFairPlayPlayerId, "New initial:", initialFairPlayWinnerId);
       setLocalFairPlayPlayerId(initialFairPlayWinnerId);
   }, [initialFairPlayWinnerId, localFairPlayPlayerId]);
 
@@ -263,7 +265,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
 
   // Modify filteredAndSortedPlayerStats useMemo to also return the list of game IDs processed
   const { stats: playerStats, gameIds: processedGameIds } = useMemo(() => {
-    console.log("Recalculating player stats...", { activeTab, filterText, selectedSeasonIdFilter, selectedTournamentIdFilter, gameEvents: activeTab === 'currentGame' ? gameEvents : null, savedGames: activeTab !== 'currentGame' ? savedGames : null });
+    // console.log("Recalculating player stats...", { activeTab, filterText, selectedSeasonIdFilter, selectedTournamentIdFilter, gameEvents: activeTab === 'currentGame' ? gameEvents : null, savedGames: activeTab !== 'currentGame' ? savedGames : null });
 
     // Initialize stats map - MODIFIED: Initialize differently based on tab
     const statsMap: { [key: string]: PlayerStatRow } = {};
@@ -521,7 +523,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   const handleCancelEditGoal = () => { setEditingGoalId(null); };
   const handleSaveEditGoal = () => {
     if (!editingGoalId) return;
-    const originalGoal = gameEvents.find(e => e.id === editingGoalId); if (!originalGoal) { console.error("Original goal missing!"); handleCancelEditGoal(); return; }
+    const originalGoal = gameEvents.find(e => e.id === editingGoalId); if (!originalGoal) { handleCancelEditGoal(); return; }
     const timeParts = editGoalTime.match(/^(\d{1,2}):(\d{1,2})$/); let timeInSeconds = 0;
     if (timeParts) { const m = parseInt(timeParts[1], 10), s = parseInt(timeParts[2], 10); if (!isNaN(m) && !isNaN(s) && m >= 0 && s >= 0 && s < 60) timeInSeconds = m * 60 + s; else { alert(t('gameStatsModal.invalidTimeFormat', 'Invalid time format. MM:SS')); goalTimeInputRef.current?.focus(); return; } } else { alert(t('gameStatsModal.invalidTimeFormat', 'Invalid time format. MM:SS')); goalTimeInputRef.current?.focus(); return; }
     const updatedScorerId = editGoalScorerId; const updatedAssisterId = editGoalAssisterId || undefined;
@@ -540,9 +542,9 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
     if (onDeleteGameEvent && typeof onDeleteGameEvent === 'function') { 
       onDeleteGameEvent!(goalId); // ADD non-null assertion (!)
       setLocalGameEvents(prevEvents => prevEvents.filter(event => event.id !== goalId));
-      console.log(`Locally deleted event ${goalId} and called parent handler.`);
+      // console.log(`Locally deleted event ${goalId} and called parent handler.`);
       } else {
-      console.warn("Delete handler (onDeleteGameEvent) not available or not a function.");
+      // console.warn("Delete handler (onDeleteGameEvent) not available or not a function.");
     }
   };
 
@@ -576,10 +578,34 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
         {/* Tab Bar - MODIFIED: Add flex-grow to items */}
         <div className="flex-shrink-0 px-4 pt-3 pb-2 border-b border-slate-700 flex flex-wrap items-center gap-1">
           {/* ADD flex-grow */} 
-          <button onClick={() => setActiveTab('currentGame')} className={`${getTabStyle('currentGame')} whitespace-nowrap flex-grow`}>{t('gameStatsModal.tabCurrent', 'Nykyinen')}</button>
-          <button onClick={() => setActiveTab('season')} className={`${getTabStyle('season')} whitespace-nowrap flex-grow`}>{t('gameStatsModal.tabSeason', 'Kausi')}</button>
-          <button onClick={() => setActiveTab('tournament')} className={`${getTabStyle('tournament')} whitespace-nowrap flex-grow`}>{t('gameStatsModal.tabTournament', 'Turnaus')}</button>
-          <button onClick={() => setActiveTab('overall')} className={`${getTabStyle('overall')} whitespace-nowrap flex-grow`}>{t('gameStatsModal.tabOverall', 'Kaikki')}</button>
+          <button 
+            onClick={() => setActiveTab('currentGame')} 
+            className={`${getTabStyle('currentGame')} whitespace-nowrap flex-grow`}
+            aria-pressed={activeTab === 'currentGame'}
+          >
+            {t('gameStatsModal.tabs.currentGame', 'Nykyinen')}
+          </button>
+          <button 
+            onClick={() => setActiveTab('season')} 
+            className={`${getTabStyle('season')} whitespace-nowrap flex-grow`}
+            aria-pressed={activeTab === 'season'}
+          >
+            {t('gameStatsModal.tabs.season', 'Kausi')}
+          </button>
+          <button 
+            onClick={() => setActiveTab('tournament')} 
+            className={`${getTabStyle('tournament')} whitespace-nowrap flex-grow`}
+            aria-pressed={activeTab === 'tournament'}
+          >
+            {t('gameStatsModal.tabs.tournament', 'Turnaus')}
+          </button>
+          <button 
+            onClick={() => setActiveTab('overall')} 
+            className={`${getTabStyle('overall')} whitespace-nowrap flex-grow`}
+            aria-pressed={activeTab === 'overall'}
+          >
+            {t('gameStatsModal.tabs.overall', 'Kaikki')}
+          </button>
           
           {/* Conditional Selectors - ADD flex-grow */} 
           {activeTab === 'season' && (

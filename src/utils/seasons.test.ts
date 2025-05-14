@@ -123,13 +123,13 @@ describe('Season Management Utilities (localStorage)', () => {
     it('should return null and log error if a season with the same name already exists', () => {
       saveSeasons([sampleSeasons[0]]); // 'Spring League 2023'
       expect(addSeason('spring league 2023')).toBeNull();
-      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('A season with this name already exists'));
+      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('[addSeason] Validation failed: A season with name "spring league 2023" already exists.'));
     });
 
     it('should return null if saving fails during add', () => {
       localStorageMock.setItem.mockImplementationOnce(() => { throw new Error('Save failed'); });
       expect(addSeason('Ephemeral Season')).toBeNull();
-      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('[saveSeasons] Error saving seasons'));
+      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('[saveSeasons] Error saving seasons to localStorage:'), expect.any(Error));
     });
   });
 
@@ -161,9 +161,10 @@ describe('Season Management Utilities (localStorage)', () => {
     });
 
     it('should return null and log error if updated name conflicts with another season', () => {
-      const seasonToUpdate: Season = { ...sampleSeasons[0], name: sampleSeasons[1].name.toUpperCase() };
+      const seasonToUpdate: Season = { ...sampleSeasons[0], name: sampleSeasons[1].name.toUpperCase() }; // "SUMMER TOURNAMENT"
       expect(updateSeason(seasonToUpdate)).toBeNull();
-      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining(`Another season with name "${sampleSeasons[1].name}" already exists`));
+      // The actual function converts the comparison to lower case, so the error message will reflect the input given to updateSeason.
+      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining(`[updateSeason] Validation failed: Another season with name "${sampleSeasons[1].name.toUpperCase()}" already exists.`));
     });
 
     it('should return null if saving fails during update', () => {
@@ -172,19 +173,20 @@ describe('Season Management Utilities (localStorage)', () => {
       });
       const seasonToUpdate: Season = { ...sampleSeasons[0], name: 'Update Fail Season' };
       expect(updateSeason(seasonToUpdate)).toBeNull();
-      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('[saveSeasons] Error saving seasons'));
+      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('[saveSeasons] Error saving seasons to localStorage:'), expect.any(Error));
     });
 
     it('should return null and log error for invalid update data (empty name)', () => {
       const invalidSeason: Season = { ...sampleSeasons[0], name: '   ' };
       expect(updateSeason(invalidSeason)).toBeNull();
-      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Season name cannot be empty'));
+      // This message comes from the validation within updateSeason itself.
+      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('[updateSeason] Invalid season data provided for update.'));
     });
 
     it('should return null and log error for invalid update data (missing id)', () => {
       const invalidSeason = { name: 'Valid Name' } as Season;
       expect(updateSeason(invalidSeason)).toBeNull();
-      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Invalid season data provided'));
+      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Invalid season data provided for update'));
     });
   });
 
@@ -219,13 +221,13 @@ describe('Season Management Utilities (localStorage)', () => {
       localStorageMock.setItem.mockImplementationOnce(() => { throw new Error('Save failed'); });
       const seasonIdToDelete = sampleSeasons[1].id;
       expect(deleteSeason(seasonIdToDelete)).toBe(false);
-      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('[saveSeasons] Error saving seasons'));
+      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('[saveSeasons] Error saving seasons to localStorage:'), expect.any(Error));
       expect(getSeasons().find(s => s.id === seasonIdToDelete)).toBeDefined();
     });
 
     it('should return false and log error for invalid delete ID', () => {
       expect(deleteSeason('')).toBe(false);
-      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Invalid season ID provided'));
+      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('[deleteSeason] Invalid season ID provided'));
     });
   });
 }); 

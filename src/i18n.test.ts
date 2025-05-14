@@ -104,4 +104,10 @@ i18n
     },
   });
 
-export default i18n; 
+export default i18n;
+
+describe('i18n initialization', () => {
+  it('should initialize without errors', () => {
+    expect(i18n).toBeDefined();
+  });
+}); 

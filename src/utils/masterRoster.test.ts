@@ -1,6 +1,6 @@
 import { 
   getMasterRoster,
-  saveMasterRoster,
+  // saveMasterRoster, // No longer directly imported for tests, mock is used by other fns
   addPlayerToRoster,
   updatePlayerInRoster,
   removePlayerFromRoster,
@@ -9,6 +9,11 @@ import {
 } from './masterRoster';
 import { MASTER_ROSTER_KEY } from '@/config/constants';
 import type { Player } from '@/types';
+
+jest.mock('./masterRoster', () => ({
+  ...jest.requireActual('./masterRoster'),
+  saveMasterRoster: jest.fn(),
+}));
 
 describe('Master Roster Utilities', () => {
   // Setup mock data
@@ -73,8 +78,10 @@ describe('Master Roster Utilities', () => {
   });
 
   describe('saveMasterRoster', () => {
+    const { saveMasterRoster: actualSaveMasterRoster } = jest.requireActual<typeof import('./masterRoster')>('./masterRoster');
+
     it('should save the roster to localStorage and return true', () => {
-      const result = saveMasterRoster(mockPlayers);
+      const result = actualSaveMasterRoster(mockPlayers);
       expect(result).toBe(true);
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
         MASTER_ROSTER_KEY,
@@ -87,7 +94,7 @@ describe('Master Roster Utilities', () => {
       const error = new Error('Storage quota exceeded');
       localStorageMock.setItem.mockImplementation(() => { throw error; });
       
-      const result = saveMasterRoster(mockPlayers);
+      const result = actualSaveMasterRoster(mockPlayers);
       expect(result).toBe(false);
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('[saveMasterRoster]'), error);
       consoleSpy.mockRestore();
@@ -134,15 +141,12 @@ describe('Master Roster Utilities', () => {
     });
 
     it('should return null if saving fails during add', () => {
-      localStorageMock.getItem.mockReturnValue(JSON.stringify([]));
-      localStorageMock.setItem.mockImplementationOnce(() => { throw new Error('Save failed'); });
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
-      const playerData = { name: 'Valid Player' };
-      const result = addPlayerToRoster(playerData);
+      localStorageMock.setItem.mockImplementationOnce(() => { throw new Error('Save failed'); });
+      const result = addPlayerToRoster({ name: 'Valid Player' });
 
       expect(result).toBeNull();
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('[saveMasterRoster]'));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('[saveMasterRoster] Error saving master roster to localStorage:'), expect.any(Error));
       consoleSpy.mockRestore();
     });
   });
@@ -202,14 +206,12 @@ describe('Master Roster Utilities', () => {
     });
 
     it('should return null if saving fails during update', () => {
-      localStorageMock.setItem.mockImplementationOnce(() => { throw new Error('Save failed'); });
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
-      const updateData = { name: 'Valid Update' };
-      const result = updatePlayerInRoster('player_1', updateData);
+      localStorageMock.setItem.mockImplementationOnce(() => { throw new Error('Save failed'); });
+      const result = updatePlayerInRoster('player_1', { name: 'Valid Update' });
 
       expect(result).toBeNull();
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('[saveMasterRoster]'));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('[saveMasterRoster] Error saving master roster to localStorage:'), expect.any(Error));
       consoleSpy.mockRestore();
     });
 
@@ -251,13 +253,12 @@ describe('Master Roster Utilities', () => {
     });
 
     it('should return false if saving fails during remove', () => {
-      localStorageMock.setItem.mockImplementationOnce(() => { throw new Error('Save failed'); });
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
+      localStorageMock.setItem.mockImplementationOnce(() => { throw new Error('Save failed'); });
       const result = removePlayerFromRoster('player_1');
 
       expect(result).toBe(false);
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('[saveMasterRoster]'));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('[saveMasterRoster] Error saving master roster to localStorage:'), expect.any(Error));
       consoleSpy.mockRestore();
     });
 
