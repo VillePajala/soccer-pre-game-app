@@ -313,10 +313,14 @@ export default function Home() {
 
     // If newState includes seasonId, ensure tournamentId is cleared if seasonId is truthy
     // This mirrors the reducer logic for SET_SEASON_ID.
+    // Similarly, if newState includes tournamentId, ensure seasonId is cleared if tournamentId is truthy.
     const adjustedNewState: Partial<AppState> = {
       ...newState,
       ...(newState.seasonId && newState.tournamentId === undefined 
           ? { tournamentId: '' } 
+          : {}),
+      ...(newState.tournamentId && newState.seasonId === undefined 
+          ? { seasonId: '' } 
           : {}),
     };
 
@@ -365,7 +369,7 @@ export default function Home() {
   // const [gameEvents, setGameEvents] = useState<GameEvent[]>(initialState.gameEvents); // REMOVE - Migrated to gameSessionState
   // const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>(initialState.selectedPlayerIds); // REMOVE - Migrated to gameSessionState
   // const [seasonId, setSeasonId] = useState<string>(initialState.seasonId); // REMOVE - Migrate to gameSessionState
-  const [tournamentId, setTournamentId] = useState<string>(initialState.tournamentId); // Initialize state for tournament ID
+  // const [tournamentId, setTournamentId] = useState<string>(initialState.tournamentId); // REMOVE - Migrate to gameSessionState
   // Add state for location and time
   const [gameLocation, setGameLocation] = useState<string>(initialState.gameLocation || '');
   const [gameTime, setGameTime] = useState<string>(initialState.gameTime || '');
@@ -959,7 +963,7 @@ export default function Home() {
     // Prefer sourcing from gameSessionState once components are updated.
     // setSelectedPlayerIds(gameData?.selectedPlayerIds || (isInitialDefaultLoad ? initialState.selectedPlayerIds : [])); // REMOVE - Handled by LOAD_PERSISTED_GAME_DATA
     // setSeasonId(gameData?.seasonId || (isInitialDefaultLoad ? initialState.seasonId : '')); // REMOVE - Handled by LOAD_PERSISTED_GAME_DATA
-    setTournamentId(gameData?.tournamentId || (isInitialDefaultLoad ? initialState.tournamentId : ''));
+    // setTournamentId(gameData?.tournamentId || (isInitialDefaultLoad ? initialState.tournamentId : '')); // REMOVE - Handled by LOAD_PERSISTED_GAME_DATA
     setGameLocation(gameData?.location || (isInitialDefaultLoad ? initialState.gameLocation : '') || '');
     setGameTime(gameData?.time || (isInitialDefaultLoad ? initialState.gameTime : '') || '');
     // setShowPlayerNames(gameData?.showPlayerNames === undefined ? (isInitialDefaultLoad ? initialState.showPlayerNames : true) : gameData.showPlayerNames); // REMOVE - Handled by LOAD_PERSISTED_GAME_DATA in reducer
@@ -1040,7 +1044,7 @@ export default function Home() {
     // Call loadGameStateFromData; it handles null correctly (applies initialState)
     // This will set up the game-specific details (scores, events, selected players for *that* game)
     // but will NOT overwrite the master availablePlayers roster.
-    loadGameStateFromData(gameToLoad); // This will now use gameSessionState.seasonId internally via reducer
+    loadGameStateFromData(gameToLoad); // This will now use gameSessionState.tournamentId internally via reducer
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentGameId, savedGames, initialLoadComplete]); // IMPORTANT: initialLoadComplete ensures this runs after master roster is loaded.
@@ -1067,7 +1071,7 @@ export default function Home() {
           currentPeriod: gameSessionState.currentPeriod, // Persisted
           gameStatus: gameSessionState.gameStatus, // Persisted
           seasonId: gameSessionState.seasonId, // USE gameSessionState
-          tournamentId: gameSessionState.tournamentId,
+          tournamentId: gameSessionState.tournamentId, // USE gameSessionState
           gameLocation: gameSessionState.gameLocation,
           gameTime: gameSessionState.gameTime,
           subIntervalMinutes: gameSessionState.subIntervalMinutes,
@@ -1256,7 +1260,7 @@ export default function Home() {
           gameEvents: prevState.gameEvents, 
           selectedPlayerIds: prevState.selectedPlayerIds, // Ensure selectedPlayerIds is from prevState
           seasonId: prevState.seasonId, // USE prevState for reducer
-          tournamentId: prevState.tournamentId, 
+          tournamentId: prevState.tournamentId, // USE prevState for reducer
           gameLocation: prevState.gameLocation, 
           gameTime: prevState.gameTime
         } 
@@ -1302,7 +1306,7 @@ export default function Home() {
           gameEvents: nextState.gameEvents, 
           selectedPlayerIds: nextState.selectedPlayerIds, // Ensure selectedPlayerIds is from nextState
           seasonId: nextState.seasonId, // USE nextState for reducer
-          tournamentId: nextState.tournamentId, 
+          tournamentId: nextState.tournamentId, // USE nextState for reducer
           gameLocation: nextState.gameLocation, 
           gameTime: nextState.gameTime
         } 
@@ -1737,9 +1741,8 @@ export default function Home() {
           setDrawings(initialState.drawings || []); 
           // setGameEvents(initialState.gameEvents || []); // REMOVE - Handled by RESET_TO_INITIAL_STATE
           // setSeasonId(initialState.seasonId || ''); // REMOVE - Handled by RESET_TO_INITIAL_STATE
-          setTournamentId(initialState.tournamentId || '');
-        setGameLocation(initialState.gameLocation || '');
-        setGameTime(initialState.gameTime || '');
+          setGameLocation(initialState.gameLocation || '');
+          setGameTime(initialState.gameTime || '');
           // setShowPlayerNames(initialState.showPlayerNames); // REMOVE - Handled by RESET_TO_INITIAL_STATE dispatch
 
           setHistory([initialState as AppState]); // Reset history with initial state (ensure cast if needed)
@@ -2516,34 +2519,20 @@ export default function Home() {
   const handleSetSeasonId = useCallback((newSeasonId: string | null) => {
     const idToSet = newSeasonId || ''; // Ensure empty string instead of null
     console.log('[page.tsx] handleSetSeasonId called with:', idToSet);
-    // setSeasonId(idToSet); // REMOVE direct state update
     dispatchGameSession({ type: 'SET_SEASON_ID', payload: idToSet }); 
     // The reducer now handles clearing tournamentId: { ...state, seasonId: action.payload, tournamentId: action.payload ? '' : state.tournamentId }
-    // --- Re-enable clearing other ID --- 
-    // if (idToSet) setTournamentId(''); // REMOVE - Reducer handles this
-    // -----------------------------------
-    // Save to history: The reducer has already updated gameSessionState.seasonId and possibly gameSessionState.tournamentId
-    // So, saveStateToHistory should reflect these changes from gameSessionState.
-    // We need to ensure that saveStateToHistory is called *after* the dispatch if we want to capture the post-dispatch state.
-    // For now, we assume saveStateToHistory will be called and pick up the latest gameSessionState in the next render, or
-    // we can optimistically construct the payload for history.
-    // Given the reducer handles the cross-field update (clearing tournamentId),
-    // the history payload should include both fields reflecting the reducer's outcome.
+    // saveStateToHistory will pick up gameSessionState.seasonId and gameSessionState.tournamentId after reducer update.
     saveStateToHistory({ seasonId: idToSet, tournamentId: idToSet ? '' : gameSessionState.tournamentId });
-  }, [saveStateToHistory, gameSessionState.tournamentId]); // <<< Update dependencies
+  }, [saveStateToHistory, gameSessionState.tournamentId]);
 
   const handleSetTournamentId = useCallback((newTournamentId: string | null) => {
     const idToSet = newTournamentId || ''; // Ensure empty string instead of null
     console.log('[page.tsx] handleSetTournamentId called with:', idToSet);
-    // setTournamentId(idToSet); // REMOVE direct state update
     dispatchGameSession({ type: 'SET_TOURNAMENT_ID', payload: idToSet });
     // The reducer now handles clearing seasonId: { ...state, tournamentId: action.payload, seasonId: action.payload ? '' : state.seasonId }
-    // --- Re-enable clearing other ID --- 
-    // if (idToSet) setSeasonId(''); // REMOVE - Reducer handles this
-    // -----------------------------------
-    // Similar to handleSetSeasonId, save history reflecting reducer's outcome.
+    // saveStateToHistory will pick up gameSessionState.tournamentId and gameSessionState.seasonId after reducer update.
     saveStateToHistory({ tournamentId: idToSet, seasonId: idToSet ? '' : gameSessionState.seasonId });
-  }, [saveStateToHistory, gameSessionState.seasonId]); // <<< Update dependencies
+  }, [saveStateToHistory, gameSessionState.seasonId]);
 
   // --- AGGREGATE EXPORT HANDLERS --- 
   
@@ -3300,7 +3289,7 @@ export default function Home() {
           savedGames={savedGames}
           currentGameId={currentGameId}
           seasonId={gameSessionState.seasonId} // USE gameSessionState
-          tournamentId={tournamentId} // This is local state, should be gameSessionState.tournamentId
+          tournamentId={gameSessionState.tournamentId} // USE gameSessionState
           // REMOVE props not defined in GameStatsModalProps:
           // numPeriods={gameSessionState.numberOfPeriods}
           // periodDurationMinutes={gameSessionState.periodDurationMinutes}
@@ -3406,7 +3395,7 @@ export default function Home() {
           gameEvents={gameSessionState.gameEvents}
           availablePlayers={availablePlayers}
           seasonId={gameSessionState.seasonId}
-          tournamentId={tournamentId}
+          tournamentId={gameSessionState.tournamentId}
           numPeriods={gameSessionState.numberOfPeriods}
           periodDurationMinutes={gameSessionState.periodDurationMinutes}
           onNumPeriodsChange={handleSetNumberOfPeriods}
