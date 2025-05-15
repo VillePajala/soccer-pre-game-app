@@ -155,26 +155,26 @@ describe('App Settings Utilities', () => {
       );
     });
 
-    it('should return current settings if update fails', async () => {
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    it('should throw an error if update fails', async () => {
       const currentSettings: AppSettings = {
         currentGameId: 'initialGame',
         lastHomeTeamName: 'InitialTeam',
         language: 'en'
       };
       // Simulate getAppSettings returning current settings initially
-      localStorageMock.getItem.mockReturnValueOnce(JSON.stringify(currentSettings)); 
-      // Simulate saveAppSettings failing
+      localStorageMock.getItem.mockReturnValueOnce(JSON.stringify(currentSettings));
+      // Simulate saveAppSettings failing by making setItem throw an error
       localStorageMock.setItem.mockImplementationOnce(() => { throw new Error('Save failed'); });
-      // Simulate getAppSettings being called again from the catch block
-      localStorageMock.getItem.mockReturnValueOnce(JSON.stringify(currentSettings)); 
 
-      const result = await updateAppSettings({ currentGameId: 'updatedGame' });
+      // Expect updateAppSettings to throw the specific error.
+      await expect(updateAppSettings({ currentGameId: 'updatedGame' })).rejects.toThrowError(
+        'Failed to save updated settings via saveAppSettings within updateAppSettings.'
+      );
 
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Error updating app settings'), expect.any(Error));
-      // It should return the settings as they were before the failed update attempt (fetched again)
-      expect(result).toEqual(currentSettings);
-      consoleSpy.mockRestore();
+      // Ensure localStorage.setItem was called (attempted to save)
+      expect(localStorageMock.setItem).toHaveBeenCalledTimes(1);
+      // Ensure console.error was NOT called by updateAppSettings directly for this error
+      // (it's now thrown, and saveAppSettings handles its own console.error for the localStorage part)
     });
   });
 
@@ -281,25 +281,30 @@ describe('App Settings Utilities', () => {
 
   describe('saveLastHomeTeamName', () => {
     it('should save to both app settings and legacy location and return true', async () => {
-      localStorageMock.getItem.mockReturnValue(JSON.stringify({
+      const currentSettings: AppSettings = {
         currentGameId: 'game123',
+        lastHomeTeamName: 'Old Team Name',
         language: 'en'
-      }));
-      // Mock setItem to simulate successful save by updateAppSettings and direct legacy save
-      localStorageMock.setItem.mockImplementation(() => {});
+      };
+      localStorageMock.getItem.mockReturnValue(JSON.stringify(currentSettings)); // For getAppSettings call in updateAppSettings
+      localStorageMock.setItem.mockImplementation(() => {}); // Default successful save
 
       const result = await saveLastHomeTeamName('New Team Name');
-      
+
       // Check updateAppSettings call (indirectly via setItem for APP_SETTINGS_KEY)
-      expect(localStorageMock.setItem).toHaveBeenCalledWith(
-        APP_SETTINGS_KEY,
-        JSON.stringify({
-          currentGameId: 'game123',
-          language: 'en',
-          lastHomeTeamName: 'New Team Name' 
-        })
+      const appSettingsCall = localStorageMock.setItem.mock.calls.find(
+        call => call[0] === APP_SETTINGS_KEY
       );
-      // Check direct legacy save
+      expect(appSettingsCall).toBeDefined();
+      if (appSettingsCall) {
+        const savedSettings = JSON.parse(appSettingsCall[1]);
+        expect(savedSettings).toEqual({
+          ...currentSettings, // Ensure other settings are preserved
+          lastHomeTeamName: 'New Team Name' // The updated value
+        });
+      }
+
+      // Check legacy save
       expect(localStorageMock.setItem).toHaveBeenCalledWith(LAST_HOME_TEAM_NAME_KEY, 'New Team Name');
       expect(result).toBe(true);
     });

@@ -23,7 +23,7 @@ const localStorageMock = (() => {
       store = {};
     }),
     length: 0,
-    key: jest.fn((_index: number) => undefined) 
+    key: jest.fn((index: number) => Object.keys(store)[index] || undefined)
   };
 })();
 
@@ -138,10 +138,12 @@ describe('Tournament Management Utilities (localStorage)', () => {
       store[TOURNAMENTS_LIST_KEY] = JSON.stringify([sampleTournaments[0]]); // Prime with one tournament
       
       const newTournamentName = 'Invitational Cup';
-      const newTournament = addTournament(newTournamentName);
+      const newTournament = await addTournament(newTournamentName);
 
       expect(newTournament).not.toBeNull();
-      expect(newTournament?.name).toBe(newTournamentName);
+      if (newTournament) {
+        expect(newTournament.name).toBe(newTournamentName);
+      }
       expect(localStorageMock.setItem).toHaveBeenCalledTimes(1);
 
       const storedTournaments = JSON.parse(store[TOURNAMENTS_LIST_KEY]);
@@ -152,12 +154,12 @@ describe('Tournament Management Utilities (localStorage)', () => {
       ]));
     });
     
-    it('should return null if underlying saveTournaments fails (e.g., localStorage.setItem throws)', () => {
+    it('should return null if underlying saveTournaments fails (e.g., localStorage.setItem throws)', async () => {
       localStorageMock.setItem.mockImplementationOnce(() => {
         throw new Error('Simulated localStorage error during save');
       });
       const newTournamentName = 'Ephemeral Tourney';
-      const result = addTournament(newTournamentName);
+      const result = await addTournament(newTournamentName);
       
       expect(result).toBeNull();
       expect(localStorageMock.setItem).toHaveBeenCalledTimes(1); // Attempted to save
@@ -165,17 +167,17 @@ describe('Tournament Management Utilities (localStorage)', () => {
       expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('[saveTournaments] Error saving tournaments to localStorage:'), expect.any(Error));
     });
 
-    it('should return null and log error if name is empty, without attempting to save', () => {
-      const result = addTournament('');
+    it('should return null and log error if name is empty, without attempting to save', async () => {
+      const result = await addTournament('');
       expect(result).toBeNull();
       expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('[addTournament] Validation failed: Tournament name cannot be empty.'));
       expect(localStorageMock.setItem).not.toHaveBeenCalled();
     });
 
-    it('should return null and log error if name already exists (case-insensitive), without attempting to save', () => {
+    it('should return null and log error if name already exists (case-insensitive), without attempting to save', async () => {
       store[TOURNAMENTS_LIST_KEY] = JSON.stringify([sampleTournaments[0]]); // 'Regional Cup Q1'
       const duplicateName = 'regional cup q1';
-      const result = addTournament(duplicateName);
+      const result = await addTournament(duplicateName);
 
       expect(result).toBeNull();
       expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining(`[addTournament] Validation failed: A tournament with name "${duplicateName}" already exists.`));
@@ -188,12 +190,14 @@ describe('Tournament Management Utilities (localStorage)', () => {
       store[TOURNAMENTS_LIST_KEY] = JSON.stringify([...sampleTournaments]);
     });
 
-    it('should update existing tournament, save it, and return updated object', () => {
+    it('should update existing tournament, save it, and return updated object', async () => {
       const tournamentToUpdate: Tournament = { ...sampleTournaments[0], name: 'Regional Cup Q1 - Finals' };
-      const updatedTournament = updateTournament(tournamentToUpdate);
+      const updatedTournament = await updateTournament(tournamentToUpdate);
       
       expect(updatedTournament).not.toBeNull();
-      expect(updatedTournament?.name).toBe('Regional Cup Q1 - Finals');
+      if (updatedTournament) {
+        expect(updatedTournament.name).toBe('Regional Cup Q1 - Finals');
+      }
       expect(localStorageMock.setItem).toHaveBeenCalledTimes(1);
 
       const storedTournaments = JSON.parse(store[TOURNAMENTS_LIST_KEY]);
@@ -201,40 +205,40 @@ describe('Tournament Management Utilities (localStorage)', () => {
       expect(changed?.name).toBe('Regional Cup Q1 - Finals');
     });
 
-    it('should return null if underlying saveTournaments fails (e.g., localStorage.setItem throws)', () => {
+    it('should return null if underlying saveTournaments fails (e.g., localStorage.setItem throws)', async () => {
       localStorageMock.setItem.mockImplementationOnce(() => {
         throw new Error('Simulated localStorage error during save');
       });
       const tournamentToUpdate: Tournament = { ...sampleTournaments[0], name: 'Update Fail Tourney' };
-      const result = updateTournament(tournamentToUpdate);
+      const result = await updateTournament(tournamentToUpdate);
       
       expect(result).toBeNull();
       expect(localStorageMock.setItem).toHaveBeenCalledTimes(1); // Attempted to save
       expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('[saveTournaments] Error saving tournaments to localStorage:'), expect.any(Error));
     });
 
-    it('should return null and log error if tournament to update is not found, without attempting to save', () => {
+    it('should return null and log error if tournament to update is not found, without attempting to save', async () => {
       const nonExistentTournament: Tournament = { id: 't99', name: 'Phantom Tournament' };
-      const result = updateTournament(nonExistentTournament);
+      const result = await updateTournament(nonExistentTournament);
 
       expect(result).toBeNull();
       expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining(`[updateTournament] Tournament with ID ${nonExistentTournament.id} not found.`));
       expect(localStorageMock.setItem).not.toHaveBeenCalled();
     });
     
-    it('should return null and log error if updated name conflicts, without attempting to save', () => {
+    it('should return null and log error if updated name conflicts, without attempting to save', async () => {
       const conflictingName = sampleTournaments[1].name.toUpperCase(); // "CHAMPIONS LEAGUE PRE-SEASON"
       const tournamentToUpdate: Tournament = { ...sampleTournaments[0], name: conflictingName };
-      const result = updateTournament(tournamentToUpdate);
+      const result = await updateTournament(tournamentToUpdate);
 
       expect(result).toBeNull();
       expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining(`[updateTournament] Validation failed: Another tournament with name "${conflictingName}" already exists.`));
       expect(localStorageMock.setItem).not.toHaveBeenCalled();
     });
 
-    it('should return null for invalid update data (e.g., empty name), without attempting to save', () => {
+    it('should return null for invalid update data (e.g., empty name), without attempting to save', async () => {
       const invalidTournament: Tournament = { ...sampleTournaments[0], name: '   ' };
-      const result = updateTournament(invalidTournament);
+      const result = await updateTournament(invalidTournament);
 
       expect(result).toBeNull();
       expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('[updateTournament] Invalid tournament data provided for update.'));
@@ -243,13 +247,13 @@ describe('Tournament Management Utilities (localStorage)', () => {
   });
 
   describe('deleteTournament', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       store[TOURNAMENTS_LIST_KEY] = JSON.stringify([...sampleTournaments]);
     });
 
-    it('should delete existing tournament by ID, save, and return true', () => {
-      const tournamentIdToDelete = sampleTournaments[1].id;
-      const result = deleteTournament(tournamentIdToDelete);
+    it('should delete existing tournament by ID, save, and return true', async () => {
+      const tournamentIdToDelete = sampleTournaments[0].id;
+      const result = await deleteTournament(tournamentIdToDelete);
       
       expect(result).toBe(true);
       expect(localStorageMock.setItem).toHaveBeenCalledTimes(1);
@@ -259,29 +263,29 @@ describe('Tournament Management Utilities (localStorage)', () => {
       expect(storedTournaments.length).toBe(sampleTournaments.length - 1);
     });
 
-    it('should return false if underlying saveTournaments fails (e.g., localStorage.setItem throws)', () => {
+    it('should return false if underlying saveTournaments fails (e.g., localStorage.setItem throws)', async () => {
       localStorageMock.setItem.mockImplementationOnce(() => {
         throw new Error('Simulated localStorage error during save');
       });
-      const tournamentIdToDelete = sampleTournaments[1].id;
-      const result = deleteTournament(tournamentIdToDelete);
+      const tournamentIdToDelete = sampleTournaments[0].id;
+      const result = await deleteTournament(tournamentIdToDelete);
       
       expect(result).toBe(false);
       expect(localStorageMock.setItem).toHaveBeenCalledTimes(1); // Attempted to save
       expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('[saveTournaments] Error saving tournaments to localStorage:'), expect.any(Error));
     });
 
-    it('should return false and log error if tournament to delete is not found, without attempting to save', () => {
-      const nonExistentId = 't99';
-      const result = deleteTournament(nonExistentId);
+    it('should return false and log error if tournament to delete is not found, without attempting to save', async () => {
+      const nonExistentId = 't-non-existent';
+      const result = await deleteTournament(nonExistentId);
 
       expect(result).toBe(false);
       expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining(`[deleteTournament] Tournament with id ${nonExistentId} not found.`));
       expect(localStorageMock.setItem).not.toHaveBeenCalled();
     });
     
-    it('should return false for invalid delete ID, without attempting to save', () => {
-      const result = deleteTournament('');
+    it('should return false for invalid delete ID, without attempting to save', async () => {
+      const result = await deleteTournament('');
       expect(result).toBe(false);
       expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('[deleteTournament] Invalid tournament ID provided.'));
       expect(localStorageMock.setItem).not.toHaveBeenCalled();

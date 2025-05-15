@@ -69,10 +69,8 @@ export const addPlayerToRoster = async (playerData: {
     const success = await saveMasterRoster(updatedRoster);
 
     if (!success) {
-      // Error logged by saveMasterRoster
       return Promise.resolve(null);
     }
-
     return Promise.resolve(newPlayer);
   } catch (error) {
     console.error('[addPlayerToRoster] Unexpected error adding player:', error);

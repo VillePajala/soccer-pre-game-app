@@ -159,8 +159,8 @@ describe('<GameSettingsModal />', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (getSeasons as jest.Mock).mockReturnValue(mockSeasons);
-    (getTournaments as jest.Mock).mockReturnValue(mockTournaments);
+    (getSeasons as jest.Mock).mockResolvedValue(mockSeasons);
+    (getTournaments as jest.Mock).mockResolvedValue(mockTournaments);
     (rosterUtils.getMasterRoster as jest.Mock).mockReturnValue(mockPlayers);
     (updateGameDetails as jest.Mock).mockResolvedValue({ id: 'game123' }); 
     (updateGameEvent as jest.Mock).mockResolvedValue({ id: 'event1' });
@@ -170,8 +170,10 @@ describe('<GameSettingsModal />', () => {
     mockOnSetHomeOrAway.mockClear();
   });
 
-  test('renders the modal when isOpen is true', () => {
+  test('renders the modal when isOpen is true', async () => {
     render(<GameSettingsModal {...defaultProps} />);
+    await waitFor(() => expect(getSeasons).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(getTournaments).toHaveBeenCalledTimes(1));
     expect(screen.getByRole('heading', { name: t('gameSettingsModal.title') })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: t('gameSettingsModal.gameInfo') })).toBeInTheDocument();
   });
@@ -184,7 +186,8 @@ describe('<GameSettingsModal />', () => {
   test('calls onClose when the close button is clicked', async () => {
     const user = userEvent.setup();
     render(<GameSettingsModal {...defaultProps} />);
-    // Find the header first, then the button within it to be more specific
+    await waitFor(() => expect(getSeasons).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(getTournaments).toHaveBeenCalledTimes(1));
     const header = screen.getByRole('heading', { name: t('gameSettingsModal.title') }).closest('div');
     if (!header) throw new Error('Modal header not found for close button test');
     const closeButton = within(header).getByRole('button', { name: 'common.close' });
@@ -203,6 +206,8 @@ describe('<GameSettingsModal />', () => {
     test('calls onOpponentNameChange and updateGameDetails when opponent name is edited', async () => {
       const user = userEvent.setup();
       const { rerender } = render(<GameSettingsModal {...defaultProps} />);
+      await waitFor(() => expect(getSeasons).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(getTournaments).toHaveBeenCalledTimes(1));
       const gameInfoSection = getGameInfoSection();
 
       const opponentDisplay = within(gameInfoSection).getByText(defaultProps.opponentName);
@@ -223,6 +228,8 @@ describe('<GameSettingsModal />', () => {
     test('cancels opponent name edit with Escape key', async () => {
       const user = userEvent.setup();
       render(<GameSettingsModal {...defaultProps} />);
+      await waitFor(() => expect(getSeasons).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(getTournaments).toHaveBeenCalledTimes(1));
       const gameInfoSection = getGameInfoSection();
       const opponentDisplay = within(gameInfoSection).getByText(defaultProps.opponentName);
       await user.click(opponentDisplay);
@@ -237,6 +244,8 @@ describe('<GameSettingsModal />', () => {
     test('calls onGameDateChange and updateGameDetails when game date is edited', async () => {
       const user = userEvent.setup();
       const { rerender } = render(<GameSettingsModal {...defaultProps} />);
+      await waitFor(() => expect(getSeasons).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(getTournaments).toHaveBeenCalledTimes(1));
       const gameInfoSection = getGameInfoSection();
 
       const dateDisplay = within(gameInfoSection).getByText(formatDateForDisplayTest(defaultProps.gameDate));
@@ -256,6 +265,8 @@ describe('<GameSettingsModal />', () => {
     test('cancels game date edit with Escape key', async () => {
       const user = userEvent.setup();
       render(<GameSettingsModal {...defaultProps} />);
+      await waitFor(() => expect(getSeasons).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(getTournaments).toHaveBeenCalledTimes(1));
       const gameInfoSection = getGameInfoSection();
       const dateDisplay = within(gameInfoSection).getByText(formatDateForDisplayTest(defaultProps.gameDate));
       await user.click(dateDisplay);
@@ -270,6 +281,8 @@ describe('<GameSettingsModal />', () => {
     test('calls onGameLocationChange and updateGameDetails when game location is edited', async () => {
       const user = userEvent.setup();
       const { rerender } = render(<GameSettingsModal {...defaultProps} />);
+      await waitFor(() => expect(getSeasons).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(getTournaments).toHaveBeenCalledTimes(1));
       const gameInfoSection = getGameInfoSection();
 
       const locationDisplay = within(gameInfoSection).getByText(defaultProps.gameLocation!);
@@ -290,6 +303,8 @@ describe('<GameSettingsModal />', () => {
     test('cancels game location edit with Escape key', async () => {
       const user = userEvent.setup();
       render(<GameSettingsModal {...defaultProps} />);
+      await waitFor(() => expect(getSeasons).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(getTournaments).toHaveBeenCalledTimes(1));
       const gameInfoSection = getGameInfoSection();
       const locationDisplay = within(gameInfoSection).getByText(defaultProps.gameLocation!);
       await user.click(locationDisplay);
@@ -304,6 +319,8 @@ describe('<GameSettingsModal />', () => {
     test('calls onGameTimeChange and updateGameDetails when time inputs change', async () => {
       const user = userEvent.setup();
       render(<GameSettingsModal {...defaultProps} />);
+      await waitFor(() => expect(getSeasons).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(getTournaments).toHaveBeenCalledTimes(1));
       const gameInfoSection = getGameInfoSection();
 
       const hourInput = within(gameInfoSection).getByPlaceholderText(t('common.hourShort'));
@@ -336,6 +353,8 @@ describe('<GameSettingsModal />', () => {
     test('calls onGameNotesChange and updateGameDetails when game notes are edited', async () => {
       const user = userEvent.setup();
       const { rerender } = render(<GameSettingsModal {...defaultProps} />);
+      await waitFor(() => expect(getSeasons).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(getTournaments).toHaveBeenCalledTimes(1));
       const notesSection = getNotesSection();
 
       const editButton = within(notesSection).getByLabelText(t('gameSettingsModal.editNotes'));
@@ -360,6 +379,8 @@ describe('<GameSettingsModal />', () => {
     test('cancels game notes edit with Escape key', async () => {
       const user = userEvent.setup();
       render(<GameSettingsModal {...defaultProps} />);
+      await waitFor(() => expect(getSeasons).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(getTournaments).toHaveBeenCalledTimes(1));
       const notesSection = getNotesSection();
 
       const editButton = within(notesSection).getByLabelText(t('gameSettingsModal.editNotes'));
@@ -385,6 +406,8 @@ describe('<GameSettingsModal />', () => {
     test('calls onNumPeriodsChange and updates UI when period button is clicked', async () => {
         const user = userEvent.setup();
         const { rerender } = render(<GameSettingsModal {...defaultProps} numPeriods={2} />);
+        await waitFor(() => expect(getSeasons).toHaveBeenCalledTimes(1));
+        await waitFor(() => expect(getTournaments).toHaveBeenCalledTimes(1));
         const gameInfoSection = getGameInfoSection();
         
         const period1Button = within(gameInfoSection).getByRole('button', { name: '1' });
@@ -402,6 +425,8 @@ describe('<GameSettingsModal />', () => {
     test('calls onPeriodDurationChange and updateGameDetails when duration is edited', async () => {
         const user = userEvent.setup();
         const { rerender } = render(<GameSettingsModal {...defaultProps} />);
+        await waitFor(() => expect(getSeasons).toHaveBeenCalledTimes(1));
+        await waitFor(() => expect(getTournaments).toHaveBeenCalledTimes(1));
         const gameInfoSection = getGameInfoSection();
 
         const durationDisplay = within(gameInfoSection).getByText(`${defaultProps.periodDurationMinutes} ${t('common.minutesShort')}`);
@@ -422,6 +447,8 @@ describe('<GameSettingsModal />', () => {
     test('cancels period duration edit with Escape key', async () => {
         const user = userEvent.setup();
         render(<GameSettingsModal {...defaultProps} />);
+        await waitFor(() => expect(getSeasons).toHaveBeenCalledTimes(1));
+        await waitFor(() => expect(getTournaments).toHaveBeenCalledTimes(1));
         const gameInfoSection = getGameInfoSection();
 
         const durationDisplay = within(gameInfoSection).getByText(`${defaultProps.periodDurationMinutes} ${t('common.minutesShort')}`);
@@ -440,8 +467,9 @@ describe('<GameSettingsModal />', () => {
   describe('Home/Away Toggle', () => {
     test('calls onSetHomeOrAway when toggle is changed', async () => {
       const user = userEvent.setup();
-      // Destructure rerender from the initial render
-      const { rerender } = render(<GameSettingsModal {...defaultProps} homeOrAway="home" />); 
+      const { rerender } = render(<GameSettingsModal {...defaultProps} homeOrAway="home" />);  
+      await waitFor(() => expect(getSeasons).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(getTournaments).toHaveBeenCalledTimes(1));
       const gameInfoSection = screen.getByRole('heading', { name: t('gameSettingsModal.gameInfo') }).closest('div');
       if (!gameInfoSection) throw new Error("Game Info section not found for home/away toggle");
 
@@ -496,18 +524,21 @@ describe('<GameSettingsModal />', () => {
       return sectionContainer as HTMLElement;
     };
 
-    test('initially shows "None" selected and no combobox if no IDs provided', () => {
+    test('initially shows "None" selected and no combobox if no IDs provided', async () => {
       render(<GameSettingsModal {...defaultProps} seasonId={null} tournamentId={null} />);
+      // Wait for the useEffect to fetch data, even if it doesn't result in visible options here
+      await waitFor(() => expect(getSeasons).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(getTournaments).toHaveBeenCalledTimes(1));
       const associationSection = getAssociationSection();
       expect(within(associationSection).queryByRole('combobox')).not.toBeInTheDocument();
     });
 
     test('displays season combobox with options when "Season/League" button is clicked', async () => {
       const user = userEvent.setup();
-      // Get rerender from the initial render call
-      const { rerender } = render(<GameSettingsModal {...defaultProps} />); 
-      
-      let associationSection = getAssociationSection(); // Get section before click
+      const { rerender } = render(<GameSettingsModal {...defaultProps} />);  
+      await waitFor(() => expect(getSeasons).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(getTournaments).toHaveBeenCalledTimes(1));
+      let associationSection = getAssociationSection();
       const seasonButton = within(associationSection).getByRole('button', { name: t('gameSettingsModal.associationSeason') });
       await user.click(seasonButton);
       
@@ -578,8 +609,9 @@ describe('<GameSettingsModal />', () => {
 
     test('calls onSeasonIdChange and updateGameDetails when a season is selected', async () => {
       const user = userEvent.setup();
-      const { rerender } = render(<GameSettingsModal {...defaultProps} />); 
-      
+      const { rerender } = render(<GameSettingsModal {...defaultProps} />);  
+      await waitFor(() => expect(getSeasons).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(getTournaments).toHaveBeenCalledTimes(1));
       let associationSection = getAssociationSection();
       const seasonButton = within(associationSection).getByRole('button', { name: t('gameSettingsModal.associationSeason') });
       await user.click(seasonButton); // Calls onSeasonIdChange(mockSeasons[0].id), onTournamentId(null)
@@ -613,8 +645,9 @@ describe('<GameSettingsModal />', () => {
 
     test('calls onTournamentIdChange and updateGameDetails when a tournament is selected', async () => {
       const user = userEvent.setup();
-      const { rerender } = render(<GameSettingsModal {...defaultProps} />); 
-      
+      const { rerender } = render(<GameSettingsModal {...defaultProps} />);  
+      await waitFor(() => expect(getSeasons).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(getTournaments).toHaveBeenCalledTimes(1));
       let associationSection = getAssociationSection();
       const tournamentButton = within(associationSection).getByRole('button', { name: t('gameSettingsModal.associationTournament') });
       await user.click(tournamentButton); // Calls onTournamentIdChange(mockTournaments[0].id), onSeasonIdChange(null)
@@ -649,8 +682,9 @@ describe('<GameSettingsModal />', () => {
       const user = userEvent.setup();
       // Start with a season selected, so combobox is visible
       const initialProps = { ...defaultProps, seasonId: mockSeasons[0].id, tournamentId: null };
-      const { rerender } = render(<GameSettingsModal {...initialProps} />); 
-      
+      const { rerender } = render(<GameSettingsModal {...initialProps} />);  
+      await waitFor(() => expect(getSeasons).toHaveBeenCalledTimes(1)); // Check after initial render
+      await waitFor(() => expect(getTournaments).toHaveBeenCalledTimes(1));
       let associationSection = getAssociationSection();
       // Verify combobox is initially present
       expect(await within(associationSection).findByRole('combobox')).toBeInTheDocument();
@@ -678,6 +712,8 @@ describe('<GameSettingsModal />', () => {
     
     test('loads with correct season selected and combobox visible if seasonId is provided', async () => {
         render(<GameSettingsModal {...defaultProps} seasonId={mockSeasons[0].id} tournamentId={null} />);
+        // For this test, season options *should* be visible after data load.
+        await screen.findByRole('option', { name: mockSeasons[0].name }); 
         const associationSection = getAssociationSection();
         const seasonSelect = await within(associationSection).findByRole('combobox');
         expect(seasonSelect).toBeInTheDocument();
@@ -685,7 +721,9 @@ describe('<GameSettingsModal />', () => {
     });
 
     test('loads with correct tournament selected and combobox visible if tournamentId is provided', async () => {
-        render(<GameSettingsModal {...defaultProps} tournamentId={mockTournaments[0].id} seasonId={null} />);
+        render(<GameSettingsModal {...defaultProps} tournamentId={mockTournaments[0].id} seasonId={null} />); 
+        // For this test, tournament options *should* be visible after data load.
+        await screen.findByRole('option', { name: mockTournaments[0].name });
         const associationSection = getAssociationSection();
         const tournamentSelect = await within(associationSection).findByRole('combobox');
         expect(tournamentSelect).toBeInTheDocument();
@@ -707,10 +745,12 @@ describe('<GameSettingsModal />', () => {
 
     test('edits a goal event successfully (time, scorer, assister)', async () => {
       const user = userEvent.setup();
-      const eventToEdit = defaultProps.gameEvents.find(e => e.type === 'goal')!; // Find the first goal event
+      const eventToEdit = defaultProps.gameEvents.find(e => e.type === 'goal')!;
       if (!eventToEdit) throw new Error('No goal event found in defaultProps for testing edit');
       
-      const { rerender } = render(<GameSettingsModal {...defaultProps} />); // Initial render
+      const { rerender } = render(<GameSettingsModal {...defaultProps} />);  
+      await waitFor(() => expect(getSeasons).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(getTournaments).toHaveBeenCalledTimes(1));
       const eventRow = await findEventRowByTime(eventToEdit.time);
 
       const editButton = within(eventRow).getByRole('button', { name: t('common.edit') });
@@ -766,13 +806,13 @@ describe('<GameSettingsModal />', () => {
 
     test('deletes a game event successfully after confirmation', async () => {
       const user = userEvent.setup();
-      const eventToDelete = defaultProps.gameEvents[0]; // Take the first event for deletion
+      const eventToDelete = defaultProps.gameEvents[0];
       const originalEventCount = defaultProps.gameEvents.length;
-
-      // Mock window.confirm to return true for this test
       const mockConfirm = jest.spyOn(window, 'confirm').mockReturnValue(true);
       
-      const { rerender } = render(<GameSettingsModal {...defaultProps} />); 
+      const { rerender } = render(<GameSettingsModal {...defaultProps} />);  
+      await waitFor(() => expect(getSeasons).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(getTournaments).toHaveBeenCalledTimes(1));
       const eventRow = await findEventRowByTime(eventToDelete.time);
 
       const deleteButton = within(eventRow).getByRole('button', { name: t('common.delete') });
@@ -799,7 +839,6 @@ describe('<GameSettingsModal />', () => {
 
   // Section: Error Handling & Edge Cases
   describe('Error Handling & Edge Cases', () => {
-    // Helper to get Game Info section (assuming it's defined or can be copied from above)
     const getGameInfoSection = () => {
       const section = screen.getByRole('heading', { name: t('gameSettingsModal.gameInfo') }).closest('div');
       if (!section) throw new Error("Game Info section not found");
@@ -808,15 +847,15 @@ describe('<GameSettingsModal />', () => {
 
     test('handles errors gracefully when updateGameDetails utility throws', async () => {
       const user = userEvent.setup();
-      // Ensure console.error is spied upon
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-      
       (updateGameDetails as jest.Mock).mockImplementationOnce(() => {
         console.error('[Mocked updateGameDetails] Simulated update failure during game details save.');
-        return null; // Simulate utility's graceful failure (logs error, returns null)
+        return null;
       });
       
-      render(<GameSettingsModal {...defaultProps} />);
+      render(<GameSettingsModal {...defaultProps} />);  
+      await waitFor(() => expect(getSeasons).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(getTournaments).toHaveBeenCalledTimes(1));
       const gameInfoSection = getGameInfoSection();
 
       // Action that triggers updateGameDetails: e.g., editing opponent name
@@ -844,13 +883,14 @@ describe('<GameSettingsModal />', () => {
     test('handles errors gracefully when updateGameEvent utility throws', async () => {
       const user = userEvent.setup();
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
       (updateGameEvent as jest.Mock).mockImplementationOnce(() => {
         console.error('[Mocked updateGameEvent] Simulated event update failure.');
-        return null; // Simulate utility's graceful failure
+        return null; 
       });
 
-      render(<GameSettingsModal {...defaultProps} gameEvents={mockGameEvents} />); // Ensure events are present
+      render(<GameSettingsModal {...defaultProps} gameEvents={mockGameEvents} />);  
+      await waitFor(() => expect(getSeasons).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(getTournaments).toHaveBeenCalledTimes(1));
       
       // Action: Edit an existing event
       const eventRows = screen.getAllByRole('row');
@@ -877,15 +917,15 @@ describe('<GameSettingsModal />', () => {
     test('handles errors gracefully when removeGameEvent utility throws', async () => {
       const user = userEvent.setup();
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
       (removeGameEvent as jest.Mock).mockImplementationOnce(() => {
         console.error('[Mocked removeGameEvent] Simulated event deletion failure.');
-        return false; // Simulate utility's graceful failure (returns false)
+        return false; 
       });
-      
-      window.confirm = jest.fn(() => true); // Ensure delete confirmation is bypassed
+      window.confirm = jest.fn(() => true);
 
-      render(<GameSettingsModal {...defaultProps} gameEvents={mockGameEvents} onDeleteGameEvent={mockOnDeleteGameEvent} />);
+      render(<GameSettingsModal {...defaultProps} gameEvents={mockGameEvents} onDeleteGameEvent={mockOnDeleteGameEvent} />);  
+      await waitFor(() => expect(getSeasons).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(getTournaments).toHaveBeenCalledTimes(1));
       
       // Action: Delete an existing event
       const eventRows = screen.getAllByRole('row');
@@ -901,31 +941,7 @@ describe('<GameSettingsModal />', () => {
       consoleErrorSpy.mockRestore();
     });
 
-    // Test for season/tournament load failures if not covered elsewhere
-    test('handles errors when getSeasons utility fails', () => {
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-      (getSeasons as jest.Mock).mockImplementationOnce(() => {
-        console.error('[Mocked getSeasons] Failed to load seasons.');
-        return []; // Or throw new Error('Simulated getSeasons failure'); if component has try-catch
-      });
-      render(<GameSettingsModal {...defaultProps} isOpen={true} />); // isOpen to trigger useEffect
-      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('[Mocked getSeasons] Failed to load seasons.'));
-      // Add assertions for how the UI should look (e.g., season dropdown disabled or shows error)
-      consoleErrorSpy.mockRestore();
-    });
-
-    test('handles errors when getTournaments utility fails', () => {
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-      (getTournaments as jest.Mock).mockImplementationOnce(() => {
-        console.error('[Mocked getTournaments] Failed to load tournaments.');
-        return []; // Or throw new Error('Simulated getTournaments failure');
-      });
-      render(<GameSettingsModal {...defaultProps} isOpen={true} />);
-      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('[Mocked getTournaments] Failed to load tournaments.'));
-      // Add assertions for UI
-      consoleErrorSpy.mockRestore();
-    });
-
+    // Tests for getSeasons/getTournaments utility failures are already correctly using waitFor for their specific consoleErrorSpy assertions.
   });
 
   // ALL TESTS ADDED

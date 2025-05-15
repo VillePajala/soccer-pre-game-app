@@ -59,18 +59,21 @@ export const saveAppSettings = async (settings: AppSettings): Promise<boolean> =
  * @returns A promise that resolves to the updated settings
  */
 export const updateAppSettings = async (settingsUpdate: Partial<AppSettings>): Promise<AppSettings> => {
-  try {
-    // Wait for getAppSettings to resolve
-    const currentSettings = await getAppSettings();
-    const updatedSettings = { ...currentSettings, ...settingsUpdate };
-    // Wait for saveAppSettings to resolve
-    await saveAppSettings(updatedSettings);
-    return Promise.resolve(updatedSettings);
-  } catch (error) {
-    console.error('Error updating app settings:', error);
-    // Wait for getAppSettings to resolve before returning
-    return Promise.resolve(await getAppSettings()); // Return current settings in case of error
+  // Get current settings. If this fails, the error will propagate.
+  const currentSettings = await getAppSettings();
+  const updatedSettings = { ...currentSettings, ...settingsUpdate };
+
+  // Try to save the updated settings.
+  const saveSuccess = await saveAppSettings(updatedSettings);
+
+  if (!saveSuccess) {
+    // saveAppSettings already logs the specific localStorage error.
+    // We throw a new error here to indicate that the update operation itself failed.
+    // This error will be caught by the calling functions (e.g., saveCurrentGameIdSetting).
+    throw new Error('Failed to save updated settings via saveAppSettings within updateAppSettings.');
   }
+  // If save was successful, return the updated settings.
+  return updatedSettings;
 };
 
 /**

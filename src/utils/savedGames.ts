@@ -1,7 +1,6 @@
 import { SAVED_GAMES_KEY } from '@/config/constants';
-import type { SavedGamesCollection } from '@/app/page';
+import type { SavedGamesCollection, AppState, GameEvent as PageGameEvent, Point, Opponent, IntervalLog } from '@/app/page';
 import type { Player } from '@/types';
-import type { Point, Opponent, GameEvent, IntervalLog } from '@/app/page';
 
 // Define GameData interface more precisely
 export interface GameData {
@@ -11,7 +10,7 @@ export interface GameData {
   date: string;
   teamOnLeft: 'home' | 'away';
   players: Player[];
-  events: GameEvent[];
+  events: PageGameEvent[];
   playersOnField?: Player[];
   opponents?: Opponent[];
   drawings?: Point[][];
@@ -36,30 +35,33 @@ export interface GameData {
 
 /**
  * Gets all saved games from localStorage
- * @returns Object containing saved games mapped by ID
+ * @returns Promise resolving to an Object containing saved games mapped by ID
  */
-export const getSavedGames = (): SavedGamesCollection => {
+export const getSavedGames = async (): Promise<SavedGamesCollection> => {
   try {
     const gamesJson = localStorage.getItem(SAVED_GAMES_KEY);
     if (!gamesJson) {
-      return {};
+      return Promise.resolve({});
     }
-    return JSON.parse(gamesJson);
+    return Promise.resolve(JSON.parse(gamesJson) as SavedGamesCollection);
   } catch (error) {
     console.error('Error getting saved games from localStorage:', error);
-    return {};
+    return Promise.reject(error);
   }
 };
 
 /**
  * Saves all games to localStorage
  * @param games - Collection of games to save
+ * @returns Promise resolving when complete
  */
-export const saveGames = (games: SavedGamesCollection): void => {
+export const saveGames = async (games: SavedGamesCollection): Promise<void> => {
   try {
     localStorage.setItem(SAVED_GAMES_KEY, JSON.stringify(games));
+    return Promise.resolve();
   } catch (error) {
     console.error('Error saving games to localStorage:', error);
+    return Promise.reject(error);
   }
 };
 
@@ -67,141 +69,155 @@ export const saveGames = (games: SavedGamesCollection): void => {
  * Saves a single game to localStorage
  * @param gameId - ID of the game to save
  * @param gameData - Game data to save
- * @returns The saved game data
+ * @returns Promise resolving to the saved game data
  */
-export const saveGame = (gameId: string, gameData: unknown): GameData | null => {
+export const saveGame = async (gameId: string, gameData: unknown): Promise<AppState> => {
   try {
     if (!gameId) {
-      throw new Error('Game ID is required');
+      return Promise.reject(new Error('Game ID is required'));
     }
     
-    const allGames = getSavedGames();
-    // Use explicit casting to address type compatibility
-    allGames[gameId] = gameData as any;
-    saveGames(allGames);
-    return gameData as GameData;
+    const allGames = await getSavedGames();
+    allGames[gameId] = gameData as AppState;
+    await saveGames(allGames);
+    return Promise.resolve(gameData as AppState);
   } catch (error) {
     console.error('Error saving game:', error);
-    return null;
+    return Promise.reject(error);
   }
 };
 
 /**
  * Gets a single game by ID
  * @param gameId - ID of the game to retrieve
- * @returns The game data, or null if not found
+ * @returns Promise resolving to the game data, or null if not found
  */
-export const getGame = (gameId: string): GameData | null => {
+export const getGame = async (gameId: string): Promise<AppState | null> => {
   try {
     if (!gameId) {
-      return null;
+      return Promise.resolve(null);
     }
     
-    const allGames = getSavedGames();
-    // Type assertion to handle compatibility between AppState and GameData
-    return allGames[gameId] ? (allGames[gameId] as unknown as GameData) : null;
+    const allGames = await getSavedGames();
+    const game = allGames[gameId] ? (allGames[gameId] as AppState) : null;
+    return Promise.resolve(game);
   } catch (error) {
     console.error('Error getting game:', error);
-    return null;
+    return Promise.reject(error);
   }
 };
 
 /**
  * Deletes a game from localStorage
  * @param gameId - ID of the game to delete
- * @returns true if the game was deleted, false otherwise
+ * @returns Promise resolving to true if the game was deleted, false otherwise
  */
-export const deleteGame = (gameId: string): boolean => {
+export const deleteGame = async (gameId: string): Promise<boolean> => {
   try {
     if (!gameId) {
-      return false;
+      return Promise.resolve(false);
     }
     
-    const allGames = getSavedGames();
+    const allGames = await getSavedGames();
     if (!allGames[gameId]) {
-      return false;
+      return Promise.resolve(false);
     }
     
     delete allGames[gameId];
-    saveGames(allGames);
-    return true;
+    await saveGames(allGames);
+    return Promise.resolve(true);
   } catch (error) {
     console.error('Error deleting game:', error);
-    return false;
+    return Promise.reject(error); // Or resolve(false) if that's preferred for deletion errors
   }
 };
 
 /**
  * Creates a new game with the given data
  * @param gameData - Initial game data
- * @returns The ID of the new game and the game data, or null on error
+ * @returns Promise resolving to the ID of the new game and the game data, or null on error
  */
-export const createGame = (gameData: Partial<GameData>): { gameId: string, gameData: GameData } | null => {
+export const createGame = async (gameData: Partial<AppState>): Promise<{ gameId: string, gameData: AppState }> => {
   try {
     const gameId = `game_${Date.now()}`;
-    const defaultGameData: GameData = {
-      id: gameId,
-      homeTeam: 'Home Team',
-      awayTeam: 'Away Team',
-      date: new Date().toISOString(),
-      teamOnLeft: 'home',
-      players: [],
-      events: [],
-      seasonId: null,
-      tournamentId: null,
+    const newGameAppState: AppState = {
+      playersOnField: gameData.playersOnField || [],
+      opponents: gameData.opponents || [],
+      drawings: gameData.drawings || [],
+      availablePlayers: gameData.availablePlayers || [],
+      showPlayerNames: gameData.showPlayerNames === undefined ? true : gameData.showPlayerNames,
+      teamName: gameData.teamName || 'My Team',
+      gameEvents: gameData.gameEvents || [],
+      opponentName: gameData.opponentName || 'Opponent',
+      gameDate: gameData.gameDate || new Date().toISOString().split('T')[0],
+      homeScore: gameData.homeScore || 0,
+      awayScore: gameData.awayScore || 0,
+      gameNotes: gameData.gameNotes || '',
+      homeOrAway: gameData.homeOrAway || 'home',
+      numberOfPeriods: gameData.numberOfPeriods || 2,
+      periodDurationMinutes: gameData.periodDurationMinutes || 10,
+      currentPeriod: gameData.currentPeriod || 1,
+      gameStatus: gameData.gameStatus || 'notStarted',
+      selectedPlayerIds: gameData.selectedPlayerIds || [],
+      seasonId: gameData.seasonId || '',
+      tournamentId: gameData.tournamentId || '',
+      gameLocation: gameData.gameLocation || '',
+      gameTime: gameData.gameTime || '',
+      subIntervalMinutes: gameData.subIntervalMinutes === undefined ? 5 : gameData.subIntervalMinutes,
+      completedIntervalDurations: gameData.completedIntervalDurations || [],
+      lastSubConfirmationTimeSeconds: gameData.lastSubConfirmationTimeSeconds === undefined ? 0 : gameData.lastSubConfirmationTimeSeconds,
       ...gameData,
     };
     
-    const result = saveGame(gameId, defaultGameData);
-    if (!result) {
-      throw new Error('Failed to save new game');
-    }
-    
-    return { gameId, gameData: result };
+    const result = await saveGame(gameId, newGameAppState);
+    return Promise.resolve({ gameId, gameData: result });
   } catch (error) {
     console.error('Error creating new game:', error);
-    return null;
+    return Promise.reject(error); // Or resolve(null) to match original behavior more closely on error
   }
 };
 
 /**
  * Gets all game IDs
- * @returns Array of game IDs
+ * @returns Promise resolving to an Array of game IDs
  */
-export const getAllGameIds = (): string[] => {
+export const getAllGameIds = async (): Promise<string[]> => {
   try {
-    const allGames = getSavedGames();
-    return Object.keys(allGames);
+    const allGames = await getSavedGames();
+    return Promise.resolve(Object.keys(allGames));
   } catch (error) {
     console.error('Error getting all game IDs:', error);
-    return [];
+    return Promise.reject(error);
   }
 };
 
 /**
  * Gets games filtered by season and/or tournament
  * @param filters - Filter criteria
- * @returns Array of filtered games as [gameId, gameData] tuples
+ * @returns Promise resolving to an Array of filtered games as [gameId, gameData] tuples
  */
-export const getFilteredGames = (filters: { 
+export const getFilteredGames = async (filters: { 
   seasonId?: string | null, 
   tournamentId?: string | null 
-}): [string, GameData][] => {
+}): Promise<[string, AppState][]> => {
   try {
-    const allGames = getSavedGames();
+    const allGames = await getSavedGames();
     const gameEntries = Object.entries(allGames);
     
-    // First convert to unknown, then to the target type
-    return gameEntries.filter(([, game]) => {
-      // Cast to GameData for proper property access
-      const gameData = game as unknown as GameData;
-      const seasonMatch = !filters.seasonId || gameData.seasonId === filters.seasonId;
-      const tournamentMatch = !filters.tournamentId || gameData.tournamentId === filters.tournamentId;
+    const filtered = gameEntries.filter(([, game]) => {
+      const gameData = game as AppState;
+      // If filters.seasonId is provided (not null/undefined), game must match.
+      // If filters.seasonId is null/undefined, this part of the condition is true (don't filter by season).
+      const seasonMatch = filters.seasonId === undefined || filters.seasonId === null || gameData.seasonId === filters.seasonId;
+      // If filters.tournamentId is provided (not null/undefined), game must match.
+      // This correctly handles filtering for tournamentId: '' (empty string).
+      const tournamentMatch = filters.tournamentId === undefined || filters.tournamentId === null || gameData.tournamentId === filters.tournamentId;
       return seasonMatch && tournamentMatch;
-    }).map(([id, game]) => [id, game as unknown as GameData]);
+    }).map(([id, game]) => [id, game as AppState] as [string, AppState]); // Ensure correct tuple type
+    return Promise.resolve(filtered);
   } catch (error) {
     console.error('Error filtering games:', error);
-    return [];
+    return Promise.reject(error);
   }
 };
 
@@ -209,17 +225,17 @@ export const getFilteredGames = (filters: {
  * Updates game details (metadata only, not events)
  * @param gameId - ID of the game to update
  * @param updateData - Data to update
- * @returns The updated game data, or null on error
+ * @returns Promise resolving to the updated game data, or null on error
  */
-export const updateGameDetails = (
+export const updateGameDetails = async (
   gameId: string, 
-  updateData: Partial<Omit<GameData, 'id' | 'events'>>
-): GameData | null => {
+  updateData: Partial<Omit<AppState, 'id' | 'events'>>
+): Promise<AppState | null> => {
   try {
-    const game = getGame(gameId);
+    const game = await getGame(gameId);
     if (!game) {
       console.warn(`Game with ID ${gameId} not found for update.`);
-      return null;
+      return Promise.resolve(null);
     }
     
     const updatedGame = {
@@ -227,162 +243,163 @@ export const updateGameDetails = (
       ...updateData,
     };
     
-    return saveGame(gameId, updatedGame);
+    // saveGame now returns a Promise<AppState>
+    return saveGame(gameId, updatedGame); 
   } catch (error) {
     console.error('Error updating game details:', error);
-    return null;
+    return Promise.reject(error); // Or resolve(null)
   }
 };
 
 /**
- * Type definition for game events to replace any
- */
-interface GameEventData {
-  id: string;
-  type: 'goal' | 'opponentGoal' | 'substitution' | 'periodEnd' | 'gameEnd';
-  time?: number;
-  scorerId?: string;
-  assisterId?: string;
-  [key: string]: unknown; // For additional properties
-}
-
-/**
  * Adds an event to a game
  * @param gameId - ID of the game
- * @param event - Event to add
- * @returns The updated game data, or null on error
+ * @param event - Event data to add
+ * @returns Promise resolving to the updated game data, or null on error
  */
-export const addGameEvent = (gameId: string, event: GameEventData): GameData | null => {
+export const addGameEvent = async (gameId: string, event: PageGameEvent): Promise<AppState | null> => {
   try {
-    const game = getGame(gameId);
+    const game = await getGame(gameId);
     if (!game) {
       console.warn(`Game with ID ${gameId} not found for adding event.`);
-      return null;
+      return Promise.resolve(null);
     }
     
     const updatedGame = {
       ...game,
-      events: [...game.events, event],
+      gameEvents: [...(game.gameEvents || []), event], // Ensure events is an array and cast event
     };
     
     return saveGame(gameId, updatedGame);
   } catch (error) {
     console.error('Error adding game event:', error);
-    return null;
+    return Promise.reject(error); // Or resolve(null)
   }
 };
 
 /**
- * Updates a game event
+ * Updates an event in a game
  * @param gameId - ID of the game
  * @param eventIndex - Index of the event to update
- * @param eventData - Updated event data
- * @returns The updated game data, or null on error
+ * @param eventData - New event data
+ * @returns Promise resolving to the updated game data, or null on error
  */
-export const updateGameEvent = (gameId: string, eventIndex: number, eventData: GameEventData): GameData | null => {
+export const updateGameEvent = async (gameId: string, eventIndex: number, eventData: PageGameEvent): Promise<AppState | null> => {
   try {
-    const game = getGame(gameId);
+    const game = await getGame(gameId);
     if (!game) {
       console.warn(`Game with ID ${gameId} not found for updating event.`);
-      return null;
+      return Promise.resolve(null);
     }
     
-    if (eventIndex < 0 || eventIndex >= game.events.length) {
-      console.warn(`Event index out of bounds: ${eventIndex}`);
-      return null;
+    const events = [...(game.gameEvents || [])];
+    if (eventIndex < 0 || eventIndex >= events.length) {
+      console.warn(`Event index ${eventIndex} out of bounds for game ${gameId}.`);
+      return Promise.resolve(null);
     }
     
-    const updatedEvents = [...game.events];
-    updatedEvents[eventIndex] = { ...updatedEvents[eventIndex], ...eventData };
+    events[eventIndex] = eventData; // Cast eventData
     
     const updatedGame = {
       ...game,
-      events: updatedEvents,
+      gameEvents: events,
     };
     
     return saveGame(gameId, updatedGame);
   } catch (error) {
     console.error('Error updating game event:', error);
-    return null;
+    return Promise.reject(error); // Or resolve(null)
   }
 };
 
 /**
- * Removes a game event
+ * Removes an event from a game
  * @param gameId - ID of the game
  * @param eventIndex - Index of the event to remove
- * @returns The updated game data, or null on error
+ * @returns Promise resolving to the updated game data, or null on error
  */
-export const removeGameEvent = (gameId: string, eventIndex: number): GameData | null => {
+export const removeGameEvent = async (gameId: string, eventIndex: number): Promise<AppState | null> => {
   try {
-    const game = getGame(gameId);
+    const game = await getGame(gameId);
     if (!game) {
       console.warn(`Game with ID ${gameId} not found for removing event.`);
-      return null;
+      return Promise.resolve(null);
     }
     
-    if (eventIndex < 0 || eventIndex >= game.events.length) {
-      console.warn(`Event index out of bounds: ${eventIndex}`);
-      return null;
+    const events = [...(game.gameEvents || [])];
+    if (eventIndex < 0 || eventIndex >= events.length) {
+      console.warn(`Event index ${eventIndex} out of bounds for game ${gameId}.`);
+      return Promise.resolve(null);
     }
     
-    const updatedEvents = [...game.events];
-    updatedEvents.splice(eventIndex, 1);
+    events.splice(eventIndex, 1);
     
     const updatedGame = {
       ...game,
-      events: updatedEvents,
+      gameEvents: events,
     };
     
     return saveGame(gameId, updatedGame);
   } catch (error) {
     console.error('Error removing game event:', error);
-    return null;
+    return Promise.reject(error); // Or resolve(null)
   }
 };
 
 /**
- * Export all games as JSON string
- * @returns JSON string of all games, or null on error
+ * Exports all games as a JSON string
+ * @returns Promise resolving to a JSON string of all games, or null on error
  */
-export const exportGamesAsJson = (): string | null => {
+export const exportGamesAsJson = async (): Promise<string | null> => {
   try {
-    const allGames = getSavedGames();
-    return JSON.stringify(allGames, null, 2);
+    const allGames = await getSavedGames();
+    if (Object.keys(allGames).length === 0) {
+      console.log('No games to export.');
+      return Promise.resolve(null); // Or an empty JSON object string like '{}'
+    }
+    return Promise.resolve(JSON.stringify(allGames, null, 2));
   } catch (error) {
     console.error('Error exporting games as JSON:', error);
-    return null;
+    return Promise.reject(error); // Or resolve(null)
   }
 };
 
 /**
- * Import games from JSON string
- * @param jsonData - JSON string containing games data
- * @param overwrite - Whether to overwrite existing games with the same IDs
- * @returns Number of games imported, or null on error
+ * Imports games from a JSON string into localStorage
+ * @param jsonData - JSON string of games to import
+ * @param overwrite - Whether to overwrite existing games with the same ID
+ * @returns Promise resolving to the number of games successfully imported, or null on error
  */
-export const importGamesFromJson = (jsonData: string, overwrite: boolean = false): number | null => {
+export const importGamesFromJson = async (jsonData: string, overwrite: boolean = false): Promise<number> => {
+  let importedCount = 0;
   try {
-    const importedGames = JSON.parse(jsonData);
-    if (typeof importedGames !== 'object') {
-      throw new Error('Invalid games data format');
+    const gamesToImport = JSON.parse(jsonData) as SavedGamesCollection;
+    if (typeof gamesToImport !== 'object' || gamesToImport === null) {
+      throw new Error('Invalid JSON data format for import.');
     }
-    
-    const currentGames = overwrite ? {} : getSavedGames();
-    let importCount = 0;
-    
-    for (const [gameId, gameData] of Object.entries(importedGames)) {
-      if (!currentGames[gameId] || overwrite) {
-        // Use explicit any to handle type compatibility with SavedGamesCollection
-        currentGames[gameId] = gameData as any;
-        importCount++;
+
+    const existingGames = await getSavedGames();
+    const gamesToSave: SavedGamesCollection = { ...existingGames }; // Make a mutable copy
+
+    for (const gameId in gamesToImport) {
+      if (Object.prototype.hasOwnProperty.call(gamesToImport, gameId)) {
+        if (existingGames[gameId] && !overwrite) {
+          console.log(`Skipping import for existing game ID: ${gameId} (overwrite is false).`);
+          continue;
+        }
+        // TODO: Add validation here to ensure gamesToImport[gameId] conforms to AppState
+        gamesToSave[gameId] = gamesToImport[gameId];
+        importedCount++;
       }
     }
+
+    if (importedCount > 0 || (overwrite && Object.keys(gamesToImport).length > 0) ) { 
+        await saveGames(gamesToSave);
+    }
     
-    saveGames(currentGames);
-    return importCount;
+    return Promise.resolve(importedCount);
   } catch (error) {
     console.error('Error importing games from JSON:', error);
-    return null;
+    return Promise.reject(error); // Or resolve(null)
   }
 }; 

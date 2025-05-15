@@ -142,7 +142,7 @@ We've already made progress in centralizing data access for certain entities:
 | 1.5.1 | Refactor src/utils/seasons.ts error handling | ✅ Completed | 2024-08-02 | Aligned with defined error handling strategy (return null/false, console.error). Tests updated. |
 | 1.5.2 | Refactor src/utils/tournaments.ts error handling | ✅ Completed | 2024-08-03 | Aligned with defined error handling strategy. Tests updated to match new logging and error details, successfully refactored to test by controlling localStorage mock directly. |
 | 1.5.3 | Review src/utils/masterRoster.ts error handling | ✅ Completed | 2024-08-03 | Error handling patterns (return values, console.error with prefixes) already align with strategy. Tests cover error paths. |
-| 2.1  | Make utility functions return Promises | 🔄 In Progress |          | Refactored src/utils/appSettings.ts. Components using it (NewGameSetupModal.tsx) and its tests updated. Refactored src/utils/seasons.ts. Components using it (NewGameSetupModal.tsx, GameStatsModal.tsx) and their tests updated. Refactored src/utils/tournaments.ts. Components using it (NewGameSetupModal.tsx, GameStatsModal.tsx) and their tests updated. Refactored src/utils/masterRoster.ts and its tests. |
+| 2.1  | Make utility functions return Promises | ✅ Completed | 2024-08-03 | Refactored src/utils/appSettings.ts. Components using it (NewGameSetupModal.tsx) and its tests updated. Refactored src/utils/seasons.ts. Components using it (NewGameSetupModal.tsx, GameStatsModal.tsx) and their tests updated. Refactored src/utils/tournaments.ts. Components using it (NewGameSetupModal.tsx, GameStatsModal.tsx) and their tests updated. Refactored src/utils/masterRoster.ts and its tests. Refactored/verified src/utils/savedGames.ts and its tests. All verified. |
 | 2.2  | Update components for async operations | 📝 Planned | | |
 | 2.3  | Add loading states | 📝 Planned | | |
 | 2.4  | Implement error states | 📝 Planned | | |
@@ -178,7 +178,7 @@ We've already made progress in centralizing data access for certain entities:
 ## Next Steps
 
 ### Immediate Focus
-1. **Complete LoadGameModal Refactoring**: The next component to refactor is LoadGameModal.tsx to use our utility functions instead of direct localStorage access. Include comprehensive tests for the refactored component.
+1. **Review Component Refactoring Status**: Double-check all components listed in 1.4.x to ensure they fully utilize the abstracted utility functions and that their tests accurately mock these utilities. Address any remaining direct `localStorage` access if found.
 
 2. **Type Harmonization**: We've made progress with type harmonization between GameData and AppState, but more work is needed. We've implemented type conversions and proper assertions to handle compatibility issues, but a more unified type system would be beneficial.
 
