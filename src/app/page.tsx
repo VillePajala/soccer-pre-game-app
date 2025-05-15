@@ -349,7 +349,6 @@ export default function Home() {
   // --- State Management (Remaining in Home component) ---
   const [showPlayerNames, setShowPlayerNames] = useState<boolean>(initialState.showPlayerNames);
   const [gameEvents, setGameEvents] = useState<GameEvent[]>(initialState.gameEvents);
-  const [opponentName, setOpponentName] = useState<string>(initialState.opponentName);
   const [gameDate, setGameDate] = useState<string>(initialState.gameDate);
   const [homeScore, setHomeScore] = useState<number>(initialState.homeScore);
   const [awayScore, setAwayScore] = useState<number>(initialState.awayScore);
@@ -994,7 +993,7 @@ export default function Home() {
     setShowPlayerNames(stateToApply.showPlayerNames === undefined ? initialState.showPlayerNames : stateToApply.showPlayerNames);
     dispatchGameSession({ type: 'SET_TEAM_NAME', payload: stateToApply.teamName || initialState.teamName });
     setGameEvents(stateToApply.gameEvents || []);
-    setOpponentName(stateToApply.opponentName || initialState.opponentName);
+    dispatchGameSession({ type: 'SET_OPPONENT_NAME', payload: stateToApply.opponentName || initialState.opponentName });
     setGameDate(stateToApply.gameDate || initialState.gameDate);
     setHomeScore(stateToApply.homeScore ?? 0);
     setAwayScore(stateToApply.awayScore ?? 0);
@@ -1063,7 +1062,7 @@ export default function Home() {
           showPlayerNames,
           teamName: gameSessionState.teamName,
           gameEvents,
-          opponentName,
+          opponentName: gameSessionState.opponentName,
           gameDate,
           homeScore,
           awayScore,
@@ -1103,7 +1102,7 @@ export default function Home() {
   }, [isLoaded, currentGameId,
       playersOnField, opponents, drawings, availablePlayers, // <<< ADD availablePlayers
       showPlayerNames, gameSessionState.teamName,
-      gameEvents, opponentName, gameDate, homeScore, awayScore, gameNotes,
+      gameEvents, gameSessionState.opponentName, gameDate, homeScore, awayScore, gameNotes,
       numberOfPeriods, periodDurationMinutes, // ADDED back dependencies
       currentPeriod, gameStatus,
       selectedPlayerIds, seasonId, tournamentId, // <<< ENSURE seasonId & tournamentId ARE HERE
@@ -1240,7 +1239,7 @@ export default function Home() {
       setGameEvents(prevState.gameEvents); // Restore game events
       setHomeScore(prevState.homeScore); // Restore scores
       setAwayScore(prevState.awayScore);
-      setOpponentName(prevState.opponentName);
+      dispatchGameSession({ type: 'SET_OPPONENT_NAME', payload: prevState.opponentName });
       setGameDate(prevState.gameDate);
       setGameNotes(prevState.gameNotes);
       setNumberOfPeriods(prevState.numberOfPeriods);
@@ -1283,7 +1282,7 @@ export default function Home() {
       setGameEvents(nextState.gameEvents); // Restore game events
       setHomeScore(nextState.homeScore); // Restore scores
       setAwayScore(nextState.awayScore);
-      setOpponentName(nextState.opponentName);
+      dispatchGameSession({ type: 'SET_OPPONENT_NAME', payload: nextState.opponentName });
       setGameDate(nextState.gameDate);
       setGameNotes(nextState.gameNotes);
       setNumberOfPeriods(nextState.numberOfPeriods);
@@ -1641,9 +1640,9 @@ export default function Home() {
 
   // Placeholder handlers for updating game info (will be passed to modal)
   const handleOpponentNameChange = (newName: string) => {
-    console.log('[page.tsx] handleOpponentNameChange called with:', newName); // <<< ADD LOG
-    setOpponentName(newName);
-    saveStateToHistory({ opponentName: newName });
+    console.log('[page.tsx] handleOpponentNameChange called with:', newName);
+    dispatchGameSession({ type: 'SET_OPPONENT_NAME', payload: newName });
+    saveStateToHistory({ opponentName: newName }); // Stays for now
   };
   const handleGameDateChange = (newDate: string) => {
     setGameDate(newDate);
@@ -1753,8 +1752,8 @@ export default function Home() {
         showPlayerNames,
         teamName: gameSessionState.teamName,
         gameEvents,
-        opponentName: opponentName, 
-        gameDate: gameDate,
+        opponentName: gameSessionState.opponentName,
+        gameDate,
         homeScore,
         awayScore,
         gameNotes,
@@ -1801,7 +1800,7 @@ export default function Home() {
         setShowPlayerNames(stateToLoad.showPlayerNames);
         dispatchGameSession({ type: 'SET_TEAM_NAME', payload: stateToLoad.teamName || initialState.teamName });
         setGameEvents(stateToLoad.gameEvents || []);
-        setOpponentName(stateToLoad.opponentName || initialState.opponentName);
+        dispatchGameSession({ type: 'SET_OPPONENT_NAME', payload: stateToLoad.opponentName || initialState.opponentName });
         setGameDate(stateToLoad.gameDate || initialState.gameDate);
         setHomeScore(stateToLoad.homeScore || 0);
         setAwayScore(stateToLoad.awayScore || 0);
@@ -1890,7 +1889,7 @@ export default function Home() {
         setShowPlayerNames(initialState.showPlayerNames);
         dispatchGameSession({ type: 'SET_TEAM_NAME', payload: initialState.teamName });
         setGameEvents(initialState.gameEvents);
-        setOpponentName(initialState.opponentName);
+        dispatchGameSession({ type: 'SET_OPPONENT_NAME', payload: initialState.opponentName });
         setGameDate(initialState.gameDate);
         setHomeScore(initialState.homeScore);
         setAwayScore(initialState.awayScore);
@@ -2608,7 +2607,7 @@ export default function Home() {
           showPlayerNames,
           teamName: gameSessionState.teamName,
           gameEvents,
-          opponentName,
+          opponentName: gameSessionState.opponentName,
           gameDate,
           homeScore,
           awayScore,
@@ -2665,7 +2664,7 @@ export default function Home() {
     showPlayerNames,
     gameSessionState.teamName,
     gameEvents,
-    opponentName,
+    gameSessionState.opponentName,
     gameDate,
     homeScore,
     awayScore,
@@ -3344,7 +3343,7 @@ export default function Home() {
       {/* <<< ADD the GameInfoBar here >>> */}
       <GameInfoBar 
         teamName={gameSessionState.teamName}
-        opponentName={opponentName}
+        opponentName={gameSessionState.opponentName}
         homeScore={homeScore}
         awayScore={awayScore}
         homeOrAway={homeOrAway} // Pass the prop
@@ -3373,7 +3372,7 @@ export default function Home() {
               onRecordOpponentGoal={() => handleLogOpponentGoal(timeElapsedInSeconds)}
               // Game score props
               teamName={gameSessionState.teamName}
-              opponentName={opponentName}
+              opponentName={gameSessionState.opponentName}
               homeScore={homeScore}
               awayScore={awayScore}
               homeOrAway={homeOrAway} // Pass prop
@@ -3465,7 +3464,7 @@ export default function Home() {
           isOpen={isGameStatsModalOpen}
           onClose={handleToggleGameStatsModal}
           teamName={gameSessionState.teamName}
-          opponentName={opponentName}
+          opponentName={gameSessionState.opponentName}
           gameDate={gameDate}
           gameLocation={gameLocation}
           gameTime={gameTime}
@@ -3499,7 +3498,7 @@ export default function Home() {
           onClose={handleCloseSaveGameModal}
           onSave={handleSaveGame} 
           teamName={gameSessionState.teamName}
-          opponentName={opponentName}
+          opponentName={gameSessionState.opponentName}
           gameDate={gameDate}
           // Pass loading/error state props from useMutation
           isGameSaving={saveGameMutation.isPending} // CORRECTED: Use isPending for loading state
@@ -3571,7 +3570,7 @@ export default function Home() {
           onClose={handleCloseGameSettingsModal}
           currentGameId={currentGameId}
           teamName={gameSessionState.teamName} 
-          opponentName={opponentName}
+          opponentName={gameSessionState.opponentName}
           gameDate={gameDate}
           gameLocation={gameLocation}
           gameTime={gameTime}
