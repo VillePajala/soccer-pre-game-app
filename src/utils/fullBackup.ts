@@ -1,4 +1,5 @@
-import { SavedGamesCollection, Season, Tournament, Player } from '@/app/page'; // Remove AppState as it's not used
+import { SavedGamesCollection } from '@/app/page'; // AppState was removed, SavedGamesCollection is still used.
+import { Player, Season, Tournament } from '@/types'; // Corrected import path for these types
 // Import the constants from the central file
 import { 
   SAVED_GAMES_KEY, 
@@ -7,6 +8,8 @@ import {
   TOURNAMENTS_LIST_KEY, 
   MASTER_ROSTER_KEY 
 } from '@/config/constants';
+// Import the new async localStorage utility functions
+import { getLocalStorageItemAsync, setLocalStorageItemAsync, removeLocalStorageItemAsync } from './localStorage';
 
 // Define the structure of the backup file
 interface FullBackupData {
@@ -24,7 +27,7 @@ interface FullBackupData {
 }
 
 // Function to export all relevant localStorage data
-export const exportFullBackup = () => {
+export const exportFullBackup = async (): Promise<void> => {
   console.log("Starting full backup export...");
   try {
     const backupData: FullBackupData = {
@@ -43,8 +46,8 @@ export const exportFullBackup = () => {
       MASTER_ROSTER_KEY,
     ];
 
-    keysToBackup.forEach(key => {
-      const itemJson = localStorage.getItem(key);
+    for (const key of keysToBackup) {
+      const itemJson = await getLocalStorageItemAsync(key);
       if (itemJson) {
         try {
           // Assign parsed data directly to the correct key in backupData.localStorage
@@ -56,11 +59,11 @@ export const exportFullBackup = () => {
           backupData.localStorage[key as keyof FullBackupData['localStorage']] = null; 
         }
       } else {
-        // Explicitly set to null if item doesn't exist
+        // Explicitly set to null if item doesn't exist or getter failed (it resolves to null)
         console.log(`No data found for key: ${key}, setting to null.`); 
         backupData.localStorage[key as keyof FullBackupData['localStorage']] = null;
       }
-    });
+    }
 
     const jsonString = JSON.stringify(backupData, null, 2); // Pretty print
     const blob = new Blob([jsonString], { type: 'application/json' });
@@ -87,7 +90,7 @@ export const exportFullBackup = () => {
 };
 
 // Function to import data from a backup file
-export const importFullBackup = (jsonContent: string): boolean => {
+export const importFullBackup = async (jsonContent: string): Promise<boolean> => {
   console.log("Starting full backup import...");
   try {
     const backupData: FullBackupData = JSON.parse(jsonContent);
@@ -118,21 +121,28 @@ export const importFullBackup = (jsonContent: string): boolean => {
     // --- Overwrite localStorage ---
     const keysToRestore = Object.keys(backupData.localStorage) as Array<keyof FullBackupData['localStorage']>;
 
-    keysToRestore.forEach((key: keyof FullBackupData['localStorage']) => {
+    for (const key of keysToRestore) {
       const dataToRestore = backupData.localStorage[key];
       if (dataToRestore !== undefined && dataToRestore !== null) {
         try {
-          localStorage.setItem(key, JSON.stringify(dataToRestore));
+          await setLocalStorageItemAsync(key, JSON.stringify(dataToRestore));
           console.log(`Restored data for key: ${key}`);
         } catch (innerError) { 
           console.error(`Error stringifying or setting localStorage item for key ${key}:`, innerError);
+          // It's important to alert the user and rethrow or handle appropriately
+          alert(`Failed to restore data for key ${key}. Aborting import to prevent partial restore.`);
           throw new Error(`Failed to restore data for key ${key}. Aborting import.`);
         }
-      } else if (localStorage.getItem(key)) {
-        localStorage.removeItem(key);
-        console.log(`Removed existing data for key: ${key} as it was not present in the backup.`);
+      } else {
+        // If data for this key is null/undefined in backup, remove it from localStorage if it exists
+        // Check if item exists before attempting removal to avoid unnecessary operations/logs
+        const currentItem = await getLocalStorageItemAsync(key); // Check if item exists
+        if (currentItem !== null) {
+          await removeLocalStorageItemAsync(key);
+          console.log(`Removed existing data for key: ${key} as it was explicitly null or not present in the backup.`);
+        }
       }
-    });
+    }
 
     // --- Final Step: Reload ---
     console.log("Data restored successfully. Reloading application...");

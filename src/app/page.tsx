@@ -50,6 +50,8 @@ import { Player, Season, Tournament } from '@/types';
 import { saveMasterRoster } from '@/utils/masterRoster';
 // Import useQuery, useMutation, useQueryClient
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+// Import async localStorage utilities
+import { getLocalStorageItemAsync, setLocalStorageItemAsync, removeLocalStorageItemAsync } from '@/utils/localStorage';
 
 // Define the Point type for drawing - Use relative coordinates
 export interface Point {
@@ -749,21 +751,21 @@ export default function Home() {
 
       // Simple migration for old data keys (if any) - Run once
       try {
-        const oldRosterJson = localStorage.getItem('availablePlayers');
+        const oldRosterJson = await getLocalStorageItemAsync('availablePlayers');
         if (oldRosterJson) {
           console.log('[EFFECT init] Migrating old roster data...');
-          localStorage.setItem(MASTER_ROSTER_KEY, oldRosterJson);
-          localStorage.removeItem('availablePlayers');
+          await setLocalStorageItemAsync(MASTER_ROSTER_KEY, oldRosterJson);
+          await removeLocalStorageItemAsync('availablePlayers');
           // Consider invalidating and refetching masterRoster query here if migration happens
           // queryClient.invalidateQueries(['masterRoster']);
         }
-      const oldSeasonsJson = localStorage.getItem('soccerSeasonsList');
-      if (oldSeasonsJson) {
+        const oldSeasonsJson = await getLocalStorageItemAsync('soccerSeasonsList'); // Another old key
+        if (oldSeasonsJson) {
           console.log('[EFFECT init] Migrating old seasons data...');
-          localStorage.setItem(SEASONS_LIST_KEY, oldSeasonsJson);
+          await setLocalStorageItemAsync(SEASONS_LIST_KEY, oldSeasonsJson); // New key
           // queryClient.invalidateQueries(['seasons']);
-      }
-    } catch (migrationError) {
+        }
+      } catch (migrationError) {
         console.error('[EFFECT init] Error during data migration:', migrationError);
       }
 
