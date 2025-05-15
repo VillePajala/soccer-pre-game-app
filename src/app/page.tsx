@@ -19,20 +19,22 @@ import { useGameState, UseGameStateReturn } from '@/hooks/useGameState';
 import GameInfoBar from '@/components/GameInfoBar';
 // Import roster utility functions
 import { getMasterRoster, addPlayerToRoster, updatePlayerInRoster, removePlayerFromRoster, setPlayerGoalieStatus } from '@/utils/rosterUtils';
-// Import game persistence utility functions
-import {
-  saveGame,
-  deleteGame,
-  saveAllGames,
-  saveCurrentGameIdSetting,
-  performHardReset,
-} from '@/utils/gamePersistence';
 // Import utility functions for seasons and tournaments
 import { getSeasons as utilGetSeasons } from '@/utils/seasons';
 import { getTournaments as utilGetTournaments } from '@/utils/tournaments';
 import { getMasterRoster as utilGetMasterRoster } from '@/utils/masterRoster';
-import { getSavedGames as utilGetSavedGames, GameData } from '@/utils/savedGames';
-import { getCurrentGameIdSetting } from '@/utils/appSettings';
+import {
+  getSavedGames as utilGetSavedGames,
+  saveGame as utilSaveGame, // For auto-save and handleSaveGame
+  deleteGame as utilDeleteGame, // For handleDeleteGame
+  saveGames as utilSaveAllGames, // Corrected: For handleImportGamesFromJson (was saveAllGames)
+  GameData // Type
+} from '@/utils/savedGames';
+import {
+  getCurrentGameIdSetting, // For initial load
+  saveCurrentGameIdSetting as utilSaveCurrentGameIdSetting, // For saving current game ID setting
+  resetAppSettings as utilResetAppSettings // For handleHardReset
+} from '@/utils/appSettings';
 // Import Player from types directory
 import { Player, Season, Tournament } from '@/types';
 
@@ -156,11 +158,11 @@ const SEASONS_LIST_KEY = 'soccerSeasons';
 const MASTER_ROSTER_KEY = 'soccerMasterRoster'; // <<< NEW KEY for global roster
 
 // Define structure for settings
-interface AppSettings {
-  currentGameId: string | null;
-  // Add other non-game-specific settings here later if needed
-  // e.g., preferredLanguage: string;
-}
+// interface AppSettings {
+//   currentGameId: string | null;
+//   // Add other non-game-specific settings here later if needed
+//   // e.g., preferredLanguage: string;
+// }
 
 // Define structure for saved games collection
 export interface SavedGamesCollection {
@@ -599,52 +601,55 @@ export default function Home() {
   // --- Save state to localStorage ---
   useEffect(() => {
     // Only auto-save if loaded AND we have a proper game ID (not the default unsaved one)
-    if (isLoaded && currentGameId && currentGameId !== DEFAULT_GAME_ID) {
-      console.log(`Auto-saving state for game ID: ${currentGameId}`);
-      try {
-        // 1. Create the current game state snapshot (excluding history)
-        const currentSnapshot: AppState = {
-          playersOnField,
-          opponents,
-          drawings,
-          availablePlayers, // <<< ADD BACK: Include roster available *at time of save*
-          showPlayerNames,
-          teamName,
-          gameEvents,
-          opponentName,
-          gameDate,
-          homeScore,
-          awayScore,
-          gameNotes,
-          numberOfPeriods, // Read current state
-          periodDurationMinutes, // Read current state
-          currentPeriod,
-          gameStatus,
-          selectedPlayerIds,
-          seasonId,
-          tournamentId,
-          gameLocation,
-          gameTime,
-          // Add timer related state
-          subIntervalMinutes,
-          completedIntervalDurations,
-          lastSubConfirmationTimeSeconds,
-          homeOrAway,
-        };
+    const autoSave = async () => {
+      if (isLoaded && currentGameId && currentGameId !== DEFAULT_GAME_ID) {
+        console.log(`Auto-saving state for game ID: ${currentGameId}`);
+        try {
+          // 1. Create the current game state snapshot (excluding history)
+          const currentSnapshot: AppState = {
+            playersOnField,
+            opponents,
+            drawings,
+            availablePlayers, // <<< ADD BACK: Include roster available *at time of save*
+            showPlayerNames,
+            teamName,
+            gameEvents,
+            opponentName,
+            gameDate,
+            homeScore,
+            awayScore,
+            gameNotes,
+            numberOfPeriods, // Read current state
+            periodDurationMinutes, // Read current state
+            currentPeriod,
+            gameStatus,
+            selectedPlayerIds,
+            seasonId,
+            tournamentId,
+            gameLocation,
+            gameTime,
+            // Add timer related state
+            subIntervalMinutes,
+            completedIntervalDurations,
+            lastSubConfirmationTimeSeconds,
+            homeOrAway,
+          };
 
-        // 2. Save the game snapshot using utility
-        saveGame(currentGameId, currentSnapshot);
-        
-        // 3. Save App Settings (only the current game ID) using utility
-        saveCurrentGameIdSetting(currentGameId);
+          // 2. Save the game snapshot using utility
+          await utilSaveGame(currentGameId, currentSnapshot);
+          
+          // 3. Save App Settings (only the current game ID) using utility
+          await utilSaveCurrentGameIdSetting(currentGameId);
 
-      } catch (error) {
-        console.error("Failed to auto-save state to localStorage:", error);
-        alert("Error saving game."); // Notify user
+        } catch (error) {
+          console.error("Failed to auto-save state to localStorage:", error);
+          alert("Error saving game."); // Notify user
+        }
+      } else if (isLoaded && currentGameId === DEFAULT_GAME_ID) {
+        console.log("Not auto-saving as this is an unsaved game (no ID assigned yet)");
       }
-    } else if (isLoaded && currentGameId === DEFAULT_GAME_ID) {
-      console.log("Not auto-saving as this is an unsaved game (no ID assigned yet)");
-    }
+    };
+    autoSave();
     // Dependencies: Include all state variables that are part of the saved snapshot
   }, [isLoaded, currentGameId,
       playersOnField, opponents, drawings, availablePlayers, // <<< ADD availablePlayers
@@ -1235,11 +1240,11 @@ export default function Home() {
   };
 
   // NEW: Handler for Hard Reset
-  const handleHardResetApp = useCallback(() => {
+  const handleHardResetApp = useCallback(async () => {
     if (window.confirm(t('controlBar.hardResetConfirmation') ?? "Are you sure you want to completely reset the application? All saved data (players, stats, positions) will be permanently lost.")) {
       try {
         console.log("Performing hard reset using utility...");
-        performHardReset(); // Use utility function
+        await utilResetAppSettings(); // Use utility function
         // The following season/tournament keys are not part of gamePersistence, handle separately if needed or move them to gamePersistence.
         // localStorage.removeItem(SEASONS_LIST_KEY); 
         // localStorage.removeItem(TOURNAMENTS_LIST_KEY);
@@ -1273,7 +1278,7 @@ export default function Home() {
   };
 
   // Function to handle the actual saving
-  const handleSaveGame = (gameName: string) => {
+  const handleSaveGame = async (gameName: string) => {
     console.log(`Attempting to save game: '${gameName}'`);
     
     // Determine the ID to save under
@@ -1326,24 +1331,16 @@ export default function Home() {
       };
 
       // 2. Update the savedGames state and localStorage using the determined ID
-      const updatedSavedGames = { 
-        ...savedGames, 
+      // This state update is for immediate UI responsiveness.
+      const updatedSavedGamesCollection = {
+        ...savedGames,
         [idToSave]: currentSnapshot // Use idToSave here
       };
-      setSavedGames(updatedSavedGames); // Update state in memory
-      localStorage.setItem(SAVED_GAMES_KEY, JSON.stringify(updatedSavedGames));
+      setSavedGames(updatedSavedGamesCollection); // Update state in memory
 
-      // 3. Update the current game ID ONLY IF it was a NEW save
-      //    Also update settings in localStorage
-      if (!isOverwriting) {
-        setCurrentGameId(idToSave);
-        const currentSettings: AppSettings = { currentGameId: idToSave };
-        localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(currentSettings));
-      } else {
-        // If overwriting, ensure the settings still point to the correct (existing) ID
-        const currentSettings: AppSettings = { currentGameId: idToSave };
-        localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(currentSettings));
-      }
+      // Persist using utility functions
+      await utilSaveGame(idToSave, currentSnapshot);
+      await utilSaveCurrentGameIdSetting(idToSave);
       
       console.log(`Game saved successfully with ID: ${idToSave}`);
       // History for the newly saved/overwritten game should start fresh
@@ -1368,7 +1365,7 @@ export default function Home() {
   };
 
   // Function to handle loading a selected game
-  const handleLoadGame = (gameId: string) => {
+  const handleLoadGame = async (gameId: string) => {
     console.log(`Loading game with ID: ${gameId}`);
     const stateToLoad = savedGames[gameId];
 
@@ -1412,8 +1409,7 @@ export default function Home() {
 
         // Update current game ID and save settings
         setCurrentGameId(gameId);
-        const currentSettings: AppSettings = { currentGameId: gameId };
-        localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(currentSettings));
+        await utilSaveCurrentGameIdSetting(gameId);
 
         console.log(`Game ${gameId} loaded successfully.`);
         handleCloseLoadGameModal();
@@ -1429,7 +1425,7 @@ export default function Home() {
   };
 
   // Function to handle deleting a saved game
-  const handleDeleteGame = (gameId: string) => {
+  const handleDeleteGame = async (gameId: string) => {
     console.log(`Deleting game with ID: ${gameId}`);
     if (gameId === DEFAULT_GAME_ID) {
       console.warn("Cannot delete the default unsaved state.");
@@ -1437,7 +1433,7 @@ export default function Home() {
     }
 
     try {
-      deleteGame(gameId); // Use utility function to delete from localStorage
+      await utilDeleteGame(gameId); // Use utility function to delete from localStorage
 
       // Update local state for immediate UI responsiveness
       const updatedSavedGames = { ...savedGames };
@@ -1486,8 +1482,7 @@ export default function Home() {
 
         // Update current game ID to DEFAULT_GAME_ID
         setCurrentGameId(DEFAULT_GAME_ID);
-        const currentSettings: AppSettings = { currentGameId: DEFAULT_GAME_ID };
-        localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(currentSettings));
+        await utilSaveCurrentGameIdSetting(DEFAULT_GAME_ID);
       }
       // Keep the modal open after delete? Or close? Let's keep it open for now.
       // handleCloseLoadGameModal(); 
@@ -2407,7 +2402,7 @@ export default function Home() {
   // --- END AGGREGATE EXPORT HANDLERS ---
 
   // --- Handler that is called when setup modal is confirmed ---
-  const handleStartNewGameWithSetup = useCallback((
+  const handleStartNewGameWithSetup = useCallback(async (
     initialSelectedPlayerIds: string[],
     homeTeamName: string, // <-- Add parameter
     opponentName: string,
@@ -2472,17 +2467,21 @@ export default function Home() {
 
       // 3. Explicitly save the new game state immediately to state and localStorage
       try {
-        const updatedSavedGames = {
+        const updatedSavedGamesCollection = {
           ...savedGames,
           [newGameId]: newGameState
         };
-        setSavedGames(updatedSavedGames);
-        localStorage.setItem(SAVED_GAMES_KEY, JSON.stringify(updatedSavedGames));
-        console.log(`Explicitly saved initial state for new game ID: ${newGameId}`);
+        setSavedGames(updatedSavedGamesCollection);
+        // localStorage.setItem(SAVED_GAMES_KEY, JSON.stringify(updatedSavedGames)); // OLD
+        // console.log(`Explicitly saved initial state for new game ID: ${newGameId}`); // OLD
 
-        const currentSettings: AppSettings = { currentGameId: newGameId };
-        localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(currentSettings));
-        console.log(`Updated app settings with new game ID: ${newGameId}`);
+        // const currentSettings: AppSettings = { currentGameId: newGameId }; // OLD
+        // localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(currentSettings)); // OLD
+        // console.log(`Updated app settings with new game ID: ${newGameId}`); // OLD
+
+        await utilSaveGame(newGameId, newGameState);
+        await utilSaveCurrentGameIdSetting(newGameId);
+        console.log(`Saved new game ${newGameId} and settings via utility functions.`);
 
       } catch (error) {
          console.error("Error explicitly saving new game state:", error);
@@ -2710,7 +2709,7 @@ export default function Home() {
   // --- END Quick Save Handler ---
 
   // --- Step 3: Handler for Importing Games ---
-  const handleImportGamesFromJson = useCallback((jsonContent: string) => {
+  const handleImportGamesFromJson = useCallback(async (jsonContent: string) => {
     console.log("handleImportGamesFromJson called.");
     let importedGames: SavedGamesCollection = {};
     let skippedCount = 0;
@@ -2748,9 +2747,9 @@ export default function Home() {
 
       if (importedCount > 0) {
         console.log(`Adding ${importedCount} new games to state and localStorage using saveAllGames.`);
-        const updatedSavedGames = { ...savedGames, ...newGamesToImport };
-        saveAllGames(updatedSavedGames); // Use utility function to save all merged games
-        setSavedGames(updatedSavedGames); // Also update local state for immediate UI responsiveness
+        const updatedSavedGamesCollection = { ...savedGames, ...newGamesToImport };
+        await utilSaveAllGames(updatedSavedGamesCollection); // Use utility function to save all merged games
+        setSavedGames(updatedSavedGamesCollection); // Also update local state for immediate UI responsiveness
         alert(t('loadGameModal.importSuccess', 
                   `Successfully imported ${importedCount} game(s). Skipped ${skippedCount} game(s) with existing IDs.`)
               ?.replace('{importedCount}', String(importedCount))
