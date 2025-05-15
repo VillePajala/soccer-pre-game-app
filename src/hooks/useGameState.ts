@@ -1,18 +1,22 @@
 // src/hooks/useGameState.ts
 import { useState, useCallback } from 'react';
+import { Player } from '@/types'; // Player type is from @/types
 import {
-    Player,
     Opponent,
     Point,
     AppState,
-    // Assuming initialState definition might be moved or imported later
-} from '@/app/page'; // Adjust import path if necessary
+} from '@/app/page'; // Reverted for Opponent, Point, AppState as they are likely still in page.tsx exports
+import { 
+    updatePlayer as updatePlayerInMasterRoster, 
+    getMasterRoster as getMasterRosterFromManager,
+    setGoalieStatus as setGoalieStatusInMasterRoster // Import setGoalieStatus
+} from '@/utils/masterRosterManager';
 
 // Define arguments the hook will receive
 interface UseGameStateArgs {
     initialState: AppState; // Pass the global initial state
     saveStateToHistory: (newState: Partial<AppState>) => void; // Callback to save changes
-    masterRosterKey: string; // <<< Add the key argument
+    // masterRosterKey: string; // Removed as no longer used directly in the hook for localStorage
 }
 
 // Define the structure of the object returned by the hook
@@ -41,7 +45,7 @@ export interface UseGameStateReturn {
     handleToggleGoalie: (playerId: string) => void;
 }
 
-export function useGameState({ initialState, saveStateToHistory, masterRosterKey }: UseGameStateArgs): UseGameStateReturn {
+export function useGameState({ initialState, saveStateToHistory }: UseGameStateArgs): UseGameStateReturn {
     // --- State Management ---
     const [playersOnField, setPlayersOnField] = useState<Player[]>(initialState.playersOnField);
     const [opponents, setOpponents] = useState<Opponent[]>(initialState.opponents);
@@ -137,61 +141,75 @@ export function useGameState({ initialState, saveStateToHistory, masterRosterKey
     }, [opponents, saveStateToHistory]);
 
     // Player Management Handlers (Moved here)
-    const handleRenamePlayer = useCallback((playerId: string, playerData: { name: string; nickname: string }) => {
-        const updatedAvailablePlayers = availablePlayers.map(p => 
-            p.id === playerId ? { ...p, name: playerData.name, nickname: playerData.nickname } : p
-        );
-        const updatedPlayersOnField = playersOnField.map(p => 
-            p.id === playerId ? { ...p, name: playerData.name, nickname: playerData.nickname } : p
-        );
-        // Directly update state using setters from this hook
-        setAvailablePlayers(updatedAvailablePlayers);
-        setPlayersOnField(updatedPlayersOnField);
-        // Save to session history
-        saveStateToHistory({ 
-            playersOnField: updatedPlayersOnField 
-            // NOTE: availablePlayers isn't part of the per-game history snapshot
-        });
-        // --- ADDED: Save updated roster to localStorage --- 
+    const handleRenamePlayer = useCallback(async (playerId: string, playerData: { name: string; nickname: string }) => {
+        console.log(`[useGameState] handleRenamePlayer called for ID: ${playerId}, with data:`, playerData);
         try {
-            localStorage.setItem(masterRosterKey, JSON.stringify(updatedAvailablePlayers));
-            console.log(`Saved updated roster to localStorage for player ${playerId}.`);
+            const updatedPlayerFromManager = await updatePlayerInMasterRoster(playerId, { 
+                name: playerData.name, 
+                nickname: playerData.nickname 
+            });
+
+            if (updatedPlayerFromManager) {
+                const latestRoster = await getMasterRosterFromManager();
+                setAvailablePlayers(latestRoster);
+
+                setPlayersOnField(prevPlayersOnField => 
+                    prevPlayersOnField.map(p => 
+                        p.id === playerId ? { ...p, name: playerData.name, nickname: playerData.nickname } : p
+                    )
+                );
+
+                saveStateToHistory({ 
+                    playersOnField: playersOnField.map(p => // This should use the updated playersOnField state for consistency
+                        p.id === playerId ? { ...p, name: playerData.name, nickname: playerData.nickname } : p
+                    )
+                });
+                console.log(`[useGameState] Player ${playerId} renamed to ${playerData.name}. Roster and field updated.`);
+            } else {
+                console.error(`[useGameState] Failed to update player ${playerId} via masterRosterManager.`);
+            }
         } catch (error) {
-            console.error("Failed to save master roster after rename:", error);
-            // Optionally notify the user about the save failure
+            console.error(`[useGameState] Error in handleRenamePlayer for ID ${playerId}:`, error);
         }
-        // ------------------------------------------------
-        console.log(`Updated name/nickname for player ${playerId} to ${playerData.name} / ${playerData.nickname}`);
-    }, [availablePlayers, playersOnField, saveStateToHistory, setAvailablePlayers, setPlayersOnField, masterRosterKey]); // Added setters to dependency array
+    }, [playersOnField, saveStateToHistory, setAvailablePlayers, setPlayersOnField]);
 
     // --- Add Goalie Handler Here ---
-    const handleToggleGoalie = useCallback((playerId: string) => {
+    const handleToggleGoalie = useCallback(async (playerId: string) => {
         console.log(`[useGameState:handleToggleGoalie] Called for ${playerId}`);
-        const currentGoalie = availablePlayers.find(p => p.isGoalie && p.id !== playerId);
-        
-        const updatedAvailable = availablePlayers.map(p => {
-          // Explicitly handle undefined case for isGoalie
-          const currentIsGoalie = p.isGoalie ?? false;
-          if (p.id === playerId) return { ...p, isGoalie: !currentIsGoalie }; 
-          // When unsetting the current goalie, explicitly set to false
-          if (currentGoalie && p.id === currentGoalie.id) return { ...p, isGoalie: false };
-          return p;
-        });
-        
-        const updatedOnField = playersOnField.map(p => {
-          // Explicitly handle undefined case for isGoalie
-          const currentIsGoalie = p.isGoalie ?? false;
-          if (p.id === playerId) return { ...p, isGoalie: !currentIsGoalie };
-          // When unsetting the current goalie, explicitly set to false
-          if (currentGoalie && p.id === currentGoalie.id) return { ...p, isGoalie: false };
-          return p;
-        });
-    
-        console.log('[useGameState:handleToggleGoalie] Attempting to set state...');
-        setAvailablePlayers([...updatedAvailable]); 
-        setPlayersOnField([...updatedOnField]); 
-        console.log('[useGameState:handleToggleGoalie] State setters called.');
-        saveStateToHistory({ playersOnField: updatedOnField });
+        const playerToToggle = availablePlayers.find(p => p.id === playerId);
+        if (!playerToToggle) {
+            console.error(`[useGameState:handleToggleGoalie] Player ${playerId} not found.`);
+            return;
+        }
+        const targetGoalieStatus = !(playerToToggle.isGoalie ?? false);
+
+        try {
+            const updatedPlayerFromManager = await setGoalieStatusInMasterRoster(playerId, targetGoalieStatus);
+
+            if (updatedPlayerFromManager) {
+                const latestRoster = await getMasterRosterFromManager();
+                setAvailablePlayers(latestRoster);
+
+                let newPlayersOnFieldState: Player[] = [];
+                setPlayersOnField(prevPlayersOnField => {
+                    newPlayersOnFieldState = prevPlayersOnField.map(p => {
+                        if (p.id === playerId) return { ...p, isGoalie: targetGoalieStatus };
+                        if (targetGoalieStatus && p.id !== playerId && p.isGoalie) return { ...p, isGoalie: false };
+                        return p;
+                    });
+                    return newPlayersOnFieldState; // Return the newly computed state
+                });
+
+                // Save history for playersOnField change using the computed state
+                saveStateToHistory({ playersOnField: newPlayersOnFieldState });
+
+                console.log(`[useGameState:handleToggleGoalie] Goalie status for ${playerId} to ${targetGoalieStatus}. Roster and field updated.`);
+            } else {
+                console.error(`[useGameState:handleToggleGoalie] Failed to update goalie status for ${playerId} via masterRosterManager.`);
+            }
+        } catch (error) {
+            console.error(`[useGameState:handleToggleGoalie] Error toggling goalie for ID ${playerId}:`, error);
+        }
     }, [availablePlayers, playersOnField, saveStateToHistory, setAvailablePlayers, setPlayersOnField]);
 
     // ... (more handlers will be moved here later)

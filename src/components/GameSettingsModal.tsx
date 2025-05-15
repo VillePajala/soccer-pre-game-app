@@ -110,6 +110,9 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   const [editGoalTime, setEditGoalTime] = useState<string>('');
   const [editGoalScorerId, setEditGoalScorerId] = useState<string>('');
   const [editGoalAssisterId, setEditGoalAssisterId] = useState<string | undefined>(undefined);
+  const [selectedFairPlayPlayerId, setSelectedFairPlayPlayerId] = useState<string | null>(
+    gameEvents.find(e => e.type === 'fairPlayCard')?.entityId || null
+  );
   const goalTimeInputRef = useRef<HTMLInputElement>(null);
 
   // State for inline editing UI control
@@ -131,6 +134,10 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   // RE-ADD local state for Time inputs for better responsiveness
   const [localHour, setLocalHour] = useState<string>('');
   const [localMinute, setLocalMinute] = useState<string>('');
+
+  // NEW: Loading and Error states for modal operations
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // --- Effects ---
 
@@ -202,29 +209,60 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
 
   // --- Event Handlers ---
 
-  const handleSeasonChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleSeasonChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setError(null);
+    setIsProcessing(true);
     const newId = event.target.value;
-    onSeasonIdChange(newId === 'none' || !newId ? null : newId);
+    const seasonToSet = newId === 'none' || !newId ? null : newId;
+    // Call these setters before the async operation for immediate UI feedback
+    onSeasonIdChange(seasonToSet);
+    onTournamentIdChange(null); // Also clear tournament when season changes
     
-    // Update game details in storage using utility function
     if (currentGameId) {
-      updateGameDetails(currentGameId, {
-        seasonId: newId === 'none' || !newId ? null : newId,
-        tournamentId: null // Set tournamentId to null when season is selected
-      });
+      try {
+        await updateGameDetails(currentGameId, {
+          seasonId: seasonToSet === null ? undefined : seasonToSet,
+          tournamentId: undefined // Explicitly set tournamentId to undefined in DB
+        });
+        console.log(`[GameSettingsModal] Updated game ${currentGameId} with season ${seasonToSet}`);
+      } catch (err) {
+        console.error(`[GameSettingsModal] Failed to update season for game ${currentGameId}:`, err);
+        setError(t('gameSettingsModal.errors.seasonUpdateFailed', 'Error updating season information.'));
+        // Potentially revert onSeasonIdChange/onTournamentIdChange if save fails? 
+        // For now, parent state change remains for UI responsiveness.
+      } finally {
+        setIsProcessing(false);
+      }
+    } else {
+      setIsProcessing(false); // Ensure processing is false if no currentGameId
     }
   };
 
-  const handleTournamentChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleTournamentChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setError(null);
+    setIsProcessing(true);
     const newId = event.target.value;
-    onTournamentIdChange(newId === 'none' || !newId ? null : newId);
+    const tournamentToSet = newId === 'none' || !newId ? null : newId;
+    // Call these setters before the async operation for immediate UI feedback
+    onTournamentIdChange(tournamentToSet);
+    onSeasonIdChange(null); // Also clear season when tournament changes
     
-    // Update game details in storage using utility function
     if (currentGameId) {
-      updateGameDetails(currentGameId, {
-        tournamentId: newId === 'none' || !newId ? null : newId,
-        seasonId: null // Set seasonId to null when tournament is selected
-      });
+      try {
+        await updateGameDetails(currentGameId, {
+          tournamentId: tournamentToSet === null ? undefined : tournamentToSet,
+          seasonId: undefined // Explicitly set seasonId to undefined in DB
+        });
+        console.log(`[GameSettingsModal] Updated game ${currentGameId} with tournament ${tournamentToSet}`);
+      } catch (err) {
+        console.error(`[GameSettingsModal] Failed to update tournament for game ${currentGameId}:`, err);
+        setError(t('gameSettingsModal.errors.tournamentUpdateFailed', 'Error updating tournament information.'));
+        // Potentially revert onTournamentIdChange/onSeasonIdChange if save fails?
+      } finally {
+        setIsProcessing(false);
+      }
+    } else {
+      setIsProcessing(false); // Ensure processing is false if no currentGameId
     }
   };
 
@@ -244,10 +282,16 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   };
 
   // Handle saving edited goal
-  const handleSaveGoal = (goalId: string) => {
-    if (!goalId) return;
+  const handleSaveGoal = async (goalId: string) => {
+    if (!goalId || !currentGameId) {
+      console.error("[GameSettingsModal] Missing goalId or currentGameId for save.");
+      setError(t('gameSettingsModal.errors.missingGoalId', 'Goal ID or Game ID is missing. Cannot save.'));
+      return;
+    }
 
-    // Convert MM:SS back to seconds
+    setError(null);
+    setIsProcessing(true);
+
     let timeInSeconds = 0;
     const timeParts = editGoalTime.split(':');
     if (timeParts.length === 2) {
@@ -259,64 +303,98 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
         alert(t('gameSettingsModal.invalidTimeFormat', "Invalid time format. Use MM:SS"));
         return;
       }
-    } else if (editGoalTime) { // Allow just seconds input maybe? For now, require MM:SS
+    } else if (editGoalTime) {
         alert(t('gameSettingsModal.invalidTimeFormat', "Invalid time format. Use MM:SS"));
       return;
     }
 
+    const originalEvent = localGameEvents.find(e => e.id === goalId);
+    if (!originalEvent) {
+        console.error(`[GameSettingsModal] Original event not found for ID: ${goalId}`);
+        return;
+    }
+
     const updatedEvent: GameEvent = {
+      ...originalEvent, // Preserve other properties like type
       id: goalId,
-      // Determine type based on original event? Assume it doesn't change. Find original event.
-      type: localGameEvents.find(e => e.id === goalId)?.type || 'goal', // Default to 'goal' if somehow not found
       time: timeInSeconds,
       scorerId: editGoalScorerId,
-      assisterId: editGoalAssisterId || undefined, // Ensure it's undefined if empty
+      assisterId: editGoalAssisterId || undefined,
     };
 
-    // Update the local state first for immediate UI feedback in the list
     setLocalGameEvents(prevEvents =>
       prevEvents.map(event => (event.id === goalId ? updatedEvent : event))
     );
+    onUpdateGameEvent(updatedEvent); // Propagate to parent for its state update
 
-    // Call the prop handler to update the main state
-    onUpdateGameEvent(updatedEvent);
-
-    // Update the event in storage using utility function
-    if (currentGameId) {
-      // Find the index of the event in the array
-      const eventIndex = localGameEvents.findIndex(e => e.id === goalId);
+    try {
+      const eventIndex = gameEvents.findIndex(e => e.id === goalId); // Use gameEvents from props for original index
       if (eventIndex !== -1) {
-        // Use the updatedEvent directly with the correct type
-        updateGameEvent(currentGameId, eventIndex, {
-          id: updatedEvent.id,
-          type: updatedEvent.type,
-          time: updatedEvent.time,
-          scorerId: updatedEvent.scorerId,
-          assisterId: updatedEvent.assisterId
-        });
+        const success = await updateGameEvent(currentGameId, eventIndex, updatedEvent);
+        if (success) {
+          console.log(`[GameSettingsModal] Event ${goalId} updated in game ${currentGameId}.`);
+          handleCancelEditGoal(); // Close edit mode on success
+        } else {
+          console.error(`[GameSettingsModal] Failed to update event ${goalId} in game ${currentGameId} via utility.`);
+          setError(t('gameSettingsModal.errors.updateFailed', 'Failed to update event. Please try again.'));
+          // Optionally revert UI:
+          // setLocalGameEvents(gameEvents); // Revert local state if save failed
+        }
+      } else {
+        console.error(`[GameSettingsModal] Event ${goalId} not found in original gameEvents prop for saving.`);
+        setError(t('gameSettingsModal.errors.eventNotFound', 'Original event not found for saving.'));
       }
+    } catch (err) {
+      console.error(`[GameSettingsModal] Error updating event ${goalId} in game ${currentGameId}:`, err);
+      setError(t('gameSettingsModal.errors.genericSaveError', 'An unexpected error occurred while saving the event.'));
+      // Optionally revert UI:
+      // setLocalGameEvents(gameEvents); // Revert local state if save failed
+    } finally {
+      setIsProcessing(false);
+      // Do not call handleCancelEditGoal() here if there was an error,
+      // so the user can see their input and try again or cancel.
     }
-
-    handleCancelEditGoal(); // Exit editing mode
   };
 
   // Handle deleting a goal
-  const handleDeleteGoal = (goalId: string) => {
-    if (onDeleteGameEvent) {
-      if (window.confirm(t('gameSettingsModal.confirmDeleteEvent', 'Are you sure you want to delete this event? This cannot be undone.'))) {
-        // Update local state immediately
-        setLocalGameEvents(prevEvents => prevEvents.filter(event => event.id !== goalId));
-        // Call parent handler
-        onDeleteGameEvent(goalId);
-        
-        // Delete the event from storage using utility function
-        if (currentGameId) {
-          // Find the index of the event in the array
-          const eventIndex = localGameEvents.findIndex(e => e.id === goalId);
-          if (eventIndex !== -1) {
-            removeGameEvent(currentGameId, eventIndex);
-          }
+  const handleDeleteGoal = async (goalId: string) => {
+    if (!onDeleteGameEvent || !currentGameId) {
+      console.error("[GameSettingsModal] Missing onDeleteGameEvent handler or currentGameId for delete.");
+      setError(t('gameSettingsModal.errors.missingDeleteHandler', 'Cannot delete event: Critical configuration missing.'));
+      return;
+    }
+
+    if (window.confirm(t('gameSettingsModal.confirmDeleteEvent', 'Are you sure you want to delete this event? This cannot be undone.'))) {
+      setError(null);
+      setIsProcessing(true);
+      try {
+        const eventIndex = gameEvents.findIndex(e => e.id === goalId); 
+        if (eventIndex === -1) {
+          console.error(`[GameSettingsModal] Event ${goalId} not found in original gameEvents for deletion.`);
+          setError(t('gameSettingsModal.errors.eventNotFoundDelete', 'Event to delete not found.'));
+          setIsProcessing(false); // Stop processing early
+          return;
         }
+        
+        // Update local state immediately for UI responsiveness - Parent state updated via prop
+        const originalLocalEvents = localGameEvents;
+        setLocalGameEvents(prevEvents => prevEvents.filter(event => event.id !== goalId));
+        onDeleteGameEvent(goalId); 
+
+        const success = await removeGameEvent(currentGameId, eventIndex);
+        if (success) {
+          console.log(`[GameSettingsModal] Event ${goalId} removed from game ${currentGameId}.`);
+        } else {
+          console.error(`[GameSettingsModal] Failed to remove event ${goalId} from game ${currentGameId} via utility.`);
+          setError(t('gameSettingsModal.errors.deleteFailed', 'Failed to delete event. Please try again.'));
+          setLocalGameEvents(originalLocalEvents); // Revert local UI on failure
+        }
+      } catch (err) {
+        console.error(`[GameSettingsModal] Error removing event ${goalId} from game ${currentGameId}:`, err);
+        setError(t('gameSettingsModal.errors.genericDeleteError', 'An unexpected error occurred while deleting the event.'));
+        // Consider reverting localGameEvents here as well if an error occurs
+      } finally {
+        setIsProcessing(false);
       }
     }
   };
@@ -336,52 +414,53 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
     }
   };
 
-  const handleConfirmInlineEdit = () => {
+  const handleConfirmInlineEdit = async () => {
     if (inlineEditingField === null) return;
 
+    setError(null); // Clear previous errors
+    setIsProcessing(true);
+
     const trimmedValue = inlineEditValue.trim();
+    let success = false;
+    const fieldProcessed: typeof inlineEditingField = inlineEditingField; // To use in finally
 
     try {
+      if (!currentGameId) {
+        console.error("[GameSettingsModal] currentGameId is null, cannot save inline edit.");
+        // alert(t('common.saveError', "Cannot save changes: Game ID is missing."));
+        setError(t('gameSettingsModal.errors.missingGameIdInline', "Cannot save: Game ID missing."));
+        return;
+      }
+
       switch (inlineEditingField) {
         case 'opponent':
-          // console.log('[GameSettingsModal] Attempting to save opponent name:', trimmedValue);
           if (trimmedValue) {
             onOpponentNameChange(trimmedValue);
-            // Update game details in storage using utility function
-            if (currentGameId) {
-              updateGameDetails(currentGameId, { awayTeam: trimmedValue });
-            }
+            await updateGameDetails(currentGameId, { opponentName: trimmedValue });
+            success = true;
           } else {
             alert(t('gameSettingsModal.opponentNameRequired', "Opponent name cannot be empty."));
           }
           break;
         case 'date':
-          // Basic validation for YYYY-MM-DD
           if (/^\d{4}-\d{2}-\d{2}$/.test(trimmedValue)) {
             onGameDateChange(trimmedValue);
-            // Update game details in storage using utility function
-            if (currentGameId) {
-              updateGameDetails(currentGameId, { date: trimmedValue });
-            }
+            await updateGameDetails(currentGameId, { gameDate: trimmedValue });
+            success = true;
           } else {
             alert(t('gameSettingsModal.invalidDateFormat', "Invalid date format. Use YYYY-MM-DD."));
           }
           break;
         case 'location':
-          onGameLocationChange(trimmedValue); // Allow empty location
-          // Update game details in storage using utility function
-          if (currentGameId) {
-            updateGameDetails(currentGameId, { location: trimmedValue });
-          }
+          onGameLocationChange(trimmedValue);
+          await updateGameDetails(currentGameId, { gameLocation: trimmedValue });
+          success = true;
           break;
         case 'time':
-          // Basic validation for HH:MM
           if (/^([01]\d|2[0-3]):([0-5]\d)$/.test(trimmedValue) || trimmedValue === '') {
-            onGameTimeChange(trimmedValue); // Allow empty time
-            // Update game details in storage using utility function
-            if (currentGameId) {
-              updateGameDetails(currentGameId, { time: trimmedValue });
-            }
+            onGameTimeChange(trimmedValue);
+            await updateGameDetails(currentGameId, { gameTime: trimmedValue });
+            success = true;
           } else {
             alert(t('gameSettingsModal.invalidTimeFormatInline', "Invalid time format. Use HH:MM (24-hour)."));
           }
@@ -390,29 +469,32 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
           const duration = parseInt(trimmedValue, 10);
           if (!isNaN(duration) && duration > 0) {
             onPeriodDurationChange(duration);
-            // Update game details in storage using utility function
-            if (currentGameId) {
-              updateGameDetails(currentGameId, { periodDuration: duration });
-            }
+            await updateGameDetails(currentGameId, { periodDurationMinutes: duration });
+            success = true;
           } else {
             alert(t('gameSettingsModal.invalidDurationFormat', "Period duration must be a positive number."));
           }
           break;
         case 'notes':
           onGameNotesChange(inlineEditValue); // Keep original spacing/newlines
-          // Update game details in storage using utility function
-          if (currentGameId) {
-            updateGameDetails(currentGameId, { notes: inlineEditValue });
-          }
+          await updateGameDetails(currentGameId, { gameNotes: inlineEditValue });
+          success = true;
           break;
       }
-    } catch (error) {
-      console.error("Error saving inline edit:", error);
-      alert(t('common.saveError', "An error occurred while saving."));
+      if (success) {
+        console.log(`[GameSettingsModal] Inline edit for ${fieldProcessed} saved for game ${currentGameId}.`);
+        setInlineEditingField(null); // Exit inline edit mode on success
+        setInlineEditValue('');
+      }
+    } catch (err) {
+      console.error(`[GameSettingsModal] Error saving inline edit for ${fieldProcessed} (Game ID: ${currentGameId}):`, err);
+      // alert(t('common.saveError', "An error occurred while saving."));
+      setError(t('gameSettingsModal.errors.genericInlineSaveError', "Error saving changes. Please try again."));
+    } finally {
+      setIsProcessing(false);
+      // Only clear editing field if successful, otherwise user might want to retry/cancel
+      // This is now handled inside the try block upon success.
     }
-
-    setInlineEditingField(null); // Exit inline edit mode
-    setInlineEditValue('');
   };
 
   const handleCancelInlineEdit = () => {
@@ -435,47 +517,75 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   };
 
   // Handlers for separate HH/MM time inputs (Refactored)
-  const handleHourChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleHourChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    setError(null);
     const newHour = e.target.value; 
     if (/^\d{0,2}$/.test(newHour)) { 
       setLocalHour(newHour); 
       const finalHour = newHour.padStart(2, '0');
-      // Corrected condition for clearing
       if (newHour === '' && (localMinute === '' || localMinute === '00')) {
         onGameTimeChange('');
-        // Update game details in storage using utility function
         if (currentGameId) {
-          updateGameDetails(currentGameId, { time: '' });
+          setIsProcessing(true);
+          try {
+            await updateGameDetails(currentGameId, { gameTime: '' });
+          } catch (err) {
+            console.error("[GameSettingsModal] Failed to update gameTime (hour change to empty):", err);
+            setError(t('gameSettingsModal.errors.timeUpdateFailed', 'Error updating game time.'));
+          } finally {
+            setIsProcessing(false);
+          }
         }
-      } else if (/^([01]\d|2[0-3])$/.test(finalHour) || finalHour === '00') {
-        const newTime = `${finalHour}:${localMinute.padStart(2,'0')}`;
+      } else if ((/^([01]\d|2[0-3])$/.test(finalHour) || finalHour === '00') && /^[0-5]\d$/.test(localMinute.padStart(2,'0'))) {
+        const newTime = `${finalHour}:${localMinute.padStart(2,'0')}`; 
         onGameTimeChange(newTime);
-        // Update game details in storage using utility function
         if (currentGameId) {
-          updateGameDetails(currentGameId, { time: newTime });
+          setIsProcessing(true);
+          try {
+            await updateGameDetails(currentGameId, { gameTime: newTime });
+          } catch (err) {
+            console.error("[GameSettingsModal] Failed to update gameTime (hour change):", err);
+            setError(t('gameSettingsModal.errors.timeUpdateFailed', 'Error updating game time.'));
+          } finally {
+            setIsProcessing(false);
+          }
         }
       }
     }
   };
 
-  const handleMinuteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMinuteChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    setError(null);
     const newMinute = e.target.value; 
     if (/^\d{0,2}$/.test(newMinute)) { 
       setLocalMinute(newMinute); 
       const finalMinute = newMinute.padStart(2, '0');
-      // Corrected condition for clearing
       if (newMinute === '' && (localHour === '' || localHour === '00')) {
         onGameTimeChange('');
-        // Update game details in storage using utility function
         if (currentGameId) {
-          updateGameDetails(currentGameId, { time: '' });
+          setIsProcessing(true);
+          try {
+            await updateGameDetails(currentGameId, { gameTime: '' });
+          } catch (err) {
+            console.error("[GameSettingsModal] Failed to update gameTime (minute change to empty):", err);
+            setError(t('gameSettingsModal.errors.timeUpdateFailed', 'Error updating game time.'));
+          } finally {
+            setIsProcessing(false);
+          }
         }
-      } else if (/^[0-5]\d$/.test(finalMinute) || finalMinute === '00') {
+      } else if ((/^([01]\d|2[0-3])$/.test(localHour.padStart(2,'0')) || localHour.padStart(2,'0') === '00') && /^[0-5]\d$/.test(finalMinute)) {
         const newTime = `${localHour.padStart(2,'0')}:${finalMinute}`;
         onGameTimeChange(newTime);
-        // Update game details in storage using utility function
         if (currentGameId) {
-          updateGameDetails(currentGameId, { time: newTime });
+          setIsProcessing(true);
+          try {
+            await updateGameDetails(currentGameId, { gameTime: newTime });
+          } catch (err) {
+            console.error("[GameSettingsModal] Failed to update gameTime (minute change):", err);
+            setError(t('gameSettingsModal.errors.timeUpdateFailed', 'Error updating game time.'));
+          } finally {
+            setIsProcessing(false);
+          }
         }
       }
     }
@@ -483,11 +593,6 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
 
   // --- ADDED Memoized Values (Moved Here) ---
   // Calculate these AFTER handlers are defined, potentially altering hook order slightly
-
-  // Find player who received the fair play card
-  const fairPlayPlayerId = useMemo(() => {
-    return availablePlayers.find(p => p.receivedFairPlayCard)?.id ?? null;
-  }, [availablePlayers]);
 
   // Determine association type based on props
   const associationType = useMemo(() => {
@@ -548,6 +653,13 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
         {/* Scrollable Content Area */}
         <div className="flex-grow overflow-y-auto overflow-x-hidden px-6 scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800 space-y-4 pb-4"> {/* Adjusted padding to px-6 */} 
           
+          {/* General Error Display Area */}
+          {error && (
+            <div className="bg-red-700/30 border border-red-600 text-red-300 px-4 py-3 rounded-md text-sm mb-4" role="alert">
+              <p>{error}</p>
+            </div>
+          )}
+
           {/* Game Info Section - Apply Card Styles */}
           <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-700">
             <h3 className="text-lg font-semibold text-slate-200 mb-3">{t('gameSettingsModal.gameInfo', 'Game Info')}</h3>
@@ -563,11 +675,12 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                       value={inlineEditValue}
                       onChange={(e) => setInlineEditValue(e.target.value)}
                       onKeyDown={handleInlineEditKeyDown}
-                      onBlur={handleConfirmInlineEdit} // CONFIRM on blur
-                      className={editInputStyle} /* Use defined style */
+                      onBlur={isProcessing ? undefined : handleConfirmInlineEdit} // Prevent confirm on blur if processing
+                      className={editInputStyle} 
+                      readOnly={isProcessing} // Make readonly during processing
                   />
                 ) : (
-                  <span className={`${valueStyle} p-1.5 rounded hover:bg-slate-700/50 cursor-pointer block truncate`} title={opponentName} onClick={() => handleStartInlineEdit('opponent')}>
+                  <span className={`${valueStyle} p-1.5 rounded hover:bg-slate-700/50 cursor-pointer block truncate`} title={opponentName} onClick={() => !isProcessing && handleStartInlineEdit('opponent')}> {/* Prevent starting edit if processing */}
                     {opponentName}
                     {/* Edit icon can be implicitly shown via hover bg */}
                   </span>
@@ -612,17 +725,18 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                 {inlineEditingField === 'date' ? (
                   <input 
                     ref={dateInputRef}
-                        type="date" // Use date input type
-                        value={inlineEditValue} // Value is YYYY-MM-DD
+                        type="date" 
+                        value={inlineEditValue} 
                         onChange={(e) => setInlineEditValue(e.target.value)}
                         onKeyDown={handleInlineEditKeyDown}
-                        onBlur={handleConfirmInlineEdit} // CONFIRM on blur
-                        className={`${editInputStyle} appearance-none`} /* Use defined style */
-                        style={{ colorScheme: 'dark' }} // Hint for dark mode date picker
+                        onBlur={isProcessing ? undefined : handleConfirmInlineEdit} 
+                        className={`${editInputStyle} appearance-none`} 
+                        style={{ colorScheme: 'dark' }}
+                        readOnly={isProcessing}
                   />
                 ) : (
-                      <span className={`${valueStyle} p-1.5 rounded hover:bg-slate-700/50 cursor-pointer block truncate`} onClick={() => handleStartInlineEdit('date')}>
-                          {formatDateFi(gameDate)} {/* Display formatted date */}
+                      <span className={`${valueStyle} p-1.5 rounded hover:bg-slate-700/50 cursor-pointer block truncate`} onClick={() => !isProcessing && handleStartInlineEdit('date')}>
+                          {formatDateFi(gameDate)} 
                   </span>
                 )}
               </div>
@@ -640,12 +754,13 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                         value={inlineEditValue}
                         onChange={(e) => setInlineEditValue(e.target.value)}
                       onKeyDown={handleInlineEditKeyDown}
-                        onBlur={handleConfirmInlineEdit} // CONFIRM on blur
-                        className={editInputStyle} /* Use defined style */
+                        onBlur={isProcessing ? undefined : handleConfirmInlineEdit} 
+                        className={editInputStyle} 
                         placeholder={t('common.optional', 'Optional')}
+                        readOnly={isProcessing}
                   />
                 ) : (
-                      <span className={`${valueStyle} p-1.5 rounded hover:bg-slate-700/50 cursor-pointer block truncate`} title={gameLocation || t('common.notSet', 'Not Set')} onClick={() => handleStartInlineEdit('location')}>
+                      <span className={`${valueStyle} p-1.5 rounded hover:bg-slate-700/50 cursor-pointer block truncate`} title={gameLocation || t('common.notSet', 'Not Set')} onClick={() => !isProcessing && handleStartInlineEdit('location')}>
                         {gameLocation || <span className="text-slate-500 italic">{t('common.notSet', 'Not Set')}</span>}
                   </span>
                 )}
@@ -663,10 +778,11 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                           min="0"
                           max="23"
                           step="1"
-                          value={localHour} // Bind to local state
-                          onChange={handleHourChange} // Use specific handler
-                          className={`${editInputStyle} w-16 text-center px-1`} /* Use defined style, adjust size/padding */
+                          value={localHour} 
+                          onChange={handleHourChange} 
+                          className={`${editInputStyle} w-16 text-center px-1`} 
                           placeholder={t('common.hourShort', 'HH')}
+                          disabled={isProcessing} // Disable if processing
                       />
                       <span className="text-slate-400">:</span>
                     <input 
@@ -674,10 +790,11 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                           min="0"
                           max="59"
                           step="1"
-                          value={localMinute} // Bind to local state
-                          onChange={handleMinuteChange} // Use specific handler
-                          className={`${editInputStyle} w-16 text-center px-1`} /* Use defined style, adjust size/padding */
+                          value={localMinute} 
+                          onChange={handleMinuteChange} 
+                          className={`${editInputStyle} w-16 text-center px-1`} 
                           placeholder={t('common.minuteShort', 'MM')}
+                          disabled={isProcessing} // Disable if processing
                       />
                   </span>
               </div>
@@ -714,16 +831,17 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                     type="number"
                           min="1"
                           step="1"
-                          value={inlineEditValue} // Use temporary edit value
+                          value={inlineEditValue} 
                           onChange={(e) => setInlineEditValue(e.target.value)}
                           onKeyDown={handleInlineEditKeyDown}
-                          onBlur={handleConfirmInlineEdit} // CONFIRM on blur
-                          className={`${editInputStyle} w-20`} /* Use defined style, adjust size */ 
+                          onBlur={isProcessing ? undefined : handleConfirmInlineEdit} 
+                          className={`${editInputStyle} w-20`}  
+                          readOnly={isProcessing}
                         />
                            <span className="ml-2 text-slate-400 text-sm">{t('common.minutesShort', 'min')}</span>
                        </div>
                    ) : (
-                       <span className={`${valueStyle} p-1.5 rounded hover:bg-slate-700/50 cursor-pointer block truncate`} onClick={() => handleStartInlineEdit('duration')}>
+                       <span className={`${valueStyle} p-1.5 rounded hover:bg-slate-700/50 cursor-pointer block truncate`} onClick={() => !isProcessing && handleStartInlineEdit('duration')}>
                            {periodDurationMinutes} {t('common.minutesShort', 'min')}
                   </span>
                 )}
@@ -733,8 +851,11 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
               <div className={`${gridItemStyle} md:col-span-2`}> {/* Span across columns */} 
                    <span className={labelStyle}>{t('gameSettingsModal.fairPlayCard', 'Fair Play')}:</span>
               <select
-                    value={fairPlayPlayerId || ''}
-                    onChange={(e) => onAwardFairPlayCard(e.target.value || null)}
+                    value={selectedFairPlayPlayerId || ''}
+                    onChange={(e) => {
+                      setSelectedFairPlayPlayerId(e.target.value || null);
+                      onAwardFairPlayCard(e.target.value || null);
+                    }}
                     className={`${editSelectStyle} mt-1`} /* Use defined style */
                   >
                     <option value="">{t('gameSettingsModal.noneAwarded', '-- None Awarded --')}</option>
@@ -755,10 +876,13 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                     <button
                       onClick={() => {
                         // console.log('[GameSettingsModal] Association button clicked: none');
+                        if (isProcessing) return;
                         onSeasonIdChange(null);
                         onTournamentIdChange(null);
+                        // No direct DB call here, so no setIsProcessing needed unless we add one
                       }}
-                      className={`px-3 py-1 rounded text-sm transition-colors ${associationType === 'none' ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
+                      className={`px-3 py-1 rounded text-sm transition-colors ${associationType === 'none' ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'} ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      disabled={isProcessing}
                     >
                       {t('gameSettingsModal.associationNone', 'None')}
                     </button>
@@ -766,15 +890,18 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                     {/* Season button */}
                     <button
                       onClick={() => {
+                        if (isProcessing) return;
                         // console.log('[GameSettingsModal] Association button clicked: season');
                         if (seasons && seasons.length > 0) {
-                          onSeasonIdChange(seasons[0].id);
+                          onSeasonIdChange(seasons[0].id); 
+                          // Potentially trigger DB save if this action should persist immediately
                         } else if (associationType !== 'season') {
-                          // Just set empty seasonId to show the dropdown
                           onSeasonIdChange('');
                         }
+                        // No direct DB call here for just showing the dropdown
                       }}
-                      className={`px-3 py-1 rounded text-sm transition-colors ${associationType === 'season' ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
+                      className={`px-3 py-1 rounded text-sm transition-colors ${associationType === 'season' ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'} ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      disabled={isProcessing}
                     >
                       {t('gameSettingsModal.associationSeason', 'Season/League')}
                     </button>
@@ -782,24 +909,28 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                     {/* Tournament button */}
                     <button
                       onClick={() => {
+                        if (isProcessing) return;
                         // console.log('[GameSettingsModal] Association button clicked: tournament');
                         if (tournaments && tournaments.length > 0) {
                           onTournamentIdChange(tournaments[0].id);
+                           // Potentially trigger DB save if this action should persist immediately
                         } else if (associationType !== 'tournament') {
-                          // Just set empty tournamentId to show the dropdown
                           onTournamentIdChange('');
                         }
+                        // No direct DB call here for just showing the dropdown
                       }}
-                      className={`px-3 py-1 rounded text-sm transition-colors ${associationType === 'tournament' ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
+                      className={`px-3 py-1 rounded text-sm transition-colors ${associationType === 'tournament' ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'} ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      disabled={isProcessing}
                     >
                       {t('gameSettingsModal.associationTournament', 'Tournament')}
                     </button>
           </div>
               {associationType === 'season' && (
                   <select 
-                      value={seasonId || ''} /* Default to empty string */ 
+                      value={seasonId || ''} 
                       onChange={handleSeasonChange}
-                      className={`${editSelectStyle} mt-1 w-full md:w-auto`} /* Use defined style */ 
+                      className={`${editSelectStyle} mt-1 w-full md:w-auto ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      disabled={isProcessing} 
                     >
                            <option value="">{t('gameSettingsModal.selectSeason', '-- Select Season --')}</option>
                            {seasons.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -807,9 +938,10 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
               )}
               {associationType === 'tournament' && (
                   <select 
-                      value={tournamentId || ''} /* Default to empty string */ 
+                      value={tournamentId || ''} 
                       onChange={handleTournamentChange}
-                      className={`${editSelectStyle} mt-1 w-full md:w-auto`} /* Use defined style */ 
+                      className={`${editSelectStyle} mt-1 w-full md:w-auto ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      disabled={isProcessing}
                     >
                            <option value="">{t('gameSettingsModal.selectTournament', '-- Select Tournament --')}</option>
                            {tournaments.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -826,9 +958,10 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
               {t('gameSettingsModal.notes', 'Game Notes')}
               {inlineEditingField !== 'notes' && (
                 <button
-                  onClick={() => handleStartInlineEdit('notes')}
+                  onClick={() => !isProcessing && handleStartInlineEdit('notes')}
                   className="text-xs text-slate-400 hover:text-indigo-400 flex items-center"
                   aria-label={t('gameSettingsModal.editNotes', 'Edit Notes')}
+                  disabled={isProcessing}
                 >
                    <FaEdit className="inline mr-1" size={12}/>
                 </button>
@@ -840,26 +973,43 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                   ref={notesTextareaRef}
                   value={inlineEditValue} 
                   onChange={(e) => setInlineEditValue(e.target.value)} 
-                  onKeyDown={handleInlineEditKeyDown} // Use common keydown
-                  onBlur={handleConfirmInlineEdit} // CONFIRM on blur for notes too?
+                  onKeyDown={handleInlineEditKeyDown} 
+                  onBlur={isProcessing ? undefined : handleConfirmInlineEdit} // Allow blur to confirm if not processing
                   rows={4}
-                  className={`${editInputStyle} text-sm`} /* Use defined style */ 
+                  className={`${editInputStyle} text-sm`}  
                   placeholder={t('gameSettingsModal.notesPlaceholder', 'Enter notes about the game...')}
+                  readOnly={isProcessing}
                 />
                 {/* Add Save/Cancel explicitly for notes textarea */}
                 <div className="text-right mt-2 space-x-2">
-                   <button onClick={handleCancelInlineEdit} className="px-3 py-1 bg-slate-600 hover:bg-slate-500 rounded text-xs font-medium">
+                   <button 
+                    onClick={handleCancelInlineEdit} 
+                    className={`px-3 py-1 bg-slate-600 hover:bg-slate-500 rounded text-xs font-medium ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    disabled={isProcessing}
+                    >
                       {t('common.cancel', 'Cancel')}
                    </button>
-                   <button onClick={handleConfirmInlineEdit} className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 rounded text-xs font-medium">
-                      <FaSave className="inline mr-1"/> {t('common.save', 'Save Notes')}
+                   <button 
+                    onClick={handleConfirmInlineEdit} 
+                    className={`px-3 py-1 bg-indigo-600 hover:bg-indigo-700 rounded text-xs font-medium flex items-center justify-center ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    disabled={isProcessing || !inlineEditValue.trim()} // Also disable if value is empty for notes save button
+                    >
+                      {isProcessing && inlineEditingField === 'notes' ? (
+                        <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      ) : (
+                        <FaSave className="inline mr-1"/> 
+                      )}
+                      {!(isProcessing && inlineEditingField === 'notes') && t('common.save', 'Save Notes')}
                    </button>
                 </div>
               </div>
             ) : (
               <p
                 className="text-sm text-slate-300 whitespace-pre-wrap min-h-[4em] p-1.5 rounded hover:bg-slate-700/50 cursor-pointer"
-                onClick={() => handleStartInlineEdit('notes')}
+                onClick={() => !isProcessing && handleStartInlineEdit('notes')}
               >
                   {gameNotes || <span className="text-slate-500 italic">{t('gameSettingsModal.noNotes', 'No notes added yet.')}</span>}
               </p>
@@ -949,15 +1099,24 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                             <div className="flex items-center justify-end space-x-2"> 
                               <button
                                 onClick={() => handleSaveGoal(event.id)}
-                                className="text-green-400 hover:text-green-300"
+                                className={`text-green-400 hover:text-green-300 ${isProcessing && editingGoalId === event.id ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 title={t('common.save', 'Save')}
+                                disabled={isProcessing && editingGoalId === event.id}
                               >
-                                <FaSave size={14}/>
+                                {isProcessing && editingGoalId === event.id ? (
+                                  <svg className="animate-spin h-4 w-4 text-slate-100" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                  </svg>
+                                ) : (
+                                  <FaSave size={14}/>
+                                )}
                               </button>
                               <button
                                 onClick={handleCancelEditGoal}
-                                className="text-slate-400 hover:text-slate-300"
+                                className={`text-slate-400 hover:text-slate-300 ${isProcessing && editingGoalId === event.id ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 title={t('common.cancel', 'Cancel')}
+                                disabled={isProcessing && editingGoalId === event.id}
                               >
                                 <FaTimes size={14}/>
                               </button>
@@ -969,7 +1128,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                                     onClick={() => handleEditGoal(event)}
                                     className="text-slate-400 hover:text-indigo-400"
                                     title={t('common.edit', 'Edit')}
-                                    disabled={!!editingGoalId} // Disable if another edit is active
+                                    disabled={!!editingGoalId || isProcessing} // Disable if another edit is active OR global processing
                                 >
                                     <FaEdit size={14}/>
                                 </button>
@@ -979,9 +1138,18 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                                   onClick={() => handleDeleteGoal(event.id)}
                                   className="text-slate-400 hover:text-red-500"
                                   title={t('common.delete', 'Delete')}
-                                  disabled={!!editingGoalId} // Disable if another edit is active
+                                  disabled={!!editingGoalId || isProcessing} // Disable if another edit is active OR global processing
                                 >
-                                  <FaTrashAlt size={13}/>
+                                  {isProcessing && !editingGoalId ? (
+                                    // Show spinner if this specific action is not causing it, but general processing is on
+                                    // This is a simplification; ideally, we'd track the ID being processed for delete.
+                                    <svg className="animate-spin h-3.5 w-3.5 text-slate-100" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                  ) : (
+                                    <FaTrashAlt size={13}/>
+                                  )}
                                               </button>
                               )}
                             </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import GameStatsModal from './GameStatsModal';
 import { Player, Season, Tournament } from '@/types';
@@ -253,13 +253,76 @@ describe('GameStatsModal', () => {
     expect(assisterCellsInThirdRow[3].textContent).toBe(''); 
   });
 
+  test('calls onDeleteGameEvent when delete button on an event is clicked and confirmed', async () => {
+    const mockProps = getDefaultProps();
+    (window.confirm as jest.Mock).mockReturnValueOnce(true);
+    renderComponent(mockProps);
+    await screen.findByRole('heading', { name: i18n.t('gameStatsModal.title') }, { timeout: 1000 });
+
+    const goalLogHeading = await screen.findByRole('heading', { name: 'Goal Log' });
+    const goalLogSectionContainer = goalLogHeading.parentElement;
+    if (!goalLogSectionContainer) throw new Error("Goal Log section container (parent of heading) not found.");
+    const eventLogTable = within(goalLogSectionContainer).getByRole('table');
+    
+    const firstEventCellWithTime = await within(eventLogTable).findByText('02:00', { selector: 'td' });
+    const parentRow = firstEventCellWithTime.closest('tr');
+    if (!parentRow) throw new Error('Parent row for the first event not found');
+
+    const deleteButton = within(parentRow).getByRole('button', { name: 'Delete' });
+    fireEvent.click(deleteButton);
+
+    expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining(i18n.t('gameStatsModal.confirmDeleteEvent')));
+    expect(mockProps.onDeleteGameEvent).toHaveBeenCalledWith('g1');
+  });
+
+  test('does not call onDeleteGameEvent if delete is cancelled', async () => {
+    const mockProps = getDefaultProps();
+    (window.confirm as jest.Mock).mockReturnValueOnce(false);
+    renderComponent(mockProps);
+    await screen.findByRole('heading', { name: i18n.t('gameStatsModal.title') }, { timeout: 1000 });
+
+    const goalLogHeading = await screen.findByRole('heading', { name: 'Goal Log' });
+    const goalLogSectionContainer = goalLogHeading.parentElement;
+    if (!goalLogSectionContainer) throw new Error("Goal Log section container (parent of heading) not found.");
+    const eventLogTable = within(goalLogSectionContainer).getByRole('table');
+
+    const firstEventCellWithTime = await within(eventLogTable).findByText('02:00', { selector: 'td' });
+    const parentRow = firstEventCellWithTime.closest('tr');
+    if (!parentRow) throw new Error('Parent row for the first event not found');
+
+    const deleteButton = within(parentRow).getByRole('button', { name: 'Delete' });
+    fireEvent.click(deleteButton);
+
+    expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining(i18n.t('gameStatsModal.confirmDeleteEvent')));
+    expect(mockProps.onDeleteGameEvent).not.toHaveBeenCalled();
+  });
+
+  test('calls onUpdateGameEvent when edit button on an event is clicked', async () => {
+    const mockProps = getDefaultProps();
+    renderComponent(mockProps);
+    await screen.findByRole('heading', { name: i18n.t('gameStatsModal.title') }, { timeout: 1000 });
+
+    const goalLogHeading = await screen.findByRole('heading', { name: 'Goal Log' });
+    const goalLogSectionContainer = goalLogHeading.parentElement;
+    if (!goalLogSectionContainer) throw new Error("Goal Log section container (parent of heading) not found.");
+    const eventLogTable = within(goalLogSectionContainer).getByRole('table');
+
+    const firstEventCellWithTime = await within(eventLogTable).findByText('02:00', { selector: 'td' });
+    const parentRow = firstEventCellWithTime.closest('tr');
+    if (!parentRow) throw new Error('Parent row for the first event not found');
+
+    const editButton = within(parentRow).getByRole('button', { name: 'Muokkaa' });
+    fireEvent.click(editButton);
+
+    expect(mockProps.onUpdateGameEvent).toHaveBeenCalledWith('g1');
+  });
+
   // Add more tests for:
   // - Switching tabs (Season, Tournament, Overall)
   // - Filtering stats table
   // - Sorting stats table
   // - Editing game info (opponent, date, score)
   // - Editing game notes
-  // - Editing/Deleting events from the log
   // - Export functionalities
   // - Fair Play award display/handling (if applicable in this modal)
 
