@@ -11,9 +11,12 @@ This checklist will guide the deep code review process, focusing on quality, mai
 - [X] **Environment Variables:** Configuration for Supabase (URL, anon key) and Clerk keys is planned to be handled via environment variables, as documented in `MIGRATION_TO_SUPABASE_AND_CLERK.md`.
 
 ## 2. TanStack Query Usage
-- [ ] **Effectiveness:** Queries and mutations are used appropriately for server state.
-- [ ] **`queryKey` Management:** `queryKey`s are consistent, descriptive, and well-managed (e.g., using factory functions if complex).
-- [ ] **Callback Logic:** `onSuccess`, `onError`, `onSettled`, and `onMutate` handlers are implemented correctly and efficiently.
+- [X] **Effectiveness:** Queries and mutations are used appropriately for server state (currently `localStorage`, will be Supabase).
+- [X] **Effectiveness:** Queries and mutations are now consistently used for server state, including asynchronous CRUD operations for seasons and tournaments via `NewGameSetupModal`.
+    - *Note: `utilDeleteGame` and some app settings utilities are still called directly but manage query invalidation; further refactoring to mutations is optional for full consistency but current setup is functional.*
+- [X] **`queryKey` Management:** `queryKey`s are consistent, descriptive, and well-managed (e.g., using factory functions if complex).
+    - *Note: Created `src/config/queryKeys.ts` and refactored `page.tsx` to use these constants. This makes management easier and less prone to typos.*
+- [X] **Callback Logic:** `onSuccess`, `onError` handlers are implemented for mutations (including new ones for addSeason/addTournament) to manage query invalidation, state updates, and basic error logging. `onSettled` and `onMutate` are used where appropriate (e.g. optimistic updates, though not extensively in current scope).
 - [ ] **Loading/Error States:** UI properly reflects `isPending`, `isError`, `isSuccess` states for queries and mutations.
 - [ ] **Data Invalidation & Refetching:** Data invalidation (`queryClient.invalidateQueries`) and refetching strategies are optimal and occur when necessary (e.g., after mutations).
 - [ ] **Optimistic Updates:** Consider if optimistic updates are appropriate for any mutations and if they are implemented correctly.
@@ -58,31 +61,4 @@ This checklist will guide the deep code review process, focusing on quality, mai
 - [ ] **Undo/Redo - Jersey Number:** Verify that undoing a jersey number change works correctly.
 - [ ] **Undo/Redo - Goalie Status:** Verify that undoing goalie status changes correctly updates UI (disc color, top bar), and ensures only one goalie is active.
 - [ ] **Player Removal from Field:** Verify that deselecting a player (checkbox in RosterSettingsModal) removes them from `playersOnField` and updates history.
-- [ ] **`GameStatsModal` Updates:** Verify that player statistics in `GameStatsModal` update in real-time with game events, without requiring a "Quick Save".
-- [ ] **Player Drag-and-Drop on Field:** Ensure this functionality is still working as expected if it was present.
-
-## 9. Internationalization (i18n)
-- [ ] **String Coverage:** All user-facing strings are internationalized using the i18n library.
-- [ ] **Translation Files:** Translation files (`translation.json`) are well-organized and up-to-date.
-- [ ] **Key Management:** Translation keys are descriptive and consistently used.
-- [ ] **Programmatic Translations:** Verify the hybrid system in `src/i18n.ts` correctly loads and overrides translations from JSON files.
-- [ ] **Language Switching:** If applicable, language switching functionality works correctly.
-
-## 10. Performance
-- [ ] **Rendering Performance:** Identify and optimize any performance bottlenecks related to component rendering (e.g., large lists, frequent updates).
-- [ ] **Bundle Size:** Check for opportunities to reduce bundle size (e.g., code splitting, lazy loading components/routes).
-- [ ] **Data Fetching:** Ensure data fetching is efficient and not over-fetching or under-fetching.
-
-## 11. Accessibility (a11y)
-- [ ] **Semantic HTML:** Use semantic HTML elements where appropriate.
-- [ ] **Keyboard Navigation:** Ensure all interactive elements are keyboard accessible.
-- [ ] **ARIA Attributes:** Use ARIA attributes to enhance accessibility where necessary.
-- [ ] **Color Contrast:** Check for sufficient color contrast for text and UI elements.
-
-## 12. Testing
-- [ ] **Unit Tests:** Consider adding unit tests for critical utility functions and complex logic.
-- [ ] **Integration Tests:** Consider if integration tests are needed for key user flows.
-- [ ] **End-to-End Tests:** (Future consideration) Plan for end-to-end tests for overall application stability.
-
-We can add or modify items as we go. How does this initial structure look to you?
-Shall we start with the first section, "Supabase & Clerk Migration Readiness"? 
+- [ ] **`GameStatsModal` Updates:** Verify that player statistics in `GameStatsModal`

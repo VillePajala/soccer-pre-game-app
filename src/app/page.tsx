@@ -52,6 +52,11 @@ import { saveMasterRoster } from '@/utils/masterRoster';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 // Import async localStorage utilities
 import { getLocalStorageItemAsync, setLocalStorageItemAsync, removeLocalStorageItemAsync } from '@/utils/localStorage';
+// Import query keys
+import { queryKeys } from '@/config/queryKeys';
+// Also import addSeason and addTournament for the new mutations
+import { addSeason as utilAddSeason } from '@/utils/seasons';
+import { addTournament as utilAddTournament } from '@/utils/tournaments';
 
 // Define the Point type for drawing - Use relative coordinates
 export interface Point {
@@ -202,7 +207,7 @@ export default function Home() {
     isError: isMasterRosterQueryError,
     error: masterRosterQueryErrorData,
   } = useQuery<Player[], Error>({
-    queryKey: ['masterRoster'],
+    queryKey: queryKeys.masterRoster,
     queryFn: getMasterRoster,
   });
 
@@ -213,7 +218,7 @@ export default function Home() {
     isError: isSeasonsQueryError,
     error: seasonsQueryErrorData,
   } = useQuery<Season[], Error>({
-    queryKey: ['seasons'],
+    queryKey: queryKeys.seasons,
     queryFn: utilGetSeasons,
   });
 
@@ -224,7 +229,7 @@ export default function Home() {
     isError: isTournamentsQueryError,
     error: tournamentsQueryErrorData,
   } = useQuery<Tournament[], Error>({
-    queryKey: ['tournaments'],
+    queryKey: queryKeys.tournaments,
     queryFn: utilGetTournaments,
   });
 
@@ -235,7 +240,7 @@ export default function Home() {
     isError: isAllSavedGamesQueryError,
     error: allSavedGamesQueryErrorData,
   } = useQuery<SavedGamesCollection | null, Error>({
-    queryKey: ['savedGames'],
+    queryKey: queryKeys.savedGames,
     queryFn: utilGetSavedGames,
     initialData: {}, 
   });
@@ -247,7 +252,7 @@ export default function Home() {
     isError: isCurrentGameIdSettingQueryError,
     error: currentGameIdSettingQueryErrorData,
   } = useQuery<string | null, Error>({
-    queryKey: ['appSettingsCurrentGameId'],
+    queryKey: queryKeys.appSettingsCurrentGameId,
     queryFn: getCurrentGameIdSetting,
   });
 
@@ -399,8 +404,8 @@ export default function Home() {
     },
     onSuccess: (savedGameId, variables) => {
       console.log('[Mutation Success] Game saved:', savedGameId);
-      queryClient.invalidateQueries({ queryKey: ['savedGames'] });
-      queryClient.invalidateQueries({ queryKey: ['appSettingsCurrentGameId'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.savedGames });
+      queryClient.invalidateQueries({ queryKey: queryKeys.appSettingsCurrentGameId });
 
       if (variables.gameIdToSave !== currentGameId || currentGameId === DEFAULT_GAME_ID) {
          setCurrentGameId(variables.gameIdToSave); 
@@ -433,7 +438,7 @@ export default function Home() {
       // Capture current availablePlayers before invalidation if needed for history
       const previousAvailablePlayers = [...availablePlayers]; // Shallow copy
 
-      queryClient.invalidateQueries({ queryKey: ['masterRoster'] }); 
+      queryClient.invalidateQueries({ queryKey: queryKeys.masterRoster }); 
       // After invalidation, the masterRosterQueryResultData useEffect will update setAvailablePlayers from the hook
 
       if (updatedPlayer) {
@@ -473,7 +478,7 @@ export default function Home() {
       // Capture current availablePlayers before invalidation if needed for history
       const previousAvailablePlayers = [...availablePlayers]; // Shallow copy
       
-      queryClient.invalidateQueries({ queryKey: ['masterRoster'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.masterRoster });
       // After invalidation, the masterRosterQueryResultData useEffect will update setAvailablePlayers from the hook
 
       if (updatedPlayer) {
@@ -518,7 +523,7 @@ export default function Home() {
     onSuccess: (success, variables) => {
       if (success) {
         console.log('[Mutation Success] Player removed:', variables.playerId);
-        queryClient.invalidateQueries({ queryKey: ['masterRoster'] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.masterRoster });
 
         let nextPlayersOnField: Player[] = [];
         setPlayersOnField(prev => {
@@ -562,7 +567,7 @@ export default function Home() {
     onSuccess: (newPlayer, variables) => {
       if (newPlayer) {
         console.log('[Mutation Success] Player added:', newPlayer.name, newPlayer.id);
-        queryClient.invalidateQueries({ queryKey: ['masterRoster'] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.masterRoster });
 
         // Add the new player to selectedPlayerIds and save to history
         let nextSelectedPlayerIds: string[] = [];
@@ -582,6 +587,59 @@ export default function Home() {
     onError: (error, variables) => {
       console.error(`[Mutation Error] Failed to add player ${variables.name}:`, error);
       setRosterError(t('rosterSettingsModal.errors.addFailed', 'Error adding player {playerName}. Please try again.', { playerName: variables.name }));
+    },
+  });
+
+  // --- Mutation for Adding a new Season ---
+  const addSeasonMutation = useMutation<
+    Season | null, // Return type from utilAddSeason
+    Error,         // Error type
+    { name: string } // Variables type (season name)
+  >({
+    mutationFn: async ({ name }) => {
+      return utilAddSeason(name);
+    },
+    onSuccess: (newSeason, variables) => {
+      if (newSeason) {
+        console.log('[Mutation Success] Season added:', newSeason.name, newSeason.id);
+        queryClient.invalidateQueries({ queryKey: queryKeys.seasons });
+        // Potentially set an optimistic update or directly update local 'seasons' state if needed
+        // For now, relying on query invalidation to refresh the seasons list
+      } else {
+        // This case might indicate a duplicate name or some other non-exception failure from utilAddSeason
+        console.warn('[Mutation Non-Success] utilAddSeason returned null for season:', variables.name);
+        // Consider setting a specific error state for the NewGameSetupModal if it's a common issue
+        // alert(t('newGameSetupModal.errors.addSeasonFailed', 'Failed to add season: {seasonName}. It might already exist.', { seasonName: variables.name }));
+      }
+    },
+    onError: (error, variables) => {
+      console.error(`[Mutation Error] Failed to add season ${variables.name}:`, error);
+      // alert(t('newGameSetupModal.errors.addSeasonFailedUnexpected', 'An unexpected error occurred while adding season: {seasonName}.', { seasonName: variables.name }));
+    },
+  });
+
+  // --- Mutation for Adding a new Tournament ---
+  const addTournamentMutation = useMutation<
+    Tournament | null, // Return type from utilAddTournament
+    Error,             // Error type
+    { name: string }   // Variables type (tournament name)
+  >({
+    mutationFn: async ({ name }) => {
+      return utilAddTournament(name);
+    },
+    onSuccess: (newTournament, variables) => {
+      if (newTournament) {
+        console.log('[Mutation Success] Tournament added:', newTournament.name, newTournament.id);
+        queryClient.invalidateQueries({ queryKey: queryKeys.tournaments });
+        // Similar to seasons, could optimistically update or rely on invalidation
+      } else {
+        console.warn('[Mutation Non-Success] utilAddTournament returned null for tournament:', variables.name);
+        // alert(t('newGameSetupModal.errors.addTournamentFailed', 'Failed to add tournament: {tournamentName}. It might already exist.', { tournamentName: variables.name }));
+      }
+    },
+    onError: (error, variables) => {
+      console.error(`[Mutation Error] Failed to add tournament ${variables.name}:`, error);
+      // alert(t('newGameSetupModal.errors.addTournamentFailedUnexpected', 'An unexpected error occurred while adding tournament: {tournamentName}.', { tournamentName: variables.name }));
     },
   });
 
@@ -757,13 +815,13 @@ export default function Home() {
           await setLocalStorageItemAsync(MASTER_ROSTER_KEY, oldRosterJson);
           await removeLocalStorageItemAsync('availablePlayers');
           // Consider invalidating and refetching masterRoster query here if migration happens
-          // queryClient.invalidateQueries(['masterRoster']);
+          // queryClient.invalidateQueries(queryKeys.masterRoster);
         }
         const oldSeasonsJson = await getLocalStorageItemAsync('soccerSeasonsList'); // Another old key
         if (oldSeasonsJson) {
           console.log('[EFFECT init] Migrating old seasons data...');
           await setLocalStorageItemAsync(SEASONS_LIST_KEY, oldSeasonsJson); // New key
-          // queryClient.invalidateQueries(['seasons']);
+          // queryClient.invalidateQueries(queryKeys.seasons);
         }
       } catch (migrationError) {
         console.error('[EFFECT init] Error during data migration:', migrationError);
@@ -3440,6 +3498,12 @@ export default function Home() {
             initialPlayerSelection={playerIdsForNewGame} // <<< Pass the state here
             onStart={handleStartNewGameWithSetup} // CORRECTED Handler
             onCancel={handleCancelNewGameSetup} 
+            // Pass the new mutation functions
+            addSeasonMutation={addSeasonMutation}
+            addTournamentMutation={addTournamentMutation}
+            // Pass loading states from mutations
+            isAddingSeason={addSeasonMutation.isPending}
+            isAddingTournament={addTournamentMutation.isPending}
           />
         )}
 
