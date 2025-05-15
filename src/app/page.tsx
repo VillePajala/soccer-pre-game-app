@@ -427,14 +427,24 @@ export default function Home() {
     },
     onSuccess: (updatedPlayer, variables) => {
       console.log('[Mutation Success] Player updated:', variables.playerId, updatedPlayer);
-      queryClient.invalidateQueries({ queryKey: ['masterRoster'] }); // This will refetch and update availablePlayers
+      
+      // Capture current availablePlayers before invalidation if needed for history
+      const previousAvailablePlayers = [...availablePlayers]; // Shallow copy
+
+      queryClient.invalidateQueries({ queryKey: ['masterRoster'] }); 
+      // After invalidation, the masterRosterQueryResultData useEffect will update setAvailablePlayers from the hook
+
       if (updatedPlayer) {
         // Update playersOnField state and then save that specific change to history
         setPlayersOnField(prevPlayersOnField => {
           const nextPlayersOnField = prevPlayersOnField.map(p => 
             p.id === updatedPlayer.id ? { ...p, ...updatedPlayer } : p
           );
-          saveStateToHistory({ playersOnField: nextPlayersOnField }); // Save this computed state to history
+          // Save history with the availablePlayers roster *before* this mutation's invalidation took full effect
+          saveStateToHistory({ 
+            playersOnField: nextPlayersOnField, 
+            availablePlayers: previousAvailablePlayers // Save the pre-mutation roster for this history step
+          }); 
           return nextPlayersOnField; // Return it to update React state
         });
       }
@@ -457,7 +467,13 @@ export default function Home() {
     },
     onSuccess: (updatedPlayer, variables) => {
       console.log('[Mutation Success] Goalie status updated:', variables.playerId, updatedPlayer);
+
+      // Capture current availablePlayers before invalidation if needed for history
+      const previousAvailablePlayers = [...availablePlayers]; // Shallow copy
+      
       queryClient.invalidateQueries({ queryKey: ['masterRoster'] });
+      // After invalidation, the masterRosterQueryResultData useEffect will update setAvailablePlayers from the hook
+
       if (updatedPlayer) {
         setPlayersOnField(prevPlayersOnField => {
           const nextPlayersOnField = prevPlayersOnField.map(p => {
@@ -472,7 +488,11 @@ export default function Home() {
             }
             return p;
           });
-          saveStateToHistory({ playersOnField: nextPlayersOnField });
+          // Save history with the availablePlayers roster *before* this mutation's invalidation took full effect
+          saveStateToHistory({ 
+            playersOnField: nextPlayersOnField,
+            availablePlayers: previousAvailablePlayers // Save the pre-mutation roster for this history step
+          });
           return nextPlayersOnField;
         });
       }
@@ -617,6 +637,50 @@ export default function Home() {
       setTournaments([]);
     }
   }, [tournamentsQueryResultData, areTournamentsQueryLoading, isTournamentsQueryError, tournamentsQueryErrorData, setTournaments]);
+
+  // --- Effect to sync playersOnField details with availablePlayers changes ---
+  useEffect(() => {
+    if (availablePlayers && availablePlayers.length > 0) {
+      setPlayersOnField(prevPlayersOnField => {
+        const nextPlayersOnField = prevPlayersOnField.map(fieldPlayer => {
+          const rosterPlayer = availablePlayers.find(ap => ap.id === fieldPlayer.id);
+          if (rosterPlayer) {
+            // Sync relevant properties from rosterPlayer to fieldPlayer
+            // Only update if there's a difference to avoid unnecessary re-renders / history saves
+            if (fieldPlayer.name !== rosterPlayer.name || 
+                fieldPlayer.jerseyNumber !== rosterPlayer.jerseyNumber || 
+                fieldPlayer.isGoalie !== rosterPlayer.isGoalie ||
+                fieldPlayer.nickname !== rosterPlayer.nickname ||
+                fieldPlayer.notes !== rosterPlayer.notes
+                // Add any other properties that should be synced
+            ) {
+              return {
+                ...fieldPlayer, // Keep position (relX, relY)
+                name: rosterPlayer.name,
+                jerseyNumber: rosterPlayer.jerseyNumber,
+                isGoalie: rosterPlayer.isGoalie,
+                nickname: rosterPlayer.nickname,
+                notes: rosterPlayer.notes,
+                // Ensure other essential Player properties are maintained if not in rosterPlayer directly
+                receivedFairPlayCard: rosterPlayer.receivedFairPlayCard !== undefined ? rosterPlayer.receivedFairPlayCard : fieldPlayer.receivedFairPlayCard
+              };
+            }
+          }
+          return fieldPlayer; // Return original if no corresponding roster player or no changes
+        });
+
+        // Only save to history if actual changes were made to playersOnField
+        if (JSON.stringify(prevPlayersOnField) !== JSON.stringify(nextPlayersOnField)) {
+          // console.log('[EFFECT syncPoF] playersOnField updated due to availablePlayers change. Saving to history.');
+          saveStateToHistory({ playersOnField: nextPlayersOnField });
+        }
+        return nextPlayersOnField;
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [availablePlayers, saveStateToHistory]); // setPlayersOnField is from useGameState, should be stable if not changing the hook itself
+  // Note: We don't want setPlayersOnField in deps if it causes loops. 
+  // saveStateToHistory is also a dependency as it's used inside.
 
   // --- Timer Effect ---
   useEffect(() => {
@@ -1072,7 +1136,7 @@ export default function Home() {
       setPlayersOnField(prevState.playersOnField);
       setOpponents(prevState.opponents);
       setDrawings(prevState.drawings);
-      // REMOVED: setAvailablePlayers(prevState.availablePlayers);
+      setAvailablePlayers(prevState.availablePlayers); // <<< RESTORE availablePlayers
       setShowPlayerNames(prevState.showPlayerNames);
       setTeamName(prevState.teamName); // Undo team name
       setGameEvents(prevState.gameEvents); // Restore game events
@@ -1115,7 +1179,7 @@ export default function Home() {
       setPlayersOnField(nextState.playersOnField);
       setOpponents(nextState.opponents);
       setDrawings(nextState.drawings);
-      // REMOVED: setAvailablePlayers(nextState.availablePlayers);
+      setAvailablePlayers(nextState.availablePlayers); // <<< RESTORE availablePlayers
       setShowPlayerNames(nextState.showPlayerNames);
       setTeamName(nextState.teamName); // Redo team name
       setGameEvents(nextState.gameEvents); // Restore game events
@@ -2398,21 +2462,39 @@ export default function Home() {
 
   // --- NEW: Handler to Toggle Player Selection for Current Match ---
   const handleTogglePlayerSelection = useCallback((playerId: string) => {
-    const currentIndex = selectedPlayerIds.indexOf(playerId);
-    let newSelectedIds: string[];
+    setSelectedPlayerIds(prevSelectedPlayerIds => {
+      const currentIndex = prevSelectedPlayerIds.indexOf(playerId);
+      let nextSelectedPlayerIds: string[];
+      let nextPlayersOnField = playersOnField; // Start with current players on field
 
-    if (currentIndex === -1) {
-      // Add player to selection
-      newSelectedIds = [...selectedPlayerIds, playerId];
-    } else {
-      // Remove player from selection
-      newSelectedIds = selectedPlayerIds.filter(id => id !== playerId);
-    }
-
-    setSelectedPlayerIds(newSelectedIds);
-    saveStateToHistory({ selectedPlayerIds: newSelectedIds }); // Save selection to history
-    console.log(`Updated selected players: ${newSelectedIds.length} players`);
-  }, [selectedPlayerIds, saveStateToHistory]); // Dependencies
+      if (currentIndex === -1) {
+        // Player is being selected, add to selection
+        nextSelectedPlayerIds = [...prevSelectedPlayerIds, playerId];
+        // No change to playersOnField when selecting, they are added via drag/drop or "Place All"
+      } else {
+        // Player is being deselected, remove from selection
+        nextSelectedPlayerIds = prevSelectedPlayerIds.filter(id => id !== playerId);
+        // Also remove this player from the field if they were on it
+        nextPlayersOnField = playersOnField.filter(p => p.id !== playerId);
+      }
+      
+      // Save to history: include selectedPlayerIds and playersOnField (if it changed)
+      const historyUpdate: Partial<AppState> = { selectedPlayerIds: nextSelectedPlayerIds };
+      if (JSON.stringify(playersOnField) !== JSON.stringify(nextPlayersOnField)) {
+        historyUpdate.playersOnField = nextPlayersOnField;
+      }
+      saveStateToHistory(historyUpdate);
+      
+      // Update playersOnField state if it changed
+      if (historyUpdate.playersOnField) {
+        setPlayersOnField(nextPlayersOnField);
+      }
+      
+      console.log(`Updated selected players: ${nextSelectedPlayerIds.length} players. Players on field: ${nextPlayersOnField.length}`);
+      return nextSelectedPlayerIds; // Return new selection for setSelectedPlayerIds
+    });
+  }, [playersOnField, saveStateToHistory, setPlayersOnField]); // Dependencies: playersOnField, saveStateToHistory, setPlayersOnField 
+                                                              // setSelectedPlayerIds is updated via its functional update form
 
   // --- NEW: Quick Save Handler ---
   const handleQuickSaveGame = useCallback(async () => {

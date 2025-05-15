@@ -174,7 +174,62 @@ export const setPlayerGoalieStatus = async (
   playerId: string,
   isGoalie: boolean
 ): Promise<Player | null> => {
-  return updatePlayerInRoster(playerId, { isGoalie });
+  if (!playerId) {
+    console.error('[setPlayerGoalieStatus] Validation Failed: Player ID cannot be empty.');
+    return Promise.resolve(null);
+  }
+
+  try {
+    const currentRoster = await getMasterRoster();
+    let targetPlayer: Player | undefined = undefined;
+    
+    const updatedRoster = currentRoster.map(player => {
+      if (player.id === playerId) {
+        targetPlayer = { ...player, isGoalie };
+        return targetPlayer;
+      }
+      // If we are setting a new goalie, unset goalie status for all other players.
+      if (isGoalie && player.isGoalie) {
+        return { ...player, isGoalie: false };
+      }
+      return player;
+    });
+
+    if (!targetPlayer) {
+      console.error(`[setPlayerGoalieStatus] Player with ID ${playerId} not found.`);
+      return Promise.resolve(null);
+    }
+    
+    // If isGoalie is true, we need a second pass to ensure the target player is definitely the goalie
+    // This handles the case where the target player was not the one initially having player.isGoalie = true
+    // when isGoalie=true was passed.
+    let finalRoster = updatedRoster;
+    if (isGoalie) {
+      finalRoster = updatedRoster.map(p => {
+        if (p.id === playerId) return { ...p, isGoalie: true };
+        // Ensure all others are not goalie if we are definitively setting one.
+        // This is slightly redundant if the first pass caught it, but ensures correctness.
+        if (p.id !== playerId && p.isGoalie) return { ...p, isGoalie: false}; 
+        return p;
+      });
+      // Update targetPlayer reference from the finalRoster
+      targetPlayer = finalRoster.find(p => p.id === playerId);
+    }
+
+
+    const success = await saveMasterRoster(finalRoster);
+
+    if (!success) {
+      // Error logged by saveMasterRoster
+      return Promise.resolve(null);
+    }
+
+    return Promise.resolve(targetPlayer || null); // Should always be targetPlayer if found earlier
+
+  } catch (error) {
+    console.error('[setPlayerGoalieStatus] Unexpected error:', error);
+    return Promise.resolve(null);
+  }
 };
 
 /**
