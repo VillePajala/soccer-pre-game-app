@@ -372,7 +372,7 @@ export default function Home() {
   // const [tournamentId, setTournamentId] = useState<string>(initialState.tournamentId); // REMOVE - Migrate to gameSessionState
   // Add state for location and time
   // const [gameLocation, setGameLocation] = useState<string>(initialState.gameLocation || ''); // REMOVE - Migrate to gameSessionState
-  const [gameTime, setGameTime] = useState<string>(initialState.gameTime || '');
+  // const [gameTime, setGameTime] = useState<string>(initialState.gameTime || ''); // REMOVE - Migrate to gameSessionState
   // ... Timer state ...
   // ... Modal states ...
   // ... UI/Interaction states ...
@@ -964,7 +964,6 @@ export default function Home() {
     // setSelectedPlayerIds(gameData?.selectedPlayerIds || (isInitialDefaultLoad ? initialState.selectedPlayerIds : [])); // REMOVE - Handled by LOAD_PERSISTED_GAME_DATA
     // setSeasonId(gameData?.seasonId || (isInitialDefaultLoad ? initialState.seasonId : '')); // REMOVE - Handled by LOAD_PERSISTED_GAME_DATA
     // setTournamentId(gameData?.tournamentId || (isInitialDefaultLoad ? initialState.tournamentId : '')); // REMOVE - Handled by LOAD_PERSISTED_GAME_DATA
-    setGameTime(gameData?.time || (isInitialDefaultLoad ? initialState.gameTime : '') || '');
     // setShowPlayerNames(gameData?.showPlayerNames === undefined ? (isInitialDefaultLoad ? initialState.showPlayerNames : true) : gameData.showPlayerNames); // REMOVE - Handled by LOAD_PERSISTED_GAME_DATA in reducer
 
 
@@ -1043,7 +1042,7 @@ export default function Home() {
     // Call loadGameStateFromData; it handles null correctly (applies initialState)
     // This will set up the game-specific details (scores, events, selected players for *that* game)
     // but will NOT overwrite the master availablePlayers roster.
-    loadGameStateFromData(gameToLoad); // This will now use gameSessionState.gameLocation internally via reducer
+    loadGameStateFromData(gameToLoad); // This will now use gameSessionState.gameTime internally via reducer
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentGameId, savedGames, initialLoadComplete]); // IMPORTANT: initialLoadComplete ensures this runs after master roster is loaded.
@@ -1740,8 +1739,6 @@ export default function Home() {
           setDrawings(initialState.drawings || []); 
           // setGameEvents(initialState.gameEvents || []); // REMOVE - Handled by RESET_TO_INITIAL_STATE
           // setSeasonId(initialState.seasonId || ''); // REMOVE - Handled by RESET_TO_INITIAL_STATE
-          setGameTime(initialState.gameTime || '');
-          // setShowPlayerNames(initialState.showPlayerNames); // REMOVE - Handled by RESET_TO_INITIAL_STATE dispatch
 
           setHistory([initialState as AppState]); // Reset history with initial state (ensure cast if needed)
           setHistoryIndex(0);
@@ -2501,8 +2498,7 @@ export default function Home() {
     saveStateToHistory({ gameLocation: location });
   };
   const handleGameTimeChange = (time: string) => {
-    // REVERT to original
-    setGameTime(time);
+    dispatchGameSession({ type: 'SET_GAME_TIME', payload: time });
     saveStateToHistory({ gameTime: time });
   };
 
@@ -3268,7 +3264,7 @@ export default function Home() {
           opponentName={gameSessionState.opponentName}
           gameDate={gameSessionState.gameDate}
           gameLocation={gameSessionState.gameLocation} // This is still a local state, might need to be gameSessionState.gameLocation
-          gameTime={gameTime} // This is still a local state, might need to be gameSessionState.gameTime
+          gameTime={gameSessionState.gameTime} // This is still a local state, might need to be gameSessionState.gameTime
           gameNotes={gameSessionState.gameNotes}
           homeScore={gameSessionState.homeScore}
           awayScore={gameSessionState.awayScore}
@@ -3377,7 +3373,7 @@ export default function Home() {
           opponentName={gameSessionState.opponentName}
           gameDate={gameSessionState.gameDate}
           gameLocation={gameSessionState.gameLocation} // USE gameSessionState
-          gameTime={gameTime} // This is still local state
+          gameTime={gameSessionState.gameTime} // This is still local state
           gameNotes={gameSessionState.gameNotes}
           homeScore={gameSessionState.homeScore}
           awayScore={gameSessionState.awayScore}
