@@ -46,6 +46,8 @@ import {
 } from '@/utils/appSettings';
 // Import Player from types directory
 import { Player, Season, Tournament } from '@/types';
+// Import saveMasterRoster utility
+import { saveMasterRoster } from '@/utils/masterRoster';
 
 // Define the Point type for drawing - Use relative coordinates
 export interface Point {
@@ -1370,24 +1372,11 @@ export default function Home() {
         homeOrAway,
       };
 
-      // 2. Update the savedGames state and localStorage using the determined ID
-      // This state update is for immediate UI responsiveness.
-      const updatedSavedGamesCollection = {
-        ...savedGames,
-        [idToSave]: currentSnapshot // Use idToSave here
-      };
-      setSavedGames(updatedSavedGamesCollection); // Update state in memory
-
-      // Persist using utility functions
+      // 2. Save the game snapshot using utility
       await utilSaveGame(idToSave, currentSnapshot);
-      await utilSaveCurrentGameIdSetting(idToSave);
       
-      console.log(`Game saved successfully with ID: ${idToSave}`);
-      // History for the newly saved/overwritten game should start fresh
-      setHistory([currentSnapshot]);
-      setHistoryIndex(0);
-      // REMOVED: saveSuccess = true; 
-      handleCloseSaveGameModal(); // Close save modal on success
+      // 3. Save App Settings (only the current game ID) using utility
+      await utilSaveCurrentGameIdSetting(idToSave);
 
     } catch (error) {
       console.error("Failed to save game state:", error);
@@ -2165,7 +2154,7 @@ export default function Home() {
   // --- END Roster Management Handlers ---
 
   // --- NEW: Handler to Award Fair Play Card ---
-  const handleAwardFairPlayCard = useCallback((playerId: string | null) => {
+  const handleAwardFairPlayCard = useCallback(async (playerId: string | null) => {
       // <<< ADD LOG HERE >>>
       console.log(`[page.tsx] handleAwardFairPlayCard called with playerId: ${playerId}`);
       console.log(`[page.tsx] availablePlayers BEFORE update:`, JSON.stringify(availablePlayers.map(p => ({id: p.id, fp: p.receivedFairPlayCard}))));
@@ -2222,7 +2211,17 @@ export default function Home() {
       setAvailablePlayers(updatedAvailablePlayers);
       setPlayersOnField(updatedPlayersOnField);
       // Save updated global roster
-      localStorage.setItem(MASTER_ROSTER_KEY, JSON.stringify(updatedAvailablePlayers));
+      // localStorage.setItem(MASTER_ROSTER_KEY, JSON.stringify(updatedAvailablePlayers));
+      try {
+        const success = await saveMasterRoster(updatedAvailablePlayers);
+        if (!success) {
+          console.error('[page.tsx] handleAwardFairPlayCard: Failed to save master roster using utility.');
+          // Optionally, set an error state to inform the user
+        }
+      } catch (error) {
+        console.error('[page.tsx] handleAwardFairPlayCard: Error calling saveMasterRoster utility:', error);
+        // Optionally, set an error state
+      }
       // <<< ADD LOG HERE >>>
       console.log(`[page.tsx] Calling saveStateToHistory... ONLY for playersOnField`);
       // Save ONLY the playersOnField change to the game history, not the global roster
@@ -2250,7 +2249,7 @@ export default function Home() {
   }, [selectedPlayerIds, saveStateToHistory]); // Dependencies
 
   // --- NEW: Quick Save Handler ---
-  const handleQuickSaveGame = useCallback(() => {
+  const handleQuickSaveGame = useCallback(async () => {
     if (currentGameId && currentGameId !== DEFAULT_GAME_ID) {
       console.log(`Quick saving game with ID: ${currentGameId}`);
       try {
@@ -2287,7 +2286,9 @@ export default function Home() {
         // 2. Update the savedGames state and localStorage
         const updatedSavedGames = { ...savedGames, [currentGameId]: currentSnapshot };
         setSavedGames(updatedSavedGames);
-        localStorage.setItem(SAVED_GAMES_KEY, JSON.stringify(updatedSavedGames));
+        // localStorage.setItem(SAVED_GAMES_KEY, JSON.stringify(updatedSavedGames));
+        await utilSaveGame(currentGameId, currentSnapshot); // Use utility function
+        await utilSaveCurrentGameIdSetting(currentGameId); // Save current game ID setting
 
         // 3. Update history to reflect the saved state
         // This makes the quick save behave like loading a game, resetting undo/redo
