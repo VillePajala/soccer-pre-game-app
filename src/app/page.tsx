@@ -427,20 +427,17 @@ export default function Home() {
     },
     onSuccess: (updatedPlayer, variables) => {
       console.log('[Mutation Success] Player updated:', variables.playerId, updatedPlayer);
-      queryClient.invalidateQueries({ queryKey: ['masterRoster'] });
-      // No direct update to setSavedGames here, as masterRoster is global.
-      // The RosterSettingsModal and PlayerBar will re-render based on the new masterRoster query data.
-      // However, playersOnField might need an update if the changed player (e.g., name) is on the field.
+      queryClient.invalidateQueries({ queryKey: ['masterRoster'] }); // This will refetch and update availablePlayers
       if (updatedPlayer) {
-        setPlayersOnField(prev => 
-          prev.map(p => 
+        // Update playersOnField state and then save that specific change to history
+        setPlayersOnField(prevPlayersOnField => {
+          const nextPlayersOnField = prevPlayersOnField.map(p => 
             p.id === updatedPlayer.id ? { ...p, ...updatedPlayer } : p
-          )
-        );
-        // Consider if saveStateToHistory is needed here if playersOnField is part of AppState history
-        // This depends on how granular history needs to be for player detail changes.
+          );
+          saveStateToHistory({ playersOnField: nextPlayersOnField }); // Save this computed state to history
+          return nextPlayersOnField; // Return it to update React state
+        });
       }
-      // Reset specific roster error state if it was set by this operation type
       setRosterError(null); 
     },
     onError: (error, variables) => {
@@ -461,19 +458,22 @@ export default function Home() {
     onSuccess: (updatedPlayer, variables) => {
       console.log('[Mutation Success] Goalie status updated:', variables.playerId, updatedPlayer);
       queryClient.invalidateQueries({ queryKey: ['masterRoster'] });
-
       if (updatedPlayer) {
-        setPlayersOnField(prev => {
-          const newPlayersOnField = prev.map(p => { // Changed let to const
+        setPlayersOnField(prevPlayersOnField => {
+          const nextPlayersOnField = prevPlayersOnField.map(p => {
             if (p.id === updatedPlayer.id) {
-              return { ...p, ...updatedPlayer };
+              return { ...p, ...updatedPlayer }; // Apply all changes from updatedPlayer
             }
+            // If we just set a new goalie (variables.isGoalie is true),
+            // and this player 'p' is a goalie but not the one we just updated,
+            // then unset their goalie status.
             if (variables.isGoalie && p.isGoalie && p.id !== updatedPlayer.id) {
               return { ...p, isGoalie: false };
             }
             return p;
           });
-          return newPlayersOnField;
+          saveStateToHistory({ playersOnField: nextPlayersOnField });
+          return nextPlayersOnField;
         });
       }
       setRosterError(null);
