@@ -12,6 +12,7 @@
     "test:all": "npm run test:unit && npm run test:e2e"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.76.1",
     "i18next": "^24.2.3",
     "i18next-http-backend": "^3.0.2",
     "next": "15.3.0",

@@ -48,6 +48,8 @@ import {
 import { Player, Season, Tournament } from '@/types';
 // Import saveMasterRoster utility
 import { saveMasterRoster } from '@/utils/masterRoster';
+// Import useQuery
+import { useQuery } from '@tanstack/react-query';
 
 // Define the Point type for drawing - Use relative coordinates
 export interface Point {
@@ -190,6 +192,62 @@ export default function Home() {
   console.log('--- page.tsx RENDER ---'); // <<< ADD RENDER LOG
   const { t } = useTranslation(); // Get translation function
 
+  // --- TanStack Query for Master Roster ---
+  const {
+    data: masterRosterQueryResultData,
+    isLoading: isMasterRosterQueryLoading,
+    isError: isMasterRosterQueryError,
+    error: masterRosterQueryErrorData,
+  } = useQuery<Player[], Error>({
+    queryKey: ['masterRoster'],
+    queryFn: getMasterRoster,
+  });
+
+  // --- TanStack Query for Seasons ---
+  const {
+    data: seasonsQueryResultData,
+    isLoading: areSeasonsQueryLoading,
+    isError: isSeasonsQueryError,
+    error: seasonsQueryErrorData,
+  } = useQuery<Season[], Error>({
+    queryKey: ['seasons'],
+    queryFn: utilGetSeasons,
+  });
+
+  // --- TanStack Query for Tournaments ---
+  const {
+    data: tournamentsQueryResultData,
+    isLoading: areTournamentsQueryLoading,
+    isError: isTournamentsQueryError,
+    error: tournamentsQueryErrorData,
+  } = useQuery<Tournament[], Error>({
+    queryKey: ['tournaments'],
+    queryFn: utilGetTournaments,
+  });
+
+  // --- TanStack Query for All Saved Games ---
+  const {
+    data: allSavedGamesQueryResultData,
+    isLoading: isAllSavedGamesQueryLoading,
+    isError: isAllSavedGamesQueryError,
+    error: allSavedGamesQueryErrorData,
+  } = useQuery<SavedGamesCollection | null, Error>({
+    queryKey: ['savedGames'],
+    queryFn: utilGetSavedGames,
+    initialData: {}, 
+  });
+
+  // --- TanStack Query for Current Game ID Setting ---
+  const {
+    data: currentGameIdSettingQueryResultData,
+    isLoading: isCurrentGameIdSettingQueryLoading,
+    isError: isCurrentGameIdSettingQueryError,
+    error: currentGameIdSettingQueryErrorData,
+  } = useQuery<string | null, Error>({
+    queryKey: ['appSettingsCurrentGameId'],
+    queryFn: getCurrentGameIdSetting,
+  });
+
   // --- History Management (Still needed here for now) ---
   const [history, setHistory] = useState<AppState[]>([initialState]);
   const [historyIndex, setHistoryIndex] = useState<number>(0);
@@ -326,26 +384,7 @@ export default function Home() {
   const [gamesImportError, setGamesImportError] = useState<string | null>(null);
   const [processingGameId, setProcessingGameId] = useState<string | null>(null); // To track which game item is being processed
 
-  // <<< ADD Effect for auto-removing the highlight >>>
-  useEffect(() => {
-    console.log('[Effect:HighlightTimeout] Running. highlightRosterButton:', highlightRosterButton); // Log effect run
-    let timer: NodeJS.Timeout | null = null;
-    if (highlightRosterButton) {
-      console.log('[Effect:HighlightTimeout] Setting timeout to remove highlight.'); // Log timeout setup
-      timer = setTimeout(() => {
-        console.log('[Effect:HighlightTimeout] Timeout fired. Setting highlightRosterButton to false.'); // Log timeout fire
-        setHighlightRosterButton(false);
-      }, 15000); // Remove highlight after 15 seconds
-    }
-    return () => {
-      if (timer) {
-        console.log('[Effect:HighlightTimeout] Cleanup: Clearing timeout.'); // Log cleanup
-        clearTimeout(timer);
-      }
-    };
-  }, [highlightRosterButton]);
-
-  // --- Derived State for Filtered Players ---
+  // --- Derived State for Filtered Players (Moved to top-level) ---
   const playersForCurrentGame = useMemo(() => {
     if (!Array.isArray(availablePlayers)) {
       console.warn('[MEMO playersForCurrentGame] availablePlayers is not an array. Returning []. Value:', availablePlayers);
@@ -358,9 +397,47 @@ export default function Home() {
     return gamePlayers;
   }, [availablePlayers, selectedPlayerIds]);
 
-  // --- Handlers (Remaining in Home component or to be moved) ---
-  // REMOVED: handlePlayerDrop (now comes from useGameState hook)
-  // ... other handlers ...
+  // --- Effect to update availablePlayers from useQuery ---
+  useEffect(() => {
+    if (isMasterRosterQueryLoading) {
+      console.log('[TanStack Query] Master Roster is loading...');
+    }
+    if (masterRosterQueryResultData) {
+      setAvailablePlayers(masterRosterQueryResultData);
+    }
+    if (isMasterRosterQueryError) {
+      console.error('[TanStack Query] Error loading master roster:', masterRosterQueryErrorData);
+      setAvailablePlayers([]);
+    }
+  }, [masterRosterQueryResultData, isMasterRosterQueryLoading, isMasterRosterQueryError, masterRosterQueryErrorData, setAvailablePlayers]);
+
+  // --- Effect to update seasons from useQuery ---
+  useEffect(() => {
+    if (areSeasonsQueryLoading) {
+      console.log('[TanStack Query] Seasons are loading...');
+    }
+    if (seasonsQueryResultData) {
+      setSeasons(Array.isArray(seasonsQueryResultData) ? seasonsQueryResultData : []);
+    }
+    if (isSeasonsQueryError) {
+      console.error('[TanStack Query] Error loading seasons:', seasonsQueryErrorData);
+      setSeasons([]);
+    }
+  }, [seasonsQueryResultData, areSeasonsQueryLoading, isSeasonsQueryError, seasonsQueryErrorData, setSeasons]);
+
+  // --- Effect to update tournaments from useQuery ---
+  useEffect(() => {
+    if (areTournamentsQueryLoading) {
+      console.log('[TanStack Query] Tournaments are loading...');
+    }
+    if (tournamentsQueryResultData) {
+      setTournaments(Array.isArray(tournamentsQueryResultData) ? tournamentsQueryResultData : []);
+    }
+    if (isTournamentsQueryError) {
+      console.error('[TanStack Query] Error loading tournaments:', tournamentsQueryErrorData);
+      setTournaments([]);
+    }
+  }, [tournamentsQueryResultData, areTournamentsQueryLoading, isTournamentsQueryError, tournamentsQueryErrorData, setTournaments]);
 
   // --- Timer Effect ---
   useEffect(() => {
@@ -422,7 +499,11 @@ export default function Home() {
   // --- Load state from localStorage on mount (REVISED) ---
   useEffect(() => {
     const loadInitialAppData = async () => {
-      console.log('[EFFECT init] Loading initial application data...');
+      console.log('[EFFECT init] Coordinating initial application data from TanStack Query...');
+      // This useEffect now primarily ensures that dependent state updates happen
+      // after the core data (masterRoster, seasons, tournaments, savedGames, currentGameIdSetting)
+      // has been fetched by their respective useQuery hooks.
+
       // Simple migration for old data keys (if any) - Run once
       try {
         const oldRosterJson = localStorage.getItem('availablePlayers');
@@ -430,89 +511,77 @@ export default function Home() {
           console.log('[EFFECT init] Migrating old roster data...');
           localStorage.setItem(MASTER_ROSTER_KEY, oldRosterJson);
           localStorage.removeItem('availablePlayers');
+          // Consider invalidating and refetching masterRoster query here if migration happens
+          // queryClient.invalidateQueries(['masterRoster']);
         }
         const oldSeasonsJson = localStorage.getItem('soccerSeasonsList');
         if (oldSeasonsJson) {
           console.log('[EFFECT init] Migrating old seasons data...');
           localStorage.setItem(SEASONS_LIST_KEY, oldSeasonsJson);
+          // queryClient.invalidateQueries(['seasons']);
         }
       } catch (migrationError) {
         console.error('[EFFECT init] Error during data migration:', migrationError);
       }
 
-      // 1. Load Master Roster (Now uses masterRosterManager)
-      try {
-        const roster = await getMasterRoster(); // Uses the async getMasterRoster from masterRosterManager
-        console.log('[EFFECT init] Master Roster loaded via manager:', roster);
-        setAvailablePlayers(roster); // Use the setter from useGameState
-      } catch (error) {
-        console.error('[EFFECT init] Error loading master player roster via manager:', error);
-        setAvailablePlayers([]); // Use the setter from useGameState
-      }
+      // Master Roster, Seasons, Tournaments are handled by their own useEffects reacting to useQuery.
 
-      // 2. Load Seasons
-      try {
-        const loadedSeasons = await utilGetSeasons();
-        setSeasons(Array.isArray(loadedSeasons) ? loadedSeasons : []);
-      } catch (error) {
-        console.error('[EFFECT init] Error loading seasons:', error);
-        setSeasons([]);
+      // 4. Update local savedGames state from useQuery for allSavedGames
+      if (isAllSavedGamesQueryLoading) {
+        console.log('[EFFECT init] All saved games are loading via TanStack Query...');
+        setIsLoadingGamesList(true);
       }
-
-      // 3. Load Tournaments
-      try {
-        const loadedTournaments = await utilGetTournaments();
-        setTournaments(Array.isArray(loadedTournaments) ? loadedTournaments : []);
-      } catch (error) {
-        console.error('[EFFECT init] Error loading tournaments:', error);
-        setTournaments([]);
+      if (allSavedGamesQueryResultData) {
+        setSavedGames(allSavedGamesQueryResultData || {});
+        setIsLoadingGamesList(false);
       }
-
-      // 4. Load All Saved Games (to have them ready for selection)
-      let currentSavedGames: SavedGamesCollection = {};
-      setIsLoadingGamesList(true); // Set loading true before fetching
-      setLoadGamesListError(null); // Clear previous errors
-      try {
-        currentSavedGames = await utilGetSavedGames() || {};
-        setSavedGames(currentSavedGames);
-      } catch (error) {
-        console.error('[EFFECT init] Error loading all saved games:', error);
+      if (isAllSavedGamesQueryError) {
+        console.error('[EFFECT init] Error loading all saved games via TanStack Query:', allSavedGamesQueryErrorData);
         setLoadGamesListError(t('loadGameModal.errors.listLoadFailed', 'Failed to load saved games list.'));
         setSavedGames({});
-      } finally {
-        setIsLoadingGamesList(false); // Set loading false after attempt
+        setIsLoadingGamesList(false);
       }
       
-      // 5. Load App Settings (like last game ID) & Restore Last Game State
-      try {
-        const lastGameIdSetting = await getCurrentGameIdSetting();
-        console.log('[EFFECT init] Last Game ID from settings:', lastGameIdSetting);
-        
+      // 5. Determine and set current game ID and related state from useQuery data
+      if (isCurrentGameIdSettingQueryLoading || isAllSavedGamesQueryLoading) { 
+        console.log('[EFFECT init] Waiting for current game ID setting and/or saved games list to load...');
+      } else {
+        const lastGameIdSetting = currentGameIdSettingQueryResultData;
+        const currentSavedGames = allSavedGamesQueryResultData || {}; 
+
         if (lastGameIdSetting && lastGameIdSetting !== DEFAULT_GAME_ID && currentSavedGames[lastGameIdSetting]) {
-          console.log(`[EFFECT init] Restoring last saved game: ${lastGameIdSetting}`);
+          console.log(`[EFFECT init] Restoring last saved game: ${lastGameIdSetting} from TanStack Query data.`);
           setCurrentGameId(lastGameIdSetting);
           setHasSkippedInitialSetup(true); 
         } else {
           if (lastGameIdSetting && lastGameIdSetting !== DEFAULT_GAME_ID) {
-            console.warn(`[EFFECT init] Last game ID ${lastGameIdSetting} not found in saved games. Loading default.`);
+            console.warn(`[EFFECT init] Last game ID ${lastGameIdSetting} not found in saved games (from TanStack Query). Loading default.`);
           }
           setCurrentGameId(DEFAULT_GAME_ID);
-          loadGameStateFromData(null, true); 
         }
-      } catch (error) {
-        console.error('[EFFECT init] Error loading current game settings or restoring game:', error);
-        setCurrentGameId(DEFAULT_GAME_ID);
-        loadGameStateFromData(null, true); 
       }
       
-      setIsLoaded(true);
-      setInitialLoadComplete(true);
-      console.log('[EFFECT init] Initial application data load complete.');
+      // Determine overall initial load completion
+      if (!isMasterRosterQueryLoading && !areSeasonsQueryLoading && !areTournamentsQueryLoading && !isAllSavedGamesQueryLoading && !isCurrentGameIdSettingQueryLoading) {
+        setIsLoaded(true);
+        setInitialLoadComplete(true);
+        console.log('[EFFECT init] Initial application data coordination complete based on TanStack Query states.');
+      }
     };
 
     loadInitialAppData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setAvailablePlayers]); // Depend on setAvailablePlayers from useGameState
+  }, [
+    masterRosterQueryResultData, isMasterRosterQueryLoading, isMasterRosterQueryError, masterRosterQueryErrorData,
+    seasonsQueryResultData, areSeasonsQueryLoading, isSeasonsQueryError, seasonsQueryErrorData,
+    tournamentsQueryResultData, areTournamentsQueryLoading, isTournamentsQueryError, tournamentsQueryErrorData,
+    allSavedGamesQueryResultData, isAllSavedGamesQueryLoading, isAllSavedGamesQueryError, allSavedGamesQueryErrorData, // Updated names
+    currentGameIdSettingQueryResultData, isCurrentGameIdSettingQueryLoading, isCurrentGameIdSettingQueryError, currentGameIdSettingQueryErrorData, // Updated names
+    setSavedGames, setIsLoadingGamesList, setLoadGamesListError,
+    setCurrentGameId, setHasSkippedInitialSetup,
+    t // t function from useTranslation
+    // REMOVE: utilGetSavedGames, getCurrentGameIdSetting (these are now queryFn)
+  ]);
 
   // Helper function to load game state from game data
   const loadGameStateFromData = (gameData: GameData | null, isInitialDefaultLoad = false) => {
@@ -2966,6 +3035,11 @@ export default function Home() {
 
   // Final console log before returning the main JSX
   console.log('[Home Render] highlightRosterButton:', highlightRosterButton); // Log state on render
+
+  // ATTEMPTING TO EXPLICITLY REMOVE THE CONDITIONAL HOOK
+  // The useEffect for highlightRosterButton that was here (around lines 2977-2992)
+  // should be removed as it's called conditionally and its correct version is at the top level.
+
   return (
     // Main container with flex column layout
     <div className="flex flex-col h-screen bg-gray-900 text-white relative">

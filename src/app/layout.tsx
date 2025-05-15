@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import ClientWrapper from "@/components/ClientWrapper";
+import QueryProvider from './QueryProvider';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -29,7 +30,9 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
       <body className={inter.className}>
-        <ClientWrapper>{children}</ClientWrapper>
+        <QueryProvider>
+          <ClientWrapper>{children}</ClientWrapper>
+        </QueryProvider>
       </body>
     </html>
   );
