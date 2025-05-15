@@ -110,25 +110,28 @@ export const getGame = async (gameId: string): Promise<AppState | null> => {
 /**
  * Deletes a game from localStorage
  * @param gameId - ID of the game to delete
- * @returns Promise resolving to true if the game was deleted, false otherwise
+ * @returns Promise resolving to the gameId if the game was deleted, null otherwise
  */
-export const deleteGame = async (gameId: string): Promise<boolean> => {
+export const deleteGame = async (gameId: string): Promise<string | null> => {
   try {
     if (!gameId) {
-      return Promise.resolve(false);
+      console.warn('deleteGame: gameId is null or empty.');
+      return null;
     }
     
     const allGames = await getSavedGames();
     if (!allGames[gameId]) {
-      return Promise.resolve(false);
+      console.warn(`deleteGame: Game with ID ${gameId} not found.`);
+      return null; // Game not found
     }
     
     delete allGames[gameId];
     await saveGames(allGames);
-    return Promise.resolve(true);
+    console.log(`deleteGame: Game with ID ${gameId} successfully deleted.`);
+    return gameId; // Successfully deleted, return the ID
   } catch (error) {
     console.error('Error deleting game:', error);
-    return Promise.reject(error); // Or resolve(false) if that's preferred for deletion errors
+    throw error; // Re-throw other errors
   }
 };
 
