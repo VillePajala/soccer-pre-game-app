@@ -3,11 +3,12 @@
 This checklist will guide the deep code review process, focusing on quality, maintainability, and readiness for migration to Supabase and Clerk.
 
 ## 1. Supabase & Clerk Migration Readiness
-- [ ] **Asynchronous Operations:** All data fetching and mutation operations use `async/await` and return Promises.
-- [ ] **`localStorage` Usage:** All `localStorage` access points are clearly identified (e.g., via wrapper functions like `utilGetFromLocalStorage`) and marked for replacement with Supabase calls.
-- [ ] **Authentication/User Management:** Logic related to user identity or saved games (if user-specific) is abstracted sufficiently for easy integration with Clerk.
-- [ ] **Client-Side Storage Dependencies:** No critical dependencies on client-side storage that would be lost or difficult to migrate if not handled by Supabase.
-- [ ] **Environment Variables:** Configuration for Supabase (URL, anon key) is planned to be handled via environment variables.
+- [X] **Asynchronous Operations:** All data fetching and mutation operations use `async/await` and return Promises.
+    - *Note: `src/components/InstallPrompt.tsx` uses synchronous `localStorage.setItem` for UI preference, deemed acceptable. Test files also use sync `localStorage` for setup/teardown.*
+- [X] **`localStorage` Usage:** All `localStorage` access points are clearly identified (via wrapper functions or specific async utilities in `src/utils/`) and thus prepared for replacement with Supabase calls.
+- [X] **Authentication/User Management:** Data logic is centralized in utility functions, ready to incorporate an internal `userId` once Clerk is integrated (as per `MIGRATION_TO_SUPABASE_AND_CLERK.md`).
+- [X] **Client-Side Storage Dependencies:** All critical client-side storage (i.e., data in `localStorage`) is addressed by the Supabase migration plan. No other critical client-side databases are in use for persistent application data.
+- [X] **Environment Variables:** Configuration for Supabase (URL, anon key) and Clerk keys is planned to be handled via environment variables, as documented in `MIGRATION_TO_SUPABASE_AND_CLERK.md`.
 
 ## 2. TanStack Query Usage
 - [ ] **Effectiveness:** Queries and mutations are used appropriately for server state.
