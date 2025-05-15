@@ -415,6 +415,75 @@ export default function Home() {
     },
   });
 
+  // --- Mutation for Updating Player in Master Roster ---
+  const updatePlayerMutation = useMutation<
+    Player | null, // Return type from masterRosterManager.updatePlayer
+    Error,        // Error type
+    { playerId: string; playerData: Partial<Omit<Player, 'id'>>; } // Variables type
+  >({
+    mutationFn: async ({ playerId, playerData }) => {
+      // The updatePlayer utility from masterRosterManager is already async
+      return updatePlayer(playerId, playerData);
+    },
+    onSuccess: (updatedPlayer, variables) => {
+      console.log('[Mutation Success] Player updated:', variables.playerId, updatedPlayer);
+      queryClient.invalidateQueries({ queryKey: ['masterRoster'] });
+      // No direct update to setSavedGames here, as masterRoster is global.
+      // The RosterSettingsModal and PlayerBar will re-render based on the new masterRoster query data.
+      // However, playersOnField might need an update if the changed player (e.g., name) is on the field.
+      if (updatedPlayer) {
+        setPlayersOnField(prev => 
+          prev.map(p => 
+            p.id === updatedPlayer.id ? { ...p, ...updatedPlayer } : p
+          )
+        );
+        // Consider if saveStateToHistory is needed here if playersOnField is part of AppState history
+        // This depends on how granular history needs to be for player detail changes.
+      }
+      // Reset specific roster error state if it was set by this operation type
+      setRosterError(null); 
+    },
+    onError: (error, variables) => {
+      console.error(`[Mutation Error] Failed to update player ${variables.playerId}:`, error);
+      setRosterError(t('rosterSettingsModal.errors.updateFailed', 'Error updating player {playerName}. Please try again.', { playerName: variables.playerData.name || variables.playerId }));
+    },
+  });
+
+  // --- Mutation for Setting Goalie Status in Master Roster ---
+  const setGoalieStatusMutation = useMutation<
+    Player | null, // Return type from masterRosterManager.setGoalieStatus
+    Error,        // Error type
+    { playerId: string; isGoalie: boolean; } // Variables type
+  >({
+    mutationFn: async ({ playerId, isGoalie }) => {
+      return setGoalieStatus(playerId, isGoalie);
+    },
+    onSuccess: (updatedPlayer, variables) => {
+      console.log('[Mutation Success] Goalie status updated:', variables.playerId, updatedPlayer);
+      queryClient.invalidateQueries({ queryKey: ['masterRoster'] });
+
+      if (updatedPlayer) {
+        setPlayersOnField(prev => {
+          const newPlayersOnField = prev.map(p => { // Changed let to const
+            if (p.id === updatedPlayer.id) {
+              return { ...p, ...updatedPlayer };
+            }
+            if (variables.isGoalie && p.isGoalie && p.id !== updatedPlayer.id) {
+              return { ...p, isGoalie: false };
+            }
+            return p;
+          });
+          return newPlayersOnField;
+        });
+      }
+      setRosterError(null);
+    },
+    onError: (error, variables) => {
+      console.error(`[Mutation Error] Failed to set goalie status for player ${variables.playerId}:`, error);
+      setRosterError(t('rosterSettingsModal.errors.goalieStatusFailed', 'Error setting goalie status for player {playerId}. Please try again.', { playerId: variables.playerId }));
+    },
+  });
+
   // --- Derived State for Filtered Players (Moved to top-level) ---
   const playersForCurrentGame = useMemo(() => {
     if (!Array.isArray(availablePlayers)) {
@@ -1557,64 +1626,69 @@ export default function Home() {
     setProcessingGameId(gameId);
 
     try {
-      await utilDeleteGame(gameId); // Use utility function to delete from localStorage
+      const deletedGameId = await utilDeleteGame(gameId); // Assign return value
 
-      // Update local state for immediate UI responsiveness
-      const updatedSavedGames = { ...savedGames };
-      delete updatedSavedGames[gameId];
-      setSavedGames(updatedSavedGames);
+      if (deletedGameId) { // Check if deletion was successful (gameId returned)
+        // Update local state for immediate UI responsiveness
+        const updatedSavedGames = { ...savedGames };
+        delete updatedSavedGames[deletedGameId]; // Use returned ID
+        setSavedGames(updatedSavedGames);
 
-      console.log(`Game ${gameId} deleted from state and persistence.`);
+        console.log(`Game ${deletedGameId} deleted from state and persistence.`);
 
-      // If the deleted game was the currently loaded one, reset to initial state
-      if (currentGameId === gameId) {
-        console.log("Currently loaded game was deleted. Resetting to initial state.");
-        
-        // Apply initial state directly
-        setPlayersOnField(initialState.playersOnField);
-        setOpponents(initialState.opponents);
-        setDrawings(initialState.drawings);
-        setShowPlayerNames(initialState.showPlayerNames);
-        setTeamName(initialState.teamName);
-        setGameEvents(initialState.gameEvents);
-        setOpponentName(initialState.opponentName);
-        setGameDate(initialState.gameDate);
-        setHomeScore(initialState.homeScore);
-        setAwayScore(initialState.awayScore);
-        setGameNotes(initialState.gameNotes);
-        setNumberOfPeriods(initialState.numberOfPeriods);
-        setPeriodDurationMinutes(initialState.periodDurationMinutes);
-        setCurrentPeriod(initialState.currentPeriod);
-        setGameStatus(initialState.gameStatus);
-        setSelectedPlayerIds(initialState.selectedPlayerIds);
-        setSeasonId(initialState.seasonId);
-        setTournamentId(initialState.tournamentId);
-        setGameLocation(initialState.gameLocation || '');
-        setGameTime(initialState.gameTime || '');
-        setSubIntervalMinutes(initialState.subIntervalMinutes ?? 5);
-        setCompletedIntervalDurations(initialState.completedIntervalDurations ?? []);
-        setLastSubConfirmationTimeSeconds(initialState.lastSubConfirmationTimeSeconds ?? 0);
-        // <<< ADD: Reset home/away status (delete game) >>>
-        setHomeOrAway(initialState.homeOrAway);
+        // If the deleted game was the currently loaded one, reset to initial state
+        if (currentGameId === deletedGameId) { // Use returned ID
+          console.log("Currently loaded game was deleted. Resetting to initial state.");
+          
+          // Apply initial state directly
+          setPlayersOnField(initialState.playersOnField);
+          setOpponents(initialState.opponents);
+          setDrawings(initialState.drawings);
+          // Also reset availablePlayers from useGameState if appropriate, or use masterRoster
+          // setAvailablePlayers(initialState.availablePlayers); // This is from useGameState, consider if direct reset is needed or if it refetches
+          setShowPlayerNames(initialState.showPlayerNames);
+          setTeamName(initialState.teamName);
+          setGameEvents(initialState.gameEvents);
+          setOpponentName(initialState.opponentName);
+          setGameDate(initialState.gameDate);
+          setHomeScore(initialState.homeScore);
+          setAwayScore(initialState.awayScore);
+          setGameNotes(initialState.gameNotes);
+          setNumberOfPeriods(initialState.numberOfPeriods);
+          setPeriodDurationMinutes(initialState.periodDurationMinutes);
+          setCurrentPeriod(initialState.currentPeriod);
+          setGameStatus(initialState.gameStatus);
+          setSelectedPlayerIds(initialState.selectedPlayerIds);
+          setSeasonId(initialState.seasonId);
+          setTournamentId(initialState.tournamentId);
+          setGameLocation(initialState.gameLocation || '');
+          setGameTime(initialState.gameTime || '');
+          setSubIntervalMinutes(initialState.subIntervalMinutes ?? 5);
+          setCompletedIntervalDurations(initialState.completedIntervalDurations ?? []);
+          setLastSubConfirmationTimeSeconds(initialState.lastSubConfirmationTimeSeconds ?? 0);
+          setHomeOrAway(initialState.homeOrAway);
 
-        // Reset session-specific state
-        setHistory([initialState]);
-        setHistoryIndex(0);
-        setTimeElapsedInSeconds(0);
-        setIsTimerRunning(false);
-        setSubAlertLevel('none');
+          // Reset session-specific state
+          setHistory([initialState]);
+          setHistoryIndex(0);
+          setTimeElapsedInSeconds(0);
+          setIsTimerRunning(false);
+          setSubAlertLevel('none');
 
-        // Update current game ID to DEFAULT_GAME_ID
-        setCurrentGameId(DEFAULT_GAME_ID);
-        await utilSaveCurrentGameIdSetting(DEFAULT_GAME_ID);
+          // Update current game ID to DEFAULT_GAME_ID
+          setCurrentGameId(DEFAULT_GAME_ID);
+          await utilSaveCurrentGameIdSetting(DEFAULT_GAME_ID);
+        }
+        // queryClient.invalidateQueries(['savedGames']); // Already handled by direct state update and if LoadGameModal re-renders
+      } else {
+        // utilDeleteGame returned null (e.g., game not found by the utility, and it didn't throw)
+        console.warn(`handleDeleteGame: utilDeleteGame returned null for gameId: ${gameId}. Game might not have been found or ID was invalid.`);
+        setGameDeleteError(t('loadGameModal.errors.deleteFailedNotFound', 'Error deleting game: {gameId}. Game not found or ID was invalid.', { gameId }));
       }
-      // Keep the modal open after delete? Or close? Let's keep it open for now.
-      // handleCloseLoadGameModal(); 
-
     } catch (error) {
       console.error("Error deleting game state:", error);
-      // alert("Error deleting saved game."); // Replaced by error state
-      setGameDeleteError(t('loadGameModal.errors.deleteFailed', 'Error deleting saved game: {gameId}', { gameId }));
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      setGameDeleteError(t('loadGameModal.errors.deleteFailedCatch', 'Error deleting saved game: {gameId}. Details: {errorMessage}', { gameId, errorMessage }));
     } finally {
       setIsGameDeleting(false);
       setProcessingGameId(null);
@@ -2021,88 +2095,63 @@ export default function Home() {
 
   // --- ASYNC Roster Management Handlers for RosterSettingsModal ---
   const handleRenamePlayerForModal = useCallback(async (playerId: string, playerData: { name: string; nickname?: string }) => {
-    console.log(`[Page.tsx] handleRenamePlayerForModal called for ID: ${playerId}, new name: ${playerData.name}`);
-    setRosterError(null);
-    setIsRosterUpdating(true);
+    console.log(`[Page.tsx] handleRenamePlayerForModal attempting mutation for ID: ${playerId}, new name: ${playerData.name}`);
+    setRosterError(null); // Clear previous specific errors
+    // setIsRosterUpdating(true); // UI should use updatePlayerMutation.isPending
+
     try {
-      const updatedPlayer = await updatePlayer(playerId, { name: playerData.name, nickname: playerData.nickname });
-      if (updatedPlayer) {
-        const newRoster = await getMasterRoster();
-        setAvailablePlayers(newRoster);
-        setPlayersOnField(prev => prev.map(p => 
-          p.id === playerId ? { ...p, name: playerData.name, nickname: playerData.nickname || p.nickname } : p
-        ));
-        // Ensure saveStateToHistory uses the correctly updated playersOnField state
-        const newPlayersOnFieldState = playersOnField.map(p => 
-          p.id === playerId ? { ...p, name: playerData.name, nickname: playerData.nickname || p.nickname } : p
-        );
-        saveStateToHistory({ playersOnField: newPlayersOnFieldState });
-        console.log(`[Page.tsx] Player ${playerId} renamed to ${playerData.name}.`);
-      } else {
-        console.error(`[Page.tsx] Failed to rename player ${playerId} (masterRosterManager.updatePlayer returned null).`);
-        setRosterError(`Error renaming player. The operation may have failed.`);
-      }
+      await updatePlayerMutation.mutateAsync({ 
+        playerId, 
+        playerData: { name: playerData.name, nickname: playerData.nickname } 
+      });
+      // onSuccess in updatePlayerMutation handles query invalidation, roster error clearing, and setPlayersOnField.
+      console.log(`[Page.tsx] updatePlayerMutation.mutateAsync successful for rename of ${playerId}.`);
     } catch (error) {
-      console.error(`[Page.tsx] Exception when renaming player ${playerId}:`, error);
-      setRosterError(`An unexpected error occurred while renaming player. Please try again.`);
+      // Errors are primarily handled by the mutation's onError, which calls setRosterError.
+      // This catch block is for any other unexpected error from mutateAsync itself if not caught by TanStack Query.
+      console.error(`[Page.tsx] Exception during updatePlayerMutation.mutateAsync for rename of ${playerId}:`, error);
+      // If setRosterError isn't already called by mutation's onError for this specific case:
+      // if (!updatePlayerMutation.isError) { // Or check error type
+      //   setRosterError(t('rosterSettingsModal.errors.unexpected', 'An unexpected error occurred.'));
+      // }
     } finally {
-      setIsRosterUpdating(false);
+      // setIsRosterUpdating(false); // UI should use updatePlayerMutation.isPending
     }
-  }, [playersOnField, saveStateToHistory, setAvailablePlayers, setPlayersOnField, setIsRosterUpdating, setRosterError]);
+  }, [updatePlayerMutation, t]); // Added t for translations if used in error
   
   const handleSetJerseyNumberForModal = useCallback(async (playerId: string, jerseyNumber: string) => {
-    console.log(`[Page.tsx] handleSetJerseyNumberForModal called for ID: ${playerId}, new number: ${jerseyNumber}`);
+    console.log(`[Page.tsx] handleSetJerseyNumberForModal attempting mutation for ID: ${playerId}, new number: ${jerseyNumber}`);
     setRosterError(null);
-    setIsRosterUpdating(true);
+
     try {
-      const updatedPlayer = await updatePlayer(playerId, { jerseyNumber: jerseyNumber });
-      if (updatedPlayer) {
-        const newRoster = await getMasterRoster();
-        setAvailablePlayers(newRoster);
-        setPlayersOnField(prev => prev.map(p => 
-          p.id === playerId ? { ...p, jerseyNumber: jerseyNumber } : p
-        ));
-        // Ensure saveStateToHistory uses the correctly updated playersOnField state
-        const newPlayersOnFieldState = playersOnField.map(p => 
-          p.id === playerId ? { ...p, jerseyNumber: jerseyNumber } : p
-        );
-        saveStateToHistory({ playersOnField: newPlayersOnFieldState });
-        console.log(`[Page.tsx] Set jersey number for ${playerId} to ${jerseyNumber}`);
-      } else {
-        console.error(`[Page.tsx] Failed to update jersey number for player ${playerId}`);
-        setRosterError(`Error updating jersey number. Please try again.`);
-      }
+      await updatePlayerMutation.mutateAsync({ 
+        playerId, 
+        playerData: { jerseyNumber } 
+      });
+      // onSuccess in updatePlayerMutation handles necessary updates.
+      console.log(`[Page.tsx] updatePlayerMutation.mutateAsync successful for jersey number update of ${playerId}.`);
     } catch (error) {
-      console.error(`[Page.tsx] Exception when updating jersey for ${playerId}:`, error);
-      setRosterError(`An unexpected error occurred while updating jersey number. Please try again.`);
-    } finally {
-      setIsRosterUpdating(false);
+      console.error(`[Page.tsx] Exception during updatePlayerMutation.mutateAsync for jersey number update of ${playerId}:`, error);
+      // Errors are primarily handled by the mutation's onError.
     }
-  }, [playersOnField, saveStateToHistory, setAvailablePlayers, setPlayersOnField, setIsRosterUpdating, setRosterError]);
+  }, [updatePlayerMutation]);
 
   const handleSetPlayerNotesForModal = useCallback(async (playerId: string, notes: string) => {
-    console.log(`[Page.tsx] handleSetPlayerNotesForModal called for ID: ${playerId}`);
+    console.log(`[Page.tsx] handleSetPlayerNotesForModal attempting mutation for ID: ${playerId}`);
     setRosterError(null);
-    setIsRosterUpdating(true);
+
     try {
-      const updatedPlayer = await updatePlayer(playerId, { notes: notes });
-      if (updatedPlayer) {
-        const newRoster = await getMasterRoster();
-        setAvailablePlayers(newRoster);
-        // Notes don't directly affect playersOnField structure, so no need to update it or saveStateToHistory for it here
-        // If notes were displayed on field, this would need to update playersOnField & history
-        console.log(`[Page.tsx] Set notes for ${playerId}`);
-      } else {
-        console.error(`[Page.tsx] Failed to update notes for player ${playerId} (masterRosterManager.updatePlayer returned null).`);
-        setRosterError(`Error updating player notes. Please try again.`);
-      }
+      await updatePlayerMutation.mutateAsync({ 
+        playerId, 
+        playerData: { notes } 
+      });
+      // onSuccess in updatePlayerMutation handles necessary updates.
+      console.log(`[Page.tsx] updatePlayerMutation.mutateAsync successful for notes update of ${playerId}.`);
     } catch (error) {
-      console.error(`[Page.tsx] Exception when updating notes for ${playerId}:`, error);
-      setRosterError(`An unexpected error occurred while updating player notes. Please try again.`);
-    } finally {
-      setIsRosterUpdating(false);
+      console.error(`[Page.tsx] Exception during updatePlayerMutation.mutateAsync for notes update of ${playerId}:`, error);
+      // Errors are primarily handled by the mutation's onError.
     }
-  }, [setAvailablePlayers, setIsRosterUpdating, setRosterError]); // Removed playersOnField, saveStateToHistory, setPlayersOnField if notes don't affect them
+  }, [updatePlayerMutation]);
 
   const handleRemovePlayerForModal = useCallback(async (playerId: string) => {
     console.log(`[Page.tsx] handleRemovePlayerForModal called for ID: ${playerId}`);
@@ -2178,52 +2227,23 @@ export default function Home() {
     const player = availablePlayers.find(p => p.id === playerId);
     if (!player) {
         console.error(`[Page.tsx] Player ${playerId} not found in availablePlayers for goalie toggle.`);
-        setRosterError(`Player not found. Cannot toggle goalie status.`);
+        setRosterError(t('rosterSettingsModal.errors.playerNotFound', 'Player not found. Cannot toggle goalie status.'));
         return;
     }
     const targetGoalieStatus = !player.isGoalie;
-    console.log(`[Page.tsx] handleToggleGoalieForModal called for ID: ${playerId}, target status: ${targetGoalieStatus}`);
+    console.log(`[Page.tsx] handleToggleGoalieForModal attempting mutation for ID: ${playerId}, target status: ${targetGoalieStatus}`);
     
-    setRosterError(null);
-    setIsRosterUpdating(true);
-    let newPlayersOnFieldState: Player[] = [];
+    setRosterError(null); // Clear previous specific errors
 
     try {
-      const updatedPlayerFromUtil = await setGoalieStatus(playerId, targetGoalieStatus);
-      
-      if (updatedPlayerFromUtil) {
-          const newRoster = await getMasterRoster();
-          setAvailablePlayers(newRoster);
-          
-          setPlayersOnField(prev => {
-              // Corrected logic: always map, ensure only one goalie if target is true
-              newPlayersOnFieldState = prev.map(p => {
-                  if (p.id === playerId) {
-                      return { ...p, isGoalie: targetGoalieStatus };
-                  }
-                  // If we are setting a new goalie (targetGoalieStatus is true), and this player (p) is currently a goalie, unset them.
-                  if (targetGoalieStatus && p.isGoalie) {
-                      return { ...p, isGoalie: false }; 
-                  }
-                  return p;
-              });
-              return newPlayersOnFieldState;
-          });
-          
-          saveStateToHistory({ playersOnField: newPlayersOnFieldState });
-
-          console.log(`[Page.tsx] Goalie status for ${playerId} toggled to ${targetGoalieStatus}.`);
-      } else {
-          console.error(`[Page.tsx] Failed to toggle goalie status for player ${playerId} (masterRosterManager.setGoalieStatus returned null).`);
-          setRosterError(`Error toggling goalie status. Please try again.`);
-      }
+      await setGoalieStatusMutation.mutateAsync({ playerId, isGoalie: targetGoalieStatus });
+      // onSuccess in setGoalieStatusMutation handles query invalidation, roster error clearing, and setPlayersOnField logic.
+      console.log(`[Page.tsx] setGoalieStatusMutation.mutateAsync successful for goalie toggle of ${playerId}.`);
     } catch (error) {
-      console.error(`[Page.tsx] Exception when toggling goalie for ${playerId}:`, error);
-      setRosterError(`An unexpected error occurred while toggling goalie status. Please try again.`);
-    } finally {
-      setIsRosterUpdating(false);
+      // Errors are primarily handled by the mutation's onError.
+      console.error(`[Page.tsx] Exception during setGoalieStatusMutation.mutateAsync for goalie toggle of ${playerId}:`, error);
     }
-  }, [availablePlayers, playersOnField, saveStateToHistory, setAvailablePlayers, setPlayersOnField, setIsRosterUpdating, setRosterError]);
+  }, [availablePlayers, setGoalieStatusMutation, t]); // Added t and setGoalieStatusMutation, removed others
 
   // --- END Roster Management Handlers ---
 
