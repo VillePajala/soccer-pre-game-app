@@ -286,7 +286,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
           };
       });
 
-      relevantGameEvents = gameEvents || [];
+      relevantGameEvents = localGameEvents || []; // MODIFIED: Use localGameEvents
       if (currentGameId) {
         processedGameIds = [currentGameId]; // Current game is the only one processed
          // Update GP for players in the current game
@@ -432,16 +432,16 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
 
   }, [
     activeTab,
-    gameEvents,
+    localGameEvents,
     savedGames,
     availablePlayers,
     sortColumn,
     sortDirection,
     filterText,
-    selectedSeasonIdFilter, // Add dependency
-    selectedTournamentIdFilter, // Add dependency
+    selectedSeasonIdFilter,
+    selectedTournamentIdFilter,
     currentGameId,
-    selectedPlayerIds // Add dependency for GP calculation in currentGame
+    selectedPlayerIds
   ]);
 
   // Use localGameEvents for display

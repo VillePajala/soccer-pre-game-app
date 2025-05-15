@@ -534,7 +534,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <HiOutlineMagnifyingGlass className="h-3.5 w-3.5 text-slate-500" aria-hidden="true" />
-              </div>
+                      </div>
               <input
                 type="search"
                 name="gameSearch"
@@ -545,10 +545,10 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                 placeholder={t('loadGameModal.searchPlaceholder', 'Search games...')}
                 disabled={isLoadingGamesList || isGameLoading || isGameDeleting || isGamesImporting} // Disable search during any processing
               />
-            </div>
-          </div>
+                      </div>
+                    </div>
           {mainContent}
-        </div>
+                  </div>
 
         {/* Footer Actions */}
         <div className="flex-shrink-0 px-4 py-3 border-t border-slate-700 space-y-2">
@@ -608,9 +608,9 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
             onClick={onClose}
             className="w-full mt-1 px-3 py-1.5 text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 rounded disabled:opacity-70"
             disabled={isGamesImporting || isGameLoading || isGameDeleting} // Allow close if only list is loading
-          >
-            {t('common.close', 'Close')}
-          </button>
+            >
+              {t('common.close', 'Close')}
+            </button>
         </div>
       </div>
     </div>

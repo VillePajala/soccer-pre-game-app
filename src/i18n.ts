@@ -202,6 +202,7 @@ fiTranslations.controlBar.exitFullscreen = "Poistu Koko Näytöltä";
 fiTranslations.controlBar.newGameButton = "Uusi Peli";
 fiTranslations.controlBar.gameSettingsButton = "Otteluasetukset";
 fiTranslations.controlBar.toggleLanguage = "Vaihda Englantiin";
+fiTranslations.controlBar.coachingMaterials = "Valmennusmateriaalit";
 
 // Add common namespace if missing
 if (!fiTranslations.common) {
@@ -383,8 +384,9 @@ enTranslations.controlBar.loadGame = "Load Game";
 enTranslations.controlBar.startNewMatch = "Start New Match";
 enTranslations.controlBar.stats = "Stats";
 enTranslations.controlBar.training = "Training";
+enTranslations.controlBar.coachingMaterials = "Coaching Materials";
 enTranslations.controlBar.tasoLink = "Taso";
-enTranslations.controlBar.tulospalveluLink = "Tulospalvelu";
+enTranslations.controlBar.tulospalveluLink = "Results Service";
 enTranslations.controlBar.appGuide = "App Guide";
 enTranslations.controlBar.language = "Language";
 enTranslations.controlBar.hardReset = "Hard Reset";

@@ -248,8 +248,11 @@ const ControlBar: React.FC<ControlBarProps> = ({
                  
                    {/* --- Main Menu View --- */}
                    <div className="w-1/2 flex-shrink-0 overflow-y-auto max-h-[85vh]">
-                     <div className="py-1"> 
-  
+                     <div className="px-3 py-2 flex justify-between items-center border-b border-slate-700/80">
+                       <h3 className="text-base font-semibold text-yellow-300">{t('controlBar.menu.title', 'Menu')}</h3>
+                       <button onClick={() => { setIsSettingsMenuOpen(false); setMenuView('main'); }} className="text-slate-400 hover:text-slate-200" title={t('common.closeMenu', 'Close Menu') ?? undefined}><HiOutlineChevronLeft className="w-5 h-5"/></button>
+                     </div>
+                     <nav className="flex flex-col p-2 space-y-1 text-sm">
                        {/* Group 1: Game Management */} 
                        <div className="py-0.5">
                          <button onClick={wrapHandler(onQuickSave)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
@@ -287,6 +290,17 @@ const ControlBar: React.FC<ControlBarProps> = ({
                          <button onClick={wrapHandler(onToggleTrainingResources)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
                            <HiOutlineBookOpen className={menuIconSize} />{t('controlBar.training', 'Training')}
                          </button>
+                         {/* Coaching Materials Link (MOVED HERE AND STYLED CONSISTENTLY) */}
+                         <a
+                           href="https://www.palloliitto.fi/valmentajien-materiaalit-jalkapallo"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           onClick={() => { setIsSettingsMenuOpen(false); setMenuView('main'); }} // Close menu on click
+                           className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75"
+                         >
+                           <HiOutlineArrowTopRightOnSquare className={menuIconSize} />
+                           {t('controlBar.coachingMaterials', 'Coaching Materials')} 
+                         </a>
                          {/* Export Data - Link to Load Modal for now, as it has Export All */} 
                          <button onClick={wrapHandler(onOpenLoadGameModal)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
                            <HiOutlineDocumentArrowDown className={menuIconSize} />{t('controlBar.exportData', 'Export Data')}
@@ -323,7 +337,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
                            <HiOutlineExclamationTriangle className={menuIconSize} /> {t('controlBar.hardReset', 'Hard Reset App')}
                          </button>
                        </div>
-                     </div> 
+                     </nav>
                    </div>{/* End Main Menu View */}
 
                    {/* --- Tulospalvelu View --- */}
