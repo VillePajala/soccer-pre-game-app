@@ -48,8 +48,8 @@ import {
 import { Player, Season, Tournament } from '@/types';
 // Import saveMasterRoster utility
 import { saveMasterRoster } from '@/utils/masterRoster';
-// Import useQuery
-import { useQuery } from '@tanstack/react-query';
+// Import useQuery, useMutation, useQueryClient
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 // Define the Point type for drawing - Use relative coordinates
 export interface Point {
@@ -189,8 +189,9 @@ export const DEFAULT_GAME_ID = '__default_unsaved__';
 
 
 export default function Home() {
-  console.log('--- page.tsx RENDER ---'); // <<< ADD RENDER LOG
+  console.log('--- page.tsx RENDER ---');
   const { t } = useTranslation(); // Get translation function
+  const queryClient = useQueryClient(); // Get query client instance
 
   // --- TanStack Query for Master Roster ---
   const {
@@ -369,8 +370,7 @@ export default function Home() {
   const [isRosterUpdating, setIsRosterUpdating] = useState(false);
   const [rosterError, setRosterError] = useState<string | null>(null);
 
-  // NEW: State for game saving operations loading/error
-  const [isGameSaving, setIsGameSaving] = useState(false);
+  // State for game saving error (loading state is from saveGameMutation.isLoading)
   const [gameSaveError, setGameSaveError] = useState<string | null>(null);
 
   // NEW: States for LoadGameModal operations
@@ -383,6 +383,37 @@ export default function Home() {
   const [isGamesImporting, setIsGamesImporting] = useState(false); // For importing games
   const [gamesImportError, setGamesImportError] = useState<string | null>(null);
   const [processingGameId, setProcessingGameId] = useState<string | null>(null); // To track which game item is being processed
+
+  // --- Mutation for Saving Game (Initial definition with mutationFn only) ---
+  const saveGameMutation = useMutation<
+    string, // Return type: gameId successfully saved
+    Error,  // Error type
+    { gameIdToSave: string; snapshot: AppState; gameName: string; /* isOverwrite: boolean; */ } // Variables type
+  >({
+    mutationFn: async ({ gameIdToSave, snapshot }) => {
+      await utilSaveGame(gameIdToSave, snapshot);
+      await utilSaveCurrentGameIdSetting(gameIdToSave);
+      return gameIdToSave;
+    },
+    onSuccess: (savedGameId, variables) => {
+      console.log('[Mutation Success] Game saved:', savedGameId);
+      queryClient.invalidateQueries({ queryKey: ['savedGames'] });
+      queryClient.invalidateQueries({ queryKey: ['appSettingsCurrentGameId'] });
+
+      if (variables.gameIdToSave !== currentGameId || currentGameId === DEFAULT_GAME_ID) {
+         setCurrentGameId(variables.gameIdToSave); 
+      }
+      
+      setSavedGames(prev => ({ ...prev, [variables.gameIdToSave]: variables.snapshot }));
+
+      setIsSaveGameModalOpen(false);
+      setGameSaveError(null); 
+    },
+    onError: (error, variables) => {
+      console.error(`[Mutation Error] Failed to save game ${variables.gameName} (ID: ${variables.gameIdToSave}):`, error);
+      setGameSaveError(t('saveGameModal.errors.saveFailed', 'Error saving game. Please try again.'));
+    },
+  });
 
   // --- Derived State for Filtered Players (Moved to top-level) ---
   const playersForCurrentGame = useMemo(() => {
@@ -1389,82 +1420,56 @@ export default function Home() {
   // Function to handle the actual saving
   const handleSaveGame = async (gameName: string) => {
     console.log(`Attempting to save game: '${gameName}'`);
-    setGameSaveError(null); // Clear previous errors
-    setIsGameSaving(true);
+    // Manual loading and error state setting is now handled by the useMutation hook.
 
-    // Determine the ID to save under
     let idToSave: string;
-    const isOverwriting = currentGameId && currentGameId !== DEFAULT_GAME_ID;
+    // Determine if overwriting the game that is currently loaded and IS NOT the default placeholder ID.
+    const isOverwritingExistingLoadedGame = currentGameId && currentGameId !== DEFAULT_GAME_ID;
 
-    if (isOverwriting) {
-      // Use the existing game ID if we are overwriting
-      idToSave = currentGameId;
+    if (isOverwritingExistingLoadedGame) {
+      idToSave = currentGameId; // Use the ID of the currently loaded game for overwriting.
       console.log(`Overwriting existing game with ID: ${idToSave}`);
     } else {
-      // Generate a new ID if it's a new save or the default unsaved state
+      // This is a new save (either "Save As" for a loaded game, or saving an unsaved DEFAULT_GAME_ID game).
       idToSave = `game_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
       console.log(`Saving as new game with ID: ${idToSave}`);
     }
 
-    // REMOVED: No longer need saveSuccess flag here for the new game flow
-    // let saveSuccess = false; 
+    const currentSnapshot: AppState = {
+      playersOnField,
+      opponents,
+      drawings,
+      availablePlayers: availablePlayers, // Snapshot of the roster at the time of save
+      showPlayerNames,
+      teamName,
+      gameEvents,
+      opponentName: opponentName, 
+      gameDate: gameDate,
+      homeScore,
+      awayScore,
+      gameNotes,
+      numberOfPeriods,
+      periodDurationMinutes,
+      currentPeriod,
+      gameStatus,
+      selectedPlayerIds, 
+      seasonId,
+      tournamentId,
+      gameLocation, 
+      gameTime, 
+      subIntervalMinutes,
+      completedIntervalDurations,
+      lastSubConfirmationTimeSeconds,
+      homeOrAway,
+    };
 
-    try {
-      // 1. Create the current game state snapshot
-      // Ensure location and time from component state are included
-      const currentSnapshot: AppState = {
-        playersOnField,
-        opponents,
-        drawings,
-        availablePlayers, // <<< ADD BACK: Include roster available *at time of save*
-        showPlayerNames,
-        teamName,
-        gameEvents,
-        opponentName: opponentName, 
-        gameDate: gameDate,
-        homeScore,
-        awayScore,
-        gameNotes,
-        numberOfPeriods,
-        periodDurationMinutes,
-        currentPeriod,
-        gameStatus,
-        selectedPlayerIds, 
-        seasonId,
-        tournamentId,
-        gameLocation, // Include current gameLocation state
-        gameTime, // Include current gameTime state
-        // Add timer related state
-        subIntervalMinutes,
-        completedIntervalDurations,
-        lastSubConfirmationTimeSeconds,
-        homeOrAway,
-      };
-
-      // 2. Save the game snapshot using utility
-      await utilSaveGame(idToSave, currentSnapshot);
-      
-      // 3. Save App Settings (only the current game ID) using utility
-      await utilSaveCurrentGameIdSetting(idToSave);
-
-    } catch (error) {
-      console.error("Failed to save game state:", error);
-      // alert("Error saving game."); // Notify user // Replaced with error state
-      setGameSaveError(t('saveGameModal.errors.saveFailed', 'Error saving game. Please try again.'));
-      // REMOVED: saveSuccess = false;
-    } finally {
-      setIsGameSaving(false);
-    }
-
-    // REMOVED: handleCloseSaveGameModal(); // Close save modal regardless of success/error
-    // Modal is now closed on success within the try block, or remains open on error.
-
-    // REMOVED: Logic to open new game modal after saving
-    // if (saveSuccess && isStartingNewGameAfterSave) {
-    //   console.log("Save successful, opening new game setup modal...");
-    //   setIsNewGameSetupModalOpen(true);
-    //   setIsStartingNewGameAfterSave(false); // Reset the flag
-    // }
+    // Call the mutation
+    saveGameMutation.mutate({
+      gameName, // For error messages
+      gameIdToSave: idToSave,
+      snapshot: currentSnapshot,
+      // isOverwrite: isOverwritingExistingLoadedGame // This can be inferred or handled in onSuccess/onError if needed by `variables`
+    });
   };
 
   // Function to handle loading a selected game
@@ -3220,14 +3225,13 @@ export default function Home() {
         <SaveGameModal
           isOpen={isSaveGameModalOpen}
           onClose={handleCloseSaveGameModal}
-          onSave={handleSaveGame} // Updated signature
+          onSave={handleSaveGame} 
           teamName={teamName}
           opponentName={opponentName}
           gameDate={gameDate}
-          // We will need to pass season/tournament info here later
-          // Pass loading/error state props
-          isGameSaving={isGameSaving}
-          gameSaveError={gameSaveError}
+          // Pass loading/error state props from useMutation
+          isGameSaving={saveGameMutation.isPending} // CORRECTED: Use isPending for loading state
+          gameSaveError={gameSaveError} 
         />
         <LoadGameModal 
           isOpen={isLoadGameModalOpen}
