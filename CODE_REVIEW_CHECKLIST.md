@@ -17,9 +17,12 @@ This checklist will guide the deep code review process, focusing on quality, mai
 - [X] **`queryKey` Management:** `queryKey`s are consistent, descriptive, and well-managed (e.g., using factory functions if complex).
     - *Note: Created `src/config/queryKeys.ts` and refactored `page.tsx` to use these constants. This makes management easier and less prone to typos.*
 - [X] **Callback Logic:** `onSuccess`, `onError` handlers are implemented for mutations (including new ones for addSeason/addTournament) to manage query invalidation, state updates, and basic error logging. `onSettled` and `onMutate` are used where appropriate (e.g. optimistic updates, though not extensively in current scope).
-- [ ] **Loading/Error States:** UI properly reflects `isPending`, `isError`, `isSuccess` states for queries and mutations.
-- [ ] **Data Invalidation & Refetching:** Data invalidation (`queryClient.invalidateQueries`) and refetching strategies are optimal and occur when necessary (e.g., after mutations).
+- [X] **Loading/Error States:** UI reflects `isPending`, `isError` states for most critical queries and mutations, particularly within modals. Initial page load has a basic loading indicator. Error messages for failed operations are generally displayed within the relevant modal or logged.
+    - *Note: Global UI notification for non-critical background query errors (e.g., initial load of seasons if localStorage is empty) is not implemented but can be a future enhancement. Core mutation operations provide feedback.*
+- [X] **Data Invalidation & Refetching:** Data invalidation (`queryClient.invalidateQueries`) and refetching strategies are generally optimal and occur when necessary (e.g., after mutations for master roster, saved games, seasons, tournaments). Query keys are specific, minimizing over/under-invalidation.
+    - *Note: `handleDeleteGame` in `page.tsx` directly manipulates local state post-deletion; explicit query invalidation for `savedGames` could be added for strictness but current UI impact is minimal.*
 - [ ] **Optimistic Updates:** Consider if optimistic updates are appropriate for any mutations and if they are implemented correctly.
+    - [ ] **Optimistic Updates:** Considered. Deferred for now as current `localStorage` backend is fast; revisit when migrating to Supabase where network latency will make optimistic updates more impactful for UX.
 
 ## 3. State Management (especially in `src/app/page.tsx`)
 - [ ] **Clarity & Coherence:** The overall state management approach (local `useState`, `useReducer`, TanStack Query, Zustand/Jotai if applicable) is clear and coherent.
