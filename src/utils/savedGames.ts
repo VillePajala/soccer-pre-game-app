@@ -2,6 +2,9 @@ import { SAVED_GAMES_KEY } from '@/config/constants';
 import type { SavedGamesCollection, AppState, GameEvent as PageGameEvent, Point, Opponent, IntervalLog } from '@/app/page';
 import type { Player } from '@/types';
 
+// Note: AppState (imported from @/app/page) is the primary type used for live game state
+// and for storing games in localStorage via SavedGamesCollection.
+// This GameData interface may represent a legacy structure or a specific format for other operations (e.g., import/export).
 // Define GameData interface more precisely
 export interface GameData {
   id: string;

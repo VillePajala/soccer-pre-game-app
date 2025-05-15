@@ -155,13 +155,13 @@ export function useGameState({ initialState, saveStateToHistory }: UseGameStateA
 
                 setPlayersOnField(prevPlayersOnField => 
                     prevPlayersOnField.map(p => 
-                        p.id === playerId ? { ...p, name: playerData.name, nickname: playerData.nickname } : p
+            p.id === playerId ? { ...p, name: playerData.name, nickname: playerData.nickname } : p
                     )
-                );
+        );
 
                 saveStateToHistory({ 
                     playersOnField: playersOnField.map(p => // This should use the updated playersOnField state for consistency
-                        p.id === playerId ? { ...p, name: playerData.name, nickname: playerData.nickname } : p
+            p.id === playerId ? { ...p, name: playerData.name, nickname: playerData.nickname } : p
                     )
                 });
                 console.log(`[useGameState] Player ${playerId} renamed to ${playerData.name}. Roster and field updated.`);
@@ -195,14 +195,14 @@ export function useGameState({ initialState, saveStateToHistory }: UseGameStateA
                     newPlayersOnFieldState = prevPlayersOnField.map(p => {
                         if (p.id === playerId) return { ...p, isGoalie: targetGoalieStatus };
                         if (targetGoalieStatus && p.id !== playerId && p.isGoalie) return { ...p, isGoalie: false };
-                        return p;
-                    });
+          return p;
+        });
                     return newPlayersOnFieldState; // Return the newly computed state
                 });
 
                 // Save history for playersOnField change using the computed state
                 saveStateToHistory({ playersOnField: newPlayersOnFieldState });
-
+    
                 console.log(`[useGameState:handleToggleGoalie] Goalie status for ${playerId} to ${targetGoalieStatus}. Roster and field updated.`);
             } else {
                 console.error(`[useGameState:handleToggleGoalie] Failed to update goalie status for ${playerId} via masterRosterManager.`);

@@ -309,7 +309,7 @@ describe('Saved Games Utilities', () => {
     it('should use full AppState defaults for unspecified fields', async () => {
       const minimalInitialData: Partial<AppState> = { teamName: 'Minimal FC' };
       const result = await createGame(minimalInitialData);
-
+      
       expect(result.gameData.teamName).toBe('Minimal FC');
       // Check a few AppState defaults
       expect(result.gameData.playersOnField).toEqual([]);

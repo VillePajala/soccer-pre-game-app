@@ -281,7 +281,7 @@ export default function Home() {
     availablePlayers, // This should be the roster from useGameState, ideally updated via async calls
     setPlayersOnField,
     setOpponents,
-    setDrawings,
+    setDrawings, 
     setAvailablePlayers, // Setter from useGameState
     handlePlayerDrop,
     // Destructure drawing handlers from hook
@@ -587,7 +587,7 @@ export default function Home() {
   const playersForCurrentGame = useMemo(() => {
     if (!Array.isArray(availablePlayers)) {
       console.warn('[MEMO playersForCurrentGame] availablePlayers is not an array. Returning []. Value:', availablePlayers);
-      return [];
+        return [];
     }
     if (!selectedPlayerIds || selectedPlayerIds.length === 0) {
         return availablePlayers; 
@@ -757,13 +757,13 @@ export default function Home() {
           // Consider invalidating and refetching masterRoster query here if migration happens
           // queryClient.invalidateQueries(['masterRoster']);
         }
-        const oldSeasonsJson = localStorage.getItem('soccerSeasonsList');
-        if (oldSeasonsJson) {
+      const oldSeasonsJson = localStorage.getItem('soccerSeasonsList');
+      if (oldSeasonsJson) {
           console.log('[EFFECT init] Migrating old seasons data...');
           localStorage.setItem(SEASONS_LIST_KEY, oldSeasonsJson);
           // queryClient.invalidateQueries(['seasons']);
-        }
-      } catch (migrationError) {
+      }
+    } catch (migrationError) {
         console.error('[EFFECT init] Error during data migration:', migrationError);
       }
 
@@ -781,7 +781,7 @@ export default function Home() {
       if (isAllSavedGamesQueryError) {
         console.error('[EFFECT init] Error loading all saved games via TanStack Query:', allSavedGamesQueryErrorData);
         setLoadGamesListError(t('loadGameModal.errors.listLoadFailed', 'Failed to load saved games list.'));
-        setSavedGames({});
+      setSavedGames({});
         setIsLoadingGamesList(false);
       }
       
@@ -795,19 +795,19 @@ export default function Home() {
         if (lastGameIdSetting && lastGameIdSetting !== DEFAULT_GAME_ID && currentSavedGames[lastGameIdSetting]) {
           console.log(`[EFFECT init] Restoring last saved game: ${lastGameIdSetting} from TanStack Query data.`);
           setCurrentGameId(lastGameIdSetting);
-          setHasSkippedInitialSetup(true); 
+          setHasSkippedInitialSetup(true);
         } else {
           if (lastGameIdSetting && lastGameIdSetting !== DEFAULT_GAME_ID) {
             console.warn(`[EFFECT init] Last game ID ${lastGameIdSetting} not found in saved games (from TanStack Query). Loading default.`);
           }
-          setCurrentGameId(DEFAULT_GAME_ID);
-        }
+        setCurrentGameId(DEFAULT_GAME_ID);
       }
-      
+    }
+    
       // Determine overall initial load completion
       if (!isMasterRosterQueryLoading && !areSeasonsQueryLoading && !areTournamentsQueryLoading && !isAllSavedGamesQueryLoading && !isCurrentGameIdSettingQueryLoading) {
-        setIsLoaded(true);
-        setInitialLoadComplete(true);
+    setIsLoaded(true);
+    setInitialLoadComplete(true);
         console.log('[EFFECT init] Initial application data coordination complete based on TanStack Query states.');
       }
     };
@@ -954,52 +954,52 @@ export default function Home() {
   useEffect(() => {
     // Only auto-save if loaded AND we have a proper game ID (not the default unsaved one)
     const autoSave = async () => {
-      if (isLoaded && currentGameId && currentGameId !== DEFAULT_GAME_ID) {
-        console.log(`Auto-saving state for game ID: ${currentGameId}`);
-        try {
-          // 1. Create the current game state snapshot (excluding history)
-          const currentSnapshot: AppState = {
-            playersOnField,
-            opponents,
-            drawings,
-            availablePlayers, // <<< ADD BACK: Include roster available *at time of save*
-            showPlayerNames,
-            teamName,
-            gameEvents,
-            opponentName,
-            gameDate,
-            homeScore,
-            awayScore,
-            gameNotes,
-            numberOfPeriods, // Read current state
-            periodDurationMinutes, // Read current state
-            currentPeriod,
-            gameStatus,
-            selectedPlayerIds,
-            seasonId,
-            tournamentId,
-            gameLocation,
-            gameTime,
-            // Add timer related state
-            subIntervalMinutes,
-            completedIntervalDurations,
-            lastSubConfirmationTimeSeconds,
-            homeOrAway,
-          };
+    if (isLoaded && currentGameId && currentGameId !== DEFAULT_GAME_ID) {
+      console.log(`Auto-saving state for game ID: ${currentGameId}`);
+      try {
+        // 1. Create the current game state snapshot (excluding history)
+        const currentSnapshot: AppState = {
+          playersOnField,
+          opponents,
+          drawings,
+          availablePlayers, // <<< ADD BACK: Include roster available *at time of save*
+          showPlayerNames,
+          teamName,
+          gameEvents,
+          opponentName,
+          gameDate,
+          homeScore,
+          awayScore,
+          gameNotes,
+          numberOfPeriods, // Read current state
+          periodDurationMinutes, // Read current state
+          currentPeriod,
+          gameStatus,
+          selectedPlayerIds,
+          seasonId,
+          tournamentId,
+          gameLocation,
+          gameTime,
+          // Add timer related state
+          subIntervalMinutes,
+          completedIntervalDurations,
+          lastSubConfirmationTimeSeconds,
+          homeOrAway,
+        };
 
-          // 2. Save the game snapshot using utility
+        // 2. Save the game snapshot using utility
           await utilSaveGame(currentGameId, currentSnapshot);
-          
-          // 3. Save App Settings (only the current game ID) using utility
+        
+        // 3. Save App Settings (only the current game ID) using utility
           await utilSaveCurrentGameIdSetting(currentGameId);
 
-        } catch (error) {
-          console.error("Failed to auto-save state to localStorage:", error);
-          alert("Error saving game."); // Notify user
-        }
-      } else if (isLoaded && currentGameId === DEFAULT_GAME_ID) {
-        console.log("Not auto-saving as this is an unsaved game (no ID assigned yet)");
+      } catch (error) {
+        console.error("Failed to auto-save state to localStorage:", error);
+        alert("Error saving game."); // Notify user
       }
+    } else if (isLoaded && currentGameId === DEFAULT_GAME_ID) {
+      console.log("Not auto-saving as this is an unsaved game (no ID assigned yet)");
+    }
     };
     autoSave();
     // Dependencies: Include all state variables that are part of the saved snapshot
@@ -1633,7 +1633,7 @@ export default function Home() {
   const handleSaveGame = async (gameName: string) => {
     console.log(`Attempting to save game: '${gameName}'`);
     // Manual loading and error state setting is now handled by the useMutation hook.
-
+    
     let idToSave: string;
     // Determine if overwriting the game that is currently loaded and IS NOT the default placeholder ID.
     const isOverwritingExistingLoadedGame = currentGameId && currentGameId !== DEFAULT_GAME_ID;
@@ -1647,33 +1647,33 @@ export default function Home() {
       console.log(`Saving as new game with ID: ${idToSave}`);
     }
 
-    const currentSnapshot: AppState = {
-      playersOnField,
-      opponents,
-      drawings,
+      const currentSnapshot: AppState = {
+        playersOnField,
+        opponents,
+        drawings,
       availablePlayers: availablePlayers, // Snapshot of the roster at the time of save
-      showPlayerNames,
-      teamName,
-      gameEvents,
-      opponentName: opponentName, 
-      gameDate: gameDate,
-      homeScore,
-      awayScore,
-      gameNotes,
-      numberOfPeriods,
-      periodDurationMinutes,
-      currentPeriod,
-      gameStatus,
-      selectedPlayerIds, 
-      seasonId,
-      tournamentId,
+        showPlayerNames,
+        teamName,
+        gameEvents,
+        opponentName: opponentName, 
+        gameDate: gameDate,
+        homeScore,
+        awayScore,
+        gameNotes,
+        numberOfPeriods,
+        periodDurationMinutes,
+        currentPeriod,
+        gameStatus,
+        selectedPlayerIds, 
+        seasonId,
+        tournamentId,
       gameLocation, 
       gameTime, 
-      subIntervalMinutes,
-      completedIntervalDurations,
-      lastSubConfirmationTimeSeconds,
-      homeOrAway,
-    };
+        subIntervalMinutes,
+        completedIntervalDurations,
+        lastSubConfirmationTimeSeconds,
+        homeOrAway,
+      };
 
     // Call the mutation
     saveGameMutation.mutate({
@@ -1772,54 +1772,54 @@ export default function Home() {
       const deletedGameId = await utilDeleteGame(gameId); // Assign return value
 
       if (deletedGameId) { // Check if deletion was successful (gameId returned)
-        // Update local state for immediate UI responsiveness
-        const updatedSavedGames = { ...savedGames };
+      // Update local state for immediate UI responsiveness
+      const updatedSavedGames = { ...savedGames };
         delete updatedSavedGames[deletedGameId]; // Use returned ID
-        setSavedGames(updatedSavedGames);
+      setSavedGames(updatedSavedGames);
 
         console.log(`Game ${deletedGameId} deleted from state and persistence.`);
 
-        // If the deleted game was the currently loaded one, reset to initial state
+      // If the deleted game was the currently loaded one, reset to initial state
         if (currentGameId === deletedGameId) { // Use returned ID
-          console.log("Currently loaded game was deleted. Resetting to initial state.");
-          
-          // Apply initial state directly
-          setPlayersOnField(initialState.playersOnField);
-          setOpponents(initialState.opponents);
-          setDrawings(initialState.drawings);
+        console.log("Currently loaded game was deleted. Resetting to initial state.");
+        
+        // Apply initial state directly
+        setPlayersOnField(initialState.playersOnField);
+        setOpponents(initialState.opponents);
+        setDrawings(initialState.drawings);
           // Also reset availablePlayers from useGameState if appropriate, or use masterRoster
           // setAvailablePlayers(initialState.availablePlayers); // This is from useGameState, consider if direct reset is needed or if it refetches
-          setShowPlayerNames(initialState.showPlayerNames);
-          setTeamName(initialState.teamName);
-          setGameEvents(initialState.gameEvents);
-          setOpponentName(initialState.opponentName);
-          setGameDate(initialState.gameDate);
-          setHomeScore(initialState.homeScore);
-          setAwayScore(initialState.awayScore);
-          setGameNotes(initialState.gameNotes);
-          setNumberOfPeriods(initialState.numberOfPeriods);
-          setPeriodDurationMinutes(initialState.periodDurationMinutes);
-          setCurrentPeriod(initialState.currentPeriod);
-          setGameStatus(initialState.gameStatus);
-          setSelectedPlayerIds(initialState.selectedPlayerIds);
-          setSeasonId(initialState.seasonId);
-          setTournamentId(initialState.tournamentId);
-          setGameLocation(initialState.gameLocation || '');
-          setGameTime(initialState.gameTime || '');
-          setSubIntervalMinutes(initialState.subIntervalMinutes ?? 5);
-          setCompletedIntervalDurations(initialState.completedIntervalDurations ?? []);
-          setLastSubConfirmationTimeSeconds(initialState.lastSubConfirmationTimeSeconds ?? 0);
-          setHomeOrAway(initialState.homeOrAway);
+        setShowPlayerNames(initialState.showPlayerNames);
+        setTeamName(initialState.teamName);
+        setGameEvents(initialState.gameEvents);
+        setOpponentName(initialState.opponentName);
+        setGameDate(initialState.gameDate);
+        setHomeScore(initialState.homeScore);
+        setAwayScore(initialState.awayScore);
+        setGameNotes(initialState.gameNotes);
+        setNumberOfPeriods(initialState.numberOfPeriods);
+        setPeriodDurationMinutes(initialState.periodDurationMinutes);
+        setCurrentPeriod(initialState.currentPeriod);
+        setGameStatus(initialState.gameStatus);
+        setSelectedPlayerIds(initialState.selectedPlayerIds);
+        setSeasonId(initialState.seasonId);
+        setTournamentId(initialState.tournamentId);
+        setGameLocation(initialState.gameLocation || '');
+        setGameTime(initialState.gameTime || '');
+        setSubIntervalMinutes(initialState.subIntervalMinutes ?? 5);
+        setCompletedIntervalDurations(initialState.completedIntervalDurations ?? []);
+        setLastSubConfirmationTimeSeconds(initialState.lastSubConfirmationTimeSeconds ?? 0);
+        setHomeOrAway(initialState.homeOrAway);
 
-          // Reset session-specific state
-          setHistory([initialState]);
-          setHistoryIndex(0);
-          setTimeElapsedInSeconds(0);
-          setIsTimerRunning(false);
-          setSubAlertLevel('none');
+        // Reset session-specific state
+        setHistory([initialState]);
+        setHistoryIndex(0);
+        setTimeElapsedInSeconds(0);
+        setIsTimerRunning(false);
+        setSubAlertLevel('none');
 
-          // Update current game ID to DEFAULT_GAME_ID
-          setCurrentGameId(DEFAULT_GAME_ID);
+        // Update current game ID to DEFAULT_GAME_ID
+        setCurrentGameId(DEFAULT_GAME_ID);
           await utilSaveCurrentGameIdSetting(DEFAULT_GAME_ID);
         }
         // queryClient.invalidateQueries(['savedGames']); // Already handled by direct state update and if LoadGameModal re-renders
@@ -2467,11 +2467,11 @@ export default function Home() {
       let nextSelectedPlayerIds: string[];
       let nextPlayersOnField = playersOnField; // Start with current players on field
 
-      if (currentIndex === -1) {
+    if (currentIndex === -1) {
         // Player is being selected, add to selection
         nextSelectedPlayerIds = [...prevSelectedPlayerIds, playerId];
         // No change to playersOnField when selecting, they are added via drag/drop or "Place All"
-      } else {
+    } else {
         // Player is being deselected, remove from selection
         nextSelectedPlayerIds = prevSelectedPlayerIds.filter(id => id !== playerId);
         // Also remove this player from the field if they were on it

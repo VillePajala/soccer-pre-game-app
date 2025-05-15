@@ -131,7 +131,7 @@ We've already made progress in centralizing data access for certain entities:
 | 1.2.1 | Fix type issues in savedGames | ✅ Completed | 2024-08-01 | Resolved type compatibility issues between GameData and AppState, improved error handling |
 | 1.3  | Create appSettings utility | ✅ Completed | 2024-07-31 | Created utility with support for both modern settings and legacy settings |
 | 1.4  | Refactor components to use utilities | 🔄 In Progress | | Breaking this down into sub-tasks |
-| 1.4.1 | Refactor app/page.tsx | 🔄 In Progress | | Initial load effect now uses utility functions; fixed lint errors |
+| 1.4.1 | Refactor app/page.tsx | ✅ Completed | 2024-08-03 | Extensive refactoring to use TanStack Query for data fetching (masterRoster, seasons, tournaments, savedGames, appSettings). Implemented TanStack Query mutations for saveGame, updatePlayer, setGoalieStatus, removePlayer, addPlayer. Updated other handlers (deleteGame, quickSave, autoSave, import/export, fairPlayCard) to use async utilities. Addressed complex undo/redo scenarios involving roster state. |
 | 1.4.2 | Refactor GameSettingsModal | ✅ Completed | 2024-08-01 | Implemented direct calls to savedGames utility functions for data persistence |
 | 1.4.2.1 | Add tests for GameSettingsModal | ✅ Completed | 2024-08-01 | Created comprehensive tests for utility function integration and component behavior |
 | 1.4.3 | Refactor NewGameSetupModal | ✅ Completed | 2024-08-02 | Replaced direct localStorage access with utility functions for team name persistence |
@@ -141,12 +141,12 @@ We've already made progress in centralizing data access for certain entities:
 | 1.5  | Implement error handling patterns | ✅ Completed | 2024-08-03 | Implemented for seasons.ts and tournaments.ts. Reviewed masterRoster.ts, which already aligns. |
 | 1.5.1 | Refactor src/utils/seasons.ts error handling | ✅ Completed | 2024-08-02 | Aligned with defined error handling strategy (return null/false, console.error). Tests updated. |
 | 1.5.2 | Refactor src/utils/tournaments.ts error handling | ✅ Completed | 2024-08-03 | Aligned with defined error handling strategy. Tests updated to match new logging and error details, successfully refactored to test by controlling localStorage mock directly. |
-| 1.5.3 | Review src/utils/masterRoster.ts error handling | ✅ Completed | 2024-08-03 | Error handling patterns (return values, console.error with prefixes) already align with strategy. Tests cover error paths. |
+| 1.5.3 | Review src/utils/masterRoster.ts error handling | ✅ Completed | 2024-08-03 | Error handling patterns (return values, console.error with prefixes) already align with strategy. Tests cover error paths. Fixed goalie logic to ensure only one active. |
 | 2.1  | Make utility functions return Promises | ✅ Completed | 2024-08-03 | Refactored src/utils/appSettings.ts. Components using it (NewGameSetupModal.tsx) and its tests updated. Refactored src/utils/seasons.ts. Components using it (NewGameSetupModal.tsx, GameStatsModal.tsx) and their tests updated. Refactored src/utils/tournaments.ts. Components using it (NewGameSetupModal.tsx, GameStatsModal.tsx) and their tests updated. Refactored src/utils/masterRoster.ts and its tests. Refactored/verified src/utils/savedGames.ts and its tests. All verified. |
-| 2.2  | Update components for async operations | 📝 Planned | | |
-| 2.3  | Add loading states | 📝 Planned | | |
-| 2.4  | Implement error states | 📝 Planned | | |
-| 2.5  | Evaluate React Query/SWR | 📝 Planned | | |
+| 2.2  | Update components for async operations | ✅ Completed | 2024-08-03 | Components like `page.tsx`, `LoadGameModal.tsx`, `GameSettingsModal.tsx` now handle async operations, primarily through TanStack Query hooks or updated `useEffect` hooks calling async utility functions. `NewGameSetupModal` and `RosterSettingsModal` rely on async handlers/mutations from `page.tsx`. |
+| 2.3  | Add loading states | ✅ Completed | 2024-08-03 | Loading states are managed by TanStack Query (`isLoading`, `isPending` flags) for major data fetching and mutations in `page.tsx`. Individual modals also manage their specific loading states (e.g., `isGameLoading` in `LoadGameModal`). |
+| 2.4  | Implement error states | ✅ Completed | 2024-08-03 | Error states are managed by TanStack Query (`isError`, `error` objects) in `page.tsx`. Components like `LoadGameModal` and `RosterSettingsModal` use local state for displaying specific operational errors (e.g., `gameLoadError`, `rosterError`). |
+| 2.5  | Evaluate React Query/SWR | ✅ Completed | 2024-08-03 | React Query (TanStack Query) has been successfully implemented and is now the core data fetching and server state management library in `page.tsx`. |
 | 3.1  | Create AuthContext | 📝 Planned | | |
 | 3.2  | Implement useAuth hook | 📝 Planned | | |
 | 3.3  | Update utilities for userId parameter | 📝 Planned | | |
@@ -178,11 +178,12 @@ We've already made progress in centralizing data access for certain entities:
 ## Next Steps
 
 ### Immediate Focus
-1. **Review Component Refactoring Status**: Double-check all components listed in 1.4.x to ensure they fully utilize the abstracted utility functions and that their tests accurately mock these utilities. Address any remaining direct `localStorage` access if found.
-
-2. **Type Harmonization**: We've made progress with type harmonization between GameData and AppState, but more work is needed. We've implemented type conversions and proper assertions to handle compatibility issues, but a more unified type system would be beneficial.
+1. **Thorough Undo/Redo Testing**: Conduct comprehensive testing of Undo/Redo functionality, especially for roster-related changes (name, jersey, goalie status) and player selection, to ensure consistency between `PlayerBar`, on-field display, and historical states.
+2. **Review `gameUtils.ts`**: Identify if any functions within `src/utils/gameUtils.ts` are actively used and require refactoring to async, or if the file can be deprecated or significantly cleaned up.
+3. **Type System Review**: While `AppState` is the primary type for game state and its usage in `savedGames.ts` is confirmed, a broader review of types, especially the legacy `GameData` interface, could be beneficial for long-term clarity.
+4. **General Regression Testing**: After significant refactoring, perform a general sweep of application functionality to catch any unforeseen issues.
 
 ### Mid-term Goals
-1. **Component Refactoring Completion**: Finish refactoring all components to use the utility functions and ensure they all have proper test coverage.
-2. **Begin Async Transition**: Once all components use the utility layer, we can start converting functions to return Promises to prepare for Supabase integration.
+1. **Component Refactoring Completion**: Finish refactoring any remaining components (if any, outside of `page.tsx` and already reviewed modals) to use the utility layer and ensure they all have proper test coverage.
+2. **Begin Async Transition (Supabase Specifics)**: While utility functions are async, the next phase of this would be planning the Supabase client integration and how these utilities will call Supabase methods.
 3. **Testing Strategy**: Continue implementing comprehensive tests to ensure stability during migration. Use mocks for utility functions to test components in isolation. 
