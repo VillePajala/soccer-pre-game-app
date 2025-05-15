@@ -140,7 +140,7 @@ export const importFullBackup = async (jsonContent: string): Promise<boolean> =>
         if (currentItem !== null) {
           await removeLocalStorageItemAsync(key);
           console.log(`Removed existing data for key: ${key} as it was explicitly null or not present in the backup.`);
-        }
+      }
       }
     }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useReducer } from 'react';
 import SoccerField from '@/components/SoccerField';
 import PlayerBar from '@/components/PlayerBar';
 import ControlBar from '@/components/ControlBar';
@@ -17,6 +17,12 @@ import GameSettingsModal from '@/components/GameSettingsModal';
 import { useTranslation } from 'react-i18next';
 import { useGameState, UseGameStateReturn } from '@/hooks/useGameState';
 import GameInfoBar from '@/components/GameInfoBar';
+// Import the new game session reducer and related types
+import {
+  gameSessionReducer,
+  GameSessionState,
+  // initialGameSessionStatePlaceholder // We will derive initial state from page.tsx's initialState
+} from '@/hooks/useGameSessionReducer';
 // Import roster utility functions
 import {
     getMasterRoster, // This is now the async one from masterRosterManager
@@ -200,6 +206,38 @@ export default function Home() {
   const { t } = useTranslation(); // Get translation function
   const queryClient = useQueryClient(); // Get query client instance
 
+  // --- Initialize Game Session Reducer ---
+  // Map necessary fields from page.tsx's initialState to GameSessionState
+  const initialGameSessionData: GameSessionState = {
+    teamName: initialState.teamName,
+    opponentName: initialState.opponentName,
+    gameDate: initialState.gameDate,
+    homeScore: initialState.homeScore,
+    awayScore: initialState.awayScore,
+    gameNotes: initialState.gameNotes,
+    homeOrAway: initialState.homeOrAway,
+    numberOfPeriods: initialState.numberOfPeriods,
+    periodDurationMinutes: initialState.periodDurationMinutes,
+    currentPeriod: initialState.currentPeriod,
+    gameStatus: initialState.gameStatus,
+    selectedPlayerIds: initialState.selectedPlayerIds,
+    seasonId: initialState.seasonId,
+    tournamentId: initialState.tournamentId,
+    gameLocation: initialState.gameLocation,
+    gameTime: initialState.gameTime,
+    gameEvents: initialState.gameEvents,
+    timeElapsedInSeconds: 0, // Initial timer state should be 0
+    isTimerRunning: false,    // Initial timer state
+    subIntervalMinutes: initialState.subIntervalMinutes ?? 5,
+    nextSubDueTimeSeconds: (initialState.subIntervalMinutes ?? 5) * 60,
+    subAlertLevel: 'none',
+    lastSubConfirmationTimeSeconds: 0,
+    completedIntervalDurations: initialState.completedIntervalDurations || [],
+    showPlayerNames: initialState.showPlayerNames,
+  };
+
+  const [gameSessionState, dispatchGameSession] = useReducer(gameSessionReducer, initialGameSessionData);
+
   // --- TanStack Query for Master Roster ---
   const {
     data: masterRosterQueryResultData,
@@ -310,7 +348,6 @@ export default function Home() {
 
   // --- State Management (Remaining in Home component) ---
   const [showPlayerNames, setShowPlayerNames] = useState<boolean>(initialState.showPlayerNames);
-  const [teamName, setTeamName] = useState<string>(initialState.teamName);
   const [gameEvents, setGameEvents] = useState<GameEvent[]>(initialState.gameEvents);
   const [opponentName, setOpponentName] = useState<string>(initialState.opponentName);
   const [gameDate, setGameDate] = useState<string>(initialState.gameDate);
@@ -818,12 +855,12 @@ export default function Home() {
           // queryClient.invalidateQueries(queryKeys.masterRoster);
         }
         const oldSeasonsJson = await getLocalStorageItemAsync('soccerSeasonsList'); // Another old key
-        if (oldSeasonsJson) {
+      if (oldSeasonsJson) {
           console.log('[EFFECT init] Migrating old seasons data...');
           await setLocalStorageItemAsync(SEASONS_LIST_KEY, oldSeasonsJson); // New key
           // queryClient.invalidateQueries(queryKeys.seasons);
-        }
-      } catch (migrationError) {
+      }
+    } catch (migrationError) {
         console.error('[EFFECT init] Error during data migration:', migrationError);
       }
 
@@ -955,7 +992,7 @@ export default function Home() {
     setOpponents(stateToApply.opponents || []);
     setDrawings(stateToApply.drawings || []);
     setShowPlayerNames(stateToApply.showPlayerNames === undefined ? initialState.showPlayerNames : stateToApply.showPlayerNames);
-    setTeamName(stateToApply.teamName || initialState.teamName);
+    dispatchGameSession({ type: 'SET_TEAM_NAME', payload: stateToApply.teamName || initialState.teamName });
     setGameEvents(stateToApply.gameEvents || []);
     setOpponentName(stateToApply.opponentName || initialState.opponentName);
     setGameDate(stateToApply.gameDate || initialState.gameDate);
@@ -1024,7 +1061,7 @@ export default function Home() {
           drawings,
           availablePlayers, // <<< ADD BACK: Include roster available *at time of save*
           showPlayerNames,
-          teamName,
+          teamName: gameSessionState.teamName,
           gameEvents,
           opponentName,
           gameDate,
@@ -1065,7 +1102,7 @@ export default function Home() {
     // Dependencies: Include all state variables that are part of the saved snapshot
   }, [isLoaded, currentGameId,
       playersOnField, opponents, drawings, availablePlayers, // <<< ADD availablePlayers
-      showPlayerNames, teamName,
+      showPlayerNames, gameSessionState.teamName,
       gameEvents, opponentName, gameDate, homeScore, awayScore, gameNotes,
       numberOfPeriods, periodDurationMinutes, // ADDED back dependencies
       currentPeriod, gameStatus,
@@ -1180,10 +1217,11 @@ export default function Home() {
     const trimmedName = newName.trim();
     if (trimmedName) {
         console.log("Updating team name to:", trimmedName);
-        // Directly update state
-        setTeamName(trimmedName);
+        // Directly update state - REPLACED
+        // setTeamName(trimmedName); 
+        dispatchGameSession({ type: 'SET_TEAM_NAME', payload: trimmedName });
         // Also save to session history for undo/redo
-        saveStateToHistory({ teamName: trimmedName });
+        saveStateToHistory({ teamName: trimmedName }); // We will adjust saveStateToHistory later
     }
   };
 
@@ -1198,7 +1236,7 @@ export default function Home() {
       setDrawings(prevState.drawings);
       setAvailablePlayers(prevState.availablePlayers); // <<< RESTORE availablePlayers
       setShowPlayerNames(prevState.showPlayerNames);
-      setTeamName(prevState.teamName); // Undo team name
+      dispatchGameSession({ type: 'SET_TEAM_NAME', payload: prevState.teamName }); // Undo team name
       setGameEvents(prevState.gameEvents); // Restore game events
       setHomeScore(prevState.homeScore); // Restore scores
       setAwayScore(prevState.awayScore);
@@ -1241,7 +1279,7 @@ export default function Home() {
       setDrawings(nextState.drawings);
       setAvailablePlayers(nextState.availablePlayers); // <<< RESTORE availablePlayers
       setShowPlayerNames(nextState.showPlayerNames);
-      setTeamName(nextState.teamName); // Redo team name
+      dispatchGameSession({ type: 'SET_TEAM_NAME', payload: nextState.teamName }); // Redo team name
       setGameEvents(nextState.gameEvents); // Restore game events
       setHomeScore(nextState.homeScore); // Restore scores
       setAwayScore(nextState.awayScore);
@@ -1713,7 +1751,7 @@ export default function Home() {
         drawings,
       availablePlayers: availablePlayers, // Snapshot of the roster at the time of save
         showPlayerNames,
-        teamName,
+        teamName: gameSessionState.teamName,
         gameEvents,
         opponentName: opponentName, 
         gameDate: gameDate,
@@ -1761,7 +1799,7 @@ export default function Home() {
         setDrawings(stateToLoad.drawings || []);
         // REMOVED: setAvailablePlayers(stateToLoad.availablePlayers || []);
         setShowPlayerNames(stateToLoad.showPlayerNames);
-        setTeamName(stateToLoad.teamName || initialState.teamName);
+        dispatchGameSession({ type: 'SET_TEAM_NAME', payload: stateToLoad.teamName || initialState.teamName });
         setGameEvents(stateToLoad.gameEvents || []);
         setOpponentName(stateToLoad.opponentName || initialState.opponentName);
         setGameDate(stateToLoad.gameDate || initialState.gameDate);
@@ -1850,7 +1888,7 @@ export default function Home() {
           // Also reset availablePlayers from useGameState if appropriate, or use masterRoster
           // setAvailablePlayers(initialState.availablePlayers); // This is from useGameState, consider if direct reset is needed or if it refetches
         setShowPlayerNames(initialState.showPlayerNames);
-        setTeamName(initialState.teamName);
+        dispatchGameSession({ type: 'SET_TEAM_NAME', payload: initialState.teamName });
         setGameEvents(initialState.gameEvents);
         setOpponentName(initialState.opponentName);
         setGameDate(initialState.gameDate);
@@ -2568,7 +2606,7 @@ export default function Home() {
           drawings,
           availablePlayers, // <<< ADD BACK: Include roster available *at time of save*
           showPlayerNames,
-          teamName,
+          teamName: gameSessionState.teamName,
           gameEvents,
           opponentName,
           gameDate,
@@ -2625,7 +2663,7 @@ export default function Home() {
     drawings,
     availablePlayers,
     showPlayerNames,
-    teamName,
+    gameSessionState.teamName,
     gameEvents,
     opponentName,
     gameDate,
@@ -3305,7 +3343,7 @@ export default function Home() {
       
       {/* <<< ADD the GameInfoBar here >>> */}
       <GameInfoBar 
-        teamName={teamName}
+        teamName={gameSessionState.teamName}
         opponentName={opponentName}
         homeScore={homeScore}
         awayScore={awayScore}
@@ -3334,7 +3372,7 @@ export default function Home() {
               onToggleGoalLogModal={handleToggleGoalLogModal}
               onRecordOpponentGoal={() => handleLogOpponentGoal(timeElapsedInSeconds)}
               // Game score props
-              teamName={teamName}
+              teamName={gameSessionState.teamName}
               opponentName={opponentName}
               homeScore={homeScore}
               awayScore={awayScore}
@@ -3426,7 +3464,7 @@ export default function Home() {
         <GameStatsModal
           isOpen={isGameStatsModalOpen}
           onClose={handleToggleGameStatsModal}
-          teamName={teamName}
+          teamName={gameSessionState.teamName}
           opponentName={opponentName}
           gameDate={gameDate}
           gameLocation={gameLocation}
@@ -3460,7 +3498,7 @@ export default function Home() {
           isOpen={isSaveGameModalOpen}
           onClose={handleCloseSaveGameModal}
           onSave={handleSaveGame} 
-          teamName={teamName}
+          teamName={gameSessionState.teamName}
           opponentName={opponentName}
           gameDate={gameDate}
           // Pass loading/error state props from useMutation
@@ -3520,7 +3558,7 @@ export default function Home() {
           onAddPlayer={handleAddPlayerForModal}
           selectedPlayerIds={selectedPlayerIds}
           onTogglePlayerSelection={handleTogglePlayerSelection}
-          teamName={teamName}
+          teamName={gameSessionState.teamName}
           onTeamNameChange={handleTeamNameChange}
           // Pass loading and error states
           isRosterUpdating={updatePlayerMutation.isPending || setGoalieStatusMutation.isPending || removePlayerMutation.isPending || addPlayerMutation.isPending}
@@ -3532,7 +3570,7 @@ export default function Home() {
           isOpen={isGameSettingsModalOpen} // Corrected State Variable
           onClose={handleCloseGameSettingsModal}
           currentGameId={currentGameId}
-          teamName={teamName}
+          teamName={gameSessionState.teamName} 
           opponentName={opponentName}
           gameDate={gameDate}
           gameLocation={gameLocation}
