@@ -105,7 +105,8 @@ export type GameSessionAction =
   | { type: 'RESET_TIMER_AND_GAME_PROGRESS'; payload?: Partial<GameSessionState> } // Optional payload for selective reset
   | { type: 'TOGGLE_SHOW_PLAYER_NAMES' }
   | { type: 'LOAD_GAME_SESSION_STATE'; payload: Partial<GameSessionState> }
-  | { type: 'RESET_GAME_SESSION_STATE'; payload: GameSessionState }; // Action to reset to a specific state
+  | { type: 'RESET_GAME_SESSION_STATE'; payload: GameSessionState } // Action to reset to a specific state
+  | { type: 'LOAD_PERSISTED_GAME_DATA'; payload: Partial<GameSessionState> }; // For loading GameData-like objects
 
 // --- Reducer Function ---
 export const gameSessionReducer = (state: GameSessionState, action: GameSessionAction): GameSessionState => {
@@ -276,6 +277,69 @@ export const gameSessionReducer = (state: GameSessionState, action: GameSessionA
       return { ...state, showPlayerNames: !state.showPlayerNames };
     case 'RESET_GAME_SESSION_STATE':
       return action.payload; // Directly set the state to the provided payload
+    case 'LOAD_PERSISTED_GAME_DATA': {
+      const loadedData = action.payload as Partial<GameSessionState>; // Cast because payload is GameData-like
+
+      // Get essential values from loadedData, with fallbacks to defaults from placeholder if not present
+      const teamName = loadedData.teamName ?? initialGameSessionStatePlaceholder.teamName;
+      const opponentName = loadedData.opponentName ?? initialGameSessionStatePlaceholder.opponentName;
+      const gameDate = loadedData.gameDate ?? initialGameSessionStatePlaceholder.gameDate;
+      const homeScore = loadedData.homeScore ?? 0;
+      const awayScore = loadedData.awayScore ?? 0;
+      const gameNotes = loadedData.gameNotes ?? '';
+      const homeOrAway = loadedData.homeOrAway ?? 'home';
+      const numberOfPeriods = loadedData.numberOfPeriods ?? initialGameSessionStatePlaceholder.numberOfPeriods;
+      const periodDurationMinutes = loadedData.periodDurationMinutes ?? initialGameSessionStatePlaceholder.periodDurationMinutes;
+      const currentPeriod = loadedData.currentPeriod ?? 1;
+      const gameStatus = loadedData.gameStatus && ['notStarted', 'periodEnd', 'gameEnd'].includes(loadedData.gameStatus)
+        ? loadedData.gameStatus
+        : 'notStarted';
+      const selectedPlayerIds = loadedData.selectedPlayerIds ?? [];
+      const seasonId = loadedData.seasonId ?? '';
+      const tournamentId = loadedData.tournamentId ?? '';
+      const gameLocation = loadedData.gameLocation ?? '';
+      const gameTime = loadedData.gameTime ?? '';
+      const gameEvents = loadedData.gameEvents ?? [];
+      const subIntervalMinutes = loadedData.subIntervalMinutes ?? initialGameSessionStatePlaceholder.subIntervalMinutes;
+      const showPlayerNames = loadedData.showPlayerNames ?? initialGameSessionStatePlaceholder.showPlayerNames;
+      const completedIntervalDurations = loadedData.completedIntervalDurations ?? [];
+
+      let timeElapsedAtLoad = 0;
+      if (gameStatus === 'periodEnd' || gameStatus === 'gameEnd') {
+         timeElapsedAtLoad = currentPeriod * periodDurationMinutes * 60;
+      } else { // 'notStarted' or beginning of a period
+         timeElapsedAtLoad = (currentPeriod - 1) * periodDurationMinutes * 60;
+      }
+
+      return {
+        teamName,
+        opponentName,
+        gameDate,
+        homeScore,
+        awayScore,
+        gameNotes,
+        homeOrAway,
+        numberOfPeriods,
+        periodDurationMinutes,
+        currentPeriod,
+        gameStatus,
+        selectedPlayerIds,
+        seasonId,
+        tournamentId,
+        gameLocation,
+        gameTime,
+        gameEvents,
+        subIntervalMinutes,
+        showPlayerNames,
+        completedIntervalDurations,
+
+        timeElapsedInSeconds: timeElapsedAtLoad,
+        isTimerRunning: false,
+        nextSubDueTimeSeconds: timeElapsedAtLoad + (subIntervalMinutes * 60),
+        subAlertLevel: 'none',
+        lastSubConfirmationTimeSeconds: timeElapsedAtLoad,
+      };
+    }
     default:
       return state;
   }
