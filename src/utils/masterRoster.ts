@@ -50,10 +50,10 @@ export const addPlayerToRoster = async (playerData: {
     console.error('[addPlayerToRoster] Validation Failed: Player name cannot be empty.');
     return Promise.resolve(null);
   }
-
+  
   try {
     const currentRoster = await getMasterRoster();
-
+    
     // Create new player with unique ID
     const newPlayer: Player = {
       id: `player_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
@@ -64,10 +64,10 @@ export const addPlayerToRoster = async (playerData: {
       isGoalie: false, // Default to not goalie
       receivedFairPlayCard: false, // Default to not having received fair play card
     };
-
+    
     const updatedRoster = [...currentRoster, newPlayer];
     const success = await saveMasterRoster(updatedRoster);
-
+    
     if (!success) {
       return Promise.resolve(null);
     }
@@ -85,7 +85,7 @@ export const addPlayerToRoster = async (playerData: {
  * @returns The updated Player object, or null if player not found or operation failed.
  */
 export const updatePlayerInRoster = async (
-  playerId: string,
+  playerId: string, 
   updateData: Partial<Omit<Player, 'id'>>
 ): Promise<Player | null> => {
   if (!playerId) {

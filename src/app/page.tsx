@@ -309,6 +309,21 @@ export default function Home() {
   const [isRosterUpdating, setIsRosterUpdating] = useState(false);
   const [rosterError, setRosterError] = useState<string | null>(null);
 
+  // NEW: State for game saving operations loading/error
+  const [isGameSaving, setIsGameSaving] = useState(false);
+  const [gameSaveError, setGameSaveError] = useState<string | null>(null);
+
+  // NEW: States for LoadGameModal operations
+  const [isLoadingGamesList, setIsLoadingGamesList] = useState(false);
+  const [loadGamesListError, setLoadGamesListError] = useState<string | null>(null);
+  const [isGameLoading, setIsGameLoading] = useState(false); // For loading a specific game
+  const [gameLoadError, setGameLoadError] = useState<string | null>(null);
+  const [isGameDeleting, setIsGameDeleting] = useState(false); // For deleting a specific game
+  const [gameDeleteError, setGameDeleteError] = useState<string | null>(null);
+  const [isGamesImporting, setIsGamesImporting] = useState(false); // For importing games
+  const [gamesImportError, setGamesImportError] = useState<string | null>(null);
+  const [processingGameId, setProcessingGameId] = useState<string | null>(null); // To track which game item is being processed
+
   // <<< ADD Effect for auto-removing the highlight >>>
   useEffect(() => {
     console.log('[Effect:HighlightTimeout] Running. highlightRosterButton:', highlightRosterButton); // Log effect run
@@ -453,12 +468,17 @@ export default function Home() {
 
       // 4. Load All Saved Games (to have them ready for selection)
       let currentSavedGames: SavedGamesCollection = {};
+      setIsLoadingGamesList(true); // Set loading true before fetching
+      setLoadGamesListError(null); // Clear previous errors
       try {
         currentSavedGames = await utilGetSavedGames() || {};
         setSavedGames(currentSavedGames);
       } catch (error) {
         console.error('[EFFECT init] Error loading all saved games:', error);
+        setLoadGamesListError(t('loadGameModal.errors.listLoadFailed', 'Failed to load saved games list.'));
         setSavedGames({});
+      } finally {
+        setIsLoadingGamesList(false); // Set loading false after attempt
       }
       
       // 5. Load App Settings (like last game ID) & Restore Last Game State
@@ -1298,7 +1318,9 @@ export default function Home() {
   // Function to handle the actual saving
   const handleSaveGame = async (gameName: string) => {
     console.log(`Attempting to save game: '${gameName}'`);
-    
+    setGameSaveError(null); // Clear previous errors
+    setIsGameSaving(true);
+
     // Determine the ID to save under
     let idToSave: string;
     const isOverwriting = currentGameId && currentGameId !== DEFAULT_GAME_ID;
@@ -1365,14 +1387,19 @@ export default function Home() {
       setHistory([currentSnapshot]);
       setHistoryIndex(0);
       // REMOVED: saveSuccess = true; 
+      handleCloseSaveGameModal(); // Close save modal on success
 
     } catch (error) {
       console.error("Failed to save game state:", error);
-      alert("Error saving game."); // Notify user
+      // alert("Error saving game."); // Notify user // Replaced with error state
+      setGameSaveError(t('saveGameModal.errors.saveFailed', 'Error saving game. Please try again.'));
       // REMOVED: saveSuccess = false;
+    } finally {
+      setIsGameSaving(false);
     }
 
-    handleCloseSaveGameModal(); // Close save modal regardless of success/error
+    // REMOVED: handleCloseSaveGameModal(); // Close save modal regardless of success/error
+    // Modal is now closed on success within the try block, or remains open on error.
 
     // REMOVED: Logic to open new game modal after saving
     // if (saveSuccess && isStartingNewGameAfterSave) {
@@ -1385,6 +1412,10 @@ export default function Home() {
   // Function to handle loading a selected game
   const handleLoadGame = async (gameId: string) => {
     console.log(`Loading game with ID: ${gameId}`);
+    setGameLoadError(null);
+    setIsGameLoading(true);
+    setProcessingGameId(gameId);
+
     const stateToLoad = savedGames[gameId];
 
     if (stateToLoad) {
@@ -1434,11 +1465,18 @@ export default function Home() {
 
       } catch(error) {
           console.error("Error applying loaded game state:", error);
-          alert("Error loading game state.");
+          // alert("Error loading game state."); // Replaced by error state
+          setGameLoadError(t('loadGameModal.errors.loadFailed', 'Error loading game state. Please try again.'));
+      } finally {
+        setIsGameLoading(false);
+        setProcessingGameId(null);
       }
     } else {
       console.error(`Game state not found for ID: ${gameId}`);
-      alert(`Could not find saved game: ${gameId}`);
+      // alert(`Could not find saved game: ${gameId}`); // Replaced by error state
+      setGameLoadError(t('loadGameModal.errors.notFound', 'Could not find saved game: {gameId}', { gameId }));
+      setIsGameLoading(false); // Ensure loading is reset if game not found upfront
+      setProcessingGameId(null);
     }
   };
 
@@ -1447,8 +1485,13 @@ export default function Home() {
     console.log(`Deleting game with ID: ${gameId}`);
     if (gameId === DEFAULT_GAME_ID) {
       console.warn("Cannot delete the default unsaved state.");
+      setGameDeleteError(t('loadGameModal.errors.cannotDeleteDefault', 'Cannot delete the current unsaved game progress.'));
       return; // Prevent deleting the default placeholder
     }
+
+    setGameDeleteError(null);
+    setIsGameDeleting(true);
+    setProcessingGameId(gameId);
 
     try {
       await utilDeleteGame(gameId); // Use utility function to delete from localStorage
@@ -1507,7 +1550,11 @@ export default function Home() {
 
     } catch (error) {
       console.error("Error deleting game state:", error);
-      alert("Error deleting saved game.");
+      // alert("Error deleting saved game."); // Replaced by error state
+      setGameDeleteError(t('loadGameModal.errors.deleteFailed', 'Error deleting saved game: {gameId}', { gameId }));
+    } finally {
+      setIsGameDeleting(false);
+      setProcessingGameId(null);
     }
   };
 
@@ -2839,6 +2886,9 @@ export default function Home() {
   // --- Step 3: Handler for Importing Games ---
   const handleImportGamesFromJson = useCallback(async (jsonContent: string) => {
     console.log("handleImportGamesFromJson called.");
+    setGamesImportError(null);
+    setIsGamesImporting(true);
+
     let importedGames: SavedGamesCollection = {};
     let skippedCount = 0;
     let importedCount = 0;
@@ -2893,8 +2943,11 @@ export default function Home() {
     } catch (error) {
       console.error("Failed to import games:", error);
       const errorMessage = error instanceof Error ? error.message : String(error);
-      alert(t('loadGameModal.importError', 'Import failed: {errorMessage}')
-            ?.replace('{errorMessage}', errorMessage) ?? `Import failed: ${errorMessage}`);
+      // alert(t('loadGameModal.importError', 'Import failed: {errorMessage}')
+      //       ?.replace('{errorMessage}', errorMessage) ?? `Import failed: ${errorMessage}`);
+      setGamesImportError(t('loadGameModal.importError', 'Import failed: {errorMessage}', { errorMessage }));
+    } finally {
+      setIsGamesImporting(false);
     }
 
   }, [savedGames, setSavedGames, t]); 
@@ -3097,6 +3150,9 @@ export default function Home() {
           opponentName={opponentName}
           gameDate={gameDate}
           // We will need to pass season/tournament info here later
+          // Pass loading/error state props
+          isGameSaving={isGameSaving}
+          gameSaveError={gameSaveError}
         />
         <LoadGameModal 
           isOpen={isLoadGameModalOpen}
@@ -3110,6 +3166,16 @@ export default function Home() {
           onExportOneCsv={handleExportOneCsv}
           onImportJson={handleImportGamesFromJson} // <-- Step 4: Pass the handler prop
           currentGameId={currentGameId || undefined} // Convert null to undefined
+          // Pass loading and error state props for LoadGameModal
+          isLoadingGamesList={isLoadingGamesList}
+          loadGamesListError={loadGamesListError}
+          isGameLoading={isGameLoading}
+          gameLoadError={gameLoadError}
+          isGameDeleting={isGameDeleting}
+          gameDeleteError={gameDeleteError}
+          isGamesImporting={isGamesImporting}
+          gamesImportError={gamesImportError}
+          processingGameId={processingGameId}
         />
 
         {/* Conditionally render the New Game Setup Modal */}

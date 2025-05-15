@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SavedGamesCollection } from '@/app/page'; // Keep this if SavedGamesCollection is from here
 import { Season, Tournament } from '@/types'; // Corrected import path
-import i18n from '../i18n'; // Import i18n directly
 import { 
   HiOutlineDocumentArrowDown, 
   HiOutlineEllipsisVertical,
@@ -13,28 +12,40 @@ import {
   HiOutlineTableCells,
   HiOutlineXCircle,
   HiOutlineDocumentArrowUp,
+  HiOutlineMagnifyingGlass
 } from 'react-icons/hi2';
 // REMOVE unused Fa icons and useGameState hook
 // import { FaTimes, FaUpload, FaDownload, FaTrash, FaExclamationTriangle, FaSearch } from 'react-icons/fa';
 // import { useGameState } from '@/hooks/useGameState';
 // Import the new backup functions
-import { exportFullBackup, importFullBackup } from '@/utils/fullBackup'; 
+// import { exportFullBackup, importFullBackup } from '@/utils/fullBackup'; 
 // Import new utility functions
 import { getSeasons as utilGetSeasons } from '@/utils/seasons';
 import { getTournaments as utilGetTournaments } from '@/utils/tournaments';
 
-interface LoadGameModalProps {
+export interface LoadGameModalProps {
   isOpen: boolean;
   onClose: () => void;
+  savedGames: SavedGamesCollection;
   onLoad: (gameId: string) => void;
   onDelete: (gameId: string) => void;
-  savedGames: SavedGamesCollection;
   onExportAllJson: () => void;
-  onExportAllExcel: () => void;
+  onExportAllExcel: () => void; // For CSV export
   onExportOneJson: (gameId: string) => void;
-  onExportOneCsv: (gameId: string) => void;
+  onExportOneCsv: (gameId: string) => void; // For individual CSV
   onImportJson: (jsonContent: string) => void;
-  currentGameId?: string; // Add prop for currently loaded game
+  currentGameId?: string; // Optional: to highlight current game
+
+  // NEW Loading and Error State Props
+  isLoadingGamesList?: boolean;
+  loadGamesListError?: string | null;
+  isGameLoading?: boolean;
+  gameLoadError?: string | null;
+  isGameDeleting?: boolean;
+  gameDeleteError?: string | null;
+  isGamesImporting?: boolean;
+  gamesImportError?: string | null;
+  processingGameId?: string | null; // ID of the game item being actively processed (loaded/deleted)
 }
 
 // Define the default game ID constant if not imported (consider sharing from page.tsx)
@@ -43,15 +54,25 @@ const DEFAULT_GAME_ID = '__default_unsaved__';
 const LoadGameModal: React.FC<LoadGameModalProps> = ({
   isOpen,
   onClose,
+  savedGames,
   onLoad,
   onDelete,
-  savedGames,
   onExportAllJson,
   onExportAllExcel,
   onExportOneJson,
   onExportOneCsv,
   onImportJson,
   currentGameId,
+  // Destructure new props with defaults
+  isLoadingGamesList = false,
+  loadGamesListError = null,
+  isGameLoading = false,
+  gameLoadError = null,
+  isGameDeleting = false,
+  gameDeleteError = null,
+  isGamesImporting = false,
+  gamesImportError = null,
+  processingGameId = null,
 }) => {
   const { t } = useTranslation();
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -60,7 +81,6 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
   const [filterId, setFilterId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const restoreFileInputRef = useRef<HTMLInputElement>(null); // Ref for the restore input
 
   // State for seasons and tournaments
   const [seasons, setSeasons] = useState<Season[]>([]);
@@ -70,20 +90,20 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       const fetchModalData = async () => {
-        try {
+      try {
           const loadedSeasonsData = await utilGetSeasons();
           setSeasons(Array.isArray(loadedSeasonsData) ? loadedSeasonsData : []);
         } catch (error) {
-          console.error("Error loading seasons via utility:", error);
-          setSeasons([]); 
-        }
-        try {
+        console.error("Error loading seasons via utility:", error);
+        setSeasons([]); 
+      }
+      try {
           const loadedTournamentsData = await utilGetTournaments();
           setTournaments(Array.isArray(loadedTournamentsData) ? loadedTournamentsData : []);
         } catch (error) {
-          console.error("Error loading tournaments via utility:", error);
-          setTournaments([]);
-        }
+        console.error("Error loading tournaments via utility:", error);
+        setTournaments([]);
+      }
       };
       fetchModalData();
     }
@@ -251,44 +271,173 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
   };
   // --- End Step 1 Handlers ---
 
-  // --- Handler for Full Restore ---
-  const handleRestoreBackupClick = () => {
-    restoreFileInputRef.current?.click();
-  };
-
-  const handleRestoreFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const jsonContent = e.target?.result as string;
-        if (jsonContent) {
-          // Call the imported function
-          const success = importFullBackup(jsonContent);
-          if (success) {
-            // Optionally close modal immediately, though reload handles it
-            // onClose(); 
-          }
-        } else {
-          alert(t('loadGameModal.importReadError', 'Error reading file content.'));
-        }
-      } catch (error) { 
-        console.error('Error processing restore file:', error);
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        alert(`${t('loadGameModal.importProcessError', 'Error processing file content.')}: ${errorMsg}`);
-      }
-    };
-    reader.onerror = () => {
-      alert(t('loadGameModal.importReadError', 'Error reading file content.'));
-    };
-    reader.readAsText(file);
-    event.target.value = ''; // Clear input
-  };
-  // --- End Full Restore Handler ---
-
   if (!isOpen) return null;
+
+  // Scrollable Content Area
+  // Main content: List of saved games or loading/error message
+  let mainContent;
+  if (isLoadingGamesList) {
+    mainContent = (
+      <div className="flex flex-col items-center justify-center h-full text-slate-400 py-10">
+        <svg className="animate-spin h-8 w-8 text-indigo-400 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <p>{t('loadGameModal.loadingGames', 'Loading saved games...')}</p>
+      </div>
+    );
+  } else if (loadGamesListError) {
+    mainContent = (
+      <div className="bg-red-700/20 border border-red-600 text-red-300 px-4 py-3 rounded-md text-sm my-4 mx-2" role="alert">
+        <p className="font-semibold mb-1">{t('common.error', 'Error')}:</p>
+        <p>{loadGamesListError}</p>
+      </div>
+    );
+  } else if (filteredGameIds.length === 0) {
+    mainContent = (
+      <div className="text-center text-slate-500 py-10 italic">
+        {t('loadGameModal.noGamesSaved', 'No games saved yet.')}
+      </div>
+    );
+  } else {
+    mainContent = (
+      <ul className="divide-y divide-slate-700 overflow-y-auto flex-grow scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800 pr-1">
+        {/* Display general game load/delete errors here, above the list but inside scroll area if many games */}
+        {gameLoadError && processingGameId === null && ( // Show if error is general, not for a specific item in loop
+          <li className="px-3 py-2 bg-red-700/20 border-b border-red-600 text-red-300 text-xs" role="alert">
+            {gameLoadError}
+          </li>
+        )}
+        {gameDeleteError && processingGameId === null && (
+          <li className="px-3 py-2 bg-red-700/20 border-b border-red-600 text-red-300 text-xs" role="alert">
+            {gameDeleteError}
+          </li>
+        )}
+        {filteredGameIds.map((gameId) => {
+          const game = savedGames[gameId];
+          if (!game) return null; // Should not happen if IDs are from savedGames keys
+          const isCurrent = gameId === currentGameId;
+
+          // Find Season/Tournament Name
+          const season = seasons.find(s => s.id === game.seasonId);
+          const tournament = tournaments.find(tourn => tourn.id === game.tournamentId);
+          const contextName = season?.name || tournament?.name;
+          const contextType = season ? 'Season' : (tournament ? 'Tournament' : null);
+          const contextId = season?.id || tournament?.id;
+          
+          // Determine display names based on the specific game's homeOrAway setting
+          const displayHomeTeamName = game.homeOrAway === 'home' ? (game.teamName || 'Team') : (game.opponentName || 'Opponent');
+          const displayAwayTeamName = game.homeOrAway === 'home' ? (game.opponentName || 'Opponent') : (game.teamName || 'Team');
+
+          const isProcessingThisGame = processingGameId === gameId;
+          const isLoadActionActive = isGameLoading && isProcessingThisGame;
+          const disableActions = isGameLoading || isGameDeleting || isGamesImporting; // General disable for other actions
+
+          return (
+            <li key={gameId} className={`p-3 hover:bg-slate-700/50 transition-colors ${isCurrent ? 'bg-indigo-800/30' : ''}`}>
+              <div className="flex justify-between items-center mb-1">
+                <div className="truncate">
+                  <h3 className={`text-sm font-semibold ${isCurrent ? 'text-amber-400' : 'text-slate-200'}`}>
+                    {/* Use display names */}
+                    {displayHomeTeamName} vs {displayAwayTeamName}
+                  </h3>
+                  {contextName && contextType && contextId && (
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleBadgeClick(contextType.toLowerCase() as ('season' | 'tournament'), contextId); }}
+                      className={`inline-block mt-0.5 text-2xs uppercase font-medium tracking-wide ${contextType === 'Tournament' ? 'bg-purple-600/80' : 'bg-blue-600/80'} text-white/90 px-1.5 py-0.5 rounded whitespace-nowrap shadow-sm transition-opacity hover:opacity-80 ${
+                        filterType === contextType.toLowerCase() && filterId === contextId ? 'ring-2 ring-offset-1 ring-offset-slate-700 ring-yellow-400' : ''
+                      }`}
+                      title={t('loadGameModal.filterByTooltip', 'Filter by {{name}}', { name: contextName }) ?? `Filter by ${contextName}`}
+                    >
+                      {contextName}
+                    </button>
+                  )}
+                </div>
+                <div className="flex space-x-1.5 flex-shrink-0 ml-2">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onLoad(gameId); onClose(); }}
+                    className={`p-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[50px] ${isLoadActionActive ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    disabled={disableActions || isLoadActionActive}
+                    title={t('common.load', 'Load')}
+                  >
+                    {isLoadActionActive ? (
+                      <svg className="animate-spin h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    ) : (
+                      <HiOutlineDocumentArrowDown className="h-3.5 w-3.5" />
+                    )}
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDeleteClick(gameId, (game.teamName || 'Team') + ' vs ' + (game.opponentName || 'Opponent')); }}
+                    className={`p-1.5 text-xs bg-red-700 hover:bg-red-800 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[50px] ${isLoadActionActive ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    disabled={disableActions || isLoadActionActive}
+                    title={t('common.delete', 'Delete')}
+                  >
+                    {isLoadActionActive ? (
+                      <svg className="animate-spin h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    ) : (
+                      <HiOutlineTrash className="h-3.5 w-3.5" />
+                    )}
+                  </button>
+                  {/* Add more actions like individual export here if needed, with similar disabled logic */}
+                  <div className="relative inline-block text-left">
+                    <div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setOpenMenuId(isProcessingThisGame ? null : gameId); }}
+                        className={`p-1.5 text-xs bg-slate-600 hover:bg-slate-500 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed ${isLoadActionActive ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        disabled={disableActions || isLoadActionActive}
+                      >
+                        <HiOutlineEllipsisVertical className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    {isProcessingThisGame && (
+                      <div 
+                        ref={menuRef} 
+                        className={`absolute right-0 z-20 mt-1 w-36 origin-top-right rounded-md bg-slate-700 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none`}
+                      >
+                        <div className="py-1">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onExportOneJson(gameId); setOpenMenuId(null); }}
+                            className={`${
+                              isLoadActionActive ? 'opacity-50 cursor-not-allowed' : ''
+                            } group flex w-full items-center rounded-md px-2 py-1.5 text-xs text-slate-200`}
+                          >
+                            <HiOutlineDocumentText className="mr-2 h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
+                            {t('loadGameModal.exportJsonShort', 'JSON')}
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onExportOneCsv(gameId); setOpenMenuId(null); }}
+                            className={`${
+                              isLoadActionActive ? 'opacity-50 cursor-not-allowed' : ''
+                            } group flex w-full items-center rounded-md px-2 py-1.5 text-xs text-slate-200`}
+                          >
+                            <HiOutlineTableCells className="mr-2 h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
+                            {t('loadGameModal.exportCsvShort', 'CSV')}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              {/* Display item-specific error if processing this game resulted in an error */}
+              {isLoadActionActive && gameLoadError && (
+                <p className="text-xs text-red-400 mt-1 animate-pulse">{gameLoadError}</p>
+              )}
+              {isLoadActionActive && gameDeleteError && (
+                <p className="text-xs text-red-400 mt-1 animate-pulse">{gameDeleteError}</p>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-start justify-center z-50 p-4 pt-8 sm:pt-4">
@@ -376,223 +525,92 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
         )}
 
         {/* Game List Area */}
-        <div
-          className="flex-grow mb-4 pr-2 -mr-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-700/50"
-        >
-          {filteredGameIds.length > 0 ? (
-            <div className="space-y-4">
-              {filteredGameIds.map((gameId) => {
-                const gameData = savedGames[gameId];
-                if (!gameData) return null; 
-
-                // Find Season/Tournament Name
-                const season = seasons.find(s => s.id === gameData.seasonId);
-                const tournament = tournaments.find(tourn => tourn.id === gameData.tournamentId);
-                const contextName = season?.name || tournament?.name;
-                const contextType = season ? 'Season' : (tournament ? 'Tournament' : null);
-                const contextId = season?.id || tournament?.id;
-                
-                // Determine display names based on the specific game's homeOrAway setting
-                const displayHomeTeamName = gameData.homeOrAway === 'home' ? (gameData.teamName || 'Team') : (gameData.opponentName || 'Opponent');
-                const displayAwayTeamName = gameData.homeOrAway === 'home' ? (gameData.opponentName || 'Opponent') : (gameData.teamName || 'Team');
-
-                // Format date nicely (e.g., "Apr 20, 2025" in English or "20.4.2025" in Finnish)
-                let formattedDate = t('common.noDate', 'No Date');
-                try {
-                    if (gameData.gameDate) {
-                        const dateObj = new Date(gameData.gameDate);
-                        const currentLanguage = i18n.language; // Get current language
-                        
-                        if (currentLanguage === 'fi') {
-                            // Finnish date format: DD.MM.YYYY
-                            formattedDate = dateObj.toLocaleDateString('fi-FI', {
-                                year: 'numeric', 
-                                month: 'numeric', 
-                                day: 'numeric'
-                            });
-                        } else {
-                            // English/default format: "Apr 20, 2025"
-                            formattedDate = dateObj.toLocaleDateString('en-US', { 
-                                year: 'numeric', 
-                                month: 'short', 
-                                day: 'numeric' 
-                            });
-                        }
-                    }
-                } catch (e) {
-                    console.error("Error formatting date:", gameData.gameDate, e);
-                    // Fallback to original string if formatting fails
-                    formattedDate = gameData.gameDate || formattedDate;
-                }
-                
-                const isCurrentlyLoaded = gameId === currentGameId;
-                const isMenuOpen = openMenuId === gameId;
-
-                return (
-                  <div
-                    key={gameId}
-                    data-testid={`game-item-${gameId}`}
-                    className={`bg-slate-700/70 p-3 rounded-lg shadow-lg border transition-colors duration-150 hover:bg-slate-600/80 ${
-                      isCurrentlyLoaded ? 'border-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.4)]' : 'border-slate-600/80'
-                    }`}
-                  >
-                    {/* Row 1: Team Names, Badge, Score */}
-                    <div className="flex items-start justify-between gap-3 mb-1.5">
-                      {/* Left: Team names and optional badge */}
-                      <div className="flex-1 min-w-0"> {/* min-w-0 helps truncation */}
-                        <h3 className="text-sm font-semibold text-slate-100 truncate">
-                          {/* Use display names */}
-                          {displayHomeTeamName} vs {displayAwayTeamName}
-                        </h3>
-                        {contextName && contextType && contextId && (
-                          <button 
-                            onClick={() => handleBadgeClick(contextType.toLowerCase() as ('season' | 'tournament'), contextId)}
-                            className={`inline-block mt-0.5 text-2xs uppercase font-medium tracking-wide ${contextType === 'Tournament' ? 'bg-purple-600/80' : 'bg-blue-600/80'} text-white/90 px-1.5 py-0.5 rounded whitespace-nowrap shadow-sm transition-opacity hover:opacity-80 ${
-                              filterType === contextType.toLowerCase() && filterId === contextId ? 'ring-2 ring-offset-1 ring-offset-slate-700 ring-yellow-400' : ''
-                            }`}
-                            title={t('loadGameModal.filterByTooltip', 'Filter by {{name}}', { name: contextName }) ?? `Filter by ${contextName}`}
-                          >
-                            {contextName}
-                          </button>
-                        )}
-                      </div>
-                      {/* Right: Score */}
-                      <span className="font-bold text-lg text-yellow-400 tracking-wider flex-shrink-0 pt-px">
-                        {gameData.homeScore ?? 0} - {gameData.awayScore ?? 0}
-                      </span>
-                    </div>
-
-                    {/* Row 2: Date/Location/Time and Status */}
-                    <div className="flex items-center text-xs text-slate-300 mb-2.5">
-                      {isCurrentlyLoaded && (
-                        <span className="inline-flex items-center bg-yellow-500/90 text-slate-900 text-2xs font-bold px-1.5 py-0.5 rounded-sm mr-1.5 shadow-sm">
-                          {t('loadGameModal.currentlyOpenShort', 'OPEN')}
-                        </span>
-                      )}
-                      <span className="truncate"> {/* Allow date line to truncate */}
-                        {formattedDate}
-                        {(gameData.gameLocation || gameData.gameTime) && ' • '}
-                        {gameData.gameLocation && (
-                          <span className="text-slate-400">{gameData.gameLocation}</span>
-                        )}
-                        {gameData.gameLocation && gameData.gameTime && ' • '}
-                        {gameData.gameTime && (
-                          <span className="text-slate-400">{gameData.gameTime}</span>
-                        )}
-                      </span>
-                    </div>
-
-                    {/* Row 3: Actions */}
-                    <div className="flex items-center pt-1.5 border-t border-slate-600/40">
-                      {/* Load Button */}
-                      <button 
-                        onClick={() => { onLoad(gameId); onClose(); }}
-                        className="flex-grow mr-2 px-2.5 py-1.5 bg-blue-600 text-white rounded-md shadow hover:bg-blue-700 transition duration-150 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-blue-400 focus:ring-offset-1 focus:ring-offset-slate-700 flex items-center justify-center"
-                      >
-                        <HiOutlineDocumentArrowDown className="w-3.5 h-3.5 mr-1" />
-                        {t('loadGameModal.loadButton', 'Load Game')}
-                      </button>
-                    
-                      {/* Actions Menu */}                      
-                      <div className="relative flex-shrink-0">
-                        <button
-                          onClick={(e) => {
-                             e.stopPropagation(); 
-                             setOpenMenuId(isMenuOpen ? null : gameId);
-                          }}
-                          className="p-1.5 text-slate-400 hover:text-slate-200 rounded-full hover:bg-slate-600/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-indigo-500"
-                          title={t('common.options', 'Options')}
-                        >
-                           <HiOutlineEllipsisVertical className="w-5 h-5" />
-                        </button>
-
-                        {isMenuOpen && (
-                           <div 
-                             ref={menuRef} 
-                             className={`absolute right-0 mt-2 w-48 bg-slate-700 rounded-md shadow-lg py-1 z-10 border border-slate-600`}
-                             data-testid={`game-item-menu-${gameId}`}
-                           >
-                             
-                             <button 
-                                onClick={(e) => { e.stopPropagation(); onExportOneJson(gameId); setOpenMenuId(null); }} 
-                                className="w-full text-left px-4 py-2 text-sm text-slate-200 hover:bg-slate-600 flex items-center gap-2"
-                              >
-                                <HiOutlineDocumentText className="w-4 h-4"/> {t('loadGameModal.exportJson', 'Export JSON')}
-                             </button>
-                             <button 
-                                onClick={(e) => { e.stopPropagation(); onExportOneCsv(gameId); setOpenMenuId(null); }} 
-                                className="w-full text-left px-4 py-2 text-sm text-slate-200 hover:bg-slate-600 flex items-center gap-2"
-                              >
-                                 <HiOutlineTableCells className="w-4 h-4"/> {t('loadGameModal.exportCsv', 'Export CSV')}
-                              </button>
-                              <div className="my-1 h-px bg-slate-600"></div> {/* Separator */}
-                              <button 
-                                onClick={(e) => { e.stopPropagation(); handleDeleteClick(gameId, (gameData.teamName || 'Team') + ' vs ' + (gameData.opponentName || 'Opponent')); }}
-                                className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/20 flex items-center gap-2"
-                              >
-                                <HiOutlineTrash className="w-4 h-4"/> {t('loadGameModal.delete', 'Delete Game')}
-                              </button>
-                           </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+        <div className="flex-grow overflow-y-auto px-1 pb-1 flex flex-col min-h-0"> {/* Added min-h-0 to ensure child flex-grow works */}
+          {/* Search Bar - Placed above the list within the scrollable area's parent */}
+          <div className="p-3 border-b border-slate-700">
+            <label htmlFor="gameSearch" className="sr-only">
+              {t('loadGameModal.searchPlaceholder', 'Search games...')}
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <HiOutlineMagnifyingGlass className="h-3.5 w-3.5 text-slate-500" aria-hidden="true" />
+              </div>
+              <input
+                type="search"
+                name="gameSearch"
+                id="gameSearch"
+                value={searchText}
+                onChange={handleSearchChange}
+                className="block w-full pl-9 pr-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder={t('loadGameModal.searchPlaceholder', 'Search games...')}
+                disabled={isLoadingGamesList || isGameLoading || isGameDeleting || isGamesImporting} // Disable search during any processing
+              />
             </div>
-          ) : (
-            <p className="text-slate-400 text-center py-8">
-              {searchText || filterType 
-                 ? t('loadGameModal.noGamesFound', 'No saved games match your filter.') 
-                 : t('loadGameModal.noSavedGames', 'No games have been saved yet.')}
-            </p>
-          )}
+          </div>
+          {mainContent}
         </div>
 
-        {/* --- NEW: Application Backup & Restore Section --- */}
-        <div className="mt-3 pt-3 border-t border-slate-600/80 flex-shrink-0 px-2 bg-slate-700/40 rounded-lg">
-          <div className="flex gap-3 justify-center">
-            {/* Backup Button - Reduced padding */}
-            <button
-              onClick={exportFullBackup} // Call the imported function directly
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-md text-xs font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-green-500 transition-colors"
-              title={t('loadGameModal.backupTooltip', 'Create a full backup file') ?? 'Create a full backup file'}
-            >
-              <HiOutlineDocumentArrowDown className="w-4 h-4" />
-              {t('loadGameModal.backupButton', 'Backup All Data')}
-            </button>
-
-            {/* Hidden File Input for Restore */}
+        {/* Footer Actions */}
+        <div className="flex-shrink-0 px-4 py-3 border-t border-slate-700 space-y-2">
+          {/* Import Section - error display and button state */}
+          {gamesImportError && (
+            <div className="bg-red-700/20 border border-red-600 text-red-300 px-3 py-2 rounded-md text-xs mb-2" role="alert">
+              <p className="font-medium">{t('loadGameModal.importFailedTitle', 'Import Failed')}:</p>
+              <p>{gamesImportError}</p>
+            </div>
+          )}
+          <div className="flex items-center space-x-2">
             <input
               type="file"
-              ref={restoreFileInputRef}
-              onChange={handleRestoreFileSelected}
+              id="importFile"
               accept=".json"
-              style={{ display: 'none' }}
-              id="restore-backup-input"
-              data-testid="restore-backup-input"
+              onChange={handleFileSelected}
+              className="hidden"
+              ref={fileInputRef}
+              disabled={isGamesImporting || isLoadingGamesList || isGameLoading || isGameDeleting}
             />
-            {/* Restore Button - Reduced padding */}
             <button
-              onClick={handleRestoreBackupClick}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-md text-xs font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-red-500 transition-colors"
-              title={t('loadGameModal.restoreTooltip', 'Restore data from a backup file') ?? 'Restore data from a backup file'}
+              onClick={() => fileInputRef.current?.click()}
+              className="flex-1 px-3 py-1.5 text-xs bg-sky-600 hover:bg-sky-700 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[100px]"
+              disabled={isGamesImporting || isLoadingGamesList || isGameLoading || isGameDeleting}
             >
-              <HiOutlineDocumentArrowUp className="w-4 h-4" />
-              {t('loadGameModal.restoreButton', 'Restore from Backup')}
+              {isGamesImporting ? (
+                <svg className="animate-spin h-3.5 w-3.5 text-white mr-1.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              ) : (
+                <HiOutlineDocumentArrowUp className="h-3.5 w-3.5 mr-1.5" />
+              )}
+              {isGamesImporting ? t('loadGameModal.importing', 'Importing...') : t('loadGameModal.importJson', 'Import JSON')}
             </button>
           </div>
-        </div>
-        {/* --- END: Application Backup & Restore Section --- */}
-
-        {/* Close Button */}
-        <div className="mt-3 pt-4 flex justify-end flex-shrink-0 border-t border-slate-700/50">
+          {/* Export All Buttons */}
+          <div className="grid grid-cols-2 gap-x-2">
             <button
-              onClick={onClose}
-              className="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-slate-100 rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-indigo-500"
+              onClick={onExportAllJson}
+              className="px-3 py-1.5 text-xs bg-slate-600 hover:bg-slate-500 text-slate-200 rounded disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              disabled={isGamesImporting || isLoadingGamesList || isGameLoading || isGameDeleting || filteredGameIds.length === 0}
             >
-              {t('common.close', 'Close')}
+              <HiOutlineDocumentArrowDown className="h-3.5 w-3.5 mr-1.5" />
+              {t('loadGameModal.exportAllJson', 'Export All (JSON)')}
             </button>
+            <button
+              onClick={onExportAllExcel}
+              className="px-3 py-1.5 text-xs bg-slate-600 hover:bg-slate-500 text-slate-200 rounded disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              disabled={isGamesImporting || isLoadingGamesList || isGameLoading || isGameDeleting || filteredGameIds.length === 0}
+            >
+              <HiOutlineTableCells className="h-3.5 w-3.5 mr-1.5" />
+              {t('loadGameModal.exportAllCsv', 'Export All (CSV)')}
+            </button>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-full mt-1 px-3 py-1.5 text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 rounded disabled:opacity-70"
+            disabled={isGamesImporting || isGameLoading || isGameDeleting} // Allow close if only list is loading
+          >
+            {t('common.close', 'Close')}
+          </button>
         </div>
       </div>
     </div>

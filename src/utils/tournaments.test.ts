@@ -30,10 +30,10 @@ const localStorageMock = (() => {
 Object.defineProperty(window, 'localStorage', { value: localStorageMock, writable: true });
 
 describe('Tournament Management Utilities (localStorage)', () => {
-  let consoleErrorSpy: jest.SpyInstance;
-  let consoleWarnSpy: jest.SpyInstance;
+let consoleErrorSpy: jest.SpyInstance;
+let consoleWarnSpy: jest.SpyInstance;
 
-  beforeEach(() => {
+beforeEach(() => {
     // Reset localStorage mocks and store
     localStorageMock.getItem.mockReset();
     localStorageMock.setItem.mockReset();
@@ -49,15 +49,15 @@ describe('Tournament Management Utilities (localStorage)', () => {
 
 
     // Setup console spies for each test
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-  });
+  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+  consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+});
 
-  afterEach(() => {
+afterEach(() => {
     // Restore console spies after each test
-    consoleErrorSpy.mockRestore();
-    consoleWarnSpy.mockRestore();
-  });
+  consoleErrorSpy.mockRestore();
+  consoleWarnSpy.mockRestore();
+});
 
   const sampleTournaments: Tournament[] = [
     { id: 't1', name: 'Regional Cup Q1' },
@@ -153,7 +153,7 @@ describe('Tournament Management Utilities (localStorage)', () => {
         expect.objectContaining({ name: newTournamentName })
       ]));
     });
-    
+
     it('should return null if underlying saveTournaments fails (e.g., localStorage.setItem throws)', async () => {
       localStorageMock.setItem.mockImplementationOnce(() => {
         throw new Error('Simulated localStorage error during save');
@@ -225,7 +225,7 @@ describe('Tournament Management Utilities (localStorage)', () => {
       expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining(`[updateTournament] Tournament with ID ${nonExistentTournament.id} not found.`));
       expect(localStorageMock.setItem).not.toHaveBeenCalled();
     });
-    
+
     it('should return null and log error if updated name conflicts, without attempting to save', async () => {
       const conflictingName = sampleTournaments[1].name.toUpperCase(); // "CHAMPIONS LEAGUE PRE-SEASON"
       const tournamentToUpdate: Tournament = { ...sampleTournaments[0], name: conflictingName };
@@ -283,7 +283,7 @@ describe('Tournament Management Utilities (localStorage)', () => {
       expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining(`[deleteTournament] Tournament with id ${nonExistentId} not found.`));
       expect(localStorageMock.setItem).not.toHaveBeenCalled();
     });
-    
+
     it('should return false for invalid delete ID, without attempting to save', async () => {
       const result = await deleteTournament('');
       expect(result).toBe(false);

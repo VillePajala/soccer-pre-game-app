@@ -521,12 +521,12 @@ describe('exportFullBackup', () => {
     const blobText = await blobArgument.text();
     const backupData = JSON.parse(blobText);
 
-    expect(backupData.meta).toBeDefined();
-    expect(backupData.meta.schema).toBe(1);
+          expect(backupData.meta).toBeDefined();
+          expect(backupData.meta.schema).toBe(1);
     expect(backupData.meta.exportedAt).toBeDefined();
-    
-    expect(backupData.localStorage[SAVED_GAMES_KEY]).toEqual(gamesData);
-    expect(backupData.localStorage[APP_SETTINGS_KEY]).toEqual(settingsData);
+
+          expect(backupData.localStorage[SAVED_GAMES_KEY]).toEqual(gamesData);
+          expect(backupData.localStorage[APP_SETTINGS_KEY]).toEqual(settingsData);
     expect(backupData.localStorage[MASTER_ROSTER_KEY]).toEqual(rosterDataDb);
     expect(backupData.localStorage[SEASONS_LIST_KEY]).toEqual(seasonsDataDb);
     expect(backupData.localStorage[TOURNAMENTS_LIST_KEY]).toEqual(tournamentsDataDb);
@@ -570,9 +570,9 @@ describe('exportFullBackup', () => {
 
     const blobText = await blobArgument.text();
     const backupData = JSON.parse(blobText);
-    
-    expect(backupData.localStorage[SAVED_GAMES_KEY]).toEqual(gamesData);
+
+          expect(backupData.localStorage[SAVED_GAMES_KEY]).toEqual(gamesData);
     expect(backupData.localStorage[MASTER_ROSTER_KEY]).toEqual(rosterDataDb);
     expect(backupData.localStorage[APP_SETTINGS_KEY]).toBeNull();
-  });
-});
+    });
+}); 

@@ -548,7 +548,7 @@ describe('<GameSettingsModal />', () => {
       
       // Re-fetch associationSection AFTER rerender because its content (the select/combobox) has now appeared or changed.
       associationSection = getAssociationSection(); 
-
+      
       let seasonSelect: HTMLElement | null = null;
       try {
         // waitFor will poll the DOM within the (now updated) associationSection
@@ -619,7 +619,7 @@ describe('<GameSettingsModal />', () => {
       // Rerender with props reflecting the button click (making combobox appear)
       rerender(<GameSettingsModal {...defaultProps} seasonId={mockSeasons[0].id} tournamentId={null} />);
       associationSection = getAssociationSection(); // Re-fetch section
-
+      
       let seasonSelectElement: HTMLElement | null = null;
       await waitFor(async () => {
         seasonSelectElement = await within(associationSection).findByRole('combobox');
@@ -655,7 +655,7 @@ describe('<GameSettingsModal />', () => {
       // Rerender with props reflecting the button click (making combobox appear)
       rerender(<GameSettingsModal {...defaultProps} tournamentId={mockTournaments[0].id} seasonId={null} />);
       associationSection = getAssociationSection(); // Re-fetch section
-
+      
       let tournamentSelectElement: HTMLElement | null = null;
       await waitFor(async () => {
         tournamentSelectElement = await within(associationSection).findByRole('combobox');
@@ -721,7 +721,7 @@ describe('<GameSettingsModal />', () => {
     });
 
     test('loads with correct tournament selected and combobox visible if tournamentId is provided', async () => {
-        render(<GameSettingsModal {...defaultProps} tournamentId={mockTournaments[0].id} seasonId={null} />); 
+        render(<GameSettingsModal {...defaultProps} tournamentId={mockTournaments[0].id} seasonId={null} />);
         // For this test, tournament options *should* be visible after data load.
         await screen.findByRole('option', { name: mockTournaments[0].name });
         const associationSection = getAssociationSection();
@@ -810,7 +810,7 @@ describe('<GameSettingsModal />', () => {
       const originalEventCount = defaultProps.gameEvents.length;
       const mockConfirm = jest.spyOn(window, 'confirm').mockReturnValue(true);
       
-      const { rerender } = render(<GameSettingsModal {...defaultProps} />);  
+      const { rerender } = render(<GameSettingsModal {...defaultProps} />); 
       await waitFor(() => expect(getSeasons).toHaveBeenCalledTimes(1));
       await waitFor(() => expect(getTournaments).toHaveBeenCalledTimes(1));
       const eventRow = await findEventRowByTime(eventToDelete.time);
@@ -853,7 +853,7 @@ describe('<GameSettingsModal />', () => {
         return null;
       });
       
-      render(<GameSettingsModal {...defaultProps} />);  
+      render(<GameSettingsModal {...defaultProps} />);
       await waitFor(() => expect(getSeasons).toHaveBeenCalledTimes(1));
       await waitFor(() => expect(getTournaments).toHaveBeenCalledTimes(1));
       const gameInfoSection = getGameInfoSection();
@@ -923,7 +923,7 @@ describe('<GameSettingsModal />', () => {
       });
       window.confirm = jest.fn(() => true);
 
-      render(<GameSettingsModal {...defaultProps} gameEvents={mockGameEvents} onDeleteGameEvent={mockOnDeleteGameEvent} />);  
+      render(<GameSettingsModal {...defaultProps} gameEvents={mockGameEvents} onDeleteGameEvent={mockOnDeleteGameEvent} />);
       await waitFor(() => expect(getSeasons).toHaveBeenCalledTimes(1));
       await waitFor(() => expect(getTournaments).toHaveBeenCalledTimes(1));
       

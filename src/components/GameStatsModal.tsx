@@ -110,10 +110,10 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
         // console.warn(`Invalid date format received: ${isoDate}`);
         return isoDate;
       }
-      const date = new Date(isoDate);
+      const date = new Date(isoDate); 
       if (isNaN(date.getTime())) {
         // console.warn(`Invalid date value received: ${isoDate}`);
-        return isoDate;
+          return isoDate; 
       }
 
       const currentLanguage = i18n.language;
@@ -190,19 +190,19 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   // Load seasons/tournaments
   useEffect(() => {
     const loadData = async () => { 
-      if (isOpen) {
-        try {
+    if (isOpen) {
+      try {
           const loadedSeasons = await utilGetSeasons(); 
-          setSeasons(loadedSeasons);
+        setSeasons(loadedSeasons);
         } catch (error) { 
           console.error("Failed to load seasons:", error); setSeasons([]); 
         }
-        try {
+      try {
           const loadedTournaments = await utilGetTournaments(); // Await the async call
-          setTournaments(loadedTournaments);
+        setTournaments(loadedTournaments);
         } catch (error) { 
           console.error("Failed to load tournaments:", error); setTournaments([]); 
-        }
+    }
       }
     };
     loadData(); 

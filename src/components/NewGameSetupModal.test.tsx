@@ -88,8 +88,8 @@ describe('NewGameSetupModal', () => {
     expect(getLastHomeTeamName).toHaveBeenCalled();
     
     await waitFor(() => {
-      const homeTeamInput = screen.getByLabelText(/Home Team Name/i);
-      expect(homeTeamInput).toHaveValue('Last Team');
+    const homeTeamInput = screen.getByLabelText(/Home Team Name/i);
+    expect(homeTeamInput).toHaveValue('Last Team');
     });
   });
 
@@ -100,8 +100,8 @@ describe('NewGameSetupModal', () => {
     await waitFor(() => expect(getTournaments).toHaveBeenCalled());
     
     await waitFor(() => {
-      expect(screen.getByText('Spring 2024')).toBeInTheDocument();
-      expect(screen.getByText('City Cup')).toBeInTheDocument();
+    expect(screen.getByText('Spring 2024')).toBeInTheDocument();
+    expect(screen.getByText('City Cup')).toBeInTheDocument();
     });
   });
 
@@ -118,7 +118,7 @@ describe('NewGameSetupModal', () => {
     fireEvent.click(startButton);
     
     await waitFor(() => {
-      expect(saveLastHomeTeamName).toHaveBeenCalledWith('New Team Name');
+    expect(saveLastHomeTeamName).toHaveBeenCalledWith('New Team Name');
     });
     
     expect(mockOnStart).toHaveBeenCalledWith(
