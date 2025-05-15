@@ -484,6 +484,85 @@ export default function Home() {
     },
   });
 
+  // --- Mutation for Removing Player from Master Roster ---
+  const removePlayerMutation = useMutation<
+    boolean,      // CORRECTED: Return type from masterRosterManager.removePlayer (indicates success)
+    Error,        // Error type
+    { playerId: string; } // Variables type
+  >({
+    mutationFn: async ({ playerId }) => {
+      return removePlayer(playerId); // This utility returns Promise<boolean>
+    },
+    onSuccess: (success, variables) => {
+      if (success) {
+        console.log('[Mutation Success] Player removed:', variables.playerId);
+        queryClient.invalidateQueries({ queryKey: ['masterRoster'] });
+
+        let nextPlayersOnField: Player[] = [];
+        setPlayersOnField(prev => {
+          nextPlayersOnField = prev.filter(p => p.id !== variables.playerId);
+          return nextPlayersOnField;
+        });
+
+        let nextSelectedPlayerIds: string[] = [];
+        setSelectedPlayerIds(prev => {
+          nextSelectedPlayerIds = prev.filter(id => id !== variables.playerId);
+          return nextSelectedPlayerIds;
+        });
+
+        saveStateToHistory({
+          playersOnField: nextPlayersOnField,
+          selectedPlayerIds: nextSelectedPlayerIds
+        });
+
+        setRosterError(null);
+      } else {
+        // This case might indicate the player wasn't found or some other non-exception failure
+        console.warn('[Mutation Non-Success] removePlayer returned false for player:', variables.playerId);
+        setRosterError(t('rosterSettingsModal.errors.removeFailedNotFound', 'Error removing player {playerId}. Player not found or removal failed.', { playerId: variables.playerId }));
+      }
+    },
+    onError: (error, variables) => {
+      console.error(`[Mutation Error] Failed to remove player ${variables.playerId}:`, error);
+      setRosterError(t('rosterSettingsModal.errors.removeFailed', 'Error removing player {playerId}. Please try again.', { playerId: variables.playerId }));
+    },
+  });
+
+  // --- Mutation for Adding Player to Master Roster ---
+  const addPlayerMutation = useMutation<
+    Player | null, // Return type from masterRosterManager.addPlayer
+    Error,         // Error type
+    { name: string; jerseyNumber: string; notes: string; nickname: string; } // Variables type (player data)
+  >({
+    mutationFn: async (playerData) => {
+      return addPlayer(playerData);
+    },
+    onSuccess: (newPlayer, variables) => {
+      if (newPlayer) {
+        console.log('[Mutation Success] Player added:', newPlayer.name, newPlayer.id);
+        queryClient.invalidateQueries({ queryKey: ['masterRoster'] });
+
+        // Add the new player to selectedPlayerIds and save to history
+        let nextSelectedPlayerIds: string[] = [];
+        setSelectedPlayerIds(prev => {
+          nextSelectedPlayerIds = [...prev, newPlayer.id];
+          return nextSelectedPlayerIds;
+        });
+        saveStateToHistory({ selectedPlayerIds: nextSelectedPlayerIds });
+
+        setRosterError(null);
+      } else {
+        // This case might indicate a duplicate name or some other non-exception failure from addPlayer
+        console.warn('[Mutation Non-Success] addPlayer returned null for player:', variables.name);
+        setRosterError(t('rosterSettingsModal.errors.addFailedDuplicate', 'Error adding player {playerName}. Player may already exist or data is invalid.', { playerName: variables.name }));
+      }
+    },
+    onError: (error, variables) => {
+      console.error(`[Mutation Error] Failed to add player ${variables.name}:`, error);
+      setRosterError(t('rosterSettingsModal.errors.addFailed', 'Error adding player {playerName}. Please try again.', { playerName: variables.name }));
+    },
+  });
+
   // --- Derived State for Filtered Players (Moved to top-level) ---
   const playersForCurrentGame = useMemo(() => {
     if (!Array.isArray(availablePlayers)) {
@@ -2159,7 +2238,7 @@ export default function Home() {
     setIsRosterUpdating(true);
     let newPlayersOnFieldState: Player[] = [];
     try {
-      const success = await removePlayer(playerId);
+      const success = await removePlayerMutation.mutateAsync({ playerId });
       if (success) {
         const newRoster = await getMasterRoster();
         setAvailablePlayers(newRoster);
@@ -2187,19 +2266,14 @@ export default function Home() {
     } finally {
       setIsRosterUpdating(false);
     }
-  }, [selectedPlayerIds, saveStateToHistory, setAvailablePlayers, setPlayersOnField, setSelectedPlayerIds, setIsRosterUpdating, setRosterError]);
+  }, [selectedPlayerIds, saveStateToHistory, setAvailablePlayers, setPlayersOnField, setSelectedPlayerIds, setIsRosterUpdating, setRosterError, removePlayerMutation]);
 
   const handleAddPlayerForModal = useCallback(async (playerData: { name: string; jerseyNumber: string; notes: string; nickname: string }) => {
     console.log('[Page.tsx] handleAddPlayerForModal called with:', playerData);
     setRosterError(null); // Clear previous errors
     setIsRosterUpdating(true);
     try {
-      const newPlayer = await addPlayer({ 
-        name: playerData.name, 
-        jerseyNumber: playerData.jerseyNumber, 
-        notes: playerData.notes,
-        nickname: playerData.nickname,
-      }); 
+      const newPlayer = await addPlayerMutation.mutateAsync(playerData);
       if (newPlayer) {
         console.log('[Page.tsx] Player added by masterRosterManager:', newPlayer);
         const updatedRoster = await getMasterRoster();
@@ -2221,7 +2295,7 @@ export default function Home() {
     } finally {
       setIsRosterUpdating(false);
     }
-  }, [selectedPlayerIds, saveStateToHistory, setAvailablePlayers, setSelectedPlayerIds, setIsRosterUpdating, setRosterError]);
+  }, [selectedPlayerIds, saveStateToHistory, setAvailablePlayers, setSelectedPlayerIds, setIsRosterUpdating, setRosterError, addPlayerMutation]);
 
   const handleToggleGoalieForModal = useCallback(async (playerId: string) => {
     const player = availablePlayers.find(p => p.id === playerId);
