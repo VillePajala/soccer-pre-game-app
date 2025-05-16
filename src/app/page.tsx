@@ -798,8 +798,8 @@ export default function Home() {
           // setIsTimerRunning(false); // Reducer's END_PERIOD_OR_GAME will handle this
           if (gameSessionState.currentPeriod === gameSessionState.numberOfPeriods) {
             dispatchGameSession({ type: 'END_PERIOD_OR_GAME', payload: { newStatus: 'gameEnd', finalTime: periodEndTimeSeconds } });
-            console.log("Game ended.");
-          } else {
+              console.log("Game ended.");
+            } else {
             dispatchGameSession({ type: 'END_PERIOD_OR_GAME', payload: { newStatus: 'periodEnd', finalTime: periodEndTimeSeconds } });
             console.log(`Period ${gameSessionState.currentPeriod} ended.`);
           }
@@ -1016,7 +1016,7 @@ export default function Home() {
     };
 
     setHistory([newHistoryState]);
-    setHistoryIndex(0);
+      setHistoryIndex(0);
     
     console.log('[LOAD GAME STATE] Finished dispatching. Reducer will update gameSessionState.');
   };
@@ -1723,9 +1723,9 @@ export default function Home() {
       const deletedGameId = await utilDeleteGame(gameId);
 
       if (deletedGameId) {
-        const updatedSavedGames = { ...savedGames };
+      const updatedSavedGames = { ...savedGames };
         delete updatedSavedGames[deletedGameId];
-        setSavedGames(updatedSavedGames);
+      setSavedGames(updatedSavedGames);
         console.log(`Game ${deletedGameId} deleted from state and persistence.`);
 
         if (currentGameId === deletedGameId) {
@@ -1741,9 +1741,9 @@ export default function Home() {
           // setSeasonId(initialState.seasonId || ''); // REMOVE - Handled by RESET_TO_INITIAL_STATE
 
           setHistory([initialState as AppState]); // Reset history with initial state (ensure cast if needed)
-          setHistoryIndex(0);
-          
-          setCurrentGameId(DEFAULT_GAME_ID);
+        setHistoryIndex(0);
+
+        setCurrentGameId(DEFAULT_GAME_ID);
           await utilSaveCurrentGameIdSetting(DEFAULT_GAME_ID);
         }
       } else {
@@ -1896,7 +1896,7 @@ export default function Home() {
                 const scorer = escapeCsvField(scorerName);
                 const assister = escapeCsvField(assisterName);
                 allRows.push(`${escapeCsvField(timeFormatted)}${DELIMITER}${escapeCsvField(type)}${DELIMITER}${scorer}${DELIMITER}${assister}`);
-            });
+          });
         } else {
             allRows.push('No goals logged');
         }
@@ -2368,17 +2368,17 @@ export default function Home() {
   }, [availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField, saveStateToHistory, currentGameId]);
 
   // --- NEW: Handler to Toggle Player Selection for Current Match ---
-     const handleTogglePlayerSelection = useCallback((playerId: string) => {
+  const handleTogglePlayerSelection = useCallback((playerId: string) => {
        const currentSelectedPlayerIds = gameSessionState.selectedPlayerIds; // Read from gameSessionState
        const currentIndex = currentSelectedPlayerIds.indexOf(playerId);
        let nextSelectedPlayerIds: string[];
        let nextPlayersOnField = playersOnField; // Start with current players on field
 
-       if (currentIndex === -1) {
+    if (currentIndex === -1) {
            // Player is being selected, add to selection
            nextSelectedPlayerIds = [...currentSelectedPlayerIds, playerId];
            // No change to playersOnField when selecting, they are added via drag/drop or "Place All"
-       } else {
+    } else {
            // Player is being deselected, remove from selection
            nextSelectedPlayerIds = currentSelectedPlayerIds.filter(id => id !== playerId);
            // Also remove this player from the field if they were on it
@@ -2470,18 +2470,18 @@ export default function Home() {
       handleOpenSaveGameModal(); 
     }
   },    [
-      currentGameId,
-       savedGames,
-       playersOnField,
-       opponents,
-       drawings,
-       availablePlayers,
-       setSavedGames,
-       setHistory,
-       setHistoryIndex,
+    currentGameId,
+    savedGames,
+    playersOnField,
+    opponents,
+    drawings,
+    availablePlayers,
+    setSavedGames,
+    setHistory,
+    setHistoryIndex,
        handleOpenSaveGameModal, 
        gameSessionState // This now covers all migrated game session fields
-    ]);
+  ]);
   // --- END Quick Save Handler ---
 
   // --- NEW: Handlers for Game Settings Modal --- 

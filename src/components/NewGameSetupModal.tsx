@@ -537,7 +537,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
               {isLoading ? t('newGameSetupModal.loadingPlayers', 'Loading players...') : t('newGameSetupModal.noPlayersInRoster', 'No players in master roster. Add players in Roster Settings.')}
             </p>
           )}
-        </div>
+          </div>
 
         {/* Season Selection */}
         <div className="mb-3 p-3 border border-slate-700/80 rounded-md bg-slate-700/30">
