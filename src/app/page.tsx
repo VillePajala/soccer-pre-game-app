@@ -43,7 +43,7 @@ import {
   saveGame as utilSaveGame, // For auto-save and handleSaveGame
   deleteGame as utilDeleteGame, // For handleDeleteGame
   saveGames as utilSaveAllGames, // Corrected: For handleImportGamesFromJson (was saveAllGames)
-  GameData // Type
+  // GameData // Type // Comment out or remove GameData import if AppState is used directly
 } from '@/utils/savedGames';
 import {
   getCurrentGameIdSetting, // For initial load
@@ -242,6 +242,10 @@ export default function Home() {
   };
 
   const [gameSessionState, dispatchGameSession] = useReducer(gameSessionReducer, initialGameSessionData);
+
+  useEffect(() => {
+    console.log('[gameSessionState CHANGED]', gameSessionState);
+  }, [gameSessionState]);
 
   // --- TanStack Query for Master Roster ---
   const {
@@ -908,43 +912,36 @@ export default function Home() {
   ]);
 
   // Helper function to load game state from game data
-  const loadGameStateFromData = (gameData: GameData | null, isInitialDefaultLoad = false) => {
+  const loadGameStateFromData = (gameData: AppState | null, isInitialDefaultLoad = false) => {
     console.log('[LOAD GAME STATE] Called with gameData:', gameData, 'isInitialDefaultLoad:', isInitialDefaultLoad);
 
-    // Dispatch action to reducer to handle loading game data
-    // The reducer will set all fields in gameSessionState, including resetting volatile timer fields.
     if (gameData) {
-      // Map GameData fields to GameSessionState partial payload
+      // gameData is AppState, map its fields directly to GameSessionState partial payload
       const payload: Partial<GameSessionState> = {
-        teamName: gameData.homeTeam,
-        opponentName: gameData.awayTeam,
-        gameDate: gameData.date,
+        teamName: gameData.teamName,
+        opponentName: gameData.opponentName,
+        gameDate: gameData.gameDate,
         homeScore: gameData.homeScore,
         awayScore: gameData.awayScore,
-        gameNotes: gameData.notes,
-        homeOrAway: gameData.teamOnLeft,
+        gameNotes: gameData.gameNotes,
+        homeOrAway: gameData.homeOrAway,
         numberOfPeriods: gameData.numberOfPeriods,
-        periodDurationMinutes: gameData.periodDuration,
+        periodDurationMinutes: gameData.periodDurationMinutes,
         currentPeriod: gameData.currentPeriod,
         gameStatus: gameData.gameStatus,
         selectedPlayerIds: gameData.selectedPlayerIds,
-        seasonId: gameData.seasonId ?? undefined, // USE gameData, will be set in reducer
-        tournamentId: gameData.tournamentId ?? undefined, // Ensure undefined if null for reducer
-        gameLocation: gameData.location,
-        gameTime: gameData.time,
-        gameEvents: gameData.events, // Assuming GameEvent in GameData matches GameEvent in GameSessionState
+        seasonId: gameData.seasonId ?? undefined,
+        tournamentId: gameData.tournamentId ?? undefined,
+        gameLocation: gameData.gameLocation,
+        gameTime: gameData.gameTime,
+        gameEvents: gameData.gameEvents,
         subIntervalMinutes: gameData.subIntervalMinutes,
         completedIntervalDurations: gameData.completedIntervalDurations,
         lastSubConfirmationTimeSeconds: gameData.lastSubConfirmationTimeSeconds,
         showPlayerNames: gameData.showPlayerNames,
-        // Volatile timer states (timeElapsedInSeconds, isTimerRunning, nextSubDueTimeSeconds, subAlertLevel)
-        // are NOT taken from gameData. The reducer's LOAD_PERSISTED_GAME_DATA will initialize them.
       };
       dispatchGameSession({ type: 'LOAD_PERSISTED_GAME_DATA', payload });
     } else {
-      // If no gameData, reset to initial state derived from page.tsx's initialState
-      // The initialGameSessionData used by useReducer already reflects this.
-      // We can dispatch a reset action that uses initialGameSessionData.
       dispatchGameSession({ type: 'RESET_TO_INITIAL_STATE', payload: initialGameSessionData });
     }
 
@@ -976,48 +973,34 @@ export default function Home() {
     // Construct historyState using the *potentially* updated gameSessionState for the next render.
     // And combine with other non-reducer states.
     const newHistoryState: AppState = {
-      // Persistable fields from gameSessionState
-      teamName: gameData?.homeTeam ?? initialGameSessionData.teamName,
-      opponentName: gameData?.awayTeam ?? initialGameSessionData.opponentName,
-      gameDate: gameData?.date ?? initialGameSessionData.gameDate,
+      teamName: gameData?.teamName ?? initialGameSessionData.teamName,
+      opponentName: gameData?.opponentName ?? initialGameSessionData.opponentName,
+      gameDate: gameData?.gameDate ?? initialGameSessionData.gameDate,
       homeScore: gameData?.homeScore ?? initialGameSessionData.homeScore,
       awayScore: gameData?.awayScore ?? initialGameSessionData.awayScore,
-      gameNotes: gameData?.notes ?? initialGameSessionData.gameNotes,
-      homeOrAway: gameData?.teamOnLeft ?? initialGameSessionData.homeOrAway,
+      gameNotes: gameData?.gameNotes ?? initialGameSessionData.gameNotes,
+      homeOrAway: gameData?.homeOrAway ?? initialGameSessionData.homeOrAway,
       numberOfPeriods: gameData?.numberOfPeriods ?? initialGameSessionData.numberOfPeriods,
-      periodDurationMinutes: gameData?.periodDuration ?? initialGameSessionData.periodDurationMinutes,
-      currentPeriod: gameData?.currentPeriod ?? initialGameSessionData.currentPeriod, // Will be updated by reducer
-      gameStatus: gameData?.gameStatus ?? initialGameSessionData.gameStatus, // Will be updated by reducer
+      periodDurationMinutes: gameData?.periodDurationMinutes ?? initialGameSessionData.periodDurationMinutes,
+      currentPeriod: gameData?.currentPeriod ?? initialGameSessionData.currentPeriod, 
+      gameStatus: gameData?.gameStatus ?? initialGameSessionData.gameStatus, 
       seasonId: gameData?.seasonId ?? initialGameSessionData.seasonId,
       tournamentId: gameData?.tournamentId ?? initialGameSessionData.tournamentId,
-      gameLocation: gameData?.location ?? initialGameSessionData.gameLocation,
-      gameTime: gameData?.time ?? initialGameSessionData.gameTime,
+      gameLocation: gameData?.gameLocation ?? initialGameSessionData.gameLocation,
+      gameTime: gameData?.gameTime ?? initialGameSessionData.gameTime,
       subIntervalMinutes: gameData?.subIntervalMinutes ?? initialGameSessionData.subIntervalMinutes,
       completedIntervalDurations: gameData?.completedIntervalDurations ?? initialGameSessionData.completedIntervalDurations,
       lastSubConfirmationTimeSeconds: gameData?.lastSubConfirmationTimeSeconds ?? initialGameSessionData.lastSubConfirmationTimeSeconds,
       showPlayerNames: gameData?.showPlayerNames === undefined ? initialGameSessionData.showPlayerNames : gameData.showPlayerNames,
       selectedPlayerIds: gameData?.selectedPlayerIds ?? initialGameSessionData.selectedPlayerIds,
-      gameEvents: gameData?.events ?? initialGameSessionData.gameEvents,
-
-      // Non-reducer states
+      gameEvents: gameData?.gameEvents ?? initialGameSessionData.gameEvents,
       playersOnField: gameData?.playersOnField || initialState.playersOnField,
       opponents: gameData?.opponents || initialState.opponents,
       drawings: gameData?.drawings || initialState.drawings,
-      
-      // availablePlayers for history snapshot. Use master roster.
       availablePlayers: masterRosterQueryResultData || availablePlayers,
-
-      // Volatile fields NOT from gameData - should be default/reset values
-      // These are not directly part of AppState for saving, but history might need them if it captured live state.
-      // However, for loading a game, these should reflect a "freshly loaded" state.
-      // The reducer handles resetting these in gameSessionState.
-      // AppState definition itself needs to be clear about what it stores for history vs. saving.
-      // For now, AppState matches GameData more closely in terms of what's *persisted*.
     };
-
     setHistory([newHistoryState]);
-      setHistoryIndex(0);
-    
+    setHistoryIndex(0);
     console.log('[LOAD GAME STATE] Finished dispatching. Reducer will update gameSessionState.');
   };
 
@@ -1029,20 +1012,14 @@ export default function Home() {
       return; 
     }
 
-    let gameToLoad: GameData | null = null;
+    let gameToLoad: AppState | null = null; // Ensure this is AppState
     if (currentGameId && currentGameId !== DEFAULT_GAME_ID && savedGames[currentGameId]) {
       console.log(`[EFFECT game load] Found game data for ${currentGameId}`);
-      gameToLoad = savedGames[currentGameId] as unknown as GameData; // Cast if necessary
+      gameToLoad = savedGames[currentGameId] as AppState; // Cast to AppState
     } else {
       console.log('[EFFECT game load] No specific game to load or ID is default. Applying default game state.');
-      // No specific game to load from savedGames, ensure defaults are applied
-      // loadGameStateFromData(null) will apply initialState defaults.
-      // The master `availablePlayers` is already set by the initial app load effect.
     }
-    // Call loadGameStateFromData; it handles null correctly (applies initialState)
-    // This will set up the game-specific details (scores, events, selected players for *that* game)
-    // but will NOT overwrite the master availablePlayers roster.
-    loadGameStateFromData(gameToLoad); // This will now use gameSessionState.gameTime internally via reducer
+    loadGameStateFromData(gameToLoad); 
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentGameId, savedGames, initialLoadComplete]); // IMPORTANT: initialLoadComplete ensures this runs after master roster is loaded.
@@ -1677,7 +1654,7 @@ export default function Home() {
     setIsGameLoading(true);
     setProcessingGameId(gameId);
 
-    const gameDataToLoad = savedGames[gameId] as unknown as GameData | undefined; // Get from savedGames
+    const gameDataToLoad = savedGames[gameId] as AppState | undefined; // Ensure this is AppState
 
     if (gameDataToLoad) {
       try {
@@ -2728,7 +2705,19 @@ export default function Home() {
     homeOrAway: 'home' | 'away' // <<< Step 4b: Add parameter
   ) => {
       // ADD LOGGING HERE:
-      console.log('[handleStartNewGameWithSetup] Received Params:', { numPeriods, periodDuration });
+      console.log('[handleStartNewGameWithSetup] Received Params:', { 
+        initialSelectedPlayerIds,
+        homeTeamName, 
+        opponentName, 
+        gameDate, 
+        gameLocation, 
+        gameTime, 
+        seasonId, 
+        tournamentId, 
+        numPeriods, 
+        periodDuration, 
+        homeOrAway 
+      });
       // No need to log initialState references anymore
 
       // Determine the player selection for the new game
@@ -2768,11 +2757,12 @@ export default function Home() {
       };
 
       // Log the constructed state *before* saving
-      console.log('[handleStartNewGameWithSetup] Constructed newGameState:', {
-          periods: newGameState.numberOfPeriods,
-          duration: newGameState.periodDurationMinutes,
-          // REMOVED: numAvailablePlayers: newGameState.availablePlayers.length // Log roster size
-      });
+      // console.log('[handleStartNewGameWithSetup] Constructed newGameState:', {
+      //     periods: newGameState.numberOfPeriods,
+      //     duration: newGameState.periodDurationMinutes,
+      //     // REMOVED: numAvailablePlayers: newGameState.availablePlayers.length // Log roster size
+      // });
+      console.log('[handleStartNewGameWithSetup] DIRECTLY CONSTRUCTED newGameState:', JSON.parse(JSON.stringify(newGameState)));
 
       // 2. Auto-generate ID
       const newGameId = `game_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;

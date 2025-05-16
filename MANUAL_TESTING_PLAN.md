@@ -65,21 +65,21 @@
 **V. Goal Logging & Event Management**
 
 1.  **Log Team Goal:**
-    *   [ ] Open Goal Log Modal.
-    *   [ ] Log a goal for your team, selecting a scorer and an optional assister.
-    *   [ ] Verify the correct score updates (Home/Away based on setting).
-    *   [ ] Verify the goal appears in the Game Stats event log.
+    *   [x] Open Goal Log Modal.
+    *   [x] Log a goal for your team, selecting a scorer and an optional assister.
+    *   [x] Verify the correct score updates (Home/Away based on setting).
+    *   [x] Verify the goal appears in the Game Stats event log.
 2.  **Log Opponent Goal:**
-    *   [ ] Open Goal Log Modal (or use quick opponent goal button in Timer Overlay).
-    *   [ ] Log a goal for the opponent.
-    *   [ ] Verify the correct score updates.
-    *   [ ] Verify the opponent goal appears in the Game Stats event log.
+    *   [x] Open Goal Log Modal (or use quick opponent goal button in Timer Overlay).
+    *   [x] Log a goal for the opponent.
+    *   [x] Verify the correct score updates.
+    *   [x] Verify the opponent goal appears in the Game Stats event log.
 3.  **Edit/Delete Goals (via Game Stats Modal):**
-    *   [ ] Open Game Stats Modal.
-    *   [ ] Find a logged goal in the event list.
-    *   [ ] Edit the scorer/assister/time of the goal. Verify changes and score recalculation.
-    *   [ ] Delete a goal. Verify its removal and score recalculation.
-    *   [ ] Verify loading/error states during these operations in Game Settings modal (as it shares some logic).
+    *   [x] Open Game Stats Modal.
+    *   [x] Find a logged goal in the event list.
+    *   [x] Edit the scorer/assister/time of the goal. Verify changes and score recalculation.
+    *   [x] Delete a goal. Verify its removal and score recalculation.
+    *   [x] Verify loading/error states during these operations in Game Settings modal (as it shares some logic).
 
 **VI. Game Setup, Settings & Modals**
 

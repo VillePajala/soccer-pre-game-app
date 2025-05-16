@@ -278,6 +278,7 @@ export const gameSessionReducer = (state: GameSessionState, action: GameSessionA
     case 'RESET_GAME_SESSION_STATE':
       return action.payload; // Directly set the state to the provided payload
     case 'LOAD_PERSISTED_GAME_DATA': {
+      console.log('[gameSessionReducer] LOAD_PERSISTED_GAME_DATA - Received action.payload:', JSON.parse(JSON.stringify(action.payload)));
       const loadedData = action.payload as Partial<GameSessionState>; // Cast because payload is GameData-like
 
       // Get essential values from loadedData, with fallbacks to defaults from placeholder if not present
@@ -311,7 +312,7 @@ export const gameSessionReducer = (state: GameSessionState, action: GameSessionA
          timeElapsedAtLoad = (currentPeriod - 1) * periodDurationMinutes * 60;
       }
 
-      return {
+      const stateToBeReturned: GameSessionState = {
         teamName,
         opponentName,
         gameDate,
@@ -339,6 +340,8 @@ export const gameSessionReducer = (state: GameSessionState, action: GameSessionA
         subAlertLevel: 'none',
         lastSubConfirmationTimeSeconds: timeElapsedAtLoad,
       };
+      console.log('[gameSessionReducer] LOAD_PERSISTED_GAME_DATA - state to be returned:', JSON.parse(JSON.stringify(stateToBeReturned)));
+      return stateToBeReturned;
     }
     default:
       return state;

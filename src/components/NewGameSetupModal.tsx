@@ -211,6 +211,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
         // The local 'seasons' state in this modal will be updated by the useEffect 
         // that fetches seasons when the modal opens, or if we explicitly refetch here.
         // For now, we'll update the selection and UI, relying on eventual consistency.
+        setSeasons(prevSeasons => [...prevSeasons, newSeason].sort((a, b) => a.name.localeCompare(b.name)));
         setSelectedSeasonId(newSeason.id);
         setSelectedTournamentId(null);
         setNewSeasonName(''); 
@@ -246,6 +247,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
       const newTournament = await addTournamentMutation.mutateAsync({ name: trimmedName });
 
       if (newTournament) {
+        setTournaments(prevTournaments => [...prevTournaments, newTournament].sort((a,b) => a.name.localeCompare(b.name)));
         setSelectedTournamentId(newTournament.id); 
         setSelectedSeasonId(null); 
         setNewTournamentName(''); 
