@@ -1000,7 +1000,7 @@ export default function Home() {
       availablePlayers: masterRosterQueryResultData || availablePlayers,
     };
     setHistory([newHistoryState]);
-    setHistoryIndex(0);
+      setHistoryIndex(0);
     console.log('[LOAD GAME STATE] Finished dispatching. Reducer will update gameSessionState.');
   };
 

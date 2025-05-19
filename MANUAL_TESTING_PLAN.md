@@ -84,24 +84,24 @@
 **VI. Game Setup, Settings & Modals**
 
 1.  **New Game Setup Modal:**
-    *   [ ] On app load (if no game is current), verify the New Game Setup modal appears.
-    *   [ ] Skip the setup and verify the app loads with a default state.
-    *   [ ] Trigger "Start New Game" from Control Bar.
-    *   [ ] Fill all fields: team name, opponent name, date, location, time, number of periods, period duration.
-    *   [ ] Select/deselect players for the new game.
-    *   [ ] Add a new Season.
-    *   [ ] Add a new Tournament.
-    *   [ ] Start the game and verify all settings are applied.
+    *   [x] On app load (if no game is current), verify the New Game Setup modal appears.
+    *   [x] Skip the setup and verify the app loads with a default state.
+    *   [x] Trigger "Start New Game" from Control Bar.
+    *   [x] Fill all fields: team name, opponent name, date, location, time, number of periods, period duration.
+    *   [x] Select/deselect players for the new game.
+    *   [x] Add a new Season.
+    *   [x] Add a new Tournament.
+    *   [x] Start the game and verify all settings are applied.
 2.  **Game Settings Modal:**
-    *   [ ] Open Game Settings Modal.
-    *   [ ] Modify all fields: Opponent Name, Game Date, Location, Time, Game Notes.
-    *   [ ] Modify Number of Periods, Period Duration.
-    *   [ ] Change Season, Change Tournament.
-    *   [ ] Award a Fair Play card to a player.
-    *   [ ] Change/Remove the Fair Play card.
-    *   [ ] Verify changes are saved and reflected in the game state.
-    *   [ ] Test editing/deleting goals if this functionality is also present/mirrored here.
-    *   [ ] Verify loading (`isProcessing`) and error states for all save operations.
+    *   [x] Open Game Settings Modal.
+    *   [x] Modify all fields: Opponent Name, Game Date, Location, Time, Game Notes. (Verify initial values are correct from New Game Setup if you just started a new game).
+    *   [x] Modify Number of Periods, Period Duration. (Verify initial values).
+    *   [x] Change Season, Change Tournament. (Verify initial values and changes work).
+    *   [x] Award a Fair Play card to a player.
+    *   [x] Change/Remove the Fair Play card.
+    *   [x] Verify changes are saved and reflected in the game state.
+    *   [x] Test editing/deleting goals if this functionality is also present/mirrored here (this was part of V.3, mainly confirm UI consistency if applicable).
+    *   [x] Verify loading (`isProcessing`) and error states for all save operations.
 3.  **Roster Settings Modal:**
     *   [ ] Open Roster Settings Modal.
     *   [ ] Add a new player (name, jersey, notes, nickname).
