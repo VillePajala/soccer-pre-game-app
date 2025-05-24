@@ -700,7 +700,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                     }}
                     className={`${editInputStyle} w-auto px-2 py-1 mt-1`} 
                     disabled={isProcessing}
-                />
+                      />
               </div>
 
               {/* Scores (Readonly) */}

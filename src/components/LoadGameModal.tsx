@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -301,7 +301,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
     );
   } else {
     mainContent = (
-      <ul className="divide-y divide-slate-700 overflow-y-auto flex-grow scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800 pr-1">
+      <ul className="overflow-y-auto flex-grow scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800 pr-1 px-1">
         {/* Display general game load/delete errors here, above the list but inside scroll area if many games */}
         {gameLoadError && processingGameId === null && ( // Show if error is general, not for a specific item in loop
           <li className="px-3 py-2 bg-red-700/20 border-b border-red-600 text-red-300 text-xs" role="alert">
@@ -315,123 +315,174 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
         )}
         {filteredGameIds.map((gameId) => {
           const game = savedGames[gameId];
-          if (!game) return null; // Should not happen if IDs are from savedGames keys
+          if (!game) return null;
           const isCurrent = gameId === currentGameId;
 
-          // Find Season/Tournament Name
           const season = seasons.find(s => s.id === game.seasonId);
           const tournament = tournaments.find(tourn => tourn.id === game.tournamentId);
           const contextName = season?.name || tournament?.name;
           const contextType = season ? 'Season' : (tournament ? 'Tournament' : null);
           const contextId = season?.id || tournament?.id;
           
-          // Determine display names based on the specific game's homeOrAway setting
           const displayHomeTeamName = game.homeOrAway === 'home' ? (game.teamName || 'Team') : (game.opponentName || 'Opponent');
           const displayAwayTeamName = game.homeOrAway === 'home' ? (game.opponentName || 'Opponent') : (game.teamName || 'Team');
 
           const isProcessingThisGame = processingGameId === gameId;
           const isLoadActionActive = isGameLoading && isProcessingThisGame;
-          const disableActions = isGameLoading || isGameDeleting || isGamesImporting; // General disable for other actions
+          const disableActions = isGameLoading || isGameDeleting || isGamesImporting;
+
+          let gameDisplayDate = '';
+          let gameDisplayTime = '';
+          if (game.gameDate) {
+            try {
+              const dateObj = new Date(game.gameDate);
+              gameDisplayDate = dateObj.toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' });
+              // Ensure game.gameTime (if it exists and is just HH:MM) is used, otherwise format from gameDate
+              if (game.gameTime && /^\\d{2}:\\d{2}$/.test(game.gameTime)) {
+                gameDisplayTime = game.gameTime;
+              } else {
+                gameDisplayTime = dateObj.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
+              }
+            } catch (e) {
+              console.warn("Error formatting game date/time:", game.gameDate, game.gameTime, e);
+              gameDisplayDate = game.gameDate || '';
+              gameDisplayTime = game.gameTime || '';
+            }
+          }
+          
+          const scoreDisplay = `${game.homeScore ?? 0} - ${game.awayScore ?? 0}`;
 
           return (
-            <li key={gameId} className={`p-3 hover:bg-slate-700/50 transition-colors ${isCurrent ? 'bg-indigo-800/30' : ''}`}>
-              <div className="flex justify-between items-center mb-1">
-                <div className="truncate">
-                  <h3 className={`text-sm font-semibold ${isCurrent ? 'text-amber-400' : 'text-slate-200'}`}>
-                    {/* Use display names */}
-                    {displayHomeTeamName} vs {displayAwayTeamName}
-                  </h3>
+            <li 
+              key={gameId} 
+              className={`p-3 transition-colors rounded-md mb-3 last:mb-0 border-2 ${
+                isCurrent 
+                  ? 'bg-slate-600 border-yellow-400 shadow-xl' // Active game: lighter bg, yellow border, strong shadow
+                  : 'bg-slate-750 border-slate-600 hover:bg-slate-700 shadow-md' // Non-active: darker bg, subtle border, subtle hover, normal shadow
+              }`}
+              data-testid={`game-item-${gameId}`}
+            >
+              <div className="flex flex-col space-y-2.5">
+                {/* Top Row: Teams and Score */}
+                <div className="flex justify-between items-start">
+                  <div className="flex-grow truncate mr-3">
+                    <h3 className={`text-base font-semibold ${isCurrent ? 'text-yellow-300' : 'text-slate-100'}`}>
+                      {displayHomeTeamName} vs {displayAwayTeamName}
+                    </h3>
+                  </div>
+                  {(typeof game.homeScore === 'number' && typeof game.awayScore === 'number') && (
+                    <div className={`text-xl font-bold ${isCurrent ? 'text-yellow-300' : 'text-amber-400'} flex-shrink-0`}>
+                      {scoreDisplay}
+                    </div>
+                  )}
+                </div>
+
+                {/* Middle Row: Badges and Date/Location Info */}
+                <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-x-3 gap-y-1.5 text-xs text-slate-400">
                   {contextName && contextType && contextId && (
                     <button 
                       onClick={(e) => { e.stopPropagation(); handleBadgeClick(contextType.toLowerCase() as ('season' | 'tournament'), contextId); }}
-                      className={`inline-block mt-0.5 text-2xs uppercase font-medium tracking-wide ${contextType === 'Tournament' ? 'bg-purple-600/80' : 'bg-blue-600/80'} text-white/90 px-1.5 py-0.5 rounded whitespace-nowrap shadow-sm transition-opacity hover:opacity-80 ${
-                        filterType === contextType.toLowerCase() && filterId === contextId ? 'ring-2 ring-offset-1 ring-offset-slate-700 ring-yellow-400' : ''
+                      className={`inline-block text-2xs uppercase font-semibold tracking-wider ${
+                        contextType === 'Tournament' ? 'bg-purple-500 hover:bg-purple-400' : 'bg-sky-500 hover:bg-sky-400'
+                      } text-white px-2 py-0.5 rounded-full whitespace-nowrap shadow-sm transition-all ${
+                        filterType === contextType.toLowerCase() && filterId === contextId ? 'ring-2 ring-offset-2 ring-offset-slate-800 ring-yellow-400' : ''
                       }`}
                       title={t('loadGameModal.filterByTooltip', 'Filter by {{name}}', { name: contextName }) ?? `Filter by ${contextName}`}
                     >
                       {contextName}
                     </button>
                   )}
+                  
+                  <div className="flex items-center gap-x-1.5 flex-wrap">
+                    {game.gameStatus === 'notStarted' && (
+                         <span className="bg-sky-600/80 text-white/90 px-1.5 py-0.5 rounded text-2xs uppercase font-medium tracking-wide">{t('common.status.open', 'Open')}</span>
+                    )}
+                    {gameDisplayDate && <span>{gameDisplayDate}</span>}
+                    {gameDisplayTime && <span className="text-slate-500">•</span>}
+                    {gameDisplayTime && <span>{gameDisplayTime}</span>}
+                    {game.gameLocation && <span className="text-slate-500">•</span>}
+                    {game.gameLocation && <span className="truncate">{game.gameLocation}</span>}
+                  </div>
                 </div>
-                <div className="flex space-x-1.5 flex-shrink-0 ml-2">
+
+                {/* Bottom Row: Load Button and Actions Menu */}
+                <div className="flex items-center justify-between mt-2.5 pt-2.5 border-t border-slate-600/70">
                   <button
                     onClick={(e) => { e.stopPropagation(); onLoad(gameId); onClose(); }}
-                    className={`p-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[50px] ${isLoadActionActive ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    className={`px-5 py-2 text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800 text-white rounded-md disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center min-w-[130px] shadow-md hover:shadow-lg transition-all ${
+                      isLoadActionActive ? 'opacity-60 cursor-not-allowed' : ''
+                    }`}
                     disabled={disableActions || isLoadActionActive}
-                    title={t('common.load', 'Load')}
+                    title={t('loadGameModal.loadButtonTooltip', 'Load this game')}
                   >
                     {isLoadActionActive ? (
-                      <svg className="animate-spin h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
                     ) : (
-                      <HiOutlineDocumentArrowDown className="h-3.5 w-3.5" />
+                      t('loadGameModal.loadButton', 'Load Game')
                     )}
                   </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleDeleteClick(gameId, (game.teamName || 'Team') + ' vs ' + (game.opponentName || 'Opponent')); }}
-                    className={`p-1.5 text-xs bg-red-700 hover:bg-red-800 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[50px] ${isLoadActionActive ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    disabled={disableActions || isLoadActionActive}
-                    title={t('common.delete', 'Delete')}
-                  >
-                    {isLoadActionActive ? (
-                      <svg className="animate-spin h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                    ) : (
-                      <HiOutlineTrash className="h-3.5 w-3.5" />
-                    )}
-                  </button>
-                  {/* Add more actions like individual export here if needed, with similar disabled logic */}
-                  <div className="relative inline-block text-left">
-                    <div>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setOpenMenuId(isProcessingThisGame ? null : gameId); }}
-                        className={`p-1.5 text-xs bg-slate-600 hover:bg-slate-500 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed ${isLoadActionActive ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        disabled={disableActions || isLoadActionActive}
-                      >
-                        <HiOutlineEllipsisVertical className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                    {isProcessingThisGame && (
+                  
+                  <div className="relative inline-block text-left ml-2">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === gameId ? null : gameId); }}
+                      className={`p-2.5 text-sm bg-slate-600 hover:bg-slate-500 focus-visible:ring-1 focus-visible:ring-slate-400 text-slate-200 rounded-md disabled:opacity-60 disabled:cursor-not-allowed shadow-sm hover:shadow-md transition-all ${
+                        (disableActions && !isProcessingThisGame) || (isProcessingThisGame && !openMenuId) ? 'opacity-60 cursor-not-allowed' : ''
+                      }`}
+                       disabled={(disableActions && !isProcessingThisGame) || (isProcessingThisGame && isLoadActionActive )}
+                       title={t('loadGameModal.actionsMenuTooltip', 'Actions')}
+                    >
+                      <HiOutlineEllipsisVertical className="h-5 w-5" />
+                    </button>
+                    {openMenuId === gameId && !isProcessingThisGame && (
                       <div 
                         ref={menuRef} 
-                        className={`absolute right-0 z-20 mt-1 w-36 origin-top-right rounded-md bg-slate-700 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none`}
+                        className={`absolute right-0 bottom-full mb-1 z-20 w-44 origin-bottom-right rounded-md bg-slate-700 shadow-xl ring-1 ring-black ring-opacity-5 focus:outline-none`}
                       >
-                        <div className="py-1">
+                        <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
                           <button
                             onClick={(e) => { e.stopPropagation(); onExportOneJson(gameId); setOpenMenuId(null); }}
-                            className={`${
-                              isLoadActionActive ? 'opacity-50 cursor-not-allowed' : ''
-                            } group flex w-full items-center rounded-md px-2 py-1.5 text-xs text-slate-200`}
+                            className={`group flex w-full items-center rounded-md px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-600 hover:text-white disabled:opacity-50`}
+                            role="menuitem"
+                            disabled={disableActions}
                           >
-                            <HiOutlineDocumentText className="mr-2 h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
-                            {t('loadGameModal.exportJsonShort', 'JSON')}
+                            <HiOutlineDocumentText className="mr-2.5 h-4 w-4 text-slate-400 group-hover:text-slate-300" aria-hidden="true" />
+                            {t('loadGameModal.exportJsonMenuItem', 'Export JSON')}
                           </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); onExportOneCsv(gameId); setOpenMenuId(null); }}
-                            className={`${
-                              isLoadActionActive ? 'opacity-50 cursor-not-allowed' : ''
-                            } group flex w-full items-center rounded-md px-2 py-1.5 text-xs text-slate-200`}
+                            className={`group flex w-full items-center rounded-md px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-600 hover:text-white disabled:opacity-50`}
+                            role="menuitem"
+                            disabled={disableActions}
                           >
-                            <HiOutlineTableCells className="mr-2 h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
-                            {t('loadGameModal.exportCsvShort', 'CSV')}
+                            <HiOutlineTableCells className="mr-2.5 h-4 w-4 text-slate-400 group-hover:text-slate-300" aria-hidden="true" />
+                            {t('loadGameModal.exportExcelMenuItem', 'Export CSV')}
+                          </button>
+                          <div className="border-t border-slate-600/70 my-1"></div>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDeleteClick(gameId, `${displayHomeTeamName} vs ${displayAwayTeamName}`); }}
+                            className={`group flex w-full items-center rounded-md px-3 py-1.5 text-xs text-red-400 hover:bg-red-600 hover:text-white disabled:opacity-50`}
+                            role="menuitem"
+                            disabled={disableActions}
+                          >
+                            <HiOutlineTrash className="mr-2.5 h-4 w-4 group-hover:text-red-300" aria-hidden="true" />
+                            {t('loadGameModal.deleteMenuItem', 'Delete Game')}
                           </button>
                         </div>
                       </div>
                     )}
                   </div>
                 </div>
+
+                {isProcessingThisGame && gameLoadError && (
+                  <p className="text-xs text-red-400 mt-1.5 animate-pulse">{t('loadGameModal.loadErrorItem', 'Error loading: {{error}}', { error: gameLoadError })}</p>
+                )}
+                {isProcessingThisGame && gameDeleteError && (
+                  <p className="text-xs text-red-400 mt-1.5 animate-pulse">{t('loadGameModal.deleteErrorItem', 'Error deleting: {{error}}', { error: gameDeleteError })}</p>
+                )}
               </div>
-              {/* Display item-specific error if processing this game resulted in an error */}
-              {isLoadActionActive && gameLoadError && (
-                <p className="text-xs text-red-400 mt-1 animate-pulse">{gameLoadError}</p>
-              )}
-              {isLoadActionActive && gameDeleteError && (
-                <p className="text-xs text-red-400 mt-1 animate-pulse">{gameDeleteError}</p>
-              )}
             </li>
           );
         })}

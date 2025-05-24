@@ -36,9 +36,9 @@
     *   [x] Change the opponent's name (via Game Info Bar or Game Settings Modal).
     *   [x] Verify changes are reflected in the UI.
 2.  **Score Updates:**
-    *   [ ] Manually update home score (e.g., in Game Stats or Game Settings if applicable).
-    *   [ ] Manually update away score.
-    *   [ ] Verify scores update correctly after logging goals (see Goal Logging section).
+    *   [x] Manually update home score (e.g., in Game Stats or Game Settings if applicable).
+    *   [x] Manually update away score.
+    *   [x] Verify scores update correctly after logging goals (see Goal Logging section).
 3.  **Home/Away Status:**
     *   [x] Change Home/Away status in Game Settings.
     *   [x] Verify the display in Game Info Bar and score logic (who gets points for "team goal") reflects this.
@@ -103,41 +103,41 @@
     *   [x] Test editing/deleting goals if this functionality is also present/mirrored here (this was part of V.3, mainly confirm UI consistency if applicable).
     *   [x] Verify loading (`isProcessing`) and error states for all save operations.
 3.  **Roster Settings Modal:**
-    *   [ ] Open Roster Settings Modal.
-    *   [ ] Add a new player (name, jersey, notes, nickname).
-    *   [ ] Rename an existing player.
-    *   [ ] Change a player's jersey number, notes, nickname.
-    *   [ ] Toggle a player's goalie status (ensure only one goalie can be active if that's the rule).
-    *   [ ] Remove a player from the master roster.
-    *   [ ] Select/deselect players for the current match. Verify this updates `playersForCurrentGame` in PlayerBar.
-    *   [ ] Change team name via this modal.
-    *   [ ] Verify loading (`isRosterUpdating`) and error (`rosterError`) states for all operations.
+    *   [x] Open Roster Settings Modal.
+    *   [x] Add a new player (name, jersey, notes, nickname).
+    *   [x] Rename an existing player.
+    *   [x] Change a player's jersey number, notes, nickname.
+    *   [x] Toggle a player's goalie status (ensure only one goalie can be active if that's the rule).
+    *   [x] Remove a player from the master roster.
+    *   [x] Select/deselect players for the current match. Verify this updates `playersForCurrentGame` in PlayerBar.
+    *   [x] Change team name via this modal.
+    *   [x] Verify loading (`isRosterUpdating`) and error (`rosterError`) states for all operations.
 4.  **Other Modals:**
-    *   [ ] Open and close Instructions Modal.
-    *   [ ] Open and close Training Resources Modal.
-    *   [ ] Open and close Game Stats Modal.
-        *   [ ] Verify data display (game info, stats, event log).
-        *   [ ] Test filtering if applicable.
+    *   [x] Open and close Instructions Modal.
+    *   [x] Open and close Training Resources Modal.
+    *   [x] Open and close Game Stats Modal.
+        *   [x] Verify data display (game info, stats, event log).
+        *   [x] Test filtering if applicable.
 
 **VII. Data Persistence: Saving, Loading, Importing, Exporting**
 
 1.  **Save Game:**
-    *   [ ] Modify game state (players on field, score, etc.).
-    *   [ ] Open Save Game Modal, enter a name, and save. Verify success and loading/error states.
-    *   [ ] Verify the game now has an ID (not `DEFAULT_GAME_ID`).
+    *   [x] Modify game state (players on field, score, etc.).
+    *   [x] Open Save Game Modal, enter a name, and save. Verify success and loading/error states.
+    *   [x] Verify the game now has an ID (not `DEFAULT_GAME_ID`).
 2.  **Quick Save:**
-    *   [ ] With a loaded game, make changes and use "Quick Save". Verify success.
-    *   [ ] Reload the app and check if quick-saved changes persisted.
+    *   [x] With a loaded game, make changes and use "Quick Save". Verify success.
+    *   [x] Reload the app and check if quick-saved changes persisted.
 3.  **Auto Save:**
-    *   [ ] Make changes to a loaded game and wait (or trigger action if auto-save is event-driven).
-    *   [ ] Reload the app and verify changes were auto-saved.
+    *   [x] Make changes to a loaded game and wait (or trigger action if auto-save is event-driven).
+    *   [x] Reload the app and verify changes were auto-saved.
 4.  **Load Game (LoadGameModal):**
-    *   [ ] Open Load Game Modal. Verify the list of saved games appears.
-    *   [ ] Select and load a game. Verify the game state is restored correctly.
-    *   [ ] Verify loading/error states for game list and individual game loading/deleting/importing.
+    *   [x] Open Load Game Modal. Verify the list of saved games appears.
+    *   [x] Select and load a game. Verify the game state is restored correctly.
+    *   [x] Verify loading/error states for game list and individual game loading/deleting/importing.
 5.  **Delete Game (LoadGameModal):**
-    *   [ ] Delete a game. Verify it's removed from the list and persistence.
-    *   [ ] If the deleted game was the current game, verify the app resets to a default/new state.
+    *   [x] Delete a game. Verify it's removed from the list and persistence.
+    *   [x] If the deleted game was the current game, verify the app resets to a default/new state.
 6.  **Import Games (LoadGameModal):**
     *   [ ] Prepare a valid JSON file with game data.
     *   [ ] Import the JSON. Verify games are added to the list.
