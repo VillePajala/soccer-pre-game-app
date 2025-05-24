@@ -300,7 +300,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
     );
   } else {
     mainContent = (
-      <ul className="overflow-y-auto flex-grow scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800 pr-1 px-1">
+      <ul className="scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800 pr-1 px-1">
         {/* Display general game load/delete errors here, above the list but inside scroll area if many games */}
         {gameLoadError && processingGameId === null && ( // Show if error is general, not for a specific item in loop
           <li className="px-3 py-2 bg-red-700/20 border-b border-red-600 text-red-300 text-xs" role="alert">
@@ -468,7 +468,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-      <div className="bg-slate-800 rounded-lg shadow-xl w-full max-w-2xl h-[95vh] flex flex-col border border-slate-600">
+      <div className="bg-slate-800 rounded-lg shadow-xl w-full max-w-2xl flex flex-col h-[95vh]">
         <div className="px-6 py-4 border-b border-slate-700">
           <h2 className="text-xl font-semibold text-yellow-300 text-center">
             {t('loadGameModal.title', 'Lataa Peli')}
