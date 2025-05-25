@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -16,8 +16,7 @@ import {
 // REMOVE unused Fa icons and useGameState hook
 // import { FaTimes, FaUpload, FaDownload, FaTrash, FaExclamationTriangle, FaSearch } from 'react-icons/fa';
 // import { useGameState } from '@/hooks/useGameState';
-// Import the new backup functions
-// import { exportFullBackup, importFullBackup } from '@/utils/fullBackup'; 
+import { exportFullBackup, importFullBackup } from '@/utils/fullBackup';
 // Import new utility functions
 import { getSeasons as utilGetSeasons } from '@/utils/seasons';
 import { getTournaments as utilGetTournaments } from '@/utils/tournaments';
@@ -80,6 +79,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
   const [filterId, setFilterId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const restoreFileInputRef = useRef<HTMLInputElement>(null);
 
   // State for seasons and tournaments
   const [seasons, setSeasons] = useState<Season[]>([]);
@@ -268,7 +268,40 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
     reader.readAsText(file);
     event.target.value = '';
   };
+
+  const handleRestoreFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      try {
+        const jsonContent = e.target?.result as string;
+        if (jsonContent) {
+          importFullBackup(jsonContent);
+        } else {
+          console.error('FileReader error: Result is null or empty.');
+          alert(t('loadGameModal.importReadError', 'Error reading file content.'));
+        }
+      } catch (error) {
+        console.error('Error processing file content:', error);
+        alert(t('loadGameModal.importProcessError', 'Error processing file content.'));
+      }
+    };
+
+    reader.onerror = () => {
+      console.error('FileReader error:', reader.error);
+      alert(t('loadGameModal.importReadError', 'Error reading file content.'));
+    };
+
+    reader.readAsText(file);
+    event.target.value = '';
+  };
   // --- End Step 1 Handlers ---
+  //   const handleRestoreFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = (e) => { try { const jsonContent = e.target?.result as string; if (jsonContent) { importFullBackup(jsonContent); } } catch (error) { console.error('Error processing file content:', error); } }; reader.readAsText(file); event.target.value = ''; };
 
   if (!isOpen) return null;
 
@@ -413,13 +446,14 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                         isLoadActionActive ? 'opacity-50 cursor-not-allowed' : ''
                       }`}
                       disabled={disableActions || isLoadActionActive}
+                      title="Options"
                     >
                       <HiOutlineEllipsisVertical className="h-5 w-5" />
                     </button>
-                    
                     {openMenuId === gameId && (
                       <div 
                         ref={menuRef} 
+                        data-testid={`game-item-menu-${gameId}`}
                         className="absolute right-0 z-20 mt-1 w-40 origin-top-right rounded-md bg-slate-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
                       >
                         <div className="py-1">
@@ -472,7 +506,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
         <div className="px-6 py-4 border-b border-slate-700">
           <h2 className="text-xl font-semibold text-yellow-300 text-center">
             {t('loadGameModal.title', 'Lataa Peli')}
-          </h2>
+        </h2>
         </div>
 
         {/* Single Search/Filter Row */}
@@ -488,72 +522,72 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
 
         {/* Import/Export Buttons Row */}
         <div className="px-6 py-3 flex gap-2 justify-center border-b border-slate-700">
-          {/* Hidden File Input */}
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileSelected}
-            accept=".json"
-            style={{ display: 'none' }}
-            id="import-json-input"
-            data-testid="import-json-input"
-          />
-          {/* Import Button */}
-          <button
-            onClick={handleImportButtonClick}
+            {/* Hidden File Input */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileSelected}
+              accept=".json"
+              style={{ display: 'none' }}
+              id="import-json-input"
+              data-testid="import-json-input"
+            />
+            {/* Import Button */}
+            <button
+              onClick={handleImportButtonClick}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium shadow-sm transition-colors"
-            title={t('loadGameModal.importTooltip', 'Import games from JSON file') ?? 'Import games from JSON file'}
-          >
+              title={t('loadGameModal.importTooltip', 'Import games from JSON file') ?? 'Import games from JSON file'}
+            >
             <HiOutlineDocumentArrowUp className="w-5 h-5" />
-            {t('loadGameModal.importButton', 'Import')}
-          </button>
-          {/* Export All JSON */}
-          <button
-            onClick={onExportAllJson}
+              {t('loadGameModal.importButton', 'Import')}
+            </button>
+            {/* Export All JSON */}
+            <button
+              onClick={onExportAllJson}
             className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-md text-sm font-medium shadow-sm transition-colors"
-            title={t('loadGameModal.exportAllJsonTooltip', 'Export all games as JSON') ?? 'Export all games as JSON'}
-          >
+              title={t('loadGameModal.exportAllJsonTooltip', 'Export all games as JSON') ?? 'Export all games as JSON'}
+            >
             <HiOutlineDocumentArrowDown className="w-5 h-5" />
             {t('loadGameModal.exportAllJsonButton', 'JSON')}
-          </button>
-          {/* Export All CSV */}
-          <button
-            onClick={onExportAllExcel}
+            </button>
+             {/* Export All CSV */}
+             <button
+              onClick={onExportAllExcel}
             className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-sm font-medium shadow-sm transition-colors"
-            title={t('loadGameModal.exportAllExcelTooltip', 'Export all games as CSV (Excel compatible)') ?? 'Export all games as CSV'}
-          >
+              title={t('loadGameModal.exportAllExcelTooltip', 'Export all games as CSV (Excel compatible)') ?? 'Export all games as CSV'}
+            >
             <HiOutlineTableCells className="w-5 h-5" />
             {t('loadGameModal.exportAllExcelButton', 'EXCEL')}
-          </button>
+            </button>
         </div>
 
         {/* Active Filter Badge (if applicable) */}
         {(filterType && filterId) && (
           <div className="px-6 py-2 flex justify-center">
             <div className="flex items-center gap-1 bg-slate-600/50 px-2 py-1 rounded text-xs">
-              <span className="text-slate-300">
-                {filterType === 'season' ? t('common.season', 'Season') : t('common.tournament', 'Tournament')}:
-              </span>
-              <span className="font-medium text-slate-100">
-                {filterType === 'season'
-                  ? seasons.find(s => s.id === filterId)?.name
-                  : tournaments.find(t => t.id === filterId)?.name}
-              </span>
-              <button
-                onClick={() => { setFilterType(null); setFilterId(null); }}
-                className="ml-1 text-slate-400 hover:text-red-400"
-                title={t('loadGameModal.clearFilterTooltip', 'Clear filter') ?? 'Clear filter'}
-              >
-                <HiOutlineXCircle className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
+                <span className="text-slate-300">
+                  {filterType === 'season' ? t('common.season', 'Season') : t('common.tournament', 'Tournament')}:
+                </span>
+                <span className="font-medium text-slate-100">
+                  {filterType === 'season'
+                    ? seasons.find(s => s.id === filterId)?.name
+                    : tournaments.find(t => t.id === filterId)?.name}
+                </span>
+                <button
+                  onClick={() => { setFilterType(null); setFilterId(null); }}
+                  className="ml-1 text-slate-400 hover:text-red-400"
+                  title={t('loadGameModal.clearFilterTooltip', 'Clear filter') ?? 'Clear filter'}
+                >
+                  <HiOutlineXCircle className="w-3.5 h-3.5" />
+                </button>
+              </div>
+           </div>
         )}
 
         {/* Game List Area - This takes up remaining space */}
         <div className="flex-1 overflow-y-auto px-6 py-3">
           {mainContent}
-        </div>
+                    </div>
 
         {/* Footer with Backup/Restore buttons */}
         <div className="px-6 py-4 border-t border-slate-700 space-y-3">
@@ -568,8 +602,8 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
           {/* Hidden File Input for Restore Backup */}
           <input
             type="file"
-            ref={fileInputRef}
-            onChange={handleFileSelected}
+            ref={restoreFileInputRef}
+            onChange={handleRestoreFileSelected}
             accept=".json"
             style={{ display: "none" }}
             data-testid="restore-backup-input"
@@ -578,21 +612,21 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
           {/* Backup/Restore buttons */}
           <div className="grid grid-cols-2 gap-3">
             <button
-              onClick={onExportAllJson}
+              onClick={exportFullBackup}
               className="flex items-center justify-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm font-medium shadow-sm transition-colors"
             >
               <HiOutlineDocumentArrowDown className="w-5 h-5" />
               {t('loadGameModal.backupButton', 'Backup All Data')}
             </button>
             <button
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => restoreFileInputRef.current?.click()}
               className="flex items-center justify-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm font-medium shadow-sm transition-colors"
               disabled={isGamesImporting || isLoadingGamesList || isGameLoading || isGameDeleting}
             >
               {isGamesImporting ? (
                 <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 714 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
               ) : (
                 <HiOutlineDocumentArrowUp className="w-5 h-5" />
@@ -600,15 +634,15 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
               {t('loadGameModal.restoreButton', 'Restore from Backup')}
             </button>
           </div>
-          
+
           {/* Close button */}
-          <button
-            onClick={onClose}
+            <button
+              onClick={onClose}
             className="w-full px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-md text-sm font-medium transition-colors"
             disabled={isGamesImporting || isGameLoading || isGameDeleting}
-          >
+            >
             {t('common.close', 'Sulje')}
-          </button>
+            </button>
         </div>
       </div>
     </div>

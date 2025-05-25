@@ -104,6 +104,22 @@ We employ a three-layered testing approach:
       * ✅ Aligned with defined error handling strategy (return values null/false, console.error logging with prefixes for all error types including parsing, saving, validation for empty/duplicate names, non-existent items, invalid data, and save failures during operations).
       * ✅ All tests passing after refactoring to test by controlling `localStorage` mocks directly, resolving previous mocking complexities.
 
+    * **`src/utils/savedGames.test.ts`** (New - reflects recent test fixes):
+      * ✅ Tests all CRUD operations for game data: `getSavedGames`, `saveGames`, `saveGame`, `getGame`, `deleteGame`, `createGame`.
+      * ✅ Tests event management functions: `addGameEvent`, `updateGameEvent`, `removeGameEvent`.
+      * ✅ Tests game metadata updates: `updateGameDetails`.
+      * ✅ Tests utility functions: `getAllGameIds`, `getFilteredGames`.
+      * ✅ Tests import/export functionality: `exportGamesAsJson`, `importGamesFromJson`.
+      * ✅ Comprehensive error handling tests for `localStorage` failures (gets, sets), ensuring promises reject correctly.
+      * ✅ All tests are passing. Functions were refactored to consistently return Promises and handle errors robustly.
+
+    * **`src/utils/appSettings.test.ts`** (New - reflects recent test fixes):
+      * ✅ Tests core settings functions: `getAppSettings`, `saveAppSettings`, `updateAppSettings`, `resetAppSettings`.
+      * ✅ Tests specific setting accessors: `getCurrentGameIdSetting`, `saveCurrentGameIdSetting`, `getLastHomeTeamName`, `saveLastHomeTeamName`.
+      * ✅ Includes tests for handling legacy `lastHomeTeamName` storage.
+      * ✅ Comprehensive error handling tests for `localStorage` failures, ensuring promises reject or return appropriate values (e.g., `false` on save failure) as per function design.
+      * ✅ All tests are passing. Functions were refactored/confirmed to return Promises where appropriate and handle errors robustly.
+
   * **Component Tests:**
     * **`src/components/LoadGameModal.test.tsx`**:
       * ✅ Renders the basic list of saved games correctly.
@@ -119,6 +135,10 @@ We employ a three-layered testing approach:
       * ✅ Handles various error scenarios (FileReader errors, JSON parsing errors).
       * ✅ Refactored to use `seasons.ts` and `tournaments.ts` utilities for loading season/tournament filter data.
       * ✅ Verified tests mock utility functions (`getSeasons`, `getTournaments`, `fullBackup`) and rely on props for core data (`savedGames`, `onDelete`, etc.).
+      * ✅ Loads seasons/tournaments using mocked utility functions (`getSeasons`, `getTournaments`).
+      * ✅ Displays current game stats table and event log.
+      * 🚧 Needs tests for tab switching, filtering, sorting, editing info/notes/events, export, Fair Play.
+      * ⚠️ Contains `act(...)` warnings in test output related to asynchronous state updates for seasons/tournaments; tests pass but this could be improved for robustness.
 
     * **`src/components/RosterSettingsModal.test.tsx`**:
       * ✅ Renders correctly when open/closed.
