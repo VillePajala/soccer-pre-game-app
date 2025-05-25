@@ -468,7 +468,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-      <div className="bg-slate-800 rounded-lg shadow-xl w-full max-w-2xl flex flex-col h-[95vh]">
+      <div className="bg-slate-800 rounded-lg shadow-xl w-full max-w-2xl flex flex-col h-[95vh] border border-slate-600">
         <div className="px-6 py-4 border-b border-slate-700">
           <h2 className="text-xl font-semibold text-yellow-300 text-center">
             {t('loadGameModal.title', 'Lataa Peli')}
@@ -564,6 +564,16 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
               <p>{gamesImportError}</p>
             </div>
           )}
+          
+          {/* Hidden File Input for Restore Backup */}
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileSelected}
+            accept=".json"
+            style={{ display: "none" }}
+            data-testid="restore-backup-input"
+          />
           
           {/* Backup/Restore buttons */}
           <div className="grid grid-cols-2 gap-3">
