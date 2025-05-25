@@ -462,14 +462,14 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                             className="group flex w-full items-center px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white"
                           >
                             <HiOutlineDocumentText className="mr-3 h-4 w-4 text-slate-400 group-hover:text-slate-300" />
-                            {t('loadGameModal.exportJsonMenuItem', 'JSON')}
+                            {t('loadGameModal.exportJsonMenuItem', 'Export JSON')}
                           </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); onExportOneCsv(gameId); setOpenMenuId(null); }}
                             className="group flex w-full items-center px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white"
                           >
                             <HiOutlineTableCells className="mr-3 h-4 w-4 text-slate-400 group-hover:text-slate-300" />
-                            {t('loadGameModal.exportExcelMenuItem', 'EXCEL')}
+                            {t('loadGameModal.exportExcelMenuItem', 'Export CSV')}
                           </button>
                           <div className="border-t border-slate-700 my-1"></div>
                           <button
@@ -477,7 +477,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                             className="group flex w-full items-center px-3 py-2 text-sm text-red-400 hover:bg-red-900/20 hover:text-red-300"
                           >
                             <HiOutlineTrash className="mr-3 h-4 w-4" />
-                            {t('loadGameModal.deleteMenuItem', 'Poista')}
+                            {t('loadGameModal.deleteMenuItem', 'Delete')}
                           </button>
                         </div>
                       </div>
@@ -548,7 +548,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
               title={t('loadGameModal.exportAllJsonTooltip', 'Export all games as JSON') ?? 'Export all games as JSON'}
             >
             <HiOutlineDocumentArrowDown className="w-5 h-5" />
-            {t('loadGameModal.exportAllJsonButton', 'JSON')}
+            {t('loadGameModal.exportAllJsonButton', 'Export JSON')}
             </button>
              {/* Export All CSV */}
              <button
@@ -557,7 +557,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
               title={t('loadGameModal.exportAllExcelTooltip', 'Export all games as CSV (Excel compatible)') ?? 'Export all games as CSV'}
             >
             <HiOutlineTableCells className="w-5 h-5" />
-            {t('loadGameModal.exportAllExcelButton', 'EXCEL')}
+            {t('loadGameModal.exportAllExcelButton', 'Export CSV')}
             </button>
         </div>
 
