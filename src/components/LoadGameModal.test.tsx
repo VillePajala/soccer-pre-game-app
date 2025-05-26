@@ -232,7 +232,7 @@ describe('LoadGameModal', () => {
       const gameItemContainer = loadedGameContainer.closest('[data-testid^="game-item-"]') as HTMLElement;
       expect(gameItemContainer).toBeInTheDocument(); 
       // Use within with the asserted HTMLElement
-      expect(within(gameItemContainer).getByText('Loaded')).toBeInTheDocument(); 
+      expect(within(gameItemContainer).getByText('Currently Loaded')).toBeInTheDocument(); 
 
       // Wait for async effects to settle
       await waitFor(() => {

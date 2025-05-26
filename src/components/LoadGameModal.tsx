@@ -407,6 +407,11 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                           OPEN
                         </span>
                       )}
+                      {isCurrent && (
+                        <span className="text-xs uppercase font-semibold tracking-wide bg-green-600 text-white px-2 py-0.5 rounded-sm">
+                          {t('loadGameModal.currentlyLoaded', 'Loaded')}
+                        </span>
+                      )}
                     </div>
                   </div>
                   {/* Score */}
