@@ -219,7 +219,7 @@ describe('<GameSettingsModal />', () => {
       await user.click(screen.getByRole('heading', { name: t('gameSettingsModal.title') })); // Click away to blur/save
 
       expect(mockOnOpponentNameChange).toHaveBeenCalledWith(newName);
-      expect(updateGameDetails).toHaveBeenCalledWith(defaultProps.currentGameId, { awayTeam: newName });
+      expect(updateGameDetails).toHaveBeenCalledWith(defaultProps.currentGameId, { opponentName: newName });
       
       rerender(<GameSettingsModal {...defaultProps} opponentName={newName} />);
       expect(await within(gameInfoSection).findByText(newName)).toBeInTheDocument();
@@ -256,7 +256,7 @@ describe('<GameSettingsModal />', () => {
       await user.click(screen.getByRole('heading', { name: t('gameSettingsModal.title') }));
 
       expect(mockOnGameDateChange).toHaveBeenCalledWith(newDate);
-      expect(updateGameDetails).toHaveBeenCalledWith(defaultProps.currentGameId, { date: newDate });
+      expect(updateGameDetails).toHaveBeenCalledWith(defaultProps.currentGameId, { gameDate: newDate });
 
       rerender(<GameSettingsModal {...defaultProps} gameDate={newDate} />);
       expect(await within(gameInfoSection).findByText(formatDateForDisplayTest(newDate))).toBeInTheDocument();
@@ -294,7 +294,7 @@ describe('<GameSettingsModal />', () => {
       await user.click(screen.getByRole('heading', { name: t('gameSettingsModal.title') }));
 
       expect(mockOnGameLocationChange).toHaveBeenCalledWith(newLocation);
-      expect(updateGameDetails).toHaveBeenCalledWith(defaultProps.currentGameId, { location: newLocation });
+      expect(updateGameDetails).toHaveBeenCalledWith(defaultProps.currentGameId, { gameLocation: newLocation });
 
       rerender(<GameSettingsModal {...defaultProps} gameLocation={newLocation} />);
       expect(await within(gameInfoSection).findByText(newLocation)).toBeInTheDocument();
@@ -316,29 +316,19 @@ describe('<GameSettingsModal />', () => {
       expect(updateGameDetails).not.toHaveBeenCalled();
     });
     
-    test('calls onGameTimeChange and updateGameDetails when time inputs change', async () => {
-      const user = userEvent.setup();
+    test('calls onGameTimeChange and updateGameDetails when time input changes', async () => {
       render(<GameSettingsModal {...defaultProps} />);
       await waitFor(() => expect(getSeasons).toHaveBeenCalledTimes(1));
       await waitFor(() => expect(getTournaments).toHaveBeenCalledTimes(1));
       const gameInfoSection = getGameInfoSection();
 
-      const hourInput = within(gameInfoSection).getByPlaceholderText(t('common.hourShort'));
-      const minuteInput = within(gameInfoSection).getByPlaceholderText(t('common.minuteShort'));
-      const initialMinute = defaultProps.gameTime!.split(':')[1];
+      const timeInput = within(gameInfoSection).getByDisplayValue(defaultProps.gameTime!);
+      const newTime = '10:05';
 
-      await user.clear(hourInput);
-      await user.type(hourInput, '10');
-      // Blur or change focus to trigger save for EditableTimeField
-      await user.click(minuteInput); // Click on another input to trigger blur/save for hour
-      expect(mockOnGameTimeChange).toHaveBeenLastCalledWith(`10:${initialMinute}`);
-      expect(updateGameDetails).toHaveBeenLastCalledWith(defaultProps.currentGameId, { time: `10:${initialMinute}` });
+      fireEvent.change(timeInput, { target: { value: newTime } });
 
-      await user.clear(minuteInput);
-      await user.type(minuteInput, '05');
-      await user.click(hourInput); // Click on hour input to trigger blur/save for minute
-      expect(mockOnGameTimeChange).toHaveBeenLastCalledWith('10:05'); // Hour is now 10 from previous step
-      expect(updateGameDetails).toHaveBeenLastCalledWith(defaultProps.currentGameId, { time: '10:05' });
+      expect(mockOnGameTimeChange).toHaveBeenCalledWith(newTime);
+      expect(updateGameDetails).toHaveBeenCalledWith(defaultProps.currentGameId, { gameTime: newTime });
     });
   });
 
@@ -368,7 +358,7 @@ describe('<GameSettingsModal />', () => {
       await user.click(saveButton);
 
       expect(mockOnGameNotesChange).toHaveBeenCalledWith(newNotes);
-      expect(updateGameDetails).toHaveBeenCalledWith(defaultProps.currentGameId, { notes: newNotes });
+      expect(updateGameDetails).toHaveBeenCalledWith(defaultProps.currentGameId, { gameNotes: newNotes });
       
       rerender(<GameSettingsModal {...defaultProps} gameNotes={newNotes} />);
       // After saving, the editable field might revert to displaying text. 
@@ -438,7 +428,7 @@ describe('<GameSettingsModal />', () => {
         await user.click(screen.getByRole('heading', { name: t('gameSettingsModal.title') })); // Blur to save
 
         expect(mockOnPeriodDurationChange).toHaveBeenCalledWith(newDuration);
-        expect(updateGameDetails).toHaveBeenCalledWith(defaultProps.currentGameId, { periodDuration: newDuration });
+        expect(updateGameDetails).toHaveBeenCalledWith(defaultProps.currentGameId, { periodDurationMinutes: newDuration });
         
         rerender(<GameSettingsModal {...defaultProps} periodDurationMinutes={newDuration} />);
         expect(await within(gameInfoSection).findByText(`${newDuration} ${t('common.minutesShort')}`)).toBeInTheDocument();
@@ -640,7 +630,7 @@ describe('<GameSettingsModal />', () => {
       expect(mockOnSeasonIdChange).toHaveBeenCalledTimes(2);
 
       // updateGameDetails is called by handleSeasonChange
-      expect(updateGameDetails).toHaveBeenCalledWith(defaultProps.currentGameId, { seasonId: selectedSeasonId, tournamentId: null });
+      expect(updateGameDetails).toHaveBeenCalledWith(defaultProps.currentGameId, { seasonId: selectedSeasonId, tournamentId: undefined });
     });
 
     test('calls onTournamentIdChange and updateGameDetails when a tournament is selected', async () => {
@@ -675,7 +665,7 @@ describe('<GameSettingsModal />', () => {
       expect(mockOnTournamentIdChange).toHaveBeenCalledTimes(2);
 
       // updateGameDetails is called by handleTournamentChange
-      expect(updateGameDetails).toHaveBeenCalledWith(defaultProps.currentGameId, { tournamentId: selectedTournamentId, seasonId: null });
+      expect(updateGameDetails).toHaveBeenCalledWith(defaultProps.currentGameId, { tournamentId: selectedTournamentId, seasonId: undefined });
     });
 
     test('switches to "None", clears combobox, and calls callbacks/updateGameDetails when "None" is clicked after selection', async () => {
