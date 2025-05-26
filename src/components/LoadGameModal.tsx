@@ -326,9 +326,13 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
       </div>
     );
   } else if (filteredGameIds.length === 0) {
+    const hasFilters = searchText || (filterType && filterId);
     mainContent = (
       <div className="text-center text-slate-500 py-10 italic">
-        {t('loadGameModal.noGamesSaved', 'No games saved yet.')}
+        {hasFilters ? 
+          t('loadGameModal.noGamesMatchFilter', 'No saved games match your filter.') :
+          t('loadGameModal.noGamesSaved', 'No games have been saved yet.')
+        }
       </div>
     );
   } else {
@@ -473,7 +477,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                           </button>
                           <div className="border-t border-slate-700 my-1"></div>
                           <button
-                            onClick={(e) => { e.stopPropagation(); handleDeleteClick(gameId, `${displayHomeTeamName} vs ${displayAwayTeamName}`); setOpenMenuId(null); }}
+                            onClick={(e) => { e.stopPropagation(); handleDeleteClick(gameId, `${game.teamName || 'Team'} vs ${game.opponentName || 'Opponent'}`); setOpenMenuId(null); }}
                             className="group flex w-full items-center px-3 py-2 text-sm text-red-400 hover:bg-red-900/20 hover:text-red-300"
                           >
                             <HiOutlineTrash className="mr-3 h-4 w-4" />
