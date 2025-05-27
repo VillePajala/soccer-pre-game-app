@@ -182,8 +182,7 @@ describe('<RosterSettingsModal />', () => {
     expect(screen.queryByPlaceholderText(/Player Name/i)).not.toBeInTheDocument();
   });
 
-  // The core edit functionality IS covered by the E2E test `tests/roster.spec.ts`.
-  test.skip('edits an existing player when edit form is submitted', async () => {
+  test('edits an existing player when edit form is submitted', async () => {
     render(<RosterSettingsModal {...defaultProps} />);
 
     const playerToEditId = mockPlayers[0].id; // 'p1'
@@ -212,8 +211,8 @@ describe('<RosterSettingsModal />', () => {
 
     // --- Verify Edit Form Appears and is pre-filled --- 
     // Use English placeholders due to test env i18n issues
-    const namePlaceholder = /Player Name/i;
-    const nicknamePlaceholder = /Nickname \(for disc\)/i;
+    const namePlaceholder = /Full Name/i;
+    const nicknamePlaceholder = /Nickname \(Display Name\)/i;
     const numberPlaceholder = /#/i;
     const notesPlaceholder = /Player notes.../i;
 
@@ -247,13 +246,8 @@ describe('<RosterSettingsModal />', () => {
     fireEvent.change(notesInput, { target: { value: updatedPlayerData.notes } });
 
     // --- Find and Click Save Button for Edit Form --- 
-    // Assuming the edit form has the same structure as the add form regarding action buttons
-    const editFormActionsContainer = notesInput.closest('div.p-3.rounded-md')?.querySelector('div.flex.justify-end.space-x-2.pt-1');
-    expect(editFormActionsContainer).toBeInstanceOf(HTMLElement);
-    if (!editFormActionsContainer) throw new Error('Edit form actions container not found');
-
-    // The save button is expected to be the first button in this container
-    const saveEditButton = within(editFormActionsContainer as HTMLElement).getAllByRole('button')[0];
+    // Find the save button directly by its title
+    const saveEditButton = screen.getByRole('button', { name: /Save|Tallenna/i });
     expect(saveEditButton).toBeInTheDocument();
     fireEvent.click(saveEditButton);
 
@@ -265,7 +259,7 @@ describe('<RosterSettingsModal />', () => {
 
     // Check onRenamePlayer (assuming it handles name + nickname)
     expect(mockOnRenamePlayer).toHaveBeenCalledTimes(1); 
-    expect(mockOnRenamePlayer).toHaveBeenCalledWith(playerToEditId, updatedPlayerData.name, updatedPlayerData.nickname);
+    expect(mockOnRenamePlayer).toHaveBeenCalledWith(playerToEditId, { name: updatedPlayerData.name, nickname: updatedPlayerData.nickname });
 
     // Check onSetJerseyNumber
     expect(mockOnSetJerseyNumber).toHaveBeenCalledTimes(1);
@@ -279,11 +273,7 @@ describe('<RosterSettingsModal />', () => {
     expect(screen.queryByPlaceholderText(namePlaceholder)).not.toBeInTheDocument();
   });
 
-  // TODO: Skipping this test. Similar to the 'edit' test, triggering the
-  // `window.confirm` via `fireEvent.click` on the dropdown's 'Remove' button
-  // is proving unreliable in the JSDOM test environment. The E2E test
-  // `tests/roster.spec.ts` does cover the full delete flow, including confirmation.
-  test.skip('deletes a player when delete is confirmed', async () => {
+  test('deletes a player when delete is confirmed', async () => {
     // Mock window.confirm to always return true (confirm deletion)
     const confirmSpy = jest.spyOn(window, 'confirm').mockImplementation(() => true);
 

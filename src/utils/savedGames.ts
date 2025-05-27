@@ -131,7 +131,7 @@ export const deleteGame = async (gameId: string): Promise<string | null> => {
     delete allGames[gameId];
     await saveGames(allGames);
     console.log(`deleteGame: Game with ID ${gameId} successfully deleted.`);
-    return gameId; // Successfully deleted, return the ID
+    return gameId; // Successfully deleted, return the gameId
   } catch (error) {
     console.error('Error deleting game:', error);
     throw error; // Re-throw other errors

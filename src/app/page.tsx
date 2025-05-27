@@ -1701,11 +1701,11 @@ export default function Home() {
 
       if (deletedGameId) {
       const updatedSavedGames = { ...savedGames };
-        delete updatedSavedGames[deletedGameId];
+        delete updatedSavedGames[gameId];
       setSavedGames(updatedSavedGames);
-        console.log(`Game ${deletedGameId} deleted from state and persistence.`);
+        console.log(`Game ${gameId} deleted from state and persistence.`);
 
-        if (currentGameId === deletedGameId) {
+        if (currentGameId === gameId) {
           console.log("Currently loaded game was deleted. Resetting to initial state via reducer.");
           // Dispatch action to reset to the initial state
           dispatchGameSession({ type: 'RESET_TO_INITIAL_STATE', payload: initialGameSessionData });

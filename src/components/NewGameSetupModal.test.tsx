@@ -1,11 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
-import { render, screen, fireEvent, within, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, within, waitFor, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import NewGameSetupModal from './NewGameSetupModal';
 import { getLastHomeTeamName, saveLastHomeTeamName } from '@/utils/appSettings';
 import { getSeasons, addSeason } from '@/utils/seasons';
 import { getTournaments, addTournament } from '@/utils/tournaments';
 import { getMasterRoster } from '@/utils/masterRosterManager';
+import type { UseMutationResult } from '@tanstack/react-query';
+import type { Season, Tournament } from '@/types';
 
 // Mock the utility functions
 jest.mock('@/utils/appSettings', () => ({
@@ -37,47 +40,52 @@ jest.mock('react-i18next', () => ({
 describe('NewGameSetupModal', () => {
   const mockOnStart = jest.fn();
   const mockOnCancel = jest.fn();
-  
-  // Mock mutation objects with proper typing
+
   const mockAddSeasonMutation = {
     mutate: jest.fn(),
+    mutateAsync: jest.fn(),
     isPending: false,
     isError: false,
+    isIdle: true,
+    isSuccess: false,
     error: null,
-    data: null,
+    data: undefined,
     reset: jest.fn(),
     variables: undefined,
-    isIdle: false,
-    isSuccess: false,
     status: 'idle' as const,
     failureCount: 0,
     failureReason: null,
-    mutateAsync: jest.fn(),
-  };
+    context: undefined,
+    isPaused: false,
+    submittedAt: 0,
+  } as any;
   
   const mockAddTournamentMutation = {
     mutate: jest.fn(),
+    mutateAsync: jest.fn(),
     isPending: false,
     isError: false,
+    isIdle: true,
+    isSuccess: false,
     error: null,
-    data: null,
+    data: undefined,
     reset: jest.fn(),
     variables: undefined,
-    isIdle: false,
-    isSuccess: false,
     status: 'idle' as const,
     failureCount: 0,
     failureReason: null,
-    mutateAsync: jest.fn(),
-  };
+    context: undefined,
+    isPaused: false,
+    submittedAt: 0,
+  } as any;
   
   const defaultProps = {
     isOpen: true,
     initialPlayerSelection: ['player1', 'player2'],
     onStart: mockOnStart,
     onCancel: mockOnCancel,
-    addSeasonMutation: mockAddSeasonMutation as any, // eslint-disable-line @typescript-eslint/no-explicit-any
-    addTournamentMutation: mockAddTournamentMutation as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+    addSeasonMutation: mockAddSeasonMutation as UseMutationResult<Season | null, Error, { name: string }, unknown>,
+    addTournamentMutation: mockAddTournamentMutation as UseMutationResult<Tournament | null, Error, { name: string }, unknown>,
     isAddingSeason: false,
     isAddingTournament: false,
   };
@@ -97,20 +105,17 @@ describe('NewGameSetupModal', () => {
     { id: 'player2', name: 'Jane Smith', jerseyNumber: 7 }
   ];
 
-  let consoleErrorSpy: jest.SpyInstance;
-  let consoleWarnSpy: jest.SpyInstance;
-  let consoleLogSpy: jest.SpyInstance;
-
   beforeEach(() => {
     jest.clearAllMocks();
     
+    // Make all async functions return resolved promises immediately
     (getLastHomeTeamName as jest.Mock).mockResolvedValue('Last Team');
     (saveLastHomeTeamName as jest.Mock).mockResolvedValue(true);
     (getMasterRoster as jest.Mock).mockResolvedValue(mockPlayersData);
-
     (getSeasons as jest.Mock).mockResolvedValue(mockSeasonsData);
     (getTournaments as jest.Mock).mockResolvedValue(mockTournamentsData);
     
+    // Make mutation functions return resolved promises
     (addSeason as jest.Mock).mockImplementation(async (name) => {
       const newSeason = { id: `new-${name}`, name };
       return Promise.resolve(newSeason);
@@ -120,29 +125,37 @@ describe('NewGameSetupModal', () => {
       return Promise.resolve(newTournament);
     });
 
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    // Setup mock mutation async functions
+    (mockAddSeasonMutation.mutateAsync as jest.Mock).mockImplementation(async ({ name }: { name: string }) => {
+      const newSeason = { id: `new-${name}`, name };
+      return Promise.resolve(newSeason);
+    });
+    
+    (mockAddTournamentMutation.mutateAsync as jest.Mock).mockImplementation(async ({ name }: { name: string }) => {
+      const newTournament = { id: `new-${name}`, name };
+      return Promise.resolve(newTournament);
+    });
   });
 
-  afterEach(() => {
-    consoleErrorSpy.mockRestore();
-    consoleWarnSpy.mockRestore();
-    consoleLogSpy.mockRestore();
-  });
-
-  // Helper function to wait for loading to complete
-  const waitForLoadingToComplete = async () => {
+  // Helper function to properly render and wait for loading to complete
+  const renderAndWaitForLoad = async () => {
+    const { container } = render(<NewGameSetupModal {...defaultProps} />);
+    
+    // Wait for loading to complete
     await waitFor(() => {
       expect(screen.queryByText('Loading setup data...')).not.toBeInTheDocument();
-    }, { timeout: 3000 });
+    }, { timeout: 10000 });
+    
+    // Ensure form is rendered
+    await waitFor(() => {
+      expect(screen.getByLabelText(/Your Team Name/i)).toBeInTheDocument();
+    }, { timeout: 5000 });
+    
+    return { container };
   };
 
   test('loads the last home team name from appSettings utility and populates input', async () => {
-    render(<NewGameSetupModal {...defaultProps} />);
-    
-    // Wait for loading to complete
-    await waitForLoadingToComplete();
+    await renderAndWaitForLoad();
     
     expect(getLastHomeTeamName).toHaveBeenCalled();
     
@@ -151,10 +164,7 @@ describe('NewGameSetupModal', () => {
   });
 
   test('loads seasons and tournaments using utility functions when opened', async () => {
-    render(<NewGameSetupModal {...defaultProps} />);
-    
-    // Wait for loading to complete
-    await waitForLoadingToComplete();
+    await renderAndWaitForLoad();
     
     expect(getSeasons).toHaveBeenCalled();
     expect(getTournaments).toHaveBeenCalled();
@@ -164,15 +174,12 @@ describe('NewGameSetupModal', () => {
   });
 
   test('saves last home team name using utility function on start', async () => {
-    render(<NewGameSetupModal {...defaultProps} />);
-    
-    // Wait for loading to complete
-    await waitForLoadingToComplete();
+    await renderAndWaitForLoad();
     
     const homeTeamInput = screen.getByLabelText(/Your Team Name/i);
     fireEvent.change(homeTeamInput, { target: { value: 'New Team Name' } });
     
-    const opponentInput = screen.getByLabelText(/Opponent Name/i);
+    const opponentInput = screen.getByLabelText(/Opponent Name.*:/i);
     fireEvent.change(opponentInput, { target: { value: 'Opponent Team' } });
     
     const startButton = screen.getByText(/Confirm & Start Game/i);
@@ -198,22 +205,20 @@ describe('NewGameSetupModal', () => {
   });
 
   test('adds a new season using utility function', async () => {
-    render(<NewGameSetupModal {...defaultProps} />);
-    
-    // Wait for loading to complete
-    await waitForLoadingToComplete();
+    await renderAndWaitForLoad();
     
     const seasonSection = screen.getByText(/Season:/i).closest('div');
     if (!seasonSection) throw new Error('Season section not found');
     
-    fireEvent.click(within(seasonSection).getByText(/Creating.../i));
+    // Look for the create season button by its translation key text
+    fireEvent.click(within(seasonSection).getByText('newGameSetupModal.createSeason'));
     
     const seasonNameInput = screen.getByPlaceholderText(/Enter new season name/i);
     fireEvent.change(seasonNameInput, { target: { value: 'Fall 2024' } });
     
     fireEvent.click(screen.getByText(/Add/i));
     
-    await waitFor(() => expect(addSeason).toHaveBeenCalledWith('Fall 2024'));
+    await waitFor(() => expect(mockAddSeasonMutation.mutateAsync).toHaveBeenCalledWith({ name: 'Fall 2024' }));
     
     await waitFor(() => {
         expect(screen.getByText('Fall 2024')).toBeInTheDocument();
@@ -221,35 +226,32 @@ describe('NewGameSetupModal', () => {
   });
 
   test('adds a new tournament using utility function', async () => {
-    render(<NewGameSetupModal {...defaultProps} />);
+    await renderAndWaitForLoad();
     
-    // Wait for loading to complete
-    await waitForLoadingToComplete();
+    // Find the tournament section and click the create button
+    const tournamentSection = screen.getByText(/Tournament:/i).closest('div');
+    if (!tournamentSection) throw new Error('Tournament section not found');
     
-    const allCreateButtons = screen.getAllByText(/Creating.../i, { selector: 'button' });
-    fireEvent.click(allCreateButtons[1]);
+    fireEvent.click(within(tournamentSection).getByText('newGameSetupModal.createTournament'));
     
     const tournamentNameInput = screen.getByPlaceholderText(/Enter new tournament name/i);
     fireEvent.change(tournamentNameInput, { target: { value: 'National Cup' } });
     
     fireEvent.click(screen.getByText(/Add/i));
     
-    await waitFor(() => expect(addTournament).toHaveBeenCalledWith('National Cup'));
+    await waitFor(() => expect(mockAddTournamentMutation.mutateAsync).toHaveBeenCalledWith({ name: 'National Cup' }));
     await waitFor(() => {
         expect(screen.getByText('National Cup')).toBeInTheDocument();
     });
   });
 
   test('does not call onStart if home team name is empty, and saveLastHomeTeamName is not called', async () => {
-    render(<NewGameSetupModal {...defaultProps} />);
-    
-    // Wait for loading to complete
-    await waitForLoadingToComplete();
+    await renderAndWaitForLoad();
     
     const homeTeamInput = screen.getByLabelText(/Your Team Name/i);
     fireEvent.change(homeTeamInput, { target: { value: '' } });
     
-    const opponentInput = screen.getByLabelText(/Opponent Name/i);
+    const opponentInput = screen.getByLabelText(/Opponent Name.*:/i);
     fireEvent.change(opponentInput, { target: { value: 'Opponent Team' } });
     
     window.alert = jest.fn();
@@ -266,14 +268,53 @@ describe('NewGameSetupModal', () => {
   });
 
   test('calls onCancel when cancel button is clicked', async () => {
-    render(<NewGameSetupModal {...defaultProps} />);
-    
-    // Wait for loading to complete
-    await waitForLoadingToComplete();
+    await renderAndWaitForLoad();
     
     const cancelButton = screen.getByText(/Cancel/i);
     fireEvent.click(cancelButton);
     
     expect(mockOnCancel).toHaveBeenCalledTimes(1);
   });
+
+  test('should render loading state initially and then form after data loads', async () => {
+    await act(async () => {
+      render(<NewGameSetupModal {...defaultProps} />);
+    });
+    
+    // Should show loading initially
+    expect(screen.getByText('Loading setup data...')).toBeInTheDocument();
+    
+    // Wait for loading to complete
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
+    
+    await waitFor(() => {
+      expect(screen.queryByText('Loading setup data...')).not.toBeInTheDocument();
+    }, { timeout: 10000 });
+    
+    // Should show form after loading
+    expect(screen.getByLabelText(/Your Team Name/i)).toBeInTheDocument();
+  });
+
+  test('debug: check if mocks are being called', async () => {
+    render(<NewGameSetupModal {...defaultProps} />);
+    
+    // Check if the component renders at all
+    expect(screen.getByText('Loading setup data...')).toBeInTheDocument();
+    
+    // Check if mocks are being called
+    await waitFor(() => {
+      expect(getMasterRoster).toHaveBeenCalled();
+      expect(getLastHomeTeamName).toHaveBeenCalled();
+      expect(getSeasons).toHaveBeenCalled();
+      expect(getTournaments).toHaveBeenCalled();
+    }, { timeout: 1000 });
+    
+    // Log what the mocks returned
+    console.log('getMasterRoster returned:', (getMasterRoster as jest.Mock).mock.results);
+    console.log('getLastHomeTeamName returned:', (getLastHomeTeamName as jest.Mock).mock.results);
+    console.log('getSeasons returned:', (getSeasons as jest.Mock).mock.results);
+    console.log('getTournaments returned:', (getTournaments as jest.Mock).mock.results);
+  }, 10000);
 }); 

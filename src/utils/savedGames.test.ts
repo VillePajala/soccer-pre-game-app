@@ -236,9 +236,9 @@ describe('Saved Games Utilities', () => {
       localStorageMock.getItem.mockReturnValue(JSON.stringify(mockSavedGamesCollection));
       localStorageMock.setItem.mockReset(); // Reset setItem to check its call for delete
     });
-    it('should delete the game and return true', async () => {
-      // deleteGame now returns Promise<boolean>
-      await expect(deleteGame('game_123')).resolves.toBe(true);
+    it('should delete the game and return the gameId', async () => {
+      // deleteGame now returns Promise<string | null>
+      await expect(deleteGame('game_123')).resolves.toBe('game_123');
       
       expect(localStorageMock.setItem).toHaveBeenCalledTimes(1);
       const savedCollection = JSON.parse(localStorageMock.setItem.mock.calls[0][1]);
@@ -246,14 +246,14 @@ describe('Saved Games Utilities', () => {
       expect(savedCollection['game_456']).toEqual(mockGame2_AppState);
     });
 
-     it('should return false if game to delete is not found', async () => {
-      await expect(deleteGame('nonexistent_id')).resolves.toBe(false);
+     it('should return null if game to delete is not found', async () => {
+      await expect(deleteGame('nonexistent_id')).resolves.toBe(null);
       // setItem should not have been called if the game wasn't found for deletion
       expect(localStorageMock.setItem).not.toHaveBeenCalled();
     });
 
-    it('should return false if gameId is empty', async () => {
-      await expect(deleteGame('')).resolves.toBe(false);
+    it('should return null if gameId is empty', async () => {
+      await expect(deleteGame('')).resolves.toBe(null);
       expect(localStorageMock.setItem).not.toHaveBeenCalled();
     });
 

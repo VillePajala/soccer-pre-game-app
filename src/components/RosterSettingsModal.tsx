@@ -553,7 +553,12 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                                 <button onClick={() => { handleStartEdit(player.id); setActionsMenuPlayerId(null); }} className={`flex items-center w-full px-3 py-1.5 text-sm ${isRosterUpdating ? 'text-blue-600 opacity-50 cursor-not-allowed' : 'text-blue-300 hover:bg-slate-600'}`} disabled={isAddingPlayer || !!editingPlayerId || isRosterUpdating}>
                                  <HiOutlinePencil className="w-4 h-4 mr-2" /> {t('common.edit', 'Edit')}
                                 </button>
-                                <button onClick={() => { onRemovePlayer(player.id); setActionsMenuPlayerId(null); }} className={`flex items-center w-full px-3 py-1.5 text-sm ${isRosterUpdating ? 'text-red-600 opacity-50 cursor-not-allowed' : 'text-red-400 hover:bg-slate-600'}`} disabled={isAddingPlayer || !!editingPlayerId || isRosterUpdating}>
+                                <button onClick={() => { 
+                                  if (window.confirm(t('rosterSettingsModal.confirmDeletePlayer', 'Are you sure you want to remove this player? This action cannot be undone.'))) {
+                                    onRemovePlayer(player.id); 
+                                  }
+                                  setActionsMenuPlayerId(null); 
+                                }} className={`flex items-center w-full px-3 py-1.5 text-sm ${isRosterUpdating ? 'text-red-600 opacity-50 cursor-not-allowed' : 'text-red-400 hover:bg-slate-600'}`} disabled={isAddingPlayer || !!editingPlayerId || isRosterUpdating}>
                                  <HiOutlineTrash className="w-4 h-4 mr-2" /> {t('common.remove', 'Remove')}
                                 </button>
                               </div>
