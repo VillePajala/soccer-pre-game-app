@@ -5,6 +5,7 @@ import NewGameSetupModal from './NewGameSetupModal';
 import { getLastHomeTeamName, saveLastHomeTeamName } from '@/utils/appSettings';
 import { getSeasons, addSeason } from '@/utils/seasons';
 import { getTournaments, addTournament } from '@/utils/tournaments';
+import { getMasterRoster } from '@/utils/masterRosterManager';
 
 // Mock the utility functions
 jest.mock('@/utils/appSettings', () => ({
@@ -22,6 +23,10 @@ jest.mock('@/utils/tournaments', () => ({
   addTournament: jest.fn(),
 }));
 
+jest.mock('@/utils/masterRosterManager', () => ({
+  getMasterRoster: jest.fn(),
+}));
+
 // Mock i18n
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -32,11 +37,49 @@ jest.mock('react-i18next', () => ({
 describe('NewGameSetupModal', () => {
   const mockOnStart = jest.fn();
   const mockOnCancel = jest.fn();
+  
+  // Mock mutation objects with proper typing
+  const mockAddSeasonMutation = {
+    mutate: jest.fn(),
+    isPending: false,
+    isError: false,
+    error: null,
+    data: null,
+    reset: jest.fn(),
+    variables: undefined,
+    isIdle: false,
+    isSuccess: false,
+    status: 'idle' as const,
+    failureCount: 0,
+    failureReason: null,
+    mutateAsync: jest.fn(),
+  };
+  
+  const mockAddTournamentMutation = {
+    mutate: jest.fn(),
+    isPending: false,
+    isError: false,
+    error: null,
+    data: null,
+    reset: jest.fn(),
+    variables: undefined,
+    isIdle: false,
+    isSuccess: false,
+    status: 'idle' as const,
+    failureCount: 0,
+    failureReason: null,
+    mutateAsync: jest.fn(),
+  };
+  
   const defaultProps = {
     isOpen: true,
     initialPlayerSelection: ['player1', 'player2'],
     onStart: mockOnStart,
     onCancel: mockOnCancel,
+    addSeasonMutation: mockAddSeasonMutation as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+    addTournamentMutation: mockAddTournamentMutation as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+    isAddingSeason: false,
+    isAddingTournament: false,
   };
 
   const mockSeasonsData = [
@@ -49,6 +92,11 @@ describe('NewGameSetupModal', () => {
     { id: 'tournament2', name: 'Regional Tournament' }
   ];
 
+  const mockPlayersData = [
+    { id: 'player1', name: 'John Doe', jerseyNumber: 10 },
+    { id: 'player2', name: 'Jane Smith', jerseyNumber: 7 }
+  ];
+
   let consoleErrorSpy: jest.SpyInstance;
   let consoleWarnSpy: jest.SpyInstance;
   let consoleLogSpy: jest.SpyInstance;
@@ -58,6 +106,7 @@ describe('NewGameSetupModal', () => {
     
     (getLastHomeTeamName as jest.Mock).mockResolvedValue('Last Team');
     (saveLastHomeTeamName as jest.Mock).mockResolvedValue(true);
+    (getMasterRoster as jest.Mock).mockResolvedValue(mockPlayersData);
 
     (getSeasons as jest.Mock).mockResolvedValue(mockSeasonsData);
     (getTournaments as jest.Mock).mockResolvedValue(mockTournamentsData);
@@ -82,43 +131,55 @@ describe('NewGameSetupModal', () => {
     consoleLogSpy.mockRestore();
   });
 
+  // Helper function to wait for loading to complete
+  const waitForLoadingToComplete = async () => {
+    await waitFor(() => {
+      expect(screen.queryByText('Loading setup data...')).not.toBeInTheDocument();
+    }, { timeout: 3000 });
+  };
+
   test('loads the last home team name from appSettings utility and populates input', async () => {
     render(<NewGameSetupModal {...defaultProps} />);
     
+    // Wait for loading to complete
+    await waitForLoadingToComplete();
+    
     expect(getLastHomeTeamName).toHaveBeenCalled();
     
-    await waitFor(() => {
-    const homeTeamInput = screen.getByLabelText(/Home Team Name/i);
+    const homeTeamInput = screen.getByLabelText(/Your Team Name/i);
     expect(homeTeamInput).toHaveValue('Last Team');
-    });
   });
 
   test('loads seasons and tournaments using utility functions when opened', async () => {
     render(<NewGameSetupModal {...defaultProps} />);
     
-    await waitFor(() => expect(getSeasons).toHaveBeenCalled());
-    await waitFor(() => expect(getTournaments).toHaveBeenCalled());
+    // Wait for loading to complete
+    await waitForLoadingToComplete();
     
-    await waitFor(() => {
+    expect(getSeasons).toHaveBeenCalled();
+    expect(getTournaments).toHaveBeenCalled();
+    
     expect(screen.getByText('Spring 2024')).toBeInTheDocument();
     expect(screen.getByText('City Cup')).toBeInTheDocument();
-    });
   });
 
   test('saves last home team name using utility function on start', async () => {
     render(<NewGameSetupModal {...defaultProps} />);
     
-    const homeTeamInput = screen.getByLabelText(/Home Team Name/i);
+    // Wait for loading to complete
+    await waitForLoadingToComplete();
+    
+    const homeTeamInput = screen.getByLabelText(/Your Team Name/i);
     fireEvent.change(homeTeamInput, { target: { value: 'New Team Name' } });
     
-    const opponentInput = screen.getByLabelText(/Opponent/i);
+    const opponentInput = screen.getByLabelText(/Opponent Name/i);
     fireEvent.change(opponentInput, { target: { value: 'Opponent Team' } });
     
-    const startButton = screen.getByText(/Start/i);
+    const startButton = screen.getByText(/Confirm & Start Game/i);
     fireEvent.click(startButton);
     
     await waitFor(() => {
-    expect(saveLastHomeTeamName).toHaveBeenCalledWith('New Team Name');
+      expect(saveLastHomeTeamName).toHaveBeenCalledWith('New Team Name');
     });
     
     expect(mockOnStart).toHaveBeenCalledWith(
@@ -139,10 +200,13 @@ describe('NewGameSetupModal', () => {
   test('adds a new season using utility function', async () => {
     render(<NewGameSetupModal {...defaultProps} />);
     
-    const seasonSection = screen.getByText('Season:').closest('div');
+    // Wait for loading to complete
+    await waitForLoadingToComplete();
+    
+    const seasonSection = screen.getByText(/Season:/i).closest('div');
     if (!seasonSection) throw new Error('Season section not found');
     
-    fireEvent.click(within(seasonSection).getByText(/Create New/));
+    fireEvent.click(within(seasonSection).getByText(/Creating.../i));
     
     const seasonNameInput = screen.getByPlaceholderText(/Enter new season name/i);
     fireEvent.change(seasonNameInput, { target: { value: 'Fall 2024' } });
@@ -159,7 +223,10 @@ describe('NewGameSetupModal', () => {
   test('adds a new tournament using utility function', async () => {
     render(<NewGameSetupModal {...defaultProps} />);
     
-    const allCreateButtons = screen.getAllByText(/Create New/, { selector: 'button' });
+    // Wait for loading to complete
+    await waitForLoadingToComplete();
+    
+    const allCreateButtons = screen.getAllByText(/Creating.../i, { selector: 'button' });
     fireEvent.click(allCreateButtons[1]);
     
     const tournamentNameInput = screen.getByPlaceholderText(/Enter new tournament name/i);
@@ -176,28 +243,35 @@ describe('NewGameSetupModal', () => {
   test('does not call onStart if home team name is empty, and saveLastHomeTeamName is not called', async () => {
     render(<NewGameSetupModal {...defaultProps} />);
     
-    const homeTeamInput = screen.getByLabelText(/Home Team Name/i);
+    // Wait for loading to complete
+    await waitForLoadingToComplete();
+    
+    const homeTeamInput = screen.getByLabelText(/Your Team Name/i);
     fireEvent.change(homeTeamInput, { target: { value: '' } });
     
-    const opponentInput = screen.getByLabelText(/Opponent/i);
+    const opponentInput = screen.getByLabelText(/Opponent Name/i);
     fireEvent.change(opponentInput, { target: { value: 'Opponent Team' } });
     
     window.alert = jest.fn();
     
-    const startButton = screen.getByText(/Start/i);
+    const startButton = screen.getByText(/Confirm & Start Game/i);
     fireEvent.click(startButton);
     
-    await screen.findByText(/Start/i);
+    await waitFor(() => {
+      expect(window.alert).toHaveBeenCalled();
+    });
 
     expect(saveLastHomeTeamName).not.toHaveBeenCalled();
     expect(mockOnStart).not.toHaveBeenCalled();
-    expect(window.alert).toHaveBeenCalled();
   });
 
-  test('calls onCancel when cancel/skip button is clicked', () => {
+  test('calls onCancel when cancel button is clicked', async () => {
     render(<NewGameSetupModal {...defaultProps} />);
     
-    const cancelButton = screen.getByText(/Skip/i);
+    // Wait for loading to complete
+    await waitForLoadingToComplete();
+    
+    const cancelButton = screen.getByText(/Cancel/i);
     fireEvent.click(cancelButton);
     
     expect(mockOnCancel).toHaveBeenCalledTimes(1);
