@@ -539,13 +539,16 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
 
   // Wrap call in check
   const triggerDeleteEvent = (goalId: string) => {
-    // Combine checks for clarity and add non-null assertion
-    if (onDeleteGameEvent && typeof onDeleteGameEvent === 'function') { 
-      onDeleteGameEvent!(goalId); // ADD non-null assertion (!)
-      setLocalGameEvents(prevEvents => prevEvents.filter(event => event.id !== goalId));
-      // console.log(`Locally deleted event ${goalId} and called parent handler.`);
-      } else {
-      // console.warn("Delete handler (onDeleteGameEvent) not available or not a function.");
+    // Add confirmation dialog before deleting
+    if (window.confirm(t('gameStatsModal.confirmDeleteEvent', 'Are you sure you want to delete this event? This cannot be undone.'))) {
+      // Combine checks for clarity and add non-null assertion
+      if (onDeleteGameEvent && typeof onDeleteGameEvent === 'function') { 
+        onDeleteGameEvent!(goalId); // ADD non-null assertion (!)
+        setLocalGameEvents(prevEvents => prevEvents.filter(event => event.id !== goalId));
+        // console.log(`Locally deleted event ${goalId} and called parent handler.`);
+        } else {
+        // console.warn("Delete handler (onDeleteGameEvent) not available or not a function.");
+      }
     }
   };
 

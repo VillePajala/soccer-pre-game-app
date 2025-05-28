@@ -159,7 +159,7 @@ describe('importFullBackup', () => {
   });
 
   describe('Success Scenarios', () => {
-    it('should successfully restore valid backup data and overwrite localStorage', () => {
+    it('should successfully restore valid backup data and overwrite localStorage', async () => {
       // Arrange: Define valid backup data
       const validBackupData = {
         meta: { schema: 1, exportedAt: new Date().toISOString() },
@@ -187,7 +187,7 @@ describe('importFullBackup', () => {
       // REMOVE: const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
 
       // Act: Call the import function
-      const result = importFullBackup(backupJson);
+      const result = await importFullBackup(backupJson);
 
       // Assert: Check results
       expect(result).toBe(true); // Function should indicate success (before reload)
@@ -217,7 +217,7 @@ describe('importFullBackup', () => {
       expect(window.location.reload).toHaveBeenCalledTimes(1); // Now check if reload was called
     });
 
-    it('should successfully import partial backup data with only some keys present', () => {
+    it('should successfully import partial backup data with only some keys present', async () => {
       jest.useFakeTimers(); // Use FAKE timers for this test
       // Arrange: Define partial backup data with valid structure but only some keys
       const partialBackupData = {
@@ -243,7 +243,7 @@ describe('importFullBackup', () => {
       // REMOVE: const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
 
       // Act: Call the import function
-      const result = importFullBackup(backupJson);
+      const result = await importFullBackup(backupJson);
 
       // Assert: Check results
       expect(result).toBe(true); // Function should indicate success
@@ -269,7 +269,7 @@ describe('importFullBackup', () => {
   });
 
   describe('User Cancellation', () => {
-    it('should return false and not modify localStorage when user cancels import', () => {
+    it('should return false and not modify localStorage when user cancels import', async () => {
       // Arrange
       const validBackupData = { meta: { schema: 1 }, localStorage: { [SAVED_GAMES_KEY]: { game1: {} } } };
       const backupJson = JSON.stringify(validBackupData);
@@ -281,7 +281,7 @@ describe('importFullBackup', () => {
       const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
 
       // Act
-      const result = importFullBackup(backupJson);
+      const result = await importFullBackup(backupJson);
 
       // Assert
       expect(result).toBe(false);
@@ -297,7 +297,7 @@ describe('importFullBackup', () => {
   });
 
   describe('Validation Errors', () => {
-    it('should return false and not modify localStorage for invalid JSON input', () => {
+    it('should return false and not modify localStorage for invalid JSON input', async () => {
       // Arrange
       const invalidJson = "{ invalid json";
 
@@ -305,7 +305,7 @@ describe('importFullBackup', () => {
       const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
 
       // Act
-      const result = importFullBackup(invalidJson);
+      const result = await importFullBackup(invalidJson);
 
       // Assert
       expect(result).toBe(false);
@@ -318,7 +318,7 @@ describe('importFullBackup', () => {
       alertMock.mockRestore();
     });
     
-    it('should return false and show error for missing meta field', () => {
+    it('should return false and show error for missing meta field', async () => {
       // Arrange
       const backupData = { localStorage: {} }; // Missing meta
       const backupJson = JSON.stringify(backupData);
@@ -327,7 +327,7 @@ describe('importFullBackup', () => {
       const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
 
       // Act
-      const result = importFullBackup(backupJson);
+      const result = await importFullBackup(backupJson);
 
       // Assert
       expect(result).toBe(false);
@@ -338,7 +338,7 @@ describe('importFullBackup', () => {
       alertMock.mockRestore();
     });
 
-    it('should return false and show error for unsupported schema version', () => {
+    it('should return false and show error for unsupported schema version', async () => {
       // Arrange
       const backupData = { meta: { schema: 2 }, localStorage: {} }; 
       const backupJson = JSON.stringify(backupData);
@@ -347,7 +347,7 @@ describe('importFullBackup', () => {
       const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
 
       // Act
-      const result = importFullBackup(backupJson);
+      const result = await importFullBackup(backupJson);
 
       // Assert
       expect(result).toBe(false);
@@ -358,7 +358,7 @@ describe('importFullBackup', () => {
       alertMock.mockRestore();
     });
     
-    it('should return false and show error for missing localStorage field', () => {
+    it('should return false and show error for missing localStorage field', async () => {
       // Arrange
       const backupData = { meta: { schema: 1 } }; // Missing localStorage
       const backupJson = JSON.stringify(backupData);
@@ -367,7 +367,7 @@ describe('importFullBackup', () => {
       const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
 
       // Act
-      const result = importFullBackup(backupJson);
+      const result = await importFullBackup(backupJson);
 
       // Assert
       expect(result).toBe(false);
@@ -380,7 +380,7 @@ describe('importFullBackup', () => {
   });
 
   describe('Runtime Errors', () => {
-    it('should return false and show error when localStorage quota is exceeded', () => {
+    it('should return false and show error when localStorage quota is exceeded', async () => {
       // Arrange: Define valid backup data
       const validBackupData = {
         meta: { schema: 1, exportedAt: new Date().toISOString() },
@@ -409,7 +409,7 @@ describe('importFullBackup', () => {
 
       try {
         // Act: Call the import function
-        const result = importFullBackup(backupJson);
+        const result = await importFullBackup(backupJson);
 
         // Assert: Check results
         expect(result).toBe(false); // Function should indicate failure
@@ -474,13 +474,13 @@ describe('exportFullBackup', () => {
     }
   });
 
-  it('should trigger download with correct filename and content type', () => {
+  it('should trigger download with correct filename and content type', async () => {
     localStorageMock.setItem(SAVED_GAMES_KEY, JSON.stringify({ test: 'data' }));
     const expectedDate = new Date(2023, 0, 15, 10, 30, 0); // Fixed date
     // Store the spy instance to restore it in afterEach
     dateSpy = jest.spyOn(global, 'Date').mockImplementation(() => expectedDate);
 
-    exportFullBackup();
+    await exportFullBackup();
 
     expect(window.URL.createObjectURL).toHaveBeenCalledTimes(1);
     expect(document.createElement).toHaveBeenCalledWith('a');
@@ -511,7 +511,7 @@ describe('exportFullBackup', () => {
     localStorageMock.setItem(TOURNAMENTS_LIST_KEY, JSON.stringify(tournamentsDataDb));
     // localStorageMock.setItem('someOtherCustomKey', JSON.stringify({ custom: 'value' })); // This key is not in APP_DATA_KEYS, so it won't be backed up.
 
-    exportFullBackup();
+    await exportFullBackup();
 
     expect(window.URL.createObjectURL).toHaveBeenCalledTimes(1);
     const blobArgument = (window.URL.createObjectURL as jest.Mock).mock.calls[0][0] as BlobWithText;
@@ -537,7 +537,7 @@ describe('exportFullBackup', () => {
   it('should handle missing localStorage keys by setting them to null in backup', async () => {
     localStorageMock.setItem(SAVED_GAMES_KEY, JSON.stringify({ game1: 'data' }));
 
-    exportFullBackup();
+    await exportFullBackup();
 
     expect(window.URL.createObjectURL).toHaveBeenCalledTimes(1);
     const blobArgument = (window.URL.createObjectURL as jest.Mock).mock.calls[0][0] as Blob;
@@ -558,7 +558,7 @@ describe('exportFullBackup', () => {
     localStorageMock.setItem(APP_SETTINGS_KEY, 'this is not json');
     localStorageMock.setItem(MASTER_ROSTER_KEY, JSON.stringify(rosterDataDb));
 
-    exportFullBackup();
+    await exportFullBackup();
 
     expect(window.URL.createObjectURL).toHaveBeenCalledTimes(1);
     const blobArgument = (window.URL.createObjectURL as jest.Mock).mock.calls[0][0] as Blob;

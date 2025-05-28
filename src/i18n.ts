@@ -175,6 +175,8 @@ fiTranslations.gameStatsModal.exportCsvButton_season = 'Vie Kausi CSV';
 fiTranslations.gameStatsModal.exportCsvButton_tournament = 'Vie Turnaus CSV';
 fiTranslations.gameStatsModal.exportCsvButton_all = 'Vie Kaikki CSV';
 fiTranslations.gameStatsModal.titleOverall = 'Kokonaistilastot';
+fiTranslations.gameStatsModal.editNotes = 'Edit Notes';
+fiTranslations.gameStatsModal.confirmDeleteEvent = "Haluatko varmasti poistaa tämän tapahtuman?";
 
 // Add control bar menu translations
 if (!fiTranslations.controlBar) {
@@ -374,6 +376,7 @@ enTranslations.gameStatsModal.exportCsvButton_tournament = 'Export Tournament CS
 enTranslations.gameStatsModal.exportCsvButton_all = 'Export All CSV';
 enTranslations.gameStatsModal.titleOverall = 'Overall Stats';
 enTranslations.gameStatsModal.editNotes = 'Edit Notes';
+enTranslations.gameStatsModal.confirmDeleteEvent = "Are you sure you want to delete this event?";
 
 // Add control bar menu translations for English
 if (!enTranslations.controlBar) {

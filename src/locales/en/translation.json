@@ -109,7 +109,8 @@
     "toggleSelection": "Toggle player selection for match",
     "removeFairPlay": "Remove Fair Play",
     "awardFairPlay": "Award Fair Play Card",
-    "actions": "Actions"
+    "actions": "Actions",
+    "confirmDeletePlayer": "Are you sure you want to remove this player? This action cannot be undone."
   },
   "loadGameModal": {
       "noGamesToExport": "No saved games to export.",

@@ -128,7 +128,8 @@
     "toggleSelection": "Valitse/poista valinta pelaajalle otteluun",
     "removeFairPlay": "Poista Fair Play -kortti",
     "awardFairPlay": "Anna Fair Play -kortti",
-    "actions": "Toiminnot"
+    "actions": "Toiminnot",
+    "confirmDeletePlayer": "Haluatko varmasti poistaa tämän pelaajan? Tätä toimintoa ei voi peruuttaa."
   },
   "loadGameModal": {
     "noGamesToExport": "Ei tallennettuja pelejä vietäväksi.",

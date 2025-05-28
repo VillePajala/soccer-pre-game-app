@@ -131,10 +131,6 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
 
-  // RE-ADD local state for Time inputs for better responsiveness
-  const [localHour, setLocalHour] = useState<string>('');
-  const [localMinute, setLocalMinute] = useState<string>('');
-
   // NEW: Loading and Error states for modal operations
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -145,20 +141,20 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       const fetchModalData = async () => {
-        try {
+      try {
           const loadedSeasonsData = await getSeasons();
           setSeasons(Array.isArray(loadedSeasonsData) ? loadedSeasonsData : []);
-        } catch (error) {
-          console.error('Error loading seasons:', error);
-          setSeasons([]);
-        }
-        try {
+      } catch (error) {
+        console.error('Error loading seasons:', error);
+        setSeasons([]);
+      }
+      try {
           const loadedTournamentsData = await getTournaments();
           setTournaments(Array.isArray(loadedTournamentsData) ? loadedTournamentsData : []);
-        } catch (error) {
-          console.error('Error loading tournaments:', error);
-          setTournaments([]);
-        }
+      } catch (error) {
+        console.error('Error loading tournaments:', error);
+        setTournaments([]);
+      }
       };
       fetchModalData();
     }
@@ -168,22 +164,6 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   useEffect(() => {
     setLocalGameEvents(gameEvents); 
   }, [gameEvents]);
-
-  // ADD Effect to sync local time state with incoming prop (Conditionally)
-  useEffect(() => {
-    if (gameTime) {
-      const parts = gameTime.split(':');
-      if (parts.length === 2) {
-        setLocalHour(parts[0]);
-        setLocalMinute(parts[1]);
-      }
-    } else {
-      // Reset local state when gameTime is empty
-      setLocalHour('');
-      setLocalMinute('');
-    }
-  // Include all dependencies that this effect uses
-  }, [gameTime]);
 
   // Focus goal time input (Keep this)
   useEffect(() => {
@@ -311,7 +291,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
     const originalEvent = localGameEvents.find(e => e.id === goalId);
     if (!originalEvent) {
         console.error(`[GameSettingsModal] Original event not found for ID: ${goalId}`);
-        return;
+      return;
     }
 
     const updatedEvent: GameEvent = {
@@ -364,7 +344,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
       return;
     }
 
-    if (window.confirm(t('gameSettingsModal.confirmDeleteEvent', 'Are you sure you want to delete this event? This cannot be undone.'))) {
+      if (window.confirm(t('gameSettingsModal.confirmDeleteEvent', 'Are you sure you want to delete this event? This cannot be undone.'))) {
       setError(null);
       setIsProcessing(true);
       try {
@@ -379,8 +359,8 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
         // Update local state immediately for UI responsiveness - Parent state updated via prop
         const originalLocalEvents = localGameEvents;
         setLocalGameEvents(prevEvents => prevEvents.filter(event => event.id !== goalId));
-        onDeleteGameEvent(goalId); 
-
+        onDeleteGameEvent(goalId);
+        
         const success = await removeGameEvent(currentGameId, eventIndex);
         if (success) {
           console.log(`[GameSettingsModal] Event ${goalId} removed from game ${currentGameId}.`);
@@ -484,7 +464,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
       if (success) {
         console.log(`[GameSettingsModal] Inline edit for ${fieldProcessed} saved for game ${currentGameId}.`);
         setInlineEditingField(null); // Exit inline edit mode on success
-        setInlineEditValue('');
+    setInlineEditValue('');
       }
     } catch (err) {
       console.error(`[GameSettingsModal] Error saving inline edit for ${fieldProcessed} (Game ID: ${currentGameId}):`, err);
@@ -513,81 +493,6 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
       handleConfirmInlineEdit();
     } else if (event.key === 'Escape') {
       handleCancelInlineEdit();
-    }
-  };
-
-  // Handlers for separate HH/MM time inputs (Refactored)
-  const handleHourChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    setError(null);
-    const newHour = e.target.value; 
-    if (/^\d{0,2}$/.test(newHour)) { 
-      setLocalHour(newHour); 
-      const finalHour = newHour.padStart(2, '0');
-      if (newHour === '' && (localMinute === '' || localMinute === '00')) {
-        onGameTimeChange('');
-        if (currentGameId) {
-          setIsProcessing(true);
-          try {
-            await updateGameDetails(currentGameId, { gameTime: '' });
-          } catch (err) {
-            console.error("[GameSettingsModal] Failed to update gameTime (hour change to empty):", err);
-            setError(t('gameSettingsModal.errors.timeUpdateFailed', 'Error updating game time.'));
-          } finally {
-            setIsProcessing(false);
-          }
-        }
-      } else if ((/^([01]\d|2[0-3])$/.test(finalHour) || finalHour === '00') && /^[0-5]\d$/.test(localMinute.padStart(2,'0'))) {
-        const newTime = `${finalHour}:${localMinute.padStart(2,'0')}`; 
-        onGameTimeChange(newTime);
-        if (currentGameId) {
-          setIsProcessing(true);
-          try {
-            await updateGameDetails(currentGameId, { gameTime: newTime });
-          } catch (err) {
-            console.error("[GameSettingsModal] Failed to update gameTime (hour change):", err);
-            setError(t('gameSettingsModal.errors.timeUpdateFailed', 'Error updating game time.'));
-          } finally {
-            setIsProcessing(false);
-          }
-        }
-      }
-    }
-  };
-
-  const handleMinuteChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    setError(null);
-    const newMinute = e.target.value; 
-    if (/^\d{0,2}$/.test(newMinute)) { 
-      setLocalMinute(newMinute); 
-      const finalMinute = newMinute.padStart(2, '0');
-      if (newMinute === '' && (localHour === '' || localHour === '00')) {
-        onGameTimeChange('');
-        if (currentGameId) {
-          setIsProcessing(true);
-          try {
-            await updateGameDetails(currentGameId, { gameTime: '' });
-          } catch (err) {
-            console.error("[GameSettingsModal] Failed to update gameTime (minute change to empty):", err);
-            setError(t('gameSettingsModal.errors.timeUpdateFailed', 'Error updating game time.'));
-          } finally {
-            setIsProcessing(false);
-          }
-        }
-      } else if ((/^([01]\d|2[0-3])$/.test(localHour.padStart(2,'0')) || localHour.padStart(2,'0') === '00') && /^[0-5]\d$/.test(finalMinute)) {
-        const newTime = `${localHour.padStart(2,'0')}:${finalMinute}`;
-        onGameTimeChange(newTime);
-        if (currentGameId) {
-          setIsProcessing(true);
-          try {
-            await updateGameDetails(currentGameId, { gameTime: newTime });
-          } catch (err) {
-            console.error("[GameSettingsModal] Failed to update gameTime (minute change):", err);
-            setError(t('gameSettingsModal.errors.timeUpdateFailed', 'Error updating game time.'));
-          } finally {
-            setIsProcessing(false);
-          }
-        }
-      }
     }
   };
 
@@ -659,7 +564,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
               <p>{error}</p>
             </div>
           )}
-
+          
           {/* Game Info Section - Apply Card Styles */}
           <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-700">
             <h3 className="text-lg font-semibold text-slate-200 mb-3">{t('gameSettingsModal.gameInfo', 'Game Info')}</h3>
@@ -766,37 +671,36 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                 )}
               </div>
               
-              {/* Game Time - Separate Inputs (Apply consistent input styles) */}
+              {/* Game Time - Reverted to single input type="time" */}
               <div className={gridItemStyle}>
                 <span className={labelStyle}>
                   <FaClock className="mr-1.5 text-slate-500" size={12} />
                   {t('gameSettingsModal.time', 'Time')}:
                 </span>
-                   <span className="flex items-center space-x-1 mt-1"> {/* Added spacing & margin */} 
                     <input 
-                          type="number"
-                          min="0"
-                          max="23"
-                          step="1"
-                          value={localHour} 
-                          onChange={handleHourChange} 
-                          className={`${editInputStyle} w-16 text-center px-1`} 
-                          placeholder={t('common.hourShort', 'HH')}
-                          disabled={isProcessing} // Disable if processing
+                    type="time"
+                    value={gameTime} // Directly use gameTime prop (should be HH:MM or "")
+                    onChange={async (e) => {
+                        const newTimeValue = e.target.value; // Format is HH:MM
+                        onGameTimeChange(newTimeValue); // Update parent state
+
+                        if (currentGameId) {
+                            setIsProcessing(true);
+                            setError(null);
+                            try {
+                                await updateGameDetails(currentGameId, { gameTime: newTimeValue });
+                                console.log(`[GameSettingsModal] Updated gameTime to ${newTimeValue}`);
+                            } catch (err) {
+                                console.error("[GameSettingsModal] Failed to update gameTime:", err);
+                                setError(t('gameSettingsModal.errors.timeUpdateFailed', 'Error updating game time.'));
+                            } finally {
+                                setIsProcessing(false);
+                            }
+                        }
+                    }}
+                    className={`${editInputStyle} w-auto px-2 py-1 mt-1`} 
+                    disabled={isProcessing}
                       />
-                      <span className="text-slate-400">:</span>
-                    <input 
-                          type="number"
-                          min="0"
-                          max="59"
-                          step="1"
-                          value={localMinute} 
-                          onChange={handleMinuteChange} 
-                          className={`${editInputStyle} w-16 text-center px-1`} 
-                          placeholder={t('common.minuteShort', 'MM')}
-                          disabled={isProcessing} // Disable if processing
-                      />
-                  </span>
               </div>
 
               {/* Scores (Readonly) */}
@@ -893,7 +797,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                         if (isProcessing) return;
                         // console.log('[GameSettingsModal] Association button clicked: season');
                         if (seasons && seasons.length > 0) {
-                          onSeasonIdChange(seasons[0].id); 
+                          onSeasonIdChange(seasons[0].id);
                           // Potentially trigger DB save if this action should persist immediately
                         } else if (associationType !== 'season') {
                           onSeasonIdChange('');
@@ -1109,7 +1013,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                   </svg>
                                 ) : (
-                                  <FaSave size={14}/>
+                                <FaSave size={14}/>
                                 )}
                               </button>
                               <button
@@ -1148,7 +1052,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                     </svg>
                                   ) : (
-                                    <FaTrashAlt size={13}/>
+                                  <FaTrashAlt size={13}/>
                                   )}
                                               </button>
                               )}

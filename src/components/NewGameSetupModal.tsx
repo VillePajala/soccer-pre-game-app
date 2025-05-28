@@ -4,10 +4,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Player, Season, Tournament } from '@/types';
 import { HiPlusCircle } from 'react-icons/hi';
-import { getSeasons as utilGetSeasons, addSeason as utilAddSeason } from '@/utils/seasons';
-import { getTournaments as utilGetTournaments, addTournament as utilAddTournament } from '@/utils/tournaments';
+import { getSeasons as utilGetSeasons } from '@/utils/seasons';
+import { getTournaments as utilGetTournaments } from '@/utils/tournaments';
 import { getMasterRoster } from '@/utils/masterRosterManager';
 import { getLastHomeTeamName as utilGetLastHomeTeamName, saveLastHomeTeamName as utilSaveLastHomeTeamName } from '@/utils/appSettings';
+import { UseMutationResult } from '@tanstack/react-query';
 
 interface NewGameSetupModalProps {
   isOpen: boolean;
@@ -26,6 +27,10 @@ interface NewGameSetupModalProps {
     homeOrAway: 'home' | 'away'
   ) => void;
   onCancel: () => void;
+  addSeasonMutation: UseMutationResult<Season | null, Error, { name: string }, unknown>;
+  addTournamentMutation: UseMutationResult<Tournament | null, Error, { name: string }, unknown>;
+  isAddingSeason: boolean;
+  isAddingTournament: boolean;
 }
 
 const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
@@ -33,6 +38,10 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   initialPlayerSelection,
   onStart,
   onCancel,
+  addSeasonMutation,
+  addTournamentMutation,
+  isAddingSeason,
+  isAddingTournament,
 }) => {
   const { t } = useTranslation();
   const [homeTeamName, setHomeTeamName] = useState('');
@@ -194,26 +203,32 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
     }
 
     try {
-      const newSeason = await utilAddSeason(trimmedName);
+      // Use the mutation
+      const newSeason = await addSeasonMutation.mutateAsync({ name: trimmedName });
       
       if (newSeason) {
-        setSeasons(prevSeasons => [...prevSeasons, newSeason]);
+        // onSuccess in page.tsx will invalidate and refetch seasons.
+        // The local 'seasons' state in this modal will be updated by the useEffect 
+        // that fetches seasons when the modal opens, or if we explicitly refetch here.
+        // For now, we'll update the selection and UI, relying on eventual consistency.
+        setSeasons(prevSeasons => [...prevSeasons, newSeason].sort((a, b) => a.name.localeCompare(b.name)));
         setSelectedSeasonId(newSeason.id);
         setSelectedTournamentId(null);
         setNewSeasonName(''); 
         setShowNewSeasonInput(false); 
-      console.log("Added new season:", newSeason);
+        console.log("Add season mutation initiated for:", newSeason.name);
+        // No need to manually update 'seasons' state here if page.tsx invalidates
       } else {
-        console.warn("utilAddSeason returned null, season might not have been added or error handled by utility.");
+        // This block might be reached if mutateAsync resolves but utilAddSeason returned null (e.g., duplicate)
+        // The mutation's onSuccess/onError in page.tsx would have more context.
+        console.warn("addSeasonMutation.mutateAsync completed, but newSeason is null. Check mutation's onSuccess/onError for details.");
+        // alert for duplicate is better handled by the mutation's error/success reporting if it returns a specific error or null for it
       }
-
     } catch (error) {
-      console.error("Failed to save new season (unexpected error):", error);
-      if (error instanceof Error) {
-          alert(t('newGameSetupModal.errorAddingSeasonGeneric', 'Error adding new season. See console for details.'));
-      } else {
-        alert(t('newGameSetupModal.errorAddingSeasonGeneric', 'An unexpected error occurred.'));
-      }
+      // This catch is for errors from mutateAsync itself, if not handled by mutation's onError
+      console.error("Error calling addSeasonMutation.mutateAsync:", error);
+      // alert(t('newGameSetupModal.errorAddingSeasonGeneric', 'Error initiating add season. See console.'));
+      // The actual user-facing error for mutation failure should come from the mutation's onError handler in page.tsx
       newSeasonInputRef.current?.focus();
     }
   };
@@ -228,26 +243,23 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
     }
 
     try {
-      const newTournament = await utilAddTournament(trimmedName); // Now async
+      // Use the mutation
+      const newTournament = await addTournamentMutation.mutateAsync({ name: trimmedName });
 
       if (newTournament) {
-        setTournaments(prevTournaments => [...prevTournaments, newTournament]);
+        setTournaments(prevTournaments => [...prevTournaments, newTournament].sort((a,b) => a.name.localeCompare(b.name)));
         setSelectedTournamentId(newTournament.id); 
         setSelectedSeasonId(null); 
         setNewTournamentName(''); 
         setShowNewTournamentInput(false); 
-      console.log("Added new tournament:", newTournament);
+        console.log("Add tournament mutation initiated for:", newTournament.name);
+        // No need to manually update 'tournaments' state here
       } else {
-        console.warn("utilAddTournament returned null, tournament might not have been added or error handled by utility.");
+        console.warn("addTournamentMutation.mutateAsync completed, but newTournament is null.");
       }
-
     } catch (error) {
-      console.error("Failed to save new tournament (unexpected error):", error);
-      if (error instanceof Error) {
-          alert(t('newGameSetupModal.errorAddingTournamentGeneric', 'Error adding new tournament. See console for details.'));
-      } else {
-        alert(t('newGameSetupModal.errorAddingTournamentGeneric', 'An unexpected error occurred.'));
-      }
+      console.error("Error calling addTournamentMutation.mutateAsync:", error);
+      // alert(t('newGameSetupModal.errorAddingTournamentGeneric', 'Error initiating add tournament. See console.'));
       newTournamentInputRef.current?.focus();
     }
   };
@@ -527,7 +539,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
               {isLoading ? t('newGameSetupModal.loadingPlayers', 'Loading players...') : t('newGameSetupModal.noPlayersInRoster', 'No players in master roster. Add players in Roster Settings.')}
             </p>
           )}
-        </div>
+          </div>
 
         {/* Season Selection */}
         <div className="mb-3 p-3 border border-slate-700/80 rounded-md bg-slate-700/30">
@@ -540,10 +552,10 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                       onClick={handleShowCreateSeason}
                       className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={!!selectedTournamentId || isLoading}
-                      title={t('newGameSetupModal.createNewSeasonTitle', 'Create New Season') ?? undefined}
+                      title={isAddingSeason ? t('newGameSetupModal.creating', 'Creating...') : t('newGameSetupModal.createSeason')}
                   >
                     <HiPlusCircle className="w-4 h-4 mr-1" />
-                    {t('newGameSetupModal.createButton', 'Create New')}
+                    {isAddingSeason ? t('newGameSetupModal.creating', 'Creating...') : t('newGameSetupModal.createSeason')}
                   </button>
               )}
             </div>
@@ -607,10 +619,10 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                           onClick={handleShowCreateTournament}
                           className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={!!selectedSeasonId || isLoading}
-                          title={t('newGameSetupModal.createNewTournamentTitle', 'Create New Tournament') ?? undefined}
+                          title={isAddingTournament ? t('newGameSetupModal.creating', 'Creating...') : t('newGameSetupModal.createTournament')}
                       >
                       <HiPlusCircle className="w-4 h-4 mr-1" />
-                      {t('newGameSetupModal.createButton', 'Create New')}
+                      {isAddingTournament ? t('newGameSetupModal.creating', 'Creating...') : t('newGameSetupModal.createTournament')}
                       </button>
                   )}
               </div>
