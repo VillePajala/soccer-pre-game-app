@@ -3098,6 +3098,11 @@ export default function Home() {
   return (
     // Main container with flex column layout
     <div className="flex flex-col h-screen bg-gray-900 text-white relative">
+      {/* TEST VERSION BANNER */}
+      <div className="bg-red-600 text-white text-center py-1 text-sm font-bold">
+        ⚠️ TEST VERSION - DO NOT USE FOR PRODUCTION ⚠️
+      </div>
+      
       {/* REMOVED Fullscreen Toggle Button from here */}
 
       {/* Replace Suspense with a regular div */}

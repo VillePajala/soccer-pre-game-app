@@ -1,7 +1,7 @@
 {
-    "name": "Coaching Companion",
-    "short_name": "Coaching Companion",
-    "description": "Soccer Tactics and Timer App for Coaches",
+    "name": "TEST - Coaching Companion",
+    "short_name": "TEST Coach",
+    "description": "TEST VERSION - Soccer Tactics and Timer App for Coaches",
     "start_url": "/",
     "display": "fullscreen",
     "background_color": "#111827",

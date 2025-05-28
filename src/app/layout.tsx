@@ -7,8 +7,8 @@ import QueryProvider from './QueryProvider';
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Coaching Companion",
-  description: "Soccer Tactics and Timer App for Coaches",
+  title: "TEST - Coaching Companion",
+  description: "TEST VERSION - Soccer Tactics and Timer App for Coaches",
   icons: {
     icon: '/pepo-logo.png',
     apple: '/pepo-logo.png',
