@@ -84,10 +84,10 @@ We employ a three-layered testing approach:
       * ✅ Includes helper for creating players (`createPlayer`).
       * ✅ Tests validation of player properties and data types.
 
-    * **`src/utils/rosterUtils.test.ts`**:
-      * ✅ Tests roster utility functions.
-      * ✅ Tests player data manipulation and validation.
-      * ✅ Tests roster state management.
+    * **`src/utils/rosterUtils.test.ts`** (DELETED - Functionality likely merged elsewhere or covered by `roster.test.ts`):
+      * Formerly tested roster utility functions.
+      * Formerly tested player data manipulation and validation.
+      * Formerly tested roster state management.
 
     * **`src/utils/seasons.test.ts`** (New):
       * ✅ Handles `localStorage` interactions for seasons: `getSeasons`, `saveSeasons`.
@@ -167,9 +167,16 @@ We employ a three-layered testing approach:
       * ✅ Displays current game stats table and event log.
       * 🚧 Needs tests for tab switching, filtering, sorting, editing info/notes/events, export, Fair Play.
 
-    * **`src/components/NewGameSetupModal.test.tsx`** (Assumed - check if test file exists):
-      * 🚧 (Tests might need update/creation if not already covering new season/tournament creation via utils)
+    * **`src/components/NewGameSetupModal.test.tsx`**:
+      * ✅ Tests loading of last home team name.
+      * ✅ Tests loading of seasons and tournaments.
+      * ✅ Tests saving of home team name on start.
+      * ✅ Tests adding new seasons and tournaments using utility functions.
+      * ✅ Validates required fields (e.g., home team name).
+      * ✅ Tests cancel functionality.
+      * ✅ Tests initial loading state and transition to form.
       * ✅ Refactored to use `seasons.ts` and `tournaments.ts` utilities for adding new seasons/tournaments.
+      * ✅ Mocks `react-query` mutations for adding seasons/tournaments.
 
 ## End-to-End Tests (Playwright)
 
@@ -203,6 +210,7 @@ We employ a three-layered testing approach:
   * ✅ Added corresponding unit tests (`seasons.test.ts`, `tournaments.test.ts`) ensuring these utilities function correctly.
   * ✅ Refactored `NewGameSetupModal.tsx`, `LoadGameModal.tsx`, and `GameSettingsModal.tsx` to utilize the new season/tournament utility functions, improving data flow and separation of concerns.
   * ✅ Consolidated `Season` and `Tournament` TypeScript interface definitions, making `src/app/page.tsx` the primary source and updating utility files to import from there.
+  * ✅ Added `src/utils/localStorage.ts` for generic localStorage operations (Unit tests for this utility should be considered if not already planned/existing).
 
 ## Progress Report
 
@@ -378,4 +386,31 @@ The following components currently lack test coverage:
 
 1. **Components:**
    * `ControlBar.tsx`
-   * `
+   * `FieldPlayer.tsx`
+   * `GoalieControls.tsx`
+   * `Header.tsx`
+   * `InstallPrompt.tsx`
+   * `LanguageSwitcher.tsx`
+   * `PlayerCard.tsx`
+   * `PlayerList.tsx`
+   * `PositionBadge.tsx`
+   * `ServiceWorkerRegistration.tsx`
+   * `SideBar.tsx`
+   * `SoccerField.tsx`
+   * `StatDisplay.tsx`
+   * `SubPlayerCard.tsx`
+   * `TeamStats.tsx`
+   * `TimerControls.tsx`
+   * `TimerDisplay.tsx`
+   * `TimerOverlay.tsx`
+   * `AppThemeProvider.tsx` (if applicable, for theme switching logic)
+   * `ConfirmModal.tsx` (if generic and testable in isolation)
+   * `EditableLabel.tsx` (if generic and testable in isolation)
+   * `InfoTooltip.tsx` (if generic and testable in isolation)
+   * Any other UI components not covered by existing integration tests.
+
+2. **Hooks:**
+    * Custom hooks in `src/hooks/` that are not indirectly tested via components.
+
+3. **Services/Utilities (if not covered or newly added):**
+    * `src/utils/localStorage.ts` (Consider adding `localStorage.test.ts`)
