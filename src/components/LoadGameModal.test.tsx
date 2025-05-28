@@ -686,9 +686,8 @@ describe('LoadGameModal', () => {
           error: new DOMException("Mock read error", "NotReadableError"),
           set onerror(handler: (() => void) | null) { capturedOnerror = handler; },
           get onload() { return null; }, 
-          // eslint-disable-next-line @typescript-eslint/no-empty-function
           set onload(_handler: null) { /* No-op for error test */ },
-          get readyState() { return 2; }, 
+          get readyState() { return 2; },
         };
         const fileReaderSpy = jest.spyOn(window, 'FileReader').mockImplementation(() => mockFileReaderInstance as unknown as FileReader);
 

@@ -210,7 +210,7 @@ export function useGameState({ initialState, saveStateToHistory }: UseGameStateA
         } catch (error) {
             console.error(`[useGameState:handleToggleGoalie] Error toggling goalie for ID ${playerId}:`, error);
         }
-    }, [availablePlayers, playersOnField, saveStateToHistory, setAvailablePlayers, setPlayersOnField]);
+    }, [availablePlayers, saveStateToHistory, setAvailablePlayers, setPlayersOnField]);
 
     // ... (more handlers will be moved here later)
 
