@@ -1,4 +1,4 @@
-import { Player } from '@/app/page';
+import { Player } from '@/types';
 
 // Constants used in the app
 const MASTER_ROSTER_KEY = 'soccerMasterRoster';

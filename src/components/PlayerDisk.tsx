@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { Player, GameEvent } from '@/app/page'; // Import Player & GameEvent type
+import { Player } from '@/types'; // Import Player from types
+import { GameEvent } from '@/app/page'; // Import GameEvent type
 import {
     HiOutlineShieldCheck, // Goalie icon
 } from 'react-icons/hi2';
