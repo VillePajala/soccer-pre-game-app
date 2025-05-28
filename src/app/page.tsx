@@ -63,6 +63,8 @@ import { queryKeys } from '@/config/queryKeys';
 // Also import addSeason and addTournament for the new mutations
 import { addSeason as utilAddSeason } from '@/utils/seasons';
 import { addTournament as utilAddTournament } from '@/utils/tournaments';
+// Import constants
+import { DEFAULT_GAME_ID, MASTER_ROSTER_KEY } from '@/config/constants';
 
 // Define the Point type for drawing - Use relative coordinates
 export interface Point {
@@ -183,11 +185,9 @@ const initialState: AppState = {
 };
 
 // Define new localStorage keys
-export const SAVED_GAMES_KEY = 'savedSoccerGames';
-export const APP_SETTINGS_KEY = 'soccerAppSettings';
 const SEASONS_LIST_KEY = 'soccerSeasons';
 // const TOURNAMENTS_LIST_KEY = 'soccerTournaments'; // Removed unused variable
-const MASTER_ROSTER_KEY = 'soccerMasterRoster'; // <<< NEW KEY for global roster
+// const MASTER_ROSTER_KEY = 'soccerMasterRoster'; // <<< NEW KEY for global roster - now imported from constants
 
 // Define structure for settings
 // interface AppSettings {
@@ -201,8 +201,7 @@ export interface SavedGamesCollection {
   [gameId: string]: AppState; // Use AppState for the game state structure
 }
 
-// Define a default Game ID for the initial/unsaved state
-export const DEFAULT_GAME_ID = '__default_unsaved__';
+// Define a default Game ID for the initial/unsaved state - now imported from constants
 
 
 
@@ -898,7 +897,6 @@ export default function Home() {
     };
 
     loadInitialAppData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     masterRosterQueryResultData, isMasterRosterQueryLoading, isMasterRosterQueryError, masterRosterQueryErrorData,
     seasonsQueryResultData, areSeasonsQueryLoading, isSeasonsQueryError, seasonsQueryErrorData,
@@ -1083,7 +1081,7 @@ export default function Home() {
     autoSave();
     // Dependencies: Include all state variables that are part of the saved snapshot
   }, [isLoaded, currentGameId,
-      playersOnField, opponents, drawings, availablePlayers, 
+      playersOnField, opponents, drawings, availablePlayers, masterRosterQueryResultData,
       // showPlayerNames, // REMOVED - Covered by gameSessionState
       // Local states that are part of the snapshot but not yet in gameSessionState:
       // gameEvents, // REMOVE - Now from gameSessionState
@@ -2144,7 +2142,7 @@ export default function Home() {
     } finally {
       // setIsRosterUpdating(false); // UI should use updatePlayerMutation.isPending
     }
-  }, [updatePlayerMutation, t]); // Added t for translations if used in error
+  }, [updatePlayerMutation]); // Removed t - it's stable from useTranslation
   
   const handleSetJerseyNumberForModal = useCallback(async (playerId: string, jerseyNumber: string) => {
     console.log(`[Page.tsx] handleSetJerseyNumberForModal attempting mutation for ID: ${playerId}, new number: ${jerseyNumber}`);
@@ -2209,7 +2207,7 @@ export default function Home() {
       // finally { // This block is removed
         // setIsRosterUpdating(false); // This line is removed - UI should use removePlayerMutation.isPending
       // }
-    }, [removePlayerMutation, t]); // CORRECTED Dependencies: only removePlayerMutation and t (for translations)
+    }, [removePlayerMutation]); // Removed t - it's stable from useTranslation
 
     // ... (start of handleAddPlayerForModal) ...
       // ... (ensure this is after the closing `}, [removePlayerMutation, t]);` of handleRemovePlayerForModal)
@@ -2239,7 +2237,7 @@ export default function Home() {
       // finally { // This block is removed
         // setIsRosterUpdating(false); // This line is removed - UI should use addPlayerMutation.isPending
       // }
-    }, [addPlayerMutation, t]); // CORRECTED Dependencies: only addPlayerMutation and t
+    }, [addPlayerMutation]); // Removed t - it's stable from useTranslation
 
     // ... (start of handleToggleGoalieForModal)
 
@@ -2263,7 +2261,7 @@ export default function Home() {
       // Errors are primarily handled by the mutation's onError.
       console.error(`[Page.tsx] Exception during setGoalieStatusMutation.mutateAsync for goalie toggle of ${playerId}:`, error);
     }
-  }, [availablePlayers, setGoalieStatusMutation, t]); // Added t and setGoalieStatusMutation, removed others
+  }, [availablePlayers, setGoalieStatusMutation]); // Added setGoalieStatusMutation, removed others
 
   // --- END Roster Management Handlers ---
 
