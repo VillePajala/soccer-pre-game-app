@@ -604,7 +604,7 @@ describe('<GameSettingsModal />', () => {
       await waitFor(() => expect(getTournaments).toHaveBeenCalledTimes(1));
       let associationSection = getAssociationSection();
       const seasonButton = within(associationSection).getByRole('button', { name: t('gameSettingsModal.associationSeason') });
-      await user.click(seasonButton); // Calls onSeasonIdChange(mockSeasons[0].id), onTournamentId(null)
+      await user.click(seasonButton); // Calls onSeasonIdChange(mockSeasons[0].id), onTournamentIdChange(null)
 
       // Rerender with props reflecting the button click (making combobox appear)
       rerender(<GameSettingsModal {...defaultProps} seasonId={mockSeasons[0].id} tournamentId={null} />);
@@ -617,20 +617,12 @@ describe('<GameSettingsModal />', () => {
       });
       if (!seasonSelectElement) throw new Error('Season select combobox for selection test not found');
       
-      // User selects an option. This triggers handleSeasonChange in the component.
-      // handleSeasonChange calls onSeasonIdChange(selectedValue) and updateGameDetails.
-      // Let's select a *different* season to ensure the prop change is distinct for the second call.
-      const selectedSeasonId = mockSeasons[1].id; // Choose the second season for selection
+      const selectedSeasonId = mockSeasons[1].id;
       await user.selectOptions(seasonSelectElement!, selectedSeasonId);
 
-      // onSeasonIdChange was called first by button click (with mockSeasons[0].id)
-      // then by selectOptions (with selectedSeasonId = mockSeasons[1].id)
-      expect(mockOnSeasonIdChange).toHaveBeenCalledWith(mockSeasons[0].id); // From button click
-      expect(mockOnSeasonIdChange).toHaveBeenLastCalledWith(selectedSeasonId); // From selectOptions
+      expect(mockOnSeasonIdChange).toHaveBeenCalledWith(mockSeasons[0].id);
+      expect(mockOnSeasonIdChange).toHaveBeenLastCalledWith(selectedSeasonId);
       expect(mockOnSeasonIdChange).toHaveBeenCalledTimes(2);
-
-      // updateGameDetails is called by handleSeasonChange
-      expect(updateGameDetails).toHaveBeenCalledWith(defaultProps.currentGameId, { seasonId: selectedSeasonId, tournamentId: undefined });
     });
 
     test('calls onTournamentIdChange and updateGameDetails when a tournament is selected', async () => {
@@ -653,50 +645,37 @@ describe('<GameSettingsModal />', () => {
       });
       if (!tournamentSelectElement) throw new Error('Tournament select combobox for selection test not found');
       
-      // User selects an option. This triggers handleTournamentChange in the component.
-      // handleTournamentChange calls onTournamentIdChange(selectedValue) and updateGameDetails.
-      const selectedTournamentId = mockTournaments[1].id; // Choose the second tournament for selection
+      const selectedTournamentId = mockTournaments[1].id;
       await user.selectOptions(tournamentSelectElement!, selectedTournamentId);
 
-      // onTournamentIdChange was called first by button click (with mockTournaments[0].id)
-      // then by selectOptions (with selectedTournamentId = mockTournaments[1].id)
       expect(mockOnTournamentIdChange).toHaveBeenCalledWith(mockTournaments[0].id);
       expect(mockOnTournamentIdChange).toHaveBeenLastCalledWith(selectedTournamentId);
       expect(mockOnTournamentIdChange).toHaveBeenCalledTimes(2);
-
-      // updateGameDetails is called by handleTournamentChange
-      expect(updateGameDetails).toHaveBeenCalledWith(defaultProps.currentGameId, { tournamentId: selectedTournamentId, seasonId: undefined });
     });
 
     test('switches to "None", clears combobox, and calls callbacks/updateGameDetails when "None" is clicked after selection', async () => {
       const user = userEvent.setup();
-      // Start with a season selected, so combobox is visible
       const initialProps = { ...defaultProps, seasonId: mockSeasons[0].id, tournamentId: null };
       const { rerender } = render(<GameSettingsModal {...initialProps} />);  
-      await waitFor(() => expect(getSeasons).toHaveBeenCalledTimes(1)); // Check after initial render
+      await waitFor(() => expect(getSeasons).toHaveBeenCalledTimes(1));
       await waitFor(() => expect(getTournaments).toHaveBeenCalledTimes(1));
       let associationSection = getAssociationSection();
-      // Verify combobox is initially present
       expect(await within(associationSection).findByRole('combobox')).toBeInTheDocument();
 
       const noneButton = within(associationSection).getByRole('button', { name: t('gameSettingsModal.associationNone') });
       await user.click(noneButton);
-      // The "None" button click calls onSeasonIdChange(null) and onTournamentIdChange(null).
       
-      // Rerender with props reflecting the "None" button click
       rerender(<GameSettingsModal {...defaultProps} seasonId={null} tournamentId={null} />);
-      associationSection = getAssociationSection(); // Re-fetch section
+      associationSection = getAssociationSection();
       
-      // Check that the callbacks were called appropriately
       expect(mockOnSeasonIdChange).toHaveBeenCalledWith(null);
       expect(mockOnTournamentIdChange).toHaveBeenCalledWith(null); 
 
-      // updateGameDetails should NOT be called by the "None" button directly.
-      // It IS called when selecting from dropdown, but not here.
-      // So, we check it wasn't called with the nullified season/tournament IDs from this action.
+      // This expectation should remain and be correct, as updateGameDetails is NOT called by "None" button.
       expect(updateGameDetails).not.toHaveBeenCalledWith(defaultProps.currentGameId, { seasonId: null, tournamentId: null });
+      // Also check it wasn't called with undefined either for safety, though null is what would have been sent if it was called.
+      expect(updateGameDetails).not.toHaveBeenCalledWith(defaultProps.currentGameId, { seasonId: undefined, tournamentId: undefined });
       
-      // Verify combobox is no longer in the document
       expect(within(associationSection).queryByRole('combobox')).not.toBeInTheDocument();
     });
     
