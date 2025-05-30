@@ -12,6 +12,8 @@ import {
   HiOutlineTableCells,
   HiOutlineXCircle,
   HiOutlineDocumentArrowUp,
+  HiOutlineClock,
+  HiOutlineMapPin
 } from 'react-icons/hi2';
 // REMOVE unused Fa icons and useGameState hook
 // import { FaTimes, FaUpload, FaDownload, FaTrash, FaExclamationTriangle, FaSearch } from 'react-icons/fa';
@@ -421,10 +423,10 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                 </div>
 
                 {/* Date, time, location row */}
-                <div className="flex items-center text-sm text-slate-400 gap-2">
+                <div className="flex items-center text-sm text-slate-400 gap-2 flex-wrap">
                   {game.gameDate && <span>{new Date(game.gameDate).toLocaleDateString('fi-FI')}</span>}
-                  {game.gameTime && <span>? {game.gameTime}</span>}
-                  {game.gameLocation && <span>? {game.gameLocation}</span>}
+                  {game.gameTime && <span className="flex items-center"><HiOutlineClock className="w-3.5 h-3.5 mr-1 flex-shrink-0" /> {game.gameTime}</span>}
+                  {game.gameLocation && <span className="flex items-center"><HiOutlineMapPin className="w-3.5 h-3.5 mr-1 flex-shrink-0" /> {game.gameLocation}</span>}
                 </div>
 
                 {/* Actions row */}
