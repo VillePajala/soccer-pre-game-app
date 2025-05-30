@@ -103,6 +103,7 @@ export type GameSessionAction =
   | { type: 'SET_SUB_INTERVAL'; payload: number } // subIntervalMinutes
   | { type: 'CONFIRM_SUBSTITUTION' }
   | { type: 'RESET_TIMER_AND_GAME_PROGRESS'; payload?: Partial<GameSessionState> } // Optional payload for selective reset
+  | { type: 'RESET_TIMER_ONLY' }
   | { type: 'TOGGLE_SHOW_PLAYER_NAMES' }
   | { type: 'LOAD_GAME_SESSION_STATE'; payload: Partial<GameSessionState> }
   | { type: 'RESET_GAME_SESSION_STATE'; payload: GameSessionState } // Action to reset to a specific state
@@ -254,6 +255,20 @@ export const gameSessionReducer = (state: GameSessionState, action: GameSessionA
             subAlertLevel: alertLevelAfterSub,
         };
     }
+    case 'RESET_TIMER_ONLY': {
+      const periodStartTime = state.currentPeriod > 1 
+        ? (state.currentPeriod - 1) * state.periodDurationMinutes * 60 
+        : 0;
+      const nextSubDue = periodStartTime + (state.subIntervalMinutes * 60);
+      return {
+        ...state,
+        timeElapsedInSeconds: periodStartTime,
+        isTimerRunning: false,
+        nextSubDueTimeSeconds: nextSubDue,
+        subAlertLevel: 'none',
+        lastSubConfirmationTimeSeconds: periodStartTime,
+      };
+    }
     case 'RESET_TIMER_AND_GAME_PROGRESS': {
         const subIntervalMins = action.payload?.subIntervalMinutes || state.subIntervalMinutes || 5;
         return {
@@ -270,18 +285,17 @@ export const gameSessionReducer = (state: GameSessionState, action: GameSessionA
             subAlertLevel: 'none',
             lastSubConfirmationTimeSeconds: 0,
             completedIntervalDurations: [],
-            ...(action.payload || {}), // Apply any other partial state resets from payload
+            ...(action.payload || {}),
         };
     }
     case 'TOGGLE_SHOW_PLAYER_NAMES':
       return { ...state, showPlayerNames: !state.showPlayerNames };
     case 'RESET_GAME_SESSION_STATE':
-      return action.payload; // Directly set the state to the provided payload
+      return action.payload;
     case 'LOAD_PERSISTED_GAME_DATA': {
       console.log('[gameSessionReducer] LOAD_PERSISTED_GAME_DATA - Received action.payload:', JSON.parse(JSON.stringify(action.payload)));
-      const loadedData = action.payload as Partial<GameSessionState>; // Cast because payload is GameData-like
+      const loadedData = action.payload as Partial<GameSessionState>;
 
-      // Get essential values from loadedData, with fallbacks to defaults from placeholder if not present
       const teamName = loadedData.teamName ?? initialGameSessionStatePlaceholder.teamName;
       const opponentName = loadedData.opponentName ?? initialGameSessionStatePlaceholder.opponentName;
       const gameDate = loadedData.gameDate ?? initialGameSessionStatePlaceholder.gameDate;
@@ -308,7 +322,7 @@ export const gameSessionReducer = (state: GameSessionState, action: GameSessionA
       let timeElapsedAtLoad = 0;
       if (gameStatus === 'periodEnd' || gameStatus === 'gameEnd') {
          timeElapsedAtLoad = currentPeriod * periodDurationMinutes * 60;
-      } else { // 'notStarted' or beginning of a period
+      } else {
          timeElapsedAtLoad = (currentPeriod - 1) * periodDurationMinutes * 60;
       }
 

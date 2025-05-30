@@ -246,6 +246,78 @@ export default function Home() {
     console.log('[gameSessionState CHANGED]', gameSessionState);
   }, [gameSessionState]);
 
+  // --- History Management (Still needed here for now) ---
+  const [history, setHistory] = useState<AppState[]>([initialState]);
+  const [historyIndex, setHistoryIndex] = useState<number>(0);
+  const saveStateToHistory = useCallback((newState: Partial<AppState>) => {
+    // This function currently modifies the 'history' state variable,
+    // which is ONLY used for runtime undo/redo in the current session.
+    // It no longer interacts directly with the localStorage saving mechanism.
+    
+    // Get the current state from the *last* entry in the session history
+    const currentHistoryState = history[historyIndex];
+    if (!currentHistoryState) return; // Should not happen
+
+    // If newState includes seasonId, ensure tournamentId is cleared if seasonId is truthy
+    // This mirrors the reducer logic for SET_SEASON_ID.
+    // Similarly, if newState includes tournamentId, ensure seasonId is cleared if tournamentId is truthy.
+    const adjustedNewState: Partial<AppState> = {
+      ...newState,
+      ...(newState.seasonId && newState.tournamentId === undefined 
+          ? { tournamentId: '' } 
+          : {}),
+      ...(newState.tournamentId && newState.seasonId === undefined 
+          ? { seasonId: '' } 
+          : {}),
+    };
+
+    const nextState: AppState = { ...currentHistoryState, ...adjustedNewState };
+
+    if (JSON.stringify(nextState) === JSON.stringify(currentHistoryState)) {
+      return; // Don't save if nothing changed
+    }
+
+    const newHistory = history.slice(0, historyIndex + 1);
+    setHistory([...newHistory, nextState]);
+    setHistoryIndex(newHistory.length);
+
+  }, [history, historyIndex]); // Dependencies are just history state
+
+  // --- Effect to save gameSessionState changes to history ---
+  useEffect(() => {
+    // This effect runs after gameSessionState has been updated by the reducer.
+    // It constructs the relevant slice of AppState from the new gameSessionState
+    // and saves it to the history.
+    const gameSessionHistorySlice: Partial<AppState> = {
+      teamName: gameSessionState.teamName,
+      opponentName: gameSessionState.opponentName,
+      gameDate: gameSessionState.gameDate,
+      homeScore: gameSessionState.homeScore,
+      awayScore: gameSessionState.awayScore,
+      gameNotes: gameSessionState.gameNotes,
+      homeOrAway: gameSessionState.homeOrAway,
+      numberOfPeriods: gameSessionState.numberOfPeriods,
+      periodDurationMinutes: gameSessionState.periodDurationMinutes,
+      currentPeriod: gameSessionState.currentPeriod,
+      gameStatus: gameSessionState.gameStatus,
+      selectedPlayerIds: gameSessionState.selectedPlayerIds,
+      seasonId: gameSessionState.seasonId,
+      tournamentId: gameSessionState.tournamentId,
+      gameLocation: gameSessionState.gameLocation,
+      gameTime: gameSessionState.gameTime,
+      gameEvents: gameSessionState.gameEvents,
+      subIntervalMinutes: gameSessionState.subIntervalMinutes,
+      completedIntervalDurations: gameSessionState.completedIntervalDurations,
+      lastSubConfirmationTimeSeconds: gameSessionState.lastSubConfirmationTimeSeconds,
+      showPlayerNames: gameSessionState.showPlayerNames,
+      // Ensure any other fields from GameSessionState that are part of AppState history are included
+    };
+    // saveStateToHistory will merge this with other non-gameSessionState parts of AppState
+    // (like playersOnField, opponents, drawings) that are handled elsewhere.
+    saveStateToHistory(gameSessionHistorySlice);
+  }, [gameSessionState, saveStateToHistory]);
+  // END --- Effect to save gameSessionState changes to history ---
+
   // --- TanStack Query for Master Roster ---
   const {
     data: masterRosterQueryResultData,
@@ -301,43 +373,6 @@ export default function Home() {
     queryKey: queryKeys.appSettingsCurrentGameId,
     queryFn: getCurrentGameIdSetting,
   });
-
-  // --- History Management (Still needed here for now) ---
-  const [history, setHistory] = useState<AppState[]>([initialState]);
-  const [historyIndex, setHistoryIndex] = useState<number>(0);
-  const saveStateToHistory = useCallback((newState: Partial<AppState>) => {
-    // This function currently modifies the 'history' state variable,
-    // which is ONLY used for runtime undo/redo in the current session.
-    // It no longer interacts directly with the localStorage saving mechanism.
-    
-    // Get the current state from the *last* entry in the session history
-    const currentHistoryState = history[historyIndex];
-    if (!currentHistoryState) return; // Should not happen
-
-    // If newState includes seasonId, ensure tournamentId is cleared if seasonId is truthy
-    // This mirrors the reducer logic for SET_SEASON_ID.
-    // Similarly, if newState includes tournamentId, ensure seasonId is cleared if tournamentId is truthy.
-    const adjustedNewState: Partial<AppState> = {
-      ...newState,
-      ...(newState.seasonId && newState.tournamentId === undefined 
-          ? { tournamentId: '' } 
-          : {}),
-      ...(newState.tournamentId && newState.seasonId === undefined 
-          ? { seasonId: '' } 
-          : {}),
-    };
-
-    const nextState: AppState = { ...currentHistoryState, ...adjustedNewState };
-
-    if (JSON.stringify(nextState) === JSON.stringify(currentHistoryState)) {
-      return; // Don't save if nothing changed
-    }
-
-    const newHistory = history.slice(0, historyIndex + 1);
-    setHistory([...newHistory, nextState]);
-    setHistoryIndex(newHistory.length);
-
-  }, [history, historyIndex]); // Dependencies are just history state
 
   // --- Core Game State (Managed by Hook) ---
   const {
@@ -1185,10 +1220,9 @@ export default function Home() {
   const handleTogglePlayerNames = () => {
     console.log('Toggling player names via reducer');
     // The new value will be the opposite of the current value in gameSessionState
-    const newShowPlayerNames = !gameSessionState.showPlayerNames;
+    // const newShowPlayerNames = !gameSessionState.showPlayerNames; // No longer needed for direct history save
     dispatchGameSession({ type: 'TOGGLE_SHOW_PLAYER_NAMES' });
-    // Save to history with the optimistically determined new value
-    saveStateToHistory({ showPlayerNames: newShowPlayerNames }); 
+    // REMOVED: saveStateToHistory({ showPlayerNames: newShowPlayerNames }); 
   };
 
   // --- Team Name Handler ---
@@ -1196,11 +1230,8 @@ export default function Home() {
     const trimmedName = newName.trim();
     if (trimmedName) {
         console.log("Updating team name to:", trimmedName);
-        // Directly update state - REPLACED
-        // setTeamName(trimmedName); 
         dispatchGameSession({ type: 'SET_TEAM_NAME', payload: trimmedName });
-        // Also save to session history for undo/redo
-        saveStateToHistory({ teamName: trimmedName }); // We will adjust saveStateToHistory later
+        // REMOVED: saveStateToHistory({ teamName: trimmedName }); 
     }
   };
 
@@ -1338,16 +1369,9 @@ export default function Home() {
   };
 
   const handleResetTimer = () => {
-    // Reset the entire game state related to time and periods
-    dispatchGameSession({ type: 'RESET_TIMER_AND_GAME_PROGRESS', payload: { subIntervalMinutes: gameSessionState.subIntervalMinutes } }); // Pass current subInterval
-    // setTimeElapsedInSeconds(0); // Handled by RESET_TIMER_AND_GAME_PROGRESS
-    // setIsTimerRunning(false); // Handled by RESET_TIMER_AND_GAME_PROGRESS
-    // setSubIntervalMinutes(5); // This should be part of gameSessionState now, reducer handles reset or keeps current
-    // setNextSubDueTimeSeconds(5 * 60); // Handled by reducer
-    // setSubAlertLevel('none'); // Handled by reducer
-    // setLastSubConfirmationTimeSeconds(0); // Handled by reducer
-    // setCompletedIntervalDurations([]); // Handled by reducer
-    console.log("Timer and game progress reset via reducer.");
+    // Dispatch the new action to reset only timer-specific fields
+    dispatchGameSession({ type: 'RESET_TIMER_ONLY' }); 
+    console.log("Timer reset to start of current period via RESET_TIMER_ONLY action.");
   };
 
   const handleSubstitutionMade = () => {
@@ -1359,7 +1383,7 @@ export default function Home() {
   const handleSetSubInterval = (minutes: number) => {
     const newMinutes = Math.max(1, minutes);
     dispatchGameSession({ type: 'SET_SUB_INTERVAL', payload: newMinutes });
-    saveStateToHistory({ subIntervalMinutes: newMinutes }); // Keep for history for now
+    // REMOVED: saveStateToHistory({ subIntervalMinutes: newMinutes }); 
     console.log(`Sub interval set to ${newMinutes}m via reducer.`);
   };
 
@@ -1409,16 +1433,12 @@ export default function Home() {
     dispatchGameSession({ type: 'ADD_GAME_EVENT', payload: newEvent });
     dispatchGameSession({ type: 'ADJUST_SCORE_FOR_EVENT', payload: { eventType: 'goal', action: 'add' } });
 
-    // Save to history. The gameEvents in gameSessionState will be updated by the dispatch.
-    // So, when saveStateToHistory reads gameSessionState (if it's modified to do so, or if a useEffect saves history),
-    // it will have the new event. For now, we pass the event as it was.
-    // A more robust solution is needed for history if we want it to perfectly mirror the post-dispatch state.
-    // We are assuming that history is primarily for undoing this specific action.
-    saveStateToHistory({ 
-      gameEvents: [...gameSessionState.gameEvents, newEvent], // Optimistically add new event
-      homeScore: gameSessionState.homeOrAway === 'home' ? gameSessionState.homeScore + 1 : gameSessionState.homeScore,
-      awayScore: gameSessionState.homeOrAway === 'away' ? gameSessionState.awayScore + 1 : gameSessionState.awayScore,
-    });
+    // REMOVED: Direct saveStateToHistory call. This will be handled by the useEffect.
+    // saveStateToHistory({ 
+    //   gameEvents: [...gameSessionState.gameEvents, newEvent], // Optimistically add new event
+    //   homeScore: gameSessionState.homeOrAway === 'home' ? gameSessionState.homeScore + 1 : gameSessionState.homeScore,
+    //   awayScore: gameSessionState.homeOrAway === 'away' ? gameSessionState.awayScore + 1 : gameSessionState.awayScore,
+    // });
     setIsGoalLogModalOpen(false);
   };
 
@@ -1435,11 +1455,12 @@ export default function Home() {
     dispatchGameSession({ type: 'ADD_GAME_EVENT', payload: newEvent });
     dispatchGameSession({ type: 'ADJUST_SCORE_FOR_EVENT', payload: { eventType: 'opponentGoal', action: 'add' } });
     
-    saveStateToHistory({ 
-      gameEvents: [...gameSessionState.gameEvents, newEvent], // Optimistically add new event
-      homeScore: gameSessionState.homeOrAway === 'away' ? gameSessionState.homeScore + 1 : gameSessionState.homeScore,
-      awayScore: gameSessionState.homeOrAway === 'home' ? gameSessionState.awayScore + 1 : gameSessionState.awayScore,
-    });
+    // REMOVED: Direct saveStateToHistory call. This will be handled by the useEffect.
+    // saveStateToHistory({ 
+    //   gameEvents: [...gameSessionState.gameEvents, newEvent], // Optimistically add new event
+    //   homeScore: gameSessionState.homeOrAway === 'away' ? gameSessionState.homeScore + 1 : gameSessionState.homeScore,
+    //   awayScore: gameSessionState.homeOrAway === 'home' ? gameSessionState.awayScore + 1 : gameSessionState.awayScore,
+    // });
     setIsGoalLogModalOpen(false);
   };
 
@@ -1449,11 +1470,11 @@ export default function Home() {
     
     dispatchGameSession({ type: 'UPDATE_GAME_EVENT', payload: cleanUpdatedEvent });
     
-    // For history, construct the new events array after the update
-    const newGameEventsAfterUpdate = gameSessionState.gameEvents.map(e => 
-      e.id === cleanUpdatedEvent.id ? cleanUpdatedEvent : e
-    );
-    saveStateToHistory({ gameEvents: newGameEventsAfterUpdate }); 
+    // REMOVED: Direct saveStateToHistory call. This will be handled by the useEffect.
+    // const newGameEventsAfterUpdate = gameSessionState.gameEvents.map(e => 
+    //   e.id === cleanUpdatedEvent.id ? cleanUpdatedEvent : e
+    // );
+    // saveStateToHistory({ gameEvents: newGameEventsAfterUpdate }); 
     console.log("Updated game event via dispatch:", updatedEvent.id);
   };
 
@@ -1473,13 +1494,11 @@ export default function Home() {
       });
     }
     
-    // For history, save the state reflecting the deletion.
-    const newGameEventsAfterDelete = gameSessionState.gameEvents.filter(e => e.id !== goalId);
-    saveStateToHistory({ 
-        gameEvents: newGameEventsAfterDelete, 
-        // Scores will be updated by the reducer and reflected in gameSessionState.
-        // The history snapshot for scores might need adjustment if it relies on immediate state post-dispatch.
-    }); 
+    // REMOVED: Direct saveStateToHistory call. This will be handled by the useEffect.
+    // const newGameEventsAfterDelete = gameSessionState.gameEvents.filter(e => e.id !== goalId);
+    // saveStateToHistory({ 
+    //     gameEvents: newGameEventsAfterDelete, 
+    // }); 
     console.log("Deleted game event via dispatch and updated state/history:", goalId);
   };
   // --- Button/Action Handlers ---
@@ -1506,23 +1525,23 @@ export default function Home() {
   const handleOpponentNameChange = (newName: string) => {
     console.log('[page.tsx] handleOpponentNameChange called with:', newName);
     dispatchGameSession({ type: 'SET_OPPONENT_NAME', payload: newName });
-    saveStateToHistory({ opponentName: newName }); // Stays for now
+    // REMOVED: saveStateToHistory({ opponentName: newName }); 
   };
   const handleGameDateChange = (newDate: string) => {
     dispatchGameSession({ type: 'SET_GAME_DATE', payload: newDate });
-    saveStateToHistory({ gameDate: newDate }); // Stays for now
+    // REMOVED: saveStateToHistory({ gameDate: newDate }); 
   };
   const handleHomeScoreChange = (newScore: number) => {
     dispatchGameSession({ type: 'SET_HOME_SCORE', payload: newScore });
-    saveStateToHistory({ homeScore: newScore });
+    // REMOVED: saveStateToHistory({ homeScore: newScore });
   };
   const handleAwayScoreChange = (newScore: number) => {
     dispatchGameSession({ type: 'SET_AWAY_SCORE', payload: newScore });
-    saveStateToHistory({ awayScore: newScore });
+    // REMOVED: saveStateToHistory({ awayScore: newScore });
   };
   const handleGameNotesChange = (notes: string) => {
     dispatchGameSession({ type: 'SET_GAME_NOTES', payload: notes });
-    saveStateToHistory({ gameNotes: notes });
+    // REMOVED: saveStateToHistory({ gameNotes: notes });
   };
 
   // --- Handlers for Game Structure ---
@@ -1532,7 +1551,7 @@ export default function Home() {
       // Keep the type assertion for the state setter
       const validPeriods = periods as (1 | 2); 
       dispatchGameSession({ type: 'SET_NUMBER_OF_PERIODS', payload: validPeriods });
-      saveStateToHistory({ numberOfPeriods: validPeriods });
+      // REMOVED: saveStateToHistory({ numberOfPeriods: validPeriods });
       console.log(`Number of periods set to: ${validPeriods}`);
     } else {
       console.warn(`Invalid number of periods attempted: ${periods}. Must be 1 or 2.`);
@@ -1542,9 +1561,8 @@ export default function Home() {
   const handleSetPeriodDuration = (minutes: number) => {
     const newMinutes = Math.max(1, minutes);
     dispatchGameSession({ type: 'SET_PERIOD_DURATION', payload: newMinutes });
-    saveStateToHistory({ periodDurationMinutes: newMinutes }); // Save immediately
-    console.log(`Period duration set to: ${newMinutes} minutes.`);
-    
+    // REMOVED: saveStateToHistory({ periodDurationMinutes: newMinutes });
+    console.log(`Period duration set to: ${newMinutes} minutes`);
   };
 
   // Training Resources Modal
@@ -2470,17 +2488,17 @@ export default function Home() {
   // --- Placeholder Handlers for GameSettingsModal (will be implemented properly later) ---
   const handleGameLocationChange = (location: string) => {
     dispatchGameSession({ type: 'SET_GAME_LOCATION', payload: location });
-    saveStateToHistory({ gameLocation: location });
+    // REMOVED: saveStateToHistory({ gameLocation: location });
   };
   const handleGameTimeChange = (time: string) => {
     dispatchGameSession({ type: 'SET_GAME_TIME', payload: time });
-    saveStateToHistory({ gameTime: time });
+    // REMOVED: saveStateToHistory({ gameTime: time });
   };
 
   // Add handler for home/away status
   const handleSetHomeOrAway = (status: 'home' | 'away') => {
     dispatchGameSession({ type: 'SET_HOME_OR_AWAY', payload: status });
-    saveStateToHistory({ homeOrAway: status });
+    // REMOVED: saveStateToHistory({ homeOrAway: status });
   };
 
   // --- NEW Handlers for Setting Season/Tournament ID ---
@@ -2488,19 +2506,15 @@ export default function Home() {
     const idToSet = newSeasonId || ''; // Ensure empty string instead of null
     console.log('[page.tsx] handleSetSeasonId called with:', idToSet);
     dispatchGameSession({ type: 'SET_SEASON_ID', payload: idToSet }); 
-    // The reducer now handles clearing tournamentId: { ...state, seasonId: action.payload, tournamentId: action.payload ? '' : state.tournamentId }
-    // saveStateToHistory will pick up gameSessionState.seasonId and gameSessionState.tournamentId after reducer update.
-    saveStateToHistory({ seasonId: idToSet, tournamentId: idToSet ? '' : gameSessionState.tournamentId });
-  }, [saveStateToHistory, gameSessionState.tournamentId]);
+    // REMOVED: saveStateToHistory({ seasonId: idToSet, tournamentId: idToSet ? '' : gameSessionState.tournamentId });
+  }, [gameSessionState.tournamentId]); // Dependency was saveStateToHistory, gameSessionState.tournamentId. Now only gameSessionState.tournamentId or none if reducer handles all logic.
 
   const handleSetTournamentId = useCallback((newTournamentId: string | null) => {
     const idToSet = newTournamentId || ''; // Ensure empty string instead of null
     console.log('[page.tsx] handleSetTournamentId called with:', idToSet);
     dispatchGameSession({ type: 'SET_TOURNAMENT_ID', payload: idToSet });
-    // The reducer now handles clearing seasonId: { ...state, tournamentId: action.payload, seasonId: action.payload ? '' : state.seasonId }
-    // saveStateToHistory will pick up gameSessionState.tournamentId and gameSessionState.seasonId after reducer update.
-    saveStateToHistory({ tournamentId: idToSet, seasonId: idToSet ? '' : gameSessionState.seasonId });
-  }, [saveStateToHistory, gameSessionState.seasonId]);
+    // REMOVED: saveStateToHistory({ tournamentId: idToSet, seasonId: idToSet ? '' : gameSessionState.seasonId });
+  }, [gameSessionState.seasonId]); // Dependency was saveStateToHistory, gameSessionState.seasonId. Now only gameSessionState.seasonId or none if reducer handles all logic.
 
   // --- AGGREGATE EXPORT HANDLERS --- 
   
