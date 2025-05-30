@@ -722,8 +722,15 @@ export default function Home() {
       console.warn('[MEMO playersForCurrentGame] availablePlayers is not an array. Returning []. Value:', availablePlayers);
         return [];
     }
-    if (!gameSessionState.selectedPlayerIds || gameSessionState.selectedPlayerIds.length === 0) { // USE gameSessionState
-        return availablePlayers; 
+    // If no players are selected for the current game, the list of players eligible for goal/assist should be empty.
+    if (!gameSessionState.selectedPlayerIds || gameSessionState.selectedPlayerIds.length === 0) { 
+        // For PlayerBar, it might show all available players if none are selected for the game (depends on desired PlayerBar behavior).
+        // However, for GoalLogModal, it should be an empty list.
+        // Since GoalLogModal will now use this, we return [] if no players selected for game.
+        // If PlayerBar needs a different behavior, it might need its own derived list or this logic might need further refinement
+        // depending on where else playersForCurrentGame is used.
+        // For the specific bug of GoalLogModal, returning [] here is correct.
+        return []; 
     }
     const gamePlayers = availablePlayers.filter(player => gameSessionState.selectedPlayerIds.includes(player.id)); // USE gameSessionState
     return gamePlayers;
@@ -3225,7 +3232,7 @@ export default function Home() {
           onClose={handleToggleGoalLogModal}
           onLogGoal={handleAddGoalEvent}
           onLogOpponentGoal={handleLogOpponentGoal} // ADDED: Pass the handler
-          availablePlayers={availablePlayers}
+          availablePlayers={playersForCurrentGame} // MODIFIED: Pass players selected for the current game
           currentTime={gameSessionState.timeElapsedInSeconds}
         />
         {/* Game Stats Modal - Restore props for now */}
