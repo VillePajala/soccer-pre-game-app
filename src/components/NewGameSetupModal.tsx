@@ -315,10 +315,9 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
     }
     // --- End Save ---
 
-    const selectedPlayers = initialPlayerSelection || [];
-    // Call the onStart callback from props
+    // Call the onStart callback from props using the modal's internal selectedPlayerIds state
     onStart(
-      selectedPlayers,
+      selectedPlayerIds, // MODIFIED: Use the modal's current selection state
       trimmedHomeTeamName,
       trimmedOpponentName,
       gameDate,

@@ -388,6 +388,15 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
     // Apply sorting
     if (sortColumn) {
       filteredAndSortedStats.sort((a, b) => {
+        // Primary sort: by gamesPlayed (players with GP > 0 come before players with GP === 0)
+        if (a.gamesPlayed > 0 && b.gamesPlayed === 0) {
+          return -1; // a comes first
+        }
+        if (a.gamesPlayed === 0 && b.gamesPlayed > 0) {
+          return 1;  // b comes first
+        }
+
+        // Secondary sort: by the selected sortColumn if GP is the same (e.g., both > 0 or both === 0)
         let aValue: string | number = '';
         let bValue: string | number = '';
 
@@ -412,12 +421,15 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                 aValue = a.fpAwards ?? 0;
                 bValue = b.fpAwards ?? 0;
                 break;
-             case 'gamesPlayed': // Add sorting for gamesPlayed
+             case 'gamesPlayed': // If primary sort is by GP itself (e.g., user clicks GP header)
+                 // The primary GP sort above already handled the main separation.
+                 // This will sort within the GP > 0 group and GP === 0 group respectively.
                  aValue = a.gamesPlayed;
                  bValue = b.gamesPlayed;
                  break;
         }
 
+        // Apply direction for secondary sort key
         if (typeof aValue === 'string' && typeof bValue === 'string') {
           return sortDirection === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
         } else if (typeof aValue === 'number' && typeof bValue === 'number') {
