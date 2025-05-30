@@ -3126,6 +3126,9 @@ export default function Home() {
   // The useEffect for highlightRosterButton that was here (around lines 2977-2992)
   // should be removed as it's called conditionally and its correct version is at the top level.
 
+  // Log gameEvents before PlayerBar is rendered
+  console.log('[page.tsx] About to render PlayerBar, gameEvents for PlayerBar:', JSON.stringify(gameSessionState.gameEvents));
+
   return (
     // Main container with flex column layout
     <div className="flex flex-col h-screen bg-gray-900 text-white relative">
