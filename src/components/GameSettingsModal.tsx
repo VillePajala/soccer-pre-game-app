@@ -135,7 +135,23 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // NEW: Local state to control which association UI is active
+  const [activeDisplayType, setActiveDisplayType] = useState<'season' | 'tournament' | 'none'>('none');
+
   // --- Effects ---
+
+  // Sync activeDisplayType with incoming props
+  useEffect(() => {
+    if (isOpen) { // Only adjust when modal is open
+      if (seasonId && seasonId !== '') {
+        setActiveDisplayType('season');
+      } else if (tournamentId && tournamentId !== '') {
+        setActiveDisplayType('tournament');
+      } else {
+        setActiveDisplayType('none');
+      }
+    }
+  }, [isOpen, seasonId, tournamentId]);
 
   // Load seasons/tournaments using utility functions
   useEffect(() => {
@@ -189,61 +205,18 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
 
   // --- Event Handlers ---
 
-  const handleSeasonChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setError(null);
-    setIsProcessing(true);
+  const handleSeasonChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const newId = event.target.value;
-    const seasonToSet = newId === 'none' || !newId ? null : newId;
-    // Call these setters before the async operation for immediate UI feedback
-    onSeasonIdChange(seasonToSet);
-    onTournamentIdChange(null); // Also clear tournament when season changes
-    
-    if (currentGameId) {
-      try {
-        await updateGameDetails(currentGameId, {
-          seasonId: seasonToSet === null ? undefined : seasonToSet,
-          tournamentId: undefined // Explicitly set tournamentId to undefined in DB
-        });
-        console.log(`[GameSettingsModal] Updated game ${currentGameId} with season ${seasonToSet}`);
-      } catch (err) {
-        console.error(`[GameSettingsModal] Failed to update season for game ${currentGameId}:`, err);
-        setError(t('gameSettingsModal.errors.seasonUpdateFailed', 'Error updating season information.'));
-        // Potentially revert onSeasonIdChange/onTournamentIdChange if save fails? 
-        // For now, parent state change remains for UI responsiveness.
-      } finally {
-        setIsProcessing(false);
-      }
-    } else {
-      setIsProcessing(false); // Ensure processing is false if no currentGameId
-    }
+    const seasonToSet = newId === '' ? null : newId; // Convert empty string from select to null for handler
+    onSeasonIdChange(seasonToSet); // Reducer will clear tournamentId
+    // setActiveDisplayType('season'); // Already in season display type
   };
 
-  const handleTournamentChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setError(null);
-    setIsProcessing(true);
+  const handleTournamentChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const newId = event.target.value;
-    const tournamentToSet = newId === 'none' || !newId ? null : newId;
-    // Call these setters before the async operation for immediate UI feedback
-    onTournamentIdChange(tournamentToSet);
-    onSeasonIdChange(null); // Also clear season when tournament changes
-    
-    if (currentGameId) {
-      try {
-        await updateGameDetails(currentGameId, {
-          tournamentId: tournamentToSet === null ? undefined : tournamentToSet,
-          seasonId: undefined // Explicitly set seasonId to undefined in DB
-        });
-        console.log(`[GameSettingsModal] Updated game ${currentGameId} with tournament ${tournamentToSet}`);
-      } catch (err) {
-        console.error(`[GameSettingsModal] Failed to update tournament for game ${currentGameId}:`, err);
-        setError(t('gameSettingsModal.errors.tournamentUpdateFailed', 'Error updating tournament information.'));
-        // Potentially revert onTournamentIdChange/onSeasonIdChange if save fails?
-      } finally {
-        setIsProcessing(false);
-      }
-    } else {
-      setIsProcessing(false); // Ensure processing is false if no currentGameId
-    }
+    const tournamentToSet = newId === '' ? null : newId; // Convert empty string from select to null for handler
+    onTournamentIdChange(tournamentToSet); // Reducer will clear seasonId
+    // setActiveDisplayType('tournament'); // Already in tournament display type
   };
 
   // Handle Goal Event Editing
@@ -498,22 +471,6 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
 
   // --- ADDED Memoized Values (Moved Here) ---
   // Calculate these AFTER handlers are defined, potentially altering hook order slightly
-
-  // Determine association type based on props
-  const associationType = useMemo(() => {
-    // If seasonId is not null and not undefined (i.e., it has been interacted with, 
-    // potentially set to "" to show the dropdown), it should be 'season' mode.
-    if (seasonId !== null && seasonId !== undefined) {
-      return 'season';
-    }
-    // If tournamentId is not null and not undefined, and season is not active, it's 'tournament' mode.
-    if (tournamentId !== null && tournamentId !== undefined) {
-      return 'tournament';
-    }
-    return 'none';
-  }, [seasonId, tournamentId]);
-
-  // --- Render Logic ---
 
   // Moved the sortedEvents calculation up to ensure hooks are called unconditionally
   const sortedEvents = useMemo(() => {
@@ -774,18 +731,16 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
               {/* Season/Tournament Association */}
               <div className={`${gridItemStyle} md:col-span-2 pt-3 mt-2 border-t border-slate-700`}> {/* Span, add padding/border */}
                    <span className={labelStyle}>{t('gameSettingsModal.association', 'Association')}:</span>
-                  {/* REPLACE radio buttons with custom button selectors like the period buttons */}
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-2 mt-1">
                     {/* None button */}
                     <button
                       onClick={() => {
-                        // console.log('[GameSettingsModal] Association button clicked: none');
                         if (isProcessing) return;
+                        setActiveDisplayType('none');
                         onSeasonIdChange(null);
                         onTournamentIdChange(null);
-                        // No direct DB call here, so no setIsProcessing needed unless we add one
                       }}
-                      className={`px-3 py-1 rounded text-sm transition-colors ${associationType === 'none' ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'} ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      className={`px-3 py-1 rounded text-sm transition-colors ${activeDisplayType === 'none' ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'} ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
                       disabled={isProcessing}
                     >
                       {t('gameSettingsModal.associationNone', 'None')}
@@ -795,16 +750,16 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                     <button
                       onClick={() => {
                         if (isProcessing) return;
-                        // console.log('[GameSettingsModal] Association button clicked: season');
-                        if (seasons && seasons.length > 0) {
-                          onSeasonIdChange(seasons[0].id);
-                          // Potentially trigger DB save if this action should persist immediately
-                        } else if (associationType !== 'season') {
-                          onSeasonIdChange('');
+                        setActiveDisplayType('season');
+                        // If not already effectively in season mode (i.e. seasonId is not set or is empty after clearing tournament)
+                        // or if no seasons are available, set seasonId to '' to ensure the dropdown appears and reducer clears tournamentId.
+                        if (!seasonId && seasons && seasons.length > 0) {
+                            onSeasonIdChange(seasons[0].id); 
+                        } else {
+                            onSeasonIdChange(''); // Ensures tournamentId is cleared by reducer
                         }
-                        // No direct DB call here for just showing the dropdown
                       }}
-                      className={`px-3 py-1 rounded text-sm transition-colors ${associationType === 'season' ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'} ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      className={`px-3 py-1 rounded text-sm transition-colors ${activeDisplayType === 'season' ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'} ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
                       disabled={isProcessing}
                     >
                       {t('gameSettingsModal.associationSeason', 'Season/League')}
@@ -814,24 +769,22 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                     <button
                       onClick={() => {
                         if (isProcessing) return;
-                        // console.log('[GameSettingsModal] Association button clicked: tournament');
-                        if (tournaments && tournaments.length > 0) {
-                          onTournamentIdChange(tournaments[0].id);
-                           // Potentially trigger DB save if this action should persist immediately
-                        } else if (associationType !== 'tournament') {
-                          onTournamentIdChange('');
+                        setActiveDisplayType('tournament');
+                        if (!tournamentId && tournaments && tournaments.length > 0) {
+                            onTournamentIdChange(tournaments[0].id);
+                        } else {
+                            onTournamentIdChange(''); // Ensures seasonId is cleared by reducer
                         }
-                        // No direct DB call here for just showing the dropdown
                       }}
-                      className={`px-3 py-1 rounded text-sm transition-colors ${associationType === 'tournament' ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'} ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      className={`px-3 py-1 rounded text-sm transition-colors ${activeDisplayType === 'tournament' ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'} ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
                       disabled={isProcessing}
                     >
                       {t('gameSettingsModal.associationTournament', 'Tournament')}
                     </button>
-          </div>
-              {associationType === 'season' && (
+                  </div>
+              {activeDisplayType === 'season' && (
                   <select 
-                      value={seasonId || ''} 
+                      value={seasonId || ''} // Use prop directly for controlled component value
                       onChange={handleSeasonChange}
                       className={`${editSelectStyle} mt-1 w-full md:w-auto ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
                       disabled={isProcessing} 
@@ -840,9 +793,9 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                            {seasons.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                   </select>
               )}
-              {associationType === 'tournament' && (
+              {activeDisplayType === 'tournament' && (
                   <select 
-                      value={tournamentId || ''} 
+                      value={tournamentId || ''} // Use prop directly
                       onChange={handleTournamentChange}
                       className={`${editSelectStyle} mt-1 w-full md:w-auto ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
                       disabled={isProcessing}

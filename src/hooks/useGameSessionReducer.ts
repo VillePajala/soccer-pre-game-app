@@ -181,9 +181,9 @@ export const gameSessionReducer = (state: GameSessionState, action: GameSessionA
     case 'SET_SELECTED_PLAYER_IDS':
       return { ...state, selectedPlayerIds: action.payload };
     case 'SET_SEASON_ID':
-      return { ...state, seasonId: action.payload, tournamentId: action.payload ? '' : state.tournamentId };
+      return { ...state, seasonId: action.payload, tournamentId: '' };
     case 'SET_TOURNAMENT_ID':
-      return { ...state, tournamentId: action.payload, seasonId: action.payload ? '' : state.seasonId };
+      return { ...state, tournamentId: action.payload, seasonId: '' };
     case 'SET_GAME_LOCATION':
       return { ...state, gameLocation: action.payload };
     case 'SET_GAME_TIME':
