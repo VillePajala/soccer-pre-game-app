@@ -34,35 +34,35 @@ This checklist provides concrete, actionable steps for migrating from localStora
 Execute in Supabase SQL Editor (in order):
 
 #### Users Table
-- [ ] Execute users table SQL (see migration plan section 1.3.1)
-- [ ] Verify table created in Supabase dashboard
-- [ ] Verify RLS policy is active
+- [x] Execute users table SQL (see migration plan section 1.3.1)
+- [x] Verify table created in Supabase dashboard
+- [x] Verify RLS policy is active
 
 #### Players Table  
-- [ ] Execute players table SQL
-- [ ] Verify table and indexes created
-- [ ] Verify RLS policy is active
+- [x] Execute players table SQL
+- [x] Verify table and indexes created
+- [x] Verify RLS policy is active
 
 #### App Settings Table
-- [ ] Execute app_settings table SQL
-- [ ] Verify table created
-- [ ] Verify RLS policy is active
+- [x] Execute app_settings table SQL
+- [x] Verify table created
+- [x] Verify RLS policy is active
 
 #### Seasons Table
-- [ ] Execute seasons table SQL
-- [ ] Verify table created
-- [ ] Verify RLS policy is active
+- [x] Execute seasons table SQL
+- [x] Verify table created
+- [x] Verify RLS policy is active
 
 #### Tournaments Table
-- [ ] Execute tournaments table SQL
-- [ ] Verify table created
-- [ ] Verify RLS policy is active
+- [x] Execute tournaments table SQL
+- [x] Verify table created
+- [x] Verify RLS policy is active
 
 #### Saved Games Table
-- [ ] Execute saved_games table SQL
-- [ ] Verify table and all columns created
-- [ ] Verify foreign keys are set up
-- [ ] Verify RLS policy is active
+- [x] Execute saved_games table SQL
+- [x] Verify table and all columns created
+- [x] Verify foreign keys are set up
+- [x] Verify RLS policy is active
 
 - [ ] Commit: `git commit -m "feat: create Supabase database schema"`
 
