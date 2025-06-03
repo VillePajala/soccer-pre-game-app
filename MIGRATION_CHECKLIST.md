@@ -28,7 +28,7 @@ This checklist provides concrete, actionable steps for migrating from localStora
 - [x] Create `src/lib/supabase.ts` (see migration plan for code)
 - [x] Create `src/lib/supabase.test.ts`
 - [x] Run tests: `npm run test:unit src/lib/supabase.test.ts`
-- [ ] Commit: `git commit -m "feat: setup Supabase client"`
+- [x] Commit: `git commit -m "feat: setup Supabase client"`
 
 ### 1.3 Database Schema Creation
 Execute in Supabase SQL Editor (in order):
