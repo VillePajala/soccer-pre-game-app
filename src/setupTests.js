@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
+
 import '@testing-library/jest-dom';
 
 // Mock window.location if needed by tests
