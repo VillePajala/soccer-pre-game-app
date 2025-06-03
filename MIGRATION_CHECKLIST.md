@@ -64,18 +64,18 @@ Execute in Supabase SQL Editor (in order):
 - [x] Verify foreign keys are set up
 - [x] Verify RLS policy is active
 
-- [ ] Commit: `git commit -m "feat: create Supabase database schema"`
+- [x] Commit: `git commit -m "feat: create Supabase database schema"`
 
 ### 1.4 First Entity Migration: Seasons
 
 #### 1.4.1 Create Supabase Service
-- [ ] Create directory: `src/utils/supabase/`
-- [ ] Create `src/utils/supabase/seasons.ts` (see migration plan)
-- [ ] Verify TypeScript compiles without errors
+- [x] Create directory: `src/utils/supabase/`
+- [x] Create `src/utils/supabase/seasons.ts` (see migration plan)
+- [x] Verify TypeScript compiles without errors
 
 #### 1.4.2 Test Supabase Service
-- [ ] Create `src/utils/supabase/seasons.test.ts`
-- [ ] Implement all CRUD operation tests
+- [x] Create `src/utils/supabase/seasons.test.ts`
+- [x] Implement all CRUD operation tests
 - [ ] Run tests: `npm run test:unit src/utils/supabase/seasons.test.ts`
 - [ ] All tests passing
 
