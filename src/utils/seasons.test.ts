@@ -1,241 +1,192 @@
-import { SEASONS_LIST_KEY } from '@/config/constants';
-import { getSeasons, saveSeasons, addSeason, updateSeason, deleteSeason } from './seasons'; // Adjust path as needed
-import type { Season } from '@/types'; // Import Season type directly from types
+import {
+  getSeasons,
+  addSeason,
+  updateSeason,
+  deleteSeason,
+  authProvider, // Import for spying
+} from './seasons';
+import type { Season } from '@/types';
 
-// Mock localStorage
-let store: Record<string, string> = {};
-const localStorageMock = (() => {
-  return {
-    getItem: jest.fn((key: string) => store[key] || null),
-    setItem: jest.fn((key: string, value: string) => {
-      store[key] = String(value);
-    }),
-    removeItem: jest.fn((key: string) => {
-      delete store[key];
-    }),
-    clear: jest.fn(() => {
-      store = {};
-    }),
-  };
-})();
+// Mock the Supabase service functions that are dependencies of this module
+jest.mock('./supabase/seasons', () => ({
+  __esModule: true,
+  getSupabaseSeasons: jest.fn(),
+  createSupabaseSeason: jest.fn(),
+  updateSupabaseSeason: jest.fn(),
+  deleteSupabaseSeason: jest.fn(),
+}));
 
-Object.defineProperty(window, 'localStorage', { value: localStorageMock });
+// Import the mocked Supabase service functions to assert they are called
+import {
+  getSupabaseSeasons as fetchSeasonsFromSupabaseMock,
+  createSupabaseSeason as addSeasonToSupabaseMock,
+  updateSupabaseSeason as updateSeasonInSupabaseMock,
+  deleteSupabaseSeason as deleteSeasonFromSupabaseMock,
+} from './supabase/seasons';
 
-// Mock console.error and console.warn to prevent output during tests and allow assertions
-let consoleErrorSpy: jest.SpyInstance;
-let consoleWarnSpy: jest.SpyInstance;
+const mockInternalSupabaseUserId = 'test-user-id-from-authprovider';
 
-beforeEach(() => {
-  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-  consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-  // Clear store directly for a fresh start, as localStorageMock.clear() is also mocked.
-  store = {}; 
-});
+describe('Utility: src/utils/seasons.ts', () => {
+  let authSpy: jest.SpyInstance;
+  let consoleWarnSpy: jest.SpyInstance;
 
-afterEach(() => {
-  consoleErrorSpy.mockRestore();
-  consoleWarnSpy.mockRestore();
-  // No need to call localStorageMock.clear() as store is reset in beforeEach
-});
-
-describe('Season Management Utilities (localStorage)', () => {
-  const sampleSeasons: Season[] = [
-    { id: 's1', name: 'Spring League 2023' },
-    { id: 's2', name: 'Summer Tournament' },
-    { id: 's3', name: 'Fall Season' },
-  ];
-
-  describe('getSeasons', () => {
-    it('should return an empty array if no seasons are in localStorage', async () => {
-      expect(await getSeasons()).toEqual([]);
-    });
-
-    it('should return seasons from localStorage if they exist', async () => {
-      localStorageMock.setItem(SEASONS_LIST_KEY, JSON.stringify(sampleSeasons));
-      expect(await getSeasons()).toEqual(sampleSeasons);
-    });
-
-    it('should return an empty array and log an error if localStorage data is malformed', async () => {
-      localStorageMock.setItem(SEASONS_LIST_KEY, 'invalid-json');
-      expect(await getSeasons()).toEqual([]);
-      expect(consoleErrorSpy).toHaveBeenCalled();
-    });
+  beforeEach(() => {
+    jest.clearAllMocks();
+    authSpy = jest.spyOn(authProvider, 'getAuthenticatedSupabaseUserId');
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
   });
 
-  describe('saveSeasons', () => {
-    it('should save seasons to localStorage and return true', async () => {
-      const result = await saveSeasons(sampleSeasons);
-      expect(result).toBe(true);
-      expect(localStorageMock.setItem).toHaveBeenCalledWith(SEASONS_LIST_KEY, JSON.stringify(sampleSeasons));
-      expect(JSON.parse(store[SEASONS_LIST_KEY])).toEqual(sampleSeasons);
+  afterEach(() => {
+    authSpy.mockRestore();
+    consoleWarnSpy.mockRestore();
+  });
+
+  describe('getSeasons', () => {
+    it('should call fetchSeasonsFromSupabase with user ID if authenticated', async () => {
+      authSpy.mockResolvedValue(mockInternalSupabaseUserId);
+      const mockSupabaseSeasons: Season[] = [{ id: 's1', name: 'Supa Season' }];
+      (fetchSeasonsFromSupabaseMock as jest.Mock).mockResolvedValue(mockSupabaseSeasons);
+
+      const result = await getSeasons();
+
+      expect(authSpy).toHaveBeenCalledTimes(1);
+      expect(fetchSeasonsFromSupabaseMock).toHaveBeenCalledWith(mockInternalSupabaseUserId);
+      expect(result).toEqual(mockSupabaseSeasons);
     });
 
-    it('should overwrite existing seasons in localStorage and return true', async () => {
-      const initialSeasons: Season[] = [{ id: 's0', name: 'Old Season' }];
-      localStorageMock.setItem(SEASONS_LIST_KEY, JSON.stringify(initialSeasons));
-      const result = await saveSeasons(sampleSeasons);
-      expect(result).toBe(true);
-      expect(JSON.parse(store[SEASONS_LIST_KEY])).toEqual(sampleSeasons);
+    it('should throw error if not authenticated', async () => {
+      authSpy.mockResolvedValue(null);
+      await expect(getSeasons()).rejects.toThrow("User not authenticated. Please log in to manage seasons.");
+      expect(fetchSeasonsFromSupabaseMock).not.toHaveBeenCalled();
     });
 
-    it('should log an error and return false if saving to localStorage fails', async () => {
-      localStorageMock.setItem.mockImplementationOnce(() => {
-        throw new Error('Quota exceeded');
-      });
-      const result = await saveSeasons(sampleSeasons);
-      expect(result).toBe(false);
-      expect(consoleErrorSpy).toHaveBeenCalled();
+    it('should propagate error from fetchSeasonsFromSupabase', async () => {
+      authSpy.mockResolvedValue(mockInternalSupabaseUserId);
+      const dbError = new Error('Supabase DB Error');
+      (fetchSeasonsFromSupabaseMock as jest.Mock).mockRejectedValue(dbError);
+      await expect(getSeasons()).rejects.toThrow(dbError);
     });
   });
 
   describe('addSeason', () => {
-    it('should add a new season to an empty list and return the new season object', async () => {
-      const newSeasonName = 'Winter Championship';
-      const newSeason = await addSeason(newSeasonName);
-      expect(newSeason).not.toBeNull();
-      expect(newSeason?.name).toBe(newSeasonName);
-      const seasonsInStorage = await getSeasons();
-      expect(seasonsInStorage).toHaveLength(1);
-      expect(seasonsInStorage[0]).toEqual(newSeason);
+    const newSeasonData: Omit<Season, 'id'> = { name: '  New Season ' };
+    const trimmedSeasonData: Omit<Season, 'id'> = { name: 'New Season' };
+    const createdSeason: Season = { id: 'sNew', ...trimmedSeasonData };
+
+    it('should call addSeasonToSupabase with user ID and trimmed data if authenticated', async () => {
+      authSpy.mockResolvedValue(mockInternalSupabaseUserId);
+      (addSeasonToSupabaseMock as jest.Mock).mockResolvedValue(createdSeason);
+
+      const result = await addSeason(newSeasonData);
+
+      expect(authSpy).toHaveBeenCalledTimes(1);
+      expect(addSeasonToSupabaseMock).toHaveBeenCalledWith(mockInternalSupabaseUserId, trimmedSeasonData);
+      expect(result).toEqual(createdSeason);
     });
 
-    it('should add a new season to an existing list and return the new object', async () => {
-      await saveSeasons([sampleSeasons[0]]);
-      const newSeasonName = 'Annual Gala';
-      const newSeason = await addSeason(newSeasonName);
-      expect(newSeason).not.toBeNull();
-      expect(newSeason?.name).toBe(newSeasonName);
-      const seasonsInStorage = await getSeasons();
-      expect(seasonsInStorage).toHaveLength(2);
-      expect(seasonsInStorage.find(s => s.id === newSeason?.id)).toEqual(newSeason);
+    it('should throw error if not authenticated for add', async () => {
+      authSpy.mockResolvedValue(null);
+      await expect(addSeason(newSeasonData)).rejects.toThrow("User not authenticated. Please log in to add a season.");
+      expect(addSeasonToSupabaseMock).not.toHaveBeenCalled();
     });
 
-    it('should trim whitespace from the new season name', async () => {
-      const newSeasonName = '  Spaced Out Cup   ';
-      const newSeason = await addSeason(newSeasonName);
-      expect(newSeason).not.toBeNull();
-      expect(newSeason?.name).toBe('Spaced Out Cup');
+    it('should throw error if season name is empty or whitespace', async () => {
+      authSpy.mockResolvedValue(mockInternalSupabaseUserId);
+      await expect(addSeason({ name: '' })).rejects.toThrow("Season name cannot be empty.");
+      await expect(addSeason({ name: '   ' })).rejects.toThrow("Season name cannot be empty.");
+      expect(addSeasonToSupabaseMock).not.toHaveBeenCalled();
     });
 
-    it('should return null and log error if the season name is empty', async () => {
-      expect(await addSeason('')).toBeNull();
-      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Season name cannot be empty'));
-      expect(await addSeason('   ')).toBeNull();
-      expect(consoleErrorSpy).toHaveBeenCalledTimes(2);
-    });
-
-    it('should return null and log error if a season with the same name already exists', async () => {
-      await saveSeasons([sampleSeasons[0]]); // 'Spring League 2023'
-      expect(await addSeason('spring league 2023')).toBeNull();
-      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('[addSeason] Validation failed: A season with name "spring league 2023" already exists.'));
-    });
-
-    it('should return null if saving fails during add', async () => {
-      localStorageMock.setItem.mockImplementationOnce(() => { throw new Error('Save failed'); });
-      expect(await addSeason('Ephemeral Season')).toBeNull();
-      // saveSeasons (which is called by addSeason) will log the error.
-      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('[saveSeasons] Error saving seasons to localStorage:'), expect.any(Error));
+    it('should propagate error from addSeasonToSupabase', async () => {
+      authSpy.mockResolvedValue(mockInternalSupabaseUserId);
+      const dbError = new Error('Supabase DB Error on add');
+      (addSeasonToSupabaseMock as jest.Mock).mockRejectedValue(dbError);
+      await expect(addSeason(newSeasonData)).rejects.toThrow(dbError);
     });
   });
 
   describe('updateSeason', () => {
-    beforeEach(async () => {
-      await saveSeasons([...sampleSeasons]); 
+    const seasonIdToUpdate = 's1';
+    const updateData: Partial<Omit<Season, 'id'>> = { name: '  Updated Name  ' };
+    const trimmedUpdateData: Partial<Omit<Season, 'id'>> = { name: 'Updated Name' };
+    const updatedSeason: Season = { id: seasonIdToUpdate, name: 'Updated Name' };
+
+    it('should call updateSeasonInSupabase with user ID, season ID and trimmed data if authenticated', async () => {
+      authSpy.mockResolvedValue(mockInternalSupabaseUserId);
+      (updateSeasonInSupabaseMock as jest.Mock).mockResolvedValue(updatedSeason);
+
+      const result = await updateSeason(seasonIdToUpdate, updateData);
+
+      expect(authSpy).toHaveBeenCalledTimes(1);
+      expect(updateSeasonInSupabaseMock).toHaveBeenCalledWith(mockInternalSupabaseUserId, seasonIdToUpdate, trimmedUpdateData);
+      expect(result).toEqual(updatedSeason);
     });
 
-    it('should update an existing season\'s name and return the updated object', async () => {
-      const seasonToUpdateData: Season = { ...sampleSeasons[0], name: 'Spring League Updated' };
-      const updatedSeason = await updateSeason(seasonToUpdateData);
-      expect(updatedSeason).not.toBeNull();
-      expect(updatedSeason?.name).toBe('Spring League Updated');
-      const currentSeasons = await getSeasons();
-      expect(currentSeasons.find(s => s.id === sampleSeasons[0].id)?.name).toBe('Spring League Updated');
+    it('should throw error if not authenticated for update', async () => {
+      authSpy.mockResolvedValue(null);
+      await expect(updateSeason(seasonIdToUpdate, updateData)).rejects.toThrow("User not authenticated. Please log in to update a season.");
+      expect(updateSeasonInSupabaseMock).not.toHaveBeenCalled();
     });
 
-    it('should trim whitespace from updated name', async () => {
-      const seasonToUpdateData: Season = { ...sampleSeasons[0], name: '  Trimmed Update ' };
-      const updatedSeason = await updateSeason(seasonToUpdateData);
-      expect(updatedSeason).not.toBeNull();
-      expect(updatedSeason?.name).toBe('Trimmed Update');
-      const currentSeasons = await getSeasons();
-      expect(currentSeasons.find(s => s.id === sampleSeasons[0].id)?.name).toBe('Trimmed Update');
+    it('should throw error if seasonId is not provided', async () => {
+      authSpy.mockResolvedValue(mockInternalSupabaseUserId);
+      await expect(updateSeason('', updateData)).rejects.toThrow("Season ID is required for update.");
+      expect(updateSeasonInSupabaseMock).not.toHaveBeenCalled();
     });
 
-    it('should return null and log error if trying to update a non-existent season', async () => {
-      const nonExistentSeason: Season = { id: 's99', name: 'Ghost Season' };
-      expect(await updateSeason(nonExistentSeason)).toBeNull();
-      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Season with ID s99 not found'));
+    it('should throw error if updateData is empty or null', async () => {
+      authSpy.mockResolvedValue(mockInternalSupabaseUserId);
+      // @ts-expect-error testing invalid input
+      await expect(updateSeason(seasonIdToUpdate, null)).rejects.toThrow("No update data provided.");
+      await expect(updateSeason(seasonIdToUpdate, {})).rejects.toThrow("No update data provided.");
+      expect(updateSeasonInSupabaseMock).not.toHaveBeenCalled();
+    });
+    
+    it('should throw error if updateData name is empty string after trim', async () => {
+      authSpy.mockResolvedValue(mockInternalSupabaseUserId);
+      await expect(updateSeason(seasonIdToUpdate, { name: '   ' })).rejects.toThrow("Season name cannot be empty if provided for update.");
+      expect(updateSeasonInSupabaseMock).not.toHaveBeenCalled();
     });
 
-    it('should return null and log error if updated name conflicts with another season', async () => {
-      const seasonToUpdateData: Season = { ...sampleSeasons[0], name: sampleSeasons[1].name.toUpperCase() }; 
-      expect(await updateSeason(seasonToUpdateData)).toBeNull();
-      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining(`[updateSeason] Validation failed: Another season with name "${sampleSeasons[1].name.toUpperCase()}" already exists.`));
-    });
-
-    it('should return null if saving fails during update', async () => {
-      localStorageMock.setItem.mockImplementationOnce(() => {
-        throw new Error('Save failed');
-      });
-      const seasonToUpdateData: Season = { ...sampleSeasons[0], name: 'Update Fail Season' };
-      expect(await updateSeason(seasonToUpdateData)).toBeNull();
-      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('[saveSeasons] Error saving seasons to localStorage:'), expect.any(Error));
-    });
-
-    it('should return null and log error for invalid update data (empty name)', async () => {
-      const invalidSeason: Season = { ...sampleSeasons[0], name: '   ' };
-      expect(await updateSeason(invalidSeason)).toBeNull();
-      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('[updateSeason] Invalid season data provided for update.'));
-    });
-
-    it('should return null and log error for invalid update data (missing id)', async () => {
-      const invalidSeason = { name: 'Valid Name' } as Season;
-      expect(await updateSeason(invalidSeason)).toBeNull();
-      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Invalid season data provided for update'));
+    it('should propagate error from updateSeasonInSupabase', async () => {
+      authSpy.mockResolvedValue(mockInternalSupabaseUserId);
+      const dbError = new Error('Supabase DB Error on update');
+      (updateSeasonInSupabaseMock as jest.Mock).mockRejectedValue(dbError);
+      await expect(updateSeason(seasonIdToUpdate, updateData)).rejects.toThrow(dbError);
     });
   });
 
   describe('deleteSeason', () => {
-    beforeEach(async () => {
-      await saveSeasons([...sampleSeasons]); 
-    });
+    const seasonIdToDelete = 's1';
 
-    it('should delete an existing season by ID and return true', async () => {
-      const seasonIdToDelete = sampleSeasons[1].id;
+    it('should call deleteSeasonFromSupabase with user ID and season ID if authenticated', async () => {
+      authSpy.mockResolvedValue(mockInternalSupabaseUserId);
+      (deleteSeasonFromSupabaseMock as jest.Mock).mockResolvedValue(true);
+
       const result = await deleteSeason(seasonIdToDelete);
+
+      expect(authSpy).toHaveBeenCalledTimes(1);
+      expect(deleteSeasonFromSupabaseMock).toHaveBeenCalledWith(mockInternalSupabaseUserId, seasonIdToDelete);
       expect(result).toBe(true);
-      const currentSeasons = await getSeasons();
-      expect(currentSeasons.find(s => s.id === seasonIdToDelete)).toBeUndefined();
     });
 
-    it('should return false and log error if trying to delete a non-existent season ID', async () => {
-      const nonExistentId = 's99';
-      const result = await deleteSeason(nonExistentId);
-      expect(result).toBe(false);
-      const currentSeasons = await getSeasons();
-      expect(currentSeasons).toHaveLength(sampleSeasons.length);
-      expect(consoleErrorSpy).toHaveBeenCalledWith(`[deleteSeason] Season with id ${nonExistentId} not found.`);
+    it('should throw error if not authenticated for delete', async () => {
+      authSpy.mockResolvedValue(null);
+      await expect(deleteSeason(seasonIdToDelete)).rejects.toThrow("User not authenticated. Please log in to delete a season.");
+      expect(deleteSeasonFromSupabaseMock).not.toHaveBeenCalled();
     });
 
-    it('should handle deleting the last season and return true', async () => {
-      await saveSeasons([sampleSeasons[0]]);
-      const result = await deleteSeason(sampleSeasons[0].id);
-      expect(result).toBe(true);
-      expect(await getSeasons()).toEqual([]);
+    it('should throw error if seasonId is not provided for delete', async () => {
+      authSpy.mockResolvedValue(mockInternalSupabaseUserId);
+      await expect(deleteSeason('')).rejects.toThrow("Season ID is required for deletion.");
+      expect(deleteSeasonFromSupabaseMock).not.toHaveBeenCalled();
     });
 
-    it('should return false if saving fails during delete', async () => {
-      localStorageMock.setItem.mockImplementationOnce(() => { throw new Error('Save failed'); });
-      const seasonIdToDelete = sampleSeasons[1].id;
-      expect(await deleteSeason(seasonIdToDelete)).toBe(false);
-      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('[saveSeasons] Error saving seasons to localStorage:'), expect.any(Error));
-      const currentSeasons = await getSeasons();
-      expect(currentSeasons.find(s => s.id === seasonIdToDelete)).toBeDefined(); // Should still be there if save failed
-    });
-
-    it('should return false and log error for invalid delete ID', async () => {
-      expect(await deleteSeason('')).toBe(false);
-      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('[deleteSeason] Invalid season ID provided'));
+    it('should propagate error from deleteSeasonFromSupabase', async () => {
+      authSpy.mockResolvedValue(mockInternalSupabaseUserId);
+      const dbError = new Error('Supabase DB Error on delete');
+      (deleteSeasonFromSupabaseMock as jest.Mock).mockRejectedValue(dbError);
+      await expect(deleteSeason(seasonIdToDelete)).rejects.toThrow(dbError);
     });
   });
 }); 

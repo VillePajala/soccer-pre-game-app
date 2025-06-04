@@ -1,5 +1,10 @@
-import { SEASONS_LIST_KEY } from '@/config/constants';
-import type { Season } from '@/types'; // Import Season type from shared types
+import type { Season } from '@/types';
+import {
+  getSupabaseSeasons as fetchSeasonsFromSupabase,
+  createSupabaseSeason as addSeasonToSupabase,
+  updateSupabaseSeason as updateSeasonInSupabase,
+  deleteSupabaseSeason as deleteSeasonFromSupabase,
+} from './supabase/seasons'; // Adjust path as needed
 
 // Define the Season type (consider moving to a shared types file if not already there)
 // export interface Season { // Remove local definition
@@ -8,137 +13,107 @@ import type { Season } from '@/types'; // Import Season type from shared types
 //   // Add any other relevant season properties, e.g., startDate, endDate
 // }
 
+// This object provides authentication-related functionalities.
+// We can spy on its methods in tests.
+export const authProvider = {
+  /**
+   * Placeholder function to simulate getting the internal Supabase User ID for the
+   * currently authenticated Clerk user.
+   */
+  getAuthenticatedSupabaseUserId: async (): Promise<string | null> => {
+    console.warn(
+      "[authProvider.getAuthenticatedSupabaseUserId] Placeholder: Needs actual Clerk integration and public.users mapping."
+    );
+    // For now, returning null to simulate no authenticated user or no mapping
+    // In tests, we will mock this to return a user ID or null as needed.
+    return Promise.resolve(null);
+  },
+};
+
+// --- Refactored Season Utility Functions --- //
+
 /**
- * Retrieves all seasons from localStorage.
+ * Retrieves all seasons for the authenticated user from Supabase.
  * @returns A promise that resolves to an array of Season objects.
+ * @throws Error if the user is not authenticated or data fetching fails.
  */
 export const getSeasons = async (): Promise<Season[]> => {
-  try {
-    const seasonsJson = localStorage.getItem(SEASONS_LIST_KEY);
-    if (!seasonsJson) {
-      return Promise.resolve([]);
-    }
-    return Promise.resolve(JSON.parse(seasonsJson) as Season[]);
-  } catch (error) {
-    console.error('[getSeasons] Error reading seasons from localStorage:', error);
-    return Promise.resolve([]); // Resolve with empty array on error
+  const internalSupabaseUserId = await authProvider.getAuthenticatedSupabaseUserId();
+  if (!internalSupabaseUserId) {
+    // console.error("[getSeasons] User not authenticated or Supabase ID not found.");
+    throw new Error("User not authenticated. Please log in to manage seasons.");
   }
+  return fetchSeasonsFromSupabase(internalSupabaseUserId);
 };
 
 /**
- * Saves an array of seasons to localStorage, overwriting any existing seasons.
- * @param seasons - The array of Season objects to save.
- * @returns A promise that resolves to true if successful, false otherwise.
+ * Adds a new season for the authenticated user to Supabase.
+ * @param seasonData - The data for the new season (e.g., { name: string }).
+ * @returns A promise that resolves to the newly created Season object.
+ * @throws Error if user not authenticated, validation fails, or save fails.
  */
-export const saveSeasons = async (seasons: Season[]): Promise<boolean> => {
-  try {
-    localStorage.setItem(SEASONS_LIST_KEY, JSON.stringify(seasons));
-    return Promise.resolve(true);
-  } catch (error) {
-    console.error('[saveSeasons] Error saving seasons to localStorage:', error);
-    return Promise.resolve(false);
+export const addSeason = async (seasonData: Omit<Season, 'id'>): Promise<Season> => {
+  const internalSupabaseUserId = await authProvider.getAuthenticatedSupabaseUserId();
+  if (!internalSupabaseUserId) {
+    throw new Error("User not authenticated. Please log in to add a season.");
   }
+  if (!seasonData || !seasonData.name?.trim()) {
+    throw new Error("Season name cannot be empty.");
+  }
+  // Potentially add duplicate name check here against `getSeasons()` if desired before hitting Supabase,
+  // though database constraints are more reliable.
+  return addSeasonToSupabase(internalSupabaseUserId, { ...seasonData, name: seasonData.name.trim() });
 };
 
 /**
- * Adds a new season to the list of seasons in localStorage.
- * @param newSeasonName - The name of the new season.
- * @returns A promise that resolves to the newly created Season object, or null if validation/save fails.
+ * Updates an existing season for the authenticated user in Supabase.
+ * @param seasonId - The ID of the season to update.
+ * @param seasonUpdateData - An object containing the fields to update (e.g., { name: string }).
+ * @returns A promise that resolves to the updated Season object.
+ * @throws Error if user not authenticated, validation fails, season not found, or update fails.
  */
-export const addSeason = async (newSeasonName: string): Promise<Season | null> => {
-  const trimmedName = newSeasonName.trim();
-  if (!trimmedName) {
-    console.error('[addSeason] Validation failed: Season name cannot be empty.');
-    return Promise.resolve(null);
+export const updateSeason = async (seasonId: string, seasonUpdateData: Partial<Omit<Season, 'id'>>): Promise<Season> => {
+  const internalSupabaseUserId = await authProvider.getAuthenticatedSupabaseUserId();
+  if (!internalSupabaseUserId) {
+    throw new Error("User not authenticated. Please log in to update a season.");
+  }
+  if (!seasonId) {
+    throw new Error("Season ID is required for update.");
+  }
+  if (!seasonUpdateData || Object.keys(seasonUpdateData).length === 0) {
+    throw new Error("No update data provided.");
+  }
+  if (seasonUpdateData.name && !seasonUpdateData.name.trim()) {
+    throw new Error("Season name cannot be empty if provided for update.");
+  }
+  
+  const updateData = { ...seasonUpdateData };
+  if (updateData.name) {
+    updateData.name = updateData.name.trim();
   }
 
-  try {
-    const currentSeasons = await getSeasons();
-    if (currentSeasons.some(s => s.name.toLowerCase() === trimmedName.toLowerCase())) {
-      console.error(`[addSeason] Validation failed: A season with name "${trimmedName}" already exists.`);
-      return Promise.resolve(null);
-    }
-    const newSeason: Season = {
-      id: `season_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-      name: trimmedName,
-    };
-    const updatedSeasons = [...currentSeasons, newSeason];
-    const success = await saveSeasons(updatedSeasons);
-
-    if (!success) {
-      return Promise.resolve(null);
-    }
-    return Promise.resolve(newSeason);
-  } catch (error) {
-    console.error('[addSeason] Unexpected error adding season:', error);
-    return Promise.resolve(null);
-  }
+  return updateSeasonInSupabase(internalSupabaseUserId, seasonId, updateData );
 };
 
 /**
- * Updates an existing season in localStorage.
- * @param updatedSeason - The Season object with updated details.
- * @returns A promise that resolves to the updated Season object, or null if not found or save fails.
- */
-export const updateSeason = async (updatedSeasonData: Season): Promise<Season | null> => {
-  if (!updatedSeasonData || !updatedSeasonData.id || !updatedSeasonData.name?.trim()) {
-    console.error('[updateSeason] Invalid season data provided for update.');
-    return Promise.resolve(null);
-  }
-  const trimmedName = updatedSeasonData.name.trim();
-
-  try {
-    const currentSeasons = await getSeasons();
-    const seasonIndex = currentSeasons.findIndex(s => s.id === updatedSeasonData.id);
-
-    if (seasonIndex === -1) {
-      console.error(`[updateSeason] Season with ID ${updatedSeasonData.id} not found.`);
-      return Promise.resolve(null);
-    }
-
-    if (currentSeasons.some(s => s.id !== updatedSeasonData.id && s.name.toLowerCase() === trimmedName.toLowerCase())) {
-      console.error(`[updateSeason] Validation failed: Another season with name "${trimmedName}" already exists.`);
-      return Promise.resolve(null);
-    }
-
-    const seasonsToUpdate = [...currentSeasons];
-    seasonsToUpdate[seasonIndex] = { ...updatedSeasonData, name: trimmedName }; 
-
-    const success = await saveSeasons(seasonsToUpdate);
-
-    if (!success) {
-      return Promise.resolve(null);
-    }
-    return Promise.resolve(seasonsToUpdate[seasonIndex]);
-  } catch (error) {
-    console.error('[updateSeason] Unexpected error updating season:', error);
-    return Promise.resolve(null);
-  }
-};
-
-/**
- * Deletes a season from localStorage by its ID.
+ * Deletes a season for the authenticated user from Supabase by its ID.
  * @param seasonId - The ID of the season to delete.
- * @returns A promise that resolves to true if successful, false if not found or error occurs.
+ * @returns A promise that resolves to true if successful.
+ * @throws Error if user not authenticated, season ID not provided, or delete fails.
  */
 export const deleteSeason = async (seasonId: string): Promise<boolean> => {
+  const internalSupabaseUserId = await authProvider.getAuthenticatedSupabaseUserId();
+  if (!internalSupabaseUserId) {
+    throw new Error("User not authenticated. Please log in to delete a season.");
+  }
   if (!seasonId) {
-     console.error('[deleteSeason] Invalid season ID provided.');
-     return Promise.resolve(false);
+    throw new Error("Season ID is required for deletion.");
   }
-  try {
-    const currentSeasons = await getSeasons();
-    const updatedSeasons = currentSeasons.filter(s => s.id !== seasonId);
+  return deleteSeasonFromSupabase(internalSupabaseUserId, seasonId);
+};
 
-    if (updatedSeasons.length === currentSeasons.length) {
-      console.error(`[deleteSeason] Season with id ${seasonId} not found.`);
-      return Promise.resolve(false);
-    }
-
-    const success = await saveSeasons(updatedSeasons);
-    return Promise.resolve(success);
-  } catch (error) {
-    console.error('[deleteSeason] Unexpected error deleting season:', error);
-    return Promise.resolve(false);
-  }
-}; 
+// Note: The `saveSeasons` function (which overwrote all seasons) is typically not 
+// needed with a backend database model where individual CRUD operations are preferred.
+// If such functionality is absolutely required, it would need careful implementation
+// (e.g., delete all existing user seasons then insert all new ones in a transaction if possible).
+// For now, it's omitted as per standard backend interaction patterns. 

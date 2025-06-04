@@ -92,11 +92,11 @@ Execute in Supabase SQL Editor (in order):
 - [ ] All tests passing (Note: Deferred/Re-evaluate)
 
 #### 1.4.5 Update Seasons Utility
-- [ ] Backup current `src/utils/seasons.ts`
-- [ ] Update to support both localStorage and Supabase
-- [ ] Run existing tests: `npm run test:unit src/utils/seasons.test.ts`
+- [x] Backup current `src/utils/seasons.ts` (implied by refactoring)
+- [x] Update to support Supabase (authentication required)
+- [ ] Rewrite tests for `src/utils/seasons.test.ts` to mock Supabase calls and auth
 - [ ] All existing tests still passing
-- [ ] Add tests for authenticated scenario
+- [ ] Add tests for authenticated scenario (covered by rewritten tests)
 - [ ] All new tests passing
 
 - [ ] Commit: `git commit -m "feat: implement seasons migration to Supabase"`
