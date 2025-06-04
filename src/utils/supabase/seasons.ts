@@ -14,37 +14,17 @@ export interface SupabaseSeason {
   updated_at: string;
 }
 
-// Helper to get the current authenticated user's Supabase internal ID
-// This is a placeholder and will be properly implemented with Clerk later.
-const getCurrentSupabaseUserId = (): string | null => {
-  // For now, let's assume we can get it from somewhere or it's passed in.
-  // In a real scenario with Clerk, you'd get the Clerk user ID
-  // and then look up your internal Supabase user ID from the 'users' table.
-  // This function will need to be adapted once Clerk is integrated
-  // and you have a way to map Clerk user ID to your internal user_id.
-  console.warn("getCurrentSupabaseUserId is a placeholder and needs actual implementation with Clerk mapping.");
-  // To allow testing before Clerk is fully set up, you might temporarily
-  // return a hardcoded UUID that you know exists in your public.users table
-  // associated with a test Clerk ID.
-  // For example, if you manually inserted a user:
-  // return 'your-manually-inserted-test-user-uuid';
-  return null; // Or throw an error if user_id is strictly required for all operations
-};
-
-
 // Get all seasons for the authenticated user
-export const getSupabaseSeasons = async (): Promise<Season[]> => {
-  const userId = getCurrentSupabaseUserId();
-  if (!userId) {
-    // Or handle as per your app's logic for unauthenticated users
-    throw new Error("User not authenticated or Supabase user ID not found.");
+export const getSupabaseSeasons = async (internalSupabaseUserId: string): Promise<Season[]> => {
+  if (!internalSupabaseUserId) {
+    throw new Error("Internal Supabase User ID is required.");
   }
 
   try {
     const { data, error } = await supabase
       .from('seasons')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', internalSupabaseUserId)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -63,10 +43,9 @@ export const getSupabaseSeasons = async (): Promise<Season[]> => {
 };
 
 // Create a new season
-export const createSupabaseSeason = async (seasonData: Omit<Season, 'id'>): Promise<Season> => {
-  const userId = getCurrentSupabaseUserId();
-  if (!userId) {
-    throw new Error("User not authenticated or Supabase user ID not found for creating season.");
+export const createSupabaseSeason = async (internalSupabaseUserId: string, seasonData: Omit<Season, 'id'>): Promise<Season> => {
+  if (!internalSupabaseUserId) {
+    throw new Error("Internal Supabase User ID is required for creating season.");
   }
 
   try {
@@ -77,7 +56,7 @@ export const createSupabaseSeason = async (seasonData: Omit<Season, 'id'>): Prom
 
     const seasonToInsert: Omit<SupabaseSeason, 'created_at' | 'updated_at' | 'user_id'> & { user_id: string } = {
       id: newSeasonId,
-      user_id: userId,
+      user_id: internalSupabaseUserId,
       name: seasonData.name,
       // map other fields from seasonData to SupabaseSeason structure if needed
       // start_date: seasonData.startDate, 
@@ -106,10 +85,9 @@ export const createSupabaseSeason = async (seasonData: Omit<Season, 'id'>): Prom
 };
 
 // Update existing season
-export const updateSupabaseSeason = async (seasonId: string, seasonUpdateData: Partial<Omit<Season, 'id'>>): Promise<Season> => {
-  const userId = getCurrentSupabaseUserId();
-  if (!userId) {
-    throw new Error("User not authenticated or Supabase user ID not found for updating season.");
+export const updateSupabaseSeason = async (internalSupabaseUserId: string, seasonId: string, seasonUpdateData: Partial<Omit<Season, 'id'>>): Promise<Season> => {
+  if (!internalSupabaseUserId) {
+    throw new Error("Internal Supabase User ID is required for updating season.");
   }
 
   try {
@@ -125,7 +103,7 @@ export const updateSupabaseSeason = async (seasonId: string, seasonUpdateData: P
       .from('seasons')
       .update(updates)
       .eq('id', seasonId)
-      .eq('user_id', userId) // Ensure user can only update their own seasons
+      .eq('user_id', internalSupabaseUserId) // Ensure user can only update their own seasons
       .select()
       .single();
 
@@ -144,18 +122,16 @@ export const updateSupabaseSeason = async (seasonId: string, seasonUpdateData: P
 };
 
 // Delete a season
-export const deleteSupabaseSeason = async (seasonId: string): Promise<boolean> => {
-  const userId = getCurrentSupabaseUserId();
-  if (!userId) {
-    throw new Error("User not authenticated or Supabase user ID not found for deleting season.");
+export const deleteSupabaseSeason = async (internalSupabaseUserId: string, seasonId: string): Promise<boolean> => {
+  if (!internalSupabaseUserId) {
+    throw new Error("Internal Supabase User ID is required for deleting season.");
   }
 
   try {
     const { error, count } = await supabase
       .from('seasons')
       .delete()
-      .eq('id', seasonId)
-      .eq('user_id', userId); // Ensure user can only delete their own seasons
+      .match({ id: seasonId, user_id: internalSupabaseUserId }); // Correct way to specify conditions for delete
 
     if (error) throw error;
     
