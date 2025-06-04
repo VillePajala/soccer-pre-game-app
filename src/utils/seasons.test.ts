@@ -3,9 +3,10 @@ import {
   addSeason,
   updateSeason,
   deleteSeason,
-  authProvider, // Import for spying
 } from './seasons';
 import type { Season } from '@/types';
+import { getSupabaseClient } from '@/lib/supabase';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 // Mock the Supabase service functions that are dependencies of this module
 jest.mock('./supabase/seasons', () => ({
@@ -16,55 +17,64 @@ jest.mock('./supabase/seasons', () => ({
   deleteSupabaseSeason: jest.fn(),
 }));
 
+// Mock the getSupabaseClient function from @/lib/supabase
+const mockAuthedSupabaseClient = {} as SupabaseClient;
+
+jest.mock('@/lib/supabase', () => ({
+  __esModule: true,
+  getSupabaseClient: jest.fn(() => mockAuthedSupabaseClient),
+  supabaseAnonClient: jest.fn(), // Also mock anon client if it were used as fallback
+}));
+
 // Import the mocked Supabase service functions to assert they are called
 import {
-  getSupabaseSeasons as fetchSeasonsFromSupabaseMock,
-  createSupabaseSeason as addSeasonToSupabaseMock,
-  updateSupabaseSeason as updateSeasonInSupabaseMock,
-  deleteSupabaseSeason as deleteSeasonFromSupabaseMock,
+  getSupabaseSeasons as fetchSeasonsFromSupabaseServiceMock,
+  createSupabaseSeason as addSeasonToSupabaseServiceMock,
+  updateSupabaseSeason as updateSeasonInSupabaseServiceMock,
+  deleteSupabaseSeason as deleteSeasonFromSupabaseServiceMock,
 } from './supabase/seasons';
 
-const mockInternalSupabaseUserId = 'test-user-id-from-authprovider';
+const mockInternalSupabaseUserId = 'test-user-id-123';
+const mockClerkToken = 'mock-clerk-jwt-token';
 
 describe('Utility: src/utils/seasons.ts', () => {
-  let authSpy: jest.SpyInstance;
   let consoleWarnSpy: jest.SpyInstance;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    authSpy = jest.spyOn(authProvider, 'getAuthenticatedSupabaseUserId');
     consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
   });
 
   afterEach(() => {
-    authSpy.mockRestore();
     consoleWarnSpy.mockRestore();
   });
 
   describe('getSeasons', () => {
-    it('should call fetchSeasonsFromSupabase with user ID if authenticated', async () => {
-      authSpy.mockResolvedValue(mockInternalSupabaseUserId);
+    it('should get authed client and call service with user ID and client', async () => {
       const mockSupabaseSeasons: Season[] = [{ id: 's1', name: 'Supa Season' }];
-      (fetchSeasonsFromSupabaseMock as jest.Mock).mockResolvedValue(mockSupabaseSeasons);
+      (fetchSeasonsFromSupabaseServiceMock as jest.Mock).mockResolvedValue(mockSupabaseSeasons);
 
-      const result = await getSeasons();
+      const result = await getSeasons(mockClerkToken, mockInternalSupabaseUserId);
 
-      expect(authSpy).toHaveBeenCalledTimes(1);
-      expect(fetchSeasonsFromSupabaseMock).toHaveBeenCalledWith(mockInternalSupabaseUserId);
+      expect(getSupabaseClient).toHaveBeenCalledWith(mockClerkToken);
+      expect(fetchSeasonsFromSupabaseServiceMock).toHaveBeenCalledWith(mockAuthedSupabaseClient, mockInternalSupabaseUserId);
       expect(result).toEqual(mockSupabaseSeasons);
     });
 
-    it('should throw error if not authenticated', async () => {
-      authSpy.mockResolvedValue(null);
-      await expect(getSeasons()).rejects.toThrow("User not authenticated. Please log in to manage seasons.");
-      expect(fetchSeasonsFromSupabaseMock).not.toHaveBeenCalled();
+    it('should throw error if clerkToken is not provided', async () => {
+       // @ts-expect-error testing invalid input
+      await expect(getSeasons(null, mockInternalSupabaseUserId)).rejects.toThrow("Clerk token is required.");
     });
 
-    it('should propagate error from fetchSeasonsFromSupabase', async () => {
-      authSpy.mockResolvedValue(mockInternalSupabaseUserId);
-      const dbError = new Error('Supabase DB Error');
-      (fetchSeasonsFromSupabaseMock as jest.Mock).mockRejectedValue(dbError);
-      await expect(getSeasons()).rejects.toThrow(dbError);
+    it('should throw error if internalSupabaseUserId is not provided', async () => {
+       // @ts-expect-error testing invalid input
+      await expect(getSeasons(mockClerkToken, null)).rejects.toThrow("User not authenticated or Supabase ID not provided to getSeasons.");
+    });
+
+    it('should propagate error from fetchSeasonsFromSupabaseService', async () => {
+      const dbError = new Error('Service Error Fetch');
+      (fetchSeasonsFromSupabaseServiceMock as jest.Mock).mockRejectedValue(dbError);
+      await expect(getSeasons(mockClerkToken, mockInternalSupabaseUserId)).rejects.toThrow(dbError);
     });
   });
 
@@ -73,35 +83,34 @@ describe('Utility: src/utils/seasons.ts', () => {
     const trimmedSeasonData: Omit<Season, 'id'> = { name: 'New Season' };
     const createdSeason: Season = { id: 'sNew', ...trimmedSeasonData };
 
-    it('should call addSeasonToSupabase with user ID and trimmed data if authenticated', async () => {
-      authSpy.mockResolvedValue(mockInternalSupabaseUserId);
-      (addSeasonToSupabaseMock as jest.Mock).mockResolvedValue(createdSeason);
+    it('should get authed client and call service with user ID, client, and trimmed data', async () => {
+      (addSeasonToSupabaseServiceMock as jest.Mock).mockResolvedValue(createdSeason);
+      const result = await addSeason(mockClerkToken, mockInternalSupabaseUserId, newSeasonData);
 
-      const result = await addSeason(newSeasonData);
-
-      expect(authSpy).toHaveBeenCalledTimes(1);
-      expect(addSeasonToSupabaseMock).toHaveBeenCalledWith(mockInternalSupabaseUserId, trimmedSeasonData);
+      expect(getSupabaseClient).toHaveBeenCalledWith(mockClerkToken);
+      expect(addSeasonToSupabaseServiceMock).toHaveBeenCalledWith(mockAuthedSupabaseClient, mockInternalSupabaseUserId, trimmedSeasonData);
       expect(result).toEqual(createdSeason);
     });
+    
+    it('should throw if clerkToken is not provided for add', async () => {
+      // @ts-expect-error testing invalid input
+      await expect(addSeason(null, mockInternalSupabaseUserId, newSeasonData)).rejects.toThrow("Clerk token is required.");
+    });
 
-    it('should throw error if not authenticated for add', async () => {
-      authSpy.mockResolvedValue(null);
-      await expect(addSeason(newSeasonData)).rejects.toThrow("User not authenticated. Please log in to add a season.");
-      expect(addSeasonToSupabaseMock).not.toHaveBeenCalled();
+    it('should throw if internalSupabaseUserId is not provided for add', async () => {
+      // @ts-expect-error testing invalid input
+      await expect(addSeason(mockClerkToken, null, newSeasonData)).rejects.toThrow("User not authenticated or Supabase ID not provided to addSeason.");
     });
 
     it('should throw error if season name is empty or whitespace', async () => {
-      authSpy.mockResolvedValue(mockInternalSupabaseUserId);
-      await expect(addSeason({ name: '' })).rejects.toThrow("Season name cannot be empty.");
-      await expect(addSeason({ name: '   ' })).rejects.toThrow("Season name cannot be empty.");
-      expect(addSeasonToSupabaseMock).not.toHaveBeenCalled();
+      await expect(addSeason(mockClerkToken, mockInternalSupabaseUserId, { name: '' })).rejects.toThrow("Season name cannot be empty.");
+      await expect(addSeason(mockClerkToken, mockInternalSupabaseUserId, { name: '   ' })).rejects.toThrow("Season name cannot be empty.");
     });
 
-    it('should propagate error from addSeasonToSupabase', async () => {
-      authSpy.mockResolvedValue(mockInternalSupabaseUserId);
-      const dbError = new Error('Supabase DB Error on add');
-      (addSeasonToSupabaseMock as jest.Mock).mockRejectedValue(dbError);
-      await expect(addSeason(newSeasonData)).rejects.toThrow(dbError);
+     it('should propagate error from addSeasonToSupabaseService', async () => {
+      const dbError = new Error('Service Error on add');
+      (addSeasonToSupabaseServiceMock as jest.Mock).mockRejectedValue(dbError);
+      await expect(addSeason(mockClerkToken, mockInternalSupabaseUserId, newSeasonData)).rejects.toThrow(dbError);
     });
   });
 
@@ -111,82 +120,76 @@ describe('Utility: src/utils/seasons.ts', () => {
     const trimmedUpdateData: Partial<Omit<Season, 'id'>> = { name: 'Updated Name' };
     const updatedSeason: Season = { id: seasonIdToUpdate, name: 'Updated Name' };
 
-    it('should call updateSeasonInSupabase with user ID, season ID and trimmed data if authenticated', async () => {
-      authSpy.mockResolvedValue(mockInternalSupabaseUserId);
-      (updateSeasonInSupabaseMock as jest.Mock).mockResolvedValue(updatedSeason);
+    it('should get authed client and call service with user ID, client, season ID and trimmed data', async () => {
+      (updateSeasonInSupabaseServiceMock as jest.Mock).mockResolvedValue(updatedSeason);
+      const result = await updateSeason(mockClerkToken, mockInternalSupabaseUserId, seasonIdToUpdate, updateData);
 
-      const result = await updateSeason(seasonIdToUpdate, updateData);
-
-      expect(authSpy).toHaveBeenCalledTimes(1);
-      expect(updateSeasonInSupabaseMock).toHaveBeenCalledWith(mockInternalSupabaseUserId, seasonIdToUpdate, trimmedUpdateData);
+      expect(getSupabaseClient).toHaveBeenCalledWith(mockClerkToken);
+      expect(updateSeasonInSupabaseServiceMock).toHaveBeenCalledWith(mockAuthedSupabaseClient, mockInternalSupabaseUserId, seasonIdToUpdate, trimmedUpdateData);
       expect(result).toEqual(updatedSeason);
     });
 
-    it('should throw error if not authenticated for update', async () => {
-      authSpy.mockResolvedValue(null);
-      await expect(updateSeason(seasonIdToUpdate, updateData)).rejects.toThrow("User not authenticated. Please log in to update a season.");
-      expect(updateSeasonInSupabaseMock).not.toHaveBeenCalled();
+    it('should throw if clerkToken is not provided for update', async () => {
+      // @ts-expect-error testing invalid input
+      await expect(updateSeason(null, mockInternalSupabaseUserId, seasonIdToUpdate, updateData)).rejects.toThrow("Clerk token is required.");
+    });
+
+    it('should throw if internalSupabaseUserId is not provided for update', async () => {
+      // @ts-expect-error testing invalid input
+      await expect(updateSeason(mockClerkToken, null, seasonIdToUpdate, updateData)).rejects.toThrow("User not authenticated or Supabase ID not provided to updateSeason.");
     });
 
     it('should throw error if seasonId is not provided', async () => {
-      authSpy.mockResolvedValue(mockInternalSupabaseUserId);
-      await expect(updateSeason('', updateData)).rejects.toThrow("Season ID is required for update.");
-      expect(updateSeasonInSupabaseMock).not.toHaveBeenCalled();
+      await expect(updateSeason(mockClerkToken, mockInternalSupabaseUserId, '', updateData)).rejects.toThrow("Season ID is required for update.");
     });
 
     it('should throw error if updateData is empty or null', async () => {
-      authSpy.mockResolvedValue(mockInternalSupabaseUserId);
       // @ts-expect-error testing invalid input
-      await expect(updateSeason(seasonIdToUpdate, null)).rejects.toThrow("No update data provided.");
-      await expect(updateSeason(seasonIdToUpdate, {})).rejects.toThrow("No update data provided.");
-      expect(updateSeasonInSupabaseMock).not.toHaveBeenCalled();
-    });
-    
-    it('should throw error if updateData name is empty string after trim', async () => {
-      authSpy.mockResolvedValue(mockInternalSupabaseUserId);
-      await expect(updateSeason(seasonIdToUpdate, { name: '   ' })).rejects.toThrow("Season name cannot be empty if provided for update.");
-      expect(updateSeasonInSupabaseMock).not.toHaveBeenCalled();
+      await expect(updateSeason(mockClerkToken, mockInternalSupabaseUserId, seasonIdToUpdate, null)).rejects.toThrow("No update data provided.");
+      await expect(updateSeason(mockClerkToken, mockInternalSupabaseUserId, seasonIdToUpdate, {})).rejects.toThrow("No update data provided.");
     });
 
-    it('should propagate error from updateSeasonInSupabase', async () => {
-      authSpy.mockResolvedValue(mockInternalSupabaseUserId);
-      const dbError = new Error('Supabase DB Error on update');
-      (updateSeasonInSupabaseMock as jest.Mock).mockRejectedValue(dbError);
-      await expect(updateSeason(seasonIdToUpdate, updateData)).rejects.toThrow(dbError);
+    it('should throw error if updateData name is empty string after trim', async () => {
+      await expect(updateSeason(mockClerkToken, mockInternalSupabaseUserId, seasonIdToUpdate, { name: '   ' })).rejects.toThrow("Season name cannot be empty if provided for update.");
+    });
+
+    it('should propagate error from updateSeasonInSupabaseService', async () => {
+      const dbError = new Error('Service Error on update');
+      (updateSeasonInSupabaseServiceMock as jest.Mock).mockRejectedValue(dbError);
+      await expect(updateSeason(mockClerkToken, mockInternalSupabaseUserId, seasonIdToUpdate, updateData)).rejects.toThrow(dbError);
     });
   });
 
   describe('deleteSeason', () => {
     const seasonIdToDelete = 's1';
 
-    it('should call deleteSeasonFromSupabase with user ID and season ID if authenticated', async () => {
-      authSpy.mockResolvedValue(mockInternalSupabaseUserId);
-      (deleteSeasonFromSupabaseMock as jest.Mock).mockResolvedValue(true);
+    it('should get authed client and call service with user ID, client and season ID', async () => {
+      (deleteSeasonFromSupabaseServiceMock as jest.Mock).mockResolvedValue(true);
+      const result = await deleteSeason(mockClerkToken, mockInternalSupabaseUserId, seasonIdToDelete);
 
-      const result = await deleteSeason(seasonIdToDelete);
-
-      expect(authSpy).toHaveBeenCalledTimes(1);
-      expect(deleteSeasonFromSupabaseMock).toHaveBeenCalledWith(mockInternalSupabaseUserId, seasonIdToDelete);
+      expect(getSupabaseClient).toHaveBeenCalledWith(mockClerkToken);
+      expect(deleteSeasonFromSupabaseServiceMock).toHaveBeenCalledWith(mockAuthedSupabaseClient, mockInternalSupabaseUserId, seasonIdToDelete);
       expect(result).toBe(true);
     });
 
-    it('should throw error if not authenticated for delete', async () => {
-      authSpy.mockResolvedValue(null);
-      await expect(deleteSeason(seasonIdToDelete)).rejects.toThrow("User not authenticated. Please log in to delete a season.");
-      expect(deleteSeasonFromSupabaseMock).not.toHaveBeenCalled();
+    it('should throw if clerkToken is not provided for delete', async () => {
+      // @ts-expect-error testing invalid input
+      await expect(deleteSeason(null, mockInternalSupabaseUserId, seasonIdToDelete)).rejects.toThrow("Clerk token is required.");
     });
 
-    it('should throw error if seasonId is not provided for delete', async () => {
-      authSpy.mockResolvedValue(mockInternalSupabaseUserId);
-      await expect(deleteSeason('')).rejects.toThrow("Season ID is required for deletion.");
-      expect(deleteSeasonFromSupabaseMock).not.toHaveBeenCalled();
+    it('should throw if internalSupabaseUserId is not provided for delete', async () => {
+      // @ts-expect-error testing invalid input
+      await expect(deleteSeason(mockClerkToken, null, seasonIdToDelete)).rejects.toThrow("User not authenticated or Supabase ID not provided to deleteSeason.");
     });
 
-    it('should propagate error from deleteSeasonFromSupabase', async () => {
-      authSpy.mockResolvedValue(mockInternalSupabaseUserId);
-      const dbError = new Error('Supabase DB Error on delete');
-      (deleteSeasonFromSupabaseMock as jest.Mock).mockRejectedValue(dbError);
-      await expect(deleteSeason(seasonIdToDelete)).rejects.toThrow(dbError);
+    it('should throw error if seasonId is not provided', async () => {
+      await expect(deleteSeason(mockClerkToken, mockInternalSupabaseUserId, '')).rejects.toThrow("Season ID is required for deletion.");
+    });
+
+    it('should propagate error from deleteSeasonFromSupabaseService', async () => {
+      const dbError = new Error('Service Error on delete');
+      (deleteSeasonFromSupabaseServiceMock as jest.Mock).mockRejectedValue(dbError);
+      await expect(deleteSeason(mockClerkToken, mockInternalSupabaseUserId, seasonIdToDelete)).rejects.toThrow(dbError);
     });
   });
 }); 

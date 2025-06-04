@@ -65,6 +65,8 @@ import { addSeason as utilAddSeason } from '@/utils/seasons';
 import { addTournament as utilAddTournament } from '@/utils/tournaments';
 // Import constants
 import { DEFAULT_GAME_ID, MASTER_ROSTER_KEY } from '@/config/constants';
+import { useAuth } from '@clerk/nextjs'; // Import useAuth from Clerk
+import { useCurrentSupabaseUser } from '@/hooks/useCurrentSupabaseUser'; // Import your hook
 
 // Define the Point type for drawing - Use relative coordinates
 export interface Point {
@@ -209,6 +211,13 @@ export default function Home() {
   console.log('--- page.tsx RENDER ---');
   const { t } = useTranslation(); // Get translation function
   const queryClient = useQueryClient(); // Get query client instance
+  const { getToken } = useAuth(); // Get Clerk's getToken function
+  const {
+    supabaseUserId,
+    isLoading: isSupabaseUserMappingLoading, // Renamed to avoid conflict
+    isSignedIn,
+    error: supabaseUserError, // Error from the hook
+  } = useCurrentSupabaseUser();
 
   // --- Initialize Game Session Reducer ---
   // Map necessary fields from page.tsx's initialState to GameSessionState
@@ -335,9 +344,24 @@ export default function Home() {
     isLoading: areSeasonsQueryLoading,
     isError: isSeasonsQueryError,
     error: seasonsQueryErrorData,
+    // refetch: refetchSeasons, // Optional: if you need to manually refetch
   } = useQuery<Season[], Error>({
     queryKey: queryKeys.seasons,
-    queryFn: utilGetSeasons,
+    queryFn: async () => {
+      if (!isSignedIn || !supabaseUserId) {
+        // This condition should ideally be caught by the `enabled` option, 
+        // but as a safeguard or if called imperatively:
+        console.log('Skipping seasons fetch: User not signed in or Supabase User ID not available yet.');
+        return []; // Return empty array or throw error if preferred
+      }
+      const token = await getToken();
+      if (!token) {
+        throw new Error("Clerk token not available for fetching seasons.");
+      }
+      return utilGetSeasons(token, supabaseUserId);
+    },
+    // Enable the query only when we have the necessary IDs and mapping is not loading
+    enabled: isSignedIn && !!supabaseUserId && !isSupabaseUserMappingLoading,
   });
 
   // --- TanStack Query for Tournaments ---
@@ -665,54 +689,53 @@ export default function Home() {
 
   // --- Mutation for Adding a new Season ---
   const addSeasonMutation = useMutation<
-    Season | null, // Return type from utilAddSeason
-    Error,         // Error type
-    { name: string } // Variables type (season name)
+    Season | null, 
+    Error,         
+    { name: string; clerkToken: string; internalSupabaseUserId: string; } 
   >({
-    mutationFn: async ({ name }) => {
-      return utilAddSeason(name);
+    mutationFn: async ({ name, clerkToken, internalSupabaseUserId }) => { 
+      if (!clerkToken || !internalSupabaseUserId) {
+        throw new Error("Clerk token and Supabase User ID are required to add a season.");
+      }
+      return utilAddSeason(clerkToken, internalSupabaseUserId, { name });
     },
-    onSuccess: (newSeason, variables) => {
+    onSuccess: (newSeason, variables) => { 
       if (newSeason) {
         console.log('[Mutation Success] Season added:', newSeason.name, newSeason.id);
         queryClient.invalidateQueries({ queryKey: queryKeys.seasons });
-        // Potentially set an optimistic update or directly update local 'seasons' state if needed
-        // For now, relying on query invalidation to refresh the seasons list
       } else {
-        // This case might indicate a duplicate name or some other non-exception failure from utilAddSeason
         console.warn('[Mutation Non-Success] utilAddSeason returned null for season:', variables.name);
-        // Consider setting a specific error state for the NewGameSetupModal if it's a common issue
-        // alert(t('newGameSetupModal.errors.addSeasonFailed', 'Failed to add season: {seasonName}. It might already exist.', { seasonName: variables.name }));
       }
     },
     onError: (error, variables) => {
       console.error(`[Mutation Error] Failed to add season ${variables.name}:`, error);
-      // alert(t('newGameSetupModal.errors.addSeasonFailedUnexpected', 'An unexpected error occurred while adding season: {seasonName}.', { seasonName: variables.name }));
     },
   });
 
   // --- Mutation for Adding a new Tournament ---
   const addTournamentMutation = useMutation<
-    Tournament | null, // Return type from utilAddTournament
-    Error,             // Error type
-    { name: string }   // Variables type (tournament name)
+    Tournament | null, 
+    Error,             
+    { name: string; clerkToken: string; internalSupabaseUserId: string; } // Expects full vars
   >({
-    mutationFn: async ({ name }) => {
-      return utilAddTournament(name);
+    mutationFn: async ({ name, clerkToken, internalSupabaseUserId }) => { // Receives full vars
+      if (!clerkToken || !internalSupabaseUserId) {
+        throw new Error("Clerk token and Supabase User ID would be required for refactored utilAddTournament.");
+      }
+      // TODO: Refactor utilAddTournament in src/utils/tournaments.ts to accept (token, userId, data)
+      console.warn("addTournamentMutation: utilAddTournament in src/utils/tournaments.ts needs refactoring. Calling with only name for now.");
+      return utilAddTournament(name); // Still calls the old utilAddTournament signature for now
     },
     onSuccess: (newTournament, variables) => {
       if (newTournament) {
         console.log('[Mutation Success] Tournament added:', newTournament.name, newTournament.id);
         queryClient.invalidateQueries({ queryKey: queryKeys.tournaments });
-        // Similar to seasons, could optimistically update or rely on invalidation
       } else {
         console.warn('[Mutation Non-Success] utilAddTournament returned null for tournament:', variables.name);
-        // alert(t('newGameSetupModal.errors.addTournamentFailed', 'Failed to add tournament: {tournamentName}. It might already exist.', { tournamentName: variables.name }));
       }
     },
     onError: (error, variables) => {
       console.error(`[Mutation Error] Failed to add tournament ${variables.name}:`, error);
-      // alert(t('newGameSetupModal.errors.addTournamentFailedUnexpected', 'An unexpected error occurred while adding tournament: {tournamentName}.', { tournamentName: variables.name }));
     },
   });
 
@@ -752,17 +775,52 @@ export default function Home() {
 
   // --- Effect to update seasons from useQuery ---
   useEffect(() => {
+    // If Supabase user mapping is in progress, wait.
+    if (isSupabaseUserMappingLoading) {
+      console.log('[Seasons Effect] Waiting for Supabase user mapping to complete...');
+      return; 
+    }
+
+    // If there was an error mapping the Supabase user, clear seasons.
+    if (supabaseUserError) {
+      console.error('[Seasons Effect] Error during Supabase user mapping:', supabaseUserError);
+      setSeasons([]);
+      return;
+    }
+
+    // If user is not signed in via Clerk or internal Supabase ID is not available, clear seasons.
+    if (!isSignedIn || !supabaseUserId) {
+      console.log('[Seasons Effect] User not signed in or no Supabase User ID. Clearing seasons.');
+      setSeasons([]);
+      return;
+    }
+
+    // At this point, user is signed in, supabaseUserId is available, and no mapping error.
+    // Now, rely on the TanStack Query state for seasons.
     if (areSeasonsQueryLoading) {
-      console.log('[TanStack Query] Seasons are loading...');
-    }
-    if (seasonsQueryResultData) {
+      console.log('[Seasons Effect] TanStack Query for seasons is loading...');
+    } else if (isSeasonsQueryError) {
+      console.error('[Seasons Effect] TanStack Query error loading seasons:', seasonsQueryErrorData);
+      setSeasons([]);
+    } else if (seasonsQueryResultData) {
+      console.log('[Seasons Effect] TanStack Query successfully fetched seasons.');
       setSeasons(Array.isArray(seasonsQueryResultData) ? seasonsQueryResultData : []);
-    }
-    if (isSeasonsQueryError) {
-      console.error('[TanStack Query] Error loading seasons:', seasonsQueryErrorData);
+    } else {
+      console.log('[Seasons Effect] No seasons data from query (or query disabled/not yet run for user). Setting to empty.');
       setSeasons([]);
     }
-  }, [seasonsQueryResultData, areSeasonsQueryLoading, isSeasonsQueryError, seasonsQueryErrorData, setSeasons]);
+
+  }, [
+    seasonsQueryResultData,
+    areSeasonsQueryLoading,
+    isSeasonsQueryError,
+    seasonsQueryErrorData,
+    setSeasons,
+    isSignedIn,
+    supabaseUserId,
+    isSupabaseUserMappingLoading,
+    supabaseUserError
+  ]);
 
   // --- Effect to update tournaments from useQuery ---
   useEffect(() => {
@@ -3119,6 +3177,10 @@ export default function Home() {
     return <div className="flex items-center justify-center h-screen bg-gray-900 text-white">Loading...</div>;
   }
 
+  if (isSupabaseUserMappingLoading || (areSeasonsQueryLoading && isSignedIn && !!supabaseUserId)) {
+    return <div>Loading application data...</div>; // More generic loading state
+  }
+
   // Final console log before returning the main JSX
   console.log('[Home Render] highlightRosterButton:', highlightRosterButton); // Log state on render
 
@@ -3368,6 +3430,8 @@ export default function Home() {
             // Pass loading states from mutations
             isAddingSeason={addSeasonMutation.isPending}
             isAddingTournament={addTournamentMutation.isPending}
+            // Pass the required auth details for the modal to use when calling mutateAsync
+            internalSupabaseUserId={supabaseUserId} // Pass only supabaseUserId
           />
         )}
 

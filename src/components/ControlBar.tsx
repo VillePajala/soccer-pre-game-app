@@ -38,6 +38,16 @@ import { FaFutbol } from 'react-icons/fa';
 // Import translation hook
 import { useTranslation } from 'react-i18next';
 
+// NEW: Import Clerk components
+import {
+    // SignInButton, // No longer directly used
+    // SignUpButton, // No longer directly used
+    SignedIn,
+    SignedOut,
+    UserButton,
+    useClerk
+} from "@clerk/nextjs";
+
 // Define props for ControlBar
 interface ControlBarProps {
   onUndo: () => void;
@@ -93,6 +103,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   highlightRosterButton, // <<< Receive prop
 }) => {
   const { t, i18n } = useTranslation(); // Standard hook
+  const { openSignIn, openSignUp } = useClerk(); // Get Clerk methods
   console.log('[ControlBar Render] Received highlightRosterButton prop:', highlightRosterButton); // <<< Log prop value
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
   const [menuView, setMenuView] = useState<'main' | 'tulospalvelu'>('main'); // NEW state for menu view
@@ -146,10 +157,12 @@ const ControlBar: React.FC<ControlBarProps> = ({
   const menuIconSize = "w-5 h-5 mr-2"; // Smaller icon size for menu items
 
   // Helper to wrap handlers to also close the menu & reset view
-  const wrapHandler = (handler: () => void) => () => {
+  const wrapHandler = (handler: () => void, closeMenu = true) => () => {
     handler();
-    setIsSettingsMenuOpen(false);
-    setMenuView('main'); 
+    if (closeMenu) {
+      setIsSettingsMenuOpen(false);
+      setMenuView('main');
+    }
   };
 
   // Callback to handle StartNewGame button click
@@ -322,10 +335,30 @@ const ControlBar: React.FC<ControlBarProps> = ({
                          </button>
                        </div>
 
-                       {/* ADD Subtle Divider - slightly more visible */}
+                       {/* NEW: Account Group */}
                        <hr className="border-slate-600/40 my-1 mx-2" />
-                       
-                       {/* Group 5: Settings & Actions (Revised) */}
+                       <div className="py-0.5">
+                         <p className="px-3 py-1.5 text-xs font-semibold text-slate-400 uppercase">{t('controlBar.menu.account', 'Account')}</p>
+                         <SignedOut>
+                           <button onClick={wrapHandler(() => openSignIn(), false)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
+                             {/* TODO: Add Sign In Icon */}
+                             {t('auth.signIn', 'Sign In')}
+                           </button>
+                           <button onClick={wrapHandler(() => openSignUp(), false)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
+                             {/* TODO: Add Sign Up Icon */}
+                             {t('auth.signUp', 'Sign Up')}
+                           </button>
+                         </SignedOut>
+                         <SignedIn>
+                           <div className="w-full flex items-center justify-between px-3 py-1.5 text-sm text-slate-100">
+                             <span>{t('auth.account', 'Account')}:</span>
+                             <UserButton afterSignOutUrl="/" />
+                           </div>
+                         </SignedIn>
+                       </div>
+
+                       {/* Group 5: Settings & Actions (Revised) - Placed after Account */}
+                       <hr className="border-slate-600/40 my-1 mx-2" />
                        <div className="py-0.5">
                          {/* Language Toggle - Fix translation */}
                          <button onClick={handleLanguageToggle} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">

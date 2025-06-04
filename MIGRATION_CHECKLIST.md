@@ -138,6 +138,14 @@ Execute in Supabase SQL Editor (in order):
   CLERK_SECRET_KEY=your_secret_key
   ```
 - [x] Install Clerk: `npm install @clerk/nextjs`
-- [ ] Commit: `git commit -m "feat: setup Clerk authentication"`
+- [x] Commit: `git commit -m "feat: setup Clerk authentication"`
 
 ### 3.2 Implement Authentication
+- [x] Update `src/app/layout.tsx` with ClerkProvider
+- [x] Create `src/middleware.ts` for route protection
+- [ ] Create sign-in/sign-up pages (Note: Using Clerk's default modals for now)
+- [x] Add UserButton component
+- [ ] Test authentication flow
+- [ ] Commit: `git commit -m "feat: implement Clerk authentication UI"`
+
+### 3.3 Connect Clerk to Supabase

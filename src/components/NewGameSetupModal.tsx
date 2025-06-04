@@ -9,6 +9,7 @@ import { getTournaments as utilGetTournaments } from '@/utils/tournaments';
 import { getMasterRoster } from '@/utils/masterRosterManager';
 import { getLastHomeTeamName as utilGetLastHomeTeamName, saveLastHomeTeamName as utilSaveLastHomeTeamName } from '@/utils/appSettings';
 import { UseMutationResult } from '@tanstack/react-query';
+import { useAuth } from '@clerk/nextjs';
 
 interface NewGameSetupModalProps {
   isOpen: boolean;
@@ -27,10 +28,11 @@ interface NewGameSetupModalProps {
     homeOrAway: 'home' | 'away'
   ) => void;
   onCancel: () => void;
-  addSeasonMutation: UseMutationResult<Season | null, Error, { name: string }, unknown>;
-  addTournamentMutation: UseMutationResult<Tournament | null, Error, { name: string }, unknown>;
+  addSeasonMutation: UseMutationResult<Season | null, Error, { name: string; clerkToken: string; internalSupabaseUserId: string; }, unknown>;
+  addTournamentMutation: UseMutationResult<Tournament | null, Error, { name: string; clerkToken: string; internalSupabaseUserId: string; }, unknown>;
   isAddingSeason: boolean;
   isAddingTournament: boolean;
+  internalSupabaseUserId: string | null;
 }
 
 const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
@@ -42,8 +44,10 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   addTournamentMutation,
   isAddingSeason,
   isAddingTournament,
+  internalSupabaseUserId,
 }) => {
   const { t } = useTranslation();
+  const { getToken } = useAuth();
   const [homeTeamName, setHomeTeamName] = useState('');
   const [opponentName, setOpponentName] = useState('');
   const [gameDate, setGameDate] = useState(new Date().toISOString().split('T')[0]);
@@ -111,6 +115,19 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
 
       const fetchData = async () => {
       try {
+          const currentToken = await getToken();
+
+          if (!currentToken || !internalSupabaseUserId) {
+            console.warn("[NewGameSetupModal] Auth details (token or Supabase User ID) not ready for fetching seasons/tournaments.");
+            setSeasons([]);
+            setTournaments([]);
+          } else {
+            const seasonsData = await utilGetSeasons(currentToken, internalSupabaseUserId);
+            setSeasons(Array.isArray(seasonsData) ? seasonsData : []);
+            const tournamentsData = await utilGetTournaments();
+            setTournaments(Array.isArray(tournamentsData) ? tournamentsData : []);
+          }
+
           const roster: Player[] = await getMasterRoster();
           setAvailablePlayersForSetup(roster || []);
           if (initialPlayerSelection && initialPlayerSelection.length > 0) {
@@ -118,33 +135,24 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
           } else if (roster && roster.length > 0) {
             setSelectedPlayerIds(roster.map(p => p.id));
           }
-
           const lastHomeTeam = await utilGetLastHomeTeamName();
           setHomeTeamName(lastHomeTeam || t('newGameSetupModal.defaultTeamName', 'My Team'));
 
-          const seasonsData = await utilGetSeasons();
-          setSeasons(Array.isArray(seasonsData) ? seasonsData : []);
-
-          const tournamentsData = await utilGetTournaments();
-          setTournaments(Array.isArray(tournamentsData) ? tournamentsData : []);
-
-          // MOVED Focus to run earlier, but can be adjusted if data loading causes issues with it.
-          // setTimeout(() => nameInputRef.current?.focus(), 100); 
         } catch (err) {
           console.error("[NewGameSetupModal] Error fetching initial data:", err);
           setError(t('newGameSetupModal.errors.dataLoadFailed', 'Failed to load initial setup data. Please try again.'));
           setHomeTeamName(t('newGameSetupModal.defaultTeamName', 'My Team'));
           setSeasons([]);
           setTournaments([]);
-          setAvailablePlayersForSetup([]); // Reset on error too
-          setSelectedPlayerIds(initialPlayerSelection || []); // Reset selection on error
+          setAvailablePlayersForSetup([]);
+          setSelectedPlayerIds(initialPlayerSelection || []);
         } finally {
           setIsLoading(false);
         }
       };
       fetchData();
     }
-  }, [isOpen, initialPlayerSelection, t]);
+  }, [isOpen, initialPlayerSelection, t, internalSupabaseUserId, getToken]);
 
   // ADD Handler for toggling player selection
   const handlePlayerSelectionToggle = (playerId: string) => {
@@ -201,34 +209,23 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
       newSeasonInputRef.current?.focus();
       return;
     }
-
+    const token = await getToken();
+    if (!token || !internalSupabaseUserId) {
+      alert(t('newGameSetupModal.errors.authRequiredForSeason', 'Authentication details are missing. Cannot add season.'));
+      console.error("Clerk token or Supabase User ID missing in handleAddNewSeason");
+      return;
+    }
     try {
-      // Use the mutation
-      const newSeason = await addSeasonMutation.mutateAsync({ name: trimmedName });
-      
-      if (newSeason) {
-        // onSuccess in page.tsx will invalidate and refetch seasons.
-        // The local 'seasons' state in this modal will be updated by the useEffect 
-        // that fetches seasons when the modal opens, or if we explicitly refetch here.
-        // For now, we'll update the selection and UI, relying on eventual consistency.
-        setSeasons(prevSeasons => [...prevSeasons, newSeason].sort((a, b) => a.name.localeCompare(b.name)));
-        setSelectedSeasonId(newSeason.id);
-        setSelectedTournamentId(null);
-        setNewSeasonName(''); 
-        setShowNewSeasonInput(false); 
-        console.log("Add season mutation initiated for:", newSeason.name);
-        // No need to manually update 'seasons' state here if page.tsx invalidates
-      } else {
-        // This block might be reached if mutateAsync resolves but utilAddSeason returned null (e.g., duplicate)
-        // The mutation's onSuccess/onError in page.tsx would have more context.
-        console.warn("addSeasonMutation.mutateAsync completed, but newSeason is null. Check mutation's onSuccess/onError for details.");
-        // alert for duplicate is better handled by the mutation's error/success reporting if it returns a specific error or null for it
-      }
+      await addSeasonMutation.mutateAsync({
+        name: trimmedName,
+        clerkToken: token, 
+        internalSupabaseUserId: internalSupabaseUserId,
+      });
+      setSelectedSeasonId(newSeasonName); 
+      setShowNewSeasonInput(false); 
+      setNewSeasonName(''); 
     } catch (error) {
-      // This catch is for errors from mutateAsync itself, if not handled by mutation's onError
       console.error("Error calling addSeasonMutation.mutateAsync:", error);
-      // alert(t('newGameSetupModal.errorAddingSeasonGeneric', 'Error initiating add season. See console.'));
-      // The actual user-facing error for mutation failure should come from the mutation's onError handler in page.tsx
       newSeasonInputRef.current?.focus();
     }
   };
@@ -241,25 +238,23 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
       newTournamentInputRef.current?.focus();
       return;
     }
-
+    const token = await getToken();
+    if (!token || !internalSupabaseUserId) {
+      alert(t('newGameSetupModal.errors.authRequiredForTournament', 'Authentication details are missing. Cannot add tournament.'));
+      console.error("Clerk token or Supabase User ID missing in handleAddNewTournament");
+      return;
+    }
     try {
-      // Use the mutation
-      const newTournament = await addTournamentMutation.mutateAsync({ name: trimmedName });
-
-      if (newTournament) {
-        setTournaments(prevTournaments => [...prevTournaments, newTournament].sort((a,b) => a.name.localeCompare(b.name)));
-        setSelectedTournamentId(newTournament.id); 
-        setSelectedSeasonId(null); 
-        setNewTournamentName(''); 
-        setShowNewTournamentInput(false); 
-        console.log("Add tournament mutation initiated for:", newTournament.name);
-        // No need to manually update 'tournaments' state here
-      } else {
-        console.warn("addTournamentMutation.mutateAsync completed, but newTournament is null.");
-      }
+      await addTournamentMutation.mutateAsync({
+        name: trimmedName,
+        clerkToken: token, 
+        internalSupabaseUserId: internalSupabaseUserId,
+      });
+      setSelectedTournamentId(newTournamentName); 
+      setShowNewTournamentInput(false); 
+      setNewTournamentName(''); 
     } catch (error) {
       console.error("Error calling addTournamentMutation.mutateAsync:", error);
-      // alert(t('newGameSetupModal.errorAddingTournamentGeneric', 'Error initiating add tournament. See console.'));
       newTournamentInputRef.current?.focus();
     }
   };

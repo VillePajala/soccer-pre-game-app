@@ -1,10 +1,13 @@
 import type { Season } from '@/types';
+import { getSupabaseClient } from '@/lib/supabase'; // Import the client getter
+// import type { SupabaseClient } from '@supabase/supabase-js'; // No longer directly needed here
+
 import {
-  getSupabaseSeasons as fetchSeasonsFromSupabase,
-  createSupabaseSeason as addSeasonToSupabase,
-  updateSupabaseSeason as updateSeasonInSupabase,
-  deleteSupabaseSeason as deleteSeasonFromSupabase,
-} from './supabase/seasons'; // Adjust path as needed
+  getSupabaseSeasons as fetchSeasonsFromSupabaseService,
+  createSupabaseSeason as addSeasonToSupabaseService,
+  updateSupabaseSeason as updateSeasonInSupabaseService,
+  deleteSupabaseSeason as deleteSeasonFromSupabaseService,
+} from './supabase/seasons';
 
 // Define the Season type (consider moving to a shared types file if not already there)
 // export interface Season { // Remove local definition
@@ -13,69 +16,62 @@ import {
 //   // Add any other relevant season properties, e.g., startDate, endDate
 // }
 
-// This object provides authentication-related functionalities.
-// We can spy on its methods in tests.
-export const authProvider = {
-  /**
-   * Placeholder function to simulate getting the internal Supabase User ID for the
-   * currently authenticated Clerk user.
-   */
-  getAuthenticatedSupabaseUserId: async (): Promise<string | null> => {
-    console.warn(
-      "[authProvider.getAuthenticatedSupabaseUserId] Placeholder: Needs actual Clerk integration and public.users mapping."
-    );
-    // For now, returning null to simulate no authenticated user or no mapping
-    // In tests, we will mock this to return a user ID or null as needed.
-    return Promise.resolve(null);
-  },
-};
+// The authProvider object is no longer needed here.
+// The calling code (e.g., React components using hooks)
+// will be responsible for obtaining the internalSupabaseUserId
+// (e.g., via the new useCurrentSupabaseUser hook) and passing it to these functions.
 
 // --- Refactored Season Utility Functions --- //
 
 /**
  * Retrieves all seasons for the authenticated user from Supabase.
+ * @param clerkToken - The JWT token from Clerk for the authenticated user.
+ * @param internalSupabaseUserId - The internal Supabase User ID (UUID).
  * @returns A promise that resolves to an array of Season objects.
- * @throws Error if the user is not authenticated or data fetching fails.
+ * @throws Error if token/ID not provided, or data fetching fails.
  */
-export const getSeasons = async (): Promise<Season[]> => {
-  const internalSupabaseUserId = await authProvider.getAuthenticatedSupabaseUserId();
+export const getSeasons = async (clerkToken: string, internalSupabaseUserId: string): Promise<Season[]> => {
+  if (!clerkToken) throw new Error("Clerk token is required.");
   if (!internalSupabaseUserId) {
-    // console.error("[getSeasons] User not authenticated or Supabase ID not found.");
-    throw new Error("User not authenticated. Please log in to manage seasons.");
+    throw new Error("User not authenticated or Supabase ID not provided to getSeasons.");
   }
-  return fetchSeasonsFromSupabase(internalSupabaseUserId);
+  const authedSupabase = getSupabaseClient(clerkToken);
+  return fetchSeasonsFromSupabaseService(authedSupabase, internalSupabaseUserId);
 };
 
 /**
  * Adds a new season for the authenticated user to Supabase.
+ * @param clerkToken - The JWT token from Clerk.
+ * @param internalSupabaseUserId - The internal Supabase User ID (UUID).
  * @param seasonData - The data for the new season (e.g., { name: string }).
  * @returns A promise that resolves to the newly created Season object.
- * @throws Error if user not authenticated, validation fails, or save fails.
+ * @throws Error if token/ID not provided, validation fails, or save fails.
  */
-export const addSeason = async (seasonData: Omit<Season, 'id'>): Promise<Season> => {
-  const internalSupabaseUserId = await authProvider.getAuthenticatedSupabaseUserId();
+export const addSeason = async (clerkToken: string, internalSupabaseUserId: string, seasonData: Omit<Season, 'id'>): Promise<Season> => {
+  if (!clerkToken) throw new Error("Clerk token is required.");
   if (!internalSupabaseUserId) {
-    throw new Error("User not authenticated. Please log in to add a season.");
+    throw new Error("User not authenticated or Supabase ID not provided to addSeason.");
   }
   if (!seasonData || !seasonData.name?.trim()) {
     throw new Error("Season name cannot be empty.");
   }
-  // Potentially add duplicate name check here against `getSeasons()` if desired before hitting Supabase,
-  // though database constraints are more reliable.
-  return addSeasonToSupabase(internalSupabaseUserId, { ...seasonData, name: seasonData.name.trim() });
+  const authedSupabase = getSupabaseClient(clerkToken);
+  return addSeasonToSupabaseService(authedSupabase, internalSupabaseUserId, { ...seasonData, name: seasonData.name.trim() });
 };
 
 /**
  * Updates an existing season for the authenticated user in Supabase.
+ * @param clerkToken - The JWT token from Clerk.
+ * @param internalSupabaseUserId - The internal Supabase User ID (UUID).
  * @param seasonId - The ID of the season to update.
- * @param seasonUpdateData - An object containing the fields to update (e.g., { name: string }).
+ * @param seasonUpdateData - An object containing the fields to update.
  * @returns A promise that resolves to the updated Season object.
- * @throws Error if user not authenticated, validation fails, season not found, or update fails.
+ * @throws Error if token/ID not provided, validation fails, or update fails.
  */
-export const updateSeason = async (seasonId: string, seasonUpdateData: Partial<Omit<Season, 'id'>>): Promise<Season> => {
-  const internalSupabaseUserId = await authProvider.getAuthenticatedSupabaseUserId();
+export const updateSeason = async (clerkToken: string, internalSupabaseUserId: string, seasonId: string, seasonUpdateData: Partial<Omit<Season, 'id'>>): Promise<Season> => {
+  if (!clerkToken) throw new Error("Clerk token is required.");
   if (!internalSupabaseUserId) {
-    throw new Error("User not authenticated. Please log in to update a season.");
+    throw new Error("User not authenticated or Supabase ID not provided to updateSeason.");
   }
   if (!seasonId) {
     throw new Error("Season ID is required for update.");
@@ -91,25 +87,28 @@ export const updateSeason = async (seasonId: string, seasonUpdateData: Partial<O
   if (updateData.name) {
     updateData.name = updateData.name.trim();
   }
-
-  return updateSeasonInSupabase(internalSupabaseUserId, seasonId, updateData );
+  const authedSupabase = getSupabaseClient(clerkToken);
+  return updateSeasonInSupabaseService(authedSupabase, internalSupabaseUserId, seasonId, updateData );
 };
 
 /**
  * Deletes a season for the authenticated user from Supabase by its ID.
+ * @param clerkToken - The JWT token from Clerk.
+ * @param internalSupabaseUserId - The internal Supabase User ID (UUID).
  * @param seasonId - The ID of the season to delete.
  * @returns A promise that resolves to true if successful.
- * @throws Error if user not authenticated, season ID not provided, or delete fails.
+ * @throws Error if token/ID not provided, or delete fails.
  */
-export const deleteSeason = async (seasonId: string): Promise<boolean> => {
-  const internalSupabaseUserId = await authProvider.getAuthenticatedSupabaseUserId();
+export const deleteSeason = async (clerkToken: string, internalSupabaseUserId: string, seasonId: string): Promise<boolean> => {
+  if (!clerkToken) throw new Error("Clerk token is required.");
   if (!internalSupabaseUserId) {
-    throw new Error("User not authenticated. Please log in to delete a season.");
+    throw new Error("User not authenticated or Supabase ID not provided to deleteSeason.");
   }
   if (!seasonId) {
     throw new Error("Season ID is required for deletion.");
   }
-  return deleteSeasonFromSupabase(internalSupabaseUserId, seasonId);
+  const authedSupabase = getSupabaseClient(clerkToken);
+  return deleteSeasonFromSupabaseService(authedSupabase, internalSupabaseUserId, seasonId);
 };
 
 // Note: The `saveSeasons` function (which overwrote all seasons) is typically not 

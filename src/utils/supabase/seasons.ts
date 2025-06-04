@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import type { SupabaseClient } from '@supabase/supabase-js'; // Import SupabaseClient type
 import type { Season } from '@/types'; // Assuming you have a Season type defined in @/types
 
 // It's good practice to define the Supabase-specific type if it differs
@@ -15,13 +15,16 @@ export interface SupabaseSeason {
 }
 
 // Get all seasons for the authenticated user
-export const getSupabaseSeasons = async (internalSupabaseUserId: string): Promise<Season[]> => {
+export const getSupabaseSeasons = async (authedSupabaseClient: SupabaseClient, internalSupabaseUserId: string): Promise<Season[]> => {
   if (!internalSupabaseUserId) {
     throw new Error("Internal Supabase User ID is required.");
   }
+  if (!authedSupabaseClient) {
+    throw new Error("Authenticated Supabase client is required.");
+  }
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await authedSupabaseClient
       .from('seasons')
       .select('*')
       .eq('user_id', internalSupabaseUserId)
@@ -43,9 +46,12 @@ export const getSupabaseSeasons = async (internalSupabaseUserId: string): Promis
 };
 
 // Create a new season
-export const createSupabaseSeason = async (internalSupabaseUserId: string, seasonData: Omit<Season, 'id'>): Promise<Season> => {
+export const createSupabaseSeason = async (authedSupabaseClient: SupabaseClient, internalSupabaseUserId: string, seasonData: Omit<Season, 'id'>): Promise<Season> => {
   if (!internalSupabaseUserId) {
     throw new Error("Internal Supabase User ID is required for creating season.");
+  }
+  if (!authedSupabaseClient) {
+    throw new Error("Authenticated Supabase client is required for creating season.");
   }
 
   try {
@@ -64,7 +70,7 @@ export const createSupabaseSeason = async (internalSupabaseUserId: string, seaso
       // details: seasonData.details,
     };
     
-    const { data, error } = await supabase
+    const { data, error } = await authedSupabaseClient
       .from('seasons')
       .insert(seasonToInsert)
       .select()
@@ -85,9 +91,12 @@ export const createSupabaseSeason = async (internalSupabaseUserId: string, seaso
 };
 
 // Update existing season
-export const updateSupabaseSeason = async (internalSupabaseUserId: string, seasonId: string, seasonUpdateData: Partial<Omit<Season, 'id'>>): Promise<Season> => {
+export const updateSupabaseSeason = async (authedSupabaseClient: SupabaseClient, internalSupabaseUserId: string, seasonId: string, seasonUpdateData: Partial<Omit<Season, 'id'>>): Promise<Season> => {
   if (!internalSupabaseUserId) {
     throw new Error("Internal Supabase User ID is required for updating season.");
+  }
+  if (!authedSupabaseClient) {
+    throw new Error("Authenticated Supabase client is required for updating season.");
   }
 
   try {
@@ -99,7 +108,7 @@ export const updateSupabaseSeason = async (internalSupabaseUserId: string, seaso
         updated_at: new Date().toISOString()
     };
 
-    const { data, error } = await supabase
+    const { data, error } = await authedSupabaseClient
       .from('seasons')
       .update(updates)
       .eq('id', seasonId)
@@ -122,13 +131,16 @@ export const updateSupabaseSeason = async (internalSupabaseUserId: string, seaso
 };
 
 // Delete a season
-export const deleteSupabaseSeason = async (internalSupabaseUserId: string, seasonId: string): Promise<boolean> => {
+export const deleteSupabaseSeason = async (authedSupabaseClient: SupabaseClient, internalSupabaseUserId: string, seasonId: string): Promise<boolean> => {
   if (!internalSupabaseUserId) {
     throw new Error("Internal Supabase User ID is required for deleting season.");
   }
+  if (!authedSupabaseClient) {
+    throw new Error("Authenticated Supabase client is required for deleting season.");
+  }
 
   try {
-    const { error, count } = await supabase
+    const { error, count } = await authedSupabaseClient
       .from('seasons')
       .delete()
       .match({ id: seasonId, user_id: internalSupabaseUserId }); // Correct way to specify conditions for delete
