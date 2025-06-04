@@ -12,6 +12,7 @@
     "test:all": "npm run test:unit"
   },
   "dependencies": {
+    "@clerk/nextjs": "^6.20.2",
     "@supabase/supabase-js": "^2.49.8",
     "@tanstack/react-query": "^5.76.1",
     "i18next": "^24.2.3",

@@ -3,6 +3,14 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import ClientWrapper from "@/components/ClientWrapper";
 import QueryProvider from './QueryProvider';
+import {
+  ClerkProvider,
+  SignInButton,
+  SignUpButton,
+  SignedIn,
+  SignedOut,
+  UserButton,
+} from "@clerk/nextjs";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -22,18 +30,29 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-        <meta name="theme-color" content="#1e293b" />
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-      </head>
-      <body className={inter.className}>
-        <QueryProvider>
-          <ClientWrapper>{children}</ClientWrapper>
-        </QueryProvider>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <head>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+          <meta name="theme-color" content="#1e293b" />
+          <meta name="mobile-web-app-capable" content="yes" />
+          <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        </head>
+        <body className={inter.className}>
+          <header style={{ padding: '1rem', borderBottom: '1px solid #eee', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <SignedOut>
+              <SignInButton />
+              <SignUpButton />
+            </SignedOut>
+            <SignedIn>
+              <UserButton />
+            </SignedIn>
+          </header>
+          <QueryProvider>
+            <ClientWrapper>{children}</ClientWrapper>
+          </QueryProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

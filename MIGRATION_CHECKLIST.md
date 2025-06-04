@@ -99,7 +99,7 @@ Execute in Supabase SQL Editor (in order):
 - [x] Add tests for authenticated scenario (covered by rewritten tests)
 - [x] All new tests passing
 
-- [ ] Commit: `git commit -m "feat: implement seasons migration to Supabase"`
+- [x] Commit: `git commit -m "feat: Implement Supabase service layer and refactor utility for Seasons"`
 
 ### 1.5 Verify First Migration
 - [ ] Create test page to trigger migration
@@ -125,3 +125,19 @@ Execute in Supabase SQL Editor (in order):
 - [ ] Create `src/components/DataMigration/PlayersMigration.tsx`
 - [ ] Create `src/components/DataMigration/PlayersMigration.test.tsx`
 - [ ] Update `
+
+## Phase 3: Clerk Authentication
+
+### 3.1 Clerk Setup
+- [x] Create Clerk application at https://clerk.com
+- [x] Configure authentication methods
+- [x] Copy API keys
+- [x] Add to `.env.local`:
+  ```
+  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_key
+  CLERK_SECRET_KEY=your_secret_key
+  ```
+- [x] Install Clerk: `npm install @clerk/nextjs`
+- [ ] Commit: `git commit -m "feat: setup Clerk authentication"`
+
+### 3.2 Implement Authentication
