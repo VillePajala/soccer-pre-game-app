@@ -44,9 +44,9 @@ import {
     // SignUpButton, // No longer directly used
     SignedIn,
     SignedOut,
-    UserButton,
     useClerk,
     useAuth, // Added useAuth for isSignedIn check
+    useUser, // Add useUser hook
 } from "@clerk/nextjs";
 
 // Define props for ControlBar
@@ -104,13 +104,31 @@ const ControlBar: React.FC<ControlBarProps> = ({
   highlightRosterButton, // <<< Receive prop
 }) => {
   const { t, i18n } = useTranslation(); // Standard hook
-  const { openSignIn, openSignUp } = useClerk(); // Get Clerk methods
+  const { openSignIn, openSignUp, signOut } = useClerk(); // Add signOut back
   const { isSignedIn } = useAuth(); // Get isSignedIn state
+  const { user } = useUser(); // Get user data
   console.log('[ControlBar Render] Received highlightRosterButton prop:', highlightRosterButton); // <<< Log prop value
   console.log('[ControlBar] isSignedIn status from useAuth():', isSignedIn);
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
   const [menuView, setMenuView] = useState<'main' | 'tulospalvelu'>('main'); // NEW state for menu view
+  const [showAccountMenu, setShowAccountMenu] = useState(false); // Add state for custom account menu
+  const [positionAccountMenuUpwards, setPositionAccountMenuUpwards] = useState(false); // New state for positioning
   const settingsMenuRef = useRef<HTMLDivElement>(null);
+  const accountMenuRef = useRef<HTMLDivElement>(null); // Add ref for account menu
+  
+  // Effect to determine if account menu should open upwards
+  useEffect(() => {
+    if (showAccountMenu && accountMenuRef.current) {
+      const menuRect = accountMenuRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - menuRect.bottom;
+      const dropdownEstimatedHeight = 150; // Estimate based on content (user info + 2 buttons)
+      if (spaceBelow < dropdownEstimatedHeight) {
+        setPositionAccountMenuUpwards(true);
+      } else {
+        setPositionAccountMenuUpwards(false);
+      }
+    }
+  }, [showAccountMenu]);
   
   // --- RE-ADD BUTTON STYLES --- 
   // Consistent Button Styles - Adjusted active state
@@ -139,13 +157,23 @@ const ControlBar: React.FC<ControlBarProps> = ({
   // Close settings menu if clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (settingsMenuRef.current && !settingsMenuRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      
+      // Check if click is outside account menu
+      if (showAccountMenu && accountMenuRef.current && !accountMenuRef.current.contains(target)) {
+        setShowAccountMenu(false);
+        return; // Don't close settings menu when closing account menu
+      }
+      
+      // Check if click is outside settings menu
+      if (settingsMenuRef.current && !settingsMenuRef.current.contains(target)) {
         setIsSettingsMenuOpen(false);
-        setMenuView('main'); // Reset view when closing menu
+        setMenuView('main');
+        setShowAccountMenu(false);
       }
     };
 
-    if (isSettingsMenuOpen) {
+    if (isSettingsMenuOpen || showAccountMenu) {
       document.addEventListener('mousedown', handleClickOutside);
     } else {
       document.removeEventListener('mousedown', handleClickOutside);
@@ -154,7 +182,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isSettingsMenuOpen]);
+  }, [isSettingsMenuOpen, showAccountMenu]);
 
   const iconSize = "w-5 h-5"; // Standard icon size class
   const menuIconSize = "w-5 h-5 mr-2"; // Smaller icon size for menu items
@@ -367,7 +395,58 @@ const ControlBar: React.FC<ControlBarProps> = ({
                          <SignedIn>
                            <div className="w-full flex items-center justify-between px-3 py-1.5 text-sm text-slate-100">
                              <span>{t('auth.account', 'Account')}:</span>
-                             <UserButton afterSignOutUrl="/" />
+                             {/* Custom account dropdown to replace UserButton */}
+                             <div className="relative" ref={accountMenuRef}>
+                               <button
+                                 onClick={() => setShowAccountMenu(!showAccountMenu)}
+                                 className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                               >
+                                 <img 
+                                   src={user?.imageUrl} 
+                                   alt={user?.fullName || 'User'} 
+                                   className="w-6 h-6 rounded-full"
+                                 />
+                                 <span className="text-xs">{user?.firstName || user?.username || 'User'}</span>
+                               </button>
+                               
+                               {showAccountMenu && (
+                                 <div 
+                                   className={`absolute right-0 w-56 bg-slate-800 rounded-md shadow-xl z-50 border border-slate-600/50 ${positionAccountMenuUpwards ? 'bottom-full mb-2' : 'mt-2'}`}
+                                 >
+                                   <div className="py-1">
+                                     <div className="px-4 py-2 text-sm text-slate-100 border-b border-slate-600/50">
+                                       <div className="font-semibold">{user?.fullName || user?.username}</div>
+                                       <div className="text-xs text-slate-400">{user?.primaryEmailAddress?.emailAddress}</div>
+                                     </div>
+                                     <button
+                                       onClick={() => {
+                                         window.open('https://accounts.clerk.dev/user', '_blank');
+                                         setShowAccountMenu(false);
+                                         setIsSettingsMenuOpen(false);
+                                         setMenuView('main');
+                                       }}
+                                       className="w-full text-left px-4 py-2 text-sm text-slate-100 hover:bg-slate-600/75 flex items-center gap-2"
+                                     >
+                                       <HiOutlineCog6Tooth className="w-4 h-4" />
+                                       {t('auth.manageAccount', 'Manage account')}
+                                     </button>
+                                     <button
+                                       onClick={async () => {
+                                         console.log('[ControlBar] Custom sign out clicked');
+                                         setShowAccountMenu(false);
+                                         setIsSettingsMenuOpen(false);
+                                         setMenuView('main');
+                                         await signOut();
+                                       }}
+                                       className="w-full text-left px-4 py-2 text-sm text-slate-100 hover:bg-slate-600/75 border-t border-slate-600/50 flex items-center gap-2"
+                                     >
+                                       <HiOutlineArrowTopRightOnSquare className="w-4 h-4 rotate-90" />
+                                       {t('auth.signOut', 'Sign out')}
+                                     </button>
+                                   </div>
+                                 </div>
+                               )}
+                             </div>
                            </div>
                          </SignedIn>
                        </div>
