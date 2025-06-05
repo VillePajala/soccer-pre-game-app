@@ -15,13 +15,11 @@ export const useCurrentSupabaseUser = () => {
         setIsLoading(true);
         setError(null);
         try {
-          // 1. Get Clerk token for Supabase
-          // It's good practice to use a specific template if configured in Clerk dashboard for Supabase.
-          // If not, getToken() without a template might work but ensure claims are correct.
-          const clerkToken = await getToken(); // Using default, add { template: 'supabase' } if you have one
+          // Get Clerk token using the 'supabase' template
+          const clerkToken = await getToken({ template: "supabase" }); 
 
           if (!clerkToken) {
-            throw new Error("Clerk token not available.");
+            throw new Error("Clerk token (supabase template) not available.");
           }
 
           // 2. Get an authenticated Supabase client
@@ -35,9 +33,13 @@ export const useCurrentSupabaseUser = () => {
             .eq('clerk_auth_id', clerkUser.id)
             .single();
 
-          if (fetchError && fetchError.code !== 'PGRST116') { 
-            console.error("Error fetching user from public.users:", fetchError);
-            throw fetchError;
+          if (fetchError) {
+            console.error("Raw fetchError from Supabase users select:", JSON.stringify(fetchError, null, 2), fetchError);
+            if (fetchError.code !== 'PGRST116') { 
+              console.error("Error fetching user from public.users (and not PGRST116):", fetchError);
+              throw fetchError;
+            }
+            console.log("fetchError was PGRST116 (user not found), proceeding to create.");
           }
 
           if (existingUser) {

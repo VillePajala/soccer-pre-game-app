@@ -45,7 +45,8 @@ import {
     SignedIn,
     SignedOut,
     UserButton,
-    useClerk
+    useClerk,
+    useAuth, // Added useAuth for isSignedIn check
 } from "@clerk/nextjs";
 
 // Define props for ControlBar
@@ -104,7 +105,9 @@ const ControlBar: React.FC<ControlBarProps> = ({
 }) => {
   const { t, i18n } = useTranslation(); // Standard hook
   const { openSignIn, openSignUp } = useClerk(); // Get Clerk methods
+  const { isSignedIn } = useAuth(); // Get isSignedIn state
   console.log('[ControlBar Render] Received highlightRosterButton prop:', highlightRosterButton); // <<< Log prop value
+  console.log('[ControlBar] isSignedIn status from useAuth():', isSignedIn);
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
   const [menuView, setMenuView] = useState<'main' | 'tulospalvelu'>('main'); // NEW state for menu view
   const settingsMenuRef = useRef<HTMLDivElement>(null);
@@ -156,10 +159,10 @@ const ControlBar: React.FC<ControlBarProps> = ({
   const iconSize = "w-5 h-5"; // Standard icon size class
   const menuIconSize = "w-5 h-5 mr-2"; // Smaller icon size for menu items
 
-  // Helper to wrap handlers to also close the menu & reset view
-  const wrapHandler = (handler: () => void, closeMenu = true) => () => {
+  // Updated wrapHandler
+  const wrapHandler = (handler: () => void, closeMenuAfterHandler = true) => () => {
     handler();
-    if (closeMenu) {
+    if (closeMenuAfterHandler) {
       setIsSettingsMenuOpen(false);
       setMenuView('main');
     }
@@ -340,12 +343,24 @@ const ControlBar: React.FC<ControlBarProps> = ({
                        <div className="py-0.5">
                          <p className="px-3 py-1.5 text-xs font-semibold text-slate-400 uppercase">{t('controlBar.menu.account', 'Account')}</p>
                          <SignedOut>
-                           <button onClick={wrapHandler(() => openSignIn(), false)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
-                             {/* TODO: Add Sign In Icon */}
+                           <button 
+                             onClick={wrapHandler(() => {
+                               openSignIn();
+                               setIsSettingsMenuOpen(false); // Explicitly close menu
+                               setMenuView('main');
+                             }, false)} // wrapHandler's own close is false
+                             className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75"
+                           >
                              {t('auth.signIn', 'Sign In')}
                            </button>
-                           <button onClick={wrapHandler(() => openSignUp(), false)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
-                             {/* TODO: Add Sign Up Icon */}
+                           <button 
+                             onClick={wrapHandler(() => {
+                               openSignUp();
+                               setIsSettingsMenuOpen(false); // Explicitly close menu
+                               setMenuView('main');
+                             }, false)} 
+                             className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75"
+                           >
                              {t('auth.signUp', 'Sign Up')}
                            </button>
                          </SignedOut>

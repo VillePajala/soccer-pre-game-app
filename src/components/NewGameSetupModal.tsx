@@ -108,26 +108,29 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
       setError(null); 
       setIsLoading(true);
 
-      // Focus on the first input field (home team name)
-      // This should ideally happen after initial data load or if not loading
-      // For now, keeping original simple focus logic, can be refined if race conditions occur.
-      setTimeout(() => homeTeamInputRef.current?.focus(), 100); 
-
       const fetchData = async () => {
       try {
           const currentToken = await getToken();
+          
+          console.log("[NewGameSetupModal fetchData] Using clerkToken:", currentToken ? 'TOKEN_PRESENT' : 'TOKEN_MISSING', "AND internalSupabaseUserId (from props):", internalSupabaseUserId);
 
           if (!currentToken || !internalSupabaseUserId) {
             console.warn("[NewGameSetupModal] Auth details (token or Supabase User ID) not ready for fetching seasons/tournaments.");
             setSeasons([]);
             setTournaments([]);
-          } else {
-            const seasonsData = await utilGetSeasons(currentToken, internalSupabaseUserId);
-            setSeasons(Array.isArray(seasonsData) ? seasonsData : []);
-            const tournamentsData = await utilGetTournaments();
-            setTournaments(Array.isArray(tournamentsData) ? tournamentsData : []);
+            const roster: Player[] = await getMasterRoster();
+            setAvailablePlayersForSetup(roster || []);
+            if (initialPlayerSelection && initialPlayerSelection.length > 0) {
+              setSelectedPlayerIds(initialPlayerSelection);
+            } else if (roster && roster.length > 0) {
+              setSelectedPlayerIds(roster.map(p => p.id));
+            }
+            const lastHomeTeam = await utilGetLastHomeTeamName();
+            setHomeTeamName(lastHomeTeam || t('newGameSetupModal.defaultTeamName', 'My Team'));
+            setIsLoading(false); 
+            return;
           }
-
+          
           const roster: Player[] = await getMasterRoster();
           setAvailablePlayersForSetup(roster || []);
           if (initialPlayerSelection && initialPlayerSelection.length > 0) {
@@ -137,6 +140,16 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
           }
           const lastHomeTeam = await utilGetLastHomeTeamName();
           setHomeTeamName(lastHomeTeam || t('newGameSetupModal.defaultTeamName', 'My Team'));
+
+          console.log(`[NewGameSetupModal fetchData] Proceeding to fetch seasons with Supabase User ID: ${internalSupabaseUserId}`);
+          const seasonsData = await utilGetSeasons(currentToken, internalSupabaseUserId);
+          setSeasons(Array.isArray(seasonsData) ? seasonsData : []);
+
+          console.log(`[NewGameSetupModal fetchData] Proceeding to fetch tournaments (currently expects 0 args).`);
+          const tournamentsData = await utilGetTournaments(); 
+          setTournaments(Array.isArray(tournamentsData) ? tournamentsData : []);
+          
+          setTimeout(() => homeTeamInputRef.current?.focus(), 0); // Focus after data fetch attempt
 
         } catch (err) {
           console.error("[NewGameSetupModal] Error fetching initial data:", err);

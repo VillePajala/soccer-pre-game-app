@@ -346,22 +346,17 @@ export default function Home() {
     error: seasonsQueryErrorData,
     // refetch: refetchSeasons, // Optional: if you need to manually refetch
   } = useQuery<Season[], Error>({
-    queryKey: queryKeys.seasons,
+    queryKey: [queryKeys.seasons, supabaseUserId, getToken], // Include dependencies
     queryFn: async () => {
-      if (!isSignedIn || !supabaseUserId) {
-        // This condition should ideally be caught by the `enabled` option, 
-        // but as a safeguard or if called imperatively:
-        console.log('Skipping seasons fetch: User not signed in or Supabase User ID not available yet.');
-        return []; // Return empty array or throw error if preferred
+      const token = await getToken({ template: 'supabase' });
+      if (!token || !supabaseUserId) {
+        console.log('[page.tsx useQuery seasons] Token or supabaseUserId not available. Skipping fetch.');
+        return []; 
       }
-      const token = await getToken();
-      if (!token) {
-        throw new Error("Clerk token not available for fetching seasons.");
-      }
+      console.log(`[page.tsx useQuery seasons] CALLING utilGetSeasons with supabaseUserId: ${supabaseUserId} and token: ${token ? "PRESENT" : "MISSING"}`);
       return utilGetSeasons(token, supabaseUserId);
     },
-    // Enable the query only when we have the necessary IDs and mapping is not loading
-    enabled: isSignedIn && !!supabaseUserId && !isSupabaseUserMappingLoading,
+    enabled: !!isSignedIn && !!supabaseUserId && !isSupabaseUserMappingLoading, 
   });
 
   // --- TanStack Query for Tournaments ---
@@ -775,51 +770,49 @@ export default function Home() {
 
   // --- Effect to update seasons from useQuery ---
   useEffect(() => {
-    // If Supabase user mapping is in progress, wait.
     if (isSupabaseUserMappingLoading) {
       console.log('[Seasons Effect] Waiting for Supabase user mapping to complete...');
       return; 
     }
 
-    // If there was an error mapping the Supabase user, clear seasons.
     if (supabaseUserError) {
       console.error('[Seasons Effect] Error during Supabase user mapping:', supabaseUserError);
-      setSeasons([]);
+      setSeasons([]); 
+      // REMOVED: setAppLoading(false);
       return;
     }
 
-    // If user is not signed in via Clerk or internal Supabase ID is not available, clear seasons.
     if (!isSignedIn || !supabaseUserId) {
       console.log('[Seasons Effect] User not signed in or no Supabase User ID. Clearing seasons.');
-      setSeasons([]);
+      setSeasons([]); 
+      // REMOVED: setAppLoading(false);
       return;
     }
 
-    // At this point, user is signed in, supabaseUserId is available, and no mapping error.
-    // Now, rely on the TanStack Query state for seasons.
     if (areSeasonsQueryLoading) {
-      console.log('[Seasons Effect] TanStack Query for seasons is loading...');
+      console.log('[Seasons Effect] TanStack Query is loading seasons...');
     } else if (isSeasonsQueryError) {
       console.error('[Seasons Effect] TanStack Query error loading seasons:', seasonsQueryErrorData);
-      setSeasons([]);
+      setSeasons([]); 
+      // REMOVED: setAppLoading(false);
     } else if (seasonsQueryResultData) {
       console.log('[Seasons Effect] TanStack Query successfully fetched seasons.');
       setSeasons(Array.isArray(seasonsQueryResultData) ? seasonsQueryResultData : []);
+      // REMOVED: setAppLoading(false);
     } else {
-      console.log('[Seasons Effect] No seasons data from query (or query disabled/not yet run for user). Setting to empty.');
-      setSeasons([]);
+      console.log('[Seasons Effect] seasonsQueryResultData is not yet available or query was disabled.');
+      setSeasons([]); 
+      // REMOVED: setAppLoading(false);
     }
-
   }, [
-    seasonsQueryResultData,
-    areSeasonsQueryLoading,
-    isSeasonsQueryError,
-    seasonsQueryErrorData,
-    setSeasons,
     isSignedIn,
     supabaseUserId,
     isSupabaseUserMappingLoading,
-    supabaseUserError
+    supabaseUserError,
+    seasonsQueryResultData, 
+    areSeasonsQueryLoading, 
+    isSeasonsQueryError,
+    seasonsQueryErrorData,
   ]);
 
   // --- Effect to update tournaments from useQuery ---

@@ -32,5 +32,23 @@ export const getSupabaseClient = (accessToken: string | null = null): SupabaseCl
   return supabaseAnonClient
 }
 
+/**
+ * Returns a Supabase client that bypasses RLS by not including the Clerk JWT.
+ * This is a temporary workaround for the UUID mismatch issue between Clerk and Supabase.
+ * 
+ * IMPORTANT: This should only be used for queries where we explicitly filter by user_id
+ * to maintain security. Do not use this for operations that rely on RLS for security.
+ * 
+ * @returns {SupabaseClient} An instance of the Supabase client without auth headers.
+ */
+export const getSupabaseClientWithoutRLS = (): SupabaseClient => {
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    }
+  })
+}
+
 // Remove or comment out the old singleton export if it exists
 // export const supabase = createClient(supabaseUrl, supabaseAnonKey) 

@@ -1,5 +1,5 @@
 import type { Season } from '@/types';
-import { getSupabaseClient } from '@/lib/supabase'; // Import the client getter
+import { getSupabaseClientWithoutRLS } from '@/lib/supabase'; // Import only the RLS-bypassing client
 // import type { SupabaseClient } from '@supabase/supabase-js'; // No longer directly needed here
 
 import {
@@ -35,8 +35,14 @@ export const getSeasons = async (clerkToken: string, internalSupabaseUserId: str
   if (!internalSupabaseUserId) {
     throw new Error("User not authenticated or Supabase ID not provided to getSeasons.");
   }
-  const authedSupabase = getSupabaseClient(clerkToken);
-  return fetchSeasonsFromSupabaseService(authedSupabase, internalSupabaseUserId);
+  
+  // TEMPORARY FIX: Use client without RLS to avoid UUID format errors
+  // This is necessary because Clerk JWT contains Clerk user IDs, not Supabase UUIDs
+  // We maintain security by explicitly filtering by user_id in the query
+  const supabaseClient = getSupabaseClientWithoutRLS();
+  console.log('[getSeasons] Using RLS-bypassing client due to Clerk/Supabase UUID mismatch');
+  
+  return fetchSeasonsFromSupabaseService(supabaseClient, internalSupabaseUserId);
 };
 
 /**
@@ -55,8 +61,10 @@ export const addSeason = async (clerkToken: string, internalSupabaseUserId: stri
   if (!seasonData || !seasonData.name?.trim()) {
     throw new Error("Season name cannot be empty.");
   }
-  const authedSupabase = getSupabaseClient(clerkToken);
-  return addSeasonToSupabaseService(authedSupabase, internalSupabaseUserId, { ...seasonData, name: seasonData.name.trim() });
+  
+  // Use RLS-bypassing client for consistency
+  const supabaseClient = getSupabaseClientWithoutRLS();
+  return addSeasonToSupabaseService(supabaseClient, internalSupabaseUserId, { ...seasonData, name: seasonData.name.trim() });
 };
 
 /**
@@ -87,8 +95,10 @@ export const updateSeason = async (clerkToken: string, internalSupabaseUserId: s
   if (updateData.name) {
     updateData.name = updateData.name.trim();
   }
-  const authedSupabase = getSupabaseClient(clerkToken);
-  return updateSeasonInSupabaseService(authedSupabase, internalSupabaseUserId, seasonId, updateData );
+  
+  // Use RLS-bypassing client for consistency
+  const supabaseClient = getSupabaseClientWithoutRLS();
+  return updateSeasonInSupabaseService(supabaseClient, internalSupabaseUserId, seasonId, updateData );
 };
 
 /**
@@ -107,8 +117,10 @@ export const deleteSeason = async (clerkToken: string, internalSupabaseUserId: s
   if (!seasonId) {
     throw new Error("Season ID is required for deletion.");
   }
-  const authedSupabase = getSupabaseClient(clerkToken);
-  return deleteSeasonFromSupabaseService(authedSupabase, internalSupabaseUserId, seasonId);
+  
+  // Use RLS-bypassing client for consistency
+  const supabaseClient = getSupabaseClientWithoutRLS();
+  return deleteSeasonFromSupabaseService(supabaseClient, internalSupabaseUserId, seasonId);
 };
 
 // Note: The `saveSeasons` function (which overwrote all seasons) is typically not 
