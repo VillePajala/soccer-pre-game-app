@@ -37,7 +37,10 @@ import {
 
 // Import utility functions for seasons and tournaments
 import { getSeasons as utilGetSeasons, addSeason as utilAddSeason } from '@/utils/seasons';
-import { getTournaments as utilGetTournaments, addTournament as utilAddTournament } from '@/utils/tournaments';
+import { 
+  getTournaments as utilGetTournaments, 
+  addTournament as utilAddTournament,
+} from '@/utils/tournaments';
 import {
   getSavedGames as utilGetSavedGames,
   saveGame as utilSaveGame, // For auto-save and handleSaveGame
@@ -52,6 +55,7 @@ import {
 } from '@/utils/appSettings';
 // Import Player from types directory
 import { Player, Season, Tournament } from '@/types';
+import { GameEvent, AppState, SavedGamesCollection } from '@/types/game';
 // Import useQuery, useMutation, useQueryClient
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 // Import async localStorage utilities
@@ -62,79 +66,9 @@ import { queryKeys } from '@/config/queryKeys';
 import { DEFAULT_GAME_ID, MASTER_ROSTER_KEY } from '@/config/constants';
 import { useAuth } from '@clerk/nextjs'; // Import useAuth from Clerk
 import { useCurrentSupabaseUser } from '@/hooks/useCurrentSupabaseUser'; // Import your hook
-import { getSupabaseClientWithoutRLS } from '@/lib/supabase'; // Import the client getter
+import { getSupabaseClientForAuthenticatedOperations } from '@/lib/supabase'; // Import the client getter
 import { saveSupabaseGame } from '@/utils/supabase/savedGames';
 import { saveSupabaseCurrentGameId } from '@/utils/supabase/appSettings';
-
-// Define the Point type for drawing - Use relative coordinates
-export interface Point {
-  relX: number; // Relative X (0.0 to 1.0)
-  relY: number; // Relative Y (0.0 to 1.0)
-}
-
-// Define the Opponent type - Use relative coordinates
-export interface Opponent {
-  id: string;
-  relX: number; // Relative X (0.0 to 1.0)
-  relY: number; // Relative Y (0.0 to 1.0)
-}
-
-// Define the structure for a game event
-export interface GameEvent {
-  id: string; // Unique ID for the event
-  type: 'goal' | 'opponentGoal' | 'substitution' | 'periodEnd' | 'gameEnd' | 'fairPlayCard'; // Added fairPlayCard
-  time: number; // Time in seconds relative to the start of the game
-  scorerId?: string; // Player ID of the scorer (optional)
-  assisterId?: string; // Player ID of the assister (optional)
-  entityId?: string; // Optional: For events associated with a specific entity (e.g., player ID for fair play card)
-  // Additional fields might be needed for other event types
-}
-
-// Define structure for substitution interval logs
-export interface IntervalLog {
-  period: number;
-  duration: number; // Duration in seconds
-  timestamp: number; // Unix timestamp when the interval ended
-}
-
-// Define the structure for the application state (for history)
-export interface AppState {
-  playersOnField: Player[];
-  opponents: Opponent[]; 
-  drawings: Point[][];
-  availablePlayers: Player[]; // <<< RE-ADD: Roster at the time of saving
-  showPlayerNames: boolean; 
-  teamName: string; 
-  gameEvents: GameEvent[]; // Add game events to state
-  // Add game info state
-  opponentName: string;
-  gameDate: string;
-  homeScore: number;
-  awayScore: number;
-  gameNotes: string; // Add game notes to state
-  homeOrAway: 'home' | 'away'; // <<< Step 1: Add field
-  // Add game structure state
-  numberOfPeriods: 1 | 2;
-  periodDurationMinutes: number;
-  currentPeriod: number; // 1 or 2
-  gameStatus: 'notStarted' | 'inProgress' | 'periodEnd' | 'gameEnd';
-  selectedPlayerIds: string[]; // IDs of players selected for the current match
-  // Replace gameType with required IDs, initialized as empty string
-  seasonId: string; 
-  tournamentId: string;
-  // NEW: Optional fields for location and time
-  gameLocation?: string;
-  gameTime?: string; 
-  // Timer related state to persist (NON-VOLATILE ONES)
-  subIntervalMinutes?: number; // Add sub interval
-  completedIntervalDurations?: IntervalLog[]; // Add completed interval logs
-  lastSubConfirmationTimeSeconds?: number; // Add last substitution confirmation time
-  // VOLATILE TIMER STATES REMOVED:
-  // timeElapsedInSeconds?: number;
-  // isTimerRunning?: boolean;
-  // nextSubDueTimeSeconds?: number;
-  // subAlertLevel?: 'none' | 'warning' | 'due';
-}
 
 // Placeholder data - Initialize new fields
 const initialAvailablePlayersData: Player[] = [
@@ -195,11 +129,6 @@ const SEASONS_LIST_KEY = 'soccerSeasons';
 //   // Add other non-game-specific settings here later if needed
 //   // e.g., preferredLanguage: string;
 // }
-
-// Define structure for saved games collection
-export interface SavedGamesCollection {
-  [gameId: string]: AppState; // Use AppState for the game state structure
-}
 
 // Define a default Game ID for the initial/unsaved state - now imported from constants
 
@@ -524,16 +453,16 @@ export default function Home() {
     Error,
     { gameIdToSave: string; snapshot: AppState; gameName: string; }
   >({
-    mutationFn: async ({ gameIdToSave, snapshot, gameName }) => {
+    mutationFn: async ({ gameIdToSave, snapshot }) => {
       const token = await getToken({ template: 'supabase' });
       if (!token || !supabaseUserId) {
         throw new Error("User is not authenticated. Cannot save game.");
       }
       
-      const supabaseClient = getSupabaseClientWithoutRLS();
+      const supabaseClient = getSupabaseClientForAuthenticatedOperations(token);
 
       await Promise.all([
-        saveSupabaseGame(supabaseClient, supabaseUserId, gameIdToSave, snapshot, gameName),
+        saveSupabaseGame(supabaseClient, supabaseUserId, gameIdToSave, snapshot),
         saveSupabaseCurrentGameId(supabaseClient, supabaseUserId, gameIdToSave)
       ]);
 
@@ -746,22 +675,18 @@ export default function Home() {
 
   // --- Mutation for Adding a new Tournament ---
   const addTournamentMutation = useMutation<
-    Tournament | null, 
-    Error,             
-    { name: string; clerkToken: string; internalSupabaseUserId: string; } // Expects full vars
+    Tournament | null,
+    Error,
+    { name: string; clerkToken: string; internalSupabaseUserId: string }
   >({
-    mutationFn: async ({ name, clerkToken, internalSupabaseUserId }) => { // Receives full vars
-      if (!clerkToken || !internalSupabaseUserId) {
-        throw new Error("Clerk token and Supabase User ID would be required for refactored utilAddTournament.");
-      }
-      // TODO: Refactor utilAddTournament in src/utils/tournaments.ts to accept (token, userId, data)
-      console.warn("addTournamentMutation: utilAddTournament in src/utils/tournaments.ts needs refactoring. Calling with only name for now.");
-      return utilAddTournament(name); // Still calls the old utilAddTournament signature for now
+    mutationFn: async ({ name, clerkToken, internalSupabaseUserId }) => {
+      // The new utilAddTournament now expects the token and user ID
+      return utilAddTournament(clerkToken, internalSupabaseUserId, { name });
     },
     onSuccess: (newTournament, variables) => {
       if (newTournament) {
-        console.log('[Mutation Success] Tournament added:', newTournament.name, newTournament.id);
-        queryClient.invalidateQueries({ queryKey: queryKeys.tournaments });
+        console.log('[Mutation Success] Tournament added via Supabase:', newTournament.name, newTournament.id);
+        queryClient.invalidateQueries({ queryKey: [queryKeys.tournaments] });
       } else {
         console.warn('[Mutation Non-Success] utilAddTournament returned null for tournament:', variables.name);
       }
@@ -770,6 +695,56 @@ export default function Home() {
       console.error(`[Mutation Error] Failed to add tournament ${variables.name}:`, error);
     },
   });
+
+  // --- Mutation for Updating a Tournament ---
+  // TODO: Implement UI to use this mutation
+  // const updateTournamentMutation = useMutation<
+  //   Tournament | null,
+  //   Error,
+  //   { tournament: Tournament }
+  // >({
+  //   mutationFn: async ({ tournament }) => {
+  //     const token = await getToken({ template: 'supabase' });
+  //     if (!token || !supabaseUserId) {
+  //       throw new Error("User is not authenticated. Cannot update tournament.");
+  //     }
+  //     return utilUpdateTournament(token, supabaseUserId, tournament);
+  //   },
+  //   onSuccess: (updatedTournament) => {
+  //     if (updatedTournament) {
+  //       console.log('[Mutation Success] Tournament updated via Supabase:', updatedTournament.name);
+  //       queryClient.invalidateQueries({ queryKey: [queryKeys.tournaments] });
+  //     }
+  //   },
+  //   onError: (error) => {
+  //     console.error(`[Mutation Error] Failed to update tournament:`, error);
+  //   },
+  // });
+
+  // --- Mutation for Deleting a Tournament ---
+  // TODO: Implement UI to use this mutation
+  // const deleteTournamentMutation = useMutation<
+  //   boolean,
+  //   Error,
+  //   { tournamentId: string }
+  // >({
+  //   mutationFn: async ({ tournamentId }) => {
+  //     const token = await getToken({ template: 'supabase' });
+  //     if (!token || !supabaseUserId) {
+  //       throw new Error("User is not authenticated. Cannot delete tournament.");
+  //     }
+  //     return utilDeleteTournament(token, supabaseUserId, tournamentId);
+  //   },
+  //   onSuccess: (success, variables) => {
+  //     if (success) {
+  //       console.log('[Mutation Success] Tournament deleted via Supabase:', variables.tournamentId);
+  //       queryClient.invalidateQueries({ queryKey: [queryKeys.tournaments] });
+  //     }
+  //   },
+  //   onError: (error, variables) => {
+  //     console.error(`[Mutation Error] Failed to delete tournament ${variables.tournamentId}:`, error);
+  //   },
+  // });
 
   // --- Mutation for Deleting a Season ---
   // TODO: Implement UI to use this mutation
@@ -1224,57 +1199,31 @@ export default function Home() {
   useEffect(() => {
     // Only auto-save if loaded AND we have a proper game ID (not the default unsaved one)
     const autoSave = async () => {
-    if (isLoaded && currentGameId && currentGameId !== DEFAULT_GAME_ID) {
-      console.log(`Auto-saving state for game ID: ${currentGameId}`);
-      try {
-        // 1. Create the current game state snapshot (excluding history and volatile timer states)
-        const currentSnapshot: AppState = {
-          // Fields from gameSessionState (persisted ones)
-          teamName: gameSessionState.teamName,
-          opponentName: gameSessionState.opponentName,
-          gameDate: gameSessionState.gameDate,
-          homeScore: gameSessionState.homeScore,
-          awayScore: gameSessionState.awayScore,
-          gameNotes: gameSessionState.gameNotes,
-          homeOrAway: gameSessionState.homeOrAway,
-          numberOfPeriods: gameSessionState.numberOfPeriods,
-          periodDurationMinutes: gameSessionState.periodDurationMinutes,
-          currentPeriod: gameSessionState.currentPeriod, // Persisted
-          gameStatus: gameSessionState.gameStatus, // Persisted
-          seasonId: gameSessionState.seasonId, // USE gameSessionState
-          tournamentId: gameSessionState.tournamentId, // USE gameSessionState
-          gameLocation: gameSessionState.gameLocation,
-          gameTime: gameSessionState.gameTime,
-          subIntervalMinutes: gameSessionState.subIntervalMinutes,
-          completedIntervalDurations: gameSessionState.completedIntervalDurations,
-          lastSubConfirmationTimeSeconds: gameSessionState.lastSubConfirmationTimeSeconds,
-          showPlayerNames: gameSessionState.showPlayerNames, // from gameSessionState
-          selectedPlayerIds: gameSessionState.selectedPlayerIds, // from gameSessionState
-          gameEvents: gameSessionState.gameEvents, // from gameSessionState
-
-          // Other states
-          playersOnField,
-          opponents,
-          drawings,
-          availablePlayers: masterRosterQueryResultData || availablePlayers, // Master roster snapshot
-          
-          // Volatile timer states are intentionally EXCLUDED from the snapshot to be saved.
-          // They are not part of GameData and should be re-initialized on load by the reducer.
-        };
-
+      if (isLoaded && currentGameId && currentGameId !== DEFAULT_GAME_ID) {
+        try {
+          console.log("Auto-saving state to localStorage (via utility)...");
+          const currentSnapshot = {
+            // ... copy everything from history for full snapshot
+            ...history[historyIndex],
+            availablePlayers: masterRosterQueryResultData || availablePlayers, // <<< USE: Master roster as authoritative
+          };
+        
         // 2. Save the game snapshot using utility
           await utilSaveGame(currentGameId, currentSnapshot as AppState); // Cast to AppState for the util
         
         // 3. Save App Settings (only the current game ID) using utility
-          await utilSaveCurrentGameIdSetting(currentGameId);
+          const token = await getToken({ template: 'supabase' });
+          if (token && supabaseUserId) {
+            await utilSaveCurrentGameIdSetting(token, supabaseUserId, currentGameId);
+          }
 
-      } catch (error) {
-        console.error("Failed to auto-save state to localStorage:", error);
-        alert("Error saving game."); // Notify user
+        } catch (error) {
+          console.error("Failed to auto-save state to localStorage:", error);
+          alert("Error saving game."); // Notify user
+        }
+      } else if (isLoaded && currentGameId === DEFAULT_GAME_ID) {
+        console.log("Not auto-saving as this is an unsaved game (no ID assigned yet)");
       }
-    } else if (isLoaded && currentGameId === DEFAULT_GAME_ID) {
-      console.log("Not auto-saving as this is an unsaved game (no ID assigned yet)");
-    }
     };
     autoSave();
     // Dependencies: Include all state variables that are part of the saved snapshot
@@ -1789,7 +1738,10 @@ export default function Home() {
 
         // Update current game ID and save settings
         setCurrentGameId(gameId);
-        await utilSaveCurrentGameIdSetting(gameId);
+        const token = await getToken({ template: 'supabase' });
+        if (token && supabaseUserId) {
+          await utilSaveCurrentGameIdSetting(token, supabaseUserId, gameId);
+        }
 
         console.log(`Game ${gameId} load dispatched to reducer.`);
         handleCloseLoadGameModal();
@@ -1847,7 +1799,10 @@ export default function Home() {
         setHistoryIndex(0);
 
         setCurrentGameId(DEFAULT_GAME_ID);
-          await utilSaveCurrentGameIdSetting(DEFAULT_GAME_ID);
+          const token = await getToken({ template: 'supabase' });
+          if (token && supabaseUserId) {
+            await utilSaveCurrentGameIdSetting(token, supabaseUserId, DEFAULT_GAME_ID);
+          }
         }
       } else {
         // ... (existing error handling)
@@ -2519,7 +2474,10 @@ export default function Home() {
         setSavedGames(updatedSavedGames);
         // localStorage.setItem(SAVED_GAMES_KEY, JSON.stringify(updatedSavedGames));
         await utilSaveGame(currentGameId, currentSnapshot); // Use utility function
-        await utilSaveCurrentGameIdSetting(currentGameId); // Save current game ID setting
+        const token = await getToken({ template: 'supabase' });
+        if (token && supabaseUserId) {
+          await utilSaveCurrentGameIdSetting(token, supabaseUserId, currentGameId); // Save current game ID setting
+        }
 
         // 3. Update history to reflect the saved state
         // This makes the quick save behave like loading a game, resetting undo/redo
@@ -2872,7 +2830,10 @@ export default function Home() {
         // console.log(`Updated app settings with new game ID: ${newGameId}`); // OLD
 
         await utilSaveGame(newGameId, newGameState);
-        await utilSaveCurrentGameIdSetting(newGameId);
+        const token = await getToken({ template: 'supabase' });
+        if (token && supabaseUserId) {
+          await utilSaveCurrentGameIdSetting(token, supabaseUserId, newGameId);
+        }
         console.log(`Saved new game ${newGameId} and settings via utility functions.`);
 
       } catch (error) {

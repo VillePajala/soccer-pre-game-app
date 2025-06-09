@@ -50,5 +50,31 @@ export const getSupabaseClientWithoutRLS = (): SupabaseClient => {
   })
 }
 
+/**
+ * Returns a Supabase client for authenticated operations that need to bypass RLS
+ * due to the Clerk/Supabase UUID mismatch. This client does not include the Clerk JWT
+ * but the calling code MUST always filter by the authenticated user's Supabase UUID.
+ * 
+ * This is a temporary solution until proper JWT mapping is configured between Clerk and Supabase.
+ * 
+ * @param {string} clerkToken - The Clerk JWT token (used for validation only)
+ * @returns {SupabaseClient} An instance of the Supabase client without auth headers.
+ * @throws {Error} If no Clerk token is provided
+ */
+export const getSupabaseClientForAuthenticatedOperations = (clerkToken: string): SupabaseClient => {
+  if (!clerkToken) {
+    throw new Error("Clerk token is required for authenticated operations");
+  }
+  
+  // We validate that a token exists but don't include it in the client
+  // because Supabase RLS expects Supabase UUIDs in the JWT, not Clerk user IDs
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    }
+  })
+}
+
 // Remove or comment out the old singleton export if it exists
 // export const supabase = createClient(supabaseUrl, supabaseAnonKey) 

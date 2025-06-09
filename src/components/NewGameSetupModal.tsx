@@ -87,84 +87,49 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isOpen) {
-      // Reinstate form reset logic
-      setOpponentName('');
-      setGameDate(new Date().toISOString().split('T')[0]);
-      setGameLocation('');
-      setGameHour('');
-      setGameMinute('');
-      setSelectedSeasonId(null);
-      setSelectedTournamentId(null);
-      setShowNewSeasonInput(false);
-      setNewSeasonName('');
-      setShowNewTournamentInput(false);
-      setNewTournamentName('');
-      setLocalNumPeriods(2);
-      setLocalPeriodDurationString('10');
-      setLocalHomeOrAway('home');
-      // End of reinstated form reset logic
-
-      setError(null); 
-      setIsLoading(true);
-
-      const fetchData = async () => {
-      try {
-          const currentToken = await getToken();
-          
-          console.log("[NewGameSetupModal fetchData] Using clerkToken:", currentToken ? 'TOKEN_PRESENT' : 'TOKEN_MISSING', "AND internalSupabaseUserId (from props):", internalSupabaseUserId);
-
-          if (!currentToken || !internalSupabaseUserId) {
-            console.warn("[NewGameSetupModal] Auth details (token or Supabase User ID) not ready for fetching seasons/tournaments.");
-            setSeasons([]);
-            setTournaments([]);
-            const roster: Player[] = await getMasterRoster();
-            setAvailablePlayersForSetup(roster || []);
-            if (initialPlayerSelection && initialPlayerSelection.length > 0) {
-              setSelectedPlayerIds(initialPlayerSelection);
-            } else if (roster && roster.length > 0) {
-              setSelectedPlayerIds(roster.map(p => p.id));
-            }
-            const lastHomeTeam = await utilGetLastHomeTeamName();
-            setHomeTeamName(lastHomeTeam || t('newGameSetupModal.defaultTeamName', 'My Team'));
-            setIsLoading(false); 
-            return;
-          }
-          
-          const roster: Player[] = await getMasterRoster();
-          setAvailablePlayersForSetup(roster || []);
-          if (initialPlayerSelection && initialPlayerSelection.length > 0) {
-            setSelectedPlayerIds(initialPlayerSelection);
-          } else if (roster && roster.length > 0) {
-            setSelectedPlayerIds(roster.map(p => p.id));
-          }
-          const lastHomeTeam = await utilGetLastHomeTeamName();
-          setHomeTeamName(lastHomeTeam || t('newGameSetupModal.defaultTeamName', 'My Team'));
-
-          console.log(`[NewGameSetupModal fetchData] Proceeding to fetch seasons with Supabase User ID: ${internalSupabaseUserId}`);
-          const seasonsData = await utilGetSeasons(currentToken, internalSupabaseUserId);
-          setSeasons(Array.isArray(seasonsData) ? seasonsData : []);
-
-          console.log(`[NewGameSetupModal fetchData] Proceeding to fetch tournaments (currently expects 0 args).`);
-          const tournamentsData = await utilGetTournaments(); 
-          setTournaments(Array.isArray(tournamentsData) ? tournamentsData : []);
-          
-          setTimeout(() => homeTeamInputRef.current?.focus(), 0); // Focus after data fetch attempt
-
-        } catch (err) {
-          console.error("[NewGameSetupModal] Error fetching initial data:", err);
-          setError(t('newGameSetupModal.errors.dataLoadFailed', 'Failed to load initial setup data. Please try again.'));
-          setHomeTeamName(t('newGameSetupModal.defaultTeamName', 'My Team'));
-          setSeasons([]);
-          setTournaments([]);
-          setAvailablePlayersForSetup([]);
-          setSelectedPlayerIds(initialPlayerSelection || []);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      fetchData();
+    if (!isOpen) {
+      return;
     }
+
+    const fetchInitialData = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const token = await getToken();
+        if (!token || !internalSupabaseUserId) {
+          throw new Error("Authentication details not available.");
+        }
+
+        // Fetch all data in parallel
+        const [roster, lastHomeTeam, seasonsData, tournamentsData] = await Promise.all([
+          getMasterRoster(token, internalSupabaseUserId),
+          utilGetLastHomeTeamName(),
+          utilGetSeasons(token, internalSupabaseUserId),
+          utilGetTournaments(token, internalSupabaseUserId)
+        ]);
+
+        // Set state after all data is fetched
+        setAvailablePlayersForSetup(roster || []);
+        if (initialPlayerSelection && initialPlayerSelection.length > 0) {
+          setSelectedPlayerIds(initialPlayerSelection);
+        } else if (roster && roster.length > 0) {
+          setSelectedPlayerIds(roster.map(p => p.id));
+        }
+        
+        setHomeTeamName(lastHomeTeam || t('newGameSetupModal.defaultTeamName', 'My Team'));
+        setSeasons(Array.isArray(seasonsData) ? seasonsData : []);
+        setTournaments(Array.isArray(tournamentsData) ? tournamentsData : []);
+
+      } catch (err) {
+        console.error("[NewGameSetupModal] Error fetching initial data:", err);
+        setError(t('newGameSetupModal.errors.dataLoadFailed', 'Failed to load initial setup data. Please try again.'));
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchInitialData();
+
   }, [isOpen, initialPlayerSelection, t, internalSupabaseUserId, getToken]);
 
   // ADD Handler for toggling player selection
@@ -446,6 +411,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
               ref={opponentInputRef}
               type="text"
               id="opponentNameInput"
+              data-testid="opponent-name-input"
               value={opponentName}
               onChange={(e) => setOpponentName(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -560,6 +526,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                       className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={!!selectedTournamentId || isLoading}
                       title={isAddingSeason ? t('newGameSetupModal.creating', 'Creating...') : t('newGameSetupModal.createSeason')}
+                      data-testid="create-new-season-button"
                   >
                     <HiPlusCircle className="w-4 h-4 mr-1" />
                     {isAddingSeason ? t('newGameSetupModal.creating', 'Creating...') : t('newGameSetupModal.createSeason')}
@@ -627,6 +594,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                           className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={!!selectedSeasonId || isLoading}
                           title={isAddingTournament ? t('newGameSetupModal.creating', 'Creating...') : t('newGameSetupModal.createTournament')}
+                          data-testid="create-new-tournament-button"
                       >
                       <HiPlusCircle className="w-4 h-4 mr-1" />
                       {isAddingTournament ? t('newGameSetupModal.creating', 'Creating...') : t('newGameSetupModal.createTournament')}

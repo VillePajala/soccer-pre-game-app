@@ -123,13 +123,15 @@ Execute in Supabase SQL Editor (in order):
 - [x] **Seasons:** `addSeason` migrated to Supabase.
 - [ ] **Seasons:** `updateSeason` functionality not present in UI. Migration deferred.
 - [ ] **Seasons:** `deleteSeason` functionality not present in UI. Migration deferred.
-- [ ] **Tournaments:** Plan migration for `addTournament`, `updateTournament`, `deleteTournament`.
+- [x] **Tournaments:** `addTournament` migrated to Supabase.
+- [ ] **Tournaments:** `updateTournament` functionality not present in UI. Migration deferred.
+- [ ] **Tournaments:** `deleteTournament` functionality not present in UI. Migration deferred.
 - [ ] **Master Roster:** 
     - [x] `addPlayer` migrated to Supabase.
     - [x] `updatePlayer` migrated to Supabase.
-    - [ ] `setGoalieStatus` migration incomplete due to issues.
+    - [x] `setGoalieStatus` migrated to Supabase.
     - [x] `removePlayer` migrated to Supabase.
-    - [ ] `setFairPlayCardStatus` migration incomplete due to issues.
+    - [x] `setFairPlayCardStatus` migrated to Supabase.
 - [ ] **Saved Games:**
     - [ ] `saveGame` migration incomplete due to issues.
     - [ ] `deleteGame` migration to be planned.
@@ -139,10 +141,7 @@ Execute in Supabase SQL Editor (in order):
 ## Phase 5: Post-Migration Cleanup & Refinement
 
 ### 5.1 Old Data Migration
-- [ ] **Strategy:** Define a clear strategy for migrating existing `localStorage` data for returning users.
-  - *Option A: One-time migration script triggered on first login.*
-  - *Option B: Prompt user to import old data.*
-- [ ] **Implementation:** Build the chosen migration utility.
+- [x] **Decision:** No automatic data migration will be performed. Existing `localStorage` data will not be moved to Supabase. The app will start fresh for all users on the new backend.
 
 ### 5.2 UI Refinement based on Auth State
 - [ ] Ensure loading indicators are shown correctly while auth state is being determined.

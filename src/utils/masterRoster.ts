@@ -1,6 +1,6 @@
 import { MASTER_ROSTER_KEY } from '@/config/constants';
 import type { Player } from '@/types';
-import { getSupabaseClientWithoutRLS } from '@/lib/supabase';
+import { getSupabaseClientForAuthenticatedOperations } from '@/lib/supabase';
 import { getSupabasePlayers } from './supabase/players';
 
 // DEPRECATED: This function will be removed after the migration to Supabase is complete.
@@ -25,8 +25,8 @@ export const getMasterRoster = async (clerkToken: string, internalSupabaseUserId
     throw new Error("Clerk token and Supabase User ID are required.");
   }
   
-  const supabaseClient = getSupabaseClientWithoutRLS();
-  console.log('[getMasterRoster] Using Supabase to fetch master roster');
+  const supabaseClient = getSupabaseClientForAuthenticatedOperations(clerkToken);
+  console.log('[getMasterRoster] Using Supabase client with manual user filtering to fetch master roster');
   
   return getSupabasePlayers(supabaseClient, internalSupabaseUserId);
 };

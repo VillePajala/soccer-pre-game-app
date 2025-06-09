@@ -316,387 +316,42 @@ This detailed schema will serve as a strong foundation for the database migratio
 
 ##### Step 1.4.1: Create Supabase Service for Seasons
 
-**Action:** Create `src/utils/supabase/seasons.ts`:
+**Action:** Create `src/utils/supabase/seasons.ts` with full CRUD (Create, Read, Update, Delete) functionality. (The code example below is illustrative).
 
 ```typescript
+// Illustrative example of a Supabase service function
 import { supabase } from '@/lib/supabase';
 import type { Season } from '@/types';
 
-export interface SupabaseSeason {
-  id: string;
-  user_id: string;
-  name: string;
-  start_date?: string;
-  end_date?: string;
-  details?: Record<string, any>;
-  created_at: string;
-  updated_at: string;
-}
-
 // Get all seasons for the authenticated user
 export const getSupabaseSeasons = async (userId: string): Promise<Season[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('seasons')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    
-    // Transform to app format
-    return (data || []).map(s => ({
-      id: s.id,
-      name: s.name
-    }));
-  } catch (error) {
-    console.error('[getSupabaseSeasons] Error:', error);
-    throw error;
-  }
+  // ... implementation to fetch seasons from Supabase ...
 };
 
-// Create a new season
-export const createSupabaseSeason = async (userId: string, season: Omit<Season, 'id'>): Promise<Season> => {
-  try {
-    const { data, error } = await supabase
-      .from('seasons')
-      .insert({
-        id: `season_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-        user_id: userId,
-        name: season.name
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-    
-    return {
-      id: data.id,
-      name: data.name
-    };
-  } catch (error) {
-    console.error('[createSupabaseSeason] Error:', error);
-    throw error;
-  }
-};
-
-// Update existing season
-export const updateSupabaseSeason = async (userId: string, season: Season): Promise<Season> => {
-  try {
-    const { data, error } = await supabase
-      .from('seasons')
-      .update({ name: season.name, updated_at: new Date().toISOString() })
-      .eq('id', season.id)
-      .eq('user_id', userId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    
-    return {
-      id: data.id,
-      name: data.name
-    };
-  } catch (error) {
-    console.error('[updateSupabaseSeason] Error:', error);
-    throw error;
-  }
-};
-
-// Delete a season
-export const deleteSupabaseSeason = async (userId: string, seasonId: string): Promise<boolean> => {
-  try {
-    const { error } = await supabase
-      .from('seasons')
-      .delete()
-      .eq('id', seasonId)
-      .eq('user_id', userId);
-
-    if (error) throw error;
-    
-    return true;
-  } catch (error) {
-    console.error('[deleteSupabaseSeason] Error:', error);
-    throw error;
-  }
-};
+// ... other functions for create, update, delete ...
 ```
 
 ##### Step 1.4.2: Create Tests for Supabase Seasons Service
 
-**Action:** Create `src/utils/supabase/seasons.test.ts`:
-
-```typescript
-import { supabase } from '@/lib/supabase';
-import {
-  getSupabaseSeasons,
-  createSupabaseSeason,
-  updateSupabaseSeason,
-  deleteSupabaseSeason
-} from './seasons';
-
-// Mock Supabase client
-jest.mock('@/lib/supabase', () => ({
-  supabase: {
-    from: jest.fn()
-  }
-}));
-
-describe('Supabase Seasons Service', () => {
-  const mockUserId = 'test-user-123';
-  
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  describe('getSupabaseSeasons', () => {
-    it('should fetch seasons for a user', async () => {
-      const mockSeasons = [
-        { id: 's1', user_id: mockUserId, name: 'Spring 2024' },
-        { id: 's2', user_id: mockUserId, name: 'Summer 2024' }
-      ];
-
-      const mockQuery = {
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        order: jest.fn().mockResolvedValue({ data: mockSeasons, error: null })
-      };
-
-      (supabase.from as jest.Mock).mockReturnValue(mockQuery);
-
-      const result = await getSupabaseSeasons(mockUserId);
-
-      expect(supabase.from).toHaveBeenCalledWith('seasons');
-      expect(mockQuery.eq).toHaveBeenCalledWith('user_id', mockUserId);
-      expect(result).toEqual([
-        { id: 's1', name: 'Spring 2024' },
-        { id: 's2', name: 'Summer 2024' }
-      ]);
-    });
-
-    it('should handle errors', async () => {
-      const mockError = new Error('Database error');
-      const mockQuery = {
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        order: jest.fn().mockResolvedValue({ data: null, error: mockError })
-      };
-
-      (supabase.from as jest.Mock).mockReturnValue(mockQuery);
-
-      await expect(getSupabaseSeasons(mockUserId)).rejects.toThrow('Database error');
-    });
-  });
-
-  // Add tests for create, update, delete...
-});
-```
+**Action:** Create `src/utils/supabase/seasons.test.ts` to test all CRUD operations, mocking the Supabase client.
 
 **Success Criteria:**
-- Supabase service created with full CRUD operations
-- All tests passing
-- Error handling implemented
+- Supabase service created with full CRUD operations.
+- All tests passing, including error handling.
 
-##### Step 1.4.3: Create Migration Component
+##### Step 1.4.3: Update Seasons Utility to Use Supabase
 
-**Action:** Create `src/components/DataMigration/SeasonsMigration.tsx`:
-
-```typescript
-import React, { useState } from 'react';
-import { getSeasons as getLocalSeasons } from '@/utils/seasons';
-import { createSupabaseSeason } from '@/utils/supabase/seasons';
-import { removeLocalStorageItemAsync } from '@/utils/localStorage';
-import { SEASONS_LIST_KEY } from '@/config/constants';
-
-interface SeasonsMigrationProps {
-  userId: string;
-  onComplete: () => void;
-  onError: (error: Error) => void;
-}
-
-export const SeasonsMigration: React.FC<SeasonsMigrationProps> = ({
-  userId,
-  onComplete,
-  onError
-}) => {
-  const [status, setStatus] = useState<'idle' | 'migrating' | 'complete' | 'error'>('idle');
-  const [progress, setProgress] = useState({ current: 0, total: 0 });
-
-  const migrateSeasons = async () => {
-    try {
-      setStatus('migrating');
-      
-      // Get local seasons
-      const localSeasons = await getLocalSeasons();
-      setProgress({ current: 0, total: localSeasons.length });
-
-      if (localSeasons.length === 0) {
-        setStatus('complete');
-        onComplete();
-        return;
-      }
-
-      // Migrate each season
-      for (let i = 0; i < localSeasons.length; i++) {
-        const season = localSeasons[i];
-        setProgress({ current: i + 1, total: localSeasons.length });
-        
-        try {
-          await createSupabaseSeason(userId, { name: season.name });
-        } catch (error) {
-          console.error(`Failed to migrate season "${season.name}":`, error);
-          // Continue with other seasons
-        }
-      }
-
-      // Clear local storage
-      await removeLocalStorageItemAsync(SEASONS_LIST_KEY);
-      
-      setStatus('complete');
-      onComplete();
-    } catch (error) {
-      console.error('Seasons migration failed:', error);
-      setStatus('error');
-      onError(error as Error);
-    }
-  };
-
-  React.useEffect(() => {
-    if (status === 'idle') {
-      migrateSeasons();
-    }
-  }, [status]);
-
-  if (status === 'error') {
-    return <div>Error migrating seasons. Please try again.</div>;
-  }
-
-  if (status === 'complete') {
-    return <div>Seasons migrated successfully!</div>;
-  }
-
-  return (
-    <div>
-      <h3>Migrating Seasons...</h3>
-      <p>Progress: {progress.current} / {progress.total}</p>
-    </div>
-  );
-};
-```
-
-##### Step 1.4.4: Create Tests for Migration Component
-
-**Action:** Create `src/components/DataMigration/SeasonsMigration.test.tsx`:
-
-```typescript
-import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
-import { SeasonsMigration } from './SeasonsMigration';
-import { getSeasons } from '@/utils/seasons';
-import { createSupabaseSeason } from '@/utils/supabase/seasons';
-import { removeLocalStorageItemAsync } from '@/utils/localStorage';
-
-jest.mock('@/utils/seasons');
-jest.mock('@/utils/supabase/seasons');
-jest.mock('@/utils/localStorage');
-
-describe('SeasonsMigration', () => {
-  const mockUserId = 'test-user-123';
-  const mockOnComplete = jest.fn();
-  const mockOnError = jest.fn();
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it('should migrate seasons successfully', async () => {
-    const mockSeasons = [
-      { id: 's1', name: 'Spring 2024' },
-      { id: 's2', name: 'Summer 2024' }
-    ];
-
-    (getSeasons as jest.Mock).mockResolvedValue(mockSeasons);
-    (createSupabaseSeason as jest.Mock).mockResolvedValue({});
-    (removeLocalStorageItemAsync as jest.Mock).mockResolvedValue(undefined);
-
-    render(
-      <SeasonsMigration
-        userId={mockUserId}
-        onComplete={mockOnComplete}
-        onError={mockOnError}
-      />
-    );
-
-    expect(screen.getByText('Migrating Seasons...')).toBeInTheDocument();
-
-    await waitFor(() => {
-      expect(screen.getByText('Seasons migrated successfully!')).toBeInTheDocument();
-    });
-
-    expect(createSupabaseSeason).toHaveBeenCalledTimes(2);
-    expect(removeLocalStorageItemAsync).toHaveBeenCalledWith('soccerSeasons');
-    expect(mockOnComplete).toHaveBeenCalled();
-    expect(mockOnError).not.toHaveBeenCalled();
-  });
-
-  // Add more test cases...
-});
-```
-
-##### Step 1.4.5: Update Seasons Utility to Use Supabase
-
-**Action:** Modify `src/utils/seasons.ts` to check for user authentication and use Supabase:
-
-```typescript
-import { SEASONS_LIST_KEY } from '@/config/constants';
-import type { Season } from '@/types';
-import { 
-  getSupabaseSeasons, 
-  createSupabaseSeason, 
-  updateSupabaseSeason, 
-  deleteSupabaseSeason 
-} from './supabase/seasons';
-
-// Check if we have a user context (will be implemented with Clerk)
-const getUserId = (): string | null => {
-  // TODO: This will be replaced with Clerk's useUser hook
-  return null;
-};
-
-export const getSeasons = async (): Promise<Season[]> => {
-  const userId = getUserId();
-  
-  // If authenticated, use Supabase
-  if (userId) {
-    return getSupabaseSeasons(userId);
-  }
-  
-  // Otherwise, fall back to localStorage (existing implementation)
-  try {
-    const seasonsJson = localStorage.getItem(SEASONS_LIST_KEY);
-    if (!seasonsJson) {
-      return Promise.resolve([]);
-    }
-    return Promise.resolve(JSON.parse(seasonsJson) as Season[]);
-  } catch (error) {
-    console.error('[getSeasons] Error reading seasons from localStorage:', error);
-    return Promise.resolve([]);
-  }
-};
-
-// Similar updates for addSeason, updateSeason, deleteSeason...
-```
+**Action:** Modify `src/utils/seasons.ts` to use the new Supabase service. All calls will now be directed to Supabase, and any `localStorage` fallback logic will be removed. The functions in this utility will now require authentication context (like a user token or ID) to be passed in.
 
 **Success Criteria:**
-- Migration component created and tested
-- Seasons utility updated to support both localStorage and Supabase
-- All existing tests still pass
-- New tests for Supabase functionality pass
+- Seasons utility updated to use Supabase exclusively.
+- `localStorage` fallback code removed.
+- All tests updated to reflect the new Supabase-only logic.
 
 #### Step 1.5: Migration Order and Dependencies
 
 **Mandatory Migration Order:**
-1. **Seasons** (no dependencies) ✓
+1.  **Seasons** (no dependencies) ✓
 2. **Tournaments** (no dependencies)
 3. **Players** (master roster, no dependencies)
 4. **App Settings** (may reference game IDs but not critical)
@@ -812,14 +467,14 @@ export default function RootLayout({
 
 ## 5. Considerations & Potential Challenges
 
-*   **Existing Users' Data:** Carefully plan how existing localStorage data will be migrated to Supabase. This might involve a client-side script that runs once per user.
+*   **Existing Users' Data:** The decision has been made **not** to migrate existing `localStorage` data. The application will start fresh on the Supabase backend. Users with old data in `localStorage` will start with a clean slate upon logging in.
 *   **Offline Support:** Moving from localStorage to a server-based solution like Supabase means the application will require an internet connection for most data operations. **The current plan results in an online-only application for data persistence.** If offline capability is a critical long-term requirement, it will need a separate, dedicated planning phase and technical design (e.g., using local caching strategies like IndexedDB with a robust synchronization mechanism to Supabase).
 *   **Error Handling:** Implement robust error handling for Supabase API calls and Clerk authentication processes.
 *   **Rate Limiting:** Be aware of potential rate limits for Supabase and Clerk, especially during initial data migration or high traffic.
 *   **Schema Evolution:** Plan for how database schema changes will be managed in the future.
 *   **Security:** Row Level Security in Supabase is paramount. Ensure it's correctly implemented and tested for every table containing user data. Refer to policy examples in Section 1.3.1.
-*   **Initial Data for New Users:** For users signing up for the first time *without* any existing `localStorage` data to migrate (i.e., new to the app ecosystem), consider if any initial data needs to be seeded into their Supabase tables (e.g., a default player roster if `initialAvailablePlayersData` from the current codebase is desired). This could be handled by a client-side check on first login: if no data exists in Supabase for key entities, seed defaults. Alternatively, a Supabase Function triggered by Clerk's new user webhook could perform this. This needs to be defined and implemented.
-*   **User Experience during One-Time Migration:** The data migration script (Phase 1.5.d) should provide clear visual feedback (loading states, progress indicators if possible, success/error messages) to the user. This avoids the perception of a frozen or broken application during this crucial one-time step.
+*   **Initial Data for New Users:** For users signing up for the first time, consider if any initial data needs to be seeded into their Supabase tables (e.g., a default player roster if `initialAvailablePlayersData` from the current codebase is desired). This could be handled by a client-side check on first login: if no data exists in Supabase for key entities, seed defaults.
+*   **User Experience during One-Time Migration:** Since no automatic data migration will occur, this is no longer a concern.
 
 ## 6. Rollback Plan (High-Level)
 

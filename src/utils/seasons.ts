@@ -1,5 +1,5 @@
 import type { Season } from '@/types';
-import { getSupabaseClientWithoutRLS } from '@/lib/supabase'; // Import only the RLS-bypassing client
+import { getSupabaseClientForAuthenticatedOperations } from '@/lib/supabase'; // Import the client for authenticated operations
 // import type { SupabaseClient } from '@supabase/supabase-js'; // No longer directly needed here
 
 import {
@@ -36,11 +36,9 @@ export const getSeasons = async (clerkToken: string, internalSupabaseUserId: str
     throw new Error("User not authenticated or Supabase ID not provided to getSeasons.");
   }
   
-  // TEMPORARY FIX: Use client without RLS to avoid UUID format errors
-  // This is necessary because Clerk JWT contains Clerk user IDs, not Supabase UUIDs
-  // We maintain security by explicitly filtering by user_id in the query
-  const supabaseClient = getSupabaseClientWithoutRLS();
-  console.log('[getSeasons] Using RLS-bypassing client due to Clerk/Supabase UUID mismatch');
+  // Use client that bypasses RLS but requires authentication
+  const supabaseClient = getSupabaseClientForAuthenticatedOperations(clerkToken);
+  console.log('[getSeasons] Using Supabase client with manual user filtering');
   
   return fetchSeasonsFromSupabaseService(supabaseClient, internalSupabaseUserId);
 };
@@ -63,7 +61,7 @@ export const addSeason = async (clerkToken: string, internalSupabaseUserId: stri
     return null;
   }
   try {
-    const supabaseClient = getSupabaseClientWithoutRLS();
+    const supabaseClient = getSupabaseClientForAuthenticatedOperations(clerkToken);
     const newSeason = await addSeasonToSupabaseService(supabaseClient, internalSupabaseUserId, { ...seasonData, name: seasonData.name.trim() });
     return newSeason;
   } catch (error) {
@@ -105,7 +103,7 @@ export const updateSeason = async (
   }
 
   try {
-    const supabaseClient = getSupabaseClientWithoutRLS();
+    const supabaseClient = getSupabaseClientForAuthenticatedOperations(clerkToken);
     const updateData = { ...seasonUpdateData };
     if (updateData.name) {
       updateData.name = updateData.name.trim();
@@ -139,7 +137,7 @@ export const deleteSeason = async (
   }
   
   try {
-    const supabaseClient = getSupabaseClientWithoutRLS();
+    const supabaseClient = getSupabaseClientForAuthenticatedOperations(clerkToken);
     return await deleteSeasonFromSupabaseService(supabaseClient, internalSupabaseUserId, seasonId);
   } catch (error) {
     console.error(`[deleteSeason] Error deleting season ${seasonId}:`, error);

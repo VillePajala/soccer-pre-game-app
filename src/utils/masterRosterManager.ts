@@ -3,7 +3,7 @@ import {
     getMasterRoster as utilGetMasterRoster,
 } from '@/utils/masterRoster';
 import { createSupabasePlayer, updateSupabasePlayer, deleteSupabasePlayer } from './supabase/players';
-import { getSupabaseClientWithoutRLS } from '@/lib/supabase';
+import { getSupabaseClientForAuthenticatedOperations } from '@/lib/supabase';
 
 /**
  * Retrieves the master roster of players for an authenticated user.
@@ -41,7 +41,7 @@ export const addPlayer = async (
         return null;
     }
     try {
-        const supabaseClient = getSupabaseClientWithoutRLS();
+        const supabaseClient = getSupabaseClientForAuthenticatedOperations(clerkToken);
         const newPlayer = await createSupabasePlayer(supabaseClient, internalSupabaseUserId, playerData);
         return newPlayer;
     } catch (error) {
@@ -69,7 +69,7 @@ export const updatePlayer = async (
         return null;
     }
     try {
-        const supabaseClient = getSupabaseClientWithoutRLS();
+        const supabaseClient = getSupabaseClientForAuthenticatedOperations(clerkToken);
         const updatedPlayer = await updateSupabasePlayer(supabaseClient, internalSupabaseUserId, playerId, updates);
         return updatedPlayer;
     } catch (error) {
@@ -95,7 +95,7 @@ export const removePlayer = async (
         return false;
     }
     try {
-        const supabaseClient = getSupabaseClientWithoutRLS();
+        const supabaseClient = getSupabaseClientForAuthenticatedOperations(clerkToken);
         const success = await deleteSupabasePlayer(supabaseClient, internalSupabaseUserId, playerId);
         return success;
     } catch (error) {
@@ -123,7 +123,7 @@ export const setFairPlayCardStatus = async (
         return null;
     }
     try {
-        const supabaseClient = getSupabaseClientWithoutRLS();
+        const supabaseClient = getSupabaseClientForAuthenticatedOperations(clerkToken);
         const updatedPlayer = await updateSupabasePlayer(supabaseClient, internalSupabaseUserId, playerId, { receivedFairPlayCard });
         return updatedPlayer;
     } catch (error) {
@@ -154,7 +154,7 @@ export const setGoalieStatus = async (
     // by a database trigger or a more robust backend service in the future.
     // For now, we update the target player directly.
     try {
-        const supabaseClient = getSupabaseClientWithoutRLS();
+        const supabaseClient = getSupabaseClientForAuthenticatedOperations(clerkToken);
         const updatedPlayer = await updateSupabasePlayer(supabaseClient, internalSupabaseUserId, playerId, { isGoalie });
         return updatedPlayer;
     } catch (error) {

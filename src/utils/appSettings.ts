@@ -1,6 +1,6 @@
 import { APP_SETTINGS_KEY, LAST_HOME_TEAM_NAME_KEY } from '@/config/constants';
-import { getSupabaseClientWithoutRLS } from '@/lib/supabase';
-import { getSupabaseCurrentGameId } from './supabase/appSettings';
+import { getSupabaseClientForAuthenticatedOperations } from '@/lib/supabase';
+import { getSupabaseCurrentGameId, saveSupabaseCurrentGameId as utilSaveSupabaseCurrentGameId } from './supabase/appSettings';
 
 /**
  * Interface for application settings
@@ -88,23 +88,33 @@ export const getCurrentGameIdSetting = async (clerkToken: string, internalSupaba
   if (!clerkToken || !internalSupabaseUserId) {
     throw new Error("Authentication details are required.");
   }
-  const supabaseClient = getSupabaseClientWithoutRLS();
+  const supabaseClient = getSupabaseClientForAuthenticatedOperations(clerkToken);
   return getSupabaseCurrentGameId(supabaseClient, internalSupabaseUserId);
 };
 
 /**
  * Saves the current game ID setting
+ * @param clerkToken - The JWT token from Clerk.
+ * @param internalSupabaseUserId - The internal Supabase User ID (UUID).
  * @param gameId - The game ID to save
  * @returns A promise that resolves to true if successful, false otherwise
  */
-export const saveCurrentGameIdSetting = async (gameId: string | null): Promise<boolean> => {
+export const saveCurrentGameIdSetting = async (clerkToken: string, internalSupabaseUserId: string, gameId: string | null): Promise<boolean> => {
+  if (!clerkToken || !internalSupabaseUserId) {
+    throw new Error("Authentication details are required.");
+  }
+
   try {
-    // Wait for updateAppSettings to resolve
+    const supabaseClient = getSupabaseClientForAuthenticatedOperations(clerkToken);
+    await utilSaveSupabaseCurrentGameId(supabaseClient, internalSupabaseUserId, gameId);
+    
+    // Also update localStorage for immediate offline access if needed
     await updateAppSettings({ currentGameId: gameId });
-    return Promise.resolve(true);
-  } catch {
-    // updateAppSettings already logs errors. We indicate failure here.
-    return Promise.resolve(false);
+    
+    return true;
+  } catch (error) {
+    console.error('Error saving current game ID setting to Supabase and localStorage:', error);
+    return false;
   }
 };
 
