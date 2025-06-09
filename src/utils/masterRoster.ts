@@ -1,21 +1,34 @@
 import { MASTER_ROSTER_KEY } from '@/config/constants';
 import type { Player } from '@/types';
+import { getSupabaseClientWithoutRLS } from '@/lib/supabase';
+import { getSupabasePlayers } from './supabase/players';
 
-/**
- * Retrieves the master roster of players from localStorage.
- * @returns An array of Player objects.
- */
-export const getMasterRoster = async (): Promise<Player[]> => {
+// DEPRECATED: This function will be removed after the migration to Supabase is complete.
+export const getMasterRosterFromLocalStorage = async (): Promise<Player[]> => {
   try {
     const rosterJson = localStorage.getItem(MASTER_ROSTER_KEY);
-    if (!rosterJson) {
-      return Promise.resolve([]);
-    }
-    return Promise.resolve(JSON.parse(rosterJson) as Player[]);
+    return rosterJson ? JSON.parse(rosterJson) : [];
   } catch (error) {
-    console.error('[getMasterRoster] Error getting master roster from localStorage:', error);
-    return Promise.resolve([]); // Return empty array on error
+    console.error('[getMasterRosterFromLocalStorage] Error:', error);
+    return [];
   }
+};
+
+/**
+ * Retrieves the master roster for the authenticated user from Supabase.
+ * @param clerkToken - The JWT token from Clerk.
+ * @param internalSupabaseUserId - The internal Supabase User ID (UUID).
+ * @returns A promise that resolves to an array of Player objects.
+ */
+export const getMasterRoster = async (clerkToken: string, internalSupabaseUserId: string): Promise<Player[]> => {
+  if (!clerkToken || !internalSupabaseUserId) {
+    throw new Error("Clerk token and Supabase User ID are required.");
+  }
+  
+  const supabaseClient = getSupabaseClientWithoutRLS();
+  console.log('[getMasterRoster] Using Supabase to fetch master roster');
+  
+  return getSupabasePlayers(supabaseClient, internalSupabaseUserId);
 };
 
 /**
@@ -52,7 +65,7 @@ export const addPlayerToRoster = async (playerData: {
   }
   
   try {
-    const currentRoster = await getMasterRoster();
+    const currentRoster = await getMasterRosterFromLocalStorage();
     
     // Create new player with unique ID
     const newPlayer: Player = {
@@ -94,7 +107,7 @@ export const updatePlayerInRoster = async (
   }
 
   try {
-    const currentRoster = await getMasterRoster();
+    const currentRoster = await getMasterRosterFromLocalStorage();
     const playerIndex = currentRoster.findIndex(p => p.id === playerId);
     
     if (playerIndex === -1) {
@@ -147,7 +160,7 @@ export const removePlayerFromRoster = async (playerId: string): Promise<boolean>
   }
 
   try {
-    const currentRoster = await getMasterRoster();
+    const currentRoster = await getMasterRosterFromLocalStorage();
     const updatedRoster = currentRoster.filter(p => p.id !== playerId);
     
     if (updatedRoster.length === currentRoster.length) {
@@ -180,7 +193,7 @@ export const setPlayerGoalieStatus = async (
   }
 
   try {
-    const currentRoster = await getMasterRoster();
+    const currentRoster = await getMasterRosterFromLocalStorage();
     let targetPlayer: Player | undefined = undefined;
     
     const updatedRoster = currentRoster.map(player => {

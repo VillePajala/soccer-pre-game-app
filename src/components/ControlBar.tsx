@@ -159,14 +159,28 @@ const ControlBar: React.FC<ControlBarProps> = ({
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
       
+      // Check if click is inside account menu - if so, don't process further
+      if (accountMenuRef.current && accountMenuRef.current.contains(target)) {
+        console.log('[ControlBar] Click inside account menu, not closing anything');
+        return; 
+      }
+      
       // Check if click is outside account menu
       if (showAccountMenu && accountMenuRef.current && !accountMenuRef.current.contains(target)) {
+        console.log('[ControlBar] Click outside account menu, closing it');
         setShowAccountMenu(false);
         return; // Don't close settings menu when closing account menu
       }
       
+      // Check if click is inside settings menu - if so, don't process further
+      if (settingsMenuRef.current && settingsMenuRef.current.contains(target)) {
+        console.log('[ControlBar] Click inside settings menu, not closing anything');
+        return;
+      }
+      
       // Check if click is outside settings menu
       if (settingsMenuRef.current && !settingsMenuRef.current.contains(target)) {
+        console.log('[ControlBar] Click outside settings menu, closing all menus');
         setIsSettingsMenuOpen(false);
         setMenuView('main');
         setShowAccountMenu(false);
@@ -411,7 +425,8 @@ const ControlBar: React.FC<ControlBarProps> = ({
                                
                                {showAccountMenu && (
                                  <div 
-                                   className={`absolute right-0 w-56 bg-slate-800 rounded-md shadow-xl z-50 border border-slate-600/50 ${positionAccountMenuUpwards ? 'bottom-full mb-2' : 'mt-2'}`}
+                                   className={`absolute right-0 w-56 bg-slate-800 rounded-md shadow-xl z-[9999] border border-slate-600/50 ${positionAccountMenuUpwards ? 'bottom-full mb-2' : 'mt-2'}`}
+                                   style={{ pointerEvents: 'auto' }}
                                  >
                                    <div className="py-1">
                                      <div className="px-4 py-2 text-sm text-slate-100 border-b border-slate-600/50">
@@ -431,12 +446,25 @@ const ControlBar: React.FC<ControlBarProps> = ({
                                        {t('auth.manageAccount', 'Manage account')}
                                      </button>
                                      <button
-                                       onClick={async () => {
+                                       onClick={async (e) => {
+                                         e.stopPropagation();
+                                         e.preventDefault();
                                          console.log('[ControlBar] Custom sign out clicked');
+                                         console.log('[ControlBar] About to close menus...');
                                          setShowAccountMenu(false);
                                          setIsSettingsMenuOpen(false);
                                          setMenuView('main');
-                                         await signOut();
+                                         console.log('[ControlBar] Menus closed, calling signOut...');
+                                         try {
+                                           await signOut();
+                                           console.log('[ControlBar] signOut completed successfully');
+                                         } catch (error) {
+                                           console.error('[ControlBar] Error during signOut:', error);
+                                         }
+                                       }}
+                                       onMouseDown={(e) => {
+                                         e.stopPropagation();
+                                         console.log('[ControlBar] Sign out button mouseDown event');
                                        }}
                                        className="w-full text-left px-4 py-2 text-sm text-slate-100 hover:bg-slate-600/75 border-t border-slate-600/50 flex items-center gap-2"
                                      >

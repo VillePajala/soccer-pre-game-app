@@ -1,4 +1,6 @@
 import { APP_SETTINGS_KEY, LAST_HOME_TEAM_NAME_KEY } from '@/config/constants';
+import { getSupabaseClientWithoutRLS } from '@/lib/supabase';
+import { getSupabaseCurrentGameId } from './supabase/appSettings';
 
 /**
  * Interface for application settings
@@ -77,13 +79,17 @@ export const updateAppSettings = async (settingsUpdate: Partial<AppSettings>): P
 };
 
 /**
- * Gets the current game ID
- * @returns A promise that resolves to the current game ID, or null if not set
+ * Gets the current game ID for an authenticated user from Supabase.
+ * @param clerkToken - The JWT token from Clerk.
+ * @param internalSupabaseUserId - The internal Supabase User ID (UUID).
+ * @returns A promise that resolves to the current game ID, or null if not set.
  */
-export const getCurrentGameIdSetting = async (): Promise<string | null> => {
-  // Wait for getAppSettings to resolve
-  const settings = await getAppSettings();
-  return Promise.resolve(settings.currentGameId);
+export const getCurrentGameIdSetting = async (clerkToken: string, internalSupabaseUserId: string): Promise<string | null> => {
+  if (!clerkToken || !internalSupabaseUserId) {
+    throw new Error("Authentication details are required.");
+  }
+  const supabaseClient = getSupabaseClientWithoutRLS();
+  return getSupabaseCurrentGameId(supabaseClient, internalSupabaseUserId);
 };
 
 /**

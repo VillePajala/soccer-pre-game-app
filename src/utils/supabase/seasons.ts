@@ -115,28 +115,24 @@ export const createSupabaseSeason = async (
     throw new Error("Authenticated Supabase client is required for creating season.");
   }
 
-  const seasonToInsert: Pick<SupabaseSeasonSchema, 'user_id' | 'name'> = {
+  const seasonToInsert: Omit<SupabaseSeasonSchema, 'id' | 'created_at' | 'updated_at'> = {
     user_id: internalSupabaseUserId,
     name: seasonData.name,
   };
 
-  try {
-    const { data, error } = await authedSupabaseClient
-      .from('seasons')
-      .insert(seasonToInsert)
-      .select('id, name') 
-      .single();
+  const { data, error } = await authedSupabaseClient
+    .from('seasons')
+    .insert(seasonToInsert)
+    .select('id, name')
+    .single();
 
-    if (error) {
-      console.error('[createSupabaseSeason] Error:', error);
-      throw error;
-    }
-    if (!data) throw new Error('Failed to create season, no data returned.');
-    return data as Season; 
-  } catch (error) {
-    console.error('[createSupabaseSeason] Unexpected error:', error);
+  if (error) {
+    console.error('[createSupabaseSeason] Error:', error);
     throw error;
   }
+  if (!data) throw new Error('Failed to create season, no data returned.');
+  
+  return data as Season; 
 };
 
 // For updates, based on Season type, only name can be updated.
@@ -149,80 +145,60 @@ export const updateSupabaseSeason = async (
   seasonId: string, 
   seasonUpdateData: SeasonForUpdate
 ): Promise<Season> => {
-  console.log(`[Supabase SERVICE - updateSupabaseSeason] Received internalSupabaseUserId: ${internalSupabaseUserId}, seasonId: ${seasonId}, updateData:`, seasonUpdateData);
-
-  if (!internalSupabaseUserId) {
-    throw new Error("Internal Supabase User ID is required for updating season.");
+  if (!internalSupabaseUserId || !seasonId) {
+    throw new Error("User ID and Season ID are required for updating season.");
   }
-   if (!authedSupabaseClient) {
+  if (!authedSupabaseClient) {
     throw new Error("Authenticated Supabase client is required for updating season.");
   }
 
-  const updateToApply: Partial<Pick<SupabaseSeasonSchema, 'name'>> = {};
-  if (seasonUpdateData.name !== undefined) {
-    updateToApply.name = seasonUpdateData.name;
+  const updateToApply: Partial<Omit<SupabaseSeasonSchema, 'id' | 'user_id' | 'created_at'>> = {
+    name: seasonUpdateData.name,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (!updateToApply.name) {
+    throw new Error("No valid fields to update.");
   }
 
-  if (Object.keys(updateToApply).length === 0) {
-    console.warn("[updateSupabaseSeason] No valid fields to update. Fetching current season.");
-    const { data: currentData, error: currentError } = await authedSupabaseClient
-      .from('seasons')
-      .select('id, name') 
-      .match({ id: seasonId, user_id: internalSupabaseUserId })
-      .single();
-    if (currentError) {
-      console.error("[updateSupabaseSeason] Error fetching current season data when no update fields were provided:", currentError);
-      throw currentError;
-    }
-    if (!currentData) throw new Error('Season not found (and no valid fields to update).');
-    return currentData as Season;
-  }
+  const { data, error } = await authedSupabaseClient
+    .from('seasons')
+    .update(updateToApply)
+    .match({ id: seasonId, user_id: internalSupabaseUserId })
+    .select('id, name') 
+    .single();
 
-  try {
-    const { data, error } = await authedSupabaseClient
-      .from('seasons')
-      .update(updateToApply)
-      .match({ id: seasonId, user_id: internalSupabaseUserId })
-      .select('id, name') 
-      .single();
-
-    if (error) {
-      console.error('[updateSupabaseSeason] Error:', error);
-      throw error;
-    }
-    if (!data) throw new Error('Failed to update season or season not found.');
-    return data as Season;
-  } catch (error) {
-    console.error('[updateSupabaseSeason] Unexpected error:', error);
+  if (error) {
+    console.error('[updateSupabaseSeason] Error:', error);
     throw error;
   }
+  if (!data) throw new Error('Failed to update season or season not found.');
+  
+  return data as Season;
 };
 
 // Delete a season
-export const deleteSupabaseSeason = async (authedSupabaseClient: SupabaseClient, internalSupabaseUserId: string, seasonId: string): Promise<boolean> => {
-  console.log(`[Supabase SERVICE - deleteSupabaseSeason] Received internalSupabaseUserId: ${internalSupabaseUserId}, seasonId: ${seasonId}`);
-
-  if (!internalSupabaseUserId) {
-    throw new Error("Internal Supabase User ID is required for deleting season.");
+export const deleteSupabaseSeason = async (
+  authedSupabaseClient: SupabaseClient, 
+  internalSupabaseUserId: string, 
+  seasonId: string
+): Promise<boolean> => {
+  if (!internalSupabaseUserId || !seasonId) {
+    throw new Error("User ID and Season ID are required for deleting a season.");
   }
   if (!authedSupabaseClient) {
-    throw new Error("Authenticated Supabase client is required for deleting season.");
+    throw new Error("Authenticated Supabase client is required for deleting a season.");
   }
 
-  try {
-    const { error, count } = await authedSupabaseClient
-      .from('seasons')
-      .delete()
-      .match({ id: seasonId, user_id: internalSupabaseUserId });
+  const { error, count } = await authedSupabaseClient
+    .from('seasons')
+    .delete()
+    .match({ id: seasonId, user_id: internalSupabaseUserId });
 
-    if (error) {
-      console.error('[deleteSupabaseSeason] Error:', error);
-      throw error;
-    }
-    
-    return (count !== null && count > 0);
-  } catch (error) {
-    console.error('[deleteSupabaseSeason] Unexpected error:', error);
+  if (error) {
+    console.error('[deleteSupabaseSeason] Error:', error);
     throw error;
   }
+  
+  return (count !== null && count > 0);
 }; 

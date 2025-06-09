@@ -29,15 +29,15 @@ import {
     addPlayer,
     updatePlayer,
     removePlayer,
-    setGoalieStatus
-    // setFairPlayCardStatus // Removed as unused in page.tsx directly
+    setGoalieStatus,
+    setFairPlayCardStatus // Added this line
 } from '@/utils/masterRosterManager';
 
 // Removed unused import of utilGetMasterRoster
 
 // Import utility functions for seasons and tournaments
-import { getSeasons as utilGetSeasons } from '@/utils/seasons';
-import { getTournaments as utilGetTournaments } from '@/utils/tournaments';
+import { getSeasons as utilGetSeasons, addSeason as utilAddSeason } from '@/utils/seasons';
+import { getTournaments as utilGetTournaments, addTournament as utilAddTournament } from '@/utils/tournaments';
 import {
   getSavedGames as utilGetSavedGames,
   saveGame as utilSaveGame, // For auto-save and handleSaveGame
@@ -52,21 +52,19 @@ import {
 } from '@/utils/appSettings';
 // Import Player from types directory
 import { Player, Season, Tournament } from '@/types';
-// Import saveMasterRoster utility
-import { saveMasterRoster } from '@/utils/masterRoster';
 // Import useQuery, useMutation, useQueryClient
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 // Import async localStorage utilities
 import { getLocalStorageItemAsync, setLocalStorageItemAsync, removeLocalStorageItemAsync } from '@/utils/localStorage';
 // Import query keys
 import { queryKeys } from '@/config/queryKeys';
-// Also import addSeason and addTournament for the new mutations
-import { addSeason as utilAddSeason } from '@/utils/seasons';
-import { addTournament as utilAddTournament } from '@/utils/tournaments';
 // Import constants
 import { DEFAULT_GAME_ID, MASTER_ROSTER_KEY } from '@/config/constants';
 import { useAuth } from '@clerk/nextjs'; // Import useAuth from Clerk
 import { useCurrentSupabaseUser } from '@/hooks/useCurrentSupabaseUser'; // Import your hook
+import { getSupabaseClientWithoutRLS } from '@/lib/supabase'; // Import the client getter
+import { saveSupabaseGame } from '@/utils/supabase/savedGames';
+import { saveSupabaseCurrentGameId } from '@/utils/supabase/appSettings';
 
 // Define the Point type for drawing - Use relative coordinates
 export interface Point {
@@ -334,8 +332,16 @@ export default function Home() {
     isError: isMasterRosterQueryError,
     error: masterRosterQueryErrorData,
   } = useQuery<Player[], Error>({
-    queryKey: queryKeys.masterRoster,
-    queryFn: getMasterRoster,
+    queryKey: [queryKeys.masterRoster, supabaseUserId, getToken], // Include dependencies for auth
+    queryFn: async () => {
+      const token = await getToken({ template: 'supabase' });
+      if (!token || !supabaseUserId) {
+        console.log('[page.tsx useQuery masterRoster] Token or supabaseUserId not available. Skipping fetch.');
+        return [];
+      }
+      return getMasterRoster(token, supabaseUserId); // Call the manager function
+    },
+    enabled: !!isSignedIn && !!supabaseUserId && !isSupabaseUserMappingLoading, // Enable only when authenticated
   });
 
   // --- TanStack Query for Seasons ---
@@ -366,8 +372,16 @@ export default function Home() {
     isError: isTournamentsQueryError,
     error: tournamentsQueryErrorData,
   } = useQuery<Tournament[], Error>({
-    queryKey: queryKeys.tournaments,
-    queryFn: utilGetTournaments,
+    queryKey: [queryKeys.tournaments, supabaseUserId, getToken], // Include dependencies
+    queryFn: async () => {
+      const token = await getToken({ template: 'supabase' });
+      if (!token || !supabaseUserId) {
+        console.log('[page.tsx useQuery tournaments] Token or supabaseUserId not available. Skipping fetch.');
+        return []; 
+      }
+      return utilGetTournaments(token, supabaseUserId);
+    },
+    enabled: !!isSignedIn && !!supabaseUserId && !isSupabaseUserMappingLoading, 
   });
 
   // --- TanStack Query for All Saved Games ---
@@ -377,8 +391,16 @@ export default function Home() {
     isError: isAllSavedGamesQueryError,
     error: allSavedGamesQueryErrorData,
   } = useQuery<SavedGamesCollection | null, Error>({
-    queryKey: queryKeys.savedGames,
-    queryFn: utilGetSavedGames,
+    queryKey: [queryKeys.savedGames, supabaseUserId, getToken], // Include dependencies for auth
+    queryFn: async () => {
+      const token = await getToken({ template: 'supabase' });
+      if (!token || !supabaseUserId) {
+        console.log('[page.tsx useQuery savedGames] Token or supabaseUserId not available. Skipping fetch.');
+        return null;
+      }
+      return utilGetSavedGames();
+    },
+    enabled: !!isSignedIn && !!supabaseUserId && !isSupabaseUserMappingLoading, // Enable only when authenticated
     initialData: {}, 
   });
 
@@ -389,8 +411,16 @@ export default function Home() {
     isError: isCurrentGameIdSettingQueryError,
     error: currentGameIdSettingQueryErrorData,
   } = useQuery<string | null, Error>({
-    queryKey: queryKeys.appSettingsCurrentGameId,
-    queryFn: getCurrentGameIdSetting,
+    queryKey: [queryKeys.appSettingsCurrentGameId, supabaseUserId, getToken], // Include dependencies for auth
+    queryFn: async () => {
+      const token = await getToken({ template: 'supabase' });
+      if (!token || !supabaseUserId) {
+        console.log('[page.tsx useQuery currentGameId] Token or supabaseUserId not available. Skipping fetch.');
+        return null;
+      }
+      return getCurrentGameIdSetting(token, supabaseUserId);
+    },
+    enabled: !!isSignedIn && !!supabaseUserId && !isSupabaseUserMappingLoading, // Enable only when authenticated
   });
 
   // --- Core Game State (Managed by Hook) ---
@@ -484,28 +514,40 @@ export default function Home() {
   const [gamesImportError, setGamesImportError] = useState<string | null>(null);
   const [processingGameId, setProcessingGameId] = useState<string | null>(null); // To track which game item is being processed
 
-  // --- Mutation for Saving Game (Initial definition with mutationFn only) ---
+  // --- Imports for Supabase services ---
+  // import { saveSupabaseGame } from '@/utils/supabase/savedGames';
+  // import { saveSupabaseCurrentGameId } from '@/utils/supabase/appSettings'; // We'll create this next
+  
+  // --- Mutation for Saving Game (now using Supabase) ---
   const saveGameMutation = useMutation<
-    string, // Return type: gameId successfully saved
-    Error,  // Error type
-    { gameIdToSave: string; snapshot: AppState; gameName: string; /* isOverwrite: boolean; */ } // Variables type
+    string,
+    Error,
+    { gameIdToSave: string; snapshot: AppState; gameName: string; }
   >({
-    mutationFn: async ({ gameIdToSave, snapshot }) => {
-      await utilSaveGame(gameIdToSave, snapshot);
-      await utilSaveCurrentGameIdSetting(gameIdToSave);
-      return gameIdToSave;
-    },
-    onSuccess: (savedGameId, variables) => {
-      console.log('[Mutation Success] Game saved:', savedGameId);
-      queryClient.invalidateQueries({ queryKey: queryKeys.savedGames });
-      queryClient.invalidateQueries({ queryKey: queryKeys.appSettingsCurrentGameId });
-
-      if (variables.gameIdToSave !== currentGameId || currentGameId === DEFAULT_GAME_ID) {
-         setCurrentGameId(variables.gameIdToSave); 
+    mutationFn: async ({ gameIdToSave, snapshot, gameName }) => {
+      const token = await getToken({ template: 'supabase' });
+      if (!token || !supabaseUserId) {
+        throw new Error("User is not authenticated. Cannot save game.");
       }
       
-      setSavedGames(prev => ({ ...prev, [variables.gameIdToSave]: variables.snapshot }));
+      const supabaseClient = getSupabaseClientWithoutRLS();
 
+      await Promise.all([
+        saveSupabaseGame(supabaseClient, supabaseUserId, gameIdToSave, snapshot, gameName),
+        saveSupabaseCurrentGameId(supabaseClient, supabaseUserId, gameIdToSave)
+      ]);
+
+      return gameIdToSave;
+    },
+    onSuccess: (savedGameId) => {
+      console.log('[Mutation Success] Game saved to Supabase:', savedGameId);
+      queryClient.invalidateQueries({ queryKey: [queryKeys.savedGames] });
+      queryClient.invalidateQueries({ queryKey: [queryKeys.appSettingsCurrentGameId] });
+
+      if (savedGameId !== currentGameId || currentGameId === DEFAULT_GAME_ID) {
+         setCurrentGameId(savedGameId); 
+      }
+      
       setIsSaveGameModalOpen(false);
       setGameSaveError(null); 
     },
@@ -522,30 +564,23 @@ export default function Home() {
     { playerId: string; playerData: Partial<Omit<Player, 'id'>>; } // Variables type
   >({
     mutationFn: async ({ playerId, playerData }) => {
-      // The updatePlayer utility from masterRosterManager is already async
-      return updatePlayer(playerId, playerData);
+      const token = await getToken({ template: 'supabase' });
+      if (!token || !supabaseUserId) {
+        throw new Error("User is not authenticated. Cannot update player.");
+      }
+      return updatePlayer(token, supabaseUserId, playerId, playerData);
     },
     onSuccess: (updatedPlayer, variables) => {
-      console.log('[Mutation Success] Player updated:', variables.playerId, updatedPlayer);
+      console.log('[Mutation Success] Player updated via Supabase:', variables.playerId, updatedPlayer);
       
-      // Capture current availablePlayers before invalidation if needed for history
-      const previousAvailablePlayers = [...availablePlayers]; // Shallow copy
-
-      queryClient.invalidateQueries({ queryKey: queryKeys.masterRoster }); 
-      // After invalidation, the masterRosterQueryResultData useEffect will update setAvailablePlayers from the hook
+      queryClient.invalidateQueries({ queryKey: [queryKeys.masterRoster] }); 
 
       if (updatedPlayer) {
-        // Update playersOnField state and then save that specific change to history
         setPlayersOnField(prevPlayersOnField => {
           const nextPlayersOnField = prevPlayersOnField.map(p => 
             p.id === updatedPlayer.id ? { ...p, ...updatedPlayer } : p
           );
-          // Save history with the availablePlayers roster *before* this mutation's invalidation took full effect
-          saveStateToHistory({ 
-            playersOnField: nextPlayersOnField, 
-            availablePlayers: previousAvailablePlayers // Save the pre-mutation roster for this history step
-          }); 
-          return nextPlayersOnField; // Return it to update React state
+          return nextPlayersOnField;
         });
       }
       setRosterError(null); 
@@ -558,45 +593,34 @@ export default function Home() {
 
   // --- Mutation for Setting Goalie Status in Master Roster ---
   const setGoalieStatusMutation = useMutation<
-    Player | null, // Return type from masterRosterManager.setGoalieStatus
-    Error,        // Error type
-    { playerId: string; isGoalie: boolean; } // Variables type
+    Player | null,
+    Error,
+    { playerId: string; isGoalie: boolean; }
   >({
     mutationFn: async ({ playerId, isGoalie }) => {
-      return setGoalieStatus(playerId, isGoalie);
+      const token = await getToken({ template: 'supabase' });
+      if (!token || !supabaseUserId) {
+        throw new Error("User is not authenticated. Cannot set goalie status.");
+      }
+      return setGoalieStatus(token, supabaseUserId, playerId, isGoalie);
     },
     onSuccess: (updatedPlayer, variables) => {
-      console.log('[Mutation Success] Goalie status updated:', variables.playerId, updatedPlayer);
-
-      // Capture current availablePlayers before invalidation if needed for history
-      const previousAvailablePlayers = [...availablePlayers]; // Shallow copy
-      
-      queryClient.invalidateQueries({ queryKey: queryKeys.masterRoster });
-      // After invalidation, the masterRosterQueryResultData useEffect will update setAvailablePlayers from the hook
-
       if (updatedPlayer) {
+        console.log('[Mutation Success] Goalie status updated via Supabase:', variables.playerId, updatedPlayer);
+        queryClient.invalidateQueries({ queryKey: [queryKeys.masterRoster] });
+
+        // This logic correctly updates the UI to reflect the new goalie status
         setPlayersOnField(prevPlayersOnField => {
           const nextPlayersOnField = prevPlayersOnField.map(p => {
-            if (p.id === updatedPlayer.id) {
-              return { ...p, ...updatedPlayer }; // Apply all changes from updatedPlayer
-            }
-            // If we just set a new goalie (variables.isGoalie is true),
-            // and this player 'p' is a goalie but not the one we just updated,
-            // then unset their goalie status.
-            if (variables.isGoalie && p.isGoalie && p.id !== updatedPlayer.id) {
-              return { ...p, isGoalie: false };
-            }
+            if (p.id === updatedPlayer.id) return { ...p, ...updatedPlayer };
+            if (variables.isGoalie && p.isGoalie && p.id !== updatedPlayer.id) return { ...p, isGoalie: false };
             return p;
-          });
-          // Save history with the availablePlayers roster *before* this mutation's invalidation took full effect
-          saveStateToHistory({ 
-            playersOnField: nextPlayersOnField,
-            availablePlayers: previousAvailablePlayers // Save the pre-mutation roster for this history step
           });
           return nextPlayersOnField;
         });
+        
+        setRosterError(null);
       }
-      setRosterError(null);
     },
     onError: (error, variables) => {
       console.error(`[Mutation Error] Failed to set goalie status for player ${variables.playerId}:`, error);
@@ -606,40 +630,25 @@ export default function Home() {
 
   // --- Mutation for Removing Player from Master Roster ---
   const removePlayerMutation = useMutation<
-    boolean,      // CORRECTED: Return type from masterRosterManager.removePlayer (indicates success)
-    Error,        // Error type
-    { playerId: string; } // Variables type
+    boolean,
+    Error,
+    { playerId: string; token: string; internalSupabaseUserId: string; } // Updated variables type
   >({
-    mutationFn: async ({ playerId }) => {
-      return removePlayer(playerId); // This utility returns Promise<boolean>
+    mutationFn: async ({ playerId, token, internalSupabaseUserId }) => {
+      return removePlayer(token, internalSupabaseUserId, playerId);
     },
     onSuccess: (success, variables) => {
       if (success) {
-        console.log('[Mutation Success] Player removed:', variables.playerId);
-        queryClient.invalidateQueries({ queryKey: queryKeys.masterRoster });
+        console.log('[Mutation Success] Player removed via Supabase:', variables.playerId);
+        queryClient.invalidateQueries({ queryKey: [queryKeys.masterRoster] });
 
-        let nextPlayersOnField: Player[] = [];
-        setPlayersOnField(prev => {
-          nextPlayersOnField = prev.filter(p => p.id !== variables.playerId);
-          return nextPlayersOnField;
-        });
-
-        // let nextSelectedPlayerIds: string[] = []; // REMOVE local variable
-        // setSelectedPlayerIds(prev => { // REMOVE direct state update
-        //   nextSelectedPlayerIds = prev.filter(id => id !== variables.playerId);
-        //   return nextSelectedPlayerIds;
-        // });
+        setPlayersOnField(prev => prev.filter(p => p.id !== variables.playerId));
+        
         const newSelectedPlayerIds = gameSessionState.selectedPlayerIds.filter(id => id !== variables.playerId);
         dispatchGameSession({ type: 'SET_SELECTED_PLAYER_IDS', payload: newSelectedPlayerIds });
-
-        saveStateToHistory({
-          playersOnField: nextPlayersOnField,
-          selectedPlayerIds: newSelectedPlayerIds // USE newSelectedPlayerIds for history
-        });
-
+        
         setRosterError(null);
       } else {
-        // This case might indicate the player wasn't found or some other non-exception failure
         console.warn('[Mutation Non-Success] removePlayer returned false for player:', variables.playerId);
         setRosterError(t('rosterSettingsModal.errors.removeFailedNotFound', 'Error removing player {playerId}. Player not found or removal failed.', { playerId: variables.playerId }));
       }
@@ -652,26 +661,27 @@ export default function Home() {
 
   // --- Mutation for Adding Player to Master Roster ---
   const addPlayerMutation = useMutation<
-    Player | null, // Return type from masterRosterManager.addPlayer
-    Error,         // Error type
-    { name: string; jerseyNumber: string; notes: string; nickname: string; } // Variables type (player data)
+    Player | null,
+    Error,
+    { name: string; jerseyNumber: string; notes: string; nickname: string; }
   >({
     mutationFn: async (playerData) => {
-      return addPlayer(playerData);
+      const token = await getToken({ template: 'supabase' });
+      if (!token || !supabaseUserId) {
+        throw new Error("User is not authenticated. Cannot add player.");
+      }
+      return addPlayer(token, supabaseUserId, playerData);
     },
     onSuccess: (newPlayer, variables) => {
       if (newPlayer) {
-        console.log('[Mutation Success] Player added:', newPlayer.name, newPlayer.id);
-        queryClient.invalidateQueries({ queryKey: queryKeys.masterRoster });
-
+        console.log('[Mutation Success] Player added via Supabase:', newPlayer.name, newPlayer.id);
+        queryClient.invalidateQueries({ queryKey: [queryKeys.masterRoster] });
+        
         const newSelectedPlayerIds = [...gameSessionState.selectedPlayerIds, newPlayer.id];
         dispatchGameSession({ type: 'SET_SELECTED_PLAYER_IDS', payload: newSelectedPlayerIds });
         
         setRosterError(null);
       } else {
-        // This case might indicate a duplicate name or some other non-exception failure from addPlayer
-        // The new checks in handleAddPlayerForModal should catch most duplicates before this point.
-        // However, this backend check (if addPlayer utility implements it) is a good fallback.
         console.warn('[Mutation Non-Success] addPlayer returned null for player:', variables.name);
         setRosterError(t('rosterSettingsModal.errors.addFailedDuplicate', 'Error adding player {playerName}. Player may already exist or data is invalid.', { playerName: variables.name }));
       }
@@ -688,16 +698,17 @@ export default function Home() {
     Error,         
     { name: string; clerkToken: string; internalSupabaseUserId: string; } 
   >({
-    mutationFn: async ({ name, clerkToken, internalSupabaseUserId }) => { 
-      if (!clerkToken || !internalSupabaseUserId) {
-        throw new Error("Clerk token and Supabase User ID are required to add a season.");
+    mutationFn: async ({ name }) => { 
+      const token = await getToken({ template: 'supabase' });
+      if (!token || !supabaseUserId) {
+        throw new Error("User is not authenticated. Cannot add season.");
       }
-      return utilAddSeason(clerkToken, internalSupabaseUserId, { name });
+      return utilAddSeason(token, supabaseUserId, { name });
     },
     onSuccess: (newSeason, variables) => { 
       if (newSeason) {
-        console.log('[Mutation Success] Season added:', newSeason.name, newSeason.id);
-        queryClient.invalidateQueries({ queryKey: queryKeys.seasons });
+        console.log('[Mutation Success] Season added via Supabase:', newSeason.name, newSeason.id);
+        queryClient.invalidateQueries({ queryKey: [queryKeys.seasons] });
       } else {
         console.warn('[Mutation Non-Success] utilAddSeason returned null for season:', variables.name);
       }
@@ -706,6 +717,32 @@ export default function Home() {
       console.error(`[Mutation Error] Failed to add season ${variables.name}:`, error);
     },
   });
+
+  // --- Mutation for Updating a Season ---
+  // TODO: Implement UI to use this mutation
+  // const updateSeasonMutation = useMutation<
+  //   Season | null,
+  //   Error,
+  //   { seasonId: string; name: string; }
+  // >({
+  //   mutationFn: async ({ seasonId, name }) => {
+  //     const token = await getToken({ template: 'supabase' });
+  //     if (!token || !supabaseUserId) {
+  //       throw new Error("User is not authenticated. Cannot update season.");
+  //     }
+  //     return utilUpdateSeason(token, supabaseUserId, seasonId, { name });
+  //   },
+  //   onSuccess: (updatedSeason) => {
+  //     if (updatedSeason) {
+  //       console.log('[Mutation Success] Season updated via Supabase:', updatedSeason.name, updatedSeason.id);
+  //       queryClient.invalidateQueries({ queryKey: [queryKeys.seasons] });
+  //     }
+  //   },
+  //   onError: (error, variables) => {
+  //     console.error(`[Mutation Error] Failed to update season ${variables.name}:`, error);
+  //     // You might want to set an error state here to show in the UI
+  //   },
+  // });
 
   // --- Mutation for Adding a new Tournament ---
   const addTournamentMutation = useMutation<
@@ -733,6 +770,35 @@ export default function Home() {
       console.error(`[Mutation Error] Failed to add tournament ${variables.name}:`, error);
     },
   });
+
+  // --- Mutation for Deleting a Season ---
+  // TODO: Implement UI to use this mutation
+  // const deleteSeasonMutation = useMutation<
+  //   boolean,
+  //   Error,
+  //   { seasonId: string; }
+  // >({
+  //   mutationFn: async ({ seasonId }) => {
+  //     const token = await getToken({ template: 'supabase' });
+  //     if (!token || !supabaseUserId) {
+  //       throw new Error("User is not authenticated. Cannot delete season.");
+  //     }
+  //     return utilDeleteSeason(token, supabaseUserId, seasonId);
+  //   },
+  //   onSuccess: (success, variables) => {
+  //     if (success) {
+  //       console.log('[Mutation Success] Season deleted via Supabase:', variables.seasonId);
+  //       queryClient.invalidateQueries({ queryKey: [queryKeys.seasons] });
+  //     } else {
+  //       // This case might not be hit if the function throws on failure, but included for completeness.
+  //       console.warn(`[Mutation Non-Success] deleteSeason returned false for season: ${variables.seasonId}`);
+  //     }
+  //   },
+  //   onError: (error, variables) => {
+  //     console.error(`[Mutation Error] Failed to delete season ${variables.seasonId}:`, error);
+  //     // You might want to set an error state here to show in the UI
+  //   },
+  // });
 
   // --- Derived State for Filtered Players (Moved to top-level) ---
   const playersForCurrentGame = useMemo(() => {
@@ -1222,19 +1288,18 @@ export default function Home() {
 
   // **** ADDED: Effect to prompt for setup if default game ID is loaded ****
   useEffect(() => {
-    console.log('[Modal Trigger Effect] Running. initialLoadComplete:', initialLoadComplete, 'hasSkipped:', hasSkippedInitialSetup);
-    // Only run the check *after* initial load is fully complete and setup hasn't been skipped
-    if (initialLoadComplete && !hasSkippedInitialSetup) {
+    console.log('[Modal Trigger Effect] Running. initialLoadComplete:', initialLoadComplete, 'hasSkipped:', hasSkippedInitialSetup, 'isSignedIn:', isSignedIn);
+    // Only run the check *after* initial load is complete, user is signed in, and setup hasn't been skipped
+    if (initialLoadComplete && isSignedIn && !hasSkippedInitialSetup) {
       // Check currentGameId *inside* the effect body
       if (currentGameId === DEFAULT_GAME_ID) {
-        console.log('Default game ID loaded, prompting for setup...');
-      setIsNewGameSetupModalOpen(true);
+        console.log('Default game ID loaded for signed-in user, prompting for setup...');
+        setIsNewGameSetupModalOpen(true);
       } else {
-        console.log('Not prompting: Specific game loaded.');
+        console.log('Not prompting: Specific game loaded for signed-in user.');
+      }
     }
-    }
-  // Depend only on load completion and skip status
-  }, [initialLoadComplete, hasSkippedInitialSetup, currentGameId]); // <<< Added currentGameId dependency back to re-check if it changes later
+  }, [initialLoadComplete, hasSkippedInitialSetup, currentGameId, isSignedIn]); // Add isSignedIn to dependency array
 
   // --- Player Management Handlers (Updated for relative coords) ---
   // Wrapped handleDropOnField in useCallback as suggested
@@ -1659,7 +1724,7 @@ export default function Home() {
   };
 
   // Function to handle the actual saving
-  const handleSaveGame = async (gameName: string) => {
+  const handleSaveGame = (gameName: string) => {
     console.log(`Attempting to save game: '${gameName}'`);
     
     let idToSave: string;
@@ -1667,49 +1732,44 @@ export default function Home() {
 
     if (isOverwritingExistingLoadedGame) {
       idToSave = currentGameId;
-      console.log(`Overwriting existing game with ID: ${idToSave}`);
     } else {
       idToSave = `game_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-      console.log(`Saving as new game with ID: ${idToSave}`);
     }
 
-      const currentSnapshot: AppState = { // Corrected type to AppState
-        // Persisted fields from gameSessionState
-        teamName: gameSessionState.teamName,
-        opponentName: gameSessionState.opponentName,
-        gameDate: gameSessionState.gameDate,
-        homeScore: gameSessionState.homeScore,
-        awayScore: gameSessionState.awayScore,
-        gameNotes: gameSessionState.gameNotes,
-        homeOrAway: gameSessionState.homeOrAway,
-        numberOfPeriods: gameSessionState.numberOfPeriods,
-        periodDurationMinutes: gameSessionState.periodDurationMinutes,
-        currentPeriod: gameSessionState.currentPeriod,
-        gameStatus: gameSessionState.gameStatus,
-        seasonId: gameSessionState.seasonId,
-        tournamentId: gameSessionState.tournamentId,
-        gameLocation: gameSessionState.gameLocation,
-        gameTime: gameSessionState.gameTime,
-        subIntervalMinutes: gameSessionState.subIntervalMinutes,
-        completedIntervalDurations: gameSessionState.completedIntervalDurations,
-        lastSubConfirmationTimeSeconds: gameSessionState.lastSubConfirmationTimeSeconds,
-        showPlayerNames: gameSessionState.showPlayerNames,
-        selectedPlayerIds: gameSessionState.selectedPlayerIds,
-        gameEvents: gameSessionState.gameEvents,
+    const currentSnapshot: AppState = {
+      // ... (snapshot creation logic is correct)
+      teamName: gameSessionState.teamName,
+      opponentName: gameSessionState.opponentName,
+      gameDate: gameSessionState.gameDate,
+      homeScore: gameSessionState.homeScore,
+      awayScore: gameSessionState.awayScore,
+      gameNotes: gameSessionState.gameNotes,
+      homeOrAway: gameSessionState.homeOrAway,
+      numberOfPeriods: gameSessionState.numberOfPeriods,
+      periodDurationMinutes: gameSessionState.periodDurationMinutes,
+      currentPeriod: gameSessionState.currentPeriod,
+      gameStatus: gameSessionState.gameStatus,
+      seasonId: gameSessionState.seasonId,
+      tournamentId: gameSessionState.tournamentId,
+      gameLocation: gameSessionState.gameLocation,
+      gameTime: gameSessionState.gameTime,
+      subIntervalMinutes: gameSessionState.subIntervalMinutes,
+      completedIntervalDurations: gameSessionState.completedIntervalDurations,
+      lastSubConfirmationTimeSeconds: gameSessionState.lastSubConfirmationTimeSeconds,
+      showPlayerNames: gameSessionState.showPlayerNames,
+      selectedPlayerIds: gameSessionState.selectedPlayerIds,
+      gameEvents: gameSessionState.gameEvents,
+      playersOnField,
+      opponents,
+      drawings,
+      availablePlayers: masterRosterQueryResultData || availablePlayers,
+    };
 
-        // Other states
-        playersOnField,
-        opponents,
-        drawings,
-        availablePlayers: masterRosterQueryResultData || availablePlayers, // Master roster snapshot
-        
-        // Volatile timer states are EXCLUDED.
-      };
-
+    // Call the mutation with the prepared variables
     saveGameMutation.mutate({
       gameName,
       gameIdToSave: idToSave,
-      snapshot: currentSnapshot as AppState, // Cast to AppState for the util
+      snapshot: currentSnapshot,
     });
   };
 
@@ -2250,31 +2310,24 @@ export default function Home() {
 
     const handleRemovePlayerForModal = useCallback(async (playerId: string) => {
       console.log(`[Page.tsx] handleRemovePlayerForModal attempting mutation for ID: ${playerId}`);
-      setRosterError(null); // Clear previous specific errors
-      // setIsRosterUpdating(true); // This line is removed - UI should use removePlayerMutation.isPending
+      setRosterError(null);
 
       try {
-        await removePlayerMutation.mutateAsync({ playerId });
-        // onSuccess in removePlayerMutation now handles:
-        // - queryClient.invalidateQueries({ queryKey: ['masterRoster'] });
-        // - setPlayersOnField update
-        // - setSelectedPlayerIds update
-        // - saveStateToHistory call
-        // - setRosterError(null) on success path
+        const token = await getToken({ template: 'supabase' });
+        if (!token || !supabaseUserId) {
+          throw new Error("User is not authenticated. Cannot remove player.");
+        }
+        // Pass all required variables to the mutation
+        await removePlayerMutation.mutateAsync({ playerId, token, internalSupabaseUserId: supabaseUserId });
+        
         console.log(`[Page.tsx] removePlayerMutation.mutateAsync successful for removal of ${playerId}.`);
       } catch (error) {
-        // Errors are primarily handled by the mutation's onError callback, which calls setRosterError.
-        // This catch block is for any other unexpected error from mutateAsync itself if not caught by TanStack Query.
         console.error(`[Page.tsx] Exception during removePlayerMutation.mutateAsync for removal of ${playerId}:`, error);
-        // Optionally, if you want a generic fallback error here if the mutation's onError isn't triggered:
-        // if (!removePlayerMutation.isError) { // Or check error type if more specific handling is needed
-        //   setRosterError(t('rosterSettingsModal.errors.unexpected', 'An unexpected error occurred.'));
-        // }
+        if (!removePlayerMutation.error) {
+          setRosterError(t('rosterSettingsModal.errors.unexpected', 'An unexpected error occurred.'));
+        }
       }
-      // finally { // This block is removed
-        // setIsRosterUpdating(false); // This line is removed - UI should use removePlayerMutation.isPending
-      // }
-    }, [removePlayerMutation]); // Removed t - it's stable from useTranslation
+    }, [removePlayerMutation, getToken, supabaseUserId, t]);
 
     // ... (rest of the code remains unchanged)
 
@@ -2353,80 +2406,37 @@ export default function Home() {
 
   // --- NEW: Handler to Award Fair Play Card ---
   const handleAwardFairPlayCard = useCallback(async (playerId: string | null) => {
-      // <<< ADD LOG HERE >>>
-      console.log(`[page.tsx] handleAwardFairPlayCard called with playerId: ${playerId}`);
-      console.log(`[page.tsx] availablePlayers BEFORE update:`, JSON.stringify(availablePlayers.map(p => ({id: p.id, fp: p.receivedFairPlayCard}))));
-      console.log(`[page.tsx] playersOnField BEFORE update:`, JSON.stringify(playersOnField.map(p => ({id: p.id, fp: p.receivedFairPlayCard}))));
+    console.log(`[page.tsx] handleAwardFairPlayCard called with playerId: ${playerId}`);
+    
+    const currentlyAwardedPlayerId = availablePlayers.find(p => p.receivedFairPlayCard)?.id;
+    const token = await getToken({ template: 'supabase' });
+    if (!token || !supabaseUserId) {
+        console.error("Cannot update fair play card status, user not authenticated.");
+        return;
+    }
 
-      if (!currentGameId || currentGameId === DEFAULT_GAME_ID) {
-          console.warn("Cannot award fair play card in unsaved/default state.");
-          return; // Prevent awarding in default state
-      }
-
-      let updatedAvailablePlayers = availablePlayers;
-      let updatedPlayersOnField = playersOnField;
-
-      // Find the currently awarded player, if any
-      const currentlyAwardedPlayerId = availablePlayers.find(p => p.receivedFairPlayCard)?.id;
-
-      // If the selected ID is the same as the current one, we are toggling it OFF.
-      // If the selected ID is different, we are changing the award.
-      // If the selected ID is null, we are clearing the award.
-
-      // Clear any existing card first
-      if (currentlyAwardedPlayerId) {
-          updatedAvailablePlayers = updatedAvailablePlayers.map(p =>
-              p.id === currentlyAwardedPlayerId ? { ...p, receivedFairPlayCard: false } : p
-          );
-          updatedPlayersOnField = updatedPlayersOnField.map(p =>
-              p.id === currentlyAwardedPlayerId ? { ...p, receivedFairPlayCard: false } : p
-          );
-      }
-
-      // Award the new card if a playerId is provided (and it's different from the one just cleared)
-      if (playerId && playerId !== currentlyAwardedPlayerId) {
-          // <<< MODIFY LOGGING HERE >>>
-          updatedAvailablePlayers = updatedAvailablePlayers.map(p =>
-              p.id === playerId ? { ...p, receivedFairPlayCard: true } : p
-          );
-          updatedPlayersOnField = updatedPlayersOnField.map(p =>
-              p.id === playerId ? { ...p, receivedFairPlayCard: true } : p
-          );
-          console.log(`[page.tsx] Awarding card to ${playerId}`);
-      } else {
-          // <<< ADD LOG HERE >>>
-          console.log(`[page.tsx] Clearing card (or toggling off). PlayerId: ${playerId}, Currently Awarded: ${currentlyAwardedPlayerId}`);
-      }
-      // If playerId is null, we only cleared the existing card.
-      // If playerId is the same as currentlyAwardedPlayerId, we cleared it and don't re-award.
-
-      // <<< ADD LOG HERE >>>
-      console.log(`[page.tsx] availablePlayers AFTER update logic:`, JSON.stringify(updatedAvailablePlayers.map(p => ({id: p.id, fp: p.receivedFairPlayCard}))));
-      console.log(`[page.tsx] playersOnField AFTER update logic:`, JSON.stringify(updatedPlayersOnField.map(p => ({id: p.id, fp: p.receivedFairPlayCard}))));
-
-      // <<< ADD LOG HERE >>>
-      console.log(`[page.tsx] Calling setAvailablePlayers and setPlayersOnField...`);
-      setAvailablePlayers(updatedAvailablePlayers);
-      setPlayersOnField(updatedPlayersOnField);
-      // Save updated global roster
-      // localStorage.setItem(MASTER_ROSTER_KEY, JSON.stringify(updatedAvailablePlayers));
-      try {
-        const success = await saveMasterRoster(updatedAvailablePlayers);
-        if (!success) {
-          console.error('[page.tsx] handleAwardFairPlayCard: Failed to save master roster using utility.');
-          // Optionally, set an error state to inform the user
+    // This logic now correctly uses the authenticated mutation
+    if (currentlyAwardedPlayerId) {
+        try {
+            await setFairPlayCardStatus(token, supabaseUserId, currentlyAwardedPlayerId, false);
+        } catch (error) {
+            console.error(`Failed to clear fair play card for ${currentlyAwardedPlayerId}`, error);
+            return;
         }
-      } catch (error) {
-        console.error('[page.tsx] handleAwardFairPlayCard: Error calling saveMasterRoster utility:', error);
-        // Optionally, set an error state
-      }
-      // <<< ADD LOG HERE >>>
-      console.log(`[page.tsx] Calling saveStateToHistory... ONLY for playersOnField`);
-      // Save ONLY the playersOnField change to the game history, not the global roster
-      saveStateToHistory({ playersOnField: updatedPlayersOnField });
+    }
 
-      console.log(`[page.tsx] Updated Fair Play card award. ${playerId ? `Awarded to ${playerId}` : 'Cleared'}`);
-  }, [availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField, saveStateToHistory, currentGameId]);
+    if (playerId && playerId !== currentlyAwardedPlayerId) {
+        try {
+            await setFairPlayCardStatus(token, supabaseUserId, playerId, true);
+        } catch (error) {
+            console.error(`Failed to award fair play card to ${playerId}`, error);
+            return;
+        }
+    }
+    
+    queryClient.invalidateQueries({ queryKey: [queryKeys.masterRoster] });
+
+  }, [availablePlayers, getToken, supabaseUserId, queryClient]);
 
   // --- NEW: Handler to Toggle Player Selection for Current Match ---
   const handleTogglePlayerSelection = useCallback((playerId: string) => {
@@ -2575,14 +2585,14 @@ export default function Home() {
     console.log('[page.tsx] handleSetSeasonId called with:', idToSet);
     dispatchGameSession({ type: 'SET_SEASON_ID', payload: idToSet }); 
     // REMOVED: saveStateToHistory({ seasonId: idToSet, tournamentId: idToSet ? '' : gameSessionState.tournamentId });
-  }, [gameSessionState.tournamentId]); // Dependency was saveStateToHistory, gameSessionState.tournamentId. Now only gameSessionState.tournamentId or none if reducer handles all logic.
+  }, []); // Dependencies removed as reducer handles all logic.
 
   const handleSetTournamentId = useCallback((newTournamentId: string | null) => {
     const idToSet = newTournamentId || ''; // Ensure empty string instead of null
     console.log('[page.tsx] handleSetTournamentId called with:', idToSet);
     dispatchGameSession({ type: 'SET_TOURNAMENT_ID', payload: idToSet });
     // REMOVED: saveStateToHistory({ tournamentId: idToSet, seasonId: idToSet ? '' : gameSessionState.seasonId });
-  }, [gameSessionState.seasonId]); // Dependency was saveStateToHistory, gameSessionState.seasonId. Now only gameSessionState.seasonId or none if reducer handles all logic.
+  }, []); // Dependencies removed as reducer handles all logic.
 
   // --- AGGREGATE EXPORT HANDLERS --- 
   

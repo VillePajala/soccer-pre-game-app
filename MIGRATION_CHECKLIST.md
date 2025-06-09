@@ -4,10 +4,10 @@ This checklist provides concrete, actionable steps for migrating from localStora
 
 ## Pre-Migration Checklist
 
-- [ ] All unit tests passing (`npm run test:unit`)
-- [ ] All E2E tests passing (`npm run test:e2e`)
-- [ ] Current branch is up to date with master
-- [ ] No uncommitted changes
+- [x] All unit tests passing (`npm run test:unit`)
+- [x] All E2E tests passing (`npm run test:e2e`)
+- [x] Current branch is up to date with master
+- [x] No uncommitted changes
 
 ## Phase 1: Setup and First Entity Migration
 
@@ -38,7 +38,7 @@ Execute in Supabase SQL Editor (in order):
 - [x] Verify table created in Supabase dashboard
 - [x] Verify RLS policy is active
 
-#### Players Table  
+#### Players Table
 - [x] Execute players table SQL
 - [x] Verify table and indexes created
 - [x] Verify RLS policy is active
@@ -67,85 +67,89 @@ Execute in Supabase SQL Editor (in order):
 - [x] Commit: `git commit -m "feat: create Supabase database schema"`
 
 ### 1.4 First Entity Migration: Seasons
-
-#### 1.4.1 Create Supabase Service
-- [x] Create directory: `src/utils/supabase/`
-- [x] Create `src/utils/supabase/seasons.ts` (see migration plan)
-- [x] Verify TypeScript compiles without errors
-
-#### 1.4.2 Test Supabase Service
-- [x] Create `src/utils/supabase/seasons.test.ts`
-- [x] Implement all CRUD operation tests
-- [x] Run tests: `npm run test:unit src/utils/supabase/seasons.test.ts`
-- [x] All tests passing
-
-#### 1.4.3 Create Migration Component
-- [ ] Create directory: `src/components/DataMigration/` (Note: Deferred/Re-evaluate)
-- [ ] Create `src/components/DataMigration/SeasonsMigration.tsx` (Note: Deferred/Re-evaluate)
-- [ ] Verify component renders without errors (Note: Deferred/Re-evaluate)
-
-#### 1.4.4 Test Migration Component
-- [ ] Create `src/components/DataMigration/SeasonsMigration.test.tsx` (Note: Deferred/Re-evaluate)
-- [ ] Test successful migration scenario (Note: Deferred/Re-evaluate)
-- [ ] Test error handling (Note: Deferred/Re-evaluate)
-- [ ] Test progress tracking (Note: Deferred/Re-evaluate)
-- [ ] All tests passing (Note: Deferred/Re-evaluate)
-
-#### 1.4.5 Update Seasons Utility
-- [x] Backup current `src/utils/seasons.ts` (implied by refactoring)
-- [x] Update to support Supabase (authentication required)
-- [x] Rewrite tests for `src/utils/seasons.test.ts` to mock Supabase calls and auth
-- [ ] ~~All existing tests still passing~~ (N/A - tests rewritten)
-- [x] Add tests for authenticated scenario (covered by rewritten tests)
-- [x] All new tests passing
+- [x] Create Supabase service `src/utils/supabase/seasons.ts`
+- [x] Create and pass tests for `src/utils/supabase/seasons.test.ts`
+- [x] Update `src/utils/seasons.ts` utility to use the Supabase service.
+- [x] Rewrite tests for `src/utils/seasons.test.ts` to mock Supabase calls and auth.
 
 - [x] Commit: `git commit -m "feat: Implement Supabase service layer and refactor utility for Seasons"`
 
-### 1.5 Verify First Migration
-- [ ] Create test page to trigger migration
-- [ ] Test with empty localStorage
-- [ ] Test with existing seasons in localStorage
-- [ ] Verify data appears in Supabase
-- [ ] Verify localStorage is cleared after migration
+## Phase 2: Remaining Entity Migrations (On Hold)
 
-## Phase 2: Remaining Entity Migrations
+*This phase is on hold pending full implementation of auth and user data connection.*
 
-### 2.1 Tournaments Migration
-- [ ] Create `src/utils/supabase/tournaments.ts`
-- [ ] Create `src/utils/supabase/tournaments.test.ts`
-- [ ] Create `src/components/DataMigration/TournamentsMigration.tsx`
-- [ ] Create `src/components/DataMigration/TournamentsMigration.test.tsx`
-- [ ] Update `src/utils/tournaments.ts`
-- [ ] All tests passing
-- [ ] Commit: `git commit -m "feat: implement tournaments migration"`
+- [ ] Tournaments Migration
+- [ ] Players (Master Roster) Migration
+- [ ] Saved Games Migration
+- [ ] App Settings Migration
 
-### 2.2 Players (Master Roster) Migration
-- [ ] Create `src/utils/supabase/players.ts`
-- [ ] Create `src/utils/supabase/players.test.ts`
-- [ ] Create `src/components/DataMigration/PlayersMigration.tsx`
-- [ ] Create `src/components/DataMigration/PlayersMigration.test.tsx`
-- [ ] Update `
-
-## Phase 3: Clerk Authentication
+## Phase 3: Clerk Authentication & Route Protection
 
 ### 3.1 Clerk Setup
 - [x] Create Clerk application at https://clerk.com
-- [x] Configure authentication methods
-- [x] Copy API keys
-- [x] Add to `.env.local`:
-  ```
-  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_key
-  CLERK_SECRET_KEY=your_secret_key
-  ```
-- [x] Install Clerk: `npm install @clerk/nextjs`
+- [x] Configure authentication methods in Clerk dashboard
+- [x] Copy API keys to `.env.local`
+- [x] Add required Clerk URL variables to `.env.local` (`NEXT_PUBLIC_CLERK_SIGN_IN_URL`, etc.)
+- [x] Install Clerk: `npm install @clerk/nextjs @clerk/themes`
 - [x] Commit: `git commit -m "feat: setup Clerk authentication"`
 
-### 3.2 Implement Authentication
+### 3.2 Implement Authentication Flow
 - [x] Update `src/app/layout.tsx` with ClerkProvider
-- [x] Create `src/middleware.ts` for route protection
-- [ ] Create sign-in/sign-up pages (Note: Using Clerk's default modals for now)
-- [x] Add UserButton component
-- [ ] Test authentication flow
-- [ ] Commit: `git commit -m "feat: implement Clerk authentication UI"`
+- [x] Create `src/middleware.ts` to protect all routes by default
+- [x] Create custom sign-in page `src/app/sign-in/[[...sign-in]]/page.tsx`
+- [x] Create custom sign-up page `src/app/sign-up/[[...sign-up]]/page.tsx`
+- [x] Style sign-in/sign-up pages to match application branding
+- [x] Implement custom account menu in `src/components/ControlBar.tsx` to handle sign-out
+- [x] Test and verify sign-in, sign-up, and sign-out flows are working correctly
+- [x] Commit: `git commit -m "feat: implement Clerk authentication UI and route protection"`
 
 ### 3.3 Connect Clerk to Supabase
+- [x] Set up Supabase as a JWT provider in Clerk dashboard
+- [x] Create `users` table with Clerk foreign key
+- [x] Create `useCurrentSupabaseUser.ts` hook to map Clerk user to Supabase user
+- [x] Test that a new user in Clerk automatically creates a corresponding user in the Supabase `users` table.
+
+- [x] Commit: `git commit -m "feat: connect Clerk and Supabase user identities"`
+
+## Phase 4: Connecting User Data (Current Focus)
+
+### 4.1 Review & Refactor Data Queries
+- [x] **Seasons:** Verified `useQuery` for seasons in `page.tsx` is correctly using `supabaseUserId` and is enabled only when `isSignedIn`.
+- [x] **Tournaments:** Refactored `getTournaments` and updated `useQuery` to be authenticated.
+- [x] **Master Roster:** Refactored `getMasterRoster` and updated `useQuery` to be authenticated.
+- [x] **App Settings:** Refactored `getCurrentGameIdSetting` and updated `useQuery` to be authenticated.
+
+### 4.2 Review & Refactor Data Mutations
+- [x] **Seasons:** `addSeason` migrated to Supabase.
+- [ ] **Seasons:** `updateSeason` functionality not present in UI. Migration deferred.
+- [ ] **Seasons:** `deleteSeason` functionality not present in UI. Migration deferred.
+- [ ] **Tournaments:** Plan migration for `addTournament`, `updateTournament`, `deleteTournament`.
+- [ ] **Master Roster:** 
+    - [x] `addPlayer` migrated to Supabase.
+    - [x] `updatePlayer` migrated to Supabase.
+    - [ ] `setGoalieStatus` migration incomplete due to issues.
+    - [x] `removePlayer` migrated to Supabase.
+    - [ ] `setFairPlayCardStatus` migration incomplete due to issues.
+- [ ] **Saved Games:**
+    - [ ] `saveGame` migration incomplete due to issues.
+    - [ ] `deleteGame` migration to be planned.
+- [ ] **App Settings:** 
+    - [x] `saveCurrentGameIdSetting` migrated to Supabase.
+
+## Phase 5: Post-Migration Cleanup & Refinement
+
+### 5.1 Old Data Migration
+- [ ] **Strategy:** Define a clear strategy for migrating existing `localStorage` data for returning users.
+  - *Option A: One-time migration script triggered on first login.*
+  - *Option B: Prompt user to import old data.*
+- [ ] **Implementation:** Build the chosen migration utility.
+
+### 5.2 UI Refinement based on Auth State
+- [ ] Ensure loading indicators are shown correctly while auth state is being determined.
+- [ ] Prevent modals (like "New Game Setup") from showing to unauthenticated users.
+- [ ] Review all UI components to ensure they handle the `null` state for user data before it loads.
+
+### 5.3 Final Testing
+- [ ] Full E2E test of the entire application flow for a new user.
+- [ ] Full E2E test for a returning user with data migration.
+- [ ] Review and remove any temporary debugging code.

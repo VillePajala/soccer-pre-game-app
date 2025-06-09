@@ -1,27 +1,37 @@
 import { TOURNAMENTS_LIST_KEY } from '@/config/constants';
-import type { Tournament } from '@/types'; // Import Tournament type from shared types
-
-// Define the Tournament type (consider moving to a shared types file)
-// export interface Tournament { // Remove local definition
-//   id: string;
-//   name: string;
-//   // Add any other relevant tournament properties, e.g., date, location
-// }
+import type { Tournament } from '@/types';
+import { getSupabaseClientWithoutRLS } from '@/lib/supabase';
+import {
+  getSupabaseTournaments as fetchTournamentsFromSupabaseService,
+  // We will import add, update, delete from the service later
+} from './supabase/tournaments';
 
 /**
- * Retrieves all tournaments from localStorage.
+ * Retrieves all tournaments for the authenticated user from Supabase.
+ * @param clerkToken - The JWT token from Clerk for the authenticated user.
+ * @param internalSupabaseUserId - The internal Supabase User ID (UUID).
  * @returns A promise that resolves to an array of Tournament objects.
  */
-export const getTournaments = async (): Promise<Tournament[]> => {
+export const getTournaments = async (clerkToken: string, internalSupabaseUserId: string): Promise<Tournament[]> => {
+  if (!clerkToken) throw new Error("Clerk token is required.");
+  if (!internalSupabaseUserId) {
+    throw new Error("User not authenticated or Supabase ID not provided to getTournaments.");
+  }
+  
+  const supabaseClient = getSupabaseClientWithoutRLS();
+  console.log('[getTournaments] Using Supabase to fetch tournaments');
+  
+  return fetchTournamentsFromSupabaseService(supabaseClient, internalSupabaseUserId);
+};
+
+// DEPRECATED: To be removed after full migration.
+const getTournamentsFromLocalStorage = async (): Promise<Tournament[]> => {
   try {
     const tournamentsJson = localStorage.getItem(TOURNAMENTS_LIST_KEY);
-    if (!tournamentsJson) {
-      return Promise.resolve([]);
-    }
-    return Promise.resolve(JSON.parse(tournamentsJson) as Tournament[]);
+    return tournamentsJson ? JSON.parse(tournamentsJson) : [];
   } catch (error) {
-    console.error('[getTournaments] Error getting tournaments from localStorage:', error);
-    return Promise.resolve([]);
+    console.error('[getTournamentsFromLocalStorage] Error:', error);
+    return [];
   }
 };
 
@@ -53,7 +63,7 @@ export const addTournament = async (newTournamentName: string): Promise<Tourname
   }
 
   try {
-    const currentTournaments = await getTournaments();
+    const currentTournaments = await getTournamentsFromLocalStorage();
     if (currentTournaments.some(t => t.name.toLowerCase() === trimmedName.toLowerCase())) {
       console.error(`[addTournament] Validation failed: A tournament with name "${trimmedName}" already exists.`);
       return Promise.resolve(null);
@@ -88,7 +98,7 @@ export const updateTournament = async (updatedTournamentData: Tournament): Promi
   const trimmedName = updatedTournamentData.name.trim();
 
   try {
-    const currentTournaments = await getTournaments();
+    const currentTournaments = await getTournamentsFromLocalStorage();
     const tournamentIndex = currentTournaments.findIndex(t => t.id === updatedTournamentData.id);
 
     if (tournamentIndex === -1) {
@@ -127,7 +137,7 @@ export const deleteTournament = async (tournamentId: string): Promise<boolean> =
     return Promise.resolve(false);
   }
   try {
-    const currentTournaments = await getTournaments();
+    const currentTournaments = await getTournamentsFromLocalStorage();
     const updatedTournaments = currentTournaments.filter(t => t.id !== tournamentId);
 
     if (updatedTournaments.length === currentTournaments.length) {
