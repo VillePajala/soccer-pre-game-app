@@ -127,12 +127,34 @@ export const createSupabaseSeason = async (
     .single();
 
   if (error) {
-    console.error('[createSupabaseSeason] Error:', error);
+    console.error('[createSupabaseSeason] An error occurred.');
+    
+    // Explicitly log known properties of a PostgrestError
+    if ('message' in error) console.error('Error Message:', error.message);
+    if ('code' in error) console.error('Error Code:', error.code);
+    if ('details' in error) console.error('Error Details:', error.details);
+    if ('hint' in error) console.error('Error Hint:', error.hint);
+
+    // Use JSON.stringify with a replacer to handle potential circular references
+    const getCircularReplacer = () => {
+      const seen = new WeakSet();
+      return (key: string, value: any) => {
+        if (typeof value === "object" && value !== null) {
+          if (seen.has(value)) {
+            return;
+          }
+          seen.add(value);
+        }
+        return value;
+      };
+    };
+
+    console.error('[createSupabaseSeason] Full Error Stringified:', JSON.stringify(error, getCircularReplacer()));
     throw error;
   }
   if (!data) throw new Error('Failed to create season, no data returned.');
   
-  return data as Season; 
+  return data as Season;
 };
 
 // For updates, based on Season type, only name can be updated.

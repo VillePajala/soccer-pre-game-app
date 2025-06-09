@@ -3,7 +3,12 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
+// Log the variables to the browser console for debugging
+console.log('[Supabase Client] NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl);
+console.log('[Supabase Client] NEXT_PUBLIC_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'Loaded' : 'MISSING or empty');
+
 if (!supabaseUrl || !supabaseAnonKey) {
+  console.error("CRITICAL: Supabase URL or Anon Key is missing. Check your .env.local file and ensure it's loaded correctly.")
   throw new Error("Supabase URL or Anon Key is missing from environment variables.")
 }
 

@@ -203,8 +203,10 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
       setShowNewSeasonInput(false); 
       setNewSeasonName(''); 
     } catch (error) {
-      console.error("Error calling addSeasonMutation.mutateAsync:", error);
-      newSeasonInputRef.current?.focus();
+      console.error("[handleAddNewSeason] Error creating season:", error);
+      // Display the actual error message to the user
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      alert(t('newGameSetupModal.errors.createSeasonFailed', 'Failed to create season: {{error}}', { error: errorMessage }));
     }
   };
 
@@ -232,8 +234,10 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
       setShowNewTournamentInput(false); 
       setNewTournamentName(''); 
     } catch (error) {
-      console.error("Error calling addTournamentMutation.mutateAsync:", error);
-      newTournamentInputRef.current?.focus();
+      console.error("[handleAddNewTournament] Error creating tournament:", error);
+      // Display the actual error message to the user
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      alert(t('newGameSetupModal.errors.createTournamentFailed', 'Failed to create tournament: {{error}}', { error: errorMessage }));
     }
   };
   // --- End Handlers for Create New ---

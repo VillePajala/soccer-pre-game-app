@@ -1,5 +1,8 @@
 import { SAVED_GAMES_KEY } from '@/config/constants';
-import type { SavedGamesCollection, AppState, GameEvent as PageGameEvent } from '@/app/page';
+import { getSupabaseClientForAuthenticatedOperations } from '@/lib/supabase';
+import { getSupabaseSavedGames } from './supabase/savedGames';
+import type { SavedGamesCollection, AppState } from '@/types/game';
+import type { GameEvent } from '@/types/game';
 
 // NOTE: This file is in a transitional state.
 // "Get" operations are being migrated to Supabase first.
@@ -22,16 +25,19 @@ const getSavedGamesFromLocalStorage = async (): Promise<SavedGamesCollection> =>
  * @param internalSupabaseUserId - The internal Supabase User ID (UUID).
  * @returns Promise resolving to an Object containing saved games mapped by ID.
  */
-export const getSavedGames = async (): Promise<SavedGamesCollection> => {
+export const getSavedGames = async (clerkToken: string, internalSupabaseUserId: string): Promise<SavedGamesCollection> => {
+  if (!clerkToken || !internalSupabaseUserId) {
+    console.error("Authentication details are required to get saved games.");
+    return {};
+  }
   try {
-    const gamesJson = localStorage.getItem(SAVED_GAMES_KEY);
-    if (!gamesJson) {
-      return Promise.resolve({});
-    }
-    return Promise.resolve(JSON.parse(gamesJson) as SavedGamesCollection);
+    const supabase = getSupabaseClientForAuthenticatedOperations(clerkToken);
+    const games = await getSupabaseSavedGames(supabase, internalSupabaseUserId);
+    return games;
   } catch (error) {
-    console.error('Error getting saved games from localStorage:', error);
-    return Promise.reject(error);
+    console.error('Error getting saved games from Supabase:', error);
+    // Return empty collection on error to prevent app crash
+    return {};
   }
 };
 
@@ -57,7 +63,7 @@ export const saveGames = async (games: SavedGamesCollection): Promise<void> => {
  * @returns Promise resolving to the saved game data (AppState).
  */
 export const saveGame = async (gameId: string, gameData: AppState): Promise<AppState> => {
-  const allGames = await getSavedGames();
+  const allGames = await getSavedGamesFromLocalStorage();
   allGames[gameId] = gameData;
   await saveGames(allGames);
   return gameData;
@@ -148,7 +154,7 @@ export const updateGameDetails = async (
   return saveGame(gameId, updatedGame);
 };
 
-export const addGameEvent = async (gameId: string, event: PageGameEvent): Promise<AppState | null> => {
+export const addGameEvent = async (gameId: string, event: GameEvent): Promise<AppState | null> => {
   const game = await getGame(gameId);
   if (!game) {
     console.warn(`Game with ID ${gameId} not found for adding event.`);
@@ -158,7 +164,7 @@ export const addGameEvent = async (gameId: string, event: PageGameEvent): Promis
   return saveGame(gameId, updatedGame);
 };
 
-export const updateGameEvent = async (gameId: string, eventIndex: number, eventData: PageGameEvent): Promise<AppState | null> => {
+export const updateGameEvent = async (gameId: string, eventIndex: number, eventData: GameEvent): Promise<AppState | null> => {
   const game = await getGame(gameId);
   if (!game) {
     console.warn(`Game with ID ${gameId} not found for updating event.`);

@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SavedGamesCollection } from '@/app/page'; // Keep this if SavedGamesCollection is from here
+import { useAuth } from '@clerk/nextjs'; // Import useAuth
+import { useCurrentSupabaseUser } from '@/hooks/useCurrentSupabaseUser'; // Import hook to get Supabase user
+import { SavedGamesCollection } from '@/types/game'; // Corrected import path
 import { Season, Tournament } from '@/types'; // Corrected import path
 import { 
   HiOutlineDocumentArrowDown, 
@@ -75,6 +77,8 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
   processingGameId = null,
 }) => {
   const { t } = useTranslation();
+  const { getToken, userId } = useAuth(); // Get auth methods from Clerk
+  const { supabaseUserId } = useCurrentSupabaseUser(); // Get Supabase user ID
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [searchText, setSearchText] = useState<string>('');
   const [filterType, setFilterType] = useState<'season' | 'tournament' | null>(null);
@@ -89,26 +93,36 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
 
   // Load seasons and tournaments on mount or when modal opens
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && userId && supabaseUserId) {
       const fetchModalData = async () => {
-      try {
-          const loadedSeasonsData = await utilGetSeasons();
+        try {
+          const token = await getToken({ template: 'supabase' });
+          if (!token) {
+            console.error("Clerk token not available.");
+            return;
+          }
+          const loadedSeasonsData = await utilGetSeasons(token, supabaseUserId);
           setSeasons(Array.isArray(loadedSeasonsData) ? loadedSeasonsData : []);
         } catch (error) {
-        console.error("Error loading seasons via utility:", error);
-        setSeasons([]); 
-      }
-      try {
-          const loadedTournamentsData = await utilGetTournaments();
+          console.error("Error loading seasons via utility:", error);
+          setSeasons([]); 
+        }
+        try {
+          const token = await getToken({ template: 'supabase' });
+          if (!token) {
+            console.error("Clerk token not available.");
+            return;
+          }
+          const loadedTournamentsData = await utilGetTournaments(token, supabaseUserId);
           setTournaments(Array.isArray(loadedTournamentsData) ? loadedTournamentsData : []);
         } catch (error) {
-        console.error("Error loading tournaments via utility:", error);
-        setTournaments([]);
-      }
+          console.error("Error loading tournaments via utility:", error);
+          setTournaments([]);
+        }
       };
       fetchModalData();
     }
-  }, [isOpen]);
+  }, [isOpen, userId, supabaseUserId, getToken]);
 
   // Filter logic updated to only use searchText
   const filteredGameIds = useMemo(() => {

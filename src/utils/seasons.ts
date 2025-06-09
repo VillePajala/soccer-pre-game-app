@@ -65,8 +65,17 @@ export const addSeason = async (clerkToken: string, internalSupabaseUserId: stri
     const newSeason = await addSeasonToSupabaseService(supabaseClient, internalSupabaseUserId, { ...seasonData, name: seasonData.name.trim() });
     return newSeason;
   } catch (error) {
-    console.error('[addSeason] Error adding season:', error);
-    return null;
+    console.error('[addSeason] Error adding season. Raw error:', error);
+    if (error instanceof Error) {
+      console.error('[addSeason] Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+        cause: 'cause' in error ? error.cause : 'N/A',
+      });
+    }
+    // Re-throw the error to be handled by the calling mutation hook
+    throw error;
   }
 };
 

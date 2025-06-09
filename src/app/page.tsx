@@ -327,7 +327,7 @@ export default function Home() {
         console.log('[page.tsx useQuery savedGames] Token or supabaseUserId not available. Skipping fetch.');
         return null;
       }
-      return utilGetSavedGames();
+      return utilGetSavedGames(token, supabaseUserId);
     },
     enabled: !!isSignedIn && !!supabaseUserId && !isSupabaseUserMappingLoading, // Enable only when authenticated
     initialData: {}, 
