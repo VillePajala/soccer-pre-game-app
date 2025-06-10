@@ -1,0 +1,81 @@
+export default function Home() {
+	const { t } = useTranslation();
+	const queryClient = useQueryClient();
+	const { getToken, isSignedIn } = useAuth();
+	const {
+		supabaseUserId,
+		isLoading: isSupabaseUserLoading,
+		error: supabaseUserError,
+	} = useCurrentSupabaseUser();
+
+	const { data: token } = useQuery<string | null>({
+		queryKey: ['clerk_token'],
+		queryFn: () => getToken({ template: 'supabase' }),
+		enabled: !!isSignedIn,
+	});
+
+	const {
+		data: masterRoster,
+		isLoading: isLoadingMasterRoster,
+		error: masterRosterError,
+	} = useQuery<Player[]>({
+		queryKey: [queryKeys.masterRoster, token],
+		queryFn: async () => {
+			if (!token) return [];
+			return getMasterRoster(token);
+		},
+		enabled: !!token,
+	});
+
+	const {
+		data: seasons,
+		isLoading: isLoadingSeasons,
+		error: seasonsError,
+	} = useQuery<Season[]>({
+		queryKey: [queryKeys.seasons, token],
+		queryFn: async () => {
+			if (!token) return [];
+			return utilGetSeasons(token);
+		},
+		enabled: !!token,
+	});
+
+	const {
+		data: tournaments,
+		isLoading: isLoadingTournaments,
+		error: tournamentsError,
+	} = useQuery<Tournament[]>({
+		queryKey: [queryKeys.tournaments, token],
+		queryFn: async () => {
+			if (!token) return [];
+			return utilGetTournaments(token);
+		},
+		enabled: !!token,
+	});
+
+	const {
+		data: allSavedGames,
+		isLoading: isLoadingSavedGames,
+		error: savedGamesError,
+	} = useQuery<SavedGamesCollection | null>({
+		queryKey: [queryKeys.savedGames, token],
+		queryFn: async () => {
+			if (!token) return null;
+			return utilGetSavedGames(token);
+		},
+		enabled: !!token,
+	});
+
+	const {
+		data: currentGameId,
+		isLoading: isLoadingCurrentGameId,
+		error: currentGameIdError,
+	} = useQuery<string | null>({
+		queryKey: [queryKeys.appSettingsCurrentGameId, token],
+		queryFn: () => {
+			if (!token) return null;
+			return getCurrentGameIdSetting(token);
+		},
+		enabled: !!token,
+	});
+} 

@@ -4,21 +4,15 @@ This file tracks known issues, refactoring needs, and areas of the codebase that
 
 ## Database & Authentication
 
-### RLS and Clerk/Supabase UUID Mismatch
-- **Issue:** Supabase Row Level Security (RLS) policies expect `auth.uid()` to contain Supabase UUIDs, but Clerk JWTs contain Clerk user IDs. This causes authentication failures when RLS is enabled.
-- **Current Workaround:** Using `getSupabaseClientForAuthenticatedOperations()` which creates an unauthenticated client and relies on manual filtering by `user_id`. This bypasses RLS but requires careful security considerations in every query.
-- **Impact:** 
-  - All database queries must explicitly filter by `user_id`
-  - RLS policies are effectively bypassed, reducing defense-in-depth
-  - Error handling must account for both missing data and auth errors
-- **Proper Solution:** 
-  1. Configure JWT mapping between Clerk and Supabase
-  2. Or use Supabase service role key (with careful security handling)
-  3. Or modify RLS policies to work with Clerk user IDs
-- **Files Affected:**
-  - `src/lib/supabase.ts` - Contains the workaround client functions
-  - `src/utils/supabase/*.ts` - All Supabase service files
-  - All files using Supabase queries
+### ~~RLS and Clerk/Supabase UUID Mismatch~~ ✅ FIXED
+- **Issue:** Supabase Row Level Security (RLS) policies expect `auth.uid()` to contain Supabase UUIDs, but Clerk JWTs contain Clerk user IDs. This caused authentication failures when RLS is enabled.
+- **Resolution:** A user mapping system has been implemented.
+  1. A `public.users` table now maps `clerk_auth_id` to an internal Supabase `id` (UUID).
+  2. The `useCurrentSupabaseUser` hook ensures this mapping is populated on login.
+  3. All RLS policies have been updated to use this `users` table for authentication checks.
+  4. All utility functions have been refactored to use the standard, RLS-enforcing `getSupabaseClient(token)` which passes the Clerk JWT.
+  5. The temporary RLS-bypassing client functions have been removed from the codebase.
+- **Status:** ✅ Fixed. The application now correctly enforces Row Level Security.
 
 ## Testing
 

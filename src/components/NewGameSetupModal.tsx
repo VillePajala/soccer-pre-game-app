@@ -28,8 +28,8 @@ interface NewGameSetupModalProps {
     homeOrAway: 'home' | 'away'
   ) => void;
   onCancel: () => void;
-  addSeasonMutation: UseMutationResult<Season | null, Error, { name: string; clerkToken: string; internalSupabaseUserId: string; }, unknown>;
-  addTournamentMutation: UseMutationResult<Tournament | null, Error, { name: string; clerkToken: string; internalSupabaseUserId: string; }, unknown>;
+  addSeasonMutation: UseMutationResult<Season | null, Error, { name: string; clerkToken: string; }, unknown>;
+  addTournamentMutation: UseMutationResult<Tournament | null, Error, { name: string; clerkToken: string; }, unknown>;
   isAddingSeason: boolean;
   isAddingTournament: boolean;
   internalSupabaseUserId: string | null;
@@ -102,10 +102,10 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
 
         // Fetch all data in parallel
         const [roster, lastHomeTeam, seasonsData, tournamentsData] = await Promise.all([
-          getMasterRoster(token, internalSupabaseUserId),
+          getMasterRoster(token),
           utilGetLastHomeTeamName(),
-          utilGetSeasons(token, internalSupabaseUserId),
-          utilGetTournaments(token, internalSupabaseUserId)
+          utilGetSeasons(token),
+          utilGetTournaments(token)
         ]);
 
         // Set state after all data is fetched
@@ -197,7 +197,6 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
       await addSeasonMutation.mutateAsync({
         name: trimmedName,
         clerkToken: token, 
-        internalSupabaseUserId: internalSupabaseUserId,
       });
       setSelectedSeasonId(newSeasonName); 
       setShowNewSeasonInput(false); 
@@ -227,8 +226,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
     try {
       await addTournamentMutation.mutateAsync({
         name: trimmedName,
-        clerkToken: token, 
-        internalSupabaseUserId: internalSupabaseUserId,
+        clerkToken: token,
       });
       setSelectedTournamentId(newTournamentName); 
       setShowNewTournamentInput(false); 

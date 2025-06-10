@@ -95,7 +95,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
   useEffect(() => {
     if (isOpen && userId && supabaseUserId) {
       const fetchModalData = async () => {
-        try {
+      try {
           const token = await getToken({ template: 'supabase' });
           if (!token) {
             console.error("Clerk token not available.");
@@ -104,10 +104,10 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
           const loadedSeasonsData = await utilGetSeasons(token, supabaseUserId);
           setSeasons(Array.isArray(loadedSeasonsData) ? loadedSeasonsData : []);
         } catch (error) {
-          console.error("Error loading seasons via utility:", error);
-          setSeasons([]); 
-        }
-        try {
+        console.error("Error loading seasons via utility:", error);
+        setSeasons([]); 
+      }
+      try {
           const token = await getToken({ template: 'supabase' });
           if (!token) {
             console.error("Clerk token not available.");
@@ -116,9 +116,9 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
           const loadedTournamentsData = await utilGetTournaments(token, supabaseUserId);
           setTournaments(Array.isArray(loadedTournamentsData) ? loadedTournamentsData : []);
         } catch (error) {
-          console.error("Error loading tournaments via utility:", error);
-          setTournaments([]);
-        }
+        console.error("Error loading tournaments via utility:", error);
+        setTournaments([]);
+      }
       };
       fetchModalData();
     }

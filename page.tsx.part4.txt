@@ -1,0 +1,203 @@
+	const saveStateToHistory = useCallback(
+		(newState: Partial<AppState>) => {
+			const currentHistoryState = history[historyIndex];
+			if (!currentHistoryState) return;
+
+			const adjustedNewState: Partial<AppState> = {
+				...newState,
+				...(newState.seasonId && newState.tournamentId === undefined
+					? { tournamentId: '' }
+					: {}),
+				...(newState.tournamentId && newState.seasonId === undefined
+					? { seasonId: '' }
+					: {}),
+			};
+
+			const nextState: AppState = { ...currentHistoryState, ...adjustedNewState };
+
+			if (JSON.stringify(nextState) === JSON.stringify(currentHistoryState)) {
+				return;
+			}
+
+			const newHistory = history.slice(0, historyIndex + 1);
+			setHistory([...newHistory, nextState]);
+			setHistoryIndex(newHistory.length);
+		},
+		[history, historyIndex]
+	);
+	
+	const saveGameMutation = useMutation<
+		string,
+		Error,
+		{ gameIdToSave: string; snapshot: AppState; gameName: string }
+	>({
+		mutationFn: async ({ gameIdToSave, snapshot }) => {
+			const token = await getToken({ template: 'supabase' });
+			if (!token) {
+				throw new Error('User is not authenticated. Cannot save game.');
+			}
+			await utilSaveGame(token, gameIdToSave, snapshot);
+			await utilSaveCurrentGameIdSetting(token, gameIdToSave);
+			return gameIdToSave;
+		},
+		onSuccess: (savedGameId) => {
+			queryClient.invalidateQueries({ queryKey: [queryKeys.savedGames, token] });
+			queryClient.invalidateQueries({ queryKey: [queryKeys.appSettingsCurrentGameId, token] });
+			if (savedGameId !== currentGameStateId || currentGameStateId === DEFAULT_GAME_ID) {
+				setCurrentGameStateId(savedGameId);
+			}
+			setIsSaveGameModalOpen(false);
+			setGameSaveError(null);
+		},
+		onError: (error, variables) => {
+			console.error(`[Mutation Error] Failed to save game ${variables.gameName} (ID: ${variables.gameIdToSave}):`, error);
+			setGameSaveError(t('saveGameModal.errors.saveFailed', 'Error saving game. Please try again.'));
+		},
+	});
+
+	const updatePlayerMutation = useMutation<
+		Player | null,
+		Error,
+		{ playerId: string; playerData: Partial<Omit<Player, 'id'>> }
+	>({
+		mutationFn: async ({ playerId, playerData }) => {
+			const token = await getToken({ template: 'supabase' });
+			if (!token) throw new Error('User is not authenticated. Cannot update player.');
+			return updatePlayer(token, playerId, playerData);
+		},
+		onSuccess: (updatedPlayer) => {
+			queryClient.invalidateQueries({ queryKey: [queryKeys.masterRoster, token] });
+			if (updatedPlayer) {
+				setPlayersOnField((prevPlayersOnField) =>
+					prevPlayersOnField.map((p) =>
+						p.id === updatedPlayer.id ? { ...p, ...updatedPlayer } : p
+					)
+				);
+			}
+			setRosterError(null);
+		},
+		onError: (error, variables) => {
+			setRosterError(t('rosterSettingsModal.errors.updateFailed', 'Error updating player {playerName}. Please try again.',{ playerName: variables.playerData.name || variables.playerId }));
+		},
+	});
+
+	const setGoalieStatusMutation = useMutation<
+		Player | null,
+		Error,
+		{ playerId: string; isGoalie: boolean }
+	>({
+		mutationFn: async ({ playerId, isGoalie }) => {
+			const token = await getToken({ template: 'supabase' });
+			if (!token) throw new Error('User is not authenticated. Cannot set goalie status.');
+			return setGoalieStatus(token, playerId, isGoalie);
+		},
+		onSuccess: (updatedPlayer, variables) => {
+			if (updatedPlayer) {
+				queryClient.invalidateQueries({ queryKey: [queryKeys.masterRoster, token] });
+				setPlayersOnField((prevPlayersOnField) =>
+					prevPlayersOnField.map((p) => {
+						if (p.id === updatedPlayer.id) return { ...p, ...updatedPlayer };
+						if (variables.isGoalie && p.isGoalie && p.id !== updatedPlayer.id) return { ...p, isGoalie: false };
+						return p;
+					})
+				);
+				setRosterError(null);
+			}
+		},
+		onError: (error, variables) => {
+			setRosterError(t('rosterSettingsModal.errors.goalieStatusFailed', 'Error setting goalie status for player {playerId}. Please try again.', { playerId: variables.playerId }));
+		},
+	});
+
+	const removePlayerMutation = useMutation<
+		boolean,
+		Error,
+		{ playerId: string }
+	>({
+		mutationFn: async ({ playerId }) => {
+			const token = await getToken({ template: 'supabase' });
+			if (!token) throw new Error("User not authenticated.");
+			return removePlayer(token, playerId);
+		},
+		onSuccess: (success, variables) => {
+			if (success) {
+				queryClient.invalidateQueries({ queryKey: [queryKeys.masterRoster, token] });
+				setPlayersOnField((prev) => prev.filter((p) => p.id !== variables.playerId));
+				dispatchGameSession({
+					type: 'SET_SELECTED_PLAYER_IDS',
+					payload: gameSessionState.selectedPlayerIds.filter(
+						(id) => id !== variables.playerId
+					),
+				});
+				setRosterError(null);
+			} else {
+				setRosterError(t('rosterSettingsModal.errors.removeFailedNotFound', 'Error removing player {playerId}. Player not found or removal failed.', { playerId: variables.playerId }));
+			}
+		},
+		onError: (error, variables) => {
+			setRosterError(t('rosterSettingsModal.errors.removeFailed', 'Error removing player {playerId}. Please try again.', { playerId: variables.playerId }));
+		},
+	});
+
+	const addPlayerMutation = useMutation<
+		Player | null,
+		Error,
+		{ name: string; jerseyNumber: string; notes: string; nickname: string }
+	>({
+		mutationFn: async (playerData) => {
+			const token = await getToken({ template: 'supabase' });
+			if (!token) {
+				throw new Error("User is not authenticated. Cannot add player.");
+			}
+			return addPlayer(token, playerData);
+		},
+		onSuccess: (newPlayer) => {
+			if (newPlayer) {
+				queryClient.invalidateQueries({ queryKey: [queryKeys.masterRoster, token] });
+				dispatchGameSession({
+					type: 'SET_SELECTED_PLAYER_IDS',
+					payload: [...gameSessionState.selectedPlayerIds, newPlayer.id],
+				});
+				setRosterError(null);
+			}
+		},
+		onError: (error, variables) => {
+			setRosterError(t('rosterSettingsModal.errors.addFailed', 'Error adding player {playerName}. Please try again.', { playerName: variables.name }));
+		},
+	});
+
+	const addSeasonMutation = useMutation<
+		Season | null,
+		Error,
+		{ name: string }
+	>({
+		mutationFn: async ({ name }) => {
+			const token = await getToken({ template: 'supabase' });
+			if (!token) throw new Error("User not authenticated.");
+			return utilAddSeason(token, { name });
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: [queryKeys.seasons, token] });
+		},
+		onError: (error, variables) => {
+			console.error(`[Mutation Error] Failed to add season ${variables.name}:`, error);
+		},
+	});
+
+	const addTournamentMutation = useMutation<
+		Tournament | null,
+		Error,
+		{ name: string }
+	>({
+		mutationFn: async ({ name }) => {
+			const token = await getToken({ template: 'supabase' });
+			if (!token) throw new Error("User not authenticated.");
+			return utilAddTournament(token, { name });
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: [queryKeys.tournaments, token] });
+		},
+		onError: (error, variables) => {
+			console.error(`[Mutation Error] Failed to add tournament ${variables.name}:`, error);
+		},
+	}); 

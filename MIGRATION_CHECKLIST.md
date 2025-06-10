@@ -38,7 +38,7 @@ Execute in Supabase SQL Editor (in order):
 - [x] Verify table created in Supabase dashboard
 - [x] Verify RLS policy is active
 
-#### Players Table
+#### Players Table  
 - [x] Execute players table SQL
 - [x] Verify table and indexes created
 - [x] Verify RLS policy is active

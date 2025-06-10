@@ -1,0 +1,106 @@
+	const initialGameSessionData: GameSessionState = useMemo(() => ({
+		teamName: initialState.teamName,
+		opponentName: initialState.opponentName,
+		gameDate: initialState.gameDate,
+		homeScore: initialState.homeScore,
+		awayScore: initialState.awayScore,
+		gameNotes: initialState.gameNotes,
+		homeOrAway: initialState.homeOrAway,
+		numberOfPeriods: initialState.numberOfPeriods,
+		periodDurationMinutes: initialState.periodDurationMinutes,
+		currentPeriod: initialState.currentPeriod,
+		gameStatus: initialState.gameStatus,
+		selectedPlayerIds: initialState.selectedPlayerIds,
+		seasonId: initialState.seasonId,
+		tournamentId: initialState.tournamentId,
+		gameLocation: initialState.gameLocation,
+		gameTime: initialState.gameTime,
+		gameEvents: initialState.gameEvents,
+		timeElapsedInSeconds: 0,
+		isTimerRunning: false,
+		subIntervalMinutes: initialState.subIntervalMinutes ?? 5,
+		nextSubDueTimeSeconds: (initialState.subIntervalMinutes ?? 5) * 60,
+		subAlertLevel: 'none',
+		lastSubConfirmationTimeSeconds: 0,
+		completedIntervalDurations: initialState.completedIntervalDurations || [],
+		showPlayerNames: initialState.showPlayerNames,
+	}), []);
+
+	const [gameSessionState, dispatchGameSession] = useReducer(
+		gameSessionReducer,
+		initialGameSessionData
+	);
+
+	const [history, setHistory] = useState<AppState[]>([initialState]);
+	const [historyIndex, setHistoryIndex] = useState<number>(0);
+
+	const {
+		playersOnField,
+		opponents,
+		drawings,
+		availablePlayers,
+		setPlayersOnField,
+		setOpponents,
+		setDrawings,
+		setAvailablePlayers,
+		handlePlayerDrop,
+		handleDrawingStart,
+		handleDrawingAddPoint,
+		handleDrawingEnd,
+		handleClearDrawings,
+		handleAddOpponent,
+		handleOpponentMove,
+		handleOpponentMoveEnd,
+		handleOpponentRemove,
+	}: UseGameStateReturn = useGameState({
+		initialState,
+		saveStateToHistory,
+	});
+
+	const [isLoaded, setIsLoaded] = useState<boolean>(false);
+	const [draggingPlayerFromBarInfo, setDraggingPlayerFromBarInfo] =
+		useState<Player | null>(null);
+	const [savedGames, setSavedGames] = useState<SavedGamesCollection>({});
+	const [currentGameStateId, setCurrentGameStateId] = useState<string | null>(DEFAULT_GAME_ID);
+    const [seasonsState, setSeasonsState] = useState<Season[]>([]);
+    const [tournamentsState, setTournamentsState] = useState<Tournament[]>([]);
+	const [initialLoadComplete, setInitialLoadComplete] = useState<boolean>(false);
+	const [hasSkippedInitialSetup, setHasSkippedInitialSetup] =
+		useState<boolean>(false);
+	const [isGameSettingsModalOpen, setIsGameSettingsModalOpen] =
+		useState<boolean>(false);
+
+	const [showLargeTimerOverlay, setShowLargeTimerOverlay] =
+		useState<boolean>(false);
+
+	const [isInstructionsOpen, setIsInstructionsOpen] = useState<boolean>(false);
+	const [isTrainingResourcesOpen, setIsTrainingResourcesOpen] =
+		useState<boolean>(false);
+	const [isGoalLogModalOpen, setIsGoalLogModalOpen] = useState<boolean>(false);
+	const [isGameStatsModalOpen, setIsGameStatsModalOpen] =
+		useState<boolean>(false);
+	const [isNewGameSetupModalOpen, setIsNewGameSetupModalOpen] =
+		useState<boolean>(false);
+	const [isSaveGameModalOpen, setIsSaveGameModalOpen] =
+		useState<boolean>(false);
+	const [isLoadGameModalOpen, setIsLoadGameModalOpen] =
+		useState<boolean>(false);
+	const [isRosterModalOpen, setIsRosterModalOpen] = useState<boolean>(false);
+
+	const [playerIdsForNewGame, setPlayerIdsForNewGame] = useState<
+		string[] | null
+	>(null);
+	const [highlightRosterButton, setHighlightRosterButton] =
+		useState<boolean>(false);
+	const [rosterError, setRosterError] = useState<string | null>(null);
+	const [gameSaveError, setGameSaveError] = useState<string | null>(null);
+
+	const [isLoadingGamesList, setIsLoadingGamesList] = useState(false);
+	const [loadGamesListError, setLoadGamesListError] = useState<string | null>(null);
+	const [isGameLoading, setIsGameLoading] = useState(false);
+	const [gameLoadError, setGameLoadError] = useState<string | null>(null);
+	const [isGameDeleting, setIsGameDeleting] = useState(false);
+	const [gameDeleteError, setGameDeleteError] = useState<string | null>(null);
+	const [isGamesImporting, setIsGamesImporting] = useState(false);
+	const [gamesImportError, setGamesImportError] = useState<string | null>(null);
+	const [processingGameId, setProcessingGameId] = useState<string | null>(null); 

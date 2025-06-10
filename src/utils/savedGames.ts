@@ -1,5 +1,5 @@
 import { SAVED_GAMES_KEY } from '@/config/constants';
-import { getSupabaseClientForAuthenticatedOperations } from '@/lib/supabase';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { getSupabaseSavedGames } from './supabase/savedGames';
 import type { SavedGamesCollection, AppState } from '@/types/game';
 import type { GameEvent } from '@/types/game';
@@ -21,18 +21,22 @@ const getSavedGamesFromLocalStorage = async (): Promise<SavedGamesCollection> =>
 
 /**
  * Gets all saved games for an authenticated user from Supabase.
- * @param clerkToken - The JWT token from Clerk.
- * @param internalSupabaseUserId - The internal Supabase User ID (UUID).
+ * @param supabase - The authenticated Supabase client.
  * @returns Promise resolving to an Object containing saved games mapped by ID.
  */
-export const getSavedGames = async (clerkToken: string, internalSupabaseUserId: string): Promise<SavedGamesCollection> => {
-  if (!clerkToken || !internalSupabaseUserId) {
-    console.error("Authentication details are required to get saved games.");
+export const getSavedGames = async (supabase: SupabaseClient): Promise<SavedGamesCollection> => {
+  if (!supabase) {
+    console.error("Supabase client is required to get saved games.");
     return {};
   }
   try {
-    const supabase = getSupabaseClientForAuthenticatedOperations(clerkToken);
-    const games = await getSupabaseSavedGames(supabase, internalSupabaseUserId);
+    // Get the user ID from the auth context
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      console.error("Failed to get authenticated user:", userError);
+      return {};
+    }
+    const games = await getSupabaseSavedGames(supabase, user.id);
     return games;
   } catch (error) {
     console.error('Error getting saved games from Supabase:', error);

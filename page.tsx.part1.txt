@@ -1,0 +1,107 @@
+'use client';
+
+import React, { useState, useEffect, useCallback, useMemo, useReducer, useRef } from 'react';
+import SoccerField from '@/components/SoccerField';
+import PlayerBar from '@/components/PlayerBar';
+import ControlBar from '@/components/ControlBar';
+import TimerOverlay from '@/components/TimerOverlay';
+import InstructionsModal from '@/components/InstructionsModal';
+import GoalLogModal from '@/components/GoalLogModal';
+import GameStatsModal from '@/components/GameStatsModal';
+import TrainingResourcesModal from '@/components/TrainingResourcesModal';
+import SaveGameModal from '@/components/SaveGameModal';
+import LoadGameModal from '@/components/LoadGameModal';
+import NewGameSetupModal from '@/components/NewGameSetupModal';
+import RosterSettingsModal from '@/components/RosterSettingsModal';
+import GameSettingsModal from '@/components/GameSettingsModal';
+import { useTranslation } from 'react-i18next';
+import { useGameState, UseGameStateReturn } from '@/hooks/useGameState';
+import GameInfoBar from '@/components/GameInfoBar';
+import {
+  gameSessionReducer,
+  GameSessionState,
+} from '@/hooks/useGameSessionReducer';
+import {
+    getMasterRoster,
+    addPlayer,
+    updatePlayer,
+    removePlayer,
+    setGoalieStatus,
+    setFairPlayCardStatus
+} from '@/utils/masterRosterManager';
+import { 
+    getSeasons as utilGetSeasons, 
+    addSeason as utilAddSeason,
+    updateSeason as utilUpdateSeason,
+    deleteSeason as utilDeleteSeason,
+} from '@/utils/seasons';
+import { 
+  getTournaments as utilGetTournaments, 
+  addTournament as utilAddTournament,
+  updateTournament as utilUpdateTournament,
+  deleteTournament as utilDeleteTournament,
+} from '@/utils/tournaments';
+import {
+  getSavedGames as utilGetSavedGames,
+  saveGame as utilSaveGame,
+  deleteGame as utilDeleteGame,
+  saveGames as utilSaveAllGames,
+} from '@/utils/savedGames';
+import {
+  getCurrentGameIdSetting,
+  saveCurrentGameIdSetting as utilSaveCurrentGameIdSetting,
+  resetAppSettings as utilResetAppSettings
+} from '@/utils/appSettings';
+import { Player, Season, Tournament } from '@/types';
+import { GameEvent, AppState, SavedGamesCollection } from '@/types/game';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getLocalStorageItemAsync, setLocalStorageItemAsync, removeLocalStorageItemAsync } from '@/utils/localStorage';
+import { queryKeys } from '@/config/queryKeys';
+import { DEFAULT_GAME_ID, MASTER_ROSTER_KEY } from '@/config/constants';
+import { useAuth } from '@clerk/nextjs';
+import { useCurrentSupabaseUser } from '@/hooks/useCurrentSupabaseUser';
+import { getSupabaseClient } from '@/lib/supabase'; // Corrected Import
+import { saveSupabaseGame } from '@/utils/supabase/savedGames';
+import { saveSupabaseCurrentGameId } from '@/utils/supabase/appSettings';
+
+const initialAvailablePlayersData: Player[] = [
+  { id: 'p1', name: 'Player 1', isGoalie: false, jerseyNumber: '1', notes: '' },
+  { id: 'p2', name: 'Player 2', isGoalie: false, jerseyNumber: '2', notes: '' },
+  { id: 'p3', name: 'Player 3', isGoalie: false, jerseyNumber: '3', notes: '' },
+  { id: 'p4', name: 'Player 4', isGoalie: false, jerseyNumber: '4', notes: '' },
+  { id: 'p5', name: 'Player 5', isGoalie: false, jerseyNumber: '5', notes: '' },
+  { id: 'p6', name: 'Player 6', isGoalie: false, jerseyNumber: '6', notes: '' },
+  { id: 'p7', name: 'Player 7', isGoalie: false, jerseyNumber: '7', notes: '' },
+  { id: 'p8', name: 'Player 8', isGoalie: false, jerseyNumber: '8', notes: '' },
+  { id: 'p9', name: 'Player 9', isGoalie: false, jerseyNumber: '9', notes: '' },
+  { id: 'p10', name: 'Player 10', isGoalie: false, jerseyNumber: '10', notes: '' },
+  { id: 'p11', name: 'Player 11', isGoalie: false, jerseyNumber: '11', notes: '' },
+];
+
+const initialState: AppState = {
+  playersOnField: [],
+  opponents: [],
+  drawings: [],
+  availablePlayers: initialAvailablePlayersData,
+  showPlayerNames: true,
+  teamName: "My Team",
+  gameEvents: [],
+  opponentName: "Opponent",
+  gameDate: new Date().toISOString().split('T')[0],
+  homeScore: 0,
+  awayScore: 0,
+  gameNotes: '',
+  homeOrAway: 'home',
+  numberOfPeriods: 2,
+  periodDurationMinutes: 10,
+  currentPeriod: 1,
+  gameStatus: 'notStarted',
+  selectedPlayerIds: initialAvailablePlayersData.map(p => p.id),
+  seasonId: '',
+  tournamentId: '',
+  gameLocation: '',
+  gameTime: '',
+  subIntervalMinutes: 5,
+  completedIntervalDurations: [],
+  lastSubConfirmationTimeSeconds: 0,
+}; 

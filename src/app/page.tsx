@@ -66,7 +66,7 @@ import { queryKeys } from '@/config/queryKeys';
 import { DEFAULT_GAME_ID, MASTER_ROSTER_KEY } from '@/config/constants';
 import { useAuth } from '@clerk/nextjs'; // Import useAuth from Clerk
 import { useCurrentSupabaseUser } from '@/hooks/useCurrentSupabaseUser'; // Import your hook
-import { getSupabaseClientForAuthenticatedOperations } from '@/lib/supabase'; // Import the client getter
+import { getSupabaseClient } from '@/lib/supabase'; // Import the client getter
 import { saveSupabaseGame } from '@/utils/supabase/savedGames';
 import { saveSupabaseCurrentGameId } from '@/utils/supabase/appSettings';
 
@@ -261,16 +261,16 @@ export default function Home() {
     isError: isMasterRosterQueryError,
     error: masterRosterQueryErrorData,
   } = useQuery<Player[], Error>({
-    queryKey: [queryKeys.masterRoster, supabaseUserId, getToken], // Include dependencies for auth
+    queryKey: [queryKeys.masterRoster],
     queryFn: async () => {
       const token = await getToken({ template: 'supabase' });
-      if (!token || !supabaseUserId) {
-        console.log('[page.tsx useQuery masterRoster] Token or supabaseUserId not available. Skipping fetch.');
+      if (!token) {
         return [];
       }
-      return getMasterRoster(token, supabaseUserId); // Call the manager function
+      const supabase = getSupabaseClient(token);
+      return getMasterRoster(supabase);
     },
-    enabled: !!isSignedIn && !!supabaseUserId && !isSupabaseUserMappingLoading, // Enable only when authenticated
+    enabled: !!isSignedIn && !isSupabaseUserMappingLoading,
   });
 
   // --- TanStack Query for Seasons ---
@@ -281,17 +281,16 @@ export default function Home() {
     error: seasonsQueryErrorData,
     // refetch: refetchSeasons, // Optional: if you need to manually refetch
   } = useQuery<Season[], Error>({
-    queryKey: [queryKeys.seasons, supabaseUserId, getToken], // Include dependencies
+    queryKey: [queryKeys.seasons],
     queryFn: async () => {
       const token = await getToken({ template: 'supabase' });
-      if (!token || !supabaseUserId) {
-        console.log('[page.tsx useQuery seasons] Token or supabaseUserId not available. Skipping fetch.');
-        return []; 
+      if (!token) {
+        return [];
       }
-      console.log(`[page.tsx useQuery seasons] CALLING utilGetSeasons with supabaseUserId: ${supabaseUserId} and token: ${token ? "PRESENT" : "MISSING"}`);
-      return utilGetSeasons(token, supabaseUserId);
+      const supabase = getSupabaseClient(token);
+      return utilGetSeasons(supabase);
     },
-    enabled: !!isSignedIn && !!supabaseUserId && !isSupabaseUserMappingLoading, 
+    enabled: !!isSignedIn && !isSupabaseUserMappingLoading,
   });
 
   // --- TanStack Query for Tournaments ---
@@ -301,16 +300,16 @@ export default function Home() {
     isError: isTournamentsQueryError,
     error: tournamentsQueryErrorData,
   } = useQuery<Tournament[], Error>({
-    queryKey: [queryKeys.tournaments, supabaseUserId, getToken], // Include dependencies
+    queryKey: [queryKeys.tournaments],
     queryFn: async () => {
       const token = await getToken({ template: 'supabase' });
-      if (!token || !supabaseUserId) {
-        console.log('[page.tsx useQuery tournaments] Token or supabaseUserId not available. Skipping fetch.');
-        return []; 
+      if (!token) {
+        return [];
       }
-      return utilGetTournaments(token, supabaseUserId);
+      const supabase = getSupabaseClient(token);
+      return utilGetTournaments(supabase);
     },
-    enabled: !!isSignedIn && !!supabaseUserId && !isSupabaseUserMappingLoading, 
+    enabled: !!isSignedIn && !isSupabaseUserMappingLoading,
   });
 
   // --- TanStack Query for All Saved Games ---
@@ -320,16 +319,16 @@ export default function Home() {
     isError: isAllSavedGamesQueryError,
     error: allSavedGamesQueryErrorData,
   } = useQuery<SavedGamesCollection | null, Error>({
-    queryKey: [queryKeys.savedGames, supabaseUserId, getToken], // Include dependencies for auth
+    queryKey: [queryKeys.savedGames],
     queryFn: async () => {
       const token = await getToken({ template: 'supabase' });
-      if (!token || !supabaseUserId) {
-        console.log('[page.tsx useQuery savedGames] Token or supabaseUserId not available. Skipping fetch.');
+      if (!token) {
         return null;
       }
-      return utilGetSavedGames(token, supabaseUserId);
+      const supabase = getSupabaseClient(token);
+      return utilGetSavedGames(supabase);
     },
-    enabled: !!isSignedIn && !!supabaseUserId && !isSupabaseUserMappingLoading, // Enable only when authenticated
+    enabled: !!isSignedIn && !isSupabaseUserMappingLoading,
     initialData: {}, 
   });
 
@@ -340,16 +339,16 @@ export default function Home() {
     isError: isCurrentGameIdSettingQueryError,
     error: currentGameIdSettingQueryErrorData,
   } = useQuery<string | null, Error>({
-    queryKey: [queryKeys.appSettingsCurrentGameId, supabaseUserId, getToken], // Include dependencies for auth
+    queryKey: [queryKeys.appSettingsCurrentGameId],
     queryFn: async () => {
       const token = await getToken({ template: 'supabase' });
-      if (!token || !supabaseUserId) {
-        console.log('[page.tsx useQuery currentGameId] Token or supabaseUserId not available. Skipping fetch.');
+      if (!token) {
         return null;
       }
-      return getCurrentGameIdSetting(token, supabaseUserId);
+      const supabase = getSupabaseClient(token);
+      return getCurrentGameIdSetting(supabase);
     },
-    enabled: !!isSignedIn && !!supabaseUserId && !isSupabaseUserMappingLoading, // Enable only when authenticated
+    enabled: !!isSignedIn && !isSupabaseUserMappingLoading,
   });
 
   // --- Core Game State (Managed by Hook) ---
@@ -459,11 +458,16 @@ export default function Home() {
         throw new Error("User is not authenticated. Cannot save game.");
       }
       
-      const supabaseClient = getSupabaseClientForAuthenticatedOperations(token);
+      const supabaseClient = getSupabaseClient(token);
+
+      const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+      if (userError || !user) {
+        throw new Error("Failed to get authenticated user.");
+      }
 
       await Promise.all([
-        saveSupabaseGame(supabaseClient, supabaseUserId, gameIdToSave, snapshot),
-        saveSupabaseCurrentGameId(supabaseClient, supabaseUserId, gameIdToSave)
+        saveSupabaseGame(supabaseClient, user.id, gameIdToSave, snapshot),
+        saveSupabaseCurrentGameId(supabaseClient, gameIdToSave)
       ]);
 
       return gameIdToSave;
@@ -494,10 +498,11 @@ export default function Home() {
   >({
     mutationFn: async ({ playerId, playerData }) => {
       const token = await getToken({ template: 'supabase' });
-      if (!token || !supabaseUserId) {
+      if (!token) {
         throw new Error("User is not authenticated. Cannot update player.");
       }
-      return updatePlayer(token, supabaseUserId, playerId, playerData);
+      const supabase = getSupabaseClient(token);
+      return updatePlayer(supabase, playerId, playerData);
     },
     onSuccess: (updatedPlayer, variables) => {
       console.log('[Mutation Success] Player updated via Supabase:', variables.playerId, updatedPlayer);
@@ -528,10 +533,11 @@ export default function Home() {
   >({
     mutationFn: async ({ playerId, isGoalie }) => {
       const token = await getToken({ template: 'supabase' });
-      if (!token || !supabaseUserId) {
+      if (!token) {
         throw new Error("User is not authenticated. Cannot set goalie status.");
       }
-      return setGoalieStatus(token, supabaseUserId, playerId, isGoalie);
+      const supabase = getSupabaseClient(token);
+      return setGoalieStatus(supabase, playerId, isGoalie);
     },
     onSuccess: (updatedPlayer, variables) => {
       if (updatedPlayer) {
@@ -561,10 +567,14 @@ export default function Home() {
   const removePlayerMutation = useMutation<
     boolean,
     Error,
-    { playerId: string; token: string; internalSupabaseUserId: string; } // Updated variables type
+    { playerId: string; token: string; } // Updated variables type
   >({
-    mutationFn: async ({ playerId, token, internalSupabaseUserId }) => {
-      return removePlayer(token, internalSupabaseUserId, playerId);
+    mutationFn: async ({ playerId, token }) => {
+      if (!token) {
+        throw new Error("User is not authenticated. Cannot remove player.");
+      }
+      const supabase = getSupabaseClient(token);
+      return removePlayer(supabase, playerId);
     },
     onSuccess: (success, variables) => {
       if (success) {
@@ -596,10 +606,11 @@ export default function Home() {
   >({
     mutationFn: async (playerData) => {
       const token = await getToken({ template: 'supabase' });
-      if (!token || !supabaseUserId) {
+      if (!token) {
         throw new Error("User is not authenticated. Cannot add player.");
       }
-      return addPlayer(token, supabaseUserId, playerData);
+      const supabase = getSupabaseClient(token);
+      return addPlayer(supabase, playerData);
     },
     onSuccess: (newPlayer, variables) => {
       if (newPlayer) {
@@ -625,14 +636,14 @@ export default function Home() {
   const addSeasonMutation = useMutation<
     Season | null, 
     Error,         
-    { name: string; clerkToken: string; internalSupabaseUserId: string; } 
+    { name: string; clerkToken: string; } 
   >({
-    mutationFn: async ({ name }) => { 
-      const token = await getToken({ template: 'supabase' });
-      if (!token || !supabaseUserId) {
+    mutationFn: async ({ name, clerkToken }) => {
+      if (!clerkToken) {
         throw new Error("User is not authenticated. Cannot add season.");
       }
-      return utilAddSeason(token, supabaseUserId, { name });
+      const supabase = getSupabaseClient(clerkToken);
+      return utilAddSeason(supabase, { name });
     },
     onSuccess: (newSeason, variables) => { 
       if (newSeason) {
@@ -677,11 +688,14 @@ export default function Home() {
   const addTournamentMutation = useMutation<
     Tournament | null,
     Error,
-    { name: string; clerkToken: string; internalSupabaseUserId: string }
+    { name: string; clerkToken: string; }
   >({
-    mutationFn: async ({ name, clerkToken, internalSupabaseUserId }) => {
-      // The new utilAddTournament now expects the token and user ID
-      return utilAddTournament(clerkToken, internalSupabaseUserId, { name });
+    mutationFn: async ({ name, clerkToken }) => {
+      if (!clerkToken) {
+        throw new Error("User is not authenticated. Cannot add tournament.");
+      }
+      const supabase = getSupabaseClient(clerkToken);
+      return utilAddTournament(supabase, { name });
     },
     onSuccess: (newTournament, variables) => {
       if (newTournament) {
@@ -1213,8 +1227,9 @@ export default function Home() {
         
         // 3. Save App Settings (only the current game ID) using utility
           const token = await getToken({ template: 'supabase' });
-          if (token && supabaseUserId) {
-            await utilSaveCurrentGameIdSetting(token, supabaseUserId, currentGameId);
+          if (token) {
+            const supabase = getSupabaseClient(token);
+            await utilSaveCurrentGameIdSetting(supabase, currentGameId);
           }
 
         } catch (error) {
@@ -1739,8 +1754,9 @@ export default function Home() {
         // Update current game ID and save settings
         setCurrentGameId(gameId);
         const token = await getToken({ template: 'supabase' });
-        if (token && supabaseUserId) {
-          await utilSaveCurrentGameIdSetting(token, supabaseUserId, gameId);
+        if (token) {
+          const supabase = getSupabaseClient(token);
+          await utilSaveCurrentGameIdSetting(supabase, gameId);
         }
 
         console.log(`Game ${gameId} load dispatched to reducer.`);
@@ -1800,8 +1816,9 @@ export default function Home() {
 
         setCurrentGameId(DEFAULT_GAME_ID);
           const token = await getToken({ template: 'supabase' });
-          if (token && supabaseUserId) {
-            await utilSaveCurrentGameIdSetting(token, supabaseUserId, DEFAULT_GAME_ID);
+          if (token) {
+            const supabase = getSupabaseClient(token);
+            await utilSaveCurrentGameIdSetting(supabase, DEFAULT_GAME_ID);
           }
         }
       } else {
@@ -2273,7 +2290,7 @@ export default function Home() {
           throw new Error("User is not authenticated. Cannot remove player.");
         }
         // Pass all required variables to the mutation
-        await removePlayerMutation.mutateAsync({ playerId, token, internalSupabaseUserId: supabaseUserId });
+        await removePlayerMutation.mutateAsync({ playerId, token });
         
         console.log(`[Page.tsx] removePlayerMutation.mutateAsync successful for removal of ${playerId}.`);
       } catch (error) {
@@ -2373,7 +2390,8 @@ export default function Home() {
     // This logic now correctly uses the authenticated mutation
     if (currentlyAwardedPlayerId) {
         try {
-            await setFairPlayCardStatus(token, supabaseUserId, currentlyAwardedPlayerId, false);
+            const supabase = getSupabaseClient(token);
+            await setFairPlayCardStatus(supabase, currentlyAwardedPlayerId, false);
         } catch (error) {
             console.error(`Failed to clear fair play card for ${currentlyAwardedPlayerId}`, error);
             return;
@@ -2382,7 +2400,8 @@ export default function Home() {
 
     if (playerId && playerId !== currentlyAwardedPlayerId) {
         try {
-            await setFairPlayCardStatus(token, supabaseUserId, playerId, true);
+            const supabase = getSupabaseClient(token);
+            await setFairPlayCardStatus(supabase, playerId, true);
         } catch (error) {
             console.error(`Failed to award fair play card to ${playerId}`, error);
             return;
@@ -2475,8 +2494,9 @@ export default function Home() {
         // localStorage.setItem(SAVED_GAMES_KEY, JSON.stringify(updatedSavedGames));
         await utilSaveGame(currentGameId, currentSnapshot); // Use utility function
         const token = await getToken({ template: 'supabase' });
-        if (token && supabaseUserId) {
-          await utilSaveCurrentGameIdSetting(token, supabaseUserId, currentGameId); // Save current game ID setting
+        if (token) {
+          const supabase = getSupabaseClient(token);
+          await utilSaveCurrentGameIdSetting(supabase, currentGameId); // Save current game ID setting
         }
 
         // 3. Update history to reflect the saved state
@@ -2831,8 +2851,9 @@ export default function Home() {
 
         await utilSaveGame(newGameId, newGameState);
         const token = await getToken({ template: 'supabase' });
-        if (token && supabaseUserId) {
-          await utilSaveCurrentGameIdSetting(token, supabaseUserId, newGameId);
+        if (token) {
+          const supabase = getSupabaseClient(token);
+          await utilSaveCurrentGameIdSetting(supabase, newGameId);
         }
         console.log(`Saved new game ${newGameId} and settings via utility functions.`);
 

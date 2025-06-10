@@ -1,7 +1,5 @@
 import type { Season } from '@/types';
-import { getSupabaseClientForAuthenticatedOperations } from '@/lib/supabase'; // Import the client for authenticated operations
-// import type { SupabaseClient } from '@supabase/supabase-js'; // No longer directly needed here
-
+import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   getSupabaseSeasons as fetchSeasonsFromSupabaseService,
   createSupabaseSeason as addSeasonToSupabaseService,
@@ -25,35 +23,26 @@ import {
 
 /**
  * Retrieves all seasons for the authenticated user from Supabase.
- * @param clerkToken - The JWT token from Clerk for the authenticated user.
- * @param internalSupabaseUserId - The internal Supabase User ID (UUID).
+ * @param supabase - The authenticated Supabase client.
  * @returns A promise that resolves to an array of Season objects.
- * @throws Error if token/ID not provided, or data fetching fails.
+ * @throws Error if client not provided, or data fetching fails.
  */
-export const getSeasons = async (clerkToken: string, internalSupabaseUserId: string): Promise<Season[]> => {
-  if (!clerkToken) throw new Error("Clerk token is required.");
-  if (!internalSupabaseUserId) {
-    throw new Error("User not authenticated or Supabase ID not provided to getSeasons.");
-  }
-  
-  // Use client that bypasses RLS but requires authentication
-  const supabaseClient = getSupabaseClientForAuthenticatedOperations(clerkToken);
-  console.log('[getSeasons] Using Supabase client with manual user filtering');
-  
-  return fetchSeasonsFromSupabaseService(supabaseClient, internalSupabaseUserId);
+export const getSeasons = async (supabase: SupabaseClient): Promise<Season[]> => {
+	if (!supabase) throw new Error('Supabase client is required.');
+
+	return fetchSeasonsFromSupabaseService(supabase);
 };
 
 /**
  * Adds a new season for the authenticated user to Supabase.
- * @param clerkToken - The JWT token from Clerk.
- * @param internalSupabaseUserId - The internal Supabase User ID (UUID).
+ * @param supabase - The authenticated Supabase client.
  * @param seasonData - The data for the new season (e.g., { name: string }).
  * @returns A promise that resolves to the newly created Season object.
- * @throws Error if token/ID not provided, validation fails, or save fails.
+ * @throws Error if client not provided, validation fails, or save fails.
  */
-export const addSeason = async (clerkToken: string, internalSupabaseUserId: string, seasonData: Omit<Season, 'id'>): Promise<Season | null> => {
-  if (!clerkToken || !internalSupabaseUserId) {
-    console.error("Auth details are required to add a season.");
+export const addSeason = async (supabase: SupabaseClient, seasonData: Omit<Season, 'id'>): Promise<Season | null> => {
+  if (!supabase) {
+    console.error("Supabase client is required.");
     return null;
   }
   if (!seasonData || !seasonData.name?.trim()) {
@@ -61,8 +50,7 @@ export const addSeason = async (clerkToken: string, internalSupabaseUserId: stri
     return null;
   }
   try {
-    const supabaseClient = getSupabaseClientForAuthenticatedOperations(clerkToken);
-    const newSeason = await addSeasonToSupabaseService(supabaseClient, internalSupabaseUserId, { ...seasonData, name: seasonData.name.trim() });
+    const newSeason = await addSeasonToSupabaseService(supabase, { ...seasonData, name: seasonData.name.trim() });
     return newSeason;
   } catch (error) {
     console.error('[addSeason] Error adding season. Raw error:', error);
@@ -71,7 +59,6 @@ export const addSeason = async (clerkToken: string, internalSupabaseUserId: stri
         name: error.name,
         message: error.message,
         stack: error.stack,
-        cause: 'cause' in error ? error.cause : 'N/A',
       });
     }
     // Re-throw the error to be handled by the calling mutation hook
@@ -81,21 +68,19 @@ export const addSeason = async (clerkToken: string, internalSupabaseUserId: stri
 
 /**
  * Updates an existing season for the authenticated user in Supabase.
- * @param clerkToken - The JWT token from Clerk.
- * @param internalSupabaseUserId - The internal Supabase User ID (UUID).
+ * @param supabase - The authenticated Supabase client.
  * @param seasonId - The ID of the season to update.
  * @param seasonUpdateData - An object containing the fields to update.
  * @returns A promise that resolves to the updated Season object.
- * @throws Error if token/ID not provided, validation fails, or update fails.
+ * @throws Error if client not provided, validation fails, or update fails.
  */
 export const updateSeason = async (
-  clerkToken: string, 
-  internalSupabaseUserId: string, 
+  supabase: SupabaseClient, 
   seasonId: string, 
   seasonUpdateData: Partial<Omit<Season, 'id'>>
 ): Promise<Season | null> => {
-  if (!clerkToken || !internalSupabaseUserId) {
-    console.error("Auth details are required to update a season.");
+  if (!supabase) {
+    console.error("Supabase client is required to update a season.");
     return null;
   }
   if (!seasonId) {
@@ -110,14 +95,13 @@ export const updateSeason = async (
     console.error("Season name cannot be empty if provided for update.");
     return null;
   }
-
+  
   try {
-    const supabaseClient = getSupabaseClientForAuthenticatedOperations(clerkToken);
     const updateData = { ...seasonUpdateData };
     if (updateData.name) {
       updateData.name = updateData.name.trim();
     }
-    const updatedSeason = await updateSeasonInSupabaseService(supabaseClient, internalSupabaseUserId, seasonId, updateData);
+    const updatedSeason = await updateSeasonInSupabaseService(supabase, seasonId, updateData);
     return updatedSeason;
   } catch (error) {
     console.error('[updateSeason] Error updating season:', error);
@@ -127,27 +111,24 @@ export const updateSeason = async (
 
 /**
  * Deletes a season for the authenticated user from Supabase by its ID.
- * @param clerkToken - The JWT token from Clerk.
- * @param internalSupabaseUserId - The internal Supabase User ID (UUID).
+ * @param supabase - The authenticated Supabase client.
  * @param seasonId - The ID of the season to delete.
  * @returns A promise that resolves to true if successful.
- * @throws Error if token/ID not provided, or delete fails.
+ * @throws Error if client not provided, or delete fails.
  */
 export const deleteSeason = async (
-  clerkToken: string, 
-  internalSupabaseUserId: string, 
+  supabase: SupabaseClient, 
   seasonId: string
 ): Promise<boolean> => {
-  if (!clerkToken || !internalSupabaseUserId) {
-    throw new Error("Authentication details are required to delete a season.");
+  if (!supabase) {
+    throw new Error("Supabase client is required to delete a season.");
   }
   if (!seasonId) {
     throw new Error("Season ID is required for deletion.");
   }
   
   try {
-    const supabaseClient = getSupabaseClientForAuthenticatedOperations(clerkToken);
-    return await deleteSeasonFromSupabaseService(supabaseClient, internalSupabaseUserId, seasonId);
+    return await deleteSeasonFromSupabaseService(supabase, seasonId);
   } catch (error) {
     console.error(`[deleteSeason] Error deleting season ${seasonId}:`, error);
     throw error; // Re-throw the error to be handled by the calling mutation

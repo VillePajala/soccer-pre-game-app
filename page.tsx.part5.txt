@@ -1,0 +1,875 @@
+	useEffect(() => {
+		const gameSessionHistorySlice: Partial<AppState> = {
+			teamName: gameSessionState.teamName,
+			opponentName: gameSessionState.opponentName,
+			gameDate: gameSessionState.gameDate,
+			homeScore: gameSessionState.homeScore,
+			awayScore: gameSessionState.awayScore,
+			gameNotes: gameSessionState.gameNotes,
+			homeOrAway: gameSessionState.homeOrAway,
+			numberOfPeriods: gameSessionState.numberOfPeriods,
+			periodDurationMinutes: gameSessionState.periodDurationMinutes,
+			currentPeriod: gameSessionState.currentPeriod,
+			gameStatus: gameSessionState.gameStatus,
+			selectedPlayerIds: gameSessionState.selectedPlayerIds,
+			seasonId: gameSessionState.seasonId,
+			tournamentId: gameSessionState.tournamentId,
+			gameLocation: gameSessionState.gameLocation,
+			gameTime: gameSessionState.gameTime,
+			gameEvents: gameSessionState.gameEvents,
+			subIntervalMinutes: gameSessionState.subIntervalMinutes,
+			completedIntervalDurations: gameSessionState.completedIntervalDurations,
+			lastSubConfirmationTimeSeconds:
+				gameSessionState.lastSubConfirmationTimeSeconds,
+			showPlayerNames: gameSessionState.showPlayerNames,
+		};
+		saveStateToHistory(gameSessionHistorySlice);
+	}, [gameSessionState, saveStateToHistory]);
+
+	const playersForCurrentGame = useMemo(() => {
+		if (!Array.isArray(availablePlayers)) {
+			return [];
+		}
+		if (
+			!gameSessionState.selectedPlayerIds ||
+			gameSessionState.selectedPlayerIds.length === 0
+		) {
+			return [];
+		}
+		const gamePlayers = availablePlayers.filter((player) =>
+			gameSessionState.selectedPlayerIds.includes(player.id)
+		);
+		return gamePlayers;
+	}, [availablePlayers, gameSessionState.selectedPlayerIds]);
+
+	useEffect(() => {
+		if (masterRoster) {
+			setAvailablePlayers(masterRoster);
+		}
+		if (masterRosterError) {
+			console.error(
+				'[TanStack Query] Error loading master roster:',
+				masterRosterError
+			);
+			setAvailablePlayers([]);
+		}
+	}, [masterRoster, masterRosterError, setAvailablePlayers]);
+
+	useEffect(() => {
+		if (isSupabaseUserLoading) {
+			return;
+		}
+		if (supabaseUserError) {
+			setSeasonsState([]);
+			return;
+		}
+		if (!isSignedIn || !supabaseUserId) {
+			setSeasonsState([]);
+			return;
+		}
+		if (isLoadingSeasons) {
+		} else if (seasonsError) {
+			console.error(
+				'[Seasons Effect] TanStack Query error loading seasons:',
+				seasonsError
+			);
+			setSeasonsState([]);
+		} else if (seasons) {
+			setSeasonsState(Array.isArray(seasons) ? seasons : []);
+		} else {
+			setSeasonsState([]);
+		}
+	}, [
+		isSignedIn,
+		supabaseUserId,
+		isSupabaseUserLoading,
+		supabaseUserError,
+		seasons,
+		isLoadingSeasons,
+		seasonsError,
+	]);
+
+	useEffect(() => {
+		if (isLoadingTournaments) {
+		}
+		if (tournaments) {
+			setTournamentsState(Array.isArray(tournaments) ? tournaments : []);
+		}
+		if (tournamentsError) {
+			console.error(
+				'[TanStack Query] Error loading tournaments:',
+				tournamentsError
+			);
+			setTournamentsState([]);
+		}
+	}, [tournaments, isLoadingTournaments, tournamentsError]);
+
+	useEffect(() => {
+		if (availablePlayers && availablePlayers.length > 0) {
+			setPlayersOnField((prevPlayersOnField) => {
+				const nextPlayersOnField = prevPlayersOnField.map((fieldPlayer) => {
+					const rosterPlayer = availablePlayers.find(
+						(ap) => ap.id === fieldPlayer.id
+					);
+					if (rosterPlayer) {
+						if (
+							fieldPlayer.name !== rosterPlayer.name ||
+							fieldPlayer.jerseyNumber !== rosterPlayer.jerseyNumber ||
+							fieldPlayer.isGoalie !== rosterPlayer.isGoalie ||
+							fieldPlayer.nickname !== rosterPlayer.nickname ||
+							fieldPlayer.notes !== rosterPlayer.notes
+						) {
+							return {
+								...fieldPlayer,
+								name: rosterPlayer.name,
+								jerseyNumber: rosterPlayer.jerseyNumber,
+								isGoalie: rosterPlayer.isGoalie,
+								nickname: rosterPlayer.nickname,
+								notes: rosterPlayer.notes,
+								receivedFairPlayCard:
+									rosterPlayer.receivedFairPlayCard !== undefined
+										? rosterPlayer.receivedFairPlayCard
+										: fieldPlayer.receivedFairPlayCard,
+							};
+						}
+					}
+					return fieldPlayer;
+				});
+
+				if (
+					JSON.stringify(prevPlayersOnField) !==
+					JSON.stringify(nextPlayersOnField)
+				) {
+					saveStateToHistory({ playersOnField: nextPlayersOnField });
+				}
+				return nextPlayersOnField;
+			});
+		}
+	}, [availablePlayers, saveStateToHistory, setPlayersOnField]);
+
+	useEffect(() => {
+		let intervalId: NodeJS.Timeout | null = null;
+		const periodEndTimeSeconds =
+			gameSessionState.currentPeriod * gameSessionState.periodDurationMinutes * 60;
+
+		if (
+			gameSessionState.isTimerRunning &&
+			gameSessionState.gameStatus === 'inProgress'
+		) {
+			intervalId = setInterval(() => {
+				const currentTime = gameSessionState.timeElapsedInSeconds;
+				const potentialNewTime = currentTime + 1;
+
+				if (potentialNewTime >= periodEndTimeSeconds) {
+					clearInterval(intervalId!);
+					if (
+						gameSessionState.currentPeriod === gameSessionState.numberOfPeriods
+					) {
+						dispatchGameSession({
+							type: 'END_PERIOD_OR_GAME',
+							payload: {
+								newStatus: 'gameEnd',
+								finalTime: periodEndTimeSeconds,
+							},
+						});
+					} else {
+						dispatchGameSession({
+							type: 'END_PERIOD_OR_GAME',
+							payload: {
+								newStatus: 'periodEnd',
+								finalTime: periodEndTimeSeconds,
+							},
+						});
+					}
+				} else {
+					dispatchGameSession({
+						type: 'SET_TIMER_ELAPSED',
+						payload: potentialNewTime,
+					});
+				}
+			}, 1000);
+		} else {
+			if (intervalId) {
+				clearInterval(intervalId);
+			}
+		}
+
+		return () => {
+			if (intervalId) {
+				clearInterval(intervalId);
+			}
+		};
+	}, [
+		gameSessionState.isTimerRunning,
+		gameSessionState.gameStatus,
+		gameSessionState.currentPeriod,
+		gameSessionState.periodDurationMinutes,
+		gameSessionState.numberOfPeriods,
+		gameSessionState.timeElapsedInSeconds,
+	]);
+
+	useEffect(() => {
+		const loadInitialAppData = async () => {
+			try {
+				const oldRosterJson = await getLocalStorageItemAsync('availablePlayers');
+				if (oldRosterJson) {
+					await setLocalStorageItemAsync(MASTER_ROSTER_KEY, oldRosterJson);
+					await removeLocalStorageItemAsync('availablePlayers');
+				}
+				const oldSeasonsJson = await getLocalStorageItemAsync('soccerSeasonsList');
+				if (oldSeasonsJson) {
+					await setLocalStorageItemAsync(SEASONS_LIST_KEY, oldSeasonsJson);
+				}
+			} catch (migrationError) {
+				console.error('[EFFECT init] Error during data migration:', migrationError);
+			}
+
+			if (isLoadingSavedGames) {
+				setIsLoadingGamesList(true);
+			}
+			if (allSavedGames) {
+				setSavedGames(allSavedGames || {});
+				setIsLoadingGamesList(false);
+			}
+			if (savedGamesError) {
+				setLoadGamesListError(t('loadGameModal.errors.listLoadFailed'));
+				setSavedGames({});
+				setIsLoadingGamesList(false);
+			}
+
+			if (isLoadingCurrentGameId || isLoadingSavedGames) {
+			} else {
+				const lastGameIdSetting = currentGameId;
+				const currentSavedGames = allSavedGames || {};
+
+				if (
+					lastGameIdSetting &&
+					lastGameIdSetting !== DEFAULT_GAME_ID &&
+					currentSavedGames[lastGameIdSetting]
+				) {
+					setCurrentGameStateId(lastGameIdSetting);
+					setHasSkippedInitialSetup(true);
+				} else {
+					setCurrentGameStateId(DEFAULT_GAME_ID);
+				}
+			}
+
+			if (
+				!isLoadingMasterRoster &&
+				!isLoadingSeasons &&
+				!isLoadingTournaments &&
+				!isLoadingSavedGames &&
+				!isLoadingCurrentGameId
+			) {
+				setIsLoaded(true);
+				setInitialLoadComplete(true);
+			}
+		};
+
+		loadInitialAppData();
+	}, [
+		masterRoster, isLoadingMasterRoster, masterRosterError,
+		seasons, isLoadingSeasons, seasonsError,
+		tournaments, isLoadingTournaments, tournamentsError,
+		allSavedGames, isLoadingSavedGames, savedGamesError,
+		currentGameId, isLoadingCurrentGameId, currentGameIdError,
+		t,
+	]);
+
+	const timerStateOnHideRef = useRef<{
+		isRunning: boolean;
+		elapsedSeconds: number;
+		timestamp: number;
+	} | null>(null);
+
+	useEffect(() => {
+		const handleVisibilityChange = () => {
+			if (document.hidden) {
+				if (
+					gameSessionState.isTimerRunning &&
+					gameSessionState.gameStatus === 'inProgress'
+				) {
+					timerStateOnHideRef.current = {
+						isRunning: true,
+						elapsedSeconds: gameSessionState.timeElapsedInSeconds,
+						timestamp: Date.now(),
+					};
+					dispatchGameSession({ type: 'SET_TIMER_RUNNING', payload: false });
+				}
+			} else {
+				if (timerStateOnHideRef.current && timerStateOnHideRef.current.isRunning) {
+					const elapsedOfflineMs =
+						Date.now() - timerStateOnHideRef.current.timestamp;
+					const correctedElapsedSeconds =
+						timerStateOnHideRef.current.elapsedSeconds + elapsedOfflineMs / 1000;
+
+					dispatchGameSession({
+						type: 'SET_TIMER_ELAPSED',
+						payload: correctedElapsedSeconds,
+					});
+
+					if (gameSessionState.gameStatus === 'inProgress') {
+						dispatchGameSession({ type: 'SET_TIMER_RUNNING', payload: true });
+					}
+					timerStateOnHideRef.current = null;
+				}
+			}
+		};
+
+		document.addEventListener('visibilitychange', handleVisibilityChange);
+		return () => {
+			document.removeEventListener('visibilitychange', handleVisibilityChange);
+		};
+	}, [
+		gameSessionState.isTimerRunning,
+		gameSessionState.timeElapsedInSeconds,
+		gameSessionState.gameStatus,
+	]);
+
+	const loadGameStateFromData = useCallback(
+		(gameData: AppState | null, isInitialDefaultLoad = false) => {
+			if (gameData) {
+				const payload: Partial<GameSessionState> = {
+					teamName: gameData.teamName,
+					opponentName: gameData.opponentName,
+					gameDate: gameData.gameDate,
+					homeScore: gameData.homeScore,
+					awayScore: gameData.awayScore,
+					gameNotes: gameData.gameNotes,
+					homeOrAway: gameData.homeOrAway,
+					numberOfPeriods: gameData.numberOfPeriods,
+					periodDurationMinutes: gameData.periodDurationMinutes,
+					currentPeriod: gameData.currentPeriod,
+					gameStatus: gameData.gameStatus,
+					selectedPlayerIds: gameData.selectedPlayerIds,
+					seasonId: gameData.seasonId ?? undefined,
+					tournamentId: gameData.tournamentId ?? undefined,
+					gameLocation: gameData.gameLocation,
+					gameTime: gameData.gameTime,
+					gameEvents: gameData.gameEvents,
+					subIntervalMinutes: gameData.subIntervalMinutes,
+					completedIntervalDurations: gameData.completedIntervalDurations,
+					lastSubConfirmationTimeSeconds:
+						gameData.lastSubConfirmationTimeSeconds,
+					showPlayerNames: gameData.showPlayerNames,
+				};
+				dispatchGameSession({ type: 'LOAD_PERSISTED_GAME_DATA', payload });
+			} else {
+				dispatchGameSession({
+					type: 'RESET_TO_INITIAL_STATE',
+					payload: initialGameSessionData,
+				});
+			}
+
+			setPlayersOnField(gameData?.playersOnField || (isInitialDefaultLoad ? initialState.playersOnField : []));
+			setOpponents(gameData?.opponents || (isInitialDefaultLoad ? initialState.opponents : []));
+			setDrawings(gameData?.drawings || (isInitialDefaultLoad ? initialState.drawings : []));
+
+			const newHistoryState: AppState = {
+				teamName: gameData?.teamName ?? initialGameSessionData.teamName,
+				opponentName: gameData?.opponentName ?? initialGameSessionData.opponentName,
+				gameDate: gameData?.gameDate ?? initialGameSessionData.gameDate,
+				homeScore: gameData?.homeScore ?? initialGameSessionData.homeScore,
+				awayScore: gameData?.awayScore ?? initialGameSessionData.awayScore,
+				gameNotes: gameData?.gameNotes ?? initialGameSessionData.gameNotes,
+				homeOrAway: gameData?.homeOrAway ?? initialGameSessionData.homeOrAway,
+				numberOfPeriods: gameData?.numberOfPeriods ?? initialGameSessionData.numberOfPeriods,
+				periodDurationMinutes: gameData?.periodDurationMinutes ?? initialGameSessionData.periodDurationMinutes,
+				currentPeriod: gameData?.currentPeriod ?? initialGameSessionData.currentPeriod,
+				gameStatus: gameData?.gameStatus ?? initialGameSessionData.gameStatus,
+				seasonId: gameData?.seasonId ?? initialGameSessionData.seasonId,
+				tournamentId: gameData?.tournamentId ?? initialGameSessionData.tournamentId,
+				gameLocation: gameData?.gameLocation ?? initialGameSessionData.gameLocation,
+				gameTime: gameData?.gameTime ?? initialGameSessionData.gameTime,
+				subIntervalMinutes: gameData?.subIntervalMinutes ?? initialGameSessionData.subIntervalMinutes,
+				completedIntervalDurations: gameData?.completedIntervalDurations ?? initialGameSessionData.completedIntervalDurations,
+				lastSubConfirmationTimeSeconds: gameData?.lastSubConfirmationTimeSeconds ?? initialGameSessionData.lastSubConfirmationTimeSeconds,
+				showPlayerNames: gameData?.showPlayerNames === undefined ? initialGameSessionData.showPlayerNames : gameData.showPlayerNames,
+				selectedPlayerIds: gameData?.selectedPlayerIds ?? initialGameSessionData.selectedPlayerIds,
+				gameEvents: gameData?.gameEvents ?? initialGameSessionData.gameEvents,
+				playersOnField: gameData?.playersOnField || initialState.playersOnField,
+				opponents: gameData?.opponents || initialState.opponents,
+				drawings: gameData?.drawings || initialState.drawings,
+				availablePlayers: masterRoster || availablePlayers,
+			};
+			setHistory([newHistoryState]);
+			setHistoryIndex(0);
+		},
+		[availablePlayers, initialGameSessionData, masterRoster]
+	);
+
+	useEffect(() => {
+		if (!initialLoadComplete) {
+			return;
+		}
+		let gameToLoad: AppState | null = null;
+		if (
+			currentGameStateId &&
+			currentGameStateId !== DEFAULT_GAME_ID &&
+			savedGames[currentGameStateId]
+		) {
+			gameToLoad = savedGames[currentGameStateId] as AppState;
+		}
+		loadGameStateFromData(gameToLoad);
+	}, [currentGameStateId, savedGames, initialLoadComplete, loadGameStateFromData]);
+
+	useEffect(() => {
+		const autoSave = async () => {
+			if (
+				isLoaded &&
+				currentGameStateId &&
+				currentGameStateId !== DEFAULT_GAME_ID
+			) {
+				try {
+					const currentSnapshot = {
+						...history[historyIndex],
+						availablePlayers: masterRoster || availablePlayers,
+					};
+
+					if (token) {
+						await utilSaveGame(token, currentGameStateId, currentSnapshot as AppState);
+						await utilSaveCurrentGameIdSetting(token, currentGameStateId);
+					}
+				} catch (error) {
+					console.error('Failed to auto-save state:', error);
+					alert('Error saving game.');
+				}
+			}
+		};
+		autoSave();
+	}, [
+		isLoaded,
+		currentGameStateId,
+		playersOnField,
+		opponents,
+		drawings,
+		availablePlayers,
+		masterRoster,
+		gameSessionState,
+		history,
+		historyIndex,
+		token,
+	]);
+
+	useEffect(() => {
+		if (initialLoadComplete && isSignedIn && !hasSkippedInitialSetup) {
+			if (currentGameStateId === DEFAULT_GAME_ID) {
+				setIsNewGameSetupModalOpen(true);
+			}
+		}
+	}, [initialLoadComplete, hasSkippedInitialSetup, currentGameStateId, isSignedIn]);
+
+	const handleDropOnField = useCallback(
+		(playerId: string, relX: number, relY: number) => {
+			const droppedPlayer = availablePlayers.find((p) => p.id === playerId);
+			if (droppedPlayer) {
+				handlePlayerDrop(droppedPlayer, { relX, relY });
+			}
+		},
+		[availablePlayers, handlePlayerDrop]
+	);
+
+	const handlePlayerMove = useCallback(
+		(playerId: string, relX: number, relY: number) => {
+			setPlayersOnField((prevPlayers) =>
+				prevPlayers.map((p) =>
+					p.id === playerId ? { ...p, relX, relY } : p
+				)
+			);
+		},
+		[setPlayersOnField]
+	);
+
+	const handlePlayerMoveEnd = useCallback(() => {
+		saveStateToHistory({ playersOnField });
+	}, [playersOnField, saveStateToHistory]);
+
+	const handlePlayerRemove = useCallback(
+		(playerId: string) => {
+			const updatedPlayersOnField = playersOnField.filter(
+				(p) => p.id !== playerId
+			);
+			setPlayersOnField(updatedPlayersOnField);
+			saveStateToHistory({ playersOnField: updatedPlayersOnField });
+		},
+		[playersOnField, saveStateToHistory, setPlayersOnField]
+	);
+
+	const handleResetField = useCallback(() => {
+		setPlayersOnField([]);
+		setOpponents([]);
+		setDrawings([]);
+		saveStateToHistory({ playersOnField: [], opponents: [], drawings: [] });
+	}, [saveStateToHistory, setDrawings, setOpponents, setPlayersOnField]);
+
+	const handlePlayerDragStartFromBar = useCallback((playerInfo: Player) => {
+		setDraggingPlayerFromBarInfo(playerInfo);
+	}, []);
+
+	const handlePlayerTapInBar = useCallback(
+		(playerInfo: Player | null) => {
+			if (draggingPlayerFromBarInfo?.id === playerInfo?.id) {
+				setDraggingPlayerFromBarInfo(null);
+			} else {
+				setDraggingPlayerFromBarInfo(playerInfo);
+			}
+		},
+		[draggingPlayerFromBarInfo]
+	);
+
+	const handlePlayerDropViaTouch = useCallback(
+		(relX: number, relY: number) => {
+			if (draggingPlayerFromBarInfo) {
+				handleDropOnField(draggingPlayerFromBarInfo.id, relX, relY);
+				setDraggingPlayerFromBarInfo(null);
+			}
+		},
+		[draggingPlayerFromBarInfo, handleDropOnField]
+	);
+
+	const handlePlayerDragCancelViaTouch = useCallback(() => {
+		setDraggingPlayerFromBarInfo(null);
+	}, []);
+
+	const handleTogglePlayerNames = () => {
+		dispatchGameSession({ type: 'TOGGLE_SHOW_PLAYER_NAMES' });
+	};
+
+	const handleTeamNameChange = (newName: string) => {
+		const trimmedName = newName.trim();
+		if (trimmedName) {
+			dispatchGameSession({ type: 'SET_TEAM_NAME', payload: trimmedName });
+		}
+	};
+
+	const handleUndo = () => {
+		if (historyIndex > 0) {
+			const prevStateIndex = historyIndex - 1;
+			const prevState = history[prevStateIndex];
+			setPlayersOnField(prevState.playersOnField);
+			setOpponents(prevState.opponents);
+			setDrawings(prevState.drawings);
+			setAvailablePlayers(prevState.availablePlayers);
+			dispatchGameSession({ type: 'SET_TEAM_NAME', payload: prevState.teamName });
+			dispatchGameSession({
+				type: 'SET_HOME_SCORE',
+				payload: prevState.homeScore,
+			});
+			dispatchGameSession({
+				type: 'SET_AWAY_SCORE',
+				payload: prevState.awayScore,
+			});
+			dispatchGameSession({
+				type: 'SET_OPPONENT_NAME',
+				payload: prevState.opponentName,
+			});
+			dispatchGameSession({ type: 'SET_GAME_DATE', payload: prevState.gameDate });
+			dispatchGameSession({
+				type: 'SET_GAME_NOTES',
+				payload: prevState.gameNotes,
+			});
+			dispatchGameSession({
+				type: 'SET_NUMBER_OF_PERIODS',
+				payload: prevState.numberOfPeriods,
+			});
+			dispatchGameSession({
+				type: 'SET_PERIOD_DURATION',
+				payload: prevState.periodDurationMinutes,
+			});
+			dispatchGameSession({
+				type: 'LOAD_STATE_FROM_HISTORY',
+				payload: {
+					currentPeriod: prevState.currentPeriod,
+					gameStatus: prevState.gameStatus,
+					completedIntervalDurations:
+						prevState.completedIntervalDurations ?? [],
+					lastSubConfirmationTimeSeconds:
+						prevState.lastSubConfirmationTimeSeconds ?? 0,
+					showPlayerNames: prevState.showPlayerNames,
+					gameEvents: prevState.gameEvents,
+					selectedPlayerIds: prevState.selectedPlayerIds,
+					seasonId: prevState.seasonId,
+					tournamentId: prevState.tournamentId,
+					gameLocation: prevState.gameLocation,
+					gameTime: prevState.gameTime,
+				},
+			});
+			dispatchGameSession({
+				type: 'SET_SUB_INTERVAL',
+				payload: prevState.subIntervalMinutes ?? 5,
+			});
+			dispatchGameSession({
+				type: 'SET_HOME_OR_AWAY',
+				payload: prevState.homeOrAway,
+			});
+			setHistoryIndex(prevStateIndex);
+		}
+	};
+
+	const handleRedo = () => {
+		if (historyIndex < history.length - 1) {
+			const nextStateIndex = historyIndex + 1;
+			const nextState = history[nextStateIndex];
+			setPlayersOnField(nextState.playersOnField);
+			setOpponents(nextState.opponents);
+			setDrawings(nextState.drawings);
+			setAvailablePlayers(nextState.availablePlayers);
+			dispatchGameSession({ type: 'SET_TEAM_NAME', payload: nextState.teamName });
+			dispatchGameSession({
+				type: 'SET_HOME_SCORE',
+				payload: nextState.homeScore,
+			});
+			dispatchGameSession({
+				type: 'SET_AWAY_SCORE',
+				payload: nextState.awayScore,
+			});
+			dispatchGameSession({
+				type: 'SET_OPPONENT_NAME',
+				payload: nextState.opponentName,
+			});
+			dispatchGameSession({ type: 'SET_GAME_DATE', payload: nextState.gameDate });
+			dispatchGameSession({
+				type: 'SET_GAME_NOTES',
+				payload: nextState.gameNotes,
+			});
+			dispatchGameSession({
+				type: 'SET_NUMBER_OF_PERIODS',
+				payload: nextState.numberOfPeriods,
+			});
+			dispatchGameSession({
+				type: 'SET_PERIOD_DURATION',
+				payload: nextState.periodDurationMinutes,
+			});
+			dispatchGameSession({
+				type: 'LOAD_STATE_FROM_HISTORY',
+				payload: {
+					currentPeriod: nextState.currentPeriod,
+					gameStatus: nextState.gameStatus,
+					completedIntervalDurations:
+						nextState.completedIntervalDurations ?? [],
+					lastSubConfirmationTimeSeconds:
+						nextState.lastSubConfirmationTimeSeconds ?? 0,
+					showPlayerNames: nextState.showPlayerNames,
+					gameEvents: nextState.gameEvents,
+					selectedPlayerIds: nextState.selectedPlayerIds,
+					seasonId: nextState.seasonId,
+					tournamentId: nextState.tournamentId,
+					gameLocation: nextState.gameLocation,
+					gameTime: nextState.gameTime,
+				},
+			});
+			dispatchGameSession({
+				type: 'SET_SUB_INTERVAL',
+				payload: nextState.subIntervalMinutes ?? 5,
+			});
+			setHistoryIndex(nextStateIndex);
+		}
+	};
+
+	const handleStartPauseTimer = () => {
+		if (gameSessionState.gameStatus === 'notStarted') {
+			dispatchGameSession({
+				type: 'START_PERIOD',
+				payload: {
+					nextPeriod: 1,
+					periodDurationMinutes: gameSessionState.periodDurationMinutes,
+					subIntervalMinutes: gameSessionState.subIntervalMinutes,
+				},
+			});
+		} else if (gameSessionState.gameStatus === 'periodEnd') {
+			const nextPeriod = gameSessionState.currentPeriod + 1;
+			dispatchGameSession({
+				type: 'START_PERIOD',
+				payload: {
+					nextPeriod: nextPeriod,
+					periodDurationMinutes: gameSessionState.periodDurationMinutes,
+					subIntervalMinutes: gameSessionState.subIntervalMinutes,
+				},
+			});
+		} else if (gameSessionState.gameStatus === 'inProgress') {
+			dispatchGameSession({
+				type: 'SET_TIMER_RUNNING',
+				payload: !gameSessionState.isTimerRunning,
+			});
+		}
+	};
+
+	const handleResetTimer = () => {
+		dispatchGameSession({ type: 'RESET_TIMER_ONLY' });
+	};
+
+	const handleSubstitutionMade = () => {
+		dispatchGameSession({ type: 'CONFIRM_SUBSTITUTION' });
+	};
+
+	const handleSetSubInterval = (minutes: number) => {
+		const newMinutes = Math.max(1, minutes);
+		dispatchGameSession({ type: 'SET_SUB_INTERVAL', payload: newMinutes });
+	};
+
+	const handleToggleLargeTimerOverlay = () => {
+		setShowLargeTimerOverlay(!showLargeTimerOverlay);
+	};
+
+	const handleToggleInstructions = () => {
+		setIsInstructionsOpen(!isInstructionsOpen);
+	};
+
+	const handleDeselectPlayer = () => {
+		if (draggingPlayerFromBarInfo) {
+			setDraggingPlayerFromBarInfo(null);
+		}
+	};
+
+	const canUndo = historyIndex > 0;
+	const canRedo = historyIndex < history.length - 1;
+
+	const handleToggleGoalLogModal = () => {
+		setIsGoalLogModalOpen(!isGoalLogModalOpen);
+	};
+
+	const handleAddGoalEvent = (scorerId: string, assisterId?: string) => {
+		const scorer = (masterRoster || availablePlayers).find(
+			(p) => p.id === scorerId
+		);
+		const assister = assisterId
+			? (masterRoster || availablePlayers).find((p) => p.id === assisterId)
+			: undefined;
+
+		if (!scorer) {
+			console.error('Scorer not found!');
+			return;
+		}
+
+		const newEvent: GameEvent = {
+			id: `goal-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+			type: 'goal',
+			time: gameSessionState.timeElapsedInSeconds,
+			scorerId: scorer.id,
+			assisterId: assister?.id,
+		};
+
+		dispatchGameSession({ type: 'ADD_GAME_EVENT', payload: newEvent });
+		dispatchGameSession({
+			type: 'ADJUST_SCORE_FOR_EVENT',
+			payload: { eventType: 'goal', action: 'add' },
+		});
+	};
+
+	const handleLogOpponentGoal = (time: number) => {
+		const newEvent: GameEvent = {
+			id: `oppGoal-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+			type: 'opponentGoal',
+			time: time,
+			scorerId: 'opponent',
+		};
+
+		dispatchGameSession({ type: 'ADD_GAME_EVENT', payload: newEvent });
+		dispatchGameSession({
+			type: 'ADJUST_SCORE_FOR_EVENT',
+			payload: { eventType: 'opponentGoal', action: 'add' },
+		});
+		setIsGoalLogModalOpen(false);
+	};
+
+	const handleUpdateGameEvent = (updatedEvent: GameEvent) => {
+		const cleanUpdatedEvent: GameEvent = {
+			id: updatedEvent.id,
+			type: updatedEvent.type,
+			time: updatedEvent.time,
+			scorerId: updatedEvent.scorerId,
+			assisterId: updatedEvent.assisterId,
+		};
+		dispatchGameSession({ type: 'UPDATE_GAME_EVENT', payload: cleanUpdatedEvent });
+	};
+
+	const handleDeleteGameEvent = (goalId: string) => {
+		const eventToDelete = gameSessionState.gameEvents.find(
+			(e) => e.id === goalId
+		);
+		if (!eventToDelete) {
+			return;
+		}
+
+		dispatchGameSession({ type: 'DELETE_GAME_EVENT', payload: goalId });
+		if (eventToDelete.type === 'goal' || eventToDelete.type === 'opponentGoal') {
+			dispatchGameSession({
+				type: 'ADJUST_SCORE_FOR_EVENT',
+				payload: { eventType: eventToDelete.type, action: 'delete' },
+			});
+		}
+	};
+
+	const handleToggleGameStatsModal = () => {
+		setIsGameStatsModalOpen(!isGameStatsModalOpen);
+	};
+
+	const handleOpponentNameChange = (newName: string) => {
+		dispatchGameSession({ type: 'SET_OPPONENT_NAME', payload: newName });
+	};
+	const handleGameDateChange = (newDate: string) => {
+		dispatchGameSession({ type: 'SET_GAME_DATE', payload: newDate });
+	};
+	const handleHomeScoreChange = (newScore: number) => {
+		dispatchGameSession({ type: 'SET_HOME_SCORE', payload: newScore });
+	};
+	const handleAwayScoreChange = (newScore: number) => {
+		dispatchGameSession({ type: 'SET_AWAY_SCORE', payload: newScore });
+	};
+	const handleGameNotesChange = (notes: string) => {
+		dispatchGameSession({ type: 'SET_GAME_NOTES', payload: notes });
+	};
+
+	const handleSetNumberOfPeriods = (periods: number) => {
+		if (periods === 1 || periods === 2) {
+			const validPeriods = periods as 1 | 2;
+			dispatchGameSession({
+				type: 'SET_NUMBER_OF_PERIODS',
+				payload: validPeriods,
+			});
+		}
+	};
+
+	const handleSetPeriodDuration = (minutes: number) => {
+		const newMinutes = Math.max(1, minutes);
+		dispatchGameSession({ type: 'SET_PERIOD_DURATION', payload: newMinutes });
+	};
+
+	const handleToggleTrainingResources = () => {
+		setIsTrainingResourcesOpen(!isTrainingResourcesOpen);
+	};
+
+	const handleHardResetApp = useCallback(async () => {
+		if (
+			window.confirm(
+				t('controlBar.hardResetConfirmation') ??
+					'Are you sure you want to completely reset the application? All saved data (players, stats, positions) will be permanently lost.'
+			)
+		) {
+			try {
+				await utilResetAppSettings();
+				window.location.reload();
+			} catch (error) {
+				console.error('Error during hard reset:', error);
+				alert('Failed to reset application data.');
+			}
+		}
+	}, [t]);
+
+	const handleOpenSaveGameModal = useCallback(() => {
+		setIsSaveGameModalOpen(true);
+	}, []);
+
+	const handleCloseSaveGameModal = () => {
+		setIsSaveGameModalOpen(false);
+	};
+
+	const handleOpenLoadGameModal = () => {
+		setIsLoadGameModalOpen(true);
+	};
+
+	const handleCloseLoadGameModal = () => {
+		setIsLoadGameModalOpen(false);
+	};
+
+</rewritten_file> 
