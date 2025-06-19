@@ -3132,9 +3132,9 @@ export default function Home() {
   return (
     // Main container with flex column layout
     <div className="flex flex-col h-screen bg-gray-900 text-white relative">
-      {/* TEST VERSION BANNER */}
-      <div className="bg-red-600 text-white text-center py-1 text-sm font-bold">
-        ⚠️ TEST VERSION - DO NOT USE FOR PRODUCTION ⚠️
+      {/* Beta Version Indicator */}
+      <div className="absolute top-2 right-2 bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded-md z-50">
+        BETA
       </div>
       
       {/* REMOVED Fullscreen Toggle Button from here */}

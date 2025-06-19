@@ -3,12 +3,15 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import ClientWrapper from "@/components/ClientWrapper";
 import QueryProvider from './QueryProvider';
+import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
+import InstallPrompt from "@/components/InstallPrompt";
+import I18nInitializer from "@/components/I18nInitializer";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "TEST - Coaching Companion",
-  description: "TEST VERSION - Soccer Tactics and Timer App for Coaches",
+  title: "Soccer Pre-Game App",
+  description: "Beta - Soccer Tactics and Timer App for Coaches",
   icons: {
     icon: '/pepo-logo.png',
     apple: '/pepo-logo.png',
@@ -25,11 +28,13 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-        <meta name="theme-color" content="#1e293b" />
-        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
       <body className={inter.className}>
+        <I18nInitializer lng="en" />
+        <ServiceWorkerRegistration />
+        <InstallPrompt />
         <QueryProvider>
           <ClientWrapper>{children}</ClientWrapper>
         </QueryProvider>
