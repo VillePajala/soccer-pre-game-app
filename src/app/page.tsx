@@ -14,6 +14,7 @@ import LoadGameModal from '@/components/LoadGameModal';
 import NewGameSetupModal from '@/components/NewGameSetupModal';
 import RosterSettingsModal from '@/components/RosterSettingsModal';
 import GameSettingsModal from '@/components/GameSettingsModal';
+import SeasonTournamentManagementModal from '@/components/SeasonTournamentManagementModal';
 import { useTranslation } from 'react-i18next';
 import { useGameState, UseGameStateReturn } from '@/hooks/useGameState';
 import GameInfoBar from '@/components/GameInfoBar';
@@ -426,6 +427,9 @@ export default function Home() {
   const [initialLoadComplete, setInitialLoadComplete] = useState<boolean>(false);
   const [hasSkippedInitialSetup, setHasSkippedInitialSetup] = useState<boolean>(false);
   const [isGameSettingsModalOpen, setIsGameSettingsModalOpen] = useState<boolean>(false); // <<< ADDED State Declaration
+  const [isLoadGameModalOpen, setIsLoadGameModalOpen] = useState<boolean>(false);
+  const [isRosterModalOpen, setIsRosterModalOpen] = useState<boolean>(false); // State for the new modal
+  const [isSeasonTournamentModalOpen, setIsSeasonTournamentModalOpen] = useState<boolean>(false);
 
   // --- Timer State (Still needed here) ---
   const [showLargeTimerOverlay, setShowLargeTimerOverlay] = useState<boolean>(false); // State for overlay visibility
@@ -437,8 +441,6 @@ export default function Home() {
   const [isGameStatsModalOpen, setIsGameStatsModalOpen] = useState<boolean>(false);
   const [isNewGameSetupModalOpen, setIsNewGameSetupModalOpen] = useState<boolean>(false);
   const [isSaveGameModalOpen, setIsSaveGameModalOpen] = useState<boolean>(false);
-  const [isLoadGameModalOpen, setIsLoadGameModalOpen] = useState<boolean>(false);
-  const [isRosterModalOpen, setIsRosterModalOpen] = useState<boolean>(false); // State for the new modal
 
   // <<< ADD State to hold player IDs for the next new game >>>
   const [playerIdsForNewGame, setPlayerIdsForNewGame] = useState<string[] | null>(null);
@@ -1605,6 +1607,14 @@ export default function Home() {
 
   const handleCloseLoadGameModal = () => {
     setIsLoadGameModalOpen(false);
+  };
+
+  const handleOpenSeasonTournamentModal = () => {
+    setIsSeasonTournamentModalOpen(true);
+  };
+
+  const handleCloseSeasonTournamentModal = () => {
+    setIsSeasonTournamentModalOpen(false);
   };
 
   // Function to handle the actual saving
@@ -3263,6 +3273,7 @@ export default function Home() {
         isGameLoaded={!!(currentGameId && currentGameId !== DEFAULT_GAME_ID)} // <-- CHECK FOR VALID GAME ID
         onPlaceAllPlayers={handlePlaceAllPlayers} // New prop for placing all players
         highlightRosterButton={highlightRosterButton} // <<< PASS THE HIGHLIGHT PROP
+        onOpenSeasonTournamentModal={handleOpenSeasonTournamentModal}
       />
         {/* Instructions Modal */}
         <InstructionsModal 
@@ -3389,6 +3400,15 @@ export default function Home() {
           // Pass loading and error states
           isRosterUpdating={updatePlayerMutation.isPending || setGoalieStatusMutation.isPending || removePlayerMutation.isPending || addPlayerMutation.isPending}
           rosterError={rosterError}
+        />
+
+        <SeasonTournamentManagementModal
+          isOpen={isSeasonTournamentModalOpen}
+          onClose={handleCloseSeasonTournamentModal}
+          seasons={seasons}
+          tournaments={tournaments}
+          addSeasonMutation={addSeasonMutation}
+          addTournamentMutation={addTournamentMutation}
         />
 
         {/* ADD the new Game Settings Modal - ADD missing props */}
