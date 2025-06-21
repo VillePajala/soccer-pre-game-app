@@ -79,25 +79,28 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
     };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-start justify-center z-50 p-4 pt-8 sm:pt-12">
-        <div className="bg-slate-800 rounded-lg shadow-xl w-full max-w-2xl border border-slate-600 flex flex-col max-h-[calc(100vh-theme(space.16))] sm:max-h-[calc(100vh-theme(space.24))]">
-            <div className="flex justify-between items-center p-4 border-b border-slate-700 flex-shrink-0">
-                <h2 className="text-lg font-semibold text-yellow-400">
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4" onClick={onClose}>
+        <div 
+            className="bg-slate-800 rounded-lg shadow-xl w-full max-w-4xl h-[95vh] overflow-hidden flex flex-col text-white relative p-0"
+            onClick={(e) => e.stopPropagation()}
+        >
+            <div className="flex justify-between items-center p-4 border-b border-slate-700 flex-shrink-0 px-6 pt-4">
+                <h2 className="text-xl font-bold text-amber-400">
                     Manage Seasons & Tournaments
                 </h2>
-                <button onClick={onClose} className="text-slate-400 hover:text-slate-200">
+                <button onClick={onClose} className="text-slate-400 hover:text-white text-xl">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
-            <div className="p-5 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800 flex-grow grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex-grow overflow-y-auto overflow-x-hidden px-6 scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800 space-y-4 pb-4 grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Seasons Column */}
                 <div>
-                    <div className="flex justify-between items-center border-b border-slate-600 pb-2 mb-3">
-                        <h3 className="text-md font-semibold text-slate-200">Seasons</h3>
+                    <div className="flex justify-between items-center border-b border-slate-700 pb-2 mb-3">
+                        <h3 className="text-lg font-semibold text-slate-200">Seasons</h3>
                         <button onClick={() => setShowNewSeasonInput(true)} className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center">
-                            <HiPlusCircle className="w-4 h-4 mr-1" />
+                            <HiPlusCircle className="w-5 h-5 mr-1" />
                             Create New
                         </button>
                     </div>
@@ -148,10 +151,10 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                 </div>
                 {/* Tournaments Column */}
                 <div>
-                    <div className="flex justify-between items-center border-b border-slate-600 pb-2 mb-3">
-                        <h3 className="text-md font-semibold text-slate-200">Tournaments</h3>
+                    <div className="flex justify-between items-center border-b border-slate-700 pb-2 mb-3">
+                        <h3 className="text-lg font-semibold text-slate-200">Tournaments</h3>
                         <button onClick={() => setShowNewTournamentInput(true)} className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center">
-                            <HiPlusCircle className="w-4 h-4 mr-1" />
+                            <HiPlusCircle className="w-5 h-5 mr-1" />
                             Create New
                         </button>
                     </div>
@@ -201,7 +204,7 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                     </div>
                 </div>
             </div>
-             <div className="px-5 py-3 border-t border-slate-700 flex justify-end space-x-3 flex-shrink-0 bg-slate-800/80 backdrop-blur-sm">
+             <div className="flex justify-end pt-4 mt-auto border-t border-slate-700 flex-shrink-0 px-6 pb-4">
                 <button
                     type="button"
                     onClick={onClose}
