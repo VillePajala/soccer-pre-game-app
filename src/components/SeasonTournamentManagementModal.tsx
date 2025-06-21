@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Season, Tournament } from '@/types';
 import { HiPlusCircle, HiOutlinePencil, HiOutlineTrash, HiOutlineCheck, HiOutlineX } from 'react-icons/hi';
 import { UseMutationResult } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 
 interface SeasonTournamentManagementModalProps {
     isOpen: boolean;
@@ -17,10 +18,7 @@ interface SeasonTournamentManagementModalProps {
 }
 
 const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalProps> = ({ isOpen, onClose, seasons, tournaments, addSeasonMutation, addTournamentMutation, updateSeasonMutation, deleteSeasonMutation, updateTournamentMutation, deleteTournamentMutation }) => {
-    if (!isOpen) {
-        return null;
-    }
-
+    const { t } = useTranslation();
     const [newSeasonName, setNewSeasonName] = useState('');
     const [showNewSeasonInput, setShowNewSeasonInput] = useState(false);
 
@@ -29,6 +27,10 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
 
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editingName, setEditingName] = useState('');
+
+    if (!isOpen) {
+        return null;
+    }
 
     const handleSaveSeason = () => {
         if (newSeasonName.trim()) {
@@ -69,7 +71,7 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
 
     const handleDelete = (id: string, type: 'season' | 'tournament') => {
         const name = type === 'season' ? seasons.find(s => s.id === id)?.name : tournaments.find(t => t.id === id)?.name;
-        if (window.confirm(`Are you sure you want to delete "${name}"? This cannot be undone.`)) {
+        if (window.confirm(t('seasonTournamentModal.confirmDelete', { name }))) {
             if (type === 'season') {
                 deleteSeasonMutation.mutate(id);
             } else {
@@ -86,7 +88,7 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
         >
             <div className="flex justify-between items-center p-4 border-b border-slate-700 flex-shrink-0 px-6 pt-4">
                 <h2 className="text-xl font-bold text-amber-400">
-                    Manage Seasons & Tournaments
+                    {t('seasonTournamentModal.title')}
                 </h2>
                 <button onClick={onClose} className="text-slate-400 hover:text-white text-xl">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
@@ -98,10 +100,10 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                 {/* Seasons Column */}
                 <div>
                     <div className="flex justify-between items-center border-b border-slate-700 pb-2 mb-3">
-                        <h3 className="text-lg font-semibold text-slate-200">Seasons</h3>
+                        <h3 className="text-lg font-semibold text-slate-200">{t('seasonTournamentModal.seasons')}</h3>
                         <button onClick={() => setShowNewSeasonInput(true)} className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center">
                             <HiPlusCircle className="w-5 h-5 mr-1" />
-                            Create New
+                            {t('seasonTournamentModal.createNew')}
                         </button>
                     </div>
                     {showNewSeasonInput && (
@@ -110,12 +112,12 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                                 type="text"
                                 value={newSeasonName}
                                 onChange={(e) => setNewSeasonName(e.target.value)}
-                                placeholder="New season name..."
+                                placeholder={t('seasonTournamentModal.newSeasonPlaceholder')}
                                 className="w-full px-2 py-1 bg-slate-600 border border-slate-500 rounded-md text-white placeholder-slate-400"
                             />
                             <div className="flex justify-end space-x-2 mt-2">
-                                <button onClick={() => setShowNewSeasonInput(false)} className="px-2 py-1 text-xs rounded bg-slate-500 hover:bg-slate-400">Cancel</button>
-                                <button onClick={handleSaveSeason} className="px-2 py-1 text-xs rounded bg-indigo-600 hover:bg-indigo-500">Save</button>
+                                <button onClick={() => setShowNewSeasonInput(false)} className="px-2 py-1 text-xs rounded bg-slate-500 hover:bg-slate-400">{t('common.cancel')}</button>
+                                <button onClick={handleSaveSeason} className="px-2 py-1 text-xs rounded bg-indigo-600 hover:bg-indigo-500">{t('common.save')}</button>
                             </div>
                         </div>
                     )}
@@ -152,10 +154,10 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                 {/* Tournaments Column */}
                 <div>
                     <div className="flex justify-between items-center border-b border-slate-700 pb-2 mb-3">
-                        <h3 className="text-lg font-semibold text-slate-200">Tournaments</h3>
+                        <h3 className="text-lg font-semibold text-slate-200">{t('seasonTournamentModal.tournaments')}</h3>
                         <button onClick={() => setShowNewTournamentInput(true)} className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center">
                             <HiPlusCircle className="w-5 h-5 mr-1" />
-                            Create New
+                            {t('seasonTournamentModal.createNew')}
                         </button>
                     </div>
                     {showNewTournamentInput && (
@@ -164,12 +166,12 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                                 type="text"
                                 value={newTournamentName}
                                 onChange={(e) => setNewTournamentName(e.target.value)}
-                                placeholder="New tournament name..."
+                                placeholder={t('seasonTournamentModal.newTournamentPlaceholder')}
                                 className="w-full px-2 py-1 bg-slate-600 border border-slate-500 rounded-md text-white placeholder-slate-400"
                             />
                             <div className="flex justify-end space-x-2 mt-2">
-                                <button onClick={() => setShowNewTournamentInput(false)} className="px-2 py-1 text-xs rounded bg-slate-500 hover:bg-slate-400">Cancel</button>
-                                <button onClick={handleSaveTournament} className="px-2 py-1 text-xs rounded bg-indigo-600 hover:bg-indigo-500">Save</button>
+                                <button onClick={() => setShowNewTournamentInput(false)} className="px-2 py-1 text-xs rounded bg-slate-500 hover:bg-slate-400">{t('common.cancel')}</button>
+                                <button onClick={handleSaveTournament} className="px-2 py-1 text-xs rounded bg-indigo-600 hover:bg-indigo-500">{t('common.save')}</button>
                             </div>
                         </div>
                     )}
@@ -210,7 +212,7 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                     onClick={onClose}
                     className="px-4 py-2 rounded bg-slate-600 text-slate-200 hover:bg-slate-500 transition-colors text-sm font-medium"
                 >
-                    Close
+                    {t('common.close')}
                 </button>
             </div>
         </div>

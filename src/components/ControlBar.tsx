@@ -281,7 +281,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
                            <HiOutlineUsers className={menuIconSize} /> {t('controlBar.manageRoster', 'Manage Roster')}
                          </button>
                          <button onClick={wrapHandler(onOpenSeasonTournamentModal)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
-                            <HiOutlineTrophy className={menuIconSize} /> Manage Seasons
+                            <HiOutlineTrophy className={menuIconSize} /> {t('controlBar.manageSeasonsAndTournaments', 'Manage Seasons & Tournaments')}
                          </button>
                        </div>
 

@@ -210,6 +210,7 @@ fiTranslations.controlBar.newGameButton = "Uusi Peli";
 fiTranslations.controlBar.gameSettingsButton = "Otteluasetukset";
 fiTranslations.controlBar.toggleLanguage = "Vaihda Englantiin";
 fiTranslations.controlBar.coachingMaterials = "Valmennusmateriaalit";
+fiTranslations.controlBar.manageSeasonsAndTournaments = "Hallinnoi Kausia & Turnauksia";
 
 // Add common namespace if missing
 if (!fiTranslations.common) {
@@ -229,6 +230,7 @@ fiTranslations.common.close = "Sulje";
 fiTranslations.common.saveChanges = "Tallenna";
 fiTranslations.common.edit = "Muokkaa";
 fiTranslations.common.remove = "Poista";
+fiTranslations.common.actions = "Toiminnot"; // Event log header
 
 // Add missing English translations
 if (!enTranslations.goalLogModal) {
@@ -412,6 +414,7 @@ enTranslations.controlBar.exitFullscreen = "Exit Fullscreen";
 enTranslations.controlBar.newGameButton = "New Game";
 enTranslations.controlBar.gameSettingsButton = "Game Settings";
 enTranslations.controlBar.toggleLanguage = "Switch to Finnish";
+enTranslations.controlBar.manageSeasonsAndTournaments = "Manage Seasons & Tournaments";
 
 // Add common namespace if missing
 if (!enTranslations.common) {
@@ -431,6 +434,7 @@ enTranslations.common.close = "Close";
 enTranslations.common.saveChanges = "Save";
 enTranslations.common.edit = "Edit";
 enTranslations.common.remove = "Remove";
+enTranslations.common.actions = "Actions";
 
 // Add load game modal translations if section doesn't exist
 if (!fiTranslations.loadGameModal) {
@@ -579,6 +583,28 @@ fiTranslations.common.hourShort = "TT";
 fiTranslations.common.minuteShort = "MM";
 fiTranslations.common.optional = "(Valinnainen)";
 fiTranslations.common.actions = "Toiminnot"; // Event log header
+
+if (!fiTranslations.seasonTournamentModal) {
+  fiTranslations.seasonTournamentModal = {};
+}
+fiTranslations.seasonTournamentModal.title = "Hallinnoi Kausia & Turnauksia";
+fiTranslations.seasonTournamentModal.seasons = "Kaudet";
+fiTranslations.seasonTournamentModal.tournaments = "Turnaukset";
+fiTranslations.seasonTournamentModal.createNew = "Luo Uusi";
+fiTranslations.seasonTournamentModal.newSeasonPlaceholder = "Uuden kauden nimi...";
+fiTranslations.seasonTournamentModal.newTournamentPlaceholder = "Uuden turnauksen nimi...";
+fiTranslations.seasonTournamentModal.confirmDelete = "Haluatko varmasti poistaa \"{{name}}\"? Tätä ei voi perua.";
+
+if (!enTranslations.seasonTournamentModal) {
+    enTranslations.seasonTournamentModal = {};
+}
+enTranslations.seasonTournamentModal.title = "Manage Seasons & Tournaments";
+enTranslations.seasonTournamentModal.seasons = "Seasons";
+enTranslations.seasonTournamentModal.tournaments = "Tournaments";
+enTranslations.seasonTournamentModal.createNew = "Create New";
+enTranslations.seasonTournamentModal.newSeasonPlaceholder = "New season name...";
+enTranslations.seasonTournamentModal.newTournamentPlaceholder = "New tournament name...";
+enTranslations.seasonTournamentModal.confirmDelete = "Are you sure you want to delete \"{{name}}\"? This cannot be undone.";
 
 // Generate a cache-busting version number
 // const cacheVersion = new Date().getTime();
