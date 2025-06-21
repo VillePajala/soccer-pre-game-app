@@ -52,7 +52,7 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
     const assists = gameEvents.filter(event => event.type === 'goal' && event.assisterId === id).length;
     // REMOVED: console.log(`[PlayerDisk id=${id} name=${fullName}] Calculated stats - Goals: ${goals}, Assists: ${assists}`);
     return { goals, assists };
-  }, [gameEvents, id, fullName]); // Reverted dependency array to include fullName as it was originally
+  }, [gameEvents, id]); // Reverted dependency array to include fullName as it was originally
 
   // --- Modified Event Handlers for Selection ONLY ---
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {

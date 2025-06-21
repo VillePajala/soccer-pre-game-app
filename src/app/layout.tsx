@@ -32,12 +32,13 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
       <body className={inter.className}>
-        <I18nInitializer lng="en" />
-        <ServiceWorkerRegistration />
-        <InstallPrompt />
-        <QueryProvider>
-          <ClientWrapper>{children}</ClientWrapper>
-        </QueryProvider>
+        <I18nInitializer>
+          <ServiceWorkerRegistration />
+          <InstallPrompt />
+          <QueryProvider>
+            <ClientWrapper>{children}</ClientWrapper>
+          </QueryProvider>
+        </I18nInitializer>
       </body>
     </html>
   );

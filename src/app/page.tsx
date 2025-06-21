@@ -2524,14 +2524,14 @@ export default function Home() {
     console.log('[page.tsx] handleSetSeasonId called with:', idToSet);
     dispatchGameSession({ type: 'SET_SEASON_ID', payload: idToSet }); 
     // REMOVED: saveStateToHistory({ seasonId: idToSet, tournamentId: idToSet ? '' : gameSessionState.tournamentId });
-  }, [gameSessionState.tournamentId]); // Dependency was saveStateToHistory, gameSessionState.tournamentId. Now only gameSessionState.tournamentId or none if reducer handles all logic.
+  }, []); // Dependency was saveStateToHistory, gameSessionState.tournamentId. Now only gameSessionState.tournamentId or none if reducer handles all logic.
 
   const handleSetTournamentId = useCallback((newTournamentId: string | null) => {
     const idToSet = newTournamentId || ''; // Ensure empty string instead of null
     console.log('[page.tsx] handleSetTournamentId called with:', idToSet);
     dispatchGameSession({ type: 'SET_TOURNAMENT_ID', payload: idToSet });
     // REMOVED: saveStateToHistory({ tournamentId: idToSet, seasonId: idToSet ? '' : gameSessionState.seasonId });
-  }, [gameSessionState.seasonId]); // Dependency was saveStateToHistory, gameSessionState.seasonId. Now only gameSessionState.seasonId or none if reducer handles all logic.
+  }, []); // Dependency was saveStateToHistory, gameSessionState.seasonId. Now only gameSessionState.seasonId or none if reducer handles all logic.
 
   // --- AGGREGATE EXPORT HANDLERS --- 
   
