@@ -31,6 +31,7 @@ import {
     HiOutlineSquares2X2,       // For Place All Players on Field
     // HiOutlineXCircle, // REMOVE unused
     // HiOutlineRectangleGroup, // REMOVE unused
+    HiOutlineTrophy,
 } from 'react-icons/hi2'; // Using hi2 for Heroicons v2 Outline
 // REMOVE FaClock, FaUsers, FaCog (FaFutbol remains)
 import { FaFutbol } from 'react-icons/fa';
@@ -64,6 +65,7 @@ interface ControlBarProps {
   isGameLoaded: boolean; // To enable/disable the settings button
   onPlaceAllPlayers: () => void; // New prop for placing all players on the field
   highlightRosterButton: boolean; // <<< ADD prop for highlighting
+  onOpenSeasonTournamentModal: () => void;
 }
 
 const ControlBar: React.FC<ControlBarProps> = ({
@@ -91,6 +93,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   isGameLoaded,
   onPlaceAllPlayers,
   highlightRosterButton, // <<< Receive prop
+  onOpenSeasonTournamentModal,
 }) => {
   const { t, i18n } = useTranslation(); // Standard hook
   console.log('[ControlBar Render] Received highlightRosterButton prop:', highlightRosterButton); // <<< Log prop value
@@ -276,6 +279,9 @@ const ControlBar: React.FC<ControlBarProps> = ({
                          </button>
                          <button onClick={wrapHandler(onOpenRosterModal)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
                            <HiOutlineUsers className={menuIconSize} /> {t('controlBar.manageRoster', 'Manage Roster')}
+                         </button>
+                         <button onClick={wrapHandler(onOpenSeasonTournamentModal)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
+                            <HiOutlineTrophy className={menuIconSize} /> {t('controlBar.manageSeasonsAndTournaments', 'Manage Seasons & Tournaments')}
                          </button>
                        </div>
 
