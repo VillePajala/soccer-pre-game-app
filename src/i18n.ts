@@ -113,6 +113,8 @@ fiTranslations.newGameSetupModal.periodsLabel = "Jaksot";
 fiTranslations.newGameSetupModal.numPeriodsLabel = "Jaksojen Määrä:";
 fiTranslations.newGameSetupModal.durationLabel = "Kesto (min)";
 fiTranslations.newGameSetupModal.periodDurationLabel = "Jakson Kesto (min):";
+fiTranslations.newGameSetupModal.homeOrAwayLabel = "Joukkueesi on:";
+fiTranslations.newGameSetupModal.confirmAndStart = "Vahvista & Aloita Peli";
 
 // <<< Add translations for Home Team Name field >>>
 fiTranslations.newGameSetupModal.homeTeamLabel = "Oman joukkueen nimi: *";
@@ -319,6 +321,8 @@ enTranslations.newGameSetupModal.createNewTournamentTitle = "Create New Tourname
 enTranslations.newGameSetupModal.cancelAddTitle = "Cancel Add";
 enTranslations.newGameSetupModal.periodsLabel = "Periods";
 enTranslations.newGameSetupModal.durationLabel = "Duration (min)";
+enTranslations.newGameSetupModal.homeOrAwayLabel = "Your Team is:";
+enTranslations.newGameSetupModal.confirmAndStart = "Confirm & Start Game";
 
 // Add game stats modal translations for English
 if (!enTranslations.gameStatsModal) {
