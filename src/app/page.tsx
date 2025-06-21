@@ -51,6 +51,8 @@ import {
   saveCurrentGameIdSetting as utilSaveCurrentGameIdSetting, // For saving current game ID setting
   resetAppSettings as utilResetAppSettings // For handleHardReset
 } from '@/utils/appSettings';
+import { deleteSeason as utilDeleteSeason, updateSeason as utilUpdateSeason } from '@/utils/seasons';
+import { deleteTournament as utilDeleteTournament, updateTournament as utilUpdateTournament } from '@/utils/tournaments';
 // Import Player from types directory
 import { Player, Season, Tournament } from '@/types';
 // Import saveMasterRoster utility
@@ -691,6 +693,34 @@ export default function Home() {
       console.error(`[Mutation Error] Failed to add season ${variables.name}:`, error);
       // alert(t('newGameSetupModal.errors.addSeasonFailedUnexpected', 'An unexpected error occurred while adding season: {seasonName}.', { seasonName: variables.name }));
     },
+  });
+
+  const updateSeasonMutation = useMutation<Season | null, Error, { id: string; name: string }>({
+    mutationFn: async ({ id, name }) => utilUpdateSeason({ id, name }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.seasons });
+    },
+  });
+
+  const deleteSeasonMutation = useMutation<boolean, Error, string>({
+    mutationFn: async (id) => utilDeleteSeason(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.seasons });
+    },
+  });
+
+  const updateTournamentMutation = useMutation<Tournament | null, Error, { id: string; name: string }>({
+      mutationFn: async ({ id, name }) => utilUpdateTournament({ id, name }),
+      onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.tournaments });
+      },
+  });
+
+  const deleteTournamentMutation = useMutation<boolean, Error, string>({
+      mutationFn: async (id) => utilDeleteTournament(id),
+      onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.tournaments });
+      },
   });
 
   // --- Mutation for Adding a new Tournament ---
@@ -3409,6 +3439,10 @@ export default function Home() {
           tournaments={tournaments}
           addSeasonMutation={addSeasonMutation}
           addTournamentMutation={addTournamentMutation}
+          updateSeasonMutation={updateSeasonMutation}
+          deleteSeasonMutation={deleteSeasonMutation}
+          updateTournamentMutation={updateTournamentMutation}
+          deleteTournamentMutation={deleteTournamentMutation}
         />
 
         {/* ADD the new Game Settings Modal - ADD missing props */}

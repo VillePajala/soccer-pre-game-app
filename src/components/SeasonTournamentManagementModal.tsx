@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Season, Tournament } from '@/types';
-import { HiPlusCircle } from 'react-icons/hi';
+import { HiPlusCircle, HiOutlinePencil, HiOutlineTrash, HiOutlineCheck, HiOutlineX } from 'react-icons/hi';
 import { UseMutationResult } from '@tanstack/react-query';
 
 interface SeasonTournamentManagementModalProps {
@@ -10,9 +10,13 @@ interface SeasonTournamentManagementModalProps {
     tournaments: Tournament[];
     addSeasonMutation: UseMutationResult<Season | null, Error, { name: string }, unknown>;
     addTournamentMutation: UseMutationResult<Tournament | null, Error, { name: string }, unknown>;
+    updateSeasonMutation: UseMutationResult<Season | null, Error, { id: string; name: string }, unknown>;
+    deleteSeasonMutation: UseMutationResult<boolean, Error, string, unknown>;
+    updateTournamentMutation: UseMutationResult<Tournament | null, Error, { id: string; name: string }, unknown>;
+    deleteTournamentMutation: UseMutationResult<boolean, Error, string, unknown>;
 }
 
-const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalProps> = ({ isOpen, onClose, seasons, tournaments, addSeasonMutation, addTournamentMutation }) => {
+const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalProps> = ({ isOpen, onClose, seasons, tournaments, addSeasonMutation, addTournamentMutation, updateSeasonMutation, deleteSeasonMutation, updateTournamentMutation, deleteTournamentMutation }) => {
     if (!isOpen) {
         return null;
     }
@@ -22,6 +26,9 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
 
     const [newTournamentName, setNewTournamentName] = useState('');
     const [showNewTournamentInput, setShowNewTournamentInput] = useState(false);
+
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editingName, setEditingName] = useState('');
 
     const handleSaveSeason = () => {
         if (newSeasonName.trim()) {
@@ -36,6 +43,38 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
             addTournamentMutation.mutate({ name: newTournamentName.trim() });
             setNewTournamentName('');
             setShowNewTournamentInput(false);
+        }
+    };
+
+    const handleEditClick = (item: Season | Tournament) => {
+        setEditingId(item.id);
+        setEditingName(item.name);
+    };
+
+    const handleCancelEdit = () => {
+        setEditingId(null);
+        setEditingName('');
+    };
+
+    const handleSaveEdit = (id: string, type: 'season' | 'tournament') => {
+        if (editingName.trim()) {
+            if (type === 'season') {
+                updateSeasonMutation.mutate({ id, name: editingName.trim() });
+            } else {
+                updateTournamentMutation.mutate({ id, name: editingName.trim() });
+            }
+            handleCancelEdit();
+        }
+    };
+
+    const handleDelete = (id: string, type: 'season' | 'tournament') => {
+        const name = type === 'season' ? seasons.find(s => s.id === id)?.name : tournaments.find(t => t.id === id)?.name;
+        if (window.confirm(`Are you sure you want to delete "${name}"? This cannot be undone.`)) {
+            if (type === 'season') {
+                deleteSeasonMutation.mutate(id);
+            } else {
+                deleteTournamentMutation.mutate(id);
+            }
         }
     };
 
@@ -80,10 +119,28 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                     <div className="space-y-2">
                         {seasons.map(season => (
                             <div key={season.id} className="bg-slate-700/50 p-2 rounded-md flex justify-between items-center">
-                                <span className="text-sm">{season.name}</span>
+                                {editingId === season.id ? (
+                                    <input
+                                        type="text"
+                                        value={editingName}
+                                        onChange={(e) => setEditingName(e.target.value)}
+                                        className="w-full px-2 py-1 bg-slate-600 border border-slate-500 rounded-md text-white"
+                                    />
+                                ) : (
+                                    <span className="text-sm">{season.name}</span>
+                                )}
                                 <div className="flex space-x-2">
-                                    <button className="text-blue-400 hover:text-blue-300">Edit</button>
-                                    <button className="text-red-400 hover:text-red-300">Delete</button>
+                                    {editingId === season.id ? (
+                                        <>
+                                            <button onClick={() => handleSaveEdit(season.id, 'season')} className="text-green-400 hover:text-green-300"><HiOutlineCheck /></button>
+                                            <button onClick={handleCancelEdit} className="text-red-400 hover:text-red-300"><HiOutlineX /></button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <button onClick={() => handleEditClick(season)} className="text-blue-400 hover:text-blue-300"><HiOutlinePencil /></button>
+                                            <button onClick={() => handleDelete(season.id, 'season')} className="text-red-400 hover:text-red-300"><HiOutlineTrash /></button>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         ))}
@@ -116,10 +173,28 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                     <div className="space-y-2">
                         {tournaments.map(tournament => (
                             <div key={tournament.id} className="bg-slate-700/50 p-2 rounded-md flex justify-between items-center">
-                                <span className="text-sm">{tournament.name}</span>
+                                {editingId === tournament.id ? (
+                                    <input
+                                        type="text"
+                                        value={editingName}
+                                        onChange={(e) => setEditingName(e.target.value)}
+                                        className="w-full px-2 py-1 bg-slate-600 border border-slate-500 rounded-md text-white"
+                                    />
+                                ) : (
+                                    <span className="text-sm">{tournament.name}</span>
+                                )}
                                 <div className="flex space-x-2">
-                                    <button className="text-blue-400 hover:text-blue-300">Edit</button>
-                                    <button className="text-red-400 hover:text-red-300">Delete</button>
+                                    {editingId === tournament.id ? (
+                                        <>
+                                            <button onClick={() => handleSaveEdit(tournament.id, 'tournament')} className="text-green-400 hover:text-green-300"><HiOutlineCheck /></button>
+                                            <button onClick={handleCancelEdit} className="text-red-400 hover:text-red-300"><HiOutlineX /></button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <button onClick={() => handleEditClick(tournament)} className="text-blue-400 hover:text-blue-300"><HiOutlinePencil /></button>
+                                            <button onClick={() => handleDelete(tournament.id, 'tournament')} className="text-red-400 hover:text-red-300"><HiOutlineTrash /></button>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         ))}

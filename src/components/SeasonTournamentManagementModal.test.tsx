@@ -18,6 +18,10 @@ describe('SeasonTournamentManagementModal', () => {
       tournaments={[]} 
       addSeasonMutation={mockMutation() as unknown as UseMutationResult<Season | null, Error, { name: string; }>} 
       addTournamentMutation={mockMutation() as unknown as UseMutationResult<Tournament | null, Error, { name: string; }>} 
+      updateSeasonMutation={mockMutation() as unknown as UseMutationResult<Season | null, Error, { id: string; name: string; }>}
+      deleteSeasonMutation={mockMutation() as unknown as UseMutationResult<boolean, Error, string>}
+      updateTournamentMutation={mockMutation() as unknown as UseMutationResult<Tournament | null, Error, { id: string; name: string; }>}
+      deleteTournamentMutation={mockMutation() as unknown as UseMutationResult<boolean, Error, string>}
     />);
   });
 
@@ -27,8 +31,12 @@ describe('SeasonTournamentManagementModal', () => {
       onClose={() => {}} 
       seasons={[]} 
       tournaments={[]} 
-      addSeasonMutation={mockMutation() as unknown as UseMutationResult<Season | null, Error, { name: string; }>} 
-      addTournamentMutation={mockMutation() as unknown as UseMutationResult<Tournament | null, Error, { name: string; }>} 
+      addSeasonMutation={mockMutation() as unknown as UseMutationResult<Season | null, Error, { name: string; }>}
+      addTournamentMutation={mockMutation() as unknown as UseMutationResult<Tournament | null, Error, { name: string; }>}
+      updateSeasonMutation={mockMutation() as unknown as UseMutationResult<Season | null, Error, { id: string; name: string; }>}
+      deleteSeasonMutation={mockMutation() as unknown as UseMutationResult<boolean, Error, string>}
+      updateTournamentMutation={mockMutation() as unknown as UseMutationResult<Tournament | null, Error, { id: string; name: string; }>}
+      deleteTournamentMutation={mockMutation() as unknown as UseMutationResult<boolean, Error, string>}
     />);
     expect(container).toBeEmptyDOMElement();
   });
