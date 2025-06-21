@@ -25,7 +25,7 @@ This file tracks potential new features and enhancements for the soccer coaching
     *   **Current Thoughts on Timing**: Pre-migration (client-side UI/state management).
 
 5.  **Link to Soccer Rules**:
-    *   **Status**: Not Implemented
+    *   **Status**: Implemented
     *   **Description**: Add an easily accessible link to official soccer rules for quick reference during a game.
     *   **Current Thoughts on Timing**: Pre-migration (simple UI addition).
 

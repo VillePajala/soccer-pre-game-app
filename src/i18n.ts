@@ -211,6 +211,7 @@ fiTranslations.controlBar.gameSettingsButton = "Otteluasetukset";
 fiTranslations.controlBar.toggleLanguage = "Vaihda Englantiin";
 fiTranslations.controlBar.coachingMaterials = "Valmennusmateriaalit";
 fiTranslations.controlBar.manageSeasonsAndTournaments = "Hallinnoi Kausia & Turnauksia";
+fiTranslations.controlBar.rules = "Säännöt";
 
 // Add common namespace if missing
 if (!fiTranslations.common) {
@@ -415,6 +416,7 @@ enTranslations.controlBar.newGameButton = "New Game";
 enTranslations.controlBar.gameSettingsButton = "Game Settings";
 enTranslations.controlBar.toggleLanguage = "Switch to Finnish";
 enTranslations.controlBar.manageSeasonsAndTournaments = "Manage Seasons & Tournaments";
+enTranslations.controlBar.rules = "Rules";
 
 // Add common namespace if missing
 if (!enTranslations.common) {

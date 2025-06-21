@@ -20,6 +20,7 @@ import {
     HiOutlineChevronRight, // Chevron for submenu
     HiOutlineChevronLeft, // Chevron for Back button
     HiOutlineExclamationTriangle, // Icon for Hard Reset
+    HiOutlineQuestionMarkCircle, // Icon for rules
     // HiOutlineFolderArrowDown,   // Icon for Save Game As... (COMMENTED OUT)
     HiOutlineFolderOpen,       // Icon for Load Game...
     HiOutlineArrowPath,        // CORRECT Icon for Reset Stats
@@ -296,6 +297,16 @@ const ControlBar: React.FC<ControlBarProps> = ({
                          <button onClick={wrapHandler(onToggleTrainingResources)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
                            <HiOutlineBookOpen className={menuIconSize} />{t('controlBar.training', 'Training')}
                          </button>
+                         <a
+                           href="https://tulospalvelu.palloliitto.fi/category/P9EKK!splita_ekk25/info/playingmethod"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           onClick={() => { setIsSettingsMenuOpen(false); setMenuView('main'); }} // Close menu on click
+                           className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75"
+                         >
+                           <HiOutlineQuestionMarkCircle className={menuIconSize} />
+                           {t('controlBar.rules', 'Rules')}
+                         </a>
                          {/* Coaching Materials Link (MOVED HERE AND STYLED CONSISTENTLY) */}
                          <a
                            href="https://www.palloliitto.fi/valmentajien-materiaalit-jalkapallo"
