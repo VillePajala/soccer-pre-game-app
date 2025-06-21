@@ -40,7 +40,7 @@ This file tracks potential new features and enhancements for the soccer coaching
     *   **Current Thoughts on Timing**: Pre-migration (likely a bug fix or client-side reactivity improvement).
 
 8.  **Dedicated Season/Tournament Management Modal**:
-    *   **Status**: Not Implemented
+    *   **Status**: Implemented
     *   **Description**: Create a separate, more focused modal for creating, editing, and deleting seasons and tournaments, rather than relying on selections within other modals (like Game Settings).
     *   **Current Thoughts on Timing**: Pre-migration (UI/component structure change).
 

@@ -101,7 +101,11 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                 <div>
                     <div className="flex justify-between items-center border-b border-slate-700 pb-2 mb-3">
                         <h3 className="text-lg font-semibold text-slate-200">{t('seasonTournamentModal.seasons')}</h3>
-                        <button onClick={() => setShowNewSeasonInput(true)} className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center">
+                        <button 
+                            onClick={() => setShowNewSeasonInput(true)} 
+                            className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center"
+                            data-testid="create-season-button"
+                        >
                             <HiPlusCircle className="w-5 h-5 mr-1" />
                             {t('seasonTournamentModal.createNew')}
                         </button>
@@ -117,7 +121,7 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                             />
                             <div className="flex justify-end space-x-2 mt-2">
                                 <button onClick={() => setShowNewSeasonInput(false)} className="px-2 py-1 text-xs rounded bg-slate-500 hover:bg-slate-400">{t('common.cancel')}</button>
-                                <button onClick={handleSaveSeason} className="px-2 py-1 text-xs rounded bg-indigo-600 hover:bg-indigo-500">{t('common.save')}</button>
+                                <button onClick={handleSaveSeason} className="px-2 py-1 text-xs rounded bg-indigo-600 hover:bg-indigo-500" data-testid="save-new-season-button">{t('common.save')}</button>
                             </div>
                         </div>
                     )}
@@ -137,13 +141,13 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                                 <div className="flex space-x-2">
                                     {editingId === season.id ? (
                                         <>
-                                            <button onClick={() => handleSaveEdit(season.id, 'season')} className="text-green-400 hover:text-green-300"><HiOutlineCheck /></button>
-                                            <button onClick={handleCancelEdit} className="text-red-400 hover:text-red-300"><HiOutlineX /></button>
+                                            <button onClick={() => handleSaveEdit(season.id, 'season')} className="text-green-400 hover:text-green-300" aria-label={`Save ${season.name}`}><HiOutlineCheck /></button>
+                                            <button onClick={handleCancelEdit} className="text-red-400 hover:text-red-300" aria-label="Cancel edit"><HiOutlineX /></button>
                                         </>
                                     ) : (
                                         <>
-                                            <button onClick={() => handleEditClick(season)} className="text-blue-400 hover:text-blue-300"><HiOutlinePencil /></button>
-                                            <button onClick={() => handleDelete(season.id, 'season')} className="text-red-400 hover:text-red-300"><HiOutlineTrash /></button>
+                                            <button onClick={() => handleEditClick(season)} className="text-blue-400 hover:text-blue-300" aria-label={`Edit ${season.name}`}><HiOutlinePencil /></button>
+                                            <button onClick={() => handleDelete(season.id, 'season')} className="text-red-400 hover:text-red-300" aria-label={`Delete ${season.name}`}><HiOutlineTrash /></button>
                                         </>
                                     )}
                                 </div>
@@ -155,7 +159,11 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                 <div>
                     <div className="flex justify-between items-center border-b border-slate-700 pb-2 mb-3">
                         <h3 className="text-lg font-semibold text-slate-200">{t('seasonTournamentModal.tournaments')}</h3>
-                        <button onClick={() => setShowNewTournamentInput(true)} className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center">
+                        <button 
+                            onClick={() => setShowNewTournamentInput(true)} 
+                            className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center"
+                            data-testid="create-tournament-button"
+                        >
                             <HiPlusCircle className="w-5 h-5 mr-1" />
                             {t('seasonTournamentModal.createNew')}
                         </button>
@@ -171,7 +179,7 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                             />
                             <div className="flex justify-end space-x-2 mt-2">
                                 <button onClick={() => setShowNewTournamentInput(false)} className="px-2 py-1 text-xs rounded bg-slate-500 hover:bg-slate-400">{t('common.cancel')}</button>
-                                <button onClick={handleSaveTournament} className="px-2 py-1 text-xs rounded bg-indigo-600 hover:bg-indigo-500">{t('common.save')}</button>
+                                <button onClick={handleSaveTournament} className="px-2 py-1 text-xs rounded bg-indigo-600 hover:bg-indigo-500" data-testid="save-new-tournament-button">{t('common.save')}</button>
                             </div>
                         </div>
                     )}
@@ -191,13 +199,13 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                                 <div className="flex space-x-2">
                                     {editingId === tournament.id ? (
                                         <>
-                                            <button onClick={() => handleSaveEdit(tournament.id, 'tournament')} className="text-green-400 hover:text-green-300"><HiOutlineCheck /></button>
-                                            <button onClick={handleCancelEdit} className="text-red-400 hover:text-red-300"><HiOutlineX /></button>
+                                            <button onClick={() => handleSaveEdit(tournament.id, 'tournament')} className="text-green-400 hover:text-green-300" aria-label={`Save ${tournament.name}`}><HiOutlineCheck /></button>
+                                            <button onClick={handleCancelEdit} className="text-red-400 hover:text-red-300" aria-label="Cancel edit"><HiOutlineX /></button>
                                         </>
                                     ) : (
                                         <>
-                                            <button onClick={() => handleEditClick(tournament)} className="text-blue-400 hover:text-blue-300"><HiOutlinePencil /></button>
-                                            <button onClick={() => handleDelete(tournament.id, 'tournament')} className="text-red-400 hover:text-red-300"><HiOutlineTrash /></button>
+                                            <button onClick={() => handleEditClick(tournament)} className="text-blue-400 hover:text-blue-300" aria-label={`Edit ${tournament.name}`}><HiOutlinePencil /></button>
+                                            <button onClick={() => handleDelete(tournament.id, 'tournament')} className="text-red-400 hover:text-red-300" aria-label={`Delete ${tournament.name}`}><HiOutlineTrash /></button>
                                         </>
                                     )}
                                 </div>
