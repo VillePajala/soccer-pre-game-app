@@ -1316,7 +1316,7 @@ export default function Home() {
     if (isTacticsBoardView) {
       setTacticalDiscs([]);
     }
-  }, [saveStateToHistory, setDrawings, setOpponents, setPlayersOnField, isTacticsBoardView]); 
+  }, [saveStateToHistory, setDrawings, setOpponents, setPlayersOnField, isTacticsBoardView, setTacticalDiscs]); 
 
   // --- Touch Drag from Bar Handlers (Updated for relative coords) ---
   const handlePlayerDragStartFromBar = useCallback((playerInfo: Player) => {
