@@ -137,6 +137,7 @@ export interface AppState {
   // nextSubDueTimeSeconds?: number;
   // subAlertLevel?: 'none' | 'warning' | 'due';
   tacticalDiscs: TacticalDisc[];
+  tacticalDrawings: Point[][];
 }
 
 export interface TacticalDisc {
@@ -193,6 +194,7 @@ const initialState: AppState = {
   completedIntervalDurations: [], // Initialize completed interval logs
   lastSubConfirmationTimeSeconds: 0, // Initialize last substitution confirmation time
   tacticalDiscs: [],
+  tacticalDrawings: [],
 };
 
 // Define new localStorage keys
@@ -478,6 +480,7 @@ export default function Home() {
   const [processingGameId, setProcessingGameId] = useState<string | null>(null); // To track which game item is being processed
   const [isTacticsBoardView, setIsTacticsBoardView] = useState<boolean>(false);
   const [tacticalDiscs, setTacticalDiscs] = useState<TacticalDisc[]>([]);
+  const [tacticalDrawings, setTacticalDrawings] = useState<Point[][]>([]);
 
   const handleToggleTacticsBoard = () => {
     setIsTacticsBoardView(!isTacticsBoardView);
@@ -1113,6 +1116,7 @@ export default function Home() {
     setOpponents(gameData?.opponents || (isInitialDefaultLoad ? initialState.opponents : []));
     setDrawings(gameData?.drawings || (isInitialDefaultLoad ? initialState.drawings : []));
     setTacticalDiscs(gameData?.tacticalDiscs || (isInitialDefaultLoad ? initialState.tacticalDiscs : []));
+    setTacticalDrawings(gameData?.tacticalDrawings || (isInitialDefaultLoad ? initialState.tacticalDrawings : []));
     
     // Update gameEvents from gameData if present, otherwise from initial state if it's an initial default load
     // setGameEvents(gameData?.events || (isInitialDefaultLoad ? initialState.gameEvents : [])); // REMOVE - Handled by LOAD_PERSISTED_GAME_DATA in reducer
@@ -1160,6 +1164,7 @@ export default function Home() {
       opponents: gameData?.opponents || initialState.opponents,
       drawings: gameData?.drawings || initialState.drawings,
       tacticalDiscs: gameData?.tacticalDiscs || [],
+      tacticalDrawings: gameData?.tacticalDrawings || [],
       availablePlayers: masterRosterQueryResultData || availablePlayers,
     };
     setHistory([newHistoryState]);
@@ -1224,6 +1229,7 @@ export default function Home() {
           opponents,
           drawings,
           tacticalDiscs,
+          tacticalDrawings,
           availablePlayers: masterRosterQueryResultData || availablePlayers, // Master roster snapshot
           
           // Volatile timer states are intentionally EXCLUDED from the snapshot to be saved.
@@ -1253,6 +1259,7 @@ export default function Home() {
       // gameEvents, // REMOVE - Now from gameSessionState
       gameSessionState,
       tacticalDiscs,
+      tacticalDrawings,
     ]);
 
   // **** ADDED: Effect to prompt for setup if default game ID is loaded ****
@@ -1315,8 +1322,18 @@ export default function Home() {
     saveStateToHistory({ playersOnField: [], opponents: [], drawings: [] });
     if (isTacticsBoardView) {
       setTacticalDiscs([]);
+      setTacticalDrawings([]);
     }
-  }, [saveStateToHistory, setDrawings, setOpponents, setPlayersOnField, isTacticsBoardView, setTacticalDiscs]); 
+  }, [saveStateToHistory, setDrawings, setOpponents, setPlayersOnField, isTacticsBoardView, setTacticalDiscs, setTacticalDrawings]); 
+
+  const handleClearDrawingsForView = () => {
+    if (isTacticsBoardView) {
+      setTacticalDrawings([]);
+      saveStateToHistory({ tacticalDrawings: [] });
+    } else {
+      handleClearDrawings();
+    }
+  };
 
   // --- Touch Drag from Bar Handlers (Updated for relative coords) ---
   const handlePlayerDragStartFromBar = useCallback((playerInfo: Player) => {
@@ -1413,6 +1430,7 @@ export default function Home() {
       dispatchGameSession({ type: 'SET_HOME_OR_AWAY', payload: prevState.homeOrAway });
       setHistoryIndex(prevStateIndex);
       setTacticalDiscs(prevState.tacticalDiscs || []);
+      setTacticalDrawings(prevState.tacticalDrawings || []);
     } else {
       console.log("Cannot undo: at beginning of history");
     }
@@ -1454,6 +1472,7 @@ export default function Home() {
       dispatchGameSession({ type: 'SET_SUB_INTERVAL', payload: nextState.subIntervalMinutes ?? 5 }); 
       setHistoryIndex(nextStateIndex);
       setTacticalDiscs(nextState.tacticalDiscs || []);
+      setTacticalDrawings(nextState.tacticalDrawings || []);
     } else {
       console.log("Cannot redo: at end of history");
     }
@@ -1698,6 +1717,7 @@ export default function Home() {
         opponents,
         drawings,
         tacticalDiscs,
+        tacticalDrawings,
         availablePlayers: masterRosterQueryResultData || availablePlayers, // Master roster snapshot
         
         // Volatile timer states are EXCLUDED.
@@ -2472,6 +2492,7 @@ export default function Home() {
           opponents,
           drawings,
           tacticalDiscs,
+          tacticalDrawings,
           availablePlayers: availablePlayers, // <<< ADD BACK: Include roster available *at time of save*
           showPlayerNames: gameSessionState.showPlayerNames, // USE gameSessionState
           teamName: gameSessionState.teamName,
@@ -2828,6 +2849,7 @@ export default function Home() {
           currentPeriod: 1, // Always start at period 1
           gameStatus: 'notStarted', // Always start as not started
           tacticalDiscs: [],
+          tacticalDrawings: [],
           // Timer/Sub State - Use TOP-LEVEL initialState defaults (or current settings?)
           // Let's stick with initialState defaults for timer/sub settings for now
           subIntervalMinutes: initialState.subIntervalMinutes ?? 5,
@@ -3179,6 +3201,24 @@ export default function Home() {
   // Log gameEvents before PlayerBar is rendered
   console.log('[page.tsx] About to render PlayerBar, gameEvents for PlayerBar:', JSON.stringify(gameSessionState.gameEvents));
 
+  // --- Tactical Drawing Handlers ---
+  const handleTacticalDrawingStart = (point: Point) => {
+    setTacticalDrawings(prev => [...prev, [point]]);
+  };
+
+  const handleTacticalDrawingAddPoint = (point: Point) => {
+    setTacticalDrawings(prev => {
+      const newDrawings = [...prev];
+      if (newDrawings.length > 0) {
+        newDrawings[newDrawings.length - 1].push(point);
+      }
+      return newDrawings;
+    });
+  };
+
+  const handleTacticalDrawingEnd = () => {
+    saveStateToHistory({ tacticalDrawings });
+  };
 
   return (
     // Main container with flex column layout
@@ -3229,7 +3269,7 @@ export default function Home() {
         <SoccerField
           players={playersOnField}
           opponents={opponents}
-          drawings={drawings}
+          drawings={isTacticsBoardView ? tacticalDrawings : drawings}
           onPlayerMove={handlePlayerMove}
           onPlayerMoveEnd={handlePlayerMoveEnd}
           onPlayerRemove={handlePlayerRemove}
@@ -3238,9 +3278,9 @@ export default function Home() {
           onOpponentRemove={handleOpponentRemove}
           onPlayerDrop={handleDropOnField}
           showPlayerNames={gameSessionState.showPlayerNames}
-          onDrawingStart={handleDrawingStart}
-          onDrawingAddPoint={handleDrawingAddPoint}
-          onDrawingEnd={handleDrawingEnd}
+          onDrawingStart={isTacticsBoardView ? handleTacticalDrawingStart : handleDrawingStart}
+          onDrawingAddPoint={isTacticsBoardView ? handleTacticalDrawingAddPoint : handleDrawingAddPoint}
+          onDrawingEnd={isTacticsBoardView ? handleTacticalDrawingEnd : handleDrawingEnd}
           draggingPlayerFromBarInfo={draggingPlayerFromBarInfo}
           onPlayerDropViaTouch={handlePlayerDropViaTouch}
           onPlayerDragCancelViaTouch={handlePlayerDragCancelViaTouch}
@@ -3257,7 +3297,7 @@ export default function Home() {
       {/* Control Bar */}
       <ControlBar
         onAddOpponent={handleAddOpponent} // Pass handler from hook
-        onClearDrawings={handleClearDrawings} // Correctly passed here
+        onClearDrawings={handleClearDrawingsForView} // Correctly passed here
         onToggleNames={handleTogglePlayerNames} 
         showPlayerNames={gameSessionState.showPlayerNames} // USE gameSessionState
         onUndo={handleUndo}
