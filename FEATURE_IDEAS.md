@@ -15,8 +15,8 @@ This file tracks potential new features and enhancements for the soccer coaching
     *   **Current Thoughts on Timing**: Pre-migration (simple UI addition).
 
 3.  **Individual Player Statistics View**:
-    *   **Status**: Not Implemented
-    *   **Description**: Provide a way to view detailed statistics for individual players, not just aggregated team/game stats.
+    *   **Status**: Implemented
+    *   **Description**: Provide a way to view detailed statistics for individual players, including total and average stats, and a game-by-game log with a performance trend graph.
     *   **Current Thoughts on Timing**: Can be started pre-migration. Complex queries/aggregations might be enhanced post-migration with a database.
 
 4.  **Toggleable Field View (Roster vs. Tactics)**:

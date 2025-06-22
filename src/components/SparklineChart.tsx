@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { AreaChart, Area, ResponsiveContainer, Tooltip, YAxis, ReferenceLine, CartesianGrid, ComposedChart, Line, Legend, Bar } from 'recharts';
+import { ResponsiveContainer, Tooltip, YAxis, ReferenceLine, CartesianGrid, ComposedChart, Area, Legend } from 'recharts';
+import type { TooltipProps } from 'recharts';
 
 interface SparklineChartProps {
   data: { date: string; points: number; goals: number; assists: number; result: 'W' | 'L' | 'D' | 'N/A' }[];
@@ -16,7 +17,7 @@ const getResultColor = (result: 'W' | 'L' | 'D' | 'N/A') => {
   }
 };
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip: React.FC<TooltipProps<number, string>> = ({ active, payload }) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
@@ -30,7 +31,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-const CustomizedDot = (props: any) => {
+const CustomizedDot: React.FC<any> = (props: any) => {
   const { cx, cy, payload } = props;
   return (
     <circle cx={cx} cy={cy} r={4} fill={getResultColor(payload.result)} stroke="#ffffff" strokeWidth={1} />
