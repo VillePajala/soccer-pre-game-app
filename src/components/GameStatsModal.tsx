@@ -375,6 +375,11 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
       // Add calculations for other stats if needed
     });
 
+    // Calculate average points for all players before filtering and sorting
+    Object.values(statsMap).forEach(player => {
+      player.avgPoints = player.gamesPlayed > 0 ? player.totalScore / player.gamesPlayed : 0;
+    });
+
     // Filter and sort
     const filteredAndSortedStats = Object.values(statsMap)
       .filter(player => player.name.toLowerCase().includes(filterText.toLowerCase()));
@@ -437,13 +442,8 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
       });
     }
 
-    const finalStats = filteredAndSortedStats.map(player => ({
-      ...player,
-      avgPoints: player.gamesPlayed > 0 ? player.totalScore / player.gamesPlayed : 0,
-    }));
-
     // Return both stats and the processed game IDs
-    return { stats: finalStats, gameIds: processedGameIds };
+    return { stats: filteredAndSortedStats, gameIds: processedGameIds };
 
   }, [
     activeTab,
