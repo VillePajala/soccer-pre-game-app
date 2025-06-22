@@ -605,16 +605,41 @@ fiTranslations.seasonTournamentModal.newSeasonPlaceholder = "Uuden kauden nimi..
 fiTranslations.seasonTournamentModal.newTournamentPlaceholder = "Uuden turnauksen nimi...";
 fiTranslations.seasonTournamentModal.confirmDelete = "Haluatko varmasti poistaa \"{{name}}\"? Tätä ei voi perua.";
 
-if (!enTranslations.seasonTournamentModal) {
-    enTranslations.seasonTournamentModal = {};
+if (!fiTranslations.playerStats) {
+  fiTranslations.playerStats = {};
 }
-enTranslations.seasonTournamentModal.title = "Manage Seasons & Tournaments";
-enTranslations.seasonTournamentModal.seasons = "Seasons";
-enTranslations.seasonTournamentModal.tournaments = "Tournaments";
-enTranslations.seasonTournamentModal.createNew = "Create New";
-enTranslations.seasonTournamentModal.newSeasonPlaceholder = "New season name...";
-enTranslations.seasonTournamentModal.newTournamentPlaceholder = "New tournament name...";
-enTranslations.seasonTournamentModal.confirmDelete = "Are you sure you want to delete \"{{name}}\"? This cannot be undone.";
+fiTranslations.playerStats.title = "Pelaajan Tilastot";
+
+if (!fiTranslations.stats) {
+  fiTranslations.stats = {};
+}
+fiTranslations.stats.gamesPlayed = "Pelatut pelit";
+fiTranslations.stats.goals = "Maalit";
+fiTranslations.stats.assists = "Syötöt";
+fiTranslations.stats.gameLog = "Pelihistoria";
+fiTranslations.stats.vs = "vs";
+fiTranslations.stats.goals_short = "M";
+fiTranslations.stats.assists_short = "S";
+fiTranslations.stats.noGames = "Ei pelitietoja saatavilla.";
+fiTranslations.stats.perGame = "/ peli";
+
+if (!enTranslations.playerStats) {
+  enTranslations.playerStats = {};
+}
+enTranslations.playerStats.title = "Player Statistics";
+
+if (!enTranslations.stats) {
+  enTranslations.stats = {};
+}
+enTranslations.stats.gamesPlayed = "Games Played";
+enTranslations.stats.goals = "Goals";
+enTranslations.stats.assists = "Assists";
+enTranslations.stats.gameLog = "Game Log";
+enTranslations.stats.vs = "vs";
+enTranslations.stats.goals_short = "G";
+enTranslations.stats.assists_short = "A";
+enTranslations.stats.noGames = "No game data available.";
+enTranslations.stats.perGame = "/ game";
 
 // Generate a cache-busting version number
 // const cacheVersion = new Date().getTime();
