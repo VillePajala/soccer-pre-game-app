@@ -802,7 +802,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     if (!currentTouch) return; 
 
     // Prevent default only needed if dragging/drawing
-    if (isDraggingPlayer || isDraggingOpponent || isDrawing) {
+    if (isDraggingPlayer || isDraggingOpponent || isDrawing || isDraggingTacticalDisc) {
       // We know this listener is non-passive, so preventDefault is safe
        e.preventDefault(); 
     }
@@ -819,7 +819,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     } else if (isDrawing) {
       onDrawingAddPoint(pos);
     }
-  }, [activeTouchId, isDrawing, isDraggingPlayer, isDraggingOpponent, draggingPlayerId, draggingOpponentId, onPlayerMove, onOpponentMove, onDrawingAddPoint]); // Added dependencies
+  }, [activeTouchId, isDrawing, isDraggingPlayer, isDraggingOpponent, draggingPlayerId, draggingOpponentId, onPlayerMove, onOpponentMove, onDrawingAddPoint, isDraggingTacticalDisc, draggingTacticalDiscId, onTacticalDiscMove]); // Added dependencies
 
   const handleTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => {
     if (draggingPlayerFromBarInfo && activeTouchId !== null) {

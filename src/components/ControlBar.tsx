@@ -23,7 +23,7 @@ import {
     HiOutlineExclamationTriangle, // Icon for Hard Reset
     HiOutlineQuestionMarkCircle, // Icon for rules
     HiOutlinePlusCircle, // Icon for adding discs
-    HiOutlineMinusCircle, // Icon for adding opponent discs
+    // HiOutlineMinusCircle, // Icon for adding opponent discs
     // HiOutlineFolderArrowDown,   // Icon for Save Game As... (COMMENTED OUT)
     HiOutlineFolderOpen,       // Icon for Load Game...
     HiOutlineArrowPath,        // CORRECT Icon for Reset Stats

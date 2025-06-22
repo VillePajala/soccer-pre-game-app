@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback, useMemo, useReducer, useRef } 
 import SoccerField from '@/components/SoccerField';
 import PlayerBar from '@/components/PlayerBar';
 import ControlBar from '@/components/ControlBar';
-import TimerOverlay from '@/components/TimerOverlay';
 import InstructionsModal from '@/components/InstructionsModal';
 import GoalLogModal from '@/components/GoalLogModal';
 import GameStatsModal from '@/components/GameStatsModal';
@@ -1253,6 +1252,7 @@ export default function Home() {
       // Local states that are part of the snapshot but not yet in gameSessionState:
       // gameEvents, // REMOVE - Now from gameSessionState
       gameSessionState,
+      tacticalDiscs,
     ]);
 
   // **** ADDED: Effect to prompt for setup if default game ID is loaded ****
@@ -1460,58 +1460,6 @@ export default function Home() {
   };
 
   // --- Timer Handlers ---
-  const handleStartPauseTimer = () => {
-    if (gameSessionState.gameStatus === 'notStarted') {
-      // Start the game (first period)
-      dispatchGameSession({ 
-        type: 'START_PERIOD', 
-        payload: { 
-          nextPeriod: 1, 
-          periodDurationMinutes: gameSessionState.periodDurationMinutes, 
-          subIntervalMinutes: gameSessionState.subIntervalMinutes // Use from gameSessionState
-        } 
-      });
-      console.log("Game started, Period 1.");
-    } else if (gameSessionState.gameStatus === 'periodEnd') {
-      // Start the next period
-      const nextPeriod = gameSessionState.currentPeriod + 1;
-      dispatchGameSession({ 
-        type: 'START_PERIOD', 
-        payload: { 
-          nextPeriod: nextPeriod, 
-          periodDurationMinutes: gameSessionState.periodDurationMinutes, 
-          subIntervalMinutes: gameSessionState.subIntervalMinutes // Use from gameSessionState
-        }
-      });
-      console.log(`Starting Period ${nextPeriod}.`);
-    } else if (gameSessionState.gameStatus === 'inProgress') {
-      // Pause or resume the current period
-      dispatchGameSession({ type: 'SET_TIMER_RUNNING', payload: !gameSessionState.isTimerRunning });
-      console.log(gameSessionState.isTimerRunning ? "Timer paused." : "Timer resumed."); 
-    } else if (gameSessionState.gameStatus === 'gameEnd') {
-      // Game has ended, do nothing or maybe allow reset?
-      console.log("Game has ended. Cannot start/pause.");
-    }
-  };
-
-  const handleResetTimer = () => {
-    // Dispatch the new action to reset only timer-specific fields
-    dispatchGameSession({ type: 'RESET_TIMER_ONLY' }); 
-    console.log("Timer reset to start of current period via RESET_TIMER_ONLY action.");
-  };
-
-  const handleSubstitutionMade = () => {
-    // Dispatch action to reducer
-    dispatchGameSession({ type: 'CONFIRM_SUBSTITUTION' });
-    console.log(`Substitution confirmed via reducer.`);
-  };
-
-  const handleSetSubInterval = (minutes: number) => {
-    const newMinutes = Math.max(1, minutes);
-    dispatchGameSession({ type: 'SET_SUB_INTERVAL', payload: newMinutes });
-    console.log(`Sub interval set to ${newMinutes}m via reducer.`);
-  };
-
   const handleToggleLargeTimerOverlay = () => {
     setShowLargeTimerOverlay(!showLargeTimerOverlay);
   };
