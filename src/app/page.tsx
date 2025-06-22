@@ -14,6 +14,7 @@ import NewGameSetupModal from '@/components/NewGameSetupModal';
 import RosterSettingsModal from '@/components/RosterSettingsModal';
 import GameSettingsModal from '@/components/GameSettingsModal';
 import SeasonTournamentManagementModal from '@/components/SeasonTournamentManagementModal';
+import PlayerStatsModal from '@/components/PlayerStatsModal';
 import { useTranslation } from 'react-i18next';
 import { useGameState, UseGameStateReturn } from '@/hooks/useGameState';
 import GameInfoBar from '@/components/GameInfoBar';
@@ -442,6 +443,8 @@ export default function Home() {
   const [isLoadGameModalOpen, setIsLoadGameModalOpen] = useState<boolean>(false);
   const [isRosterModalOpen, setIsRosterModalOpen] = useState<boolean>(false); // State for the new modal
   const [isSeasonTournamentModalOpen, setIsSeasonTournamentModalOpen] = useState<boolean>(false);
+  const [isPlayerStatsModalOpen, setIsPlayerStatsModalOpen] = useState(false);
+  const [selectedPlayerForStats, setSelectedPlayerForStats] = useState<Player | null>(null);
 
   // --- Timer State (Still needed here) ---
   const [showLargeTimerOverlay, setShowLargeTimerOverlay] = useState<boolean>(false); // State for overlay visibility
@@ -1324,7 +1327,7 @@ export default function Home() {
       setTacticalDiscs([]);
       setTacticalDrawings([]);
     }
-  }, [saveStateToHistory, setDrawings, setOpponents, setPlayersOnField, isTacticsBoardView, setTacticalDiscs, setTacticalDrawings]);
+  }, [saveStateToHistory, setDrawings, setOpponents, setPlayersOnField, isTacticsBoardView, setTacticalDiscs, setTacticalDrawings, tacticalDrawings]);
 
   const handleClearDrawingsForView = () => {
     if (isTacticsBoardView) {
@@ -2785,7 +2788,7 @@ export default function Home() {
         console.error(`Failed to export aggregate stats as CSV:`, error);
         alert(t('export.csvError', 'Error exporting aggregate data as CSV.'));
     }
-  }, [savedGames]); // Correctly removed seasons and tournaments
+  }, [savedGames]);// Correctly removed seasons and tournaments
 
   // --- END AGGREGATE EXPORT HANDLERS ---
 
@@ -2992,7 +2995,8 @@ export default function Home() {
 
   }, [t, currentGameId, savedGames, /* handleOpenSaveGameModal, */ handleQuickSaveGame, setIsNewGameSetupModalOpen, 
       // <<< ADD dependencies >>>
-      availablePlayers, gameSessionState.selectedPlayerIds, setPlayerIdsForNewGame
+      availablePlayers, gameSessionState.selectedPlayerIds, setPlayerIdsForNewGame,
+      t
      ]); 
   // --- END Start New Game Handler ---
 
@@ -3218,6 +3222,26 @@ export default function Home() {
 
   const handleTacticalDrawingEnd = () => {
     saveStateToHistory({ tacticalDrawings });
+  };
+
+  const handleOpenPlayerStats = (playerId: string) => {
+    const player = availablePlayers.find(p => p.id === playerId);
+    if (player) {
+      setSelectedPlayerForStats(player);
+      setIsPlayerStatsModalOpen(true);
+      setIsRosterModalOpen(false); // Close the roster modal
+    }
+  };
+
+  const handleClosePlayerStats = () => {
+    setIsPlayerStatsModalOpen(false);
+    setSelectedPlayerForStats(null);
+  };
+
+  const handleGameLogClick = (gameId: string) => {
+    setCurrentGameId(gameId);
+    handleClosePlayerStats();
+    handleToggleGameStatsModal();
   };
 
   return (
@@ -3455,6 +3479,7 @@ export default function Home() {
           // Pass loading and error states
           isRosterUpdating={updatePlayerMutation.isPending || setGoalieStatusMutation.isPending || removePlayerMutation.isPending || addPlayerMutation.isPending}
           rosterError={rosterError}
+          onOpenPlayerStats={handleOpenPlayerStats}
         />
 
         <SeasonTournamentManagementModal
@@ -3505,6 +3530,14 @@ export default function Home() {
           // <<< ADD: Pass Home/Away state and handler >>>
           homeOrAway={gameSessionState.homeOrAway}
           onSetHomeOrAway={handleSetHomeOrAway}
+        />
+
+        <PlayerStatsModal
+          isOpen={isPlayerStatsModalOpen}
+          onClose={handleClosePlayerStats}
+          player={selectedPlayerForStats}
+          savedGames={savedGames}
+          onGameClick={handleGameLogClick}
         />
 
       </div>

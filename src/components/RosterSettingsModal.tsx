@@ -9,7 +9,8 @@ import {
     HiOutlineTrash,
     HiOutlineUserCircle, // Default player icon (or choose another)
     HiOutlinePencilSquare, // Icon for notes indicator
-    HiOutlineEllipsisVertical // Icon for actions menu
+    HiOutlineEllipsisVertical, // Icon for actions menu
+    HiOutlineChartBar // Icon for stats
 } from 'react-icons/hi2';
 import { useTranslation } from 'react-i18next';
 
@@ -29,6 +30,7 @@ interface RosterSettingsModalProps {
   onTeamNameChange: (newName: string) => void;
   isRosterUpdating?: boolean;
   rosterError?: string | null;
+  onOpenPlayerStats: (playerId: string) => void;
 }
 
 const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
@@ -47,6 +49,7 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
   onTeamNameChange,
   isRosterUpdating,
   rosterError,
+  onOpenPlayerStats,
 }) => {
   const { t } = useTranslation();
   const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
@@ -552,6 +555,9 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                                 {/* Use t() for button text */}
                                 <button onClick={() => { handleStartEdit(player.id); setActionsMenuPlayerId(null); }} className={`flex items-center w-full px-3 py-1.5 text-sm ${isRosterUpdating ? 'text-blue-600 opacity-50 cursor-not-allowed' : 'text-blue-300 hover:bg-slate-600'}`} disabled={isAddingPlayer || !!editingPlayerId || isRosterUpdating}>
                                  <HiOutlinePencil className="w-4 h-4 mr-2" /> {t('common.edit', 'Edit')}
+                                </button>
+                                <button onClick={() => { onOpenPlayerStats(player.id); setActionsMenuPlayerId(null); }} className={`flex items-center w-full px-3 py-1.5 text-sm ${isRosterUpdating ? 'text-green-600 opacity-50 cursor-not-allowed' : 'text-green-400 hover:bg-slate-600'}`} disabled={isAddingPlayer || !!editingPlayerId || isRosterUpdating}>
+                                  <HiOutlineChartBar className="w-4 h-4 mr-2" /> {t('common.stats', 'Stats')}
                                 </button>
                                 <button onClick={() => { 
                                   if (window.confirm(t('rosterSettingsModal.confirmDeletePlayer', 'Are you sure you want to remove this player? This action cannot be undone.'))) {
