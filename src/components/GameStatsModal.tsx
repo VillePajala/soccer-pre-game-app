@@ -15,7 +15,7 @@ import { getTournaments as utilGetTournaments } from '@/utils/tournaments';
 import { FaSort, FaSortUp, FaSortDown, FaEdit, FaSave, FaTimes, FaTrashAlt } from 'react-icons/fa';
 
 // Define the type for sortable columns
-type SortableColumn = 'name' | 'goals' | 'assists' | 'totalScore' | 'fpAwards' | 'gamesPlayed';
+type SortableColumn = 'name' | 'goals' | 'assists' | 'totalScore' | 'fpAwards' | 'gamesPlayed' | 'avgPoints';
 type SortDirection = 'asc' | 'desc';
 
 // Define tab types
@@ -421,6 +421,10 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                  aValue = a.gamesPlayed;
                  bValue = b.gamesPlayed;
                  break;
+            case 'avgPoints':
+                aValue = a.avgPoints;
+                bValue = b.avgPoints;
+                break;
         }
 
         // Apply direction for secondary sort key
@@ -711,8 +715,8 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                       <th scope="col" className="px-1 py-2 text-center cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('gamesPlayed')}> <div className="flex items-center justify-center">{t('common.gamesPlayedShort', 'GP')} {sortColumn === 'gamesPlayed' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1 w-3 h-3"/> : <FaSortDown className="ml-1 w-3 h-3"/>) : <FaSort className="ml-1 w-3 h-3 opacity-30"/>}</div> </th>
                       <th scope="col" className="px-1 py-2 text-center cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('goals')}> <div className="flex items-center justify-center">{t('common.goalsShort', 'M')} {sortColumn === 'goals' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1 w-3 h-3"/> : <FaSortDown className="ml-1 w-3 h-3"/>) : <FaSort className="ml-1 w-3 h-3 opacity-30"/>}</div> </th>
                       <th scope="col" className="px-1 py-2 text-center cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('assists')}> <div className="flex items-center justify-center">{t('common.assistsShort', 'S')} {sortColumn === 'assists' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1 w-3 h-3"/> : <FaSortDown className="ml-1 w-3 h-3"/>) : <FaSort className="ml-1 w-3 h-3 opacity-30"/>}</div> </th>
-                      <th scope="col" className="px-1 py-2 text-center cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('totalScore')}> <div className="flex items-center justify-center">{t('common.totalScoreShort', 'P')} {sortColumn === 'totalScore' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1 w-3 h-3"/> : <FaSortDown className="ml-1 w-3 h-3"/>) : <FaSort className="ml-1 w-3 h-3 opacity-30"/>}</div> </th>
-                      <th scope="col" className="px-1 py-2 text-center">{t('common.avgPointsShort', 'AVG')}</th>
+                      <th scope="col" className="px-1 py-2 text-center cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('totalScore')}> <div className="flex items-center justify-center">{t('common.totalScoreShort', 'Pts')} {sortColumn === 'totalScore' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1 w-3 h-3"/> : <FaSortDown className="ml-1 w-3 h-3"/>) : <FaSort className="ml-1 w-3 h-3 opacity-30"/>}</div> </th>
+                      <th scope="col" className="px-1 py-2 text-center cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('avgPoints')}> <div className="flex items-center justify-center">{t('common.avgPointsShort', 'KA')} {sortColumn === 'avgPoints' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1 w-3 h-3"/> : <FaSortDown className="ml-1 w-3 h-3"/>) : <FaSort className="ml-1 w-3 h-3 opacity-30"/>}</div> </th>
                     </tr>
                   </thead>
                   <tbody>
