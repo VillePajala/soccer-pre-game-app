@@ -1328,7 +1328,7 @@ export default function Home() {
       setTacticalDiscs([]);
       setTacticalDrawings([]);
     }
-  }, [saveStateToHistory, setDrawings, setOpponents, setPlayersOnField, isTacticsBoardView, setTacticalDiscs, setTacticalDrawings]);
+  }, [saveStateToHistory, setDrawings, setOpponents, setPlayersOnField, isTacticsBoardView, setTacticalDiscs, setTacticalDrawings, tacticalDiscs, tacticalDrawings]);
 
   const handleClearDrawingsForView = () => {
     if (isTacticsBoardView) {
@@ -2596,12 +2596,14 @@ export default function Home() {
     playersOnField,
     opponents,
     drawings,
+    tacticalDiscs,
+    tacticalDrawings,
     availablePlayers,
     setSavedGames,
     setHistory,
     setHistoryIndex,
-       handleOpenSaveGameModal, 
-       gameSessionState // This now covers all migrated game session fields
+    handleOpenSaveGameModal, 
+    gameSessionState // This now covers all migrated game session fields
   ]);
   // --- END Quick Save Handler ---
 
@@ -2718,7 +2720,7 @@ export default function Home() {
         console.error(`Failed to export aggregate stats as JSON:`, error);
         alert(t('export.jsonError', 'Error exporting aggregate data as JSON.'));
     }
-  }, [savedGames, t, seasons, tournaments]); // REMOVED: seasons, tournaments
+  }, [savedGames, t, seasons, tournaments]);
 
   const handleExportAggregateCsv = useCallback((gameIds: string[], aggregateStats: import('@/types').PlayerStatRow[]) => {
     console.log(`Exporting aggregate CSV for ${gameIds.length} games.`);

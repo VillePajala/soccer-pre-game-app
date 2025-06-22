@@ -22,13 +22,15 @@ const CustomTooltip: React.FC<TooltipProps<number, string>> = ({ active, payload
   return null;
 };
 
-interface CustomizedDotProps {
+interface DotProps {
   cx?: number;
   cy?: number;
+  value?: number;
+  index?: number;
+  payload?: Record<string, unknown>;
 }
 
-const CustomizedDot = (props: any) => {
-  const { cx, cy } = props;
+const CustomizedDot = ({ cx, cy }: DotProps) => {
   return (
     <circle cx={cx} cy={cy} r={1.5} fill="#6366f1" />
   );
