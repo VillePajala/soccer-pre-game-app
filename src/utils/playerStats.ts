@@ -17,6 +17,7 @@ export interface GameStats {
   opponentName: string;
   goals: number;
   assists: number;
+  points: number;
   result: 'W' | 'L' | 'D' | 'N/A';
 }
 
@@ -34,6 +35,7 @@ export const calculatePlayerStats = (player: Player, savedGames: { [key: string]
     if (game.selectedPlayerIds?.includes(player.id)) {
       const goals = game.gameEvents?.filter(e => e.type === 'goal' && e.scorerId === player.id).length || 0;
       const assists = game.gameEvents?.filter(e => e.type === 'goal' && e.assisterId === player.id).length || 0;
+      const points = goals + assists;
 
       let result: 'W' | 'L' | 'D' | 'N/A' = 'N/A';
       if (game.homeScore > game.awayScore) {
@@ -50,6 +52,7 @@ export const calculatePlayerStats = (player: Player, savedGames: { [key: string]
         opponentName: game.opponentName,
         goals,
         assists,
+        points,
         result,
       });
     }

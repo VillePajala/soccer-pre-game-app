@@ -4,6 +4,7 @@ import { Player } from '@/types';
 import { AppState } from '@/app/page';
 import { calculatePlayerStats, PlayerStats as PlayerStatsData } from '@/utils/playerStats';
 import { format } from 'date-fns';
+import SparklineChart from './SparklineChart';
 
 interface PlayerStatsModalProps {
   isOpen: boolean;
@@ -74,6 +75,9 @@ const PlayerStatsModal: React.FC<PlayerStatsModalProps> = ({ isOpen, onClose, pl
         {/* Game by Game Stats */}
         <div className="flex-grow overflow-y-auto">
           <h3 className="text-lg font-semibold mb-2">{t('stats.gameLog', 'Game Log')}</h3>
+          <div className="mb-4">
+            <SparklineChart data={playerStats.gameByGameStats} />
+          </div>
           <div className="space-y-2">
             {playerStats.gameByGameStats.length > 0 ? (
               playerStats.gameByGameStats.map(game => (
@@ -90,7 +94,13 @@ const PlayerStatsModal: React.FC<PlayerStatsModalProps> = ({ isOpen, onClose, pl
                     </div>
                   </div>
                   <div className="text-right">
-                    <p>{t('stats.goals_short', 'G')}: {game.goals} | {t('stats.assists_short', 'A')}: {game.assists}</p>
+                    <p>
+                      <span className={game.goals > 0 ? 'text-green-400 font-bold' : ''}>
+                        {t('stats.goals_short', 'G')}: {game.goals}
+                      </span> | <span className={game.assists > 0 ? 'text-blue-400 font-bold' : ''}>
+                        {t('stats.assists_short', 'A')}: {game.assists}
+                      </span>
+                    </p>
                   </div>
                 </button>
               ))
