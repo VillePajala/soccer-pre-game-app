@@ -20,8 +20,8 @@ This file tracks potential new features and enhancements for the soccer coaching
     *   **Current Thoughts on Timing**: Can be started pre-migration. Complex queries/aggregations might be enhanced post-migration with a database.
 
 4.  **Toggleable Field View (Roster vs. Tactics)**:
-    *   **Status**: Not Implemented
-    *   **Description**: Allow the coach to toggle the main field view between the current player/opponent positions and a clean tactics board for drawing plays (perhaps hiding players/opponents or showing them as static icons).
+    *   **Status**: Implemented
+    *   **Description**: Allow the coach to toggle the main field view between the current player/opponent positions and a clean tactics board for drawing plays. The tactics board has its own drawing layer and allows for adding/moving colored discs.
     *   **Current Thoughts on Timing**: Pre-migration (client-side UI/state management).
 
 5.  **Link to Soccer Rules**:
