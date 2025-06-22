@@ -212,6 +212,10 @@ fiTranslations.controlBar.toggleLanguage = "Vaihda Englantiin";
 fiTranslations.controlBar.coachingMaterials = "Valmennusmateriaalit";
 fiTranslations.controlBar.manageSeasonsAndTournaments = "Hallinnoi Kausia & Turnauksia";
 fiTranslations.controlBar.rules = "Säännöt";
+fiTranslations.controlBar.toggleTacticsBoardShow = "Näytä taktiikkataulu";
+fiTranslations.controlBar.toggleTacticsBoardHide = "Näytä pelaajat";
+fiTranslations.controlBar.addHomeDisc = "Lisää kotijoukkueen pelaaja";
+fiTranslations.controlBar.addOpponentDisc = "Lisää vastustajan pelaaja";
 
 // Add common namespace if missing
 if (!fiTranslations.common) {
@@ -417,6 +421,10 @@ enTranslations.controlBar.gameSettingsButton = "Game Settings";
 enTranslations.controlBar.toggleLanguage = "Switch to Finnish";
 enTranslations.controlBar.manageSeasonsAndTournaments = "Manage Seasons & Tournaments";
 enTranslations.controlBar.rules = "Rules";
+enTranslations.controlBar.toggleTacticsBoardShow = "Show Tactics Board";
+enTranslations.controlBar.toggleTacticsBoardHide = "Show Players";
+enTranslations.controlBar.addHomeDisc = "Add Home Disc";
+enTranslations.controlBar.addOpponentDisc = "Add Opponent Disc";
 
 // Add common namespace if missing
 if (!enTranslations.common) {

@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback, useMemo, useReducer, useRef } 
 import SoccerField from '@/components/SoccerField';
 import PlayerBar from '@/components/PlayerBar';
 import ControlBar from '@/components/ControlBar';
-import TimerOverlay from '@/components/TimerOverlay';
 import InstructionsModal from '@/components/InstructionsModal';
 import GoalLogModal from '@/components/GoalLogModal';
 import GameStatsModal from '@/components/GameStatsModal';
@@ -137,6 +136,14 @@ export interface AppState {
   // isTimerRunning?: boolean;
   // nextSubDueTimeSeconds?: number;
   // subAlertLevel?: 'none' | 'warning' | 'due';
+  tacticalDiscs: TacticalDisc[];
+}
+
+export interface TacticalDisc {
+  id: string;
+  relX: number;
+  relY: number;
+  type: 'home' | 'opponent' | 'goalie';
 }
 
 // Placeholder data - Initialize new fields
@@ -185,6 +192,7 @@ const initialState: AppState = {
   subIntervalMinutes: 5, // Add sub interval with default
   completedIntervalDurations: [], // Initialize completed interval logs
   lastSubConfirmationTimeSeconds: 0, // Initialize last substitution confirmation time
+  tacticalDiscs: [],
 };
 
 // Define new localStorage keys
@@ -468,6 +476,48 @@ export default function Home() {
   const [isGamesImporting, setIsGamesImporting] = useState(false); // For importing games
   const [gamesImportError, setGamesImportError] = useState<string | null>(null);
   const [processingGameId, setProcessingGameId] = useState<string | null>(null); // To track which game item is being processed
+  const [isTacticsBoardView, setIsTacticsBoardView] = useState<boolean>(false);
+  const [tacticalDiscs, setTacticalDiscs] = useState<TacticalDisc[]>([]);
+
+  const handleToggleTacticsBoard = () => {
+    setIsTacticsBoardView(!isTacticsBoardView);
+  };
+
+  const handleAddTacticalDisc = (type: 'home' | 'opponent') => {
+    const newDisc: TacticalDisc = {
+      id: `tactical-${type}-${Date.now()}`,
+      relX: 0.5,
+      relY: 0.5,
+      type: type,
+    };
+    const newDiscs = [...tacticalDiscs, newDisc];
+    setTacticalDiscs(newDiscs);
+    saveStateToHistory({ tacticalDiscs: newDiscs });
+  };
+
+  const handleTacticalDiscMove = (discId: string, relX: number, relY: number) => {
+    const newDiscs = tacticalDiscs.map(d => d.id === discId ? { ...d, relX, relY } : d);
+    setTacticalDiscs(newDiscs);
+    saveStateToHistory({ tacticalDiscs: newDiscs });
+  };
+
+  const handleTacticalDiscRemove = (discId: string) => {
+    const newDiscs = tacticalDiscs.filter(d => d.id !== discId);
+    setTacticalDiscs(newDiscs);
+    saveStateToHistory({ tacticalDiscs: newDiscs });
+  };
+
+  const handleToggleTacticalDiscType = (discId: string) => {
+    const newDiscs = tacticalDiscs.map(d => {
+      if (d.id === discId) {
+        if (d.type === 'home') return { ...d, type: 'goalie' as const };
+        if (d.type === 'goalie') return { ...d, type: 'home' as const };
+      }
+      return d;
+    });
+    setTacticalDiscs(newDiscs);
+    saveStateToHistory({ tacticalDiscs: newDiscs });
+  };
 
   // --- Mutation for Saving Game (Initial definition with mutationFn only) ---
   const saveGameMutation = useMutation<
@@ -1062,6 +1112,7 @@ export default function Home() {
     setPlayersOnField(gameData?.playersOnField || (isInitialDefaultLoad ? initialState.playersOnField : []));
     setOpponents(gameData?.opponents || (isInitialDefaultLoad ? initialState.opponents : []));
     setDrawings(gameData?.drawings || (isInitialDefaultLoad ? initialState.drawings : []));
+    setTacticalDiscs(gameData?.tacticalDiscs || (isInitialDefaultLoad ? initialState.tacticalDiscs : []));
     
     // Update gameEvents from gameData if present, otherwise from initial state if it's an initial default load
     // setGameEvents(gameData?.events || (isInitialDefaultLoad ? initialState.gameEvents : [])); // REMOVE - Handled by LOAD_PERSISTED_GAME_DATA in reducer
@@ -1108,6 +1159,7 @@ export default function Home() {
       playersOnField: gameData?.playersOnField || initialState.playersOnField,
       opponents: gameData?.opponents || initialState.opponents,
       drawings: gameData?.drawings || initialState.drawings,
+      tacticalDiscs: gameData?.tacticalDiscs || [],
       availablePlayers: masterRosterQueryResultData || availablePlayers,
     };
     setHistory([newHistoryState]);
@@ -1171,6 +1223,7 @@ export default function Home() {
           playersOnField,
           opponents,
           drawings,
+          tacticalDiscs,
           availablePlayers: masterRosterQueryResultData || availablePlayers, // Master roster snapshot
           
           // Volatile timer states are intentionally EXCLUDED from the snapshot to be saved.
@@ -1199,6 +1252,7 @@ export default function Home() {
       // Local states that are part of the snapshot but not yet in gameSessionState:
       // gameEvents, // REMOVE - Now from gameSessionState
       gameSessionState,
+      tacticalDiscs,
     ]);
 
   // **** ADDED: Effect to prompt for setup if default game ID is loaded ****
@@ -1259,7 +1313,10 @@ export default function Home() {
     setDrawings([]);
     // Save reset state to history
     saveStateToHistory({ playersOnField: [], opponents: [], drawings: [] });
-  }, [saveStateToHistory, setDrawings, setOpponents, setPlayersOnField]); 
+    if (isTacticsBoardView) {
+      setTacticalDiscs([]);
+    }
+  }, [saveStateToHistory, setDrawings, setOpponents, setPlayersOnField, isTacticsBoardView, setTacticalDiscs]); 
 
   // --- Touch Drag from Bar Handlers (Updated for relative coords) ---
   const handlePlayerDragStartFromBar = useCallback((playerInfo: Player) => {
@@ -1355,6 +1412,7 @@ export default function Home() {
       // setGameTime(prevState.gameTime ?? ''); // REMOVE - Handled by LOAD_STATE_FROM_HISTORY
       dispatchGameSession({ type: 'SET_HOME_OR_AWAY', payload: prevState.homeOrAway });
       setHistoryIndex(prevStateIndex);
+      setTacticalDiscs(prevState.tacticalDiscs || []);
     } else {
       console.log("Cannot undo: at beginning of history");
     }
@@ -1395,64 +1453,13 @@ export default function Home() {
       }); 
       dispatchGameSession({ type: 'SET_SUB_INTERVAL', payload: nextState.subIntervalMinutes ?? 5 }); 
       setHistoryIndex(nextStateIndex);
+      setTacticalDiscs(nextState.tacticalDiscs || []);
     } else {
       console.log("Cannot redo: at end of history");
     }
   };
 
   // --- Timer Handlers ---
-  const handleStartPauseTimer = () => {
-    if (gameSessionState.gameStatus === 'notStarted') {
-      // Start the game (first period)
-      dispatchGameSession({ 
-        type: 'START_PERIOD', 
-        payload: { 
-          nextPeriod: 1, 
-          periodDurationMinutes: gameSessionState.periodDurationMinutes, 
-          subIntervalMinutes: gameSessionState.subIntervalMinutes // Use from gameSessionState
-        } 
-      });
-      console.log("Game started, Period 1.");
-    } else if (gameSessionState.gameStatus === 'periodEnd') {
-      // Start the next period
-      const nextPeriod = gameSessionState.currentPeriod + 1;
-      dispatchGameSession({ 
-        type: 'START_PERIOD', 
-        payload: { 
-          nextPeriod: nextPeriod, 
-          periodDurationMinutes: gameSessionState.periodDurationMinutes, 
-          subIntervalMinutes: gameSessionState.subIntervalMinutes // Use from gameSessionState
-        }
-      });
-      console.log(`Starting Period ${nextPeriod}.`);
-    } else if (gameSessionState.gameStatus === 'inProgress') {
-      // Pause or resume the current period
-      dispatchGameSession({ type: 'SET_TIMER_RUNNING', payload: !gameSessionState.isTimerRunning });
-      console.log(gameSessionState.isTimerRunning ? "Timer paused." : "Timer resumed."); 
-    } else if (gameSessionState.gameStatus === 'gameEnd') {
-      // Game has ended, do nothing or maybe allow reset?
-      console.log("Game has ended. Cannot start/pause.");
-    }
-  };
-
-  const handleResetTimer = () => {
-    // Dispatch the new action to reset only timer-specific fields
-    dispatchGameSession({ type: 'RESET_TIMER_ONLY' }); 
-    console.log("Timer reset to start of current period via RESET_TIMER_ONLY action.");
-  };
-
-  const handleSubstitutionMade = () => {
-    // Dispatch action to reducer
-    dispatchGameSession({ type: 'CONFIRM_SUBSTITUTION' });
-    console.log(`Substitution confirmed via reducer.`);
-  };
-
-  const handleSetSubInterval = (minutes: number) => {
-    const newMinutes = Math.max(1, minutes);
-    dispatchGameSession({ type: 'SET_SUB_INTERVAL', payload: newMinutes });
-    console.log(`Sub interval set to ${newMinutes}m via reducer.`);
-  };
-
   const handleToggleLargeTimerOverlay = () => {
     setShowLargeTimerOverlay(!showLargeTimerOverlay);
   };
@@ -1690,6 +1697,7 @@ export default function Home() {
         playersOnField,
         opponents,
         drawings,
+        tacticalDiscs,
         availablePlayers: masterRosterQueryResultData || availablePlayers, // Master roster snapshot
         
         // Volatile timer states are EXCLUDED.
@@ -2463,7 +2471,8 @@ export default function Home() {
           playersOnField,
           opponents,
           drawings,
-          availablePlayers, // <<< ADD BACK: Include roster available *at time of save*
+          tacticalDiscs,
+          availablePlayers: availablePlayers, // <<< ADD BACK: Include roster available *at time of save*
           showPlayerNames: gameSessionState.showPlayerNames, // USE gameSessionState
           teamName: gameSessionState.teamName,
           gameEvents: gameSessionState.gameEvents, // USE gameSessionState
@@ -2818,6 +2827,7 @@ export default function Home() {
           gameEvents: [], // Always start with empty events
           currentPeriod: 1, // Always start at period 1
           gameStatus: 'notStarted', // Always start as not started
+          tacticalDiscs: [],
           // Timer/Sub State - Use TOP-LEVEL initialState defaults (or current settings?)
           // Let's stick with initialState defaults for timer/sub settings for now
           subIntervalMinutes: initialState.subIntervalMinutes ?? 5,
@@ -3169,6 +3179,7 @@ export default function Home() {
   // Log gameEvents before PlayerBar is rendered
   console.log('[page.tsx] About to render PlayerBar, gameEvents for PlayerBar:', JSON.stringify(gameSessionState.gameEvents));
 
+
   return (
     // Main container with flex column layout
     <div className="flex flex-col h-screen bg-gray-900 text-white relative">
@@ -3213,64 +3224,34 @@ export default function Home() {
       {/* Opponent Bar (Optional) */}
 
       {/* Main content */}
-      <main className="flex-1 relative overflow-hidden">
-        {showLargeTimerOverlay && (
-          <TimerOverlay 
-              // Pass all required props as defined in TimerOverlayProps
-              timeElapsedInSeconds={gameSessionState.timeElapsedInSeconds} 
-              subAlertLevel={gameSessionState.subAlertLevel}
-              onSubstitutionMade={handleSubstitutionMade} 
-              completedIntervalDurations={gameSessionState.completedIntervalDurations || []}
-              subIntervalMinutes={gameSessionState.subIntervalMinutes}
-              onSetSubInterval={handleSetSubInterval}
-              isTimerRunning={gameSessionState.isTimerRunning}
-              onStartPauseTimer={handleStartPauseTimer}// Corrected prop name
-              onResetTimer={handleResetTimer}
-              onToggleGoalLogModal={handleToggleGoalLogModal}
-              onRecordOpponentGoal={() => handleLogOpponentGoal(gameSessionState.timeElapsedInSeconds)}
-              // Game score props
-              teamName={gameSessionState.teamName}
-              opponentName={gameSessionState.opponentName}
-              homeScore={gameSessionState.homeScore}
-              awayScore={gameSessionState.awayScore}
-              homeOrAway={gameSessionState.homeOrAway}
-              // Last substitution time
-              lastSubTime={gameSessionState.lastSubConfirmationTimeSeconds}
-              // Game Structure props
-              numberOfPeriods={gameSessionState.numberOfPeriods}
-              periodDurationMinutes={gameSessionState.periodDurationMinutes}
-              currentPeriod={gameSessionState.currentPeriod}
-              gameStatus={gameSessionState.gameStatus}
-              onOpponentNameChange={handleOpponentNameChange}
-              // REMOVE Duplicate props that were causing errors:
-              // timeElapsedInSeconds={gameSessionState.timeElapsedInSeconds}
-              // isTimerRunning={gameSessionState.isTimerRunning}
-              // subIntervalMinutes={gameSessionState.subIntervalMinutes}
-              // nextSubDueTimeSeconds={gameSessionState.nextSubDueTimeSeconds} // Not a prop of TimerOverlay
-              // subAlertLevel={gameSessionState.subAlertLevel}
-          />
-        )}
+      <main className="flex-1 flex flex-col items-center justify-center relative w-full overflow-hidden">
+        {/* Pass rel drawing handlers to SoccerField */}
         <SoccerField
           players={playersOnField}
           opponents={opponents}
           drawings={drawings}
-          showPlayerNames={gameSessionState.showPlayerNames} // USE gameSessionState
-          onPlayerDrop={handleDropOnField}
           onPlayerMove={handlePlayerMove}
           onPlayerMoveEnd={handlePlayerMoveEnd}
-          onDrawingStart={handleDrawingStart}
-          onDrawingAddPoint={handleDrawingAddPoint}
-          onDrawingEnd={handleDrawingEnd}
-          onPlayerRemove={handlePlayerRemove} // Pass the newly added handler
+          onPlayerRemove={handlePlayerRemove}
           onOpponentMove={handleOpponentMove}
           onOpponentMoveEnd={handleOpponentMoveEnd}
           onOpponentRemove={handleOpponentRemove}
+          onPlayerDrop={handleDropOnField}
+          showPlayerNames={gameSessionState.showPlayerNames}
+          onDrawingStart={handleDrawingStart}
+          onDrawingAddPoint={handleDrawingAddPoint}
+          onDrawingEnd={handleDrawingEnd}
           draggingPlayerFromBarInfo={draggingPlayerFromBarInfo}
           onPlayerDropViaTouch={handlePlayerDropViaTouch}
           onPlayerDragCancelViaTouch={handlePlayerDragCancelViaTouch}
-          // ADD timeElapsedInSeconds prop
           timeElapsedInSeconds={gameSessionState.timeElapsedInSeconds}
+          isTacticsBoardView={isTacticsBoardView}
+          tacticalDiscs={tacticalDiscs}
+          onTacticalDiscMove={handleTacticalDiscMove}
+          onTacticalDiscRemove={handleTacticalDiscRemove}
+          onToggleTacticalDiscType={handleToggleTacticalDiscType}
         />
+        {/* Other components that might overlay or interact with the field */}
       </main>
 
       {/* Control Bar */}
@@ -3304,6 +3285,10 @@ export default function Home() {
         onPlaceAllPlayers={handlePlaceAllPlayers} // New prop for placing all players
         highlightRosterButton={highlightRosterButton} // <<< PASS THE HIGHLIGHT PROP
         onOpenSeasonTournamentModal={handleOpenSeasonTournamentModal}
+        isTacticsBoardView={isTacticsBoardView}
+        onToggleTacticsBoard={handleToggleTacticsBoard}
+        onAddHomeDisc={() => handleAddTacticalDisc('home')}
+        onAddOpponentDisc={() => handleAddTacticalDisc('opponent')}
       />
         {/* Instructions Modal */}
         <InstructionsModal 
