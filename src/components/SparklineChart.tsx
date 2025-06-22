@@ -8,15 +8,6 @@ interface SparklineChartProps {
   data: { date: string; points: number; goals: number; assists: number; result: 'W' | 'L' | 'D' | 'N/A' }[];
 }
 
-const getResultColor = (result: 'W' | 'L' | 'D' | 'N/A') => {
-  switch (result) {
-    case 'W': return '#22c55e'; // green-500
-    case 'L': return '#ef4444'; // red-500
-    case 'D': return '#6b7280'; // gray-500
-    default: return '#4b5563'; // gray-600
-  }
-};
-
 const CustomTooltip: React.FC<TooltipProps<number, string>> = ({ active, payload }) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
@@ -31,8 +22,13 @@ const CustomTooltip: React.FC<TooltipProps<number, string>> = ({ active, payload
   return null;
 };
 
-const CustomizedDot = (props: any) => {
-  const { cx, cy, payload } = props;
+interface CustomizedDotProps {
+  cx?: number;
+  cy?: number;
+}
+
+const CustomizedDot = (props: CustomizedDotProps) => {
+  const { cx, cy } = props;
   return (
     <circle cx={cx} cy={cy} r={3} fill="#6366f1" stroke="#ffffff" strokeWidth={1} />
   );

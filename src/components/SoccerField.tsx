@@ -287,6 +287,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
 
     // --- Draw Tactical Discs ---
     if (isTacticsBoardView) {
+      const tacticalDiscRadius = PLAYER_RADIUS * 0.9;
       tacticalDiscs.forEach(disc => {
         const absX = disc.relX * W;
         const absY = disc.relY * H;
@@ -296,7 +297,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
         }
 
         context.beginPath();
-        context.arc(absX, absY, PLAYER_RADIUS, 0, Math.PI * 2);
+        context.arc(absX, absY, tacticalDiscRadius, 0, Math.PI * 2);
         context.save();
         context.shadowColor = 'rgba(0, 0, 0, 0.5)';
         context.shadowBlur = 5;
