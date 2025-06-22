@@ -6,6 +6,7 @@ import QueryProvider from './QueryProvider';
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 import InstallPrompt from "@/components/InstallPrompt";
 import I18nInitializer from "@/components/I18nInitializer";
+import { Analytics } from "@vercel/analytics/react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -39,6 +40,7 @@ export default function RootLayout({
             <ClientWrapper>{children}</ClientWrapper>
           </QueryProvider>
         </I18nInitializer>
+        <Analytics />
       </body>
     </html>
   );
