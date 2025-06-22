@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo, useReducer, useRef } 
 import SoccerField from '@/components/SoccerField';
 import PlayerBar from '@/components/PlayerBar';
 import ControlBar from '@/components/ControlBar';
+import TimerOverlay from '@/components/TimerOverlay';
 import InstructionsModal from '@/components/InstructionsModal';
 import GoalLogModal from '@/components/GoalLogModal';
 import GameStatsModal from '@/components/GameStatsModal';
@@ -1482,6 +1483,43 @@ export default function Home() {
   };
 
   // --- Timer Handlers ---
+  const handleStartPauseTimer = () => {
+    if (gameSessionState.gameStatus === 'notStarted') {
+      dispatchGameSession({
+        type: 'START_PERIOD',
+        payload: {
+          nextPeriod: 1,
+          periodDurationMinutes: gameSessionState.periodDurationMinutes,
+          subIntervalMinutes: gameSessionState.subIntervalMinutes
+        }
+      });
+    } else if (gameSessionState.gameStatus === 'periodEnd') {
+      const nextPeriod = gameSessionState.currentPeriod + 1;
+      dispatchGameSession({
+        type: 'START_PERIOD',
+        payload: {
+          nextPeriod: nextPeriod,
+          periodDurationMinutes: gameSessionState.periodDurationMinutes,
+          subIntervalMinutes: gameSessionState.subIntervalMinutes
+        }
+      });
+    } else if (gameSessionState.gameStatus === 'inProgress') {
+      dispatchGameSession({ type: 'SET_TIMER_RUNNING', payload: !gameSessionState.isTimerRunning });
+    }
+  };
+
+  const handleResetTimer = () => {
+    dispatchGameSession({ type: 'RESET_TIMER_ONLY' });
+  };
+
+  const handleSubstitutionMade = () => {
+    dispatchGameSession({ type: 'CONFIRM_SUBSTITUTION' });
+  };
+
+  const handleSetSubInterval = (minutes: number) => {
+    dispatchGameSession({ type: 'SET_SUB_INTERVAL', payload: Math.max(1, minutes) });
+  };
+
   const handleToggleLargeTimerOverlay = () => {
     setShowLargeTimerOverlay(!showLargeTimerOverlay);
   };
@@ -3290,6 +3328,34 @@ export default function Home() {
       {/* Main content */}
       <main className="flex-1 flex flex-col items-center justify-center relative w-full overflow-hidden">
         {/* Pass rel drawing handlers to SoccerField */}
+
+        {showLargeTimerOverlay && (
+          <TimerOverlay
+            timeElapsedInSeconds={gameSessionState.timeElapsedInSeconds}
+            subAlertLevel={gameSessionState.subAlertLevel}
+            onSubstitutionMade={handleSubstitutionMade}
+            completedIntervalDurations={gameSessionState.completedIntervalDurations || []}
+            subIntervalMinutes={gameSessionState.subIntervalMinutes}
+            onSetSubInterval={handleSetSubInterval}
+            isTimerRunning={gameSessionState.isTimerRunning}
+            onStartPauseTimer={handleStartPauseTimer}
+            onResetTimer={handleResetTimer}
+            onToggleGoalLogModal={handleToggleGoalLogModal}
+            onRecordOpponentGoal={() => handleLogOpponentGoal(gameSessionState.timeElapsedInSeconds)}
+            teamName={gameSessionState.teamName}
+            opponentName={gameSessionState.opponentName}
+            homeScore={gameSessionState.homeScore}
+            awayScore={gameSessionState.awayScore}
+            homeOrAway={gameSessionState.homeOrAway}
+            lastSubTime={gameSessionState.lastSubConfirmationTimeSeconds}
+            numberOfPeriods={gameSessionState.numberOfPeriods}
+            periodDurationMinutes={gameSessionState.periodDurationMinutes}
+            currentPeriod={gameSessionState.currentPeriod}
+            gameStatus={gameSessionState.gameStatus}
+            onOpponentNameChange={handleOpponentNameChange}
+          />
+        )}
+
         <SoccerField
           players={playersOnField}
           opponents={opponents}

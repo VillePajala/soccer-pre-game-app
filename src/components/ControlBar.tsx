@@ -268,6 +268,8 @@ const ControlBar: React.FC<ControlBarProps> = ({
         >
             {showLargeTimerOverlay ? <HiOutlineStopCircle className={iconSize} /> : <HiOutlineClock className={iconSize} />}
         </button>
+        
+        
         {/* Settings Menu Button (REMAINING) */}
         <div className="relative" ref={settingsMenuRef}>
           <button
