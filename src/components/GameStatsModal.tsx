@@ -281,8 +281,8 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
               goals: 0,
               assists: 0,
               totalScore: 0,
-              fpAwards: 0,
               gamesPlayed: 0,
+              avgPoints: 0,
           };
       });
 
@@ -333,8 +333,8 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                       goals: 0,
                       assists: 0,
                       totalScore: 0,
-                      fpAwards: 0,
                       gamesPlayed: 0,
+                      avgPoints: 0,
                   };
               }
           });
@@ -352,13 +352,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
               if (statsMap[playerId]) {
                 // Increment gamesPlayed only if the player exists in the main availablePlayers list
                 statsMap[playerId].gamesPlayed = (statsMap[playerId].gamesPlayed || 0) + 1;
-                 // ADD FP Award Calculation by checking Player object in saved game
-                game.availablePlayers?.forEach((playerInGame: Player) => {
-                    if (playerInGame.receivedFairPlayCard && statsMap[playerInGame.id]) {
-                        statsMap[playerInGame.id].fpAwards = (statsMap[playerInGame.id].fpAwards || 0) + 1;
-                    }
-                });
-               }
+              }
             });
         }
       });
@@ -439,8 +433,13 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
       });
     }
 
+    const finalStats = filteredAndSortedStats.map(player => ({
+      ...player,
+      avgPoints: player.gamesPlayed > 0 ? player.totalScore / player.gamesPlayed : 0,
+    }));
+
     // Return both stats and the processed game IDs
-    return { stats: filteredAndSortedStats, gameIds: processedGameIds };
+    return { stats: finalStats, gameIds: processedGameIds };
 
   }, [
     activeTab,
@@ -713,7 +712,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                       <th scope="col" className="px-1 py-2 text-center cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('goals')}> <div className="flex items-center justify-center">{t('common.goalsShort', 'M')} {sortColumn === 'goals' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1 w-3 h-3"/> : <FaSortDown className="ml-1 w-3 h-3"/>) : <FaSort className="ml-1 w-3 h-3 opacity-30"/>}</div> </th>
                       <th scope="col" className="px-1 py-2 text-center cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('assists')}> <div className="flex items-center justify-center">{t('common.assistsShort', 'S')} {sortColumn === 'assists' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1 w-3 h-3"/> : <FaSortDown className="ml-1 w-3 h-3"/>) : <FaSort className="ml-1 w-3 h-3 opacity-30"/>}</div> </th>
                       <th scope="col" className="px-1 py-2 text-center cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('totalScore')}> <div className="flex items-center justify-center">{t('common.totalScoreShort', 'P')} {sortColumn === 'totalScore' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1 w-3 h-3"/> : <FaSortDown className="ml-1 w-3 h-3"/>) : <FaSort className="ml-1 w-3 h-3 opacity-30"/>}</div> </th>
-                      <th scope="col" className="px-1 py-2 text-center cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('fpAwards')}> <div className="flex items-center justify-center">{t('common.fairPlayShort', 'FP')} {sortColumn === 'fpAwards' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1 w-3 h-3"/> : <FaSortDown className="ml-1 w-3 h-3"/>) : <FaSort className="ml-1 w-3 h-3 opacity-30"/>}</div> </th>
+                      <th scope="col" className="px-1 py-2 text-center">{t('common.avgPointsShort', 'AVG')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -729,7 +728,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                         <td className="px-1 py-1.5 text-center">{player.goals}</td>
                         <td className="px-1 py-1.5 text-center">{player.assists}</td>
                         <td className="px-1 py-1.5 text-center font-semibold">{player.totalScore}</td>
-                        <td className="px-1 py-1.5 text-center">{player.fpAwards ?? 0}</td>
+                        <td className="px-1 py-1.5 text-center">{player.avgPoints.toFixed(1)}</td>
                       </tr>
                     ))) : (
                       <tr><td colSpan={6} className="text-center py-3 text-slate-400 italic">{filterText ? t('common.noPlayersMatchFilter', 'Ei pelaajia hakusuodattimella') : t('common.noPlayersSelected', 'Ei pelaajia valittuna')}</td></tr>

@@ -49,7 +49,7 @@ const PlayerStatsModal: React.FC<PlayerStatsModalProps> = ({ isOpen, onClose, pl
         </div>
 
         {/* Summary Stats */}
-        <div className="grid grid-cols-3 gap-4 text-center mb-6 p-4 bg-slate-700/50 rounded-lg">
+        <div className="grid grid-cols-4 gap-4 text-center mb-6 p-4 bg-slate-700/50 rounded-lg">
           <div>
             <p className="text-2xl font-bold">{playerStats.totalGames}</p>
             <p className="text-sm text-slate-400">{t('stats.gamesPlayed', 'Games Played')}</p>
@@ -69,6 +69,14 @@ const PlayerStatsModal: React.FC<PlayerStatsModalProps> = ({ isOpen, onClose, pl
             </div>
             <p className="text-sm text-slate-400">{t('stats.assists', 'Assists')}</p>
             <p className="text-xs text-slate-500">({playerStats.avgAssistsPerGame.toFixed(1)} {t('stats.perGame', '/ game')})</p>
+          </div>
+          <div className="flex flex-col items-center justify-center">
+            <div className="flex items-center">
+              <span className="w-2 h-2 rounded-full bg-yellow-400 mr-2"></span>
+              <p className="text-2xl font-bold">{playerStats.totalGoals + playerStats.totalAssists}</p>
+            </div>
+            <p className="text-sm text-slate-400">{t('stats.points', 'Points')}</p>
+            <p className="text-xs text-slate-500">({(playerStats.avgGoalsPerGame + playerStats.avgAssistsPerGame).toFixed(1)} {t('stats.perGame', '/ game')})</p>
           </div>
         </div>
 

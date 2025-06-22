@@ -221,6 +221,7 @@ fiTranslations.controlBar.addOpponentDisc = "Lisää vastustajan pelaaja";
 if (!fiTranslations.common) {
   fiTranslations.common = {};
 }
+fiTranslations.common.avgPointsShort = "KA";
 fiTranslations.common.cancelButton = "Peruuta";
 fiTranslations.common.cancelEdit = "Peruuta";
 // ADD missing common keys used in GameSettingsModal labels with actual Finnish
@@ -430,6 +431,7 @@ enTranslations.controlBar.addOpponentDisc = "Add Opponent Disc";
 if (!enTranslations.common) {
   enTranslations.common = {};
 }
+enTranslations.common.avgPointsShort = "AVG";
 enTranslations.common.cancelButton = "Cancel";
 enTranslations.common.cancelEdit = "Cancel";
 // ADD missing common keys for English
@@ -622,6 +624,7 @@ fiTranslations.stats.goals_short = "M";
 fiTranslations.stats.assists_short = "S";
 fiTranslations.stats.noGames = "Ei pelitietoja saatavilla.";
 fiTranslations.stats.perGame = "/ peli";
+fiTranslations.stats.points = "Pisteet";
 
 if (!enTranslations.playerStats) {
   enTranslations.playerStats = {};
@@ -640,6 +643,7 @@ enTranslations.stats.goals_short = "G";
 enTranslations.stats.assists_short = "A";
 enTranslations.stats.noGames = "No game data available.";
 enTranslations.stats.perGame = "/ game";
+enTranslations.stats.points = "Points";
 
 // Generate a cache-busting version number
 // const cacheVersion = new Date().getTime();

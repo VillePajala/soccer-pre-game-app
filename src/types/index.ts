@@ -17,6 +17,7 @@ export interface PlayerStatRow extends Player {
   totalScore: number;
   fpAwards?: number;
   gamesPlayed: number;
+  avgPoints: number;
 }
 
 export interface Season {
