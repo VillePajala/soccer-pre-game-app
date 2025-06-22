@@ -13,6 +13,7 @@ import {
     HiOutlineStopCircle,
     HiOutlineClock,
     HiOutlineClipboardDocumentList, // Replaces FaClipboardList
+    HiOutlineClipboard, // Icon for Tactics Board
     HiOutlineLanguage,
     HiOutlineCog6Tooth, // Settings icon
     HiOutlineBookOpen, // Import for Training Resources
@@ -21,6 +22,8 @@ import {
     HiOutlineChevronLeft, // Chevron for Back button
     HiOutlineExclamationTriangle, // Icon for Hard Reset
     HiOutlineQuestionMarkCircle, // Icon for rules
+    HiOutlinePlusCircle, // Icon for adding discs
+    HiOutlineMinusCircle, // Icon for adding opponent discs
     // HiOutlineFolderArrowDown,   // Icon for Save Game As... (COMMENTED OUT)
     HiOutlineFolderOpen,       // Icon for Load Game...
     HiOutlineArrowPath,        // CORRECT Icon for Reset Stats
@@ -67,6 +70,10 @@ interface ControlBarProps {
   onPlaceAllPlayers: () => void; // New prop for placing all players on the field
   highlightRosterButton: boolean; // <<< ADD prop for highlighting
   onOpenSeasonTournamentModal: () => void;
+  isTacticsBoardView: boolean;
+  onToggleTacticsBoard: () => void;
+  onAddHomeDisc: () => void;
+  onAddOpponentDisc: () => void;
 }
 
 const ControlBar: React.FC<ControlBarProps> = ({
@@ -95,6 +102,10 @@ const ControlBar: React.FC<ControlBarProps> = ({
   onPlaceAllPlayers,
   highlightRosterButton, // <<< Receive prop
   onOpenSeasonTournamentModal,
+  isTacticsBoardView,
+  onToggleTacticsBoard,
+  onAddHomeDisc,
+  onAddOpponentDisc,
 }) => {
   const { t, i18n } = useTranslation(); // Standard hook
   console.log('[ControlBar Render] Received highlightRosterButton prop:', highlightRosterButton); // <<< Log prop value
@@ -177,21 +188,43 @@ const ControlBar: React.FC<ControlBarProps> = ({
 
       {/* Center Group: Field Actions */}
       <div className="flex items-center gap-2">
-        <button onClick={onToggleNames} className={`${baseButtonStyle} ${secondaryColor}`} title={t(showPlayerNames ? 'controlBar.toggleNamesHide' : 'controlBar.toggleNamesShow') ?? (showPlayerNames ? "Hide Names" : "Show Names")}>
-            {showPlayerNames ? <HiOutlineEyeSlash className={iconSize}/> : <HiOutlineEye className={iconSize}/>}
+        <button onClick={onToggleTacticsBoard} className={`${baseButtonStyle} ${secondaryColor}`} title={t(isTacticsBoardView ? 'controlBar.toggleTacticsBoardHide' : 'controlBar.toggleTacticsBoardShow') ?? (isTacticsBoardView ? "Show Players" : "Show Tactics Board")}>
+            {isTacticsBoardView ? <HiOutlineEye className={iconSize}/> : <HiOutlineClipboard className={iconSize}/>}
         </button>
-        <button onClick={onPlaceAllPlayers} className={`${baseButtonStyle} bg-indigo-600 hover:bg-indigo-500 focus:ring-indigo-500`} title={t('controlBar.placeAllPlayers') ?? "Place All Players on Field"}>
-            <HiOutlineSquares2X2 className={iconSize}/>
-        </button>
-        <button onClick={onClearDrawings} className={`${baseButtonStyle} ${clearColor}`} title={t('controlBar.clearDrawings') ?? "Clear Drawings"}>
-            <HiOutlineBackspace className={iconSize}/>
-        </button>
-        <button onClick={onAddOpponent} className={`${baseButtonStyle} ${addOpponentColor}`} title={t('controlBar.addOpponent') ?? "Add Opponent"}>
-            <HiOutlineUserPlus className={iconSize}/>
-        </button>
-        <button onClick={onResetField} className={`${baseButtonStyle} ${resetColor}`} title={t('controlBar.resetField') ?? "Reset Field"}>
-            <HiOutlineTrash className={iconSize}/>
-        </button>
+        {isTacticsBoardView ? (
+          <>
+            <button onClick={onAddHomeDisc} className={`${baseButtonStyle} bg-purple-600 hover:bg-purple-500 focus:ring-purple-500`} title={t('controlBar.addHomeDisc', 'Add Home Disc') ?? "Add Home Disc"}>
+              <HiOutlinePlusCircle className={iconSize}/>
+            </button>
+            <button onClick={onAddOpponentDisc} className={`${baseButtonStyle} bg-red-600 hover:bg-red-500 focus:ring-red-500`} title={t('controlBar.addOpponentDisc', 'Add Opponent Disc') ?? "Add Opponent Disc"}>
+              <HiOutlineMinusCircle className={iconSize}/>
+            </button>
+            <button onClick={onClearDrawings} className={`${baseButtonStyle} ${clearColor}`} title={t('controlBar.clearDrawings') ?? "Clear Drawings"}>
+                <HiOutlineBackspace className={iconSize}/>
+            </button>
+            <button onClick={onResetField} className={`${baseButtonStyle} ${resetColor}`} title={t('controlBar.resetField') ?? "Reset Field"}>
+                <HiOutlineTrash className={iconSize}/>
+            </button>
+          </>
+        ) : (
+          <>
+            <button onClick={onToggleNames} className={`${baseButtonStyle} ${secondaryColor}`} title={t(showPlayerNames ? 'controlBar.toggleNamesHide' : 'controlBar.toggleNamesShow') ?? (showPlayerNames ? "Hide Names" : "Show Names")}>
+                {showPlayerNames ? <HiOutlineEyeSlash className={iconSize}/> : <HiOutlineEye className={iconSize}/>}
+            </button>
+            <button onClick={onPlaceAllPlayers} className={`${baseButtonStyle} bg-indigo-600 hover:bg-indigo-500 focus:ring-indigo-500`} title={t('controlBar.placeAllPlayers') ?? "Place All Players on Field"}>
+                <HiOutlineSquares2X2 className={iconSize}/>
+            </button>
+            <button onClick={onClearDrawings} className={`${baseButtonStyle} ${clearColor}`} title={t('controlBar.clearDrawings') ?? "Clear Drawings"}>
+                <HiOutlineBackspace className={iconSize}/>
+            </button>
+            <button onClick={onAddOpponent} className={`${baseButtonStyle} ${addOpponentColor}`} title={t('controlBar.addOpponent') ?? "Add Opponent"}>
+                <HiOutlineUserPlus className={iconSize}/>
+            </button>
+            <button onClick={onResetField} className={`${baseButtonStyle} ${resetColor}`} title={t('controlBar.resetField') ?? "Reset Field"}>
+                <HiOutlineTrash className={iconSize}/>
+            </button>
+          </>
+        )}
       </div>
 
       {/* Right Group: Live/Info Actions & Settings */}
