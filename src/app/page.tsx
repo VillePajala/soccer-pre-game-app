@@ -1327,7 +1327,7 @@ export default function Home() {
       setTacticalDiscs([]);
       setTacticalDrawings([]);
     }
-  }, [saveStateToHistory, setDrawings, setOpponents, setPlayersOnField, isTacticsBoardView, setTacticalDiscs, setTacticalDrawings]);
+  }, [saveStateToHistory, setDrawings, setOpponents, setPlayersOnField, isTacticsBoardView, setTacticalDiscs, setTacticalDrawings, tacticalDrawings]);
 
   const handleClearDrawingsForView = () => {
     if (isTacticsBoardView) {
@@ -2995,7 +2995,8 @@ export default function Home() {
 
   }, [t, currentGameId, savedGames, /* handleOpenSaveGameModal, */ handleQuickSaveGame, setIsNewGameSetupModalOpen, 
       // <<< ADD dependencies >>>
-      availablePlayers, gameSessionState.selectedPlayerIds, setPlayerIdsForNewGame
+      availablePlayers, gameSessionState.selectedPlayerIds, setPlayerIdsForNewGame,
+      t
      ]); 
   // --- END Start New Game Handler ---
 

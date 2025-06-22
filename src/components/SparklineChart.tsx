@@ -31,8 +31,21 @@ const CustomTooltip: React.FC<TooltipProps<number, string>> = ({ active, payload
   return null;
 };
 
-const CustomizedDot: React.FC<any> = (props) => {
+interface CustomizedDotProps {
+  cx?: number;
+  cy?: number;
+  payload?: {
+    result: 'W' | 'L' | 'D' | 'N/A';
+  };
+}
+
+const CustomizedDot = (props: CustomizedDotProps) => {
   const { cx, cy, payload } = props;
+
+  if (!cx || !cy || !payload) {
+    return null;
+  }
+
   return (
     <circle cx={cx} cy={cy} r={4} fill={getResultColor(payload.result)} stroke="#ffffff" strokeWidth={1} />
   );
