@@ -2,9 +2,13 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Season, Tournament } from '../app/page';
-import { SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY, LAST_HOME_TEAM_NAME_KEY } from '@/config/constants';
+import { Player, Season, Tournament } from '@/types';
 import { HiPlusCircle } from 'react-icons/hi';
+import { getSeasons as utilGetSeasons } from '@/utils/seasons';
+import { getTournaments as utilGetTournaments } from '@/utils/tournaments';
+import { getMasterRoster } from '@/utils/masterRosterManager';
+import { getLastHomeTeamName as utilGetLastHomeTeamName, saveLastHomeTeamName as utilSaveLastHomeTeamName } from '@/utils/appSettings';
+import { UseMutationResult } from '@tanstack/react-query';
 
 interface NewGameSetupModalProps {
   isOpen: boolean;
@@ -23,6 +27,10 @@ interface NewGameSetupModalProps {
     homeOrAway: 'home' | 'away'
   ) => void;
   onCancel: () => void;
+  addSeasonMutation: UseMutationResult<Season | null, Error, { name: string }, unknown>;
+  addTournamentMutation: UseMutationResult<Tournament | null, Error, { name: string }, unknown>;
+  isAddingSeason: boolean;
+  isAddingTournament: boolean;
 }
 
 const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
@@ -30,6 +38,10 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   initialPlayerSelection,
   onStart,
   onCancel,
+  addSeasonMutation,
+  addTournamentMutation,
+  isAddingSeason,
+  isAddingTournament,
 }) => {
   const { t } = useTranslation();
   const [homeTeamName, setHomeTeamName] = useState('');
@@ -56,20 +68,23 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   const newTournamentInputRef = useRef<HTMLInputElement>(null);
 
   // state for periods and duration
-  const [localNumPeriods, setLocalNumPeriods] = useState<1 | 2>(2); // Default 2 periods
-  const [localPeriodDurationString, setLocalPeriodDurationString] = useState<string>('10'); // Default 10 minutes as string
+  const [localNumPeriods, setLocalNumPeriods] = useState<1 | 2>(2);
+  const [localPeriodDurationString, setLocalPeriodDurationString] = useState<string>('10');
 
   // <<< Step 4a: State for Home/Away >>>
   const [localHomeOrAway, setLocalHomeOrAway] = useState<'home' | 'away'>('home');
 
+  // MOVED state declarations for availablePlayersForSetup and selectedPlayerIds here
+  const [availablePlayersForSetup, setAvailablePlayersForSetup] = useState<Player[]>([]);
+  const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>(initialPlayerSelection || []);
+
+  // NEW: Loading and error states for initial data fetch
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
     if (isOpen) {
-      // --- Load last used home team name ---
-      const lastUsedHomeTeam = localStorage.getItem(LAST_HOME_TEAM_NAME_KEY);
-      setHomeTeamName(lastUsedHomeTeam || ''); // Set from storage or default to empty
-      // --- End Load ---
-
-      // Reset form fields
+      // Reinstate form reset logic
       setOpponentName('');
       setGameDate(new Date().toISOString().split('T')[0]);
       setGameLocation('');
@@ -77,51 +92,69 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
       setGameMinute('');
       setSelectedSeasonId(null);
       setSelectedTournamentId(null);
-      // Reset create new inputs
       setShowNewSeasonInput(false);
       setNewSeasonName('');
       setShowNewTournamentInput(false);
       setNewTournamentName('');
-      // Reset for period/duration
       setLocalNumPeriods(2);
-      setLocalPeriodDurationString(String(10));
-      // <<< Step 4a: Reset Home/Away >>>
+      setLocalPeriodDurationString('10');
+      setLocalHomeOrAway('home');
+      // End of reinstated form reset logic
 
-      // Load seasons and tournaments from localStorage
+      setError(null); 
+      setIsLoading(true);
+
+      // Focus on the first input field (home team name)
+      // This should ideally happen after initial data load or if not loading
+      // For now, keeping original simple focus logic, can be refined if race conditions occur.
+      setTimeout(() => homeTeamInputRef.current?.focus(), 100); 
+
+      const fetchData = async () => {
       try {
-        const storedSeasons = localStorage.getItem(SEASONS_LIST_KEY);
-        setSeasons(storedSeasons ? JSON.parse(storedSeasons) : []);
-      } catch (error) {
-        console.error("Failed to load or parse seasons:", error);
-        setSeasons([]);
-      }
-      try {
-        const storedTournaments = localStorage.getItem(TOURNAMENTS_LIST_KEY);
-        setTournaments(storedTournaments ? JSON.parse(storedTournaments) : []);
-      } catch (error) {
-        console.error("Failed to load or parse tournaments:", error);
-        setTournaments([]);
-      }
+          const roster: Player[] = await getMasterRoster();
+          setAvailablePlayersForSetup(roster || []);
+          if (initialPlayerSelection && initialPlayerSelection.length > 0) {
+            setSelectedPlayerIds(initialPlayerSelection);
+          } else if (roster && roster.length > 0) {
+            setSelectedPlayerIds(roster.map(p => p.id));
+          }
 
-      // Focus home team name input instead of opponent
-      setTimeout(() => {
-        homeTeamInputRef.current?.focus();
-      }, 100);
-    }
-  }, [isOpen]);
+          const lastHomeTeam = await utilGetLastHomeTeamName();
+          setHomeTeamName(lastHomeTeam || t('newGameSetupModal.defaultTeamName', 'My Team'));
 
-  // Focus input when create new section appears
-  useEffect(() => {
-    if (showNewSeasonInput) {
-        newSeasonInputRef.current?.focus();
-    }
-  }, [showNewSeasonInput]);
+          const seasonsData = await utilGetSeasons();
+          setSeasons(Array.isArray(seasonsData) ? seasonsData : []);
 
-  useEffect(() => {
-    if (showNewTournamentInput) {
-        newTournamentInputRef.current?.focus();
+          const tournamentsData = await utilGetTournaments();
+          setTournaments(Array.isArray(tournamentsData) ? tournamentsData : []);
+
+          // MOVED Focus to run earlier, but can be adjusted if data loading causes issues with it.
+          // setTimeout(() => nameInputRef.current?.focus(), 100); 
+        } catch (err) {
+          console.error("[NewGameSetupModal] Error fetching initial data:", err);
+          setError(t('newGameSetupModal.errors.dataLoadFailed', 'Failed to load initial setup data. Please try again.'));
+          setHomeTeamName(t('newGameSetupModal.defaultTeamName', 'My Team'));
+          setSeasons([]);
+          setTournaments([]);
+          setAvailablePlayersForSetup([]); // Reset on error too
+          setSelectedPlayerIds(initialPlayerSelection || []); // Reset selection on error
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchData();
     }
-  }, [showNewTournamentInput]);
+  }, [isOpen, initialPlayerSelection, t]);
+
+  // ADD Handler for toggling player selection
+  const handlePlayerSelectionToggle = (playerId: string) => {
+    setSelectedPlayerIds(prevSelectedIds => {
+      if (prevSelectedIds.includes(playerId)) {
+        return prevSelectedIds.filter(id => id !== playerId);
+    }
+      return [...prevSelectedIds, playerId];
+    });
+  };
 
   const handleSeasonChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
@@ -161,7 +194,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   };
 
   // Implement Add New Season logic
-  const handleAddNewSeason = () => {
+  const handleAddNewSeason = async () => {
     const trimmedName = newSeasonName.trim();
     if (!trimmedName) {
       alert(t('newGameSetupModal.newSeasonNameRequired', 'Please enter a name for the new season.'));
@@ -169,44 +202,39 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
       return;
     }
 
-    const newId = `season_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-    const newSeason: Season = { id: newId, name: trimmedName };
-
     try {
-      // 1. Load current seasons
-      const storedSeasons = localStorage.getItem(SEASONS_LIST_KEY);
-      const currentSeasons: Season[] = storedSeasons ? JSON.parse(storedSeasons) : [];
+      // Use the mutation
+      const newSeason = await addSeasonMutation.mutateAsync({ name: trimmedName });
       
-      // Check for duplicate names (optional but recommended)
-      if (currentSeasons.some(s => s.name.toLowerCase() === trimmedName.toLowerCase())) {
-          alert(t('newGameSetupModal.duplicateSeasonName', 'A season with this name already exists.'));
-          newSeasonInputRef.current?.focus();
-          return;
+      if (newSeason) {
+        // onSuccess in page.tsx will invalidate and refetch seasons.
+        // The local 'seasons' state in this modal will be updated by the useEffect 
+        // that fetches seasons when the modal opens, or if we explicitly refetch here.
+        // For now, we'll update the selection and UI, relying on eventual consistency.
+        setSeasons(prevSeasons => [...prevSeasons, newSeason].sort((a, b) => a.name.localeCompare(b.name)));
+        setSelectedSeasonId(newSeason.id);
+        setSelectedTournamentId(null);
+        setNewSeasonName(''); 
+        setShowNewSeasonInput(false); 
+        console.log("Add season mutation initiated for:", newSeason.name);
+        // No need to manually update 'seasons' state here if page.tsx invalidates
+      } else {
+        // This block might be reached if mutateAsync resolves but utilAddSeason returned null (e.g., duplicate)
+        // The mutation's onSuccess/onError in page.tsx would have more context.
+        console.warn("addSeasonMutation.mutateAsync completed, but newSeason is null. Check mutation's onSuccess/onError for details.");
+        // alert for duplicate is better handled by the mutation's error/success reporting if it returns a specific error or null for it
       }
-
-      // 2. Add new season
-      const updatedSeasons = [...currentSeasons, newSeason];
-
-      // 3. Save updated list
-      localStorage.setItem(SEASONS_LIST_KEY, JSON.stringify(updatedSeasons));
-
-      // 4. Update component state
-      setSeasons(updatedSeasons);
-      setSelectedSeasonId(newId); // Automatically select the new season
-      setSelectedTournamentId(null); // Ensure tournament is deselected
-      setNewSeasonName(''); // Clear input
-      setShowNewSeasonInput(false); // Hide input field
-
-      console.log("Added new season:", newSeason);
-
     } catch (error) {
-      console.error("Failed to save new season:", error);
-      alert(t('newGameSetupModal.errorAddingSeason', 'Error adding new season. See console for details.'));
+      // This catch is for errors from mutateAsync itself, if not handled by mutation's onError
+      console.error("Error calling addSeasonMutation.mutateAsync:", error);
+      // alert(t('newGameSetupModal.errorAddingSeasonGeneric', 'Error initiating add season. See console.'));
+      // The actual user-facing error for mutation failure should come from the mutation's onError handler in page.tsx
+      newSeasonInputRef.current?.focus();
     }
   };
 
   // Implement Add New Tournament logic
-  const handleAddNewTournament = () => {
+  const handleAddNewTournament = async () => {
     const trimmedName = newTournamentName.trim();
     if (!trimmedName) {
       alert(t('newGameSetupModal.newTournamentNameRequired', 'Please enter a name for the new tournament.'));
@@ -214,57 +242,42 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
       return;
     }
 
-    const newId = `tournament_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-    const newTournament: Tournament = { id: newId, name: trimmedName };
-
     try {
-      // 1. Load current tournaments
-      const storedTournaments = localStorage.getItem(TOURNAMENTS_LIST_KEY);
-      const currentTournaments: Tournament[] = storedTournaments ? JSON.parse(storedTournaments) : [];
+      // Use the mutation
+      const newTournament = await addTournamentMutation.mutateAsync({ name: trimmedName });
 
-      // Check for duplicate names (optional but recommended)
-      if (currentTournaments.some(t => t.name.toLowerCase() === trimmedName.toLowerCase())) {
-          alert(t('newGameSetupModal.duplicateTournamentName', 'A tournament with this name already exists.'));
-          newTournamentInputRef.current?.focus();
-          return;
+      if (newTournament) {
+        setTournaments(prevTournaments => [...prevTournaments, newTournament].sort((a,b) => a.name.localeCompare(b.name)));
+        setSelectedTournamentId(newTournament.id); 
+        setSelectedSeasonId(null); 
+        setNewTournamentName(''); 
+        setShowNewTournamentInput(false); 
+        console.log("Add tournament mutation initiated for:", newTournament.name);
+        // No need to manually update 'tournaments' state here
+      } else {
+        console.warn("addTournamentMutation.mutateAsync completed, but newTournament is null.");
       }
-
-      // 2. Add new tournament
-      const updatedTournaments = [...currentTournaments, newTournament];
-
-      // 3. Save updated list
-      localStorage.setItem(TOURNAMENTS_LIST_KEY, JSON.stringify(updatedTournaments));
-
-      // 4. Update component state
-      setTournaments(updatedTournaments);
-      setSelectedTournamentId(newId); // Automatically select the new tournament
-      setSelectedSeasonId(null); // Ensure season is deselected
-      setNewTournamentName(''); // Clear input
-      setShowNewTournamentInput(false); // Hide input field
-
-      console.log("Added new tournament:", newTournament);
-
     } catch (error) {
-      console.error("Failed to save new tournament:", error);
-      alert(t('newGameSetupModal.errorAddingTournament', 'Error adding new tournament. See console for details.'));
+      console.error("Error calling addTournamentMutation.mutateAsync:", error);
+      // alert(t('newGameSetupModal.errorAddingTournamentGeneric', 'Error initiating add tournament. See console.'));
+      newTournamentInputRef.current?.focus();
     }
   };
   // --- End Handlers for Create New ---
 
 
-  const handleStartClick = () => {
+  const handleStartClick = async () => {
     const trimmedHomeTeamName = homeTeamName.trim();
     const trimmedOpponentName = opponentName.trim();
 
-    // Validate home team name
     if (!trimmedHomeTeamName) {
-      alert(t('newGameSetupModal.homeTeamRequiredAlert', 'Please enter a home team name.'));
+      alert(t('newGameSetupModal.homeTeamNameRequired', 'Home Team Name is required.') || 'Home Team Name is required.');
       homeTeamInputRef.current?.focus();
       return;
     }
 
     if (!trimmedOpponentName) {
-      alert(t('newGameSetupModal.opponentRequiredAlert', 'Please enter an opponent name.'));
+      alert(t('newGameSetupModal.opponentNameRequired', 'Opponent Name is required.') || 'Opponent Name is required.');
       opponentInputRef.current?.focus();
       return;
     }
@@ -281,51 +294,43 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
         return;
     }
 
-    const finalGameTime = (gameHour && gameMinute) ? `${gameHour.padStart(2, '0')}:${gameMinute.padStart(2, '0')}` : '';
+    // Format game time properly
+    const formattedHour = gameHour.padStart(2, '0');
+    const formattedMinute = gameMinute.padStart(2, '0');
+    const gameTime = (gameHour && gameMinute) ? `${formattedHour}:${formattedMinute}` : '';
 
-    // Period duration validation
-    const periodDurationMinutes = parseInt(localPeriodDurationString, 10);
-    if (isNaN(periodDurationMinutes) || periodDurationMinutes <= 0) {
-        alert(t('newGameSetupModal.invalidPeriodDuration', 'Period duration must be a positive number.'));
+    // Validate period duration
+    const duration = parseInt(localPeriodDurationString, 10);
+    if (isNaN(duration) || duration <= 0) {
+        alert(t('newGameSetupModal.invalidPeriodDuration', 'Period duration must be a positive number.') || 'Period duration must be a positive number.');
         return;
     }
     
-    console.log("Starting game with:", {
-        homeTeam: trimmedHomeTeamName,
-        opponent: trimmedOpponentName,
-        date: gameDate,
-        location: gameLocation,
-        time: finalGameTime,
-        season: selectedSeasonId,
-        tournament: selectedTournamentId,
-        numPeriods: localNumPeriods,
-        periodDuration: periodDurationMinutes,
-        homeOrAway: localHomeOrAway
-    });
+    // --- Save last used home team name using utility function ---
+    try {
+      await utilSaveLastHomeTeamName(trimmedHomeTeamName);
+    } catch (error) {
+      console.error("Failed to save last home team name:", error);
+      // Continue without blocking, as this is not critical for starting the game
+    }
+    // --- End Save ---
 
-    // Call the onStart prop with ALL collected data
+    // Call the onStart callback from props using the modal's internal selectedPlayerIds state
     onStart(
-      initialPlayerSelection || [], // Pass empty array if null
+      selectedPlayerIds, // MODIFIED: Use the modal's current selection state
       trimmedHomeTeamName,
       trimmedOpponentName,
       gameDate,
-      gameLocation,
-      finalGameTime,
+      gameLocation.trim(),
+      gameTime,
       selectedSeasonId,
       selectedTournamentId,
-      localNumPeriods, // Pass the selected number of periods
-      periodDurationMinutes,    // Pass the parsed and validated number duration
-      localHomeOrAway         // <<< Step 4a: Pass value
+      localNumPeriods,
+      duration, // use validated duration
+      localHomeOrAway // <<< Step 4a: Pass Home/Away >>>
     );
 
-    // <<< --- Save last used home team name on success ---
-    try {
-        localStorage.setItem(LAST_HOME_TEAM_NAME_KEY, trimmedHomeTeamName);
-    } catch (error) {
-        console.error("Failed to save last home team name:", error); 
-        // Non-critical error, don't need to alert user
-    }
-    // <<< --- End Save ---
+    // Modal will be closed by parent component after onStart
   };
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
@@ -375,37 +380,59 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
     }
   };
 
-
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60] p-4">
-      <div className="bg-slate-800 rounded-lg shadow-xl p-6 w-full border border-slate-600 h-full overflow-hidden flex flex-col">
-        <h2 className="text-xl font-semibold mb-5 text-yellow-300 flex-shrink-0">
-          {t('newGameSetupModal.title')}
-        </h2>
-        
-        <div className="flex-grow overflow-y-auto pr-3 -mr-3 scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-700/50">
-          <div className="mb-4">
-            <label htmlFor="home-team-name" className="block text-sm font-medium text-slate-300 mb-1">
-              {t('newGameSetupModal.homeTeamLabel', 'Home Team Name: *')}
+  // Main content: Loading, Error, or Form
+  let modalContent;
+  if (isLoading) {
+    modalContent = (
+      <div className="flex flex-col items-center justify-center h-64 text-slate-400">
+        <svg className="animate-spin h-8 w-8 text-indigo-400 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <p>{t('newGameSetupModal.loadingData', 'Loading setup data...')}</p>
+      </div>
+    );
+  } else if (error) {
+    modalContent = (
+      <div className="bg-red-700/20 border border-red-600 text-red-300 px-4 py-3 rounded-md text-sm my-4 mx-2" role="alert">
+        <p className="font-semibold mb-1">{t('common.error', 'Error')}:</p>
+        <p>{error}</p>
+        <button 
+          onClick={() => { /* Add a retry mechanism if desired, for now just closes */ onCancel(); }}
+          className="mt-3 px-3 py-1.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded"
+        >
+          {t('common.close', 'Close')}
+        </button>
+      </div>
+    );
+  } else {
+    // Form content goes here when not loading and no error
+    modalContent = (
+      <>
+        {/* Home Team Name */}
+        <div className="mb-3">
+          <label htmlFor="homeTeamName" className="block text-sm font-medium text-slate-300 mb-1">
+            {t('newGameSetupModal.homeTeamName', 'Your Team Name')}
             </label>
             <input
+            type="text"
+            id="homeTeamName"
               ref={homeTeamInputRef}
-              type="text"
-              id="home-team-name"
               value={homeTeamName}
               onChange={(e) => setHomeTeamName(e.target.value)}
+            className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+            placeholder={t('newGameSetupModal.homeTeamPlaceholder', 'e.g., Galaxy U10')}
               onKeyDown={handleKeyDown}
-              placeholder={t('newGameSetupModal.homeTeamPlaceholder', 'Enter home team name') ?? ''}
-              className="w-full px-3 py-1.5 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              required
+            disabled={isLoading} // Disable if somehow still loading (belt and braces)
             />
           </div>
 
-          <div className="mb-4">
+        {/* Opponent Name */}
+        <div className="mb-3">
             <label htmlFor="opponentNameInput" className="block text-sm font-medium text-slate-300 mb-1">
-              {t('newGameSetupModal.opponentLabel')} *
+            {t('newGameSetupModal.opponentNameLabel', 'Opponent Name: *')}
             </label>
             <input
               ref={opponentInputRef}
@@ -414,15 +441,16 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
               value={opponentName}
               onChange={(e) => setOpponentName(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={t('newGameSetupModal.opponentPlaceholder') ?? undefined}
+            placeholder={t('newGameSetupModal.opponentPlaceholder', 'Enter opponent name') ?? ''}
               className="w-full px-3 py-1.5 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              required 
+            disabled={isLoading}
             />
           </div>
 
-          <div className="mb-4">
+        {/* Game Date */}
+        <div className="mb-3">
             <label htmlFor="gameDateInput" className="block text-sm font-medium text-slate-300 mb-1">
-              {t('newGameSetupModal.dateLabel')}
+            {t('newGameSetupModal.gameDateLabel', 'Game Date:')}
             </label>
             <input
               type="date"
@@ -431,10 +459,89 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
               onChange={(e) => setGameDate(e.target.value)}
               onKeyDown={handleKeyDown}
               className="w-full px-3 py-1.5 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            disabled={isLoading}
+            />
+        </div>
+
+        {/* Game Location */}
+        <div className="mb-3">
+          <label htmlFor="gameLocationInput" className="block text-sm font-medium text-slate-300 mb-1">
+            {t('newGameSetupModal.gameLocationLabel', 'Location (Optional):')}
+          </label>
+          <input
+            type="text"
+            id="gameLocationInput"
+            value={gameLocation}
+            onChange={(e) => setGameLocation(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={t('newGameSetupModal.locationPlaceholder', 'e.g., Central Park Field 2') ?? ''}
+            className="w-full px-3 py-1.5 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            disabled={isLoading}
+          />
+        </div>
+
+        {/* Game Time */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-slate-300 mb-1">
+            {t('newGameSetupModal.gameTimeLabel', 'Time (Optional):')}
+          </label>
+          <div className="flex items-center space-x-2">
+            <input
+              type="number"
+              value={gameHour}
+              onChange={handleHourChange}
+              onKeyDown={handleKeyDown}
+              placeholder={t('newGameSetupModal.hourPlaceholder', 'HH') ?? ''}
+              className="w-1/2 px-3 py-1.5 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              min="0" max="23"
+              disabled={isLoading}
+            />
+            <span className="text-slate-400">:</span>
+            <input
+              type="number"
+              value={gameMinute}
+              onChange={handleMinuteChange}
+              onKeyDown={handleKeyDown}
+              placeholder={t('newGameSetupModal.minutePlaceholder', 'MM') ?? ''}
+              className="w-1/2 px-3 py-1.5 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              min="0" max="59"
+              disabled={isLoading}
             />
           </div>
+          </div>
 
-          <div className="mb-4 p-3 border border-slate-700 rounded-md bg-slate-900/30">
+        {/* Player Selection (already structured for isLoading/error in previous step) */}
+        <div className="mb-3">
+          <h3 className="text-sm font-medium text-slate-300 mb-1.5">
+            {t('newGameSetupModal.selectPlayers', 'Select Players for this Game')}
+          </h3>
+          {availablePlayersForSetup.length > 0 ? (
+            <div className="max-h-40 overflow-y-auto bg-slate-700/50 p-2 rounded-md border border-slate-600 scrollbar-thin scrollbar-thumb-slate-500 scrollbar-track-slate-700">
+              {availablePlayersForSetup.map((player) => (
+                <div key={player.id} className="flex items-center mb-1.5 last:mb-0">
+                  <input
+                    type="checkbox"
+                    id={`player-select-${player.id}`}
+                    checked={selectedPlayerIds.includes(player.id)}
+                    onChange={() => handlePlayerSelectionToggle(player.id)} // Call defined handler
+                    className="h-4 w-4 rounded border-slate-500 bg-slate-600 text-indigo-500 focus:ring-indigo-400 focus:ring-offset-slate-800 mr-2.5 shrink-0"
+                    disabled={isLoading}
+                  />
+                  <label htmlFor={`player-select-${player.id}`} className="text-xs text-slate-200 cursor-pointer flex-grow">
+                    {player.name} {player.jerseyNumber ? `(#${player.jerseyNumber})` : ''}
+                  </label>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-slate-500 italic">
+              {isLoading ? t('newGameSetupModal.loadingPlayers', 'Loading players...') : t('newGameSetupModal.noPlayersInRoster', 'No players in master roster. Add players in Roster Settings.')}
+            </p>
+          )}
+          </div>
+
+        {/* Season Selection */}
+        <div className="mb-3 p-3 border border-slate-700/80 rounded-md bg-slate-700/30">
             <div className="flex justify-between items-center mb-2">
               <label htmlFor="seasonSelect" className="block text-sm font-medium text-slate-300">
                 {t('newGameSetupModal.seasonLabel', 'Season:')} 
@@ -443,15 +550,14 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                   <button 
                       onClick={handleShowCreateSeason}
                       className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={!!selectedTournamentId}
-                      title={t('newGameSetupModal.createNewSeasonTitle', 'Create New Season') ?? undefined}
+                disabled={!!selectedTournamentId || isLoading}
+                      title={isAddingSeason ? t('newGameSetupModal.creating', 'Creating...') : t('newGameSetupModal.createSeason')}
                   >
                     <HiPlusCircle className="w-4 h-4 mr-1" />
-                    {t('newGameSetupModal.createButton', 'Create New')}
+                    {isAddingSeason ? t('newGameSetupModal.creating', 'Creating...') : t('newGameSetupModal.createSeason')}
                   </button>
               )}
             </div>
-            
             {!showNewSeasonInput ? (
               <select
                 id="seasonSelect"
@@ -459,7 +565,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                 onChange={handleSeasonChange}
                 onKeyDown={handleKeyDown} 
                 className="w-full px-3 py-1.5 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-                disabled={!!selectedTournamentId}
+              disabled={!!selectedTournamentId || isLoading}
               >
                 <option value="">{t('newGameSetupModal.selectSeasonOption', '-- Select Season --')}</option>
                 {seasons.map((season) => (
@@ -478,19 +584,21 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                   onKeyDown={handleNewSeasonKeyDown}
                   placeholder={t('newGameSetupModal.newSeasonPlaceholder', 'Enter new season name...') ?? undefined}
                   className="px-3 py-1.5 bg-slate-600 border border-slate-400 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                disabled={isLoading}
                 />
                 <div className="flex justify-end space-x-2"> 
                     <button 
                         onClick={handleAddNewSeason} 
-                        className="px-4 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm"
-                        disabled={!newSeasonName.trim()}
+                  className="px-4 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm disabled:opacity-50"
+                  disabled={!newSeasonName.trim() || isLoading}
                     >
                         {t('newGameSetupModal.addButton', 'Add')}
                     </button>
                     <button 
                         onClick={() => setShowNewSeasonInput(false)} 
-                        className="px-4 py-1.5 bg-slate-600 text-white rounded hover:bg-slate-500 text-sm"
+                  className="px-4 py-1.5 bg-slate-600 text-white rounded hover:bg-slate-500 text-sm disabled:opacity-50"
                         title={t('newGameSetupModal.cancelAddTitle', 'Cancel Add') ?? undefined}
+                  disabled={isLoading}
                     >
                         {t('newGameSetupModal.cancelButton', 'Cancel')}
                     </button>
@@ -499,7 +607,8 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
             )}
           </div>
 
-          <div className="mb-4 p-3 border border-slate-700 rounded-md bg-slate-900/30">
+        {/* Tournament Selection */}
+        <div className="mb-4 p-3 border border-slate-700/80 rounded-md bg-slate-700/30">
               <div className="flex justify-between items-center mb-2">
                   <label htmlFor="tournamentSelect" className="block text-sm font-medium text-slate-300">
                       {t('newGameSetupModal.tournamentLabel', 'Tournament:')}
@@ -508,15 +617,14 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                       <button 
                           onClick={handleShowCreateTournament}
                           className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
-                          disabled={!!selectedSeasonId}
-                          title={t('newGameSetupModal.createNewTournamentTitle', 'Create New Tournament') ?? undefined}
+                disabled={!!selectedSeasonId || isLoading}
+                          title={isAddingTournament ? t('newGameSetupModal.creating', 'Creating...') : t('newGameSetupModal.createTournament')}
                       >
                       <HiPlusCircle className="w-4 h-4 mr-1" />
-                      {t('newGameSetupModal.createButton', 'Create New')}
+                      {isAddingTournament ? t('newGameSetupModal.creating', 'Creating...') : t('newGameSetupModal.createTournament')}
                       </button>
                   )}
               </div>
-              
               {!showNewTournamentInput ? (
                   <select
                   id="tournamentSelect"
@@ -524,7 +632,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                   onChange={handleTournamentChange}
                   onKeyDown={handleKeyDown}
                   className="w-full px-3 py-1.5 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-                  disabled={!!selectedSeasonId}
+              disabled={!!selectedSeasonId || isLoading}
                   >
                   <option value="">{t('newGameSetupModal.selectTournamentOption', '-- Select Tournament --')}</option>
                   {tournaments.map((tournament) => (
@@ -543,19 +651,21 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                           onKeyDown={handleNewTournamentKeyDown}
                           placeholder={t('newGameSetupModal.newTournamentPlaceholder', 'Enter new tournament name...') ?? undefined}
                           className="px-3 py-1.5 bg-slate-600 border border-slate-400 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                disabled={isLoading}
                       />
                       <div className="flex justify-end space-x-2"> 
                           <button 
                               onClick={handleAddNewTournament} 
-                              className="px-4 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm"
-                              disabled={!newTournamentName.trim()}
+                  className="px-4 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm disabled:opacity-50"
+                  disabled={!newTournamentName.trim() || isLoading}
                           >
                               {t('newGameSetupModal.addButton', 'Add')}
                           </button>
                           <button 
                               onClick={() => setShowNewTournamentInput(false)} 
-                              className="px-4 py-1.5 bg-slate-600 text-white rounded hover:bg-slate-500 text-sm"
+                  className="px-4 py-1.5 bg-slate-600 text-white rounded hover:bg-slate-500 text-sm disabled:opacity-50"
                               title={t('newGameSetupModal.cancelAddTitle', 'Cancel Add') ?? undefined}
+                  disabled={isLoading}
                           >
                               {t('newGameSetupModal.cancelButton', 'Cancel')}
                           </button>
@@ -564,133 +674,105 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
               )}
           </div>
           
-          <div className="mb-4">
-            <label htmlFor="gameLocationInput" className="block text-sm font-medium text-slate-300 mb-1">
-              {t('newGameSetupModal.locationLabel', 'Location (Optional)')}
+        {/* Game Structure Settings */}
+        <div className="grid grid-cols-2 gap-x-4 mb-3">
+          <div>
+            <label htmlFor="numPeriods" className="block text-sm font-medium text-slate-300 mb-1">
+              {t('newGameSetupModal.numPeriodsLabel', 'Number of Periods:')}
             </label>
-            <input
-              type="text"
-              id="gameLocationInput"
-              value={gameLocation}
-              onChange={(e) => setGameLocation(e.target.value)}
+            <select
+              id="numPeriods"
+              value={localNumPeriods}
+              onChange={(e) => setLocalNumPeriods(parseInt(e.target.value, 10) as 1 | 2)}
               onKeyDown={handleKeyDown}
-              placeholder={t('newGameSetupModal.locationPlaceholder', 'e.g., Home Field, Stadium X') ?? undefined}
-              className="w-full px-3 py-1.5 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-            />
+              className="w-full px-3 py-1.5 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+              disabled={isLoading}
+            >
+              <option value={1}>1</option>
+              <option value={2}>2</option>
+            </select>
           </div>
-
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-slate-300 mb-1">
-              {t('newGameSetupModal.timeLabel', 'Time (HH:MM) (Optional)')}
+          <div>
+            <label htmlFor="periodDuration" className="block text-sm font-medium text-slate-300 mb-1">
+              {t('newGameSetupModal.periodDurationLabel', 'Period Duration (min):')}
             </label>
-            <div className="flex items-center space-x-2">
               <input
                 type="number"
-                id="gameHourInput"
-                value={gameHour}
-                onChange={handleHourChange}
+              id="periodDuration"
+              value={localPeriodDurationString}
+              onChange={(e) => setLocalPeriodDurationString(e.target.value)} // Validate in handler
                 onKeyDown={handleKeyDown}
-                placeholder={t('newGameSetupModal.hourPlaceholder', 'HH') ?? 'HH'}
-                min="0"
-                max="23"
-                className="w-1/2 px-3 py-1.5 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-center"
-              />
-              <span className="text-slate-400 font-bold">:</span>
-              <input
-                type="number"
-                id="gameMinuteInput"
-                value={gameMinute}
-                onChange={handleMinuteChange}
-                onKeyDown={handleKeyDown}
-                placeholder={t('newGameSetupModal.minutePlaceholder', 'MM') ?? 'MM'}
-                min="0"
-                max="59"
-                className="w-1/2 px-3 py-1.5 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-center"
+              className="w-full px-3 py-1.5 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+              min="1"
+              disabled={isLoading}
               />
             </div>
           </div>
 
-          {/* ADD Game Structure Settings */}
-          <div className="grid grid-cols-2 gap-x-4 mb-6">
-            <div>
+        {/* Home/Away Selection */}
+        <div className="mb-3">
               <label className="block text-sm font-medium text-slate-300 mb-1">
-                {t('newGameSetupModal.periodsLabel', 'Periods')}
+            {t('newGameSetupModal.homeOrAwayLabel', 'Your Team is:')}
               </label>
-              <div className="flex items-center space-x-2 mt-1">
-                {[1, 2].map(num => (
+          <div className="flex space-x-3">
+            {(['home', 'away'] as const).map((option) => (
                   <button 
-                    key={num}
-                    onClick={() => setLocalNumPeriods(num as 1 | 2)}
-                    className={`w-full px-3 py-1.5 rounded text-sm ${localNumPeriods === num ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
-                    {num}
+                key={option}
+                type="button"
+                onClick={() => setLocalHomeOrAway(option)}
+                className={`flex-1 px-3 py-1.5 rounded-md text-sm font-medium border transition-colors disabled:opacity-50
+                  ${localHomeOrAway === option 
+                    ? 'bg-indigo-600 border-indigo-500 text-white' 
+                    : 'bg-slate-700 border-slate-500 text-slate-200 hover:bg-slate-600 hover:border-slate-400'}
+                `}
+                disabled={isLoading}
+              >
+                {option === 'home' ? t('common.home', 'Home') : t('common.away', 'Away')}
                   </button>
                 ))}
               </div>
             </div>
-            <div>
-              <label htmlFor="periodDurationInput" className="block text-sm font-medium text-slate-300 mb-1">
-                {t('newGameSetupModal.durationLabel', 'Duration (min)')}
-              </label>
-              <input
-                type="number"
-                id="periodDurationInput"
-                value={localPeriodDurationString}
-                onChange={(e) => setLocalPeriodDurationString(e.target.value)}
-                onKeyDown={handleKeyDown}
-                min="1"
-                className="w-full px-3 py-1.5 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              />
-            </div>
-          </div>
-          {/* END Game Structure Settings */}
+      </>
+    );
+  }
 
-          {/* --- Home/Away Selection --- */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-slate-300 mb-1">
-              {t('newGameSetupModal.venueLabel', 'Venue')} *
-            </label>
-            <div className="flex items-center space-x-4 bg-slate-700 border border-slate-500 rounded-md p-1.5">
-              <label className={`flex-1 text-center px-3 py-1 rounded cursor-pointer transition-colors duration-150 ${localHomeOrAway === 'home' ? 'bg-indigo-600 text-white' : 'bg-slate-600 hover:bg-slate-500'}`}>
-                <input 
-                  type="radio"
-                  name="homeOrAway"
-                  value="home"
-                  checked={localHomeOrAway === 'home'}
-                  onChange={() => setLocalHomeOrAway('home')}
-                  className="sr-only" // Hide the actual radio button
-                />
-                {t('general.home', 'Home')}
-              </label>
-              <label className={`flex-1 text-center px-3 py-1 rounded cursor-pointer transition-colors duration-150 ${localHomeOrAway === 'away' ? 'bg-indigo-600 text-white' : 'bg-slate-600 hover:bg-slate-500'}`}>
-                <input 
-                  type="radio"
-                  name="homeOrAway"
-                  value="away"
-                  checked={localHomeOrAway === 'away'}
-                  onChange={() => setLocalHomeOrAway('away')}
-                  className="sr-only"
-                />
-                {t('general.away', 'Away')}
-              </label>
-            </div>
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-start justify-center z-50 p-4 pt-8 sm:pt-12">
+      <div className="bg-slate-800 rounded-lg shadow-xl w-full max-w-lg border border-slate-600 flex flex-col max-h-[calc(100vh-theme(space.16))] sm:max-h-[calc(100vh-theme(space.24))]">
+        <div className="flex justify-between items-center p-4 border-b border-slate-700 flex-shrink-0">
+          <h2 className="text-lg font-semibold text-yellow-400">
+            {t('newGameSetupModal.title', 'New Game Setup')}
+          </h2>
+          <button onClick={onCancel} className="text-slate-400 hover:text-slate-200">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
           </div>
-          {/* --- End Home/Away Selection --- */}
+
+        <div className="p-5 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800 flex-grow">
+          {modalContent} {/* Render the appropriate content here */}
         </div>
 
-        <div className="flex justify-center space-x-3 mt-auto pt-4 border-t border-slate-700 flex-shrink-0"> 
+        {/* Footer with action buttons - only show if not loading and no error, or handle disabled state */}
+        {!isLoading && !error && (
+          <div className="px-5 py-3 border-t border-slate-700 flex justify-end space-x-3 flex-shrink-0 bg-slate-800/80 backdrop-blur-sm">
           <button 
+              type="button"
             onClick={onCancel}
-            className="px-4 py-2 bg-slate-600 text-white rounded hover:bg-slate-500 transition-colors text-sm"
+              className="px-4 py-2 rounded bg-slate-600 text-slate-200 hover:bg-slate-500 transition-colors text-sm font-medium"
           >
-            {t('newGameSetupModal.skipButton', 'Skip (No Auto-Save)')}
+              {t('common.cancel', 'Cancel')}
           </button>
           <button
-            onClick={handleStartClick}
-            className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition duration-150 text-sm"
+              type="button"
+              onClick={handleStartClick} // This is the existing confirm handler
+              className="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700 transition-colors text-sm font-medium"
           >
-            {t('newGameSetupModal.startButton')}
+              {t('newGameSetupModal.confirmAndStart', 'Confirm & Start Game')}
           </button>
         </div>
+        )}
       </div>
     </div>
   );

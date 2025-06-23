@@ -13,6 +13,7 @@ import {
     HiOutlineStopCircle,
     HiOutlineClock,
     HiOutlineClipboardDocumentList, // Replaces FaClipboardList
+    HiOutlineClipboard, // Icon for Tactics Board
     HiOutlineLanguage,
     HiOutlineCog6Tooth, // Settings icon
     HiOutlineBookOpen, // Import for Training Resources
@@ -20,6 +21,9 @@ import {
     HiOutlineChevronRight, // Chevron for submenu
     HiOutlineChevronLeft, // Chevron for Back button
     HiOutlineExclamationTriangle, // Icon for Hard Reset
+    HiOutlineQuestionMarkCircle, // Icon for rules
+    HiOutlinePlusCircle, // Icon for adding discs
+    // HiOutlineMinusCircle, // Icon for adding opponent discs
     // HiOutlineFolderArrowDown,   // Icon for Save Game As... (COMMENTED OUT)
     HiOutlineFolderOpen,       // Icon for Load Game...
     HiOutlineArrowPath,        // CORRECT Icon for Reset Stats
@@ -31,6 +35,7 @@ import {
     HiOutlineSquares2X2,       // For Place All Players on Field
     // HiOutlineXCircle, // REMOVE unused
     // HiOutlineRectangleGroup, // REMOVE unused
+    HiOutlineTrophy,
 } from 'react-icons/hi2'; // Using hi2 for Heroicons v2 Outline
 // REMOVE FaClock, FaUsers, FaCog (FaFutbol remains)
 import { FaFutbol } from 'react-icons/fa';
@@ -64,6 +69,11 @@ interface ControlBarProps {
   isGameLoaded: boolean; // To enable/disable the settings button
   onPlaceAllPlayers: () => void; // New prop for placing all players on the field
   highlightRosterButton: boolean; // <<< ADD prop for highlighting
+  onOpenSeasonTournamentModal: () => void;
+  isTacticsBoardView: boolean;
+  onToggleTacticsBoard: () => void;
+  onAddHomeDisc: () => void;
+  onAddOpponentDisc: () => void;
 }
 
 const ControlBar: React.FC<ControlBarProps> = ({
@@ -91,6 +101,11 @@ const ControlBar: React.FC<ControlBarProps> = ({
   isGameLoaded,
   onPlaceAllPlayers,
   highlightRosterButton, // <<< Receive prop
+  onOpenSeasonTournamentModal,
+  isTacticsBoardView,
+  onToggleTacticsBoard,
+  onAddHomeDisc,
+  onAddOpponentDisc,
 }) => {
   const { t, i18n } = useTranslation(); // Standard hook
   console.log('[ControlBar Render] Received highlightRosterButton prop:', highlightRosterButton); // <<< Log prop value
@@ -173,6 +188,30 @@ const ControlBar: React.FC<ControlBarProps> = ({
 
       {/* Center Group: Field Actions */}
       <div className="flex items-center gap-2">
+        <button 
+          onClick={onToggleTacticsBoard} 
+          className={`${baseButtonStyle} ${isTacticsBoardView ? 'bg-indigo-600 hover:bg-indigo-500 focus:ring-indigo-500' : secondaryColor}`} 
+          title={t(isTacticsBoardView ? 'controlBar.toggleTacticsBoardHide' : 'controlBar.toggleTacticsBoardShow') ?? (isTacticsBoardView ? "Show Players" : "Show Tactics Board")}
+        >
+            <HiOutlineClipboard className={iconSize}/>
+        </button>
+        {isTacticsBoardView ? (
+          <>
+            <button onClick={onAddHomeDisc} className={`${baseButtonStyle} bg-purple-600 hover:bg-purple-500 focus:ring-purple-500`} title={t('controlBar.addHomeDisc', 'Add Home Disc') ?? "Add Home Disc"}>
+              <HiOutlinePlusCircle className={iconSize}/>
+            </button>
+            <button onClick={onAddOpponentDisc} className={`${baseButtonStyle} bg-red-600 hover:bg-red-500 focus:ring-red-500`} title={t('controlBar.addOpponentDisc', 'Add Opponent Disc') ?? "Add Opponent Disc"}>
+              <HiOutlinePlusCircle className={iconSize}/>
+            </button>
+            <button onClick={onClearDrawings} className={`${baseButtonStyle} ${clearColor}`} title={t('controlBar.clearDrawings') ?? "Clear Drawings"}>
+                <HiOutlineBackspace className={iconSize}/>
+            </button>
+            <button onClick={onResetField} className={`${baseButtonStyle} ${resetColor}`} title={t('controlBar.resetField') ?? "Reset Field"}>
+                <HiOutlineTrash className={iconSize}/>
+            </button>
+          </>
+        ) : (
+          <>
         <button onClick={onToggleNames} className={`${baseButtonStyle} ${secondaryColor}`} title={t(showPlayerNames ? 'controlBar.toggleNamesHide' : 'controlBar.toggleNamesShow') ?? (showPlayerNames ? "Hide Names" : "Show Names")}>
             {showPlayerNames ? <HiOutlineEyeSlash className={iconSize}/> : <HiOutlineEye className={iconSize}/>}
         </button>
@@ -188,6 +227,8 @@ const ControlBar: React.FC<ControlBarProps> = ({
         <button onClick={onResetField} className={`${baseButtonStyle} ${resetColor}`} title={t('controlBar.resetField') ?? "Reset Field"}>
             <HiOutlineTrash className={iconSize}/>
         </button>
+          </>
+        )}
       </div>
 
       {/* Right Group: Live/Info Actions & Settings */}
@@ -227,6 +268,8 @@ const ControlBar: React.FC<ControlBarProps> = ({
         >
             {showLargeTimerOverlay ? <HiOutlineStopCircle className={iconSize} /> : <HiOutlineClock className={iconSize} />}
         </button>
+        
+        
         {/* Settings Menu Button (REMAINING) */}
         <div className="relative" ref={settingsMenuRef}>
           <button
@@ -248,8 +291,11 @@ const ControlBar: React.FC<ControlBarProps> = ({
                  
                    {/* --- Main Menu View --- */}
                    <div className="w-1/2 flex-shrink-0 overflow-y-auto max-h-[85vh]">
-                     <div className="py-1"> 
-  
+                     <div className="px-3 py-2 flex justify-between items-center border-b border-slate-700/80">
+                       <h3 className="text-base font-semibold text-yellow-300">{t('controlBar.menu.title', 'Menu')}</h3>
+                       <button onClick={() => { setIsSettingsMenuOpen(false); setMenuView('main'); }} className="text-slate-400 hover:text-slate-200" title={t('common.closeMenu', 'Close Menu') ?? undefined}><HiOutlineChevronLeft className="w-5 h-5"/></button>
+                     </div>
+                     <nav className="flex flex-col p-2 space-y-1 text-sm">
                        {/* Group 1: Game Management */} 
                        <div className="py-0.5">
                          <button onClick={wrapHandler(onQuickSave)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
@@ -274,6 +320,9 @@ const ControlBar: React.FC<ControlBarProps> = ({
                          <button onClick={wrapHandler(onOpenRosterModal)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
                            <HiOutlineUsers className={menuIconSize} /> {t('controlBar.manageRoster', 'Manage Roster')}
                          </button>
+                         <button onClick={wrapHandler(onOpenSeasonTournamentModal)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
+                            <HiOutlineTrophy className={menuIconSize} /> {t('controlBar.manageSeasonsAndTournaments', 'Manage Seasons & Tournaments')}
+                         </button>
                        </div>
 
                        {/* ADD Subtle Divider - slightly more visible */}
@@ -287,6 +336,27 @@ const ControlBar: React.FC<ControlBarProps> = ({
                          <button onClick={wrapHandler(onToggleTrainingResources)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
                            <HiOutlineBookOpen className={menuIconSize} />{t('controlBar.training', 'Training')}
                          </button>
+                         <a
+                           href="https://tulospalvelu.palloliitto.fi/category/P9EKK!splita_ekk25/info/playingmethod"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           onClick={() => { setIsSettingsMenuOpen(false); setMenuView('main'); }} // Close menu on click
+                           className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75"
+                         >
+                           <HiOutlineQuestionMarkCircle className={menuIconSize} />
+                           {t('controlBar.rules', 'Rules')}
+                         </a>
+                         {/* Coaching Materials Link (MOVED HERE AND STYLED CONSISTENTLY) */}
+                         <a
+                           href="https://www.palloliitto.fi/valmentajien-materiaalit-jalkapallo"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           onClick={() => { setIsSettingsMenuOpen(false); setMenuView('main'); }} // Close menu on click
+                           className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75"
+                         >
+                           <HiOutlineArrowTopRightOnSquare className={menuIconSize} />
+                           {t('controlBar.coachingMaterials', 'Coaching Materials')} 
+                         </a>
                          {/* Export Data - Link to Load Modal for now, as it has Export All */} 
                          <button onClick={wrapHandler(onOpenLoadGameModal)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
                            <HiOutlineDocumentArrowDown className={menuIconSize} />{t('controlBar.exportData', 'Export Data')}
@@ -323,7 +393,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
                            <HiOutlineExclamationTriangle className={menuIconSize} /> {t('controlBar.hardReset', 'Hard Reset App')}
                          </button>
                        </div>
-                     </div> 
+                     </nav>
                    </div>{/* End Main Menu View */}
 
                    {/* --- Tulospalvelu View --- */}

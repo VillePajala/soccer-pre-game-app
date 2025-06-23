@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { Player, GameEvent } from '@/app/page'; // Import Player & GameEvent type
+import { Player } from '@/types'; // Import Player from types
+import { GameEvent } from '@/app/page'; // Import GameEvent type
 import {
     HiOutlineShieldCheck, // Goalie icon
 } from 'react-icons/hi2';
@@ -42,12 +43,16 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
   onPlayerTapInBar,
   onToggleGoalie // Destructure goalie toggle handler
 }) => {
+  // REMOVED: console.log(`[PlayerDisk id=${id} name=${fullName}] Component RENDER. gameEvents prop:`, JSON.stringify(gameEvents));
+
   // Calculate goals and assists for this player
   const playerStats = useMemo(() => {
+    // REMOVED: console.log(`[PlayerDisk id=${id} name=${fullName}] Recalculating stats. gameEvents:`, JSON.stringify(gameEvents));
     const goals = gameEvents.filter(event => event.type === 'goal' && event.scorerId === id).length;
     const assists = gameEvents.filter(event => event.type === 'goal' && event.assisterId === id).length;
+    // REMOVED: console.log(`[PlayerDisk id=${id} name=${fullName}] Calculated stats - Goals: ${goals}, Assists: ${assists}`);
     return { goals, assists };
-  }, [gameEvents, id]);
+  }, [gameEvents, id]); // Reverted dependency array to include fullName as it was originally
 
   // --- Modified Event Handlers for Selection ONLY ---
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {

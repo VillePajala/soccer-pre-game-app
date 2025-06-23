@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Player } from '@/app/page'; // Import Player type
+import type { Player } from '@/types'; // Import Player type from the central types file
 import {
     HiOutlineXMark,
     HiOutlineCheck,
@@ -9,7 +9,8 @@ import {
     HiOutlineTrash,
     HiOutlineUserCircle, // Default player icon (or choose another)
     HiOutlinePencilSquare, // Icon for notes indicator
-    HiOutlineEllipsisVertical // Icon for actions menu
+    HiOutlineEllipsisVertical, // Icon for actions menu
+    HiOutlineChartBar // Icon for stats
 } from 'react-icons/hi2';
 import { useTranslation } from 'react-i18next';
 
@@ -27,6 +28,9 @@ interface RosterSettingsModalProps {
   onTogglePlayerSelection: (playerId: string) => void;
   teamName: string;
   onTeamNameChange: (newName: string) => void;
+  isRosterUpdating?: boolean;
+  rosterError?: string | null;
+  onOpenPlayerStats: (playerId: string) => void;
 }
 
 const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
@@ -42,7 +46,10 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
   selectedPlayerIds,
   onTogglePlayerSelection,
   teamName,
-  onTeamNameChange
+  onTeamNameChange,
+  isRosterUpdating,
+  rosterError,
+  onOpenPlayerStats,
 }) => {
   const { t } = useTranslation();
   const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
@@ -248,15 +255,15 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                 <div className="flex ml-2">
                   <button 
                     onClick={handleSaveTeamName} 
-                    className="text-green-500 hover:text-green-400 p-1 rounded hover:bg-slate-600" 
-                    title={t('common.save', 'Save')}
+                    title={t('rosterSettingsModal.saveTeamName', 'Save Team Name')}
+                    className="text-green-500 hover:text-green-400 p-1 rounded hover:bg-slate-700"
                   >
                     <HiOutlineCheck className="w-5 h-5" />
                   </button>
                   <button 
                     onClick={handleCancelTeamNameEdit} 
-                    className="text-red-500 hover:text-red-400 p-1 rounded hover:bg-slate-600" 
-                    title={t('common.cancel', 'Cancel')}
+                    title={t('rosterSettingsModal.cancelEditTeamName', 'Cancel Edit Team Name')}
+                    className="text-red-500 hover:text-red-400 p-1 rounded hover:bg-slate-700 ml-1"
                   >
                     <HiOutlineXMark className="w-5 h-5" />
                   </button>
@@ -330,13 +337,37 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                   />
                 {/* Action Buttons (Save/Cancel) - Use Icons */}
                 <div className="flex justify-end space-x-2 pt-1">
-                  <button onClick={handleAddNewPlayer} className="text-green-500 hover:text-green-400 p-1.5 rounded hover:bg-slate-600" title={t('common.save', 'Save') || 'Save'}>
+                  <button 
+                    onClick={handleAddNewPlayer} 
+                    className={`p-1.5 rounded ${isRosterUpdating ? 'text-gray-500' : 'text-green-500 hover:text-green-400 hover:bg-slate-600'}`}
+                    title={isRosterUpdating ? t('common.saving', 'Saving...') : t('common.save', 'Save') || 'Save'}
+                    disabled={isRosterUpdating}
+                  >
+                    {isRosterUpdating ? (
+                      <svg className="animate-spin h-5 w-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    ) : (
                     <HiOutlineCheck className="w-5 h-5" />
+                    )}
                   </button>
-                  <button onClick={handleCancelAddPlayer} className="text-red-500 hover:text-red-400 p-1.5 rounded hover:bg-slate-600" title={t('common.cancel', 'Cancel') || 'Cancel'}>
+                  <button 
+                    onClick={handleCancelAddPlayer} 
+                    className={`p-1.5 rounded ${isRosterUpdating ? 'text-gray-500 cursor-not-allowed' : 'text-red-500 hover:text-red-400 hover:bg-slate-600'}`}
+                    title={t('common.cancel', 'Cancel') || 'Cancel'}
+                    disabled={isRosterUpdating} // Also disable cancel during processing
+                  >
                     <HiOutlineXMark className="w-5 h-5" />
                   </button>
                 </div>
+              
+                {/* Display Roster Error for Add Player */}
+                {rosterError && isAddingPlayer && (
+                  <div className="mt-2 text-sm text-red-400">
+                    {rosterError}
+                  </div>
+                )}
             </div>
           ) : (
             // --- Add Player Button - Apply button styling ---
@@ -389,11 +420,12 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                           <button
                               title={player.isGoalie ? t('rosterSettingsModal.unsetGoalie', 'Unset Goalie') : t('rosterSettingsModal.setGoalie', 'Set Goalie')}
                               onClick={() => onToggleGoalie(player.id)}
+                              disabled={isRosterUpdating} // Disable during global roster update
                               className={`p-1 rounded text-xs transition-all duration-150 flex-shrink-0 flex items-center justify-center mt-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-700 ${ 
                                   player.isGoalie
                                       ? 'bg-amber-500 text-white shadow-md hover:bg-amber-600 focus:ring-amber-400'
                                       : 'border border-slate-600 text-slate-400 hover:border-amber-500 hover:text-amber-500 focus:ring-amber-500' 
-                              }`}
+                              } ${isRosterUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
                               style={{ minWidth: '24px', height: '24px' }}
                           >
                             <span className={`font-bold text-[10px] leading-none ${player.isGoalie ? 'text-white' : 'text-amber-500 group-hover:text-amber-400'}`}>G</span>
@@ -441,10 +473,27 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                           />
                         {/* Row 4: Action Buttons (Save/Cancel) */}
                         <div className="flex justify-end space-x-2 pt-1">
-                          <button onClick={() => handleSaveEdit(player.id)} className="text-green-500 hover:text-green-400 p-1.5 rounded hover:bg-slate-600" title={t('common.save', 'Save') || 'Save'}>
+                          <button 
+                            onClick={() => handleSaveEdit(player.id)} 
+                            className={`p-1.5 rounded ${isRosterUpdating ? 'text-gray-500' : 'text-green-500 hover:text-green-400 hover:bg-slate-600'}`}
+                            title={isRosterUpdating ? t('common.saving', 'Saving...') : t('common.save', 'Save') || 'Save'}
+                            disabled={isRosterUpdating}
+                          >
+                            {isRosterUpdating && editingPlayerId === player.id ? (
+                              <svg className="animate-spin h-5 w-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                            ) : (
                             <HiOutlineCheck className="w-5 h-5" />
+                            )}
                           </button>
-                          <button onClick={handleCancelEdit} className="text-red-500 hover:text-red-400 p-1.5 rounded hover:bg-slate-600" title={t('common.cancel', 'Cancel') || 'Cancel'}>
+                          <button 
+                            onClick={handleCancelEdit} 
+                            className={`p-1.5 rounded ${isRosterUpdating ? 'text-gray-500 cursor-not-allowed' : 'text-red-500 hover:text-red-400 hover:bg-slate-600'}`}
+                            title={t('common.cancel', 'Cancel') || 'Cancel'}
+                            disabled={isRosterUpdating}
+                          >
                             <HiOutlineXMark className="w-5 h-5" />
                           </button>
                         </div>
@@ -461,12 +510,14 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                             onChange={() => onTogglePlayerSelection(player.id)}
                             className="form-checkbox h-4 w-4 text-indigo-600 bg-slate-600 border-slate-500 rounded focus:ring-indigo-500 shrink-0" 
                             title={t('rosterSettingsModal.toggleSelection', 'Toggle player selection for match')}
+                            disabled={isRosterUpdating} // Disable during global roster update
                           />
                           {/* Goalie Toggle Button (Display) */}
                           <button
                             title={player.isGoalie ? t('rosterSettingsModal.unsetGoalie', 'Unset Goalie') : t('rosterSettingsModal.setGoalie', 'Set Goalie')}
                             onClick={() => onToggleGoalie(player.id)}
-                            className={`p-1 rounded text-xs transition-all duration-150 flex-shrink-0 flex items-center justify-center focus:outline-none ${player.isGoalie ? 'bg-amber-500 text-white shadow-sm' : 'border border-slate-700 text-slate-500 opacity-60 hover:opacity-100 hover:border-amber-500 hover:text-amber-500'}`}
+                            disabled={isRosterUpdating} // Disable during global roster update
+                            className={`p-1 rounded text-xs transition-all duration-150 flex-shrink-0 flex items-center justify-center focus:outline-none ${player.isGoalie ? 'bg-amber-500 text-white shadow-sm' : 'border border-slate-700 text-slate-500 opacity-60 hover:opacity-100 hover:border-amber-500 hover:text-amber-500'} ${isRosterUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
                             style={{ minWidth: '20px', height: '20px' }}
                           >
                             <span className={`font-bold text-[9px] leading-none ${player.isGoalie ? 'text-white' : 'text-amber-600'}`}>G</span>
@@ -488,9 +539,9 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                           <div className="relative">
                             <button
                               onClick={(e) => { e.stopPropagation(); setActionsMenuPlayerId(actionsMenuPlayerId === player.id ? null : player.id); }}
-                              className="text-slate-400 hover:text-slate-100 p-1 rounded hover:bg-slate-700 flex-shrink-0"
+                              className={`p-1 rounded flex-shrink-0 ${isRosterUpdating ? 'text-slate-600 cursor-not-allowed' : 'text-slate-400 hover:text-slate-100 hover:bg-slate-700'}`}
                               title={t('rosterSettingsModal.actions', 'Actions')}
-                              disabled={isAddingPlayer || !!editingPlayerId} // Keep disabled logic
+                              disabled={isAddingPlayer || !!editingPlayerId || isRosterUpdating}
                             >
                               <HiOutlineEllipsisVertical className="w-5 h-5" />
                             </button>
@@ -502,10 +553,18 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 {/* Use t() for button text */}
-                                <button onClick={() => { handleStartEdit(player.id); setActionsMenuPlayerId(null); }} className="flex items-center w-full px-3 py-1.5 text-sm text-blue-300 hover:bg-slate-600 disabled:opacity-50" disabled={isAddingPlayer || !!editingPlayerId}>
+                                <button onClick={() => { handleStartEdit(player.id); setActionsMenuPlayerId(null); }} className={`flex items-center w-full px-3 py-1.5 text-sm ${isRosterUpdating ? 'text-blue-600 opacity-50 cursor-not-allowed' : 'text-blue-300 hover:bg-slate-600'}`} disabled={isAddingPlayer || !!editingPlayerId || isRosterUpdating}>
                                  <HiOutlinePencil className="w-4 h-4 mr-2" /> {t('common.edit', 'Edit')}
                                 </button>
-                                <button onClick={() => { onRemovePlayer(player.id); setActionsMenuPlayerId(null); }} className="flex items-center w-full px-3 py-1.5 text-sm text-red-400 hover:bg-slate-600 disabled:opacity-50" disabled={isAddingPlayer || !!editingPlayerId}>
+                                <button onClick={() => { onOpenPlayerStats(player.id); setActionsMenuPlayerId(null); }} className={`flex items-center w-full px-3 py-1.5 text-sm ${isRosterUpdating ? 'text-green-600 opacity-50 cursor-not-allowed' : 'text-green-400 hover:bg-slate-600'}`} disabled={isAddingPlayer || !!editingPlayerId || isRosterUpdating}>
+                                  <HiOutlineChartBar className="w-4 h-4 mr-2" /> {t('common.stats', 'Stats')}
+                                </button>
+                                <button onClick={() => { 
+                                  if (window.confirm(t('rosterSettingsModal.confirmDeletePlayer', 'Are you sure you want to remove this player? This action cannot be undone.'))) {
+                                    onRemovePlayer(player.id); 
+                                  }
+                                  setActionsMenuPlayerId(null); 
+                                }} className={`flex items-center w-full px-3 py-1.5 text-sm ${isRosterUpdating ? 'text-red-600 opacity-50 cursor-not-allowed' : 'text-red-400 hover:bg-slate-600'}`} disabled={isAddingPlayer || !!editingPlayerId || isRosterUpdating}>
                                  <HiOutlineTrash className="w-4 h-4 mr-2" /> {t('common.remove', 'Remove')}
                                 </button>
                               </div>
@@ -517,6 +576,12 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                   </div>
                 ))}
              </div>
+            {/* Display Roster Error at the end of the player list section if not in add mode */}
+            {rosterError && !isAddingPlayer && (
+                <div className="mt-3 text-sm text-red-400">
+                    {rosterError}
+                </div>
+            )}
           </section>
         </div>
 

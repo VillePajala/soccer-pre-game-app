@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react'; // Added useEffect
 import { useTranslation } from 'react-i18next';
-import { Player } from '@/app/page'; // Remove GameEvent import
+import { Player } from '@/types'; // Import from types instead of page
 
 interface GoalLogModalProps {
   isOpen: boolean;

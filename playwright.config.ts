@@ -26,15 +26,22 @@ export default defineConfig({
     /* Base URL to use in actions like `await page.goto('/')`. */
     baseURL: 'http://localhost:3000', // Assuming default Next.js port
 
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on-first-retry',
+    /* Collect trace for failed tests. See https://playwright.dev/docs/trace-viewer */
+    trace: 'retain-on-failure',
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
   },
 
   /* Configure projects for major browsers */
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { 
+        ...devices['Pixel 5'],
+        launchOptions: {
+          args: ['--disable-features=DesktopPwaInstallPrompt']
+        }
+      },
     },
 
     // {
@@ -73,6 +80,7 @@ export default defineConfig({
     command: 'npm run dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
+    timeout: 120 * 1000,
     stdout: 'pipe',
     stderr: 'pipe',
   },

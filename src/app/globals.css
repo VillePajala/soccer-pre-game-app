@@ -82,3 +82,8 @@ body > div {
   height: 1rem !important;
   cursor: pointer !important;
 }
+
+.glow-orange {
+  box-shadow: 0 0 15px 5px rgba(245, 158, 11, 0.7), inset 0 0 0 2px rgba(245, 158, 11, 0.9);
+  border-radius: 0.375rem; /* Corresponds to rounded-md if needed */
+}

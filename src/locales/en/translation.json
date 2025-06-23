@@ -109,7 +109,21 @@
     "toggleSelection": "Toggle player selection for match",
     "removeFairPlay": "Remove Fair Play",
     "awardFairPlay": "Award Fair Play Card",
-    "actions": "Actions"
+    "actions": "Actions",
+    "confirmDeletePlayer": "Are you sure you want to remove this player? This action cannot be undone.",
+    "errors": {
+      "updateFailed": "Error updating player {{playerName}}. Please try again.",
+      "goalieStatusFailed": "Error setting goalie status for player {{playerId}}. Please try again.",
+      "removeFailedNotFound": "Error removing player {{playerId}}. Player not found or removal failed.",
+      "removeFailed": "Error removing player {{playerId}}. Please try again.",
+      "addFailedDuplicate": "Error adding player {{playerName}}. Player may already exist or data is invalid.",
+      "addFailed": "Error adding player {{playerName}}. Please try again.",
+      "playerNotFound": "Player not found. Cannot toggle goalie status.",
+      "unexpected": "An unexpected error occurred.",
+      "nameRequired": "Player name cannot be empty.",
+      "duplicateName": "A player with this name already exists. Please use a different name.",
+      "duplicateNumber": "A player with this jersey number already exists. Please use a different number or leave it blank."
+    }
   },
   "loadGameModal": {
       "noGamesToExport": "No saved games to export.",

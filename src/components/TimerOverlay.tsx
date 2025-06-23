@@ -167,6 +167,13 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
   const displayHomeTeamName = homeOrAway === 'home' ? teamName : opponentName;
   const displayAwayTeamName = homeOrAway === 'home' ? opponentName : teamName;
 
+  // Determine score colors based on homeOrAway status
+  const userTeamColor = 'text-green-400';
+  const opponentTeamColor = 'text-red-400';
+
+  const homeScoreDisplayColor = homeOrAway === 'home' ? userTeamColor : opponentTeamColor;
+  const awayScoreDisplayColor = homeOrAway === 'away' ? userTeamColor : opponentTeamColor;
+
   return (
     <div className={`fixed inset-0 z-40 flex flex-col items-center p-4 pt-12 ${bgColor} backdrop-blur-lg`}>
       <div className="w-full max-w-lg flex flex-col items-center">
@@ -174,9 +181,9 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
         <div className="bg-slate-800/70 px-5 py-2 rounded-lg mb-4">
           <div className="flex items-center justify-center gap-3 text-xl font-semibold">
             <span className="text-slate-100">{displayHomeTeamName}</span>
-            <span className={`text-2xl font-bold ${homeScore > awayScore ? 'text-green-400' : 'text-slate-100'}`}>{homeScore}</span>
+            <span className={`text-2xl font-bold ${homeScoreDisplayColor}`}>{homeScore}</span>
             <span className="text-slate-500">-</span>
-            <span className={`text-2xl font-bold ${awayScore > homeScore ? 'text-red-400' : 'text-slate-100'}`}>{awayScore}</span>
+            <span className={`text-2xl font-bold ${awayScoreDisplayColor}`}>{awayScore}</span>
             {/* --- Opponent Name Display/Edit --- */}
             {isEditingOpponentName ? (
                 <input

@@ -1,18 +1,32 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import ClientWrapper from "@/components/ClientWrapper";
+import QueryProvider from './QueryProvider';
+import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
+import InstallPrompt from "@/components/InstallPrompt";
+import I18nInitializer from "@/components/I18nInitializer";
+import { Analytics } from "@vercel/analytics/react";
+import { manifestConfig } from "@/config/manifest.config.js";
 
 const inter = Inter({ subsets: ["latin"] });
 
+// Determine the current branch
+const branch = process.env.VERCEL_GIT_COMMIT_REF || 'development';
+const config = manifestConfig[branch] || manifestConfig.default;
+
 export const metadata: Metadata = {
-  title: "Coaching Companion",
+  title: config.appName,
   description: "Soccer Tactics and Timer App for Coaches",
   icons: {
-    icon: '/pepo-logo.png',
-    apple: '/pepo-logo.png',
+    icon: config.iconPath,
+    apple: config.iconPath,
   },
   manifest: '/manifest.json',
+};
+
+export const viewport: Viewport = {
+  themeColor: config.themeColor,
 };
 
 export default function RootLayout({
@@ -24,12 +38,18 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-        <meta name="theme-color" content="#1e293b" />
-        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
       <body className={inter.className}>
-        <ClientWrapper>{children}</ClientWrapper>
+        <I18nInitializer>
+          <ServiceWorkerRegistration />
+          <InstallPrompt />
+          <QueryProvider>
+            <ClientWrapper>{children}</ClientWrapper>
+          </QueryProvider>
+        </I18nInitializer>
+        <Analytics />
       </body>
     </html>
   );

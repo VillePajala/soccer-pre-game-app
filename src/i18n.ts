@@ -74,26 +74,26 @@ if (!fiTranslations.newGameSetupModal) {
   fiTranslations.newGameSetupModal = {};
 }
 fiTranslations.newGameSetupModal.title = "Uuden Pelin Asetukset";
-fiTranslations.newGameSetupModal.opponentLabel = "Vastustajan Nimi:";
+fiTranslations.newGameSetupModal.opponentNameLabel = "Vastustajan Nimi: *";
 fiTranslations.newGameSetupModal.opponentPlaceholder = "Syötä vastustajan nimi";
-fiTranslations.newGameSetupModal.dateLabel = "Pelin Päivämäärä:";
+fiTranslations.newGameSetupModal.gameDateLabel = "Pelin Päivämäärä:";
 fiTranslations.newGameSetupModal.gameTypeLabel = "Pelin Tyyppi:";
 fiTranslations.newGameSetupModal.gameTypeSeason = "Sarjaottelu";
 fiTranslations.newGameSetupModal.gameTypeTournament = "Turnaus";
 fiTranslations.newGameSetupModal.skipButton = "Ohita";
 fiTranslations.newGameSetupModal.startButton = "Aloita Peli";
 fiTranslations.newGameSetupModal.opponentRequiredAlert = "Syötä vastustajan nimi.";
-// Add location and time translations
-fiTranslations.newGameSetupModal.locationLabel = "Paikka (Valinnainen)";
+fiTranslations.newGameSetupModal.gameLocationLabel = "Paikka (Valinnainen):";
 fiTranslations.newGameSetupModal.locationPlaceholder = "esim. Kotikenttä, Stadion X";
-fiTranslations.newGameSetupModal.timeLabel = "Aika (TT:MM) (Valinnainen)";
+fiTranslations.newGameSetupModal.gameTimeLabel = "Aika (Valinnainen):";
 fiTranslations.newGameSetupModal.hourPlaceholder = "TT";
 fiTranslations.newGameSetupModal.minutePlaceholder = "MM";
 fiTranslations.newGameSetupModal.invalidTimeAlert = "Anna kelvollinen aika (Tunti 0-23, Minuutti 0-59) tai jätä molemmat kentät tyhjiksi.";
-// --- Add Missing Finnish Translations ---
 fiTranslations.newGameSetupModal.seasonLabel = "Kausi:";
 fiTranslations.newGameSetupModal.tournamentLabel = "Turnaus:";
-fiTranslations.newGameSetupModal.createButton = "Luo Uusi";
+fiTranslations.newGameSetupModal.createSeason = "Luo Kausi";
+fiTranslations.newGameSetupModal.createTournament = "Luo Turnaus";
+fiTranslations.newGameSetupModal.creating = "Luodaan...";
 fiTranslations.newGameSetupModal.selectSeasonOption = "-- Valitse Kausi --";
 fiTranslations.newGameSetupModal.selectTournamentOption = "-- Valitse Turnaus --";
 fiTranslations.newGameSetupModal.newSeasonPlaceholder = "Syötä uuden kauden nimi...";
@@ -110,10 +110,15 @@ fiTranslations.newGameSetupModal.createNewSeasonTitle = "Luo Uusi Kausi";
 fiTranslations.newGameSetupModal.createNewTournamentTitle = "Luo Uusi Turnaus";
 fiTranslations.newGameSetupModal.cancelAddTitle = "Peruuta Lisäys";
 fiTranslations.newGameSetupModal.periodsLabel = "Jaksot";
+fiTranslations.newGameSetupModal.numPeriodsLabel = "Jaksojen Määrä:";
 fiTranslations.newGameSetupModal.durationLabel = "Kesto (min)";
+fiTranslations.newGameSetupModal.periodDurationLabel = "Jakson Kesto (min):";
+fiTranslations.newGameSetupModal.homeOrAwayLabel = "Joukkueesi on:";
+fiTranslations.newGameSetupModal.confirmAndStart = "Vahvista & Aloita Peli";
 
 // <<< Add translations for Home Team Name field >>>
 fiTranslations.newGameSetupModal.homeTeamLabel = "Oman joukkueen nimi: *";
+fiTranslations.newGameSetupModal.homeTeamName = "Oman Joukkueen Nimi";
 fiTranslations.newGameSetupModal.homeTeamPlaceholder = "Syötä oman joukkueen nimi";
 fiTranslations.newGameSetupModal.homeTeamRequiredAlert = "Syötä oman joukkueen nimi.";
 
@@ -175,6 +180,8 @@ fiTranslations.gameStatsModal.exportCsvButton_season = 'Vie Kausi CSV';
 fiTranslations.gameStatsModal.exportCsvButton_tournament = 'Vie Turnaus CSV';
 fiTranslations.gameStatsModal.exportCsvButton_all = 'Vie Kaikki CSV';
 fiTranslations.gameStatsModal.titleOverall = 'Kokonaistilastot';
+fiTranslations.gameStatsModal.editNotes = 'Edit Notes';
+fiTranslations.gameStatsModal.confirmDeleteEvent = "Haluatko varmasti poistaa tämän tapahtuman?";
 
 // Add control bar menu translations
 if (!fiTranslations.controlBar) {
@@ -202,11 +209,19 @@ fiTranslations.controlBar.exitFullscreen = "Poistu Koko Näytöltä";
 fiTranslations.controlBar.newGameButton = "Uusi Peli";
 fiTranslations.controlBar.gameSettingsButton = "Otteluasetukset";
 fiTranslations.controlBar.toggleLanguage = "Vaihda Englantiin";
+fiTranslations.controlBar.coachingMaterials = "Valmennusmateriaalit";
+fiTranslations.controlBar.manageSeasonsAndTournaments = "Hallinnoi Kausia & Turnauksia";
+fiTranslations.controlBar.rules = "Säännöt";
+fiTranslations.controlBar.toggleTacticsBoardShow = "Näytä taktiikkataulu";
+fiTranslations.controlBar.toggleTacticsBoardHide = "Näytä pelaajat";
+fiTranslations.controlBar.addHomeDisc = "Lisää kotijoukkueen pelaaja";
+fiTranslations.controlBar.addOpponentDisc = "Lisää vastustajan pelaaja";
 
 // Add common namespace if missing
 if (!fiTranslations.common) {
   fiTranslations.common = {};
 }
+fiTranslations.common.avgPointsShort = "KA";
 fiTranslations.common.cancelButton = "Peruuta";
 fiTranslations.common.cancelEdit = "Peruuta";
 // ADD missing common keys used in GameSettingsModal labels with actual Finnish
@@ -221,6 +236,7 @@ fiTranslations.common.close = "Sulje";
 fiTranslations.common.saveChanges = "Tallenna";
 fiTranslations.common.edit = "Muokkaa";
 fiTranslations.common.remove = "Poista";
+fiTranslations.common.actions = "Toiminnot"; // Event log header
 
 // Add missing English translations
 if (!enTranslations.goalLogModal) {
@@ -313,6 +329,8 @@ enTranslations.newGameSetupModal.createNewTournamentTitle = "Create New Tourname
 enTranslations.newGameSetupModal.cancelAddTitle = "Cancel Add";
 enTranslations.newGameSetupModal.periodsLabel = "Periods";
 enTranslations.newGameSetupModal.durationLabel = "Duration (min)";
+enTranslations.newGameSetupModal.homeOrAwayLabel = "Your Team is:";
+enTranslations.newGameSetupModal.confirmAndStart = "Confirm & Start Game";
 
 // Add game stats modal translations for English
 if (!enTranslations.gameStatsModal) {
@@ -373,6 +391,7 @@ enTranslations.gameStatsModal.exportCsvButton_tournament = 'Export Tournament CS
 enTranslations.gameStatsModal.exportCsvButton_all = 'Export All CSV';
 enTranslations.gameStatsModal.titleOverall = 'Overall Stats';
 enTranslations.gameStatsModal.editNotes = 'Edit Notes';
+enTranslations.gameStatsModal.confirmDeleteEvent = "Are you sure you want to delete this event?";
 
 // Add control bar menu translations for English
 if (!enTranslations.controlBar) {
@@ -383,8 +402,9 @@ enTranslations.controlBar.loadGame = "Load Game";
 enTranslations.controlBar.startNewMatch = "Start New Match";
 enTranslations.controlBar.stats = "Stats";
 enTranslations.controlBar.training = "Training";
+enTranslations.controlBar.coachingMaterials = "Coaching Materials";
 enTranslations.controlBar.tasoLink = "Taso";
-enTranslations.controlBar.tulospalveluLink = "Tulospalvelu";
+enTranslations.controlBar.tulospalveluLink = "Results Service";
 enTranslations.controlBar.appGuide = "App Guide";
 enTranslations.controlBar.language = "Language";
 enTranslations.controlBar.hardReset = "Hard Reset";
@@ -400,11 +420,18 @@ enTranslations.controlBar.exitFullscreen = "Exit Fullscreen";
 enTranslations.controlBar.newGameButton = "New Game";
 enTranslations.controlBar.gameSettingsButton = "Game Settings";
 enTranslations.controlBar.toggleLanguage = "Switch to Finnish";
+enTranslations.controlBar.manageSeasonsAndTournaments = "Manage Seasons & Tournaments";
+enTranslations.controlBar.rules = "Rules";
+enTranslations.controlBar.toggleTacticsBoardShow = "Show Tactics Board";
+enTranslations.controlBar.toggleTacticsBoardHide = "Show Players";
+enTranslations.controlBar.addHomeDisc = "Add Home Disc";
+enTranslations.controlBar.addOpponentDisc = "Add Opponent Disc";
 
 // Add common namespace if missing
 if (!enTranslations.common) {
   enTranslations.common = {};
 }
+enTranslations.common.avgPointsShort = "AVG";
 enTranslations.common.cancelButton = "Cancel";
 enTranslations.common.cancelEdit = "Cancel";
 // ADD missing common keys for English
@@ -419,6 +446,7 @@ enTranslations.common.close = "Close";
 enTranslations.common.saveChanges = "Save";
 enTranslations.common.edit = "Edit";
 enTranslations.common.remove = "Remove";
+enTranslations.common.actions = "Actions";
 
 // Add load game modal translations if section doesn't exist
 if (!fiTranslations.loadGameModal) {
@@ -432,6 +460,8 @@ fiTranslations.loadGameModal.filter_tournament = "Turnaus";
 fiTranslations.loadGameModal.filterPlaceholder = "Suodata nimellä/päivämäärällä...";
 fiTranslations.loadGameModal.loadButton = "Lataa Peli";
 fiTranslations.loadGameModal.noFilterResults = "Ei hakutuloksia.";
+fiTranslations.loadGameModal.backupButton = "Varmuuskopioi Kaikki Tiedot";
+fiTranslations.loadGameModal.restoreButton = "Palauta Varmuuskopiosta";
 
 // Add load game modal translations if section doesn't exist for English
 if (!enTranslations.loadGameModal) {
@@ -445,6 +475,8 @@ enTranslations.loadGameModal.filter_tournament = "Tournament";
 enTranslations.loadGameModal.filterPlaceholder = "Filter by name/date...";
 enTranslations.loadGameModal.loadButton = "Load Game";
 enTranslations.loadGameModal.noFilterResults = "No games match the current filter.";
+enTranslations.loadGameModal.backupButton = "Backup All Data";
+enTranslations.loadGameModal.restoreButton = "Restore from Backup";
 
 // Add RosterSettingsModal translations if section doesn't exist
 if (!fiTranslations.rosterSettingsModal) {
@@ -491,7 +523,7 @@ fiTranslations.gameSettingsModal.periodsLabel = "Jaksot";
 fiTranslations.gameSettingsModal.durationLabel = "Kesto (min)";
 fiTranslations.gameSettingsModal.seasonLabel = "Kausi";
 fiTranslations.gameSettingsModal.tournamentLabel = "Turnaus";
-fiTranslations.gameSettingsModal.associationLabel = "Linkitä";
+fiTranslations.gameSettingsModal.association = "Linkitä";
 fiTranslations.gameSettingsModal.selectSeason = "- Valitse Kausi -";
 fiTranslations.gameSettingsModal.selectTournament = "- Valitse Turnaus -";
 fiTranslations.gameSettingsModal.noPlayerSelected = "- Valitse Pelaaja -";
@@ -563,6 +595,55 @@ fiTranslations.common.hourShort = "TT";
 fiTranslations.common.minuteShort = "MM";
 fiTranslations.common.optional = "(Valinnainen)";
 fiTranslations.common.actions = "Toiminnot"; // Event log header
+
+if (!fiTranslations.seasonTournamentModal) {
+  fiTranslations.seasonTournamentModal = {};
+}
+fiTranslations.seasonTournamentModal.title = "Hallinnoi Kausia & Turnauksia";
+fiTranslations.seasonTournamentModal.seasons = "Kaudet";
+fiTranslations.seasonTournamentModal.tournaments = "Turnaukset";
+fiTranslations.seasonTournamentModal.createNew = "Luo Uusi";
+fiTranslations.seasonTournamentModal.newSeasonPlaceholder = "Uuden kauden nimi...";
+fiTranslations.seasonTournamentModal.newTournamentPlaceholder = "Uuden turnauksen nimi...";
+fiTranslations.seasonTournamentModal.confirmDelete = "Haluatko varmasti poistaa \"{{name}}\"? Tätä ei voi perua.";
+
+if (!fiTranslations.playerStats) {
+  fiTranslations.playerStats = {};
+}
+fiTranslations.playerStats.title = "Pelaajan Tilastot";
+
+if (!fiTranslations.stats) {
+  fiTranslations.stats = {};
+}
+fiTranslations.stats.gamesPlayed = "Pelatut pelit";
+fiTranslations.stats.goals = "Maalit";
+fiTranslations.stats.assists = "Syötöt";
+fiTranslations.stats.gameLog = "Pelihistoria";
+fiTranslations.stats.vs = "vs";
+fiTranslations.stats.goals_short = "M";
+fiTranslations.stats.assists_short = "S";
+fiTranslations.stats.noGames = "Ei pelitietoja saatavilla.";
+fiTranslations.stats.perGame = "/ peli";
+fiTranslations.stats.points = "Pisteet";
+
+if (!enTranslations.playerStats) {
+  enTranslations.playerStats = {};
+}
+enTranslations.playerStats.title = "Player Statistics";
+
+if (!enTranslations.stats) {
+  enTranslations.stats = {};
+}
+enTranslations.stats.gamesPlayed = "Games Played";
+enTranslations.stats.goals = "Goals";
+enTranslations.stats.assists = "Assists";
+enTranslations.stats.gameLog = "Game Log";
+enTranslations.stats.vs = "vs";
+enTranslations.stats.goals_short = "G";
+enTranslations.stats.assists_short = "A";
+enTranslations.stats.noGames = "No game data available.";
+enTranslations.stats.perGame = "/ game";
+enTranslations.stats.points = "Points";
 
 // Generate a cache-busting version number
 // const cacheVersion = new Date().getTime();

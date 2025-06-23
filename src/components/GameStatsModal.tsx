@@ -2,27 +2,24 @@
 
 import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-// Import Season/Tournament types and keys
-import { Player, GameEvent, SavedGamesCollection, Season, Tournament } from '@/app/page';
+// Import types from the types directory
+import { Player, PlayerStatRow, Season, Tournament } from '@/types';
+import { GameEvent, SavedGamesCollection } from '@/app/page';
 // ADD new import for keys
-import { SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY } from '@/config/constants';
+// import { SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY } from '@/config/constants';
+// <<< REMOVE unused key imports
+// import { SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY } from '@/config/constants';
+// <<< ADD imports for utility functions >>>
+import { getSeasons as utilGetSeasons } from '@/utils/seasons';
+import { getTournaments as utilGetTournaments } from '@/utils/tournaments';
 import { FaSort, FaSortUp, FaSortDown, FaEdit, FaSave, FaTimes, FaTrashAlt } from 'react-icons/fa';
 
 // Define the type for sortable columns
-type SortableColumn = 'name' | 'goals' | 'assists' | 'totalScore' | 'fpAwards' | 'gamesPlayed';
+type SortableColumn = 'name' | 'goals' | 'assists' | 'totalScore' | 'fpAwards' | 'gamesPlayed' | 'avgPoints';
 type SortDirection = 'asc' | 'desc';
 
 // Define tab types
 type StatsTab = 'currentGame' | 'season' | 'tournament' | 'overall';
-
-interface PlayerStatRow extends Player {
-  id: string;
-  goals: number;
-  assists: number;
-  totalScore: number;
-  fpAwards?: number;
-  gamesPlayed: number;
-}
 
 // ADD Minimal interface for saved game structure used in this component
 interface SavedGame {
@@ -87,7 +84,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   onHomeScoreChange,
   onAwayScoreChange,
   onGameNotesChange = () => {},
-  onUpdateGameEvent = () => { console.warn('onUpdateGameEvent handler not provided'); },
+  onUpdateGameEvent = () => { /* console.warn('onUpdateGameEvent handler not provided'); */ },
   selectedPlayerIds,
   savedGames, // Not actively used after removing aggregation
   currentGameId,
@@ -102,22 +99,20 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   const { t, i18n } = useTranslation();
 
   // <<< ADD DIAGNOSTIC LOG >>>
-  console.log('[GameStatsModal Render] gameEvents prop:', JSON.stringify(gameEvents));
-  console.log('[GameStatsModal Render] availablePlayers prop ref check:', availablePlayers); // Log reference too
+  // console.log('[GameStatsModal Render] gameEvents prop:', JSON.stringify(gameEvents));
+  // console.log('[GameStatsModal Render] availablePlayers prop ref check:', availablePlayers); // Log reference too
 
   // REVISED formatDisplayDate definition without date-fns
   const formatDisplayDate = useCallback((isoDate: string): string => {
     if (!isoDate) return t('common.notSet', 'Ei asetettu');
     try {
-      // Basic validation for YYYY-MM-DD format before creating Date
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) {
-        console.warn(`Invalid date format received: ${isoDate}`);
+      if (isoDate.length !== 10) { // Basic check for YYYY-MM-DD format
+        // console.warn(`Invalid date format received: ${isoDate}`);
         return isoDate;
       }
       const date = new Date(isoDate); 
-      // Check if Date object is valid (accounts for invalid dates like 2023-02-30)
       if (isNaN(date.getTime())) {
-          console.warn(`Invalid date value received: ${isoDate}`);
+        // console.warn(`Invalid date value received: ${isoDate}`);
           return isoDate; 
       }
 
@@ -137,9 +132,9 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
           year: 'numeric' 
         });
       }
-    } catch (e) {
-      console.error("Error formatting date:", e);
-      return isoDate; // Fallback to original string on error
+    } catch {
+      // console.error("Error formatting date:", e);
+      return 'Date Error';
     }
   }, [i18n.language, t]); // Dependencies: language and t function
 
@@ -183,27 +178,34 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
 
   // ** Calculate initial winner ID using useMemo **
   const initialFairPlayWinnerId = useMemo(() => {
-      console.log("[GameStatsModal:useMemo] Calculating initialFairPlayWinnerId. availablePlayers prop:", JSON.stringify(availablePlayers.map(p => ({id: p.id, name: p.name, fp: p.receivedFairPlayCard}))));
+      // console.log("[GameStatsModal:useMemo] Calculating initialFairPlayWinnerId. availablePlayers prop:", JSON.stringify(availablePlayers.map(p => ({id: p.id, name: p.name, fp: p.receivedFairPlayCard}))));
       const winner = availablePlayers.find(p => p.receivedFairPlayCard);
-      console.log("[GameStatsModal:useMemo] Found winner object:", winner);
+      // console.log("[GameStatsModal:useMemo] Found winner object:", winner);
       const winnerId = winner?.id || null;
-      console.log("[GameStatsModal:useMemo] Determined initialFairPlayWinnerId:", winnerId);
+      // console.log("[GameStatsModal:useMemo] Determined initialFairPlayWinnerId:", winnerId);
       return winnerId;
   }, [availablePlayers]);
 
   // --- Effects ---
   // Load seasons/tournaments
   useEffect(() => {
+    const loadData = async () => { 
     if (isOpen) {
       try {
-        const storedSeasons = localStorage.getItem(SEASONS_LIST_KEY);
-        setSeasons(storedSeasons ? JSON.parse(storedSeasons) : []);
-      } catch (error) { console.error("Failed to load seasons:", error); setSeasons([]); }
+          const loadedSeasons = await utilGetSeasons(); 
+        setSeasons(loadedSeasons);
+        } catch (error) { 
+          console.error("Failed to load seasons:", error); setSeasons([]); 
+        }
       try {
-        const storedTournaments = localStorage.getItem(TOURNAMENTS_LIST_KEY);
-        setTournaments(storedTournaments ? JSON.parse(storedTournaments) : []);
-      } catch (error) { console.error("Failed to load tournaments:", error); setTournaments([]); }
+          const loadedTournaments = await utilGetTournaments(); // Await the async call
+        setTournaments(loadedTournaments);
+        } catch (error) { 
+          console.error("Failed to load tournaments:", error); setTournaments([]); 
     }
+      }
+    };
+    loadData(); 
   }, [isOpen]);
 
   // Reset edit state
@@ -251,7 +253,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
 
   // ** ADD Separate Effect to Sync local state with calculated initial ID **
   useEffect(() => {
-      console.log("[GameStatsModal:useEffectSync] Syncing localFairPlayPlayerId. Current local:", localFairPlayPlayerId, "New initial:", initialFairPlayWinnerId);
+      // console.log("[GameStatsModal:useEffectSync] Syncing localFairPlayPlayerId. Current local:", localFairPlayPlayerId, "New initial:", initialFairPlayWinnerId);
       setLocalFairPlayPlayerId(initialFairPlayWinnerId);
   }, [initialFairPlayWinnerId, localFairPlayPlayerId]);
 
@@ -264,7 +266,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
 
   // Modify filteredAndSortedPlayerStats useMemo to also return the list of game IDs processed
   const { stats: playerStats, gameIds: processedGameIds } = useMemo(() => {
-    console.log("Recalculating player stats...", { activeTab, filterText, selectedSeasonIdFilter, selectedTournamentIdFilter, gameEvents: activeTab === 'currentGame' ? gameEvents : null, savedGames: activeTab !== 'currentGame' ? savedGames : null });
+    // console.log("Recalculating player stats...", { activeTab, filterText, selectedSeasonIdFilter, selectedTournamentIdFilter, gameEvents: activeTab === 'currentGame' ? gameEvents : null, savedGames: activeTab !== 'currentGame' ? savedGames : null });
 
     // Initialize stats map - MODIFIED: Initialize differently based on tab
     const statsMap: { [key: string]: PlayerStatRow } = {};
@@ -279,12 +281,12 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
               goals: 0,
               assists: 0,
               totalScore: 0,
-              fpAwards: 0,
               gamesPlayed: 0,
+              avgPoints: 0,
           };
       });
 
-      relevantGameEvents = gameEvents || [];
+      relevantGameEvents = localGameEvents || []; // MODIFIED: Use localGameEvents
       if (currentGameId) {
         processedGameIds = [currentGameId]; // Current game is the only one processed
          // Update GP for players in the current game
@@ -331,8 +333,8 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                       goals: 0,
                       assists: 0,
                       totalScore: 0,
-                      fpAwards: 0,
                       gamesPlayed: 0,
+                      avgPoints: 0,
                   };
               }
           });
@@ -350,13 +352,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
               if (statsMap[playerId]) {
                 // Increment gamesPlayed only if the player exists in the main availablePlayers list
                 statsMap[playerId].gamesPlayed = (statsMap[playerId].gamesPlayed || 0) + 1;
-                 // ADD FP Award Calculation by checking Player object in saved game
-                game.availablePlayers?.forEach((playerInGame: Player) => {
-                    if (playerInGame.receivedFairPlayCard && statsMap[playerInGame.id]) {
-                        statsMap[playerInGame.id].fpAwards = (statsMap[playerInGame.id].fpAwards || 0) + 1;
-                    }
-                });
-               }
+              }
             });
         }
       });
@@ -379,6 +375,11 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
       // Add calculations for other stats if needed
     });
 
+    // Calculate average points for all players before filtering and sorting
+    Object.values(statsMap).forEach(player => {
+      player.avgPoints = player.gamesPlayed > 0 ? player.totalScore / player.gamesPlayed : 0;
+    });
+
     // Filter and sort
     const filteredAndSortedStats = Object.values(statsMap)
       .filter(player => player.name.toLowerCase().includes(filterText.toLowerCase()));
@@ -386,6 +387,15 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
     // Apply sorting
     if (sortColumn) {
       filteredAndSortedStats.sort((a, b) => {
+        // Primary sort: by gamesPlayed (players with GP > 0 come before players with GP === 0)
+        if (a.gamesPlayed > 0 && b.gamesPlayed === 0) {
+          return -1; // a comes first
+        }
+        if (a.gamesPlayed === 0 && b.gamesPlayed > 0) {
+          return 1;  // b comes first
+        }
+
+        // Secondary sort: by the selected sortColumn if GP is the same (e.g., both > 0 or both === 0)
         let aValue: string | number = '';
         let bValue: string | number = '';
 
@@ -410,12 +420,19 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                 aValue = a.fpAwards ?? 0;
                 bValue = b.fpAwards ?? 0;
                 break;
-             case 'gamesPlayed': // Add sorting for gamesPlayed
+             case 'gamesPlayed': // If primary sort is by GP itself (e.g., user clicks GP header)
+                 // The primary GP sort above already handled the main separation.
+                 // This will sort within the GP > 0 group and GP === 0 group respectively.
                  aValue = a.gamesPlayed;
                  bValue = b.gamesPlayed;
                  break;
+            case 'avgPoints':
+                aValue = a.avgPoints;
+                bValue = b.avgPoints;
+                break;
         }
 
+        // Apply direction for secondary sort key
         if (typeof aValue === 'string' && typeof bValue === 'string') {
           return sortDirection === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
         } else if (typeof aValue === 'number' && typeof bValue === 'number') {
@@ -430,16 +447,16 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
 
   }, [
     activeTab,
-    gameEvents,
+    localGameEvents,
     savedGames,
     availablePlayers,
     sortColumn,
     sortDirection,
     filterText,
-    selectedSeasonIdFilter, // Add dependency
-    selectedTournamentIdFilter, // Add dependency
+    selectedSeasonIdFilter,
+    selectedTournamentIdFilter,
     currentGameId,
-    selectedPlayerIds // Add dependency for GP calculation in currentGame
+    selectedPlayerIds
   ]);
 
   // Use localGameEvents for display
@@ -522,7 +539,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   const handleCancelEditGoal = () => { setEditingGoalId(null); };
   const handleSaveEditGoal = () => {
     if (!editingGoalId) return;
-    const originalGoal = gameEvents.find(e => e.id === editingGoalId); if (!originalGoal) { console.error("Original goal missing!"); handleCancelEditGoal(); return; }
+    const originalGoal = gameEvents.find(e => e.id === editingGoalId); if (!originalGoal) { handleCancelEditGoal(); return; }
     const timeParts = editGoalTime.match(/^(\d{1,2}):(\d{1,2})$/); let timeInSeconds = 0;
     if (timeParts) { const m = parseInt(timeParts[1], 10), s = parseInt(timeParts[2], 10); if (!isNaN(m) && !isNaN(s) && m >= 0 && s >= 0 && s < 60) timeInSeconds = m * 60 + s; else { alert(t('gameStatsModal.invalidTimeFormat', 'Invalid time format. MM:SS')); goalTimeInputRef.current?.focus(); return; } } else { alert(t('gameStatsModal.invalidTimeFormat', 'Invalid time format. MM:SS')); goalTimeInputRef.current?.focus(); return; }
     const updatedScorerId = editGoalScorerId; const updatedAssisterId = editGoalAssisterId || undefined;
@@ -537,13 +554,16 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
 
   // Wrap call in check
   const triggerDeleteEvent = (goalId: string) => {
-    // Combine checks for clarity and add non-null assertion
-    if (onDeleteGameEvent && typeof onDeleteGameEvent === 'function') { 
-      onDeleteGameEvent!(goalId); // ADD non-null assertion (!)
-      setLocalGameEvents(prevEvents => prevEvents.filter(event => event.id !== goalId));
-      console.log(`Locally deleted event ${goalId} and called parent handler.`);
-      } else {
-      console.warn("Delete handler (onDeleteGameEvent) not available or not a function.");
+    // Add confirmation dialog before deleting
+    if (window.confirm(t('gameStatsModal.confirmDeleteEvent', 'Are you sure you want to delete this event? This cannot be undone.'))) {
+      // Combine checks for clarity and add non-null assertion
+      if (onDeleteGameEvent && typeof onDeleteGameEvent === 'function') { 
+        onDeleteGameEvent!(goalId); // ADD non-null assertion (!)
+        setLocalGameEvents(prevEvents => prevEvents.filter(event => event.id !== goalId));
+        // console.log(`Locally deleted event ${goalId} and called parent handler.`);
+        } else {
+        // console.warn("Delete handler (onDeleteGameEvent) not available or not a function.");
+      }
     }
   };
 
@@ -577,10 +597,34 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
         {/* Tab Bar - MODIFIED: Add flex-grow to items */}
         <div className="flex-shrink-0 px-4 pt-3 pb-2 border-b border-slate-700 flex flex-wrap items-center gap-1">
           {/* ADD flex-grow */} 
-          <button onClick={() => setActiveTab('currentGame')} className={`${getTabStyle('currentGame')} whitespace-nowrap flex-grow`}>{t('gameStatsModal.tabCurrent', 'Nykyinen')}</button>
-          <button onClick={() => setActiveTab('season')} className={`${getTabStyle('season')} whitespace-nowrap flex-grow`}>{t('gameStatsModal.tabSeason', 'Kausi')}</button>
-          <button onClick={() => setActiveTab('tournament')} className={`${getTabStyle('tournament')} whitespace-nowrap flex-grow`}>{t('gameStatsModal.tabTournament', 'Turnaus')}</button>
-          <button onClick={() => setActiveTab('overall')} className={`${getTabStyle('overall')} whitespace-nowrap flex-grow`}>{t('gameStatsModal.tabOverall', 'Kaikki')}</button>
+          <button 
+            onClick={() => setActiveTab('currentGame')} 
+            className={`${getTabStyle('currentGame')} whitespace-nowrap flex-grow`}
+            aria-pressed={activeTab === 'currentGame'}
+          >
+            {t('gameStatsModal.tabs.currentGame', 'Nykyinen')}
+          </button>
+          <button 
+            onClick={() => setActiveTab('season')} 
+            className={`${getTabStyle('season')} whitespace-nowrap flex-grow`}
+            aria-pressed={activeTab === 'season'}
+          >
+            {t('gameStatsModal.tabs.season', 'Kausi')}
+          </button>
+          <button 
+            onClick={() => setActiveTab('tournament')} 
+            className={`${getTabStyle('tournament')} whitespace-nowrap flex-grow`}
+            aria-pressed={activeTab === 'tournament'}
+          >
+            {t('gameStatsModal.tabs.tournament', 'Turnaus')}
+          </button>
+          <button 
+            onClick={() => setActiveTab('overall')} 
+            className={`${getTabStyle('overall')} whitespace-nowrap flex-grow`}
+            aria-pressed={activeTab === 'overall'}
+          >
+            {t('gameStatsModal.tabs.overall', 'Kaikki')}
+          </button>
           
           {/* Conditional Selectors - ADD flex-grow */} 
           {activeTab === 'season' && (
@@ -671,8 +715,8 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                       <th scope="col" className="px-1 py-2 text-center cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('gamesPlayed')}> <div className="flex items-center justify-center">{t('common.gamesPlayedShort', 'GP')} {sortColumn === 'gamesPlayed' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1 w-3 h-3"/> : <FaSortDown className="ml-1 w-3 h-3"/>) : <FaSort className="ml-1 w-3 h-3 opacity-30"/>}</div> </th>
                       <th scope="col" className="px-1 py-2 text-center cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('goals')}> <div className="flex items-center justify-center">{t('common.goalsShort', 'M')} {sortColumn === 'goals' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1 w-3 h-3"/> : <FaSortDown className="ml-1 w-3 h-3"/>) : <FaSort className="ml-1 w-3 h-3 opacity-30"/>}</div> </th>
                       <th scope="col" className="px-1 py-2 text-center cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('assists')}> <div className="flex items-center justify-center">{t('common.assistsShort', 'S')} {sortColumn === 'assists' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1 w-3 h-3"/> : <FaSortDown className="ml-1 w-3 h-3"/>) : <FaSort className="ml-1 w-3 h-3 opacity-30"/>}</div> </th>
-                      <th scope="col" className="px-1 py-2 text-center cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('totalScore')}> <div className="flex items-center justify-center">{t('common.totalScoreShort', 'P')} {sortColumn === 'totalScore' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1 w-3 h-3"/> : <FaSortDown className="ml-1 w-3 h-3"/>) : <FaSort className="ml-1 w-3 h-3 opacity-30"/>}</div> </th>
-                      <th scope="col" className="px-1 py-2 text-center cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('fpAwards')}> <div className="flex items-center justify-center">{t('common.fairPlayShort', 'FP')} {sortColumn === 'fpAwards' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1 w-3 h-3"/> : <FaSortDown className="ml-1 w-3 h-3"/>) : <FaSort className="ml-1 w-3 h-3 opacity-30"/>}</div> </th>
+                      <th scope="col" className="px-1 py-2 text-center cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('totalScore')}> <div className="flex items-center justify-center">{t('common.totalScoreShort', 'Pts')} {sortColumn === 'totalScore' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1 w-3 h-3"/> : <FaSortDown className="ml-1 w-3 h-3"/>) : <FaSort className="ml-1 w-3 h-3 opacity-30"/>}</div> </th>
+                      <th scope="col" className="px-1 py-2 text-center cursor-pointer hover:bg-slate-600/50" onClick={() => handleSort('avgPoints')}> <div className="flex items-center justify-center">{t('common.avgPointsShort', 'KA')} {sortColumn === 'avgPoints' ? (sortDirection === 'asc' ? <FaSortUp className="ml-1 w-3 h-3"/> : <FaSortDown className="ml-1 w-3 h-3"/>) : <FaSort className="ml-1 w-3 h-3 opacity-30"/>}</div> </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -688,7 +732,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                         <td className="px-1 py-1.5 text-center">{player.goals}</td>
                         <td className="px-1 py-1.5 text-center">{player.assists}</td>
                         <td className="px-1 py-1.5 text-center font-semibold">{player.totalScore}</td>
-                        <td className="px-1 py-1.5 text-center">{player.fpAwards ?? 0}</td>
+                        <td className="px-1 py-1.5 text-center">{player.avgPoints.toFixed(1)}</td>
                       </tr>
                     ))) : (
                       <tr><td colSpan={6} className="text-center py-3 text-slate-400 italic">{filterText ? t('common.noPlayersMatchFilter', 'Ei pelaajia hakusuodattimella') : t('common.noPlayersSelected', 'Ei pelaajia valittuna')}</td></tr>

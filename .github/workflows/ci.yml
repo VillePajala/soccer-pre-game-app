@@ -1,9 +1,8 @@
 name: CI Checks and Tests
 
 on:
-  # Run on pushes to the master branch (e.g., after a merge)
-  push:
-    branches: [ master ]
+  # Run on pushes to *any* branch
+  push: {}
   # Run on pull requests targeting the master branch
   pull_request:
     branches: [ master ]
@@ -26,6 +25,9 @@ jobs:
 
     - name: Install dependencies
       run: npm ci # Use 'ci' for cleaner installs in CI environments
+
+    - name: Run unit tests
+      run: npm run test:unit
 
     - name: Install Playwright Browsers and OS dependencies
       run: npx playwright install --with-deps # Installs browsers and needed libraries
