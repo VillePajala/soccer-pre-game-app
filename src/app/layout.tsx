@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import ClientWrapper from "@/components/ClientWrapper";
@@ -7,17 +7,26 @@ import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 import InstallPrompt from "@/components/InstallPrompt";
 import I18nInitializer from "@/components/I18nInitializer";
 import { Analytics } from "@vercel/analytics/react";
+import { manifestConfig } from "@/config/manifest.config";
 
 const inter = Inter({ subsets: ["latin"] });
 
+// Determine the current branch
+const branch = process.env.VERCEL_GIT_COMMIT_REF || 'development';
+const config = manifestConfig[branch] || manifestConfig.default;
+
 export const metadata: Metadata = {
-  title: "Soccer Pre-Game App",
-  description: "Beta - Soccer Tactics and Timer App for Coaches",
+  title: config.appName,
+  description: "Soccer Tactics and Timer App for Coaches",
   icons: {
-    icon: '/pepo-logo.png',
-    apple: '/pepo-logo.png',
+    icon: config.iconPath,
+    apple: config.iconPath,
   },
   manifest: '/manifest.json',
+};
+
+export const viewport: Viewport = {
+  themeColor: config.themeColor,
 };
 
 export default function RootLayout({

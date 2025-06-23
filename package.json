@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/generate-manifest.mjs && next build",
     "start": "next start",
     "lint": "next lint",
     "test:e2e": "npx playwright test",
