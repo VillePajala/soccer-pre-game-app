@@ -6,11 +6,11 @@ import ClientWrapper from "@/components/ClientWrapper";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Coaching Companion",
-  description: "Soccer Tactics and Timer App for Coaches",
+  title: "Soccer App (Legacy)",
+  description: "Legacy version of the Soccer Tactics and Timer App",
   icons: {
-    icon: '/pepo-logo.png',
-    apple: '/pepo-logo.png',
+    icon: '/pepo-logo-legacy.png',
+    apple: '/pepo-logo-legacy.png',
   },
   manifest: '/manifest.json',
 };
