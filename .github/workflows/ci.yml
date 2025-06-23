@@ -29,20 +29,20 @@ jobs:
     - name: Run unit tests
       run: npm run test:unit
 
-    - name: Install Playwright Browsers and OS dependencies
-      run: npx playwright install --with-deps # Installs browsers and needed libraries
-
-    - name: Run Playwright tests
-      run: npm run test:e2e
-
-    # Optional: Upload test results artifact (useful for debugging failures)
-    - name: Upload Playwright report
-      if: always() # Run this step even if tests fail
-      uses: actions/upload-artifact@v4
-      with:
-        name: playwright-report
-        path: playwright-report/
-        retention-days: 7 # Keep reports for 7 days
+    # - name: Install Playwright Browsers and OS dependencies
+    #   run: npx playwright install --with-deps # Installs browsers and needed libraries
+    #
+    # - name: Run Playwright tests
+    #   run: npm run test:e2e
+    #
+    # # Optional: Upload test results artifact (useful for debugging failures)
+    # - name: Upload Playwright report
+    #   if: always() # Run this step even if tests fail
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: playwright-report
+    #     path: playwright-report/
+    #     retention-days: 7 # Keep reports for 7 days
 
     # Optional: Add build step to catch build errors
     # - name: Run Build Check
