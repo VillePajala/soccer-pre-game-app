@@ -1,14 +1,8 @@
 // src/config/manifest.config.ts
 
-interface ManifestDetails {
-  appName: string;
-  shortName: string;
-  iconPath: string;
-  themeColor: string;
-}
-
 // Using 'export const' to ensure it can be imported by the build script.
-export const manifestConfig: { [key: string]: ManifestDetails } = {
+/** @type {Object.<string, {appName: string, shortName: string, iconPath: string, themeColor: string}>} */
+export const manifestConfig = {
   // Config for the 'development' branch
   development: {
     appName: "Soccer App (Dev)",

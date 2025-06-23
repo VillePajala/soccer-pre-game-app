@@ -6,7 +6,7 @@ import path from 'path';
 // but for this script, we'll point directly to the source TS file
 // and rely on Node's module handling capabilities.
 async function importManifestConfig() {
-  const configPath = path.join(process.cwd(), 'src', 'config', 'manifest.config.ts');
+  const configPath = path.join(process.cwd(), 'src', 'config', 'manifest.config.js');
   // Use a dynamic import() which can handle modules
   const { manifestConfig } = await import(configPath);
   return manifestConfig;

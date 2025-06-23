@@ -7,7 +7,7 @@ import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 import InstallPrompt from "@/components/InstallPrompt";
 import I18nInitializer from "@/components/I18nInitializer";
 import { Analytics } from "@vercel/analytics/react";
-import { manifestConfig } from "@/config/manifest.config";
+import { manifestConfig } from "@/config/manifest.config.js";
 
 const inter = Inter({ subsets: ["latin"] });
 
