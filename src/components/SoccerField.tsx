@@ -187,6 +187,28 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
       context.strokeStyle = '#F59E0B'; // A vibrant amber/orange
       context.lineWidth = 4;
       context.strokeRect(0, 0, W, H);
+
+      // --- Draw Tactical Grid Overlay ---
+      context.strokeStyle = 'rgba(255, 255, 255, 0.1)'; // Faint white grid lines
+      context.lineWidth = 1;
+      const gridSpacing = 40; // pixels
+
+      // Draw vertical lines
+      for (let x = gridSpacing; x < W; x += gridSpacing) {
+        context.beginPath();
+        context.moveTo(x, 0);
+        context.lineTo(x, H);
+        context.stroke();
+      }
+
+      // Draw horizontal lines
+      for (let y = gridSpacing; y < H; y += gridSpacing) {
+        context.beginPath();
+        context.moveTo(0, y);
+        context.lineTo(W, y);
+        context.stroke();
+      }
+      // --- End Tactical Grid Overlay ---
     }
 
     context.strokeStyle = 'rgba(255, 255, 255, 0.6)';
