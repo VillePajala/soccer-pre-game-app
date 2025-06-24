@@ -100,9 +100,12 @@ const GameInfoBar: React.FC<GameInfoBarProps> = ({
   const rightScore = awayScore;
 
   return (
-    <div className="bg-gradient-to-b from-slate-800 to-slate-900 px-4 py-1 text-slate-200 flex justify-center items-center text-sm shadow-md min-h-[2.5rem]">
+    <div 
+      className="bg-gradient-to-b from-slate-800 to-slate-900 px-4 py-1 text-slate-200 flex justify-center items-center text-sm shadow-md min-h-[2.5rem]"
+      style={{ fontFamily: 'Rajdhani, sans-serif' }}
+    >
       {/* Center Content: Teams and Score */}
-      <div className="flex items-center space-x-3 font-medium">
+      <div className="flex items-center space-x-3 font-semibold">
         {/* Left Team Name */}
         <div className="text-right" title={editingField !== 'left' ? "Double-click to edit" : undefined}>
           {editingField === 'left' ? (

@@ -127,7 +127,10 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
       )}
 
       {/* Always render the name span */}
-      <span className={`font-semibold ${textSizeClasses} ${defaultTextColor} break-words text-center leading-tight max-w-full px-1`}>
+      <span 
+        className={`font-semibold ${textSizeClasses} ${defaultTextColor} break-words text-center leading-tight max-w-full px-1`}
+        style={{ fontFamily: 'Rajdhani, sans-serif' }}
+      >
         {nickname || fullName} {/* Always display nickname or full name */}
       </span>
 
