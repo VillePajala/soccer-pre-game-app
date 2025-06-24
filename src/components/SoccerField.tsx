@@ -184,8 +184,8 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
 
     // --- Draw Tactical Mode Border ---
     if (isTacticsBoardView) {
-      context.strokeStyle = '#F59E0B'; // A vibrant amber/orange
-      context.lineWidth = 4;
+      context.strokeStyle = 'rgba(255, 255, 255, 0.5)'; // Subtle white for a cleaner look
+      context.lineWidth = 2; // Can be a bit thinner now
       context.strokeRect(0, 0, W, H);
 
       // --- Draw Tactical Grid Overlay ---
