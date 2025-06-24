@@ -39,6 +39,39 @@ const PLAYER_RADIUS = 20;
 const DOUBLE_TAP_TIME_THRESHOLD = 300; // ms
 const DOUBLE_TAP_POS_THRESHOLD = 15; // pixels
 
+// Helper function to generate a noise pattern on an off-screen canvas
+const createNoisePattern = (
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  opacity: number
+): CanvasPattern | null => {
+  // Check if running in a browser environment
+  if (typeof document === 'undefined') return null;
+
+  const noiseCanvas = document.createElement('canvas');
+  noiseCanvas.width = width;
+  noiseCanvas.height = height;
+  const noiseCtx = noiseCanvas.getContext('2d');
+  if (!noiseCtx) return null;
+
+  const imageData = noiseCtx.createImageData(width, height);
+  const data = imageData.data;
+  const alpha = opacity * 255;
+  for (let i = 0; i < data.length; i += 4) {
+    // A simple black/white noise
+    const randomValue = Math.random() > 0.5 ? 255 : 0;
+    data[i] = randomValue;     // R
+    data[i + 1] = randomValue; // G
+    data[i + 2] = randomValue; // B
+    data[i + 3] = alpha;       // Alpha
+  }
+  noiseCtx.putImageData(imageData, 0, 0);
+
+  const pattern = ctx.createPattern(noiseCanvas, 'repeat');
+  return pattern;
+};
+
 // Helper function to format time (defined locally for now)
 const formatTime = (totalSeconds: number): string => {
   const minutes = Math.floor(totalSeconds / 60);
@@ -118,22 +151,35 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     }
 
     // --- Clear and Draw Background/Field Lines --- 
-    // New color palette for a more natural look
-    const baseGreen = '#538d56';
-    const lightStripeGreen = '#68a76b';
-    const darkStripeGreen = '#487d4a';
+    // New color palette for a more natural and subtle look
+    const lightStripeGreen = '#5b995e'; // Made lighter color closer to base
+    const darkStripeGreen = '#508153';  // Made darker color closer to base
     
-    // Create vertical mowing stripes with a linear gradient
-    const stripeWidth = W / 15; // Width of each stripe
+    // 1. Create and draw the base mowing stripes
+    const numStripes = 9;
     const gradient = context.createLinearGradient(0, 0, W, 0);
 
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < numStripes; i++) {
       const color = (i % 2 === 0) ? lightStripeGreen : darkStripeGreen;
-      gradient.addColorStop(i / 15, color);
-      gradient.addColorStop((i + 1) / 15, color);
+      gradient.addColorStop(i / numStripes, color);
+      gradient.addColorStop((i + 1) / numStripes, color);
     }
 
-    context.fillStyle = isTacticsBoardView ? gradient : baseGreen; 
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, W, H);
+
+    // 2. Add a subtle noise texture layer
+    const noisePattern = createNoisePattern(context, 100, 100, 0.03); // 3% opacity noise
+    if (noisePattern) {
+        context.fillStyle = noisePattern;
+        context.fillRect(0, 0, W, H);
+    }
+    
+    // 3. Add a vignette lighting effect
+    const vignette = context.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.4, W / 2, H / 2, Math.max(W, H));
+    vignette.addColorStop(0, 'rgba(0,0,0,0)');
+    vignette.addColorStop(1, 'rgba(0,0,0,0.2)'); // Darken edges by 20%
+    context.fillStyle = vignette;
     context.fillRect(0, 0, W, H);
 
     // --- Draw Tactical Mode Border ---
