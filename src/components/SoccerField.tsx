@@ -118,7 +118,22 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     }
 
     // --- Clear and Draw Background/Field Lines --- 
-    context.fillStyle = isTacticsBoardView ? '#04A777' : '#059669'; 
+    // New color palette for a more natural look
+    const baseGreen = '#538d56';
+    const lightStripeGreen = '#68a76b';
+    const darkStripeGreen = '#487d4a';
+    
+    // Create vertical mowing stripes with a linear gradient
+    const stripeWidth = W / 15; // Width of each stripe
+    const gradient = context.createLinearGradient(0, 0, W, 0);
+
+    for (let i = 0; i < 15; i++) {
+      const color = (i % 2 === 0) ? lightStripeGreen : darkStripeGreen;
+      gradient.addColorStop(i / 15, color);
+      gradient.addColorStop((i + 1) / 15, color);
+    }
+
+    context.fillStyle = isTacticsBoardView ? gradient : baseGreen; 
     context.fillRect(0, 0, W, H);
 
     // --- Draw Tactical Mode Border ---
