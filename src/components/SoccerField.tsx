@@ -420,62 +420,70 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
         return;
       }
 
-      // --- Start Disc Redesign ---
+      // --- Start Refined "Polished Enamel" Disc Redesign ---
       const baseColor = tinycolor(player.isGoalie ? '#F97316' : (player.color || '#7E22CE'));
 
-      // 1. Outer "halo" for edge definition
-      context.beginPath();
-      context.arc(absX, absY, playerRadius + 1, 0, Math.PI * 2);
-      context.fillStyle = 'rgba(0, 0, 0, 0.25)';
-      context.fill();
-      
-      // 2. Main disc body with new gradient
-      const gradient = context.createRadialGradient(absX, absY, 1, absX, absY, playerRadius);
-      gradient.addColorStop(0, baseColor.lighten(10).toString());
-      gradient.addColorStop(0.8, baseColor.darken(15).toString());
-
+      // 1. Base Disc Color
       context.beginPath();
       context.arc(absX, absY, playerRadius, 0, Math.PI * 2);
-      context.fillStyle = gradient;
+      context.fillStyle = baseColor.toString();
       context.fill();
 
-      // 3. Inner shadow for ambient occlusion (bottom-right)
+      // 2. Create a clipping mask for the subsequent effects
       context.save();
       context.beginPath();
       context.arc(absX, absY, playerRadius, 0, Math.PI * 2);
       context.clip();
-      context.shadowColor = 'rgba(0, 0, 0, 0.4)';
-      context.shadowBlur = 3;
-      context.shadowOffsetX = -1;
-      context.shadowOffsetY = 1;
-      context.fillRect(absX - playerRadius, absY - playerRadius, playerRadius * 2, playerRadius * 2);
-      context.restore();
 
-      // 4. Glossy Sheen (subtle)
-      const sheenGradient = context.createLinearGradient(absX, absY - playerRadius, absX, absY + playerRadius);
-      sheenGradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
-      sheenGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-      context.fillStyle = sheenGradient;
-      context.fill(); // This fills the arc from step 2 again
+      // 3. Top-left Highlight (Sheen)
+      const highlightGradient = context.createRadialGradient(
+        absX - playerRadius * 0.3, absY - playerRadius * 0.3, 0,
+        absX - playerRadius * 0.3, absY - playerRadius * 0.3, playerRadius * 1.2
+      );
+      highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
+      highlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      context.fillStyle = highlightGradient;
+      context.fillRect(absX - playerRadius, absY - playerRadius, playerRadius * 2, playerRadius * 2);
+
+      // 4. Bottom-right Inner Shadow for depth
+      const shadowGradient = context.createRadialGradient(
+        absX + playerRadius * 0.4, absY + playerRadius * 0.4, 0,
+        absX + playerRadius * 0.4, absY + playerRadius * 0.4, playerRadius * 1.5
+      );
+      shadowGradient.addColorStop(0, 'rgba(0, 0, 0, 0.2)');
+      shadowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      context.fillStyle = shadowGradient;
+      context.fillRect(absX - playerRadius, absY - playerRadius, playerRadius * 2, playerRadius * 2);
+
+      // 5. Restore from clipping mask and add border
+      context.restore();
+      context.beginPath();
+      context.arc(absX, absY, playerRadius, 0, Math.PI * 2);
+      context.strokeStyle = 'rgba(0, 0, 0, 0.25)';
+      context.lineWidth = 1;
+      context.stroke();
       
       // --- End Disc Redesign ---
 
-      // Draw player name with text-shadow
+      // Draw player name with clean "engraved" effect
       if (showPlayerNames) {
-        context.save();
         context.font = '600 12px Rajdhani, sans-serif';
         context.textAlign = 'center';
         context.textBaseline = 'middle';
         
-        // Text shadow for legibility
-        context.shadowColor = 'rgba(0, 0, 0, 0.4)';
-        context.shadowBlur = 2;
-        context.shadowOffsetX = 1;
-        context.shadowOffsetY = 1;
+        const text = player.nickname || player.name;
 
-        context.fillStyle = '#FFFFFF';
-        context.fillText(player.nickname || player.name, absX, absY);
-        context.restore();
+        // 1. Dark shadow on top-left for the "pressed-in" look
+        context.fillStyle = 'rgba(0, 0, 0, 0.25)';
+        context.fillText(text, absX - 0.5, absY - 0.5);
+
+        // 2. Light highlight on bottom-right
+        context.fillStyle = 'rgba(255, 255, 255, 0.25)';
+        context.fillText(text, absX + 0.5, absY + 0.5);
+
+        // 3. Main text fill
+        context.fillStyle = '#F0F0F0';
+        context.fillText(text, absX, absY);
       }
     });
     }
