@@ -175,7 +175,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   };
 
   return (
-    <div className="bg-slate-800 p-2 shadow-md flex flex-wrap justify-center gap-2 relative z-40">
+    <div className="bg-gradient-to-b from-slate-700 to-slate-800 p-2 shadow-md flex flex-wrap justify-center gap-2 relative z-40">
       {/* Left Group: Undo/Redo */}
       <div className="flex items-center gap-2">
         <button onClick={onUndo} disabled={!canUndo} className={`${baseButtonStyle} ${secondaryColor}`} title={t('controlBar.undo') ?? "Undo"}>

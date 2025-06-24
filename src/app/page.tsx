@@ -3284,51 +3284,51 @@ export default function Home() {
     handleToggleGameStatsModal();
   };
 
-  return (
-    // Main container with flex column layout
-    <div className="flex flex-col h-screen bg-gray-900 text-white relative">
-      {/* Beta Version Indicator */}
-      <div className="absolute top-2 right-2 bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded-md z-50">
-        BETA
+  // --- Render Logic ---
+  const isLoading = isMasterRosterQueryLoading || areSeasonsQueryLoading || areTournamentsQueryLoading || isAllSavedGamesQueryLoading || isCurrentGameIdSettingQueryLoading;
+
+  if (isLoading && !initialLoadComplete) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-slate-900 text-white">
+        {/* You can replace this with a more sophisticated loading spinner component */}
+        <p>Loading Game Data...</p>
       </div>
-      
-      {/* REMOVED Fullscreen Toggle Button from here */}
+    );
+  }
 
-      {/* Replace Suspense with a regular div */}
-      <div className="flex flex-col h-full">
-      {/* Top Player Bar - Filter players based on selection */}
-      <PlayerBar
-        players={playersForCurrentGame} // Pass the filtered list
-        // <<< Remove teamName and onTeamNameChange props again >>>
-        // teamName={teamName}
-        // onTeamNameChange={handleTeamNameChange}
-        // CORRECT prop name back to onPlayerDragStartFromBar
-        onPlayerDragStartFromBar={handlePlayerDragStartFromBar}
-        selectedPlayerIdFromBar={draggingPlayerFromBarInfo?.id} // Pass the selected ID
-        onBarBackgroundClick={handleDeselectPlayer} // Pass deselect handler
-        // REMOVE: onRenamePlayer prop
-        // onRenamePlayer={handleRenamePlayer} 
-        gameEvents={gameSessionState.gameEvents} // Pass game events for badges
-        onPlayerTapInBar={handlePlayerTapInBar} // Pass the new tap handler
-        onToggleGoalie={handleToggleGoalieForModal} // Pass the handler from the hook
-      />
-      
-      {/* <<< ADD the GameInfoBar here >>> */}
-      <GameInfoBar 
-        teamName={gameSessionState.teamName}
-        opponentName={gameSessionState.opponentName}
-        homeScore={gameSessionState.homeScore}
-        awayScore={gameSessionState.awayScore}
-        homeOrAway={gameSessionState.homeOrAway} // Pass the prop
-        // <<< REMOVE timeElapsedInSeconds prop >>>
-        onTeamNameChange={handleTeamNameChange}
-        onOpponentNameChange={handleOpponentNameChange}
-      />
+  // Define a consistent, premium style for the top and bottom bars
+  const barStyle = "bg-gradient-to-b from-slate-700 to-slate-800 shadow-lg";
+  // We can add a noise texture via pseudo-elements or a background image later if desired
 
-      {/* Opponent Bar (Optional) */}
+  // Determine which players are available for the current game based on selected IDs
 
-      {/* Main content */}
-      <main className="flex-1 flex flex-col items-center justify-center relative w-full overflow-hidden">
+
+  return (
+    <main className="flex flex-col h-screen bg-slate-900 text-slate-50 overflow-hidden">
+      {/* Top Section: Player Bar, Game Info */}
+      <div className={barStyle}>
+        <PlayerBar
+          players={playersForCurrentGame}
+          onPlayerDragStartFromBar={handlePlayerDragStartFromBar}
+          selectedPlayerIdFromBar={draggingPlayerFromBarInfo?.id}
+          onBarBackgroundClick={handleDeselectPlayer}
+          gameEvents={gameSessionState.gameEvents}
+          onPlayerTapInBar={handlePlayerTapInBar}
+          onToggleGoalie={handleToggleGoalieForModal}
+        />
+        <GameInfoBar
+          teamName={gameSessionState.teamName}
+          opponentName={gameSessionState.opponentName}
+          homeScore={gameSessionState.homeScore}
+          awayScore={gameSessionState.awayScore}
+          onTeamNameChange={handleTeamNameChange}
+          onOpponentNameChange={handleOpponentNameChange}
+          homeOrAway={gameSessionState.homeOrAway}
+        />
+      </div>
+
+      {/* Main Content: Soccer Field */}
+      <div className="flex-grow relative bg-black">
         {/* Pass rel drawing handlers to SoccerField */}
 
         {showLargeTimerOverlay && (
@@ -3384,266 +3384,218 @@ export default function Home() {
           onToggleTacticalDiscType={handleToggleTacticalDiscType}
         />
         {/* Other components that might overlay or interact with the field */}
-      </main>
-
-      {/* Control Bar */}
-      <ControlBar
-        onAddOpponent={handleAddOpponent} // Pass handler from hook
-        onClearDrawings={handleClearDrawingsForView} // Correctly passed here
-        onToggleNames={handleTogglePlayerNames} 
-        showPlayerNames={gameSessionState.showPlayerNames} // USE gameSessionState
-        onUndo={handleUndo}
-        onRedo={handleRedo}
-        canUndo={canUndo}
-        canRedo={canRedo}
-        onResetField={handleResetField} 
-        // REMOVE props not defined in ControlBarProps:
-        // isTimerRunning={gameSessionState.isTimerRunning} 
-        // onStartPauseTimer={handleStartPauseTimer} 
-        // onResetTimer={handleResetTimer} 
-        showLargeTimerOverlay={showLargeTimerOverlay}
-        onToggleLargeTimerOverlay={handleToggleLargeTimerOverlay}
-        onToggleTrainingResources={handleToggleTrainingResources}
-        onToggleGoalLogModal={handleToggleGoalLogModal}
-        onToggleGameStatsModal={handleToggleGameStatsModal}
-        onHardResetApp={handleHardResetApp}
-        onOpenLoadGameModal={handleOpenLoadGameModal}
-        onStartNewGame={handleStartNewGame}
-        onOpenRosterModal={openRosterModal} // Pass the handler
-        onQuickSave={handleQuickSaveGame} // Pass the quick save handler
-        // ADD props for Game Settings button
-        onOpenGameSettingsModal={handleOpenGameSettingsModal}
-        isGameLoaded={!!(currentGameId && currentGameId !== DEFAULT_GAME_ID)} // <-- CHECK FOR VALID GAME ID
-        onPlaceAllPlayers={handlePlaceAllPlayers} // New prop for placing all players
-        highlightRosterButton={highlightRosterButton} // <<< PASS THE HIGHLIGHT PROP
-        onOpenSeasonTournamentModal={handleOpenSeasonTournamentModal}
-        isTacticsBoardView={isTacticsBoardView}
-        onToggleTacticsBoard={handleToggleTacticsBoard}
-        onAddHomeDisc={() => handleAddTacticalDisc('home')}
-        onAddOpponentDisc={() => handleAddTacticalDisc('opponent')}
-      />
-        {/* Instructions Modal */}
-        <InstructionsModal 
-          isOpen={isInstructionsOpen} 
-          onClose={handleToggleInstructions}
-        />
-        {/* Training Resources Modal */}
-        <TrainingResourcesModal 
-          isOpen={isTrainingResourcesOpen} 
-          onClose={handleToggleTrainingResources}
-        />
-        {/* Goal Log Modal */}
-        <GoalLogModal 
-          isOpen={isGoalLogModalOpen}
-          onClose={handleToggleGoalLogModal}
-          onLogGoal={handleAddGoalEvent}
-          onLogOpponentGoal={handleLogOpponentGoal} // ADDED: Pass the handler
-          availablePlayers={playersForCurrentGame} // MODIFIED: Pass players selected for the current game
-          currentTime={gameSessionState.timeElapsedInSeconds}
-        />
-        {/* Game Stats Modal - Restore props for now */}
-        <GameStatsModal
-          isOpen={isGameStatsModalOpen}
-          onClose={handleToggleGameStatsModal}
-          teamName={gameSessionState.teamName}
-          opponentName={gameSessionState.opponentName}
-          gameDate={gameSessionState.gameDate}
-          gameLocation={gameSessionState.gameLocation} // This is still a local state, might need to be gameSessionState.gameLocation
-          gameTime={gameSessionState.gameTime} // This is still a local state, might need to be gameSessionState.gameTime
-          gameNotes={gameSessionState.gameNotes}
-          homeScore={gameSessionState.homeScore}
-          awayScore={gameSessionState.awayScore}
-          homeOrAway={gameSessionState.homeOrAway} // Pass the prop
-          availablePlayers={availablePlayers}
-          gameEvents={gameSessionState.gameEvents} // This is still local state, should be gameSessionState.gameEvents
-          onOpponentNameChange={handleOpponentNameChange}
-          onGameDateChange={handleGameDateChange}
-          onHomeScoreChange={handleHomeScoreChange}
-          onAwayScoreChange={handleAwayScoreChange}
-          onGameNotesChange={handleGameNotesChange}
-          onUpdateGameEvent={handleUpdateGameEvent}
-          onDeleteGameEvent={handleDeleteGameEvent}
-             selectedPlayerIds={gameSessionState.selectedPlayerIds} 
-          savedGames={savedGames}
-          currentGameId={currentGameId}
-          seasonId={gameSessionState.seasonId} // USE gameSessionState
-          tournamentId={gameSessionState.tournamentId} // USE gameSessionState
-          // REMOVE props not defined in GameStatsModalProps:
-          // numPeriods={gameSessionState.numberOfPeriods}
-          // periodDurationMinutes={gameSessionState.periodDurationMinutes}
-          onExportOneJson={handleExportOneJson}
-          onExportOneCsv={handleExportOneCsv}
-          // ADD Aggregate export handlers
-          onExportAggregateJson={handleExportAggregateJson}
-          onExportAggregateCsv={handleExportAggregateCsv}
-        />
-        {/* Save Game Modal */}
-        <SaveGameModal
-          isOpen={isSaveGameModalOpen}
-          onClose={handleCloseSaveGameModal}
-          onSave={handleSaveGame} 
-          teamName={gameSessionState.teamName}
-          opponentName={gameSessionState.opponentName}
-          gameDate={gameSessionState.gameDate}
-          // Pass loading/error state props from useMutation
-          isGameSaving={saveGameMutation.isPending} // CORRECTED: Use isPending for loading state
-          gameSaveError={gameSaveError} 
-        />
-        <LoadGameModal 
-          isOpen={isLoadGameModalOpen}
-          onClose={handleCloseLoadGameModal}
-          savedGames={savedGames} 
-          onLoad={handleLoadGame}
-          onDelete={handleDeleteGame}
-          onExportAllJson={handleExportAllGamesJson}
-          onExportAllExcel={handleExportAllGamesCsv} // Pass renamed CSV handler
-          onExportOneJson={handleExportOneJson}
-          onExportOneCsv={handleExportOneCsv}
-          onImportJson={handleImportGamesFromJson} // <-- Step 4: Pass the handler prop
-          currentGameId={currentGameId || undefined} // Convert null to undefined
-          // Pass loading and error state props for LoadGameModal
-          isLoadingGamesList={isLoadingGamesList}
-          loadGamesListError={loadGamesListError}
-          isGameLoading={isGameLoading}
-          gameLoadError={gameLoadError}
-          isGameDeleting={isGameDeleting}
-          gameDeleteError={gameDeleteError}
-          isGamesImporting={isGamesImporting}
-          gamesImportError={gamesImportError}
-          processingGameId={processingGameId}
-        />
-
-        {/* Conditionally render the New Game Setup Modal */}
-        {isNewGameSetupModalOpen && (
-          <NewGameSetupModal
-            isOpen={isNewGameSetupModalOpen}
-            initialPlayerSelection={playerIdsForNewGame} // <<< Pass the state here
-            onStart={handleStartNewGameWithSetup} // CORRECTED Handler
-            onCancel={handleCancelNewGameSetup} 
-            // Pass the new mutation functions
-            addSeasonMutation={addSeasonMutation}
-            addTournamentMutation={addTournamentMutation}
-            // Pass loading states from mutations
-            isAddingSeason={addSeasonMutation.isPending}
-            isAddingTournament={addTournamentMutation.isPending}
-          />
-        )}
-
-        {/* Roster Settings Modal */}
-        <RosterSettingsModal
-          isOpen={isRosterModalOpen}
-          onClose={closeRosterModal}
-          availablePlayers={availablePlayers} // Use availablePlayers from useGameState
-          onRenamePlayer={handleRenamePlayerForModal}
-          onToggleGoalie={handleToggleGoalieForModal}
-          onSetJerseyNumber={handleSetJerseyNumberForModal}
-          onSetPlayerNotes={handleSetPlayerNotesForModal}
-          onRemovePlayer={handleRemovePlayerForModal} 
-          onAddPlayer={handleAddPlayerForModal}
-             selectedPlayerIds={gameSessionState.selectedPlayerIds}
-          onTogglePlayerSelection={handleTogglePlayerSelection}
-          teamName={gameSessionState.teamName}
-          onTeamNameChange={handleTeamNameChange}
-          // Pass loading and error states
-          isRosterUpdating={updatePlayerMutation.isPending || setGoalieStatusMutation.isPending || removePlayerMutation.isPending || addPlayerMutation.isPending}
-          rosterError={rosterError}
-          onOpenPlayerStats={handleOpenPlayerStats}
-        />
-
-        <SeasonTournamentManagementModal
-          isOpen={isSeasonTournamentModalOpen}
-          onClose={handleCloseSeasonTournamentModal}
-          seasons={seasons}
-          tournaments={tournaments}
-          addSeasonMutation={addSeasonMutation}
-          addTournamentMutation={addTournamentMutation}
-          updateSeasonMutation={updateSeasonMutation}
-          deleteSeasonMutation={deleteSeasonMutation}
-          updateTournamentMutation={updateTournamentMutation}
-          deleteTournamentMutation={deleteTournamentMutation}
-        />
-
-        {/* ADD the new Game Settings Modal - ADD missing props */}
-        <GameSettingsModal
-          isOpen={isGameSettingsModalOpen} // Corrected State Variable
-          onClose={handleCloseGameSettingsModal}
-          currentGameId={currentGameId}
-          teamName={gameSessionState.teamName} 
-          opponentName={gameSessionState.opponentName}
-          gameDate={gameSessionState.gameDate}
-          gameLocation={gameSessionState.gameLocation} // USE gameSessionState
-          gameTime={gameSessionState.gameTime} // This is still local state
-          gameNotes={gameSessionState.gameNotes}
-          homeScore={gameSessionState.homeScore}
-          awayScore={gameSessionState.awayScore}
-          onOpponentNameChange={handleOpponentNameChange}
-          onGameDateChange={handleGameDateChange}
-          onGameLocationChange={handleGameLocationChange}
-          onGameTimeChange={handleGameTimeChange}
-          onGameNotesChange={handleGameNotesChange}
-          onUpdateGameEvent={handleUpdateGameEvent}
-          onAwardFairPlayCard={handleAwardFairPlayCard} // Pass the required handler
-          onDeleteGameEvent={handleDeleteGameEvent}
-          gameEvents={gameSessionState.gameEvents}
-          availablePlayers={availablePlayers}
-          seasonId={gameSessionState.seasonId}
-          tournamentId={gameSessionState.tournamentId}
-          numPeriods={gameSessionState.numberOfPeriods}
-          periodDurationMinutes={gameSessionState.periodDurationMinutes}
-          onNumPeriodsChange={handleSetNumberOfPeriods}
-          onPeriodDurationChange={handleSetPeriodDuration}
-          // Pass the new handlers
-          onSeasonIdChange={handleSetSeasonId}
-          onTournamentIdChange={handleSetTournamentId}
-          // <<< ADD: Pass Home/Away state and handler >>>
-          homeOrAway={gameSessionState.homeOrAway}
-          onSetHomeOrAway={handleSetHomeOrAway}
-        />
-
-        <PlayerStatsModal
-          isOpen={isPlayerStatsModalOpen}
-          onClose={handleClosePlayerStats}
-          player={selectedPlayerForStats}
-          savedGames={savedGames}
-          onGameClick={handleGameLogClick}
-        />
-
       </div>
 
-      {/* <<< ADD Roster Prompt Toast >>> */}
-      {/* <div 
-        className={`
-          fixed bottom-16 right-4 bg-indigo-600/90 backdrop-blur-sm text-white 
-          rounded-lg shadow-lg p-3 transition-all duration-300 ease-in-out
-          ${showRosterPrompt ? 'translate-y-0 opacity-100' : 'translate-y-12 opacity-0 pointer-events-none'}
-          flex items-center gap-3 max-w-xs z-50
-        `}
-      >
-        <div className="flex-1">
-          <p className="text-sm font-medium">
-            {t('rosterPrompt.message', 'Set up your roster now?')}
-          </p>
-        </div>
-        <div className="flex gap-2 items-center">
-          <button 
-            onClick={handleConfirmRosterPrompt} 
-            className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded text-xs"
-            title={t('rosterPrompt.confirmTooltip', 'Open Roster Settings') ?? undefined}
-          >
-            {t('rosterPrompt.confirm', 'Yes')}
-          </button>
-          <button 
-            onClick={dismissRosterPrompt} 
-            className="p-1 text-white/70 hover:text-white"
-            title={t('rosterPrompt.dismissTooltip', 'Dismiss') ?? undefined}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-      </div> */}
+      {/* Bottom Section: Control Bar */}
+      <div className={barStyle}>
+        <ControlBar
+          onUndo={handleUndo}
+          onRedo={handleRedo}
+          canUndo={historyIndex > 0}
+          canRedo={historyIndex < history.length - 1}
+          onToggleNames={handleTogglePlayerNames}
+          onResetField={handleResetField}
+          onClearDrawings={handleClearDrawingsForView}
+          onAddOpponent={handleAddOpponent}
+          showLargeTimerOverlay={showLargeTimerOverlay}
+          onToggleLargeTimerOverlay={handleToggleLargeTimerOverlay}
+          showPlayerNames={gameSessionState.showPlayerNames}
+          onToggleTrainingResources={handleToggleTrainingResources}
+          onToggleGoalLogModal={handleToggleGoalLogModal}
+          onToggleGameStatsModal={handleToggleGameStatsModal}
+          onHardResetApp={handleHardResetApp}
+          onOpenLoadGameModal={handleOpenLoadGameModal}
+          onStartNewGame={handleStartNewGame}
+          onOpenRosterModal={openRosterModal}
+          onQuickSave={handleQuickSaveGame}
+          onOpenGameSettingsModal={handleOpenGameSettingsModal}
+          isGameLoaded={!!currentGameId && currentGameId !== DEFAULT_GAME_ID}
+          onPlaceAllPlayers={handlePlaceAllPlayers}
+          highlightRosterButton={highlightRosterButton}
+          onOpenSeasonTournamentModal={handleOpenSeasonTournamentModal}
+          isTacticsBoardView={isTacticsBoardView}
+          onToggleTacticsBoard={handleToggleTacticsBoard}
+          onAddHomeDisc={() => handleAddTacticalDisc('home')}
+          onAddOpponentDisc={() => handleAddTacticalDisc('opponent')}
+        />
+      </div>
 
-    </div>
+      {/* Modals and Overlays */}
+      {showLargeTimerOverlay && (
+        <TimerOverlay
+          timeElapsedInSeconds={gameSessionState.timeElapsedInSeconds}
+          subAlertLevel={gameSessionState.subAlertLevel}
+          onSubstitutionMade={handleSubstitutionMade}
+          completedIntervalDurations={gameSessionState.completedIntervalDurations || []}
+          subIntervalMinutes={gameSessionState.subIntervalMinutes}
+          onSetSubInterval={handleSetSubInterval}
+          isTimerRunning={gameSessionState.isTimerRunning}
+          onStartPauseTimer={handleStartPauseTimer}
+          onResetTimer={handleResetTimer}
+          onToggleGoalLogModal={handleToggleGoalLogModal}
+          onRecordOpponentGoal={() => handleLogOpponentGoal(gameSessionState.timeElapsedInSeconds)}
+          teamName={gameSessionState.teamName}
+          opponentName={gameSessionState.opponentName}
+          homeScore={gameSessionState.homeScore}
+          awayScore={gameSessionState.awayScore}
+          homeOrAway={gameSessionState.homeOrAway}
+          lastSubTime={gameSessionState.lastSubConfirmationTimeSeconds}
+          numberOfPeriods={gameSessionState.numberOfPeriods}
+          periodDurationMinutes={gameSessionState.periodDurationMinutes}
+          currentPeriod={gameSessionState.currentPeriod}
+          gameStatus={gameSessionState.gameStatus}
+          onOpponentNameChange={handleOpponentNameChange}
+        />
+      )}
+
+      {/* Instructions Modal */}
+      <InstructionsModal 
+        isOpen={isInstructionsOpen} 
+        onClose={handleToggleInstructions}
+      />
+      {/* Training Resources Modal */}
+      <TrainingResourcesModal 
+        isOpen={isTrainingResourcesOpen} 
+        onClose={handleToggleTrainingResources}
+      />
+      {/* Goal Log Modal */}
+      <GoalLogModal 
+        isOpen={isGoalLogModalOpen}
+        onClose={handleToggleGoalLogModal}
+        onLogGoal={handleAddGoalEvent}
+        onLogOpponentGoal={handleLogOpponentGoal} // ADDED: Pass the handler
+        availablePlayers={playersForCurrentGame} // MODIFIED: Pass players selected for the current game
+        currentTime={gameSessionState.timeElapsedInSeconds}
+      />
+      {/* Game Stats Modal - Restore props for now */}
+      <GameStatsModal
+        isOpen={isGameStatsModalOpen}
+        onClose={handleToggleGameStatsModal}
+        teamName={gameSessionState.teamName}
+        opponentName={gameSessionState.opponentName}
+        gameDate={gameSessionState.gameDate}
+        gameLocation={gameSessionState.gameLocation} // This is still a local state, might need to be gameSessionState.gameLocation
+        gameTime={gameSessionState.gameTime} // This is still a local state, might need to be gameSessionState.gameTime
+        gameNotes={gameSessionState.gameNotes}
+        homeScore={gameSessionState.homeScore}
+        awayScore={gameSessionState.awayScore}
+        homeOrAway={gameSessionState.homeOrAway} // Pass the prop
+        availablePlayers={availablePlayers}
+        gameEvents={gameSessionState.gameEvents} // This is still local state, should be gameSessionState.gameEvents
+        onOpponentNameChange={handleOpponentNameChange}
+        onGameDateChange={handleGameDateChange}
+        onHomeScoreChange={handleHomeScoreChange}
+        onAwayScoreChange={handleAwayScoreChange}
+        onGameNotesChange={handleGameNotesChange}
+        onUpdateGameEvent={handleUpdateGameEvent}
+        onDeleteGameEvent={handleDeleteGameEvent}
+           selectedPlayerIds={gameSessionState.selectedPlayerIds} 
+        savedGames={savedGames}
+        currentGameId={currentGameId}
+        seasonId={gameSessionState.seasonId} // USE gameSessionState
+        tournamentId={gameSessionState.tournamentId} // USE gameSessionState
+        // REMOVE props not defined in GameStatsModalProps:
+        // numPeriods={gameSessionState.numberOfPeriods}
+        // periodDurationMinutes={gameSessionState.periodDurationMinutes}
+        onExportOneJson={handleExportOneJson}
+        onExportOneCsv={handleExportOneCsv}
+        // ADD Aggregate export handlers
+        onExportAggregateJson={handleExportAggregateJson}
+        onExportAggregateCsv={handleExportAggregateCsv}
+      />
+      {/* Save Game Modal */}
+      <SaveGameModal
+        isOpen={isSaveGameModalOpen}
+        onClose={handleCloseSaveGameModal}
+        onSave={handleSaveGame} 
+        teamName={gameSessionState.teamName}
+        opponentName={gameSessionState.opponentName}
+        gameDate={gameSessionState.gameDate}
+        // Pass loading/error state props from useMutation
+        isGameSaving={saveGameMutation.isPending} // CORRECTED: Use isPending for loading state
+        gameSaveError={gameSaveError} 
+      />
+      <LoadGameModal 
+        isOpen={isLoadGameModalOpen}
+        onClose={handleCloseLoadGameModal}
+        savedGames={savedGames} 
+        onLoad={handleLoadGame}
+        onDelete={handleDeleteGame}
+        onExportAllJson={handleExportAllGamesJson}
+        onExportAllExcel={handleExportAllGamesCsv} // Pass renamed CSV handler
+        onExportOneJson={handleExportOneJson}
+        onExportOneCsv={handleExportOneCsv}
+        onImportJson={handleImportGamesFromJson} // <-- Step 4: Pass the handler prop
+        currentGameId={currentGameId || undefined} // Convert null to undefined
+        // Pass loading and error state props for LoadGameModal
+        isLoadingGamesList={isLoadingGamesList}
+        loadGamesListError={loadGamesListError}
+        isGameLoading={isGameLoading}
+        gameLoadError={gameLoadError}
+        isGameDeleting={isGameDeleting}
+        gameDeleteError={gameDeleteError}
+        isGamesImporting={isGamesImporting}
+        gamesImportError={gamesImportError}
+        processingGameId={processingGameId}
+      />
+
+      {/* Conditionally render the New Game Setup Modal */}
+      {isNewGameSetupModalOpen && (
+        <NewGameSetupModal
+          isOpen={isNewGameSetupModalOpen}
+          initialPlayerSelection={playerIdsForNewGame} // <<< Pass the state here
+          onStart={handleStartNewGameWithSetup} // CORRECTED Handler
+          onCancel={handleCancelNewGameSetup} 
+          // Pass the new mutation functions
+          addSeasonMutation={addSeasonMutation}
+          addTournamentMutation={addTournamentMutation}
+          // Pass loading states from mutations
+          isAddingSeason={addSeasonMutation.isPending}
+          isAddingTournament={addTournamentMutation.isPending}
+        />
+      )}
+
+      {/* Roster Settings Modal */}
+      <RosterSettingsModal
+        isOpen={isRosterModalOpen}
+        onClose={closeRosterModal}
+        availablePlayers={availablePlayers} // Use availablePlayers from useGameState
+        onRenamePlayer={handleRenamePlayerForModal}
+        onToggleGoalie={handleToggleGoalieForModal}
+        onSetJerseyNumber={handleSetJerseyNumberForModal}
+        onSetPlayerNotes={handleSetPlayerNotesForModal}
+        onRemovePlayer={handleRemovePlayerForModal} 
+        onAddPlayer={handleAddPlayerForModal}
+           selectedPlayerIds={gameSessionState.selectedPlayerIds}
+        onTogglePlayerSelection={handleTogglePlayerSelection}
+        teamName={gameSessionState.teamName}
+        onTeamNameChange={handleTeamNameChange}
+        // Pass loading and error states
+        isRosterUpdating={updatePlayerMutation.isPending || setGoalieStatusMutation.isPending || removePlayerMutation.isPending || addPlayerMutation.isPending}
+        rosterError={rosterError}
+        onOpenPlayerStats={handleOpenPlayerStats}
+      />
+
+      <SeasonTournamentManagementModal
+        isOpen={isSeasonTournamentModalOpen}
+        onClose={handleCloseSeasonTournamentModal}
+        seasons={seasons}
+        tournaments={tournaments}
+        addSeasonMutation={addSeasonMutation}
+        addTournamentMutation={addTournamentMutation}
+        updateSeasonMutation={updateSeasonMutation}
+        deleteSeasonMutation={deleteSeasonMutation}
+        updateTournamentMutation={updateTournamentMutation}
+        deleteTournamentMutation={deleteTournamentMutation}
+      />
+      
+      <PlayerStatsModal 
+          isOpen={isPlayerStatsModalOpen} 
+          onClose={handleClosePlayerStats} 
+          player={selectedPlayerForStats}
+          savedGames={allSavedGamesQueryResultData || {}} 
+          onGameClick={handleGameLogClick}
+      />
+    </main>
   );
 }

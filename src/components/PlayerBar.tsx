@@ -37,7 +37,7 @@ interface PlayerBarProps {
 const PlayerBar: React.FC<PlayerBarProps> = ({ players, onPlayerDragStartFromBar, selectedPlayerIdFromBar, onBarBackgroundClick, gameEvents, onPlayerTapInBar, onToggleGoalie }) => {
   return (
     <div 
-      className="bg-slate-900/85 backdrop-blur-md pl-4 pr-2 py-0.5 flex items-center space-x-3 flex-shrink-0 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-slate-700/80 scrollbar-track-slate-800/50 shadow-lg border-b border-slate-700/50"
+      className="bg-gradient-to-b from-slate-700 to-slate-800/85 backdrop-blur-md pl-4 pr-2 py-0.5 flex items-center space-x-3 flex-shrink-0 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-slate-700/80 scrollbar-track-slate-800/50 shadow-lg border-b border-slate-700/50"
       onClick={(e) => {
         // Check if the click target is the div itself (the background)
         if (e.target === e.currentTarget && onBarBackgroundClick) {
