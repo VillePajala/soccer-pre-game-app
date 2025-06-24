@@ -8,7 +8,13 @@ module.exports = {
   ],
   theme: {
     extend: {
-      // We're using Tailwind's built-in animations instead
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
+        display: ['var(--font-rajdhani)', 'sans-serif'],
+      },
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+      },
     },
   },
   plugins: [],

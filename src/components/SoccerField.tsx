@@ -3,6 +3,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Player } from '@/types'; // Import Player from types
 import { Point, Opponent, TacticalDisc } from '@/app/page'; // Import Point and Opponent from page
+import tinycolor from 'tinycolor2';
 
 // Define props for SoccerField
 interface SoccerFieldProps {
@@ -419,33 +420,62 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
         return;
       }
 
-      // Draw the player disk
+      // --- Start Disc Redesign ---
+      const baseColor = tinycolor(player.isGoalie ? '#F97316' : (player.color || '#7E22CE'));
+
+      // 1. Outer "halo" for edge definition
+      context.beginPath();
+      context.arc(absX, absY, playerRadius + 1, 0, Math.PI * 2);
+      context.fillStyle = 'rgba(0, 0, 0, 0.25)';
+      context.fill();
+      
+      // 2. Main disc body with new gradient
+      const gradient = context.createRadialGradient(absX, absY, 1, absX, absY, playerRadius);
+      gradient.addColorStop(0, baseColor.lighten(10).toString());
+      gradient.addColorStop(0.8, baseColor.darken(15).toString());
+
       context.beginPath();
       context.arc(absX, absY, playerRadius, 0, Math.PI * 2);
-      context.save();
-      context.shadowColor = 'rgba(0, 0, 0, 0.5)';
-      context.shadowBlur = 5;
-      context.shadowOffsetX = 1;
-      context.shadowOffsetY = 2;
-      // Set fill color based on goalie status
-      context.fillStyle = player.isGoalie ? '#F97316' : (player.color || '#7E22CE'); // Use orange for goalie
+      context.fillStyle = gradient;
       context.fill();
+
+      // 3. Inner shadow for ambient occlusion (bottom-right)
+      context.save();
+      context.beginPath();
+      context.arc(absX, absY, playerRadius, 0, Math.PI * 2);
+      context.clip();
+      context.shadowColor = 'rgba(0, 0, 0, 0.4)';
+      context.shadowBlur = 3;
+      context.shadowOffsetX = -1;
+      context.shadowOffsetY = 1;
+      context.fillRect(absX - playerRadius, absY - playerRadius, playerRadius * 2, playerRadius * 2);
       context.restore();
 
-      // Draw default border (thin purple)
-      context.strokeStyle = '#581C87'; // Default border color (purple-900)
-      context.lineWidth = 1.5; // Default border width
-      context.stroke(); 
+      // 4. Glossy Sheen (subtle)
+      const sheenGradient = context.createLinearGradient(absX, absY - playerRadius, absX, absY + playerRadius);
+      sheenGradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
+      sheenGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      context.fillStyle = sheenGradient;
+      context.fill(); // This fills the arc from step 2 again
+      
+      // --- End Disc Redesign ---
 
-      // Draw player name
+      // Draw player name with text-shadow
       if (showPlayerNames) {
-        // Always use default text color (yellow on field)
-        context.fillStyle = '#FDE047';
-        context.font = '600 11px Inter, sans-serif';
+        context.save();
+        context.font = '600 12px Rajdhani, sans-serif';
         context.textAlign = 'center';
         context.textBaseline = 'middle';
-        // Use nickname if available, otherwise fall back to full name
+        
+        // Text shadow for legibility
+        context.shadowColor = 'rgba(0, 0, 0, 0.4)';
+        context.shadowBlur = 2;
+        context.shadowOffsetX = 1;
+        context.shadowOffsetY = 1;
+
+        context.fillStyle = '#FFFFFF';
         context.fillText(player.nickname || player.name, absX, absY);
+        context.restore();
       }
     });
     }

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { Rajdhani } from 'next/font/google';
 import "./globals.css";
 import ClientWrapper from "@/components/ClientWrapper";
 import QueryProvider from './QueryProvider';
@@ -10,6 +11,13 @@ import { Analytics } from "@vercel/analytics/react";
 import { manifestConfig } from "@/config/manifest.config.js";
 
 const inter = Inter({ subsets: ["latin"] });
+
+// Configure Rajdhani font
+const rajdhani = Rajdhani({
+  subsets: ['latin'],
+  weight: ['400', '600'], // We'll use 600 for Semi-bold
+  variable: '--font-rajdhani',
+});
 
 // Determine the current branch
 const branch = process.env.VERCEL_GIT_COMMIT_REF || 'development';
@@ -41,7 +49,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
-      <body className={inter.className}>
+      <body className={`${inter.className} ${rajdhani.variable}`}>
         <I18nInitializer>
           <ServiceWorkerRegistration />
           <InstallPrompt />
