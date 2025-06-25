@@ -259,17 +259,41 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
         {/* Content wrapper */}
         <div className="relative z-10 flex flex-col min-h-0">
           {/* Header */}
-          <div className="flex justify-center items-center py-8 backdrop-blur-sm bg-slate-900/20">
-            <h2 className={`${titleStyle} drop-shadow-lg`}>{t('rosterSettingsModal.title', 'Manage Roster')}</h2>
-          </div>
+          <div className="flex flex-col">
+            {/* Title Section */}
+            <div className="flex justify-center items-center pt-10 pb-4 backdrop-blur-sm bg-slate-900/20">
+              <h2 className={`${titleStyle} drop-shadow-lg`}>{t('rosterSettingsModal.title', 'Manage Roster')}</h2>
+            </div>
 
-          {/* Content Area */}
-          <div className="flex-1 overflow-y-auto min-h-0 space-y-6 backdrop-blur-sm bg-slate-900/20">
-            {/* Team Name Section */}
-            <div className="px-4 pt-2">
-              <div className="bg-gradient-to-r from-slate-900/80 to-slate-800/80 rounded-lg shadow-inner">
+            {/* Fixed Section (Stats, Add Button, Team Name) */}
+            <div className="px-6 pt-1 pb-4 backdrop-blur-sm bg-slate-900/20">
+              {/* Player Counter Section - Always visible */}
+              <div className="mb-5 text-center text-sm">
+                <div className="flex justify-center items-center gap-8 text-slate-300">
+                  <span>
+                    <span className="text-yellow-400 font-semibold">{availablePlayers.length}</span>
+                    {" "}{t('rosterSettingsModal.totalPlayersShort', 'Total Players')}
+                  </span>
+                  <span>
+                    <span className="text-yellow-400 font-semibold">{selectedPlayerIds.length}</span>
+                    {" "}{t('rosterSettingsModal.selectedPlayersShort', 'Selected')}
+                  </span>
+                </div>
+              </div>
+
+              {/* Add Player Button - Always visible */}
+              <button
+                onClick={() => { setIsAddingPlayer(true); setEditingPlayerId(null); }}
+                className={`${primaryButtonStyle} w-full bg-indigo-600 hover:bg-indigo-700`}
+                disabled={!!editingPlayerId || isRosterUpdating || isAddingPlayer}
+              >
+                {t('rosterSettingsModal.addPlayerButton', 'Add Player')}
+              </button>
+
+              {/* Team Name */}
+              <div className="mt-4 mx-4 bg-gradient-to-r from-slate-900/80 to-slate-800/80 rounded-lg shadow-inner">
                 {isEditingTeamName ? (
-                  <div className="p-3">
+                  <div className="p-2">
                     <input
                       ref={teamNameInputRef}
                       type="text"
@@ -280,34 +304,26 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                         if (e.key === 'Escape') handleCancelTeamNameEdit();
                       }}
                       onBlur={handleSaveTeamName}
-                      className={`${inputBaseStyle} text-lg`}
+                      className={`${inputBaseStyle} text-base`}
                     />
                   </div>
                 ) : (
                   <div
-                    className="group flex items-center justify-between p-3 cursor-pointer"
+                    className="group flex items-center justify-between p-2 cursor-pointer"
                     onClick={() => setIsEditingTeamName(true)}
                   >
-                    <p className="text-xl text-slate-100 font-semibold group-hover:text-yellow-400 transition-colors">
+                    <p className="text-base text-slate-100 font-semibold group-hover:text-yellow-400 transition-colors">
                       {teamName}
                     </p>
-                    <HiOutlinePencil className="w-5 h-5 text-slate-500 group-hover:text-yellow-400 transition-colors" />
+                    <HiOutlinePencil className="w-4 h-4 text-slate-500 group-hover:text-yellow-400 transition-colors" />
                   </div>
                 )}
               </div>
             </div>
+          </div>
 
-            {/* Add Player Section */}
-            <div className="px-4">
-              <button
-                onClick={() => { setIsAddingPlayer(true); setEditingPlayerId(null); }}
-                className={`${primaryButtonStyle} w-full`}
-                disabled={!!editingPlayerId || isRosterUpdating || isAddingPlayer}
-              >
-                {t('rosterSettingsModal.addPlayerButton', 'Add Player')}
-              </button>
-            </div>
-            
+          {/* Scrollable Content Area */}
+          <div className="flex-1 overflow-y-auto min-h-0">
             {/* Form to Add New Player (appears here when isAddingPlayer is true) */}
             {isAddingPlayer && (
               <div className={`${cardStyle} mx-4 space-y-3`}>
