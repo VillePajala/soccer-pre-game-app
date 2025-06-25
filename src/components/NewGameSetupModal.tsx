@@ -621,7 +621,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                           <select
                             id="seasonSelect"
                             value={selectedSeasonId || ''}
-                            onChange={(e) => setSelectedSeasonId(e.target.value)}
+                            onChange={handleSeasonChange}
                             className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                           >
                             <option value="">{t('newGameSetupModal.selectSeason', '-- Select Season --')}</option>
@@ -633,14 +633,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                           </select>
                           <button
                             type="button"
-                            onClick={() => {
-                              if (showNewSeasonInput) {
-                                setShowNewSeasonInput(false);
-                                setNewSeasonName('');
-                              } else {
-                                setShowNewSeasonInput(true);
-                              }
-                            }}
+                            onClick={handleShowCreateSeason}
                             className="p-2 text-indigo-400 hover:text-indigo-300 disabled:opacity-50"
                             title={showNewSeasonInput ? t('newGameSetupModal.cancelCreate', 'Cancel creation') : t('newGameSetupModal.createSeason', 'Create new season')}
                             disabled={isAddingSeason || isAddingTournament}
@@ -691,7 +684,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                           <select
                             id="tournamentSelect"
                             value={selectedTournamentId || ''}
-                            onChange={(e) => setSelectedTournamentId(e.target.value)}
+                            onChange={handleTournamentChange}
                             className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                           >
                             <option value="">{t('newGameSetupModal.selectTournament', '-- Select Tournament --')}</option>
@@ -703,14 +696,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                           </select>
                           <button
                             type="button"
-                            onClick={() => {
-                              if (showNewTournamentInput) {
-                                setShowNewTournamentInput(false);
-                                setNewTournamentName('');
-                              } else {
-                                setShowNewTournamentInput(true);
-                              }
-                            }}
+                            onClick={handleShowCreateTournament}
                             className="p-2 text-indigo-400 hover:text-indigo-300 disabled:opacity-50"
                             title={showNewTournamentInput ? t('newGameSetupModal.cancelCreate', 'Cancel creation') : t('newGameSetupModal.createTournament', 'Create new tournament')}
                             disabled={isAddingSeason || isAddingTournament}
