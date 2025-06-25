@@ -2495,7 +2495,7 @@ export default function Home() {
       saveStateToHistory({ playersOnField: updatedPlayersOnField });
 
       console.log(`[page.tsx] Updated Fair Play card award. ${playerId ? `Awarded to ${playerId}` : 'Cleared'}`);
-    }, [availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField, saveStateToHistory, currentGameId, t]);
+    }, [availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField, saveStateToHistory, currentGameId]);
 
   // --- NEW: Handler to Toggle Player Selection for Current Match ---
   const handleTogglePlayerSelection = useCallback((playerId: string) => {
@@ -2530,8 +2530,7 @@ export default function Home() {
        }
        
        console.log(`Updated selected players: ${nextSelectedPlayerIds.length} players. Players on field: ${nextPlayersOnField.length}`);
-  }, [playersOnField, saveStateToHistory, setPlayersOnField, gameSessionState.selectedPlayerIds]); // Dependency array updated 
-                                                              // setSelectedPlayerIds is updated via its functional update form
+  }, [playersOnField, saveStateToHistory, setPlayersOnField, gameSessionState.selectedPlayerIds, dispatchGameSession]); // Added dispatchGameSession, removed t
 
   // --- NEW: Quick Save Handler ---
   const handleQuickSaveGame = useCallback(async () => {

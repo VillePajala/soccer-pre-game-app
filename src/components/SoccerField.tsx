@@ -986,7 +986,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     isPointInBall, isTacticsBoardView, tacticalDiscs, onToggleTacticalDiscType, onTacticalDiscRemove, isPointInTacticalDisc,
     players, onPlayerRemove, isPointInPlayer, opponents, onOpponentRemove, isPointInOpponent,
     draggingPlayerFromBarInfo, onPlayerDropViaTouch,
-    lastTapInfo, onDrawingStart, tacticalBallPosition,
+    lastTapInfo, onDrawingStart
   ]);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
