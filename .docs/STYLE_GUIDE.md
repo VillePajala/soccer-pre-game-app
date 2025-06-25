@@ -60,11 +60,17 @@ Standardized components are the key to a consistent UI.
 
 ### 3.3 Modals
 - **Standard Layout:**
-  - **Header:** A flex container with the title on the left and a close button (`<FaTimes />`) on the right. A `border-b border-slate-700` provides separation.
+  - **Header:** A flex container with a centered title. The close "X" button in the top-right corner should be omitted in favor of a footer button. A `border-b border-slate-700` provides separation.
   - **Body:** Contains the main content, uses padding (`p-4` or `p-6`).
-  - **Footer:** A flex container with `justify-end` for action buttons. Separated by a `border-t border-slate-700`.
+  - **Footer:** A flex container with `justify-end` or `justify-center` for action buttons (e.g., "Done", "Close"). Separated by a `border-t border-slate-700`.
 
 ## 4. Spacing & Layout
 - **Gaps:** Use consistent `gap-x-4` and `gap-y-2` (or similar) for grid and flexbox layouts.
 - **Padding:** Use consistent padding within containers (e.g., `p-4`) to maintain visual rhythm.
-- **Responsiveness:** Ensure layouts are usable on smaller screens by using flexbox wrapping and responsive grid columns (`grid-cols-1 md:grid-cols-2`). 
+- **Responsiveness:** Ensure layouts are usable on smaller screens by using flexbox wrapping and responsive grid columns (`grid-cols-1 md:grid-cols-2`).
+
+## 5. Internationalization (i18n)
+All user-facing text must be internationalized using the `react-i18next` library.
+- **Implementation:** Use the `t()` function for all static strings (labels, titles, buttons, placeholders, etc.).
+- **Keys:** Follow a namespaced key structure (e.g., `modalName.component.keyName`) for clarity.
+- **Reference:** For a detailed example and best practices, refer to the `@translation-bugfix.md` document. 
