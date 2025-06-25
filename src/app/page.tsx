@@ -1536,7 +1536,9 @@ export default function Home() {
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const canUndo = historyIndex > 0;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const canRedo = historyIndex < history.length - 1;
 
   // Handler to open/close the goal log modal
@@ -2484,7 +2486,7 @@ export default function Home() {
       saveStateToHistory({ playersOnField: updatedPlayersOnField });
 
       console.log(`[page.tsx] Updated Fair Play card award. ${playerId ? `Awarded to ${playerId}` : 'Cleared'}`);
-  }, [availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField, saveStateToHistory, currentGameId, t]);
+    }, [availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField, saveStateToHistory, currentGameId, t]);
 
   // --- NEW: Handler to Toggle Player Selection for Current Match ---
   const handleTogglePlayerSelection = useCallback((playerId: string) => {
@@ -2519,7 +2521,7 @@ export default function Home() {
        }
        
        console.log(`Updated selected players: ${nextSelectedPlayerIds.length} players. Players on field: ${nextPlayersOnField.length}`);
-   }, [playersOnField, saveStateToHistory, setPlayersOnField, gameSessionState.selectedPlayerIds]); // Dependency array updated 
+  }, [playersOnField, saveStateToHistory, setPlayersOnField, gameSessionState.selectedPlayerIds, t]); // Dependency array updated 
                                                               // setSelectedPlayerIds is updated via its functional update form
 
   // --- NEW: Quick Save Handler ---
@@ -3390,8 +3392,8 @@ export default function Home() {
         <ControlBar
           onUndo={handleUndo}
           onRedo={handleRedo}
-          canUndo={historyIndex > 0}
-          canRedo={historyIndex < history.length - 1}
+          canUndo={canUndo}
+          canRedo={canRedo}
           onToggleNames={handleTogglePlayerNames}
           onResetField={handleResetField}
           onClearDrawings={handleClearDrawingsForView}
