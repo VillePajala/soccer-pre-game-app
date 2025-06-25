@@ -1318,17 +1318,19 @@ export default function Home() {
 
   // --- Reset Handler ---
   const handleResetField = useCallback(() => {
-    // Update state directly
-    setPlayersOnField([]);
-    setOpponents([]);
-    setDrawings([]);
-    // Save reset state to history
-    saveStateToHistory({ playersOnField: [], opponents: [], drawings: [] });
     if (isTacticsBoardView) {
+      // Only clear tactical elements in tactics view
       setTacticalDiscs([]);
       setTacticalDrawings([]);
+      saveStateToHistory({ tacticalDiscs: [], tacticalDrawings: [] });
+    } else {
+      // Only clear game elements in normal view
+      setPlayersOnField([]);
+      setOpponents([]);
+      setDrawings([]);
+      saveStateToHistory({ playersOnField: [], opponents: [], drawings: [] });
     }
-  }, [saveStateToHistory, setDrawings, setOpponents, setPlayersOnField, isTacticsBoardView, setTacticalDiscs, setTacticalDrawings]);
+  }, [isTacticsBoardView, setPlayersOnField, setOpponents, setDrawings, setTacticalDiscs, setTacticalDrawings, saveStateToHistory]);
 
   const handleClearDrawingsForView = () => {
     if (isTacticsBoardView) {
@@ -1372,14 +1374,7 @@ export default function Home() {
     setDraggingPlayerFromBarInfo(null);
   }, []);
 
-  // --- Toggle Player Names Handler ---
-  const handleTogglePlayerNames = () => {
-    console.log('Toggling player names via reducer');
-    // The new value will be the opposite of the current value in gameSessionState
-    // const newShowPlayerNames = !gameSessionState.showPlayerNames; // No longer needed for direct history save
-    dispatchGameSession({ type: 'TOGGLE_SHOW_PLAYER_NAMES' });
-    // REMOVED: saveStateToHistory({ showPlayerNames: newShowPlayerNames }); 
-  };
+  
 
   // --- Team Name Handler ---
   const handleTeamNameChange = (newName: string) => {
@@ -3394,13 +3389,11 @@ export default function Home() {
           onRedo={handleRedo}
           canUndo={canUndo}
           canRedo={canRedo}
-          onToggleNames={handleTogglePlayerNames}
           onResetField={handleResetField}
           onClearDrawings={handleClearDrawingsForView}
           onAddOpponent={handleAddOpponent}
           showLargeTimerOverlay={showLargeTimerOverlay}
           onToggleLargeTimerOverlay={handleToggleLargeTimerOverlay}
-          showPlayerNames={gameSessionState.showPlayerNames}
           onToggleTrainingResources={handleToggleTrainingResources}
           onToggleGoalLogModal={handleToggleGoalLogModal}
           onToggleGameStatsModal={handleToggleGameStatsModal}

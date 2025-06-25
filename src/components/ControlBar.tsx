@@ -49,13 +49,11 @@ interface ControlBarProps {
   onRedo: () => void;
   canUndo: boolean;
   canRedo: boolean;
-  onToggleNames: () => void;
   onResetField: () => void;
   onClearDrawings: () => void;
   onAddOpponent: () => void;
   showLargeTimerOverlay: boolean;
   onToggleLargeTimerOverlay: () => void;
-  showPlayerNames: boolean;
   onToggleTrainingResources: () => void; // Add prop for training modal
   onToggleGoalLogModal: () => void; // Add prop for goal modal
   onToggleGameStatsModal: () => void;
@@ -81,13 +79,11 @@ const ControlBar: React.FC<ControlBarProps> = ({
   onRedo,
   canUndo,
   canRedo,
-  onToggleNames,
   onResetField,
   onClearDrawings,
   onAddOpponent,
   showLargeTimerOverlay,
   onToggleLargeTimerOverlay,
-  showPlayerNames,
   onToggleTrainingResources,
   onToggleGoalLogModal,
   onToggleGameStatsModal,
@@ -212,17 +208,14 @@ const ControlBar: React.FC<ControlBarProps> = ({
           </>
         ) : (
           <>
-        <button onClick={onToggleNames} className={`${baseButtonStyle} ${secondaryColor}`} title={t(showPlayerNames ? 'controlBar.toggleNamesHide' : 'controlBar.toggleNamesShow') ?? (showPlayerNames ? "Hide Names" : "Show Names")}>
-            {showPlayerNames ? <HiOutlineEyeSlash className={iconSize}/> : <HiOutlineEye className={iconSize}/>}
-        </button>
-        <button onClick={onPlaceAllPlayers} className={`${baseButtonStyle} bg-indigo-600 hover:bg-indigo-500 focus:ring-indigo-500`} title={t('controlBar.placeAllPlayers') ?? "Place All Players on Field"}>
+        <button onClick={onPlaceAllPlayers} className={`${baseButtonStyle} bg-purple-600 hover:bg-purple-500 focus:ring-purple-500`} title={t('controlBar.placeAllPlayers') ?? "Place All Players on Field"}>
             <HiOutlineSquares2X2 className={iconSize}/>
+        </button>
+        <button onClick={onAddOpponent} className={`${baseButtonStyle} bg-red-600 hover:bg-red-500 focus:ring-red-500`} title={t('controlBar.addOpponent') ?? "Add Opponent"}>
+            <HiOutlinePlusCircle className={iconSize}/>
         </button>
         <button onClick={onClearDrawings} className={`${baseButtonStyle} ${clearColor}`} title={t('controlBar.clearDrawings') ?? "Clear Drawings"}>
             <HiOutlineBackspace className={iconSize}/>
-        </button>
-        <button onClick={onAddOpponent} className={`${baseButtonStyle} ${addOpponentColor}`} title={t('controlBar.addOpponent') ?? "Add Opponent"}>
-            <HiOutlineUserPlus className={iconSize}/>
         </button>
         <button onClick={onResetField} className={`${baseButtonStyle} ${resetColor}`} title={t('controlBar.resetField') ?? "Reset Field"}>
             <HiOutlineTrash className={iconSize}/>

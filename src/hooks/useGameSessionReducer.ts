@@ -104,7 +104,6 @@ export type GameSessionAction =
   | { type: 'CONFIRM_SUBSTITUTION' }
   | { type: 'RESET_TIMER_AND_GAME_PROGRESS'; payload?: Partial<GameSessionState> } // Optional payload for selective reset
   | { type: 'RESET_TIMER_ONLY' }
-  | { type: 'TOGGLE_SHOW_PLAYER_NAMES' }
   | { type: 'LOAD_GAME_SESSION_STATE'; payload: Partial<GameSessionState> }
   | { type: 'RESET_GAME_SESSION_STATE'; payload: GameSessionState } // Action to reset to a specific state
   | { type: 'LOAD_PERSISTED_GAME_DATA'; payload: Partial<GameSessionState> }; // For loading GameData-like objects
@@ -288,8 +287,6 @@ export const gameSessionReducer = (state: GameSessionState, action: GameSessionA
             ...(action.payload || {}),
         };
     }
-    case 'TOGGLE_SHOW_PLAYER_NAMES':
-      return { ...state, showPlayerNames: !state.showPlayerNames };
     case 'RESET_GAME_SESSION_STATE':
       return action.payload;
     case 'LOAD_PERSISTED_GAME_DATA': {
