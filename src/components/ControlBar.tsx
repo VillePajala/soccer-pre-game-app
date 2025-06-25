@@ -5,11 +5,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
     HiOutlineArrowUturnLeft,
     HiOutlineArrowUturnRight,
-    HiOutlineEye,
-    HiOutlineEyeSlash,
     HiOutlineTrash,
     HiOutlineBackspace, // Icon for Clear Drawings
-    HiOutlineUserPlus,
     HiOutlineStopCircle,
     HiOutlineClock,
     HiOutlineClipboardDocumentList, // Replaces FaClipboardList
@@ -117,7 +114,6 @@ const ControlBar: React.FC<ControlBarProps> = ({
   const secondaryColor = "bg-slate-700 hover:bg-slate-600 focus:ring-slate-500";
   const resetColor = "bg-red-600 hover:bg-red-500 focus:ring-red-500";
   const clearColor = "bg-amber-600 hover:bg-amber-500 focus:ring-amber-500 text-white";
-  const addOpponentColor = secondaryColor;
   const logGoalColor = "bg-blue-600 hover:bg-blue-500 focus:ring-blue-500"; 
   // --- END RE-ADD BUTTON STYLES --- 
 

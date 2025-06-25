@@ -53,7 +53,7 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
     const assists = gameEvents.filter(event => event.type === 'goal' && event.assisterId === id).length;
     // REMOVED: console.log(`[PlayerDisk id=${id} name=${fullName}] Calculated stats - Goals: ${goals}, Assists: ${assists}`);
     return { goals, assists };
-  }, [gameEvents.length, id]);
+  }, [gameEvents, id]);
 
   // --- Modified Event Handlers for Selection ONLY ---
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -103,7 +103,6 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
   const defaultFillColor = color || '#7E22CE'; // Existing default purple
   const defaultTextColor = 'text-white';
   const finalFillColor = isGoalie ? goalieFillColor : defaultFillColor;
-  const baseColor = tinycolor(finalFillColor);
 
   return (
     <div

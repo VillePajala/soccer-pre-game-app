@@ -1531,9 +1531,7 @@ export default function Home() {
     }
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const canUndo = historyIndex > 0;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const canRedo = historyIndex < history.length - 1;
 
   // Handler to open/close the goal log modal
