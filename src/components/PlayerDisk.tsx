@@ -6,7 +6,6 @@ import { GameEvent } from '@/app/page'; // Import GameEvent type
 import {
     HiOutlineShieldCheck, // Goalie icon
 } from 'react-icons/hi2';
-import tinycolor from 'tinycolor2';
 
 interface PlayerDiskProps {
   id: string;
