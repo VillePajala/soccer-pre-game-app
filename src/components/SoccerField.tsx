@@ -350,21 +350,46 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
         return;
       }
 
+      const baseColor = tinycolor('#DC2626'); // Opponent Red
+
+      // 1. Base Disc Color
       context.beginPath();
       context.arc(absX, absY, opponentRadius, 0, Math.PI * 2);
-      context.save();
-      context.shadowColor = 'rgba(0, 0, 0, 0.5)';
-      context.shadowBlur = 5; // Original value
-      context.shadowOffsetX = 1; // Original value
-      context.shadowOffsetY = 2; // Original value
-      // Gradient uses original radius
-      const gradientOpp = context.createRadialGradient(absX - 3, absY - 3, 1, absX, absY, opponentRadius);
-      gradientOpp.addColorStop(0, '#F87171');
-      gradientOpp.addColorStop(1, '#DC2626');
-      context.fillStyle = gradientOpp;
+      context.fillStyle = baseColor.toString();
       context.fill();
+
+      // 2. Create a clipping mask
+      context.save();
+      context.beginPath();
+      context.arc(absX, absY, opponentRadius, 0, Math.PI * 2);
+      context.clip();
+
+      // 3. Top-left Highlight (Sheen)
+      const highlightGradient = context.createRadialGradient(
+        absX - opponentRadius * 0.3, absY - opponentRadius * 0.3, 0,
+        absX - opponentRadius * 0.3, absY - opponentRadius * 0.3, opponentRadius * 1.2
+      );
+      highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
+      highlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      context.fillStyle = highlightGradient;
+      context.fillRect(absX - opponentRadius, absY - opponentRadius, opponentRadius * 2, opponentRadius * 2);
+
+      // 4. Bottom-right Inner Shadow for depth
+      const shadowGradient = context.createRadialGradient(
+        absX + opponentRadius * 0.4, absY + opponentRadius * 0.4, 0,
+        absX + opponentRadius * 0.4, absY + opponentRadius * 0.4, opponentRadius * 1.5
+      );
+      shadowGradient.addColorStop(0, 'rgba(0, 0, 0, 0.2)');
+      shadowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      context.fillStyle = shadowGradient;
+      context.fillRect(absX - opponentRadius, absY - opponentRadius, opponentRadius * 2, opponentRadius * 2);
+      
+      // 5. Restore and add border
       context.restore();
-      context.strokeStyle = '#B91C1C';
+      context.beginPath();
+      context.arc(absX, absY, opponentRadius, 0, Math.PI * 2);
+      context.strokeStyle = 'rgba(0, 0, 0, 0.25)';
+      context.lineWidth = 1;
       context.stroke();
     });
     }
