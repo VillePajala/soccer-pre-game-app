@@ -171,9 +171,9 @@ const ControlBar: React.FC<ControlBarProps> = ({
   };
 
   return (
-    <div className="bg-gradient-to-b from-slate-800 to-slate-900 p-2 shadow-md flex flex-wrap justify-center gap-2 relative z-40">
+    <div className="bg-gradient-to-b from-slate-800 to-slate-900 p-2 shadow-md flex flex-wrap justify-center items-center gap-x-4 gap-y-2 relative z-40">
       {/* Left Group: Undo/Redo */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
         <button onClick={onUndo} disabled={!canUndo} className={`${baseButtonStyle} ${secondaryColor}`} title={t('controlBar.undo') ?? "Undo"}>
             <HiOutlineArrowUturnLeft className={iconSize}/>
         </button>
@@ -183,7 +183,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
       </div>
 
       {/* Center Group: Field Actions */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
         <button 
           onClick={onToggleTacticsBoard} 
           className={`${baseButtonStyle} ${isTacticsBoardView ? 'bg-indigo-600 hover:bg-indigo-500 focus:ring-indigo-500' : secondaryColor}`} 
@@ -225,7 +225,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
       </div>
 
       {/* Right Group: Live/Info Actions & Settings */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
         {/* Log Goal (Moved Here, Use FaFutbol Icon) */}
         <button onClick={onToggleGoalLogModal} className={`${baseButtonStyle} ${logGoalColor}`} title={t('controlBar.logGoal', 'Log Goal') ?? "Log Goal"}>
             <FaFutbol size={18} />
