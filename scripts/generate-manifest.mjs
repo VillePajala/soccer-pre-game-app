@@ -47,7 +47,33 @@ async function generateManifest() {
   console.log('Manifest generated successfully!');
 }
 
-generateManifest().catch(error => {
-  console.error("Failed to generate manifest:", error);
+async function updateServiceWorker() {
+  const swPath = path.join(process.cwd(), 'public', 'sw.js');
+  try {
+    const swContent = fs.readFileSync(swPath, 'utf8');
+    // Remove old timestamp if it exists to prevent the file from growing indefinitely
+    const contentWithoutTimestamp = swContent.replace(/\/\/ Build Timestamp: .*/, '').trim();
+    const newContent = `${contentWithoutTimestamp}\n// Build Timestamp: ${new Date().toISOString()}`;
+    fs.writeFileSync(swPath, newContent);
+    console.log('Service worker timestamp updated successfully!');
+  } catch (error) {
+    console.error('Failed to update service worker:', error);
+    // We don't want to fail the build if the SW doesn't exist,
+    // as it might not be present in all development environments.
+    if (error.code !== 'ENOENT') {
+      throw error; // Rethrow if it's not a "file not found" error
+    } else {
+      console.warn('public/sw.js not found, skipping update.');
+    }
+  }
+}
+
+async function main() {
+  await generateManifest();
+  await updateServiceWorker();
+}
+
+main().catch(error => {
+  console.error("Build script failed:", error);
   process.exit(1);
 }); 
