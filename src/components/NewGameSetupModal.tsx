@@ -621,14 +621,11 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                           <select
                             id="seasonSelect"
                             value={selectedSeasonId || ''}
-                            onChange={handleSeasonChange}
+                            onChange={(e) => setSelectedSeasonId(e.target.value)}
                             className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
-                            disabled={isLoading || showNewSeasonInput}
                           >
-                            <option value="">
-                              {t('newGameSetupModal.selectSeasonOption', '-- Select Season --')}
-                            </option>
-                            {seasons.map(season => (
+                            <option value="">{t('newGameSetupModal.selectSeason', '-- Select Season --')}</option>
+                            {seasons.map((season) => (
                               <option key={season.id} value={season.id}>
                                 {season.name}
                               </option>
@@ -636,9 +633,10 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                           </select>
                           <button
                             type="button"
-                            onClick={handleShowCreateSeason}
+                            onClick={() => setShowNewSeasonInput(true)}
                             className="p-2 text-indigo-400 hover:text-indigo-300 disabled:opacity-50"
-                            disabled={isLoading || showNewSeasonInput}
+                            title={t('newGameSetupModal.createSeason', 'Create new season')}
+                            disabled={isAddingSeason || isAddingTournament}
                           >
                             <HiPlusCircle className="w-6 h-6" />
                           </button>
@@ -675,14 +673,11 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                           <select
                             id="tournamentSelect"
                             value={selectedTournamentId || ''}
-                            onChange={handleTournamentChange}
+                            onChange={(e) => setSelectedTournamentId(e.target.value)}
                             className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
-                            disabled={isLoading || showNewTournamentInput}
                           >
-                            <option value="">
-                              {t('newGameSetupModal.selectTournamentOption', '-- Select Tournament --')}
-                            </option>
-                            {tournaments.map(tournament => (
+                            <option value="">{t('newGameSetupModal.selectTournament', '-- Select Tournament --')}</option>
+                            {tournaments.map((tournament) => (
                               <option key={tournament.id} value={tournament.id}>
                                 {tournament.name}
                               </option>
@@ -690,9 +685,10 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                           </select>
                           <button
                             type="button"
-                            onClick={handleShowCreateTournament}
+                            onClick={() => setShowNewTournamentInput(true)}
                             className="p-2 text-indigo-400 hover:text-indigo-300 disabled:opacity-50"
-                            disabled={isLoading || showNewTournamentInput}
+                            title={t('newGameSetupModal.createTournament', 'Create new tournament')}
+                            disabled={isAddingSeason || isAddingTournament}
                           >
                             <HiPlusCircle className="w-6 h-6" />
                           </button>

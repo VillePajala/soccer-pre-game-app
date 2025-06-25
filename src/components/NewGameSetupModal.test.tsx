@@ -30,12 +30,44 @@ jest.mock('@/utils/masterRosterManager', () => ({
   getMasterRoster: jest.fn(),
 }));
 
-// Simplified Mock i18n - always returns the fallback or the key itself
+// More robust i18n mock
+const translations: { [key: string]: string } = {
+  'newGameSetupModal.title': 'New Game Setup',
+  'newGameSetupModal.loading': 'Loading setup data...',
+  'newGameSetupModal.homeTeamLabel': 'Your Team Name',
+  'newGameSetupModal.homeTeamPlaceholder': 'e.g., Galaxy U10',
+  'newGameSetupModal.opponentNameLabel': 'Opponent Name: *',
+  'newGameSetupModal.opponentNamePlaceholder': 'Enter opponent name',
+  'newGameSetupModal.playersHeader': 'Select Players',
+  'newGameSetupModal.playersSelected': 'selected',
+  'newGameSetupModal.selectAll': 'Select All',
+  'newGameSetupModal.seasonLabel': 'Season:',
+  'newGameSetupModal.tournamentLabel': 'Tournament:',
+  'newGameSetupModal.createSeason': 'Create new season',
+  'newGameSetupModal.createTournament': 'Create new tournament',
+  'newGameSetupModal.addSeasonPlaceholder': 'Enter new season name...',
+  'newGameSetupModal.addTournamentPlaceholder': 'Enter new tournament name...',
+  'common.add': 'Add',
+  'common.cancel': 'Cancel',
+  'newGameSetupModal.confirmButton': 'Confirm & Start Game',
+  'newGameSetupModal.errorHomeTeamRequired': 'Home Team Name is required.',
+};
+
 const mockT = jest.fn((key: string, fallback?: any) => {
-    // For specific keys that we know the component uses for titles, we can return those
-    // but generally, prefer relying on the fallback for text content.
-    if (key === 'newGameSetupModal.createSeason') return fallback || 'Create new season';
-    if (key === 'newGameSetupModal.createTournament') return fallback || 'Create new tournament';
+    // If a specific translation exists in our map, return it.
+    if (translations[key]) {
+        return translations[key];
+    }
+    // If it's an object with a fallback (like for placeholders), use that.
+    if (typeof fallback === 'object' && fallback !== null) {
+        // A simple attempt to replace placeholders if any.
+        let text = translations[key] || key;
+        Object.keys(fallback).forEach(placeholder => {
+            text = text.replace(`{{${placeholder}}}`, fallback[placeholder]);
+        });
+        return text;
+    }
+    // Otherwise, return the fallback string or the key itself.
     return fallback || key;
 });
 
@@ -95,22 +127,22 @@ describe('NewGameSetupModal', () => {
 
   const renderAndWaitForLoad = async () => {
     render(<NewGameSetupModal {...defaultProps} />);
-    // Use the fallback English text for the loading message, as per our simplified mockT
+    // Use the translation key for the loading message
     await waitFor(() => 
-      expect(screen.queryByText('Loading setup data...')).not.toBeInTheDocument(),
+      expect(screen.queryByText(translations['newGameSetupModal.loading'])).not.toBeInTheDocument(),
       { timeout: 10000 } 
     );
     await waitFor(() => {
-        // Use fallback for label text
-        expect(screen.getByLabelText('Your Team Name')).toBeInTheDocument();
+        // Use getByRole for a more robust selector
+        expect(screen.getByRole('textbox', { name: /Your Team Name/i })).toBeInTheDocument();
     });
   };
 
   test('loads the last home team name from appSettings utility and populates input', async () => {
     await renderAndWaitForLoad();
     expect(getLastHomeTeamName).toHaveBeenCalled();
-    // Use fallback for label text
-    const homeTeamInput = screen.getByLabelText('Your Team Name');
+    // Use getByRole
+    const homeTeamInput = screen.getByRole('textbox', { name: /Your Team Name/i });
     expect(homeTeamInput).toHaveValue('Last Team');
   });
 
@@ -124,13 +156,11 @@ describe('NewGameSetupModal', () => {
 
   test('saves last home team name using utility function on start', async () => {
     await renderAndWaitForLoad();
-    const homeTeamInput = screen.getByLabelText('Your Team Name');
+    const homeTeamInput = screen.getByRole('textbox', { name: /Your Team Name/i });
     fireEvent.change(homeTeamInput, { target: { value: 'New Team Name' } });
-    // Use fallback for label text, ensure regex matches colon and asterisk
-    const opponentInput = screen.getByLabelText(/Opponent Name: \*/i); 
+    const opponentInput = screen.getByRole('textbox', { name: /Opponent Name/i }); 
     fireEvent.change(opponentInput, { target: { value: 'Opponent Team' } });
-    // Use fallback for button text
-    const startButton = screen.getByText('Confirm & Start Game');
+    const startButton = screen.getByRole('button', { name: /Confirm & Start Game/i });
     
     await act(async () => {
         fireEvent.click(startButton);
@@ -147,21 +177,15 @@ describe('NewGameSetupModal', () => {
 
   test('adds a new season using utility function', async () => {
     await renderAndWaitForLoad();
-    // Use fallback for label text
-    const seasonSection = screen.getByText('Season:').closest('div');
-    if (!seasonSection) throw new Error('Season section not found');
     
     await act(async () => {
-        // Find by title attribute, using the English fallback as per mockT
-        fireEvent.click(within(seasonSection).getByTitle('Create new season'));
+        fireEvent.click(screen.getByTitle('Create new season'));
     });
     
-    // Use fallback for placeholder text
     const seasonNameInput = screen.getByPlaceholderText('Enter new season name...');
     fireEvent.change(seasonNameInput, { target: { value: 'Fall 2024' } });
     
     await act(async () => {
-        // Use fallback for button text
         fireEvent.click(screen.getByText('Add'));
     });
 
@@ -170,21 +194,15 @@ describe('NewGameSetupModal', () => {
 
   test('adds a new tournament using utility function', async () => {
     await renderAndWaitForLoad();
-    // Use fallback for label text
-    const tournamentSection = screen.getByText('Tournament:').closest('div');
-    if (!tournamentSection) throw new Error('Tournament section not found');
 
     await act(async () => {
-        // Find by title attribute, using the English fallback as per mockT
-        fireEvent.click(within(tournamentSection).getByTitle('Create new tournament'));
+        fireEvent.click(screen.getByTitle('Create new tournament'));
     });
 
-    // Use fallback for placeholder text
     const tournamentNameInput = screen.getByPlaceholderText('Enter new tournament name...');
     fireEvent.change(tournamentNameInput, { target: { value: 'National Cup' } });
 
     await act(async () => {
-        // Use fallback for button text
         fireEvent.click(screen.getByText('Add'));
     });
     
@@ -193,20 +211,20 @@ describe('NewGameSetupModal', () => {
 
   test('does not call onStart if home team name is empty, and saveLastHomeTeamName is not called', async () => {
     await renderAndWaitForLoad();
-    const homeTeamInput = screen.getByLabelText('Your Team Name');
+    const homeTeamInput = screen.getByRole('textbox', { name: /Your Team Name/i });
     fireEvent.change(homeTeamInput, { target: { value: '' } });
-    const opponentInput = screen.getByLabelText(/Opponent Name: \*/i);
+    const opponentInput = screen.getByRole('textbox', { name: /Opponent Name/i });
     fireEvent.change(opponentInput, { target: { value: 'Opponent Team' } });
     window.alert = jest.fn();
-    const startButton = screen.getByText('Confirm & Start Game');
+    const startButton = screen.getByRole('button', { name: /Confirm & Start Game/i });
     
     await act(async () => {
         fireEvent.click(startButton);
     });
 
     await waitFor(() => {
-      // Use fallback for alert message
-      expect(window.alert).toHaveBeenCalledWith('Home Team Name is required.');
+      // Use translation key for alert message
+      expect(window.alert).toHaveBeenCalledWith(translations['newGameSetupModal.errorHomeTeamRequired']);
     });
     expect(saveLastHomeTeamName).not.toHaveBeenCalled();
     expect(mockOnStart).not.toHaveBeenCalled();
@@ -214,8 +232,8 @@ describe('NewGameSetupModal', () => {
 
   test('calls onCancel when cancel button is clicked', async () => {
     await renderAndWaitForLoad();
-    // Use fallback for button text
-    const cancelButton = screen.getByText('Cancel');
+    // Use translation key for button text
+    const cancelButton = screen.getByText(translations['common.cancel']);
     await act(async () => {
         fireEvent.click(cancelButton);
     });
@@ -224,15 +242,15 @@ describe('NewGameSetupModal', () => {
 
   test('should render loading state initially and then form after data loads', async () => {
     render(<NewGameSetupModal {...defaultProps} />); 
-    // Use fallback for loading text
-    expect(screen.getByText('Loading setup data...')).toBeInTheDocument();
+    // Use translation key for loading text
+    expect(screen.getByText(translations['newGameSetupModal.loading'])).toBeInTheDocument();
     
     await waitFor(() => 
-      // Use fallback for loading text
-      expect(screen.queryByText('Loading setup data...')).not.toBeInTheDocument(),
+      // Use translation key for loading text
+      expect(screen.queryByText(translations['newGameSetupModal.loading'])).not.toBeInTheDocument(),
       { timeout: 10000 }
     );
-    // Use fallback for label text
-    expect(screen.getByLabelText('Your Team Name')).toBeInTheDocument();
+    // Use getByRole
+    expect(screen.getByRole('textbox', { name: /Your Team Name/i })).toBeInTheDocument();
   });
 });
