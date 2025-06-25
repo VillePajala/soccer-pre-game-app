@@ -309,6 +309,18 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     context.beginPath();
     context.arc(W / 2, H - lineMargin - penaltySpotDist, spotRadius, 0, Math.PI * 2);
     context.fill();
+
+    // --- Draw Goals ---
+    const goalWidth = W * 0.15;
+    const goalHeight = 5; // A fixed pixel height for the line
+    context.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    
+    // Top Goal
+    context.fillRect((W - goalWidth) / 2, lineMargin, goalWidth, goalHeight);
+    
+    // Bottom Goal
+    context.fillRect((W - goalWidth) / 2, H - lineMargin - goalHeight, goalWidth, goalHeight);
+
     // --- End Field Lines ---
 
     // --- Draw User Drawings --- (lineWidth only change needed)
