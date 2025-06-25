@@ -2521,7 +2521,7 @@ export default function Home() {
        }
        
        console.log(`Updated selected players: ${nextSelectedPlayerIds.length} players. Players on field: ${nextPlayersOnField.length}`);
-  }, [playersOnField, saveStateToHistory, setPlayersOnField, gameSessionState.selectedPlayerIds, t]); // Dependency array updated 
+  }, [playersOnField, saveStateToHistory, setPlayersOnField, gameSessionState.selectedPlayerIds]); // Dependency array updated 
                                                               // setSelectedPlayerIds is updated via its functional update form
 
   // --- NEW: Quick Save Handler ---
