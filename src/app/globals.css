@@ -34,9 +34,7 @@ body {
       rgb(var(--background-end-rgb))
     )
     rgb(var(--background-start-rgb));
-  font-family: var(--font-rajdhani), sans-serif;
-  display: flex;
-  flex-direction: column;
+  font-family: var(--font-rajdhani), sans-serif; /* <-- ADD THIS LINE */
 }
 
 /* Fix for app root to take full height */

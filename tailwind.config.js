@@ -9,7 +9,7 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
+        sans: ['var(--font-rajdhani)', 'Inter', 'sans-serif'],
         display: ['var(--font-rajdhani)', 'sans-serif'],
       },
       backgroundImage: {

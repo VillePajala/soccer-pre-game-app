@@ -67,6 +67,7 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
   // State for the actions menu
   const [actionsMenuPlayerId, setActionsMenuPlayerId] = useState<string | null>(null);
   const actionsMenuRef = useRef<HTMLDivElement>(null); // Ref for click outside
+  const playerRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // Close editing mode when modal closes or players change
   useEffect(() => {
@@ -113,6 +114,17 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
       notes: playerToEdit.notes || '',
       nickname: playerToEdit.nickname || '',
     });
+
+    // Scroll the editing view into focus
+    setTimeout(() => {
+      const playerIndex = availablePlayers.findIndex(p => p.id === playerId);
+      if (playerRefs.current[playerIndex]) {
+        playerRefs.current[playerIndex]?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest'
+        });
+      }
+    }, 50); // A small delay to allow the DOM to update
   };
 
   // Cancel editing
@@ -230,7 +242,7 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
   // --- Style Guide Definitions ---
   const modalContainerStyle = "bg-slate-800 rounded-lg shadow-xl w-full max-w-2xl flex flex-col border border-slate-700 overflow-hidden max-h-[calc(100vh-theme(space.8))]";
   const headerStyle = "flex justify-between items-center p-4 border-b border-slate-700 flex-shrink-0";
-  const titleStyle = "text-xl font-bold text-yellow-400";
+  const titleStyle = "text-2xl font-bold text-yellow-400";
   const closeButtonStyle = "text-slate-400 hover:text-white";
   
   const sectionStyle = "p-4 border-b border-slate-700 flex-shrink-0";
@@ -313,8 +325,12 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
           {/* Player List */}
           <div className={cardStyle}>
             <div className="space-y-2">
-              {availablePlayers.map((player) => (
-                <div key={player.id} className={`p-2 rounded-md border ${editingPlayerId === player.id ? 'bg-slate-700/75 border-indigo-500' : 'bg-slate-800/60 border-slate-700'}`}>
+              {availablePlayers.map((player, index) => (
+                <div 
+                  key={player.id}
+                  ref={(el) => { playerRefs.current[index] = el; }}
+                  className={`p-2 rounded-md border ${editingPlayerId === player.id ? 'bg-slate-700/75 border-indigo-500' : 'bg-slate-800/60 border-slate-700'}`}
+                >
                   {editingPlayerId === player.id ? (
                     <div className="space-y-2">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
