@@ -47,6 +47,7 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
   const handleLogOwnGoalClick = () => {
     if (scorerId) {
       onLogGoal(scorerId, assisterId || undefined); // Pass undefined if assisterId is empty
+      onClose();
     }
   };
 
