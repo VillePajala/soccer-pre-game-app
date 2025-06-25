@@ -1328,7 +1328,7 @@ export default function Home() {
       setTacticalDiscs([]);
       setTacticalDrawings([]);
     }
-  }, [saveStateToHistory, setDrawings, setOpponents, setPlayersOnField, isTacticsBoardView, setTacticalDiscs, setTacticalDrawings, tacticalDiscs, tacticalDrawings]);
+  }, [saveStateToHistory, setDrawings, setOpponents, setPlayersOnField, isTacticsBoardView, setTacticalDiscs, setTacticalDrawings]);
 
   const handleClearDrawingsForView = () => {
     if (isTacticsBoardView) {
@@ -3035,8 +3035,7 @@ export default function Home() {
 
   }, [t, currentGameId, savedGames, /* handleOpenSaveGameModal, */ handleQuickSaveGame, setIsNewGameSetupModalOpen, 
       // <<< ADD dependencies >>>
-      availablePlayers, gameSessionState.selectedPlayerIds, setPlayerIdsForNewGame,
-      t
+      availablePlayers, gameSessionState.selectedPlayerIds, setPlayerIdsForNewGame
      ]); 
   // --- END Start New Game Handler ---
 
@@ -3595,6 +3594,40 @@ export default function Home() {
           player={selectedPlayerForStats}
           savedGames={allSavedGamesQueryResultData || {}} 
           onGameClick={handleGameLogClick}
+      />
+
+      <GameSettingsModal
+        isOpen={isGameSettingsModalOpen}
+        onClose={handleCloseGameSettingsModal}
+        currentGameId={currentGameId}
+        teamName={gameSessionState.teamName}
+        opponentName={gameSessionState.opponentName}
+        gameDate={gameSessionState.gameDate}
+        gameLocation={gameSessionState.gameLocation}
+        gameTime={gameSessionState.gameTime}
+        gameNotes={gameSessionState.gameNotes}
+        homeScore={gameSessionState.homeScore}
+        awayScore={gameSessionState.awayScore}
+        gameEvents={gameSessionState.gameEvents}
+        availablePlayers={availablePlayers}
+        numPeriods={gameSessionState.numberOfPeriods}
+        periodDurationMinutes={gameSessionState.periodDurationMinutes}
+        onOpponentNameChange={handleOpponentNameChange}
+        onGameDateChange={handleGameDateChange}
+        onGameLocationChange={handleGameLocationChange}
+        onGameTimeChange={handleGameTimeChange}
+        onGameNotesChange={handleGameNotesChange}
+        onUpdateGameEvent={handleUpdateGameEvent}
+        onAwardFairPlayCard={handleAwardFairPlayCard}
+        onDeleteGameEvent={handleDeleteGameEvent}
+        onNumPeriodsChange={handleSetNumberOfPeriods}
+        onPeriodDurationChange={handleSetPeriodDuration}
+        seasonId={gameSessionState.seasonId}
+        tournamentId={gameSessionState.tournamentId}
+        onSeasonIdChange={handleSetSeasonId}
+        onTournamentIdChange={handleSetTournamentId}
+        homeOrAway={gameSessionState.homeOrAway}
+        onSetHomeOrAway={handleSetHomeOrAway}
       />
     </main>
   );
