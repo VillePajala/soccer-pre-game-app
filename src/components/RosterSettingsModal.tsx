@@ -388,13 +388,12 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                     ) : (
                       <div className="flex items-center gap-3">
                         <input type="checkbox" checked={selectedPlayerIds.includes(player.id)} onChange={() => onTogglePlayerSelection(player.id)} className="form-checkbox h-5 w-5 text-indigo-600 bg-slate-600 border-slate-500 rounded focus:ring-indigo-500 shrink-0" disabled={isRosterUpdating} />
-                        <div className="flex-grow flex items-center gap-2 truncate">
+                        <div className="flex-grow flex items-center gap-2 truncate pl-2">
                           <span className="text-base text-slate-100 truncate" title={player.name}>{player.nickname || player.name}</span>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           <button onClick={() => handleStartEdit(player.id)} className={`${iconButtonBaseStyle} text-slate-400 hover:text-indigo-400`} title={t('common.edit', 'Edit')} disabled={isRosterUpdating || isAddingPlayer}><HiOutlinePencil className="w-5 h-5" /></button>
                           <button onClick={() => onOpenPlayerStats(player.id)} className={`${iconButtonBaseStyle} text-slate-400 hover:text-indigo-400`} title={t('common.stats', 'Stats')} disabled={isRosterUpdating || isAddingPlayer}><HiOutlineChartBar className="w-5 h-5" /></button>
-                          <button onClick={() => onToggleGoalie(player.id)} className={`${iconButtonBaseStyle} text-slate-400 hover:text-indigo-400`} title={t('rosterSettingsModal.toggleGoalie', 'Toggle Goalie')} disabled={isRosterUpdating || isAddingPlayer}>G</button>
                           <button onClick={() => { if (window.confirm(t('rosterSettingsModal.confirmDeletePlayer', 'Are you sure you want to remove this player?'))) { onRemovePlayer(player.id); } }} className={`${iconButtonBaseStyle} text-slate-400 hover:text-red-500`} title={t('common.remove', 'Remove')} disabled={isRosterUpdating || isAddingPlayer}><HiOutlineTrash className="w-5 h-5" /></button>
                         </div>
                       </div>
