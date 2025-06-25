@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
 import { Rajdhani } from 'next/font/google';
 import "./globals.css";
 import ClientWrapper from "@/components/ClientWrapper";
@@ -9,8 +8,6 @@ import InstallPrompt from "@/components/InstallPrompt";
 import I18nInitializer from "@/components/I18nInitializer";
 import { Analytics } from "@vercel/analytics/react";
 import { manifestConfig } from "@/config/manifest.config.js";
-
-const inter = Inter({ subsets: ["latin"] });
 
 // Configure Rajdhani font
 const rajdhani = Rajdhani({

@@ -2649,15 +2649,13 @@ export default function Home() {
     const idToSet = newSeasonId || ''; // Ensure empty string instead of null
     console.log('[page.tsx] handleSetSeasonId called with:', idToSet);
     dispatchGameSession({ type: 'SET_SEASON_ID', payload: idToSet }); 
-    // REMOVED: saveStateToHistory({ seasonId: idToSet, tournamentId: idToSet ? '' : gameSessionState.tournamentId });
-  }, []); // Dependency was saveStateToHistory, gameSessionState.tournamentId. Now only gameSessionState.tournamentId or none if reducer handles all logic.
+  }, []); // No dependencies needed since we're only using dispatchGameSession which is stable
 
   const handleSetTournamentId = useCallback((newTournamentId: string | null) => {
     const idToSet = newTournamentId || ''; // Ensure empty string instead of null
     console.log('[page.tsx] handleSetTournamentId called with:', idToSet);
     dispatchGameSession({ type: 'SET_TOURNAMENT_ID', payload: idToSet });
-    // REMOVED: saveStateToHistory({ tournamentId: idToSet, seasonId: idToSet ? '' : gameSessionState.seasonId });
-  }, []); // Dependency was saveStateToHistory, gameSessionState.seasonId. Now only gameSessionState.seasonId or none if reducer handles all logic.
+  }, []); // No dependencies needed since we're only using dispatchGameSession which is stable
 
   // --- AGGREGATE EXPORT HANDLERS --- 
   
@@ -2733,7 +2731,7 @@ export default function Home() {
         console.error(`Failed to export aggregate stats as JSON:`, error);
         alert(t('export.jsonError', 'Error exporting aggregate data as JSON.'));
     }
-  }, [savedGames, t, seasons, tournaments]);
+  }, [savedGames, seasons, tournaments, t]); // Added t as dependency since it's used in the function
 
   const handleExportAggregateCsv = useCallback((gameIds: string[], aggregateStats: import('@/types').PlayerStatRow[]) => {
     console.log(`Exporting aggregate CSV for ${gameIds.length} games.`);
