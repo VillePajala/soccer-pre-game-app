@@ -236,9 +236,9 @@ fiTranslations.common.close = "Sulje";
 fiTranslations.common.saveChanges = "Tallenna";
 fiTranslations.common.edit = "Muokkaa";
 fiTranslations.common.remove = "Poista";
-fiTranslations.common.actions = "Toiminnot"; // Event log header
+fiTranslations.common.actions = "TOIMINNOT"; // Event log header
 fiTranslations.common.doneButton = "Valmis";
-fiTranslations.common.player = "Pelaaja";
+fiTranslations.common.player = "PELAAJA";
 
 // Add missing English translations
 if (!enTranslations.goalLogModal) {
@@ -488,6 +488,8 @@ if (!fiTranslations.rosterSettingsModal) {
 }
 fiTranslations.rosterSettingsModal.title = "Joukkueen Hallinta";
 fiTranslations.rosterSettingsModal.teamNameLabel = "Joukkueen Nimi:";
+fiTranslations.rosterSettingsModal.totalPlayersShort = "Pelaajaa";
+fiTranslations.rosterSettingsModal.selectedPlayersShort = "Valittu";
 // Add other keys as needed
 fiTranslations.rosterSettingsModal.selectHeader = "VAL";
 fiTranslations.rosterSettingsModal.goalieHeader = "MV";
@@ -598,7 +600,7 @@ fiTranslations.common.minutesShort = "min";
 fiTranslations.common.hourShort = "TT";
 fiTranslations.common.minuteShort = "MM";
 fiTranslations.common.optional = "(Valinnainen)";
-fiTranslations.common.actions = "Toiminnot"; // Event log header
+fiTranslations.common.actions = "TOIMINNOT"; // Event log header
 
 if (!fiTranslations.seasonTournamentModal) {
   fiTranslations.seasonTournamentModal = {};

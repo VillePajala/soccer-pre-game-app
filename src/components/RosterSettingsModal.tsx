@@ -345,9 +345,13 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
             {/* Player List */}
             <div className={`${cardStyle} mx-4`}>
               {/* Player List Header */}
-              <div className="flex items-center justify-between pb-2 border-b border-slate-700 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                <span className="pl-10 flex-1">{t('common.player', 'Player')}</span>
-                <span className="w-28 text-right">{t('common.actions', 'Actions')}</span>
+              <div className="grid grid-cols-[60%_40%] pb-2 border-b border-slate-700 mb-2">
+                <div className="text-center -translate-x-8 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                  {t('common.player', 'PELAAJA')}
+                </div>
+                <div className="text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                  {t('common.actions', 'TOIMINNOT')}
+                </div>
               </div>
               <div className="space-y-1.5">
                 {availablePlayers.map((player, index) => (
