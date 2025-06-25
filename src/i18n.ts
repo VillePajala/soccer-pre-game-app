@@ -237,6 +237,7 @@ fiTranslations.common.saveChanges = "Tallenna";
 fiTranslations.common.edit = "Muokkaa";
 fiTranslations.common.remove = "Poista";
 fiTranslations.common.actions = "Toiminnot"; // Event log header
+fiTranslations.common.doneButton = "Valmis";
 
 // Add missing English translations
 if (!enTranslations.goalLogModal) {
@@ -447,6 +448,7 @@ enTranslations.common.saveChanges = "Save";
 enTranslations.common.edit = "Edit";
 enTranslations.common.remove = "Remove";
 enTranslations.common.actions = "Actions";
+enTranslations.common.doneButton = "Done";
 
 // Add load game modal translations if section doesn't exist
 if (!fiTranslations.loadGameModal) {

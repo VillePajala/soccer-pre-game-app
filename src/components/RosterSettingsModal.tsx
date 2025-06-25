@@ -247,7 +247,7 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60] p-4">
-      <div className={modalContainerStyle}>
+      <div className={`${modalContainerStyle} font-display`}>
         {/* Header */}
         <div className="flex justify-center p-4 border-b border-slate-700 flex-shrink-0">
           <h2 className={titleStyle}>{t('rosterSettingsModal.title', 'Manage Roster')}</h2>
@@ -292,11 +292,11 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
               <div className="space-y-3">
                 <h3 className="text-lg font-semibold text-slate-200">{t('rosterSettingsModal.addPlayerButton', 'Add Player')}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <input type="text" name="name" placeholder={t('rosterSettingsModal.playerNamePlaceholder', 'Player Name') || 'Player Name'} value={newPlayerData.name} onChange={handleNewPlayerInputChange} className={inputBaseStyle} autoFocus />
-                  <input type="text" name="nickname" placeholder={t('rosterSettingsModal.nicknamePlaceholder', 'Nickname (Optional)') || 'Nickname (Optional)'} value={newPlayerData.nickname} onChange={handleNewPlayerInputChange} className={inputBaseStyle} />
+                  <input type="text" name="name" placeholder={t('rosterSettingsModal.playerNamePlaceholder', 'Player Name')} value={newPlayerData.name} onChange={handleNewPlayerInputChange} className={inputBaseStyle} autoFocus />
+                  <input type="text" name="nickname" placeholder={t('rosterSettingsModal.nicknamePlaceholder', 'Nickname (Optional)')} value={newPlayerData.nickname} onChange={handleNewPlayerInputChange} className={inputBaseStyle} />
                 </div>
-                <input type="text" name="jerseyNumber" placeholder={t('rosterSettingsModal.jerseyHeader', '#') || '#'} value={newPlayerData.jerseyNumber} onChange={handleNewPlayerInputChange} className={`${inputBaseStyle} w-24 text-center`} maxLength={3} />
-                <textarea name="notes" placeholder={t('rosterSettingsModal.notesPlaceholder', 'Player notes...') || 'Player notes...'} value={newPlayerData.notes} onChange={handleNewPlayerInputChange} className={`${inputBaseStyle} h-20 resize-none`} rows={3} />
+                <input type="text" name="jerseyNumber" placeholder={t('rosterSettingsModal.jerseyHeader', '#')} value={newPlayerData.jerseyNumber} onChange={handleNewPlayerInputChange} className={`${inputBaseStyle} w-24 text-center`} maxLength={3} />
+                <textarea name="notes" placeholder={t('rosterSettingsModal.notesPlaceholder', 'Player notes...')} value={newPlayerData.notes} onChange={handleNewPlayerInputChange} className={`${inputBaseStyle} h-20 resize-none`} rows={3} />
                 <div className="flex justify-end gap-3 pt-2">
                   <button onClick={handleCancelAddPlayer} className={secondaryButtonStyle} disabled={isRosterUpdating}>{t('common.cancelButton', 'Cancel')}</button>
                   <button onClick={handleAddNewPlayer} className={primaryButtonStyle} disabled={isRosterUpdating}>{t('rosterSettingsModal.confirmAddPlayer', 'Add Player')}</button>
@@ -324,7 +324,7 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                         </div>
                         <div>
                           <label htmlFor={`nickname-${player.id}`} className={labelStyle}>{t('rosterSettingsModal.nicknamePlaceholder', 'Nickname')}</label>
-                          <input id={`nickname-${player.id}`} type="text" name="nickname" value={editPlayerData.nickname} onChange={handleEditInputChange} className={inputBaseStyle} placeholder={t('rosterSettingsModal.nicknamePlaceholder', 'Nickname (Optional)') || 'Nickname (Optional)'} />
+                          <input id={`nickname-${player.id}`} type="text" name="nickname" value={editPlayerData.nickname} onChange={handleEditInputChange} className={inputBaseStyle} placeholder={t('rosterSettingsModal.nicknamePlaceholder', 'Nickname (Optional)')} />
                         </div>
                       </div>
                       <div>
@@ -333,11 +333,11 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                       </div>
                       <div>
                         <label htmlFor={`notes-${player.id}`} className={labelStyle}>{t('rosterSettingsModal.notesPlaceholder', 'Notes')}</label>
-                        <textarea id={`notes-${player.id}`} name="notes" value={editPlayerData.notes} onChange={handleEditInputChange} className={`${inputBaseStyle} h-20 resize-none`} placeholder={t('rosterSettingsModal.notesPlaceholder', 'Player notes...') || 'Player notes...'} rows={3} />
+                        <textarea id={`notes-${player.id}`} name="notes" value={editPlayerData.notes} onChange={handleEditInputChange} className={`${inputBaseStyle} h-20 resize-none`} placeholder={t('rosterSettingsModal.notesPlaceholder', 'Player notes...')} rows={3} />
                       </div>
                       <div className="flex justify-end gap-2">
-                        <button onClick={handleCancelEdit} className={`${iconButtonBaseStyle} text-slate-400 hover:bg-slate-600`}><HiOutlineXMark className="w-5 h-5" /></button>
-                        <button onClick={() => handleSaveEdit(player.id)} className={`${iconButtonBaseStyle} text-green-400 hover:bg-slate-600`}><HiOutlineCheck className="w-5 h-5" /></button>
+                        <button onClick={handleCancelEdit} className={`${iconButtonBaseStyle} text-slate-400 hover:bg-slate-600`} title={t('common.cancel', 'Cancel')}><HiOutlineXMark className="w-5 h-5" /></button>
+                        <button onClick={() => handleSaveEdit(player.id)} className={`${iconButtonBaseStyle} text-green-400 hover:bg-slate-600`} title={t('common.save', 'Save')}><HiOutlineCheck className="w-5 h-5" /></button>
                       </div>
                     </div>
                   ) : (
@@ -347,10 +347,9 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                         <span className="text-base text-slate-100 truncate" title={player.name}>{player.nickname || player.name}</span>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        {player.jerseyNumber && <span className="text-sm text-slate-400">#{player.jerseyNumber}</span>}
-                        <button onClick={() => handleStartEdit(player.id)} className={`${iconButtonBaseStyle} text-slate-400 hover:text-indigo-400`} disabled={isRosterUpdating || isAddingPlayer}><HiOutlinePencil className="w-5 h-5" /></button>
-                        <button onClick={() => onOpenPlayerStats(player.id)} className={`${iconButtonBaseStyle} text-slate-400 hover:text-indigo-400`} disabled={isRosterUpdating || isAddingPlayer}><HiOutlineChartBar className="w-5 h-5" /></button>
-                        <button onClick={() => { if (window.confirm(t('rosterSettingsModal.confirmDeletePlayer', 'Are you sure you want to remove this player?'))) { onRemovePlayer(player.id); } }} className={`${iconButtonBaseStyle} text-slate-400 hover:text-red-500`} disabled={isRosterUpdating || isAddingPlayer}><HiOutlineTrash className="w-5 h-5" /></button>
+                        <button onClick={() => handleStartEdit(player.id)} className={`${iconButtonBaseStyle} text-slate-400 hover:text-indigo-400`} title={t('common.edit', 'Edit')} disabled={isRosterUpdating || isAddingPlayer}><HiOutlinePencil className="w-5 h-5" /></button>
+                        <button onClick={() => onOpenPlayerStats(player.id)} className={`${iconButtonBaseStyle} text-slate-400 hover:text-indigo-400`} title={t('common.stats', 'Stats')} disabled={isRosterUpdating || isAddingPlayer}><HiOutlineChartBar className="w-5 h-5" /></button>
+                        <button onClick={() => { if (window.confirm(t('rosterSettingsModal.confirmDeletePlayer', 'Are you sure you want to remove this player?'))) { onRemovePlayer(player.id); } }} className={`${iconButtonBaseStyle} text-slate-400 hover:text-red-500`} title={t('common.remove', 'Remove')} disabled={isRosterUpdating || isAddingPlayer}><HiOutlineTrash className="w-5 h-5" /></button>
                       </div>
                     </div>
                   )}
