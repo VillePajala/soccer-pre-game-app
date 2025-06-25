@@ -71,4 +71,24 @@ This file tracks potential new features and enhancements for the soccer coaching
 13. **Game Plan/Notes Section**:
     *   **Status**: Implemented
     *   **Description**: A dedicated section (perhaps per game or per tournament) where coaches can type up game plans, pre-game notes, or post-game reflections.
-    *   **Current Thoughts on Timing**: Pre-migration for simple text fields; robust storage and linking to specific games post-migration. 
+    *   **Current Thoughts on Timing**: Pre-migration for simple text fields; robust storage and linking to specific games post-migration.
+
+14. **Saved Tactical Animations**:
+    *   **Status**: Not Implemented
+    *   **Description**: Allow coaches to create, save, and play back short, animated tactical plays on the tactical board. These animations would be independent of any specific game and could be used as a library of drills or set pieces.
+    *   **Implementation Plan (Keyframe Approach)**:
+        *   **State Management (`page.tsx` or a new zustand/redux store)**:
+            *   Introduce a "recording" mode.
+            *   While recording, every movement of a tactical disc or the ball would be saved as a "keyframe" in an array. A keyframe would store the `id`, `relX`, and `relY` of every element on the board at that moment.
+            *   This array of keyframes, along with a name, would constitute a single "Saved Animation".
+        *   **UI Components (`ControlBar.tsx`, new modals)**:
+            *   Add new controls to the `ControlBar` for "Record", "Play", "Pause", and "Reset Animation".
+            *   Create a new "Load Animation" modal where users can see a list of their saved animations, play them, rename them, or delete them.
+            *   Create a "Save Animation" modal that appears after recording is stopped, prompting the user for a name.
+        *   **Canvas Logic (`SoccerField.tsx`)**:
+            *   Implement an animation loop using `requestAnimationFrame`.
+            *   When an animation is played, the loop will iterate through the keyframes.
+            *   To create smooth movement, the drawing logic will **interpolate** the positions of each disc between keyframes, rather than having them jump from one spot to the next.
+        *   **Persistence (`src/utils`)**:
+            *   Create new utility functions (e.g., `savedAnimations.ts`) to handle saving, loading, and deleting the animations from `localStorage`. They would be stored under a new key (e.g., `soccerTacticalAnimations`).
+    *   **Current Thoughts on Timing**: Moderately difficult. This is a significant feature that touches core state, rendering, and persistence logic. It would be a great candidate for post-launch development. 
