@@ -240,9 +240,9 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
   if (!isOpen) return null;
 
   // --- Style Guide Definitions ---
-  const modalContainerStyle = "bg-slate-800 rounded-lg shadow-xl w-full max-w-2xl flex flex-col border border-slate-700 overflow-hidden max-h-[calc(100vh-theme(space.8))]";
-  const headerStyle = "flex justify-between items-center p-4 border-b border-slate-700 flex-shrink-0";
-  const titleStyle = "text-2xl font-bold text-yellow-400";
+  const modalContainerStyle = "bg-slate-800 rounded-none shadow-xl flex flex-col border-0 overflow-hidden";
+  const headerStyle = "flex justify-center items-center py-8 backdrop-blur-sm bg-slate-900/20";
+  const titleStyle = "text-3xl font-bold text-yellow-400 tracking-wide";
   const closeButtonStyle = "text-slate-400 hover:text-white";
   
   const sectionStyle = "p-4 border-b border-slate-700 flex-shrink-0";
@@ -252,14 +252,14 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
   const inputBaseStyle = "block w-full bg-slate-700 border border-slate-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-indigo-500 sm:text-sm text-white";
   
   const buttonBaseStyle = "px-4 py-2 rounded-md text-sm font-medium transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed";
-  const primaryButtonStyle = `${buttonBaseStyle} bg-gradient-to-b from-indigo-500 to-indigo-600 text-white hover:from-indigo-600 hover:to-indigo-700`;
+  const primaryButtonStyle = `${buttonBaseStyle} bg-gradient-to-b from-indigo-500 to-indigo-600 text-white hover:from-indigo-600 hover:to-indigo-700 shadow-lg`;
   const secondaryButtonStyle = `${buttonBaseStyle} bg-gradient-to-b from-slate-600 to-slate-700 text-slate-200 hover:from-slate-700 hover:to-slate-600`;
   const destructiveButtonStyle = `${buttonBaseStyle} bg-red-600 text-white hover:bg-red-700`;
   const iconButtonBaseStyle = "p-1.5 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60] p-4 font-display">
-      <div className={`${modalContainerStyle} bg-noise-texture relative overflow-hidden max-h-[90vh] flex flex-col`}>
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60] font-display">
+      <div className={`${modalContainerStyle} bg-noise-texture relative overflow-hidden h-full w-full flex flex-col`}>
         {/* Background effects */}
         <div className="absolute inset-0 bg-indigo-600/10 mix-blend-soft-light" />
         <div className="absolute inset-0 bg-gradient-to-b from-sky-400/10 via-transparent to-transparent" />
@@ -268,45 +268,47 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
 
         {/* Content wrapper */}
         <div className="relative z-10 flex flex-col min-h-0">
-          {/* Header - fixed height */}
-          <div className="flex justify-center items-center p-4 border-b border-slate-700/20 backdrop-blur-sm bg-slate-900/20">
-            <h2 className={`${titleStyle} drop-shadow`}>{t('rosterSettingsModal.title', 'Manage Roster')}</h2>
+          {/* Header */}
+          <div className={headerStyle}>
+            <h2 className={`${titleStyle} drop-shadow-lg`}>{t('rosterSettingsModal.title', 'Manage Roster')}</h2>
           </div>
 
-          {/* Scrollable content area */}
-          <div className="flex-1 overflow-y-auto min-h-0 p-4 space-y-4 backdrop-blur-sm bg-slate-900/20">
+          {/* Content Area */}
+          <div className="flex-1 overflow-y-auto min-h-0 space-y-6 backdrop-blur-sm bg-slate-900/20">
             {/* Team Name Section */}
-            <div className={cardStyle}>
-              {isEditingTeamName ? (
-                <div>
-                  <input
-                    ref={teamNameInputRef}
-                    type="text"
-                    value={editedTeamName}
-                    onChange={handleTeamNameInputChange}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleSaveTeamName();
-                      if (e.key === 'Escape') handleCancelTeamNameEdit();
-                    }}
-                    onBlur={handleSaveTeamName}
-                    className={inputBaseStyle}
-                  />
-                </div>
-              ) : (
-                <div
-                  className="group flex items-center justify-between cursor-pointer"
-                  onClick={() => setIsEditingTeamName(true)}
-                >
-                  <p className="text-lg text-slate-100 font-semibold border-b-2 border-dashed border-transparent group-hover:border-slate-500 transition-colors">
-                    {teamName}
-                  </p>
-                  <HiOutlinePencil className="w-5 h-5 text-slate-500 group-hover:text-slate-300 transition-colors" />
-                </div>
-              )}
+            <div className="px-4 pt-2">
+              <div className="bg-gradient-to-r from-slate-900/80 to-slate-800/80 rounded-lg shadow-inner">
+                {isEditingTeamName ? (
+                  <div className="p-3">
+                    <input
+                      ref={teamNameInputRef}
+                      type="text"
+                      value={editedTeamName}
+                      onChange={handleTeamNameInputChange}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSaveTeamName();
+                        if (e.key === 'Escape') handleCancelTeamNameEdit();
+                      }}
+                      onBlur={handleSaveTeamName}
+                      className={`${inputBaseStyle} text-lg`}
+                    />
+                  </div>
+                ) : (
+                  <div
+                    className="group flex items-center justify-between p-3 cursor-pointer"
+                    onClick={() => setIsEditingTeamName(true)}
+                  >
+                    <p className="text-xl text-slate-100 font-semibold group-hover:text-yellow-400 transition-colors">
+                      {teamName}
+                    </p>
+                    <HiOutlinePencil className="w-5 h-5 text-slate-500 group-hover:text-yellow-400 transition-colors" />
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Add Player Section - Simplified to just a button */}
-            <div>
+            {/* Add Player Section */}
+            <div className="px-4">
               <button
                 onClick={() => { setIsAddingPlayer(true); setEditingPlayerId(null); }}
                 className={`${primaryButtonStyle} w-full`}
@@ -318,7 +320,7 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
             
             {/* Form to Add New Player (appears here when isAddingPlayer is true) */}
             {isAddingPlayer && (
-              <div className={`${cardStyle} space-y-3`}>
+              <div className={`${cardStyle} mx-4 space-y-3`}>
                 <h3 className="text-lg font-semibold text-slate-200">{t('rosterSettingsModal.addPlayerButton', 'Add Player')}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <input type="text" name="name" placeholder={t('rosterSettingsModal.playerNamePlaceholder', 'Player Name')} value={newPlayerData.name} onChange={handleNewPlayerInputChange} className={inputBaseStyle} autoFocus />
@@ -335,18 +337,18 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
             )}
 
             {/* Player List */}
-            <div className={cardStyle}>
+            <div className={`${cardStyle} mx-4`}>
               {/* Player List Header */}
-              <div className="flex items-center justify-between pr-10 pb-2 border-b border-slate-700 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                <span className="pl-10">{t('common.player', 'Player')}</span>
-                <span>{t('common.actions', 'Actions')}</span>
+              <div className="flex items-center justify-between pb-2 border-b border-slate-700 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                <span className="pl-10 flex-1">{t('common.player', 'Player')}</span>
+                <span className="w-28 text-right">{t('common.actions', 'Actions')}</span>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {availablePlayers.map((player, index) => (
                   <div 
                     key={player.id}
                     ref={(el) => { playerRefs.current[index] = el; }}
-                    className={`p-2 rounded-md border ${editingPlayerId === player.id ? 'bg-slate-700/75 border-indigo-500' : 'bg-slate-800/60 border-slate-700'}`}
+                    className={`p-2 rounded-md border ${editingPlayerId === player.id ? 'bg-slate-700/75 border-indigo-500' : 'bg-slate-800/40 border-slate-700/50 hover:bg-slate-800/60 transition-colors'}`}
                   >
                     {editingPlayerId === player.id ? (
                       <div className="space-y-2">
@@ -393,9 +395,9 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
             </div>
           </div>
 
-          {/* Footer - fixed height */}
+          {/* Footer */}
           <div className="p-4 border-t border-slate-700/20 backdrop-blur-sm bg-slate-900/20">
-            <div className="flex justify-end">
+            <div className="flex justify-end px-4">
               <button onClick={onClose} className={secondaryButtonStyle}>
                 {t('common.doneButton', 'Done')}
               </button>

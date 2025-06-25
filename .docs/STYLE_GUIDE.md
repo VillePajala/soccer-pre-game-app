@@ -2,74 +2,147 @@
 
 This document outlines the design system and styling conventions for the Soccer Pre-Game App to ensure a cohesive and professional user experience.
 
-## 1. Color Palette
+## 1. Color Palette & Effects
 
-Our theme is built on a dark, professional "slate" palette with clear, functional colors for actions.
+Our theme combines deep, professional slate backgrounds with subtle gradients and modern blur effects for depth.
 
 - **Backgrounds:**
-  - **Modal Body:** `bg-slate-800`
-  - **Internal "Cards"/Sections:** `bg-slate-900/50`
-  - **Input Fields/Selects:** `bg-slate-700`
+  - **Modal Base:** `bg-slate-800` with `bg-noise-texture`
+  - **Gradient Overlays:** 
+    - Subtle top gradient: `bg-gradient-to-b from-sky-400/10 via-transparent to-transparent`
+    - Background tint: `bg-indigo-600/10 mix-blend-soft-light`
+  - **Section Backgrounds:** `bg-slate-900/80` to `bg-slate-800/80` with gradient
+  - **Interactive Areas:** `bg-slate-800/40` with hover `bg-slate-800/60`
 
 - **Text:**
-  - **Primary Body Text:** `text-slate-100` or `text-slate-200`
-  - **Secondary/Muted Text:** `text-slate-400`
-  - **Accent/Title Text:** `text-yellow-400` or `text-amber-400`
+  - **Primary Headers:** `text-yellow-400` with `tracking-wide` and `drop-shadow-lg`
+  - **Body Text:** `text-slate-100`
+  - **Secondary Text:** `text-slate-400`
 
-- **Borders:**
-  - **Modal/Card Borders:** `border-slate-700`
-  - **Input Borders:** `border-slate-600`
+- **Borders & Dividers:**
+  - **Subtle Borders:** `border-slate-700/20` with `backdrop-blur-sm`
+  - **Interactive Borders:** `border-slate-700/50`
+  - **Focus Borders:** `border-indigo-500`
 
-- **Interactive Colors (Buttons, etc.):**
-  - **Primary Action (Confirm, Save):** `bg-indigo-600`
-  - **Secondary/Neutral Action (Cancel, Close):** `bg-slate-600` or `bg-slate-700`
-  - **Destructive Action (Delete, Reset):** `bg-red-600`
-  - **Special Action (Tactics, etc.):** `bg-purple-600` (for home) & `bg-red-600` (for opponent)
+- **Effects & Overlays:**
+  - **Backdrop Blur:** `backdrop-blur-sm` for layered elements
+  - **Shadows:** `shadow-inner` for depth, `drop-shadow-lg` for emphasis
+  - **Noise Texture:** Applied via `bg-noise-texture` for subtle grain
+  - **Glow Effects:** Using absolute positioning and blur
 
-- **Focus Rings:** A consistent `focus:ring-indigo-500` for all interactive elements to ensure accessibility.
+## 2. Layout & Spacing
 
-## 2. Typography
+- **Modal Structure:**
+  - Full-screen approach with no padding
+  - Three-part vertical layout: header, scrollable content, footer
+  - Content sections use consistent horizontal padding (`px-4`)
+  - Vertical spacing between sections: `space-y-6`
 
-We will use a single, consistent font across the application to create a unified feel.
+- **Header Treatment:**
+  - Generous vertical padding (`py-8`)
+  - Centered text with increased size (`text-3xl`)
+  - No border, uses backdrop blur instead
 
-- **Primary Font:** **Rajdhani**
-  - *Implementation Note:* This will need to be imported in `layout.tsx` (e.g., from Google Fonts) and applied as the base font in `globals.css` or the main layout component.
+- **Content Organization:**
+  - Card-like sections with gradient backgrounds
+  - Consistent horizontal padding
+  - Compact but readable spacing (`space-y-1.5` for lists)
 
-- **Font Sizes & Weights:**
-  - **Modal Titles:** `text-xl font-bold` (Color: Accent)
-  - **Section Headings:** `text-lg font-semibold` (Color: Primary Body)
-  - **Form Labels:** `text-sm font-medium` (Color: Secondary/Muted)
-  - **Body Text:** `text-base` (Color: Primary Body)
-  - **Input Text:** `text-sm` (Color: Primary Body)
-  - **Button Text:** `text-sm font-medium`
-
-## 3. Component Styles
-
-Standardized components are the key to a consistent UI.
+## 3. Interactive Elements
 
 ### 3.1 Buttons
 - **Base Style:** `px-4 py-2 rounded-md text-sm font-medium transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800`
-- **Variations:**
-  - **Primary:** `bg-indigo-600 text-white hover:bg-indigo-700`
-  - **Secondary:** `bg-slate-600 text-slate-200 hover:bg-slate-500`
-  - **Destructive:** `bg-red-600 text-white hover:bg-red-700`
-- **Disabled State:** `disabled:opacity-50 disabled:cursor-not-allowed` for all buttons.
+- **Primary Action:** 
+  ```css
+  bg-gradient-to-b from-indigo-500 to-indigo-600 
+  hover:from-indigo-600 hover:to-indigo-700 
+  shadow-lg
+  ```
+- **Secondary Action:**
+  ```css
+  bg-gradient-to-b from-slate-600 to-slate-700 
+  hover:from-slate-700 hover:to-slate-600
+  ```
 
-### 3.2 Forms (Inputs, Selects, Textareas)
-- **Base Style:** `block w-full bg-slate-700 border border-slate-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-indigo-500 sm:text-sm text-white`
+### 3.2 Interactive Areas
+- **Hover States:** Smooth transitions with `transition-colors`
+- **Focus States:** Clear indicators with ring focus
+- **Disabled States:** `disabled:opacity-50 disabled:cursor-not-allowed`
 
-### 3.3 Modals
-- **Standard Layout:**
-  - **Header:** A flex container with a centered title. The close "X" button in the top-right corner should be omitted in favor of a footer button. A `border-b border-slate-700` provides separation.
-  - **Body:** Contains the main content, uses padding (`p-4` or `p-6`).
-  - **Footer:** A flex container with `justify-end` or `justify-center` for action buttons (e.g., "Done", "Close"). Separated by a `border-t border-slate-700`.
+### 3.3 Forms & Inputs
+- **Text Inputs:** 
+  ```css
+  bg-slate-700 border border-slate-600 
+  rounded-md shadow-sm py-2 px-3
+  focus:ring-2 focus:ring-indigo-500
+  ```
+- **Size Variations:**
+  - Regular: `text-base`
+  - Large (e.g., team name): `text-lg`
 
-## 4. Spacing & Layout
-- **Gaps:** Use consistent `gap-x-4` and `gap-y-2` (or similar) for grid and flexbox layouts.
-- **Padding:** Use consistent padding within containers (e.g., `p-4`) to maintain visual rhythm.
-- **Responsiveness:** Ensure layouts are usable on smaller screens by using flexbox wrapping and responsive grid columns (`grid-cols-1 md:grid-cols-2`).
+## 4. Typography
 
-## 5. Internationalization (i18n)
+- **Font Family:** Rajdhani for the entire application
+- **Size Hierarchy:**
+  - Modal Titles: `text-3xl font-bold tracking-wide`
+  - Section Headers: `text-xl font-semibold`
+  - Regular Text: `text-base`
+  - Secondary Text: `text-sm`
+
+## 5. Component Patterns
+
+### 5.1 Modal Pattern
+```css
+// Container
+.modal-container {
+  @apply fixed inset-0 bg-black bg-opacity-70 
+         flex items-center justify-center z-[60] font-display;
+}
+
+// Content
+.modal-content {
+  @apply bg-slate-800 flex flex-col h-full w-full
+         bg-noise-texture relative overflow-hidden;
+}
+
+// Header
+.modal-header {
+  @apply flex justify-center items-center py-8
+         backdrop-blur-sm bg-slate-900/20;
+}
+
+// Body
+.modal-body {
+  @apply flex-1 overflow-y-auto min-h-0 space-y-6
+         backdrop-blur-sm bg-slate-900/20;
+}
+
+// Footer
+.modal-footer {
+  @apply p-4 border-t border-slate-700/20
+         backdrop-blur-sm bg-slate-900/20;
+}
+```
+
+## 6. Responsive Design
+- Full-screen modals on mobile
+- Consistent padding and spacing across devices
+- Touch-friendly tap targets
+- Proper overflow handling for various screen sizes
+
+## 7. Animation & Transitions
+- Smooth hover transitions
+- Subtle background effects
+- Performance-conscious blur effects
+- Consistent timing functions
+
+## 8. Accessibility
+- Clear focus indicators
+- Sufficient color contrast
+- Proper ARIA attributes
+- Keyboard navigation support
+
+## 9. Internationalization (i18n)
 All user-facing text must be internationalized using the `react-i18next` library.
 - **Implementation:** Use the `t()` function for all static strings (labels, titles, buttons, placeholders, etc.).
 - **Keys:** Follow a namespaced key structure (e.g., `modalName.component.keyName`) for clarity.
