@@ -163,3 +163,66 @@ All user-facing text must be internationalized using the `react-i18next` library
 - **Implementation:** Use the `t()` function for all static strings (labels, titles, buttons, placeholders, etc.).
 - **Keys:** Follow a namespaced key structure (e.g., `modalName.component.keyName`) for clarity.
 - **Reference:** For a detailed example and best practices, refer to the `@translation-bugfix.md` document. 
+
+## 12. Implementation Progress
+
+This section tracks which components have been updated to match the style guide specifications.
+
+### Modal Updates Checklist
+- [x] RosterSettingsModal
+  - [x] Layout matches style guide (fixed header, controls, scrollable content)
+  - [x] Finnish translations complete
+  - [x] Proper spacing and alignment
+  - [x] Removed deprecated features (goalie toggle)
+  - [x] Column headers properly aligned
+  - [x] Consistent with style guide colors and effects
+
+- [ ] GameSettingsModal
+  - [ ] Layout update
+  - [ ] Finnish translations
+  - [ ] Style guide compliance
+
+- [ ] GameStatsModal
+  - [ ] Layout update
+  - [ ] Finnish translations
+  - [ ] Style guide compliance
+
+- [ ] GoalLogModal
+  - [ ] Layout update
+  - [ ] Finnish translations
+  - [ ] Style guide compliance
+
+- [ ] InstructionsModal
+  - [ ] Layout update
+  - [ ] Finnish translations
+  - [ ] Style guide compliance
+
+- [ ] LoadGameModal
+  - [ ] Layout update
+  - [ ] Finnish translations
+  - [ ] Style guide compliance
+
+- [ ] NewGameSetupModal
+  - [ ] Layout update
+  - [ ] Finnish translations
+  - [ ] Style guide compliance
+
+- [ ] PlayerStatsModal
+  - [ ] Layout update
+  - [ ] Finnish translations
+  - [ ] Style guide compliance
+
+- [ ] SaveGameModal
+  - [ ] Layout update
+  - [ ] Finnish translations
+  - [ ] Style guide compliance
+
+- [ ] SeasonTournamentManagementModal
+  - [ ] Layout update
+  - [ ] Finnish translations
+  - [ ] Style guide compliance
+
+- [ ] TrainingResourcesModal
+  - [ ] Layout update
+  - [ ] Finnish translations
+  - [ ] Style guide compliance 

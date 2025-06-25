@@ -115,6 +115,9 @@ fiTranslations.newGameSetupModal.durationLabel = "Kesto (min)";
 fiTranslations.newGameSetupModal.periodDurationLabel = "Jakson Kesto (min):";
 fiTranslations.newGameSetupModal.homeOrAwayLabel = "Joukkueesi on:";
 fiTranslations.newGameSetupModal.confirmAndStart = "Vahvista & Aloita Peli";
+fiTranslations.newGameSetupModal.selectPlayers = "Valitse Pelaajat";
+fiTranslations.newGameSetupModal.playersSelected = "valittu";
+fiTranslations.newGameSetupModal.selectAll = "Valitse Kaikki";
 
 // <<< Add translations for Home Team Name field >>>
 fiTranslations.newGameSetupModal.homeTeamLabel = "Oman joukkueen nimi: *";

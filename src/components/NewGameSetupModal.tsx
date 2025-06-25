@@ -400,382 +400,421 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
         <p className="font-semibold mb-1">{t('common.error', 'Error')}:</p>
         <p>{error}</p>
         <button 
-          onClick={() => { /* Add a retry mechanism if desired, for now just closes */ onCancel(); }}
+          onClick={() => { onCancel(); }}
           className="mt-3 px-3 py-1.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded"
         >
           {t('common.close', 'Close')}
         </button>
       </div>
     );
-  } else {
-    // Form content goes here when not loading and no error
-    modalContent = (
-      <>
-        {/* Home Team Name */}
-        <div className="mb-3">
-          <label htmlFor="homeTeamName" className="block text-sm font-medium text-slate-300 mb-1">
-            {t('newGameSetupModal.homeTeamName', 'Your Team Name')}
-            </label>
-            <input
-            type="text"
-            id="homeTeamName"
-              ref={homeTeamInputRef}
-              value={homeTeamName}
-              onChange={(e) => setHomeTeamName(e.target.value)}
-            className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
-            placeholder={t('newGameSetupModal.homeTeamPlaceholder', 'e.g., Galaxy U10')}
-              onKeyDown={handleKeyDown}
-            disabled={isLoading} // Disable if somehow still loading (belt and braces)
-            />
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60] font-display">
+      <div className="bg-slate-800 rounded-none shadow-xl flex flex-col border-0 overflow-hidden h-full w-full bg-noise-texture relative">
+        {/* Background effects */}
+        <div className="absolute inset-0 bg-indigo-600/10 mix-blend-soft-light" />
+        <div className="absolute inset-0 bg-gradient-to-b from-sky-400/10 via-transparent to-transparent" />
+        <div className="absolute -inset-[50px] bg-sky-400/5 blur-2xl top-0 opacity-50" />
+        <div className="absolute -inset-[50px] bg-indigo-600/5 blur-2xl bottom-0 opacity-50" />
+
+        {/* Content wrapper */}
+        <div className="relative z-10 flex flex-col min-h-0">
+          {/* Fixed Header */}
+          <div className="flex justify-center items-center pt-10 pb-4 backdrop-blur-sm bg-slate-900/20">
+            <h2 className="text-3xl font-bold text-yellow-400 tracking-wide drop-shadow-lg">
+              {t('newGameSetupModal.title', 'New Game Setup')}
+            </h2>
           </div>
 
-        {/* Opponent Name */}
-        <div className="mb-3">
-            <label htmlFor="opponentNameInput" className="block text-sm font-medium text-slate-300 mb-1">
-            {t('newGameSetupModal.opponentNameLabel', 'Opponent Name: *')}
-            </label>
-            <input
-              ref={opponentInputRef}
-              type="text"
-              id="opponentNameInput"
-              value={opponentName}
-              onChange={(e) => setOpponentName(e.target.value)}
-              onKeyDown={handleKeyDown}
-            placeholder={t('newGameSetupModal.opponentPlaceholder', 'Enter opponent name') ?? ''}
-              className="w-full px-3 py-1.5 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-            disabled={isLoading}
-            />
-          </div>
-
-        {/* Game Date */}
-        <div className="mb-3">
-            <label htmlFor="gameDateInput" className="block text-sm font-medium text-slate-300 mb-1">
-            {t('newGameSetupModal.gameDateLabel', 'Game Date:')}
-            </label>
-            <input
-              type="date"
-              id="gameDateInput"
-              value={gameDate}
-              onChange={(e) => setGameDate(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="w-full px-3 py-1.5 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-            disabled={isLoading}
-            />
-        </div>
-
-        {/* Game Location */}
-        <div className="mb-3">
-          <label htmlFor="gameLocationInput" className="block text-sm font-medium text-slate-300 mb-1">
-            {t('newGameSetupModal.gameLocationLabel', 'Location (Optional):')}
-          </label>
-          <input
-            type="text"
-            id="gameLocationInput"
-            value={gameLocation}
-            onChange={(e) => setGameLocation(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={t('newGameSetupModal.locationPlaceholder', 'e.g., Central Park Field 2') ?? ''}
-            className="w-full px-3 py-1.5 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-            disabled={isLoading}
-          />
-        </div>
-
-        {/* Game Time */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-slate-300 mb-1">
-            {t('newGameSetupModal.gameTimeLabel', 'Time (Optional):')}
-          </label>
-          <div className="flex items-center space-x-2">
-            <input
-              type="number"
-              value={gameHour}
-              onChange={handleHourChange}
-              onKeyDown={handleKeyDown}
-              placeholder={t('newGameSetupModal.hourPlaceholder', 'HH') ?? ''}
-              className="w-1/2 px-3 py-1.5 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              min="0" max="23"
-              disabled={isLoading}
-            />
-            <span className="text-slate-400">:</span>
-            <input
-              type="number"
-              value={gameMinute}
-              onChange={handleMinuteChange}
-              onKeyDown={handleKeyDown}
-              placeholder={t('newGameSetupModal.minutePlaceholder', 'MM') ?? ''}
-              className="w-1/2 px-3 py-1.5 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              min="0" max="59"
-              disabled={isLoading}
-            />
-          </div>
-          </div>
-
-        {/* Player Selection (already structured for isLoading/error in previous step) */}
-        <div className="mb-3">
-          <h3 className="text-sm font-medium text-slate-300 mb-1.5">
-            {t('newGameSetupModal.selectPlayers', 'Select Players for this Game')}
-          </h3>
-          {availablePlayersForSetup.length > 0 ? (
-            <div className="max-h-40 overflow-y-auto bg-slate-700/50 p-2 rounded-md border border-slate-600 scrollbar-thin scrollbar-thumb-slate-500 scrollbar-track-slate-700">
-              {availablePlayersForSetup.map((player) => (
-                <div key={player.id} className="flex items-center mb-1.5 last:mb-0">
-                  <input
-                    type="checkbox"
-                    id={`player-select-${player.id}`}
-                    checked={selectedPlayerIds.includes(player.id)}
-                    onChange={() => handlePlayerSelectionToggle(player.id)} // Call defined handler
-                    className="h-4 w-4 rounded border-slate-500 bg-slate-600 text-indigo-500 focus:ring-indigo-400 focus:ring-offset-slate-800 mr-2.5 shrink-0"
-                    disabled={isLoading}
-                  />
-                  <label htmlFor={`player-select-${player.id}`} className="text-xs text-slate-200 cursor-pointer flex-grow">
-                    {player.name} {player.jerseyNumber ? `(#${player.jerseyNumber})` : ''}
-                  </label>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-xs text-slate-500 italic">
-              {isLoading ? t('newGameSetupModal.loadingPlayers', 'Loading players...') : t('newGameSetupModal.noPlayersInRoster', 'No players in master roster. Add players in Roster Settings.')}
-            </p>
-          )}
-          </div>
-
-        {/* Season Selection */}
-        <div className="mb-3 p-3 border border-slate-700/80 rounded-md bg-slate-700/30">
-            <div className="flex justify-between items-center mb-2">
-              <label htmlFor="seasonSelect" className="block text-sm font-medium text-slate-300">
-                {t('newGameSetupModal.seasonLabel', 'Season:')} 
+          {/* Fixed Controls Section */}
+          <div className="px-6 pt-3 pb-4 backdrop-blur-sm bg-slate-900/20">
+            {/* Home Team Name - Critical input that should always be visible */}
+            <div className="mb-4">
+              <label htmlFor="homeTeamName" className="block text-sm font-medium text-slate-300 mb-1">
+                {t('newGameSetupModal.homeTeamName', 'Your Team Name')} *
               </label>
-              {!showNewSeasonInput && (
-                  <button 
-                      onClick={handleShowCreateSeason}
-                      className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={!!selectedTournamentId || isLoading}
-                      title={isAddingSeason ? t('newGameSetupModal.creating', 'Creating...') : t('newGameSetupModal.createSeason')}
-                  >
-                    <HiPlusCircle className="w-4 h-4 mr-1" />
-                    {isAddingSeason ? t('newGameSetupModal.creating', 'Creating...') : t('newGameSetupModal.createSeason')}
-                  </button>
-              )}
-            </div>
-            {!showNewSeasonInput ? (
-              <select
-                id="seasonSelect"
-                value={selectedSeasonId ?? ''}
-                onChange={handleSeasonChange}
-                onKeyDown={handleKeyDown} 
-                className="w-full px-3 py-1.5 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-              disabled={!!selectedTournamentId || isLoading}
-              >
-                <option value="">{t('newGameSetupModal.selectSeasonOption', '-- Select Season --')}</option>
-                {seasons.map((season) => (
-                  <option key={season.id} value={season.id}>
-                    {season.name}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <div className="flex flex-col space-y-2 items-stretch"> 
-                <input 
-                  ref={newSeasonInputRef}
-                  type="text"
-                  value={newSeasonName}
-                  onChange={(e) => setNewSeasonName(e.target.value)}
-                  onKeyDown={handleNewSeasonKeyDown}
-                  placeholder={t('newGameSetupModal.newSeasonPlaceholder', 'Enter new season name...') ?? undefined}
-                  className="px-3 py-1.5 bg-slate-600 border border-slate-400 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-                disabled={isLoading}
-                />
-                <div className="flex justify-end space-x-2"> 
-                    <button 
-                        onClick={handleAddNewSeason} 
-                  className="px-4 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm disabled:opacity-50"
-                  disabled={!newSeasonName.trim() || isLoading}
-                    >
-                        {t('newGameSetupModal.addButton', 'Add')}
-                    </button>
-                    <button 
-                        onClick={() => setShowNewSeasonInput(false)} 
-                  className="px-4 py-1.5 bg-slate-600 text-white rounded hover:bg-slate-500 text-sm disabled:opacity-50"
-                        title={t('newGameSetupModal.cancelAddTitle', 'Cancel Add') ?? undefined}
-                  disabled={isLoading}
-                    >
-                        {t('newGameSetupModal.cancelButton', 'Cancel')}
-                    </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-        {/* Tournament Selection */}
-        <div className="mb-4 p-3 border border-slate-700/80 rounded-md bg-slate-700/30">
-              <div className="flex justify-between items-center mb-2">
-                  <label htmlFor="tournamentSelect" className="block text-sm font-medium text-slate-300">
-                      {t('newGameSetupModal.tournamentLabel', 'Tournament:')}
-                  </label>
-                  {!showNewTournamentInput && (
-                      <button 
-                          onClick={handleShowCreateTournament}
-                          className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={!!selectedSeasonId || isLoading}
-                          title={isAddingTournament ? t('newGameSetupModal.creating', 'Creating...') : t('newGameSetupModal.createTournament')}
-                      >
-                      <HiPlusCircle className="w-4 h-4 mr-1" />
-                      {isAddingTournament ? t('newGameSetupModal.creating', 'Creating...') : t('newGameSetupModal.createTournament')}
-                      </button>
-                  )}
-              </div>
-              {!showNewTournamentInput ? (
-                  <select
-                  id="tournamentSelect"
-                  value={selectedTournamentId ?? ''} 
-                  onChange={handleTournamentChange}
-                  onKeyDown={handleKeyDown}
-                  className="w-full px-3 py-1.5 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-              disabled={!!selectedSeasonId || isLoading}
-                  >
-                  <option value="">{t('newGameSetupModal.selectTournamentOption', '-- Select Tournament --')}</option>
-                  {tournaments.map((tournament) => (
-                      <option key={tournament.id} value={tournament.id}>
-                      {tournament.name}
-                      </option>
-                  ))}
-                  </select>
-              ) : (
-                  <div className="flex flex-col space-y-2 items-stretch"> 
-                      <input 
-                          ref={newTournamentInputRef}
-                          type="text"
-                          value={newTournamentName}
-                          onChange={(e) => setNewTournamentName(e.target.value)}
-                          onKeyDown={handleNewTournamentKeyDown}
-                          placeholder={t('newGameSetupModal.newTournamentPlaceholder', 'Enter new tournament name...') ?? undefined}
-                          className="px-3 py-1.5 bg-slate-600 border border-slate-400 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-                disabled={isLoading}
-                      />
-                      <div className="flex justify-end space-x-2"> 
-                          <button 
-                              onClick={handleAddNewTournament} 
-                  className="px-4 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm disabled:opacity-50"
-                  disabled={!newTournamentName.trim() || isLoading}
-                          >
-                              {t('newGameSetupModal.addButton', 'Add')}
-                          </button>
-                          <button 
-                              onClick={() => setShowNewTournamentInput(false)} 
-                  className="px-4 py-1.5 bg-slate-600 text-white rounded hover:bg-slate-500 text-sm disabled:opacity-50"
-                              title={t('newGameSetupModal.cancelAddTitle', 'Cancel Add') ?? undefined}
-                  disabled={isLoading}
-                          >
-                              {t('newGameSetupModal.cancelButton', 'Cancel')}
-                          </button>
-                      </div>
-                  </div>
-              )}
-          </div>
-          
-        {/* Game Structure Settings */}
-        <div className="grid grid-cols-2 gap-x-4 mb-3">
-          <div>
-            <label htmlFor="numPeriods" className="block text-sm font-medium text-slate-300 mb-1">
-              {t('newGameSetupModal.numPeriodsLabel', 'Number of Periods:')}
-            </label>
-            <select
-              id="numPeriods"
-              value={localNumPeriods}
-              onChange={(e) => setLocalNumPeriods(parseInt(e.target.value, 10) as 1 | 2)}
-              onKeyDown={handleKeyDown}
-              className="w-full px-3 py-1.5 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-              disabled={isLoading}
-            >
-              <option value={1}>1</option>
-              <option value={2}>2</option>
-            </select>
-          </div>
-          <div>
-            <label htmlFor="periodDuration" className="block text-sm font-medium text-slate-300 mb-1">
-              {t('newGameSetupModal.periodDurationLabel', 'Period Duration (min):')}
-            </label>
               <input
-                type="number"
-              id="periodDuration"
-              value={localPeriodDurationString}
-              onChange={(e) => setLocalPeriodDurationString(e.target.value)} // Validate in handler
+                type="text"
+                id="homeTeamName"
+                ref={homeTeamInputRef}
+                value={homeTeamName}
+                onChange={(e) => setHomeTeamName(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                placeholder={t('newGameSetupModal.homeTeamPlaceholder', 'e.g., Galaxy U10')}
                 onKeyDown={handleKeyDown}
-              className="w-full px-3 py-1.5 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-              min="1"
-              disabled={isLoading}
+                disabled={isLoading}
+              />
+            </div>
+
+            {/* Opponent Name - Also critical */}
+            <div className="mb-4">
+              <label htmlFor="opponentNameInput" className="block text-sm font-medium text-slate-300 mb-1">
+                {t('newGameSetupModal.opponentNameLabel', 'Opponent Name')} *
+              </label>
+              <input
+                ref={opponentInputRef}
+                type="text"
+                id="opponentNameInput"
+                value={opponentName}
+                onChange={(e) => setOpponentName(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={t('newGameSetupModal.opponentPlaceholder', 'Enter opponent name')}
+                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                disabled={isLoading}
               />
             </div>
           </div>
 
-        {/* Home/Away Selection */}
-        <div className="mb-3">
-              <label className="block text-sm font-medium text-slate-300 mb-1">
-            {t('newGameSetupModal.homeOrAwayLabel', 'Your Team is:')}
-              </label>
-          <div className="flex space-x-3">
-            {(['home', 'away'] as const).map((option) => (
-                  <button 
-                key={option}
-                type="button"
-                onClick={() => setLocalHomeOrAway(option)}
-                className={`flex-1 px-3 py-1.5 rounded-md text-sm font-medium border transition-colors disabled:opacity-50
-                  ${localHomeOrAway === option 
-                    ? 'bg-indigo-600 border-indigo-500 text-white' 
-                    : 'bg-slate-700 border-slate-500 text-slate-200 hover:bg-slate-600 hover:border-slate-400'}
-                `}
-                disabled={isLoading}
-              >
-                {option === 'home' ? t('common.home', 'Home') : t('common.away', 'Away')}
-                  </button>
-                ))}
-              </div>
-            </div>
-      </>
-    );
-  }
+          {/* Scrollable Content Area */}
+          <div className="flex-1 overflow-y-auto min-h-0 px-6 py-4 space-y-4">
+            {isLoading ? modalContent : (
+              <>
+                {error ? (
+                  modalContent
+                ) : (
+                  <>
+                    {/* Player Selection Section */}
+                    <div className="space-y-4 bg-slate-900/70 p-4 rounded-lg border border-slate-700 shadow-inner">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-semibold text-slate-200">
+                          {t('newGameSetupModal.selectPlayers', 'Select Players')}
+                        </h3>
+                        <div className="text-sm text-slate-400">
+                          <span className="text-yellow-400 font-semibold">{selectedPlayerIds.length}</span>
+                          {" / "}
+                          <span className="text-yellow-400 font-semibold">{availablePlayersForSetup.length}</span>
+                          {" "}{t('newGameSetupModal.playersSelected', 'selected')}
+                        </div>
+                      </div>
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-start justify-center z-50 p-4 pt-8 sm:pt-12">
-      <div className="bg-slate-800 rounded-lg shadow-xl w-full max-w-lg border border-slate-600 flex flex-col max-h-[calc(100vh-theme(space.16))] sm:max-h-[calc(100vh-theme(space.24))]">
-        <div className="flex justify-between items-center p-4 border-b border-slate-700 flex-shrink-0">
-          <h2 className="text-lg font-semibold text-yellow-400">
-            {t('newGameSetupModal.title', 'New Game Setup')}
-          </h2>
-          <button onClick={onCancel} className="text-slate-400 hover:text-slate-200">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+                      {availablePlayersForSetup.length > 0 ? (
+                        <>
+                          {/* Select All Header */}
+                          <div className="flex items-center py-2 px-1 border-b border-slate-700/50">
+                            <label className="flex items-center text-sm text-slate-300 hover:text-slate-200 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={availablePlayersForSetup.length === selectedPlayerIds.length}
+                                onChange={() => {
+                                  if (selectedPlayerIds.length === availablePlayersForSetup.length) {
+                                    setSelectedPlayerIds([]);
+                                  } else {
+                                    setSelectedPlayerIds(availablePlayersForSetup.map(p => p.id));
+                                  }
+                                }}
+                                className="form-checkbox h-4 w-4 text-indigo-600 bg-slate-700 border-slate-500 rounded focus:ring-indigo-500 focus:ring-offset-slate-800"
+                              />
+                              <span className="ml-2">{t('newGameSetupModal.selectAll', 'Select All')}</span>
+                            </label>
+                          </div>
+
+                          {/* Player List */}
+                          <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
+                            {availablePlayersForSetup.map((player) => (
+                              <div
+                                key={player.id}
+                                className="flex items-center py-1.5 px-1 rounded hover:bg-slate-800/40 transition-colors"
+                              >
+                                <label className="flex items-center flex-1 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedPlayerIds.includes(player.id)}
+                                    onChange={() => handlePlayerSelectionToggle(player.id)}
+                                    className="form-checkbox h-4 w-4 text-indigo-600 bg-slate-700 border-slate-500 rounded focus:ring-indigo-500 focus:ring-offset-slate-800"
+                                  />
+                                  <span className="ml-2 text-slate-200">
+                                    {player.name}
+                                    {player.nickname && (
+                                      <span className="text-slate-400 ml-1">({player.nickname})</span>
+                                    )}
+                                  </span>
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-center py-4 text-slate-400">
+                          {t('newGameSetupModal.noPlayersInRoster', 'No players in roster. Add players in Roster Settings.')}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Game Date */}
+                    <div className="mb-4">
+                      <label htmlFor="gameDateInput" className="block text-sm font-medium text-slate-300 mb-1">
+                        {t('newGameSetupModal.gameDateLabel', 'Game Date')}
+                      </label>
+                      <input
+                        type="date"
+                        id="gameDateInput"
+                        value={gameDate}
+                        onChange={(e) => setGameDate(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                        disabled={isLoading}
+                      />
+                    </div>
+
+                    {/* Game Location */}
+                    <div className="mb-4">
+                      <label htmlFor="gameLocationInput" className="block text-sm font-medium text-slate-300 mb-1">
+                        {t('newGameSetupModal.gameLocationLabel', 'Location (Optional)')}
+                      </label>
+                      <input
+                        type="text"
+                        id="gameLocationInput"
+                        value={gameLocation}
+                        onChange={(e) => setGameLocation(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder={t('newGameSetupModal.locationPlaceholder', 'e.g., Central Park Field 2')}
+                        className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                        disabled={isLoading}
+                      />
+                    </div>
+
+                    {/* Game Time */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-slate-300 mb-1">
+                        {t('newGameSetupModal.gameTimeLabel', 'Time (Optional)')}
+                      </label>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="number"
+                          value={gameHour}
+                          onChange={handleHourChange}
+                          onKeyDown={handleKeyDown}
+                          placeholder={t('newGameSetupModal.hourPlaceholder', 'HH')}
+                          className="w-1/2 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                          min="0"
+                          max="23"
+                          disabled={isLoading}
+                        />
+                        <span className="text-slate-400">:</span>
+                        <input
+                          type="number"
+                          value={gameMinute}
+                          onChange={handleMinuteChange}
+                          onKeyDown={handleKeyDown}
+                          placeholder={t('newGameSetupModal.minutePlaceholder', 'MM')}
+                          className="w-1/2 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                          min="0"
+                          max="59"
+                          disabled={isLoading}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Season & Tournament Section */}
+                    <div className="space-y-4 bg-slate-900/70 p-4 rounded-lg border border-slate-700 shadow-inner">
+                      <h3 className="text-lg font-semibold text-slate-200 mb-3">
+                        {t('newGameSetupModal.gameTypeLabel', 'Game Type')}
+                      </h3>
+
+                      {/* Season Selection */}
+                      <div className="mb-4">
+                        <label htmlFor="seasonSelect" className="block text-sm font-medium text-slate-300 mb-1">
+                          {t('newGameSetupModal.seasonLabel', 'Season')}
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <select
+                            id="seasonSelect"
+                            value={selectedSeasonId || ''}
+                            onChange={handleSeasonChange}
+                            className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                            disabled={isLoading || showNewSeasonInput}
+                          >
+                            <option value="">
+                              {t('newGameSetupModal.selectSeasonOption', '-- Select Season --')}
+                            </option>
+                            {seasons.map(season => (
+                              <option key={season.id} value={season.id}>
+                                {season.name}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            onClick={handleShowCreateSeason}
+                            className="p-2 text-indigo-400 hover:text-indigo-300 disabled:opacity-50"
+                            disabled={isLoading || showNewSeasonInput}
+                          >
+                            <HiPlusCircle className="w-6 h-6" />
+                          </button>
+                        </div>
+                        {showNewSeasonInput && (
+                          <div className="mt-2 flex items-center gap-2">
+                            <input
+                              ref={newSeasonInputRef}
+                              type="text"
+                              value={newSeasonName}
+                              onChange={(e) => setNewSeasonName(e.target.value)}
+                              onKeyDown={handleNewSeasonKeyDown}
+                              placeholder={t('newGameSetupModal.newSeasonPlaceholder', 'Enter new season name...')}
+                              className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                              disabled={isAddingSeason}
+                            />
+                            <button
+                              onClick={handleAddNewSeason}
+                              disabled={isAddingSeason || !newSeasonName.trim()}
+                              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md shadow-sm disabled:opacity-50"
+                            >
+                              {isAddingSeason ? t('newGameSetupModal.creating', 'Creating...') : t('newGameSetupModal.addButton', 'Add')}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Tournament Selection */}
+                      <div className="mb-4">
+                        <label htmlFor="tournamentSelect" className="block text-sm font-medium text-slate-300 mb-1">
+                          {t('newGameSetupModal.tournamentLabel', 'Tournament')}
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <select
+                            id="tournamentSelect"
+                            value={selectedTournamentId || ''}
+                            onChange={handleTournamentChange}
+                            className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                            disabled={isLoading || showNewTournamentInput}
+                          >
+                            <option value="">
+                              {t('newGameSetupModal.selectTournamentOption', '-- Select Tournament --')}
+                            </option>
+                            {tournaments.map(tournament => (
+                              <option key={tournament.id} value={tournament.id}>
+                                {tournament.name}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            onClick={handleShowCreateTournament}
+                            className="p-2 text-indigo-400 hover:text-indigo-300 disabled:opacity-50"
+                            disabled={isLoading || showNewTournamentInput}
+                          >
+                            <HiPlusCircle className="w-6 h-6" />
+                          </button>
+                        </div>
+                        {showNewTournamentInput && (
+                          <div className="mt-2 flex items-center gap-2">
+                            <input
+                              ref={newTournamentInputRef}
+                              type="text"
+                              value={newTournamentName}
+                              onChange={(e) => setNewTournamentName(e.target.value)}
+                              onKeyDown={handleNewTournamentKeyDown}
+                              placeholder={t('newGameSetupModal.newTournamentPlaceholder', 'Enter new tournament name...')}
+                              className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                              disabled={isAddingTournament}
+                            />
+                            <button
+                              onClick={handleAddNewTournament}
+                              disabled={isAddingTournament || !newTournamentName.trim()}
+                              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md shadow-sm disabled:opacity-50"
+                            >
+                              {isAddingTournament ? t('newGameSetupModal.creating', 'Creating...') : t('newGameSetupModal.addButton', 'Add')}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Game Settings Section */}
+                    <div className="space-y-4 bg-slate-900/70 p-4 rounded-lg border border-slate-700 shadow-inner">
+                      <h3 className="text-lg font-semibold text-slate-200 mb-3">
+                        {t('newGameSetupModal.periodsLabel', 'Game Settings')}
+                      </h3>
+
+                      {/* Number of Periods */}
+                      <div className="mb-4">
+                        <label htmlFor="numPeriodsSelect" className="block text-sm font-medium text-slate-300 mb-1">
+                          {t('newGameSetupModal.numPeriodsLabel', 'Number of Periods')}
+                        </label>
+                        <select
+                          id="numPeriodsSelect"
+                          value={localNumPeriods}
+                          onChange={(e) => setLocalNumPeriods(parseInt(e.target.value) as 1 | 2)}
+                          className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                        >
+                          <option value={1}>1</option>
+                          <option value={2}>2</option>
+                        </select>
+                      </div>
+
+                      {/* Period Duration */}
+                      <div className="mb-4">
+                        <label htmlFor="periodDurationInput" className="block text-sm font-medium text-slate-300 mb-1">
+                          {t('newGameSetupModal.periodDurationLabel', 'Period Duration (minutes)')}
+                        </label>
+                        <input
+                          type="number"
+                          id="periodDurationInput"
+                          value={localPeriodDurationString}
+                          onChange={(e) => setLocalPeriodDurationString(e.target.value)}
+                          className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                          min="1"
+                        />
+                      </div>
+
+                      {/* Home/Away Selection */}
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-slate-300 mb-1">
+                          {t('newGameSetupModal.homeOrAwayLabel', 'Your Team is')}
+                        </label>
+                        <div className="flex gap-4">
+                          <label className="inline-flex items-center">
+                            <input
+                              type="radio"
+                              value="home"
+                              checked={localHomeOrAway === 'home'}
+                              onChange={(e) => setLocalHomeOrAway(e.target.value as 'home' | 'away')}
+                              className="form-radio h-4 w-4 text-indigo-600 bg-slate-700 border-slate-500"
+                            />
+                            <span className="ml-2 text-slate-300">{t('common.home', 'Home')}</span>
+                          </label>
+                          <label className="inline-flex items-center">
+                            <input
+                              type="radio"
+                              value="away"
+                              checked={localHomeOrAway === 'away'}
+                              onChange={(e) => setLocalHomeOrAway(e.target.value as 'home' | 'away')}
+                              className="form-radio h-4 w-4 text-indigo-600 bg-slate-700 border-slate-500"
+                            />
+                            <span className="ml-2 text-slate-300">{t('common.away', 'Away')}</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </>
+            )}
           </div>
 
-        <div className="p-5 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800 flex-grow">
-          {modalContent} {/* Render the appropriate content here */}
+          {/* Footer */}
+          <div className="p-4 border-t border-slate-700/20 backdrop-blur-sm bg-slate-900/20">
+            <div className="flex justify-end gap-3 px-6">
+              <button
+                onClick={onCancel}
+                className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-md shadow-sm"
+              >
+                {t('common.cancelButton', 'Cancel')}
+              </button>
+              <button
+                onClick={handleStartClick}
+                disabled={isLoading || isAddingSeason || isAddingTournament}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md shadow-sm disabled:opacity-50"
+              >
+                {t('newGameSetupModal.confirmAndStart', 'Confirm & Start Game')}
+              </button>
+            </div>
+          </div>
         </div>
-
-        {/* Footer with action buttons - only show if not loading and no error, or handle disabled state */}
-        {!isLoading && !error && (
-          <div className="px-5 py-3 border-t border-slate-700 flex justify-end space-x-3 flex-shrink-0 bg-slate-800/80 backdrop-blur-sm">
-          <button 
-              type="button"
-            onClick={onCancel}
-              className="px-4 py-2 rounded bg-slate-600 text-slate-200 hover:bg-slate-500 transition-colors text-sm font-medium"
-          >
-              {t('common.cancel', 'Cancel')}
-          </button>
-          <button
-              type="button"
-              onClick={handleStartClick} // This is the existing confirm handler
-              className="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700 transition-colors text-sm font-medium"
-          >
-              {t('newGameSetupModal.confirmAndStart', 'Confirm & Start Game')}
-          </button>
-        </div>
-        )}
       </div>
     </div>
   );
-};
+}
 
 export default NewGameSetupModal;
