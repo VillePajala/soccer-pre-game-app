@@ -140,6 +140,7 @@ export interface AppState {
   // subAlertLevel?: 'none' | 'warning' | 'due';
   tacticalDiscs: TacticalDisc[];
   tacticalDrawings: Point[][];
+  tacticalBallPosition: Point | null;
 }
 
 export interface TacticalDisc {
@@ -197,6 +198,7 @@ const initialState: AppState = {
   lastSubConfirmationTimeSeconds: 0, // Initialize last substitution confirmation time
   tacticalDiscs: [],
   tacticalDrawings: [],
+  tacticalBallPosition: { relX: 0.5, relY: 0.5 },
 };
 
 // Define new localStorage keys
@@ -485,6 +487,7 @@ export default function Home() {
   const [isTacticsBoardView, setIsTacticsBoardView] = useState<boolean>(false);
   const [tacticalDiscs, setTacticalDiscs] = useState<TacticalDisc[]>([]);
   const [tacticalDrawings, setTacticalDrawings] = useState<Point[][]>([]);
+  const [tacticalBallPosition, setTacticalBallPosition] = useState<Point | null>(initialState.tacticalBallPosition);
 
   const handleToggleTacticsBoard = () => {
     setIsTacticsBoardView(!isTacticsBoardView);
@@ -524,6 +527,11 @@ export default function Home() {
     });
     setTacticalDiscs(newDiscs);
     saveStateToHistory({ tacticalDiscs: newDiscs });
+  };
+
+  const handleTacticalBallMove = (position: Point) => {
+    setTacticalBallPosition(position);
+    saveStateToHistory({ tacticalBallPosition: position });
   };
 
   // --- Mutation for Saving Game (Initial definition with mutationFn only) ---
@@ -1121,6 +1129,7 @@ export default function Home() {
     setDrawings(gameData?.drawings || (isInitialDefaultLoad ? initialState.drawings : []));
     setTacticalDiscs(gameData?.tacticalDiscs || (isInitialDefaultLoad ? initialState.tacticalDiscs : []));
     setTacticalDrawings(gameData?.tacticalDrawings || (isInitialDefaultLoad ? initialState.tacticalDrawings : []));
+    setTacticalBallPosition(gameData?.tacticalBallPosition || { relX: 0.5, relY: 0.5 });
     
     // Update gameEvents from gameData if present, otherwise from initial state if it's an initial default load
     // setGameEvents(gameData?.events || (isInitialDefaultLoad ? initialState.gameEvents : [])); // REMOVE - Handled by LOAD_PERSISTED_GAME_DATA in reducer
@@ -1169,6 +1178,7 @@ export default function Home() {
       drawings: gameData?.drawings || initialState.drawings,
       tacticalDiscs: gameData?.tacticalDiscs || [],
       tacticalDrawings: gameData?.tacticalDrawings || [],
+      tacticalBallPosition: gameData?.tacticalBallPosition || { relX: 0.5, relY: 0.5 },
       availablePlayers: masterRosterQueryResultData || availablePlayers,
     };
     setHistory([newHistoryState]);
@@ -1234,6 +1244,7 @@ export default function Home() {
           drawings,
           tacticalDiscs,
           tacticalDrawings,
+          tacticalBallPosition,
           availablePlayers: masterRosterQueryResultData || availablePlayers, // Master roster snapshot
           
           // Volatile timer states are intentionally EXCLUDED from the snapshot to be saved.
@@ -1264,6 +1275,7 @@ export default function Home() {
       gameSessionState,
       tacticalDiscs,
       tacticalDrawings,
+      tacticalBallPosition,
     ]);
 
   // **** ADDED: Effect to prompt for setup if default game ID is loaded ****
@@ -1322,7 +1334,8 @@ export default function Home() {
       // Only clear tactical elements in tactics view
       setTacticalDiscs([]);
       setTacticalDrawings([]);
-      saveStateToHistory({ tacticalDiscs: [], tacticalDrawings: [] });
+      setTacticalBallPosition({ relX: 0.5, relY: 0.5 }); // Reset ball to center
+      saveStateToHistory({ tacticalDiscs: [], tacticalDrawings: [], tacticalBallPosition: { relX: 0.5, relY: 0.5 } });
     } else {
       // Only clear game elements in normal view
       setPlayersOnField([]);
@@ -1330,7 +1343,7 @@ export default function Home() {
       setDrawings([]);
       saveStateToHistory({ playersOnField: [], opponents: [], drawings: [] });
     }
-  }, [isTacticsBoardView, setPlayersOnField, setOpponents, setDrawings, setTacticalDiscs, setTacticalDrawings, saveStateToHistory]);
+  }, [isTacticsBoardView, setPlayersOnField, setOpponents, setDrawings, setTacticalDiscs, setTacticalDrawings, saveStateToHistory, setTacticalBallPosition]);
 
   const handleClearDrawingsForView = () => {
     if (isTacticsBoardView) {
@@ -1430,6 +1443,7 @@ export default function Home() {
       setHistoryIndex(prevStateIndex);
       setTacticalDiscs(prevState.tacticalDiscs || []);
       setTacticalDrawings(prevState.tacticalDrawings || []);
+      setTacticalBallPosition(prevState.tacticalBallPosition || null);
     } else {
       console.log("Cannot undo: at beginning of history");
     }
@@ -1472,6 +1486,7 @@ export default function Home() {
       setHistoryIndex(nextStateIndex);
       setTacticalDiscs(nextState.tacticalDiscs || []);
       setTacticalDrawings(nextState.tacticalDrawings || []);
+      setTacticalBallPosition(nextState.tacticalBallPosition || null);
     } else {
       console.log("Cannot redo: at end of history");
     }
@@ -1754,6 +1769,7 @@ export default function Home() {
         drawings,
         tacticalDiscs,
         tacticalDrawings,
+        tacticalBallPosition,
         availablePlayers: masterRosterQueryResultData || availablePlayers, // Master roster snapshot
         
         // Volatile timer states are EXCLUDED.
@@ -2529,6 +2545,7 @@ export default function Home() {
           drawings,
           tacticalDiscs,
           tacticalDrawings,
+          tacticalBallPosition,
           availablePlayers: availablePlayers, // <<< ADD BACK: Include roster available *at time of save*
           showPlayerNames: gameSessionState.showPlayerNames, // USE gameSessionState
           teamName: gameSessionState.teamName,
@@ -2593,6 +2610,7 @@ export default function Home() {
     drawings,
     tacticalDiscs,
     tacticalDrawings,
+    tacticalBallPosition,
     availablePlayers,
     setSavedGames,
     setHistory,
@@ -2893,6 +2911,7 @@ export default function Home() {
           subIntervalMinutes: initialState.subIntervalMinutes ?? 5,
           completedIntervalDurations: [], // Always reset intervals
           lastSubConfirmationTimeSeconds: 0, // Always reset last sub time
+          tacticalBallPosition: { relX: 0.5, relY: 0.5 },
       };
 
       // Log the constructed state *before* saving
@@ -3376,6 +3395,8 @@ export default function Home() {
           onTacticalDiscMove={handleTacticalDiscMove}
           onTacticalDiscRemove={handleTacticalDiscRemove}
           onToggleTacticalDiscType={handleToggleTacticalDiscType}
+          tacticalBallPosition={tacticalBallPosition}
+          onTacticalBallMove={handleTacticalBallMove}
         />
         {/* Other components that might overlay or interact with the field */}
       </div>
