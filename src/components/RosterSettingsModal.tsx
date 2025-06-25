@@ -246,151 +246,161 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
   const closeButtonStyle = "text-slate-400 hover:text-white";
   
   const sectionStyle = "p-4 border-b border-slate-700 flex-shrink-0";
-  const cardStyle = "bg-slate-900/50 p-4 rounded-lg border border-slate-700";
+  const cardStyle = "bg-slate-900/70 p-4 rounded-lg border border-slate-700 shadow-inner";
   
   const labelStyle = "text-sm font-medium text-slate-300 mb-1";
   const inputBaseStyle = "block w-full bg-slate-700 border border-slate-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-indigo-500 sm:text-sm text-white";
   
   const buttonBaseStyle = "px-4 py-2 rounded-md text-sm font-medium transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed";
-  const primaryButtonStyle = `${buttonBaseStyle} bg-indigo-600 text-white hover:bg-indigo-700`;
-  const secondaryButtonStyle = `${buttonBaseStyle} bg-slate-600 text-slate-200 hover:bg-slate-500`;
+  const primaryButtonStyle = `${buttonBaseStyle} bg-gradient-to-b from-indigo-500 to-indigo-600 text-white hover:from-indigo-600 hover:to-indigo-700`;
+  const secondaryButtonStyle = `${buttonBaseStyle} bg-gradient-to-b from-slate-600 to-slate-700 text-slate-200 hover:from-slate-700 hover:to-slate-600`;
   const destructiveButtonStyle = `${buttonBaseStyle} bg-red-600 text-white hover:bg-red-700`;
   const iconButtonBaseStyle = "p-1.5 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60] p-4">
-      <div className={`${modalContainerStyle} font-display`}>
-        {/* Header */}
-        <div className="flex justify-center p-4 border-b border-slate-700 flex-shrink-0">
-          <h2 className={titleStyle}>{t('rosterSettingsModal.title', 'Manage Roster')}</h2>
-        </div>
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60] p-4 font-display">
+      <div className={`${modalContainerStyle} bg-noise-texture relative overflow-hidden max-h-[90vh] flex flex-col`}>
+        {/* Background effects */}
+        <div className="absolute inset-0 bg-indigo-600/10 mix-blend-soft-light" />
+        <div className="absolute inset-0 bg-gradient-to-b from-sky-400/10 via-transparent to-transparent" />
+        <div className="absolute -inset-[50px] bg-sky-400/5 blur-2xl top-0 opacity-50" />
+        <div className="absolute -inset-[50px] bg-indigo-600/5 blur-2xl bottom-0 opacity-50" />
 
-        {/* Content Area */}
-        <div className="p-4 overflow-y-auto flex-grow space-y-4 scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800">
-          
-          {/* Team Name Section */}
-          <div className={cardStyle}>
-            {isEditingTeamName ? (
-              <div>
-                <input
-                  ref={teamNameInputRef}
-                  type="text"
-                  value={editedTeamName}
-                  onChange={handleTeamNameInputChange}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleSaveTeamName();
-                    if (e.key === 'Escape') handleCancelTeamNameEdit();
-                  }}
-                  onBlur={handleSaveTeamName}
-                  className={inputBaseStyle}
-                />
-              </div>
-            ) : (
-              <div
-                className="group flex items-center justify-between cursor-pointer"
-                onClick={() => setIsEditingTeamName(true)}
+        {/* Content wrapper */}
+        <div className="relative z-10 flex flex-col min-h-0">
+          {/* Header - fixed height */}
+          <div className="flex justify-center items-center p-4 border-b border-slate-700/20 backdrop-blur-sm bg-slate-900/20">
+            <h2 className={`${titleStyle} drop-shadow`}>{t('rosterSettingsModal.title', 'Manage Roster')}</h2>
+          </div>
+
+          {/* Scrollable content area */}
+          <div className="flex-1 overflow-y-auto min-h-0 p-4 space-y-4 backdrop-blur-sm bg-slate-900/20">
+            {/* Team Name Section */}
+            <div className={cardStyle}>
+              {isEditingTeamName ? (
+                <div>
+                  <input
+                    ref={teamNameInputRef}
+                    type="text"
+                    value={editedTeamName}
+                    onChange={handleTeamNameInputChange}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSaveTeamName();
+                      if (e.key === 'Escape') handleCancelTeamNameEdit();
+                    }}
+                    onBlur={handleSaveTeamName}
+                    className={inputBaseStyle}
+                  />
+                </div>
+              ) : (
+                <div
+                  className="group flex items-center justify-between cursor-pointer"
+                  onClick={() => setIsEditingTeamName(true)}
+                >
+                  <p className="text-lg text-slate-100 font-semibold border-b-2 border-dashed border-transparent group-hover:border-slate-500 transition-colors">
+                    {teamName}
+                  </p>
+                  <HiOutlinePencil className="w-5 h-5 text-slate-500 group-hover:text-slate-300 transition-colors" />
+                </div>
+              )}
+            </div>
+
+            {/* Add Player Section - Simplified to just a button */}
+            <div>
+              <button
+                onClick={() => { setIsAddingPlayer(true); setEditingPlayerId(null); }}
+                className={`${primaryButtonStyle} w-full`}
+                disabled={!!editingPlayerId || isRosterUpdating || isAddingPlayer}
               >
-                <p className="text-lg text-slate-100 font-semibold border-b-2 border-dashed border-transparent group-hover:border-slate-500 transition-colors">
-                  {teamName}
-                </p>
-                <HiOutlinePencil className="w-5 h-5 text-slate-500 group-hover:text-slate-300 transition-colors" />
+                {t('rosterSettingsModal.addPlayerButton', 'Add Player')}
+              </button>
+            </div>
+            
+            {/* Form to Add New Player (appears here when isAddingPlayer is true) */}
+            {isAddingPlayer && (
+              <div className={`${cardStyle} space-y-3`}>
+                <h3 className="text-lg font-semibold text-slate-200">{t('rosterSettingsModal.addPlayerButton', 'Add Player')}</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <input type="text" name="name" placeholder={t('rosterSettingsModal.playerNamePlaceholder', 'Player Name')} value={newPlayerData.name} onChange={handleNewPlayerInputChange} className={inputBaseStyle} autoFocus />
+                  <input type="text" name="nickname" placeholder={t('rosterSettingsModal.nicknamePlaceholder', 'Nickname (Optional)')} value={newPlayerData.nickname} onChange={handleNewPlayerInputChange} className={inputBaseStyle} />
+                </div>
+                <input type="text" name="jerseyNumber" placeholder={t('rosterSettingsModal.jerseyHeader', '#')} value={newPlayerData.jerseyNumber} onChange={handleNewPlayerInputChange} className={`${inputBaseStyle} w-24 text-center`} maxLength={3} />
+                <textarea name="notes" placeholder={t('rosterSettingsModal.notesPlaceholder', 'Player notes...')} value={newPlayerData.notes} onChange={handleNewPlayerInputChange} className={`${inputBaseStyle} h-20 resize-none`} rows={3} />
+                <div className="flex justify-end gap-3 pt-2">
+                  <button onClick={handleCancelAddPlayer} className={secondaryButtonStyle} disabled={isRosterUpdating}>{t('common.cancelButton', 'Cancel')}</button>
+                  <button onClick={handleAddNewPlayer} className={primaryButtonStyle} disabled={isRosterUpdating}>{t('rosterSettingsModal.confirmAddPlayer', 'Add Player')}</button>
+                </div>
+                {rosterError && <div className="mt-2 text-sm text-red-400">{rosterError}</div>}
               </div>
             )}
-          </div>
 
-          {/* Add Player Section - Simplified to just a button */}
-          <div>
-            <button
-              onClick={() => { setIsAddingPlayer(true); setEditingPlayerId(null); }}
-              className={`${primaryButtonStyle} w-full`}
-              disabled={!!editingPlayerId || isRosterUpdating || isAddingPlayer}
-            >
-              {t('rosterSettingsModal.addPlayerButton', 'Add Player')}
-            </button>
-          </div>
-          
-          {/* Form to Add New Player (appears here when isAddingPlayer is true) */}
-          {isAddingPlayer && (
-            <div className={`${cardStyle} space-y-3`}>
-              <h3 className="text-lg font-semibold text-slate-200">{t('rosterSettingsModal.addPlayerButton', 'Add Player')}</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <input type="text" name="name" placeholder={t('rosterSettingsModal.playerNamePlaceholder', 'Player Name')} value={newPlayerData.name} onChange={handleNewPlayerInputChange} className={inputBaseStyle} autoFocus />
-                <input type="text" name="nickname" placeholder={t('rosterSettingsModal.nicknamePlaceholder', 'Nickname (Optional)')} value={newPlayerData.nickname} onChange={handleNewPlayerInputChange} className={inputBaseStyle} />
+            {/* Player List */}
+            <div className={cardStyle}>
+              {/* Player List Header */}
+              <div className="flex items-center justify-between pr-10 pb-2 border-b border-slate-700 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                <span className="pl-10">{t('common.player', 'Player')}</span>
+                <span>{t('common.actions', 'Actions')}</span>
               </div>
-              <input type="text" name="jerseyNumber" placeholder={t('rosterSettingsModal.jerseyHeader', '#')} value={newPlayerData.jerseyNumber} onChange={handleNewPlayerInputChange} className={`${inputBaseStyle} w-24 text-center`} maxLength={3} />
-              <textarea name="notes" placeholder={t('rosterSettingsModal.notesPlaceholder', 'Player notes...')} value={newPlayerData.notes} onChange={handleNewPlayerInputChange} className={`${inputBaseStyle} h-20 resize-none`} rows={3} />
-              <div className="flex justify-end gap-3 pt-2">
-                <button onClick={handleCancelAddPlayer} className={secondaryButtonStyle} disabled={isRosterUpdating}>{t('common.cancelButton', 'Cancel')}</button>
-                <button onClick={handleAddNewPlayer} className={primaryButtonStyle} disabled={isRosterUpdating}>{t('rosterSettingsModal.confirmAddPlayer', 'Add Player')}</button>
-              </div>
-              {rosterError && <div className="mt-2 text-sm text-red-400">{rosterError}</div>}
-            </div>
-          )}
-
-          {/* Player List */}
-          <div className={cardStyle}>
-            {/* Player List Header */}
-            <div className="flex items-center justify-between pr-10 pb-2 border-b border-slate-700 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              <span className="pl-10">{t('common.player', 'Player')}</span>
-              <span>{t('common.actions', 'Actions')}</span>
-            </div>
-            <div className="space-y-2">
-              {availablePlayers.map((player, index) => (
-                <div 
-                  key={player.id}
-                  ref={(el) => { playerRefs.current[index] = el; }}
-                  className={`p-2 rounded-md border ${editingPlayerId === player.id ? 'bg-slate-700/75 border-indigo-500' : 'bg-slate-800/60 border-slate-700'}`}
-                >
-                  {editingPlayerId === player.id ? (
-                    <div className="space-y-2">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <div>
-                          <label htmlFor={`name-${player.id}`} className={labelStyle}>{t('rosterSettingsModal.nameHeader', 'Name')}</label>
-                          <input id={`name-${player.id}`} type="text" name="name" value={editPlayerData.name} onChange={handleEditInputChange} className={inputBaseStyle} />
+              <div className="space-y-2">
+                {availablePlayers.map((player, index) => (
+                  <div 
+                    key={player.id}
+                    ref={(el) => { playerRefs.current[index] = el; }}
+                    className={`p-2 rounded-md border ${editingPlayerId === player.id ? 'bg-slate-700/75 border-indigo-500' : 'bg-slate-800/60 border-slate-700'}`}
+                  >
+                    {editingPlayerId === player.id ? (
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div>
+                            <label htmlFor={`name-${player.id}`} className={labelStyle}>{t('rosterSettingsModal.nameHeader', 'Name')}</label>
+                            <input id={`name-${player.id}`} type="text" name="name" value={editPlayerData.name} onChange={handleEditInputChange} className={inputBaseStyle} />
+                          </div>
+                          <div>
+                            <label htmlFor={`nickname-${player.id}`} className={labelStyle}>{t('rosterSettingsModal.nicknamePlaceholder', 'Nickname')}</label>
+                            <input id={`nickname-${player.id}`} type="text" name="nickname" value={editPlayerData.nickname} onChange={handleEditInputChange} className={inputBaseStyle} placeholder={t('rosterSettingsModal.nicknamePlaceholder', 'Nickname (Optional)')} />
+                          </div>
                         </div>
                         <div>
-                          <label htmlFor={`nickname-${player.id}`} className={labelStyle}>{t('rosterSettingsModal.nicknamePlaceholder', 'Nickname')}</label>
-                          <input id={`nickname-${player.id}`} type="text" name="nickname" value={editPlayerData.nickname} onChange={handleEditInputChange} className={inputBaseStyle} placeholder={t('rosterSettingsModal.nicknamePlaceholder', 'Nickname (Optional)')} />
+                          <label htmlFor={`jersey-${player.id}`} className={labelStyle}>{t('rosterSettingsModal.jerseyHeader', 'Jersey #')}</label>
+                          <input id={`jersey-${player.id}`} type="text" name="jerseyNumber" value={editPlayerData.jerseyNumber} onChange={handleEditInputChange} className={`${inputBaseStyle} w-24 text-center`} placeholder="#" maxLength={3} />
+                        </div>
+                        <div>
+                          <label htmlFor={`notes-${player.id}`} className={labelStyle}>{t('rosterSettingsModal.notesPlaceholder', 'Notes')}</label>
+                          <textarea id={`notes-${player.id}`} name="notes" value={editPlayerData.notes} onChange={handleEditInputChange} className={`${inputBaseStyle} h-20 resize-none`} placeholder={t('rosterSettingsModal.notesPlaceholder', 'Player notes...')} rows={3} />
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <button onClick={handleCancelEdit} className={`${iconButtonBaseStyle} text-slate-400 hover:bg-slate-600`} title={t('common.cancel', 'Cancel')}><HiOutlineXMark className="w-5 h-5" /></button>
+                          <button onClick={() => handleSaveEdit(player.id)} className={`${iconButtonBaseStyle} text-green-400 hover:bg-slate-600`} title={t('common.save', 'Save')}><HiOutlineCheck className="w-5 h-5" /></button>
                         </div>
                       </div>
-                      <div>
-                        <label htmlFor={`jersey-${player.id}`} className={labelStyle}>{t('rosterSettingsModal.jerseyHeader', 'Jersey #')}</label>
-                        <input id={`jersey-${player.id}`} type="text" name="jerseyNumber" value={editPlayerData.jerseyNumber} onChange={handleEditInputChange} className={`${inputBaseStyle} w-24 text-center`} placeholder="#" maxLength={3} />
+                    ) : (
+                      <div className="flex items-center gap-3">
+                        <input type="checkbox" checked={selectedPlayerIds.includes(player.id)} onChange={() => onTogglePlayerSelection(player.id)} className="form-checkbox h-5 w-5 text-indigo-600 bg-slate-600 border-slate-500 rounded focus:ring-indigo-500 shrink-0" disabled={isRosterUpdating} />
+                        <div className="flex-grow flex items-center gap-2 truncate">
+                          <span className="text-base text-slate-100 truncate" title={player.name}>{player.nickname || player.name}</span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button onClick={() => handleStartEdit(player.id)} className={`${iconButtonBaseStyle} text-slate-400 hover:text-indigo-400`} title={t('common.edit', 'Edit')} disabled={isRosterUpdating || isAddingPlayer}><HiOutlinePencil className="w-5 h-5" /></button>
+                          <button onClick={() => onOpenPlayerStats(player.id)} className={`${iconButtonBaseStyle} text-slate-400 hover:text-indigo-400`} title={t('common.stats', 'Stats')} disabled={isRosterUpdating || isAddingPlayer}><HiOutlineChartBar className="w-5 h-5" /></button>
+                          <button onClick={() => { if (window.confirm(t('rosterSettingsModal.confirmDeletePlayer', 'Are you sure you want to remove this player?'))) { onRemovePlayer(player.id); } }} className={`${iconButtonBaseStyle} text-slate-400 hover:text-red-500`} title={t('common.remove', 'Remove')} disabled={isRosterUpdating || isAddingPlayer}><HiOutlineTrash className="w-5 h-5" /></button>
+                        </div>
                       </div>
-                      <div>
-                        <label htmlFor={`notes-${player.id}`} className={labelStyle}>{t('rosterSettingsModal.notesPlaceholder', 'Notes')}</label>
-                        <textarea id={`notes-${player.id}`} name="notes" value={editPlayerData.notes} onChange={handleEditInputChange} className={`${inputBaseStyle} h-20 resize-none`} placeholder={t('rosterSettingsModal.notesPlaceholder', 'Player notes...')} rows={3} />
-                      </div>
-                      <div className="flex justify-end gap-2">
-                        <button onClick={handleCancelEdit} className={`${iconButtonBaseStyle} text-slate-400 hover:bg-slate-600`} title={t('common.cancel', 'Cancel')}><HiOutlineXMark className="w-5 h-5" /></button>
-                        <button onClick={() => handleSaveEdit(player.id)} className={`${iconButtonBaseStyle} text-green-400 hover:bg-slate-600`} title={t('common.save', 'Save')}><HiOutlineCheck className="w-5 h-5" /></button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-3">
-                      <input type="checkbox" checked={selectedPlayerIds.includes(player.id)} onChange={() => onTogglePlayerSelection(player.id)} className="form-checkbox h-5 w-5 text-indigo-600 bg-slate-600 border-slate-500 rounded focus:ring-indigo-500 shrink-0" disabled={isRosterUpdating} />
-                      <div className="flex-grow flex items-center gap-2 truncate">
-                        <span className="text-base text-slate-100 truncate" title={player.name}>{player.nickname || player.name}</span>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button onClick={() => handleStartEdit(player.id)} className={`${iconButtonBaseStyle} text-slate-400 hover:text-indigo-400`} title={t('common.edit', 'Edit')} disabled={isRosterUpdating || isAddingPlayer}><HiOutlinePencil className="w-5 h-5" /></button>
-                        <button onClick={() => onOpenPlayerStats(player.id)} className={`${iconButtonBaseStyle} text-slate-400 hover:text-indigo-400`} title={t('common.stats', 'Stats')} disabled={isRosterUpdating || isAddingPlayer}><HiOutlineChartBar className="w-5 h-5" /></button>
-                        <button onClick={() => { if (window.confirm(t('rosterSettingsModal.confirmDeletePlayer', 'Are you sure you want to remove this player?'))) { onRemovePlayer(player.id); } }} className={`${iconButtonBaseStyle} text-slate-400 hover:text-red-500`} title={t('common.remove', 'Remove')} disabled={isRosterUpdating || isAddingPlayer}><HiOutlineTrash className="w-5 h-5" /></button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
+                    )}
+                  </div>
+                ))}
+              </div>
+              {rosterError && !isAddingPlayer && <div className="mt-3 text-sm text-red-400">{rosterError}</div>}
             </div>
-            {rosterError && !isAddingPlayer && <div className="mt-3 text-sm text-red-400">{rosterError}</div>}
           </div>
-        </div>
 
-        {/* Footer */}
-        <div className="flex justify-end p-4 border-t border-slate-700 flex-shrink-0">
-          <button onClick={onClose} className={secondaryButtonStyle}>
-            {t('common.doneButton', 'Done')}
-          </button>
+          {/* Footer - fixed height */}
+          <div className="p-4 border-t border-slate-700/20 backdrop-blur-sm bg-slate-900/20">
+            <div className="flex justify-end">
+              <button onClick={onClose} className={secondaryButtonStyle}>
+                {t('common.doneButton', 'Done')}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
