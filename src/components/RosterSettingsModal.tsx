@@ -7,10 +7,7 @@ import {
     HiOutlineCheck,
     HiOutlinePencil,
     HiOutlineTrash,
-    HiOutlineUserCircle, // Default player icon (or choose another)
-    HiOutlinePencilSquare, // Icon for notes indicator
-    HiOutlineEllipsisVertical, // Icon for actions menu
-    HiOutlineChartBar // Icon for stats
+    HiOutlineChartBar
 } from 'react-icons/hi2';
 import { useTranslation } from 'react-i18next';
 
@@ -19,7 +16,6 @@ interface RosterSettingsModalProps {
   onClose: () => void;
   availablePlayers: Player[];
   onRenamePlayer: (playerId: string, playerData: { name: string; nickname: string }) => void;
-  onToggleGoalie: (playerId: string) => void;
   onSetJerseyNumber: (playerId: string, number: string) => void;
   onSetPlayerNotes: (playerId: string, notes: string) => void;
   onRemovePlayer: (playerId: string) => void;
@@ -38,7 +34,6 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
   onClose,
   availablePlayers,
   onRenamePlayer,
-  onToggleGoalie,
   onSetJerseyNumber,
   onSetPlayerNotes,
   onRemovePlayer,
@@ -241,20 +236,13 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
 
   // --- Style Guide Definitions ---
   const modalContainerStyle = "bg-slate-800 rounded-none shadow-xl flex flex-col border-0 overflow-hidden";
-  const headerStyle = "flex justify-center items-center py-8 backdrop-blur-sm bg-slate-900/20";
   const titleStyle = "text-3xl font-bold text-yellow-400 tracking-wide";
-  const closeButtonStyle = "text-slate-400 hover:text-white";
-  
-  const sectionStyle = "p-4 border-b border-slate-700 flex-shrink-0";
   const cardStyle = "bg-slate-900/70 p-4 rounded-lg border border-slate-700 shadow-inner";
-  
   const labelStyle = "text-sm font-medium text-slate-300 mb-1";
   const inputBaseStyle = "block w-full bg-slate-700 border border-slate-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-indigo-500 sm:text-sm text-white";
-  
   const buttonBaseStyle = "px-4 py-2 rounded-md text-sm font-medium transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed";
   const primaryButtonStyle = `${buttonBaseStyle} bg-gradient-to-b from-indigo-500 to-indigo-600 text-white hover:from-indigo-600 hover:to-indigo-700 shadow-lg`;
   const secondaryButtonStyle = `${buttonBaseStyle} bg-gradient-to-b from-slate-600 to-slate-700 text-slate-200 hover:from-slate-700 hover:to-slate-600`;
-  const destructiveButtonStyle = `${buttonBaseStyle} bg-red-600 text-white hover:bg-red-700`;
   const iconButtonBaseStyle = "p-1.5 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
 
   return (
@@ -269,7 +257,7 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
         {/* Content wrapper */}
         <div className="relative z-10 flex flex-col min-h-0">
           {/* Header */}
-          <div className={headerStyle}>
+          <div className="flex justify-center items-center py-8 backdrop-blur-sm bg-slate-900/20">
             <h2 className={`${titleStyle} drop-shadow-lg`}>{t('rosterSettingsModal.title', 'Manage Roster')}</h2>
           </div>
 
