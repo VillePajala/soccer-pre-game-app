@@ -708,7 +708,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     const canvas = canvasRef.current;
     if (!canvas) return false;
     const rect = canvas.getBoundingClientRect();
-    const ballRadius = PLAYER_RADIUS * 0.5; // Slightly larger touch area
+    const ballRadius = PLAYER_RADIUS; // Use a larger radius for hit detection
     const absBallX = tacticalBallPosition.relX * rect.width;
     const absBallY = tacticalBallPosition.relY * rect.height;
     const absEventX = eventClientX - rect.left;
