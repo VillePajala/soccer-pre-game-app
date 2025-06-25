@@ -298,32 +298,42 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
             )}
           </div>
 
-          {/* Add Player Section */}
-          <div className={cardStyle}>
-            {isAddingPlayer ? (
-              <div className="space-y-3">
-                <h3 className="text-lg font-semibold text-slate-200">{t('rosterSettingsModal.addPlayerButton', 'Add Player')}</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <input type="text" name="name" placeholder={t('rosterSettingsModal.playerNamePlaceholder', 'Player Name')} value={newPlayerData.name} onChange={handleNewPlayerInputChange} className={inputBaseStyle} autoFocus />
-                  <input type="text" name="nickname" placeholder={t('rosterSettingsModal.nicknamePlaceholder', 'Nickname (Optional)')} value={newPlayerData.nickname} onChange={handleNewPlayerInputChange} className={inputBaseStyle} />
-                </div>
-                <input type="text" name="jerseyNumber" placeholder={t('rosterSettingsModal.jerseyHeader', '#')} value={newPlayerData.jerseyNumber} onChange={handleNewPlayerInputChange} className={`${inputBaseStyle} w-24 text-center`} maxLength={3} />
-                <textarea name="notes" placeholder={t('rosterSettingsModal.notesPlaceholder', 'Player notes...')} value={newPlayerData.notes} onChange={handleNewPlayerInputChange} className={`${inputBaseStyle} h-20 resize-none`} rows={3} />
-                <div className="flex justify-end gap-3 pt-2">
-                  <button onClick={handleCancelAddPlayer} className={secondaryButtonStyle} disabled={isRosterUpdating}>{t('common.cancelButton', 'Cancel')}</button>
-                  <button onClick={handleAddNewPlayer} className={primaryButtonStyle} disabled={isRosterUpdating}>{t('rosterSettingsModal.confirmAddPlayer', 'Add Player')}</button>
-                </div>
-                {rosterError && <div className="mt-2 text-sm text-red-400">{rosterError}</div>}
-              </div>
-            ) : (
-              <button onClick={() => { setIsAddingPlayer(true); setEditingPlayerId(null); }} className={`${primaryButtonStyle} w-full`} disabled={!!editingPlayerId || isRosterUpdating}>
-                {t('rosterSettingsModal.addPlayerButton', 'Add Player')}
-              </button>
-            )}
+          {/* Add Player Section - Simplified to just a button */}
+          <div>
+            <button
+              onClick={() => { setIsAddingPlayer(true); setEditingPlayerId(null); }}
+              className={`${primaryButtonStyle} w-full`}
+              disabled={!!editingPlayerId || isRosterUpdating || isAddingPlayer}
+            >
+              {t('rosterSettingsModal.addPlayerButton', 'Add Player')}
+            </button>
           </div>
+          
+          {/* Form to Add New Player (appears here when isAddingPlayer is true) */}
+          {isAddingPlayer && (
+            <div className={`${cardStyle} space-y-3`}>
+              <h3 className="text-lg font-semibold text-slate-200">{t('rosterSettingsModal.addPlayerButton', 'Add Player')}</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <input type="text" name="name" placeholder={t('rosterSettingsModal.playerNamePlaceholder', 'Player Name')} value={newPlayerData.name} onChange={handleNewPlayerInputChange} className={inputBaseStyle} autoFocus />
+                <input type="text" name="nickname" placeholder={t('rosterSettingsModal.nicknamePlaceholder', 'Nickname (Optional)')} value={newPlayerData.nickname} onChange={handleNewPlayerInputChange} className={inputBaseStyle} />
+              </div>
+              <input type="text" name="jerseyNumber" placeholder={t('rosterSettingsModal.jerseyHeader', '#')} value={newPlayerData.jerseyNumber} onChange={handleNewPlayerInputChange} className={`${inputBaseStyle} w-24 text-center`} maxLength={3} />
+              <textarea name="notes" placeholder={t('rosterSettingsModal.notesPlaceholder', 'Player notes...')} value={newPlayerData.notes} onChange={handleNewPlayerInputChange} className={`${inputBaseStyle} h-20 resize-none`} rows={3} />
+              <div className="flex justify-end gap-3 pt-2">
+                <button onClick={handleCancelAddPlayer} className={secondaryButtonStyle} disabled={isRosterUpdating}>{t('common.cancelButton', 'Cancel')}</button>
+                <button onClick={handleAddNewPlayer} className={primaryButtonStyle} disabled={isRosterUpdating}>{t('rosterSettingsModal.confirmAddPlayer', 'Add Player')}</button>
+              </div>
+              {rosterError && <div className="mt-2 text-sm text-red-400">{rosterError}</div>}
+            </div>
+          )}
 
           {/* Player List */}
           <div className={cardStyle}>
+            {/* Player List Header */}
+            <div className="flex items-center justify-between pr-10 pb-2 border-b border-slate-700 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              <span className="pl-10">{t('common.player', 'Player')}</span>
+              <span>{t('common.actions', 'Actions')}</span>
+            </div>
             <div className="space-y-2">
               {availablePlayers.map((player, index) => (
                 <div 
