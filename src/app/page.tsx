@@ -1725,7 +1725,7 @@ export default function Home() {
   };
 
   // Function to handle the actual saving
-  const handleSaveGame = async (gameName: string) => {
+  const handleSaveGame = useCallback(async (gameName: string) => {
     console.log(`Attempting to save game: '${gameName}'`);
     
     let idToSave: string;
@@ -1780,7 +1780,7 @@ export default function Home() {
       gameIdToSave: idToSave,
       snapshot: currentSnapshot as AppState, // Cast to AppState for the util
     });
-  };
+  }, [saveGameMutation, currentGameId, gameSessionState, playersOnField, opponents, drawings, availablePlayers, masterRosterQueryResultData]);
 
   // Function to handle loading a selected game
   const handleLoadGame = async (gameId: string) => {
@@ -3571,7 +3571,6 @@ export default function Home() {
         onClose={closeRosterModal}
         availablePlayers={availablePlayers} // Use availablePlayers from useGameState
         onRenamePlayer={handleRenamePlayerForModal}
-        onToggleGoalie={handleToggleGoalieForModal}
         onSetJerseyNumber={handleSetJerseyNumberForModal}
         onSetPlayerNotes={handleSetPlayerNotesForModal}
         onRemovePlayer={handleRemovePlayerForModal} 

@@ -27,7 +27,6 @@ interface RosterSettingsModalProps {
   isRosterUpdating?: boolean;
   rosterError?: string | null;
   onOpenPlayerStats: (playerId: string) => void;
-  onToggleGoalie: (playerId: string) => void;
 }
 
 const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
@@ -46,7 +45,6 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
   isRosterUpdating,
   rosterError,
   onOpenPlayerStats,
-  onToggleGoalie,
 }) => {
   const { t } = useTranslation();
   const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
