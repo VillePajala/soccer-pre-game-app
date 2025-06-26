@@ -1,4 +1,11 @@
-import { APP_SETTINGS_KEY, LAST_HOME_TEAM_NAME_KEY } from '@/config/constants';
+import {
+  APP_SETTINGS_KEY,
+  LAST_HOME_TEAM_NAME_KEY,
+  MASTER_ROSTER_KEY,
+  SAVED_GAMES_KEY,
+  SEASONS_LIST_KEY,
+  TOURNAMENTS_LIST_KEY,
+} from '@/config/constants';
 
 /**
  * Interface for application settings
@@ -148,7 +155,16 @@ export const saveLastHomeTeamName = async (teamName: string): Promise<boolean> =
  */
 export const resetAppSettings = async (): Promise<boolean> => {
   try {
-    // Wait for saveAppSettings to resolve
+    // Clear all known keys from localStorage
+    localStorage.removeItem(APP_SETTINGS_KEY);
+    localStorage.removeItem(SAVED_GAMES_KEY);
+    localStorage.removeItem(MASTER_ROSTER_KEY);
+    localStorage.removeItem(SEASONS_LIST_KEY);
+    localStorage.removeItem(TOURNAMENTS_LIST_KEY);
+    // For legacy compatibility, also clear this if it exists
+    localStorage.removeItem(LAST_HOME_TEAM_NAME_KEY);
+
+    // After clearing, save the default settings back
     const success = await saveAppSettings(DEFAULT_APP_SETTINGS);
     return Promise.resolve(success);
   } catch (error) {

@@ -714,8 +714,14 @@ export default function Home() {
         console.log('[Mutation Success] Player added:', newPlayer.name, newPlayer.id);
         queryClient.invalidateQueries({ queryKey: queryKeys.masterRoster });
 
-        const newSelectedPlayerIds = [...gameSessionState.selectedPlayerIds, newPlayer.id];
+        // When a new player is added, they should be automatically selected.
+        // If the roster was empty before, this new player should be the ONLY one selected.
+        const newSelectedPlayerIds = gameSessionState.selectedPlayerIds.includes(newPlayer.id)
+          ? gameSessionState.selectedPlayerIds
+          : [...gameSessionState.selectedPlayerIds, newPlayer.id];
+
         dispatchGameSession({ type: 'SET_SELECTED_PLAYER_IDS', payload: newSelectedPlayerIds });
+        
         
         setRosterError(null);
       } else {
