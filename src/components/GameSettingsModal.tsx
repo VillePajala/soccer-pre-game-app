@@ -193,21 +193,31 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   // Handle time changes
   const handleHourChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    if (value.length <= 2) {
-      setGameHour(value);
+    // Ensure we're storing a string, not a number that could become NaN
+    setGameHour(value === '' ? '' : value);
+    
+    if (value === '') {
+      // If hour is empty, update the time string accordingly
+      onGameTimeChange(gameMinute ? `:${gameMinute.padStart(2, '0')}` : '');
+    } else {
       const formattedHour = value.padStart(2, '0');
       const formattedMinute = gameMinute.padStart(2, '0');
-      onGameTimeChange((value && gameMinute) ? `${formattedHour}:${formattedMinute}` : '');
+      onGameTimeChange(`${formattedHour}:${formattedMinute}`);
     }
   };
 
   const handleMinuteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    if (value.length <= 2) {
-      setGameMinute(value);
+    // Ensure we're storing a string, not a number that could become NaN
+    setGameMinute(value === '' ? '' : value);
+    
+    if (value === '') {
+      // If minute is empty, update the time string accordingly
+      onGameTimeChange(gameHour ? `${gameHour.padStart(2, '0')}:` : '');
+    } else {
       const formattedHour = gameHour.padStart(2, '0');
       const formattedMinute = value.padStart(2, '0');
-      onGameTimeChange((gameHour && value) ? `${formattedHour}:${formattedMinute}` : '');
+      onGameTimeChange(`${formattedHour}:${formattedMinute}`);
     }
   };
 
@@ -744,23 +754,25 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                   </label>
                   <div className="flex items-center space-x-2">
                     <input
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       value={gameHour}
                       onChange={handleHourChange}
                       placeholder={t('gameSettingsModal.hourPlaceholder', 'HH')}
                       className="w-1/2 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
-                      min="0"
-                      max="23"
+                      maxLength={2}
                     />
                     <span className="text-slate-400">:</span>
                     <input
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       value={gameMinute}
                       onChange={handleMinuteChange}
                       placeholder={t('gameSettingsModal.minutePlaceholder', 'MM')}
                       className="w-1/2 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
-                      min="0"
-                      max="59"
+                      maxLength={2}
                     />
                   </div>
                 </div>
