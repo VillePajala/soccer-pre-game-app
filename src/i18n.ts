@@ -135,10 +135,14 @@ fiTranslations.gameStatsModal.gameInfoTitle = "Ottelun Tiedot";
 fiTranslations.gameStatsModal.closeButton = "Sulje";
 fiTranslations.gameStatsModal.notesTitle = "Ottelun Muistiinpanot";
 fiTranslations.gameStatsModal.playerStatsTitle = "Pelaajatilastot";
-fiTranslations.gameStatsModal.tab_current = "Nykyinen";
-fiTranslations.gameStatsModal.tab_season = "Kausi";
-fiTranslations.gameStatsModal.tab_tournament = "Turnaus";
-fiTranslations.gameStatsModal.tab_all = "Kaikki";
+fiTranslations.gameStatsModal.tabs = {
+    currentGame: "Nykyinen",
+    season: "Kausi",
+    tournament: "Turnaus",
+    overall: "Kaikki"
+};
+fiTranslations.gameStatsModal.filterAllSeasons = "Kaikki Kaudet";
+fiTranslations.gameStatsModal.filterAllTournaments = "Kaikki Turnaukset";
 fiTranslations.gameStatsModal.fairPlayTooltip = "Reilun Pelin Kortti";
 fiTranslations.gameStatsModal.fairPlayAwardNone = "- Ei Valittu -";
 fiTranslations.gameStatsModal.playerHeader = "PELAAJA";
@@ -247,6 +251,10 @@ fiTranslations.common.actions = "TOIMINNOT"; // Event log header
 fiTranslations.common.doneButton = "Valmis";
 fiTranslations.common.player = "PELAAJA";
 fiTranslations.common.assist = "Syöttö";
+fiTranslations.common.filterByName = "Suodata nimellä...";
+fiTranslations.common.scorer = "Maalintekijä";
+fiTranslations.common.select = "Valitse...";
+fiTranslations.common.none = "Ei mitään";
 
 // Add missing English translations
 if (!enTranslations.goalLogModal) {
@@ -352,10 +360,14 @@ enTranslations.gameStatsModal.gameInfoTitle = "Game Information";
 enTranslations.gameStatsModal.closeButton = "Close";
 enTranslations.gameStatsModal.notesTitle = "Game Notes";
 enTranslations.gameStatsModal.playerStatsTitle = "Player Statistics";
-enTranslations.gameStatsModal.tab_current = "Current";
-enTranslations.gameStatsModal.tab_season = "Season";
-enTranslations.gameStatsModal.tab_tournament = "Tournament";
-enTranslations.gameStatsModal.tab_all = "All";
+enTranslations.gameStatsModal.tabs = {
+    currentGame: "Current",
+    season: "Season",
+    tournament: "Tournament",
+    overall: "All"
+};
+enTranslations.gameStatsModal.filterAllSeasons = "All Seasons";
+enTranslations.gameStatsModal.filterAllTournaments = "All Tournaments";
 enTranslations.gameStatsModal.fairPlayTooltip = "Fair Play Card";
 enTranslations.gameStatsModal.fairPlayAwardNone = "- None -";
 enTranslations.gameStatsModal.playerHeader = "PLAYER";
@@ -462,6 +474,10 @@ enTranslations.common.actions = "Actions";
 enTranslations.common.doneButton = "Done";
 enTranslations.common.player = "Player";
 enTranslations.common.assist = "Assist";
+enTranslations.common.filterByName = "Filter by name...";
+enTranslations.common.scorer = "Scorer";
+enTranslations.common.select = "Select...";
+enTranslations.common.none = "None";
 
 // Add load game modal translations if section doesn't exist
 if (!fiTranslations.loadGameModal) {
