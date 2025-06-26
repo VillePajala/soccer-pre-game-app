@@ -1653,12 +1653,12 @@ export default function Home() {
   const handleGameDateChange = (newDate: string) => {
     dispatchGameSession({ type: 'SET_GAME_DATE', payload: newDate });
   };
-  const handleHomeScoreChange = (newScore: number) => {
-    dispatchGameSession({ type: 'SET_HOME_SCORE', payload: newScore });
-  };
-  const handleAwayScoreChange = (newScore: number) => {
-    dispatchGameSession({ type: 'SET_AWAY_SCORE', payload: newScore });
-  };
+  // const handleHomeScoreChange = (newScore: number) => {
+  //   dispatchGameSession({ type: 'SET_HOME_SCORE', payload: newScore });
+  // };
+  // const handleAwayScoreChange = (newScore: number) => {
+  //   dispatchGameSession({ type: 'SET_AWAY_SCORE', payload: newScore });
+  // };
   const handleGameNotesChange = (notes: string) => {
     dispatchGameSession({ type: 'SET_GAME_NOTES', payload: notes });
   };
@@ -3458,41 +3458,34 @@ export default function Home() {
         currentTime={gameSessionState.timeElapsedInSeconds}
       />
       {/* Game Stats Modal - Restore props for now */}
-      <GameStatsModal
-        isOpen={isGameStatsModalOpen}
-        onClose={handleToggleGameStatsModal}
-        teamName={gameSessionState.teamName}
-        opponentName={gameSessionState.opponentName}
-        gameDate={gameSessionState.gameDate}
-        gameLocation={gameSessionState.gameLocation} // This is still a local state, might need to be gameSessionState.gameLocation
-        gameTime={gameSessionState.gameTime} // This is still a local state, might need to be gameSessionState.gameTime
-        gameNotes={gameSessionState.gameNotes}
-        homeScore={gameSessionState.homeScore}
-        awayScore={gameSessionState.awayScore}
-        homeOrAway={gameSessionState.homeOrAway} // Pass the prop
-        availablePlayers={availablePlayers}
-        gameEvents={gameSessionState.gameEvents} // This is still local state, should be gameSessionState.gameEvents
-        onOpponentNameChange={handleOpponentNameChange}
-        onGameDateChange={handleGameDateChange}
-        onHomeScoreChange={handleHomeScoreChange}
-        onAwayScoreChange={handleAwayScoreChange}
-        onGameNotesChange={handleGameNotesChange}
-        onUpdateGameEvent={handleUpdateGameEvent}
-        onDeleteGameEvent={handleDeleteGameEvent}
-           selectedPlayerIds={gameSessionState.selectedPlayerIds} 
-        savedGames={savedGames}
-        currentGameId={currentGameId}
-        seasonId={gameSessionState.seasonId} // USE gameSessionState
-        tournamentId={gameSessionState.tournamentId} // USE gameSessionState
-        // REMOVE props not defined in GameStatsModalProps:
-        // numPeriods={gameSessionState.numberOfPeriods}
-        // periodDurationMinutes={gameSessionState.periodDurationMinutes}
-        onExportOneJson={handleExportOneJson}
-        onExportOneCsv={handleExportOneCsv}
-        // ADD Aggregate export handlers
-        onExportAggregateJson={handleExportAggregateJson}
-        onExportAggregateCsv={handleExportAggregateCsv}
-      />
+      {isGameStatsModalOpen && (
+        <GameStatsModal
+          isOpen={isGameStatsModalOpen}
+          onClose={handleToggleGameStatsModal}
+          teamName={gameSessionState.teamName}
+          opponentName={gameSessionState.opponentName}
+          gameDate={gameSessionState.gameDate}
+          homeScore={gameSessionState.homeScore}
+          awayScore={gameSessionState.awayScore}
+          homeOrAway={gameSessionState.homeOrAway}
+          gameLocation={gameSessionState.gameLocation}
+          gameTime={gameSessionState.gameTime}
+          numPeriods={gameSessionState.numberOfPeriods}
+          periodDurationMinutes={gameSessionState.periodDurationMinutes}
+          availablePlayers={availablePlayers}
+          gameEvents={gameSessionState.gameEvents}
+          gameNotes={gameSessionState.gameNotes}
+          onUpdateGameEvent={handleUpdateGameEvent}
+          selectedPlayerIds={gameSessionState.selectedPlayerIds}
+          savedGames={savedGames}
+          currentGameId={currentGameId}
+          onDeleteGameEvent={handleDeleteGameEvent}
+          onExportOneJson={handleExportOneJson}
+          onExportOneCsv={handleExportOneCsv}
+          onExportAggregateJson={handleExportAggregateJson}
+          onExportAggregateCsv={handleExportAggregateCsv}
+        />
+      )}
       {/* Save Game Modal */}
       <SaveGameModal
         isOpen={isSaveGameModalOpen}

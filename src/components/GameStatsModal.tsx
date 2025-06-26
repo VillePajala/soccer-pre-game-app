@@ -40,13 +40,13 @@ interface GameStatsModalProps {
   homeScore: number;
   awayScore: number;
   homeOrAway: 'home' | 'away';
+  gameLocation?: string;
+  gameTime?: string;
+  numPeriods?: number;
+  periodDurationMinutes?: number;
   availablePlayers: Player[];
   gameEvents: GameEvent[];
   gameNotes?: string;
-  onOpponentNameChange: (name: string) => void;
-  onGameDateChange: (date: string) => void;
-  onHomeScoreChange: (score: number) => void;
-  onAwayScoreChange: (score: number) => void;
   onGameNotesChange?: (notes: string) => void;
   onUpdateGameEvent?: (updatedEvent: GameEvent) => void;
   selectedPlayerIds: string[];
@@ -68,13 +68,13 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   homeScore,
   awayScore,
   homeOrAway,
+  gameLocation,
+  gameTime,
+  numPeriods,
+  periodDurationMinutes,
   availablePlayers,
   gameEvents,
   gameNotes = '',
-  onOpponentNameChange,
-  onGameDateChange,
-  onHomeScoreChange,
-  onAwayScoreChange,
   onGameNotesChange = () => {},
   onUpdateGameEvent = () => { /* console.warn('onUpdateGameEvent handler not provided'); */ },
   selectedPlayerIds,
@@ -136,12 +136,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   };
 
   // --- State ---
-  const [editOpponentName, setEditOpponentName] = useState(opponentName);
-  const [editGameDate, setEditGameDate] = useState(gameDate);
-  const [editHomeScore, setEditHomeScore] = useState(String(homeScore));
-  const [editAwayScore, setEditAwayScore] = useState(String(awayScore));
   const [editGameNotes, setEditGameNotes] = useState(gameNotes);
-  const [isEditingInfo, setIsEditingInfo] = useState(false);
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [inlineEditingField, setInlineEditingField] = useState<'opponent' | 'date' | 'home' | 'away' | null>(null);
   const opponentInputRef = useRef<HTMLInputElement>(null);
@@ -200,20 +195,14 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   // Reset edit state
   useEffect(() => {
       if (isOpen) {
-          setEditOpponentName(opponentName);
-          setEditGameDate(gameDate);
-          setEditHomeScore(String(homeScore));
-          setEditAwayScore(String(awayScore));
           setEditGameNotes(gameNotes);
-          setIsEditingInfo(false);
           setIsEditingNotes(false);
           setInlineEditingField(null);
       } else {
-          setIsEditingInfo(false);
           setIsEditingNotes(false);
           setInlineEditingField(null);
       }
-  }, [isOpen, opponentName, gameDate, homeScore, awayScore, gameNotes]);
+  }, [isOpen, gameNotes]);
 
   // Focus elements
   useEffect(() => {
@@ -472,52 +461,9 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   const displayAwayTeamName = homeOrAway === 'home' ? opponentName : teamName;
 
   // --- Handlers ---
-  const handleSaveInfo = () => {
-      const home = parseInt(editHomeScore), away = parseInt(editAwayScore);
-      if (isNaN(home) || isNaN(away) || home < 0 || away < 0) { alert(t('gameStatsModal.invalidScoreAlert', 'Scores must be non-negative numbers.')); return; }
-      onOpponentNameChange(editOpponentName); onGameDateChange(editGameDate);
-      onHomeScoreChange(home); onAwayScoreChange(away);
-      setIsEditingInfo(false);
-  };
-  const handleCancelEditInfo = () => {
-      setEditOpponentName(opponentName); setEditGameDate(gameDate);
-      setEditHomeScore(String(homeScore)); setEditAwayScore(String(awayScore));
-      setIsEditingInfo(false);
-  };
   const handleSaveNotes = () => { if (gameNotes !== editGameNotes) onGameNotesChange(editGameNotes); setIsEditingNotes(false); };
   const handleCancelEditNotes = () => { setEditGameNotes(gameNotes); setIsEditingNotes(false); };
   
-  // These are no longer used with the new UI, can be removed.
-  // const handleStartInlineEdit = (field: 'opponent' | 'date' | 'home' | 'away') => {
-  //   if (isEditingInfo || isEditingNotes) return;
-  //   setInlineEditingField(field);
-  //   let initialValue = '';
-  //   switch(field) {
-  //     case 'opponent': initialValue = opponentName; break;
-  //     case 'date': initialValue = gameDate; break;
-  //     case 'home': initialValue = String(homeScore); break;
-  //     case 'away': initialValue = String(awayScore); break;
-  //   }
-  //   setInlineEditValue(initialValue); setIsEditingInfo(false);
-  // };
-  // const handleCancelInlineEdit = () => { setInlineEditingField(null); setInlineEditValue(''); };
-  // const handleSaveInlineEdit = () => {
-  //   if (!inlineEditingField) return;
-  //   const trimmedValue = inlineEditValue.trim();
-  //   switch(inlineEditingField) {
-  //     case 'opponent': onOpponentNameChange(trimmedValue || t('gameStatsModal.opponentPlaceholder', 'Opponent')); break;
-  //     case 'date': if (trimmedValue) onGameDateChange(trimmedValue); break;
-  //     case 'home': case 'away':
-  //       const score = parseInt(trimmedValue);
-  //       if (!isNaN(score) && score >= 0) {
-  //           if (inlineEditingField === 'home') onHomeScoreChange(score); else onAwayScoreChange(score);
-  //       } else { alert(t('gameStatsModal.invalidScoreAlert', 'Score must be non-negative.')); return; }
-  //       break;
-  //   }
-  //     handleCancelInlineEdit();
-  // };
-  // const handleInlineEditKeyDown = (event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => { if (event.key === 'Enter') handleSaveInlineEdit(); else if (event.key === 'Escape') handleCancelInlineEdit(); };
-
   const handleSort = (column: SortableColumn) => { if (sortColumn === column) setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc')); else { setSortColumn(column); setSortDirection(column === 'name' ? 'asc' : 'desc'); } };
   const handleFilterChange = (event: React.ChangeEvent<HTMLInputElement>) => { setFilterText(event.target.value); };
   const handleStartEditGoal = (goal: GameEvent) => {
@@ -525,7 +471,6 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
     setEditGoalTime(formatTime(goal.time));
     setEditGoalScorerId(goal.scorerId ?? '');
     setEditGoalAssisterId(goal.assisterId ?? '');
-    setIsEditingInfo(false);
     setIsEditingNotes(false);
     setInlineEditingField(null);
   };
@@ -644,54 +589,34 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
             <div className="space-y-6">
               {activeTab === 'currentGame' && (
                 <div className="bg-slate-900/70 p-4 rounded-lg border border-slate-700 shadow-inner">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xl font-semibold text-slate-200">{t('gameStatsModal.gameInfoTitle', 'Game Information')}</h3>
-                    <div className="flex items-center gap-2">
-                      {isEditingInfo ? (
-                        <>
-                          <button onClick={handleSaveInfo} className="p-1.5 text-green-400 hover:text-green-300 rounded bg-slate-700 hover:bg-slate-600" title={t('common.save', 'Save')}><FaSave /></button>
-                          <button onClick={handleCancelEditInfo} className="p-1.5 text-red-400 hover:text-red-300 rounded bg-slate-700 hover:bg-slate-600" title={t('common.cancel', 'Cancel')}><FaTimes /></button>
-                        </>
-                      ) : (
-                        <button onClick={() => setIsEditingInfo(true)} disabled={isEditingNotes} className="p-1.5 text-slate-400 hover:text-indigo-400 rounded-md transition-colors" title={t('common.edit', 'Edit')}><FaEdit /></button>
-                      )}
+                  <h3 className="text-xl font-semibold text-slate-200 mb-4">{t('gameStatsModal.gameInfoTitle', 'Game Information')}</h3>
+                  <div className="space-y-3">
+                    <div className="bg-slate-800/40 p-3 rounded-md border border-slate-700/50">
+                      <div className="flex justify-center items-center text-center">
+                        <span className="font-semibold text-slate-100 flex-1 text-right">{displayHomeTeamName}</span>
+                        <span className="text-2xl text-yellow-400 font-bold mx-4">{homeScore} - {awayScore}</span>
+                        <span className="font-semibold text-slate-100 flex-1 text-left">{displayAwayTeamName}</span>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-2 gap-3 text-sm">
+                      <div className="bg-slate-800/40 p-2 rounded-md">
+                        <label className="block text-xs text-slate-400">{t('common.date')}</label>
+                        <span className="font-medium text-slate-200">{formatDisplayDate(gameDate)}</span>
+                      </div>
+                      <div className="bg-slate-800/40 p-2 rounded-md">
+                        <label className="block text-xs text-slate-400">{t('common.time')}</label>
+                        <span className="font-medium text-slate-200">{gameTime || t('common.notSet')}</span>
+                      </div>
+                      <div className="bg-slate-800/40 p-2 rounded-md">
+                        <label className="block text-xs text-slate-400">{t('common.location')}</label>
+                        <span className="font-medium text-slate-200">{gameLocation || t('common.notSet')}</span>
+                      </div>
+                      <div className="bg-slate-800/40 p-2 rounded-md">
+                        <label className="block text-xs text-slate-400">{t('newGameSetupModal.periodsLabel')}</label>
+                        <span className="font-medium text-slate-200">{numPeriods} x {periodDurationMinutes} min</span>
+                      </div>
                     </div>
                   </div>
-                  
-                  {isEditingInfo ? (
-                    <div className="space-y-3">
-                      <div>
-                        <label className="text-xs text-slate-400 mb-1 block">{t('common.home', 'Home Team')}</label>
-                        <input type="number" value={editHomeScore} onChange={e => setEditHomeScore(e.target.value)} className="w-full bg-slate-700 border border-slate-600 rounded-md px-2 py-1 text-slate-100"/>
-                      </div>
-                      <div>
-                        <label className="text-xs text-slate-400 mb-1 block">{t('common.away', 'Away Team')}</label>
-                        <input type="number" value={editAwayScore} onChange={e => setEditAwayScore(e.target.value)} className="w-full bg-slate-700 border border-slate-600 rounded-md px-2 py-1 text-slate-100"/>
-                      </div>
-                      <div>
-                        <label className="text-xs text-slate-400 mb-1 block">{t('common.opponent', 'Opponent')}</label>
-                        <input type="text" value={editOpponentName} onChange={e => setEditOpponentName(e.target.value)} className="w-full bg-slate-700 border border-slate-600 rounded-md px-2 py-1 text-slate-100"/>
-                      </div>
-                      <div>
-                        <label className="text-xs text-slate-400 mb-1 block">{t('common.date', 'Date')}</label>
-                        <input type="date" value={editGameDate} onChange={e => setEditGameDate(e.target.value)} className="w-full bg-slate-700 border border-slate-600 rounded-md px-2 py-1 text-slate-100"/>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-slate-800/40 p-3 rounded-md border border-slate-700/50">
-                        <div className="text-sm text-slate-400 mb-1">{displayHomeTeamName}</div>
-                        <div className="text-2xl text-yellow-400 font-bold">{homeScore}</div>
-                      </div>
-                      <div className="bg-slate-800/40 p-3 rounded-md border border-slate-700/50">
-                        <div className="text-sm text-slate-400 mb-1">{displayAwayTeamName}</div>
-                        <div className="text-2xl text-yellow-400 font-bold">{awayScore}</div>
-                      </div>
-                      <div className="col-span-2 text-center text-sm text-slate-400 pt-2">
-                        {formatDisplayDate(gameDate)}
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
 
@@ -823,7 +748,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                             <button onClick={handleCancelEditNotes} className="p-1.5 text-red-400 hover:text-red-300 rounded bg-slate-700 hover:bg-slate-600" title={t('common.cancel') ?? 'Peruuta'}><FaTimes /></button>
                           </>
                         ) : (
-                          <button onClick={() => setIsEditingNotes(true)} disabled={isEditingInfo} className="p-1.5 text-slate-400 hover:text-indigo-400 rounded bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed" title={t('common.edit') ?? 'Muokkaa'}><FaEdit /></button>
+                          <button onClick={() => setIsEditingNotes(true)} className="p-1.5 text-slate-400 hover:text-indigo-400 rounded bg-slate-700 hover:bg-slate-600" title={t('common.edit') ?? 'Muokkaa'}><FaEdit /></button>
                         )}
                       </div>
                     </div>

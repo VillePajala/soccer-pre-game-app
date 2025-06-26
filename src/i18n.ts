@@ -141,6 +141,8 @@ fiTranslations.gameStatsModal.tabs = {
     tournament: "Turnaus",
     overall: "Kaikki"
 };
+fiTranslations.gameStatsModal.filterAllSeasons = "Kaikki Kaudet";
+fiTranslations.gameStatsModal.filterAllTournaments = "Kaikki Turnaukset";
 fiTranslations.gameStatsModal.fairPlayTooltip = "Reilun Pelin Kortti";
 fiTranslations.gameStatsModal.fairPlayAwardNone = "- Ei Valittu -";
 fiTranslations.gameStatsModal.playerHeader = "PELAAJA";
@@ -364,6 +366,8 @@ enTranslations.gameStatsModal.tabs = {
     tournament: "Tournament",
     overall: "All"
 };
+enTranslations.gameStatsModal.filterAllSeasons = "All Seasons";
+enTranslations.gameStatsModal.filterAllTournaments = "All Tournaments";
 enTranslations.gameStatsModal.fairPlayTooltip = "Fair Play Card";
 enTranslations.gameStatsModal.fairPlayAwardNone = "- None -";
 enTranslations.gameStatsModal.playerHeader = "PLAYER";
