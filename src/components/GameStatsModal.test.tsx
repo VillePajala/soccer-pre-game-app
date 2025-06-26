@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, within, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, within, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import GameStatsModal from './GameStatsModal';
 import { Player, Season, Tournament } from '@/types';
@@ -66,6 +66,9 @@ const minimalMockAppState: AppState = {
   subIntervalMinutes: 5,
   completedIntervalDurations: [],
   lastSubConfirmationTimeSeconds: 0,
+  tacticalDiscs: [],
+  tacticalDrawings: [],
+  tacticalBallPosition: null,
 };
 
 // Use the minimal AppState object for the mockSavedGames collection
@@ -156,65 +159,53 @@ describe('GameStatsModal', () => {
     jest.clearAllMocks();
   });
 
-  test('renders modal title and basic game info when open', () => {
+  test('renders modal title and basic game info when open', async () => {
     const props = getDefaultProps();
-    renderComponent(props);
-    expect(screen.getByRole('heading', { name: i18n.t('gameStatsModal.title') })).toBeInTheDocument();
+    await act(async () => {
+      renderComponent(props);
+    });
     
-    const gameInfoSection = screen.getByRole('heading', { name: i18n.t('gameStatsModal.gameInfoTitle') }).parentElement?.parentElement;
+    expect(screen.getByRole('heading', { name: i18n.t('gameStatsModal.titleCurrentGame', 'Ottelutilastot') })).toBeInTheDocument();
+    
+    const gameInfoSection = screen.getByRole('heading', { name: i18n.t('gameStatsModal.gameInfoTitle', 'Game Information') });
     expect(gameInfoSection).toBeInTheDocument();
-    if (!(gameInfoSection instanceof HTMLElement)) throw new Error("Game info section not found or not an HTMLElement");
 
-    // Team names are present as labels for their scores, and also for the opponent block
-    expect(within(gameInfoSection).getAllByText(props.teamName).length).toBeGreaterThanOrEqual(1);
-    expect(within(gameInfoSection).getAllByText(props.opponentName).length).toBeGreaterThanOrEqual(1);
+    const gameInfoContainer = gameInfoSection.parentElement as HTMLElement;
     
-    // Date is still present
-    expect(within(gameInfoSection).getByText(/2\.8\.2024/)).toBeInTheDocument();
-
-    // Score verification based on the new structure
-    // Home Score: Label is Home Team Name, next sibling is the score
-    const homeTeamNameLabelForScore = within(gameInfoSection).getByText((content, element) => {
-      return element?.tagName.toLowerCase() === 'span' && 
-             element.textContent === (props.homeOrAway === 'home' ? props.teamName : props.opponentName) &&
-             element.nextElementSibling?.textContent === String(props.homeScore);
-    });
-    expect(homeTeamNameLabelForScore).toBeInTheDocument();
-    const homeScoreElement = homeTeamNameLabelForScore.nextElementSibling;
-    expect(homeScoreElement).toHaveTextContent(String(props.homeScore));
-
-    // Away Score: Label is Away Team Name, next sibling is the score
-    const awayTeamNameLabelForScore = within(gameInfoSection).getByText((content, element) => {
-      return element?.tagName.toLowerCase() === 'span' && 
-             element.textContent === (props.homeOrAway === 'home' ? props.opponentName : props.teamName) &&
-             element.nextElementSibling?.textContent === String(props.awayScore);
-    });
-    expect(awayTeamNameLabelForScore).toBeInTheDocument();
-    const awayScoreElement = awayTeamNameLabelForScore.nextElementSibling;
-    expect(awayScoreElement).toHaveTextContent(String(props.awayScore));
+    // Check for team names and scores
+    expect(within(gameInfoContainer).getByText(props.teamName)).toBeInTheDocument();
+    expect(within(gameInfoContainer).getByText(props.opponentName)).toBeInTheDocument();
+    expect(within(gameInfoContainer).getByText(`${props.homeScore} - ${props.awayScore}`)).toBeInTheDocument();
+    
+    // Check for date
+    expect(within(gameInfoContainer).getByText(/2\.8\.2024/)).toBeInTheDocument();
   });
 
   test('loads seasons and tournaments using utility functions on mount', async () => {
-    renderComponent(getDefaultProps());
+    await act(async () => {
+      renderComponent(getDefaultProps());
+    });
     await waitFor(() => {
       expect(mockGetSeasons).toHaveBeenCalledTimes(1);
       expect(mockGetTournaments).toHaveBeenCalledTimes(1);
     });
   });
 
-  test('displays current game stats by default', () => {
-    renderComponent(getDefaultProps());
-    expect(screen.getByRole('button', { name: i18n.t('gameStatsModal.tabs.currentGame'), pressed: true })).toBeInTheDocument();
+  test('displays current game stats by default', async () => {
+    await act(async () => {
+      renderComponent(getDefaultProps());
+    });
+    expect(screen.getByRole('button', { name: i18n.t('gameStatsModal.tabs.currentGame') })).toBeInTheDocument();
 
-    const playerStatsSection = screen.getByRole('heading', { name: i18n.t('gameStatsModal.playerStatsTitle') }).closest('div');
+    const playerStatsSection = screen.getByRole('heading', { name: i18n.t('gameStatsModal.playerStatsTitle') });
     expect(playerStatsSection).toBeInTheDocument();
-    if (!(playerStatsSection instanceof HTMLElement)) throw new Error("Player stats section not found or not an HTMLElement");
+    const playerStatsContainer = playerStatsSection.closest('div') as HTMLElement;
 
-    expect(within(playerStatsSection).getByRole('columnheader', { name: i18n.t('common.player') })).toBeInTheDocument();
-    expect(within(playerStatsSection).getByRole('cell', { name: 'Alice' })).toBeInTheDocument();
-    expect(within(playerStatsSection).getByRole('cell', { name: /Bob/ })).toBeInTheDocument();
+    expect(within(playerStatsContainer).getByRole('columnheader', { name: i18n.t('common.player') })).toBeInTheDocument();
+    expect(within(playerStatsContainer).getByRole('cell', { name: 'Alice' })).toBeInTheDocument();
+    expect(within(playerStatsContainer).getByRole('cell', { name: /Bob/ })).toBeInTheDocument();
     
-    const aliceRow = within(playerStatsSection).getByRole('row', { name: /Alice/i });
+    const aliceRow = within(playerStatsContainer).getByRole('row', { name: /Alice/i });
     if (!aliceRow) throw new Error("Row for Alice not found");
     // Alice: 1 Goal, 0 Assists = 1 Point. GP is 1. FP is 0.
     expect(aliceRow).toHaveTextContent('Alice'); // Name
@@ -224,52 +215,55 @@ describe('GameStatsModal', () => {
     expect(aliceRow).toHaveTextContent('1');    // Total Points
   });
 
-  test('displays game event log correctly', () => {
-    renderComponent(getDefaultProps());
-    expect(screen.getByRole('heading', { name: 'Goal Log' })).toBeInTheDocument();
-    
-    const eventLogSectionParent = screen.getByRole('heading', { name: 'Goal Log' }).parentElement;
-    expect(eventLogSectionParent).toBeInTheDocument();
-    if(!(eventLogSectionParent instanceof HTMLElement)) throw new Error("Event log section parent not found or not an HTMLElement");
+  test('displays game event log correctly', async () => {
+    await act(async () => {
+      renderComponent(getDefaultProps());
+    });
+    const goalLogSection = await screen.findByRole('heading', { name: i18n.t('gameStatsModal.goalLogTitle', 'Goal Log') });
+    const goalLogContainer = goalLogSection.parentElement as HTMLElement;
 
-    const eventLogTable = within(eventLogSectionParent).getByRole('table');
-    
-    const firstGoalRow = within(eventLogTable).getByText('02:00').closest('tr');
-    if (!firstGoalRow) throw new Error("First goal row (02:00) not found");
-    expect(within(firstGoalRow).getByText('Maali')).toBeInTheDocument();
-    expect(within(firstGoalRow).getByText('Alice')).toBeInTheDocument(); 
-    expect(within(firstGoalRow).getByText('Bob')).toBeInTheDocument();   
+    // Check for the first goal (Alice from Bob)
+    const firstGoalCard = within(goalLogContainer).getByText('02:00').closest('div.p-3');
+    expect(firstGoalCard).not.toBeNull();
+    if (firstGoalCard) {
+      expect(within(firstGoalCard as HTMLElement).getByText('Alice')).toBeInTheDocument();
+      expect(within(firstGoalCard as HTMLElement).getByText(new RegExp(i18n.t('common.assist', 'Assist') + '.*Bob'))).toBeInTheDocument();
+    }
 
-    const secondGoalRow = within(eventLogTable).getByText('05:00').closest('tr');
-    if (!secondGoalRow) throw new Error("Second goal row (05:00) not found");
-    expect(within(secondGoalRow).getByText(i18n.t('common.opponentGoal'))).toBeInTheDocument();
-    expect(within(secondGoalRow).getByText(getDefaultProps().opponentName)).toBeInTheDocument(); 
+    // Check for the opponent goal
+    const opponentGoalCard = within(goalLogContainer).getByText('05:00').closest('div.p-3');
+    expect(opponentGoalCard).not.toBeNull();
+    if (opponentGoalCard) {
+      expect(within(opponentGoalCard as HTMLElement).getByText('Rivals')).toBeInTheDocument();
+    }
 
-    const thirdGoalRow = within(eventLogTable).getByText('08:20').closest('tr');
-    if (!thirdGoalRow) throw new Error("Third goal row (08:20) not found");
-    expect(within(thirdGoalRow).getByText('Maali')).toBeInTheDocument();
-    expect(within(thirdGoalRow).getByText('Bob')).toBeInTheDocument(); 
-    const assisterCellsInThirdRow = within(thirdGoalRow).getAllByRole('cell');
-    expect(assisterCellsInThirdRow[3].textContent).toBe(''); 
+    // Check for the third goal (Bob, unassisted)
+    const thirdGoalCard = within(goalLogContainer).getByText('08:20').closest('div.p-3');
+    expect(thirdGoalCard).not.toBeNull();
+    if (thirdGoalCard) {
+      expect(within(thirdGoalCard as HTMLElement).getByText('Bob')).toBeInTheDocument();
+      // Ensure no assister text is present
+      expect(within(thirdGoalCard as HTMLElement).queryByText(new RegExp(i18n.t('common.assist', 'Assist')))).not.toBeInTheDocument();
+    }
   });
 
   test('calls onDeleteGameEvent when delete button on an event is clicked and confirmed', async () => {
     const mockProps = getDefaultProps();
-    (window.confirm as jest.Mock).mockReturnValueOnce(true);
-    renderComponent(mockProps);
-    await screen.findByRole('heading', { name: i18n.t('gameStatsModal.title') }, { timeout: 1000 });
+    window.confirm = jest.fn(() => true);
+    await act(async () => {
+      renderComponent(mockProps);
+    });
 
-    const goalLogHeading = await screen.findByRole('heading', { name: 'Goal Log' });
-    const goalLogSectionContainer = goalLogHeading.parentElement;
-    if (!goalLogSectionContainer) throw new Error("Goal Log section container (parent of heading) not found.");
-    const eventLogTable = within(goalLogSectionContainer).getByRole('table');
+    const goalLogSection = await screen.findByRole('heading', { name: i18n.t('gameStatsModal.goalLogTitle', 'Goal Log') });
+    const goalLogContainer = goalLogSection.parentElement as HTMLElement;
     
-    const firstEventCellWithTime = await within(eventLogTable).findByText('02:00', { selector: 'td' });
-    const parentRow = firstEventCellWithTime.closest('tr');
-    if (!parentRow) throw new Error('Parent row for the first event not found');
+    const firstGoalCard = within(goalLogContainer).getByText('02:00').closest('div.p-3');
+    expect(firstGoalCard).not.toBeNull();
 
-    const deleteButton = within(parentRow).getByRole('button', { name: 'Delete' });
-    fireEvent.click(deleteButton);
+    if (firstGoalCard) {
+      const deleteButton = within(firstGoalCard as HTMLElement).getByRole('button', { name: i18n.t('common.delete', 'Delete') });
+      fireEvent.click(deleteButton);
+    }
 
     expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining(i18n.t('gameStatsModal.confirmDeleteEvent')));
     expect(mockProps.onDeleteGameEvent).toHaveBeenCalledWith('g1');
@@ -277,58 +271,94 @@ describe('GameStatsModal', () => {
 
   test('does not call onDeleteGameEvent if delete is cancelled', async () => {
     const mockProps = getDefaultProps();
-    (window.confirm as jest.Mock).mockReturnValueOnce(false);
-    renderComponent(mockProps);
-    await screen.findByRole('heading', { name: i18n.t('gameStatsModal.title') }, { timeout: 1000 });
+    window.confirm = jest.fn(() => false);
+    await act(async () => {
+      renderComponent(mockProps);
+    });
 
-    const goalLogHeading = await screen.findByRole('heading', { name: 'Goal Log' });
-    const goalLogSectionContainer = goalLogHeading.parentElement;
-    if (!goalLogSectionContainer) throw new Error("Goal Log section container (parent of heading) not found.");
-    const eventLogTable = within(goalLogSectionContainer).getByRole('table');
+    const goalLogSection = await screen.findByRole('heading', { name: i18n.t('gameStatsModal.goalLogTitle', 'Goal Log') });
+    const goalLogContainer = goalLogSection.parentElement as HTMLElement;
 
-    const firstEventCellWithTime = await within(eventLogTable).findByText('02:00', { selector: 'td' });
-    const parentRow = firstEventCellWithTime.closest('tr');
-    if (!parentRow) throw new Error('Parent row for the first event not found');
+    const firstGoalCard = within(goalLogContainer).getByText('02:00').closest('div.p-3');
+    expect(firstGoalCard).not.toBeNull();
 
-    const deleteButton = within(parentRow).getByRole('button', { name: 'Delete' });
-    fireEvent.click(deleteButton);
-
+    if (firstGoalCard) {
+      const deleteButton = within(firstGoalCard as HTMLElement).getByRole('button', { name: i18n.t('common.delete', 'Delete') });
+      fireEvent.click(deleteButton);
+    }
+    
     expect(window.confirm).toHaveBeenCalledWith(i18n.t('gameStatsModal.confirmDeleteEvent'));
     expect(mockProps.onDeleteGameEvent).not.toHaveBeenCalled();
   });
 
   test('enters edit mode when edit button on an event is clicked', async () => {
     const mockProps = getDefaultProps();
-    renderComponent(mockProps);
-    await screen.findByRole('heading', { name: i18n.t('gameStatsModal.title') }, { timeout: 1000 });
+    await act(async () => {
+      renderComponent(mockProps);
+    });
 
-    const goalLogHeading = await screen.findByRole('heading', { name: 'Goal Log' });
-    const goalLogSectionContainer = goalLogHeading.parentElement;
-    if (!goalLogSectionContainer) throw new Error("Goal Log section container (parent of heading) not found.");
-    const eventLogTable = within(goalLogSectionContainer).getByRole('table');
+    const goalLogSection = await screen.findByRole('heading', { name: i18n.t('gameStatsModal.goalLogTitle', 'Goal Log') });
+    const goalLogContainer = goalLogSection.parentElement as HTMLElement;
 
-    const firstEventCellWithTime = await within(eventLogTable).findByText('02:00', { selector: 'td' });
-    const parentRow = firstEventCellWithTime.closest('tr');
-    if (!parentRow) throw new Error('Parent row for the first event not found');
+    const firstGoalCard = within(goalLogContainer).getByText('02:00').closest('div.p-3');
+    expect(firstGoalCard).not.toBeNull();
 
-    const editButton = within(parentRow).getByRole('button', { name: 'Muokkaa' });
-    fireEvent.click(editButton);
+    if (firstGoalCard) {
+      const editButton = within(firstGoalCard as HTMLElement).getByRole('button', { name: i18n.t('common.edit', 'Edit') });
+      fireEvent.click(editButton);
 
-    // Check that edit mode is entered by looking for save/cancel buttons
-    expect(within(parentRow).getByRole('button', { name: 'Tallenna' })).toBeInTheDocument();
-    expect(within(parentRow).getByRole('button', { name: 'Peruuta' })).toBeInTheDocument();
+      // Check that edit mode is entered by looking for save/cancel buttons within the same card
+      expect(await within(firstGoalCard as HTMLElement).findByRole('button', { name: i18n.t('common.save', 'Save Changes') })).toBeInTheDocument();
+      expect(within(firstGoalCard as HTMLElement).getByRole('button', { name: i18n.t('common.cancel', 'Cancel') })).toBeInTheDocument();
+    }
     
     // onUpdateGameEvent should NOT be called until save is clicked
     expect(mockProps.onUpdateGameEvent).not.toHaveBeenCalled();
   });
 
+  test('displays correct data when switching tabs', async () => {
+    const props = getDefaultProps();
+    await act(async () => {
+      renderComponent(props);
+    });
+
+    // Initial check (Current Game)
+    expect(screen.getByRole('button', { name: i18n.t('gameStatsModal.tabs.currentGame') })).toBeInTheDocument();
+    
+    // Switch to Season tab and check for season-specific elements
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('gameStatsModal.tabs.season') }));
+    await waitFor(() => {
+      expect(screen.getByRole('combobox')).toBeInTheDocument();
+      expect(screen.getByText(i18n.t('gameStatsModal.filterAllSeasons'))).toBeInTheDocument();
+    });
+
+    // Switch to Tournament tab and check for tournament-specific elements
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('gameStatsModal.tabs.tournament') }));
+    await waitFor(() => {
+      expect(screen.getByRole('combobox')).toBeInTheDocument();
+      expect(screen.getByText(i18n.t('gameStatsModal.filterAllTournaments'))).toBeInTheDocument();
+    });
+  });
+
+  test('deletes a goal when delete is confirmed', async () => {
+    const mockProps = getDefaultProps();
+    window.confirm = jest.fn(() => true); // Mock window.confirm to return true
+
+    await act(async () => {
+      renderComponent(mockProps);
+    });
+
+    // Find the delete button for the first goal
+    const deleteButtons = await screen.findAllByRole('button', { name: i18n.t('common.delete', 'Delete') });
+    fireEvent.click(deleteButtons[0]);
+
+    // Check that onDeleteGameEvent was called with the correct goal ID
+    expect(mockProps.onDeleteGameEvent).toHaveBeenCalledWith('g1');
+  });
+
   // Add more tests for:
-  // - Switching tabs (Season, Tournament, Overall)
   // - Filtering stats table
   // - Sorting stats table
-  // - Editing game info (opponent, date, score)
   // - Editing game notes
   // - Export functionalities
-  // - Fair Play award display/handling (if applicable in this modal)
-
 }); 

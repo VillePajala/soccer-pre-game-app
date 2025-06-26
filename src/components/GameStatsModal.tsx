@@ -571,7 +571,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                 type="text"
                 value={filterText}
                 onChange={handleFilterChange}
-                placeholder={t('common.filterByName')}
+                placeholder={t('common.filterByName', 'Filter by name...')}
                 className="bg-slate-700 border border-slate-600 rounded-md text-white pl-8 pr-3 py-1.5 text-sm w-full sm:w-64 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               />
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -728,8 +728,8 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
-                                <button onClick={() => handleStartEditGoal(goal)} className="p-1.5 text-slate-400 hover:text-indigo-400 rounded-md transition-colors"><FaEdit /></button>
-                                <button onClick={() => triggerDeleteEvent(goal.id)} className="p-1.5 text-slate-400 hover:text-red-500 rounded-md transition-colors"><FaTrashAlt /></button>
+                                <button onClick={() => handleStartEditGoal(goal)} className="p-1.5 text-slate-400 hover:text-indigo-400 rounded-md transition-colors" aria-label={t('common.edit', 'Edit')}><FaEdit /></button>
+                                <button onClick={() => triggerDeleteEvent(goal.id)} className="p-1.5 text-slate-400 hover:text-red-500 rounded-md transition-colors" aria-label={t('common.delete', 'Delete')}><FaTrashAlt /></button>
                               </div>
                             </div>
                           )}
