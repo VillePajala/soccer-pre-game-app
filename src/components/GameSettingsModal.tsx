@@ -51,6 +51,7 @@ export interface GameSettingsModalProps {
   onGameNotesChange: (notes: string) => void;
   onUpdateGameEvent: (updatedEvent: GameEvent) => void;
   onDeleteGameEvent?: (goalId: string) => void;
+  onAwardFairPlayCard: (playerId: string, time: number) => void;
   onNumPeriodsChange: (num: number) => void;
   onPeriodDurationChange: (minutes: number) => void;
   onSeasonIdChange: (seasonId: string | null) => void;
