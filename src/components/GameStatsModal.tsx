@@ -564,20 +564,6 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                 </select>
               )}
             </div>
-
-            {/* Search Input */}
-            <div className="relative">
-              <input
-                type="text"
-                value={filterText}
-                onChange={handleFilterChange}
-                placeholder={t('common.filterByName', 'Filter by name...')}
-                className="bg-slate-700 border border-slate-600 rounded-md text-white pl-8 pr-3 py-1.5 text-sm w-full sm:w-64 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              />
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
           </div>
         </div>
 
@@ -622,6 +608,19 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
 
               <div className="bg-slate-900/70 p-4 rounded-lg border border-slate-700 shadow-inner">
                 <h3 className="text-xl font-semibold text-slate-200 mb-4">{t('gameStatsModal.playerStatsTitle', 'Player Statistics')}</h3>
+                {/* Search Input */}
+                <div className="relative mb-4">
+                  <input
+                    type="text"
+                    value={filterText}
+                    onChange={handleFilterChange}
+                    placeholder={t('common.filterByName', 'Filter by name...')}
+                    className="bg-slate-800 border border-slate-700 rounded-md text-white pl-8 pr-3 py-1.5 text-sm w-full focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  />
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead className="text-slate-300">
