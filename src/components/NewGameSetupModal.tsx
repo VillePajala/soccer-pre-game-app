@@ -781,27 +781,27 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                         <label className="block text-sm font-medium text-slate-300 mb-1">
                           {t('newGameSetupModal.homeOrAwayLabel', 'Your Team is')}
                         </label>
-                        <div className="flex gap-4">
-                          <label className="inline-flex items-center">
-                            <input
-                              type="radio"
-                              value="home"
-                              checked={localHomeOrAway === 'home'}
-                              onChange={(e) => setLocalHomeOrAway(e.target.value as 'home' | 'away')}
-                              className="form-radio h-4 w-4 text-indigo-600 bg-slate-700 border-slate-500"
-                            />
-                            <span className="ml-2 text-slate-300">{t('common.home', 'Home')}</span>
-                          </label>
-                          <label className="inline-flex items-center">
-                            <input
-                              type="radio"
-                              value="away"
-                              checked={localHomeOrAway === 'away'}
-                              onChange={(e) => setLocalHomeOrAway(e.target.value as 'home' | 'away')}
-                              className="form-radio h-4 w-4 text-indigo-600 bg-slate-700 border-slate-500"
-                            />
-                            <span className="ml-2 text-slate-300">{t('common.away', 'Away')}</span>
-                          </label>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setLocalHomeOrAway('home')}
+                            className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 ${
+                              localHomeOrAway === 'home'
+                                ? 'bg-indigo-600 text-white'
+                                : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                            }`}
+                          >
+                            {t('common.home', 'Home')}
+                          </button>
+                          <button
+                            onClick={() => setLocalHomeOrAway('away')}
+                            className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 ${
+                              localHomeOrAway === 'away'
+                                ? 'bg-indigo-600 text-white'
+                                : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                            }`}
+                          >
+                            {t('common.away', 'Away')}
+                          </button>
                         </div>
                       </div>
                     </div>

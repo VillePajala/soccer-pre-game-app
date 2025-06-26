@@ -2,12 +2,26 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaTimes, FaEdit, FaSave, FaTrashAlt, FaCalendarAlt, FaClock, FaMapMarkerAlt } from 'react-icons/fa';
-import { Season, Tournament, Player } from '@/types'; // Import Player from types
-import { GameEvent } from '@/app/page'; // Import GameEvent from page for type compatibility
+import { FaEdit, FaTrashAlt } from 'react-icons/fa';
+import { HiPlusCircle } from 'react-icons/hi2';
+import { Season, Tournament, Player } from '@/types';
 import { getSeasons } from '@/utils/seasons';
 import { getTournaments } from '@/utils/tournaments';
-import { updateGameDetails, updateGameEvent, removeGameEvent } from '@/utils/savedGames'; // Import savedGames utility functions
+import { updateGameDetails, updateGameEvent, removeGameEvent } from '@/utils/savedGames';
+import { UseMutationResult } from '@tanstack/react-query';
+import { TFunction } from 'i18next';
+
+export type GameEventType = 'goal' | 'opponentGoal' | 'substitution' | 'periodEnd' | 'gameEnd' | 'fairPlayCard';
+
+export interface GameEvent {
+  id: string;
+  type: GameEventType;
+  time: number; // Gametime in seconds
+  period?: number;
+  scorerId?: string;
+  assisterId?: string;
+  entityId?: string;
+}
 
 export interface GameSettingsModalProps {
   isOpen: boolean;
@@ -22,32 +36,35 @@ export interface GameSettingsModalProps {
   gameNotes?: string;
   seasonId?: string | null;
   tournamentId?: string | null;
-  homeScore: number;
-  awayScore: number;
   gameEvents: GameEvent[];
   availablePlayers: Player[];
-  // ADD: Period and Duration props
   numPeriods: number;
   periodDurationMinutes: number;
+  selectedPlayerIds: string[];
+  onSelectedPlayersChange: (playerIds: string[]) => void;
   // --- Handlers for updating game data ---
+  onTeamNameChange: (name: string) => void;
   onOpponentNameChange: (name: string) => void;
   onGameDateChange: (date: string) => void;
   onGameLocationChange: (location: string) => void;
   onGameTimeChange: (time: string) => void;
   onGameNotesChange: (notes: string) => void;
   onUpdateGameEvent: (updatedEvent: GameEvent) => void;
-  onAwardFairPlayCard: (playerId: string | null) => void;
-  // ADD: Event deletion callback
   onDeleteGameEvent?: (goalId: string) => void;
-  // ADD: Period and Duration callbacks
+  onAwardFairPlayCard: (playerId: string | null, time: number) => void;
   onNumPeriodsChange: (num: number) => void;
   onPeriodDurationChange: (minutes: number) => void;
-  // ADD new handlers for Season/Tournament
   onSeasonIdChange: (seasonId: string | null) => void;
   onTournamentIdChange: (tournamentId: string | null) => void;
-  // <<< ADD: Home/Away props >>>
   homeOrAway: 'home' | 'away';
   onSetHomeOrAway: (status: 'home' | 'away') => void;
+  // Add mutation props for creating seasons and tournaments
+  addSeasonMutation: UseMutationResult<Season | null, Error, { name: string }, unknown>;
+  addTournamentMutation: UseMutationResult<Tournament | null, Error, { name: string }, unknown>;
+  isAddingSeason: boolean;
+  isAddingTournament: boolean;
+  // Add current time for fair play card
+  timeElapsedInSeconds?: number;
 }
 
 // Helper to format time from seconds to MM:SS
@@ -57,10 +74,34 @@ const formatTime = (timeInSeconds: number): string => {
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 };
 
+// Helper to get event description
+const getEventDescription = (event: GameEvent, players: Player[], t: TFunction): string => {
+  switch (event.type) {
+    case 'goal': {
+      const scorer = players.find(p => p.id === event.scorerId)?.name || t('gameSettingsModal.unknownPlayer', 'Unknown Player');
+      let description = scorer;
+      if (event.assisterId) {
+        const assister = players.find(p => p.id === event.assisterId)?.name;
+        if (assister) {
+          description += ` (${t('common.assist', 'Assist')}: ${assister})`;
+        }
+      }
+      return description;
+    }
+    case 'opponentGoal':
+      return t('gameSettingsModal.logTypeOpponentGoal', 'Opponent Goal');
+    case 'periodEnd':
+      return t('gameSettingsModal.logTypePeriodEnd', 'End of Period');
+    case 'gameEnd':
+      return t('gameSettingsModal.logTypeGameEnd', 'End of Game');
+    default:
+      return t('gameSettingsModal.logTypeUnknown', 'Unknown Event');
+  }
+};
+
 const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   isOpen,
   onClose,
-  // Destructure props
   currentGameId,
   teamName,
   opponentName,
@@ -68,18 +109,19 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   gameLocation = '',
   gameTime = '',
   gameNotes = '',
-  homeScore,
-  awayScore,
+  onTeamNameChange,
   onOpponentNameChange,
   onGameDateChange,
   onGameLocationChange,
   onGameTimeChange,
   onGameNotesChange,
   onUpdateGameEvent,
-  onAwardFairPlayCard,
   onDeleteGameEvent,
+  onAwardFairPlayCard,
   gameEvents,
   availablePlayers,
+  selectedPlayerIds,
+  onSelectedPlayersChange,
   seasonId,
   tournamentId,
   numPeriods,
@@ -88,21 +130,16 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   onPeriodDurationChange,
   onSeasonIdChange,
   onTournamentIdChange,
-  // <<< Destructure new props >>>
   homeOrAway,
   onSetHomeOrAway,
+  addSeasonMutation,
+  addTournamentMutation,
+  isAddingSeason,
+  isAddingTournament,
+  timeElapsedInSeconds,
 }) => {
   // console.log('[GameSettingsModal Render] Props received:', { seasonId, tournamentId, currentGameId });
   const { t } = useTranslation();
-
-  // Helper function definition INSIDE the component body
-  const formatDateFi = (isoDate: string): string => {
-    if (!isoDate || !/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) {
-      return isoDate || t('common.notSet', 'Not Set');
-    }
-    const parts = isoDate.split('-');
-    return `${parts[2]}.${parts[1]}.${parts[0]}`;
-  };
 
   // State for event editing within the modal
   const [localGameEvents, setLocalGameEvents] = useState<GameEvent[]>(gameEvents);
@@ -110,16 +147,14 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   const [editGoalTime, setEditGoalTime] = useState<string>('');
   const [editGoalScorerId, setEditGoalScorerId] = useState<string>('');
   const [editGoalAssisterId, setEditGoalAssisterId] = useState<string | undefined>(undefined);
-  const [selectedFairPlayPlayerId, setSelectedFairPlayPlayerId] = useState<string | null>(
-    gameEvents.find(e => e.type === 'fairPlayCard')?.entityId || null
-  );
   const goalTimeInputRef = useRef<HTMLInputElement>(null);
 
   // State for inline editing UI control
   const [inlineEditingField, setInlineEditingField] = useState<
-    'opponent' | 'date' | 'location' | 'time' | 'duration' | 'notes' | null
+    'team' | 'opponent' | 'date' | 'location' | 'time' | 'duration' | 'notes' | null
   >(null);
   const [inlineEditValue, setInlineEditValue] = useState<string>('');
+  const teamInputRef = useRef<HTMLInputElement>(null);
   const opponentInputRef = useRef<HTMLInputElement>(null);
   const dateInputRef = useRef<HTMLInputElement>(null);
   const locationInputRef = useRef<HTMLInputElement>(null);
@@ -127,28 +162,81 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   const durationInputRef = useRef<HTMLInputElement>(null);
   const notesTextareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // State for Season/Tournament Name Lookup
+  // State for seasons and tournaments
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [showNewSeasonInput, setShowNewSeasonInput] = useState(false);
+  const [newSeasonName, setNewSeasonName] = useState('');
+  const [showNewTournamentInput, setShowNewTournamentInput] = useState(false);
+  const [newTournamentName, setNewTournamentName] = useState('');
+  const newSeasonInputRef = useRef<HTMLInputElement>(null);
+  const newTournamentInputRef = useRef<HTMLInputElement>(null);
+
+  // State for active tab
+  const [activeTab, setActiveTab] = useState<'none' | 'season' | 'tournament'>('none');
 
   // NEW: Loading and Error states for modal operations
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // NEW: Local state to control which association UI is active
-  const [activeDisplayType, setActiveDisplayType] = useState<'season' | 'tournament' | 'none'>('none');
+  // State for game time
+  const [gameHour, setGameHour] = useState<string>('');
+  const [gameMinute, setGameMinute] = useState<string>('');
+
+  // Initialize game time state from prop
+  useEffect(() => {
+    if (gameTime) {
+      const [hour, minute] = gameTime.split(':');
+      setGameHour(hour || '');
+      setGameMinute(minute || '');
+    } else {
+      setGameHour('');
+      setGameMinute('');
+    }
+  }, [gameTime]);
+
+  // Handle time changes
+  const handleHourChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Ensure we're storing a string, not a number that could become NaN
+    setGameHour(value === '' ? '' : value);
+    
+    if (value === '') {
+      // If hour is empty, update the time string accordingly
+      onGameTimeChange(gameMinute ? `:${gameMinute.padStart(2, '0')}` : '');
+    } else {
+      const formattedHour = value.padStart(2, '0');
+      const formattedMinute = gameMinute.padStart(2, '0');
+      onGameTimeChange(`${formattedHour}:${formattedMinute}`);
+    }
+  };
+
+  const handleMinuteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Ensure we're storing a string, not a number that could become NaN
+    setGameMinute(value === '' ? '' : value);
+    
+    if (value === '') {
+      // If minute is empty, update the time string accordingly
+      onGameTimeChange(gameHour ? `${gameHour.padStart(2, '0')}:` : '');
+    } else {
+      const formattedHour = gameHour.padStart(2, '0');
+      const formattedMinute = value.padStart(2, '0');
+      onGameTimeChange(`${formattedHour}:${formattedMinute}`);
+    }
+  };
 
   // --- Effects ---
 
-  // Sync activeDisplayType with incoming props
+  // Sync activeTab with incoming props
   useEffect(() => {
     if (isOpen) { // Only adjust when modal is open
       if (seasonId && seasonId !== '') {
-        setActiveDisplayType('season');
+        setActiveTab('season');
       } else if (tournamentId && tournamentId !== '') {
-        setActiveDisplayType('tournament');
+        setActiveTab('tournament');
       } else {
-        setActiveDisplayType('none');
+        setActiveTab('none');
       }
     }
   }, [isOpen, seasonId, tournamentId]);
@@ -188,7 +276,8 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
 
   // Focus inline edit input (Keep this)
   useEffect(() => {
-    if (inlineEditingField === 'opponent') opponentInputRef.current?.focus();
+    if (inlineEditingField === 'team') teamInputRef.current?.focus();
+    else if (inlineEditingField === 'opponent') opponentInputRef.current?.focus();
     else if (inlineEditingField === 'date') dateInputRef.current?.focus();
     else if (inlineEditingField === 'location') locationInputRef.current?.focus();
     else if (inlineEditingField === 'time') timeInputRef.current?.focus();
@@ -197,7 +286,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
 
     if(inlineEditingField) {
         // Select text content on focus for easier editing
-        const inputElement = opponentInputRef.current || dateInputRef.current || locationInputRef.current || timeInputRef.current || durationInputRef.current;
+        const inputElement = teamInputRef.current || opponentInputRef.current || dateInputRef.current || locationInputRef.current || timeInputRef.current || durationInputRef.current;
         inputElement?.select();
         notesTextareaRef.current?.select();
     }
@@ -205,18 +294,28 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
 
   // --- Event Handlers ---
 
-  const handleSeasonChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const newId = event.target.value;
-    const seasonToSet = newId === '' ? null : newId; // Convert empty string from select to null for handler
-    onSeasonIdChange(seasonToSet); // Reducer will clear tournamentId
-    // setActiveDisplayType('season'); // Already in season display type
+  const handleSeasonChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    if (value) {
+      onSeasonIdChange(value);
+      onTournamentIdChange(null);
+      setShowNewSeasonInput(false);
+      setNewSeasonName('');
+    } else {
+      onSeasonIdChange(null);
+    }
   };
 
-  const handleTournamentChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const newId = event.target.value;
-    const tournamentToSet = newId === '' ? null : newId; // Convert empty string from select to null for handler
-    onTournamentIdChange(tournamentToSet); // Reducer will clear seasonId
-    // setActiveDisplayType('tournament'); // Already in tournament display type
+  const handleTournamentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    if (value) {
+      onTournamentIdChange(value);
+      onSeasonIdChange(null);
+      setShowNewTournamentInput(false);
+      setNewTournamentName('');
+    } else {
+      onTournamentIdChange(null);
+    }
   };
 
   // Handle Goal Event Editing
@@ -353,10 +452,11 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   };
 
   // Inline Editing Handlers (Refactored)
-  const handleStartInlineEdit = (field: 'opponent' | 'date' | 'location' | 'time' | 'duration' | 'notes') => {
+  const handleStartInlineEdit = (field: 'team' | 'opponent' | 'date' | 'location' | 'time' | 'duration' | 'notes') => {
     setInlineEditingField(field);
     // Initialize edit value based on current prop value
     switch (field) {
+      case 'team': setInlineEditValue(teamName); break;
       case 'opponent': setInlineEditValue(opponentName); break;
       case 'date': setInlineEditValue(gameDate); break; // Use YYYY-MM-DD
       case 'location': setInlineEditValue(gameLocation); break;
@@ -380,12 +480,20 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
     try {
       if (!currentGameId) {
         console.error("[GameSettingsModal] currentGameId is null, cannot save inline edit.");
-        // alert(t('common.saveError', "Cannot save changes: Game ID is missing."));
         setError(t('gameSettingsModal.errors.missingGameIdInline', "Cannot save: Game ID missing."));
         return;
       }
 
       switch (inlineEditingField) {
+        case 'team':
+          if (trimmedValue) {
+            onTeamNameChange(trimmedValue);
+            await updateGameDetails(currentGameId, { teamName: trimmedValue });
+            success = true;
+          } else {
+            alert(t('gameSettingsModal.teamNameRequired', "Team name cannot be empty."));
+          }
+          break;
         case 'opponent':
           if (trimmedValue) {
             onOpponentNameChange(trimmedValue);
@@ -437,16 +545,13 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
       if (success) {
         console.log(`[GameSettingsModal] Inline edit for ${fieldProcessed} saved for game ${currentGameId}.`);
         setInlineEditingField(null); // Exit inline edit mode on success
-    setInlineEditValue('');
+        setInlineEditValue('');
       }
     } catch (err) {
       console.error(`[GameSettingsModal] Error saving inline edit for ${fieldProcessed} (Game ID: ${currentGameId}):`, err);
-      // alert(t('common.saveError', "An error occurred while saving."));
       setError(t('gameSettingsModal.errors.genericInlineSaveError', "Error saving changes. Please try again."));
     } finally {
       setIsProcessing(false);
-      // Only clear editing field if successful, otherwise user might want to retry/cancel
-      // This is now handled inside the try block upon success.
     }
   };
 
@@ -478,563 +583,745 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
     return [...localGameEvents].sort((a, b) => a.time - b.time);
   }, [localGameEvents]);
 
+  // Handlers for creating new seasons/tournaments
+  const handleShowCreateSeason = () => {
+    setShowNewSeasonInput(true);
+    onSeasonIdChange(null);
+    onTournamentIdChange(null);
+  };
+
+  const handleShowCreateTournament = () => {
+    setShowNewTournamentInput(true);
+    onTournamentIdChange(null);
+    onSeasonIdChange(null);
+  };
+
+  const handleAddNewSeason = async () => {
+    const trimmedName = newSeasonName.trim();
+    if (!trimmedName) {
+      alert(t('gameSettingsModal.newSeasonNameRequired', 'Please enter a name for the new season.'));
+      newSeasonInputRef.current?.focus();
+      return;
+    }
+
+    try {
+      const newSeason = await addSeasonMutation.mutateAsync({ name: trimmedName });
+      
+      if (newSeason) {
+        setSeasons(prevSeasons => [...prevSeasons, newSeason].sort((a, b) => a.name.localeCompare(b.name)));
+        onSeasonIdChange(newSeason.id);
+        onTournamentIdChange(null);
+        setNewSeasonName('');
+        setShowNewSeasonInput(false);
+      }
+    } catch (error) {
+      console.error("Error calling addSeasonMutation.mutateAsync:", error);
+      newSeasonInputRef.current?.focus();
+    }
+  };
+
+  const handleAddNewTournament = async () => {
+    const trimmedName = newTournamentName.trim();
+    if (!trimmedName) {
+      alert(t('gameSettingsModal.newTournamentNameRequired', 'Please enter a name for the new tournament.'));
+      newTournamentInputRef.current?.focus();
+      return;
+    }
+
+    try {
+      const newTournament = await addTournamentMutation.mutateAsync({ name: trimmedName });
+
+      if (newTournament) {
+        setTournaments(prevTournaments => [...prevTournaments, newTournament].sort((a,b) => a.name.localeCompare(b.name)));
+        onTournamentIdChange(newTournament.id);
+        onSeasonIdChange(null);
+        setNewTournamentName('');
+        setShowNewTournamentInput(false);
+      }
+    } catch (error) {
+      console.error("Error calling addTournamentMutation.mutateAsync:", error);
+      newTournamentInputRef.current?.focus();
+    }
+  };
+
+  // Handle tab changes
+  const handleTabChange = (tab: 'none' | 'season' | 'tournament') => {
+    setActiveTab(tab);
+    if (tab === 'none') {
+      onSeasonIdChange(null);
+      onTournamentIdChange(null);
+    }
+    setShowNewSeasonInput(false);
+    setShowNewTournamentInput(false);
+  };
+
+  // Key handlers for new season/tournament inputs
+  const handleNewSeasonKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      handleAddNewSeason();
+    } else if (event.key === 'Escape') {
+      setShowNewSeasonInput(false);
+      setNewSeasonName('');
+    }
+  };
+
+  const handleNewTournamentKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      handleAddNewTournament();
+    } else if (event.key === 'Escape') {
+      setShowNewTournamentInput(false);
+      setNewTournamentName('');
+    }
+  };
+
+  // Add this section to handle fair play cards
+  const handleFairPlayCardClick = (playerId: string | null) => {
+    // If the player already has a fair play card, this will toggle it off
+    // If not, it will award the card to this player (removing it from any other player)
+    if (playerId) {
+      const playerHasCard = availablePlayers.find(p => p.id === playerId)?.receivedFairPlayCard;
+      onAwardFairPlayCard(playerHasCard ? null : playerId, timeElapsedInSeconds || 0);
+    } else {
+      // If playerId is null, clear the fair play card
+      onAwardFairPlayCard(null, timeElapsedInSeconds || 0);
+    }
+  };
+
   // Conditional return MUST come AFTER all hook calls
   if (!isOpen) {
     return null;
   }
 
-  // Define styles based on GameStatsModal for consistency
-  const labelStyle = "text-xs font-medium text-slate-400 uppercase flex items-center mb-0.5";
-  const valueStyle = "text-base text-slate-100 font-medium";
-  const editInputStyle = "block w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 text-sm";
-  const editSelectStyle = `${editInputStyle} appearance-none`;
-  const gridItemStyle = "mb-2";
-
   return (
-    // Backdrop (matches GameStatsModal)
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      {/* Main Container - Apply GameStatsModal styles */}
-      <div
-        className="bg-slate-800 rounded-lg shadow-xl w-full max-w-4xl h-[95vh] overflow-hidden flex flex-col text-white relative p-0" /* Changed bg, size, padding */
-        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
-      >
-        {/* Header - Add standard header */}
-        <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-700 flex-shrink-0 px-6 pt-4"> {/* Added padding */} 
-          <h2 className="text-xl font-bold text-amber-400 flex items-center">
-            {t('gameSettingsModal.title', 'Game Settings & Log')}
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-white text-xl" /* Match StatsModal close button */
-            aria-label={t('common.close', 'Close')}
-          >
-            <FaTimes />
-          </button>
-        </div>
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60] font-display">
+      <div className="bg-slate-800 rounded-none shadow-xl flex flex-col border-0 overflow-hidden h-full w-full bg-noise-texture relative">
+        {/* Background effects */}
+        <div className="absolute inset-0 bg-indigo-600/10 mix-blend-soft-light" />
+        <div className="absolute inset-0 bg-gradient-to-b from-sky-400/10 via-transparent to-transparent" />
+        <div className="absolute -inset-[50px] bg-sky-400/5 blur-2xl top-0 opacity-50" />
+        <div className="absolute -inset-[50px] bg-indigo-600/5 blur-2xl bottom-0 opacity-50" />
 
-        {/* Scrollable Content Area */}
-        <div className="flex-grow overflow-y-auto overflow-x-hidden px-6 scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800 space-y-4 pb-4"> {/* Adjusted padding to px-6 */} 
-          
-          {/* General Error Display Area */}
-          {error && (
-            <div className="bg-red-700/30 border border-red-600 text-red-300 px-4 py-3 rounded-md text-sm mb-4" role="alert">
-              <p>{error}</p>
-            </div>
-          )}
-          
-          {/* Game Info Section - Apply Card Styles */}
-          <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-700">
-            <h3 className="text-lg font-semibold text-slate-200 mb-3">{t('gameSettingsModal.gameInfo', 'Game Info')}</h3>
-            {/* Force single column layout to debug overflow */}
-            <div className="grid grid-cols-1 gap-x-6 gap-y-1"> 
-              {/* Opponent Name */}
-              <div className={gridItemStyle}>
-                <span className={labelStyle}>{t('gameSettingsModal.opponent', 'Opponent')}:</span>
-                {inlineEditingField === 'opponent' ? (
-                  <input 
-                    ref={opponentInputRef}
-                    type="text"
-                      value={inlineEditValue}
-                      onChange={(e) => setInlineEditValue(e.target.value)}
-                      onKeyDown={handleInlineEditKeyDown}
-                      onBlur={isProcessing ? undefined : handleConfirmInlineEdit} // Prevent confirm on blur if processing
-                      className={editInputStyle} 
-                      readOnly={isProcessing} // Make readonly during processing
-                  />
-                ) : (
-                  <span className={`${valueStyle} p-1.5 rounded hover:bg-slate-700/50 cursor-pointer block truncate`} title={opponentName} onClick={() => !isProcessing && handleStartInlineEdit('opponent')}> {/* Prevent starting edit if processing */}
-                    {opponentName}
-                    {/* Edit icon can be implicitly shown via hover bg */}
-                  </span>
-                )}
-              </div>
-
-              {/* Home/Away Status - Step 5a */}
-              <div className={gridItemStyle}>
-                <span className={labelStyle}>{t('gameSettingsModal.venue', 'Venue')}:</span>
-                <div className="flex items-center space-x-4 bg-slate-800/60 border border-slate-700 rounded-md p-1 mt-0.5"> {/* Adjust bg/padding */} 
-                  <label className={`flex-1 text-center px-2 py-0.5 rounded cursor-pointer transition-colors duration-150 text-sm ${homeOrAway === 'home' ? 'bg-blue-600 text-white shadow-inner' : 'bg-slate-700 hover:bg-slate-600'}`}>
-                    <input 
-                      type="radio"
-                      name="modalHomeOrAway"
-                      value="home"
-                      checked={homeOrAway === 'home'}
-                      onChange={() => onSetHomeOrAway('home')}
-                      className="sr-only"
-                    />
-                    {t('general.home', 'Home')}
-                  </label>
-                  <label className={`flex-1 text-center px-2 py-0.5 rounded cursor-pointer transition-colors duration-150 text-sm ${homeOrAway === 'away' ? 'bg-teal-600 text-white shadow-inner' : 'bg-slate-700 hover:bg-slate-600'}`}>
-                    <input 
-                      type="radio"
-                      name="modalHomeOrAway"
-                      value="away"
-                      checked={homeOrAway === 'away'}
-                      onChange={() => onSetHomeOrAway('away')}
-                      className="sr-only"
-                    />
-                    {t('general.away', 'Away')}
-                  </label>
-                </div>
-              </div>
-
-              {/* Game Date */}
-              <div className={gridItemStyle}>
-                <span className={labelStyle}>
-                  <FaCalendarAlt className="mr-1.5 text-slate-500" size={12} />
-                      {t('gameSettingsModal.date', 'Date')}:
-                </span>
-                {inlineEditingField === 'date' ? (
-                  <input 
-                    ref={dateInputRef}
-                        type="date" 
-                        value={inlineEditValue} 
-                        onChange={(e) => setInlineEditValue(e.target.value)}
-                        onKeyDown={handleInlineEditKeyDown}
-                        onBlur={isProcessing ? undefined : handleConfirmInlineEdit} 
-                        className={`${editInputStyle} appearance-none`} 
-                        style={{ colorScheme: 'dark' }}
-                        readOnly={isProcessing}
-                  />
-                ) : (
-                      <span className={`${valueStyle} p-1.5 rounded hover:bg-slate-700/50 cursor-pointer block truncate`} onClick={() => !isProcessing && handleStartInlineEdit('date')}>
-                          {formatDateFi(gameDate)} 
-                  </span>
-                )}
-              </div>
-
-              {/* Game Location */}
-              <div className={gridItemStyle}>
-                <span className={labelStyle}>
-                  <FaMapMarkerAlt className="mr-1.5 text-slate-500" size={12} />
-                  {t('gameSettingsModal.location', 'Location')}:
-                </span>
-                {inlineEditingField === 'location' ? (
-                  <input 
-                    ref={locationInputRef}
-                    type="text"
-                        value={inlineEditValue}
-                        onChange={(e) => setInlineEditValue(e.target.value)}
-                      onKeyDown={handleInlineEditKeyDown}
-                        onBlur={isProcessing ? undefined : handleConfirmInlineEdit} 
-                        className={editInputStyle} 
-                        placeholder={t('common.optional', 'Optional')}
-                        readOnly={isProcessing}
-                  />
-                ) : (
-                      <span className={`${valueStyle} p-1.5 rounded hover:bg-slate-700/50 cursor-pointer block truncate`} title={gameLocation || t('common.notSet', 'Not Set')} onClick={() => !isProcessing && handleStartInlineEdit('location')}>
-                        {gameLocation || <span className="text-slate-500 italic">{t('common.notSet', 'Not Set')}</span>}
-                  </span>
-                )}
-              </div>
-              
-              {/* Game Time - Reverted to single input type="time" */}
-              <div className={gridItemStyle}>
-                <span className={labelStyle}>
-                  <FaClock className="mr-1.5 text-slate-500" size={12} />
-                  {t('gameSettingsModal.time', 'Time')}:
-                </span>
-                    <input 
-                    type="time"
-                    value={gameTime} // Directly use gameTime prop (should be HH:MM or "")
-                    onChange={async (e) => {
-                        const newTimeValue = e.target.value; // Format is HH:MM
-                        onGameTimeChange(newTimeValue); // Update parent state
-
-                        if (currentGameId) {
-                            setIsProcessing(true);
-                            setError(null);
-                            try {
-                                await updateGameDetails(currentGameId, { gameTime: newTimeValue });
-                                console.log(`[GameSettingsModal] Updated gameTime to ${newTimeValue}`);
-                            } catch (err) {
-                                console.error("[GameSettingsModal] Failed to update gameTime:", err);
-                                setError(t('gameSettingsModal.errors.timeUpdateFailed', 'Error updating game time.'));
-                            } finally {
-                                setIsProcessing(false);
-                            }
-                        }
-                    }}
-                    className={`${editInputStyle} w-auto px-2 py-1 mt-1`} 
-                    disabled={isProcessing}
-                      />
-              </div>
-
-              {/* Scores (Readonly) */}
-              <div className={gridItemStyle}>
-                <span className={labelStyle}>{t('common.score', 'Score')}:</span>
-                <span className={valueStyle}>{teamName} {homeScore} - {awayScore} {opponentName}</span>
-                </div>
-
-              {/* Periods (Use buttons like StatsModal?) - Let's use buttons for consistency */}
-              <div className={gridItemStyle}>
-                  <span className={labelStyle}>{t('gameSettingsModal.periods', 'Periods')}:</span>
-                <div className="flex items-center space-x-2 mt-1">
-                  {[1, 2].map(num => (
-                    <button 
-                      key={num}
-                              onClick={() => onNumPeriodsChange(num as 1 | 2)}
-                              className={`px-3 py-1 rounded text-sm transition-colors ${numPeriods === num ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
-                          >
-                      {num}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-               {/* Period Duration */}
-              <div className={gridItemStyle}>
-                  <span className={labelStyle}>{t('gameSettingsModal.duration', 'Duration')}:</span>
-                {inlineEditingField === 'duration' ? (
-                      <div className="flex items-center">
-                  <input 
-                    ref={durationInputRef}
-                    type="number"
-                          min="1"
-                          step="1"
-                          value={inlineEditValue} 
-                          onChange={(e) => setInlineEditValue(e.target.value)}
-                          onKeyDown={handleInlineEditKeyDown}
-                          onBlur={isProcessing ? undefined : handleConfirmInlineEdit} 
-                          className={`${editInputStyle} w-20`}  
-                          readOnly={isProcessing}
-                        />
-                           <span className="ml-2 text-slate-400 text-sm">{t('common.minutesShort', 'min')}</span>
-                       </div>
-                   ) : (
-                       <span className={`${valueStyle} p-1.5 rounded hover:bg-slate-700/50 cursor-pointer block truncate`} onClick={() => !isProcessing && handleStartInlineEdit('duration')}>
-                           {periodDurationMinutes} {t('common.minutesShort', 'min')}
-                  </span>
-                )}
-              </div>
-              
-              {/* Fair Play Card */}
-              <div className={`${gridItemStyle} md:col-span-2`}> {/* Span across columns */} 
-                   <span className={labelStyle}>{t('gameSettingsModal.fairPlayCard', 'Fair Play')}:</span>
-              <select
-                    value={selectedFairPlayPlayerId || ''}
-                    onChange={(e) => {
-                      setSelectedFairPlayPlayerId(e.target.value || null);
-                      onAwardFairPlayCard(e.target.value || null);
-                    }}
-                    className={`${editSelectStyle} mt-1`} /* Use defined style */
-                  >
-                    <option value="">{t('gameSettingsModal.noneAwarded', '-- None Awarded --')}</option>
-                    {availablePlayers.sort((a, b) => a.name.localeCompare(b.name)).map(p => (
-                      <option key={p.id} value={p.id}>
-                        {p.name} {p.jerseyNumber ? `(#${p.jerseyNumber})` : ''}
-                    </option>
-                  ))}
-              </select>
-            </div>
-
-              {/* Season/Tournament Association */}
-              <div className={`${gridItemStyle} md:col-span-2 pt-3 mt-2 border-t border-slate-700`}> {/* Span, add padding/border */}
-                   <span className={labelStyle}>{t('gameSettingsModal.association', 'Association')}:</span>
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-2 mt-1">
-                    {/* None button */}
-                    <button
-                      onClick={() => {
-                        if (isProcessing) return;
-                        setActiveDisplayType('none');
-                        onSeasonIdChange(null);
-                        onTournamentIdChange(null);
-                      }}
-                      className={`px-3 py-1 rounded text-sm transition-colors ${activeDisplayType === 'none' ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'} ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      disabled={isProcessing}
-                    >
-                      {t('gameSettingsModal.associationNone', 'None')}
-                    </button>
-                    
-                    {/* Season button */}
-                    <button
-                      onClick={() => {
-                        if (isProcessing) return;
-                        setActiveDisplayType('season');
-                        // If not already effectively in season mode (i.e. seasonId is not set or is empty after clearing tournament)
-                        // or if no seasons are available, set seasonId to '' to ensure the dropdown appears and reducer clears tournamentId.
-                        if (!seasonId && seasons && seasons.length > 0) {
-                            onSeasonIdChange(seasons[0].id); 
-                        } else {
-                            onSeasonIdChange(''); // Ensures tournamentId is cleared by reducer
-                        }
-                      }}
-                      className={`px-3 py-1 rounded text-sm transition-colors ${activeDisplayType === 'season' ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'} ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      disabled={isProcessing}
-                    >
-                      {t('gameSettingsModal.associationSeason', 'Season/League')}
-                    </button>
-                    
-                    {/* Tournament button */}
-                    <button
-                      onClick={() => {
-                        if (isProcessing) return;
-                        setActiveDisplayType('tournament');
-                        if (!tournamentId && tournaments && tournaments.length > 0) {
-                            onTournamentIdChange(tournaments[0].id);
-                        } else {
-                            onTournamentIdChange(''); // Ensures seasonId is cleared by reducer
-                        }
-                      }}
-                      className={`px-3 py-1 rounded text-sm transition-colors ${activeDisplayType === 'tournament' ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'} ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      disabled={isProcessing}
-                    >
-                      {t('gameSettingsModal.associationTournament', 'Tournament')}
-                    </button>
-                  </div>
-              {activeDisplayType === 'season' && (
-                  <select 
-                      value={seasonId || ''} // Use prop directly for controlled component value
-                      onChange={handleSeasonChange}
-                      className={`${editSelectStyle} mt-1 w-full md:w-auto ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      disabled={isProcessing} 
-                    >
-                           <option value="">{t('gameSettingsModal.selectSeason', '-- Select Season --')}</option>
-                           {seasons.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                  </select>
-              )}
-              {activeDisplayType === 'tournament' && (
-                  <select 
-                      value={tournamentId || ''} // Use prop directly
-                      onChange={handleTournamentChange}
-                      className={`${editSelectStyle} mt-1 w-full md:w-auto ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      disabled={isProcessing}
-                    >
-                           <option value="">{t('gameSettingsModal.selectTournament', '-- Select Tournament --')}</option>
-                           {tournaments.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                  </select>
-                   )}
-                </div>
-              </div>
-              </div>
-
-
-          {/* Game Notes Section - Apply Card Styles */}
-          <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-700">
-            <h3 className="text-lg font-semibold text-slate-200 mb-3 flex justify-between items-center"> {/* Match Stats title style */} 
-              {t('gameSettingsModal.notes', 'Game Notes')}
-              {inlineEditingField !== 'notes' && (
-                <button
-                  onClick={() => !isProcessing && handleStartInlineEdit('notes')}
-                  className="text-xs text-slate-400 hover:text-indigo-400 flex items-center"
-                  aria-label={t('gameSettingsModal.editNotes', 'Edit Notes')}
-                  disabled={isProcessing}
-                >
-                   <FaEdit className="inline mr-1" size={12}/>
-                </button>
-              )}
-            </h3>
-            {inlineEditingField === 'notes' ? (
-              <div>
-              <textarea 
-                  ref={notesTextareaRef}
-                  value={inlineEditValue} 
-                  onChange={(e) => setInlineEditValue(e.target.value)} 
-                  onKeyDown={handleInlineEditKeyDown} 
-                  onBlur={isProcessing ? undefined : handleConfirmInlineEdit} // Allow blur to confirm if not processing
-                  rows={4}
-                  className={`${editInputStyle} text-sm`}  
-                  placeholder={t('gameSettingsModal.notesPlaceholder', 'Enter notes about the game...')}
-                  readOnly={isProcessing}
-                />
-                {/* Add Save/Cancel explicitly for notes textarea */}
-                <div className="text-right mt-2 space-x-2">
-                   <button 
-                    onClick={handleCancelInlineEdit} 
-                    className={`px-3 py-1 bg-slate-600 hover:bg-slate-500 rounded text-xs font-medium ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    disabled={isProcessing}
-                    >
-                      {t('common.cancel', 'Cancel')}
-                   </button>
-                   <button 
-                    onClick={handleConfirmInlineEdit} 
-                    className={`px-3 py-1 bg-indigo-600 hover:bg-indigo-700 rounded text-xs font-medium flex items-center justify-center ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    disabled={isProcessing || !inlineEditValue.trim()} // Also disable if value is empty for notes save button
-                    >
-                      {isProcessing && inlineEditingField === 'notes' ? (
-                        <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                      ) : (
-                        <FaSave className="inline mr-1"/> 
-                      )}
-                      {!(isProcessing && inlineEditingField === 'notes') && t('common.save', 'Save Notes')}
-                   </button>
-                </div>
-              </div>
-            ) : (
-              <p
-                className="text-sm text-slate-300 whitespace-pre-wrap min-h-[4em] p-1.5 rounded hover:bg-slate-700/50 cursor-pointer"
-                onClick={() => !isProcessing && handleStartInlineEdit('notes')}
-              >
-                  {gameNotes || <span className="text-slate-500 italic">{t('gameSettingsModal.noNotes', 'No notes added yet.')}</span>}
-              </p>
-             )}
+        {/* Content wrapper */}
+        <div className="relative z-10 flex flex-col h-full">
+          {/* Fixed Header */}
+          <div className="flex justify-center items-center pt-10 pb-4 backdrop-blur-sm bg-slate-900/20">
+            <h2 className="text-3xl font-bold text-yellow-400 tracking-wide drop-shadow-lg">
+              {t('gameSettingsModal.title', 'Game Settings')}
+            </h2>
           </div>
 
-          {/* Event Log Section - Apply Card Styles */}
-          <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-700">
-            <h3 className="text-lg font-semibold text-slate-200 mb-3">{t('gameSettingsModal.eventLog', 'Tapahtumaloki')}</h3>
-            {/* Make the table container scrollable horizontally if needed */}
-            <div className="max-h-60 overflow-y-auto overflow-x-auto pr-2 scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-900/50">
-              {sortedEvents.length > 0 ? (
-                  <table className="w-full text-sm text-left table-fixed">
-                     <thead className="text-xs text-slate-400 uppercase bg-slate-700/50 sticky top-0 z-10">
-                      <tr>
-                    <th scope="col" className="px-3 py-2">{t('gameSettingsModal.logTime', 'Aika')}</th>
-                    <th scope="col" className="px-3 py-2">{t('gameSettingsModal.logType', 'Tyyppi')}</th>
-                    <th scope="col" className="px-3 py-2">{t('gameSettingsModal.logScorer', 'Scorer')}</th>
-                    <th scope="col" className="px-3 py-2">{t('gameSettingsModal.logAssister', 'Assister')}</th>
-                    <th scope="col" className="px-3 py-2 text-right">{t('common.actions', 'Actions')}</th>
-                        </tr>
-                    </thead>
-                <tbody className="text-slate-200">
-                  {sortedEvents.map((event) => {
-                    const isEditing = editingGoalId === event.id;
-                    const scorer = event.type === 'goal' ? availablePlayers.find(p => p.id === event.scorerId) : null;
-                    const assister = event.type === 'goal' ? availablePlayers.find(p => p.id === event.assisterId) : null;
-                    const eventTypeDisplay = event.type === 'goal'
-                        ? t('gameSettingsModal.logTypeGoal', 'Goal')
-                        : t('gameSettingsModal.logTypeOpponentGoal', 'Opponent Goal');
+          {/* Fixed Controls Section */}
+          <div className="px-6 pt-3 pb-4 backdrop-blur-sm bg-slate-900/20">
+            {/* Team Name */}
+            <div className="mb-4">
+              <label htmlFor="teamNameInput" className="block text-sm font-medium text-slate-300 mb-1">
+                {t('gameSettingsModal.teamName', 'Your Team Name')} *
+              </label>
+              <input
+                type="text"
+                id="teamNameInput"
+                value={teamName}
+                onChange={(e) => onTeamNameChange(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                placeholder={t('gameSettingsModal.teamNamePlaceholder', 'Enter team name')}
+              />
+            </div>
 
-                                return (
-                      <tr key={event.id} className={`border-b border-slate-700 ${isEditing ? 'bg-slate-700/60' : 'hover:bg-slate-700/40'}`}>
-                        {/* Time Column */}
-                        <td className="px-3 py-2 whitespace-nowrap">
-                          {isEditing ? (
-                            <input
-                              ref={goalTimeInputRef}
-                              type="text" // Use text to allow MM:SS format
-                              value={editGoalTime}
-                              onChange={(e) => setEditGoalTime(e.target.value)}
-                              onKeyDown={(e) => e.key === 'Enter' ? handleSaveGoal(event.id) : e.key === 'Escape' ? handleCancelEditGoal() : null}
-                              className={`${editInputStyle} w-16 px-1 py-0.5 text-xs`} /* Smaller input for table */ 
-                              placeholder="MM:SS"
-                            />
-                          ) : (
-                            formatTime(event.time)
-                          )}
-                        </td>
-                        {/* Type Column */}
-                        <td className="px-3 py-2"><span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${event.type === 'goal' ? 'bg-green-700/70 text-green-100' : 'bg-red-700/70 text-red-100'}`}>{eventTypeDisplay}</span></td>
-                        {/* Scorer Column */}
-                        <td className="px-3 py-2">
-                          {isEditing && event.type === 'goal' ? (
+            {/* Opponent Name */}
+            <div className="mb-4">
+              <label htmlFor="opponentNameInput" className="block text-sm font-medium text-slate-300 mb-1">
+                {t('gameSettingsModal.opponentName', 'Opponent Name')} *
+              </label>
+              <input
+                type="text"
+                id="opponentNameInput"
+                value={opponentName}
+                onChange={(e) => onOpponentNameChange(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                placeholder={t('gameSettingsModal.opponentNamePlaceholder', 'Enter opponent name')}
+              />
+            </div>
+          </div>
+
+          {/* Scrollable Content Area */}
+          <div className="flex-1 overflow-y-auto min-h-0 px-6 py-4 space-y-4">
+            {/* Game Info Section */}
+            <div className="bg-slate-900/70 p-4 rounded-lg border border-slate-700 shadow-inner">
+              <h3 className="text-lg font-semibold text-slate-200 mb-4">
+                {t('gameSettingsModal.gameInfo', 'Game Info')}
+              </h3>
+              <div className="space-y-4">
+                {/* Game Date */}
+                <div className="mb-4">
+                  <label htmlFor="gameDateInput" className="block text-sm font-medium text-slate-300 mb-1">
+                    {t('gameSettingsModal.gameDateLabel', 'Game Date')}
+                  </label>
+                  <input
+                    type="date"
+                    id="gameDateInput"
+                    value={gameDate}
+                    onChange={(e) => onGameDateChange(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                  />
+                </div>
+
+                {/* Game Time */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-slate-300 mb-1">
+                    {t('gameSettingsModal.gameTimeLabel', 'Time (Optional)')}
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={gameHour}
+                      onChange={handleHourChange}
+                      placeholder={t('gameSettingsModal.hourPlaceholder', 'HH')}
+                      className="w-1/2 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                      maxLength={2}
+                    />
+                    <span className="text-slate-400">:</span>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={gameMinute}
+                      onChange={handleMinuteChange}
+                      placeholder={t('gameSettingsModal.minutePlaceholder', 'MM')}
+                      className="w-1/2 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                      maxLength={2}
+                    />
+                  </div>
+                </div>
+
+                {/* Game Location */}
+                <div className="mb-4">
+                  <label htmlFor="gameLocationInput" className="block text-sm font-medium text-slate-300 mb-1">
+                    {t('gameSettingsModal.locationLabel', 'Location (Optional)')}
+                  </label>
+                  <input
+                    type="text"
+                    id="gameLocationInput"
+                    value={gameLocation}
+                    onChange={(e) => onGameLocationChange(e.target.value)}
+                    placeholder={t('gameSettingsModal.locationPlaceholder', 'e.g., Central Park Field 2')}
+                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                  />
+                </div>
+
+                {/* Home/Away Selection */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-slate-300 mb-1">
+                    {t('gameSettingsModal.homeOrAwayLabel', 'Home / Away')}
+                  </label>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onSetHomeOrAway('home')}
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors w-full ${
+                        homeOrAway === 'home'
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                      }`}
+                    >
+                      {t('gameSettingsModal.home', 'Home')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onSetHomeOrAway('away')}
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors w-full ${
+                        homeOrAway === 'away'
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                      }`}
+                    >
+                      {t('gameSettingsModal.away', 'Away')}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Game Structure */}
+                <div className="space-y-4 bg-slate-900/70 p-4 rounded-lg border border-slate-700 shadow-inner">
+                  <h3 className="text-lg font-semibold text-slate-200 mb-3">
+                    {t('gameSettingsModal.periodsLabel', 'Periods')}
+                  </h3>
+
+                  {/* Number of Periods */}
+                  <div className="mb-4">
+                    <label htmlFor="numPeriodsSelect" className="block text-sm font-medium text-slate-300 mb-1">
+                      {t('gameSettingsModal.numPeriodsLabel', 'Number of Periods')}
+                    </label>
+                    <select
+                      id="numPeriodsSelect"
+                      value={numPeriods}
+                      onChange={(e) => onNumPeriodsChange(parseInt(e.target.value) as 1 | 2)}
+                      className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                    >
+                      <option value={1}>1</option>
+                      <option value={2}>2</option>
+                    </select>
+                  </div>
+
+                  {/* Period Duration */}
+                  <div className="mb-4">
+                    <label htmlFor="periodDurationInput" className="block text-sm font-medium text-slate-300 mb-1">
+                      {t('gameSettingsModal.periodDurationLabel', 'Period Duration (minutes)')}
+                    </label>
+                    <input
+                      type="number"
+                      id="periodDurationInput"
+                      value={periodDurationMinutes}
+                      onChange={(e) => onPeriodDurationChange(parseInt(e.target.value, 10))}
+                      className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                      min="1"
+                    />
+                  </div>
+                </div>
+
+                {/* Linkitä Section */}
+                <div className="space-y-4 bg-slate-900/70 p-4 rounded-lg border border-slate-700 shadow-inner">
+                  <h3 className="text-lg font-semibold text-slate-200 mb-3">
+                    {t('gameSettingsModal.linkita', 'Link')}
+                  </h3>
+
+                  {/* Tabs */}
+                  <div className="flex gap-2 mb-4">
+                    <button
+                      onClick={() => handleTabChange('none')}
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                        activeTab === 'none'
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                      }`}
+                    >
+                      {t('gameSettingsModal.eiMitaan', 'None')}
+                    </button>
+                    <button
+                      onClick={() => handleTabChange('season')}
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                        activeTab === 'season'
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                      }`}
+                    >
+                      {t('gameSettingsModal.kausi', 'Season')}
+                    </button>
+                    <button
+                      onClick={() => handleTabChange('tournament')}
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                        activeTab === 'tournament'
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                      }`}
+                    >
+                      {t('gameSettingsModal.turnaus', 'Tournament')}
+                    </button>
+                  </div>
+
+                  {/* Season Selection */}
+                  {activeTab === 'season' && (
+                    <div className="mb-4">
+                      <div className="flex items-center gap-2">
+                        <select
+                          id="seasonSelect"
+                          value={seasonId || ''}
+                          onChange={handleSeasonChange}
+                          className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                        >
+                          <option value="">{t('gameSettingsModal.selectSeason', '-- Select Season --')}</option>
+                          {seasons.map((season) => (
+                            <option key={season.id} value={season.id}>
+                              {season.name}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={handleShowCreateSeason}
+                          className="p-2 text-indigo-400 hover:text-indigo-300 disabled:opacity-50"
+                          title={showNewSeasonInput ? t('gameSettingsModal.cancelCreate', 'Cancel creation') : t('gameSettingsModal.createSeason', 'Create new season')}
+                          disabled={isAddingSeason || isAddingTournament}
+                        >
+                          <HiPlusCircle className={`w-6 h-6 transition-transform ${showNewSeasonInput ? 'rotate-45' : ''}`} />
+                        </button>
+                      </div>
+                      {showNewSeasonInput && (
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <input
+                            ref={newSeasonInputRef}
+                            type="text"
+                            value={newSeasonName}
+                            onChange={(e) => setNewSeasonName(e.target.value)}
+                            onKeyDown={handleNewSeasonKeyDown}
+                            placeholder={t('gameSettingsModal.newSeasonPlaceholder', 'Enter new season name...')}
+                            className="flex-1 min-w-[200px] px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                            disabled={isAddingSeason}
+                          />
+                          <div className="flex gap-2 shrink-0">
+                            <button
+                              onClick={handleAddNewSeason}
+                              disabled={isAddingSeason || !newSeasonName.trim()}
+                              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md shadow-sm disabled:opacity-50 whitespace-nowrap"
+                            >
+                              {isAddingSeason ? t('gameSettingsModal.creating', 'Creating...') : t('gameSettingsModal.addButton', 'Add')}
+                            </button>
+                            <button
+                              onClick={() => {
+                                setShowNewSeasonInput(false);
+                                setNewSeasonName('');
+                              }}
+                              className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-md shadow-sm whitespace-nowrap"
+                            >
+                              {t('common.cancelButton', 'Cancel')}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Tournament Selection */}
+                  {activeTab === 'tournament' && (
+                    <div className="mb-4">
+                      <div className="flex items-center gap-2">
+                        <select
+                          id="tournamentSelect"
+                          value={tournamentId || ''}
+                          onChange={handleTournamentChange}
+                          className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                        >
+                          <option value="">{t('gameSettingsModal.selectTournament', '-- Select Tournament --')}</option>
+                          {tournaments.map((tournament) => (
+                            <option key={tournament.id} value={tournament.id}>
+                              {tournament.name}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={handleShowCreateTournament}
+                          className="p-2 text-indigo-400 hover:text-indigo-300 disabled:opacity-50"
+                          title={showNewTournamentInput ? t('gameSettingsModal.cancelCreate', 'Cancel creation') : t('gameSettingsModal.createTournament', 'Create new tournament')}
+                          disabled={isAddingSeason || isAddingTournament}
+                        >
+                          <HiPlusCircle className={`w-6 h-6 transition-transform ${showNewTournamentInput ? 'rotate-45' : ''}`} />
+                        </button>
+                      </div>
+                      {showNewTournamentInput && (
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <input
+                            ref={newTournamentInputRef}
+                            type="text"
+                            value={newTournamentName}
+                            onChange={(e) => setNewTournamentName(e.target.value)}
+                            onKeyDown={handleNewTournamentKeyDown}
+                            placeholder={t('gameSettingsModal.newTournamentPlaceholder', 'Enter new tournament name...')}
+                            className="flex-1 min-w-[200px] px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                            disabled={isAddingTournament}
+                          />
+                          <div className="flex gap-2 shrink-0">
+                            <button
+                              onClick={handleAddNewTournament}
+                              disabled={isAddingTournament || !newTournamentName.trim()}
+                              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md shadow-sm disabled:opacity-50 whitespace-nowrap"
+                            >
+                              {isAddingTournament ? t('gameSettingsModal.creating', 'Creating...') : t('gameSettingsModal.addButton', 'Add')}
+                            </button>
+                            <button
+                              onClick={() => {
+                                setShowNewTournamentInput(false);
+                                setNewTournamentName('');
+                              }}
+                              className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-md shadow-sm whitespace-nowrap"
+                            >
+                              {t('common.cancelButton', 'Cancel')}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Fair Play Card Section */}
+                <div className="space-y-4 bg-slate-900/70 p-4 rounded-lg border border-slate-700 shadow-inner">
+                  <h3 className="text-lg font-semibold text-slate-200 mb-4">
+                    {t('gameSettingsModal.fairPlayCardTitle', 'Fair Play Card')}
+                  </h3>
+                  <div className="space-y-3">
+                    <p className="text-slate-300 text-sm">
+                      {t('gameSettingsModal.fairPlayCardDescription', 'Select a player to award the Fair Play Card, or clear the current selection.')}
+                    </p>
+                    
+                    <div className="flex items-center gap-3">
+                      <select
+                        value={availablePlayers.find(p => p.receivedFairPlayCard)?.id || ''}
+                        onChange={(e) => handleFairPlayCardClick(e.target.value || null)}
+                        className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                      >
+                        <option value="">{t('gameSettingsModal.selectPlayerForFairPlay', '-- Select Player --')}</option>
+                        {availablePlayers.map((player) => (
+                          <option key={player.id} value={player.id}>
+                            {player.name}
+                            {player.receivedFairPlayCard ? ` (${t('gameSettingsModal.currentFairPlayHolder', 'Current')})` : ''}
+                          </option>
+                        ))}
+                      </select>
+                      
+                      {availablePlayers.some(p => p.receivedFairPlayCard) && (
+                        <button
+                          onClick={() => handleFairPlayCardClick(null)}
+                          className="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-slate-200 rounded-md text-sm font-medium transition-colors shadow-sm"
+                          title={t('gameSettingsModal.clearFairPlayCard', 'Clear Fair Play Card')}
+                        >
+                          {t('common.clear', 'Clear')}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Player Selection Section */}
+                <div className="space-y-4 bg-slate-900/70 p-4 rounded-lg border border-slate-700 shadow-inner">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-slate-200">
+                      {t('gameSettingsModal.selectPlayers', 'Select Players')}
+                    </h3>
+                    <div className="text-sm text-slate-400">
+                      <span className="text-yellow-400 font-semibold">{selectedPlayerIds.length}</span>
+                      {" / "}
+                      <span className="text-yellow-400 font-semibold">{availablePlayers.length}</span>
+                      {" "}{t('gameSettingsModal.playersSelected', 'selected')}
+                    </div>
+                  </div>
+
+                  {availablePlayers.length > 0 ? (
+                    <>
+                      {/* Select All Header */}
+                      <div className="flex items-center py-2 px-1 border-b border-slate-700/50">
+                        <label className="flex items-center text-sm text-slate-300 hover:text-slate-200 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={availablePlayers.length === selectedPlayerIds.length}
+                            onChange={() => {
+                              if (selectedPlayerIds.length === availablePlayers.length) {
+                                onSelectedPlayersChange([]);
+                              } else {
+                                onSelectedPlayersChange(availablePlayers.map(p => p.id));
+                              }
+                            }}
+                            className="form-checkbox h-4 w-4 text-indigo-600 bg-slate-700 border-slate-500 rounded focus:ring-indigo-500 focus:ring-offset-slate-800"
+                          />
+                          <span className="ml-2">{t('gameSettingsModal.selectAll', 'Select All')}</span>
+                        </label>
+                      </div>
+
+                      {/* Player List */}
+                      <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
+                        {availablePlayers.map((player) => (
+                          <div
+                            key={player.id}
+                            className="flex items-center py-1.5 px-1 rounded hover:bg-slate-800/40 transition-colors"
+                          >
+                            <label className="flex items-center flex-1 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={selectedPlayerIds.includes(player.id)}
+                                onChange={() => {
+                                  if (selectedPlayerIds.includes(player.id)) {
+                                    onSelectedPlayersChange(selectedPlayerIds.filter(id => id !== player.id));
+                                  } else {
+                                    onSelectedPlayersChange([...selectedPlayerIds, player.id]);
+                                  }
+                                }}
+                                className="form-checkbox h-4 w-4 text-indigo-600 bg-slate-700 border-slate-500 rounded focus:ring-indigo-500 focus:ring-offset-slate-800"
+                              />
+                              <span className="ml-2 text-slate-200">
+                                {player.name}
+                                {player.nickname && (
+                                  <span className="text-slate-400 ml-1">({player.nickname})</span>
+                                )}
+                              </span>
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-4 text-slate-400">
+                      {t('gameSettingsModal.noPlayersInRoster', 'No players in roster. Add players in Roster Settings.')}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Game Events Section */}
+            <div className="bg-slate-900/70 p-4 rounded-lg border border-slate-700 shadow-inner">
+              <h3 className="text-lg font-semibold text-slate-200 mb-4">
+                {t('gameSettingsModal.eventLogTitle', 'Event Log')}
+              </h3>
+              <div className="space-y-2">
+                {sortedEvents.map(event => (
+                  <div 
+                    key={event.id}
+                    className={`p-3 rounded-md border ${
+                      editingGoalId === event.id
+                        ? 'bg-slate-700/75 border-indigo-500'
+                        : 'bg-slate-800/40 border-slate-700/50'
+                    }`}
+                  >
+                    {editingGoalId === event.id ? (
+                      <div className="space-y-3">
+                        <input
+                          ref={goalTimeInputRef}
+                          type="text"
+                          value={editGoalTime}
+                          onChange={(e) => setEditGoalTime(e.target.value)}
+                          placeholder={t('gameSettingsModal.timeFormatPlaceholder', 'MM:SS')}
+                          className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                        />
+                        {event.type === 'goal' && (
+                          <>
                             <select
                               value={editGoalScorerId}
                               onChange={(e) => setEditGoalScorerId(e.target.value)}
-                              className={`${editSelectStyle} py-0.5 text-xs max-w-[150px]`} /* Smaller select */ 
+                              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm appearance-none"
                             >
                               <option value="">{t('gameSettingsModal.selectScorer', 'Select Scorer...')}</option>
-                              {availablePlayers.sort((a,b) => a.name.localeCompare(b.name)).map(p => <option key={p.id} value={p.id}>{p.name}</option>)} 
+                              {availablePlayers.map(player => (
+                                <option key={player.id} value={player.id}>{player.name}</option>
+                              ))}
                             </select>
-                          ) : event.type === 'goal' ? (
-                            scorer?.name || t('gameSettingsModal.unknownPlayer', 'Unknown Player')
-                          ) : (
-                            opponentName // Show opponent name for their goals
-                          )}
-                        </td>
-                        {/* Assister Column */}
-                        <td className="px-3 py-2">
-                          {isEditing && event.type === 'goal' ? (
                             <select
-                              value={editGoalAssisterId || ''}
+                              value={editGoalAssisterId}
                               onChange={(e) => setEditGoalAssisterId(e.target.value || undefined)}
-                              className={`${editSelectStyle} py-0.5 text-xs max-w-[150px]`} /* Smaller select */ 
+                              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm appearance-none"
                             >
                               <option value="">{t('gameSettingsModal.selectAssister', 'Select Assister (Optional)...')}</option>
-                              {availablePlayers.filter(p => p.id !== editGoalScorerId).sort((a,b) => a.name.localeCompare(b.name)).map(p => <option key={p.id} value={p.id}>{p.name}</option>)} 
+                              {availablePlayers.map(player => (
+                                <option key={player.id} value={player.id}>{player.name}</option>
+                              ))}
                             </select>
-                          ) : (
-                            assister?.name || ''
-                          )}
-                        </td>
-                        {/* Actions Column */}
-                        <td className="px-3 py-2 text-right">
-                          {isEditing ? (
-                            <div className="flex items-center justify-end space-x-2"> 
-                              <button
-                                onClick={() => handleSaveGoal(event.id)}
-                                className={`text-green-400 hover:text-green-300 ${isProcessing && editingGoalId === event.id ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                title={t('common.save', 'Save')}
-                                disabled={isProcessing && editingGoalId === event.id}
-                              >
-                                {isProcessing && editingGoalId === event.id ? (
-                                  <svg className="animate-spin h-4 w-4 text-slate-100" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                  </svg>
-                                ) : (
-                                <FaSave size={14}/>
-                                )}
-                              </button>
-                              <button
-                                onClick={handleCancelEditGoal}
-                                className={`text-slate-400 hover:text-slate-300 ${isProcessing && editingGoalId === event.id ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                title={t('common.cancel', 'Cancel')}
-                                disabled={isProcessing && editingGoalId === event.id}
-                              >
-                                <FaTimes size={14}/>
-                              </button>
-                                                    </div>
-                                                ) : (
-                            <div className="flex items-center justify-end space-x-2"> 
-                              {event.type === 'goal' && ( // Only allow editing player goals for now
-                                  <button
-                                    onClick={() => handleEditGoal(event)}
-                                    className="text-slate-400 hover:text-indigo-400"
-                                    title={t('common.edit', 'Edit')}
-                                    disabled={!!editingGoalId || isProcessing} // Disable if another edit is active OR global processing
-                                >
-                                    <FaEdit size={14}/>
-                                </button>
-                              )}
-                              {onDeleteGameEvent && ( // Conditionally render delete button
-                                              <button 
-                                  onClick={() => handleDeleteGoal(event.id)}
-                                  className="text-slate-400 hover:text-red-500"
-                                  title={t('common.delete', 'Delete')}
-                                  disabled={!!editingGoalId || isProcessing} // Disable if another edit is active OR global processing
-                                >
-                                  {isProcessing && !editingGoalId ? (
-                                    // Show spinner if this specific action is not causing it, but general processing is on
-                                    // This is a simplification; ideally, we'd track the ID being processed for delete.
-                                    <svg className="animate-spin h-3.5 w-3.5 text-slate-100" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                  ) : (
-                                  <FaTrashAlt size={13}/>
-                                  )}
-                                              </button>
-                              )}
-                            </div>
-                                            )}
-                                        </td>
-                                    </tr>
-                                ); 
-                  })}
-                    </tbody>
-                </table>
-            ) : (
-              <p className="text-center text-slate-500 italic py-4">{t('gameSettingsModal.noEvents', 'No goals logged yet.')}</p>
-            )}
+                          </>
+                        )}
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={handleCancelEditGoal}
+                            className="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-slate-200 rounded-md text-sm font-medium transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800"
+                            disabled={isProcessing}
+                          >
+                            {t('common.cancel', 'Cancel')}
+                          </button>
+                          <button
+                            onClick={() => handleSaveGoal(event.id)}
+                            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-sm font-medium transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800"
+                            disabled={isProcessing}
+                          >
+                            {t('common.save', 'Save')}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <span className="text-slate-300">{formatTime(event.time)}</span>
+                          <span className="text-slate-100">
+                            {getEventDescription(event, availablePlayers, t)}
+                          </span>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleEditGoal(event)}
+                            className="p-1.5 rounded-md text-slate-400 hover:text-indigo-400 transition-colors"
+                            title={t('common.edit', 'Edit')}
+                            disabled={isProcessing}
+                          >
+                            <FaEdit className="w-5 h-5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteGoal(event.id)}
+                            className="p-1.5 rounded-md text-slate-400 hover:text-red-500 transition-colors"
+                            title={t('common.delete', 'Delete')}
+                            disabled={isProcessing}
+                          >
+                            <FaTrashAlt className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {sortedEvents.length === 0 && (
+                  <div className="text-slate-400 text-center py-4">
+                    {t('gameSettingsModal.noGoalsLogged', 'No goals logged yet.')}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Game Notes Section */}
+            <div className="bg-slate-900/70 p-4 rounded-lg border border-slate-700 shadow-inner">
+              <h3 className="text-lg font-semibold text-slate-200 mb-4">
+                {t('gameSettingsModal.notesTitle', 'Game Notes')}
+              </h3>
+              {inlineEditingField === 'notes' ? (
+                <div className="space-y-3">
+                  <textarea
+                    ref={notesTextareaRef}
+                    value={inlineEditValue}
+                    onChange={(e) => setInlineEditValue(e.target.value)}
+                    onKeyDown={handleInlineEditKeyDown}
+                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm h-32 resize-none"
+                    placeholder={t('gameSettingsModal.notesPlaceholder', 'Write notes...')}
+                    disabled={isProcessing}
+                  />
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={handleCancelInlineEdit}
+                      className="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-slate-200 rounded-md text-sm font-medium transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800"
+                      disabled={isProcessing}
+                    >
+                      {t('common.cancel', 'Cancel')}
+                    </button>
+                    <button
+                      onClick={handleConfirmInlineEdit}
+                      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-sm font-medium transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800"
+                      disabled={isProcessing}
+                    >
+                      {t('common.save', 'Save')}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  className="cursor-pointer hover:text-yellow-400 transition-colors min-h-[8rem] p-3 rounded-md border border-slate-700/50 bg-slate-700/50"
+                  onClick={() => handleStartInlineEdit('notes')}
+                >
+                  {gameNotes || t('gameSettingsModal.noNotes', 'No notes yet. Click to add.')}
+                </div>
+              )}
             </div>
           </div>
-        </div> {/* End Scrollable Content Area */} 
 
-        {/* Footer - Match StatsModal Footer */}
-        <div className="flex justify-end pt-4 mt-auto border-t border-slate-700 flex-shrink-0 px-6 pb-4"> {/* Added padding */} 
-             <button
-              onClick={onClose}
-               className="px-4 py-2 rounded bg-slate-600 text-slate-200 hover:bg-slate-500 transition-colors text-sm font-medium"
-             >
-               {t('common.close', 'Close')} 
-             </button>
+          {/* Footer */}
+          <div className="p-4 border-t border-slate-700/20 backdrop-blur-sm bg-slate-900/20">
+            <div className="flex justify-end px-4">
+              {error && (
+                <div className="text-red-400 text-sm mr-auto">{error}</div>
+              )}
+              <button
+                onClick={onClose}
+                className="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-slate-200 rounded-md text-sm font-medium transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800"
+              >
+                {t('common.close', 'Close')}
+              </button>
+            </div>
+          </div>
         </div>
-        </div> {/* End Main Content Container */} 
-      </div> // End Backdrop
+      </div>
+    </div>
   );
 };
 

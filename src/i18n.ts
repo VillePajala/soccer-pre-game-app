@@ -209,7 +209,7 @@ fiTranslations.controlBar.manageRoster = "Hallinnoi Kokoonpanoa";
 fiTranslations.controlBar.gameSettingsTooltip = "Peliasetukset";
 fiTranslations.controlBar.exportData = "Vie Tiedot";
 fiTranslations.controlBar.enterFullscreen = "Koko Näyttö";
-fiTranslations.controlBar.exitFullscreen = "Poistu Koko Näytöltä";
+fiTranslations.controlBar.exitFullscreen = "Poistu Koko Näyöltä";
 fiTranslations.controlBar.newGameButton = "Uusi Peli";
 fiTranslations.controlBar.gameSettingsButton = "Otteluasetukset";
 fiTranslations.controlBar.toggleLanguage = "Vaihda Englantiin";
@@ -228,6 +228,8 @@ if (!fiTranslations.common) {
 fiTranslations.common.avgPointsShort = "KA";
 fiTranslations.common.cancelButton = "Peruuta";
 fiTranslations.common.cancelEdit = "Peruuta";
+fiTranslations.common.cancel = "Peruuta";
+fiTranslations.common.clear = "Tyhjennä";
 // ADD missing common keys used in GameSettingsModal labels with actual Finnish
 fiTranslations.common.opponent = "Vastustaja";
 fiTranslations.common.date = "Päivämäärä";
@@ -238,11 +240,13 @@ fiTranslations.common.away = "Vieras";
 fiTranslations.common.notSet = "Ei asetettu";
 fiTranslations.common.close = "Sulje";
 fiTranslations.common.saveChanges = "Tallenna";
+fiTranslations.common.save = "Tallenna";
 fiTranslations.common.edit = "Muokkaa";
 fiTranslations.common.remove = "Poista";
 fiTranslations.common.actions = "TOIMINNOT"; // Event log header
 fiTranslations.common.doneButton = "Valmis";
 fiTranslations.common.player = "PELAAJA";
+fiTranslations.common.assist = "Syöttö";
 
 // Add missing English translations
 if (!enTranslations.goalLogModal) {
@@ -441,6 +445,7 @@ if (!enTranslations.common) {
 enTranslations.common.avgPointsShort = "AVG";
 enTranslations.common.cancelButton = "Cancel";
 enTranslations.common.cancelEdit = "Cancel";
+enTranslations.common.clear = "Clear";
 // ADD missing common keys for English
 enTranslations.common.opponent = "Opponent";
 enTranslations.common.date = "Date";
@@ -456,6 +461,7 @@ enTranslations.common.remove = "Remove";
 enTranslations.common.actions = "Actions";
 enTranslations.common.doneButton = "Done";
 enTranslations.common.player = "Player";
+enTranslations.common.assist = "Assist";
 
 // Add load game modal translations if section doesn't exist
 if (!fiTranslations.loadGameModal) {
@@ -513,174 +519,157 @@ fiTranslations.rosterSettingsModal.setGoalie = "Aseta Maalivahdiksi";
 fiTranslations.rosterSettingsModal.hasNotes = "Muistiinpanoja";
 fiTranslations.rosterSettingsModal.confirmAddPlayer = "Lisää Pelaaja";
 
-// ADD GameSettingsModal translations (Ensure object exists first)
+// Add game settings modal translations if section doesn't exist
 if (!fiTranslations.gameSettingsModal) {
   fiTranslations.gameSettingsModal = {};
 }
-// Now assign keys with actual Finnish
-fiTranslations.gameSettingsModal.title = "Pelin Asetukset";
-fiTranslations.gameSettingsModal.gameInfoTitle = "Ottelun Tiedot";
-fiTranslations.gameSettingsModal.fairPlayTitle = "Fair Play -kortti";
-fiTranslations.gameSettingsModal.awardFairPlayLabel = "Palkittu Pelaaja:";
-fiTranslations.gameSettingsModal.awardFairPlayNone = "- Ei Valittu -";
-fiTranslations.gameSettingsModal.notesTitle = "Muistiinpanot";
-fiTranslations.gameSettingsModal.notesPlaceholder = "Kirjoita muistiinpanoja...";
-fiTranslations.gameSettingsModal.noNotes = "Ei muistiinpanoja.";
-fiTranslations.gameSettingsModal.eventLogTitle = "Muokkaa Tapahtumia";
-fiTranslations.gameSettingsModal.noGoalsLogged = "Ei kirjattuja maaleja.";
-fiTranslations.gameSettingsModal.invalidTimeFormat = "Virheellinen aika (MM:SS)";
-fiTranslations.gameSettingsModal.scorerRequired = "Maalintekijä vaaditaan.";
-// Add missing keys for the GameSettingsModal
-fiTranslations.gameSettingsModal.periodsLabel = "Jaksot";
-fiTranslations.gameSettingsModal.durationLabel = "Kesto (min)";
-fiTranslations.gameSettingsModal.seasonLabel = "Kausi";
-fiTranslations.gameSettingsModal.tournamentLabel = "Turnaus";
-fiTranslations.gameSettingsModal.association = "Linkitä";
-fiTranslations.gameSettingsModal.selectSeason = "- Valitse Kausi -";
-fiTranslations.gameSettingsModal.selectTournament = "- Valitse Turnaus -";
-fiTranslations.gameSettingsModal.noPlayerSelected = "- Valitse Pelaaja -";
-fiTranslations.gameSettingsModal.confirmDeleteEvent = "Haluatko varmasti poistaa tämän tapahtuman?";
-fiTranslations.gameSettingsModal.invalidDuration = "Keston täytyy olla positiivinen luku.";
-fiTranslations.gameSettingsModal.locationPlaceholder = "Esim. Kaupunki, Kenttä";
 
-// <<< ADD MISSING GAME INFO LABELS >>>
-fiTranslations.gameSettingsModal.gameInfo = "Ottelun Tiedot";
-fiTranslations.gameSettingsModal.opponent = "Vastustaja";
-fiTranslations.gameSettingsModal.date = "Päivämäärä";
-fiTranslations.gameSettingsModal.location = "Paikka";
-fiTranslations.gameSettingsModal.time = "Aika";
-fiTranslations.gameSettingsModal.periods = "Jaksot"; // Key used in component
-fiTranslations.gameSettingsModal.duration = "Kesto"; // Key used in component
-fiTranslations.gameSettingsModal.fairPlayCard = "Fair Play"; // Key used in component
-// Add keys for association buttons/labels if they don't exist
-fiTranslations.gameSettingsModal.associationNone = "Ei Mikään";
-fiTranslations.gameSettingsModal.associationSeason = "Kausi/Sarja";
-fiTranslations.gameSettingsModal.associationTournament = "Turnaus";
-fiTranslations.gameSettingsModal.noneAwarded = "-- Ei Palkittu --"; // For Fair Play dropdown
+// Add Finnish translations
+fiTranslations.gameSettingsModal.title = 'Pelin Asetukset';
+fiTranslations.gameSettingsModal.teamName = 'Oman Joukkueen Nimi';
+fiTranslations.gameSettingsModal.teamNamePlaceholder = 'Syötä joukkueen nimi';
+fiTranslations.gameSettingsModal.opponentName = 'Vastustajan Nimi';
+fiTranslations.gameSettingsModal.opponentNamePlaceholder = 'Syötä vastustajan nimi';
+fiTranslations.gameSettingsModal.gameInfo = 'Pelin Tiedot';
+fiTranslations.gameSettingsModal.gameDateLabel = 'Pelin Päivämäärä';
+fiTranslations.gameSettingsModal.gameTimeLabel = 'Aika (Vapaaehtoinen)';
+fiTranslations.gameSettingsModal.hourPlaceholder = 'HH';
+fiTranslations.gameSettingsModal.minutePlaceholder = 'MM';
+fiTranslations.gameSettingsModal.locationLabel = 'Paikka (Vapaaehtoinen)';
+fiTranslations.gameSettingsModal.locationPlaceholder = 'esim. Keskuspuiston kenttä 2';
+fiTranslations.gameSettingsModal.homeOrAwayLabel = 'Koti / Vieras';
+fiTranslations.gameSettingsModal.home = 'Koti';
+fiTranslations.gameSettingsModal.away = 'Vieras';
+fiTranslations.gameSettingsModal.periodsLabel = 'Erät';
+fiTranslations.gameSettingsModal.numPeriodsLabel = 'Erien määrä';
+fiTranslations.gameSettingsModal.periodDurationLabel = 'Erän pituus (minuuttia)';
+fiTranslations.gameSettingsModal.linkita = 'Linkitä';
+fiTranslations.gameSettingsModal.eiMitaan = 'Ei mitään';
+fiTranslations.gameSettingsModal.kausi = 'Kausi';
+fiTranslations.gameSettingsModal.turnaus = 'Turnaus';
+fiTranslations.gameSettingsModal.selectSeason = '-- Valitse kausi --';
+fiTranslations.gameSettingsModal.createSeason = 'Luo uusi kausi';
+fiTranslations.gameSettingsModal.cancelCreate = 'Peruuta luonti';
+fiTranslations.gameSettingsModal.newSeasonPlaceholder = 'Syötä uuden kauden nimi...';
+fiTranslations.gameSettingsModal.creating = 'Luodaan...';
+fiTranslations.gameSettingsModal.addButton = 'Lisää';
+fiTranslations.gameSettingsModal.selectTournament = '-- Valitse turnaus --';
+fiTranslations.gameSettingsModal.createTournament = 'Luo uusi turnaus';
+fiTranslations.gameSettingsModal.newTournamentPlaceholder = 'Syötä uuden turnauksen nimi...';
+fiTranslations.gameSettingsModal.selectPlayers = 'Valitse Pelaajat';
+fiTranslations.gameSettingsModal.playersSelected = 'valittu';
+fiTranslations.gameSettingsModal.selectAll = 'Valitse kaikki';
+fiTranslations.gameSettingsModal.noPlayersInRoster = 'Pelaajia ei ole kokoonpanossa. Lisää pelaajia Rosterin Asetuksissa.';
+fiTranslations.gameSettingsModal.eventLogTitle = 'Tapahtumaloki';
+fiTranslations.gameSettingsModal.timeFormatPlaceholder = 'MM:SS';
+fiTranslations.gameSettingsModal.selectScorer = 'Valitse maalintekijä...';
+fiTranslations.gameSettingsModal.selectAssister = 'Valitse syöttäjä (Vapaaehtoinen)...';
+fiTranslations.gameSettingsModal.unknownPlayer = 'Tuntematon pelaaja';
+fiTranslations.gameSettingsModal.logTypeOpponentGoal = 'Vastustajan maali';
+fiTranslations.gameSettingsModal.logTypePeriodEnd = 'Erä päättyi';
+fiTranslations.gameSettingsModal.logTypeGameEnd = 'Peli päättyi';
+fiTranslations.gameSettingsModal.logTypeUnknown = 'Tuntematon tapahtuma';
+fiTranslations.gameSettingsModal.noGoalsLogged = 'Maaleja ei ole vielä kirjattu.';
+fiTranslations.gameSettingsModal.notesTitle = 'Pelin Muistiinpanot';
+fiTranslations.gameSettingsModal.notesPlaceholder = 'Kirjoita muistiinpanoja...';
+fiTranslations.gameSettingsModal.noNotes = 'Ei muistiinpanoja vielä. Klikkaa lisätäksesi.';
+fiTranslations.gameSettingsModal.confirmDeleteEvent = 'Haluatko varmasti poistaa tämän tapahtuman? Toimintoa ei voi kumota.';
+fiTranslations.gameSettingsModal.invalidTimeFormat = 'Virheellinen aikamuoto. Käytä MM:SS.';
+fiTranslations.gameSettingsModal.teamNameRequired = 'Joukkueen nimi ei voi olla tyhjä.';
+fiTranslations.gameSettingsModal.opponentNameRequired = 'Vastustajan nimi ei voi olla tyhjä.';
+fiTranslations.gameSettingsModal.invalidDateFormat = 'Virheellinen päivämäärämuoto. Käytä VVVV-KK-PP.';
+fiTranslations.gameSettingsModal.invalidTimeFormatInline = 'Virheellinen aikamuoto. Käytä HH:MM (24h).';
+fiTranslations.gameSettingsModal.invalidDurationFormat = 'Erän keston on oltava positiivinen luku.';
+fiTranslations.gameSettingsModal.newSeasonNameRequired = 'Anna uudelle kaudelle nimi.';
+fiTranslations.gameSettingsModal.newTournamentNameRequired = 'Anna uudelle turnaukselle nimi.';
+fiTranslations.gameSettingsModal.errors = {
+  missingGoalId: 'Maalin ID tai pelin ID puuttuu. Ei voi tallentaa.',
+  updateFailed: 'Tapahtuman päivitys epäonnistui. Yritä uudelleen.',
+  eventNotFound: 'Alkuperäistä tapahtumaa ei löytynyt tallenusta varten.',
+  genericSaveError: 'Tapahtumaa tallennettaessa tapahtui odottamaton virhe.',
+  missingDeleteHandler: 'Tapahtumaa ei voi poistaa: Kriittinen määritys puuttuu.',
+  eventNotFoundDelete: 'Poistettavaa tapahtumaa ei löytynyt.',
+  deleteFailed: 'Tapahtuman poistaminen epäonnistui. Yritä uudelleen.',
+  genericDeleteError: 'Tapahtumaa poistettaessa tapahtui odottamaton virhe.',
+  missingGameIdInline: 'Ei voi tallentaa: Pelin ID puuttuu.',
+  genericInlineSaveError: 'Muutosten tallentamisessa tapahtui virhe. Yritä uudelleen.'
+};
 
-
-// <<< ADD MISSING GAME NOTES & EVENT LOG LABELS >>>
-fiTranslations.gameSettingsModal.notes = "Muistiinpanot"; // Title for Game Notes
-fiTranslations.gameSettingsModal.eventLog = "Tapahtumaloki"; // Title for Event Log
-fiTranslations.gameSettingsModal.logTime = "Aika"; // Event log header
-fiTranslations.gameSettingsModal.logType = "Tyyppi"; // Event log header
-fiTranslations.gameSettingsModal.logScorer = "Tekijä"; // Event log header (more general than Scorer)
-fiTranslations.gameSettingsModal.logAssister = "Syöttäjä"; // Event log header
-fiTranslations.gameSettingsModal.logTypeGoal = "Maali"; // Event type text
-fiTranslations.gameSettingsModal.logTypeOpponentGoal = "Vast. Maali"; // Event type text
-fiTranslations.gameSettingsModal.selectScorer = "Valitse Tekijä..."; // Dropdown placeholder
-fiTranslations.gameSettingsModal.selectAssister = "Valitse Syöttäjä (Valinnainen)..."; // Dropdown placeholder
-fiTranslations.gameSettingsModal.unknownPlayer = "Tuntematon Pelaaja"; // Fallback text
-
-// Ensure common namespace exists before adding key
-if (!fiTranslations.common) {
-  fiTranslations.common = {};
+// Add English translations if section doesn't exist
+if (!enTranslations.gameSettingsModal) {
+  enTranslations.gameSettingsModal = {};
 }
-fiTranslations.common.cancelEdit = "Peruuta"; 
-// ADD missing common keys used in GameSettingsModal labels with actual Finnish
-fiTranslations.common.opponent = "Vastustaja"; // Already exists
-fiTranslations.common.date = "Päivämäärä"; // Already exists
-fiTranslations.common.location = "Paikka"; // Already exists
-fiTranslations.common.time = "Aika"; // Already exists
-fiTranslations.common.home = "Koti"; // Already exists
-fiTranslations.common.away = "Vieras"; // Already exists
-fiTranslations.common.notSet = "Ei asetettu"; // Already exists
-fiTranslations.common.none = "Ei mikään";  // Already exists
-fiTranslations.common.save = "Tallenna"; // Already exists
-fiTranslations.common.cancel = "Peruuta"; // Already exists
-fiTranslations.common.delete = "Poista"; // Already exists
-fiTranslations.common.close = "Sulje"; // Already exists
-fiTranslations.common.edit = "Muokkaa"; // Already exists
-fiTranslations.common.scorer = "Maalintekijä"; // Already exists
-fiTranslations.common.assist = "Syöttäjä"; // Already exists
-fiTranslations.common.selectPlayer = "Valitse pelaaja..."; // Already exists
-fiTranslations.common.noAssist = "Ei syöttäjää"; // Already exists
-fiTranslations.common.goal = "Maali"; // Already exists
-fiTranslations.common.opponentGoal = "Vast. Maali"; // Already exists
-fiTranslations.common.type = "Tyyppi"; // Already exists
-fiTranslations.common.saveError = "Virhe tallennettaessa muutoksia."; // Already exists
 
-// <<< ADD MISSING COMMON LABELS >>>
-fiTranslations.common.score = "Tulos";
-fiTranslations.common.minutesShort = "min";
-fiTranslations.common.hourShort = "TT";
-fiTranslations.common.minuteShort = "MM";
-fiTranslations.common.optional = "(Valinnainen)";
-fiTranslations.common.actions = "TOIMINNOT"; // Event log header
+// Add English translations
+enTranslations.gameSettingsModal.title = "Game Settings";
+enTranslations.gameSettingsModal.teamName = "Your Team Name";
+enTranslations.gameSettingsModal.teamNamePlaceholder = "Enter team name";
+enTranslations.gameSettingsModal.opponentName = "Opponent Name";
+enTranslations.gameSettingsModal.opponentNamePlaceholder = "Enter opponent name";
+enTranslations.gameSettingsModal.gameInfo = "Game Info";
+enTranslations.gameSettingsModal.gameDateLabel = "Game Date";
+enTranslations.gameSettingsModal.gameTimeLabel = "Time (Optional)";
+enTranslations.gameSettingsModal.hourPlaceholder = "HH";
+enTranslations.gameSettingsModal.minutePlaceholder = "MM";
+enTranslations.gameSettingsModal.locationLabel = "Location (Optional)";
+enTranslations.gameSettingsModal.locationPlaceholder = "e.g., Central Park Field 2";
+enTranslations.gameSettingsModal.periodsLabel = "Periods";
+enTranslations.gameSettingsModal.numPeriodsLabel = "Number of Periods";
+enTranslations.gameSettingsModal.periodDurationLabel = "Period Duration (minutes)";
+enTranslations.gameSettingsModal.linkita = "Link";
+enTranslations.gameSettingsModal.eiMitaan = "None";
+enTranslations.gameSettingsModal.kausi = "Season";
+enTranslations.gameSettingsModal.turnaus = "Tournament";
+enTranslations.gameSettingsModal.selectSeason = "-- Select Season --";
+enTranslations.gameSettingsModal.selectTournament = "-- Select Tournament --";
+enTranslations.gameSettingsModal.newSeasonNameRequired = "Please enter a name for the new season.";
+enTranslations.gameSettingsModal.newTournamentNameRequired = "Please enter a name for the new tournament.";
+enTranslations.gameSettingsModal.newSeasonPlaceholder = "Enter new season name...";
+enTranslations.gameSettingsModal.newTournamentPlaceholder = "Enter new tournament name...";
+enTranslations.gameSettingsModal.creating = "Creating...";
+enTranslations.gameSettingsModal.addButton = "Add";
+enTranslations.gameSettingsModal.cancelCreate = "Cancel creation";
+enTranslations.gameSettingsModal.createSeason = "Create new season";
+enTranslations.gameSettingsModal.createTournament = "Create new tournament";
+enTranslations.gameSettingsModal.selectPlayers = "Select Players";
+enTranslations.gameSettingsModal.playersSelected = "selected";
+enTranslations.gameSettingsModal.selectAll = "Select All";
+enTranslations.gameSettingsModal.noPlayersInRoster = "No players in roster. Add players in Roster Settings.";
+enTranslations.gameSettingsModal.notesTitle = "Game Notes";
+enTranslations.gameSettingsModal.notesPlaceholder = "Write notes...";
+enTranslations.gameSettingsModal.noNotes = "No notes yet. Click to add.";
+enTranslations.gameSettingsModal.teamNameRequired = "Team name cannot be empty.";
+enTranslations.gameSettingsModal.opponentNameRequired = "Opponent name cannot be empty.";
+enTranslations.gameSettingsModal.invalidDateFormat = "Invalid date format. Use YYYY-MM-DD.";
+enTranslations.gameSettingsModal.invalidTimeFormat = "Invalid time format. Use MM:SS";
+enTranslations.gameSettingsModal.invalidTimeFormatInline = "Invalid time format. Use HH:MM (24-hour).";
+enTranslations.gameSettingsModal.invalidDurationFormat = "Period duration must be a positive number.";
+enTranslations.gameSettingsModal.errors = {
+    missingGoalId: 'Goal ID or Game ID is missing. Cannot save.',
+    updateFailed: 'Failed to update event. Please try again.',
+    eventNotFound: 'Original event not found for saving.',
+    genericSaveError: 'An unexpected error occurred while saving the event.',
+    missingDeleteHandler: 'Cannot delete event: Critical configuration missing.',
+    eventNotFoundDelete: 'Event to delete not found.',
+    deleteFailed: 'Failed to delete event. Please try again.',
+    genericDeleteError: 'An unexpected error occurred while deleting the event.',
+    missingGameIdInline: "Cannot save: Game ID missing.",
+    genericInlineSaveError: "Error saving changes. Please try again."
+};
 
-if (!fiTranslations.seasonTournamentModal) {
-  fiTranslations.seasonTournamentModal = {};
-}
-fiTranslations.seasonTournamentModal.title = "Hallinnoi Kausia & Turnauksia";
-fiTranslations.seasonTournamentModal.seasons = "Kaudet";
-fiTranslations.seasonTournamentModal.tournaments = "Turnaukset";
-fiTranslations.seasonTournamentModal.createNew = "Luo Uusi";
-fiTranslations.seasonTournamentModal.newSeasonPlaceholder = "Uuden kauden nimi...";
-fiTranslations.seasonTournamentModal.newTournamentPlaceholder = "Uuden turnauksen nimi...";
-fiTranslations.seasonTournamentModal.confirmDelete = "Haluatko varmasti poistaa \"{{name}}\"? Tätä ei voi perua.";
+// Add Finnish translations for Fair Play Card section
+fiTranslations.gameSettingsModal.fairPlayCardTitle = 'Fair Play Kortti';
+fiTranslations.gameSettingsModal.fairPlayCardDescription = 'Valitse pelaaja, jolle myönnetään Fair Play kortti, tai poista nykyinen valinta.';
+fiTranslations.gameSettingsModal.selectPlayerForFairPlay = '-- Valitse Pelaaja --';
+fiTranslations.gameSettingsModal.currentFairPlayHolder = 'Nykyinen';
+fiTranslations.gameSettingsModal.clearFairPlayCard = 'Poista Fair Play kortti';
 
-if (!fiTranslations.playerStats) {
-  fiTranslations.playerStats = {};
-}
-fiTranslations.playerStats.title = "Pelaajan Tilastot";
-
-if (!fiTranslations.stats) {
-  fiTranslations.stats = {};
-}
-fiTranslations.stats.gamesPlayed = "Pelatut pelit";
-fiTranslations.stats.goals = "Maalit";
-fiTranslations.stats.assists = "Syötöt";
-fiTranslations.stats.gameLog = "Pelihistoria";
-fiTranslations.stats.vs = "vs";
-fiTranslations.stats.goals_short = "M";
-fiTranslations.stats.assists_short = "S";
-fiTranslations.stats.noGames = "Ei pelitietoja saatavilla.";
-fiTranslations.stats.perGame = "/ peli";
-fiTranslations.stats.points = "Pisteet";
-
-if (!enTranslations.playerStats) {
-  enTranslations.playerStats = {};
-}
-enTranslations.playerStats.title = "Player Statistics";
-
-if (!enTranslations.stats) {
-  enTranslations.stats = {};
-}
-enTranslations.stats.gamesPlayed = "Games Played";
-enTranslations.stats.goals = "Goals";
-enTranslations.stats.assists = "Assists";
-enTranslations.stats.gameLog = "Game Log";
-enTranslations.stats.vs = "vs";
-enTranslations.stats.goals_short = "G";
-enTranslations.stats.assists_short = "A";
-enTranslations.stats.noGames = "No game data available.";
-enTranslations.stats.perGame = "/ game";
-enTranslations.stats.points = "Points";
-
-if (!enTranslations.rosterSettingsModal) {
-  enTranslations.rosterSettingsModal = {};
-}
-enTranslations.rosterSettingsModal.title = "Manage Roster";
-enTranslations.rosterSettingsModal.addPlayerButton = "Add Player";
-enTranslations.rosterSettingsModal.confirmAddPlayer = "Add Player";
-enTranslations.rosterSettingsModal.teamNameLabel = "Team Name:";
-enTranslations.rosterSettingsModal.totalPlayersShort = "Total Players";
-enTranslations.rosterSettingsModal.selectedPlayersShort = "Selected";
-enTranslations.rosterSettingsModal.selectHeader = "SEL";
-enTranslations.rosterSettingsModal.goalieHeader = "GK";
-enTranslations.rosterSettingsModal.nameHeader = "Name";
-enTranslations.rosterSettingsModal.jerseyHeader = "Jersey #";
-enTranslations.rosterSettingsModal.fairPlayHeader = "FP";
-enTranslations.rosterSettingsModal.actions = "Actions";
-enTranslations.rosterSettingsModal.playerNamePlaceholder = "Player Name";
-enTranslations.rosterSettingsModal.nicknamePlaceholder = "Nickname (Optional)";
-enTranslations.rosterSettingsModal.nameRequired = "Player name cannot be empty.";
-enTranslations.rosterSettingsModal.notesPlaceholder = "Player notes...";
-enTranslations.rosterSettingsModal.toggleSelection = "Select/deselect for match";
-enTranslations.rosterSettingsModal.unsetGoalie = "Unset Goalie Status";
-enTranslations.rosterSettingsModal.setGoalie = "Set as Goalie";
-enTranslations.rosterSettingsModal.hasNotes = "Has Notes";
-enTranslations.rosterSettingsModal.confirmDeletePlayer = "Are you sure you want to remove this player?";
+// Add English translations for Fair Play Card section
+enTranslations.gameSettingsModal.fairPlayCardTitle = 'Fair Play Card';
+enTranslations.gameSettingsModal.fairPlayCardDescription = 'Select a player to award the Fair Play Card, or clear the current selection.';
+enTranslations.gameSettingsModal.selectPlayerForFairPlay = '-- Select Player --';
+enTranslations.gameSettingsModal.currentFairPlayHolder = 'Current';
+enTranslations.gameSettingsModal.clearFairPlayCard = 'Clear Fair Play Card';
 
 // Generate a cache-busting version number
 // const cacheVersion = new Date().getTime();

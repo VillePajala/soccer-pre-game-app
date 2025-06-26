@@ -91,4 +91,11 @@ This file tracks potential new features and enhancements for the soccer coaching
             *   To create smooth movement, the drawing logic will **interpolate** the positions of each disc between keyframes, rather than having them jump from one spot to the next.
         *   **Persistence (`src/utils`)**:
             *   Create new utility functions (e.g., `savedAnimations.ts`) to handle saving, loading, and deleting the animations from `localStorage`. They would be stored under a new key (e.g., `soccerTacticalAnimations`).
-    *   **Current Thoughts on Timing**: Moderately difficult. This is a significant feature that touches core state, rendering, and persistence logic. It would be a great candidate for post-launch development. 
+    *   **Current Thoughts on Timing**: Moderately difficult. This is a significant feature that touches core state, rendering, and persistence logic. It would be a great candidate for post-launch development.
+
+## Technical Debt / Refactoring
+
+15. **Refactor Game Settings Data Persistence**:
+    *   **Status**: Not Implemented
+    *   **Description**: Currently, many settings in the `GameSettingsModal` (e.g., team name, game date, period duration) are not saved directly from the modal. Instead, they rely on an indirect auto-save mechanism in the main page component. While this is functional, it's fragile. This task involves refactoring the modal to make it responsible for explicitly saving every piece of data it modifies, which would make the application more robust and maintainable.
+    *   **Current Thoughts on Timing**: Low priority, as the current system works. Good candidate for a future code quality improvement sprint. 
