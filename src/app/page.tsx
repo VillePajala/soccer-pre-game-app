@@ -2504,39 +2504,13 @@ export default function Home() {
     }, [availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField, saveStateToHistory, currentGameId]);
 
   // --- NEW: Handler to Toggle Player Selection for Current Match ---
-  const handleTogglePlayerSelection = useCallback((playerId: string) => {
-       const currentSelectedPlayerIds = gameSessionState.selectedPlayerIds; // Read from gameSessionState
-       const currentIndex = currentSelectedPlayerIds.indexOf(playerId);
-       let nextSelectedPlayerIds: string[];
-       let nextPlayersOnField = playersOnField; // Start with current players on field
+  const handleTogglePlayerSelection = (playerId: string) => {
+    dispatchGameSession({ type: 'SET_SELECTED_PLAYER_IDS', payload: [playerId] });
+  };
 
-    if (currentIndex === -1) {
-           // Player is being selected, add to selection
-           nextSelectedPlayerIds = [...currentSelectedPlayerIds, playerId];
-           // No change to playersOnField when selecting, they are added via drag/drop or "Place All"
-    } else {
-           // Player is being deselected, remove from selection
-           nextSelectedPlayerIds = currentSelectedPlayerIds.filter(id => id !== playerId);
-           // Also remove this player from the field if they were on it
-           nextPlayersOnField = playersOnField.filter(p => p.id !== playerId);
-       }
-       
-       dispatchGameSession({ type: 'SET_SELECTED_PLAYER_IDS', payload: nextSelectedPlayerIds });
-
-       // Save to history: include selectedPlayerIds and playersOnField (if it changed)
-       const historyUpdate: Partial<AppState> = { selectedPlayerIds: nextSelectedPlayerIds };
-       if (JSON.stringify(playersOnField) !== JSON.stringify(nextPlayersOnField)) {
-           historyUpdate.playersOnField = nextPlayersOnField;
-       }
-       saveStateToHistory(historyUpdate);
-       
-       // Update playersOnField state if it changed
-       if (historyUpdate.playersOnField) {
-           setPlayersOnField(nextPlayersOnField);
-       }
-       
-       console.log(`Updated selected players: ${nextSelectedPlayerIds.length} players. Players on field: ${nextPlayersOnField.length}`);
-  }, [playersOnField, saveStateToHistory, setPlayersOnField, gameSessionState.selectedPlayerIds, dispatchGameSession]); // Added dispatchGameSession, removed t
+  const handleUpdateSelectedPlayers = (playerIds: string[]) => {
+    dispatchGameSession({ type: 'SET_SELECTED_PLAYER_IDS', payload: playerIds });
+  };
 
   // --- NEW: Quick Save Handler ---
   const handleQuickSaveGame = useCallback(async () => {
@@ -3624,6 +3598,8 @@ export default function Home() {
         gameNotes={gameSessionState.gameNotes}
         gameEvents={gameSessionState.gameEvents}
         availablePlayers={availablePlayers}
+        selectedPlayerIds={gameSessionState.selectedPlayerIds}
+        onSelectedPlayersChange={handleUpdateSelectedPlayers}
         numPeriods={gameSessionState.numberOfPeriods}
         periodDurationMinutes={gameSessionState.periodDurationMinutes}
         onTeamNameChange={handleTeamNameChange}
@@ -3643,6 +3619,10 @@ export default function Home() {
         onTournamentIdChange={handleSetTournamentId}
         homeOrAway={gameSessionState.homeOrAway}
         onSetHomeOrAway={handleSetHomeOrAway}
+        addSeasonMutation={addSeasonMutation}
+        addTournamentMutation={addTournamentMutation}
+        isAddingSeason={addSeasonMutation.isPending}
+        isAddingTournament={addTournamentMutation.isPending}
       />
     </main>
   );
