@@ -329,7 +329,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                     <h3 className={`text-base font-medium ${isCurrent ? 'text-amber-400' : 'text-slate-100'}`}>
                       {displayHomeTeamName} vs {displayAwayTeamName}
                     </h3>
-                    <div className="flex items-center gap-2 mt-1">
+                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                       {contextName && contextType && contextId && (
                         <button 
                           onClick={(e) => { e.stopPropagation(); handleBadgeClick(contextType.toLowerCase() as ('season' | 'tournament'), contextId); }}
@@ -349,7 +349,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                         </span>
                       )}
                       {isCurrent && (
-                        <span className="text-xs uppercase font-semibold tracking-wide bg-green-600 text-white px-2 py-0.5 rounded-sm">
+                        <span className="text-xs uppercase font-semibold tracking-wide bg-green-600/90 text-white px-2 py-0.5 rounded-sm shadow-lg shadow-green-500/50">
                           {t('loadGameModal.currentlyLoaded', 'Loaded')}
                         </span>
                       )}
@@ -469,11 +469,17 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                  style={{ display: "none" }}
                  data-testid="restore-backup-input"
                />
-               <button onClick={exportFullBackup} className="px-4 py-2 bg-green-700 hover:bg-green-600 text-white rounded-md text-sm font-medium transition-colors flex items-center justify-center gap-2">
+               <button
+                 onClick={exportFullBackup}
+                 className="flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-sm font-medium shadow-sm transition-colors"
+               >
                  <HiOutlineDocumentArrowDown className="h-5 w-5" />
                  {t('loadGameModal.backupButton', 'Backup All Data')}
                </button>
-               <button onClick={handleRestore} className="px-4 py-2 bg-red-700 hover:bg-red-600 text-white rounded-md text-sm font-medium transition-colors flex items-center justify-center gap-2">
+               <button
+                 onClick={handleRestore}
+                 className="flex items-center justify-center gap-2 px-4 py-3 bg-slate-600 hover:bg-slate-500 text-slate-200 rounded-md text-sm font-medium shadow-sm transition-colors"
+               >
                  <HiOutlineDocumentArrowUp className="h-5 w-5" />
                  {t('loadGameModal.restoreButton', 'Restore from Backup')}
                </button>
