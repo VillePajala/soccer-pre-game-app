@@ -51,7 +51,7 @@ export interface GameSettingsModalProps {
   onGameNotesChange: (notes: string) => void;
   onUpdateGameEvent: (updatedEvent: GameEvent) => void;
   onDeleteGameEvent?: (goalId: string) => void;
-  onAwardFairPlayCard: (playerId: string, time: number) => void;
+  onAwardFairPlayCard: (playerId: string | null, time: number) => void;
   onNumPeriodsChange: (num: number) => void;
   onPeriodDurationChange: (minutes: number) => void;
   onSeasonIdChange: (seasonId: string | null) => void;
@@ -63,6 +63,8 @@ export interface GameSettingsModalProps {
   addTournamentMutation: UseMutationResult<Tournament | null, Error, { name: string }, unknown>;
   isAddingSeason: boolean;
   isAddingTournament: boolean;
+  // Add current time for fair play card
+  timeElapsedInSeconds?: number;
 }
 
 // Helper to format time from seconds to MM:SS
@@ -115,6 +117,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   onGameNotesChange,
   onUpdateGameEvent,
   onDeleteGameEvent,
+  onAwardFairPlayCard,
   gameEvents,
   availablePlayers,
   selectedPlayerIds,
@@ -133,6 +136,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   addTournamentMutation,
   isAddingSeason,
   isAddingTournament,
+  timeElapsedInSeconds,
 }) => {
   // console.log('[GameSettingsModal Render] Props received:', { seasonId, tournamentId, currentGameId });
   const { t } = useTranslation();
@@ -670,6 +674,19 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
     }
   };
 
+  // Add this section to handle fair play cards
+  const handleFairPlayCardClick = (playerId: string | null) => {
+    // If the player already has a fair play card, this will toggle it off
+    // If not, it will award the card to this player (removing it from any other player)
+    if (playerId) {
+      const playerHasCard = availablePlayers.find(p => p.id === playerId)?.receivedFairPlayCard;
+      onAwardFairPlayCard(playerHasCard ? null : playerId, timeElapsedInSeconds || 0);
+    } else {
+      // If playerId is null, clear the fair play card
+      onAwardFairPlayCard(null, timeElapsedInSeconds || 0);
+    }
+  };
+
   // Conditional return MUST come AFTER all hook calls
   if (!isOpen) {
     return null;
@@ -1025,6 +1042,44 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                       )}
                     </div>
                   )}
+                </div>
+
+                {/* Fair Play Card Section */}
+                <div className="space-y-4 bg-slate-900/70 p-4 rounded-lg border border-slate-700 shadow-inner">
+                  <h3 className="text-lg font-semibold text-slate-200 mb-4">
+                    {t('gameSettingsModal.fairPlayCardTitle', 'Fair Play Card')}
+                  </h3>
+                  <div className="space-y-3">
+                    <p className="text-slate-300 text-sm">
+                      {t('gameSettingsModal.fairPlayCardDescription', 'Select a player to award the Fair Play Card, or clear the current selection.')}
+                    </p>
+                    
+                    <div className="flex items-center gap-3">
+                      <select
+                        value={availablePlayers.find(p => p.receivedFairPlayCard)?.id || ''}
+                        onChange={(e) => handleFairPlayCardClick(e.target.value || null)}
+                        className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                      >
+                        <option value="">{t('gameSettingsModal.selectPlayerForFairPlay', '-- Select Player --')}</option>
+                        {availablePlayers.map((player) => (
+                          <option key={player.id} value={player.id}>
+                            {player.name}
+                            {player.receivedFairPlayCard ? ` (${t('gameSettingsModal.currentFairPlayHolder', 'Current')})` : ''}
+                          </option>
+                        ))}
+                      </select>
+                      
+                      {availablePlayers.some(p => p.receivedFairPlayCard) && (
+                        <button
+                          onClick={() => handleFairPlayCardClick(null)}
+                          className="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-slate-200 rounded-md text-sm font-medium transition-colors shadow-sm"
+                          title={t('gameSettingsModal.clearFairPlayCard', 'Clear Fair Play Card')}
+                        >
+                          {t('common.clear', 'Clear')}
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Player Selection Section */}

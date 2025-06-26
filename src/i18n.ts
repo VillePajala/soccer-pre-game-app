@@ -229,6 +229,7 @@ fiTranslations.common.avgPointsShort = "KA";
 fiTranslations.common.cancelButton = "Peruuta";
 fiTranslations.common.cancelEdit = "Peruuta";
 fiTranslations.common.cancel = "Peruuta";
+fiTranslations.common.clear = "Tyhjennä";
 // ADD missing common keys used in GameSettingsModal labels with actual Finnish
 fiTranslations.common.opponent = "Vastustaja";
 fiTranslations.common.date = "Päivämäärä";
@@ -443,6 +444,7 @@ if (!enTranslations.common) {
 enTranslations.common.avgPointsShort = "AVG";
 enTranslations.common.cancelButton = "Cancel";
 enTranslations.common.cancelEdit = "Cancel";
+enTranslations.common.clear = "Clear";
 // ADD missing common keys for English
 enTranslations.common.opponent = "Opponent";
 enTranslations.common.date = "Date";
@@ -652,6 +654,20 @@ enTranslations.gameSettingsModal.errors = {
     missingGameIdInline: "Cannot save: Game ID missing.",
     genericInlineSaveError: "Error saving changes. Please try again."
 };
+
+// Add Finnish translations for Fair Play Card section
+fiTranslations.gameSettingsModal.fairPlayCardTitle = 'Fair Play Kortti';
+fiTranslations.gameSettingsModal.fairPlayCardDescription = 'Valitse pelaaja, jolle myönnetään Fair Play kortti, tai poista nykyinen valinta.';
+fiTranslations.gameSettingsModal.selectPlayerForFairPlay = '-- Valitse Pelaaja --';
+fiTranslations.gameSettingsModal.currentFairPlayHolder = 'Nykyinen';
+fiTranslations.gameSettingsModal.clearFairPlayCard = 'Poista Fair Play kortti';
+
+// Add English translations for Fair Play Card section
+enTranslations.gameSettingsModal.fairPlayCardTitle = 'Fair Play Card';
+enTranslations.gameSettingsModal.fairPlayCardDescription = 'Select a player to award the Fair Play Card, or clear the current selection.';
+enTranslations.gameSettingsModal.selectPlayerForFairPlay = '-- Select Player --';
+enTranslations.gameSettingsModal.currentFairPlayHolder = 'Current';
+enTranslations.gameSettingsModal.clearFairPlayCard = 'Clear Fair Play Card';
 
 // Generate a cache-busting version number
 // const cacheVersion = new Date().getTime();

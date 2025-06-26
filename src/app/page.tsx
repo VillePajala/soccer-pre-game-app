@@ -3623,6 +3623,7 @@ export default function Home() {
         addTournamentMutation={addTournamentMutation}
         isAddingSeason={addSeasonMutation.isPending}
         isAddingTournament={addTournamentMutation.isPending}
+        timeElapsedInSeconds={gameSessionState.timeElapsedInSeconds}
       />
     </main>
   );
