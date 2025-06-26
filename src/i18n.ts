@@ -511,6 +511,7 @@ fiTranslations.rosterSettingsModal.toggleSelection = "Valitse/Poista valinta ott
 fiTranslations.rosterSettingsModal.unsetGoalie = "Poista MV-status";
 fiTranslations.rosterSettingsModal.setGoalie = "Aseta Maalivahdiksi";
 fiTranslations.rosterSettingsModal.hasNotes = "Muistiinpanoja";
+fiTranslations.rosterSettingsModal.confirmAddPlayer = "Lisää Pelaaja";
 
 // ADD GameSettingsModal translations (Ensure object exists first)
 if (!fiTranslations.gameSettingsModal) {
@@ -655,6 +656,31 @@ enTranslations.stats.assists_short = "A";
 enTranslations.stats.noGames = "No game data available.";
 enTranslations.stats.perGame = "/ game";
 enTranslations.stats.points = "Points";
+
+if (!enTranslations.rosterSettingsModal) {
+  enTranslations.rosterSettingsModal = {};
+}
+enTranslations.rosterSettingsModal.title = "Manage Roster";
+enTranslations.rosterSettingsModal.addPlayerButton = "Add Player";
+enTranslations.rosterSettingsModal.confirmAddPlayer = "Add Player";
+enTranslations.rosterSettingsModal.teamNameLabel = "Team Name:";
+enTranslations.rosterSettingsModal.totalPlayersShort = "Total Players";
+enTranslations.rosterSettingsModal.selectedPlayersShort = "Selected";
+enTranslations.rosterSettingsModal.selectHeader = "SEL";
+enTranslations.rosterSettingsModal.goalieHeader = "GK";
+enTranslations.rosterSettingsModal.nameHeader = "Name";
+enTranslations.rosterSettingsModal.jerseyHeader = "Jersey #";
+enTranslations.rosterSettingsModal.fairPlayHeader = "FP";
+enTranslations.rosterSettingsModal.actions = "Actions";
+enTranslations.rosterSettingsModal.playerNamePlaceholder = "Player Name";
+enTranslations.rosterSettingsModal.nicknamePlaceholder = "Nickname (Optional)";
+enTranslations.rosterSettingsModal.nameRequired = "Player name cannot be empty.";
+enTranslations.rosterSettingsModal.notesPlaceholder = "Player notes...";
+enTranslations.rosterSettingsModal.toggleSelection = "Select/deselect for match";
+enTranslations.rosterSettingsModal.unsetGoalie = "Unset Goalie Status";
+enTranslations.rosterSettingsModal.setGoalie = "Set as Goalie";
+enTranslations.rosterSettingsModal.hasNotes = "Has Notes";
+enTranslations.rosterSettingsModal.confirmDeletePlayer = "Are you sure you want to remove this player?";
 
 // Generate a cache-busting version number
 // const cacheVersion = new Date().getTime();
