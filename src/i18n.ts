@@ -118,6 +118,7 @@ fiTranslations.newGameSetupModal.confirmAndStart = "Vahvista & Aloita Peli";
 fiTranslations.newGameSetupModal.selectPlayers = "Valitse Pelaajat";
 fiTranslations.newGameSetupModal.playersSelected = "valittu";
 fiTranslations.newGameSetupModal.selectAll = "Valitse Kaikki";
+fiTranslations.newGameSetupModal.noPlayersInRoster = "Ei pelaajia kokoonpanossa. Lisää pelaajia Joukkueen Hallinta -näkymässä.";
 
 // <<< Add translations for Home Team Name field >>>
 fiTranslations.newGameSetupModal.homeTeamLabel = "Oman joukkueen nimi: *";
@@ -336,6 +337,7 @@ enTranslations.newGameSetupModal.periodsLabel = "Periods";
 enTranslations.newGameSetupModal.durationLabel = "Duration (min)";
 enTranslations.newGameSetupModal.homeOrAwayLabel = "Your Team is:";
 enTranslations.newGameSetupModal.confirmAndStart = "Confirm & Start Game";
+enTranslations.newGameSetupModal.noPlayersInRoster = "No players in roster. Add players in Roster Settings.";
 
 // Add game stats modal translations for English
 if (!enTranslations.gameStatsModal) {
