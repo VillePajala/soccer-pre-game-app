@@ -187,10 +187,10 @@ This section tracks which components have been updated to match the style guide 
   - [x] Finnish translations
   - [x] Style guide compliance
 
-- [ ] GoalLogModal
-  - [ ] Layout update
-  - [ ] Finnish translations
-  - [ ] Style guide compliance
+- [x] GoalLogModal
+  - [x] Layout update
+  - [x] Finnish translations
+  - [x] Style guide compliance
 
 - [ ] InstructionsModal
   - [ ] Layout update
@@ -229,16 +229,16 @@ This section tracks which components have been updated to match the style guide 
 
 ## 13. Next Steps
 
-Based on the current progress, the next component to update is the **GameStatsModal**. This should include:
+Based on the current progress, the next component to update is the **LoadGameModal**. This should include:
 
 1. Updating the layout to match the style guide (fixed header, controls, scrollable content)
 2. Ensuring all text is properly internationalized with Finnish translations
 3. Applying the color palette and effects as specified in this guide
 4. Ensuring proper spacing, alignment, and responsive behavior
 
-After GameStatsModal, the priority order should be:
-1. GoalLogModal
-2. LoadGameModal 
-3. NewGameSetupModal
+After LoadGameModal, the priority order should be:
+1. NewGameSetupModal
+2. PlayerStatsModal
+3. InstructionsModal
 
 These modals are frequently used in the main gameplay flow and would benefit most from the updated styling. 
