@@ -70,111 +70,94 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div
-      className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
-      onClick={onClose} // Close modal on overlay click
-    >
-      <div
-        className="bg-slate-800 rounded-lg p-6 max-w-sm w-full text-slate-200 shadow-xl relative"
-        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
-      >
-        <button
-          onClick={onClose}
-          className="absolute top-2 right-2 text-slate-400 hover:text-slate-100 text-2xl font-bold z-10"
-          aria-label={t('goalLogModal.closeButton', 'Close') ?? "Close"}
-        >
-          &times;
-        </button>
-        <h2 className="text-xl font-bold mb-4 text-yellow-400 text-center">
-          {t('goalLogModal.title', 'Log Goal Event')}
-        </h2>
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60] font-display">
+      <div className="bg-slate-800 flex flex-col h-full w-full bg-noise-texture relative overflow-hidden">
+        {/* Background Effects */}
+        <div className="absolute inset-0 bg-gradient-to-b from-sky-400/10 via-transparent to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-indigo-600/10 mix-blend-soft-light pointer-events-none" />
 
-        <div className="space-y-4">
-          {/* Time Display */}
-          <div className="text-center text-lg">
-             {t('goalLogModal.timeLabel', 'Time')}: <span className="font-semibold text-yellow-300">{formatTime(currentTime)}</span>
+        {/* Header */}
+        <div className="flex justify-center items-center pt-10 pb-4 px-6 backdrop-blur-sm bg-slate-900/20 border-b border-slate-700/20 flex-shrink-0">
+          <h2 className="text-3xl font-bold text-yellow-400 tracking-wide drop-shadow-lg">
+            {t('goalLogModal.title', 'Log Goal Event')}
+          </h2>
+        </div>
+
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto min-h-0 p-6 space-y-6">
+          <div className="bg-slate-900/70 p-4 rounded-lg border border-slate-700 shadow-inner">
+            <div className="text-center text-lg mb-4">
+              <span className="text-slate-300">{t('goalLogModal.timeLabel', 'Time')}: </span>
+              <span className="font-semibold text-yellow-400 font-mono text-xl">{formatTime(currentTime)}</span>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="scorerSelect" className="block text-sm font-medium text-slate-300 mb-1">
+                  {t('goalLogModal.scorerLabel', 'Scorer')} <span className="text-red-500">*</span>
+                </label>
+                <select
+                  id="scorerSelect"
+                  value={scorerId}
+                  onChange={(e) => {
+                    setScorerId(e.target.value);
+                    if (e.target.value && e.target.value === assisterId) {
+                      setAssisterId('');
+                    }
+                  }}
+                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                >
+                  <option value="" disabled>{t('goalLogModal.selectPlaceholder', '-- Select Scorer --')}</option>
+                  {playerOptions}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="assisterSelect" className="block text-sm font-medium text-slate-300 mb-1">
+                  {t('goalLogModal.assisterLabel', 'Assister (Optional)')}
+                </label>
+                <select
+                  id="assisterSelect"
+                  value={assisterId}
+                  onChange={(e) => setAssisterId(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  disabled={!scorerId}
+                >
+                  <option value="">{t('goalLogModal.noAssisterPlaceholder', '-- No Assist --')}</option>
+                  {availablePlayers.filter(p => p.id !== scorerId).map(player => (
+                    <option key={player.id} value={player.id}>{player.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
+        </div>
 
-          {/* Scorer Selection */}
-          <div>
-            <label htmlFor="scorerSelect" className="block text-sm font-medium text-slate-300 mb-1">
-              {t('goalLogModal.scorerLabel', 'Scorer')} <span className="text-red-500">*</span>
-            </label>
-            <select
-              id="scorerSelect"
-              value={scorerId}
-              onChange={(e) => {
-                setScorerId(e.target.value);
-                // If the new scorer is the same as the current assister, clear the assist
-                if (e.target.value && e.target.value === assisterId) {
-                  setAssisterId('');
-                }
-              }}
-              className="block w-full bg-slate-700 border border-slate-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-white"
-            >
-              <option value="" disabled>
-                {t('goalLogModal.selectPlaceholder', '-- Select Scorer --')}
-              </option>
-              {playerOptions}
-            </select>
-          </div>
-
-          {/* Assister Selection */}
-          <div>
-            <label htmlFor="assisterSelect" className="block text-sm font-medium text-slate-300 mb-1">
-              {t('goalLogModal.assisterLabel', 'Assister (Optional)')}
-            </label>
-            <select
-              id="assisterSelect"
-              value={assisterId}
-              onChange={(e) => setAssisterId(e.target.value)}
-              className="block w-full bg-slate-700 border border-slate-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-white"
-              disabled={!scorerId} // Disable if no scorer selected
-            >
-              <option value="">
-                {t('goalLogModal.noAssisterPlaceholder', '-- No Assist --')}
-              </option>
-              {/* Filter out the selected scorer from assist options */}
-              {availablePlayers
-                .filter(player => player.id !== scorerId) // Exclude scorer
-                .sort((a, b) => a.name.localeCompare(b.name)) // Sort alphabetically
-                .map(player => (
-                  <option key={player.id} value={player.id}>
-                    {player.name}
-                  </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Buttons - Reverted container to grid, kept new order */}
-          <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
-            {/* 1. Log Goal Button - Original styles */}
-            <button 
+        {/* Footer */}
+        <div className="p-4 border-t border-slate-700/20 backdrop-blur-sm bg-slate-900/20 flex-shrink-0">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <button
               type="button"
               onClick={handleLogOwnGoalClick}
-              disabled={!scorerId} // Disable if no scorer is selected
-              className="w-full inline-flex justify-center rounded-md border border-transparent px-4 py-2 bg-indigo-600 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed sm:text-sm transition-colors"
+              disabled={!scorerId}
+              className="w-full px-4 py-2 rounded-md font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {t('goalLogModal.logGoalButton', 'Kirjaa Maali')}
+              {t('goalLogModal.logGoalButton', 'Log Goal')}
             </button>
-
-            {/* 2. Log Opponent Goal Button - Original styles */}
-            <button 
+            <button
               type="button"
               onClick={handleLogOpponentGoalClick}
-              className="w-full inline-flex justify-center rounded-md border border-transparent px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-red-500 sm:text-sm transition-colors"
+              className="w-full px-4 py-2 rounded-md font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors"
               title={t('goalLogModal.logOpponentGoalTooltip', 'Record a goal for the opponent at the current game time') ?? undefined}
             >
-              {t('goalLogModal.logOpponentGoalButtonShort', 'Opponent + 1')} 
+              {t('goalLogModal.logOpponentGoalButtonShort', 'Opponent +1')}
             </button>
-            
-            {/* 3. Cancel Button - Original styles */}
-            <button 
+            <button
               type="button"
               onClick={onClose}
-              className="w-full inline-flex justify-center rounded-md border border-slate-600 px-4 py-2 bg-slate-700 text-base font-medium text-slate-300 hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-slate-500 sm:text-sm transition-colors"
+              className="w-full px-4 py-2 rounded-md font-semibold text-slate-200 bg-slate-700 hover:bg-slate-600 transition-colors"
             >
-              {t('common.cancelButton', 'Peruuta')}
+              {t('common.cancel', 'Cancel')}
             </button>
           </div>
         </div>
