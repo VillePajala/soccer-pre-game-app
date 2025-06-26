@@ -11,7 +11,7 @@ import { updateGameDetails, updateGameEvent, removeGameEvent } from '@/utils/sav
 import { UseMutationResult } from '@tanstack/react-query';
 import { TFunction } from 'i18next';
 
-export type GameEventType = 'goal' | 'opponentGoal' | 'periodEnd' | 'gameEnd';
+export type GameEventType = 'goal' | 'opponentGoal' | 'substitution' | 'periodEnd' | 'gameEnd' | 'fairPlayCard';
 
 export interface GameEvent {
   id: string;
