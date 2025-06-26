@@ -3622,12 +3622,11 @@ export default function Home() {
         gameLocation={gameSessionState.gameLocation}
         gameTime={gameSessionState.gameTime}
         gameNotes={gameSessionState.gameNotes}
-        homeScore={gameSessionState.homeScore}
-        awayScore={gameSessionState.awayScore}
         gameEvents={gameSessionState.gameEvents}
         availablePlayers={availablePlayers}
         numPeriods={gameSessionState.numberOfPeriods}
         periodDurationMinutes={gameSessionState.periodDurationMinutes}
+        onTeamNameChange={handleTeamNameChange}
         onOpponentNameChange={handleOpponentNameChange}
         onGameDateChange={handleGameDateChange}
         onGameLocationChange={handleGameLocationChange}
