@@ -204,10 +204,10 @@ This section tracks which components have been updated to match the style guide 
   - [x] Finnish translations
   - [x] Style guide compliance
 
-- [ ] NewGameSetupModal
-  - [ ] Layout update
-  - [ ] Finnish translations
-  - [ ] Style guide compliance
+- [x] NewGameSetupModal
+  - [x] Layout update
+  - [x] Finnish translations
+  - [x] Style guide compliance
 
 - [ ] PlayerStatsModal
   - [ ] Layout update
