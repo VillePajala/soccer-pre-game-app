@@ -98,4 +98,14 @@ This file tracks potential new features and enhancements for the soccer coaching
 15. **Refactor Game Settings Data Persistence**:
     *   **Status**: Not Implemented
     *   **Description**: Currently, many settings in the `GameSettingsModal` (e.g., team name, game date, period duration) are not saved directly from the modal. Instead, they rely on an indirect auto-save mechanism in the main page component. While this is functional, it's fragile. This task involves refactoring the modal to make it responsible for explicitly saving every piece of data it modifies, which would make the application more robust and maintainable.
-    *   **Current Thoughts on Timing**: Low priority, as the current system works. Good candidate for a future code quality improvement sprint. 
+    *   **Current Thoughts on Timing**: Low priority, as the current system works. Good candidate for a future code quality improvement sprint.
+
+16. **Clean Up Deprecated SaveGameModal**:
+    *   **Status**: Not Implemented
+    *   **Description**: The `SaveGameModal` component and its related code are no longer in use, as the application has moved to using only quick save functionality. This cleanup task involves:
+        - Removing the `SaveGameModal.tsx` component
+        - Cleaning up related translations in all locale files
+        - Removing unused state and handlers from `page.tsx`
+        - Removing related types and interfaces
+        - Cleaning up any remaining references in other components
+    *   **Current Thoughts on Timing**: Can be done anytime as part of code cleanup, as the code is already effectively deprecated. 

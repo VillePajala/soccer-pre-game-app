@@ -214,10 +214,7 @@ This section tracks which components have been updated to match the style guide 
   - [ ] Finnish translations
   - [ ] Style guide compliance
 
-- [ ] SaveGameModal
-  - [ ] Layout update
-  - [ ] Finnish translations
-  - [ ] Style guide compliance
+
 
 - [ ] SeasonTournamentManagementModal
   - [ ] Layout update

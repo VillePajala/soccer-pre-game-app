@@ -1,134 +1,178 @@
 # Project TODO List
 
-**Project Setup & Basic Structure**
-- [x] Initialize Next.js project (TypeScript, Tailwind, App Router)
-- [x] Set up Git repository and push initial commit
-- [x] Create `.docs` folder and add documentation
-- [x] Update `README.md`
-- [x] Set up basic page structure in `app/page.tsx`
+## 🐛 Bug Fixes & Technical Debt
 
-**UI Layout & Components**
-- [x] Create the main layout: Full-screen field canvas, top player bar, bottom control bar.
-- [x] Implement the `SoccerField` component (Canvas) - Basic structure created.
-- [x] Implement the `PlayerDisk` component (draggable, named circles) - Basic structure created.
-- [x] Implement the `PlayerBar` component (holds available player disks) - Basic structure created.
-- [x] Implement the `ControlBar` component (buttons for actions) - Basic structure created.
+### Code Cleanup
+- [ ] **Clean up SaveGameModal**
+  - The SaveGameModal is deprecated as we've moved to quick save only
+  - Remove component, translations, states, and all related code
+  - Impact: Reduces codebase complexity and maintenance burden
 
-**Core Functionality**
-- [x] Implement player addition/naming (tapping disk in the bar?). (Inline rename done)
-- [x] Implement dragging players from the bar to the field.
-- [x] Implement repositioning players already on the field. (Basic mouse drag done)
-- [x] Implement freehand drawing on the field canvas. (Basic implementation done)
-- [x] Implement Undo/Redo functionality for movements and drawings. (Basic implementation done)
-- [x] Implement the "Toggle Player Names" feature. (Basic implementation done)
-- [x] Implement persistence using `localStorage` for player names and potentially positions/drawings.
-- [x] Implement player removal from field (double-click).
-- [x] Implement opponent markers (add/drag/remove).
-- [x] Implement game timer with start/pause/reset.
-- [x] Implement large timer overlay with substitution alerts and interval history.
-- [x] Add static field markings (lines, circles, arcs) to canvas background.
+- [ ] **Refactor Game Settings Data Persistence**
+  - Current implementation uses indirect auto-save in page component
+  - Need to move saving logic directly into GameSettingsModal
+  - Impact: Improves code maintainability and reduces potential for data loss
 
-**Styling & Refinements**
-- [x] Apply Tailwind CSS styling according to the UID (field appearance, disk colors, controls).
-- [x] Ensure responsive design for mobile, tablet, and desktop.
-- [x] Implement visual feedback for interactions (e.g., dragging).
-- [x] Improve canvas rendering (non-distorting disks, distinct drawing colors).
-- [ ] Address accessibility considerations (contrast, touch target size).
-- [x] Implement persistence using `localStorage`. (History and index saved)
+### Data Validation
+- [ ] **Player Name/Number Validation**
+  - Add warnings for duplicate player names or numbers
+  - Implement proper validation in player creation forms
+  - Impact: Prevents data inconsistency issues
 
-**Optional/Future**
-- [x] Implement "Reset Field" functionality.
-- [x] Implement "Clear Drawings" functionality.
-- [ ] Implement saving/loading formations. 
-- [ ] Implement exporting field view as an image. 
-- [ ] Advanced touch interaction refinement.
-- [ ] Code cleanup (e.g., shared utilities). 
+- [ ] **Game Selection Validation**
+  - Improve player selection validation in game setup
+  - Enhance season/tournament association logic
+  - Impact: Ensures data integrity for game records
 
-## Game Stats Modal Improvements
+## 🧪 Testing Infrastructure
 
-- [ ] Add Totals Row to Player Stats table (code is commented out).
-- [ ] Enhanced Sorting/Filtering:
-  - [x] Allow sorting Player Stats table by clicking column headers (Name, G, A, Pts). (Implemented)
-  - [x] Add filter input for Player Stats table. (Implemented)
-- [x] Goal Log Improvements:
-  - [x] Allow editing goal log entries (scorer, assister, time). (Implemented)
-  - [ ] Add filtering options to the goal log.
-- [x] Add Export Functionality (JSON/CSV). (Implemented)
-- [ ] Basic Visualizations (e.g., bar chart for player points).
-- [ ] Track More Stats (e.g., substitutions, cards - more complex).
+### Setup & Configuration
+- [ ] **Jest & React Testing Library Setup**
+  - Install and configure testing libraries
+  - Set up TypeScript support for tests
+  - Impact: Enables automated testing capabilities
 
-## Testing Plan (2024)
+- [ ] **CI Pipeline Setup**
+  - Configure GitHub Actions for automated testing
+  - Add test scripts to package.json
+  - Impact: Ensures code quality on every commit
 
-### Test Infrastructure Setup
-- [ ] Install Jest, React Testing Library, and related dependencies
-- [ ] Configure Jest for Next.js and TypeScript
-- [ ] Set up GitHub Actions CI for automated testing
-- [ ] Add test scripts to package.json
+### Test Implementation
+- [ ] **Utility Function Tests**
+  - Write tests for time formatting functions
+  - Test CSV/data export functionality
+  - Test game event processing logic
+  - Impact: Ensures core utilities work correctly
 
-### Unit Tests
-- [ ] Create tests for utility functions:
-  - [ ] Time formatting
-  - [ ] CSV/data export functions
-  - [ ] Game event processing
+- [ ] **Component Tests**
+  - Test PlayerBar interactions
+  - Test GameStatsModal functionality
+  - Test SoccerField canvas operations
+  - Test TimerOverlay accuracy
+  - Impact: Validates UI component behavior
 
-### Component Tests
-- [ ] Test critical UI components:
-  - [ ] PlayerBar component
-  - [ ] GameStatsModal component
-  - [ ] SoccerField component
-  - [ ] TimerOverlay component
+- [ ] **Integration Tests**
+  - Test complete game creation workflow
+  - Test save/load game functionality
+  - Test player management system
+  - Test statistics calculation
+  - Impact: Verifies end-to-end functionality
 
-### Integration Tests
-- [ ] Test core workflows:
-  - [ ] Game creation and setup
-  - [ ] Game saving and loading
-  - [ ] Player management
-  - [ ] Goal logging and statistics
+## 🎮 Game Features
 
-### Testing Guidelines
-- [ ] Create test documentation for contributors
-- [ ] Establish test coverage targets
-- [ ] Implement pre-commit hooks for running tests
+### Statistics & Analytics
+- [ ] **Enhanced Player Stats**
+  - Add totals row to stats table
+  - Implement player on-pitch time tracking
+  - Add more event types (corners, shots, fouls)
+  - Impact: Provides more detailed game analysis
 
-## Near-Term Enhancements (Next Iteration)
+- [ ] **Visual Analytics**
+  - Add bar charts for player points
+  - Create visual event timeline
+  - Add filtering options to goal log
+  - Impact: Makes statistics more digestible
 
-### Team Customization
-- [ ] Team logo upload functionality
-- [ ] Customizable color schemes
-- [ ] Team-specific settings persistence
+### Tactics Board
+- [ ] **Animation System**
+  - Implement recording mode for tactical movements
+  - Add playback controls (play, pause, reset)
+  - Create animation saving/loading system
+  - Impact: Enables creating tactical play demonstrations
 
-### PWA Improvements
-- [ ] Enhanced offline capabilities
-- [ ] Installation prompts and guides
-- [ ] Home screen icon customization
+- [ ] **Drawing Tools**
+  - Add ball marker
+  - Implement arrows and shapes
+  - Add multiple colors for drawings
+  - Impact: Improves tactical explanation capabilities
 
-### User Experience Refinements
-- [ ] Onboarding tour for new users
-- [ ] Contextual help tooltips
-- [ ] Performance optimization for mobile devices
+- [ ] **Formation Management**
+  - Add quick-access formation templates
+  - Implement formation save/load
+  - Create toggleable formation/tactics views
+  - Impact: Streamlines team setup process
 
-## Future Enhancements (Brainstorm - 2024)
+## 🎨 UI/UX Improvements
 
-### Game/Session Management
-*   **Save/Load Multiple Games:** ✅ Implemented
-*   **Import Game Data:** ✅ Implemented
-*   **Multiple Team Support:** Allow managing multiple teams in one app
+### Accessibility
+- [ ] **Core Accessibility**
+  - Improve color contrast ratios
+  - Optimize touch target sizes
+  - Add keyboard navigation
+  - Implement screen reader support
+  - Impact: Makes app usable for all users
 
-### Enhanced Statistics & Tracking
-*   **Player On-Pitch Time Calculation:** Track and display the total time each player was on the field during the match.
-*   **Log More Event Types:** Consider adding logging for corners, shots, fouls, etc.
-*   **Visual Event Timeline:** Display game events (goals) on a visual timeline relative to game duration in the stats modal.
-*   **Team Season Statistics:** Track performance across multiple games/season
+### Responsive Design
+- [ ] **Mobile Optimization**
+  - Review modal layouts on small screens
+  - Optimize timer and stats displays
+  - Improve touch interactions
+  - Impact: Ensures good mobile experience
 
-### Tactics Board Improvements
-*   **Ball Marker:** Add a draggable ball marker.
-*   **Advanced Drawing:** Arrows, basic shapes, different colors for drawings.
-*   **Formation Templates:** Quick buttons to set common formations.
-*   **Save/Load Formations:** Save/load player positional arrangements independently.
-*   **Animation Tools:** Simple movement animations for explaining tactics
+### User Experience
+- [ ] **Visual Feedback**
+  - Add player status indicators
+  - Implement contextual help tooltips
+  - Create onboarding tour
+  - Impact: Improves user understanding
 
-### UI/UX Refinements
-*   **Player Bar Status Indication:** Visually differentiate players on the field vs. available in the top bar.
-*   **Responsive Design Review:** Thoroughly check modal layouts (Timer, Stats) on smaller mobile screens.
-*   **Accessibility Audit:** Review color contrast, keyboard navigation, and screen reader support. 
-*   **Localization Expansion:** Support for additional languages 
+## 🌐 Internationalization
+
+### Language Support
+- [ ] **Finnish Translation Completion**
+  - Audit existing Finnish translations
+  - Fix remaining English text
+  - Update translation key structure
+  - Impact: Ensures consistent Finnish experience
+
+- [ ] **Additional Languages**
+  - Prepare for multi-language support
+  - Create translation contribution guide
+  - Impact: Makes app accessible to more users
+
+## 📱 PWA Features
+
+### Offline Capabilities
+- [ ] **Enhanced Offline Support**
+  - Improve data persistence
+  - Add offline mode indicators
+  - Impact: Ensures app works without internet
+
+### Installation Experience
+- [ ] **PWA Installation**
+  - Add installation prompts
+  - Create custom home screen icons
+  - Improve app launch experience
+  - Impact: Makes app feel more native
+
+## ✅ Recently Completed
+
+### Bug Fixes
+- [x] Goal events reset issue
+- [x] Player creation duplicates
+- [x] Incorrect players in goal logging
+- [x] Player selection in new game setup
+- [x] Season/Tournament selection issues
+- [x] Timer reset on mobile app switch
+- [x] Sub interval mid-game changes
+- [x] Manual game events reflection
+- [x] Score color coding in timer modal
+- [x] Game stats player ordering
+- [x] Question mark icons on saved game cards
+- [x] Player ordering in game stats with filters
+
+### Features
+- [x] Initialize Next.js project
+- [x] Set up Git repository
+- [x] Create basic documentation
+- [x] Implement core UI components
+- [x] Implement player management
+- [x] Implement game timer
+- [x] Implement drawing functionality
+- [x] Implement Undo/Redo
+- [x] Save/Load Multiple Games
+- [x] Import Game Data
+- [x] Allow sorting Player Stats table
+- [x] Add filter input for Player Stats
+- [x] Allow editing goal log entries
+- [x] Add Export Functionality (JSON/CSV) 
