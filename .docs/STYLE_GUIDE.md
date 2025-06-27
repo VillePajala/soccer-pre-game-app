@@ -176,6 +176,7 @@ This section tracks which components have been updated to match the style guide 
   - [x] Removed deprecated features (goalie toggle)
   - [x] Column headers properly aligned
   - [x] Consistent with style guide colors and effects
+  - [x] Style guide compliance
 
 - [x] GameSettingsModal
   - [x] Layout update
@@ -197,10 +198,11 @@ This section tracks which components have been updated to match the style guide 
   - [ ] Finnish translations
   - [ ] Style guide compliance
 
-- [ ] LoadGameModal
-  - [ ] Layout update
-  - [ ] Finnish translations
-  - [ ] Style guide compliance
+- [x] LoadGameModal
+  - [x] Tests fixed
+  - [x] Layout update
+  - [x] Finnish translations
+  - [x] Style guide compliance
 
 - [ ] NewGameSetupModal
   - [ ] Layout update

@@ -44,7 +44,6 @@ import {
   getSavedGames as utilGetSavedGames,
   saveGame as utilSaveGame, // For auto-save and handleSaveGame
   deleteGame as utilDeleteGame, // For handleDeleteGame
-  saveGames as utilSaveAllGames, // Corrected: For handleImportGamesFromJson (was saveAllGames)
   // GameData // Type // Comment out or remove GameData import if AppState is used directly
 } from '@/utils/savedGames';
 import {
@@ -481,8 +480,6 @@ export default function Home() {
   const [gameLoadError, setGameLoadError] = useState<string | null>(null);
   const [isGameDeleting, setIsGameDeleting] = useState(false); // For deleting a specific game
   const [gameDeleteError, setGameDeleteError] = useState<string | null>(null);
-  const [isGamesImporting, setIsGamesImporting] = useState(false); // For importing games
-  const [gamesImportError, setGamesImportError] = useState<string | null>(null);
   const [processingGameId, setProcessingGameId] = useState<string | null>(null); // To track which game item is being processed
   const [isTacticsBoardView, setIsTacticsBoardView] = useState<boolean>(false);
   const [tacticalDiscs, setTacticalDiscs] = useState<TacticalDisc[]>([]);
@@ -1880,53 +1877,9 @@ export default function Home() {
   };
 
   // Function to export all saved games as a single JSON file (RENAMED & PARAMETERIZED)
-  const handleExportAllGamesJson = () => {
-    const gameIdsToExport = Object.keys(savedGames).filter(id => id !== DEFAULT_GAME_ID);
-
-    if (gameIdsToExport.length === 0) {
-        alert(t('loadGameModal.noGamesToExport', 'No saved games to export.'));
-        return;
-    }
-
-    const gamesToExport = gameIdsToExport.reduce((acc, id) => {
-        const gameData = savedGames[id];
-        if (gameData) {
-            // Add names alongside IDs
-            const seasonName = gameData.seasonId ? seasons.find(s => s.id === gameData.seasonId)?.name : null;
-            const tournamentName = gameData.tournamentId ? tournaments.find(t => t.id === gameData.tournamentId)?.name : null;
-            acc[id] = {
-                ...gameData,
-                seasonName: seasonName,
-                tournamentName: tournamentName
-            };
-        }
-        return acc;
-    }, {} as SavedGamesCollection & { [key: string]: { seasonName?: string | null, tournamentName?: string | null } }); // Adjust type slightly
-
-    try {
-      const jsonString = JSON.stringify(gamesToExport, null, 2); // Export only filtered games
-      const blob = new Blob([jsonString], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-
-      // Generate filename with timestamp and filter
-      const now = new Date();
-      const timestamp = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
-      // REMOVE unused filterName variable
-      // const filterName = 'All';
-      a.download = `SoccerApp_AllGames_${timestamp}.json`; 
-      
-      a.href = url;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      console.log(`All games exported successfully as JSON.`);
-    } catch (error) {
-      console.error(`Failed to export all games as JSON:`, error);
-      alert(t('loadGameModal.exportAllJsonError', 'Error exporting games as JSON.')); // Generic error message
-    }
-  };
+  // const handleExportAllGamesJson = () => { // This function is no longer used
+  //   // ...
+  // };
 
   // Helper function to safely format CSV fields (handles quotes and commas)
   const escapeCsvField = (field: string | number | undefined | null): string => {
@@ -1943,143 +1896,14 @@ export default function Home() {
   // Helper function to format time (consider extracting if used elsewhere)
   const formatTime = (totalSeconds: number): string => {
     const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
+    const seconds = Math.floor(totalSeconds % 60);
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
   
   // Function to export all saved games as Excel/CSV (RENAMED & PARAMETERIZED)
-  const handleExportAllGamesCsv = () => {
-    const gameIdsToExport = Object.keys(savedGames).filter(id => id !== DEFAULT_GAME_ID);
-
-    if (gameIdsToExport.length === 0) {
-      alert(t('loadGameModal.noGamesToExport', 'No saved games to export.'));
-      return;
-    }
-    console.log(`Starting CSV export for ${gameIdsToExport.length} games...`);
-
-    try {
-      const allRows: string[] = [];
-      const EOL = '\r\n'; // Use CRLF for Excel compatibility
-      const DELIMITER = ';'; // Use semicolon for better Excel compatibility
-
-      gameIdsToExport.forEach((gameId, index) => {
-        const game = savedGames[gameId]; // This is of type AppState
-        if (!game) return; // Skip if game data is missing
-
-        // --- Game Separator ---
-        if (index > 0) {
-          allRows.push(''); // Add a blank separator row between games
-        }
-        allRows.push(`=== GAME START: ${escapeCsvField(gameId)} ===`);
-
-        // --- Section: Game Info ---
-        allRows.push('Game Info');
-        allRows.push(`${escapeCsvField('Game Date:')} ${DELIMITER} ${escapeCsvField(game.gameDate)}`);
-        allRows.push(`${escapeCsvField('Team Name:')} ${DELIMITER} ${escapeCsvField(game.teamName)}`);
-        allRows.push(`${escapeCsvField('Opponent Name:')} ${DELIMITER} ${escapeCsvField(game.opponentName)}`);
-        allRows.push(`${escapeCsvField('Location:')} ${DELIMITER} ${escapeCsvField(game.gameLocation)}`);
-        allRows.push(`${escapeCsvField('Time:')} ${DELIMITER} ${escapeCsvField(game.gameTime)}`);
-        allRows.push(`${escapeCsvField('Home/Away:')} ${DELIMITER} ${escapeCsvField(game.homeOrAway)}`);
-        allRows.push(`${escapeCsvField('Final Score (Home-Away):')} ${DELIMITER} ${escapeCsvField(game.homeScore)} - ${escapeCsvField(game.awayScore)}`);
-        allRows.push(`${escapeCsvField('Game Status:')} ${DELIMITER} ${escapeCsvField(game.gameStatus)}`);
-        allRows.push(`${escapeCsvField('Number of Periods:')} ${DELIMITER} ${escapeCsvField(game.numberOfPeriods)}`);
-        allRows.push(`${escapeCsvField('Period Duration (min):')} ${DELIMITER} ${escapeCsvField(game.periodDurationMinutes)}`);
-        allRows.push(`${escapeCsvField('Current Period:')} ${DELIMITER} ${escapeCsvField(game.currentPeriod)}`);
-        allRows.push(`${escapeCsvField('Sub Interval (min):')} ${DELIMITER} ${escapeCsvField(game.subIntervalMinutes)}`);
-        const seasonName = game.seasonId ? seasons.find(s => s.id === game.seasonId)?.name : 'N/A';
-        const tournamentName = game.tournamentId ? tournaments.find(t => t.id === game.tournamentId)?.name : 'N/A';
-        allRows.push(`${escapeCsvField('Season:')} ${DELIMITER} ${escapeCsvField(seasonName)}`);
-        allRows.push(`${escapeCsvField('Tournament:')} ${DELIMITER} ${escapeCsvField(tournamentName)}`);
-        allRows.push(`${escapeCsvField('Game Notes:')} ${DELIMITER} ${escapeCsvField(game.gameNotes)}`);
-        allRows.push(''); // Blank row
-
-        // --- Section: Events ---
-        allRows.push('Event Log');
-        allRows.push(`${escapeCsvField('Time')}${DELIMITER}${escapeCsvField('Type')}${DELIMITER}${escapeCsvField('Scorer')}${DELIMITER}${escapeCsvField('Assister')}`);
-        const sortedEvents = game.gameEvents?.filter(e => e.type === 'goal' || e.type === 'opponentGoal').sort((a, b) => a.time - b.time) || [];
-        
-        if (sortedEvents.length > 0) {
-            sortedEvents.forEach(event => {
-                const timeFormatted = formatTime(event.time);
-                const type = event.type === 'goal' ? 'Goal' : 'Opponent Goal';
-                // Look up names dynamically using the game's availablePlayers
-                // Look up names dynamically using the GLOBAL availablePlayers state
-                const scorerName = event.type === 'goal'
-                  ? availablePlayers.find(p => p.id === event.scorerId)?.name ?? event.scorerId // <-- Use global state
-                  : game.opponentName || 'Opponent'; // Use game's opponent name for opponent goals
-                const assisterName = event.type === 'goal' && event.assisterId
-                  ? availablePlayers.find(p => p.id === event.assisterId)?.name ?? event.assisterId // <-- Use global state
-                  : ''; // Empty if no assister ID or opponent goal
-                
-                const scorer = escapeCsvField(scorerName);
-                const assister = escapeCsvField(assisterName);
-                allRows.push(`${escapeCsvField(timeFormatted)}${DELIMITER}${escapeCsvField(type)}${DELIMITER}${scorer}${DELIMITER}${assister}`);
-          });
-        } else {
-            allRows.push('No goals logged');
-        }
-        allRows.push(''); // Blank separator row
-
-        // --- Section: Player Stats ---
-        allRows.push('Player Stats');
-        // Add Fair Play column header
-        allRows.push(`${escapeCsvField('Player')}${DELIMITER}${escapeCsvField('Goals')}${DELIMITER}${escapeCsvField('Assists')}${DELIMITER}${escapeCsvField('Points')}${DELIMITER}${escapeCsvField('Fair Play')}`);
-        // Use the GLOBAL availablePlayers state here
-        const playerStats = availablePlayers.map((player: Player) => { // <-- Use global state
-          const goals = game.gameEvents?.filter(e => e.type === 'goal' && e.scorerId === player.id).length || 0;
-          const assists = game.gameEvents?.filter(e => e.type === 'goal' && e.assisterId === player.id).length || 0;
-          const totalScore = goals + assists;
-          // Include fairPlay status - check if player is IN the global roster
-          const globalPlayer = availablePlayers.find(p => p.id === player.id); // Re-check existence
-          return { name: player.name, goals, assists, totalScore, fairPlay: globalPlayer?.receivedFairPlayCard };
-        })
-        // REMOVED filter: .filter(p => p.totalScore > 0) // Show all players now
-        .sort((a, b) => b.totalScore - a.totalScore || b.goals - a.goals); // Sort by points, then goals
-        
-        if (playerStats && playerStats.length > 0) {
-            playerStats.forEach(player => {
-                // Add fairPlay data to the row
-                allRows.push(`${escapeCsvField(player.name)}${DELIMITER}${escapeCsvField(player.goals)}${DELIMITER}${escapeCsvField(player.assists)}${DELIMITER}${escapeCsvField(player.totalScore)}${DELIMITER}${escapeCsvField(player.fairPlay ? 'Yes' : 'No')}`);
-            });
-        } else {
-            allRows.push('No player stats recorded');
-        }
-        allRows.push(''); // Blank separator row
-
-        // --- Section: Notes ---
-        allRows.push('Notes:');
-        // Handle multi-line notes by enclosing in quotes if necessary
-        allRows.push(escapeCsvField(game.gameNotes || '')); 
-        
-        // --- Game End Separator ---
-        allRows.push(`=== GAME END: ${escapeCsvField(gameId)} ===`);
-      });
-
-      // --- Combine and Download ---
-      const csvString = allRows.join(EOL);
-      const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' }); // Specify charset
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-
-      // Generate filename with timestamp
-      const now = new Date();
-      const timestamp = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
-      // REMOVE unused filterName variable
-      // const filterName = 'All'; // Corrected filterName usage
-      a.download = `SoccerApp_AllGames_${timestamp}.csv`; // Use .csv extension and filter name
-      
-      a.href = url;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      console.log(`All games exported successfully as CSV.`);
-
-    } catch (error) {
-      console.error(`Failed to export all games as CSV:`, error);
-      alert(t('loadGameModal.exportAllExcelError', 'Error exporting games as CSV.'));
-    }
-  };
+  // const handleExportAllGamesCsv = () => { // This function is no longer used
+  //   // ...
+  // };
 
   // --- INDIVIDUAL GAME EXPORT HANDLERS ---
   const handleExportOneJson = (gameId: string) => {
@@ -3146,73 +2970,9 @@ export default function Home() {
   // --- END Quick Save Handler ---
 
   // --- Step 3: Handler for Importing Games ---
-  const handleImportGamesFromJson = useCallback(async (jsonContent: string) => {
-    console.log("handleImportGamesFromJson called.");
-    setGamesImportError(null);
-    setIsGamesImporting(true);
-
-    let importedGames: SavedGamesCollection = {};
-    let skippedCount = 0;
-    let importedCount = 0;
-    const newGamesToImport: SavedGamesCollection = {}; // Renamed to avoid conflict
-
-    try {
-      importedGames = JSON.parse(jsonContent);
-      
-      if (typeof importedGames !== 'object' || importedGames === null || Array.isArray(importedGames)) {
-        throw new Error("Invalid format: Imported data is not a valid game collection object.");
-      }
-
-      console.log(`Parsed ${Object.keys(importedGames).length} games from JSON.`);
-
-      for (const gameId in importedGames) {
-        if (Object.prototype.hasOwnProperty.call(importedGames, gameId)) {
-          const gameData = importedGames[gameId];
-          if (typeof gameData !== 'object' || gameData === null || !gameData.teamName || !gameData.gameDate) {
-             console.warn(`Skipping game ${gameId} due to invalid/missing core properties.`);
-             skippedCount++;
-             continue; 
-          }
-
-          if (savedGames[gameId]) {
-            console.log(`Skipping import for existing game ID: ${gameId}`);
-            skippedCount++;
-          } else {
-            console.log(`Marking new game for import: ${gameId}`);
-            newGamesToImport[gameId] = gameData;
-            importedCount++;
-          }
-        }
-      }
-
-      if (importedCount > 0) {
-        console.log(`Adding ${importedCount} new games to state and localStorage using saveAllGames.`);
-        const updatedSavedGamesCollection = { ...savedGames, ...newGamesToImport };
-        await utilSaveAllGames(updatedSavedGamesCollection); // Use utility function to save all merged games
-        setSavedGames(updatedSavedGamesCollection); // Also update local state for immediate UI responsiveness
-        alert(t('loadGameModal.importSuccess', 
-                  `Successfully imported ${importedCount} game(s). Skipped ${skippedCount} game(s) with existing IDs.`)
-              ?.replace('{importedCount}', String(importedCount))
-              ?.replace('{skippedCount}', String(skippedCount)) ?? `Imported: ${importedCount}, Skipped: ${skippedCount}`);
-      } else if (skippedCount > 0) {
-        alert(t('loadGameModal.importSkippedOnly', 
-                   `Import complete. Skipped ${skippedCount} game(s) because they already exist.`)
-                ?.replace('{skippedCount}', String(skippedCount)) ?? `Skipped all ${skippedCount} existing games.`);
-      } else {
-        alert(t('loadGameModal.importNoNewGames', 'No new games found in the file to import.'));
-      }
-
-    } catch (error) {
-      console.error("Failed to import games:", error);
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      // alert(t('loadGameModal.importError', 'Import failed: {errorMessage}')
-      //       ?.replace('{errorMessage}', errorMessage) ?? `Import failed: ${errorMessage}`);
-      setGamesImportError(t('loadGameModal.importError', 'Import failed: {errorMessage}', { errorMessage }));
-    } finally {
-      setIsGamesImporting(false);
-    }
-
-  }, [savedGames, setSavedGames, t]); 
+  // const handleImportGamesFromJson = useCallback(async (jsonContent: string) => { // This function is no longer used
+  //   // ...
+  // }, [savedGames, setSavedGames, t]); 
   // --- End Step 3 --- 
 
   // --- NEW: Handlers for Game Settings Modal --- (Placeholder open/close)
@@ -3345,6 +3105,7 @@ export default function Home() {
             currentPeriod={gameSessionState.currentPeriod}
             gameStatus={gameSessionState.gameStatus}
             onOpponentNameChange={handleOpponentNameChange}
+            onClose={handleToggleLargeTimerOverlay} // ADD THIS
           />
         )}
 
@@ -3411,34 +3172,6 @@ export default function Home() {
       </div>
 
       {/* Modals and Overlays */}
-      {showLargeTimerOverlay && (
-        <TimerOverlay
-          timeElapsedInSeconds={gameSessionState.timeElapsedInSeconds}
-          subAlertLevel={gameSessionState.subAlertLevel}
-          onSubstitutionMade={handleSubstitutionMade}
-          completedIntervalDurations={gameSessionState.completedIntervalDurations || []}
-          subIntervalMinutes={gameSessionState.subIntervalMinutes}
-          onSetSubInterval={handleSetSubInterval}
-          isTimerRunning={gameSessionState.isTimerRunning}
-          onStartPauseTimer={handleStartPauseTimer}
-          onResetTimer={handleResetTimer}
-          onToggleGoalLogModal={handleToggleGoalLogModal}
-          onRecordOpponentGoal={() => handleLogOpponentGoal(gameSessionState.timeElapsedInSeconds)}
-          teamName={gameSessionState.teamName}
-          opponentName={gameSessionState.opponentName}
-          homeScore={gameSessionState.homeScore}
-          awayScore={gameSessionState.awayScore}
-          homeOrAway={gameSessionState.homeOrAway}
-          lastSubTime={gameSessionState.lastSubConfirmationTimeSeconds}
-          numberOfPeriods={gameSessionState.numberOfPeriods}
-          periodDurationMinutes={gameSessionState.periodDurationMinutes}
-          currentPeriod={gameSessionState.currentPeriod}
-          gameStatus={gameSessionState.gameStatus}
-          onOpponentNameChange={handleOpponentNameChange}
-        />
-      )}
-
-      {/* Instructions Modal */}
       <InstructionsModal 
         isOpen={isInstructionsOpen} 
         onClose={handleToggleInstructions}
@@ -3504,11 +3237,8 @@ export default function Home() {
         savedGames={savedGames} 
         onLoad={handleLoadGame}
         onDelete={handleDeleteGame}
-        onExportAllJson={handleExportAllGamesJson}
-        onExportAllExcel={handleExportAllGamesCsv} // Pass renamed CSV handler
         onExportOneJson={handleExportOneJson}
         onExportOneCsv={handleExportOneCsv}
-        onImportJson={handleImportGamesFromJson} // <-- Step 4: Pass the handler prop
         currentGameId={currentGameId || undefined} // Convert null to undefined
         // Pass loading and error state props for LoadGameModal
         isLoadingGamesList={isLoadingGamesList}
@@ -3517,8 +3247,6 @@ export default function Home() {
         gameLoadError={gameLoadError}
         isGameDeleting={isGameDeleting}
         gameDeleteError={gameDeleteError}
-        isGamesImporting={isGamesImporting}
-        gamesImportError={gamesImportError}
         processingGameId={processingGameId}
       />
 
