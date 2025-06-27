@@ -37,6 +37,7 @@ interface TimerOverlayProps {
   gameStatus: 'notStarted' | 'inProgress' | 'periodEnd' | 'gameEnd';
   lastSubTime: number | null;
   onOpponentNameChange: (name: string) => void;
+  onClose?: () => void;
 }
 
 const TimerOverlay: React.FC<TimerOverlayProps> = ({
@@ -63,6 +64,7 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
   gameStatus = 'notStarted',
   lastSubTime = null,
   onOpponentNameChange = () => { console.warn('onOpponentNameChange handler not provided'); },
+  onClose,
 }) => {
   const { t } = useTranslation(); // Initialize translation hook
 
@@ -343,7 +345,7 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
             <h3 className="text-sm font-semibold mb-1 text-center text-slate-300">{t('timerOverlay.historyTitle', 'Play Time History')}</h3>
             <ul className="list-none text-slate-400 text-sm text-center space-y-1">
               {completedIntervalDurations.map((log, index) => (
-                <li key={log.timestamp || index}>
+                <li key={`${log.timestamp}-${index}`}>
                   {t('timerOverlay.intervalLogFormat', 'P{{period}}: {{duration}}', {
                     period: log.period,
                     duration: formatTime(log.duration)
@@ -354,6 +356,19 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
           </div>
         )}
       </div>
+
+      {/* ADD CLOSE BUTTON HERE */}
+      {onClose && (
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
+          aria-label={t('common.close', 'Close')}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      )}
     </div>
   );
 };

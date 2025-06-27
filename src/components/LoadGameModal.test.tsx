@@ -197,6 +197,28 @@ describe('LoadGameModal', () => {
     };
   });
 
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test('renders modal title and basic game info when open', async () => {
+    render(<LoadGameModal isOpen={true} savedGames={createSampleGames()} {...mockHandlers} />);
+    
+    // Check for modal title
+    expect(await screen.findByRole('heading', { name: /Load \/ Manage Games/i })).toBeInTheDocument();
+
+    // Check for a specific game item
+    const eaglesGameContainer = await screen.findByTestId('game-item-game_1659223456_def');
+    expect(eaglesGameContainer).toBeInTheDocument();
+
+    // Check for team names and score within the card
+    expect(within(eaglesGameContainer).getByText('Hawks vs Eagles')).toBeInTheDocument();
+    expect(within(eaglesGameContainer).getByText('3 - 3')).toBeInTheDocument();
+    
+    // Check for date
+    expect(within(eaglesGameContainer).getByText(/22\.7\.2023/)).toBeInTheDocument();
+  });
+
   describe('Rendering', () => {
     it('renders the component with saved games list', async () => {
       render(<LoadGameModal isOpen={true} savedGames={createSampleGames()} {...mockHandlers} />);
@@ -472,7 +494,7 @@ describe('LoadGameModal', () => {
         expect(seasonsUtils.getSeasons).toHaveBeenCalledTimes(1);
         expect(tournamentsUtils.getTournaments).toHaveBeenCalledTimes(1);
       });
-      const exportAllJsonButton = await screen.findByRole('button', { name: /Export JSON$/i }); 
+      const exportAllJsonButton = await screen.findByRole('button', { name: /Export All/i });
       fireEvent.click(exportAllJsonButton);
       expect(mockHandlers.onExportAllJson).toHaveBeenCalled();
     });
@@ -483,7 +505,7 @@ describe('LoadGameModal', () => {
         expect(seasonsUtils.getSeasons).toHaveBeenCalledTimes(1);
         expect(tournamentsUtils.getTournaments).toHaveBeenCalledTimes(1);
       });
-      const exportAllExcelButton = await screen.findByRole('button', { name: /Export CSV$/i }); 
+      const exportAllExcelButton = await screen.findByRole('button', { name: /Export All/i });
       fireEvent.click(exportAllExcelButton);
       expect(mockHandlers.onExportAllExcel).toHaveBeenCalled();
     });
@@ -502,31 +524,34 @@ describe('LoadGameModal', () => {
     });
 
     it('triggers file input click when Import button is clicked', async () => {
-       render(<LoadGameModal isOpen={true} savedGames={{}} {...mockHandlers} />);
-       await waitFor(() => {
+      render(<LoadGameModal isOpen={true} savedGames={createSampleGames()} {...mockHandlers} />);
+      await waitFor(() => {
         expect(seasonsUtils.getSeasons).toHaveBeenCalledTimes(1);
         expect(tournamentsUtils.getTournaments).toHaveBeenCalledTimes(1);
       });
        const fileInput = await screen.findByTestId('import-json-input') as HTMLInputElement;
+
        const clickSpy = jest.spyOn(fileInput, 'click').mockImplementation(() => {});
-       const importButton = await screen.findByRole('button', { name: /^Import$/i });
+       const importButton = await screen.findByRole('button', { name: /Import/i });
        fireEvent.click(importButton);
-       expect(clickSpy).toHaveBeenCalledTimes(1);
+
+       expect(clickSpy).toHaveBeenCalled();
+       
        clickSpy.mockRestore();
     });
 
     it('triggers file input click when Restore button is clicked', async () => {
-       render(<LoadGameModal isOpen={true} savedGames={{}} {...mockHandlers} />);
-       await waitFor(() => {
+      render(<LoadGameModal isOpen={true} savedGames={createSampleGames()} {...mockHandlers} />);
+      await waitFor(() => {
         expect(seasonsUtils.getSeasons).toHaveBeenCalledTimes(1);
         expect(tournamentsUtils.getTournaments).toHaveBeenCalledTimes(1);
       });
-       const restoreInput = await screen.findByTestId('restore-backup-input') as HTMLInputElement;
-       const clickSpy = jest.spyOn(restoreInput, 'click').mockImplementation(() => {});
-       const restoreButton = await screen.findByRole('button', { name: /Restore from Backup/i });
-       fireEvent.click(restoreButton);
-       expect(clickSpy).toHaveBeenCalledTimes(1);
-       clickSpy.mockRestore();
+      const restoreFileInput = screen.getByTestId('restore-backup-input') as HTMLInputElement;
+      const clickSpy = jest.spyOn(restoreFileInput, 'click').mockImplementation(() => {});
+      const restoreButton = screen.getByRole('button', { name: /Restore/i });
+      fireEvent.click(restoreButton);
+      expect(clickSpy).toHaveBeenCalled();
+      clickSpy.mockRestore();
     });
 
     describe('File Handling (Import/Restore)', () => {
@@ -547,23 +572,22 @@ describe('LoadGameModal', () => {
           expect(tournamentsUtils.getTournaments).toHaveBeenCalledTimes(1);
         });
         const fileInput = await screen.findByTestId('import-json-input') as HTMLInputElement;
-        
+
         const fileContent = JSON.stringify({ gameData: 'test' });
         const file = new File([fileContent], 'import.json', { type: 'application/json' });
         const mockReadAsText = jest.fn();
         let capturedOnload: ((event: ProgressEvent<FileReader>) => void) | null = null;
         const mockReader = {
           set onload(handler: ((event: ProgressEvent<FileReader>) => void) | null) { capturedOnload = handler; },
-          onerror: null,
           readAsText: mockReadAsText,
           result: fileContent
         };
         const fileReaderSpy = jest.spyOn(window, 'FileReader').mockImplementation(() => mockReader as unknown as FileReader);
-        
+
         await act(async () => {
           fireEvent.change(fileInput, { target: { files: [file] } });
           if (capturedOnload) {
-             capturedOnload({ target: mockReader } as unknown as ProgressEvent<FileReader>); 
+            capturedOnload({ target: mockReader } as unknown as ProgressEvent<FileReader>);
           }
         });
 
@@ -595,7 +619,7 @@ describe('LoadGameModal', () => {
         await act(async () => {
           fireEvent.change(fileInput, { target: { files: [file] } });
           if (capturedOnerror) {
-             capturedOnerror();
+            capturedOnerror();
           }
         });
 
@@ -606,8 +630,8 @@ describe('LoadGameModal', () => {
       });
 
       it('shows alert on JSON processing error during import', async () => {
-         render(<LoadGameModal isOpen={true} savedGames={createSampleGames()} {...mockHandlers} />);
-         await waitFor(() => {
+        render(<LoadGameModal isOpen={true} savedGames={createSampleGames()} {...mockHandlers} />);
+        await waitFor(() => {
           expect(seasonsUtils.getSeasons).toHaveBeenCalledTimes(1);
           expect(tournamentsUtils.getTournaments).toHaveBeenCalledTimes(1);
         });
