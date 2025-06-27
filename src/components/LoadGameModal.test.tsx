@@ -13,13 +13,13 @@ jest.mock('react-i18next', () => ({
       if (options?.replace) {
         Object.entries(options.replace).forEach(([k, v]) => {
           translation = translation.replace(`{{${k}}}`, v);
-        });
-      }
-      return translation;
-    },
-    i18n: {
-      changeLanguage: () => new Promise(() => {}),
-    },
+          });
+        }
+        return translation;
+      },
+      i18n: {
+        changeLanguage: () => new Promise(() => {}),
+      },
   }),
 }));
 
@@ -41,7 +41,7 @@ const createSampleGames = (): SavedGamesCollection => ({
     teamName: 'Lions',
     opponentName: 'Tigers',
     gameDate: '2023-05-15',
-    homeOrAway: 'home',
+    homeOrAway: 'home', 
     seasonId: 'season_1',
     tournamentId: '',
   } as unknown as AppState,
@@ -94,62 +94,62 @@ describe('LoadGameModal', () => {
     await screen.findByText('Lions vs Tigers'); // wait for load
     
     const searchInput = screen.getByPlaceholderText('loadGameModal.filterPlaceholder');
-    fireEvent.change(searchInput, { target: { value: 'Lions' } });
+      fireEvent.change(searchInput, { target: { value: 'Lions' } });
 
-    expect(await screen.findByText('Lions vs Tigers')).toBeInTheDocument();
+      expect(await screen.findByText('Lions vs Tigers')).toBeInTheDocument();
     expect(screen.queryByText('Hawks vs Eagles')).not.toBeInTheDocument();
-  });
+    });
 
   it('calls onLoad and onClose when a game is loaded', async () => {
     renderModal();
     const gameItem = await screen.findByText('Lions vs Tigers');
     const loadButton = within(gameItem.closest('li')!).getByRole('button', { name: /loadGameModal.loadButton/i });
 
-    fireEvent.click(loadButton);
-    expect(mockHandlers.onLoad).toHaveBeenCalledWith('game_1659123456_abc');
+      fireEvent.click(loadButton);
+      expect(mockHandlers.onLoad).toHaveBeenCalledWith('game_1659123456_abc');
     expect(mockHandlers.onClose).toHaveBeenCalled();
-  });
+    });
 
   it('calls onDelete when delete is confirmed', async () => {
     (window.confirm as jest.Mock).mockReturnValue(true);
     renderModal();
     const gameItem = await screen.findByText('Hawks vs Eagles');
     const optionsButton = within(gameItem.closest('li')!).getByTitle('Options');
-    fireEvent.click(optionsButton);
+      fireEvent.click(optionsButton);
 
     const deleteButton = await screen.findByRole('button', { name: 'loadGameModal.deleteMenuItem' });
-    fireEvent.click(deleteButton);
+      fireEvent.click(deleteButton);
     
     expect(window.confirm).toHaveBeenCalled();
-    expect(mockHandlers.onDelete).toHaveBeenCalledWith('game_1659223456_def');
-  });
+      expect(mockHandlers.onDelete).toHaveBeenCalledWith('game_1659223456_def');
+    });
 
   it('calls exportFullBackup when the backup button is clicked', async () => {
     renderModal();
     const backupButton = await screen.findByRole('button', { name: 'loadGameModal.backupButton' });
     fireEvent.click(backupButton);
     expect(fullBackupUtils.exportFullBackup).toHaveBeenCalled();
-  });
+    });
 
   it('triggers file input when restore button is clicked', async () => {
     renderModal();
     const restoreButton = await screen.findByRole('button', { name: 'loadGameModal.restoreButton' });
     const fileInput = screen.getByTestId('restore-backup-input');
-    const clickSpy = jest.spyOn(fileInput, 'click').mockImplementation(() => {});
+       const clickSpy = jest.spyOn(fileInput, 'click').mockImplementation(() => {});
 
-    fireEvent.click(restoreButton);
-    expect(clickSpy).toHaveBeenCalled();
-    clickSpy.mockRestore();
-  });
-  
+      fireEvent.click(restoreButton);
+      expect(clickSpy).toHaveBeenCalled();
+      clickSpy.mockRestore();
+    });
+
   it('calls importFullBackup on file selection', async () => {
     renderModal();
     const fileInput = screen.getByTestId('restore-backup-input');
     const fileContent = '{"data":"test"}';
     const file = new File([fileContent], 'backup.json', { type: 'application/json' });
 
-    await act(async () => {
-        fireEvent.change(fileInput, { target: { files: [file] } });
+        await act(async () => {
+          fireEvent.change(fileInput, { target: { files: [file] } });
     });
     
     // This part is tricky as the FileReader logic is internal.

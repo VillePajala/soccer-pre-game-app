@@ -198,6 +198,7 @@ This section tracks which components have been updated to match the style guide 
   - [ ] Style guide compliance
 
 - [ ] LoadGameModal
+  - [x] Tests fixed
   - [ ] Layout update
   - [ ] Finnish translations
   - [ ] Style guide compliance
