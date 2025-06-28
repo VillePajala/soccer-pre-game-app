@@ -952,7 +952,8 @@ export default function Home() {
       intervalId = setInterval(() => {
         saveTimerState(); // Save state on each tick
         const currentTime = gameSessionState.timeElapsedInSeconds;
-        const potentialNewTime = currentTime + 1;
+        // Round the current time before incrementing to avoid decimal drift
+        const potentialNewTime = Math.round(currentTime) + 1;
 
         if (potentialNewTime >= periodEndTimeSeconds) {
           clearInterval(intervalId!); // Stop the interval
@@ -970,7 +971,8 @@ export default function Home() {
         }
       }, 1000);
     } else {
-      removeLocalStorageItemAsync(TIMER_STATE_KEY);
+      // When timer is NOT running (paused, stopped), we should NOT clear the state.
+      // The state should only be cleared on explicit reset or game end.
       if (intervalId) {
         clearInterval(intervalId);
       }
