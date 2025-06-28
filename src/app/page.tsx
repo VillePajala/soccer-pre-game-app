@@ -19,6 +19,7 @@ import PlayerStatsModal from '@/components/PlayerStatsModal';
 import { useTranslation } from 'react-i18next';
 import { useGameState, UseGameStateReturn } from '@/hooks/useGameState';
 import GameInfoBar from '@/components/GameInfoBar';
+import { useWakeLock } from '@/hooks/useWakeLock';
 // Import the new game session reducer and related types
 import {
   gameSessionReducer,
@@ -232,6 +233,8 @@ export default function Home() {
   console.log('--- page.tsx RENDER ---');
   const { t } = useTranslation(); // Get translation function
   const queryClient = useQueryClient(); // Get query client instance
+  const { requestWakeLock, releaseWakeLock } = useWakeLock();
+
   const [visibilityTrigger, setVisibilityTrigger] = useState(0);
   // --- Initialize Game Session Reducer ---
   // Map necessary fields from page.tsx's initialState to GameSessionState
@@ -1139,6 +1142,20 @@ export default function Home() {
     restoreTimerFromVisibility();
     // The dependency array ensures this runs with the latest currentGameId
   }, [visibilityTrigger, currentGameId]);
+
+  // --- Wake Lock Effect ---
+  useEffect(() => {
+    if (gameSessionState.isTimerRunning) {
+      requestWakeLock();
+    } else {
+      releaseWakeLock();
+    }
+
+    // Cleanup on component unmount
+    return () => {
+      releaseWakeLock();
+    };
+  }, [gameSessionState.isTimerRunning, requestWakeLock, releaseWakeLock]);
 
   // Helper function to load game state from game data
   const loadGameStateFromData = (gameData: AppState | null, isInitialDefaultLoad = false) => {
