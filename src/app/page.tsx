@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo, useReducer } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useReducer, useRef } from 'react';
 import SoccerField from '@/components/SoccerField';
 import PlayerBar from '@/components/PlayerBar';
 import ControlBar from '@/components/ControlBar';
@@ -235,7 +235,7 @@ export default function Home() {
   const queryClient = useQueryClient(); // Get query client instance
   const { syncWakeLock } = useWakeLock();
 
-  const [visibilityTrigger, setVisibilityTrigger] = useState(0);
+  
   // --- Initialize Game Session Reducer ---
   // Map necessary fields from page.tsx's initialState to GameSessionState
   const initialGameSessionData: GameSessionState = {
@@ -1101,39 +1101,28 @@ export default function Home() {
 
   // 1. Stable effect to listen for the event and trigger a state change
     // 1. Stable effect to listen for the event and trigger reducer actions
-    useEffect(() => {
-      const handleVisibilityChange = () => {
-        if (document.hidden) {
-          // When tab is hidden, save the current time and dispatch a pause action
+      // --- NEW: Robust Visibility Change Handling ---
+  const visibilityHandlerRef = useRef<((e: Event) => void) | null>(null);
+
+  // Keep the handler logic updated with the latest state
+  useEffect(() => {
+    visibilityHandlerRef.current = async (e: Event) => {
+      if (document.hidden) {
+        // Only save state if the timer is actually running
+        if (gameSessionState.isTimerRunning) {
           const timerState: TimerState = {
             gameId: currentGameId || '',
             timeElapsedInSeconds: gameSessionState.timeElapsedInSeconds,
             timestamp: Date.now(),
           };
-          setLocalStorageItemAsync(TIMER_STATE_KEY, JSON.stringify(timerState));
+          await setLocalStorageItemAsync(TIMER_STATE_KEY, JSON.stringify(timerState));
           dispatchGameSession({ type: 'PAUSE_TIMER_FOR_HIDDEN' });
-        } else {
-          // When tab becomes visible, trigger the other effect to handle restoration
-          setVisibilityTrigger(c => c + 1);
         }
-      };
-      document.addEventListener('visibilitychange', handleVisibilityChange);
-      return () => {
-        document.removeEventListener('visibilitychange', handleVisibilityChange);
-      };
-    }, [currentGameId, gameSessionState.timeElapsedInSeconds]);
-
-  // 2. Effect that runs the logic when the trigger state changes
-    // 2. Effect that runs the logic when the trigger state changes
-    useEffect(() => {
-      if (visibilityTrigger === 0) return; // Don't run on initial render
-  
-      const restoreTimer = async () => {
-        // First, check if a timer state was saved
+      } else {
+        // When tab becomes visible, attempt to restore
         const savedTimerStateJSON = await getLocalStorageItemAsync(TIMER_STATE_KEY);
         if (savedTimerStateJSON) {
           const savedTimerState: TimerState = JSON.parse(savedTimerStateJSON);
-          // Only restore if the saved state belongs to the currently active game
           if (savedTimerState && savedTimerState.gameId === currentGameId) {
             dispatchGameSession({
               type: 'RESTORE_TIMER_STATE',
@@ -1144,10 +1133,18 @@ export default function Home() {
             });
           }
         }
-      };
-  
-      restoreTimer();
-    }, [visibilityTrigger, currentGameId]); // Re-run when page becomes visible or game changes
+      }
+    };
+  }, [gameSessionState.isTimerRunning, gameSessionState.timeElapsedInSeconds, currentGameId]);
+
+  // Attach a stable event listener
+  useEffect(() => {
+    const stableHandler = (e: Event) => visibilityHandlerRef.current?.(e);
+    document.addEventListener('visibilitychange', stableHandler);
+    return () => {
+      document.removeEventListener('visibilitychange', stableHandler);
+    };
+  }, []); // Empty dependency array ensures this runs only onceage becomes visible or game changes
 
   // --- Wake Lock Effect ---
   useEffect(() => {
