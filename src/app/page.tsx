@@ -3177,6 +3177,7 @@ export default function Home() {
             gameStatus={gameSessionState.gameStatus}
             onOpponentNameChange={handleOpponentNameChange}
             onClose={handleToggleLargeTimerOverlay} // ADD THIS
+            isLoaded={isLoaded}
           />
         )}
 

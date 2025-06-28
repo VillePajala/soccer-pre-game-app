@@ -38,6 +38,7 @@ interface TimerOverlayProps {
   lastSubTime: number | null;
   onOpponentNameChange: (name: string) => void;
   onClose?: () => void;
+  isLoaded: boolean;
 }
 
 const TimerOverlay: React.FC<TimerOverlayProps> = ({
@@ -65,6 +66,7 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
   lastSubTime = null,
   onOpponentNameChange = () => { console.warn('onOpponentNameChange handler not provided'); },
   onClose,
+  isLoaded,
 }) => {
   const { t } = useTranslation(); // Initialize translation hook
 
@@ -268,8 +270,8 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
         <div className="flex items-center space-x-3 mb-5"> 
           <button 
             onClick={onStartPauseTimer} 
-            disabled={gameStatus === 'gameEnd'} // Disable when game ended
-            className={`${timerButtonStyle} ${isTimerRunning ? 'bg-orange-600 hover:bg-orange-700 focus:ring-orange-400' : 'bg-green-600 hover:bg-green-700 focus:ring-green-500'} ${gameStatus === 'gameEnd' ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={gameStatus === 'gameEnd' || !isLoaded} // Disable when game ended OR NOT LOADED
+            className={`${timerButtonStyle} ${isTimerRunning ? 'bg-orange-600 hover:bg-orange-700 focus:ring-orange-400' : 'bg-green-600 hover:bg-green-700 focus:ring-green-500'} ${gameStatus === 'gameEnd' || !isLoaded ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {isTimerRunning ? <FaPause size={16}/> : <FaPlay size={16}/>} 
             <span>{startPauseButtonText}</span>
