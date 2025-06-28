@@ -1094,51 +1094,6 @@ export default function Home() {
     // REMOVE: utilGetSavedGames, getCurrentGameIdSetting (these are now queryFn)
   ]);
 
-  // --- Effect for Page Visibility API to handle timer resilience ---
-  const timerStateOnHideRef = useRef<{isRunning: boolean; elapsedSeconds: number; timestamp: number} | null>(null);
-
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        // Page is hidden
-        if (gameSessionState.isTimerRunning && gameSessionState.gameStatus === 'inProgress') {
-          console.log('[Visibility] Page hidden, timer was running. Pausing and storing state.');
-          timerStateOnHideRef.current = {
-            isRunning: true,
-            elapsedSeconds: gameSessionState.timeElapsedInSeconds,
-            timestamp: Date.now(),
-          };
-          dispatchGameSession({ type: 'SET_TIMER_RUNNING', payload: false });
-        }
-      } else {
-        // Page is visible
-        if (timerStateOnHideRef.current && timerStateOnHideRef.current.isRunning) {
-          console.log('[Visibility] Page visible, timer was running. Restoring state.');
-          const elapsedOfflineMs = Date.now() - timerStateOnHideRef.current.timestamp;
-          const correctedElapsedSeconds = timerStateOnHideRef.current.elapsedSeconds + (elapsedOfflineMs / 1000);
-          
-          // Dispatching SET_TIMER_ELAPSED. The main timer useEffect will catch up game status if period/game ended.
-          dispatchGameSession({ type: 'SET_TIMER_ELAPSED', payload: correctedElapsedSeconds });
-
-          // Check game status *after* potential update by SET_TIMER_ELAPSED via main timer effect
-          // This requires gameSessionState to be up-to-date here, which it might not be immediately after dispatch.
-          // A safer way is to check the status *before* deciding to run, or let the main timer effect restart if conditions met.
-          // For now, let's assume if it was running, and game status is still inProgress, we try to resume.
-          // The main timer useEffect dependence on gameSessionState.isTimerRunning will kick it back on.
-          if (gameSessionState.gameStatus === 'inProgress') { // Check current status
-             dispatchGameSession({ type: 'SET_TIMER_RUNNING', payload: true });
-          }
-          timerStateOnHideRef.current = null;
-        }
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [gameSessionState.isTimerRunning, gameSessionState.timeElapsedInSeconds, gameSessionState.gameStatus]); // Dependencies needed to access current state
-
   // Helper function to load game state from game data
   const loadGameStateFromData = (gameData: AppState | null, isInitialDefaultLoad = false) => {
     console.log('[LOAD GAME STATE] Called with gameData:', gameData, 'isInitialDefaultLoad:', isInitialDefaultLoad);
@@ -1837,10 +1792,14 @@ export default function Home() {
 
   // Function to handle loading a selected game
   const handleLoadGame = async (gameId: string) => {
-    console.log(`Loading game with ID: ${gameId}`);
-    setGameLoadError(null);
-    setIsGameLoading(true);
+    console.log(`[handleLoadGame] Attempting to load game: ${gameId}`);
+    
+    // Clear any existing timer state before loading a new game
+    await removeLocalStorageItemAsync(TIMER_STATE_KEY);
+    
     setProcessingGameId(gameId);
+    setIsGameLoading(true);
+    setGameLoadError(null);
 
     const gameDataToLoad = savedGames[gameId] as AppState | undefined; // Ensure this is AppState
 
