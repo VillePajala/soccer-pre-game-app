@@ -233,7 +233,7 @@ export default function Home() {
   console.log('--- page.tsx RENDER ---');
   const { t } = useTranslation(); // Get translation function
   const queryClient = useQueryClient(); // Get query client instance
-  const { requestWakeLock, releaseWakeLock } = useWakeLock();
+  const { syncWakeLock } = useWakeLock();
 
   const [visibilityTrigger, setVisibilityTrigger] = useState(0);
   // --- Initialize Game Session Reducer ---
@@ -937,6 +937,9 @@ export default function Home() {
     let intervalId: NodeJS.Timeout | null = null;
     const periodEndTimeSeconds = gameSessionState.currentPeriod * gameSessionState.periodDurationMinutes * 60;
 
+    // Sync wake lock state with timer state
+    syncWakeLock(gameSessionState.isTimerRunning);
+
     const saveTimerState = async () => {
       if (currentGameId) {
         const timerState: TimerState = {
@@ -983,7 +986,7 @@ export default function Home() {
         clearInterval(intervalId);
       }
     };
-  }, [gameSessionState.isTimerRunning, gameSessionState.gameStatus, gameSessionState.currentPeriod, gameSessionState.periodDurationMinutes, gameSessionState.numberOfPeriods, gameSessionState.timeElapsedInSeconds, gameSessionState.nextSubDueTimeSeconds, currentGameId]); // Reflect isTimerRunning from gameSessionState
+  }, [gameSessionState.isTimerRunning, gameSessionState.gameStatus, gameSessionState.currentPeriod, gameSessionState.periodDurationMinutes, gameSessionState.numberOfPeriods, gameSessionState.timeElapsedInSeconds, gameSessionState.nextSubDueTimeSeconds, currentGameId, syncWakeLock]); // Reflect isTimerRunning from gameSessionState
 
   // --- Load state from localStorage on mount (REVISED) ---
   useEffect(() => {
@@ -1147,17 +1150,9 @@ export default function Home() {
 
   // --- Wake Lock Effect ---
   useEffect(() => {
-    if (gameSessionState.isTimerRunning) {
-      requestWakeLock();
-    } else {
-      releaseWakeLock();
-    }
-
-    // Cleanup on component unmount
-    return () => {
-      releaseWakeLock();
-    };
-  }, [gameSessionState.isTimerRunning, requestWakeLock, releaseWakeLock]);
+    // This effect is now replaced by the direct call in the main timer effect
+    // to avoid race conditions.
+  }, []);
 
   // Helper function to load game state from game data
   const loadGameStateFromData = (gameData: AppState | null, isInitialDefaultLoad = false) => {
