@@ -1094,6 +1094,44 @@ export default function Home() {
     // REMOVE: utilGetSavedGames, getCurrentGameIdSetting (these are now queryFn)
   ]);
 
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.hidden) {
+        // When the page is hidden, the main timer's useEffect will handle stopping the interval
+        // and has already saved the latest state to localStorage on its last tick.
+        // No immediate action is needed here, but you could add logic if required.
+        console.log('[Visibility] Page is hidden.');
+      } else {
+        // When the page becomes visible, check if we need to restore a running timer.
+        console.log('[Visibility] Page is visible. Checking for timer state...');
+        try {
+          const savedTimerStateJSON = await getLocalStorageItemAsync(TIMER_STATE_KEY);
+          if (savedTimerStateJSON) {
+            const savedTimerState: TimerState = JSON.parse(savedTimerStateJSON);
+            // Only restore if the saved state belongs to the currently active game.
+            if (savedTimerState && savedTimerState.gameId === currentGameId) {
+              console.log('[Visibility] Restoring timer state for the current game.');
+              const elapsedOfflineSeconds = (Date.now() - savedTimerState.timestamp) / 1000;
+              const correctedElapsedSeconds = savedTimerState.timeElapsedInSeconds + elapsedOfflineSeconds;
+
+              // Dispatch actions to update the time and ensure the timer is running.
+              dispatchGameSession({ type: 'SET_TIMER_ELAPSED', payload: correctedElapsedSeconds });
+              dispatchGameSession({ type: 'SET_TIMER_RUNNING', payload: true });
+            }
+          }
+        } catch (error) {
+          console.error('[Visibility] Error restoring timer state:', error);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [currentGameId]); // Dependency on currentGameId ensures we have the correct game context.
+
   // Helper function to load game state from game data
   const loadGameStateFromData = (gameData: AppState | null, isInitialDefaultLoad = false) => {
     console.log('[LOAD GAME STATE] Called with gameData:', gameData, 'isInitialDefaultLoad:', isInitialDefaultLoad);
