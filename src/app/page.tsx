@@ -1100,50 +1100,54 @@ export default function Home() {
     // --- NEW: Robust Visibility Change Handling ---
 
   // 1. Stable effect to listen for the event and trigger a state change
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        console.log('[Visibility] Page became visible, triggering check.');
-        setVisibilityTrigger(c => c + 1);
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, []); // The empty array [] is important here!
+    // 1. Stable effect to listen for the event and trigger reducer actions
+    useEffect(() => {
+      const handleVisibilityChange = () => {
+        if (document.hidden) {
+          // When tab is hidden, save the current time and dispatch a pause action
+          const timerState: TimerState = {
+            gameId: currentGameId || '',
+            timeElapsedInSeconds: gameSessionState.timeElapsedInSeconds,
+            timestamp: Date.now(),
+          };
+          setLocalStorageItemAsync(TIMER_STATE_KEY, JSON.stringify(timerState));
+          dispatchGameSession({ type: 'PAUSE_TIMER_FOR_HIDDEN' });
+        } else {
+          // When tab becomes visible, trigger the other effect to handle restoration
+          setVisibilityTrigger(c => c + 1);
+        }
+      };
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      return () => {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      };
+    }, [currentGameId, gameSessionState.timeElapsedInSeconds]);
 
   // 2. Effect that runs the logic when the trigger state changes
-  useEffect(() => {
-    // Don't run on the initial render, only on subsequent visibility changes
-    if (visibilityTrigger === 0) return;
-
-    const restoreTimerFromVisibility = async () => {
-      console.log('[Visibility Effect] Checking for timer state...');
-      try {
+    // 2. Effect that runs the logic when the trigger state changes
+    useEffect(() => {
+      if (visibilityTrigger === 0) return; // Don't run on initial render
+  
+      const restoreTimer = async () => {
+        // First, check if a timer state was saved
         const savedTimerStateJSON = await getLocalStorageItemAsync(TIMER_STATE_KEY);
-        const lastGameId = await getCurrentGameIdSetting(); // Get the most reliable game ID
-
         if (savedTimerStateJSON) {
           const savedTimerState: TimerState = JSON.parse(savedTimerStateJSON);
-          // Use BOTH the state's currentGameId and the directly fetched lastGameId for the check
-          if (savedTimerState && (savedTimerState.gameId === currentGameId || savedTimerState.gameId === lastGameId)) {
-            console.log('[Visibility Effect] Restoring timer state for current game.');
-            const elapsedOfflineSeconds = (Date.now() - savedTimerState.timestamp) / 1000;
-            const correctedElapsedSeconds = Math.round(savedTimerState.timeElapsedInSeconds + elapsedOfflineSeconds);
-
-            dispatchGameSession({ type: 'SET_TIMER_ELAPSED', payload: correctedElapsedSeconds });
-            dispatchGameSession({ type: 'SET_TIMER_RUNNING', payload: true });
+          // Only restore if the saved state belongs to the currently active game
+          if (savedTimerState && savedTimerState.gameId === currentGameId) {
+            dispatchGameSession({
+              type: 'RESTORE_TIMER_STATE',
+              payload: {
+                savedTime: savedTimerState.timeElapsedInSeconds,
+                timestamp: savedTimerState.timestamp,
+              },
+            });
           }
         }
-      } catch (error) {
-        console.error('[Visibility Effect] Error restoring timer state:', error);
-      }
-    };
-
-    restoreTimerFromVisibility();
-    // The dependency array ensures this runs with the latest currentGameId
-  }, [visibilityTrigger, currentGameId]);
+      };
+  
+      restoreTimer();
+    }, [visibilityTrigger, currentGameId]); // Re-run when page becomes visible or game changes
 
   // --- Wake Lock Effect ---
   useEffect(() => {

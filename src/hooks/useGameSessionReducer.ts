@@ -106,7 +106,9 @@ export type GameSessionAction =
   | { type: 'RESET_TIMER_ONLY' }
   | { type: 'LOAD_GAME_SESSION_STATE'; payload: Partial<GameSessionState> }
   | { type: 'RESET_GAME_SESSION_STATE'; payload: GameSessionState } // Action to reset to a specific state
-  | { type: 'LOAD_PERSISTED_GAME_DATA'; payload: Partial<GameSessionState> }; // For loading GameData-like objects
+  | { type: 'LOAD_PERSISTED_GAME_DATA'; payload: Partial<GameSessionState> } // For loading GameData-like objects
+  | { type: 'PAUSE_TIMER_FOR_HIDDEN' }
+  | { type: 'RESTORE_TIMER_STATE'; payload: { savedTime: number; timestamp: number } };
 
 // --- Reducer Function ---
 export const gameSessionReducer = (state: GameSessionState, action: GameSessionAction): GameSessionState => {
@@ -212,6 +214,24 @@ export const gameSessionReducer = (state: GameSessionState, action: GameSessionA
     }
     case 'SET_TIMER_RUNNING':
       return { ...state, isTimerRunning: action.payload };
+    case 'PAUSE_TIMER_FOR_HIDDEN':
+      if (state.isTimerRunning && state.gameStatus === 'inProgress') {
+        return { ...state, isTimerRunning: false };
+      }
+      return state;
+    case 'RESTORE_TIMER_STATE': {
+      if (state.gameStatus === 'inProgress') {
+        const { savedTime, timestamp } = action.payload;
+        const elapsedOfflineSeconds = (Date.now() - timestamp) / 1000;
+        const correctedElapsedSeconds = Math.round(savedTime + elapsedOfflineSeconds);
+        return {
+          ...state,
+          timeElapsedInSeconds: correctedElapsedSeconds,
+          isTimerRunning: true,
+        };
+      }
+      return state;
+    }
     case 'SET_SUB_INTERVAL': {
         const newIntervalMinutes = Math.max(1, action.payload);
         const currentElapsedTime = state.timeElapsedInSeconds;
