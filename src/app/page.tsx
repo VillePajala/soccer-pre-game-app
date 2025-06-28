@@ -232,7 +232,7 @@ export default function Home() {
   console.log('--- page.tsx RENDER ---');
   const { t } = useTranslation(); // Get translation function
   const queryClient = useQueryClient(); // Get query client instance
-
+  const [visibilityTrigger, setVisibilityTrigger] = useState(0);
   // --- Initialize Game Session Reducer ---
   // Map necessary fields from page.tsx's initialState to GameSessionState
   const initialGameSessionData: GameSessionState = {
@@ -1094,43 +1094,51 @@ export default function Home() {
     // REMOVE: utilGetSavedGames, getCurrentGameIdSetting (these are now queryFn)
   ]);
 
-  useEffect(() => {
-    const handleVisibilityChange = async () => {
-      if (document.hidden) {
-        // When the page is hidden, the main timer's useEffect will handle stopping the interval
-        // and has already saved the latest state to localStorage on its last tick.
-        // No immediate action is needed here, but you could add logic if required.
-        console.log('[Visibility] Page is hidden.');
-      } else {
-        // When the page becomes visible, check if we need to restore a running timer.
-        console.log('[Visibility] Page is visible. Checking for timer state...');
-        try {
-          const savedTimerStateJSON = await getLocalStorageItemAsync(TIMER_STATE_KEY);
-          if (savedTimerStateJSON) {
-            const savedTimerState: TimerState = JSON.parse(savedTimerStateJSON);
-            // Only restore if the saved state belongs to the currently active game.
-            if (savedTimerState && savedTimerState.gameId === currentGameId) {
-              console.log('[Visibility] Restoring timer state for the current game.');
-              const elapsedOfflineSeconds = (Date.now() - savedTimerState.timestamp) / 1000;
-              const correctedElapsedSeconds = savedTimerState.timeElapsedInSeconds + elapsedOfflineSeconds;
+    // --- NEW: Robust Visibility Change Handling ---
 
-              // Dispatch actions to update the time and ensure the timer is running.
-              dispatchGameSession({ type: 'SET_TIMER_ELAPSED', payload: correctedElapsedSeconds });
-              dispatchGameSession({ type: 'SET_TIMER_RUNNING', payload: true });
-            }
-          }
-        } catch (error) {
-          console.error('[Visibility] Error restoring timer state:', error);
-        }
+  // 1. Stable effect to listen for the event and trigger a state change
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('[Visibility] Page became visible, triggering check.');
+        setVisibilityTrigger(c => c + 1);
       }
     };
-
     document.addEventListener('visibilitychange', handleVisibilityChange);
-
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [currentGameId]); // Dependency on currentGameId ensures we have the correct game context.
+  }, []); // The empty array [] is important here!
+
+  // 2. Effect that runs the logic when the trigger state changes
+  useEffect(() => {
+    // Don't run on the initial render, only on subsequent visibility changes
+    if (visibilityTrigger === 0) return;
+
+    const restoreTimerFromVisibility = async () => {
+      console.log('[Visibility Effect] Checking for timer state...');
+      try {
+        const savedTimerStateJSON = await getLocalStorageItemAsync(TIMER_STATE_KEY);
+        if (savedTimerStateJSON) {
+          const savedTimerState: TimerState = JSON.parse(savedTimerStateJSON);
+          // Only restore if the saved state belongs to the currently active game
+          if (savedTimerState && savedTimerState.gameId === currentGameId) {
+            console.log('[Visibility Effect] Restoring timer state for current game.');
+            const elapsedOfflineSeconds = (Date.now() - savedTimerState.timestamp) / 1000;
+            const correctedElapsedSeconds = savedTimerState.timeElapsedInSeconds + elapsedOfflineSeconds;
+
+            dispatchGameSession({ type: 'SET_TIMER_ELAPSED', payload: correctedElapsedSeconds });
+            dispatchGameSession({ type: 'SET_TIMER_RUNNING', payload: true });
+          }
+        }
+      } catch (error) {
+        console.error('[Visibility Effect] Error restoring timer state:', error);
+      }
+    };
+
+    restoreTimerFromVisibility();
+    // The dependency array ensures this runs with the latest currentGameId
+  }, [visibilityTrigger, currentGameId]);
 
   // Helper function to load game state from game data
   const loadGameStateFromData = (gameData: AppState | null, isInitialDefaultLoad = false) => {
