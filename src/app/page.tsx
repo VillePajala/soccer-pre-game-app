@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo, useReducer, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useReducer } from 'react';
 import SoccerField from '@/components/SoccerField';
 import PlayerBar from '@/components/PlayerBar';
 import ControlBar from '@/components/ControlBar';
@@ -1350,7 +1350,7 @@ export default function Home() {
       setDrawings([]);
       saveStateToHistory({ playersOnField: [], opponents: [], drawings: [] });
     }
-  }, [isTacticsBoardView, setPlayersOnField, setOpponents, setDrawings, setTacticalDiscs, setTacticalDrawings, saveStateToHistory, setTacticalBallPosition]);
+  }, [isTacticsBoardView, saveStateToHistory, setDrawings, setOpponents, setPlayersOnField, setTacticalBallPosition, setTacticalDiscs, setTacticalDrawings]);
 
   const handleClearDrawingsForView = () => {
     if (isTacticsBoardView) {

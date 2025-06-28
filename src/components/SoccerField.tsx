@@ -572,7 +572,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
 
     // --- Restore context --- 
     context.restore();
-  }, [players, opponents, drawings, showPlayerNames, isTacticsBoardView, tacticalDiscs, ballImage]); // Remove gameEvents dependency
+  }, [players, opponents, drawings, showPlayerNames, isTacticsBoardView, tacticalDiscs, tacticalBallPosition, ballImage]); // Remove gameEvents dependency
 
   // Add the new ResizeObserver effect
   useEffect(() => {
