@@ -440,7 +440,6 @@ export default function Home() {
   // ... Timer state ...
   // ... Modal states ...
   // ... UI/Interaction states ...
-  const [isLoaded, setIsLoaded] = useState<boolean>(false);
   const [draggingPlayerFromBarInfo, setDraggingPlayerFromBarInfo] = useState<Player | null>(null);
   // Persistence state
   const [savedGames, setSavedGames] = useState<SavedGamesCollection>({});
@@ -1065,27 +1064,23 @@ export default function Home() {
             if (savedTimerState && savedTimerState.gameId === lastGameId) {
               console.log('[EFFECT init] Found a saved timer state for the current game. Restoring...');
               const elapsedOfflineSeconds = (Date.now() - savedTimerState.timestamp) / 1000;
-              const correctedElapsedSeconds = savedTimerState.timeElapsedInSeconds + elapsedOfflineSeconds;
+              const correctedElapsedSeconds = Math.round(savedTimerState.timeElapsedInSeconds + elapsedOfflineSeconds);
               
               dispatchGameSession({ type: 'SET_TIMER_ELAPSED', payload: correctedElapsedSeconds });
               dispatchGameSession({ type: 'SET_TIMER_RUNNING', payload: true });
-              
-              // It's safer to remove the state *after* we've successfully dispatched the updates
-              // but for this flow, we'll let the running timer overwrite it.
             } else {
-              // Ensure no stale timer state is left if the game ID doesn't match
               await removeLocalStorageItemAsync(TIMER_STATE_KEY);
             }
           }
         } catch (error) {
           console.error('[EFFECT init] Error restoring timer state:', error);
-          await removeLocalStorageItemAsync(TIMER_STATE_KEY); // Clean up on error
+          await removeLocalStorageItemAsync(TIMER_STATE_KEY);
         }
         // --- END TIMER RESTORATION LOGIC ---
 
-        setIsLoaded(true);
+        // This is now the single source of truth for loading completion.
         setInitialLoadComplete(true);
-        console.log('[EFFECT init] Initial application data coordination complete based on TanStack Query states.');
+        console.log('[EFFECT init] Initial application data coordination complete.');
       }
     };
 
@@ -1279,7 +1274,7 @@ export default function Home() {
   useEffect(() => {
     // Only auto-save if loaded AND we have a proper game ID (not the default unsaved one)
     const autoSave = async () => {
-    if (isLoaded && currentGameId && currentGameId !== DEFAULT_GAME_ID) {
+    if (initialLoadComplete && currentGameId && currentGameId !== DEFAULT_GAME_ID) {
       console.log(`Auto-saving state for game ID: ${currentGameId}`);
       try {
         // 1. Create the current game state snapshot (excluding history and volatile timer states)
@@ -1330,13 +1325,13 @@ export default function Home() {
         console.error("Failed to auto-save state to localStorage:", error);
         alert("Error saving game."); // Notify user
       }
-    } else if (isLoaded && currentGameId === DEFAULT_GAME_ID) {
+    } else if (initialLoadComplete && currentGameId === DEFAULT_GAME_ID) {
       console.log("Not auto-saving as this is an unsaved game (no ID assigned yet)");
     }
     };
     autoSave();
     // Dependencies: Include all state variables that are part of the saved snapshot
-  }, [isLoaded, currentGameId,
+  }, [initialLoadComplete, currentGameId,
       playersOnField, opponents, drawings, availablePlayers, masterRosterQueryResultData,
       // showPlayerNames, // REMOVED - Covered by gameSessionState
       // Local states that are part of the snapshot but not yet in gameSessionState:
@@ -3050,12 +3045,7 @@ export default function Home() {
 
   // Render null or a loading indicator until state is loaded
   // Note: Console log added before the check itself
-  if (!isLoaded) {
-    // You might want a more sophisticated loading indicator
-    console.log('Rendering Loading Indicator because !isLoaded');
-    return <div className="flex items-center justify-center h-screen bg-gray-900 text-white">Loading...</div>;
-  }
-
+ 
   // Final console log before returning the main JSX
   console.log('[Home Render] highlightRosterButton:', highlightRosterButton); // Log state on render
 
@@ -3176,8 +3166,8 @@ export default function Home() {
             currentPeriod={gameSessionState.currentPeriod}
             gameStatus={gameSessionState.gameStatus}
             onOpponentNameChange={handleOpponentNameChange}
-            onClose={handleToggleLargeTimerOverlay} // ADD THIS
-            isLoaded={isLoaded}
+            onClose={handleToggleLargeTimerOverlay}
+            isLoaded={initialLoadComplete}
           />
         )}
 
