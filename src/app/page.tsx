@@ -1127,13 +1127,15 @@ export default function Home() {
       console.log('[Visibility Effect] Checking for timer state...');
       try {
         const savedTimerStateJSON = await getLocalStorageItemAsync(TIMER_STATE_KEY);
+        const lastGameId = await getCurrentGameIdSetting(); // Get the most reliable game ID
+
         if (savedTimerStateJSON) {
           const savedTimerState: TimerState = JSON.parse(savedTimerStateJSON);
-          // Only restore if the saved state belongs to the currently active game
-          if (savedTimerState && savedTimerState.gameId === currentGameId) {
+          // Use BOTH the state's currentGameId and the directly fetched lastGameId for the check
+          if (savedTimerState && (savedTimerState.gameId === currentGameId || savedTimerState.gameId === lastGameId)) {
             console.log('[Visibility Effect] Restoring timer state for current game.');
             const elapsedOfflineSeconds = (Date.now() - savedTimerState.timestamp) / 1000;
-            const correctedElapsedSeconds = savedTimerState.timeElapsedInSeconds + elapsedOfflineSeconds;
+            const correctedElapsedSeconds = Math.round(savedTimerState.timeElapsedInSeconds + elapsedOfflineSeconds);
 
             dispatchGameSession({ type: 'SET_TIMER_ELAPSED', payload: correctedElapsedSeconds });
             dispatchGameSession({ type: 'SET_TIMER_RUNNING', payload: true });
