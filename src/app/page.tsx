@@ -67,7 +67,7 @@ import { queryKeys } from '@/config/queryKeys';
 import { addSeason as utilAddSeason } from '@/utils/seasons';
 import { addTournament as utilAddTournament } from '@/utils/tournaments';
 // Import constants
-import { DEFAULT_GAME_ID, MASTER_ROSTER_KEY } from '@/config/constants';
+import { DEFAULT_GAME_ID, MASTER_ROSTER_KEY, TIMER_STATE_KEY } from '@/config/constants';
 
 // Define the Point type for drawing - Use relative coordinates
 export interface Point {
@@ -91,6 +91,13 @@ export interface GameEvent {
   assisterId?: string; // Player ID of the assister (optional)
   entityId?: string; // Optional: For events associated with a specific entity (e.g., player ID for fair play card)
   // Additional fields might be needed for other event types
+}
+
+// Define the structure for the timer state snapshot
+interface TimerState {
+  gameId: string;
+  timeElapsedInSeconds: number;
+  timestamp: number; // The Date.now() when the state was saved
 }
 
 // Define structure for substitution interval logs
@@ -927,13 +934,26 @@ export default function Home() {
     let intervalId: NodeJS.Timeout | null = null;
     const periodEndTimeSeconds = gameSessionState.currentPeriod * gameSessionState.periodDurationMinutes * 60;
 
+    const saveTimerState = async () => {
+      if (currentGameId) {
+        const timerState: TimerState = {
+          gameId: currentGameId,
+          timeElapsedInSeconds: gameSessionState.timeElapsedInSeconds,
+          timestamp: Date.now(),
+        };
+        await setLocalStorageItemAsync(TIMER_STATE_KEY, JSON.stringify(timerState));
+      }
+    };
+
     if (gameSessionState.isTimerRunning && gameSessionState.gameStatus === 'inProgress') {
       intervalId = setInterval(() => {
+        saveTimerState(); // Save state on each tick
         const currentTime = gameSessionState.timeElapsedInSeconds;
         const potentialNewTime = currentTime + 1;
 
         if (potentialNewTime >= periodEndTimeSeconds) {
           clearInterval(intervalId!); // Stop the interval
+          removeLocalStorageItemAsync(TIMER_STATE_KEY);
           // setIsTimerRunning(false); // Reducer's END_PERIOD_OR_GAME will handle this
           if (gameSessionState.currentPeriod === gameSessionState.numberOfPeriods) {
             dispatchGameSession({ type: 'END_PERIOD_OR_GAME', payload: { newStatus: 'gameEnd', finalTime: periodEndTimeSeconds } });
@@ -947,6 +967,7 @@ export default function Home() {
         }
       }, 1000);
     } else {
+      removeLocalStorageItemAsync(TIMER_STATE_KEY);
       if (intervalId) {
         clearInterval(intervalId);
       }
@@ -957,7 +978,7 @@ export default function Home() {
         clearInterval(intervalId);
       }
     };
-  }, [gameSessionState.isTimerRunning, gameSessionState.gameStatus, gameSessionState.currentPeriod, gameSessionState.periodDurationMinutes, gameSessionState.numberOfPeriods, gameSessionState.timeElapsedInSeconds, gameSessionState.nextSubDueTimeSeconds]); // Reflect isTimerRunning from gameSessionState
+  }, [gameSessionState.isTimerRunning, gameSessionState.gameStatus, gameSessionState.currentPeriod, gameSessionState.periodDurationMinutes, gameSessionState.numberOfPeriods, gameSessionState.timeElapsedInSeconds, gameSessionState.nextSubDueTimeSeconds, currentGameId]); // Reflect isTimerRunning from gameSessionState
 
   // --- Load state from localStorage on mount (REVISED) ---
   useEffect(() => {
@@ -1026,8 +1047,36 @@ export default function Home() {
     
       // Determine overall initial load completion
       if (!isMasterRosterQueryLoading && !areSeasonsQueryLoading && !areTournamentsQueryLoading && !isAllSavedGamesQueryLoading && !isCurrentGameIdSettingQueryLoading) {
-    setIsLoaded(true);
-    setInitialLoadComplete(true);
+        // --- TIMER RESTORATION LOGIC ---
+        try {
+          const savedTimerStateJSON = await getLocalStorageItemAsync(TIMER_STATE_KEY);
+          const lastGameId = await getCurrentGameIdSetting();
+          
+          if (savedTimerStateJSON) {
+            const savedTimerState: TimerState = JSON.parse(savedTimerStateJSON);
+            if (savedTimerState && savedTimerState.gameId === lastGameId) {
+              console.log('[EFFECT init] Found a saved timer state for the current game. Restoring...');
+              const elapsedOfflineSeconds = (Date.now() - savedTimerState.timestamp) / 1000;
+              const correctedElapsedSeconds = savedTimerState.timeElapsedInSeconds + elapsedOfflineSeconds;
+              
+              dispatchGameSession({ type: 'SET_TIMER_ELAPSED', payload: correctedElapsedSeconds });
+              dispatchGameSession({ type: 'SET_TIMER_RUNNING', payload: true });
+              
+              // It's safer to remove the state *after* we've successfully dispatched the updates
+              // but for this flow, we'll let the running timer overwrite it.
+            } else {
+              // Ensure no stale timer state is left if the game ID doesn't match
+              await removeLocalStorageItemAsync(TIMER_STATE_KEY);
+            }
+          }
+        } catch (error) {
+          console.error('[EFFECT init] Error restoring timer state:', error);
+          await removeLocalStorageItemAsync(TIMER_STATE_KEY); // Clean up on error
+        }
+        // --- END TIMER RESTORATION LOGIC ---
+
+        setIsLoaded(true);
+        setInitialLoadComplete(true);
         console.log('[EFFECT init] Initial application data coordination complete based on TanStack Query states.');
       }
     };
@@ -1522,6 +1571,7 @@ export default function Home() {
   };
 
   const handleResetTimer = () => {
+    removeLocalStorageItemAsync(TIMER_STATE_KEY);
     dispatchGameSession({ type: 'RESET_TIMER_ONLY' });
   };
 
