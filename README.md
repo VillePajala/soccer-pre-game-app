@@ -78,4 +78,4 @@ The app is designed to be an all-in-one digital assistant for game day, from pre
 
 ---
 
-*This project is under active development. Feel free to contribute or report issues!*
+*This project is under active development. Feel free to contribute or report issues!**
