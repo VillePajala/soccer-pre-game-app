@@ -15,7 +15,6 @@ import NewGameSetupModal from '@/components/NewGameSetupModal';
 import RosterSettingsModal from '@/components/RosterSettingsModal';
 import GameSettingsModal from '@/components/GameSettingsModal';
 import SeasonTournamentManagementModal from '@/components/SeasonTournamentManagementModal';
-import PlayerStatsModal from '@/components/PlayerStatsModal';
 import { useTranslation } from 'react-i18next';
 import { useGameState, UseGameStateReturn } from '@/hooks/useGameState';
 import GameInfoBar from '@/components/GameInfoBar';
@@ -470,7 +469,7 @@ export default function Home() {
   const [isLoadGameModalOpen, setIsLoadGameModalOpen] = useState<boolean>(false);
   const [isRosterModalOpen, setIsRosterModalOpen] = useState<boolean>(false); // State for the new modal
   const [isSeasonTournamentModalOpen, setIsSeasonTournamentModalOpen] = useState<boolean>(false);
-  const [isPlayerStatsModalOpen, setIsPlayerStatsModalOpen] = useState(false);
+  // const [isPlayerStatsModalOpen, setIsPlayerStatsModalOpen] = useState(false);
   const [selectedPlayerForStats, setSelectedPlayerForStats] = useState<Player | null>(null);
 
   // --- Timer State (Still needed here) ---
@@ -1746,6 +1745,11 @@ export default function Home() {
 
   // Handler to open/close the stats modal
   const handleToggleGameStatsModal = () => {
+    // If the modal is currently open, we are about to close it.
+    if (isGameStatsModalOpen) {
+      // Clear the selected player so it doesn't open to the same player next time.
+      setSelectedPlayerForStats(null);
+    }
     setIsGameStatsModalOpen(!isGameStatsModalOpen);
   };
 
@@ -3124,19 +3128,16 @@ export default function Home() {
     const player = availablePlayers.find(p => p.id === playerId);
     if (player) {
       setSelectedPlayerForStats(player);
-      setIsPlayerStatsModalOpen(true);
+      setIsGameStatsModalOpen(true);
       setIsRosterModalOpen(false); // Close the roster modal
     }
   };
 
-  const handleClosePlayerStats = () => {
-    setIsPlayerStatsModalOpen(false);
-    setSelectedPlayerForStats(null);
-  };
+  
 
   const handleGameLogClick = (gameId: string) => {
     setCurrentGameId(gameId);
-    handleClosePlayerStats();
+    // handleClosePlayerStats(); // This function no longer exists
     handleToggleGameStatsModal();
   };
 
@@ -3324,6 +3325,8 @@ export default function Home() {
           onExportOneCsv={handleExportOneCsv}
           onExportAggregateJson={handleExportAggregateJson}
           onExportAggregateCsv={handleExportAggregateCsv}
+          initialSelectedPlayerId={selectedPlayerForStats?.id}
+          onGameClick={handleGameLogClick}
         />
       )}
       {/* Save Game Modal */}
@@ -3406,13 +3409,13 @@ export default function Home() {
         deleteTournamentMutation={deleteTournamentMutation}
       />
       
-      <PlayerStatsModal 
+      {/* <PlayerStatsModal 
           isOpen={isPlayerStatsModalOpen} 
           onClose={handleClosePlayerStats} 
           player={selectedPlayerForStats}
           savedGames={allSavedGamesQueryResultData || {}} 
           onGameClick={handleGameLogClick}
-      />
+      /> */}
 
       <GameSettingsModal
         isOpen={isGameSettingsModalOpen}
