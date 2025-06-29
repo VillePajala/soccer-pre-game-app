@@ -2444,10 +2444,24 @@ export default function Home() {
 
   // --- NEW: Handler to Toggle Player Selection for Current Match ---
   const handleTogglePlayerSelection = (playerId: string) => {
-    dispatchGameSession({ type: 'SET_SELECTED_PLAYER_IDS', payload: [playerId] });
+    const currentSelectedIds = gameSessionState.selectedPlayerIds;
+    const isSelected = currentSelectedIds.includes(playerId);
+    
+    let newSelectedIds;
+    if (isSelected) {
+      // If player is already selected, remove them
+      newSelectedIds = currentSelectedIds.filter(id => id !== playerId);
+    } else {
+      // If player is not selected, add them
+      newSelectedIds = [...currentSelectedIds, playerId];
+    }
+
+    dispatchGameSession({ type: 'SET_SELECTED_PLAYER_IDS', payload: newSelectedIds });
   };
 
   const handleUpdateSelectedPlayers = (playerIds: string[]) => {
+    // This function is used by GameSettingsModal to set the roster for that specific game.
+    // It replaces the entire selection.
     dispatchGameSession({ type: 'SET_SELECTED_PLAYER_IDS', payload: playerIds });
   };
 

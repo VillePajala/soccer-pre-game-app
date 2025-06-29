@@ -569,7 +569,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
 
         {/* Header Section */}
         <div className="flex justify-center items-center pt-10 pb-4 px-6 backdrop-blur-sm bg-slate-900/20 border-b border-slate-700/20 flex-shrink-0">
-          <h2 className="text-3xl font-bold text-yellow-400 tracking-wide drop-shadow-lg">
+          <h2 className="text-3xl font-bold text-yellow-400 tracking-wide drop-shadow-lg text-center">
             {modalTitle}
           </h2>
         </div>
