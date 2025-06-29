@@ -98,6 +98,7 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                     <button 
                         onClick={() => setShowInput(true)} 
                         className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
+                        data-testid={`create-${type}-button`}
                     >
                         <HiPlusCircle className="w-5 h-5" />
                         {t('seasonTournamentModal.createNew')}
@@ -114,7 +115,7 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                         />
                         <div className="flex justify-end gap-2">
                             <button onClick={() => setShowInput(false)} className="px-3 py-1 text-xs rounded bg-slate-600 hover:bg-slate-500">{t('common.cancel')}</button>
-                            <button onClick={() => handleSave(type)} className="px-3 py-1 text-xs rounded bg-indigo-600 hover:bg-indigo-500">{t('common.save')}</button>
+                            <button onClick={() => handleSave(type)} className="px-3 py-1 text-xs rounded bg-indigo-600 hover:bg-indigo-500" data-testid={`save-new-${type}-button`}>{t('common.save')}</button>
                         </div>
                     </div>
                 )}
