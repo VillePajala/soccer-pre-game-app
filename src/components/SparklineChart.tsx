@@ -6,16 +6,18 @@ import type { TooltipProps } from 'recharts';
 
 interface SparklineChartProps {
   data: { date: string; points: number; goals: number; assists: number; result: 'W' | 'L' | 'D' | 'N/A' }[];
+  goalsLabel: string;
+  assistsLabel: string;
 }
 
-const CustomTooltip: React.FC<TooltipProps<number, string>> = ({ active, payload }) => {
+const CustomTooltip: React.FC<TooltipProps<number, string> & { goalsLabel: string; assistsLabel: string }> = ({ active, payload, goalsLabel, assistsLabel }) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
       <div className="bg-slate-700 text-white p-2 rounded-md border border-slate-600 shadow-lg text-xs">
         <p className="font-bold">{new Date(data.date).toLocaleDateString()}</p>
-        <p style={{ color: '#22c55e' }}>{`Goals: ${data.goals}`}</p>
-        <p style={{ color: '#3b82f6' }}>{`Assists: ${data.assists}`}</p>
+        <p style={{ color: '#22c55e' }}>{`${goalsLabel}: ${data.goals}`}</p>
+        <p style={{ color: '#3b82f6' }}>{`${assistsLabel}: ${data.assists}`}</p>
       </div>
     );
   }
@@ -36,7 +38,7 @@ const CustomizedDot = ({ cx, cy }: DotProps) => {
   );
 };
 
-const SparklineChart: React.FC<SparklineChartProps> = ({ data }) => {
+const SparklineChart: React.FC<SparklineChartProps> = ({ data, goalsLabel, assistsLabel }) => {
   const chartData = [...data].reverse();
   const averagePoints = chartData.length > 0 ? chartData.reduce((sum, item) => sum + item.points, 0) / chartData.length : 0;
   const maxPoints = Math.max(...chartData.map(d => d.points), 3); // Ensure y-axis is at least 3
@@ -56,15 +58,15 @@ const SparklineChart: React.FC<SparklineChartProps> = ({ data }) => {
             domain={[0, maxPoints]}
             allowDecimals={false}
           />
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip content={<CustomTooltip goalsLabel={goalsLabel} assistsLabel={assistsLabel} />} />
           <Legend 
             iconType="circle"
             iconSize={8}
             wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} 
           />
           <ReferenceLine y={averagePoints} stroke="#94a3b8" strokeDasharray="4 4" />
-          <Area type="monotone" dataKey="goals" fill="#22c55e" stroke="#22c55e" name="Goals" fillOpacity={0.2} dot={<CustomizedDot />} />
-          <Area type="monotone" dataKey="assists" fill="#3b82f6" stroke="#3b82f6" name="Assists" fillOpacity={0.2} dot={<CustomizedDot />} />
+          <Area type="monotone" dataKey="goals" fill="#22c55e" stroke="#22c55e" name={goalsLabel} fillOpacity={0.2} dot={<CustomizedDot />} />
+          <Area type="monotone" dataKey="assists" fill="#3b82f6" stroke="#3b82f6" name={assistsLabel} fillOpacity={0.2} dot={<CustomizedDot />} />
         </ComposedChart>
       </ResponsiveContainer>
     </div>

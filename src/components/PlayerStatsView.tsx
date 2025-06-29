@@ -49,23 +49,24 @@ const PlayerStatsView: React.FC<PlayerStatsViewProps> = ({ player, savedGames, o
         </div>
 
         {/* Summary Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center mb-6 p-4 bg-slate-800/60 rounded-lg">
+        <div className="grid grid-cols-4 gap-4 text-center mb-6 p-4 bg-slate-800/60 rounded-lg">
           <div>
-            <p className="text-2xl font-bold">{playerStats.totalGames}</p>
+            <p className="text-2xl font-bold text-yellow-400">{playerStats.totalGames}</p>
             <p className="text-sm text-slate-400">{t('playerStats.gamesPlayed', 'Games Played')}</p>
+            <p className="text-xs text-slate-500">&nbsp;</p>
           </div>
           <div>
-            <p className="text-2xl font-bold">{playerStats.totalGoals}</p>
+            <p className="text-2xl font-bold text-yellow-400">{playerStats.totalGoals}</p>
             <p className="text-sm text-slate-400">{t('playerStats.goals', 'Goals')}</p>
             <p className="text-xs text-slate-500">({playerStats.avgGoalsPerGame.toFixed(1)} {t('playerStats.perGame', '/ game')})</p>
           </div>
           <div>
-            <p className="text-2xl font-bold">{playerStats.totalAssists}</p>
+            <p className="text-2xl font-bold text-yellow-400">{playerStats.totalAssists}</p>
             <p className="text-sm text-slate-400">{t('playerStats.assists', 'Assists')}</p>
             <p className="text-xs text-slate-500">({playerStats.avgAssistsPerGame.toFixed(1)} {t('playerStats.perGame', '/ game')})</p>
           </div>
           <div>
-            <p className="text-2xl font-bold">{playerStats.totalGoals + playerStats.totalAssists}</p>
+            <p className="text-2xl font-bold text-yellow-400">{playerStats.totalGoals + playerStats.totalAssists}</p>
             <p className="text-sm text-slate-400">{t('playerStats.points', 'Points')}</p>
             <p className="text-xs text-slate-500">({(playerStats.avgGoalsPerGame + playerStats.avgAssistsPerGame).toFixed(1)} {t('playerStats.perGame', '/ game')})</p>
           </div>
@@ -75,7 +76,11 @@ const PlayerStatsView: React.FC<PlayerStatsViewProps> = ({ player, savedGames, o
         <div className="flex-grow">
           <h3 className="text-lg font-semibold mb-2">{t('playerStats.gameLog', 'Game Log')}</h3>
           <div className="mb-4">
-            <SparklineChart data={playerStats.gameByGameStats} />
+            <SparklineChart 
+              data={playerStats.gameByGameStats} 
+              goalsLabel={t('playerStats.goals', 'Goals')}
+              assistsLabel={t('playerStats.assists', 'Assists')}
+            />
           </div>
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {playerStats.gameByGameStats.length > 0 ? (
@@ -92,14 +97,15 @@ const PlayerStatsView: React.FC<PlayerStatsViewProps> = ({ player, savedGames, o
                       <p className="text-xs text-slate-400">{format(new Date(game.date), i18n.language === 'fi' ? 'd.M.yyyy' : 'PP', { locale: i18n.language === 'fi' ? fi : enUS })}</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p>
-                      <span className={game.goals > 0 ? 'text-green-400 font-bold' : ''}>
-                        {t('playerStats.goals_short', 'G')}: {game.goals}
-                      </span> | <span className={game.assists > 0 ? 'text-blue-400 font-bold' : ''}>
-                        {t('playerStats.assists_short', 'A')}: {game.assists}
-                      </span>
-                    </p>
+                  <div className="flex items-center">
+                    <div className="text-center mx-2">
+                      <p className={`font-bold text-lg ${game.goals > 0 ? 'text-green-400' : 'text-slate-300'}`}>{game.goals}</p>
+                      <p className="text-xs text-slate-400">{t('playerStats.goals', 'Goals')}</p>
+                    </div>
+                    <div className="text-center mx-2">
+                      <p className={`font-bold text-lg ${game.assists > 0 ? 'text-blue-400' : 'text-slate-300'}`}>{game.assists}</p>
+                      <p className="text-xs text-slate-400">{t('playerStats.assists', 'Assists')}</p>
+                    </div>
                   </div>
                 </button>
               ))
