@@ -1,8 +1,8 @@
 // Listen for the install event
 self.addEventListener('install', (event) => {
   console.log('[SW] Service worker installing...');
-  // Ensure the new service worker activates immediately once it's installed
-  self.skipWaiting();
+  // Do NOT call self.skipWaiting() here.
+  // We want to wait for the user to click the update button.
 });
 
 // Listen for the activate event

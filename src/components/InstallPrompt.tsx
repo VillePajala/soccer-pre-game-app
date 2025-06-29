@@ -19,7 +19,7 @@ const InstallPrompt: React.FC = () => {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isVisible, setIsVisible] = useState(false);
 
-  useEffect(() => {
+  const checkInstallationStatus = () => {
     // Only run this in the browser
     if (typeof window === 'undefined') return;
 
@@ -30,7 +30,8 @@ const InstallPrompt: React.FC = () => {
       (window.navigator as IosNavigator).standalone === true;
 
     if (isAppInstalled) {
-      return; // Don't show prompt if already installed
+      setIsVisible(false); // Hide prompt if installed
+      return;
     }
 
     // Check localStorage to see if the user dismissed the prompt recently
@@ -39,22 +40,31 @@ const InstallPrompt: React.FC = () => {
       return; // Don't show prompt if dismissed in the last 24 hours
     }
 
+    // If not installed and not recently dismissed, check if we have a prompt event
+    if (installPrompt) {
+        setIsVisible(true);
+    }
+  };
+
+  useEffect(() => {
     const handleBeforeInstallPrompt = (event: Event) => {
-      // Prevent the browser's default install prompt
       event.preventDefault();
-      
-      // Store the event for later use
       const promptEvent = event as BeforeInstallPromptEvent;
       setInstallPrompt(promptEvent);
-      setIsVisible(true);
+      setIsVisible(true); // Show immediately when event is caught
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('focus', checkInstallationStatus); // Re-check on focus
+
+    // Initial check
+    checkInstallationStatus();
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('focus', checkInstallationStatus);
     };
-  }, []);
+  }, [installPrompt]); // Rerun effect if installPrompt changes
 
   const handleInstall = async () => {
     if (!installPrompt) return;
