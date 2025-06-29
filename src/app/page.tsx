@@ -235,6 +235,7 @@ export default function Home() {
   const queryClient = useQueryClient(); // Get query client instance
   const { syncWakeLock } = useWakeLock();
 
+ 
   
   // --- Initialize Game Session Reducer ---
   // Map necessary fields from page.tsx's initialState to GameSessionState
@@ -267,6 +268,17 @@ export default function Home() {
   };
 
   const [gameSessionState, dispatchGameSession] = useReducer(gameSessionReducer, initialGameSessionData);
+
+ // --- Refs to hold the latest state for the stable visibility handler ---
+  const isRunningRef = useRef(gameSessionState.isTimerRunning);
+  const elapsedRef = useRef(gameSessionState.timeElapsedInSeconds);
+ 
+
+  // Effects to keep the refs in sync with the state
+  useEffect(() => { isRunningRef.current = gameSessionState.isTimerRunning; }, [gameSessionState.isTimerRunning]);
+  useEffect(() => { elapsedRef.current = gameSessionState.timeElapsedInSeconds; }, [gameSessionState.timeElapsedInSeconds]);
+  
+
 
   useEffect(() => {
     console.log('[gameSessionState CHANGED]', gameSessionState);
@@ -444,6 +456,8 @@ export default function Home() {
   // Persistence state
   const [savedGames, setSavedGames] = useState<SavedGamesCollection>({});
   const [currentGameId, setCurrentGameId] = useState<string | null>(DEFAULT_GAME_ID);
+  const gameIdRef = useRef(currentGameId);
+  useEffect(() => { gameIdRef.current = currentGameId; }, [currentGameId]);
   // ADD State for seasons/tournaments lists
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
@@ -1097,33 +1111,26 @@ export default function Home() {
     // REMOVE: utilGetSavedGames, getCurrentGameIdSetting (these are now queryFn)
   ]);
 
-    // --- NEW: Robust Visibility Change Handling ---
-
-  // 1. Stable effect to listen for the event and trigger a state change
-    // 1. Stable effect to listen for the event and trigger reducer actions
-      // --- NEW: Robust Visibility Change Handling ---
-  const visibilityHandlerRef = useRef<((e: Event) => void) | null>(null);
-
-  // Keep the handler logic updated with the latest state
+  // --- NEW: Robust Visibility Change Handling ---
   useEffect(() => {
-    visibilityHandlerRef.current = async () => {
+    const handleVisibilityChange = async () => {
       if (document.hidden) {
-        // Only save state if the timer is actually running
-        if (gameSessionState.isTimerRunning) {
+        // Use the ref to get the most up-to-date state
+        if (isRunningRef.current) {
           const timerState: TimerState = {
-            gameId: currentGameId || '',
-            timeElapsedInSeconds: gameSessionState.timeElapsedInSeconds,
+            gameId: gameIdRef.current || '',
+            timeElapsedInSeconds: elapsedRef.current,
             timestamp: Date.now(),
           };
           await setLocalStorageItemAsync(TIMER_STATE_KEY, JSON.stringify(timerState));
           dispatchGameSession({ type: 'PAUSE_TIMER_FOR_HIDDEN' });
         }
       } else {
-        // When tab becomes visible, attempt to restore
         const savedTimerStateJSON = await getLocalStorageItemAsync(TIMER_STATE_KEY);
         if (savedTimerStateJSON) {
           const savedTimerState: TimerState = JSON.parse(savedTimerStateJSON);
-          if (savedTimerState && savedTimerState.gameId === currentGameId) {
+          // Use the ref to get the most up-to-date game ID for comparison
+          if (savedTimerState && savedTimerState.gameId === gameIdRef.current) {
             dispatchGameSession({
               type: 'RESTORE_TIMER_STATE',
               payload: {
@@ -1135,16 +1142,12 @@ export default function Home() {
         }
       }
     };
-  }, [gameSessionState.isTimerRunning, gameSessionState.timeElapsedInSeconds, currentGameId]);
 
-  // Attach a stable event listener
-  useEffect(() => {
-    const stableHandler = (e: Event) => visibilityHandlerRef.current?.(e);
-    document.addEventListener('visibilitychange', stableHandler);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => {
-      document.removeEventListener('visibilitychange', stableHandler);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, []); // Empty dependency array ensures this runs only onceage becomes visible or game changes
+  }, []); // Empty dependency array ensures this listener is stable and created only once
 
   // --- Wake Lock Effect ---
   useEffect(() => {
