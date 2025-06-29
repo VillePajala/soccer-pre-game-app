@@ -204,10 +204,14 @@ This section tracks which components have been updated to match the style guide 
   - [x] Finnish translations
   - [x] Style guide compliance
 
-- [ ] SeasonTournamentManagementModal
-  - [ ] Layout update
-  - [ ] Finnish translations
-  - [ ] Style guide compliance
+- [x] SeasonTournamentManagementModal
+  - [x] Layout update
+  - [x] Finnish translations
+  - [x] Style guide compliance
+  - [ ] **Planned Enhancements:**
+    - [ ] Add fields to set default game parameters for a season or tournament (location, number of periods, period duration).
+    - [ ] Explore adding a date range or a list of dates for tournaments.
+    - [ ] When a new game is created and linked to a season/tournament, it should automatically inherit these preset values.
 
 - [ ] TrainingResourcesModal
   - [ ] Layout update

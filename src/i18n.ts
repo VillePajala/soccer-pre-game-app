@@ -1348,3 +1348,47 @@ enTranslations.trainingResourcesModal.exampleDrills = {
     point3: "Shooting and Finishing"
 };
 
+// Add SeasonTournamentManagementModal translations
+if (!fiTranslations.seasonTournamentModal) {
+  fiTranslations.seasonTournamentModal = {};
+}
+fiTranslations.seasonTournamentModal.title = "Hallinnoi Kausia & Turnauksia";
+fiTranslations.seasonTournamentModal.seasons = "Kaudet";
+fiTranslations.seasonTournamentModal.tournaments = "Turnaukset";
+fiTranslations.seasonTournamentModal.createNew = "Luo uusi";
+fiTranslations.seasonTournamentModal.newSeasonPlaceholder = "Uuden kauden nimi...";
+fiTranslations.seasonTournamentModal.newTournamentPlaceholder = "Uuden turnauksen nimi...";
+fiTranslations.seasonTournamentModal.confirmDelete = "Haluatko varmasti poistaa '{{name}}'? Tämä toiminto poistaa sen kaikista peleistä, mutta ei poista pelejä itseään.";
+
+
+// Add English PlayerStats translations
+if (!enTranslations.playerStats) {
+  enTranslations.playerStats = {};
+}
+// ... existing code ...
+enTranslations.trainingResourcesModal.exampleDrills = {
+    title: "Example Drills",
+    description: "Here are some example drills to help improve your team's skills:",
+    point1: "Dribbling and Ball Control",
+    point2: "Passing and Receiving",
+    point3: "Shooting and Finishing"
+};
+
+// Add English SeasonTournamentManagementModal translations
+if (!enTranslations.seasonTournamentModal) {
+  enTranslations.seasonTournamentModal = {};
+}
+enTranslations.seasonTournamentModal.title = "Manage Seasons & Tournaments";
+enTranslations.seasonTournamentModal.seasons = "Seasons";
+enTranslations.seasonTournamentModal.tournaments = "Tournaments";
+enTranslations.seasonTournamentModal.createNew = "Create New";
+enTranslations.seasonTournamentModal.newSeasonPlaceholder = "New season name...";
+enTranslations.seasonTournamentModal.newTournamentPlaceholder = "New tournament name...";
+enTranslations.seasonTournamentModal.confirmDelete = "Are you sure you want to delete '{{name}}'? This will remove it from all associated games but will not delete the games themselves.";
+
+// Add common namespace if missing
+if (!fiTranslations.common) {
+  fiTranslations.common = {};
+}
+// ... existing code ...
+
