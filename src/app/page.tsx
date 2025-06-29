@@ -5,7 +5,6 @@ import SoccerField from '@/components/SoccerField';
 import PlayerBar from '@/components/PlayerBar';
 import ControlBar from '@/components/ControlBar';
 import TimerOverlay from '@/components/TimerOverlay';
-import InstructionsModal from '@/components/InstructionsModal';
 import GoalLogModal from '@/components/GoalLogModal';
 import GameStatsModal from '@/components/GameStatsModal';
 import TrainingResourcesModal from '@/components/TrainingResourcesModal';
@@ -476,7 +475,6 @@ export default function Home() {
   const [showLargeTimerOverlay, setShowLargeTimerOverlay] = useState<boolean>(false); // State for overlay visibility
   
   // --- Modal States (Still needed here) ---
-  const [isInstructionsOpen, setIsInstructionsOpen] = useState<boolean>(false);
   const [isTrainingResourcesOpen, setIsTrainingResourcesOpen] = useState<boolean>(false); 
   const [isGoalLogModalOpen, setIsGoalLogModalOpen] = useState<boolean>(false); 
   const [isGameStatsModalOpen, setIsGameStatsModalOpen] = useState<boolean>(false);
@@ -1643,10 +1641,7 @@ export default function Home() {
     setShowLargeTimerOverlay(!showLargeTimerOverlay);
   };
 
-  const handleToggleInstructions = () => {
-    setIsInstructionsOpen(!isInstructionsOpen);
-  };
-
+  
   // Handler to specifically deselect player when bar background is clicked
   const handleDeselectPlayer = () => {
     if (draggingPlayerFromBarInfo) { // Only log if there was a selection
@@ -3294,10 +3289,6 @@ export default function Home() {
       </div>
 
       {/* Modals and Overlays */}
-      <InstructionsModal 
-        isOpen={isInstructionsOpen} 
-        onClose={handleToggleInstructions}
-      />
       {/* Training Resources Modal */}
       <TrainingResourcesModal 
         isOpen={isTrainingResourcesOpen} 

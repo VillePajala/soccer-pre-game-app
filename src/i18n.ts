@@ -1318,3 +1318,33 @@ if (!i18n.isInitialized) {
     });
 }
 
+// Add TrainingResourcesModal translations
+if (!fiTranslations.trainingResourcesModal) {
+  fiTranslations.trainingResourcesModal = {};
+}
+fiTranslations.trainingResourcesModal.title = "Valmennusmateriaalit";
+fiTranslations.trainingResourcesModal.navWarmup = "Ottelun valmistautuminen";
+fiTranslations.trainingResourcesModal.navExampleDrills = "Esimerkkiharjoituksia";
+fiTranslations.trainingResourcesModal.exampleDrills = {
+    title: "Esimerkkiharjoituksia",
+    description: "Tässä on joitain esimerkkiharjoituksia, jotka auttavat parantamaan joukkueesi taitoja:",
+    point1: "Kuljetus ja pallonhallinta",
+    point2: "Syöttäminen ja vastaanotto",
+    point3: "Laukaiseminen ja maalinteko"
+};
+
+// Add English TrainingResourcesModal translations
+if (!enTranslations.trainingResourcesModal) {
+  enTranslations.trainingResourcesModal = {};
+}
+enTranslations.trainingResourcesModal.title = "Training Resources";
+enTranslations.trainingResourcesModal.navWarmup = "Match Preparation";
+enTranslations.trainingResourcesModal.navExampleDrills = "Example Drills";
+enTranslations.trainingResourcesModal.exampleDrills = {
+    title: "Example Drills",
+    description: "Here are some example drills to help improve your team's skills:",
+    point1: "Dribbling and Ball Control",
+    point2: "Passing and Receiving",
+    point3: "Shooting and Finishing"
+};
+

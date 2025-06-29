@@ -1,179 +1,139 @@
+'use client';
+
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { HiOutlineChevronDown, HiOutlineChevronUp } from 'react-icons/hi2'; // Import chevron icons
+import { HiOutlineChevronDown, HiOutlineChevronUp } from 'react-icons/hi2';
 
 interface TrainingResourcesModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-// Define available sections
 type TrainingSection = 'warmup' | 'exampleDrills';
 
 const TrainingResourcesModal: React.FC<TrainingResourcesModalProps> = ({ isOpen, onClose }) => {
   const { t } = useTranslation();
-  // State to track the currently expanded section (or null if none)
-  const [expandedSection, setExpandedSection] = useState<TrainingSection | null>(null); // Default to null (all closed)
+  const [expandedSection, setExpandedSection] = useState<TrainingSection | null>(null);
 
   if (!isOpen) return null;
 
-  // Define the type for list items, which can be strings or nested objects
-  type ListItem = string | { title: string; subPoints?: ListItem[] }; 
+  type ListItem = string | { title: string; subPoints?: ListItem[] };
 
-  // Helper to render list items from translation arrays safely, handling multiple levels of nesting
   const renderListItems = (items: string | ListItem[], itemKeyPrefix: string, level = 1): React.ReactNode => {
-    let actualItems: ListItem[]; // Use a separate variable for the processed array
-
-    // Check if items is the initial string key or already an array
+    let actualItems: ListItem[];
     if (typeof items === 'string') {
-        const fetchedItems = t(items, { returnObjects: true });
-        if (!Array.isArray(fetchedItems)) return null;
-        actualItems = fetchedItems as ListItem[]; // Assign fetched items
+      const fetchedItems = t(items, { returnObjects: true });
+      if (!Array.isArray(fetchedItems)) return null;
+      actualItems = fetchedItems as ListItem[];
     } else {
-        actualItems = items; // Assign if already an array
+      actualItems = items;
     }
 
     return actualItems.map((item: ListItem, index: number) => {
       const key = `${itemKeyPrefix}-${index}`;
-      const currentPadding = `pl-${2 + level * 2}`; // Calculate padding based on level (pl-4, pl-6, etc.)
+      const currentPadding = `pl-${2 + level * 2}`;
 
-      // Check if item is an object with title
       if (typeof item === 'object' && item !== null && item.title) {
         return (
           <li key={key}>
             {item.title}
-            {/* Render sub-points recursively if they exist */}
             {item.subPoints && Array.isArray(item.subPoints) && item.subPoints.length > 0 && (
-              <ul className={`list-disc list-inside space-y-1 ${currentPadding} mt-1`}> 
-                {renderListItems(item.subPoints, key, level + 1)} {/* Recursive call */}
+              <ul className={`list-disc list-inside space-y-1 ${currentPadding} mt-1`}>
+                {renderListItems(item.subPoints, key, level + 1)}
               </ul>
             )}
           </li>
         );
       }
-      // Render regular string item
       return <li key={key}>{String(item)}</li>;
     });
   };
 
-  // Function to toggle accordion sections
   const toggleSection = (section: TrainingSection) => {
     setExpandedSection(prev => (prev === section ? null : section));
   };
 
-  // Define the sections to render in the accordion
   const sections: { key: TrainingSection; titleKey: string }[] = [
     { key: 'warmup', titleKey: 'trainingResourcesModal.navWarmup' },
     { key: 'exampleDrills', titleKey: 'trainingResourcesModal.navExampleDrills' },
-    // Add more sections here as needed
   ];
 
   return (
-    <div 
-      className="fixed inset-0 bg-black bg-opacity-75 flex items-start justify-center z-50 p-4"
-      onClick={onClose}
-    >
-      <div 
-        className="bg-slate-800 rounded-lg p-6 max-w-4xl w-full text-slate-200 shadow-xl relative flex flex-col border border-slate-600 overflow-hidden max-h-[calc(100vh-theme(space.8))] min-h-[calc(100vh-theme(space.8))]"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button 
-          onClick={onClose} 
-          className="absolute top-3 right-3 text-slate-400 hover:text-slate-100 text-2xl font-bold z-20"
-          aria-label={t('common.closeButton', 'Close') ?? "Close"}
-        >
-          &times;
-        </button>
-        <h2 className="text-2xl font-bold mb-4 text-yellow-400">{t('trainingResourcesModal.title', 'Training Resources')}</h2> 
-        
-        {/* Accordion Content Area */}
-        <div className="flex-grow overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-700/50 pr-2 space-y-2">
-          
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60] font-display">
+      <div className="bg-slate-800 flex flex-col h-full w-full bg-noise-texture relative overflow-hidden">
+        {/* Header */}
+        <div className="flex justify-center items-center pt-10 pb-4 px-6 backdrop-blur-sm bg-slate-900/20 border-b border-slate-700/20 flex-shrink-0">
+          <h2 className="text-3xl font-bold text-yellow-400 tracking-wide drop-shadow-lg">
+            {t('trainingResourcesModal.title', 'Training Resources')}
+          </h2>
+        </div>
+
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6 space-y-2">
           {sections.map((section) => {
             const isExpanded = expandedSection === section.key;
             return (
-              <div key={section.key} className="border border-slate-700 rounded-md overflow-hidden">
-                {/* Accordion Header/Button */}
+              <div key={section.key} className="bg-slate-900/70 border border-slate-700 rounded-lg overflow-hidden">
                 <button
                   onClick={() => toggleSection(section.key)}
-                  className="w-full flex justify-between items-center p-3 text-left bg-slate-700/50 hover:bg-slate-700 transition-colors"
+                  className="w-full flex justify-between items-center p-3 text-left bg-slate-800/50 hover:bg-slate-700/80 transition-colors"
                   aria-expanded={isExpanded}
-                  aria-controls={`${section.key}-content`}
                 >
-                  <span className="font-semibold text-lg text-yellow-300">{t(section.titleKey)}</span>
+                  <span className="font-semibold text-lg text-slate-100">{t(section.titleKey)}</span>
                   {isExpanded ? <HiOutlineChevronUp className="w-5 h-5 text-slate-400"/> : <HiOutlineChevronDown className="w-5 h-5 text-slate-400"/>}
                 </button>
                 
-                {/* Accordion Content Panel (Conditionally Rendered) */}
                 {isExpanded && (
-                  <div 
-                    id={`${section.key}-content`}
-                    className="p-4 bg-slate-800/50 text-sm sm:text-base"
-                  >
+                  <div className="p-4 text-sm sm:text-base border-t border-slate-700">
                     {section.key === 'warmup' && (
-                        <div className="space-y-6">
-                        {/* Use matchPreparation keys for content */}
-                        <h3 className="text-xl font-semibold mb-4 text-yellow-300">{t('matchPreparation.title')}</h3>
+                      <div className="space-y-6">
+                        <h3 className="text-xl font-semibold text-yellow-300">{t('matchPreparation.title')}</h3>
                         <section>
                           <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('matchPreparation.section1.title')}</h4>
-                          <p className="text-sm italic text-slate-400 mb-2">{t('matchPreparation.section1.goal')}</p>
-                          <ul className="list-disc list-inside space-y-1.5 pl-2">
-                            {renderListItems(t('matchPreparation.section1.points', { returnObjects: true }) as ListItem[], 's1')}
-                          </ul>
+                          <ul className="list-disc list-inside space-y-1.5 pl-2">{renderListItems(t('matchPreparation.section1.points', { returnObjects: true }) as ListItem[], 's1')}</ul>
                         </section>
                         <section>
-                            <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('matchPreparation.section2.title')}</h4>
-                            <p className="text-sm italic text-slate-400 mb-2">{t('matchPreparation.section2.goal')}</p>
-                            <ul className="list-disc list-inside space-y-1.5 pl-2">
-                              {renderListItems(t('matchPreparation.section2.points', { returnObjects: true }) as ListItem[], 's2')}
-                            </ul>
-                          </section>
-                          <section>
-                            <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('matchPreparation.section3.title')}</h4>
-                            <p className="text-sm italic text-slate-400 mb-2">{t('matchPreparation.section3.goal')}</p>
-                            {/* Render the top-level list for section 3 */}
-                            <ul className="list-disc list-inside space-y-1.5 pl-2">
-                                {renderListItems(t('matchPreparation.section3.points', { returnObjects: true }) as ListItem[], 's3')}
-                            </ul>
-                          </section>
-                          <section>
-                            <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('matchPreparation.section4.title')}</h4>
-                            <p className="text-sm italic text-slate-400 mb-2">{t('matchPreparation.section4.goal')}</p>
-                            <ul className="list-disc list-inside space-y-1.5 pl-2">
-                              {renderListItems(t('matchPreparation.section4.points', { returnObjects: true }) as ListItem[], 's4')}
-                            </ul>
-                          </section>
-                          <section>
-                            <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('matchPreparation.duringGame.title')}</h4>
-                            <ul className="list-disc list-inside space-y-1.5 pl-2">
-                              {renderListItems(t('matchPreparation.duringGame.points', { returnObjects: true }) as ListItem[], 'dg')}
-                            </ul>
-                          </section>
-                        </div>
+                          <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('matchPreparation.section2.title')}</h4>
+                          <ul className="list-disc list-inside space-y-1.5 pl-2">{renderListItems(t('matchPreparation.section2.points', { returnObjects: true }) as ListItem[], 's2')}</ul>
+                        </section>
+                        <section>
+                          <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('matchPreparation.section3.title')}</h4>
+                          <ul className="list-disc list-inside space-y-1.5 pl-2">{renderListItems(t('matchPreparation.section3.points', { returnObjects: true }) as ListItem[], 's3')}</ul>
+                        </section>
+                        <section>
+                          <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('matchPreparation.section4.title')}</h4>
+                          <ul className="list-disc list-inside space-y-1.5 pl-2">{renderListItems(t('matchPreparation.section4.points', { returnObjects: true }) as ListItem[], 's4')}</ul>
+                        </section>
+                        <section>
+                          <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('matchPreparation.duringGame.title')}</h4>
+                          <ul className="list-disc list-inside space-y-1.5 pl-2">{renderListItems(t('matchPreparation.duringGame.points', { returnObjects: true }) as ListItem[], 'dg')}</ul>
+                        </section>
+                      </div>
                     )}
                     {section.key === 'exampleDrills' && (
                       <div className="space-y-4">
-                         {/* Example Drills content structure */}
-                         <h3 className="text-xl font-semibold mb-3 text-yellow-300">{t('trainingResourcesModal.exampleDrills.title')}</h3>
-                         <section>
-                           <p className="text-slate-300 mb-2">{t('trainingResourcesModal.exampleDrills.description')}</p>
-                           <ul className="list-disc list-inside space-y-1 pl-2 text-slate-400 italic">
-                             <li>{t('trainingResourcesModal.exampleDrills.point1')}</li>
-                             <li>{t('trainingResourcesModal.exampleDrills.point2')}</li>
-                             <li>{t('trainingResourcesModal.exampleDrills.point3')}</li>
-                           </ul>
-                         </section>
+                         <h3 className="text-xl font-semibold text-yellow-300">{t('trainingResourcesModal.exampleDrills.title')}</h3>
+                         <p className="text-slate-300">{t('trainingResourcesModal.exampleDrills.description')}</p>
+                         <ul className="list-disc list-inside space-y-1 pl-2 text-slate-300">
+                           <li>{t('trainingResourcesModal.exampleDrills.point1')}</li>
+                           <li>{t('trainingResourcesModal.exampleDrills.point2')}</li>
+                           <li>{t('trainingResourcesModal.exampleDrills.point3')}</li>
+                         </ul>
                       </div>
                     )}
-                    {/* Add more conditions here for other sections */}
                   </div>
                 )}
               </div>
             );
-          })} 
-
+          })}
         </div>
 
+        {/* Footer */}
+        <div className="px-6 py-3 bg-slate-800/50 border-t border-slate-700/20 backdrop-blur-sm flex justify-end items-center gap-4 flex-shrink-0">
+          <button onClick={onClose} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-sm font-medium transition-colors">
+            {t('common.doneButton', 'Done')}
+          </button>
+        </div>
       </div>
     </div>
   );

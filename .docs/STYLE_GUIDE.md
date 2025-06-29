@@ -193,11 +193,6 @@ This section tracks which components have been updated to match the style guide 
   - [x] Finnish translations
   - [x] Style guide compliance
 
-- [ ] InstructionsModal
-  - [ ] Layout update
-  - [ ] Finnish translations
-  - [ ] Style guide compliance
-
 - [x] LoadGameModal
   - [x] Tests fixed
   - [x] Layout update
@@ -208,13 +203,6 @@ This section tracks which components have been updated to match the style guide 
   - [x] Layout update
   - [x] Finnish translations
   - [x] Style guide compliance
-
-- [ ] PlayerStatsModal
-  - [ ] Layout update
-  - [ ] Finnish translations
-  - [ ] Style guide compliance
-
-
 
 - [ ] SeasonTournamentManagementModal
   - [ ] Layout update
