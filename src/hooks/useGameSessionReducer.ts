@@ -20,7 +20,8 @@ export interface GameSessionState {
   gameTime?: string;
   gameEvents: GameEvent[];
   // Timer related state
-  timeElapsedInSeconds: number;
+  timeElapsedInSeconds: number; // This will now represent the time elapsed *when paused*
+  startTimestamp: number | null; // Timestamp from Date.now() when the timer was started/resumed
   isTimerRunning: boolean;
   subIntervalMinutes: number;
   nextSubDueTimeSeconds: number;
@@ -63,6 +64,7 @@ export const initialGameSessionStatePlaceholder: GameSessionState = {
   gameTime: '',
   gameEvents: [],
   timeElapsedInSeconds: 0,
+  startTimestamp: null,
   isTimerRunning: false,
   subIntervalMinutes: 5,
   nextSubDueTimeSeconds: 300,
@@ -90,6 +92,8 @@ export type GameSessionAction =
   | { type: 'SET_GAME_STATUS'; payload: GameSessionState['gameStatus'] }
   | { type: 'START_PERIOD'; payload: { nextPeriod: number, periodDurationMinutes: number, subIntervalMinutes: number } }
   | { type: 'END_PERIOD_OR_GAME'; payload: { newStatus: 'periodEnd' | 'gameEnd', finalTime?: number } }
+  | { type: 'START_TIMER' }
+  | { type: 'PAUSE_TIMER' }
   | { type: 'SET_SELECTED_PLAYER_IDS'; payload: string[] }
   | { type: 'SET_SEASON_ID'; payload: string }
   | { type: 'SET_TOURNAMENT_ID'; payload: string }
@@ -166,6 +170,7 @@ export const gameSessionReducer = (state: GameSessionState, action: GameSessionA
             nextSubDueTimeSeconds: (nextPeriod === 1 ? 0 : previousPeriodEndTime) + (subIntervalMinutes * 60),
             subAlertLevel: 'none',
             completedIntervalDurations: nextPeriod === 1 ? [] : state.completedIntervalDurations,
+            startTimestamp: Date.now(),
         };
     }
     case 'END_PERIOD_OR_GAME': {
@@ -177,7 +182,26 @@ export const gameSessionReducer = (state: GameSessionState, action: GameSessionA
             isTimerRunning: false,
             timeElapsedInSeconds: timeToSet,
             subAlertLevel: timeToSet >= state.nextSubDueTimeSeconds ? 'due' : state.subAlertLevel,
+            startTimestamp: null,
         };
+    }
+    case 'START_TIMER': {
+      if (state.isTimerRunning) return state;
+      return {
+        ...state,
+        isTimerRunning: true,
+        startTimestamp: Date.now(),
+      };
+    }
+    case 'PAUSE_TIMER': {
+      if (!state.isTimerRunning || !state.startTimestamp) return state;
+      const elapsedSinceStart = (Date.now() - state.startTimestamp) / 1000;
+      return {
+        ...state,
+        isTimerRunning: false,
+        startTimestamp: null,
+        timeElapsedInSeconds: state.timeElapsedInSeconds + elapsedSinceStart,
+      };
     }
     case 'SET_SELECTED_PLAYER_IDS':
       return { ...state, selectedPlayerIds: action.payload };
@@ -366,6 +390,7 @@ export const gameSessionReducer = (state: GameSessionState, action: GameSessionA
         completedIntervalDurations,
 
         timeElapsedInSeconds: timeElapsedAtLoad,
+        startTimestamp: null,
         isTimerRunning: false,
         nextSubDueTimeSeconds: timeElapsedAtLoad + (subIntervalMinutes * 60),
         subAlertLevel: 'none',

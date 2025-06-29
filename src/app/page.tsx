@@ -265,20 +265,18 @@ export default function Home() {
     lastSubConfirmationTimeSeconds: 0,
     completedIntervalDurations: initialState.completedIntervalDurations || [],
     showPlayerNames: initialState.showPlayerNames,
+    startTimestamp: null,
   };
 
   const [gameSessionState, dispatchGameSession] = useReducer(gameSessionReducer, initialGameSessionData);
 
- // --- Refs to hold the latest state for the stable visibility handler ---
+  // --- Refs to hold the latest state for the stable visibility handler ---
   const isRunningRef = useRef(gameSessionState.isTimerRunning);
   const elapsedRef = useRef(gameSessionState.timeElapsedInSeconds);
- 
-
+  
   // Effects to keep the refs in sync with the state
   useEffect(() => { isRunningRef.current = gameSessionState.isTimerRunning; }, [gameSessionState.isTimerRunning]);
   useEffect(() => { elapsedRef.current = gameSessionState.timeElapsedInSeconds; }, [gameSessionState.timeElapsedInSeconds]);
-  
-
 
   useEffect(() => {
     console.log('[gameSessionState CHANGED]', gameSessionState);
@@ -456,8 +454,12 @@ export default function Home() {
   // Persistence state
   const [savedGames, setSavedGames] = useState<SavedGamesCollection>({});
   const [currentGameId, setCurrentGameId] = useState<string | null>(DEFAULT_GAME_ID);
+  
+  // This ref needs to be declared after currentGameId
   const gameIdRef = useRef(currentGameId);
+
   useEffect(() => { gameIdRef.current = currentGameId; }, [currentGameId]);
+
   // ADD State for seasons/tournaments lists
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
@@ -1002,6 +1004,45 @@ export default function Home() {
   }, [gameSessionState.isTimerRunning, gameSessionState.gameStatus, gameSessionState.currentPeriod, gameSessionState.periodDurationMinutes, gameSessionState.numberOfPeriods, gameSessionState.timeElapsedInSeconds, gameSessionState.nextSubDueTimeSeconds, currentGameId, syncWakeLock]); // Reflect isTimerRunning from gameSessionState
 
   // --- Load state from localStorage on mount (REVISED) ---
+
+    // --- NEW: Robust Visibility Change Handling ---
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.hidden) {
+        // Use the ref to get the most up-to-date state
+        if (isRunningRef.current) {
+          const timerState: TimerState = {
+            gameId: gameIdRef.current || '',
+            timeElapsedInSeconds: elapsedRef.current,
+            timestamp: Date.now(),
+          };
+          await setLocalStorageItemAsync(TIMER_STATE_KEY, JSON.stringify(timerState));
+          dispatchGameSession({ type: 'PAUSE_TIMER_FOR_HIDDEN' });
+        }
+      } else {
+        const savedTimerStateJSON = await getLocalStorageItemAsync(TIMER_STATE_KEY);
+        if (savedTimerStateJSON) {
+          const savedTimerState: TimerState = JSON.parse(savedTimerStateJSON);
+          // Use the ref to get the most up-to-date game ID for comparison
+          if (savedTimerState && savedTimerState.gameId === gameIdRef.current) {
+            dispatchGameSession({
+              type: 'RESTORE_TIMER_STATE',
+              payload: {
+                savedTime: savedTimerState.timeElapsedInSeconds,
+                timestamp: savedTimerState.timestamp,
+              },
+            });
+          }
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []); // Empty dependency array ensures this listener is stable and created only once
+  
   useEffect(() => {
     const loadInitialAppData = async () => {
       console.log('[EFFECT init] Coordinating initial application data from TanStack Query...');
