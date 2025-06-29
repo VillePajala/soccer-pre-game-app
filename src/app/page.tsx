@@ -1106,7 +1106,7 @@ export default function Home() {
 
   // Keep the handler logic updated with the latest state
   useEffect(() => {
-    visibilityHandlerRef.current = async (e: Event) => {
+    visibilityHandlerRef.current = async () => {
       if (document.hidden) {
         // Only save state if the timer is actually running
         if (gameSessionState.isTimerRunning) {
@@ -1408,7 +1408,7 @@ export default function Home() {
       setDrawings([]);
       saveStateToHistory({ playersOnField: [], opponents: [], drawings: [] });
     }
-  }, [isTacticsBoardView, saveStateToHistory, setDrawings, setOpponents, setPlayersOnField, setTacticalBallPosition, setTacticalDiscs, setTacticalDrawings]);
+    }, [isTacticsBoardView, saveStateToHistory, setDrawings, setOpponents, setPlayersOnField, setTacticalBallPosition, setTacticalDiscs, setTacticalDrawings, tacticalBallPosition, tacticalDiscs, tacticalDrawings]);
 
   const handleClearDrawingsForView = () => {
     if (isTacticsBoardView) {
