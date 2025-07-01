@@ -1475,7 +1475,6 @@ export default function Home() {
       setDrawings([]);
       saveStateToHistory({ playersOnField: [], opponents: [], drawings: [] });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isTacticsBoardView, saveStateToHistory, setDrawings, setOpponents, setPlayersOnField, setTacticalDiscs, setTacticalDrawings, setTacticalBallPosition]);
 
   const handleClearDrawingsForView = () => {
@@ -1829,7 +1828,6 @@ export default function Home() {
         alert("Failed to reset application data.");
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [t]);
 
   
