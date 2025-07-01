@@ -143,6 +143,11 @@ fiTranslations.playerStats.vs = "vs";
 fiTranslations.playerStats.goals_short = "M";
 fiTranslations.playerStats.assists_short = "S";
 fiTranslations.playerStats.noGames = "Pelaajalle ei ole tallennettu pelejä.";
+fiTranslations.playerStats.seasonPerformance = "Kausikohtaiset tilastot";
+fiTranslations.playerStats.tournamentPerformance = "Turnauskohtaiset tilastot";
+fiTranslations.playerStats.points_short = "pist";
+fiTranslations.playerStats.gamesPlayed_short = "Ottelut";
+
 // Add game stats modal translations
 if (!fiTranslations.gameStatsModal) {
   fiTranslations.gameStatsModal = {};
@@ -386,6 +391,11 @@ enTranslations.playerStats.vs = "vs";
 enTranslations.playerStats.goals_short = "G";
 enTranslations.playerStats.assists_short = "A";
 enTranslations.playerStats.noGames = "No game data available for this player.";
+enTranslations.playerStats.seasonPerformance = "Season Performance";
+enTranslations.playerStats.tournamentPerformance = "Tournament Performance";
+enTranslations.playerStats.points_short = "pts";
+enTranslations.playerStats.gamesPlayed_short = "GP";
+
 // Add game stats modal translations for English
 if (!enTranslations.gameStatsModal) {
   enTranslations.gameStatsModal = {};
@@ -789,6 +799,10 @@ fiTranslations.playerStats.vs = "vs";
 fiTranslations.playerStats.goals_short = "M";
 fiTranslations.playerStats.assists_short = "S";
 fiTranslations.playerStats.noGames = "Pelaajalle ei ole tallennettu pelejä.";
+fiTranslations.playerStats.seasonPerformance = "Kausikohtaiset tilastot";
+fiTranslations.playerStats.tournamentPerformance = "Turnauskohtaiset tilastot";
+fiTranslations.playerStats.points_short = "pist";
+fiTranslations.playerStats.gamesPlayed_short = "Ottelut";
 
 // Add English PlayerStats translations
 if (!enTranslations.playerStats) {
@@ -807,6 +821,10 @@ enTranslations.playerStats.vs = "vs";
 enTranslations.playerStats.goals_short = "G";
 enTranslations.playerStats.assists_short = "A";
 enTranslations.playerStats.noGames = "No game data available for this player.";
+enTranslations.playerStats.seasonPerformance = "Season Performance";
+enTranslations.playerStats.tournamentPerformance = "Tournament Performance";
+enTranslations.playerStats.points_short = "pts";
+enTranslations.playerStats.gamesPlayed_short = "GP";
 
 // Add common namespace if missing
 if (!fiTranslations.common) {
@@ -1405,8 +1423,11 @@ fiTranslations.gameStatsModal.noStatsAvailable = "Tilastoja ei saatavilla";
 
 if (!fiTranslations.common) fiTranslations.common = {};
 fiTranslations.common.gamesPlayed = "Pelatut Ottelut";
+fiTranslations.common.gamesPlayedShort = "Ottelut";
+fiTranslations.common.wins = "Voitot";
+fiTranslations.common.losses = "Häviöt";
+fiTranslations.common.ties = "Tasapelit";
 fiTranslations.common.record = "Tulos";
-fiTranslations.common.winPercentage = "Voittoprosentti";
 fiTranslations.common.goalDifference = "Maaliero";
 fiTranslations.common.goalsFor = "Tehdyt Maalit";
 fiTranslations.common.goalsAgainst = "Päästetyt Maalit";
@@ -1426,8 +1447,11 @@ enTranslations.gameStatsModal.noStatsAvailable = "No statistics available";
 
 if (!enTranslations.common) enTranslations.common = {};
 enTranslations.common.gamesPlayed = "Games Played";
+enTranslations.common.gamesPlayedShort = "GP";
+enTranslations.common.wins = "Wins";
+enTranslations.common.losses = "Losses";
+enTranslations.common.ties = "Ties";
 enTranslations.common.record = "Record";
-enTranslations.common.winPercentage = "Win Percentage";
 enTranslations.common.goalDifference = "Goal Difference";
 enTranslations.common.goalsFor = "Goals For";
 enTranslations.common.goalsAgainst = "Goals Against";

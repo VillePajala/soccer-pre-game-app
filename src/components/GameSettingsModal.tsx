@@ -304,8 +304,8 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
     if (currentGameId) {
       updateGameDetailsMutation.mutate({ gameId: currentGameId, updates: { seasonId: newSeasonId, tournamentId: null } });
     }
-    setShowNewSeasonInput(false);
-    setNewSeasonName('');
+      setShowNewSeasonInput(false);
+      setNewSeasonName('');
   };
 
   const handleTournamentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -316,8 +316,8 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
     if (currentGameId) {
       updateGameDetailsMutation.mutate({ gameId: currentGameId, updates: { tournamentId: newTournamentId, seasonId: null } });
     }
-    setShowNewTournamentInput(false);
-    setNewTournamentName('');
+      setShowNewTournamentInput(false);
+      setNewTournamentName('');
   };
 
   // Handle Goal Event Editing

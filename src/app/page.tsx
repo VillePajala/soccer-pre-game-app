@@ -807,8 +807,8 @@ export default function Home() {
 
   const deleteTournamentMutation = useMutation({
     mutationFn: (id: string) => utilDeleteTournament(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.tournaments });
+      onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.tournaments });
       queryClient.invalidateQueries({ queryKey: queryKeys.savedGames });
     },
   });
@@ -836,7 +836,7 @@ export default function Home() {
     onError: (error) => {
       console.error("Error updating game details:", error);
       // Here you could show a toast notification to the user
-    },
+      },
   });
 
   // --- Mutation for Adding a new Tournament ---
@@ -1667,7 +1667,7 @@ export default function Home() {
     setShowLargeTimerOverlay(!showLargeTimerOverlay);
   };
 
-  
+
   // Handler to specifically deselect player when bar background is clicked
   const handleDeselectPlayer = () => {
     if (draggingPlayerFromBarInfo) { // Only log if there was a selection

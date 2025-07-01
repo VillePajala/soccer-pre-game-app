@@ -299,6 +299,43 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   //     return null;
   // }, [seasonId, tournamentId, seasons, tournaments]);
 
+  const overallTeamStats = useMemo(() => {
+    if (activeTab !== 'overall') return null;
+
+    const allGameIds = Object.keys(savedGames || {});
+    let wins = 0;
+    let losses = 0;
+    let ties = 0;
+    let goalsFor = 0;
+    let goalsAgainst = 0;
+
+    allGameIds.forEach(gameId => {
+        const game = savedGames?.[gameId];
+        if (!game || typeof game.homeScore !== 'number' || typeof game.awayScore !== 'number') return;
+        
+        const ourScore = game.homeOrAway === 'home' ? game.homeScore : game.awayScore;
+        const theirScore = game.homeOrAway === 'home' ? game.awayScore : game.homeScore;
+
+        goalsFor += ourScore;
+        goalsAgainst += theirScore;
+
+        if (ourScore > theirScore) wins++;
+        else if (ourScore < theirScore) losses++;
+        else ties++;
+    });
+
+    const gamesPlayed = allGameIds.length;
+    if (gamesPlayed === 0) return null;
+
+    return {
+        gamesPlayed, wins, losses, ties, goalsFor, goalsAgainst,
+        goalDifference: goalsFor - goalsAgainst,
+        winPercentage: (wins / gamesPlayed) * 100,
+        averageGoalsFor: goalsFor / gamesPlayed,
+        averageGoalsAgainst: goalsAgainst / gamesPlayed,
+    };
+  }, [activeTab, savedGames]);
+
   // ADD calculation for tournament/season statistics
   const tournamentSeasonStats = useMemo(() => {
     if (activeTab !== 'season' && activeTab !== 'tournament') return null;
@@ -925,12 +962,63 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                   </select>
                 </div>
 
-                <PlayerStatsView player={selectedPlayer} savedGames={savedGames} onGameClick={onGameClick} />
+                <PlayerStatsView 
+                  player={selectedPlayer} 
+                  savedGames={savedGames} 
+                  onGameClick={onGameClick} 
+                  seasons={seasons}
+                  tournaments={tournaments}
+                />
             </div>
           ) : (
             <div className="p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Left Column */}
               <div className="space-y-6">
+                {/* Overall Statistics Section */}
+                {activeTab === 'overall' && overallTeamStats && (
+                  <div className="bg-slate-900/70 p-4 rounded-lg border border-slate-700 shadow-inner">
+                    <h3 className="text-xl font-semibold text-slate-200 mb-4">
+                      {t('gameStatsModal.overallSummary', 'Overall Summary')}
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                        <div className="bg-slate-800/60 p-2 rounded">
+                          <div className="text-xs text-slate-400">{t('common.gamesPlayed', 'Games Played')}</div>
+                          <div className="text-yellow-400 font-bold text-lg">{overallTeamStats.gamesPlayed}</div>
+                        </div>
+                        <div className="bg-slate-800/60 p-2 rounded">
+                          <div className="text-xs text-slate-400">{t('common.record', 'Record')}</div>
+                          <div className="text-yellow-400 font-bold text-sm">{overallTeamStats.wins}-{overallTeamStats.losses}-{overallTeamStats.ties}</div>
+                        </div>
+                        <div className="bg-slate-800/60 p-2 rounded">
+                          <div className="text-xs text-slate-400">{t('common.winPercentage', 'Win %')}</div>
+                          <div className="text-yellow-400 font-bold">{overallTeamStats.winPercentage.toFixed(1)}%</div>
+                        </div>
+                        <div className="bg-slate-800/60 p-2 rounded">
+                          <div className="text-xs text-slate-400">{t('common.goalDifference', 'Goal Diff')}</div>
+                          <div className={`font-bold ${overallTeamStats.goalDifference >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                            {overallTeamStats.goalDifference >= 0 ? '+' : ''}{overallTeamStats.goalDifference}
+                          </div>
+                        </div>
+                        <div className="bg-slate-800/60 p-2 rounded">
+                          <div className="text-xs text-slate-400">{t('common.goalsFor', 'Goals For')}</div>
+                          <div className="text-yellow-400 font-bold">{overallTeamStats.goalsFor}</div>
+                        </div>
+                        <div className="bg-slate-800/60 p-2 rounded">
+                          <div className="text-xs text-slate-400">{t('common.goalsAgainst', 'Goals Against')}</div>
+                          <div className="text-yellow-400 font-bold">{overallTeamStats.goalsAgainst}</div>
+                        </div>
+                        <div className="bg-slate-800/60 p-2 rounded">
+                          <div className="text-xs text-slate-400">{t('common.avgGoalsFor', 'Avg Goals For')}</div>
+                          <div className="text-yellow-400 font-bold">{overallTeamStats.averageGoalsFor.toFixed(1)}</div>
+                        </div>
+                        <div className="bg-slate-800/60 p-2 rounded">
+                          <div className="text-xs text-slate-400">{t('common.avgGoalsAgainst', 'Avg Goals Against')}</div>
+                          <div className="text-yellow-400 font-bold">{overallTeamStats.averageGoalsAgainst.toFixed(1)}</div>
+                        </div>
+                      </div>
+                  </div>
+                )}
+
                 {/* Tournament/Season Statistics Section */}
                 {(activeTab === 'season' || activeTab === 'tournament') && tournamentSeasonStats && (
                   <div className="bg-slate-900/70 p-4 rounded-lg border border-slate-700 shadow-inner">
