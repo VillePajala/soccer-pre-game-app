@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { FaEdit, FaTrashAlt } from 'react-icons/fa';
 import { HiPlusCircle } from 'react-icons/hi2';
 import { Season, Tournament, Player } from '@/types';
-import { AppState, GameEvent as PageGameEvent } from '@/app/page';
+import { AppState } from '@/app/page';
 import { getSeasons } from '@/utils/seasons';
 import { getTournaments } from '@/utils/tournaments';
 import { updateGameDetails, updateGameEvent, removeGameEvent } from '@/utils/savedGames';

@@ -1475,7 +1475,7 @@ export default function Home() {
       setDrawings([]);
       saveStateToHistory({ playersOnField: [], opponents: [], drawings: [] });
     }
-    }, [isTacticsBoardView, saveStateToHistory, setDrawings, setOpponents, setPlayersOnField, setTacticalDiscs, setTacticalDrawings, setTacticalBallPosition]);
+    }, [isTacticsBoardView, saveStateToHistory, setDrawings, setOpponents, setPlayersOnField, setTacticalDiscs, setTacticalDrawings, setTacticalBallPosition, tacticalDiscs, tacticalDrawings, tacticalBallPosition]);
 
   const handleClearDrawingsForView = () => {
     if (isTacticsBoardView) {
@@ -2791,7 +2791,7 @@ export default function Home() {
         console.error(`Failed to export aggregate stats as CSV:`, error);
         alert(t('export.csvError', 'Error exporting aggregate data as CSV.'));
     }
-  }, [savedGames, t]);// Correctly removed seasons and tournaments
+  }, [savedGames, t,]);
 
   // --- END AGGREGATE EXPORT HANDLERS ---
 
