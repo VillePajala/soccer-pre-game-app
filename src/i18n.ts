@@ -143,6 +143,11 @@ fiTranslations.playerStats.vs = "vs";
 fiTranslations.playerStats.goals_short = "M";
 fiTranslations.playerStats.assists_short = "S";
 fiTranslations.playerStats.noGames = "Pelaajalle ei ole tallennettu pelejä.";
+fiTranslations.playerStats.seasonPerformance = "Kausikohtaiset tilastot";
+fiTranslations.playerStats.tournamentPerformance = "Turnauskohtaiset tilastot";
+fiTranslations.playerStats.points_short = "pist";
+fiTranslations.playerStats.gamesPlayed_short = "Ottelut";
+
 // Add game stats modal translations
 if (!fiTranslations.gameStatsModal) {
   fiTranslations.gameStatsModal = {};
@@ -386,6 +391,11 @@ enTranslations.playerStats.vs = "vs";
 enTranslations.playerStats.goals_short = "G";
 enTranslations.playerStats.assists_short = "A";
 enTranslations.playerStats.noGames = "No game data available for this player.";
+enTranslations.playerStats.seasonPerformance = "Season Performance";
+enTranslations.playerStats.tournamentPerformance = "Tournament Performance";
+enTranslations.playerStats.points_short = "pts";
+enTranslations.playerStats.gamesPlayed_short = "GP";
+
 // Add game stats modal translations for English
 if (!enTranslations.gameStatsModal) {
   enTranslations.gameStatsModal = {};
@@ -789,6 +799,10 @@ fiTranslations.playerStats.vs = "vs";
 fiTranslations.playerStats.goals_short = "M";
 fiTranslations.playerStats.assists_short = "S";
 fiTranslations.playerStats.noGames = "Pelaajalle ei ole tallennettu pelejä.";
+fiTranslations.playerStats.seasonPerformance = "Kausikohtaiset tilastot";
+fiTranslations.playerStats.tournamentPerformance = "Turnauskohtaiset tilastot";
+fiTranslations.playerStats.points_short = "pist";
+fiTranslations.playerStats.gamesPlayed_short = "Ottelut";
 
 // Add English PlayerStats translations
 if (!enTranslations.playerStats) {
@@ -807,6 +821,10 @@ enTranslations.playerStats.vs = "vs";
 enTranslations.playerStats.goals_short = "G";
 enTranslations.playerStats.assists_short = "A";
 enTranslations.playerStats.noGames = "No game data available for this player.";
+enTranslations.playerStats.seasonPerformance = "Season Performance";
+enTranslations.playerStats.tournamentPerformance = "Tournament Performance";
+enTranslations.playerStats.points_short = "pts";
+enTranslations.playerStats.gamesPlayed_short = "GP";
 
 // Add common namespace if missing
 if (!fiTranslations.common) {
@@ -1391,4 +1409,98 @@ if (!fiTranslations.common) {
   fiTranslations.common = {};
 }
 // ... existing code ...
+
+// --- ADD TRANSLATIONS HERE ---
+
+// Finnish Translations
+if (!fiTranslations.gameStatsModal) fiTranslations.gameStatsModal = {};
+fiTranslations.gameStatsModal.allSeasonsStats = "Kaikkien Kausien Tilastot";
+fiTranslations.gameStatsModal.seasonStats = "Kauden Tilastot";
+fiTranslations.gameStatsModal.allTournamentsStats = "Kaikkien Turnausten Tilastot";
+fiTranslations.gameStatsModal.tournamentStats = "Turnauksen Tilastot";
+fiTranslations.gameStatsModal.overallSummary = "Kokonaisyhteenveto";
+fiTranslations.gameStatsModal.noStatsAvailable = "Tilastoja ei saatavilla";
+
+if (!fiTranslations.common) fiTranslations.common = {};
+fiTranslations.common.gamesPlayed = "Pelatut Ottelut";
+fiTranslations.common.gamesPlayedShort = "Ottelut";
+fiTranslations.common.wins = "Voitot";
+fiTranslations.common.losses = "Häviöt";
+fiTranslations.common.ties = "Tasapelit";
+fiTranslations.common.record = "Tulos";
+fiTranslations.common.goalDifference = "Maaliero";
+fiTranslations.common.goalsFor = "Tehdyt Maalit";
+fiTranslations.common.goalsAgainst = "Päästetyt Maalit";
+fiTranslations.common.avgGoalsFor = "KA Tehdyt Maalit";
+fiTranslations.common.avgGoalsAgainst = "KA Päästetyt Maalit";
+fiTranslations.common.season = "Kausi";
+fiTranslations.common.tournament = "Turnaus";
+
+// English Translations
+if (!enTranslations.gameStatsModal) enTranslations.gameStatsModal = {};
+enTranslations.gameStatsModal.allSeasonsStats = "All Seasons Statistics";
+enTranslations.gameStatsModal.seasonStats = "Season Statistics";
+enTranslations.gameStatsModal.allTournamentsStats = "All Tournaments Statistics";
+enTranslations.gameStatsModal.tournamentStats = "Tournament Statistics";
+enTranslations.gameStatsModal.overallSummary = "Overall Summary";
+enTranslations.gameStatsModal.noStatsAvailable = "No statistics available";
+
+if (!enTranslations.common) enTranslations.common = {};
+enTranslations.common.gamesPlayed = "Games Played";
+enTranslations.common.gamesPlayedShort = "GP";
+enTranslations.common.wins = "Wins";
+enTranslations.common.losses = "Losses";
+enTranslations.common.ties = "Ties";
+enTranslations.common.record = "Record";
+enTranslations.common.goalDifference = "Goal Difference";
+enTranslations.common.goalsFor = "Goals For";
+enTranslations.common.goalsAgainst = "Goals Against";
+enTranslations.common.avgGoalsFor = "Avg Goals For";
+enTranslations.common.avgGoalsAgainst = "Avg Goals Against";
+enTranslations.common.season = "Season";
+enTranslations.common.tournament = "Tournament";
+
+// --- END TRANSLATIONS ---
+
+// Only initialize once
+if (!i18n.isInitialized) {
+  i18n
+    .use(initReactI18next) // passes i18n down to react-i18next
+    .init({
+      lng: "fi", // default language
+      fallbackLng: "en", // Add fallback language
+      // Remove ns and defaultNS
+      // ns: ['common'], 
+      // defaultNS: 'common',
+
+      // Remove backend config
+      // backend: {
+      //   loadPath: `/locales/{{lng}}/{{ns}}.json?v=${cacheVersion}`,
+      // },
+
+      // Add resources directly
+      resources: {
+        fi: {
+          translation: fiTranslations // Use our hardcoded version
+        },
+        en: { 
+          translation: enTranslations // Use our enhanced version for English
+        }
+      },
+
+      interpolation: {
+        escapeValue: false // react already safes from xss
+      },
+      
+      debug: false,
+      
+      react: {
+        useSuspense: false,
+        bindI18n: 'languageChanged loaded',
+        bindI18nStore: 'added removed',
+        transSupportBasicHtmlNodes: true,
+        transKeepBasicHtmlNodesFor: ['br', 'strong', 'i', 'p', 'span']
+      }
+    });
+}
 

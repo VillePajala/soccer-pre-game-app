@@ -213,23 +213,6 @@ This section tracks which components have been updated to match the style guide 
     - [ ] Explore adding a date range or a list of dates for tournaments.
     - [ ] When a new game is created and linked to a season/tournament, it should automatically inherit these preset values.
 
-- [ ] TrainingResourcesModal
-  - [ ] Layout update
-  - [ ] Finnish translations
-  - [ ] Style guide compliance 
+## 13. Modal Updates Complete
 
-## 13. Next Steps
-
-Based on the current progress, the next component to update is the **LoadGameModal**. This should include:
-
-1. Updating the layout to match the style guide (fixed header, controls, scrollable content)
-2. Ensuring all text is properly internationalized with Finnish translations
-3. Applying the color palette and effects as specified in this guide
-4. Ensuring proper spacing, alignment, and responsive behavior
-
-After LoadGameModal, the priority order should be:
-1. NewGameSetupModal
-2. PlayerStatsModal
-3. InstructionsModal
-
-These modals are frequently used in the main gameplay flow and would benefit most from the updated styling. 
+All planned modal updates have been completed successfully. The application now has a consistent design system across all major modals, with proper internationalization support and adherence to the established style guide patterns. 

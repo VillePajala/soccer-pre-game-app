@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styles from './InstallPrompt.module.css';
 
 // Define proper interfaces for better type safety
@@ -19,7 +19,7 @@ const InstallPrompt: React.FC = () => {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isVisible, setIsVisible] = useState(false);
 
-  const checkInstallationStatus = () => {
+  const checkInstallationStatus = useCallback(() => {
     // Only run this in the browser
     if (typeof window === 'undefined') return;
 
@@ -44,7 +44,7 @@ const InstallPrompt: React.FC = () => {
     if (installPrompt) {
         setIsVisible(true);
     }
-  };
+  }, [installPrompt]);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (event: Event) => {
@@ -64,7 +64,7 @@ const InstallPrompt: React.FC = () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('focus', checkInstallationStatus);
     };
-  }, [installPrompt]); // Rerun effect if installPrompt changes
+  }, [installPrompt, checkInstallationStatus]); // Rerun effect if installPrompt changes
 
   const handleInstall = async () => {
     if (!installPrompt) return;

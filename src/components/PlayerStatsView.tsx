@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Player } from '@/types';
+import { Player, Season, Tournament } from '@/types';
 import { AppState } from '@/app/page';
 import { calculatePlayerStats, PlayerStats as PlayerStatsData } from '@/utils/playerStats';
 import { format } from 'date-fns';
@@ -11,15 +11,17 @@ interface PlayerStatsViewProps {
   player: Player | null;
   savedGames: { [key: string]: AppState };
   onGameClick: (gameId: string) => void;
+  seasons: Season[];
+  tournaments: Tournament[];
 }
 
-const PlayerStatsView: React.FC<PlayerStatsViewProps> = ({ player, savedGames, onGameClick }) => {
+const PlayerStatsView: React.FC<PlayerStatsViewProps> = ({ player, savedGames, onGameClick, seasons, tournaments }) => {
   const { t, i18n } = useTranslation();
 
   const playerStats: PlayerStatsData | null = useMemo(() => {
     if (!player) return null;
-    return calculatePlayerStats(player, savedGames);
-  }, [player, savedGames]);
+    return calculatePlayerStats(player, savedGames, seasons, tournaments);
+  }, [player, savedGames, seasons, tournaments]);
 
   if (!player || !playerStats) {
     return (
@@ -72,8 +74,8 @@ const PlayerStatsView: React.FC<PlayerStatsViewProps> = ({ player, savedGames, o
           </div>
         </div>
 
-        {/* Game by Game Stats */}
-        <div className="flex-grow">
+        {/* Game by Game Stats - Title and Chart */}
+        <div className="mt-6">
           <h3 className="text-lg font-semibold mb-2">{t('playerStats.gameLog', 'Game Log')}</h3>
           <div className="mb-4">
             <SparklineChart 
@@ -82,7 +84,51 @@ const PlayerStatsView: React.FC<PlayerStatsViewProps> = ({ player, savedGames, o
               assistsLabel={t('playerStats.assists', 'Assists')}
             />
           </div>
-          <div className="space-y-2 max-h-64 overflow-y-auto">
+        </div>
+
+        {/* Performance by Season/Tournament */}
+        <div className="space-y-4 mt-2">
+          {Object.keys(playerStats.performanceBySeason).length > 0 && (
+            <div className="bg-slate-800/60 p-3 rounded-lg">
+              <h4 className="text-md font-semibold text-slate-200 mb-2">{t('playerStats.seasonPerformance', 'Season Performance')}</h4>
+              <div className="space-y-2">
+                {Object.entries(playerStats.performanceBySeason).map(([id, stats]) => (
+                  <div key={id} className="p-2 bg-slate-700/50 rounded-md">
+                    <p className="font-semibold text-slate-100 mb-1">{stats.name}</p>
+                    <div className="grid grid-cols-4 gap-2 text-center text-sm">
+                      <div><p className="font-bold text-yellow-400">{stats.gamesPlayed}</p><p className="text-xs text-slate-400">{t('playerStats.gamesPlayed_short', 'GP')}</p></div>
+                      <div><p className="font-bold text-yellow-400">{stats.goals}</p><p className="text-xs text-slate-400">{t('playerStats.goals', 'Goals')}</p></div>
+                      <div><p className="font-bold text-yellow-400">{stats.assists}</p><p className="text-xs text-slate-400">{t('playerStats.assists', 'Assists')}</p></div>
+                      <div><p className="font-bold text-yellow-400">{stats.points}</p><p className="text-xs text-slate-400">{t('playerStats.points', 'Points')}</p></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {Object.keys(playerStats.performanceByTournament).length > 0 && (
+            <div className="bg-slate-800/60 p-3 rounded-lg">
+              <h4 className="text-md font-semibold text-slate-200 mb-2">{t('playerStats.tournamentPerformance', 'Tournament Performance')}</h4>
+              <div className="space-y-2">
+                {Object.entries(playerStats.performanceByTournament).map(([id, stats]) => (
+                  <div key={id} className="p-2 bg-slate-700/50 rounded-md">
+                    <p className="font-semibold text-slate-100 mb-1">{stats.name}</p>
+                    <div className="grid grid-cols-4 gap-2 text-center text-sm">
+                      <div><p className="font-bold text-yellow-400">{stats.gamesPlayed}</p><p className="text-xs text-slate-400">{t('playerStats.gamesPlayed_short', 'GP')}</p></div>
+                      <div><p className="font-bold text-yellow-400">{stats.goals}</p><p className="text-xs text-slate-400">{t('playerStats.goals', 'Goals')}</p></div>
+                      <div><p className="font-bold text-yellow-400">{stats.assists}</p><p className="text-xs text-slate-400">{t('playerStats.assists', 'Assists')}</p></div>
+                      <div><p className="font-bold text-yellow-400">{stats.points}</p><p className="text-xs text-slate-400">{t('playerStats.points', 'Points')}</p></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Individual Game Log List */}
+        <div className="flex-grow mt-4">
+          <div className="space-y-2 max-h-48 overflow-y-auto">
             {playerStats.gameByGameStats.length > 0 ? (
               playerStats.gameByGameStats.map(game => (
                 <button

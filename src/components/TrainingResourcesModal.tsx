@@ -17,13 +17,13 @@ const TrainingResourcesModal: React.FC<TrainingResourcesModalProps> = ({ isOpen,
 
   if (!isOpen) return null;
 
-  type ListItem = string | { title: string; subPoints?: ListItem[] };
+  type ListItem = string | { title: string; subPoints?: ListItem[] }; 
 
   const renderListItems = (items: string | ListItem[], itemKeyPrefix: string, level = 1): React.ReactNode => {
     let actualItems: ListItem[];
     if (typeof items === 'string') {
-      const fetchedItems = t(items, { returnObjects: true });
-      if (!Array.isArray(fetchedItems)) return null;
+        const fetchedItems = t(items, { returnObjects: true });
+        if (!Array.isArray(fetchedItems)) return null;
       actualItems = fetchedItems as ListItem[];
     } else {
       actualItems = items;
@@ -38,7 +38,7 @@ const TrainingResourcesModal: React.FC<TrainingResourcesModalProps> = ({ isOpen,
           <li key={key}>
             {item.title}
             {item.subPoints && Array.isArray(item.subPoints) && item.subPoints.length > 0 && (
-              <ul className={`list-disc list-inside space-y-1 ${currentPadding} mt-1`}>
+              <ul className={`list-disc list-inside space-y-1 ${currentPadding} mt-1`}> 
                 {renderListItems(item.subPoints, key, level + 1)}
               </ul>
             )}
@@ -67,7 +67,7 @@ const TrainingResourcesModal: React.FC<TrainingResourcesModalProps> = ({ isOpen,
             {t('trainingResourcesModal.title', 'Training Resources')}
           </h2>
         </div>
-
+        
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6 space-y-2">
           {sections.map((section) => {
@@ -86,46 +86,46 @@ const TrainingResourcesModal: React.FC<TrainingResourcesModalProps> = ({ isOpen,
                 {isExpanded && (
                   <div className="p-4 text-sm sm:text-base border-t border-slate-700">
                     {section.key === 'warmup' && (
-                      <div className="space-y-6">
+                        <div className="space-y-6">
                         <h3 className="text-xl font-semibold text-yellow-300">{t('matchPreparation.title')}</h3>
                         <section>
                           <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('matchPreparation.section1.title')}</h4>
                           <ul className="list-disc list-inside space-y-1.5 pl-2">{renderListItems(t('matchPreparation.section1.points', { returnObjects: true }) as ListItem[], 's1')}</ul>
                         </section>
                         <section>
-                          <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('matchPreparation.section2.title')}</h4>
+                            <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('matchPreparation.section2.title')}</h4>
                           <ul className="list-disc list-inside space-y-1.5 pl-2">{renderListItems(t('matchPreparation.section2.points', { returnObjects: true }) as ListItem[], 's2')}</ul>
-                        </section>
-                        <section>
-                          <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('matchPreparation.section3.title')}</h4>
+                          </section>
+                          <section>
+                            <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('matchPreparation.section3.title')}</h4>
                           <ul className="list-disc list-inside space-y-1.5 pl-2">{renderListItems(t('matchPreparation.section3.points', { returnObjects: true }) as ListItem[], 's3')}</ul>
-                        </section>
-                        <section>
-                          <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('matchPreparation.section4.title')}</h4>
+                          </section>
+                          <section>
+                            <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('matchPreparation.section4.title')}</h4>
                           <ul className="list-disc list-inside space-y-1.5 pl-2">{renderListItems(t('matchPreparation.section4.points', { returnObjects: true }) as ListItem[], 's4')}</ul>
-                        </section>
-                        <section>
-                          <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('matchPreparation.duringGame.title')}</h4>
+                          </section>
+                          <section>
+                            <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('matchPreparation.duringGame.title')}</h4>
                           <ul className="list-disc list-inside space-y-1.5 pl-2">{renderListItems(t('matchPreparation.duringGame.points', { returnObjects: true }) as ListItem[], 'dg')}</ul>
-                        </section>
-                      </div>
+                          </section>
+                        </div>
                     )}
                     {section.key === 'exampleDrills' && (
                       <div className="space-y-4">
                          <h3 className="text-xl font-semibold text-yellow-300">{t('trainingResourcesModal.exampleDrills.title')}</h3>
                          <p className="text-slate-300">{t('trainingResourcesModal.exampleDrills.description')}</p>
                          <ul className="list-disc list-inside space-y-1 pl-2 text-slate-300">
-                           <li>{t('trainingResourcesModal.exampleDrills.point1')}</li>
-                           <li>{t('trainingResourcesModal.exampleDrills.point2')}</li>
-                           <li>{t('trainingResourcesModal.exampleDrills.point3')}</li>
-                         </ul>
+                             <li>{t('trainingResourcesModal.exampleDrills.point1')}</li>
+                             <li>{t('trainingResourcesModal.exampleDrills.point2')}</li>
+                             <li>{t('trainingResourcesModal.exampleDrills.point3')}</li>
+                           </ul>
                       </div>
                     )}
                   </div>
                 )}
               </div>
             );
-          })}
+          })} 
         </div>
 
         {/* Footer */}
