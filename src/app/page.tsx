@@ -1475,6 +1475,7 @@ export default function Home() {
       setDrawings([]);
       saveStateToHistory({ playersOnField: [], opponents: [], drawings: [] });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isTacticsBoardView, saveStateToHistory, setDrawings, setOpponents, setPlayersOnField, setTacticalDiscs, setTacticalDrawings, setTacticalBallPosition]);
 
   const handleClearDrawingsForView = () => {
@@ -1828,29 +1829,9 @@ export default function Home() {
         alert("Failed to reset application data.");
       }
     }
-  }, [t]); // Add t to dependency array
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [t]);
 
-  // --- NEW: Handler to Reset Only Current Game Stats/Timer ---
-  const handleResetCurrentGame = useCallback(() => {
-    if (window.confirm(t('controlBar.resetCurrentGameConfirmation', 'Are you sure you want to reset the current game? This will clear all stats and timer progress for this match.'))) {
-      dispatchGameSession({ type: 'RESET_TIMER_AND_GAME_PROGRESS' });
-      setPlayersOnField([]);
-      setOpponents([]);
-      setDrawings([]);
-      saveStateToHistory({ 
-        playersOnField: [], 
-        opponents: [], 
-        drawings: [],
-        gameEvents: [],
-        homeScore: 0,
-        awayScore: 0,
-        currentPeriod: 1,
-        gameStatus: 'notStarted',
-        completedIntervalDurations: [],
-        lastSubConfirmationTimeSeconds: 0
-      });
-    }
-  }, [t, saveStateToHistory, setPlayersOnField, setOpponents, setDrawings]);
   
   // Placeholder handlers for Save/Load Modals
   const handleOpenSaveGameModal = useCallback(() => { // Wrap in useCallback
