@@ -32,6 +32,38 @@ interface SavedGame {
   // Note: Add other properties from AppState if they are accessed via 'game' variable below
 }
 
+// ADD new interfaces for tournament and season statistics
+interface TournamentSeasonStats {
+  id: string;
+  name: string;
+  gamesPlayed: number;
+  wins: number;
+  losses: number;
+  ties: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDifference: number;
+  winPercentage: number;
+  averageGoalsFor: number;
+  averageGoalsAgainst: number;
+  lastGameDate?: string;
+}
+
+interface OverallTournamentSeasonStats {
+  totalGames: number;
+  totalWins: number;
+  totalLosses: number;
+  totalTies: number;
+  totalGoalsFor: number;
+  totalGoalsAgainst: number;
+  totalGoalDifference: number;
+  overallWinPercentage: number;
+  averageGoalsFor: number;
+  averageGoalsAgainst: number;
+  tournaments: TournamentSeasonStats[];
+  seasons: TournamentSeasonStats[];
+}
+
 interface GameStatsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -266,6 +298,271 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   //     if (tournamentId) return tournaments.find(t => t.id === tournamentId)?.name;
   //     return null;
   // }, [seasonId, tournamentId, seasons, tournaments]);
+
+  // ADD calculation for tournament/season statistics
+  const tournamentSeasonStats = useMemo(() => {
+    if (activeTab !== 'season' && activeTab !== 'tournament') return null;
+
+    const calculateStats = (gameIds: string[], isSpecific: boolean = false): TournamentSeasonStats[] | OverallTournamentSeasonStats => {
+      if (activeTab === 'season') {
+        if (selectedSeasonIdFilter === 'all') {
+          // Calculate stats for all seasons
+          const seasonStatsMap = new Map<string, TournamentSeasonStats>();
+          
+          gameIds.forEach(gameId => {
+            const game = savedGames?.[gameId];
+            if (!game?.seasonId || game.tournamentId) return; // Skip if no season or has tournament
+            
+            const season = seasons.find(s => s.id === game.seasonId);
+            if (!season) return;
+
+            if (!seasonStatsMap.has(season.id)) {
+              seasonStatsMap.set(season.id, {
+                id: season.id,
+                name: season.name,
+                gamesPlayed: 0,
+                wins: 0,
+                losses: 0,
+                ties: 0,
+                goalsFor: 0,
+                goalsAgainst: 0,
+                goalDifference: 0,
+                winPercentage: 0,
+                averageGoalsFor: 0,
+                averageGoalsAgainst: 0,
+                lastGameDate: game.gameDate
+              });
+            }
+
+            const stats = seasonStatsMap.get(season.id)!;
+            stats.gamesPlayed++;
+            stats.goalsFor += game.homeOrAway === 'home' ? game.homeScore : game.awayScore;
+            stats.goalsAgainst += game.homeOrAway === 'home' ? game.awayScore : game.homeScore;
+            
+            // Determine win/loss/tie
+            const ourScore = game.homeOrAway === 'home' ? game.homeScore : game.awayScore;
+            const theirScore = game.homeOrAway === 'home' ? game.awayScore : game.homeScore;
+            
+            if (ourScore > theirScore) stats.wins++;
+            else if (ourScore < theirScore) stats.losses++;
+            else stats.ties++;
+
+            // Update last game date
+            if (!stats.lastGameDate || game.gameDate > stats.lastGameDate) {
+              stats.lastGameDate = game.gameDate;
+            }
+          });
+
+          // Calculate derived stats
+          const allSeasonStats = Array.from(seasonStatsMap.values()).map(stats => ({
+            ...stats,
+            goalDifference: stats.goalsFor - stats.goalsAgainst,
+            winPercentage: stats.gamesPlayed > 0 ? (stats.wins / stats.gamesPlayed) * 100 : 0,
+            averageGoalsFor: stats.gamesPlayed > 0 ? stats.goalsFor / stats.gamesPlayed : 0,
+            averageGoalsAgainst: stats.gamesPlayed > 0 ? stats.goalsAgainst / stats.gamesPlayed : 0
+          }));
+
+          // Calculate overall stats
+          const totalGames = allSeasonStats.reduce((sum, s) => sum + s.gamesPlayed, 0);
+          const totalWins = allSeasonStats.reduce((sum, s) => sum + s.wins, 0);
+          const totalLosses = allSeasonStats.reduce((sum, s) => sum + s.losses, 0);
+          const totalTies = allSeasonStats.reduce((sum, s) => sum + s.ties, 0);
+          const totalGoalsFor = allSeasonStats.reduce((sum, s) => sum + s.goalsFor, 0);
+          const totalGoalsAgainst = allSeasonStats.reduce((sum, s) => sum + s.goalsAgainst, 0);
+
+          return {
+            totalGames,
+            totalWins,
+            totalLosses,
+            totalTies,
+            totalGoalsFor,
+            totalGoalsAgainst,
+            totalGoalDifference: totalGoalsFor - totalGoalsAgainst,
+            overallWinPercentage: totalGames > 0 ? (totalWins / totalGames) * 100 : 0,
+            averageGoalsFor: totalGames > 0 ? totalGoalsFor / totalGames : 0,
+            averageGoalsAgainst: totalGames > 0 ? totalGoalsAgainst / totalGames : 0,
+            tournaments: [],
+            seasons: allSeasonStats
+          } as OverallTournamentSeasonStats;
+        } else {
+          // Calculate stats for specific season
+          const season = seasons.find(s => s.id === selectedSeasonIdFilter);
+          if (!season) return [];
+
+          const stats: TournamentSeasonStats = {
+            id: season.id,
+            name: season.name,
+            gamesPlayed: 0,
+            wins: 0,
+            losses: 0,
+            ties: 0,
+            goalsFor: 0,
+            goalsAgainst: 0,
+            goalDifference: 0,
+            winPercentage: 0,
+            averageGoalsFor: 0,
+            averageGoalsAgainst: 0
+          };
+
+          gameIds.forEach(gameId => {
+            const game = savedGames?.[gameId];
+            if (!game || game.seasonId !== selectedSeasonIdFilter) return;
+
+            stats.gamesPlayed++;
+            stats.goalsFor += game.homeOrAway === 'home' ? game.homeScore : game.awayScore;
+            stats.goalsAgainst += game.homeOrAway === 'home' ? game.awayScore : game.homeScore;
+            
+            const ourScore = game.homeOrAway === 'home' ? game.homeScore : game.awayScore;
+            const theirScore = game.homeOrAway === 'home' ? game.awayScore : game.homeScore;
+            
+            if (ourScore > theirScore) stats.wins++;
+            else if (ourScore < theirScore) stats.losses++;
+            else stats.ties++;
+
+            if (!stats.lastGameDate || game.gameDate > stats.lastGameDate) {
+              stats.lastGameDate = game.gameDate;
+            }
+          });
+
+          // Calculate derived stats
+          stats.goalDifference = stats.goalsFor - stats.goalsAgainst;
+          stats.winPercentage = stats.gamesPlayed > 0 ? (stats.wins / stats.gamesPlayed) * 100 : 0;
+          stats.averageGoalsFor = stats.gamesPlayed > 0 ? stats.goalsFor / stats.gamesPlayed : 0;
+          stats.averageGoalsAgainst = stats.gamesPlayed > 0 ? stats.goalsAgainst / stats.gamesPlayed : 0;
+
+          return [stats];
+        }
+      } else if (activeTab === 'tournament') {
+        if (selectedTournamentIdFilter === 'all') {
+          // Calculate stats for all tournaments
+          const tournamentStatsMap = new Map<string, TournamentSeasonStats>();
+          
+          gameIds.forEach(gameId => {
+            const game = savedGames?.[gameId];
+            if (!game?.tournamentId || game.seasonId) return; // Skip if no tournament or has season
+            
+            const tournament = tournaments.find(t => t.id === game.tournamentId);
+            if (!tournament) return;
+
+            if (!tournamentStatsMap.has(tournament.id)) {
+              tournamentStatsMap.set(tournament.id, {
+                id: tournament.id,
+                name: tournament.name,
+                gamesPlayed: 0,
+                wins: 0,
+                losses: 0,
+                ties: 0,
+                goalsFor: 0,
+                goalsAgainst: 0,
+                goalDifference: 0,
+                winPercentage: 0,
+                averageGoalsFor: 0,
+                averageGoalsAgainst: 0,
+                lastGameDate: game.gameDate
+              });
+            }
+
+            const stats = tournamentStatsMap.get(tournament.id)!;
+            stats.gamesPlayed++;
+            stats.goalsFor += game.homeOrAway === 'home' ? game.homeScore : game.awayScore;
+            stats.goalsAgainst += game.homeOrAway === 'home' ? game.awayScore : game.homeScore;
+            
+            const ourScore = game.homeOrAway === 'home' ? game.homeScore : game.awayScore;
+            const theirScore = game.homeOrAway === 'home' ? game.awayScore : game.homeScore;
+            
+            if (ourScore > theirScore) stats.wins++;
+            else if (ourScore < theirScore) stats.losses++;
+            else stats.ties++;
+
+            if (!stats.lastGameDate || game.gameDate > stats.lastGameDate) {
+              stats.lastGameDate = game.gameDate;
+            }
+          });
+
+          const allTournamentStats = Array.from(tournamentStatsMap.values()).map(stats => ({
+            ...stats,
+            goalDifference: stats.goalsFor - stats.goalsAgainst,
+            winPercentage: stats.gamesPlayed > 0 ? (stats.wins / stats.gamesPlayed) * 100 : 0,
+            averageGoalsFor: stats.gamesPlayed > 0 ? stats.goalsFor / stats.gamesPlayed : 0,
+            averageGoalsAgainst: stats.gamesPlayed > 0 ? stats.goalsAgainst / stats.gamesPlayed : 0
+          }));
+
+          const totalGames = allTournamentStats.reduce((sum, s) => sum + s.gamesPlayed, 0);
+          const totalWins = allTournamentStats.reduce((sum, s) => sum + s.wins, 0);
+          const totalLosses = allTournamentStats.reduce((sum, s) => sum + s.losses, 0);
+          const totalTies = allTournamentStats.reduce((sum, s) => sum + s.ties, 0);
+          const totalGoalsFor = allTournamentStats.reduce((sum, s) => sum + s.goalsFor, 0);
+          const totalGoalsAgainst = allTournamentStats.reduce((sum, s) => sum + s.goalsAgainst, 0);
+
+          return {
+            totalGames,
+            totalWins,
+            totalLosses,
+            totalTies,
+            totalGoalsFor,
+            totalGoalsAgainst,
+            totalGoalDifference: totalGoalsFor - totalGoalsAgainst,
+            overallWinPercentage: totalGames > 0 ? (totalWins / totalGames) * 100 : 0,
+            averageGoalsFor: totalGames > 0 ? totalGoalsFor / totalGames : 0,
+            averageGoalsAgainst: totalGames > 0 ? totalGoalsAgainst / totalGames : 0,
+            tournaments: allTournamentStats,
+            seasons: []
+          } as OverallTournamentSeasonStats;
+        } else {
+          // Calculate stats for specific tournament
+          const tournament = tournaments.find(t => t.id === selectedTournamentIdFilter);
+          if (!tournament) return [];
+
+          const stats: TournamentSeasonStats = {
+            id: tournament.id,
+            name: tournament.name,
+            gamesPlayed: 0,
+            wins: 0,
+            losses: 0,
+            ties: 0,
+            goalsFor: 0,
+            goalsAgainst: 0,
+            goalDifference: 0,
+            winPercentage: 0,
+            averageGoalsFor: 0,
+            averageGoalsAgainst: 0
+          };
+
+          gameIds.forEach(gameId => {
+            const game = savedGames?.[gameId];
+            if (!game || game.tournamentId !== selectedTournamentIdFilter) return;
+
+            stats.gamesPlayed++;
+            stats.goalsFor += game.homeOrAway === 'home' ? game.homeScore : game.awayScore;
+            stats.goalsAgainst += game.homeOrAway === 'home' ? game.awayScore : game.homeScore;
+            
+            const ourScore = game.homeOrAway === 'home' ? game.homeScore : game.awayScore;
+            const theirScore = game.homeOrAway === 'home' ? game.awayScore : game.homeScore;
+            
+            if (ourScore > theirScore) stats.wins++;
+            else if (ourScore < theirScore) stats.losses++;
+            else stats.ties++;
+
+            if (!stats.lastGameDate || game.gameDate > stats.lastGameDate) {
+              stats.lastGameDate = game.gameDate;
+            }
+          });
+
+          stats.goalDifference = stats.goalsFor - stats.goalsAgainst;
+          stats.winPercentage = stats.gamesPlayed > 0 ? (stats.wins / stats.gamesPlayed) * 100 : 0;
+          stats.averageGoalsFor = stats.gamesPlayed > 0 ? stats.goalsFor / stats.gamesPlayed : 0;
+          stats.averageGoalsAgainst = stats.gamesPlayed > 0 ? stats.goalsAgainst / stats.gamesPlayed : 0;
+
+          return [stats];
+        }
+      }
+
+      return [];
+    };
+
+    const allGameIds = Object.keys(savedGames || {});
+    return calculateStats(allGameIds);
+  }, [activeTab, savedGames, seasons, tournaments, selectedSeasonIdFilter, selectedTournamentIdFilter]);
 
   // Modify filteredAndSortedPlayerStats useMemo to also return the list of game IDs processed
   const { stats: playerStats, gameIds: processedGameIds } = useMemo(() => {
@@ -634,6 +931,125 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
             <div className="p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Left Column */}
               <div className="space-y-6">
+                {/* Tournament/Season Statistics Section */}
+                {(activeTab === 'season' || activeTab === 'tournament') && tournamentSeasonStats && (
+                  <div className="bg-slate-900/70 p-4 rounded-lg border border-slate-700 shadow-inner">
+                    <h3 className="text-xl font-semibold text-slate-200 mb-4">
+                      {activeTab === 'season' 
+                        ? (selectedSeasonIdFilter === 'all' ? t('gameStatsModal.allSeasonsStats', 'All Seasons Statistics') : t('gameStatsModal.seasonStats', 'Season Statistics'))
+                        : (selectedTournamentIdFilter === 'all' ? t('gameStatsModal.allTournamentsStats', 'All Tournaments Statistics') : t('gameStatsModal.tournamentStats', 'Tournament Statistics'))
+                      }
+                    </h3>
+                    
+                    {/* Overall Statistics for "All" view */}
+                    {((selectedSeasonIdFilter === 'all' && activeTab === 'season') || (selectedTournamentIdFilter === 'all' && activeTab === 'tournament')) && 
+                     !Array.isArray(tournamentSeasonStats) && (
+                      <div className="mb-6 bg-slate-800/40 p-4 rounded-md border border-slate-700/50">
+                        <h4 className="text-lg font-semibold text-yellow-400 mb-3">{t('gameStatsModal.overallSummary', 'Overall Summary')}</h4>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                          <div className="bg-slate-800/60 p-2 rounded">
+                            <div className="text-xs text-slate-400">{t('common.gamesPlayed', 'Games Played')}</div>
+                            <div className="text-yellow-400 font-bold text-lg">{tournamentSeasonStats.totalGames}</div>
+                          </div>
+                          <div className="bg-slate-800/60 p-2 rounded">
+                            <div className="text-xs text-slate-400">{t('common.record', 'Record')}</div>
+                            <div className="text-yellow-400 font-bold text-sm">{tournamentSeasonStats.totalWins}-{tournamentSeasonStats.totalLosses}-{tournamentSeasonStats.totalTies}</div>
+                          </div>
+                          <div className="bg-slate-800/60 p-2 rounded">
+                            <div className="text-xs text-slate-400">{t('common.winPercentage', 'Win %')}</div>
+                            <div className="text-yellow-400 font-bold">{tournamentSeasonStats.overallWinPercentage.toFixed(1)}%</div>
+                          </div>
+                          <div className="bg-slate-800/60 p-2 rounded">
+                            <div className="text-xs text-slate-400">{t('common.goalDifference', 'Goal Diff')}</div>
+                            <div className={`font-bold ${tournamentSeasonStats.totalGoalDifference >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                              {tournamentSeasonStats.totalGoalDifference >= 0 ? '+' : ''}{tournamentSeasonStats.totalGoalDifference}
+                            </div>
+                          </div>
+                          <div className="bg-slate-800/60 p-2 rounded">
+                            <div className="text-xs text-slate-400">{t('common.goalsFor', 'Goals For')}</div>
+                            <div className="text-yellow-400 font-bold">{tournamentSeasonStats.totalGoalsFor}</div>
+                          </div>
+                          <div className="bg-slate-800/60 p-2 rounded">
+                            <div className="text-xs text-slate-400">{t('common.goalsAgainst', 'Goals Against')}</div>
+                            <div className="text-yellow-400 font-bold">{tournamentSeasonStats.totalGoalsAgainst}</div>
+                          </div>
+                          <div className="bg-slate-800/60 p-2 rounded">
+                            <div className="text-xs text-slate-400">{t('common.avgGoalsFor', 'Avg Goals For')}</div>
+                            <div className="text-yellow-400 font-bold">{tournamentSeasonStats.averageGoalsFor.toFixed(1)}</div>
+                          </div>
+                          <div className="bg-slate-800/60 p-2 rounded">
+                            <div className="text-xs text-slate-400">{t('common.avgGoalsAgainst', 'Avg Goals Against')}</div>
+                            <div className="text-yellow-400 font-bold">{tournamentSeasonStats.averageGoalsAgainst.toFixed(1)}</div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Individual Tournament/Season Statistics Table */}
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="text-slate-300">
+                          <tr className="border-b border-slate-700">
+                            <th className="px-2 py-2 text-left">{activeTab === 'season' ? t('common.season', 'Season') : t('common.tournament', 'Tournament')}</th>
+                            <th className="px-1 py-2 text-center">{t('common.gamesPlayedShort', 'GP')}</th>
+                            <th className="px-1 py-2 text-center">{t('common.wins', 'W')}</th>
+                            <th className="px-1 py-2 text-center">{t('common.losses', 'L')}</th>
+                            <th className="px-1 py-2 text-center">{t('common.ties', 'T')}</th>
+                            <th className="px-1 py-2 text-center">{t('common.winPercentageShort', 'Win%')}</th>
+                            <th className="px-1 py-2 text-center">{t('common.goalDifferenceShort', 'GD')}</th>
+                            <th className="px-1 py-2 text-center">{t('common.goalsForShort', 'GF')}</th>
+                            <th className="px-1 py-2 text-center">{t('common.goalsAgainstShort', 'GA')}</th>
+                          </tr>
+                        </thead>
+                        <tbody className="text-slate-100">
+                          {Array.isArray(tournamentSeasonStats) ? (
+                            tournamentSeasonStats.length > 0 ? (
+                              tournamentSeasonStats.map(stats => (
+                                <tr key={stats.id} className="border-b border-slate-800 hover:bg-slate-800/40">
+                                  <td className="px-2 py-2 font-medium">{stats.name}</td>
+                                  <td className="px-1 py-2 text-center text-yellow-400 font-semibold">{stats.gamesPlayed}</td>
+                                  <td className="px-1 py-2 text-center text-green-400 font-semibold">{stats.wins}</td>
+                                  <td className="px-1 py-2 text-center text-red-400 font-semibold">{stats.losses}</td>
+                                  <td className="px-1 py-2 text-center text-blue-400 font-semibold">{stats.ties}</td>
+                                  <td className="px-1 py-2 text-center text-yellow-400 font-semibold">{stats.winPercentage.toFixed(1)}%</td>
+                                  <td className={`px-1 py-2 text-center font-semibold ${stats.goalDifference >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                    {stats.goalDifference >= 0 ? '+' : ''}{stats.goalDifference}
+                                  </td>
+                                  <td className="px-1 py-2 text-center text-yellow-400 font-semibold">{stats.goalsFor}</td>
+                                  <td className="px-1 py-2 text-center text-yellow-400 font-semibold">{stats.goalsAgainst}</td>
+                                </tr>
+                              ))
+                            ) : (
+                              <tr><td colSpan={9} className="py-4 text-center text-slate-400">{t('gameStatsModal.noStatsAvailable', 'No statistics available')}</td></tr>
+                            )
+                          ) : (
+                            // Show individual stats for specific tournament/season
+                            tournamentSeasonStats.totalGames > 0 ? (
+                              (activeTab === 'season' ? tournamentSeasonStats.seasons : tournamentSeasonStats.tournaments).map(stats => (
+                                <tr key={stats.id} className="border-b border-slate-800 hover:bg-slate-800/40">
+                                  <td className="px-2 py-2 font-medium">{stats.name}</td>
+                                  <td className="px-1 py-2 text-center text-yellow-400 font-semibold">{stats.gamesPlayed}</td>
+                                  <td className="px-1 py-2 text-center text-green-400 font-semibold">{stats.wins}</td>
+                                  <td className="px-1 py-2 text-center text-red-400 font-semibold">{stats.losses}</td>
+                                  <td className="px-1 py-2 text-center text-blue-400 font-semibold">{stats.ties}</td>
+                                  <td className="px-1 py-2 text-center text-yellow-400 font-semibold">{stats.winPercentage.toFixed(1)}%</td>
+                                  <td className={`px-1 py-2 text-center font-semibold ${stats.goalDifference >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                    {stats.goalDifference >= 0 ? '+' : ''}{stats.goalDifference}
+                                  </td>
+                                  <td className="px-1 py-2 text-center text-yellow-400 font-semibold">{stats.goalsFor}</td>
+                                  <td className="px-1 py-2 text-center text-yellow-400 font-semibold">{stats.goalsAgainst}</td>
+                                </tr>
+                              ))
+                            ) : (
+                              <tr><td colSpan={9} className="py-4 text-center text-slate-400">{t('gameStatsModal.noStatsAvailable', 'No statistics available')}</td></tr>
+                            )
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
                 {activeTab === 'currentGame' && (
                   <div className="bg-slate-900/70 p-4 rounded-lg border border-slate-700 shadow-inner">
                     <h3 className="text-xl font-semibold text-slate-200 mb-4">{t('gameStatsModal.gameInfoTitle', 'Game Information')}</h3>

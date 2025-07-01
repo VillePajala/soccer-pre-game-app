@@ -50,8 +50,8 @@ import {
   saveCurrentGameIdSetting as utilSaveCurrentGameIdSetting, // For saving current game ID setting
   resetAppSettings as utilResetAppSettings // For handleHardReset
 } from '@/utils/appSettings';
-import { deleteSeason as utilDeleteSeason, updateSeason as utilUpdateSeason } from '@/utils/seasons';
-import { deleteTournament as utilDeleteTournament, updateTournament as utilUpdateTournament } from '@/utils/tournaments';
+import { deleteSeason as utilDeleteSeason, updateSeason as utilUpdateSeason, addSeason as utilAddSeason } from '@/utils/seasons';
+import { deleteTournament as utilDeleteTournament, updateTournament as utilUpdateTournament, addTournament as utilAddTournament } from '@/utils/tournaments';
 // Import Player from types directory
 import { Player, Season, Tournament } from '@/types';
 // Import saveMasterRoster utility
@@ -63,8 +63,7 @@ import { getLocalStorageItemAsync, setLocalStorageItemAsync, removeLocalStorageI
 // Import query keys
 import { queryKeys } from '@/config/queryKeys';
 // Also import addSeason and addTournament for the new mutations
-import { addSeason as utilAddSeason } from '@/utils/seasons';
-import { addTournament as utilAddTournament } from '@/utils/tournaments';
+import { updateGameDetails as utilUpdateGameDetails } from '@/utils/savedGames';
 // Import constants
 import { DEFAULT_GAME_ID, MASTER_ROSTER_KEY, TIMER_STATE_KEY } from '@/config/constants';
 
@@ -806,11 +805,38 @@ export default function Home() {
       },
   });
 
-  const deleteTournamentMutation = useMutation<boolean, Error, string>({
-      mutationFn: async (id) => utilDeleteTournament(id),
-      onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: queryKeys.tournaments });
-      },
+  const deleteTournamentMutation = useMutation({
+    mutationFn: (id: string) => utilDeleteTournament(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.tournaments });
+      queryClient.invalidateQueries({ queryKey: queryKeys.savedGames });
+    },
+  });
+
+  const updateGameDetailsMutation = useMutation({
+    mutationFn: ({ gameId, updates }: { gameId: string, updates: Partial<AppState> }) => utilUpdateGameDetails(gameId, updates),
+    onSuccess: (data, variables) => {
+      // After a successful update, invalidate the savedGames query to refetch
+      queryClient.invalidateQueries({ queryKey: queryKeys.savedGames });
+      
+      // OPTIONALLY: Optimistically update the query data
+      queryClient.setQueryData(queryKeys.savedGames, (oldData: SavedGamesCollection | undefined) => {
+        if (!oldData) return oldData;
+        const gameId = variables.gameId;
+        const existingGame = oldData[gameId];
+        if (existingGame) {
+          return {
+            ...oldData,
+            [gameId]: { ...existingGame, ...variables.updates },
+          };
+        }
+        return oldData;
+      });
+    },
+    onError: (error) => {
+      console.error("Error updating game details:", error);
+      // Here you could show a toast notification to the user
+    },
   });
 
   // --- Mutation for Adding a new Tournament ---
@@ -3460,6 +3486,7 @@ export default function Home() {
         isAddingSeason={addSeasonMutation.isPending}
         isAddingTournament={addTournamentMutation.isPending}
         timeElapsedInSeconds={gameSessionState.timeElapsedInSeconds}
+        updateGameDetailsMutation={updateGameDetailsMutation}
       />
     </main>
   );

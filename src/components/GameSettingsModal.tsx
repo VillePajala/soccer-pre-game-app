@@ -65,6 +65,7 @@ export interface GameSettingsModalProps {
   isAddingTournament: boolean;
   // Add current time for fair play card
   timeElapsedInSeconds?: number;
+  updateGameDetailsMutation: UseMutationResult<any, Error, { gameId: string; updates: Partial<any> }, any>;
 }
 
 // Helper to format time from seconds to MM:SS
@@ -137,6 +138,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   isAddingSeason,
   isAddingTournament,
   timeElapsedInSeconds,
+  updateGameDetailsMutation,
 }) => {
   // console.log('[GameSettingsModal Render] Props received:', { seasonId, tournamentId, currentGameId });
   const { t } = useTranslation();
@@ -296,26 +298,26 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
 
   const handleSeasonChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
-    if (value) {
-      onSeasonIdChange(value);
-      onTournamentIdChange(null);
-      setShowNewSeasonInput(false);
-      setNewSeasonName('');
-    } else {
-      onSeasonIdChange(null);
+    const newSeasonId = value || null;
+    onSeasonIdChange(newSeasonId);
+    onTournamentIdChange(null); // Setting a season clears the tournament
+    if (currentGameId) {
+      updateGameDetailsMutation.mutate({ gameId: currentGameId, updates: { seasonId: newSeasonId, tournamentId: null } });
     }
+    setShowNewSeasonInput(false);
+    setNewSeasonName('');
   };
 
   const handleTournamentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
-    if (value) {
-      onTournamentIdChange(value);
-      onSeasonIdChange(null);
-      setShowNewTournamentInput(false);
-      setNewTournamentName('');
-    } else {
-      onTournamentIdChange(null);
+    const newTournamentId = value || null;
+    onTournamentIdChange(newTournamentId);
+    onSeasonIdChange(null); // Setting a tournament clears the season
+    if (currentGameId) {
+      updateGameDetailsMutation.mutate({ gameId: currentGameId, updates: { tournamentId: newTournamentId, seasonId: null } });
     }
+    setShowNewTournamentInput(false);
+    setNewTournamentName('');
   };
 
   // Handle Goal Event Editing
