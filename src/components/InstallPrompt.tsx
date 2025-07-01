@@ -64,7 +64,7 @@ const InstallPrompt: React.FC = () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('focus', checkInstallationStatus);
     };
-  }, [installPrompt]); // Rerun effect if installPrompt changes
+  }, [installPrompt, checkInstallationStatus]); // Rerun effect if installPrompt changes
 
   const handleInstall = async () => {
     if (!installPrompt) return;

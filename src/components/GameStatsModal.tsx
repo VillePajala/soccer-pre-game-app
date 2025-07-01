@@ -340,7 +340,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   const tournamentSeasonStats = useMemo(() => {
     if (activeTab !== 'season' && activeTab !== 'tournament') return null;
 
-    const calculateStats = (gameIds: string[], isSpecific: boolean = false): TournamentSeasonStats[] | OverallTournamentSeasonStats => {
+    const calculateStats = (gameIds: string[]): TournamentSeasonStats[] | OverallTournamentSeasonStats => {
       if (activeTab === 'season') {
         if (selectedSeasonIdFilter === 'all') {
           // Calculate stats for all seasons

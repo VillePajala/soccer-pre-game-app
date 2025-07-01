@@ -1466,7 +1466,7 @@ export default function Home() {
       // Only clear tactical elements in tactics view
       setTacticalDiscs([]);
       setTacticalDrawings([]);
-      setTacticalBallPosition({ relX: 0.5, relY: 0.5 }); // Reset ball to center
+      setTacticalBallPosition({ relX: 0.5, relY: 0.5 });
       saveStateToHistory({ tacticalDiscs: [], tacticalDrawings: [], tacticalBallPosition: { relX: 0.5, relY: 0.5 } });
     } else {
       // Only clear game elements in normal view
@@ -1475,7 +1475,7 @@ export default function Home() {
       setDrawings([]);
       saveStateToHistory({ playersOnField: [], opponents: [], drawings: [] });
     }
-    }, [isTacticsBoardView, saveStateToHistory, setDrawings, setOpponents, setPlayersOnField, setTacticalBallPosition, setTacticalDiscs, setTacticalDrawings, tacticalBallPosition, tacticalDiscs, tacticalDrawings]);
+    }, [isTacticsBoardView, saveStateToHistory, setDrawings, setOpponents, setPlayersOnField, setTacticalDiscs, setTacticalDrawings, setTacticalBallPosition]);
 
   const handleClearDrawingsForView = () => {
     if (isTacticsBoardView) {
@@ -1818,7 +1818,7 @@ export default function Home() {
 
   // NEW: Handler for Hard Reset
   const handleHardResetApp = useCallback(async () => {
-    if (window.confirm(t('controlBar.hardResetConfirmation') ?? "Are you sure you want to completely reset the application? All saved data (players, stats, positions) will be permanently lost.")) {
+    if (window.confirm(t('controlBar.hardResetConfirmation', 'Are you sure you want to completely reset the application? All saved data (players, stats, positions) will be permanently lost.'))) {
       try {
         console.log("Performing hard reset using utility...");
         await utilResetAppSettings(); // Use utility function
@@ -1831,6 +1831,26 @@ export default function Home() {
   }, [t]); // Add t to dependency array
 
   // --- NEW: Handler to Reset Only Current Game Stats/Timer ---
+  const handleResetCurrentGame = useCallback(() => {
+    if (window.confirm(t('controlBar.resetCurrentGameConfirmation', 'Are you sure you want to reset the current game? This will clear all stats and timer progress for this match.'))) {
+      dispatchGameSession({ type: 'RESET_TIMER_AND_GAME_PROGRESS' });
+      setPlayersOnField([]);
+      setOpponents([]);
+      setDrawings([]);
+      saveStateToHistory({ 
+        playersOnField: [], 
+        opponents: [], 
+        drawings: [],
+        gameEvents: [],
+        homeScore: 0,
+        awayScore: 0,
+        currentPeriod: 1,
+        gameStatus: 'notStarted',
+        completedIntervalDurations: [],
+        lastSubConfirmationTimeSeconds: 0
+      });
+    }
+  }, [t, saveStateToHistory, setPlayersOnField, setOpponents, setDrawings]);
   
   // Placeholder handlers for Save/Load Modals
   const handleOpenSaveGameModal = useCallback(() => { // Wrap in useCallback
@@ -2598,13 +2618,13 @@ export default function Home() {
   };
 
   // --- NEW Handlers for Setting Season/Tournament ID ---
-  const handleSetSeasonId = useCallback((newSeasonId: string | null) => {
+  const handleSetSeasonId = useCallback((newSeasonId: string | undefined) => {
     const idToSet = newSeasonId || ''; // Ensure empty string instead of null
     console.log('[page.tsx] handleSetSeasonId called with:', idToSet);
     dispatchGameSession({ type: 'SET_SEASON_ID', payload: idToSet }); 
   }, []); // No dependencies needed since we're only using dispatchGameSession which is stable
 
-  const handleSetTournamentId = useCallback((newTournamentId: string | null) => {
+  const handleSetTournamentId = useCallback((newTournamentId: string | undefined) => {
     const idToSet = newTournamentId || ''; // Ensure empty string instead of null
     console.log('[page.tsx] handleSetTournamentId called with:', idToSet);
     dispatchGameSession({ type: 'SET_TOURNAMENT_ID', payload: idToSet });

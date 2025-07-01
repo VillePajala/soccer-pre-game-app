@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { FaEdit, FaTrashAlt } from 'react-icons/fa';
 import { HiPlusCircle } from 'react-icons/hi2';
 import { Season, Tournament, Player } from '@/types';
+import { AppState, GameEvent as PageGameEvent } from '@/app/page';
 import { getSeasons } from '@/utils/seasons';
 import { getTournaments } from '@/utils/tournaments';
 import { updateGameDetails, updateGameEvent, removeGameEvent } from '@/utils/savedGames';
@@ -54,8 +55,8 @@ export interface GameSettingsModalProps {
   onAwardFairPlayCard: (playerId: string | null, time: number) => void;
   onNumPeriodsChange: (num: number) => void;
   onPeriodDurationChange: (minutes: number) => void;
-  onSeasonIdChange: (seasonId: string | null) => void;
-  onTournamentIdChange: (tournamentId: string | null) => void;
+  onSeasonIdChange: (seasonId: string | undefined) => void;
+  onTournamentIdChange: (tournamentId: string | undefined) => void;
   homeOrAway: 'home' | 'away';
   onSetHomeOrAway: (status: 'home' | 'away') => void;
   // Add mutation props for creating seasons and tournaments
@@ -65,7 +66,7 @@ export interface GameSettingsModalProps {
   isAddingTournament: boolean;
   // Add current time for fair play card
   timeElapsedInSeconds?: number;
-  updateGameDetailsMutation: UseMutationResult<any, Error, { gameId: string; updates: Partial<any> }, any>;
+  updateGameDetailsMutation: UseMutationResult<AppState | null, Error, { gameId: string; updates: Partial<AppState> }, unknown>;
 }
 
 // Helper to format time from seconds to MM:SS
@@ -298,26 +299,26 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
 
   const handleSeasonChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
-    const newSeasonId = value || null;
+    const newSeasonId = value || undefined;
     onSeasonIdChange(newSeasonId);
-    onTournamentIdChange(null); // Setting a season clears the tournament
+    onTournamentIdChange(undefined); // Setting a season clears the tournament
     if (currentGameId) {
-      updateGameDetailsMutation.mutate({ gameId: currentGameId, updates: { seasonId: newSeasonId, tournamentId: null } });
+      updateGameDetailsMutation.mutate({ gameId: currentGameId, updates: { seasonId: newSeasonId, tournamentId: undefined } });
     }
-      setShowNewSeasonInput(false);
-      setNewSeasonName('');
+    setShowNewSeasonInput(false);
+    setNewSeasonName('');
   };
 
   const handleTournamentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
-    const newTournamentId = value || null;
+    const newTournamentId = value || undefined;
     onTournamentIdChange(newTournamentId);
-    onSeasonIdChange(null); // Setting a tournament clears the season
+    onSeasonIdChange(undefined); // Setting a tournament clears the season
     if (currentGameId) {
-      updateGameDetailsMutation.mutate({ gameId: currentGameId, updates: { tournamentId: newTournamentId, seasonId: null } });
+      updateGameDetailsMutation.mutate({ gameId: currentGameId, updates: { tournamentId: newTournamentId, seasonId: undefined } });
     }
-      setShowNewTournamentInput(false);
-      setNewTournamentName('');
+    setShowNewTournamentInput(false);
+    setNewTournamentName('');
   };
 
   // Handle Goal Event Editing
@@ -588,14 +589,14 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   // Handlers for creating new seasons/tournaments
   const handleShowCreateSeason = () => {
     setShowNewSeasonInput(true);
-    onSeasonIdChange(null);
-    onTournamentIdChange(null);
+    onSeasonIdChange(undefined);
+    onTournamentIdChange(undefined);
   };
 
   const handleShowCreateTournament = () => {
     setShowNewTournamentInput(true);
-    onTournamentIdChange(null);
-    onSeasonIdChange(null);
+    onTournamentIdChange(undefined);
+    onSeasonIdChange(undefined);
   };
 
   const handleAddNewSeason = async () => {
@@ -612,7 +613,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
       if (newSeason) {
         setSeasons(prevSeasons => [...prevSeasons, newSeason].sort((a, b) => a.name.localeCompare(b.name)));
         onSeasonIdChange(newSeason.id);
-        onTournamentIdChange(null);
+        onTournamentIdChange(undefined);
         setNewSeasonName('');
         setShowNewSeasonInput(false);
       }
@@ -636,7 +637,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
       if (newTournament) {
         setTournaments(prevTournaments => [...prevTournaments, newTournament].sort((a,b) => a.name.localeCompare(b.name)));
         onTournamentIdChange(newTournament.id);
-        onSeasonIdChange(null);
+        onSeasonIdChange(undefined);
         setNewTournamentName('');
         setShowNewTournamentInput(false);
       }
@@ -650,8 +651,8 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   const handleTabChange = (tab: 'none' | 'season' | 'tournament') => {
     setActiveTab(tab);
     if (tab === 'none') {
-      onSeasonIdChange(null);
-      onTournamentIdChange(null);
+      onSeasonIdChange(undefined);
+      onTournamentIdChange(undefined);
     }
     setShowNewSeasonInput(false);
     setShowNewTournamentInput(false);
