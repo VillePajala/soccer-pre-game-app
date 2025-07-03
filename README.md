@@ -79,3 +79,13 @@ The app is designed to be an all-in-one digital assistant for game day, from pre
 ---
 
 *This project is under active development. Feel free to contribute or report issues!**
+
+## License
+
+This project is the exclusive intellectual property of Ville Pajala.  
+All rights reserved. No part of this codebase may be copied, reused, or distributed without explicit permission.
+
+## Contributions
+
+By contributing to this project, you agree to transfer all IP rights of your contributions to Ville Pajala.  
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for full terms.
