@@ -23,6 +23,7 @@ import {
   removeGameEvent,
   exportGamesAsJson,
   importGamesFromJson,
+  getLatestGameId,
   // GameData, // No longer importing GameData for test mocks, using AppState
 } from './savedGames';
 import { SAVED_GAMES_KEY } from '@/config/constants';
@@ -672,10 +673,21 @@ describe('Saved Games Utilities', () => {
     });
 
     it('should reject if internal getSavedGames fails', async () => {
-      localStorageMock.getItem.mockImplementation(() => { 
-        throw new Error('LocalStorage get failure for filter'); 
+      localStorageMock.getItem.mockImplementation(() => {
+        throw new Error('LocalStorage get failure for filter');
       });
       await expect(getFilteredGames({ seasonId: 'season_1' })).rejects.toThrow('LocalStorage get failure for filter');
+    });
+  });
+
+  describe('getLatestGameId', () => {
+    it('should return the id of the newest game', () => {
+      const id = getLatestGameId(mockSavedGamesCollection);
+      expect(id).toBe('game_456');
+    });
+
+    it('should return null when collection is empty', () => {
+      expect(getLatestGameId({})).toBeNull();
     });
   });
 
