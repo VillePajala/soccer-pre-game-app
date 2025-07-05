@@ -1070,6 +1070,10 @@ export default function Home() {
   useEffect(() => {
     const loadInitialAppData = async () => {
       console.log('[EFFECT init] Coordinating initial application data from TanStack Query...');
+      if (initialLoadComplete) {
+        console.log('[EFFECT init] Initial load already complete. Skipping.');
+        return;
+      }
       // This useEffect now primarily ensures that dependent state updates happen
       // after the core data (masterRoster, seasons, tournaments, savedGames, currentGameIdSetting)
       // has been fetched by their respective useQuery hooks.
