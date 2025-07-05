@@ -1,4 +1,4 @@
-import { SAVED_GAMES_KEY } from '@/config/constants';
+import { SAVED_GAMES_KEY, DEFAULT_GAME_ID } from '@/config/constants';
 import type { SavedGamesCollection, AppState, GameEvent as PageGameEvent, Point, Opponent, IntervalLog } from '@/app/page';
 import type { Player } from '@/types';
 
@@ -205,9 +205,9 @@ export const getAllGameIds = async (): Promise<string[]> => {
  * @param filters - Filter criteria
  * @returns Promise resolving to an Array of filtered games as [gameId, gameData] tuples
  */
-export const getFilteredGames = async (filters: { 
-  seasonId?: string | null, 
-  tournamentId?: string | null 
+export const getFilteredGames = async (filters: {
+  seasonId?: string | null,
+  tournamentId?: string | null
 }): Promise<[string, AppState][]> => {
   try {
     const allGames = await getSavedGames();
@@ -228,6 +228,38 @@ export const getFilteredGames = async (filters: {
     console.error('Error filtering games:', error);
     return Promise.reject(error);
   }
+};
+
+/**
+ * Determines the most recently created game ID from a collection.
+ * Games are sorted by gameDate (newest first) and then by timestamp
+ * embedded in the game ID.
+ * @param games - Collection of saved games
+ * @returns The latest game ID or null if none exist
+ */
+export const getLatestGameId = (games: SavedGamesCollection): string | null => {
+  const ids = Object.keys(games).filter(id => id !== DEFAULT_GAME_ID);
+  if (ids.length === 0) return null;
+
+  const sortedIds = ids.sort((a, b) => {
+    const gameA = games[a];
+    const gameB = games[b];
+    const dateA = gameA?.gameDate ? new Date(gameA.gameDate).getTime() : 0;
+    const dateB = gameB?.gameDate ? new Date(gameB.gameDate).getTime() : 0;
+    if (dateB !== dateA) {
+      if (!dateA) return 1;
+      if (!dateB) return -1;
+      return dateB - dateA;
+    }
+    const tsA = parseInt(a.split('_')[1], 10);
+    const tsB = parseInt(b.split('_')[1], 10);
+    if (!isNaN(tsA) && !isNaN(tsB)) {
+      return tsB - tsA;
+    }
+    return 0;
+  });
+
+  return sortedIds[0];
 };
 
 /**
@@ -411,4 +443,4 @@ export const importGamesFromJson = async (jsonData: string, overwrite: boolean =
     console.error('Error importing games from JSON:', error);
     return Promise.reject(error); // Or resolve(null)
   }
-}; 
+};

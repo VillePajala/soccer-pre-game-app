@@ -43,6 +43,7 @@ import {
   getSavedGames as utilGetSavedGames,
   saveGame as utilSaveGame, // For auto-save and handleSaveGame
   deleteGame as utilDeleteGame, // For handleDeleteGame
+  getLatestGameId,
   // GameData // Type // Comment out or remove GameData import if AppState is used directly
 } from '@/utils/savedGames';
 import {
@@ -1979,22 +1980,22 @@ export default function Home() {
         console.log(`Game ${gameId} deleted from state and persistence.`);
 
         if (currentGameId === gameId) {
-          console.log("Currently loaded game was deleted. Resetting to initial state via reducer.");
-          // Dispatch action to reset to the initial state
-          dispatchGameSession({ type: 'RESET_TO_INITIAL_STATE', payload: initialGameSessionData });
-          
-          // Reset other non-reducer states using initialState (from page.tsx)
-          setPlayersOnField(initialState.playersOnField || []); 
-          setOpponents(initialState.opponents || []); 
-          setDrawings(initialState.drawings || []); 
-          // setGameEvents(initialState.gameEvents || []); // REMOVE - Handled by RESET_TO_INITIAL_STATE
-          // setSeasonId(initialState.seasonId || ''); // REMOVE - Handled by RESET_TO_INITIAL_STATE
-
-          setHistory([initialState as AppState]); // Reset history with initial state (ensure cast if needed)
-        setHistoryIndex(0);
-
-        setCurrentGameId(DEFAULT_GAME_ID);
-          await utilSaveCurrentGameIdSetting(DEFAULT_GAME_ID);
+          const latestId = getLatestGameId(updatedSavedGames);
+          if (latestId) {
+            console.log(`Deleted active game. Loading latest game ${latestId}.`);
+            setCurrentGameId(latestId);
+            await utilSaveCurrentGameIdSetting(latestId);
+          } else {
+            console.log("Currently loaded game was deleted with no other games remaining. Resetting to initial state.");
+            dispatchGameSession({ type: 'RESET_TO_INITIAL_STATE', payload: initialGameSessionData });
+            setPlayersOnField(initialState.playersOnField || []);
+            setOpponents(initialState.opponents || []);
+            setDrawings(initialState.drawings || []);
+            setHistory([initialState as AppState]);
+            setHistoryIndex(0);
+            setCurrentGameId(DEFAULT_GAME_ID);
+            await utilSaveCurrentGameIdSetting(DEFAULT_GAME_ID);
+          }
         }
       } else {
         // ... (existing error handling)
