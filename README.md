@@ -2,6 +2,7 @@
 
 A comprehensive PWA for soccer coaches to manage rosters, track live game events, analyze detailed statistics, and design plays on an interactive tactics board. Built for the sideline, available on any device.
 
+
 ## Key Features
 
 The app is designed to be an all-in-one digital assistant for game day, from pre-match planning to post-game analysis.
