@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SavedGamesCollection } from '@/app/page'; // Keep this if SavedGamesCollection is from here
+import { SavedGamesCollection } from '@/types'; // Keep this if SavedGamesCollection is from here
 import { Season, Tournament } from '@/types'; // Corrected import path
 import { 
   HiOutlineDocumentArrowDown, 

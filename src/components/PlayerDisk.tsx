@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { Player } from '@/types'; // Import Player from types
-import { GameEvent } from '@/app/page'; // Import GameEvent type
+import { GameEvent } from '@/types'; // Import GameEvent type
 import {
     HiOutlineShieldCheck, // Goalie icon
 } from 'react-icons/hi2';

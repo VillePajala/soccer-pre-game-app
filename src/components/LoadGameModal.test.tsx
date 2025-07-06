@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, within, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import LoadGameModal from './LoadGameModal';
-import { SavedGamesCollection, AppState } from '@/app/page';
+import { SavedGamesCollection, AppState } from '@/types';
 import { Season, Tournament } from '@/types';
 
 // Mock react-i18next

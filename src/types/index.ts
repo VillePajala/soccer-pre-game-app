@@ -29,3 +29,4 @@ export interface Tournament {
   id: string; 
   name: string; 
 } 
+export * from "./game";

@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import SoccerField from './SoccerField';
 import { Player } from '@/types';
-import { Point, Opponent } from '@/app/page';
+import { Point, Opponent } from '@/types';
 
 // Mock ResizeObserver
 global.ResizeObserver = class ResizeObserver {

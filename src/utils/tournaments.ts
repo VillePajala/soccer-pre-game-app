@@ -1,4 +1,4 @@
-import { TOURNAMENTS_LIST_KEY } from '@/config/constants';
+import { TOURNAMENTS_LIST_KEY } from '@/config/storageKeys';
 import type { Tournament } from '@/types'; // Import Tournament type from shared types
 
 // Define the Tournament type (consider moving to a shared types file)

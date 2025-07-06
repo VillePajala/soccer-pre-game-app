@@ -6,7 +6,7 @@ import {
   SEASONS_LIST_KEY, 
   TOURNAMENTS_LIST_KEY, 
   MASTER_ROSTER_KEY 
-} from '@/config/constants'; // Using path alias from jest.config.js
+} from '@/config/storageKeys'; // Using path alias from jest.config.js
 
 // Mock localStorage globally for all tests in this file
 const localStorageMock = (() => {

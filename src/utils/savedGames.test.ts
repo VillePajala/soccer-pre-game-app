@@ -1,5 +1,5 @@
 import type { Player } from '@/types';
-// Import AppState and other necessary types from @/app/page
+// Import AppState and other necessary types from @/types
 import type { 
   AppState, 
   SavedGamesCollection, 
@@ -7,7 +7,7 @@ import type {
   // Point, // Removed unused import
   // Opponent, // Removed unused import
   // IntervalLog // Removed unused import
-} from '@/app/page';
+} from '@/types';
 import {
   getSavedGames,
   saveGames,
@@ -26,7 +26,7 @@ import {
   getLatestGameId,
   // GameData, // No longer importing GameData for test mocks, using AppState
 } from './savedGames';
-import { SAVED_GAMES_KEY } from '@/config/constants';
+import { SAVED_GAMES_KEY } from '@/config/storageKeys';
 
 // TestGameEvent is no longer needed, use PageGameEvent directly
 

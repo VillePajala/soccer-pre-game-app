@@ -4,7 +4,7 @@ import React from 'react';
 import PlayerDisk from './PlayerDisk'; // Import the PlayerDisk component
 import type { Player } from '@/types'; // Import the Player type from central types
 import Image from 'next/image'; // RE-ADD Import
-import type { GameEvent } from '@/app/page'; // Correctly import GameEvent type
+import type { GameEvent } from '@/types'; // Correctly import GameEvent type
 // REMOVED unused import
 // import Image from 'next/image'; 
 

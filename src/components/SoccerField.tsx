@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Player } from '@/types'; // Import Player from types
-import { Point, Opponent, TacticalDisc } from '@/app/page'; // Import Point and Opponent from page
+import { Point, Opponent, TacticalDisc } from '@/types'; // Import Point and Opponent from page
 import tinycolor from 'tinycolor2';
 
 // Define props for SoccerField

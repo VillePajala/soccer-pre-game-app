@@ -9,7 +9,7 @@ import {
   resetAppSettings,
   AppSettings
 } from './appSettings';
-import { APP_SETTINGS_KEY, LAST_HOME_TEAM_NAME_KEY } from '@/config/constants';
+import { APP_SETTINGS_KEY, LAST_HOME_TEAM_NAME_KEY } from '@/config/storageKeys';
 
 describe('App Settings Utilities', () => {
   // Mock localStorage

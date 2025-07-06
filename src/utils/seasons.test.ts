@@ -1,4 +1,4 @@
-import { SEASONS_LIST_KEY } from '@/config/constants';
+import { SEASONS_LIST_KEY } from '@/config/storageKeys';
 import { getSeasons, saveSeasons, addSeason, updateSeason, deleteSeason } from './seasons'; // Adjust path as needed
 import type { Season } from '@/types'; // Import Season type directly from types
 

@@ -7,7 +7,7 @@ import {
   setPlayerGoalieStatus,
   setPlayerFairPlayCardStatus
 } from './masterRoster';
-import { MASTER_ROSTER_KEY } from '@/config/constants';
+import { MASTER_ROSTER_KEY } from '@/config/storageKeys';
 import type { Player } from '@/types';
 
 describe('Master Roster Utilities', () => {

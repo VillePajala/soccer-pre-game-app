@@ -56,6 +56,7 @@ import { deleteTournament as utilDeleteTournament, updateTournament as utilUpdat
 // Import Player from types directory
 import { Player, Season, Tournament } from '@/types';
 // Import saveMasterRoster utility
+import type { Point, GameEvent, AppState, TacticalDisc, SavedGamesCollection, TimerState } from "@/types";
 import { saveMasterRoster } from '@/utils/masterRoster';
 // Import useQuery, useMutation, useQueryClient
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -65,95 +66,9 @@ import { getLocalStorageItemAsync, setLocalStorageItemAsync, removeLocalStorageI
 import { queryKeys } from '@/config/queryKeys';
 // Also import addSeason and addTournament for the new mutations
 import { updateGameDetails as utilUpdateGameDetails } from '@/utils/savedGames';
-// Import constants
-import { DEFAULT_GAME_ID, MASTER_ROSTER_KEY, TIMER_STATE_KEY } from '@/config/constants';
+import { DEFAULT_GAME_ID } from '@/config/constants';
+import { MASTER_ROSTER_KEY, TIMER_STATE_KEY, SEASONS_LIST_KEY } from "@/config/storageKeys";
 
-// Define the Point type for drawing - Use relative coordinates
-export interface Point {
-  relX: number; // Relative X (0.0 to 1.0)
-  relY: number; // Relative Y (0.0 to 1.0)
-}
-
-// Define the Opponent type - Use relative coordinates
-export interface Opponent {
-  id: string;
-  relX: number; // Relative X (0.0 to 1.0)
-  relY: number; // Relative Y (0.0 to 1.0)
-}
-
-// Define the structure for a game event
-export interface GameEvent {
-  id: string; // Unique ID for the event
-  type: 'goal' | 'opponentGoal' | 'substitution' | 'periodEnd' | 'gameEnd' | 'fairPlayCard'; // Added fairPlayCard
-  time: number; // Time in seconds relative to the start of the game
-  scorerId?: string; // Player ID of the scorer (optional)
-  assisterId?: string; // Player ID of the assister (optional)
-  entityId?: string; // Optional: For events associated with a specific entity (e.g., player ID for fair play card)
-  // Additional fields might be needed for other event types
-}
-
-// Define the structure for the timer state snapshot
-interface TimerState {
-  gameId: string;
-  timeElapsedInSeconds: number;
-  timestamp: number; // The Date.now() when the state was saved
-}
-
-// Define structure for substitution interval logs
-export interface IntervalLog {
-  period: number;
-  duration: number; // Duration in seconds
-  timestamp: number; // Unix timestamp when the interval ended
-}
-
-// Define the structure for the application state (for history)
-export interface AppState {
-  playersOnField: Player[];
-  opponents: Opponent[]; 
-  drawings: Point[][];
-  availablePlayers: Player[]; // <<< RE-ADD: Roster at the time of saving
-  showPlayerNames: boolean; 
-  teamName: string; 
-  gameEvents: GameEvent[]; // Add game events to state
-  // Add game info state
-  opponentName: string;
-  gameDate: string;
-  homeScore: number;
-  awayScore: number;
-  gameNotes: string; // Add game notes to state
-  homeOrAway: 'home' | 'away'; // <<< Step 1: Add field
-  // Add game structure state
-  numberOfPeriods: 1 | 2;
-  periodDurationMinutes: number;
-  currentPeriod: number; // 1 or 2
-  gameStatus: 'notStarted' | 'inProgress' | 'periodEnd' | 'gameEnd';
-  selectedPlayerIds: string[]; // IDs of players selected for the current match
-  // Replace gameType with required IDs, initialized as empty string
-  seasonId: string; 
-  tournamentId: string;
-  // NEW: Optional fields for location and time
-  gameLocation?: string;
-  gameTime?: string; 
-  // Timer related state to persist (NON-VOLATILE ONES)
-  subIntervalMinutes?: number; // Add sub interval
-  completedIntervalDurations?: IntervalLog[]; // Add completed interval logs
-  lastSubConfirmationTimeSeconds?: number; // Add last substitution confirmation time
-  // VOLATILE TIMER STATES REMOVED:
-  // timeElapsedInSeconds?: number;
-  // isTimerRunning?: boolean;
-  // nextSubDueTimeSeconds?: number;
-  // subAlertLevel?: 'none' | 'warning' | 'due';
-  tacticalDiscs: TacticalDisc[];
-  tacticalDrawings: Point[][];
-  tacticalBallPosition: Point | null;
-}
-
-export interface TacticalDisc {
-  id: string;
-  relX: number;
-  relY: number;
-  type: 'home' | 'opponent' | 'goalie';
-}
 
 // Placeholder data - Initialize new fields
 const initialAvailablePlayersData: Player[] = [
@@ -206,24 +121,6 @@ const initialState: AppState = {
   tacticalBallPosition: { relX: 0.5, relY: 0.5 },
 };
 
-// Define new localStorage keys
-const SEASONS_LIST_KEY = 'soccerSeasons';
-// const TOURNAMENTS_LIST_KEY = 'soccerTournaments'; // Removed unused variable
-// const MASTER_ROSTER_KEY = 'soccerMasterRoster'; // <<< NEW KEY for global roster - now imported from constants
-
-// Define structure for settings
-// interface AppSettings {
-//   currentGameId: string | null;
-//   // Add other non-game-specific settings here later if needed
-//   // e.g., preferredLanguage: string;
-// }
-
-// Define structure for saved games collection
-export interface SavedGamesCollection {
-  [gameId: string]: AppState; // Use AppState for the game state structure
-}
-
-// Define a default Game ID for the initial/unsaved state - now imported from constants
 
 
 

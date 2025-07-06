@@ -1,4 +1,4 @@
-import { SavedGamesCollection } from '@/app/page'; // AppState was removed, SavedGamesCollection is still used.
+import { SavedGamesCollection } from '@/types'; // AppState was removed, SavedGamesCollection is still used.
 import { Player, Season, Tournament } from '@/types'; // Corrected import path for these types
 // Import the constants from the central file
 import { 
@@ -7,7 +7,7 @@ import {
   SEASONS_LIST_KEY, 
   TOURNAMENTS_LIST_KEY, 
   MASTER_ROSTER_KEY 
-} from '@/config/constants';
+} from '@/config/storageKeys';
 // Import the new async localStorage utility functions
 import { getLocalStorageItemAsync, setLocalStorageItemAsync, removeLocalStorageItemAsync } from './localStorage';
 
