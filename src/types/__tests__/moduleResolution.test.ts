@@ -10,9 +10,7 @@ import {
 } from '@/config/storageKeys';
 import type {
   Point,
-  Opponent,
   GameEvent,
-  IntervalLog,
   AppState,
   TacticalDisc,
   SavedGamesCollection,
@@ -22,9 +20,7 @@ import type {
 // Dummy variable to ensure type imports are used
 const _dummy: {
   point?: Point;
-  opponent?: Opponent;
   event?: GameEvent;
-  log?: IntervalLog;
   state?: AppState;
   disc?: TacticalDisc;
   collection?: SavedGamesCollection;
@@ -34,7 +30,16 @@ const _dummy: {
 describe('module resolution', () => {
   it('resolves constants and types', () => {
     expect(typeof DEFAULT_GAME_ID).toBe('string');
-    expect(SEASONS_LIST_KEY).toBeDefined();
+    const allKeys = [
+      SEASONS_LIST_KEY,
+      TOURNAMENTS_LIST_KEY,
+      SAVED_GAMES_KEY,
+      APP_SETTINGS_KEY,
+      MASTER_ROSTER_KEY,
+      LAST_HOME_TEAM_NAME_KEY,
+      TIMER_STATE_KEY,
+    ];
+    allKeys.forEach((k) => expect(typeof k).toBe('string'));
     expect(_dummy).toBeDefined();
   });
 });

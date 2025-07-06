@@ -56,7 +56,7 @@ import { deleteTournament as utilDeleteTournament, updateTournament as utilUpdat
 // Import Player from types directory
 import { Player, Season, Tournament } from '@/types';
 // Import saveMasterRoster utility
-import type { Point, Opponent, GameEvent, IntervalLog, AppState, TacticalDisc, SavedGamesCollection, TimerState } from "@/types";
+import type { Point, GameEvent, AppState, TacticalDisc, SavedGamesCollection, TimerState } from "@/types";
 import { saveMasterRoster } from '@/utils/masterRoster';
 // Import useQuery, useMutation, useQueryClient
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
