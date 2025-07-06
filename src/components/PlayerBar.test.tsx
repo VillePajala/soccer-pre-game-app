@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import PlayerBar from './PlayerBar';
 import { Player } from '@/types';
-import { GameEvent } from '@/app/page';
+import { GameEvent } from '@/types';
 
 // Mock next/image since it's used in the component
 jest.mock('next/image', () => ({

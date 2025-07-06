@@ -1,4 +1,4 @@
-import { SEASONS_LIST_KEY } from '@/config/constants';
+import { SEASONS_LIST_KEY } from '@/config/storageKeys';
 import type { Season } from '@/types'; // Import Season type from shared types
 
 // Define the Season type (consider moving to a shared types file if not already there)

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaPlay, FaPause, FaUndo } from 'react-icons/fa'; // Import icons
 import { useTranslation } from 'react-i18next'; // Import translation hook
-import { IntervalLog } from '@/app/page'; // Import the IntervalLog interface
+import { IntervalLog } from '@/types'; // Import the IntervalLog interface
 
 // Helper function to format time (copied from ControlBar for now)
 // TODO: Consider moving to a shared utility file

@@ -1,5 +1,5 @@
 import { Player, Season, Tournament } from '@/types';
-import { AppState } from '@/app/page';
+import { AppState } from '@/types';
 
 // Define a type for the processed stats
 export interface PlayerStats {

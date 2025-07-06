@@ -1,4 +1,4 @@
-import { TOURNAMENTS_LIST_KEY } from '@/config/constants';
+import { TOURNAMENTS_LIST_KEY } from '@/config/storageKeys';
 import { 
   getTournaments, 
   addTournament, 

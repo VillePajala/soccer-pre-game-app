@@ -1,4 +1,4 @@
-import { GameEvent } from '@/app/page'; // Assuming AppState might be useful context
+import { GameEvent } from '@/types'; // Assuming AppState might be useful context
 
 // --- State Definition ---
 export interface GameSessionState {

@@ -3,7 +3,7 @@ import { render, screen, waitFor, within, fireEvent, act } from '@testing-librar
 import '@testing-library/jest-dom';
 import GameStatsModal from './GameStatsModal';
 import { Player, Season, Tournament } from '@/types';
-import { GameEvent, SavedGamesCollection, AppState } from '@/app/page';
+import { GameEvent, SavedGamesCollection, AppState } from '@/types';
 import * as seasonsUtils from '@/utils/seasons';
 import * as tournamentsUtils from '@/utils/tournaments';
 import { I18nextProvider } from 'react-i18next';

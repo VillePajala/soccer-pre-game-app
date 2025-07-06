@@ -5,7 +5,7 @@ import {
     Opponent,
     Point,
     AppState,
-} from '@/app/page'; // Reverted for Opponent, Point, AppState as they are likely still in page.tsx exports
+} from '@/types'; // Reverted for Opponent, Point, AppState as they are likely still in page.tsx exports
 import { 
     updatePlayer as updatePlayerInMasterRoster, 
     getMasterRoster as getMasterRosterFromManager,

@@ -5,8 +5,7 @@ import {
   SAVED_GAMES_KEY,
   SEASONS_LIST_KEY,
   TOURNAMENTS_LIST_KEY,
-} from '@/config/constants';
-
+} from '@/config/storageKeys';
 /**
  * Interface for application settings
  */

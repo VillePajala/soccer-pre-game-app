@@ -4,7 +4,7 @@ import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next';
 // Import types from the types directory
 import { Player, PlayerStatRow, Season, Tournament } from '@/types';
-import { GameEvent, SavedGamesCollection } from '@/app/page';
+import { GameEvent, SavedGamesCollection } from '@/types';
 // ADD new import for keys
 // import { SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY } from '@/config/constants';
 // <<< REMOVE unused key imports

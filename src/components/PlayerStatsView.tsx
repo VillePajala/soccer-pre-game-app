@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Player, Season, Tournament } from '@/types';
-import { AppState } from '@/app/page';
+import { AppState } from '@/types';
 import { calculatePlayerStats, PlayerStats as PlayerStatsData } from '@/utils/playerStats';
 import { format } from 'date-fns';
 import { fi, enUS } from 'date-fns/locale';

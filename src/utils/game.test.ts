@@ -1,4 +1,4 @@
-import { AppState } from '@/app/page';
+import { AppState } from '@/types';
 
 // Define placeholder functions for the logic being tested.
 // Use unknown for state parameter and perform type checking inside if needed
