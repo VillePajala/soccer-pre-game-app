@@ -6,7 +6,7 @@
 
 ## 0. Preparation & Safety Net
 
-1. **Baseline green CI** – run the full Jest suite (`npm test -- --watchAll=false`) and make sure everything is already passing.
+1. **Baseline green CI** – run the full Jest suite (`npm test -- --watchAll=false`) and make sure everything is already passing. the correct test eun command can be checked from package.json
 2. **Branching strategy** – create a long-lived feature branch `refactor/page-split` so we can merge small PRs for each step below.
 3. **Snapshot tests** – add a Jest snapshot of the current `Home` page render (shallow render with `render(<Home />)`) so we can detect unintended structural changes while refactoring.
 4. **Type-check gate** – ensure `npm run type-check` (tsc --noEmit) is part of CI so that type migrations caused by file moves are caught early.
