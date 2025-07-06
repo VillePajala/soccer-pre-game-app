@@ -9,8 +9,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run build` - Build for production (includes manifest generation)
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint
-- `npm test` - Run all Jest tests
-- `npm run test:unit` - Run unit tests specifically
+- `npm test` - Run all Jest tests (executes `jest`)
+- `npm run test:unit` - Alias for `npm test`
 
 ### Build Process
 The build process includes a custom manifest generation step that runs before Next.js build:
@@ -30,7 +30,7 @@ The build process includes a custom manifest generation step that runs before Ne
 
 ### Core Architecture
 
-**Data Flow**: The app uses a combination of localStorage for persistence and React state for UI reactivity. The main state is managed in `src/app/page.tsx` with a custom hook `useGameState` that handles field interactions.
+**Data Flow**: The app's data layer relies on **React Query** to fetch, cache, and manage server-side state (persisted in localStorage). Asynchronous wrappers in `src/utils/localStorage.ts` are used for direct localStorage access. This approach centralizes data fetching and reduces manual state management.
 
 **PWA Structure**: The app is a full PWA with:
 - Custom service worker (`public/sw.js`)
@@ -38,10 +38,11 @@ The build process includes a custom manifest generation step that runs before Ne
 - Install prompts and update notifications
 
 **State Management**: 
-- Main app state in `src/app/page.tsx` 
-- Game state hook in `src/hooks/useGameState.ts`
-- Game session reducer in `src/hooks/useGameSessionReducer.ts`
-- Master roster management in `src/utils/masterRosterManager.ts`
+- **`src/app/page.tsx`**: Acts as the central orchestrator, bringing together different state management strategies.
+- **`useReducer` (`useGameSessionReducer.ts`)**: Manages the core game session state, including score, timer, periods, and game metadata. This provides predictable state transitions.
+- **`useGameState` hook**: Manages the interactive state of the soccer field, including player positions on the field and drawings.
+- **React Query**: Handles all asynchronous data operations, such as fetching and updating the master roster, seasons, tournaments, and saved games.
+- **`useState`**: Used for managing local UI state within components (e.g., modal visibility).
 
 **Key Components**:
 - `SoccerField` - Interactive drag-and-drop field
@@ -59,12 +60,13 @@ The build process includes a custom manifest generation step that runs before Ne
 
 ## Key Files to Understand
 
-- `src/app/page.tsx` - Main app component with primary state management
-- `src/hooks/useGameState.ts` - Field interaction and game state logic
-- `src/types/index.ts` - Core TypeScript interfaces (Player, Season, Tournament)
-- `src/utils/masterRosterManager.ts` - Player roster CRUD operations
-- `src/components/SoccerField.tsx` - Interactive field with drag-and-drop
-- `src/utils/localStorage.ts` - Async localStorage wrapper utilities
+- `src/app/page.tsx` - The main component that orchestrates the entire application, integrating hooks, reducers, and data fetching.
+- `src/hooks/useGameSessionReducer.ts` - The reducer managing core game logic (timer, score, status). Crucial for understanding state transitions.
+- `src/hooks/useGameState.ts` - The hook for managing interactive state on the soccer field (player positions, drawings).
+- `src/utils/masterRosterManager.ts` - Handles all CRUD operations for the master player list, interacting with localStorage.
+- `src/config/queryKeys.ts` - Defines the keys used for caching and invalidating data with React Query.
+- `src/types/index.ts` - Core TypeScript interfaces (Player, Season, Tournament, AppState).
+- `src/utils/localStorage.ts` - Async localStorage wrapper utilities.
 
 ## Development Notes
 
