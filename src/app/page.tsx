@@ -46,7 +46,7 @@ import { deleteTournament as utilDeleteTournament, updateTournament as utilUpdat
 // Import Player from types directory
 import { Player, Season, Tournament } from '@/types';
 // Import saveMasterRoster utility
-import type { Point, GameEvent, AppState, TacticalDisc, SavedGamesCollection, TimerState } from "@/types";
+import type { GameEvent, AppState, SavedGamesCollection, TimerState } from "@/types";
 import { saveMasterRoster } from '@/utils/masterRoster';
 // Import useQuery, useMutation, useQueryClient
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -371,7 +371,6 @@ export default function Home() {
   const [processingGameId, setProcessingGameId] = useState<string | null>(null); // To track which game item is being processed
   const {
     isTacticsBoardView,
-    setIsTacticsBoardView,
     tacticalDiscs,
     setTacticalDiscs,
     tacticalDrawings,
