@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo, useReducer, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useReducer, useRef } from 'react';
 import SoccerField from '@/components/SoccerField';
 import PlayerBar from '@/components/PlayerBar';
 import ControlBar from '@/components/ControlBar';
@@ -263,11 +263,9 @@ export default function Home() {
     playersOnField,
     opponents,
     drawings, // State from hook
-    availablePlayers: _unusedAvailablePlayers,
     setPlayersOnField,
     setOpponents,
     setDrawings,
-    setAvailablePlayers: _unusedSetAvailablePlayers,
     handlePlayerDrop,
     // Destructure drawing handlers from hook
     handleDrawingStart,
@@ -291,6 +289,7 @@ export default function Home() {
     setAvailablePlayers,
     highlightRosterButton,
     setHighlightRosterButton,
+    isRosterUpdating,
     rosterError,
     playersForCurrentGame,
     handleAddPlayer,
@@ -536,7 +535,7 @@ export default function Home() {
       // alert(t('newGameSetupModal.errors.addTournamentFailedUnexpected', 'An unexpected error occurred while adding tournament: {tournamentName}.', { tournamentName: variables.name }));
     },
   });
-  useEffect() => {
+  useEffect(() => {
     if (isMasterRosterQueryLoading) {
       console.log('[TanStack Query] Master Roster is loading...');
     }
@@ -1664,91 +1663,51 @@ export default function Home() {
   const handleRenamePlayerForModal = useCallback(async (playerId: string, playerData: { name: string; nickname?: string }) => {
     console.log(`[Page.tsx] handleRenamePlayerForModal attempting mutation for ID: ${playerId}, new name: ${playerData.name}`);
     setRosterError(null); // Clear previous specific errors
-    // setIsRosterUpdating(true); // UI should use false
-
     try {
-      await handleUpdatePlayer({ 
-        playerId, 
-        playerData: { name: playerData.name, nickname: playerData.nickname } 
-      });
-      // onSuccess in updatePlayerMutation handles query invalidation, roster error clearing, and setPlayersOnField.
-      console.log(`[Page.tsx] updatePlayerMutation.mutateAsync successful for rename of ${playerId}.`);
+      await handleUpdatePlayer(playerId, { name: playerData.name, nickname: playerData.nickname });
+      console.log(`[Page.tsx] rename player success for ${playerId}.`);
     } catch (error) {
-      // Errors are primarily handled by the mutation's onError, which calls setRosterError.
-      // This catch block is for any other unexpected error from mutateAsync itself if not caught by TanStack Query.
-      console.error(`[Page.tsx] Exception during updatePlayerMutation.mutateAsync for rename of ${playerId}:`, error);
-      // If setRosterError isn't already called by mutation's onError for this specific case:
-      // if (!updatePlayerMutation.isError) { // Or check error type
-      //   setRosterError(t('rosterSettingsModal.errors.unexpected', 'An unexpected error occurred.'));
-      // }
-    } finally {
-      // setIsRosterUpdating(false); // UI should use false
+      console.error(`[Page.tsx] Exception during rename of ${playerId}:`, error);
     }
-  }, [updatePlayerMutation]); // Removed t - it's stable from useTranslation
+  }, [handleUpdatePlayer]);
   
   const handleSetJerseyNumberForModal = useCallback(async (playerId: string, jerseyNumber: string) => {
     console.log(`[Page.tsx] handleSetJerseyNumberForModal attempting mutation for ID: ${playerId}, new number: ${jerseyNumber}`);
     setRosterError(null);
 
     try {
-      await updatePlayerMutation.mutateAsync({ 
-        playerId, 
-        playerData: { jerseyNumber } 
-      });
-      // onSuccess in updatePlayerMutation handles necessary updates.
-      console.log(`[Page.tsx] updatePlayerMutation.mutateAsync successful for jersey number update of ${playerId}.`);
+      await handleUpdatePlayer(playerId, { jerseyNumber });
+      console.log(`[Page.tsx] jersey number update successful for ${playerId}.`);
     } catch (error) {
-      console.error(`[Page.tsx] Exception during updatePlayerMutation.mutateAsync for jersey number update of ${playerId}:`, error);
-      // Errors are primarily handled by the mutation's onError.
+      console.error(`[Page.tsx] Exception during jersey number update of ${playerId}:`, error);
     }
-  }, [updatePlayerMutation]);
+  }, [handleUpdatePlayer]);
 
   const handleSetPlayerNotesForModal = useCallback(async (playerId: string, notes: string) => {
     console.log(`[Page.tsx] handleSetPlayerNotesForModal attempting mutation for ID: ${playerId}`);
     setRosterError(null);
 
     try {
-      await updatePlayerMutation.mutateAsync({ 
-        playerId, 
-        playerData: { notes } 
-      });
-      // onSuccess in updatePlayerMutation handles necessary updates.
-      console.log(`[Page.tsx] updatePlayerMutation.mutateAsync successful for notes update of ${playerId}.`);
+      await handleUpdatePlayer(playerId, { notes });
+      console.log(`[Page.tsx] notes update successful for ${playerId}.`);
     } catch (error) {
-      console.error(`[Page.tsx] Exception during updatePlayerMutation.mutateAsync for notes update of ${playerId}:`, error);
-      // Errors are primarily handled by the mutation's onError.
+      console.error(`[Page.tsx] Exception during notes update of ${playerId}:`, error);
     }
-  }, [updatePlayerMutation]);
+  }, [handleUpdatePlayer]);
 
       // ... (rest of the code remains unchanged)
 
     const handleRemovePlayerForModal = useCallback(async (playerId: string) => {
       console.log(`[Page.tsx] handleRemovePlayerForModal attempting mutation for ID: ${playerId}`);
-      setRosterError(null); // Clear previous specific errors
-      // setIsRosterUpdating(true); // This line is removed - UI should use false
+      setRosterError(null);
 
       try {
-        await handleRemovePlayer({ playerId });
-        // onSuccess in removePlayerMutation now handles:
-        // - queryClient.invalidateQueries({ queryKey: ['masterRoster'] });
-        // - setPlayersOnField update
-        // - setSelectedPlayerIds update
-        // - saveStateToHistory call
-        // - setRosterError(null) on success path
-        console.log(`[Page.tsx] removePlayerMutation.mutateAsync successful for removal of ${playerId}.`);
+        await handleRemovePlayer(playerId);
+        console.log(`[Page.tsx] player removed: ${playerId}.`);
       } catch (error) {
-        // Errors are primarily handled by the mutation's onError callback, which calls setRosterError.
-        // This catch block is for any other unexpected error from mutateAsync itself if not caught by TanStack Query.
-        console.error(`[Page.tsx] Exception during removePlayerMutation.mutateAsync for removal of ${playerId}:`, error);
-        // Optionally, if you want a generic fallback error here if the mutation's onError isn't triggered:
-        // if (!removePlayerMutation.isError) { // Or check error type if more specific handling is needed
-        //   setRosterError(t('rosterSettingsModal.errors.unexpected', 'An unexpected error occurred.'));
-        // }
+        console.error(`[Page.tsx] Exception during removal of ${playerId}:`, error);
       }
-      // finally { // This block is removed
-        // setIsRosterUpdating(false); // This line is removed - UI should use false
-      // }
-    }, [removePlayerMutation]); // Removed t - it's stable from useTranslation
+    }, [handleRemovePlayer]);
 
     // ... (rest of the code remains unchanged)
 
@@ -1784,20 +1743,17 @@ export default function Home() {
 
       // If all checks pass, proceed with the mutation
       try {
-        console.log('[Page.tsx] No duplicates found. Proceeding with addPlayerMutation for:', playerData);
+        console.log('[Page.tsx] No duplicates found. Proceeding with addPlayer for:', playerData);
         await handleAddPlayer(playerData);
-        // onSuccess in the mutation will handle further UI updates like invalidating queries and clearing rosterError if successful.
-        console.log(`[Page.tsx] addPlayerMutation.mutateAsync likely successful for adding player: ${playerData.name}.`);
+        console.log(`[Page.tsx] add player success: ${playerData.name}.`);
       } catch (error) {
         // This catch block is for unexpected errors directly from mutateAsync call itself (e.g., network issues before mutationFn runs).
         // Errors from within mutationFn (like from the addPlayer utility) should ideally be handled by the mutation's onError callback.
         console.error(`[Page.tsx] Exception during addPlayerMutation.mutateAsync for player ${playerData.name}:`, error);
         // Set a generic error message if rosterError hasn't been set by the mutation's onError callback.
-        if (!false) { // Check if mutation itself has an error state
-          setRosterError(t('rosterSettingsModal.errors.addFailed', 'Error adding player {playerName}. Please try again.', { playerName: playerData.name }));
-        }
+        setRosterError(t('rosterSettingsModal.errors.addFailed', 'Error adding player {playerName}. Please try again.', { playerName: playerData.name }));
       }
-    }, [addPlayerMutation, masterRosterQueryResultData, t]); // Removed rosterError from deps, as it's set within this callback.
+    }, [masterRosterQueryResultData, handleAddPlayer, t]);
 
     // ... (rest of the code remains unchanged)
 
@@ -1814,14 +1770,12 @@ export default function Home() {
     setRosterError(null); // Clear previous specific errors
 
     try {
-      await handleSetGoalieStatus({ playerId, isGoalie: targetGoalieStatus });
-      // onSuccess in setGoalieStatusMutation handles query invalidation, roster error clearing, and setPlayersOnField logic.
-      console.log(`[Page.tsx] setGoalieStatusMutation.mutateAsync successful for goalie toggle of ${playerId}.`);
+      await handleSetGoalieStatus(playerId, targetGoalieStatus);
+      console.log(`[Page.tsx] goalie toggle success for ${playerId}.`);
     } catch (error) {
-      // Errors are primarily handled by the mutation's onError.
-      console.error(`[Page.tsx] Exception during setGoalieStatusMutation.mutateAsync for goalie toggle of ${playerId}:`, error);
+      console.error(`[Page.tsx] Exception during goalie toggle of ${playerId}:`, error);
     }
-  }, [availablePlayers, setGoalieStatusMutation]); // Added setGoalieStatusMutation, removed others
+  }, [availablePlayers, handleSetGoalieStatus]);
 
   // --- END Roster Management Handlers ---
 
@@ -2839,7 +2793,7 @@ export default function Home() {
         teamName={gameSessionState.teamName}
         onTeamNameChange={handleTeamNameChange}
         // Pass loading and error states
-        isRosterUpdating={false || false || false || false}
+        isRosterUpdating={isRosterUpdating}
         rosterError={rosterError}
         onOpenPlayerStats={handleOpenPlayerStats}
       />

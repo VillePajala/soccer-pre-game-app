@@ -12,51 +12,75 @@ export const useRoster = ({ initialPlayers, selectedPlayerIds }: UseRosterArgs) 
   const [highlightRosterButton, setHighlightRosterButton] = useState(false);
   const [showRosterPrompt, setShowRosterPrompt] = useState(false);
   const [rosterError, setRosterError] = useState<string | null>(null);
+  const [isRosterUpdating, setIsRosterUpdating] = useState(false);
 
   const playersForCurrentGame = useMemo(
     () => availablePlayers.filter((p) => selectedPlayerIds.includes(p.id)),
     [availablePlayers, selectedPlayerIds]
   );
 
-  const handleAddPlayer = async (data: Omit<Player, 'id' | 'isGoalie' | 'receivedFairPlayCard'>) => {
+  const handleAddPlayer = async (
+    data: Omit<Player, 'id' | 'isGoalie' | 'receivedFairPlayCard'>,
+  ) => {
     const prev = [...availablePlayers];
-    const temp: Player = { id: `temp-${Date.now()}`, isGoalie: false, receivedFairPlayCard: false, ...data };
+    const temp: Player = {
+      id: `temp-${Date.now()}`,
+      isGoalie: false,
+      receivedFairPlayCard: false,
+      ...data,
+    };
+    setIsRosterUpdating(true);
     setAvailablePlayers([...availablePlayers, temp]);
     try {
       const saved = await addPlayer(data);
       if (saved) {
-        setAvailablePlayers((players) => players.map((p) => (p.id === temp.id ? saved : p)));
+        setAvailablePlayers((players) =>
+          players.map((p) => (p.id === temp.id ? saved : p)),
+        );
         setRosterError(null);
       } else {
         setAvailablePlayers(prev);
         setRosterError('Failed to add player');
       }
-    } catch (e) {
+    } catch {
       setAvailablePlayers(prev);
       setRosterError('Failed to add player');
+    } finally {
+      setIsRosterUpdating(false);
     }
   };
 
-  const handleUpdatePlayer = async (playerId: string, updates: Partial<Omit<Player, 'id'>>) => {
+  const handleUpdatePlayer = async (
+    playerId: string,
+    updates: Partial<Omit<Player, 'id'>>,
+  ) => {
     const prev = [...availablePlayers];
-    setAvailablePlayers((ps) => ps.map((p) => (p.id === playerId ? { ...p, ...updates } : p)));
+    setIsRosterUpdating(true);
+    setAvailablePlayers((ps) =>
+      ps.map((p) => (p.id === playerId ? { ...p, ...updates } : p)),
+    );
     try {
       const updated = await updatePlayer(playerId, updates);
       if (updated) {
-        setAvailablePlayers((ps) => ps.map((p) => (p.id === updated.id ? updated : p)));
+        setAvailablePlayers((ps) =>
+          ps.map((p) => (p.id === updated.id ? updated : p)),
+        );
         setRosterError(null);
       } else {
         setAvailablePlayers(prev);
         setRosterError('Failed to update player');
       }
-    } catch (e) {
+    } catch {
       setAvailablePlayers(prev);
       setRosterError('Failed to update player');
+    } finally {
+      setIsRosterUpdating(false);
     }
   };
 
   const handleRemovePlayer = async (playerId: string) => {
     const prev = [...availablePlayers];
+    setIsRosterUpdating(true);
     setAvailablePlayers((ps) => ps.filter((p) => p.id !== playerId));
     try {
       const success = await removePlayer(playerId);
@@ -66,14 +90,17 @@ export const useRoster = ({ initialPlayers, selectedPlayerIds }: UseRosterArgs) 
       } else {
         setRosterError(null);
       }
-    } catch (e) {
+    } catch {
       setAvailablePlayers(prev);
       setRosterError('Failed to remove player');
+    } finally {
+      setIsRosterUpdating(false);
     }
   };
 
   const handleSetGoalieStatus = async (playerId: string, isGoalie: boolean) => {
     const prev = [...availablePlayers];
+    setIsRosterUpdating(true);
     setAvailablePlayers((ps) =>
       ps.map((p) => {
         if (p.id === playerId) return { ...p, isGoalie };
@@ -89,9 +116,11 @@ export const useRoster = ({ initialPlayers, selectedPlayerIds }: UseRosterArgs) 
       } else {
         setRosterError(null);
       }
-    } catch (e) {
+    } catch {
       setAvailablePlayers(prev);
       setRosterError('Failed to set goalie status');
+    } finally {
+      setIsRosterUpdating(false);
     }
   };
 
@@ -104,6 +133,7 @@ export const useRoster = ({ initialPlayers, selectedPlayerIds }: UseRosterArgs) 
     setShowRosterPrompt,
     rosterError,
     setRosterError,
+    isRosterUpdating,
     playersForCurrentGame,
     handleAddPlayer,
     handleUpdatePlayer,

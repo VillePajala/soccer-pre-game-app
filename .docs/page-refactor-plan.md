@@ -125,6 +125,7 @@
 - Toggle goalie status from the roster modal and verify only one goalie persists.
 - Start a new game and ensure the roster button highlights as expected.
 - Reload a saved game and verify player selections load correctly.
+- Refresh the page after making roster changes to confirm persistence.
 
 ---
 

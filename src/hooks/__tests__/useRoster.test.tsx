@@ -1,6 +1,4 @@
-import React from 'react';
 import { renderHook, act } from '@testing-library/react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRoster } from '../useRoster';
 
 jest.mock('@/utils/masterRosterManager', () => ({
@@ -10,27 +8,6 @@ jest.mock('@/utils/masterRosterManager', () => ({
   setGoalieStatus: jest.fn(),
 }));
 
-jest.mock('@tanstack/react-query', () => {
-  const actual = jest.requireActual('@tanstack/react-query');
-  return {
-    ...actual,
-    useMutation: jest.fn((fn, opts) => ({
-      mutateAsync: async (vars: any) => {
-        try {
-          opts?.onMutate?.(vars);
-          const result = await fn(vars);
-          opts?.onSuccess?.(result, vars, undefined as any);
-          return result;
-        } catch (err) {
-          opts?.onError?.(err, vars, undefined as any);
-          throw err;
-        }
-      },
-      isPending: false,
-    })),
-    useQueryClient: jest.fn(() => ({})),
-  };
-});
 
 const { addPlayer, updatePlayer } = jest.requireMock('@/utils/masterRosterManager');
 
@@ -51,6 +28,7 @@ describe('useRoster', () => {
     });
 
     expect(result.current.availablePlayers[0].name).toBe('One');
+    expect(result.current.isRosterUpdating).toBe(false);
   });
 
   test('adds player on success', async () => {
@@ -65,6 +43,7 @@ describe('useRoster', () => {
     });
 
     expect(result.current.availablePlayers).toEqual([newPlayer]);
+    expect(result.current.isRosterUpdating).toBe(false);
   });
 });
 
