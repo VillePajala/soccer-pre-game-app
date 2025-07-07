@@ -27,7 +27,7 @@
 
 ---
 
-## 2. Create `useGameDataQueries` Hook  
+## 2. Create `useGameDataQueries` Hook – ✅ Completed
 *(isolates TanStack Query logic)*
 
 **Tasks**
@@ -40,7 +40,7 @@
 
 ---
 
-## 3. Extract **Undo / Redo History** Logic  
+## 3. Extract **Undo / Redo History** Logic – ✅ Completed
 *(currently ~120 lines)*
 
 **Tasks**

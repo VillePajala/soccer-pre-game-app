@@ -51,6 +51,7 @@ import { saveMasterRoster } from '@/utils/masterRoster';
 // Import useQuery, useMutation, useQueryClient
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useGameDataQueries } from '@/hooks/useGameDataQueries';
+import { useUndoRedo } from '@/hooks/useUndoRedo';
 // Import async localStorage utilities
 import { getLocalStorageItemAsync, setLocalStorageItemAsync, removeLocalStorageItemAsync } from '@/utils/localStorage';
 // Import query keys
@@ -168,16 +169,18 @@ export default function Home() {
     console.log('[gameSessionState CHANGED]', gameSessionState);
   }, [gameSessionState]);
 
-  // --- History Management (Still needed here for now) ---
-  const [history, setHistory] = useState<AppState[]>([initialState]);
-  const [historyIndex, setHistoryIndex] = useState<number>(0);
+  // --- History Management ---
+  const {
+    state: currentHistoryState,
+    set: pushHistoryState,
+    reset: resetHistory,
+    undo: undoHistory,
+    redo: redoHistory,
+    canUndo,
+    canRedo,
+  } = useUndoRedo<AppState>(initialState);
+
   const saveStateToHistory = useCallback((newState: Partial<AppState>) => {
-    // This function currently modifies the 'history' state variable,
-    // which is ONLY used for runtime undo/redo in the current session.
-    // It no longer interacts directly with the localStorage saving mechanism.
-    
-    // Get the current state from the *last* entry in the session history
-    const currentHistoryState = history[historyIndex];
     if (!currentHistoryState) return; // Should not happen
 
     // If newState includes seasonId, ensure tournamentId is cleared if seasonId is truthy
@@ -199,11 +202,9 @@ export default function Home() {
       return; // Don't save if nothing changed
     }
 
-    const newHistory = history.slice(0, historyIndex + 1);
-    setHistory([...newHistory, nextState]);
-    setHistoryIndex(newHistory.length);
+    pushHistoryState(nextState);
 
-  }, [history, historyIndex]); // Dependencies are just history state
+  }, [currentHistoryState, pushHistoryState]);
 
   // --- Effect to save gameSessionState changes to history ---
   useEffect(() => {
@@ -1179,8 +1180,7 @@ export default function Home() {
       tacticalBallPosition: gameData?.tacticalBallPosition || { relX: 0.5, relY: 0.5 },
       availablePlayers: masterRosterQueryResultData || availablePlayers,
     };
-    setHistory([newHistoryState]);
-      setHistoryIndex(0);
+    resetHistory(newHistoryState);
     console.log('[LOAD GAME STATE] Finished dispatching. Reducer will update gameSessionState.');
   };
 
@@ -1397,96 +1397,59 @@ export default function Home() {
     }
   };
 
-  // --- Undo/Redo Handlers ---
+  const applyHistoryState = (state: AppState) => {
+    setPlayersOnField(state.playersOnField);
+    setOpponents(state.opponents);
+    setDrawings(state.drawings);
+    setAvailablePlayers(state.availablePlayers);
+    dispatchGameSession({ type: 'SET_TEAM_NAME', payload: state.teamName });
+    dispatchGameSession({ type: 'SET_HOME_SCORE', payload: state.homeScore });
+    dispatchGameSession({ type: 'SET_AWAY_SCORE', payload: state.awayScore });
+    dispatchGameSession({ type: 'SET_OPPONENT_NAME', payload: state.opponentName });
+    dispatchGameSession({ type: 'SET_GAME_DATE', payload: state.gameDate });
+    dispatchGameSession({ type: 'SET_GAME_NOTES', payload: state.gameNotes });
+    dispatchGameSession({ type: 'SET_NUMBER_OF_PERIODS', payload: state.numberOfPeriods });
+    dispatchGameSession({ type: 'SET_PERIOD_DURATION', payload: state.periodDurationMinutes });
+    dispatchGameSession({
+      type: 'LOAD_STATE_FROM_HISTORY',
+      payload: {
+        currentPeriod: state.currentPeriod,
+        gameStatus: state.gameStatus,
+        completedIntervalDurations: state.completedIntervalDurations ?? [],
+        lastSubConfirmationTimeSeconds: state.lastSubConfirmationTimeSeconds ?? 0,
+        showPlayerNames: state.showPlayerNames,
+        gameEvents: state.gameEvents,
+        selectedPlayerIds: state.selectedPlayerIds,
+        seasonId: state.seasonId,
+        tournamentId: state.tournamentId,
+        gameLocation: state.gameLocation,
+        gameTime: state.gameTime,
+      },
+    });
+    dispatchGameSession({ type: 'SET_SUB_INTERVAL', payload: state.subIntervalMinutes ?? 5 });
+    dispatchGameSession({ type: 'SET_HOME_OR_AWAY', payload: state.homeOrAway });
+    setTacticalDiscs(state.tacticalDiscs || []);
+    setTacticalDrawings(state.tacticalDrawings || []);
+    setTacticalBallPosition(state.tacticalBallPosition || null);
+  };
+
   const handleUndo = () => {
-    if (historyIndex > 0) {
-      console.log("Undoing...");
-      const prevStateIndex = historyIndex - 1;
-      const prevState = history[prevStateIndex];
-      setPlayersOnField(prevState.playersOnField);
-      setOpponents(prevState.opponents);
-      setDrawings(prevState.drawings);
-      setAvailablePlayers(prevState.availablePlayers); 
-      dispatchGameSession({ type: 'SET_TEAM_NAME', payload: prevState.teamName }); 
-      dispatchGameSession({ type: 'SET_HOME_SCORE', payload: prevState.homeScore }); 
-      dispatchGameSession({ type: 'SET_AWAY_SCORE', payload: prevState.awayScore });
-      dispatchGameSession({ type: 'SET_OPPONENT_NAME', payload: prevState.opponentName });
-      dispatchGameSession({ type: 'SET_GAME_DATE', payload: prevState.gameDate });
-      dispatchGameSession({ type: 'SET_GAME_NOTES', payload: prevState.gameNotes });
-      dispatchGameSession({ type: 'SET_NUMBER_OF_PERIODS', payload: prevState.numberOfPeriods });
-      dispatchGameSession({ type: 'SET_PERIOD_DURATION', payload: prevState.periodDurationMinutes });
-      dispatchGameSession({ 
-        type: 'LOAD_STATE_FROM_HISTORY', 
-        payload: { 
-          currentPeriod: prevState.currentPeriod, 
-          gameStatus: prevState.gameStatus,
-          completedIntervalDurations: prevState.completedIntervalDurations ?? [],
-          lastSubConfirmationTimeSeconds: prevState.lastSubConfirmationTimeSeconds ?? 0,
-          showPlayerNames: prevState.showPlayerNames, 
-          gameEvents: prevState.gameEvents, 
-          selectedPlayerIds: prevState.selectedPlayerIds, // Ensure selectedPlayerIds is from prevState
-          seasonId: prevState.seasonId, // USE prevState for reducer
-          tournamentId: prevState.tournamentId, // USE prevState for reducer
-          gameLocation: prevState.gameLocation, 
-          gameTime: prevState.gameTime
-        } 
-      }); 
-      dispatchGameSession({ type: 'SET_SUB_INTERVAL', payload: prevState.subIntervalMinutes ?? 5 }); 
-      // setSelectedPlayerIds(prevState.selectedPlayerIds); // REMOVE - Handled by LOAD_STATE_FROM_HISTORY
-      // setSeasonId(prevState.seasonId ?? ''); // REMOVE - Handled by LOAD_STATE_FROM_HISTORY
-      // setTournamentId(prevState.tournamentId ?? ''); // REMOVE - Handled by LOAD_STATE_FROM_HISTORY
-      // setGameLocation(prevState.gameLocation ?? ''); // REMOVE - Handled by LOAD_STATE_FROM_HISTORY
-      // setGameTime(prevState.gameTime ?? ''); // REMOVE - Handled by LOAD_STATE_FROM_HISTORY
-      dispatchGameSession({ type: 'SET_HOME_OR_AWAY', payload: prevState.homeOrAway });
-      setHistoryIndex(prevStateIndex);
-      setTacticalDiscs(prevState.tacticalDiscs || []);
-      setTacticalDrawings(prevState.tacticalDrawings || []);
-      setTacticalBallPosition(prevState.tacticalBallPosition || null);
+    const prevState = undoHistory();
+    if (prevState) {
+      console.log('Undoing...');
+      applyHistoryState(prevState);
     } else {
-      console.log("Cannot undo: at beginning of history");
+      console.log('Cannot undo: at beginning of history');
     }
   };
 
   const handleRedo = () => {
-    if (historyIndex < history.length - 1) {
-      console.log("Redoing...");
-      const nextStateIndex = historyIndex + 1;
-      const nextState = history[nextStateIndex];
-      setPlayersOnField(nextState.playersOnField);
-      setOpponents(nextState.opponents);
-      setDrawings(nextState.drawings);
-      setAvailablePlayers(nextState.availablePlayers); 
-      dispatchGameSession({ type: 'SET_TEAM_NAME', payload: nextState.teamName }); 
-      dispatchGameSession({ type: 'SET_HOME_SCORE', payload: nextState.homeScore }); 
-      dispatchGameSession({ type: 'SET_AWAY_SCORE', payload: nextState.awayScore });
-      dispatchGameSession({ type: 'SET_OPPONENT_NAME', payload: nextState.opponentName });
-      dispatchGameSession({ type: 'SET_GAME_DATE', payload: nextState.gameDate });
-      dispatchGameSession({ type: 'SET_GAME_NOTES', payload: nextState.gameNotes });
-      dispatchGameSession({ type: 'SET_NUMBER_OF_PERIODS', payload: nextState.numberOfPeriods });
-      dispatchGameSession({ type: 'SET_PERIOD_DURATION', payload: nextState.periodDurationMinutes });
-      dispatchGameSession({ 
-        type: 'LOAD_STATE_FROM_HISTORY', 
-        payload: { 
-          currentPeriod: nextState.currentPeriod, 
-          gameStatus: nextState.gameStatus,
-          completedIntervalDurations: nextState.completedIntervalDurations ?? [],
-          lastSubConfirmationTimeSeconds: nextState.lastSubConfirmationTimeSeconds ?? 0,
-          showPlayerNames: nextState.showPlayerNames, 
-          gameEvents: nextState.gameEvents, 
-          selectedPlayerIds: nextState.selectedPlayerIds, // Ensure selectedPlayerIds is from nextState
-          seasonId: nextState.seasonId, // USE nextState for reducer
-          tournamentId: nextState.tournamentId, // USE nextState for reducer
-          gameLocation: nextState.gameLocation, 
-          gameTime: nextState.gameTime
-        } 
-      }); 
-      dispatchGameSession({ type: 'SET_SUB_INTERVAL', payload: nextState.subIntervalMinutes ?? 5 }); 
-      setHistoryIndex(nextStateIndex);
-      setTacticalDiscs(nextState.tacticalDiscs || []);
-      setTacticalDrawings(nextState.tacticalDrawings || []);
-      setTacticalBallPosition(nextState.tacticalBallPosition || null);
+    const nextState = redoHistory();
+    if (nextState) {
+      console.log('Redoing...');
+      applyHistoryState(nextState);
     } else {
-      console.log("Cannot redo: at end of history");
+      console.log('Cannot redo: at end of history');
     }
   };
 
@@ -1542,8 +1505,6 @@ export default function Home() {
     }
   };
 
-  const canUndo = historyIndex > 0;
-  const canRedo = historyIndex < history.length - 1;
 
   // Handler to open/close the goal log modal
   const handleToggleGoalLogModal = () => {
@@ -1856,8 +1817,7 @@ export default function Home() {
             setPlayersOnField(initialState.playersOnField || []);
             setOpponents(initialState.opponents || []);
             setDrawings(initialState.drawings || []);
-            setHistory([initialState as AppState]);
-            setHistoryIndex(0);
+            resetHistory(initialState as AppState);
             setCurrentGameId(DEFAULT_GAME_ID);
             await utilSaveCurrentGameIdSetting(DEFAULT_GAME_ID);
           }
@@ -2403,8 +2363,7 @@ export default function Home() {
 
         // 3. Update history to reflect the saved state
         // This makes the quick save behave like loading a game, resetting undo/redo
-        setHistory([currentSnapshot]);
-        setHistoryIndex(0);
+        resetHistory(currentSnapshot);
 
         console.log(`Game quick saved successfully with ID: ${currentGameId}`);
         // TODO: Add visual feedback (e.g., a toast notification)
@@ -2431,9 +2390,8 @@ export default function Home() {
     tacticalBallPosition,
     availablePlayers,
     setSavedGames,
-    setHistory,
-    setHistoryIndex,
-    handleOpenSaveGameModal, 
+    resetHistory,
+    handleOpenSaveGameModal,
     gameSessionState // This now covers all migrated game session fields
   ]);
   // --- END Quick Save Handler ---
@@ -2764,8 +2722,7 @@ export default function Home() {
       }
 
       // 4. Reset History with the new state
-      setHistory([newGameState]);
-      setHistoryIndex(0);
+      resetHistory(newGameState);
 
       // 5. Set the current game ID - This will trigger the loading useEffect
       setCurrentGameId(newGameId);
@@ -2781,13 +2738,12 @@ export default function Home() {
   }, [
     // Keep necessary dependencies
     savedGames,
-    availablePlayers, 
+    availablePlayers,
     setSavedGames,
-    setHistory,
-    setHistoryIndex,
+    resetHistory,
     setCurrentGameId,
     setIsNewGameSetupModalOpen,
-    setHighlightRosterButton, 
+    setHighlightRosterButton,
   ]);
 
   // ** REVERT handleCancelNewGameSetup TO ORIGINAL **
