@@ -315,7 +315,6 @@ export default function Home() {
   const {
     timeElapsedInSeconds,
     isTimerRunning,
-    nextSubDueTimeSeconds,
     subAlertLevel,
     lastSubConfirmationTimeSeconds,
     startPause: handleStartPauseTimer,
