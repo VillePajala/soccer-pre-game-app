@@ -91,7 +91,7 @@
 
 ---
 
-## 5. Extract **Tactical Board** State & Handlers
+## 5. Extract **Tactical Board** State & Handlers – ✅ Completed
 
 **Tasks**
 - New hook `src/hooks/useTacticalBoard.ts` managing `isTacticsBoardView`, `tacticalDiscs`, `tacticalDrawings`, `tacticalBallPosition` and related handlers (`handleAddTacticalDisc`, `handleTacticalDiscMove`, …).
@@ -101,6 +101,13 @@
 **Unit tests**
 - Add/Remove disc updates array immutably.
 - Toggling disc type cycles through home→opponent→goalie.
+
+### Manual testing
+- Toggle the tactics board view and ensure discs and drawings appear only in that mode.
+- Add, move and remove tactical discs to verify state persists.
+- Drag the ball to new positions and confirm location is stored.
+- Draw on the board and clear drawings using the control bar.
+- Use "Reset Field" while in tactics mode to clear only tactical elements.
 
 ---
 

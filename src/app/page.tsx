@@ -52,6 +52,7 @@ import { saveMasterRoster } from '@/utils/masterRoster';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useGameDataQueries } from '@/hooks/useGameDataQueries';
 import { useUndoRedo } from '@/hooks/useUndoRedo';
+import { useTacticalBoard } from '@/hooks/useTacticalBoard';
 // Import async localStorage utilities
 import { getLocalStorageItemAsync, setLocalStorageItemAsync, removeLocalStorageItemAsync } from '@/utils/localStorage';
 // Import query keys
@@ -368,55 +369,31 @@ export default function Home() {
   const [isGameDeleting, setIsGameDeleting] = useState(false); // For deleting a specific game
   const [gameDeleteError, setGameDeleteError] = useState<string | null>(null);
   const [processingGameId, setProcessingGameId] = useState<string | null>(null); // To track which game item is being processed
-  const [isTacticsBoardView, setIsTacticsBoardView] = useState<boolean>(false);
-  const [tacticalDiscs, setTacticalDiscs] = useState<TacticalDisc[]>([]);
-  const [tacticalDrawings, setTacticalDrawings] = useState<Point[][]>([]);
-  const [tacticalBallPosition, setTacticalBallPosition] = useState<Point | null>(initialState.tacticalBallPosition);
-
-  const handleToggleTacticsBoard = () => {
-    setIsTacticsBoardView(!isTacticsBoardView);
-  };
-
-  const handleAddTacticalDisc = (type: 'home' | 'opponent') => {
-    const newDisc: TacticalDisc = {
-      id: `tactical-${type}-${Date.now()}`,
-      relX: 0.5,
-      relY: 0.5,
-      type: type,
-    };
-    const newDiscs = [...tacticalDiscs, newDisc];
-    setTacticalDiscs(newDiscs);
-    saveStateToHistory({ tacticalDiscs: newDiscs });
-  };
-
-  const handleTacticalDiscMove = (discId: string, relX: number, relY: number) => {
-    const newDiscs = tacticalDiscs.map(d => d.id === discId ? { ...d, relX, relY } : d);
-    setTacticalDiscs(newDiscs);
-    saveStateToHistory({ tacticalDiscs: newDiscs });
-  };
-
-  const handleTacticalDiscRemove = (discId: string) => {
-    const newDiscs = tacticalDiscs.filter(d => d.id !== discId);
-    setTacticalDiscs(newDiscs);
-    saveStateToHistory({ tacticalDiscs: newDiscs });
-  };
-
-  const handleToggleTacticalDiscType = (discId: string) => {
-    const newDiscs = tacticalDiscs.map(d => {
-      if (d.id === discId) {
-        if (d.type === 'home') return { ...d, type: 'goalie' as const };
-        if (d.type === 'goalie') return { ...d, type: 'home' as const };
-      }
-      return d;
-    });
-    setTacticalDiscs(newDiscs);
-    saveStateToHistory({ tacticalDiscs: newDiscs });
-  };
-
-  const handleTacticalBallMove = (position: Point) => {
-    setTacticalBallPosition(position);
-    saveStateToHistory({ tacticalBallPosition: position });
-  };
+  const {
+    isTacticsBoardView,
+    setIsTacticsBoardView,
+    tacticalDiscs,
+    setTacticalDiscs,
+    tacticalDrawings,
+    setTacticalDrawings,
+    tacticalBallPosition,
+    setTacticalBallPosition,
+    handleToggleTacticsBoard,
+    handleAddTacticalDisc,
+    handleTacticalDiscMove,
+    handleTacticalDiscRemove,
+    handleToggleTacticalDiscType,
+    handleTacticalBallMove,
+    handleTacticalDrawingStart,
+    handleTacticalDrawingAddPoint,
+    handleTacticalDrawingEnd,
+    clearTacticalElements,
+  } = useTacticalBoard({
+    initialDiscs: initialState.tacticalDiscs,
+    initialDrawings: initialState.tacticalDrawings,
+    initialBallPosition: initialState.tacticalBallPosition,
+    saveStateToHistory,
+  });
 
   // --- Mutation for Saving Game (Initial definition with mutationFn only) ---
   const saveGameMutation = useMutation<
@@ -1199,11 +1176,7 @@ export default function Home() {
   // --- Reset Handler ---
   const handleResetField = useCallback(() => {
     if (isTacticsBoardView) {
-      // Only clear tactical elements in tactics view
-      setTacticalDiscs([]);
-      setTacticalDrawings([]);
-      setTacticalBallPosition({ relX: 0.5, relY: 0.5 });
-      saveStateToHistory({ tacticalDiscs: [], tacticalDrawings: [], tacticalBallPosition: { relX: 0.5, relY: 0.5 } });
+      clearTacticalElements();
     } else {
       // Only clear game elements in normal view
       setPlayersOnField([]);
@@ -1211,7 +1184,7 @@ export default function Home() {
       setDrawings([]);
       saveStateToHistory({ playersOnField: [], opponents: [], drawings: [] });
     }
-    }, [isTacticsBoardView, saveStateToHistory, setDrawings, setOpponents, setPlayersOnField, setTacticalDiscs, setTacticalDrawings, setTacticalBallPosition, tacticalDiscs, tacticalDrawings, tacticalBallPosition]);
+    }, [isTacticsBoardView, saveStateToHistory, setDrawings, setOpponents, setPlayersOnField, clearTacticalElements]);
 
   const handleClearDrawingsForView = () => {
     if (isTacticsBoardView) {
@@ -2794,24 +2767,6 @@ export default function Home() {
   // Log gameEvents before PlayerBar is rendered
   console.log('[page.tsx] About to render PlayerBar, gameEvents for PlayerBar:', JSON.stringify(gameSessionState.gameEvents));
 
-  // --- Tactical Drawing Handlers ---
-  const handleTacticalDrawingStart = (point: Point) => {
-    setTacticalDrawings(prev => [...prev, [point]]);
-  };
-
-  const handleTacticalDrawingAddPoint = (point: Point) => {
-    setTacticalDrawings(prev => {
-      const newDrawings = [...prev];
-      if (newDrawings.length > 0) {
-        newDrawings[newDrawings.length - 1].push(point);
-      }
-      return newDrawings;
-    });
-  };
-
-  const handleTacticalDrawingEnd = () => {
-    saveStateToHistory({ tacticalDrawings });
-  };
 
   const handleOpenPlayerStats = (playerId: string) => {
     const player = availablePlayers.find(p => p.id === playerId);
