@@ -17,7 +17,7 @@ import SeasonTournamentManagementModal from '@/components/SeasonTournamentManage
 import { useTranslation } from 'react-i18next';
 import { useGameState, UseGameStateReturn } from '@/hooks/useGameState';
 import GameInfoBar from '@/components/GameInfoBar';
-import { useWakeLock } from '@/hooks/useWakeLock';
+import { useGameTimer } from '@/hooks/useGameTimer';
 // Import the new game session reducer and related types
 import {
   gameSessionReducer,
@@ -120,7 +120,6 @@ export default function Home() {
   console.log('--- page.tsx RENDER ---');
   const { t } = useTranslation(); // Get translation function
   const queryClient = useQueryClient(); // Get query client instance
-  const { syncWakeLock } = useWakeLock();
 
  
   
@@ -157,13 +156,6 @@ export default function Home() {
 
   const [gameSessionState, dispatchGameSession] = useReducer(gameSessionReducer, initialGameSessionData);
 
-  // --- Refs to hold the latest state for the stable visibility handler ---
-  const isRunningRef = useRef(gameSessionState.isTimerRunning);
-  const elapsedRef = useRef(gameSessionState.timeElapsedInSeconds);
-  
-  // Effects to keep the refs in sync with the state
-  useEffect(() => { isRunningRef.current = gameSessionState.isTimerRunning; }, [gameSessionState.isTimerRunning]);
-  useEffect(() => { elapsedRef.current = gameSessionState.timeElapsedInSeconds; }, [gameSessionState.timeElapsedInSeconds]);
 
   useEffect(() => {
     console.log('[gameSessionState CHANGED]', gameSessionState);
@@ -319,6 +311,18 @@ export default function Home() {
   const gameIdRef = useRef(currentGameId);
 
   useEffect(() => { gameIdRef.current = currentGameId; }, [currentGameId]);
+
+  const {
+    timeElapsedInSeconds,
+    isTimerRunning,
+    nextSubDueTimeSeconds,
+    subAlertLevel,
+    lastSubConfirmationTimeSeconds,
+    startPause: handleStartPauseTimer,
+    reset: handleResetTimer,
+    ackSubstitution: handleSubstitutionMade,
+    setSubInterval: handleSetSubInterval,
+  } = useGameTimer({ state: gameSessionState, dispatch: dispatchGameSession, currentGameId: currentGameId || '' });
 
   // ADD State for seasons/tournaments lists
   const [seasons, setSeasons] = useState<Season[]>([]);
@@ -833,100 +837,6 @@ export default function Home() {
   // Note: We don't want setPlayersOnField in deps if it causes loops. 
   // saveStateToHistory is also a dependency as it's used inside.
 
-  // --- Timer Effect ---
-  useEffect(() => {
-    let intervalId: NodeJS.Timeout | null = null;
-    const periodEndTimeSeconds = gameSessionState.currentPeriod * gameSessionState.periodDurationMinutes * 60;
-
-    // Sync wake lock state with timer state
-    syncWakeLock(gameSessionState.isTimerRunning);
-
-    const saveTimerState = async () => {
-      if (currentGameId) {
-        const timerState: TimerState = {
-          gameId: currentGameId,
-          timeElapsedInSeconds: gameSessionState.timeElapsedInSeconds,
-          timestamp: Date.now(),
-        };
-        await setLocalStorageItemAsync(TIMER_STATE_KEY, JSON.stringify(timerState));
-      }
-    };
-
-    if (gameSessionState.isTimerRunning && gameSessionState.gameStatus === 'inProgress') {
-      intervalId = setInterval(() => {
-        saveTimerState(); // Save state on each tick
-        const currentTime = gameSessionState.timeElapsedInSeconds;
-        // Round the current time before incrementing to avoid decimal drift
-        const potentialNewTime = Math.round(currentTime) + 1;
-
-        if (potentialNewTime >= periodEndTimeSeconds) {
-          clearInterval(intervalId!); // Stop the interval
-          removeLocalStorageItemAsync(TIMER_STATE_KEY);
-          // setIsTimerRunning(false); // Reducer's END_PERIOD_OR_GAME will handle this
-          if (gameSessionState.currentPeriod === gameSessionState.numberOfPeriods) {
-            dispatchGameSession({ type: 'END_PERIOD_OR_GAME', payload: { newStatus: 'gameEnd', finalTime: periodEndTimeSeconds } });
-              console.log("Game ended.");
-            } else {
-            dispatchGameSession({ type: 'END_PERIOD_OR_GAME', payload: { newStatus: 'periodEnd', finalTime: periodEndTimeSeconds } });
-            console.log(`Period ${gameSessionState.currentPeriod} ended.`);
-          }
-        } else {
-          dispatchGameSession({ type: 'SET_TIMER_ELAPSED', payload: potentialNewTime });
-        }
-      }, 1000);
-    } else {
-      // When timer is NOT running (paused, stopped), we should NOT clear the state.
-      // The state should only be cleared on explicit reset or game end.
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
-    }
-
-    return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
-    };
-  }, [gameSessionState.isTimerRunning, gameSessionState.gameStatus, gameSessionState.currentPeriod, gameSessionState.periodDurationMinutes, gameSessionState.numberOfPeriods, gameSessionState.timeElapsedInSeconds, gameSessionState.nextSubDueTimeSeconds, currentGameId, syncWakeLock]); // Reflect isTimerRunning from gameSessionState
-
-  // --- Load state from localStorage on mount (REVISED) ---
-
-    // --- NEW: Robust Visibility Change Handling ---
-  useEffect(() => {
-    const handleVisibilityChange = async () => {
-      if (document.hidden) {
-        // Use the ref to get the most up-to-date state
-        if (isRunningRef.current) {
-          const timerState: TimerState = {
-            gameId: gameIdRef.current || '',
-            timeElapsedInSeconds: elapsedRef.current,
-            timestamp: Date.now(),
-          };
-          await setLocalStorageItemAsync(TIMER_STATE_KEY, JSON.stringify(timerState));
-          dispatchGameSession({ type: 'PAUSE_TIMER_FOR_HIDDEN' });
-        }
-      } else {
-        const savedTimerStateJSON = await getLocalStorageItemAsync(TIMER_STATE_KEY);
-        if (savedTimerStateJSON) {
-          const savedTimerState: TimerState = JSON.parse(savedTimerStateJSON);
-          // Use the ref to get the most up-to-date game ID for comparison
-          if (savedTimerState && savedTimerState.gameId === gameIdRef.current) {
-            dispatchGameSession({
-              type: 'RESTORE_TIMER_STATE',
-              payload: {
-                savedTime: savedTimerState.timeElapsedInSeconds,
-                timestamp: savedTimerState.timestamp,
-              },
-            });
-          }
-        }
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
   }, []); // Empty dependency array ensures this listener is stable and created only once
   
   useEffect(() => {
@@ -1043,43 +953,6 @@ export default function Home() {
   ]);
 
   // --- NEW: Robust Visibility Change Handling ---
-  useEffect(() => {
-    const handleVisibilityChange = async () => {
-      if (document.hidden) {
-        // Use the ref to get the most up-to-date state
-        if (isRunningRef.current) {
-          const timerState: TimerState = {
-            gameId: gameIdRef.current || '',
-            timeElapsedInSeconds: elapsedRef.current,
-            timestamp: Date.now(),
-          };
-          await setLocalStorageItemAsync(TIMER_STATE_KEY, JSON.stringify(timerState));
-          dispatchGameSession({ type: 'PAUSE_TIMER_FOR_HIDDEN' });
-        }
-      } else {
-        const savedTimerStateJSON = await getLocalStorageItemAsync(TIMER_STATE_KEY);
-        if (savedTimerStateJSON) {
-          const savedTimerState: TimerState = JSON.parse(savedTimerStateJSON);
-          // Use the ref to get the most up-to-date game ID for comparison
-          if (savedTimerState && savedTimerState.gameId === gameIdRef.current) {
-            dispatchGameSession({
-              type: 'RESTORE_TIMER_STATE',
-              payload: {
-                savedTime: savedTimerState.timeElapsedInSeconds,
-                timestamp: savedTimerState.timestamp,
-              },
-            });
-          }
-        }
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, []); // Empty dependency array ensures this listener is stable and created only once
-
   // --- Wake Lock Effect ---
   useEffect(() => {
     // This effect is now replaced by the direct call in the main timer effect
@@ -1453,44 +1326,7 @@ export default function Home() {
     }
   };
 
-  // --- Timer Handlers ---
-  const handleStartPauseTimer = () => {
-    if (gameSessionState.gameStatus === 'notStarted') {
-      dispatchGameSession({
-        type: 'START_PERIOD',
-        payload: {
-          nextPeriod: 1,
-          periodDurationMinutes: gameSessionState.periodDurationMinutes,
-          subIntervalMinutes: gameSessionState.subIntervalMinutes
-        }
-      });
-    } else if (gameSessionState.gameStatus === 'periodEnd') {
-      const nextPeriod = gameSessionState.currentPeriod + 1;
-      dispatchGameSession({
-        type: 'START_PERIOD',
-        payload: {
-          nextPeriod: nextPeriod,
-          periodDurationMinutes: gameSessionState.periodDurationMinutes,
-          subIntervalMinutes: gameSessionState.subIntervalMinutes
-        }
-      });
-    } else if (gameSessionState.gameStatus === 'inProgress') {
-      dispatchGameSession({ type: 'SET_TIMER_RUNNING', payload: !gameSessionState.isTimerRunning });
-    }
-  };
-
-  const handleResetTimer = () => {
-    removeLocalStorageItemAsync(TIMER_STATE_KEY);
-    dispatchGameSession({ type: 'RESET_TIMER_ONLY' });
-  };
-
-  const handleSubstitutionMade = () => {
-    dispatchGameSession({ type: 'CONFIRM_SUBSTITUTION' });
-  };
-
-  const handleSetSubInterval = (minutes: number) => {
-    dispatchGameSession({ type: 'SET_SUB_INTERVAL', payload: Math.max(1, minutes) });
-  };
+  // --- Timer Handlers provided by useGameTimer ---
 
   const handleToggleLargeTimerOverlay = () => {
     setShowLargeTimerOverlay(!showLargeTimerOverlay);
@@ -3046,23 +2882,23 @@ export default function Home() {
 
         {showLargeTimerOverlay && (
           <TimerOverlay
-            timeElapsedInSeconds={gameSessionState.timeElapsedInSeconds}
-            subAlertLevel={gameSessionState.subAlertLevel}
+            timeElapsedInSeconds={timeElapsedInSeconds}
+            subAlertLevel={subAlertLevel}
             onSubstitutionMade={handleSubstitutionMade}
             completedIntervalDurations={gameSessionState.completedIntervalDurations || []}
             subIntervalMinutes={gameSessionState.subIntervalMinutes}
             onSetSubInterval={handleSetSubInterval}
-            isTimerRunning={gameSessionState.isTimerRunning}
+            isTimerRunning={isTimerRunning}
             onStartPauseTimer={handleStartPauseTimer}
             onResetTimer={handleResetTimer}
             onToggleGoalLogModal={handleToggleGoalLogModal}
-            onRecordOpponentGoal={() => handleLogOpponentGoal(gameSessionState.timeElapsedInSeconds)}
+            onRecordOpponentGoal={() => handleLogOpponentGoal(timeElapsedInSeconds)}
             teamName={gameSessionState.teamName}
             opponentName={gameSessionState.opponentName}
             homeScore={gameSessionState.homeScore}
             awayScore={gameSessionState.awayScore}
             homeOrAway={gameSessionState.homeOrAway}
-            lastSubTime={gameSessionState.lastSubConfirmationTimeSeconds}
+            lastSubTime={lastSubConfirmationTimeSeconds}
             numberOfPeriods={gameSessionState.numberOfPeriods}
             periodDurationMinutes={gameSessionState.periodDurationMinutes}
             currentPeriod={gameSessionState.currentPeriod}
@@ -3091,7 +2927,7 @@ export default function Home() {
           draggingPlayerFromBarInfo={draggingPlayerFromBarInfo}
           onPlayerDropViaTouch={handlePlayerDropViaTouch}
           onPlayerDragCancelViaTouch={handlePlayerDragCancelViaTouch}
-          timeElapsedInSeconds={gameSessionState.timeElapsedInSeconds}
+          timeElapsedInSeconds={timeElapsedInSeconds}
           isTacticsBoardView={isTacticsBoardView}
           tacticalDiscs={tacticalDiscs}
           onTacticalDiscMove={handleTacticalDiscMove}
@@ -3306,7 +3142,7 @@ export default function Home() {
         addTournamentMutation={addTournamentMutation}
         isAddingSeason={addSeasonMutation.isPending}
         isAddingTournament={addTournamentMutation.isPending}
-        timeElapsedInSeconds={gameSessionState.timeElapsedInSeconds}
+        timeElapsedInSeconds={timeElapsedInSeconds}
         updateGameDetailsMutation={updateGameDetailsMutation}
       />
     </main>

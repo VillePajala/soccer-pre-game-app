@@ -53,7 +53,7 @@
 
 ---
 
-## 4. Extract **Timer & Visibility / Wake-lock**  
+## 4. Extract **Timer & Visibility / Wake-lock** – ✅ Completed
 *(largest isolated behaviour)*
 
 **Tasks**
@@ -66,6 +66,11 @@
 **Unit tests**
 - Use Jest fake timers to test that `timeElapsedInSeconds` increments only while running.
 - Simulate page visibility change events to ensure timer pauses/stores state.
+
+### Manual testing
+- Start the app and verify the timer counts up when Start is pressed and pauses when paused.
+- Hide the browser tab and return to confirm the timer resumes and accounts for time away.
+- Trigger a substitution to ensure the next due time updates and alert level resets.
 
 ---
 
