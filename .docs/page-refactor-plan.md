@@ -40,7 +40,7 @@
 
 ---
 
-## 3. Extract **Undo / Redo History** Logic  
+## 3. Extract **Undo / Redo History** Logic – ✅ Completed
 *(currently ~120 lines)*
 
 **Tasks**

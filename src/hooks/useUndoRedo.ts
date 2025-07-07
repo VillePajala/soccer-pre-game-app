@@ -3,6 +3,11 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 export interface UseUndoRedoReturn<T> {
   state: T;
   set: (next: T) => void;
+  /**
+   * Reset the entire history to a single state. Useful when loading
+   * a completely new game or discarding previous history.
+   */
+  reset: (next: T) => void;
   undo: () => T | null;
   redo: () => T | null;
   canUndo: boolean;
@@ -38,6 +43,13 @@ export function useUndoRedo<T>(initialState: T): UseUndoRedoReturn<T> {
     });
   }, []);
 
+  const reset = useCallback((next: T) => {
+    historyRef.current = [next];
+    indexRef.current = 0;
+    setIndex(0);
+    setHistory([next]);
+  }, []);
+
   const undo = useCallback((): T | null => {
     if (indexRef.current === 0) return null;
     const newIndex = indexRef.current - 1;
@@ -58,7 +70,7 @@ export function useUndoRedo<T>(initialState: T): UseUndoRedoReturn<T> {
   const canUndo = index > 0;
   const canRedo = index < history.length - 1;
 
-  return { state, set, undo, redo, canUndo, canRedo };
+  return { state, set, reset, undo, redo, canUndo, canRedo };
 }
 
 export default useUndoRedo;

@@ -173,6 +173,7 @@ export default function Home() {
   const {
     state: currentHistoryState,
     set: pushHistoryState,
+    reset: resetHistory,
     undo: undoHistory,
     redo: redoHistory,
     canUndo,
@@ -1179,8 +1180,7 @@ export default function Home() {
       tacticalBallPosition: gameData?.tacticalBallPosition || { relX: 0.5, relY: 0.5 },
       availablePlayers: masterRosterQueryResultData || availablePlayers,
     };
-    setHistory([newHistoryState]);
-      setHistoryIndex(0);
+    resetHistory(newHistoryState);
     console.log('[LOAD GAME STATE] Finished dispatching. Reducer will update gameSessionState.');
   };
 
@@ -1817,8 +1817,7 @@ export default function Home() {
             setPlayersOnField(initialState.playersOnField || []);
             setOpponents(initialState.opponents || []);
             setDrawings(initialState.drawings || []);
-            setHistory([initialState as AppState]);
-            setHistoryIndex(0);
+            resetHistory(initialState as AppState);
             setCurrentGameId(DEFAULT_GAME_ID);
             await utilSaveCurrentGameIdSetting(DEFAULT_GAME_ID);
           }
@@ -2364,8 +2363,7 @@ export default function Home() {
 
         // 3. Update history to reflect the saved state
         // This makes the quick save behave like loading a game, resetting undo/redo
-        setHistory([currentSnapshot]);
-        setHistoryIndex(0);
+        resetHistory(currentSnapshot);
 
         console.log(`Game quick saved successfully with ID: ${currentGameId}`);
         // TODO: Add visual feedback (e.g., a toast notification)
@@ -2392,9 +2390,8 @@ export default function Home() {
     tacticalBallPosition,
     availablePlayers,
     setSavedGames,
-    setHistory,
-    setHistoryIndex,
-    handleOpenSaveGameModal, 
+    resetHistory,
+    handleOpenSaveGameModal,
     gameSessionState // This now covers all migrated game session fields
   ]);
   // --- END Quick Save Handler ---
@@ -2725,8 +2722,7 @@ export default function Home() {
       }
 
       // 4. Reset History with the new state
-      setHistory([newGameState]);
-      setHistoryIndex(0);
+      resetHistory(newGameState);
 
       // 5. Set the current game ID - This will trigger the loading useEffect
       setCurrentGameId(newGameId);
@@ -2742,13 +2738,12 @@ export default function Home() {
   }, [
     // Keep necessary dependencies
     savedGames,
-    availablePlayers, 
+    availablePlayers,
     setSavedGames,
-    setHistory,
-    setHistoryIndex,
+    resetHistory,
     setCurrentGameId,
     setIsNewGameSetupModalOpen,
-    setHighlightRosterButton, 
+    setHighlightRosterButton,
   ]);
 
   // ** REVERT handleCancelNewGameSetup TO ORIGINAL **

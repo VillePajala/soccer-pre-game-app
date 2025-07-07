@@ -48,4 +48,21 @@ describe('useUndoRedo', () => {
     expect(result.current.state.count).toBe(3);
     expect(result.current.canRedo).toBe(false);
   });
+
+  test('reset replaces history with new state', () => {
+    const { result } = renderHook(() => useUndoRedo<State>({ count: 0 }));
+
+    act(() => {
+      result.current.set({ count: 1 });
+      result.current.set({ count: 2 });
+    });
+
+    act(() => {
+      result.current.reset({ count: 5 });
+    });
+
+    expect(result.current.state.count).toBe(5);
+    expect(result.current.canUndo).toBe(false);
+    expect(result.current.canRedo).toBe(false);
+  });
 });
