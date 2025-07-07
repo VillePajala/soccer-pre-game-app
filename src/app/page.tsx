@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo, useReducer, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useReducer, useRef } from 'react';
 import SoccerField from '@/components/SoccerField';
 import PlayerBar from '@/components/PlayerBar';
 import ControlBar from '@/components/ControlBar';
@@ -25,13 +25,7 @@ import {
   // initialGameSessionStatePlaceholder // We will derive initial state from page.tsx's initialState
 } from '@/hooks/useGameSessionReducer';
 // Import roster utility functions
-import {
-    addPlayer,
-    updatePlayer,
-    removePlayer,
-    setGoalieStatus
-    // setFairPlayCardStatus // Removed as unused in page.tsx directly
-} from '@/utils/masterRosterManager';
+// roster mutations now managed inside useRoster hook
 
 // Removed unused import of utilGetMasterRoster
 
@@ -53,6 +47,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useGameDataQueries } from '@/hooks/useGameDataQueries';
 import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { useTacticalBoard } from '@/hooks/useTacticalBoard';
+import { useRoster } from '@/hooks/useRoster';
 // Import async localStorage utilities
 import { getLocalStorageItemAsync, setLocalStorageItemAsync, removeLocalStorageItemAsync } from '@/utils/localStorage';
 // Import query keys
@@ -268,11 +263,9 @@ export default function Home() {
     playersOnField,
     opponents,
     drawings, // State from hook
-    availablePlayers, // This should be the roster from useGameState, ideally updated via async calls
     setPlayersOnField,
     setOpponents,
-    setDrawings, 
-    setAvailablePlayers, // Setter from useGameState
+    setDrawings,
     handlePlayerDrop,
     // Destructure drawing handlers from hook
     handleDrawingStart,
@@ -289,6 +282,24 @@ export default function Home() {
     initialState,
     saveStateToHistory,
     // masterRosterKey: MASTER_ROSTER_KEY, // Removed as no longer used by useGameState
+  });
+
+  const {
+    availablePlayers,
+    setAvailablePlayers,
+    highlightRosterButton,
+    setHighlightRosterButton,
+    isRosterUpdating,
+    setRosterError,
+    rosterError,
+    playersForCurrentGame,
+    handleAddPlayer,
+    handleUpdatePlayer,
+    handleRemovePlayer,
+    handleSetGoalieStatus,
+  } = useRoster({
+    initialPlayers: initialState.availablePlayers,
+    selectedPlayerIds: gameSessionState.selectedPlayerIds,
   });
 
   // --- State Management (Remaining in Home component) ---
@@ -351,12 +362,6 @@ export default function Home() {
   const [playerIdsForNewGame, setPlayerIdsForNewGame] = useState<string[] | null>(null);
   // <<< ADD State for the roster prompt toast >>>
   // const [showRosterPrompt, setShowRosterPrompt] = useState<boolean>(false);
-  // <<< ADD State for roster button highlight >>>
-  const [highlightRosterButton, setHighlightRosterButton] = useState<boolean>(false);
-
-  // State for roster operations loading/error
-  // const [isRosterUpdating, setIsRosterUpdating] = useState(false); // REMOVING THIS LINE
-  const [rosterError, setRosterError] = useState<string | null>(null);
 
   // State for game saving error (loading state is from saveGameMutation.isLoading)
   const [gameSaveError, setGameSaveError] = useState<string | null>(null);
@@ -424,180 +429,6 @@ export default function Home() {
       setGameSaveError(t('saveGameModal.errors.saveFailed', 'Error saving game. Please try again.'));
     },
   });
-
-  // --- Mutation for Updating Player in Master Roster ---
-  const updatePlayerMutation = useMutation<
-    Player | null, // Return type from masterRosterManager.updatePlayer
-    Error,        // Error type
-    { playerId: string; playerData: Partial<Omit<Player, 'id'>>; } // Variables type
-  >({
-    mutationFn: async ({ playerId, playerData }) => {
-      // The updatePlayer utility from masterRosterManager is already async
-      return updatePlayer(playerId, playerData);
-    },
-    onSuccess: (updatedPlayer, variables) => {
-      console.log('[Mutation Success] Player updated:', variables.playerId, updatedPlayer);
-      
-      // Capture current availablePlayers before invalidation if needed for history
-      const previousAvailablePlayers = [...availablePlayers]; // Shallow copy
-
-      queryClient.invalidateQueries({ queryKey: queryKeys.masterRoster }); 
-      // After invalidation, the masterRosterQueryResultData useEffect will update setAvailablePlayers from the hook
-
-      if (updatedPlayer) {
-        // Update playersOnField state and then save that specific change to history
-        setPlayersOnField(prevPlayersOnField => {
-          const nextPlayersOnField = prevPlayersOnField.map(p => 
-            p.id === updatedPlayer.id ? { ...p, ...updatedPlayer } : p
-          );
-          // Save history with the availablePlayers roster *before* this mutation's invalidation took full effect
-          saveStateToHistory({ 
-            playersOnField: nextPlayersOnField, 
-            availablePlayers: previousAvailablePlayers // Save the pre-mutation roster for this history step
-          }); 
-          return nextPlayersOnField; // Return it to update React state
-        });
-      }
-      setRosterError(null); 
-    },
-    onError: (error, variables) => {
-      console.error(`[Mutation Error] Failed to update player ${variables.playerId}:`, error);
-      setRosterError(t('rosterSettingsModal.errors.updateFailed', 'Error updating player {playerName}. Please try again.', { playerName: variables.playerData.name || variables.playerId }));
-    },
-  });
-
-  // --- Mutation for Setting Goalie Status in Master Roster ---
-  const setGoalieStatusMutation = useMutation<
-    Player | null, // Return type from masterRosterManager.setGoalieStatus
-    Error,        // Error type
-    { playerId: string; isGoalie: boolean; } // Variables type
-  >({
-    mutationFn: async ({ playerId, isGoalie }) => {
-      return setGoalieStatus(playerId, isGoalie);
-    },
-    onSuccess: (updatedPlayer, variables) => {
-      console.log('[Mutation Success] Goalie status updated:', variables.playerId, updatedPlayer);
-
-      // Capture current availablePlayers before invalidation if needed for history
-      const previousAvailablePlayers = [...availablePlayers]; // Shallow copy
-      
-      queryClient.invalidateQueries({ queryKey: queryKeys.masterRoster });
-      // After invalidation, the masterRosterQueryResultData useEffect will update setAvailablePlayers from the hook
-
-      if (updatedPlayer) {
-        setPlayersOnField(prevPlayersOnField => {
-          const nextPlayersOnField = prevPlayersOnField.map(p => {
-            if (p.id === updatedPlayer.id) {
-              return { ...p, ...updatedPlayer }; // Apply all changes from updatedPlayer
-            }
-            // If we just set a new goalie (variables.isGoalie is true),
-            // and this player 'p' is a goalie but not the one we just updated,
-            // then unset their goalie status.
-            if (variables.isGoalie && p.isGoalie && p.id !== updatedPlayer.id) {
-              return { ...p, isGoalie: false };
-            }
-            return p;
-          });
-          // Save history with the availablePlayers roster *before* this mutation's invalidation took full effect
-          saveStateToHistory({ 
-            playersOnField: nextPlayersOnField,
-            availablePlayers: previousAvailablePlayers // Save the pre-mutation roster for this history step
-          });
-          return nextPlayersOnField;
-        });
-      }
-      setRosterError(null);
-    },
-    onError: (error, variables) => {
-      console.error(`[Mutation Error] Failed to set goalie status for player ${variables.playerId}:`, error);
-      setRosterError(t('rosterSettingsModal.errors.goalieStatusFailed', 'Error setting goalie status for player {playerId}. Please try again.', { playerId: variables.playerId }));
-    },
-  });
-
-  // --- Mutation for Removing Player from Master Roster ---
-  const removePlayerMutation = useMutation<
-    boolean,      // CORRECTED: Return type from masterRosterManager.removePlayer (indicates success)
-    Error,        // Error type
-    { playerId: string; } // Variables type
-  >({
-    mutationFn: async ({ playerId }) => {
-      return removePlayer(playerId); // This utility returns Promise<boolean>
-    },
-    onSuccess: (success, variables) => {
-      if (success) {
-        console.log('[Mutation Success] Player removed:', variables.playerId);
-        queryClient.invalidateQueries({ queryKey: queryKeys.masterRoster });
-
-        let nextPlayersOnField: Player[] = [];
-        setPlayersOnField(prev => {
-          nextPlayersOnField = prev.filter(p => p.id !== variables.playerId);
-          return nextPlayersOnField;
-        });
-
-        // let nextSelectedPlayerIds: string[] = []; // REMOVE local variable
-        // setSelectedPlayerIds(prev => { // REMOVE direct state update
-        //   nextSelectedPlayerIds = prev.filter(id => id !== variables.playerId);
-        //   return nextSelectedPlayerIds;
-        // });
-        const newSelectedPlayerIds = gameSessionState.selectedPlayerIds.filter(id => id !== variables.playerId);
-        dispatchGameSession({ type: 'SET_SELECTED_PLAYER_IDS', payload: newSelectedPlayerIds });
-
-        saveStateToHistory({
-          playersOnField: nextPlayersOnField,
-          selectedPlayerIds: newSelectedPlayerIds // USE newSelectedPlayerIds for history
-        });
-
-        setRosterError(null);
-      } else {
-        // This case might indicate the player wasn't found or some other non-exception failure
-        console.warn('[Mutation Non-Success] removePlayer returned false for player:', variables.playerId);
-        setRosterError(t('rosterSettingsModal.errors.removeFailedNotFound', 'Error removing player {playerId}. Player not found or removal failed.', { playerId: variables.playerId }));
-      }
-    },
-    onError: (error, variables) => {
-      console.error(`[Mutation Error] Failed to remove player ${variables.playerId}:`, error);
-      setRosterError(t('rosterSettingsModal.errors.removeFailed', 'Error removing player {playerId}. Please try again.', { playerId: variables.playerId }));
-    },
-  });
-
-  // --- Mutation for Adding Player to Master Roster ---
-  const addPlayerMutation = useMutation<
-    Player | null, // Return type from masterRosterManager.addPlayer
-    Error,         // Error type
-    { name: string; jerseyNumber: string; notes: string; nickname: string; } // Variables type (player data)
-  >({
-    mutationFn: async (playerData) => {
-      return addPlayer(playerData);
-    },
-    onSuccess: (newPlayer, variables) => {
-      if (newPlayer) {
-        console.log('[Mutation Success] Player added:', newPlayer.name, newPlayer.id);
-        queryClient.invalidateQueries({ queryKey: queryKeys.masterRoster });
-
-        // When a new player is added, they should be automatically selected.
-        // If the roster was empty before, this new player should be the ONLY one selected.
-        const newSelectedPlayerIds = gameSessionState.selectedPlayerIds.includes(newPlayer.id)
-          ? gameSessionState.selectedPlayerIds
-          : [...gameSessionState.selectedPlayerIds, newPlayer.id];
-
-        dispatchGameSession({ type: 'SET_SELECTED_PLAYER_IDS', payload: newSelectedPlayerIds });
-        
-        
-        setRosterError(null);
-      } else {
-        // This case might indicate a duplicate name or some other non-exception failure from addPlayer
-        // The new checks in handleAddPlayerForModal should catch most duplicates before this point.
-        // However, this backend check (if addPlayer utility implements it) is a good fallback.
-        console.warn('[Mutation Non-Success] addPlayer returned null for player:', variables.name);
-        setRosterError(t('rosterSettingsModal.errors.addFailedDuplicate', 'Error adding player {playerName}. Player may already exist or data is invalid.', { playerName: variables.name }));
-      }
-    },
-    onError: (error, variables) => {
-      console.error(`[Mutation Error] Failed to add player ${variables.name}:`, error);
-      setRosterError(t('rosterSettingsModal.errors.addFailed', 'Error adding player {playerName}. Please try again.', { playerName: variables.name }));
-    },
-  });
-
   // --- Mutation for Adding a new Season ---
   const addSeasonMutation = useMutation<
     Season | null, // Return type from utilAddSeason
@@ -705,28 +536,6 @@ export default function Home() {
       // alert(t('newGameSetupModal.errors.addTournamentFailedUnexpected', 'An unexpected error occurred while adding tournament: {tournamentName}.', { tournamentName: variables.name }));
     },
   });
-
-  // --- Derived State for Filtered Players (Moved to top-level) ---
-  const playersForCurrentGame = useMemo(() => {
-    if (!Array.isArray(availablePlayers)) {
-      console.warn('[MEMO playersForCurrentGame] availablePlayers is not an array. Returning []. Value:', availablePlayers);
-        return [];
-    }
-    // If no players are selected for the current game, the list of players eligible for goal/assist should be empty.
-    if (!gameSessionState.selectedPlayerIds || gameSessionState.selectedPlayerIds.length === 0) { 
-        // For PlayerBar, it might show all available players if none are selected for the game (depends on desired PlayerBar behavior).
-        // However, for GoalLogModal, it should be an empty list.
-        // Since GoalLogModal will now use this, we return [] if no players selected for game.
-        // If PlayerBar needs a different behavior, it might need its own derived list or this logic might need further refinement
-        // depending on where else playersForCurrentGame is used.
-        // For the specific bug of GoalLogModal, returning [] here is correct.
-        return []; 
-    }
-    const gamePlayers = availablePlayers.filter(player => gameSessionState.selectedPlayerIds.includes(player.id)); // USE gameSessionState
-    return gamePlayers;
-  }, [availablePlayers, gameSessionState.selectedPlayerIds]); // USE gameSessionState.selectedPlayerIds
-
-  // --- Effect to update availablePlayers from useQuery ---
   useEffect(() => {
     if (isMasterRosterQueryLoading) {
       console.log('[TanStack Query] Master Roster is loading...');
@@ -1855,91 +1664,51 @@ export default function Home() {
   const handleRenamePlayerForModal = useCallback(async (playerId: string, playerData: { name: string; nickname?: string }) => {
     console.log(`[Page.tsx] handleRenamePlayerForModal attempting mutation for ID: ${playerId}, new name: ${playerData.name}`);
     setRosterError(null); // Clear previous specific errors
-    // setIsRosterUpdating(true); // UI should use updatePlayerMutation.isPending
-
     try {
-      await updatePlayerMutation.mutateAsync({ 
-        playerId, 
-        playerData: { name: playerData.name, nickname: playerData.nickname } 
-      });
-      // onSuccess in updatePlayerMutation handles query invalidation, roster error clearing, and setPlayersOnField.
-      console.log(`[Page.tsx] updatePlayerMutation.mutateAsync successful for rename of ${playerId}.`);
+      await handleUpdatePlayer(playerId, { name: playerData.name, nickname: playerData.nickname });
+      console.log(`[Page.tsx] rename player success for ${playerId}.`);
     } catch (error) {
-      // Errors are primarily handled by the mutation's onError, which calls setRosterError.
-      // This catch block is for any other unexpected error from mutateAsync itself if not caught by TanStack Query.
-      console.error(`[Page.tsx] Exception during updatePlayerMutation.mutateAsync for rename of ${playerId}:`, error);
-      // If setRosterError isn't already called by mutation's onError for this specific case:
-      // if (!updatePlayerMutation.isError) { // Or check error type
-      //   setRosterError(t('rosterSettingsModal.errors.unexpected', 'An unexpected error occurred.'));
-      // }
-    } finally {
-      // setIsRosterUpdating(false); // UI should use updatePlayerMutation.isPending
+      console.error(`[Page.tsx] Exception during rename of ${playerId}:`, error);
     }
-  }, [updatePlayerMutation]); // Removed t - it's stable from useTranslation
+  }, [handleUpdatePlayer]);
   
   const handleSetJerseyNumberForModal = useCallback(async (playerId: string, jerseyNumber: string) => {
     console.log(`[Page.tsx] handleSetJerseyNumberForModal attempting mutation for ID: ${playerId}, new number: ${jerseyNumber}`);
     setRosterError(null);
 
     try {
-      await updatePlayerMutation.mutateAsync({ 
-        playerId, 
-        playerData: { jerseyNumber } 
-      });
-      // onSuccess in updatePlayerMutation handles necessary updates.
-      console.log(`[Page.tsx] updatePlayerMutation.mutateAsync successful for jersey number update of ${playerId}.`);
+      await handleUpdatePlayer(playerId, { jerseyNumber });
+      console.log(`[Page.tsx] jersey number update successful for ${playerId}.`);
     } catch (error) {
-      console.error(`[Page.tsx] Exception during updatePlayerMutation.mutateAsync for jersey number update of ${playerId}:`, error);
-      // Errors are primarily handled by the mutation's onError.
+      console.error(`[Page.tsx] Exception during jersey number update of ${playerId}:`, error);
     }
-  }, [updatePlayerMutation]);
+  }, [handleUpdatePlayer]);
 
   const handleSetPlayerNotesForModal = useCallback(async (playerId: string, notes: string) => {
     console.log(`[Page.tsx] handleSetPlayerNotesForModal attempting mutation for ID: ${playerId}`);
     setRosterError(null);
 
     try {
-      await updatePlayerMutation.mutateAsync({ 
-        playerId, 
-        playerData: { notes } 
-      });
-      // onSuccess in updatePlayerMutation handles necessary updates.
-      console.log(`[Page.tsx] updatePlayerMutation.mutateAsync successful for notes update of ${playerId}.`);
+      await handleUpdatePlayer(playerId, { notes });
+      console.log(`[Page.tsx] notes update successful for ${playerId}.`);
     } catch (error) {
-      console.error(`[Page.tsx] Exception during updatePlayerMutation.mutateAsync for notes update of ${playerId}:`, error);
-      // Errors are primarily handled by the mutation's onError.
+      console.error(`[Page.tsx] Exception during notes update of ${playerId}:`, error);
     }
-  }, [updatePlayerMutation]);
+  }, [handleUpdatePlayer]);
 
       // ... (rest of the code remains unchanged)
 
     const handleRemovePlayerForModal = useCallback(async (playerId: string) => {
       console.log(`[Page.tsx] handleRemovePlayerForModal attempting mutation for ID: ${playerId}`);
-      setRosterError(null); // Clear previous specific errors
-      // setIsRosterUpdating(true); // This line is removed - UI should use removePlayerMutation.isPending
+      setRosterError(null);
 
       try {
-        await removePlayerMutation.mutateAsync({ playerId });
-        // onSuccess in removePlayerMutation now handles:
-        // - queryClient.invalidateQueries({ queryKey: ['masterRoster'] });
-        // - setPlayersOnField update
-        // - setSelectedPlayerIds update
-        // - saveStateToHistory call
-        // - setRosterError(null) on success path
-        console.log(`[Page.tsx] removePlayerMutation.mutateAsync successful for removal of ${playerId}.`);
+        await handleRemovePlayer(playerId);
+        console.log(`[Page.tsx] player removed: ${playerId}.`);
       } catch (error) {
-        // Errors are primarily handled by the mutation's onError callback, which calls setRosterError.
-        // This catch block is for any other unexpected error from mutateAsync itself if not caught by TanStack Query.
-        console.error(`[Page.tsx] Exception during removePlayerMutation.mutateAsync for removal of ${playerId}:`, error);
-        // Optionally, if you want a generic fallback error here if the mutation's onError isn't triggered:
-        // if (!removePlayerMutation.isError) { // Or check error type if more specific handling is needed
-        //   setRosterError(t('rosterSettingsModal.errors.unexpected', 'An unexpected error occurred.'));
-        // }
+        console.error(`[Page.tsx] Exception during removal of ${playerId}:`, error);
       }
-      // finally { // This block is removed
-        // setIsRosterUpdating(false); // This line is removed - UI should use removePlayerMutation.isPending
-      // }
-    }, [removePlayerMutation]); // Removed t - it's stable from useTranslation
+    }, [handleRemovePlayer]);
 
     // ... (rest of the code remains unchanged)
 
@@ -1975,20 +1744,17 @@ export default function Home() {
 
       // If all checks pass, proceed with the mutation
       try {
-        console.log('[Page.tsx] No duplicates found. Proceeding with addPlayerMutation for:', playerData);
-        await addPlayerMutation.mutateAsync(playerData);
-        // onSuccess in the mutation will handle further UI updates like invalidating queries and clearing rosterError if successful.
-        console.log(`[Page.tsx] addPlayerMutation.mutateAsync likely successful for adding player: ${playerData.name}.`);
+        console.log('[Page.tsx] No duplicates found. Proceeding with addPlayer for:', playerData);
+        await handleAddPlayer(playerData);
+        console.log(`[Page.tsx] add player success: ${playerData.name}.`);
       } catch (error) {
         // This catch block is for unexpected errors directly from mutateAsync call itself (e.g., network issues before mutationFn runs).
         // Errors from within mutationFn (like from the addPlayer utility) should ideally be handled by the mutation's onError callback.
         console.error(`[Page.tsx] Exception during addPlayerMutation.mutateAsync for player ${playerData.name}:`, error);
         // Set a generic error message if rosterError hasn't been set by the mutation's onError callback.
-        if (!addPlayerMutation.error) { // Check if mutation itself has an error state
-          setRosterError(t('rosterSettingsModal.errors.addFailed', 'Error adding player {playerName}. Please try again.', { playerName: playerData.name }));
-        }
+        setRosterError(t('rosterSettingsModal.errors.addFailed', 'Error adding player {playerName}. Please try again.', { playerName: playerData.name }));
       }
-    }, [addPlayerMutation, masterRosterQueryResultData, t]); // Removed rosterError from deps, as it's set within this callback.
+    }, [masterRosterQueryResultData, handleAddPlayer, t]);
 
     // ... (rest of the code remains unchanged)
 
@@ -2005,14 +1771,12 @@ export default function Home() {
     setRosterError(null); // Clear previous specific errors
 
     try {
-      await setGoalieStatusMutation.mutateAsync({ playerId, isGoalie: targetGoalieStatus });
-      // onSuccess in setGoalieStatusMutation handles query invalidation, roster error clearing, and setPlayersOnField logic.
-      console.log(`[Page.tsx] setGoalieStatusMutation.mutateAsync successful for goalie toggle of ${playerId}.`);
+      await handleSetGoalieStatus(playerId, targetGoalieStatus);
+      console.log(`[Page.tsx] goalie toggle success for ${playerId}.`);
     } catch (error) {
-      // Errors are primarily handled by the mutation's onError.
-      console.error(`[Page.tsx] Exception during setGoalieStatusMutation.mutateAsync for goalie toggle of ${playerId}:`, error);
+      console.error(`[Page.tsx] Exception during goalie toggle of ${playerId}:`, error);
     }
-  }, [availablePlayers, setGoalieStatusMutation]); // Added setGoalieStatusMutation, removed others
+  }, [availablePlayers, handleSetGoalieStatus]);
 
   // --- END Roster Management Handlers ---
 
@@ -3030,7 +2794,7 @@ export default function Home() {
         teamName={gameSessionState.teamName}
         onTeamNameChange={handleTeamNameChange}
         // Pass loading and error states
-        isRosterUpdating={updatePlayerMutation.isPending || setGoalieStatusMutation.isPending || removePlayerMutation.isPending || addPlayerMutation.isPending}
+        isRosterUpdating={isRosterUpdating}
         rosterError={rosterError}
         onOpenPlayerStats={handleOpenPlayerStats}
       />
