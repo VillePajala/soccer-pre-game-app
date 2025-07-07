@@ -11,6 +11,11 @@
 3. **Snapshot tests** – add a Jest snapshot of the current `Home` page render (shallow render with `render(<Home />)`) so we can detect unintended structural changes while refactoring.
 4. **Type-check gate** – ensure `npm run type-check` (tsc --noEmit) is part of CI so that type migrations caused by file moves are caught early.
 
+### Manual testing
+- Run `npm test` and confirm all suites pass.
+- Execute `npm run type-check` to ensure there are no TypeScript errors.
+- Start the dev server and verify the Home page loads without console errors.
+
 ---
 
 ## 1. Extract Fundamental **Types & Constants** – ✅ Completed
@@ -24,6 +29,10 @@
 
 **Unit tests**
 - TS-only change → run `npm run type-check`; add a dedicated jest test that imports every new type & constant just to assert the module resolves (guards against circular import regressions).
+### Manual testing
+- Start the dev server and confirm the home page renders without runtime errors.
+- Save a new game and reload the page to verify storage keys still work.
+- Run `npm run type-check` to catch any missing type or constant exports.
 
 ---
 
@@ -37,6 +46,10 @@
 
 **Unit tests**
 - Mock `@tanstack/react-query` and the underlying utility fns. Test that the hook returns aggregated data and `loading` flag logic works (truthy when **any** query is loading).
+### Manual testing
+- Launch the app and ensure roster, seasons, tournaments and saved games data all display.
+- Toggle offline mode and reload to verify an error message appears.
+- Observe that a loading indicator is shown during initial data fetch.
 
 ---
 
@@ -50,6 +63,10 @@
 
 **Unit tests**
 - Feed the hook with a dummy `initialState` object; assert push, undo, and redo mutate `state` correctly and `canUndo/Redo` flags update.
+### Manual testing
+- Make a change (e.g., move a player) then click Undo to confirm the previous state returns.
+- After an undo, click Redo and verify the state reapplies.
+- Attempt to undo past the first change and check that the Undo control disables or has no effect.
 
 ---
 
