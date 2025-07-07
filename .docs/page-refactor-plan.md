@@ -13,7 +13,7 @@
 
 ---
 
-## 1. Extract Fundamental **Types & Constants**  
+## 1. Extract Fundamental **Types & Constants** – ✅ Completed
 *(easy – no runtime behaviour change)*
 
 **Tasks**
