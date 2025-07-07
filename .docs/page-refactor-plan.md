@@ -111,7 +111,7 @@
 
 ---
 
-## 6. Extract **Roster Management** into Dedicated Hook
+## 6. Extract **Roster Management** into Dedicated Hook – ✅ Completed
 
 **Tasks**
 - New hook `src/hooks/useRoster.ts` encapsulating `availablePlayers`, mutations (`addPlayer`, `updatePlayer`, `removePlayer`, `setGoalieStatus`) and the highlight/prompt UI flags.
@@ -119,6 +119,12 @@
 
 **Unit tests**
 - Mock `masterRosterManager` utilities and verify optimistic updates roll back on error.
+
+### Manual testing
+- Open the roster modal and confirm players can be added, edited and removed.
+- Toggle goalie status from the roster modal and verify only one goalie persists.
+- Start a new game and ensure the roster button highlights as expected.
+- Reload a saved game and verify player selections load correctly.
 
 ---
 
