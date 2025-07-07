@@ -129,7 +129,7 @@
 
 ---
 
-## 7. Move **Export / Import** Helpers to Utility File
+## 7. Move **Export / Import** Helpers to Utility File – ✅ Completed
 
 **Tasks**
 - Create `src/utils/exportGames.ts` with `exportJson(game)`, `exportCsv(game)`, `exportAggregateJson(allGames)` & `exportAggregateCsv(allGames)`.
@@ -137,6 +137,12 @@
 
 **Unit tests**
 - Given a minimal `AppState`, verify JSON stringifies correctly and CSV contains header row & formatted times.
+
+### Manual testing
+- Export a single saved game as JSON and verify the downloaded file opens and contains the expected data.
+- Export a single saved game as CSV and confirm the header row and time values are formatted correctly.
+- Use the aggregate export options in Game Stats to download JSON and CSV for multiple games and check the files include all selected games.
+- Trigger each export button and ensure no errors appear in the browser console.
 
 ---
 
