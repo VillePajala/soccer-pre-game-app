@@ -26,7 +26,6 @@ import {
 } from '@/hooks/useGameSessionReducer';
 // Import roster utility functions
 import {
-    getMasterRoster, // This is now the async one from masterRosterManager
     addPlayer,
     updatePlayer,
     removePlayer,
@@ -253,7 +252,7 @@ export default function Home() {
   } = useGameDataQueries();
 
   const isMasterRosterQueryLoading = isGameDataLoading;
-  const isSeasonsQueryLoading = isGameDataLoading;
+  const areSeasonsQueryLoading = isGameDataLoading;
   const areTournamentsQueryLoading = isGameDataLoading;
   const isAllSavedGamesQueryLoading = isGameDataLoading;
   const isCurrentGameIdSettingQueryLoading = isGameDataLoading;
