@@ -834,10 +834,8 @@ export default function Home() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [availablePlayers, saveStateToHistory]); // setPlayersOnField is from useGameState, should be stable if not changing the hook itself
-  // Note: We don't want setPlayersOnField in deps if it causes loops. 
+  // Note: We don't want setPlayersOnField in deps if it causes loops.
   // saveStateToHistory is also a dependency as it's used inside.
-
-  }, []); // Empty dependency array ensures this listener is stable and created only once
   
   useEffect(() => {
     const loadInitialAppData = async () => {
