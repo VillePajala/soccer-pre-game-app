@@ -290,6 +290,7 @@ export default function Home() {
     highlightRosterButton,
     setHighlightRosterButton,
     isRosterUpdating,
+    setRosterError,
     rosterError,
     playersForCurrentGame,
     handleAddPlayer,
