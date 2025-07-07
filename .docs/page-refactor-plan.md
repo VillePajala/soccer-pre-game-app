@@ -27,7 +27,7 @@
 
 ---
 
-## 2. Create `useGameDataQueries` Hook  
+## 2. Create `useGameDataQueries` Hook – ✅ Completed
 *(isolates TanStack Query logic)*
 
 **Tasks**
