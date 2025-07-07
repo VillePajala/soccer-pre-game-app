@@ -26,7 +26,6 @@ import {
 } from '@/hooks/useGameSessionReducer';
 // Import roster utility functions
 import {
-    getMasterRoster, // This is now the async one from masterRosterManager
     addPlayer,
     updatePlayer,
     removePlayer,
@@ -37,19 +36,10 @@ import {
 // Removed unused import of utilGetMasterRoster
 
 // Import utility functions for seasons and tournaments
-import { getSeasons as utilGetSeasons } from '@/utils/seasons';
-import { getTournaments as utilGetTournaments } from '@/utils/tournaments';
+import { saveGame as utilSaveGame, deleteGame as utilDeleteGame, getLatestGameId } from '@/utils/savedGames';
 import {
-  getSavedGames as utilGetSavedGames,
-  saveGame as utilSaveGame, // For auto-save and handleSaveGame
-  deleteGame as utilDeleteGame, // For handleDeleteGame
-  getLatestGameId,
-  // GameData // Type // Comment out or remove GameData import if AppState is used directly
-} from '@/utils/savedGames';
-import {
-  getCurrentGameIdSetting, // For initial load
-  saveCurrentGameIdSetting as utilSaveCurrentGameIdSetting, // For saving current game ID setting
-  resetAppSettings as utilResetAppSettings // For handleHardReset
+  saveCurrentGameIdSetting as utilSaveCurrentGameIdSetting,
+  resetAppSettings as utilResetAppSettings,
 } from '@/utils/appSettings';
 import { deleteSeason as utilDeleteSeason, updateSeason as utilUpdateSeason, addSeason as utilAddSeason } from '@/utils/seasons';
 import { deleteTournament as utilDeleteTournament, updateTournament as utilUpdateTournament, addTournament as utilAddTournament } from '@/utils/tournaments';
@@ -59,7 +49,8 @@ import { Player, Season, Tournament } from '@/types';
 import type { Point, GameEvent, AppState, TacticalDisc, SavedGamesCollection, TimerState } from "@/types";
 import { saveMasterRoster } from '@/utils/masterRoster';
 // Import useQuery, useMutation, useQueryClient
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useGameDataQueries } from '@/hooks/useGameDataQueries';
 // Import async localStorage utilities
 import { getLocalStorageItemAsync, setLocalStorageItemAsync, removeLocalStorageItemAsync } from '@/utils/localStorage';
 // Import query keys
@@ -249,61 +240,34 @@ export default function Home() {
   }, [gameSessionState, saveStateToHistory]);
   // END --- Effect to save gameSessionState changes to history ---
 
-  // --- TanStack Query for Master Roster ---
+  // --- Load game data via hook ---
   const {
-    data: masterRosterQueryResultData,
-    isLoading: isMasterRosterQueryLoading,
-    isError: isMasterRosterQueryError,
-    error: masterRosterQueryErrorData,
-  } = useQuery<Player[], Error>({
-    queryKey: queryKeys.masterRoster,
-    queryFn: getMasterRoster,
-  });
+    masterRoster: masterRosterQueryResultData,
+    seasons: seasonsQueryResultData,
+    tournaments: tournamentsQueryResultData,
+    savedGames: allSavedGamesQueryResultData,
+    currentGameId: currentGameIdSettingQueryResultData,
+    loading: isGameDataLoading,
+    error: gameDataError,
+  } = useGameDataQueries();
 
-  // --- TanStack Query for Seasons ---
-  const {
-    data: seasonsQueryResultData,
-    isLoading: areSeasonsQueryLoading,
-    isError: isSeasonsQueryError,
-    error: seasonsQueryErrorData,
-  } = useQuery<Season[], Error>({
-    queryKey: queryKeys.seasons,
-    queryFn: utilGetSeasons,
-  });
+  const isMasterRosterQueryLoading = isGameDataLoading;
+  const areSeasonsQueryLoading = isGameDataLoading;
+  const areTournamentsQueryLoading = isGameDataLoading;
+  const isAllSavedGamesQueryLoading = isGameDataLoading;
+  const isCurrentGameIdSettingQueryLoading = isGameDataLoading;
 
-  // --- TanStack Query for Tournaments ---
-  const {
-    data: tournamentsQueryResultData,
-    isLoading: areTournamentsQueryLoading,
-    isError: isTournamentsQueryError,
-    error: tournamentsQueryErrorData,
-  } = useQuery<Tournament[], Error>({
-    queryKey: queryKeys.tournaments,
-    queryFn: utilGetTournaments,
-  });
+  const isMasterRosterQueryError = !!gameDataError;
+  const isSeasonsQueryError = !!gameDataError;
+  const isTournamentsQueryError = !!gameDataError;
+  const isAllSavedGamesQueryError = !!gameDataError;
+  const isCurrentGameIdSettingQueryError = !!gameDataError;
 
-  // --- TanStack Query for All Saved Games ---
-  const {
-    data: allSavedGamesQueryResultData,
-    isLoading: isAllSavedGamesQueryLoading,
-    isError: isAllSavedGamesQueryError,
-    error: allSavedGamesQueryErrorData,
-  } = useQuery<SavedGamesCollection | null, Error>({
-    queryKey: queryKeys.savedGames,
-    queryFn: utilGetSavedGames,
-    initialData: {}, 
-  });
-
-  // --- TanStack Query for Current Game ID Setting ---
-  const {
-    data: currentGameIdSettingQueryResultData,
-    isLoading: isCurrentGameIdSettingQueryLoading,
-    isError: isCurrentGameIdSettingQueryError,
-    error: currentGameIdSettingQueryErrorData,
-  } = useQuery<string | null, Error>({
-    queryKey: queryKeys.appSettingsCurrentGameId,
-    queryFn: getCurrentGameIdSetting,
-  });
+  const masterRosterQueryErrorData = gameDataError;
+  const seasonsQueryErrorData = gameDataError;
+  const tournamentsQueryErrorData = gameDataError;
+  const allSavedGamesQueryErrorData = gameDataError;
+  const currentGameIdSettingQueryErrorData = gameDataError;
 
   // --- Core Game State (Managed by Hook) ---
   const {
@@ -1037,7 +1001,7 @@ export default function Home() {
         // --- TIMER RESTORATION LOGIC ---
         try {
           const savedTimerStateJSON = await getLocalStorageItemAsync(TIMER_STATE_KEY);
-          const lastGameId = await getCurrentGameIdSetting();
+          const lastGameId = currentGameIdSettingQueryResultData;
           
           if (savedTimerStateJSON) {
             const savedTimerState: TimerState = JSON.parse(savedTimerStateJSON);
