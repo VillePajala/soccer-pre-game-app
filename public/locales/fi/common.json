@@ -49,6 +49,7 @@
   "controlBar.exportData": "Vie tiedot",
   "controlBar.toggleLanguage": "Vaihda kieli",
   "controlBar.backButton": "Takaisin",
+  "common.notSet": "Ei asetettu",
   "timerOverlay.intervalLabel": "Vaihtoväli (min):",
   "timerOverlay.confirmSubButton": "Vaihto tehty",
   "timerOverlay.historyTitle": "Peliaikahistoria",
@@ -172,7 +173,9 @@
     "noAssisterPlaceholder": "-- Ei Syöttäjää --",
     "cancelButton": "Peruuta",
     "logButton": "Kirjaa maali",
-    "logOpponentButton": "Kirjaa Vastustajan Maali"
+    "logOpponentButton": "Kirjaa Vastustajan Maali",
+    "logOpponentGoalButtonShort": "Vastustaja +1",
+    "logOpponentGoalTooltip": "Kirjaa vastustajalle maali nykyiseen aikaan"
   },
   "trainingResourcesModal": {
     "title": "Harjoitusmateriaalit",
@@ -227,7 +230,31 @@
     "draw": "Tasapeli",
     "tasoLink": "Taso",
     "exportJsonButton": "Lataa JSON",
-    "exportExcelButton": "Lataa EXCEL"
+    "exportExcelButton": "Lataa EXCEL",
+    "tabs": {
+      "currentGame": "Nykyinen",
+      "season": "Kausi",
+      "tournament": "Turnaus",
+      "overall": "Kaikki",
+      "player": "Pelaaja"
+    },
+    "filterAllSeasons": "Kaikki kaudet",
+    "filterAllTournaments": "Kaikki turnaukset",
+    "titleSeason": "Kausitilastot",
+    "titleTournament": "Turnaustilastot",
+    "titleOverall": "Kokonaistilastot",
+    "titleCurrentGame": "Nykyisen pelin tilastot",
+    "invalidTimeFormat": "Virheellinen aikamuoto. MM:SS",
+    "scorerRequired": "Maalintekijä on valittava.",
+    "confirmDeleteEvent": "Haluatko varmasti poistaa tapahtuman? Tätä ei voi perua.",
+    "overallSummary": "Kokonaisyhteenveto",
+    "allSeasonsStats": "Kaikkien kausien tilastot",
+    "allTournamentsStats": "Kaikkien turnausten tilastot",
+    "seasonStats": "Kausitilastot",
+    "tournamentStats": "Turnaustilastot",
+    "noStatsAvailable": "Ei tilastoja saatavilla.",
+    "notesPlaceholder": "Lisää muistiinpanot tähän...",
+    "noNotes": "Ei muistiinpanoja"
   },
   "saveGameModal": {
     "title": "Tallenna Peli Nimellä...",

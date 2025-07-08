@@ -50,6 +50,7 @@
   "controlBar.exportData": "Export Data",
   "controlBar.toggleLanguage": "Change Language",
   "controlBar.backButton": "Back",
+  "common.notSet": "Not Set",
   "timerOverlay.intervalLabel": "Interval (min):",
   "timerOverlay.confirmSubButton": "Substitution Made",
   "timerOverlay.historyTitle": "Play Time History",
@@ -173,7 +174,9 @@
     "noAssisterPlaceholder": "-- No Assist --",
     "cancelButton": "Cancel",
     "logButton": "Log Goal",
-    "logOpponentButton": "Log Opponent Goal"
+    "logOpponentButton": "Log Opponent Goal",
+    "logOpponentGoalButtonShort": "Opponent +1",
+    "logOpponentGoalTooltip": "Record a goal for the opponent at the current time"
   },
   "trainingResourcesModal": {
     "title": "Training Resources",
@@ -228,7 +231,31 @@
     "draw": "Draw",
     "tasoLink": "Log data to Taso",
     "exportJsonButton": "Export JSON",
-    "exportExcelButton": "Export Excel"
+    "exportExcelButton": "Export Excel",
+    "tabs": {
+      "currentGame": "Current",
+      "season": "Season",
+      "tournament": "Tournament",
+      "overall": "Overall",
+      "player": "Player"
+    },
+    "filterAllSeasons": "All Seasons",
+    "filterAllTournaments": "All Tournaments",
+    "titleSeason": "Season Stats",
+    "titleTournament": "Tournament Stats",
+    "titleOverall": "Overall Stats",
+    "titleCurrentGame": "Current Game Stats",
+    "invalidTimeFormat": "Invalid time format. MM:SS",
+    "scorerRequired": "Scorer must be selected.",
+    "confirmDeleteEvent": "Are you sure you want to delete this event? This cannot be undone.",
+    "overallSummary": "Overall Summary",
+    "allSeasonsStats": "All Seasons Stats",
+    "allTournamentsStats": "All Tournaments Stats",
+    "seasonStats": "Season Statistics",
+    "tournamentStats": "Tournament Statistics",
+    "noStatsAvailable": "No statistics available.",
+    "notesPlaceholder": "Add notes here...",
+    "noNotes": "No notes added"
   },
   "controlBar": {
     "hardReset": "Hard Reset App",
