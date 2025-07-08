@@ -156,6 +156,12 @@
 **Unit tests**
 - Mount a test component inside the provider, toggle a modal and assert context value updates.
 
+### Manual testing
+- Launch the app and open each modal from the control bar to verify it appears and closes correctly.
+- Open different modals in succession to ensure they do not interfere with each other's visibility.
+- Refresh the page and confirm all modals are closed on initial load.
+- Perform common actions like saving or loading a game to ensure the related modal still functions.
+
 ---
 
 ## 9. Collapse **Derived Data & Selectors**
@@ -212,7 +218,7 @@ Remove obsolete code and make sure the line-count drops below ~300 lines.
 4. PR-4 – Step 4 (timer)
 5. PR-5 – Step 5 (tactical board)
 6. PR-6 – Step 6 (roster)
-7. PR-7 – Step 7 (export utils)
+7. PR-7 – Step 7 (export utils) ✅
 8. PR-8 – Step 8 (modal context)
 9. PR-9 – Step 9 & 10 sweep
 10. PR-10 – Docs & clean-up
