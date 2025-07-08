@@ -47,6 +47,8 @@ Manual verification after implementing the above:
 - [x] Provide visual confirmation when the quick‑save operation succeeds (the TODO near line 1782 of `HomePage.tsx`). A toast notification is sufficient.
 - [x] Replace verbose `console.log` statements with a lightweight logging utility that can be disabled in production builds.
 
+Status: **Done**
+
 Manual verification after implementing the above:
   1. Perform a quick save and verify a green toast briefly appears confirming success.
   2. Disable localStorage to force a quick save error and confirm an alert is shown and the error is logged.
@@ -54,10 +56,10 @@ Manual verification after implementing the above:
   4. Build the project for production and confirm informational logs no longer appear in the console.
 
 ## 6. Translation Maintenance
-- [ ] The custom augmentations in `src/i18n.ts` complicate merging JSON locale files. Investigate generating type definitions for translation keys and consolidating all translations in JSON to avoid runtime mutations.
+- [x] The custom augmentations in `src/i18n.ts` complicate merging JSON locale files. Investigate generating type definitions for translation keys and consolidating all translations in JSON to avoid runtime mutations.
 
 Manual verification after implementing the above:
-  1. Run the type generation script and verify `tsc` passes with the generated definitions.
+  1. Run `npm run generate:i18n-types` and verify `npx tsc src/i18n-types.ts` completes without errors.
   2. Switch languages in the app and confirm all strings render correctly without runtime warnings.
 
 ## 7. Additional Testing

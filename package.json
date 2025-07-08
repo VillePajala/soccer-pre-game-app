@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
-    "test:unit": "jest"
+    "test:unit": "jest",
+    "generate:i18n-types": "node scripts/generate-i18n-types.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.80.10",
