@@ -1,13 +1,14 @@
 import { SavedGamesCollection } from '@/types'; // AppState was removed, SavedGamesCollection is still used.
 import { Player, Season, Tournament } from '@/types'; // Corrected import path for these types
 // Import the constants from the central file
-import { 
-  SAVED_GAMES_KEY, 
-  APP_SETTINGS_KEY, 
-  SEASONS_LIST_KEY, 
-  TOURNAMENTS_LIST_KEY, 
-  MASTER_ROSTER_KEY 
+import {
+  SAVED_GAMES_KEY,
+  APP_SETTINGS_KEY,
+  SEASONS_LIST_KEY,
+  TOURNAMENTS_LIST_KEY,
+  MASTER_ROSTER_KEY
 } from '@/config/storageKeys';
+import logger from '@/utils/logger';
 // Import the new async localStorage utility functions
 import {
   getLocalStorageItem,
@@ -32,7 +33,7 @@ interface FullBackupData {
 
 // Function to export all relevant localStorage data
 export const exportFullBackup = async (): Promise<void> => {
-  console.log("Starting full backup export...");
+  logger.log("Starting full backup export...");
   try {
     const backupData: FullBackupData = {
       meta: {
@@ -56,15 +57,15 @@ export const exportFullBackup = async (): Promise<void> => {
         try {
           // Assign parsed data directly to the correct key in backupData.localStorage
           backupData.localStorage[key as keyof FullBackupData['localStorage']] = JSON.parse(itemJson);
-          console.log(`Backed up data for key: ${key}`);
+          logger.log(`Backed up data for key: ${key}`);
         } catch (error) {
-          console.error(`Error parsing localStorage item for key ${key}:`, error);
+          logger.error(`Error parsing localStorage item for key ${key}:`, error);
           // Explicitly set to null on parsing error
           backupData.localStorage[key as keyof FullBackupData['localStorage']] = null; 
         }
       } else {
         // Explicitly set to null if item doesn't exist or getter failed (it resolves to null)
-        console.log(`No data found for key: ${key}, setting to null.`); 
+        logger.log(`No data found for key: ${key}, setting to null.`); 
         backupData.localStorage[key as keyof FullBackupData['localStorage']] = null;
       }
     }
@@ -84,18 +85,18 @@ export const exportFullBackup = async (): Promise<void> => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    console.log(`Full backup exported successfully as ${a.download}`);
+    logger.log(`Full backup exported successfully as ${a.download}`);
     alert('Full backup exported successfully!'); // Provide user feedback
 
   } catch (error) {
-    console.error("Failed to export full backup:", error);
+    logger.error("Failed to export full backup:", error);
     alert('Error exporting full backup. Check the console for details.');
   }
 };
 
 // Function to import data from a backup file
 export const importFullBackup = async (jsonContent: string): Promise<boolean> => {
-  console.log("Starting full backup import...");
+  logger.log("Starting full backup import...");
   try {
     const backupData: FullBackupData = JSON.parse(jsonContent);
 
@@ -116,11 +117,11 @@ export const importFullBackup = async (jsonContent: string): Promise<boolean> =>
 
     // --- Confirmation ---
     if (!window.confirm("Are you sure you want to restore from this backup? This will OVERWRITE all current application data (games, roster, seasons, tournaments, settings) and reload the app. This action cannot be undone.")) {
-        console.log("User cancelled the import process.");
+        logger.log("User cancelled the import process.");
         return false; // User cancelled
     }
 
-    console.log("User confirmed import. Proceeding to overwrite data...");
+    logger.log("User confirmed import. Proceeding to overwrite data...");
 
     // --- Overwrite localStorage ---
     const keysToRestore = Object.keys(backupData.localStorage) as Array<keyof FullBackupData['localStorage']>;
@@ -130,9 +131,9 @@ export const importFullBackup = async (jsonContent: string): Promise<boolean> =>
       if (dataToRestore !== undefined && dataToRestore !== null) {
         try {
           setLocalStorageItem(key, JSON.stringify(dataToRestore));
-          console.log(`Restored data for key: ${key}`);
+          logger.log(`Restored data for key: ${key}`);
         } catch (innerError) { 
-          console.error(`Error stringifying or setting localStorage item for key ${key}:`, innerError);
+          logger.error(`Error stringifying or setting localStorage item for key ${key}:`, innerError);
           // It's important to alert the user and rethrow or handle appropriately
           alert(`Failed to restore data for key ${key}. Aborting import to prevent partial restore.`);
           throw new Error(`Failed to restore data for key ${key}. Aborting import.`);
@@ -143,13 +144,13 @@ export const importFullBackup = async (jsonContent: string): Promise<boolean> =>
         const currentItem = getLocalStorageItem(key); // Check if item exists
         if (currentItem !== null) {
           removeLocalStorageItem(key);
-          console.log(`Removed existing data for key: ${key} as it was explicitly null or not present in the backup.`);
+          logger.log(`Removed existing data for key: ${key} as it was explicitly null or not present in the backup.`);
       }
       }
     }
 
     // --- Final Step: Reload ---
-    console.log("Data restored successfully. Reloading application...");
+    logger.log("Data restored successfully. Reloading application...");
     alert('Full backup restored successfully! The application will now reload.');
     
     // Use setTimeout to ensure the alert is seen before reload
@@ -160,7 +161,7 @@ export const importFullBackup = async (jsonContent: string): Promise<boolean> =>
     return true; // Indicate success (although reload prevents further action)
 
   } catch (error) {
-    console.error("Failed to import full backup:", error);
+    logger.error("Failed to import full backup:", error);
     // Type check for error before accessing message
     const errorMessage = error instanceof Error ? error.message : String(error);
     alert(`Error importing full backup: ${errorMessage}`);

@@ -6,8 +6,8 @@ import enTranslationsFile from './locales/en.json';
 
 // ADD DEBUG LOG HERE
 // Log the entire object now, without truncation
-//console.log('[i18n.ts] Imported fiTranslations:', JSON.stringify(fiTranslationsFile));
-//console.log('[i18n.ts] Imported enTranslations:', JSON.stringify(enTranslationsFile));
+//logger.log('[i18n.ts] Imported fiTranslations:', JSON.stringify(fiTranslationsFile));
+//logger.log('[i18n.ts] Imported enTranslations:', JSON.stringify(enTranslationsFile));
 
 // Create a complete translation object by merging imported and hardcoded values
 const fiTranslations = JSON.parse(JSON.stringify(fiTranslationsFile));

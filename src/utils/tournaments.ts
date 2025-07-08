@@ -1,5 +1,6 @@
 import { TOURNAMENTS_LIST_KEY } from '@/config/storageKeys';
 import type { Tournament } from '@/types'; // Import Tournament type from shared types
+import logger from '@/utils/logger';
 
 // Define the Tournament type (consider moving to a shared types file)
 // export interface Tournament { // Remove local definition
@@ -20,7 +21,7 @@ export const getTournaments = async (): Promise<Tournament[]> => {
     }
     return Promise.resolve(JSON.parse(tournamentsJson) as Tournament[]);
   } catch (error) {
-    console.error('[getTournaments] Error getting tournaments from localStorage:', error);
+    logger.error('[getTournaments] Error getting tournaments from localStorage:', error);
     return Promise.resolve([]);
   }
 };
@@ -35,7 +36,7 @@ export const saveTournaments = async (tournaments: Tournament[]): Promise<boolea
     localStorage.setItem(TOURNAMENTS_LIST_KEY, JSON.stringify(tournaments));
     return Promise.resolve(true);
   } catch (error) {
-    console.error('[saveTournaments] Error saving tournaments to localStorage:', error);
+    logger.error('[saveTournaments] Error saving tournaments to localStorage:', error);
     return Promise.resolve(false);
   }
 };
@@ -48,14 +49,14 @@ export const saveTournaments = async (tournaments: Tournament[]): Promise<boolea
 export const addTournament = async (newTournamentName: string): Promise<Tournament | null> => {
   const trimmedName = newTournamentName.trim();
   if (!trimmedName) {
-    console.error('[addTournament] Validation failed: Tournament name cannot be empty.');
+    logger.error('[addTournament] Validation failed: Tournament name cannot be empty.');
     return Promise.resolve(null);
   }
 
   try {
     const currentTournaments = await getTournaments();
     if (currentTournaments.some(t => t.name.toLowerCase() === trimmedName.toLowerCase())) {
-      console.error(`[addTournament] Validation failed: A tournament with name "${trimmedName}" already exists.`);
+      logger.error(`[addTournament] Validation failed: A tournament with name "${trimmedName}" already exists.`);
       return Promise.resolve(null);
     }
     const newTournament: Tournament = {
@@ -70,7 +71,7 @@ export const addTournament = async (newTournamentName: string): Promise<Tourname
     }
     return Promise.resolve(newTournament);
   } catch (error) {
-    console.error('[addTournament] Unexpected error adding tournament:', error);
+    logger.error('[addTournament] Unexpected error adding tournament:', error);
     return Promise.resolve(null);
   }
 };
@@ -82,7 +83,7 @@ export const addTournament = async (newTournamentName: string): Promise<Tourname
  */
 export const updateTournament = async (updatedTournamentData: Tournament): Promise<Tournament | null> => {
   if (!updatedTournamentData || !updatedTournamentData.id || !updatedTournamentData.name?.trim()) {
-    console.error('[updateTournament] Invalid tournament data provided for update.');
+    logger.error('[updateTournament] Invalid tournament data provided for update.');
     return Promise.resolve(null);
   }
   const trimmedName = updatedTournamentData.name.trim();
@@ -92,12 +93,12 @@ export const updateTournament = async (updatedTournamentData: Tournament): Promi
     const tournamentIndex = currentTournaments.findIndex(t => t.id === updatedTournamentData.id);
 
     if (tournamentIndex === -1) {
-      console.error(`[updateTournament] Tournament with ID ${updatedTournamentData.id} not found.`);
+      logger.error(`[updateTournament] Tournament with ID ${updatedTournamentData.id} not found.`);
       return Promise.resolve(null);
     }
 
     if (currentTournaments.some(t => t.id !== updatedTournamentData.id && t.name.toLowerCase() === trimmedName.toLowerCase())) {
-      console.error(`[updateTournament] Validation failed: Another tournament with name "${trimmedName}" already exists.`);
+      logger.error(`[updateTournament] Validation failed: Another tournament with name "${trimmedName}" already exists.`);
       return Promise.resolve(null);
     }
 
@@ -111,7 +112,7 @@ export const updateTournament = async (updatedTournamentData: Tournament): Promi
     }
     return Promise.resolve(tournamentsToUpdate[tournamentIndex]);
   } catch (error) {
-    console.error('[updateTournament] Unexpected error updating tournament:', error);
+    logger.error('[updateTournament] Unexpected error updating tournament:', error);
     return Promise.resolve(null);
   }
 };
@@ -123,7 +124,7 @@ export const updateTournament = async (updatedTournamentData: Tournament): Promi
  */
 export const deleteTournament = async (tournamentId: string): Promise<boolean> => {
   if (!tournamentId) {
-    console.error('[deleteTournament] Invalid tournament ID provided.');
+    logger.error('[deleteTournament] Invalid tournament ID provided.');
     return Promise.resolve(false);
   }
   try {
@@ -131,14 +132,14 @@ export const deleteTournament = async (tournamentId: string): Promise<boolean> =
     const updatedTournaments = currentTournaments.filter(t => t.id !== tournamentId);
 
     if (updatedTournaments.length === currentTournaments.length) {
-      console.error(`[deleteTournament] Tournament with id ${tournamentId} not found.`);
+      logger.error(`[deleteTournament] Tournament with id ${tournamentId} not found.`);
       return Promise.resolve(false);
     }
 
     const success = await saveTournaments(updatedTournaments);
     return Promise.resolve(success);
   } catch (error) {
-    console.error('[deleteTournament] Unexpected error deleting tournament:', error);
+    logger.error('[deleteTournament] Unexpected error deleting tournament:', error);
     return Promise.resolve(false);
   }
 }; 

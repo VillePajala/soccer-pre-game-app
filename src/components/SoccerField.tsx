@@ -4,6 +4,7 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Player } from '@/types'; // Import Player from types
 import { Point, Opponent, TacticalDisc } from '@/types'; // Import Point and Opponent from page
 import tinycolor from 'tinycolor2';
+import logger from '@/utils/logger';
 
 // Define props for SoccerField
 interface SoccerFieldProps {
@@ -159,7 +160,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
 
     // *** SAFETY CHECK: Ensure calculated CSS dimensions are valid ***
     if (W <= 0 || H <= 0 || !Number.isFinite(W) || !Number.isFinite(H)) {
-      console.warn("Canvas dimensions are invalid, skipping draw:", { W, H });
+      logger.warn("Canvas dimensions are invalid, skipping draw:", { W, H });
       return; 
     }
 
@@ -335,7 +336,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
       const startX = path[0].relX * W;
       const startY = path[0].relY * H;
       if (!Number.isFinite(startX) || !Number.isFinite(startY)) {
-        console.warn("Skipping drawing path due to non-finite start point", path[0]);
+        logger.warn("Skipping drawing path due to non-finite start point", path[0]);
         return; 
       }
 
@@ -346,7 +347,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
         const pointX = path[i].relX * W;
         const pointY = path[i].relY * H;
         if (!Number.isFinite(pointX) || !Number.isFinite(pointY)) {
-          console.warn("Skipping drawing segment due to non-finite point", path[i]);
+          logger.warn("Skipping drawing segment due to non-finite point", path[i]);
           context.stroke(); 
           context.beginPath();
           context.moveTo(pointX, pointY);
@@ -363,14 +364,14 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     if (!isTacticsBoardView) {
     opponents.forEach(opponent => {
       if (typeof opponent.relX !== 'number' || typeof opponent.relY !== 'number') {
-        console.warn("Skipping opponent due to invalid relX/relY", opponent);
+        logger.warn("Skipping opponent due to invalid relX/relY", opponent);
         return;
       }
       // Calculate absolute positions using CSS dimensions (W/H)
       const absX = opponent.relX * W;
       const absY = opponent.relY * H;
       if (!Number.isFinite(absX) || !Number.isFinite(absY)) {
-        console.warn("Skipping opponent due to non-finite calculated position", { opponent, absX, absY });
+        logger.warn("Skipping opponent due to non-finite calculated position", { opponent, absX, absY });
         return;
       }
 
@@ -425,7 +426,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
         const absX = disc.relX * W;
         const absY = disc.relY * H;
         if (!Number.isFinite(absX) || !Number.isFinite(absY)) {
-          console.warn("Skipping tactical disc due to non-finite calculated position", { disc, absX, absY });
+          logger.warn("Skipping tactical disc due to non-finite calculated position", { disc, absX, absY });
           return;
         }
 
@@ -498,7 +499,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
       const absX = player.relX * W;
       const absY = player.relY * H;
       if (!Number.isFinite(absX) || !Number.isFinite(absY)) {
-        console.warn("Skipping player due to non-finite calculated position", { player, absX, absY });
+        logger.warn("Skipping player due to non-finite calculated position", { player, absX, absY });
         return;
       }
 
@@ -580,7 +581,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     const parent = canvas?.parentElement; // Observe the parent which dictates size
     if (!parent || typeof ResizeObserver === 'undefined') {
         // Fallback or handle browsers without ResizeObserver
-        console.warn('ResizeObserver not supported or parent not found');
+        logger.warn('ResizeObserver not supported or parent not found');
         // Consider adding back the window resize listener as a fallback?
         draw(); // Initial draw attempt
         return; 
@@ -639,7 +640,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
 
     // Check for invalid dimensions before calculating relative position
     if (rect.width <= 0 || rect.height <= 0) {
-        console.warn("Canvas has invalid dimensions, cannot calculate relative position.");
+        logger.warn("Canvas has invalid dimensions, cannot calculate relative position.");
         return null;
     }
 
@@ -755,7 +756,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     } else {
     // *** Check if placing a tapped player ***
     if (draggingPlayerFromBarInfo) {
-      console.log("Field MouseDown: Placing player from bar tap:", draggingPlayerFromBarInfo.id);
+      logger.log("Field MouseDown: Placing player from bar tap:", draggingPlayerFromBarInfo.id);
       onPlayerDrop(draggingPlayerFromBarInfo.id, relPos.relX, relPos.relY);
       // IMPORTANT: Clear the selection state after placing
       // This needs to happen in the parent (page.tsx), 
@@ -889,7 +890,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
 
     // *** Check if placing a tapped player ***
     if (draggingPlayerFromBarInfo) {
-        console.log("Field TouchStart: Placing player from bar tap:", draggingPlayerFromBarInfo.id);
+        logger.log("Field TouchStart: Placing player from bar tap:", draggingPlayerFromBarInfo.id);
         // Don't preventDefault here for placing, allow potential scroll if placement fails
         onPlayerDropViaTouch(relPos.relX, relPos.relY);
         setActiveTouchId(null); 
@@ -1070,7 +1071,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
         const parsedData = JSON.parse(data);
         droppedPlayerId = parsedData.id;
         if (!droppedPlayerId) throw new Error("ID missing");
-    } catch (error) { console.error("Drop data error:", error); return; }
+    } catch (error) { logger.error("Drop data error:", error); return; }
 
     const canvas = canvasRef.current;
     if (!canvas) return;

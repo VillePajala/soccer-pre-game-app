@@ -39,6 +39,7 @@ import { FaFutbol } from 'react-icons/fa';
 
 // Import translation hook
 import { useTranslation } from 'react-i18next';
+import logger from '@/utils/logger';
 
 // Define props for ControlBar
 interface ControlBarProps {
@@ -101,7 +102,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   onAddOpponentDisc,
 }) => {
   const { t, i18n } = useTranslation(); // Standard hook
-  console.log('[ControlBar Render] Received highlightRosterButton prop:', highlightRosterButton); // <<< Log prop value
+  logger.log('[ControlBar Render] Received highlightRosterButton prop:', highlightRosterButton); // <<< Log prop value
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
   const [menuView, setMenuView] = useState<'main' | 'tulospalvelu'>('main'); // NEW state for menu view
   const settingsMenuRef = useRef<HTMLDivElement>(null);
@@ -120,7 +121,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   const handleLanguageToggle = () => {
     const nextLang = i18n.language === 'en' ? 'fi' : 'en';
     i18n.changeLanguage(nextLang);
-    console.log(`Changed language to ${nextLang}`);
+    logger.log(`Changed language to ${nextLang}`);
     setIsSettingsMenuOpen(false); // Close menu after action
     setMenuView('main'); 
   };

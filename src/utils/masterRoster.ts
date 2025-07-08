@@ -1,5 +1,6 @@
 import { MASTER_ROSTER_KEY } from '@/config/storageKeys';
 import type { Player } from '@/types';
+import logger from '@/utils/logger';
 
 /**
  * Retrieves the master roster of players from localStorage.
@@ -13,7 +14,7 @@ export const getMasterRoster = async (): Promise<Player[]> => {
     }
     return Promise.resolve(JSON.parse(rosterJson) as Player[]);
   } catch (error) {
-    console.error('[getMasterRoster] Error getting master roster from localStorage:', error);
+    logger.error('[getMasterRoster] Error getting master roster from localStorage:', error);
     return Promise.resolve([]); // Return empty array on error
   }
 };
@@ -28,7 +29,7 @@ export const saveMasterRoster = async (players: Player[]): Promise<boolean> => {
     localStorage.setItem(MASTER_ROSTER_KEY, JSON.stringify(players));
     return Promise.resolve(true);
   } catch (error) {
-    console.error('[saveMasterRoster] Error saving master roster to localStorage:', error);
+    logger.error('[saveMasterRoster] Error saving master roster to localStorage:', error);
     // Handle potential errors, e.g., localStorage quota exceeded
     return Promise.resolve(false);
   }
@@ -47,7 +48,7 @@ export const addPlayerToRoster = async (playerData: {
 }): Promise<Player | null> => {
   const trimmedName = playerData.name?.trim();
   if (!trimmedName) {
-    console.error('[addPlayerToRoster] Validation Failed: Player name cannot be empty.');
+    logger.error('[addPlayerToRoster] Validation Failed: Player name cannot be empty.');
     return Promise.resolve(null);
   }
   
@@ -73,7 +74,7 @@ export const addPlayerToRoster = async (playerData: {
     }
     return Promise.resolve(newPlayer);
   } catch (error) {
-    console.error('[addPlayerToRoster] Unexpected error adding player:', error);
+    logger.error('[addPlayerToRoster] Unexpected error adding player:', error);
     return Promise.resolve(null);
   }
 };
@@ -89,7 +90,7 @@ export const updatePlayerInRoster = async (
   updateData: Partial<Omit<Player, 'id'>>
 ): Promise<Player | null> => {
   if (!playerId) {
-    console.error('[updatePlayerInRoster] Validation Failed: Player ID cannot be empty.');
+    logger.error('[updatePlayerInRoster] Validation Failed: Player ID cannot be empty.');
     return Promise.resolve(null);
   }
 
@@ -98,7 +99,7 @@ export const updatePlayerInRoster = async (
     const playerIndex = currentRoster.findIndex(p => p.id === playerId);
     
     if (playerIndex === -1) {
-      console.error(`[updatePlayerInRoster] Player with ID ${playerId} not found.`);
+      logger.error(`[updatePlayerInRoster] Player with ID ${playerId} not found.`);
       return Promise.resolve(null);
     }
     
@@ -110,7 +111,7 @@ export const updatePlayerInRoster = async (
     
     // Ensure name is not empty if it's being updated
     if (updateData.name !== undefined && !updatedPlayer.name?.trim()) {
-      console.error('[updatePlayerInRoster] Validation Failed: Player name cannot be empty.');
+      logger.error('[updatePlayerInRoster] Validation Failed: Player name cannot be empty.');
       return Promise.resolve(null);
     }
     // Ensure name is trimmed if updated
@@ -130,7 +131,7 @@ export const updatePlayerInRoster = async (
 
     return Promise.resolve(updatedPlayer);
   } catch (error) {
-    console.error('[updatePlayerInRoster] Unexpected error updating player:', error);
+    logger.error('[updatePlayerInRoster] Unexpected error updating player:', error);
     return Promise.resolve(null);
   }
 };
@@ -142,7 +143,7 @@ export const updatePlayerInRoster = async (
  */
 export const removePlayerFromRoster = async (playerId: string): Promise<boolean> => {
   if (!playerId) {
-    console.error('[removePlayerFromRoster] Validation Failed: Player ID cannot be empty.');
+    logger.error('[removePlayerFromRoster] Validation Failed: Player ID cannot be empty.');
     return Promise.resolve(false);
   }
 
@@ -151,7 +152,7 @@ export const removePlayerFromRoster = async (playerId: string): Promise<boolean>
     const updatedRoster = currentRoster.filter(p => p.id !== playerId);
     
     if (updatedRoster.length === currentRoster.length) {
-      console.error(`[removePlayerFromRoster] Player with ID ${playerId} not found.`);
+      logger.error(`[removePlayerFromRoster] Player with ID ${playerId} not found.`);
       return Promise.resolve(false);
     }
     
@@ -159,7 +160,7 @@ export const removePlayerFromRoster = async (playerId: string): Promise<boolean>
     return Promise.resolve(success);
 
   } catch (error) {
-    console.error('[removePlayerFromRoster] Unexpected error removing player:', error);
+    logger.error('[removePlayerFromRoster] Unexpected error removing player:', error);
     return Promise.resolve(false);
   }
 };
@@ -175,7 +176,7 @@ export const setPlayerGoalieStatus = async (
   isGoalie: boolean
 ): Promise<Player | null> => {
   if (!playerId) {
-    console.error('[setPlayerGoalieStatus] Validation Failed: Player ID cannot be empty.');
+    logger.error('[setPlayerGoalieStatus] Validation Failed: Player ID cannot be empty.');
     return Promise.resolve(null);
   }
 
@@ -196,7 +197,7 @@ export const setPlayerGoalieStatus = async (
     });
 
     if (!targetPlayer) {
-      console.error(`[setPlayerGoalieStatus] Player with ID ${playerId} not found.`);
+      logger.error(`[setPlayerGoalieStatus] Player with ID ${playerId} not found.`);
       return Promise.resolve(null);
     }
     
@@ -227,7 +228,7 @@ export const setPlayerGoalieStatus = async (
     return Promise.resolve(targetPlayer || null); // Should always be targetPlayer if found earlier
 
   } catch (error) {
-    console.error('[setPlayerGoalieStatus] Unexpected error:', error);
+    logger.error('[setPlayerGoalieStatus] Unexpected error:', error);
     return Promise.resolve(null);
   }
 };

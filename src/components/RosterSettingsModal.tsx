@@ -10,6 +10,7 @@ import {
     HiOutlineChartBar
 } from 'react-icons/hi2';
 import { useTranslation } from 'react-i18next';
+import logger from '@/utils/logger';
 
 interface RosterSettingsModalProps {
   isOpen: boolean;
@@ -98,7 +99,7 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
     // Find the player data directly from the current prop state INSIDE the handler
     const playerToEdit = availablePlayers.find(p => p.id === playerId);
     if (!playerToEdit) {
-      console.error("Player not found in availablePlayers for editing:", playerId);
+      logger.error("Player not found in availablePlayers for editing:", playerId);
       return; // Player not found, shouldn't happen
     }
 

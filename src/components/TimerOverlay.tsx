@@ -5,6 +5,7 @@ import { FaPlay, FaPause, FaUndo } from 'react-icons/fa'; // Import icons
 import { useTranslation } from 'react-i18next'; // Import translation hook
 import { IntervalLog } from '@/types'; // Import the IntervalLog interface
 import { formatTime } from '@/utils/time';
+import logger from '@/utils/logger';
 
 
 interface TimerOverlayProps {
@@ -45,8 +46,8 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
   isTimerRunning,
   onStartPauseTimer,
   onResetTimer,
-  onToggleGoalLogModal = () => { console.warn('onToggleGoalLogModal handler not provided'); },
-  onRecordOpponentGoal = () => { console.warn('onRecordOpponentGoal handler not provided'); },
+  onToggleGoalLogModal = () => { logger.warn('onToggleGoalLogModal handler not provided'); },
+  onRecordOpponentGoal = () => { logger.warn('onRecordOpponentGoal handler not provided'); },
   teamName = "Team",
   opponentName = "Opponent",
   homeScore = 0,
@@ -58,7 +59,7 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
   currentPeriod = 1,
   gameStatus = 'notStarted',
   lastSubTime = null,
-  onOpponentNameChange = () => { console.warn('onOpponentNameChange handler not provided'); },
+  onOpponentNameChange = () => { logger.warn('onOpponentNameChange handler not provided'); },
   onClose,
   isLoaded,
 }) => {

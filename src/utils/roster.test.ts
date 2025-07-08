@@ -1,4 +1,5 @@
 import { Player } from '@/types';
+import logger from '@/utils/logger';
 
 // Constants used in the app
 const MASTER_ROSTER_KEY = 'soccerMasterRoster';
@@ -36,7 +37,7 @@ function getRoster(): Player[] {
   try {
     return JSON.parse(roster);
   } catch (error) {
-    console.error("Error parsing roster:", error);
+    logger.error("Error parsing roster:", error);
     return [];
   }
 }

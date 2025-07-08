@@ -4,8 +4,9 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SavedGamesCollection } from '@/types'; // Keep this if SavedGamesCollection is from here
 import { Season, Tournament } from '@/types'; // Corrected import path
+import logger from '@/utils/logger';
 import { 
-  HiOutlineDocumentArrowDown, 
+  HiOutlineDocumentArrowDown,
   HiOutlineEllipsisVertical,
   HiOutlineTrash,
   HiOutlineDocumentText,
@@ -84,14 +85,14 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
           const loadedSeasonsData = await utilGetSeasons();
           setSeasons(Array.isArray(loadedSeasonsData) ? loadedSeasonsData : []);
         } catch (error) {
-        console.error("Error loading seasons via utility:", error);
+        logger.error("Error loading seasons via utility:", error);
         setSeasons([]); 
       }
       try {
           const loadedTournamentsData = await utilGetTournaments();
           setTournaments(Array.isArray(loadedTournamentsData) ? loadedTournamentsData : []);
         } catch (error) {
-        console.error("Error loading tournaments via utility:", error);
+        logger.error("Error loading tournaments via utility:", error);
         setTournaments([]);
       }
       };
@@ -163,7 +164,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
           return timestampB - timestampA;
         }
       } catch (error) {
-        console.warn("Could not parse timestamps from game IDs for secondary sort:", a, b, error);
+        logger.warn("Could not parse timestamps from game IDs for secondary sort:", a, b, error);
       }
       
       // Fallback if dates are equal and timestamps can't be parsed

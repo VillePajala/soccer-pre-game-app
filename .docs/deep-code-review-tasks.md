@@ -37,14 +37,34 @@ Manual verification after implementing the above:
 - [x] `useGameTimer` recreates its interval every second because `timeElapsedInSeconds` is in the dependency list. Refactor to keep a stable interval while running, using a ref for the latest state.
 - [x] Consider moving the `formatTime` helper from `TimerOverlay.tsx` to a shared utility module.
 
+Manual verification after implementing the above:
+  1. Start a new game and ensure the timer counts smoothly without resetting every second.
+  2. Pause and resume play and verify the timer resumes from the correct elapsed time.
+  3. Let the timer reach the end of a period and confirm it stops and advances the game state correctly.
+  4. Reload the page while a period is running and confirm the timer state restores from localStorage.
+
 ## 5. User Feedback & Logging
-- [ ] Provide visual confirmation when the quick‑save operation succeeds (the TODO near line 1782 of `HomePage.tsx`). A toast notification is sufficient.
-- [ ] Replace verbose `console.log` statements with a lightweight logging utility that can be disabled in production builds.
+- [x] Provide visual confirmation when the quick‑save operation succeeds (the TODO near line 1782 of `HomePage.tsx`). A toast notification is sufficient.
+- [x] Replace verbose `console.log` statements with a lightweight logging utility that can be disabled in production builds.
+
+Manual verification after implementing the above:
+  1. Perform a quick save and verify a green toast briefly appears confirming success.
+  2. Disable localStorage to force a quick save error and confirm an alert is shown and the error is logged.
+  3. Open the browser console in development and ensure log messages appear via the logger utility.
+  4. Build the project for production and confirm informational logs no longer appear in the console.
 
 ## 6. Translation Maintenance
 - [ ] The custom augmentations in `src/i18n.ts` complicate merging JSON locale files. Investigate generating type definitions for translation keys and consolidating all translations in JSON to avoid runtime mutations.
 
+Manual verification after implementing the above:
+  1. Run the type generation script and verify `tsc` passes with the generated definitions.
+  2. Switch languages in the app and confirm all strings render correctly without runtime warnings.
+
 ## 7. Additional Testing
 - [ ] Extend unit tests for `useGameSessionReducer` to cover score adjustment and timer reset edge cases.
 - [ ] Add smoke tests for the modal context to ensure modals do not interfere with each other when opened sequentially.
+
+Manual verification after implementing the above:
+  1. Run all Jest suites and ensure new reducer tests pass.
+  2. Manually open and close each modal in succession to confirm they do not overlap or freeze the UI.
 
