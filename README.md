@@ -77,6 +77,14 @@ The app is designed to be an all-in-one digital assistant for game day, from pre
 *   **Data Storage:** All your data is stored in your browser's `localStorage`. This is fast and enables offline use, but it means clearing your browser data will erase everything. **Use the "Full Backup" feature regularly!**
 *   **Offline Use:** To get the best experience, install the app on your device when prompted by your browser ("Add to Home Screen" on mobile, or an install icon in the address bar on desktop).
 
+### Manual Testing Checklist
+
+1. Start the development server with `npm run dev` and perform a quick save from the home page. A green toast should appear confirming the save.
+2. Disable localStorage in your browser tools and attempt to save a game; an error should be logged but the app must not crash.
+3. Trigger the language switcher and verify all labels update without page reloads.
+4. Start the game timer and ensure it continues counting even when switching views or modals.
+5. Use the backup export feature and verify a file downloads with your saved games.
+
 ---
 
 *This project is under active development. Feel free to contribute or report issues!**

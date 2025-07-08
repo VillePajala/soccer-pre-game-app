@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import logger from '@/utils/logger';
 
 // REMOVED GameType definition as it's no longer used here
 // export type GameType = 'season' | 'tournament'; 
@@ -59,7 +60,7 @@ const SaveGameModal: React.FC<SaveGameModalProps> = ({
       onSave(trimmedName); 
       onClose(); 
     } else {
-      console.warn("Game name cannot be empty.");
+      logger.warn("Game name cannot be empty.");
       inputRef.current?.focus(); 
     }
   };

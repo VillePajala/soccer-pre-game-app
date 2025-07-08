@@ -1,4 +1,5 @@
 import { AppState } from '@/types';
+import logger from '@/utils/logger';
 
 // Define placeholder functions for the logic being tested.
 // Use unknown for state parameter and perform type checking inside if needed
@@ -38,7 +39,7 @@ const migrateGameState = (state: unknown): GameState => {
   if (typeof state !== 'object' || state === null) {
       // Handle invalid input, maybe return a default state or throw error
       // For placeholder, let's return a default-like structure
-      console.error("Invalid state passed to migrateGameState");
+      logger.error("Invalid state passed to migrateGameState");
       state = {}; // Reset to empty object to allow defaults below
   }
 

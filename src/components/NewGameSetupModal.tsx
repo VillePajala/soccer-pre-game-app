@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Player, Season, Tournament } from '@/types';
 import { HiPlusCircle } from 'react-icons/hi';
+import logger from '@/utils/logger';
 import { getSeasons as utilGetSeasons } from '@/utils/seasons';
 import { getTournaments as utilGetTournaments } from '@/utils/tournaments';
 import { getMasterRoster } from '@/utils/masterRosterManager';
@@ -131,7 +132,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
           // MOVED Focus to run earlier, but can be adjusted if data loading causes issues with it.
           // setTimeout(() => nameInputRef.current?.focus(), 100); 
         } catch (err) {
-          console.error("[NewGameSetupModal] Error fetching initial data:", err);
+          logger.error("[NewGameSetupModal] Error fetching initial data:", err);
           setError(t('newGameSetupModal.errors.dataLoadFailed', 'Failed to load initial setup data. Please try again.'));
           setHomeTeamName(t('newGameSetupModal.defaultTeamName', 'My Team'));
           setSeasons([]);
@@ -216,17 +217,17 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
         setSelectedTournamentId(null);
         setNewSeasonName(''); 
         setShowNewSeasonInput(false); 
-        console.log("Add season mutation initiated for:", newSeason.name);
+        logger.log("Add season mutation initiated for:", newSeason.name);
         // No need to manually update 'seasons' state here if page.tsx invalidates
       } else {
         // This block might be reached if mutateAsync resolves but utilAddSeason returned null (e.g., duplicate)
         // The mutation's onSuccess/onError in page.tsx would have more context.
-        console.warn("addSeasonMutation.mutateAsync completed, but newSeason is null. Check mutation's onSuccess/onError for details.");
+        logger.warn("addSeasonMutation.mutateAsync completed, but newSeason is null. Check mutation's onSuccess/onError for details.");
         // alert for duplicate is better handled by the mutation's error/success reporting if it returns a specific error or null for it
       }
     } catch (error) {
       // This catch is for errors from mutateAsync itself, if not handled by mutation's onError
-      console.error("Error calling addSeasonMutation.mutateAsync:", error);
+      logger.error("Error calling addSeasonMutation.mutateAsync:", error);
       // alert(t('newGameSetupModal.errorAddingSeasonGeneric', 'Error initiating add season. See console.'));
       // The actual user-facing error for mutation failure should come from the mutation's onError handler in page.tsx
       newSeasonInputRef.current?.focus();
@@ -252,13 +253,13 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
         setSelectedSeasonId(null); 
         setNewTournamentName(''); 
         setShowNewTournamentInput(false); 
-        console.log("Add tournament mutation initiated for:", newTournament.name);
+        logger.log("Add tournament mutation initiated for:", newTournament.name);
         // No need to manually update 'tournaments' state here
       } else {
-        console.warn("addTournamentMutation.mutateAsync completed, but newTournament is null.");
+        logger.warn("addTournamentMutation.mutateAsync completed, but newTournament is null.");
       }
     } catch (error) {
-      console.error("Error calling addTournamentMutation.mutateAsync:", error);
+      logger.error("Error calling addTournamentMutation.mutateAsync:", error);
       // alert(t('newGameSetupModal.errorAddingTournamentGeneric', 'Error initiating add tournament. See console.'));
       newTournamentInputRef.current?.focus();
     }
@@ -310,7 +311,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
     try {
       await utilSaveLastHomeTeamName(trimmedHomeTeamName);
     } catch (error) {
-      console.error("Failed to save last home team name:", error);
+      logger.error("Failed to save last home team name:", error);
       // Continue without blocking, as this is not critical for starting the game
     }
     // --- End Save ---

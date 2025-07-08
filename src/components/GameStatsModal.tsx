@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import logger from '@/utils/logger';
 // Import types from the types directory
 import { Player, PlayerStatRow, Season, Tournament } from '@/types';
 import { GameEvent, SavedGamesCollection } from '@/types';
@@ -111,7 +112,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   gameEvents,
   gameNotes = '',
   onGameNotesChange = () => {},
-  onUpdateGameEvent = () => { /* console.warn('onUpdateGameEvent handler not provided'); */ },
+  onUpdateGameEvent = () => { /* logger.warn('onUpdateGameEvent handler not provided'); */ },
   selectedPlayerIds,
   savedGames, // Not actively used after removing aggregation
   currentGameId,
@@ -126,20 +127,20 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   const { t, i18n } = useTranslation();
 
   // <<< ADD DIAGNOSTIC LOG >>>
-  // console.log('[GameStatsModal Render] gameEvents prop:', JSON.stringify(gameEvents));
-  // console.log('[GameStatsModal Render] availablePlayers prop ref check:', availablePlayers); // Log reference too
+  // logger.log('[GameStatsModal Render] gameEvents prop:', JSON.stringify(gameEvents));
+  // logger.log('[GameStatsModal Render] availablePlayers prop ref check:', availablePlayers); // Log reference too
 
   // REVISED formatDisplayDate definition without date-fns
   const formatDisplayDate = useCallback((isoDate: string): string => {
     if (!isoDate) return t('common.notSet', 'Ei asetettu');
     try {
       if (isoDate.length !== 10) { // Basic check for YYYY-MM-DD format
-        // console.warn(`Invalid date format received: ${isoDate}`);
+        // logger.warn(`Invalid date format received: ${isoDate}`);
         return isoDate;
       }
       const date = new Date(isoDate); 
       if (isNaN(date.getTime())) {
-        // console.warn(`Invalid date value received: ${isoDate}`);
+        // logger.warn(`Invalid date value received: ${isoDate}`);
           return isoDate; 
       }
 
@@ -160,7 +161,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
         });
       }
     } catch {
-      // console.error("Error formatting date:", e);
+      // logger.error("Error formatting date:", e);
       return 'Date Error';
     }
   }, [i18n.language, t]); // Dependencies: language and t function
@@ -200,11 +201,11 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
 
   // ** Calculate initial winner ID using useMemo **
   const initialFairPlayWinnerId = useMemo(() => {
-      // console.log("[GameStatsModal:useMemo] Calculating initialFairPlayWinnerId. availablePlayers prop:", JSON.stringify(availablePlayers.map(p => ({id: p.id, name: p.name, fp: p.receivedFairPlayCard}))));
+      // logger.log("[GameStatsModal:useMemo] Calculating initialFairPlayWinnerId. availablePlayers prop:", JSON.stringify(availablePlayers.map(p => ({id: p.id, name: p.name, fp: p.receivedFairPlayCard}))));
       const winner = availablePlayers.find(p => p.receivedFairPlayCard);
-      // console.log("[GameStatsModal:useMemo] Found winner object:", winner);
+      // logger.log("[GameStatsModal:useMemo] Found winner object:", winner);
       const winnerId = winner?.id || null;
-      // console.log("[GameStatsModal:useMemo] Determined initialFairPlayWinnerId:", winnerId);
+      // logger.log("[GameStatsModal:useMemo] Determined initialFairPlayWinnerId:", winnerId);
       return winnerId;
   }, [availablePlayers]);
 
@@ -217,13 +218,13 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
           const loadedSeasons = await utilGetSeasons(); 
         setSeasons(loadedSeasons);
         } catch (error) { 
-          console.error("Failed to load seasons:", error); setSeasons([]); 
+          logger.error("Failed to load seasons:", error); setSeasons([]); 
         }
       try {
           const loadedTournaments = await utilGetTournaments(); // Await the async call
         setTournaments(loadedTournaments);
         } catch (error) { 
-          console.error("Failed to load tournaments:", error); setTournaments([]); 
+          logger.error("Failed to load tournaments:", error); setTournaments([]); 
     }
       }
     };
@@ -269,7 +270,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
 
   // ** ADD Separate Effect to Sync local state with calculated initial ID **
   useEffect(() => {
-      // console.log("[GameStatsModal:useEffectSync] Syncing localFairPlayPlayerId. Current local:", localFairPlayPlayerId, "New initial:", initialFairPlayWinnerId);
+      // logger.log("[GameStatsModal:useEffectSync] Syncing localFairPlayPlayerId. Current local:", localFairPlayPlayerId, "New initial:", initialFairPlayWinnerId);
       setLocalFairPlayPlayerId(initialFairPlayWinnerId);
   }, [initialFairPlayWinnerId, localFairPlayPlayerId]);
 
@@ -603,7 +604,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
 
   // Modify filteredAndSortedPlayerStats useMemo to also return the list of game IDs processed
   const { stats: playerStats, gameIds: processedGameIds } = useMemo(() => {
-    // console.log("Recalculating player stats...", { activeTab, filterText, selectedSeasonIdFilter, selectedTournamentIdFilter, gameEvents: activeTab === 'currentGame' ? gameEvents : null, savedGames: activeTab !== 'currentGame' ? savedGames : null });
+    // logger.log("Recalculating player stats...", { activeTab, filterText, selectedSeasonIdFilter, selectedTournamentIdFilter, gameEvents: activeTab === 'currentGame' ? gameEvents : null, savedGames: activeTab !== 'currentGame' ? savedGames : null });
 
     // Initialize stats map - MODIFIED: Initialize differently based on tab
     const statsMap: { [key: string]: PlayerStatRow } = {};
@@ -855,9 +856,9 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
       if (onDeleteGameEvent && typeof onDeleteGameEvent === 'function') { 
         onDeleteGameEvent!(goalId); // ADD non-null assertion (!)
         setLocalGameEvents(prevEvents => prevEvents.filter(event => event.id !== goalId));
-        // console.log(`Locally deleted event ${goalId} and called parent handler.`);
+        // logger.log(`Locally deleted event ${goalId} and called parent handler.`);
         } else {
-        // console.warn("Delete handler (onDeleteGameEvent) not available or not a function.");
+        // logger.warn("Delete handler (onDeleteGameEvent) not available or not a function.");
       }
     }
   };

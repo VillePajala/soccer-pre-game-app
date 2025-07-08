@@ -7,6 +7,7 @@ import {
     setPlayerGoalieStatus as utilSetPlayerGoalieStatus,
     setPlayerFairPlayCardStatus as utilSetPlayerFairPlayCardStatus
 } from '@/utils/masterRoster';
+import logger from '@/utils/logger';
 
 /**
  * Retrieves the master roster of players.
@@ -14,13 +15,13 @@ import {
  * @returns {Promise<Player[]>} The current roster.
  */
 export const getMasterRoster = async (): Promise<Player[]> => {
-    // console.log('[masterRosterManager] getMasterRoster called');
+    // logger.log('[masterRosterManager] getMasterRoster called');
     try {
         const roster = await utilGetMasterRoster();
-        // console.log('[masterRosterManager] Roster fetched by util:', roster);
+        // logger.log('[masterRosterManager] Roster fetched by util:', roster);
         return roster;
     } catch (error) {
-        console.error("[masterRosterManager] Error in getMasterRoster:", error);
+        logger.error("[masterRosterManager] Error in getMasterRoster:", error);
         return []; // Return empty array on error to maintain type consistency
     }
 };
@@ -34,13 +35,13 @@ export const getMasterRoster = async (): Promise<Player[]> => {
 export const addPlayer = async (
     playerData: Omit<Player, 'id' | 'isGoalie' | 'receivedFairPlayCard'>
 ): Promise<Player | null> => {
-    // console.log('[masterRosterManager] addPlayer called with:', playerData);
+    // logger.log('[masterRosterManager] addPlayer called with:', playerData);
     try {
         const newPlayer = await utilAddPlayerToRoster(playerData);
-        // console.log('[masterRosterManager] Player added by util:', newPlayer);
+        // logger.log('[masterRosterManager] Player added by util:', newPlayer);
         return newPlayer;
     } catch (error) {
-        console.error("[masterRosterManager] Error in addPlayer:", error);
+        logger.error("[masterRosterManager] Error in addPlayer:", error);
         return null;
     }
 };
@@ -56,13 +57,13 @@ export const updatePlayer = async (
     playerId: string,
     updates: Partial<Omit<Player, 'id'>>
 ): Promise<Player | null> => {
-    // console.log('[masterRosterManager] updatePlayer called for ID:', playerId, 'with updates:', updates);
+    // logger.log('[masterRosterManager] updatePlayer called for ID:', playerId, 'with updates:', updates);
     try {
         const updatedPlayer = await utilUpdatePlayerInRoster(playerId, updates);
-        // console.log('[masterRosterManager] Player updated by util:', updatedPlayer);
+        // logger.log('[masterRosterManager] Player updated by util:', updatedPlayer);
         return updatedPlayer;
     } catch (error) {
-        console.error(`[masterRosterManager] Error in updatePlayer for ID ${playerId}:`, error);
+        logger.error(`[masterRosterManager] Error in updatePlayer for ID ${playerId}:`, error);
         return null;
     }
 };
@@ -74,13 +75,13 @@ export const updatePlayer = async (
  * @returns {Promise<boolean>} True if the player was successfully removed, false otherwise.
  */
 export const removePlayer = async (playerId: string): Promise<boolean> => {
-    // console.log('[masterRosterManager] removePlayer called for ID:', playerId);
+    // logger.log('[masterRosterManager] removePlayer called for ID:', playerId);
     try {
         const success = await utilRemovePlayerFromRoster(playerId);
-        // console.log('[masterRosterManager] Player removal by util status:', success);
+        // logger.log('[masterRosterManager] Player removal by util status:', success);
         return success;
     } catch (error) {
-        console.error(`[masterRosterManager] Error in removePlayer for ID ${playerId}:`, error);
+        logger.error(`[masterRosterManager] Error in removePlayer for ID ${playerId}:`, error);
         return false;
     }
 };
@@ -96,13 +97,13 @@ export const setGoalieStatus = async (
     playerId: string,
     isGoalie: boolean
 ): Promise<Player | null> => {
-    // console.log('[masterRosterManager] setGoalieStatus called for ID:', playerId, 'to:', isGoalie);
+    // logger.log('[masterRosterManager] setGoalieStatus called for ID:', playerId, 'to:', isGoalie);
     try {
         const updatedPlayer = await utilSetPlayerGoalieStatus(playerId, isGoalie);
-        // console.log('[masterRosterManager] Goalie status updated by util:', updatedPlayer);
+        // logger.log('[masterRosterManager] Goalie status updated by util:', updatedPlayer);
         return updatedPlayer;
     } catch (error) {
-        console.error(`[masterRosterManager] Error in setGoalieStatus for ID ${playerId}:`, error);
+        logger.error(`[masterRosterManager] Error in setGoalieStatus for ID ${playerId}:`, error);
         return null;
     }
 };
@@ -118,13 +119,13 @@ export const setFairPlayCardStatus = async (
     playerId: string,
     receivedFairPlayCard: boolean
 ): Promise<Player | null> => {
-    // console.log('[masterRosterManager] setFairPlayCardStatus called for ID:', playerId, 'to:', receivedFairPlayCard);
+    // logger.log('[masterRosterManager] setFairPlayCardStatus called for ID:', playerId, 'to:', receivedFairPlayCard);
     try {
         const updatedPlayer = await utilSetPlayerFairPlayCardStatus(playerId, receivedFairPlayCard);
-        // console.log('[masterRosterManager] Fair play status updated by util:', updatedPlayer);
+        // logger.log('[masterRosterManager] Fair play status updated by util:', updatedPlayer);
         return updatedPlayer;
     } catch (error) {
-        console.error(`[masterRosterManager] Error in setFairPlayCardStatus for ID ${playerId}:`, error);
+        logger.error(`[masterRosterManager] Error in setFairPlayCardStatus for ID ${playerId}:`, error);
         return null;
     }
 }; 

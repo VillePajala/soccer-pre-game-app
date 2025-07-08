@@ -1,4 +1,5 @@
-import { GameEvent } from '@/types'; // Assuming AppState might be useful context
+import { GameEvent } from '@/types';
+import logger from '@/utils/logger';
 
 // --- State Definition ---
 export interface GameSessionState {
@@ -116,7 +117,7 @@ export type GameSessionAction =
 
 // --- Reducer Function ---
 export const gameSessionReducer = (state: GameSessionState, action: GameSessionAction): GameSessionState => {
-  console.log('[gameSessionReducer] action type:', action.type);
+  logger.log('[gameSessionReducer] action type:', action.type);
   switch (action.type) {
     case 'LOAD_STATE_FROM_HISTORY':
     case 'LOAD_GAME_SESSION_STATE':
@@ -334,7 +335,7 @@ export const gameSessionReducer = (state: GameSessionState, action: GameSessionA
     case 'RESET_GAME_SESSION_STATE':
       return action.payload;
     case 'LOAD_PERSISTED_GAME_DATA': {
-      console.log('[gameSessionReducer] LOAD_PERSISTED_GAME_DATA - Received action.payload:', JSON.parse(JSON.stringify(action.payload)));
+      logger.log('[gameSessionReducer] LOAD_PERSISTED_GAME_DATA - Received action.payload:', JSON.parse(JSON.stringify(action.payload)));
       const loadedData = action.payload as Partial<GameSessionState>;
 
       const teamName = loadedData.teamName ?? initialGameSessionStatePlaceholder.teamName;
@@ -396,7 +397,7 @@ export const gameSessionReducer = (state: GameSessionState, action: GameSessionA
         subAlertLevel: 'none',
         lastSubConfirmationTimeSeconds: timeElapsedAtLoad,
       };
-      console.log('[gameSessionReducer] LOAD_PERSISTED_GAME_DATA - state to be returned:', JSON.parse(JSON.stringify(stateToBeReturned)));
+      logger.log('[gameSessionReducer] LOAD_PERSISTED_GAME_DATA - state to be returned:', JSON.parse(JSON.stringify(stateToBeReturned)));
       return stateToBeReturned;
     }
     default:

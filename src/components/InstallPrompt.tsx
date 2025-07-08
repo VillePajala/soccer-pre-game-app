@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import styles from './InstallPrompt.module.css';
+import logger from '@/utils/logger';
 
 // Define proper interfaces for better type safety
 interface BeforeInstallPromptEvent extends Event {
@@ -74,14 +75,14 @@ const InstallPrompt: React.FC = () => {
       const choiceResult = await installPrompt.userChoice;
       
       if (choiceResult.outcome === 'accepted') {
-        console.log('User accepted the install prompt');
+        logger.log('User accepted the install prompt');
       } else {
-        console.log('User dismissed the install prompt');
+        logger.log('User dismissed the install prompt');
         // Store the time when dismissed to avoid showing it again too soon
         localStorage.setItem('installPromptDismissed', Date.now().toString());
       }
     } catch (error) {
-      console.error('Error showing install prompt:', error);
+      logger.error('Error showing install prompt:', error);
     }
 
     setInstallPrompt(null);

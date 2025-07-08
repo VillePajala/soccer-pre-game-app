@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import logger from '@/utils/logger';
 import { FaEdit, FaTrashAlt } from 'react-icons/fa';
 import { HiPlusCircle } from 'react-icons/hi2';
 import { Season, Tournament, Player } from '@/types';
@@ -141,7 +142,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   timeElapsedInSeconds,
   updateGameDetailsMutation,
 }) => {
-  // console.log('[GameSettingsModal Render] Props received:', { seasonId, tournamentId, currentGameId });
+  // logger.log('[GameSettingsModal Render] Props received:', { seasonId, tournamentId, currentGameId });
   const { t } = useTranslation();
 
   // State for event editing within the modal
@@ -252,14 +253,14 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
           const loadedSeasonsData = await getSeasons();
           setSeasons(Array.isArray(loadedSeasonsData) ? loadedSeasonsData : []);
       } catch (error) {
-        console.error('Error loading seasons:', error);
+        logger.error('Error loading seasons:', error);
         setSeasons([]);
       }
       try {
           const loadedTournamentsData = await getTournaments();
           setTournaments(Array.isArray(loadedTournamentsData) ? loadedTournamentsData : []);
       } catch (error) {
-        console.error('Error loading tournaments:', error);
+        logger.error('Error loading tournaments:', error);
         setTournaments([]);
       }
       };
@@ -339,7 +340,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   // Handle saving edited goal
   const handleSaveGoal = async (goalId: string) => {
     if (!goalId || !currentGameId) {
-      console.error("[GameSettingsModal] Missing goalId or currentGameId for save.");
+      logger.error("[GameSettingsModal] Missing goalId or currentGameId for save.");
       setError(t('gameSettingsModal.errors.missingGoalId', 'Goal ID or Game ID is missing. Cannot save.'));
       return;
     }
@@ -365,7 +366,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
 
     const originalEvent = localGameEvents.find(e => e.id === goalId);
     if (!originalEvent) {
-        console.error(`[GameSettingsModal] Original event not found for ID: ${goalId}`);
+        logger.error(`[GameSettingsModal] Original event not found for ID: ${goalId}`);
       return;
     }
 
@@ -387,20 +388,20 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
       if (eventIndex !== -1) {
         const success = await updateGameEvent(currentGameId, eventIndex, updatedEvent);
         if (success) {
-          console.log(`[GameSettingsModal] Event ${goalId} updated in game ${currentGameId}.`);
+          logger.log(`[GameSettingsModal] Event ${goalId} updated in game ${currentGameId}.`);
           handleCancelEditGoal(); // Close edit mode on success
         } else {
-          console.error(`[GameSettingsModal] Failed to update event ${goalId} in game ${currentGameId} via utility.`);
+          logger.error(`[GameSettingsModal] Failed to update event ${goalId} in game ${currentGameId} via utility.`);
           setError(t('gameSettingsModal.errors.updateFailed', 'Failed to update event. Please try again.'));
           // Optionally revert UI:
           // setLocalGameEvents(gameEvents); // Revert local state if save failed
         }
       } else {
-        console.error(`[GameSettingsModal] Event ${goalId} not found in original gameEvents prop for saving.`);
+        logger.error(`[GameSettingsModal] Event ${goalId} not found in original gameEvents prop for saving.`);
         setError(t('gameSettingsModal.errors.eventNotFound', 'Original event not found for saving.'));
       }
     } catch (err) {
-      console.error(`[GameSettingsModal] Error updating event ${goalId} in game ${currentGameId}:`, err);
+      logger.error(`[GameSettingsModal] Error updating event ${goalId} in game ${currentGameId}:`, err);
       setError(t('gameSettingsModal.errors.genericSaveError', 'An unexpected error occurred while saving the event.'));
       // Optionally revert UI:
       // setLocalGameEvents(gameEvents); // Revert local state if save failed
@@ -414,7 +415,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   // Handle deleting a goal
   const handleDeleteGoal = async (goalId: string) => {
     if (!onDeleteGameEvent || !currentGameId) {
-      console.error("[GameSettingsModal] Missing onDeleteGameEvent handler or currentGameId for delete.");
+      logger.error("[GameSettingsModal] Missing onDeleteGameEvent handler or currentGameId for delete.");
       setError(t('gameSettingsModal.errors.missingDeleteHandler', 'Cannot delete event: Critical configuration missing.'));
       return;
     }
@@ -425,7 +426,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
       try {
         const eventIndex = gameEvents.findIndex(e => e.id === goalId); 
         if (eventIndex === -1) {
-          console.error(`[GameSettingsModal] Event ${goalId} not found in original gameEvents for deletion.`);
+          logger.error(`[GameSettingsModal] Event ${goalId} not found in original gameEvents for deletion.`);
           setError(t('gameSettingsModal.errors.eventNotFoundDelete', 'Event to delete not found.'));
           setIsProcessing(false); // Stop processing early
           return;
@@ -438,14 +439,14 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
         
         const success = await removeGameEvent(currentGameId, eventIndex);
         if (success) {
-          console.log(`[GameSettingsModal] Event ${goalId} removed from game ${currentGameId}.`);
+          logger.log(`[GameSettingsModal] Event ${goalId} removed from game ${currentGameId}.`);
         } else {
-          console.error(`[GameSettingsModal] Failed to remove event ${goalId} from game ${currentGameId} via utility.`);
+          logger.error(`[GameSettingsModal] Failed to remove event ${goalId} from game ${currentGameId} via utility.`);
           setError(t('gameSettingsModal.errors.deleteFailed', 'Failed to delete event. Please try again.'));
           setLocalGameEvents(originalLocalEvents); // Revert local UI on failure
         }
       } catch (err) {
-        console.error(`[GameSettingsModal] Error removing event ${goalId} from game ${currentGameId}:`, err);
+        logger.error(`[GameSettingsModal] Error removing event ${goalId} from game ${currentGameId}:`, err);
         setError(t('gameSettingsModal.errors.genericDeleteError', 'An unexpected error occurred while deleting the event.'));
         // Consider reverting localGameEvents here as well if an error occurs
       } finally {
@@ -482,7 +483,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
 
     try {
       if (!currentGameId) {
-        console.error("[GameSettingsModal] currentGameId is null, cannot save inline edit.");
+        logger.error("[GameSettingsModal] currentGameId is null, cannot save inline edit.");
         setError(t('gameSettingsModal.errors.missingGameIdInline', "Cannot save: Game ID missing."));
         return;
       }
@@ -546,12 +547,12 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
           break;
       }
       if (success) {
-        console.log(`[GameSettingsModal] Inline edit for ${fieldProcessed} saved for game ${currentGameId}.`);
+        logger.log(`[GameSettingsModal] Inline edit for ${fieldProcessed} saved for game ${currentGameId}.`);
         setInlineEditingField(null); // Exit inline edit mode on success
         setInlineEditValue('');
       }
     } catch (err) {
-      console.error(`[GameSettingsModal] Error saving inline edit for ${fieldProcessed} (Game ID: ${currentGameId}):`, err);
+      logger.error(`[GameSettingsModal] Error saving inline edit for ${fieldProcessed} (Game ID: ${currentGameId}):`, err);
       setError(t('gameSettingsModal.errors.genericInlineSaveError', "Error saving changes. Please try again."));
     } finally {
       setIsProcessing(false);
@@ -618,7 +619,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
         setShowNewSeasonInput(false);
       }
     } catch (error) {
-      console.error("Error calling addSeasonMutation.mutateAsync:", error);
+      logger.error("Error calling addSeasonMutation.mutateAsync:", error);
       newSeasonInputRef.current?.focus();
     }
   };
@@ -642,7 +643,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
         setShowNewTournamentInput(false);
       }
     } catch (error) {
-      console.error("Error calling addTournamentMutation.mutateAsync:", error);
+      logger.error("Error calling addTournamentMutation.mutateAsync:", error);
       newTournamentInputRef.current?.focus();
     }
   };

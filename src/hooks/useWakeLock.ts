@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import logger from '@/utils/logger';
 
 export const useWakeLock = () => {
   const [wakeLock, setWakeLock] = useState<WakeLockSentinel | null>(null);
@@ -9,7 +10,7 @@ export const useWakeLock = () => {
     const supported = 'wakeLock' in navigator;
     setIsSupported(supported);
     if (!supported) {
-      console.log('Screen Wake Lock API not supported.');
+      logger.log('Screen Wake Lock API not supported.');
     }
   }, []);
 
@@ -22,14 +23,14 @@ export const useWakeLock = () => {
         try {
           const lock = await navigator.wakeLock.request('screen');
           lock.addEventListener('release', () => {
-            console.log('Screen Wake Lock was released by the system.');
+            logger.log('Screen Wake Lock was released by the system.');
             setWakeLock(null);
           });
-          console.log('Screen Wake Lock is active.');
+          logger.log('Screen Wake Lock is active.');
           setWakeLock(lock);
         } catch (err: unknown) {
           if (err instanceof Error) {
-            console.error(`Wake Lock request failed: ${err.name}, ${err.message}`);
+            logger.error(`Wake Lock request failed: ${err.name}, ${err.message}`);
           }
         }
       }
@@ -38,7 +39,7 @@ export const useWakeLock = () => {
       if (wakeLock) {
         await wakeLock.release();
         setWakeLock(null);
-        console.log('Screen Wake Lock released programmatically.');
+        logger.log('Screen Wake Lock released programmatically.');
       }
     }
   }, [isSupported, wakeLock]);

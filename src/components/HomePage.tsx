@@ -62,6 +62,8 @@ import { updateGameDetails as utilUpdateGameDetails } from '@/utils/savedGames';
 import { DEFAULT_GAME_ID } from '@/config/constants';
 import { MASTER_ROSTER_KEY, TIMER_STATE_KEY, SEASONS_LIST_KEY } from "@/config/storageKeys";
 import { exportJson, exportCsv, exportAggregateJson, exportAggregateCsv } from '@/utils/exportGames';
+import { useToast } from '@/contexts/ToastProvider';
+import logger from '@/utils/logger';
 
 
 // Placeholder data - Initialize new fields
@@ -119,7 +121,7 @@ const initialState: AppState = {
 
 
 function HomePage() {
-  console.log('--- page.tsx RENDER ---');
+  logger.log('--- page.tsx RENDER ---');
   const { t } = useTranslation(); // Get translation function
   const queryClient = useQueryClient(); // Get query client instance
 
@@ -160,7 +162,7 @@ function HomePage() {
 
 
   useEffect(() => {
-    console.log('[gameSessionState CHANGED]', gameSessionState);
+    logger.log('[gameSessionState CHANGED]', gameSessionState);
   }, [gameSessionState]);
 
   // --- History Management ---
@@ -367,6 +369,7 @@ function HomePage() {
     isSaveGameModalOpen,
     setIsSaveGameModalOpen,
   } = useModalContext();
+  const { showToast } = useToast();
   // const [isPlayerStatsModalOpen, setIsPlayerStatsModalOpen] = useState(false);
   const [selectedPlayerForStats, setSelectedPlayerForStats] = useState<Player | null>(null);
 
@@ -428,7 +431,7 @@ function HomePage() {
       return gameIdToSave;
     },
     onSuccess: (savedGameId, variables) => {
-      console.log('[Mutation Success] Game saved:', savedGameId);
+      logger.log('[Mutation Success] Game saved:', savedGameId);
       queryClient.invalidateQueries({ queryKey: queryKeys.savedGames });
       queryClient.invalidateQueries({ queryKey: queryKeys.appSettingsCurrentGameId });
 
@@ -442,7 +445,7 @@ function HomePage() {
       setGameSaveError(null); 
     },
     onError: (error, variables) => {
-      console.error(`[Mutation Error] Failed to save game ${variables.gameName} (ID: ${variables.gameIdToSave}):`, error);
+      logger.error(`[Mutation Error] Failed to save game ${variables.gameName} (ID: ${variables.gameIdToSave}):`, error);
       setGameSaveError(t('saveGameModal.errors.saveFailed', 'Error saving game. Please try again.'));
     },
   });
@@ -457,19 +460,19 @@ function HomePage() {
     },
     onSuccess: (newSeason, variables) => {
       if (newSeason) {
-        console.log('[Mutation Success] Season added:', newSeason.name, newSeason.id);
+        logger.log('[Mutation Success] Season added:', newSeason.name, newSeason.id);
         queryClient.invalidateQueries({ queryKey: queryKeys.seasons });
         // Potentially set an optimistic update or directly update local 'seasons' state if needed
         // For now, relying on query invalidation to refresh the seasons list
       } else {
         // This case might indicate a duplicate name or some other non-exception failure from utilAddSeason
-        console.warn('[Mutation Non-Success] utilAddSeason returned null for season:', variables.name);
+        logger.warn('[Mutation Non-Success] utilAddSeason returned null for season:', variables.name);
         // Consider setting a specific error state for the NewGameSetupModal if it's a common issue
         // alert(t('newGameSetupModal.errors.addSeasonFailed', 'Failed to add season: {seasonName}. It might already exist.', { seasonName: variables.name }));
       }
     },
     onError: (error, variables) => {
-      console.error(`[Mutation Error] Failed to add season ${variables.name}:`, error);
+      logger.error(`[Mutation Error] Failed to add season ${variables.name}:`, error);
       // alert(t('newGameSetupModal.errors.addSeasonFailedUnexpected', 'An unexpected error occurred while adding season: {seasonName}.', { seasonName: variables.name }));
     },
   });
@@ -524,7 +527,7 @@ function HomePage() {
       });
     },
     onError: (error) => {
-      console.error("Error updating game details:", error);
+      logger.error("Error updating game details:", error);
       // Here you could show a toast notification to the user
       },
   });
@@ -540,28 +543,28 @@ function HomePage() {
     },
     onSuccess: (newTournament, variables) => {
       if (newTournament) {
-        console.log('[Mutation Success] Tournament added:', newTournament.name, newTournament.id);
+        logger.log('[Mutation Success] Tournament added:', newTournament.name, newTournament.id);
         queryClient.invalidateQueries({ queryKey: queryKeys.tournaments });
         // Similar to seasons, could optimistically update or rely on invalidation
       } else {
-        console.warn('[Mutation Non-Success] utilAddTournament returned null for tournament:', variables.name);
+        logger.warn('[Mutation Non-Success] utilAddTournament returned null for tournament:', variables.name);
         // alert(t('newGameSetupModal.errors.addTournamentFailed', 'Failed to add tournament: {tournamentName}. It might already exist.', { tournamentName: variables.name }));
       }
     },
     onError: (error, variables) => {
-      console.error(`[Mutation Error] Failed to add tournament ${variables.name}:`, error);
+      logger.error(`[Mutation Error] Failed to add tournament ${variables.name}:`, error);
       // alert(t('newGameSetupModal.errors.addTournamentFailedUnexpected', 'An unexpected error occurred while adding tournament: {tournamentName}.', { tournamentName: variables.name }));
     },
   });
   useEffect(() => {
     if (isMasterRosterQueryLoading) {
-      console.log('[TanStack Query] Master Roster is loading...');
+      logger.log('[TanStack Query] Master Roster is loading...');
     }
     if (masterRosterQueryResultData) {
       setAvailablePlayers(masterRosterQueryResultData);
     }
     if (isMasterRosterQueryError) {
-      console.error('[TanStack Query] Error loading master roster:', masterRosterQueryErrorData);
+      logger.error('[TanStack Query] Error loading master roster:', masterRosterQueryErrorData);
       setAvailablePlayers([]);
     }
   }, [masterRosterQueryResultData, isMasterRosterQueryLoading, isMasterRosterQueryError, masterRosterQueryErrorData, setAvailablePlayers]);
@@ -569,13 +572,13 @@ function HomePage() {
   // --- Effect to update seasons from useQuery ---
   useEffect(() => {
     if (areSeasonsQueryLoading) {
-      console.log('[TanStack Query] Seasons are loading...');
+      logger.log('[TanStack Query] Seasons are loading...');
     }
     if (seasonsQueryResultData) {
       setSeasons(Array.isArray(seasonsQueryResultData) ? seasonsQueryResultData : []);
     }
     if (isSeasonsQueryError) {
-      console.error('[TanStack Query] Error loading seasons:', seasonsQueryErrorData);
+      logger.error('[TanStack Query] Error loading seasons:', seasonsQueryErrorData);
       setSeasons([]);
     }
   }, [seasonsQueryResultData, areSeasonsQueryLoading, isSeasonsQueryError, seasonsQueryErrorData, setSeasons]);
@@ -583,13 +586,13 @@ function HomePage() {
   // --- Effect to update tournaments from useQuery ---
   useEffect(() => {
     if (areTournamentsQueryLoading) {
-      console.log('[TanStack Query] Tournaments are loading...');
+      logger.log('[TanStack Query] Tournaments are loading...');
     }
     if (tournamentsQueryResultData) {
       setTournaments(Array.isArray(tournamentsQueryResultData) ? tournamentsQueryResultData : []);
     }
     if (isTournamentsQueryError) {
-      console.error('[TanStack Query] Error loading tournaments:', tournamentsQueryErrorData);
+      logger.error('[TanStack Query] Error loading tournaments:', tournamentsQueryErrorData);
       setTournaments([]);
     }
   }, [tournamentsQueryResultData, areTournamentsQueryLoading, isTournamentsQueryError, tournamentsQueryErrorData, setTournaments]);
@@ -627,7 +630,7 @@ function HomePage() {
 
         // Only save to history if actual changes were made to playersOnField
         if (JSON.stringify(prevPlayersOnField) !== JSON.stringify(nextPlayersOnField)) {
-          // console.log('[EFFECT syncPoF] playersOnField updated due to availablePlayers change. Saving to history.');
+          // logger.log('[EFFECT syncPoF] playersOnField updated due to availablePlayers change. Saving to history.');
           saveStateToHistory({ playersOnField: nextPlayersOnField });
         }
         return nextPlayersOnField;
@@ -640,9 +643,9 @@ function HomePage() {
   
   useEffect(() => {
     const loadInitialAppData = async () => {
-      console.log('[EFFECT init] Coordinating initial application data from TanStack Query...');
+      logger.log('[EFFECT init] Coordinating initial application data from TanStack Query...');
       if (initialLoadComplete) {
-        console.log('[EFFECT init] Initial load already complete. Skipping.');
+        logger.log('[EFFECT init] Initial load already complete. Skipping.');
         return;
       }
       // This useEffect now primarily ensures that dependent state updates happen
@@ -653,7 +656,7 @@ function HomePage() {
       try {
         const oldRosterJson = getLocalStorageItem('availablePlayers');
         if (oldRosterJson) {
-          console.log('[EFFECT init] Migrating old roster data...');
+          logger.log('[EFFECT init] Migrating old roster data...');
           setLocalStorageItem(MASTER_ROSTER_KEY, oldRosterJson);
           removeLocalStorageItem('availablePlayers');
           // Consider invalidating and refetching masterRoster query here if migration happens
@@ -661,19 +664,19 @@ function HomePage() {
         }
         const oldSeasonsJson = getLocalStorageItem('soccerSeasonsList'); // Another old key
       if (oldSeasonsJson) {
-          console.log('[EFFECT init] Migrating old seasons data...');
+          logger.log('[EFFECT init] Migrating old seasons data...');
           setLocalStorageItem(SEASONS_LIST_KEY, oldSeasonsJson); // New key
           // queryClient.invalidateQueries(queryKeys.seasons);
       }
     } catch (migrationError) {
-        console.error('[EFFECT init] Error during data migration:', migrationError);
+        logger.error('[EFFECT init] Error during data migration:', migrationError);
       }
 
       // Master Roster, Seasons, Tournaments are handled by their own useEffects reacting to useQuery.
 
       // 4. Update local savedGames state from useQuery for allSavedGames
       if (isAllSavedGamesQueryLoading) {
-        console.log('[EFFECT init] All saved games are loading via TanStack Query...');
+        logger.log('[EFFECT init] All saved games are loading via TanStack Query...');
         setIsLoadingGamesList(true);
       }
       if (allSavedGamesQueryResultData) {
@@ -681,7 +684,7 @@ function HomePage() {
         setIsLoadingGamesList(false);
       }
       if (isAllSavedGamesQueryError) {
-        console.error('[EFFECT init] Error loading all saved games via TanStack Query:', allSavedGamesQueryErrorData);
+        logger.error('[EFFECT init] Error loading all saved games via TanStack Query:', allSavedGamesQueryErrorData);
         setLoadGamesListError(t('loadGameModal.errors.listLoadFailed', 'Failed to load saved games list.'));
       setSavedGames({});
         setIsLoadingGamesList(false);
@@ -689,18 +692,18 @@ function HomePage() {
       
       // 5. Determine and set current game ID and related state from useQuery data
       if (isCurrentGameIdSettingQueryLoading || isAllSavedGamesQueryLoading) { 
-        console.log('[EFFECT init] Waiting for current game ID setting and/or saved games list to load...');
+        logger.log('[EFFECT init] Waiting for current game ID setting and/or saved games list to load...');
       } else {
         const lastGameIdSetting = currentGameIdSettingQueryResultData;
         const currentSavedGames = allSavedGamesQueryResultData || {}; 
 
         if (lastGameIdSetting && lastGameIdSetting !== DEFAULT_GAME_ID && currentSavedGames[lastGameIdSetting]) {
-          console.log(`[EFFECT init] Restoring last saved game: ${lastGameIdSetting} from TanStack Query data.`);
+          logger.log(`[EFFECT init] Restoring last saved game: ${lastGameIdSetting} from TanStack Query data.`);
           setCurrentGameId(lastGameIdSetting);
           setHasSkippedInitialSetup(true);
         } else {
           if (lastGameIdSetting && lastGameIdSetting !== DEFAULT_GAME_ID) {
-            console.warn(`[EFFECT init] Last game ID ${lastGameIdSetting} not found in saved games (from TanStack Query). Loading default.`);
+            logger.warn(`[EFFECT init] Last game ID ${lastGameIdSetting} not found in saved games (from TanStack Query). Loading default.`);
           }
         setCurrentGameId(DEFAULT_GAME_ID);
       }
@@ -716,7 +719,7 @@ function HomePage() {
           if (savedTimerStateJSON) {
             const savedTimerState: TimerState = JSON.parse(savedTimerStateJSON);
             if (savedTimerState && savedTimerState.gameId === lastGameId) {
-              console.log('[EFFECT init] Found a saved timer state for the current game. Restoring...');
+              logger.log('[EFFECT init] Found a saved timer state for the current game. Restoring...');
               const elapsedOfflineSeconds = (Date.now() - savedTimerState.timestamp) / 1000;
               const correctedElapsedSeconds = Math.round(savedTimerState.timeElapsedInSeconds + elapsedOfflineSeconds);
               
@@ -727,14 +730,14 @@ function HomePage() {
             }
           }
         } catch (error) {
-          console.error('[EFFECT init] Error restoring timer state:', error);
+          logger.error('[EFFECT init] Error restoring timer state:', error);
           removeLocalStorageItem(TIMER_STATE_KEY);
         }
         // --- END TIMER RESTORATION LOGIC ---
 
         // This is now the single source of truth for loading completion.
         setInitialLoadComplete(true);
-        console.log('[EFFECT init] Initial application data coordination complete.');
+        logger.log('[EFFECT init] Initial application data coordination complete.');
       }
     };
 
@@ -778,7 +781,7 @@ function HomePage() {
 
   // Helper function to load game state from game data
   const loadGameStateFromData = (gameData: AppState | null, isInitialDefaultLoad = false) => {
-    console.log('[LOAD GAME STATE] Called with gameData:', gameData, 'isInitialDefaultLoad:', isInitialDefaultLoad);
+    logger.log('[LOAD GAME STATE] Called with gameData:', gameData, 'isInitialDefaultLoad:', isInitialDefaultLoad);
 
     if (gameData) {
       // gameData is AppState, map its fields directly to GameSessionState partial payload
@@ -871,23 +874,23 @@ function HomePage() {
       availablePlayers: masterRosterQueryResultData || availablePlayers,
     };
     resetHistory(newHistoryState);
-    console.log('[LOAD GAME STATE] Finished dispatching. Reducer will update gameSessionState.');
+    logger.log('[LOAD GAME STATE] Finished dispatching. Reducer will update gameSessionState.');
   };
 
   // --- Effect to load game state when currentGameId changes or savedGames updates ---
   useEffect(() => {
-    console.log('[EFFECT game load] currentGameId or savedGames changed:', { currentGameId });
+    logger.log('[EFFECT game load] currentGameId or savedGames changed:', { currentGameId });
     if (!initialLoadComplete) {
-      console.log('[EFFECT game load] Initial load not complete, skipping game state application.');
+      logger.log('[EFFECT game load] Initial load not complete, skipping game state application.');
       return; 
     }
 
     let gameToLoad: AppState | null = null; // Ensure this is AppState
     if (currentGameId && currentGameId !== DEFAULT_GAME_ID && savedGames[currentGameId]) {
-      console.log(`[EFFECT game load] Found game data for ${currentGameId}`);
+      logger.log(`[EFFECT game load] Found game data for ${currentGameId}`);
       gameToLoad = savedGames[currentGameId] as AppState; // Cast to AppState
     } else {
-      console.log('[EFFECT game load] No specific game to load or ID is default. Applying default game state.');
+      logger.log('[EFFECT game load] No specific game to load or ID is default. Applying default game state.');
     }
     loadGameStateFromData(gameToLoad); 
 
@@ -899,7 +902,7 @@ function HomePage() {
     // Only auto-save if loaded AND we have a proper game ID (not the default unsaved one)
     const autoSave = async () => {
     if (initialLoadComplete && currentGameId && currentGameId !== DEFAULT_GAME_ID) {
-      console.log(`Auto-saving state for game ID: ${currentGameId}`);
+      logger.log(`Auto-saving state for game ID: ${currentGameId}`);
       try {
         // 1. Create the current game state snapshot (excluding history and volatile timer states)
         const currentSnapshot: AppState = {
@@ -946,11 +949,11 @@ function HomePage() {
           await utilSaveCurrentGameIdSetting(currentGameId);
 
       } catch (error) {
-        console.error("Failed to auto-save state to localStorage:", error);
+        logger.error("Failed to auto-save state to localStorage:", error);
         alert("Error saving game."); // Notify user
       }
     } else if (initialLoadComplete && currentGameId === DEFAULT_GAME_ID) {
-      console.log("Not auto-saving as this is an unsaved game (no ID assigned yet)");
+      logger.log("Not auto-saving as this is an unsaved game (no ID assigned yet)");
     }
     };
     autoSave();
@@ -968,15 +971,15 @@ function HomePage() {
 
   // **** ADDED: Effect to prompt for setup if default game ID is loaded ****
   useEffect(() => {
-    console.log('[Modal Trigger Effect] Running. initialLoadComplete:', initialLoadComplete, 'hasSkipped:', hasSkippedInitialSetup);
+    logger.log('[Modal Trigger Effect] Running. initialLoadComplete:', initialLoadComplete, 'hasSkipped:', hasSkippedInitialSetup);
     // Only run the check *after* initial load is fully complete and setup hasn't been skipped
     if (initialLoadComplete && !hasSkippedInitialSetup) {
       // Check currentGameId *inside* the effect body
       if (currentGameId === DEFAULT_GAME_ID) {
-        console.log('Default game ID loaded, prompting for setup...');
+        logger.log('Default game ID loaded, prompting for setup...');
       setIsNewGameSetupModalOpen(true);
       } else {
-        console.log('Not prompting: Specific game loaded.');
+        logger.log('Not prompting: Specific game loaded.');
     }
     }
   // Depend only on load completion and skip status
@@ -989,7 +992,7 @@ function HomePage() {
     if (droppedPlayer) {
       handlePlayerDrop(droppedPlayer, { relX, relY }); // Call the handler from the hook
     } else {
-      console.error(`Dropped player with ID ${playerId} not found in availablePlayers.`);
+      logger.error(`Dropped player with ID ${playerId} not found in availablePlayers.`);
     }
   }, [availablePlayers, handlePlayerDrop]); 
 
@@ -1008,7 +1011,7 @@ function HomePage() {
   }, [playersOnField, saveStateToHistory]);
 
   const handlePlayerRemove = useCallback((playerId: string) => {
-    console.log(`Removing player ${playerId} from field`);
+    logger.log(`Removing player ${playerId} from field`);
     const updatedPlayersOnField = playersOnField.filter(p => p.id !== playerId);
     setPlayersOnField(updatedPlayersOnField); 
     saveStateToHistory({ playersOnField: updatedPlayersOnField });
@@ -1042,18 +1045,18 @@ function HomePage() {
   const handlePlayerDragStartFromBar = useCallback((playerInfo: Player) => {
     // This is now primarily for HTML Drag and Drop OR potential long-press drag
     setDraggingPlayerFromBarInfo(playerInfo);
-    console.log("Setting draggingPlayerFromBarInfo (Drag Start):", playerInfo);
+    logger.log("Setting draggingPlayerFromBarInfo (Drag Start):", playerInfo);
   }, []);
 
   // NEW Handler for simple tap selection in the bar
   const handlePlayerTapInBar = useCallback((playerInfo: Player | null) => {
     // If the tapped player is already selected, deselect them
     if (draggingPlayerFromBarInfo?.id === playerInfo?.id) {
-      console.log("Tapped already selected player, deselecting:", playerInfo?.id);
+      logger.log("Tapped already selected player, deselecting:", playerInfo?.id);
       setDraggingPlayerFromBarInfo(null);
     } else {
       // Otherwise, select the tapped player
-      console.log("Setting draggingPlayerFromBarInfo (Tap):", playerInfo);
+      logger.log("Setting draggingPlayerFromBarInfo (Tap):", playerInfo);
       setDraggingPlayerFromBarInfo(playerInfo);
     }
   }, [draggingPlayerFromBarInfo]); // Dependency needed
@@ -1061,7 +1064,7 @@ function HomePage() {
   const handlePlayerDropViaTouch = useCallback((relX: number, relY: number) => {
     // This handler might be less relevant now if tap-on-field works
     if (draggingPlayerFromBarInfo) {
-      console.log("Player Drop Via Touch (field):", { id: draggingPlayerFromBarInfo.id, relX, relY });
+      logger.log("Player Drop Via Touch (field):", { id: draggingPlayerFromBarInfo.id, relX, relY });
       handleDropOnField(draggingPlayerFromBarInfo.id, relX, relY); 
       setDraggingPlayerFromBarInfo(null); // Deselect player after placing
     }
@@ -1077,7 +1080,7 @@ function HomePage() {
   const handleTeamNameChange = (newName: string) => {
     const trimmedName = newName.trim();
     if (trimmedName) {
-        console.log("Updating team name to:", trimmedName);
+        logger.log("Updating team name to:", trimmedName);
         dispatchGameSession({ type: 'SET_TEAM_NAME', payload: trimmedName });
         // REMOVED: saveStateToHistory({ teamName: trimmedName }); 
     }
@@ -1122,20 +1125,20 @@ function HomePage() {
   const handleUndo = () => {
     const prevState = undoHistory();
     if (prevState) {
-      console.log('Undoing...');
+      logger.log('Undoing...');
       applyHistoryState(prevState);
     } else {
-      console.log('Cannot undo: at beginning of history');
+      logger.log('Cannot undo: at beginning of history');
     }
   };
 
   const handleRedo = () => {
     const nextState = redoHistory();
     if (nextState) {
-      console.log('Redoing...');
+      logger.log('Redoing...');
       applyHistoryState(nextState);
     } else {
-      console.log('Cannot redo: at end of history');
+      logger.log('Cannot redo: at end of history');
     }
   };
 
@@ -1149,7 +1152,7 @@ function HomePage() {
   // Handler to specifically deselect player when bar background is clicked
   const handleDeselectPlayer = () => {
     if (draggingPlayerFromBarInfo) { // Only log if there was a selection
-      console.log("Deselecting player by clicking bar background.");
+      logger.log("Deselecting player by clicking bar background.");
       setDraggingPlayerFromBarInfo(null);
     }
   };
@@ -1166,7 +1169,7 @@ function HomePage() {
     const assister = assisterId ? (masterRosterQueryResultData || availablePlayers).find(p => p.id === assisterId) : undefined;
 
     if (!scorer) {
-      console.error("Scorer not found!");
+      logger.error("Scorer not found!");
       return;
     }
 
@@ -1185,7 +1188,7 @@ function HomePage() {
 
   // NEW Handler to log an opponent goal
   const handleLogOpponentGoal = (time: number) => {
-    console.log(`Logging opponent goal at time: ${time}`);
+    logger.log(`Logging opponent goal at time: ${time}`);
     const newEvent: GameEvent = {
       id: `oppGoal-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       type: 'opponentGoal',
@@ -1204,14 +1207,14 @@ function HomePage() {
     
     dispatchGameSession({ type: 'UPDATE_GAME_EVENT', payload: cleanUpdatedEvent });
     
-    console.log("Updated game event via dispatch:", updatedEvent.id);
+    logger.log("Updated game event via dispatch:", updatedEvent.id);
   };
 
   // Handler to delete a game event
   const handleDeleteGameEvent = (goalId: string) => {
     const eventToDelete = gameSessionState.gameEvents.find(e => e.id === goalId);
     if (!eventToDelete) {
-      console.error("Event to delete not found in gameSessionState.gameEvents:", goalId);
+      logger.error("Event to delete not found in gameSessionState.gameEvents:", goalId);
       return;
     }
 
@@ -1223,7 +1226,7 @@ function HomePage() {
       });
     }
     
-    console.log("Deleted game event via dispatch and updated state/history:", goalId);
+    logger.log("Deleted game event via dispatch and updated state/history:", goalId);
   };
   // --- Button/Action Handlers ---
   
@@ -1236,7 +1239,7 @@ function HomePage() {
   
   // NEW: Handler to cancel the new game setup
   // const handleCancelNewGameSetup = useCallback(() => { // REMOVED this line
-  //   console.log("Cancelling new game setup.");
+  //   logger.log("Cancelling new game setup.");
   //   setIsNewGameSetupModalOpen(false);
   // }, []);
 
@@ -1252,7 +1255,7 @@ function HomePage() {
 
   // Placeholder handlers for updating game info (will be passed to modal)
   const handleOpponentNameChange = (newName: string) => {
-    console.log('[page.tsx] handleOpponentNameChange called with:', newName);
+    logger.log('[page.tsx] handleOpponentNameChange called with:', newName);
     dispatchGameSession({ type: 'SET_OPPONENT_NAME', payload: newName });
   };
   const handleGameDateChange = (newDate: string) => {
@@ -1275,16 +1278,16 @@ function HomePage() {
       // Keep the type assertion for the state setter
       const validPeriods = periods as (1 | 2); 
       dispatchGameSession({ type: 'SET_NUMBER_OF_PERIODS', payload: validPeriods });
-      console.log(`Number of periods set to: ${validPeriods}`);
+      logger.log(`Number of periods set to: ${validPeriods}`);
     } else {
-      console.warn(`Invalid number of periods attempted: ${periods}. Must be 1 or 2.`);
+      logger.warn(`Invalid number of periods attempted: ${periods}. Must be 1 or 2.`);
     }
   };
 
   const handleSetPeriodDuration = (minutes: number) => {
     const newMinutes = Math.max(1, minutes);
     dispatchGameSession({ type: 'SET_PERIOD_DURATION', payload: newMinutes });
-    console.log(`Period duration set to: ${newMinutes} minutes`);
+    logger.log(`Period duration set to: ${newMinutes} minutes`);
   };
 
   // Training Resources Modal
@@ -1296,11 +1299,11 @@ function HomePage() {
   const handleHardResetApp = useCallback(async () => {
     if (window.confirm(t('controlBar.hardResetConfirmation', 'Are you sure you want to completely reset the application? All saved data (players, stats, positions) will be permanently lost.'))) {
       try {
-        console.log("Performing hard reset using utility...");
+        logger.log("Performing hard reset using utility...");
         await utilResetAppSettings(); // Use utility function
         window.location.reload();
       } catch (error) {
-        console.error("Error during hard reset:", error);
+        logger.error("Error during hard reset:", error);
         alert("Failed to reset application data.");
       }
     }
@@ -1309,7 +1312,7 @@ function HomePage() {
   
   // Placeholder handlers for Save/Load Modals
   const handleOpenSaveGameModal = useCallback(() => {
-    console.log("Opening Save Game Modal...");
+    logger.log("Opening Save Game Modal...");
     setIsSaveGameModalOpen(true);
   }, [setIsSaveGameModalOpen]);
 
@@ -1318,7 +1321,7 @@ function HomePage() {
   };
 
   const handleOpenLoadGameModal = () => {
-    console.log("Opening Load Game Modal...");
+    logger.log("Opening Load Game Modal...");
     setIsLoadGameModalOpen(true);
   };
 
@@ -1336,17 +1339,17 @@ function HomePage() {
 
   // Function to handle the actual saving
   const handleSaveGame = useCallback(async (gameName: string) => {
-    console.log(`Attempting to save game: '${gameName}'`);
+    logger.log(`Attempting to save game: '${gameName}'`);
     
     let idToSave: string;
     const isOverwritingExistingLoadedGame = currentGameId && currentGameId !== DEFAULT_GAME_ID;
 
     if (isOverwritingExistingLoadedGame) {
       idToSave = currentGameId;
-      console.log(`Overwriting existing game with ID: ${idToSave}`);
+      logger.log(`Overwriting existing game with ID: ${idToSave}`);
     } else {
       idToSave = `game_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-      console.log(`Saving as new game with ID: ${idToSave}`);
+      logger.log(`Saving as new game with ID: ${idToSave}`);
     }
 
       const currentSnapshot: AppState = { // Corrected type to AppState
@@ -1406,7 +1409,7 @@ function HomePage() {
 
   // Function to handle loading a selected game
   const handleLoadGame = async (gameId: string) => {
-    console.log(`[handleLoadGame] Attempting to load game: ${gameId}`);
+    logger.log(`[handleLoadGame] Attempting to load game: ${gameId}`);
     
     // Clear any existing timer state before loading a new game
     removeLocalStorageItem(TIMER_STATE_KEY);
@@ -1426,18 +1429,18 @@ function HomePage() {
         setCurrentGameId(gameId);
         await utilSaveCurrentGameIdSetting(gameId);
 
-        console.log(`Game ${gameId} load dispatched to reducer.`);
+        logger.log(`Game ${gameId} load dispatched to reducer.`);
         handleCloseLoadGameModal();
 
       } catch(error) {
-          console.error("Error processing game load:", error);
+          logger.error("Error processing game load:", error);
           setGameLoadError(t('loadGameModal.errors.loadFailed', 'Error loading game state. Please try again.'));
       } finally {
         setIsGameLoading(false);
         setProcessingGameId(null);
       }
     } else {
-      console.error(`Game state not found for ID: ${gameId}`);
+      logger.error(`Game state not found for ID: ${gameId}`);
       setGameLoadError(t('loadGameModal.errors.notFound', 'Could not find saved game: {gameId}', { gameId }));
       setIsGameLoading(false);
       setProcessingGameId(null);
@@ -1446,9 +1449,9 @@ function HomePage() {
 
   // Function to handle deleting a saved game
   const handleDeleteGame = async (gameId: string) => {
-    console.log(`Deleting game with ID: ${gameId}`);
+    logger.log(`Deleting game with ID: ${gameId}`);
     if (gameId === DEFAULT_GAME_ID) {
-      console.warn("Cannot delete the default unsaved state.");
+      logger.warn("Cannot delete the default unsaved state.");
       setGameDeleteError(t('loadGameModal.errors.cannotDeleteDefault', 'Cannot delete the current unsaved game progress.'));
       return; // Prevent deleting the default placeholder
     }
@@ -1464,16 +1467,16 @@ function HomePage() {
       const updatedSavedGames = { ...savedGames };
         delete updatedSavedGames[gameId];
       setSavedGames(updatedSavedGames);
-        console.log(`Game ${gameId} deleted from state and persistence.`);
+        logger.log(`Game ${gameId} deleted from state and persistence.`);
 
         if (currentGameId === gameId) {
           const latestId = getLatestGameId(updatedSavedGames);
           if (latestId) {
-            console.log(`Deleted active game. Loading latest game ${latestId}.`);
+            logger.log(`Deleted active game. Loading latest game ${latestId}.`);
             setCurrentGameId(latestId);
             await utilSaveCurrentGameIdSetting(latestId);
           } else {
-            console.log("Currently loaded game was deleted with no other games remaining. Resetting to initial state.");
+            logger.log("Currently loaded game was deleted with no other games remaining. Resetting to initial state.");
             dispatchGameSession({ type: 'RESET_TO_INITIAL_STATE', payload: initialGameSessionData });
             setPlayersOnField(initialState.playersOnField || []);
             setOpponents(initialState.opponents || []);
@@ -1485,7 +1488,7 @@ function HomePage() {
         }
       } else {
         // ... (existing error handling)
-        console.warn(`handleDeleteGame: utilDeleteGame returned null for gameId: ${gameId}. Game might not have been found or ID was invalid.`);
+        logger.warn(`handleDeleteGame: utilDeleteGame returned null for gameId: ${gameId}. Game might not have been found or ID was invalid.`);
         setGameDeleteError(t('loadGameModal.errors.deleteFailedNotFound', 'Error deleting game: {gameId}. Game not found or ID was invalid.', { gameId }));
       }
     } catch (error) {
@@ -1528,7 +1531,7 @@ function HomePage() {
 
   // --- Roster Management Handlers ---
   const openRosterModal = () => {
-    console.log('[openRosterModal] Called. Setting highlightRosterButton to false.'); // Log modal open
+    logger.log('[openRosterModal] Called. Setting highlightRosterButton to false.'); // Log modal open
     setIsRosterModalOpen(true);
     setHighlightRosterButton(false); // <<< Remove highlight when modal is opened
   };
@@ -1540,58 +1543,58 @@ function HomePage() {
 
   // --- ASYNC Roster Management Handlers for RosterSettingsModal ---
   const handleRenamePlayerForModal = useCallback(async (playerId: string, playerData: { name: string; nickname?: string }) => {
-    console.log(`[Page.tsx] handleRenamePlayerForModal attempting mutation for ID: ${playerId}, new name: ${playerData.name}`);
+    logger.log(`[Page.tsx] handleRenamePlayerForModal attempting mutation for ID: ${playerId}, new name: ${playerData.name}`);
     setRosterError(null); // Clear previous specific errors
     try {
       await handleUpdatePlayer(playerId, { name: playerData.name, nickname: playerData.nickname });
-      console.log(`[Page.tsx] rename player success for ${playerId}.`);
+      logger.log(`[Page.tsx] rename player success for ${playerId}.`);
     } catch (error) {
-      console.error(`[Page.tsx] Exception during rename of ${playerId}:`, error);
+      logger.error(`[Page.tsx] Exception during rename of ${playerId}:`, error);
     }
   }, [handleUpdatePlayer, setRosterError]);
   
   const handleSetJerseyNumberForModal = useCallback(async (playerId: string, jerseyNumber: string) => {
-    console.log(`[Page.tsx] handleSetJerseyNumberForModal attempting mutation for ID: ${playerId}, new number: ${jerseyNumber}`);
+    logger.log(`[Page.tsx] handleSetJerseyNumberForModal attempting mutation for ID: ${playerId}, new number: ${jerseyNumber}`);
     setRosterError(null);
 
     try {
       await handleUpdatePlayer(playerId, { jerseyNumber });
-      console.log(`[Page.tsx] jersey number update successful for ${playerId}.`);
+      logger.log(`[Page.tsx] jersey number update successful for ${playerId}.`);
     } catch (error) {
-      console.error(`[Page.tsx] Exception during jersey number update of ${playerId}:`, error);
+      logger.error(`[Page.tsx] Exception during jersey number update of ${playerId}:`, error);
     }
   }, [handleUpdatePlayer, setRosterError]);
 
   const handleSetPlayerNotesForModal = useCallback(async (playerId: string, notes: string) => {
-    console.log(`[Page.tsx] handleSetPlayerNotesForModal attempting mutation for ID: ${playerId}`);
+    logger.log(`[Page.tsx] handleSetPlayerNotesForModal attempting mutation for ID: ${playerId}`);
     setRosterError(null);
 
     try {
       await handleUpdatePlayer(playerId, { notes });
-      console.log(`[Page.tsx] notes update successful for ${playerId}.`);
+      logger.log(`[Page.tsx] notes update successful for ${playerId}.`);
     } catch (error) {
-      console.error(`[Page.tsx] Exception during notes update of ${playerId}:`, error);
+      logger.error(`[Page.tsx] Exception during notes update of ${playerId}:`, error);
     }
   }, [handleUpdatePlayer, setRosterError]);
 
       // ... (rest of the code remains unchanged)
 
     const handleRemovePlayerForModal = useCallback(async (playerId: string) => {
-      console.log(`[Page.tsx] handleRemovePlayerForModal attempting mutation for ID: ${playerId}`);
+      logger.log(`[Page.tsx] handleRemovePlayerForModal attempting mutation for ID: ${playerId}`);
       setRosterError(null);
 
       try {
         await handleRemovePlayer(playerId);
-        console.log(`[Page.tsx] player removed: ${playerId}.`);
+        logger.log(`[Page.tsx] player removed: ${playerId}.`);
       } catch (error) {
-        console.error(`[Page.tsx] Exception during removal of ${playerId}:`, error);
+        logger.error(`[Page.tsx] Exception during removal of ${playerId}:`, error);
       }
     }, [handleRemovePlayer, setRosterError]);
 
     // ... (rest of the code remains unchanged)
 
     const handleAddPlayerForModal = useCallback(async (playerData: { name: string; jerseyNumber: string; notes: string; nickname: string }) => {
-      console.log('[Page.tsx] handleAddPlayerForModal attempting to add player:', playerData);
+      logger.log('[Page.tsx] handleAddPlayerForModal attempting to add player:', playerData);
       setRosterError(null); // Clear previous specific errors first
 
       const currentRoster = masterRosterQueryResultData || [];
@@ -1622,13 +1625,13 @@ function HomePage() {
 
       // If all checks pass, proceed with the mutation
       try {
-        console.log('[Page.tsx] No duplicates found. Proceeding with addPlayer for:', playerData);
+        logger.log('[Page.tsx] No duplicates found. Proceeding with addPlayer for:', playerData);
         await handleAddPlayer(playerData);
-        console.log(`[Page.tsx] add player success: ${playerData.name}.`);
+        logger.log(`[Page.tsx] add player success: ${playerData.name}.`);
       } catch (error) {
         // This catch block is for unexpected errors directly from mutateAsync call itself (e.g., network issues before mutationFn runs).
         // Errors from within mutationFn (like from the addPlayer utility) should ideally be handled by the mutation's onError callback.
-        console.error(`[Page.tsx] Exception during addPlayerMutation.mutateAsync for player ${playerData.name}:`, error);
+        logger.error(`[Page.tsx] Exception during addPlayerMutation.mutateAsync for player ${playerData.name}:`, error);
         // Set a generic error message if rosterError hasn't been set by the mutation's onError callback.
         setRosterError(t('rosterSettingsModal.errors.addFailed', 'Error adding player {playerName}. Please try again.', { playerName: playerData.name }));
       }
@@ -1639,20 +1642,20 @@ function HomePage() {
   const handleToggleGoalieForModal = useCallback(async (playerId: string) => {
     const player = availablePlayers.find(p => p.id === playerId);
     if (!player) {
-        console.error(`[Page.tsx] Player ${playerId} not found in availablePlayers for goalie toggle.`);
+        logger.error(`[Page.tsx] Player ${playerId} not found in availablePlayers for goalie toggle.`);
         setRosterError(t('rosterSettingsModal.errors.playerNotFound', 'Player not found. Cannot toggle goalie status.'));
         return;
     }
     const targetGoalieStatus = !player.isGoalie;
-    console.log(`[Page.tsx] handleToggleGoalieForModal attempting mutation for ID: ${playerId}, target status: ${targetGoalieStatus}`);
+    logger.log(`[Page.tsx] handleToggleGoalieForModal attempting mutation for ID: ${playerId}, target status: ${targetGoalieStatus}`);
     
     setRosterError(null); // Clear previous specific errors
 
     try {
       await handleSetGoalieStatus(playerId, targetGoalieStatus);
-      console.log(`[Page.tsx] goalie toggle success for ${playerId}.`);
+      logger.log(`[Page.tsx] goalie toggle success for ${playerId}.`);
     } catch (error) {
-      console.error(`[Page.tsx] Exception during goalie toggle of ${playerId}:`, error);
+      logger.error(`[Page.tsx] Exception during goalie toggle of ${playerId}:`, error);
     }
   }, [availablePlayers, handleSetGoalieStatus, setRosterError, t]);
 
@@ -1661,12 +1664,12 @@ function HomePage() {
   // --- NEW: Handler to Award Fair Play Card ---
   const handleAwardFairPlayCard = useCallback(async (playerId: string | null) => {
       // <<< ADD LOG HERE >>>
-      console.log(`[page.tsx] handleAwardFairPlayCard called with playerId: ${playerId}`);
-      console.log(`[page.tsx] availablePlayers BEFORE update:`, JSON.stringify(availablePlayers.map(p => ({id: p.id, fp: p.receivedFairPlayCard}))));
-      console.log(`[page.tsx] playersOnField BEFORE update:`, JSON.stringify(playersOnField.map(p => ({id: p.id, fp: p.receivedFairPlayCard}))));
+      logger.log(`[page.tsx] handleAwardFairPlayCard called with playerId: ${playerId}`);
+      logger.log(`[page.tsx] availablePlayers BEFORE update:`, JSON.stringify(availablePlayers.map(p => ({id: p.id, fp: p.receivedFairPlayCard}))));
+      logger.log(`[page.tsx] playersOnField BEFORE update:`, JSON.stringify(playersOnField.map(p => ({id: p.id, fp: p.receivedFairPlayCard}))));
 
       if (!currentGameId || currentGameId === DEFAULT_GAME_ID) {
-          console.warn("Cannot award fair play card in unsaved/default state.");
+          logger.warn("Cannot award fair play card in unsaved/default state.");
           return; // Prevent awarding in default state
       }
 
@@ -1699,20 +1702,20 @@ function HomePage() {
           updatedPlayersOnField = updatedPlayersOnField.map(p =>
               p.id === playerId ? { ...p, receivedFairPlayCard: true } : p
           );
-          console.log(`[page.tsx] Awarding card to ${playerId}`);
+          logger.log(`[page.tsx] Awarding card to ${playerId}`);
       } else {
           // <<< ADD LOG HERE >>>
-          console.log(`[page.tsx] Clearing card (or toggling off). PlayerId: ${playerId}, Currently Awarded: ${currentlyAwardedPlayerId}`);
+          logger.log(`[page.tsx] Clearing card (or toggling off). PlayerId: ${playerId}, Currently Awarded: ${currentlyAwardedPlayerId}`);
       }
       // If playerId is null, we only cleared the existing card.
       // If playerId is the same as currentlyAwardedPlayerId, we cleared it and don't re-award.
 
       // <<< ADD LOG HERE >>>
-      console.log(`[page.tsx] availablePlayers AFTER update logic:`, JSON.stringify(updatedAvailablePlayers.map(p => ({id: p.id, fp: p.receivedFairPlayCard}))));
-      console.log(`[page.tsx] playersOnField AFTER update logic:`, JSON.stringify(updatedPlayersOnField.map(p => ({id: p.id, fp: p.receivedFairPlayCard}))));
+      logger.log(`[page.tsx] availablePlayers AFTER update logic:`, JSON.stringify(updatedAvailablePlayers.map(p => ({id: p.id, fp: p.receivedFairPlayCard}))));
+      logger.log(`[page.tsx] playersOnField AFTER update logic:`, JSON.stringify(updatedPlayersOnField.map(p => ({id: p.id, fp: p.receivedFairPlayCard}))));
 
       // <<< ADD LOG HERE >>>
-      console.log(`[page.tsx] Calling setAvailablePlayers and setPlayersOnField...`);
+      logger.log(`[page.tsx] Calling setAvailablePlayers and setPlayersOnField...`);
       setAvailablePlayers(updatedAvailablePlayers);
       setPlayersOnField(updatedPlayersOnField);
       // Save updated global roster
@@ -1720,19 +1723,19 @@ function HomePage() {
       try {
         const success = await saveMasterRoster(updatedAvailablePlayers);
         if (!success) {
-          console.error('[page.tsx] handleAwardFairPlayCard: Failed to save master roster using utility.');
+          logger.error('[page.tsx] handleAwardFairPlayCard: Failed to save master roster using utility.');
           // Optionally, set an error state to inform the user
         }
       } catch (error) {
-        console.error('[page.tsx] handleAwardFairPlayCard: Error calling saveMasterRoster utility:', error);
+        logger.error('[page.tsx] handleAwardFairPlayCard: Error calling saveMasterRoster utility:', error);
         // Optionally, set an error state
       }
       // <<< ADD LOG HERE >>>
-      console.log(`[page.tsx] Calling saveStateToHistory... ONLY for playersOnField`);
+      logger.log(`[page.tsx] Calling saveStateToHistory... ONLY for playersOnField`);
       // Save ONLY the playersOnField change to the game history, not the global roster
       saveStateToHistory({ playersOnField: updatedPlayersOnField });
 
-      console.log(`[page.tsx] Updated Fair Play card award. ${playerId ? `Awarded to ${playerId}` : 'Cleared'}`);
+      logger.log(`[page.tsx] Updated Fair Play card award. ${playerId ? `Awarded to ${playerId}` : 'Cleared'}`);
     }, [availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField, saveStateToHistory, currentGameId]);
 
   // --- NEW: Handler to Toggle Player Selection for Current Match ---
@@ -1761,7 +1764,7 @@ function HomePage() {
   // --- NEW: Quick Save Handler ---
   const handleQuickSaveGame = useCallback(async () => {
     if (currentGameId && currentGameId !== DEFAULT_GAME_ID) {
-      console.log(`Quick saving game with ID: ${currentGameId}`);
+      logger.log(`Quick saving game with ID: ${currentGameId}`);
       try {
         // 1. Create the current game state snapshot
         const currentSnapshot: AppState = {
@@ -1812,18 +1815,18 @@ function HomePage() {
         // This makes the quick save behave like loading a game, resetting undo/redo
         resetHistory(currentSnapshot);
 
-        console.log(`Game quick saved successfully with ID: ${currentGameId}`);
-        // TODO: Add visual feedback (e.g., a toast notification)
+        logger.log(`Game quick saved successfully with ID: ${currentGameId}`);
+        showToast('Game saved!');
 
       } catch (error) {
-        console.error("Failed to quick save game state:", error);
+        logger.error("Failed to quick save game state:", error);
         alert("Error quick saving game.");
       }
     } else {
       // If no valid current game ID, trigger the "Save As" modal
       // Note: This case might not be reachable if Quick Save button is only enabled for loaded games,
       // but kept for robustness.
-      console.log("No current game ID, opening Save As modal instead for Quick Save.");
+      logger.log("No current game ID, opening Save As modal instead for Quick Save.");
       handleOpenSaveGameModal(); 
     }
   },    [
@@ -1870,13 +1873,13 @@ function HomePage() {
   // --- NEW Handlers for Setting Season/Tournament ID ---
   const handleSetSeasonId = useCallback((newSeasonId: string | undefined) => {
     const idToSet = newSeasonId || ''; // Ensure empty string instead of null
-    console.log('[page.tsx] handleSetSeasonId called with:', idToSet);
+    logger.log('[page.tsx] handleSetSeasonId called with:', idToSet);
     dispatchGameSession({ type: 'SET_SEASON_ID', payload: idToSet }); 
   }, []); // No dependencies needed since we're only using dispatchGameSession which is stable
 
   const handleSetTournamentId = useCallback((newTournamentId: string | undefined) => {
     const idToSet = newTournamentId || ''; // Ensure empty string instead of null
-    console.log('[page.tsx] handleSetTournamentId called with:', idToSet);
+    logger.log('[page.tsx] handleSetTournamentId called with:', idToSet);
     dispatchGameSession({ type: 'SET_TOURNAMENT_ID', payload: idToSet });
   }, []); // No dependencies needed since we're only using dispatchGameSession which is stable
 
@@ -1942,7 +1945,7 @@ function HomePage() {
     homeOrAway: 'home' | 'away' // <<< Step 4b: Add parameter
   ) => {
       // ADD LOGGING HERE:
-      console.log('[handleStartNewGameWithSetup] Received Params:', { 
+      logger.log('[handleStartNewGameWithSetup] Received Params:', { 
         initialSelectedPlayerIds,
         homeTeamName, 
         opponentName, 
@@ -1997,12 +2000,12 @@ function HomePage() {
       };
 
       // Log the constructed state *before* saving
-      // console.log('[handleStartNewGameWithSetup] Constructed newGameState:', {
+      // logger.log('[handleStartNewGameWithSetup] Constructed newGameState:', {
       //     periods: newGameState.numberOfPeriods,
       //     duration: newGameState.periodDurationMinutes,
       //     // REMOVED: numAvailablePlayers: newGameState.availablePlayers.length // Log roster size
       // });
-      console.log('[handleStartNewGameWithSetup] DIRECTLY CONSTRUCTED newGameState:', JSON.parse(JSON.stringify(newGameState)));
+      logger.log('[handleStartNewGameWithSetup] DIRECTLY CONSTRUCTED newGameState:', JSON.parse(JSON.stringify(newGameState)));
 
       // 2. Auto-generate ID
       const newGameId = `game_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
@@ -2015,18 +2018,18 @@ function HomePage() {
         };
         setSavedGames(updatedSavedGamesCollection);
         // localStorage.setItem(SAVED_GAMES_KEY, JSON.stringify(updatedSavedGames)); // OLD
-        // console.log(`Explicitly saved initial state for new game ID: ${newGameId}`); // OLD
+        // logger.log(`Explicitly saved initial state for new game ID: ${newGameId}`); // OLD
 
         // const currentSettings: AppSettings = { currentGameId: newGameId }; // OLD
         // localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(currentSettings)); // OLD
-        // console.log(`Updated app settings with new game ID: ${newGameId}`); // OLD
+        // logger.log(`Updated app settings with new game ID: ${newGameId}`); // OLD
 
         await utilSaveGame(newGameId, newGameState);
         await utilSaveCurrentGameIdSetting(newGameId);
-        console.log(`Saved new game ${newGameId} and settings via utility functions.`);
+        logger.log(`Saved new game ${newGameId} and settings via utility functions.`);
 
       } catch (error) {
-         console.error("Error explicitly saving new game state:", error);
+         logger.error("Error explicitly saving new game state:", error);
       }
 
       // 4. Reset History with the new state
@@ -2034,13 +2037,13 @@ function HomePage() {
 
       // 5. Set the current game ID - This will trigger the loading useEffect
       setCurrentGameId(newGameId);
-      console.log(`Set current game ID to: ${newGameId}. Loading useEffect will sync component state.`);
+      logger.log(`Set current game ID to: ${newGameId}. Loading useEffect will sync component state.`);
 
       // Close the setup modal
       setIsNewGameSetupModalOpen(false);
 
       // <<< Trigger the roster button highlight >>>
-      console.log('[handleStartNewGameWithSetup] Setting highlightRosterButton to true.'); // Log highlight trigger
+      logger.log('[handleStartNewGameWithSetup] Setting highlightRosterButton to true.'); // Log highlight trigger
       setHighlightRosterButton(true);
 
   }, [
@@ -2056,7 +2059,7 @@ function HomePage() {
 
   // ** REVERT handleCancelNewGameSetup TO ORIGINAL **
   const handleCancelNewGameSetup = useCallback(() => {
-    console.log("New game setup skipped/cancelled.");
+    logger.log("New game setup skipped/cancelled.");
     // REMOVED call to handleStartNewGameWithSetup
     // // Initialize with default values similar to handleStartNewGameWithSetup
     // const defaultOpponent = ''; // Empty opponent name
@@ -2091,16 +2094,16 @@ function HomePage() {
 
       if (saveConfirmation) {
         // User chose OK (Save) -> Call Quick Save, then open setup modal.
-        console.log("User chose to Quick Save before starting new game.");
+        logger.log("User chose to Quick Save before starting new game.");
         handleQuickSaveGame(); // Call quick save directly
         setIsNewGameSetupModalOpen(true); // Open setup modal immediately after
         // No need to return here; flow continues after quick save
       } else {
         // User chose Cancel (Discard) -> Proceed to next confirmation
-        console.log("Discarding current game changes to start new game.");
+        logger.log("Discarding current game changes to start new game.");
         // Confirmation for actually starting new game (ONLY shown if user DISCARDED previous game)
         if (window.confirm(t('controlBar.startNewMatchConfirmation', 'Are you sure you want to start a new match? Any unsaved progress will be lost.') ?? 'Are you sure?')) {
-          console.log("Start new game confirmed after discarding, opening setup modal...");
+          logger.log("Start new game confirmed after discarding, opening setup modal...");
           // <<< SET default player selection (all players) >>>
           setPlayerIdsForNewGame(availablePlayers.map(p => p.id));
           setIsNewGameSetupModalOpen(true); // Open the setup modal
@@ -2112,7 +2115,7 @@ function HomePage() {
     } else {
       // If no real game is loaded, proceed directly to the main confirmation
        if (window.confirm(t('controlBar.startNewMatchConfirmation', 'Are you sure you want to start a new match? Any unsaved progress will be lost.') ?? 'Are you sure?')) {
-         console.log("Start new game confirmed (no prior game to save), opening setup modal...");
+         logger.log("Start new game confirmed (no prior game to save), opening setup modal...");
          // <<< SET default player selection (all players) >>>
          setPlayerIdsForNewGame(availablePlayers.map(p => p.id));
          setIsNewGameSetupModalOpen(true); // Open the setup modal
@@ -2142,7 +2145,7 @@ function HomePage() {
     
     if (selectedButNotOnField.length === 0) {
       // All selected players are already on the field
-      console.log('All selected players are already on the field');
+      logger.log('All selected players are already on the field');
       return;
     }
 
@@ -2151,7 +2154,7 @@ function HomePage() {
       .map(id => availablePlayers.find(p => p.id === id))
       .filter((p): p is Player => p !== undefined);
     
-    console.log(`Placing ${playersToPlace.length} players on the field...`);
+    logger.log(`Placing ${playersToPlace.length} players on the field...`);
 
     // Define a reasonable soccer formation based on number of players
     // For simplicity, we'll use these common formations:
@@ -2243,7 +2246,7 @@ function HomePage() {
     setPlayersOnField(newFieldPlayers);
     saveStateToHistory({ playersOnField: newFieldPlayers });
     
-    console.log(`Successfully placed ${playersToPlace.length} players on the field`);
+    logger.log(`Successfully placed ${playersToPlace.length} players on the field`);
          }, [playersOnField, gameSessionState.selectedPlayerIds, availablePlayers, saveStateToHistory, setPlayersOnField]);
 
   // --- END Quick Save Handler ---
@@ -2260,14 +2263,14 @@ function HomePage() {
   // Note: Console log added before the check itself
  
   // Final console log before returning the main JSX
-  console.log('[Home Render] highlightRosterButton:', highlightRosterButton); // Log state on render
+  logger.log('[Home Render] highlightRosterButton:', highlightRosterButton); // Log state on render
 
   // ATTEMPTING TO EXPLICITLY REMOVE THE CONDITIONAL HOOK
   // The useEffect for highlightRosterButton that was here (around lines 2977-2992)
   // should be removed as it's called conditionally and its correct version is at the top level.
 
   // Log gameEvents before PlayerBar is rendered
-  console.log('[page.tsx] About to render PlayerBar, gameEvents for PlayerBar:', JSON.stringify(gameSessionState.gameEvents));
+  logger.log('[page.tsx] About to render PlayerBar, gameEvents for PlayerBar:', JSON.stringify(gameSessionState.gameEvents));
 
 
   const handleOpenPlayerStats = (playerId: string) => {
