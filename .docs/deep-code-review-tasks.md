@@ -58,13 +58,17 @@ Manual verification after implementing the above:
 ## 6. Translation Maintenance
 - [x] The custom augmentations in `src/i18n.ts` complicate merging JSON locale files. Investigate generating type definitions for translation keys and consolidating all translations in JSON to avoid runtime mutations.
 
+Status: **Done**
+
 Manual verification after implementing the above:
   1. Run `npm run generate:i18n-types` and verify `npx tsc src/i18n-types.ts` completes without errors.
   2. Switch languages in the app and confirm all strings render correctly without runtime warnings.
 
 ## 7. Additional Testing
-- [ ] Extend unit tests for `useGameSessionReducer` to cover score adjustment and timer reset edge cases.
-- [ ] Add smoke tests for the modal context to ensure modals do not interfere with each other when opened sequentially.
+- [x] Extend unit tests for `useGameSessionReducer` to cover score adjustment and timer reset edge cases.
+- [x] Add smoke tests for the modal context to ensure modals do not interfere with each other when opened sequentially.
+
+Status: **Done**
 
 Manual verification after implementing the above:
   1. Run all Jest suites and ensure new reducer tests pass.
