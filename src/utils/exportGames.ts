@@ -1,4 +1,5 @@
 import { AppState, Player, Season, Tournament, SavedGamesCollection, PlayerStatRow } from '@/types';
+import { formatTime } from './time';
 
 /** Utility to create and trigger a download from a data string */
 const triggerDownload = (data: string, filename: string, type: string): void => {
@@ -19,12 +20,6 @@ const escapeCsvField = (field: string | number | undefined | null): string => {
   return `"${str.replace(/"/g, '""')}"`;
 };
 
-/** Format seconds as mm:ss */
-const formatTime = (totalSeconds: number): string => {
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = Math.floor(totalSeconds % 60);
-  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-};
 
 /**
  * Export a single game as JSON.
