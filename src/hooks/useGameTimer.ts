@@ -1,6 +1,10 @@
 import { useEffect, useCallback } from 'react';
 import { TIMER_STATE_KEY } from '@/config/storageKeys';
-import { removeLocalStorageItemAsync, setLocalStorageItemAsync, getLocalStorageItemAsync } from '@/utils/localStorage';
+import {
+  removeLocalStorageItem,
+  setLocalStorageItem,
+  getLocalStorageItem,
+} from '@/utils/localStorage';
 import { useWakeLock } from './useWakeLock';
 import { GameSessionState, GameSessionAction } from './useGameSessionReducer';
 
@@ -38,7 +42,7 @@ export const useGameTimer = ({ state, dispatch, currentGameId }: UseGameTimerArg
   }, [dispatch, state]);
 
   const reset = useCallback(() => {
-    removeLocalStorageItemAsync(TIMER_STATE_KEY);
+    removeLocalStorageItem(TIMER_STATE_KEY);
     dispatch({ type: 'RESET_TIMER_ONLY' });
   }, [dispatch]);
 
@@ -57,14 +61,14 @@ export const useGameTimer = ({ state, dispatch, currentGameId }: UseGameTimerArg
     let intervalId: NodeJS.Timeout | null = null;
     const periodEndTimeSeconds = state.currentPeriod * state.periodDurationMinutes * 60;
 
-    const saveTimerState = async () => {
+    const saveTimerState = () => {
       if (currentGameId) {
         const timerState = {
           gameId: currentGameId,
           timeElapsedInSeconds: state.timeElapsedInSeconds,
           timestamp: Date.now(),
         };
-        await setLocalStorageItemAsync(TIMER_STATE_KEY, JSON.stringify(timerState));
+        setLocalStorageItem(TIMER_STATE_KEY, JSON.stringify(timerState));
       }
     };
 
@@ -77,7 +81,7 @@ export const useGameTimer = ({ state, dispatch, currentGameId }: UseGameTimerArg
         const potentialNewTime = Math.round(currentTime) + 1;
         if (potentialNewTime >= periodEndTimeSeconds) {
           clearInterval(intervalId!);
-          removeLocalStorageItemAsync(TIMER_STATE_KEY);
+          removeLocalStorageItem(TIMER_STATE_KEY);
           if (state.currentPeriod === state.numberOfPeriods) {
             dispatch({ type: 'END_PERIOD_OR_GAME', payload: { newStatus: 'gameEnd', finalTime: periodEndTimeSeconds } });
           } else {
@@ -109,11 +113,11 @@ export const useGameTimer = ({ state, dispatch, currentGameId }: UseGameTimerArg
             timeElapsedInSeconds: state.timeElapsedInSeconds,
             timestamp: Date.now(),
           };
-          await setLocalStorageItemAsync(TIMER_STATE_KEY, JSON.stringify(timerState));
+          setLocalStorageItem(TIMER_STATE_KEY, JSON.stringify(timerState));
           dispatch({ type: 'PAUSE_TIMER_FOR_HIDDEN' });
         }
       } else {
-        const savedTimerStateJSON = await getLocalStorageItemAsync(TIMER_STATE_KEY);
+        const savedTimerStateJSON = getLocalStorageItem(TIMER_STATE_KEY);
         if (savedTimerStateJSON) {
           const savedTimerState = JSON.parse(savedTimerStateJSON);
           if (savedTimerState && savedTimerState.gameId === currentGameId) {

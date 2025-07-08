@@ -3,8 +3,8 @@
 This document captures follow up tasks discovered during a deeper pass over the codebase. The focus is on potential bugs, suboptimal patterns and areas lacking polish.
 
 ## 1. React Hook Dependency Audits
-- [ ] Examine every `useEffect` and `useCallback` in `src/components/HomePage.tsx` for missing dependencies. ESLint currently warns about several omissions (e.g. lines ~738, 961, 1292, 1371, 1517). Fix dependency arrays or restructure callbacks to prevent stale closures.
-- [ ] Enable the `react-hooks/exhaustive-deps` rule project wide to prevent future regressions.
+- [x] Examine every `useEffect` and `useCallback` in `src/components/HomePage.tsx` for missing dependencies. ESLint currently warns about several omissions (e.g. lines ~738, 961, 1292, 1371, 1517). Fix dependency arrays or restructure callbacks to prevent stale closures.
+- [x] Enable the `react-hooks/exhaustive-deps` rule project wide to prevent future regressions.
 
 Manual verification after implementing the above:
   1. Start the development server and ensure the roster and saved games load without errors when visiting the home page.
