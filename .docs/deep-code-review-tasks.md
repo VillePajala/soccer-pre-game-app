@@ -6,6 +6,13 @@ This document captures follow up tasks discovered during a deeper pass over the 
 - [ ] Examine every `useEffect` and `useCallback` in `src/components/HomePage.tsx` for missing dependencies. ESLint currently warns about several omissions (e.g. lines ~738, 961, 1292, 1371, 1517). Fix dependency arrays or restructure callbacks to prevent stale closures.
 - [ ] Enable the `react-hooks/exhaustive-deps` rule project wide to prevent future regressions.
 
+Manual verification after implementing the above:
+  1. Start the development server and ensure the roster and saved games load without errors when visiting the home page.
+  2. Start a new game and verify the timer and game state update as players are added and removed.
+  3. Open the roster settings modal and try adding, renaming and removing a player. The UI should react immediately without stale data.
+  4. Perform a quick save, reload the page and confirm the saved game can be loaded with the correct lineup.
+  5. Switch the app language using the language selector to confirm translations still update across the page.
+
 ## 2. Local Storage Utilities
 - [ ] The helpers in `src/utils/localStorage.ts` wrap synchronous APIs in async functions. Evaluate replacing them with direct synchronous calls or a unified wrapper that checks for `window` availability. Remove unnecessary `Promise.resolve`/`Promise.reject` usage.
 - [ ] Harden error handling in `appSettings.ts` and `savedGames.ts` when localStorage fails (e.g. private browsing).

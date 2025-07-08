@@ -736,15 +736,33 @@ function HomePage() {
 
     loadInitialAppData();
   }, [
-    masterRosterQueryResultData, isMasterRosterQueryLoading, isMasterRosterQueryError, masterRosterQueryErrorData,
-    seasonsQueryResultData, areSeasonsQueryLoading, isSeasonsQueryError, seasonsQueryErrorData,
-    tournamentsQueryResultData, areTournamentsQueryLoading, isTournamentsQueryError, tournamentsQueryErrorData,
-    allSavedGamesQueryResultData, isAllSavedGamesQueryLoading, isAllSavedGamesQueryError, allSavedGamesQueryErrorData, // Updated names
-    currentGameIdSettingQueryResultData, isCurrentGameIdSettingQueryLoading, isCurrentGameIdSettingQueryError, currentGameIdSettingQueryErrorData, // Updated names
-    setSavedGames, setIsLoadingGamesList, setLoadGamesListError,
-    setCurrentGameId, setHasSkippedInitialSetup,
-    t // t function from useTranslation
-    // REMOVE: utilGetSavedGames, getCurrentGameIdSetting (these are now queryFn)
+    masterRosterQueryResultData,
+    isMasterRosterQueryLoading,
+    isMasterRosterQueryError,
+    masterRosterQueryErrorData,
+    seasonsQueryResultData,
+    areSeasonsQueryLoading,
+    isSeasonsQueryError,
+    seasonsQueryErrorData,
+    tournamentsQueryResultData,
+    areTournamentsQueryLoading,
+    isTournamentsQueryError,
+    tournamentsQueryErrorData,
+    allSavedGamesQueryResultData,
+    isAllSavedGamesQueryLoading,
+    isAllSavedGamesQueryError,
+    allSavedGamesQueryErrorData,
+    currentGameIdSettingQueryResultData,
+    isCurrentGameIdSettingQueryLoading,
+    isCurrentGameIdSettingQueryError,
+    currentGameIdSettingQueryErrorData,
+    setSavedGames,
+    setIsLoadingGamesList,
+    setLoadGamesListError,
+    setCurrentGameId,
+    setHasSkippedInitialSetup,
+    t,
+    initialLoadComplete
   ]);
 
   // --- NEW: Robust Visibility Change Handling ---
@@ -958,7 +976,7 @@ function HomePage() {
     }
     }
   // Depend only on load completion and skip status
-  }, [initialLoadComplete, hasSkippedInitialSetup, currentGameId]); // <<< Added currentGameId dependency back to re-check if it changes later
+  }, [initialLoadComplete, hasSkippedInitialSetup, currentGameId, setIsNewGameSetupModalOpen]);
 
   // --- Player Management Handlers (Updated for relative coords) ---
   // Wrapped handleDropOnField in useCallback as suggested
@@ -1286,10 +1304,10 @@ function HomePage() {
 
   
   // Placeholder handlers for Save/Load Modals
-  const handleOpenSaveGameModal = useCallback(() => { // Wrap in useCallback
+  const handleOpenSaveGameModal = useCallback(() => {
     console.log("Opening Save Game Modal...");
     setIsSaveGameModalOpen(true);
-  }, []); // Add dependency array
+  }, [setIsSaveGameModalOpen]);
 
   const handleCloseSaveGameModal = () => {
     setIsSaveGameModalOpen(false);
@@ -1368,7 +1386,19 @@ function HomePage() {
       gameIdToSave: idToSave,
       snapshot: currentSnapshot as AppState, // Cast to AppState for the util
     });
-  }, [saveGameMutation, currentGameId, gameSessionState, playersOnField, opponents, drawings, availablePlayers, masterRosterQueryResultData]);
+  }, [
+    saveGameMutation,
+    currentGameId,
+    gameSessionState,
+    playersOnField,
+    opponents,
+    drawings,
+    tacticalDiscs,
+    tacticalDrawings,
+    tacticalBallPosition,
+    availablePlayers,
+    masterRosterQueryResultData,
+  ]);
 
   // Function to handle loading a selected game
   const handleLoadGame = async (gameId: string) => {
@@ -1514,7 +1544,7 @@ function HomePage() {
     } catch (error) {
       console.error(`[Page.tsx] Exception during rename of ${playerId}:`, error);
     }
-  }, [handleUpdatePlayer]);
+  }, [handleUpdatePlayer, setRosterError]);
   
   const handleSetJerseyNumberForModal = useCallback(async (playerId: string, jerseyNumber: string) => {
     console.log(`[Page.tsx] handleSetJerseyNumberForModal attempting mutation for ID: ${playerId}, new number: ${jerseyNumber}`);
@@ -1526,7 +1556,7 @@ function HomePage() {
     } catch (error) {
       console.error(`[Page.tsx] Exception during jersey number update of ${playerId}:`, error);
     }
-  }, [handleUpdatePlayer]);
+  }, [handleUpdatePlayer, setRosterError]);
 
   const handleSetPlayerNotesForModal = useCallback(async (playerId: string, notes: string) => {
     console.log(`[Page.tsx] handleSetPlayerNotesForModal attempting mutation for ID: ${playerId}`);
@@ -1538,7 +1568,7 @@ function HomePage() {
     } catch (error) {
       console.error(`[Page.tsx] Exception during notes update of ${playerId}:`, error);
     }
-  }, [handleUpdatePlayer]);
+  }, [handleUpdatePlayer, setRosterError]);
 
       // ... (rest of the code remains unchanged)
 
@@ -1552,7 +1582,7 @@ function HomePage() {
       } catch (error) {
         console.error(`[Page.tsx] Exception during removal of ${playerId}:`, error);
       }
-    }, [handleRemovePlayer]);
+    }, [handleRemovePlayer, setRosterError]);
 
     // ... (rest of the code remains unchanged)
 
@@ -1598,7 +1628,7 @@ function HomePage() {
         // Set a generic error message if rosterError hasn't been set by the mutation's onError callback.
         setRosterError(t('rosterSettingsModal.errors.addFailed', 'Error adding player {playerName}. Please try again.', { playerName: playerData.name }));
       }
-    }, [masterRosterQueryResultData, handleAddPlayer, t]);
+    }, [masterRosterQueryResultData, handleAddPlayer, t, setRosterError]);
 
     // ... (rest of the code remains unchanged)
 
@@ -1620,7 +1650,7 @@ function HomePage() {
     } catch (error) {
       console.error(`[Page.tsx] Exception during goalie toggle of ${playerId}:`, error);
     }
-  }, [availablePlayers, handleSetGoalieStatus]);
+  }, [availablePlayers, handleSetGoalieStatus, setRosterError, t]);
 
   // --- END Roster Management Handlers ---
 
