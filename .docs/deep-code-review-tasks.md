@@ -3,8 +3,8 @@
 This document captures follow up tasks discovered during a deeper pass over the codebase. The focus is on potential bugs, suboptimal patterns and areas lacking polish.
 
 ## 1. React Hook Dependency Audits
-- [ ] Examine every `useEffect` and `useCallback` in `src/components/HomePage.tsx` for missing dependencies. ESLint currently warns about several omissions (e.g. lines ~738, 961, 1292, 1371, 1517). Fix dependency arrays or restructure callbacks to prevent stale closures.
-- [ ] Enable the `react-hooks/exhaustive-deps` rule project wide to prevent future regressions.
+- [x] Examine every `useEffect` and `useCallback` in `src/components/HomePage.tsx` for missing dependencies. ESLint currently warns about several omissions (e.g. lines ~738, 961, 1292, 1371, 1517). Fix dependency arrays or restructure callbacks to prevent stale closures.
+- [x] Enable the `react-hooks/exhaustive-deps` rule project wide to prevent future regressions.
 
 Manual verification after implementing the above:
   1. Start the development server and ensure the roster and saved games load without errors when visiting the home page.
@@ -14,8 +14,14 @@ Manual verification after implementing the above:
   5. Switch the app language using the language selector to confirm translations still update across the page.
 
 ## 2. Local Storage Utilities
-- [ ] The helpers in `src/utils/localStorage.ts` wrap synchronous APIs in async functions. Evaluate replacing them with direct synchronous calls or a unified wrapper that checks for `window` availability. Remove unnecessary `Promise.resolve`/`Promise.reject` usage.
-- [ ] Harden error handling in `appSettings.ts` and `savedGames.ts` when localStorage fails (e.g. private browsing).
+- [x] The helpers in `src/utils/localStorage.ts` wrap synchronous APIs in async functions. Evaluate replacing them with direct synchronous calls or a unified wrapper that checks for `window` availability. Remove unnecessary `Promise.resolve`/`Promise.reject` usage.
+- [x] Harden error handling in `appSettings.ts` and `savedGames.ts` when localStorage fails (e.g. private browsing).
+
+Manual verification after implementing the above:
+  1. Disable localStorage in the browser's devtools (simulate private mode) and confirm that saving settings displays an error but the app does not crash.
+  2. Create a new game and ensure it still appears in the saved games list after a page reload.
+  3. Import a backup file and verify that overwriting existing data prompts the user for confirmation and succeeds.
+  4. Trigger quota exceeded errors via devtools and confirm graceful error messages are shown for saving games or settings.
 
 ## 3. Game Import Validation
 - [ ] Implement schema validation inside `importGamesFromJson` before persisting data. Use `zod` or similar to ensure each imported object conforms to `AppState`.

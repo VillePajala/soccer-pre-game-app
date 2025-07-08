@@ -6,6 +6,11 @@ import {
   SEASONS_LIST_KEY,
   TOURNAMENTS_LIST_KEY,
 } from '@/config/storageKeys';
+import {
+  getLocalStorageItem,
+  setLocalStorageItem,
+  removeLocalStorageItem,
+} from './localStorage';
 /**
  * Interface for application settings
  */
@@ -31,16 +36,16 @@ const DEFAULT_APP_SETTINGS: AppSettings = {
  */
 export const getAppSettings = async (): Promise<AppSettings> => {
   try {
-    const settingsJson = localStorage.getItem(APP_SETTINGS_KEY);
+    const settingsJson = getLocalStorageItem(APP_SETTINGS_KEY);
     if (!settingsJson) {
-      return Promise.resolve(DEFAULT_APP_SETTINGS);
+      return DEFAULT_APP_SETTINGS;
     }
-    
+
     const settings = JSON.parse(settingsJson);
-    return Promise.resolve({ ...DEFAULT_APP_SETTINGS, ...settings });
+    return { ...DEFAULT_APP_SETTINGS, ...settings };
   } catch (error) {
     console.error('Error getting app settings from localStorage:', error);
-    return Promise.resolve(DEFAULT_APP_SETTINGS); // Resolve with default on error
+    return DEFAULT_APP_SETTINGS; // Fallback to default on error
   }
 };
 
@@ -51,11 +56,11 @@ export const getAppSettings = async (): Promise<AppSettings> => {
  */
 export const saveAppSettings = async (settings: AppSettings): Promise<boolean> => {
   try {
-    localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(settings));
-    return Promise.resolve(true);
+    setLocalStorageItem(APP_SETTINGS_KEY, JSON.stringify(settings));
+    return true;
   } catch (error) {
     console.error('Error saving app settings to localStorage:', error);
-    return Promise.resolve(false);
+    return false;
   }
 };
 
@@ -89,7 +94,7 @@ export const updateAppSettings = async (settingsUpdate: Partial<AppSettings>): P
 export const getCurrentGameIdSetting = async (): Promise<string | null> => {
   // Wait for getAppSettings to resolve
   const settings = await getAppSettings();
-  return Promise.resolve(settings.currentGameId);
+  return settings.currentGameId;
 };
 
 /**
@@ -101,10 +106,10 @@ export const saveCurrentGameIdSetting = async (gameId: string | null): Promise<b
   try {
     // Wait for updateAppSettings to resolve
     await updateAppSettings({ currentGameId: gameId });
-    return Promise.resolve(true);
+    return true;
   } catch {
     // updateAppSettings already logs errors. We indicate failure here.
-    return Promise.resolve(false);
+    return false;
   }
 };
 
@@ -122,11 +127,11 @@ export const getLastHomeTeamName = async (): Promise<string> => {
     }
     
     // Fall back to legacy approach (using dedicated key)
-    const legacyValue = localStorage.getItem(LAST_HOME_TEAM_NAME_KEY);
-    return Promise.resolve(legacyValue || '');
+    const legacyValue = getLocalStorageItem(LAST_HOME_TEAM_NAME_KEY);
+    return legacyValue || '';
   } catch (error) {
     console.error('Error getting last home team name:', error);
-    return Promise.resolve('');
+    return '';
   }
 };
 
@@ -140,11 +145,11 @@ export const saveLastHomeTeamName = async (teamName: string): Promise<boolean> =
     // Save in both the modern way and legacy way for backwards compatibility
     // Wait for updateAppSettings to resolve
     await updateAppSettings({ lastHomeTeamName: teamName });
-    localStorage.setItem(LAST_HOME_TEAM_NAME_KEY, teamName); // Legacy sync save
-    return Promise.resolve(true);
+    setLocalStorageItem(LAST_HOME_TEAM_NAME_KEY, teamName); // Legacy sync save
+    return true;
   } catch (error) {
     console.error('Error saving last home team name:', error);
-    return Promise.resolve(false);
+    return false;
   }
 };
 
@@ -155,19 +160,19 @@ export const saveLastHomeTeamName = async (teamName: string): Promise<boolean> =
 export const resetAppSettings = async (): Promise<boolean> => {
   try {
     // Clear all known keys from localStorage
-    localStorage.removeItem(APP_SETTINGS_KEY);
-    localStorage.removeItem(SAVED_GAMES_KEY);
-    localStorage.removeItem(MASTER_ROSTER_KEY);
-    localStorage.removeItem(SEASONS_LIST_KEY);
-    localStorage.removeItem(TOURNAMENTS_LIST_KEY);
+    removeLocalStorageItem(APP_SETTINGS_KEY);
+    removeLocalStorageItem(SAVED_GAMES_KEY);
+    removeLocalStorageItem(MASTER_ROSTER_KEY);
+    removeLocalStorageItem(SEASONS_LIST_KEY);
+    removeLocalStorageItem(TOURNAMENTS_LIST_KEY);
     // For legacy compatibility, also clear this if it exists
-    localStorage.removeItem(LAST_HOME_TEAM_NAME_KEY);
+    removeLocalStorageItem(LAST_HOME_TEAM_NAME_KEY);
 
     // After clearing, save the default settings back
     const success = await saveAppSettings(DEFAULT_APP_SETTINGS);
-    return Promise.resolve(success);
+    return success;
   } catch (error) {
     console.error('Error resetting app settings:', error);
-    return Promise.resolve(false);
+    return false;
   }
-}; 
+};

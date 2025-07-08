@@ -1,5 +1,9 @@
 import { DEFAULT_GAME_ID } from '@/config/constants';
 import { SAVED_GAMES_KEY } from '@/config/storageKeys';
+import {
+  getLocalStorageItem,
+  setLocalStorageItem,
+} from './localStorage';
 import type { SavedGamesCollection, AppState, GameEvent as PageGameEvent, Point, Opponent, IntervalLog } from '@/types';
 import type { Player } from '@/types';
 
@@ -43,14 +47,14 @@ export interface GameData {
  */
 export const getSavedGames = async (): Promise<SavedGamesCollection> => {
   try {
-    const gamesJson = localStorage.getItem(SAVED_GAMES_KEY);
+    const gamesJson = getLocalStorageItem(SAVED_GAMES_KEY);
     if (!gamesJson) {
-      return Promise.resolve({});
+      return {};
     }
-    return Promise.resolve(JSON.parse(gamesJson) as SavedGamesCollection);
+    return JSON.parse(gamesJson) as SavedGamesCollection;
   } catch (error) {
     console.error('Error getting saved games from localStorage:', error);
-    return Promise.reject(error);
+    throw error;
   }
 };
 
@@ -61,11 +65,11 @@ export const getSavedGames = async (): Promise<SavedGamesCollection> => {
  */
 export const saveGames = async (games: SavedGamesCollection): Promise<void> => {
   try {
-    localStorage.setItem(SAVED_GAMES_KEY, JSON.stringify(games));
-    return Promise.resolve();
+    setLocalStorageItem(SAVED_GAMES_KEY, JSON.stringify(games));
+    return;
   } catch (error) {
     console.error('Error saving games to localStorage:', error);
-    return Promise.reject(error);
+    throw error;
   }
 };
 
@@ -78,16 +82,16 @@ export const saveGames = async (games: SavedGamesCollection): Promise<void> => {
 export const saveGame = async (gameId: string, gameData: unknown): Promise<AppState> => {
   try {
     if (!gameId) {
-      return Promise.reject(new Error('Game ID is required'));
+      throw new Error('Game ID is required');
     }
     
     const allGames = await getSavedGames();
     allGames[gameId] = gameData as AppState;
     await saveGames(allGames);
-    return Promise.resolve(gameData as AppState);
+    return gameData as AppState;
   } catch (error) {
     console.error('Error saving game:', error);
-    return Promise.reject(error);
+    throw error;
   }
 };
 
@@ -99,15 +103,15 @@ export const saveGame = async (gameId: string, gameData: unknown): Promise<AppSt
 export const getGame = async (gameId: string): Promise<AppState | null> => {
   try {
     if (!gameId) {
-      return Promise.resolve(null);
+      return null;
     }
     
     const allGames = await getSavedGames();
     const game = allGames[gameId] ? (allGames[gameId] as AppState) : null;
-    return Promise.resolve(game);
+    return game;
   } catch (error) {
     console.error('Error getting game:', error);
-    return Promise.reject(error);
+    throw error;
   }
 };
 
@@ -180,10 +184,10 @@ export const createGame = async (gameData: Partial<AppState>): Promise<{ gameId:
     };
     
     const result = await saveGame(gameId, newGameAppState);
-    return Promise.resolve({ gameId, gameData: result });
+    return { gameId, gameData: result };
   } catch (error) {
     console.error('Error creating new game:', error);
-    return Promise.reject(error); // Or resolve(null) to match original behavior more closely on error
+    throw error; // Rethrow to indicate failure
   }
 };
 
@@ -194,10 +198,10 @@ export const createGame = async (gameData: Partial<AppState>): Promise<{ gameId:
 export const getAllGameIds = async (): Promise<string[]> => {
   try {
     const allGames = await getSavedGames();
-    return Promise.resolve(Object.keys(allGames));
+    return Object.keys(allGames);
   } catch (error) {
     console.error('Error getting all game IDs:', error);
-    return Promise.reject(error);
+    throw error;
   }
 };
 
@@ -224,10 +228,10 @@ export const getFilteredGames = async (filters: {
       const tournamentMatch = filters.tournamentId === undefined || filters.tournamentId === null || gameData.tournamentId === filters.tournamentId;
       return seasonMatch && tournamentMatch;
     }).map(([id, game]) => [id, game as AppState] as [string, AppState]); // Ensure correct tuple type
-    return Promise.resolve(filtered);
+    return filtered;
   } catch (error) {
     console.error('Error filtering games:', error);
-    return Promise.reject(error);
+    throw error;
   }
 };
 
@@ -270,14 +274,14 @@ export const getLatestGameId = (games: SavedGamesCollection): string | null => {
  * @returns Promise resolving to the updated game data, or null on error
  */
 export const updateGameDetails = async (
-  gameId: string, 
+  gameId: string,
   updateData: Partial<Omit<AppState, 'id' | 'events'>>
 ): Promise<AppState | null> => {
   try {
     const game = await getGame(gameId);
     if (!game) {
       console.warn(`Game with ID ${gameId} not found for update.`);
-      return Promise.resolve(null);
+      return null;
     }
     
     const updatedGame = {
@@ -286,10 +290,10 @@ export const updateGameDetails = async (
     };
     
     // saveGame now returns a Promise<AppState>
-    return saveGame(gameId, updatedGame); 
+    return saveGame(gameId, updatedGame);
   } catch (error) {
     console.error('Error updating game details:', error);
-    return Promise.reject(error); // Or resolve(null)
+    throw error; // Propagate error
   }
 };
 
@@ -304,7 +308,7 @@ export const addGameEvent = async (gameId: string, event: PageGameEvent): Promis
     const game = await getGame(gameId);
     if (!game) {
       console.warn(`Game with ID ${gameId} not found for adding event.`);
-      return Promise.resolve(null);
+      return null;
     }
     
     const updatedGame = {
@@ -315,7 +319,7 @@ export const addGameEvent = async (gameId: string, event: PageGameEvent): Promis
     return saveGame(gameId, updatedGame);
   } catch (error) {
     console.error('Error adding game event:', error);
-    return Promise.reject(error); // Or resolve(null)
+    throw error;
   }
 };
 
@@ -331,13 +335,13 @@ export const updateGameEvent = async (gameId: string, eventIndex: number, eventD
     const game = await getGame(gameId);
     if (!game) {
       console.warn(`Game with ID ${gameId} not found for updating event.`);
-      return Promise.resolve(null);
+      return null;
     }
     
     const events = [...(game.gameEvents || [])];
     if (eventIndex < 0 || eventIndex >= events.length) {
       console.warn(`Event index ${eventIndex} out of bounds for game ${gameId}.`);
-      return Promise.resolve(null);
+      return null;
     }
     
     events[eventIndex] = eventData; // Cast eventData
@@ -350,7 +354,7 @@ export const updateGameEvent = async (gameId: string, eventIndex: number, eventD
     return saveGame(gameId, updatedGame);
   } catch (error) {
     console.error('Error updating game event:', error);
-    return Promise.reject(error); // Or resolve(null)
+    throw error;
   }
 };
 
@@ -365,13 +369,13 @@ export const removeGameEvent = async (gameId: string, eventIndex: number): Promi
     const game = await getGame(gameId);
     if (!game) {
       console.warn(`Game with ID ${gameId} not found for removing event.`);
-      return Promise.resolve(null);
+      return null;
     }
     
     const events = [...(game.gameEvents || [])];
     if (eventIndex < 0 || eventIndex >= events.length) {
       console.warn(`Event index ${eventIndex} out of bounds for game ${gameId}.`);
-      return Promise.resolve(null);
+      return null;
     }
     
     events.splice(eventIndex, 1);
@@ -384,7 +388,7 @@ export const removeGameEvent = async (gameId: string, eventIndex: number): Promi
     return saveGame(gameId, updatedGame);
   } catch (error) {
     console.error('Error removing game event:', error);
-    return Promise.reject(error); // Or resolve(null)
+    throw error;
   }
 };
 
@@ -397,12 +401,12 @@ export const exportGamesAsJson = async (): Promise<string | null> => {
     const allGames = await getSavedGames();
     if (Object.keys(allGames).length === 0) {
       console.log('No games to export.');
-      return Promise.resolve(null); // Or an empty JSON object string like '{}'
+      return null; // Or an empty JSON object string like '{}'
     }
-    return Promise.resolve(JSON.stringify(allGames, null, 2));
+    return JSON.stringify(allGames, null, 2);
   } catch (error) {
     console.error('Error exporting games as JSON:', error);
-    return Promise.reject(error); // Or resolve(null)
+    throw error; // Propagate error
   }
 };
 
@@ -435,13 +439,13 @@ export const importGamesFromJson = async (jsonData: string, overwrite: boolean =
       }
     }
 
-    if (importedCount > 0 || (overwrite && Object.keys(gamesToImport).length > 0) ) { 
+    if (importedCount > 0 || (overwrite && Object.keys(gamesToImport).length > 0) ) {
         await saveGames(gamesToSave);
     }
-    
-    return Promise.resolve(importedCount);
+
+    return importedCount;
   } catch (error) {
     console.error('Error importing games from JSON:', error);
-    return Promise.reject(error); // Or resolve(null)
+    throw error; // Propagate error
   }
 };

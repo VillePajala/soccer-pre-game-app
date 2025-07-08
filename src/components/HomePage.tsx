@@ -50,7 +50,11 @@ import { useTacticalBoard } from '@/hooks/useTacticalBoard';
 import { useRoster } from '@/hooks/useRoster';
 import { useModalContext } from '@/contexts/ModalProvider';
 // Import async localStorage utilities
-import { getLocalStorageItemAsync, setLocalStorageItemAsync, removeLocalStorageItemAsync } from '@/utils/localStorage';
+import {
+  getLocalStorageItem,
+  setLocalStorageItem,
+  removeLocalStorageItem,
+} from '@/utils/localStorage';
 // Import query keys
 import { queryKeys } from '@/config/queryKeys';
 // Also import addSeason and addTournament for the new mutations
@@ -647,18 +651,18 @@ function HomePage() {
 
       // Simple migration for old data keys (if any) - Run once
       try {
-        const oldRosterJson = await getLocalStorageItemAsync('availablePlayers');
+        const oldRosterJson = getLocalStorageItem('availablePlayers');
         if (oldRosterJson) {
           console.log('[EFFECT init] Migrating old roster data...');
-          await setLocalStorageItemAsync(MASTER_ROSTER_KEY, oldRosterJson);
-          await removeLocalStorageItemAsync('availablePlayers');
+          setLocalStorageItem(MASTER_ROSTER_KEY, oldRosterJson);
+          removeLocalStorageItem('availablePlayers');
           // Consider invalidating and refetching masterRoster query here if migration happens
           // queryClient.invalidateQueries(queryKeys.masterRoster);
         }
-        const oldSeasonsJson = await getLocalStorageItemAsync('soccerSeasonsList'); // Another old key
+        const oldSeasonsJson = getLocalStorageItem('soccerSeasonsList'); // Another old key
       if (oldSeasonsJson) {
           console.log('[EFFECT init] Migrating old seasons data...');
-          await setLocalStorageItemAsync(SEASONS_LIST_KEY, oldSeasonsJson); // New key
+          setLocalStorageItem(SEASONS_LIST_KEY, oldSeasonsJson); // New key
           // queryClient.invalidateQueries(queryKeys.seasons);
       }
     } catch (migrationError) {
@@ -706,7 +710,7 @@ function HomePage() {
       if (!isMasterRosterQueryLoading && !areSeasonsQueryLoading && !areTournamentsQueryLoading && !isAllSavedGamesQueryLoading && !isCurrentGameIdSettingQueryLoading) {
         // --- TIMER RESTORATION LOGIC ---
         try {
-          const savedTimerStateJSON = await getLocalStorageItemAsync(TIMER_STATE_KEY);
+          const savedTimerStateJSON = getLocalStorageItem(TIMER_STATE_KEY);
           const lastGameId = currentGameIdSettingQueryResultData;
           
           if (savedTimerStateJSON) {
@@ -719,12 +723,12 @@ function HomePage() {
               dispatchGameSession({ type: 'SET_TIMER_ELAPSED', payload: correctedElapsedSeconds });
               dispatchGameSession({ type: 'SET_TIMER_RUNNING', payload: true });
             } else {
-              await removeLocalStorageItemAsync(TIMER_STATE_KEY);
+              removeLocalStorageItem(TIMER_STATE_KEY);
             }
           }
         } catch (error) {
           console.error('[EFFECT init] Error restoring timer state:', error);
-          await removeLocalStorageItemAsync(TIMER_STATE_KEY);
+          removeLocalStorageItem(TIMER_STATE_KEY);
         }
         // --- END TIMER RESTORATION LOGIC ---
 
@@ -1405,7 +1409,7 @@ function HomePage() {
     console.log(`[handleLoadGame] Attempting to load game: ${gameId}`);
     
     // Clear any existing timer state before loading a new game
-    await removeLocalStorageItemAsync(TIMER_STATE_KEY);
+    removeLocalStorageItem(TIMER_STATE_KEY);
     
     setProcessingGameId(gameId);
     setIsGameLoading(true);

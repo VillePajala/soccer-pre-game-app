@@ -87,7 +87,7 @@ describe('App Settings Utilities', () => {
 
       const result = await getAppSettings();
 
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Error getting app settings'), error);
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Error getting item'), error);
       expect(result).toEqual({
         currentGameId: null,
         lastHomeTeamName: '',
@@ -122,7 +122,7 @@ describe('App Settings Utilities', () => {
       const settings: AppSettings = { currentGameId: 'game123' };
       const result = await saveAppSettings(settings);
 
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Error saving app settings'), error);
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Error setting item'), error);
       expect(result).toBe(false);
       consoleSpy.mockRestore();
     });
