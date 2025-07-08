@@ -24,8 +24,14 @@ Manual verification after implementing the above:
   4. Trigger quota exceeded errors via devtools and confirm graceful error messages are shown for saving games or settings.
 
 ## 3. Game Import Validation
-- [ ] Implement schema validation inside `importGamesFromJson` before persisting data. Use `zod` or similar to ensure each imported object conforms to `AppState`.
-- [ ] Add unit tests covering invalid JSON, missing fields and overwrite behaviour.
+- [x] Implement schema validation inside `importGamesFromJson` before persisting data. Use `zod` or similar to ensure each imported object conforms to `AppState`.
+- [x] Add unit tests covering invalid JSON, missing fields and overwrite behaviour.
+
+Manual verification after implementing the above:
+  1. Attempt to import a JSON file with missing required fields and confirm an error is displayed.
+  2. Import a valid backup file and verify all games appear correctly in the saved games list.
+  3. Try importing a mix of valid and invalid games and ensure the import is rejected with no partial data saved.
+  4. Overwrite an existing game when prompted and confirm the new data replaces the old game.
 
 ## 4. Timer Improvements
 - [ ] `useGameTimer` recreates its interval every second because `timeElapsedInSeconds` is in the dependency list. Refactor to keep a stable interval while running, using a ref for the latest state.
