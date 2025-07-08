@@ -164,7 +164,7 @@
 
 ---
 
-## 9. Collapse **Derived Data & Selectors**
+## 9. Collapse **Derived Data & Selectors** – ✅ Completed
 
 **Tasks**
 - Identify all `useMemo` inside `page.tsx` that compute derived lists (e.g. `playersForCurrentGame`). Move each to the most relevant hook (`useRoster`, `useGameTimer`, etc.).
@@ -189,6 +189,13 @@ Remove obsolete code and make sure the line-count drops below ~300 lines.
 **Unit tests**
 - Update the initial snapshot test from step 0 – it should still match (except for expected prop changes).
 - Run full e2e smoke test: render Home, simulate placing a player, saving a game, and opening GoalLog – no runtime errors.
+
+### Manual testing
+- Launch the dev server and verify the Home page loads without errors.
+- Drag a player from the roster onto the field and confirm the disk appears.
+- Save a game and reload the page to ensure it persists.
+- Open and close each modal from the control bar to confirm they still work.
+- Start the timer and make sure the overlay toggles correctly.
 
 ---
 
