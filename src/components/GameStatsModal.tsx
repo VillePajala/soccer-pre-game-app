@@ -611,27 +611,22 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
     let processedGameIds: string[] = []; // Keep track of games considered for GP calc
 
     if (activeTab === 'currentGame') {
-      // Current game: Initialize from availablePlayers prop
-      availablePlayers.forEach(player => {
+      // Current game: Only include players that were selected
+      const playersInGame = availablePlayers.filter(p => selectedPlayerIds?.includes(p.id));
+      playersInGame.forEach(player => {
           statsMap[player.id] = {
               ...player,
               goals: 0,
               assists: 0,
               totalScore: 0,
-              gamesPlayed: 0,
+              gamesPlayed: 1,
               avgPoints: 0,
           };
       });
 
       relevantGameEvents = localGameEvents || []; // MODIFIED: Use localGameEvents
       if (currentGameId) {
-        processedGameIds = [currentGameId]; // Current game is the only one processed
-         // Update GP for players in the current game
-        selectedPlayerIds?.forEach(playerId => {
-          if (statsMap[playerId]) {
-            statsMap[playerId].gamesPlayed = 1;
-          }
-        });
+        processedGameIds = [currentGameId];
       }
     } else {
       // Handle 'season', 'tournament', 'overall' tabs
@@ -659,14 +654,14 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
         return false; // Default case, should not happen
       });
 
-      // Aggregate views: Build statsMap from players across ALL relevant games first
+      // Aggregate views: Build statsMap from players that actually played
       processedGameIds.forEach(gameId => {
           const game: SavedGame | undefined = savedGames?.[gameId];
-          game?.availablePlayers?.forEach((playerInGame: Player) => {
-              if (!statsMap[playerInGame.id]) {
-                  // Add player to map if not already present
-                  statsMap[playerInGame.id] = {
-                      ...playerInGame, // Use data from the saved game player object
+          game?.selectedPlayerIds?.forEach(playerId => {
+              const playerInGame = game.availablePlayers?.find(p => p.id === playerId);
+              if (playerInGame && !statsMap[playerId]) {
+                  statsMap[playerId] = {
+                      ...playerInGame,
                       goals: 0,
                       assists: 0,
                       totalScore: 0,
@@ -719,7 +714,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
 
     // Filter and sort
     const filteredAndSortedStats = Object.values(statsMap)
-      .filter(player => player.name.toLowerCase().includes(filterText.toLowerCase()));
+      .filter(player => player.gamesPlayed > 0 && player.name.toLowerCase().includes(filterText.toLowerCase()));
 
     // Apply sorting
     if (sortColumn) {
