@@ -4,14 +4,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { FaPlay, FaPause, FaUndo } from 'react-icons/fa'; // Import icons
 import { useTranslation } from 'react-i18next'; // Import translation hook
 import { IntervalLog } from '@/types'; // Import the IntervalLog interface
+import { formatTime } from '@/utils/time';
 
-// Helper function to format time (copied from ControlBar for now)
-// TODO: Consider moving to a shared utility file
-const formatTime = (totalSeconds: number): string => {
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-};
 
 interface TimerOverlayProps {
   timeElapsedInSeconds: number;

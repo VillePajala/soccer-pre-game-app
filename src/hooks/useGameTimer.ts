@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { TIMER_STATE_KEY } from '@/config/storageKeys';
 import {
   removeLocalStorageItem,
@@ -57,52 +57,60 @@ export const useGameTimer = ({ state, dispatch, currentGameId }: UseGameTimerArg
     [dispatch]
   );
 
+  const stateRef = useRef(state);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  stateRef.current = state;
+
   useEffect(() => {
-    let intervalId: NodeJS.Timeout | null = null;
-    const periodEndTimeSeconds = state.currentPeriod * state.periodDurationMinutes * 60;
-
-    const saveTimerState = () => {
-      if (currentGameId) {
-        const timerState = {
-          gameId: currentGameId,
-          timeElapsedInSeconds: state.timeElapsedInSeconds,
-          timestamp: Date.now(),
-        };
-        setLocalStorageItem(TIMER_STATE_KEY, JSON.stringify(timerState));
-      }
-    };
-
     syncWakeLock(state.isTimerRunning);
 
-    if (state.isTimerRunning && state.gameStatus === 'inProgress') {
-      intervalId = setInterval(() => {
-        saveTimerState();
-        const currentTime = state.timeElapsedInSeconds;
-        const potentialNewTime = Math.round(currentTime) + 1;
-        if (potentialNewTime >= periodEndTimeSeconds) {
-          clearInterval(intervalId!);
+    const startInterval = () => {
+      if (intervalRef.current) return;
+      intervalRef.current = setInterval(() => {
+        const s = stateRef.current;
+        const periodEnd = s.currentPeriod * s.periodDurationMinutes * 60;
+        const nextTime = Math.round(s.timeElapsedInSeconds) + 1;
+
+        if (currentGameId) {
+          const timerState = {
+            gameId: currentGameId,
+            timeElapsedInSeconds: nextTime,
+            timestamp: Date.now(),
+          };
+          setLocalStorageItem(TIMER_STATE_KEY, JSON.stringify(timerState));
+        }
+
+        if (nextTime >= periodEnd) {
+          clearInterval(intervalRef.current!);
+          intervalRef.current = null;
           removeLocalStorageItem(TIMER_STATE_KEY);
-          if (state.currentPeriod === state.numberOfPeriods) {
-            dispatch({ type: 'END_PERIOD_OR_GAME', payload: { newStatus: 'gameEnd', finalTime: periodEndTimeSeconds } });
+          if (s.currentPeriod === s.numberOfPeriods) {
+            dispatch({ type: 'END_PERIOD_OR_GAME', payload: { newStatus: 'gameEnd', finalTime: periodEnd } });
           } else {
-            dispatch({ type: 'END_PERIOD_OR_GAME', payload: { newStatus: 'periodEnd', finalTime: periodEndTimeSeconds } });
+            dispatch({ type: 'END_PERIOD_OR_GAME', payload: { newStatus: 'periodEnd', finalTime: periodEnd } });
           }
         } else {
-          dispatch({ type: 'SET_TIMER_ELAPSED', payload: potentialNewTime });
+          dispatch({ type: 'SET_TIMER_ELAPSED', payload: nextTime });
         }
       }, 1000);
+    };
+
+    if (state.isTimerRunning && state.gameStatus === 'inProgress') {
+      startInterval();
     } else {
-      if (intervalId) {
-        clearInterval(intervalId);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
     }
 
     return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
     };
-  }, [state.isTimerRunning, state.gameStatus, state.currentPeriod, state.periodDurationMinutes, state.numberOfPeriods, state.timeElapsedInSeconds, currentGameId, dispatch, syncWakeLock]);
+  }, [state.isTimerRunning, state.gameStatus, state.currentPeriod, state.periodDurationMinutes, state.numberOfPeriods, currentGameId, dispatch, syncWakeLock]);
 
   useEffect(() => {
     const handleVisibilityChange = async () => {

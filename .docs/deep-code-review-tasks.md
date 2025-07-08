@@ -34,8 +34,8 @@ Manual verification after implementing the above:
   4. Overwrite an existing game when prompted and confirm the new data replaces the old game.
 
 ## 4. Timer Improvements
-- [ ] `useGameTimer` recreates its interval every second because `timeElapsedInSeconds` is in the dependency list. Refactor to keep a stable interval while running, using a ref for the latest state.
-- [ ] Consider moving the `formatTime` helper from `TimerOverlay.tsx` to a shared utility module.
+- [x] `useGameTimer` recreates its interval every second because `timeElapsedInSeconds` is in the dependency list. Refactor to keep a stable interval while running, using a ref for the latest state.
+- [x] Consider moving the `formatTime` helper from `TimerOverlay.tsx` to a shared utility module.
 
 ## 5. User Feedback & Logging
 - [ ] Provide visual confirmation when the quick‑save operation succeeds (the TODO near line 1782 of `HomePage.tsx`). A toast notification is sufficient.
