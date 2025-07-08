@@ -93,4 +93,23 @@ describe('exportGames utilities', () => {
     const anchor = (document.createElement as jest.Mock).mock.results[0].value as HTMLAnchorElement;
     expect(anchor.download).toBe('game1.csv');
   });
+
+  it('exportCsv includes only selected players', async () => {
+    const playersWithExtra: Player[] = [
+      ...players,
+      { id: 'p3', name: 'Extra', jerseyNumber: '3', isGoalie: false, receivedFairPlayCard: false },
+    ];
+    const gameWithExtra: AppState = {
+      ...baseGame,
+      availablePlayers: playersWithExtra,
+      selectedPlayerIds: ['p1', 'p2'],
+    };
+
+    exportCsv('game1', gameWithExtra, playersWithExtra, [{ id: 's1', name: 'Season' } as Season], [{ id: 't1', name: 'Tournament' } as Tournament]);
+    const blob = (window.URL.createObjectURL as jest.Mock).mock.calls[0][0] as BlobWithText;
+    const text = await blob.text();
+    expect(text).toContain('Player 1');
+    expect(text).toContain('Player 2');
+    expect(text).not.toContain('Extra');
+  });
 });

@@ -94,12 +94,17 @@ export const exportCsv = (
 
   rows.push('Player Stats');
   rows.push(`${escapeCsvField('Player')}${DELIMITER}${escapeCsvField('Goals')}${DELIMITER}${escapeCsvField('Assists')}${DELIMITER}${escapeCsvField('Points')}${DELIMITER}${escapeCsvField('Fair Play')}`);
-  const playerStats = players.map((p) => {
-    const goals = game.gameEvents.filter((e) => e.type === 'goal' && e.scorerId === p.id).length;
-    const assists = game.gameEvents.filter((e) => e.type === 'goal' && e.assisterId === p.id).length;
-    const totalScore = goals + assists;
-    return { name: p.name, goals, assists, totalScore, fairPlay: p.receivedFairPlayCard };
-  }).sort((a, b) => b.totalScore - a.totalScore || b.goals - a.goals);
+
+  const selectedPlayers = players.filter(p => game.selectedPlayerIds?.includes(p.id));
+
+  const playerStats = selectedPlayers
+    .map((p) => {
+      const goals = game.gameEvents.filter((e) => e.type === 'goal' && e.scorerId === p.id).length;
+      const assists = game.gameEvents.filter((e) => e.type === 'goal' && e.assisterId === p.id).length;
+      const totalScore = goals + assists;
+      return { name: p.name, goals, assists, totalScore, fairPlay: p.receivedFairPlayCard };
+    })
+    .sort((a, b) => b.totalScore - a.totalScore || b.goals - a.goals);
 
   if (playerStats.length > 0) {
     playerStats.forEach((ps) => {
@@ -117,8 +122,12 @@ export const exportCsv = (
     sortedEvents.forEach((event) => {
       const timeFormatted = formatTime(event.time);
       const type = event.type === 'goal' ? 'Goal' : 'Opponent Goal';
-      const scorerName = event.type === 'goal' ? players.find((p) => p.id === event.scorerId)?.name ?? event.scorerId : game.opponentName || 'Opponent';
-      const assisterName = event.type === 'goal' && event.assisterId ? players.find((p) => p.id === event.assisterId)?.name ?? event.assisterId : '';
+      const scorerName = event.type === 'goal'
+        ? selectedPlayers.find((p) => p.id === event.scorerId)?.name ?? event.scorerId
+        : game.opponentName || 'Opponent';
+      const assisterName = event.type === 'goal' && event.assisterId
+        ? selectedPlayers.find((p) => p.id === event.assisterId)?.name ?? event.assisterId
+        : '';
       rows.push(`${escapeCsvField(timeFormatted)}${DELIMITER}${escapeCsvField(type)}${DELIMITER}${escapeCsvField(scorerName)}${DELIMITER}${escapeCsvField(assisterName)}`);
     });
   } else {
@@ -176,16 +185,18 @@ export const exportAggregateCsv = (
     escapeCsvField('FP'),
   ].join(DELIMITER));
 
-  aggregateStats.forEach((player) => {
-    allRows.push([
-      escapeCsvField(player.name),
-      escapeCsvField(player.gamesPlayed),
-      escapeCsvField(player.goals),
-      escapeCsvField(player.assists),
-      escapeCsvField(player.totalScore),
-      escapeCsvField(player.fpAwards ?? 0),
-    ].join(DELIMITER));
-  });
+  aggregateStats
+    .filter((player) => player.gamesPlayed > 0)
+    .forEach((player) => {
+      allRows.push([
+        escapeCsvField(player.name),
+        escapeCsvField(player.gamesPlayed),
+        escapeCsvField(player.goals),
+        escapeCsvField(player.assists),
+        escapeCsvField(player.totalScore),
+        escapeCsvField(player.fpAwards ?? 0),
+      ].join(DELIMITER));
+    });
   allRows.push('');
 
   allRows.push(escapeCsvField('Included Game Details'));
