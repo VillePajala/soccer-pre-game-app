@@ -1,8 +1,9 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 // Use the comprehensive translation files
-import fi from './locales/fi/translation.json';
-import en from './locales/en/translation.json';
+// Load translations from the public folder so all keys are available
+import fi from '../public/locales/fi/common.json';
+import en from '../public/locales/en/common.json';
 
 export const resources = {
   fi: { translation: fi },
