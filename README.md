@@ -72,6 +72,18 @@ The app is designed to be an all-in-one digital assistant for game day, from pre
 
 4.  Open [http://localhost:3000](http://localhost:3000) with your browser to start using the app.
 
+## Running Tests
+
+Install project dependencies with `npm install` as shown above. Then execute the automated test suite with:
+
+```bash
+npm test
+# or
+npm run test:unit
+```
+
+The tests rely on [Jest](https://jestjs.io/) and [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/).
+
 ## Important Notes
 
 *   **Data Storage:** All your data is stored in your browser's `localStorage`. This is fast and enables offline use, but it means clearing your browser data will erase everything. **Use the "Full Backup" feature regularly!**
