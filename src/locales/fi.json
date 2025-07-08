@@ -1,4 +1,13 @@
 {
+  "common": {
+    "save": "Tallenna",
+    "cancel": "Peruuta",
+    "edit": "Muokkaa",
+    "remove": "Poista",
+    "closeButton": "Sulje",
+    "goal": "Maali",
+    "assist": "Syöttäjä"
+  },
   "timerOverlay": {
     "title": "Ajastimen Peittokuva",
     "gameNotStarted": "Peli ei ole alkanut",
