@@ -84,6 +84,9 @@ The app is designed to be an all-in-one digital assistant for game day, from pre
 3. Trigger the language switcher and verify all labels update without page reloads.
 4. Start the game timer and ensure it continues counting even when switching views or modals.
 5. Use the backup export feature and verify a file downloads with your saved games.
+6. Run `npm run generate:i18n-types` and ensure `src/i18n-types.ts` is updated without errors.
+7. Switch the language selector between English and Finnish and confirm all text updates immediately.
+8. Build the project with `npm run build` and open the production build to verify no missing translation warnings appear.
 
 ---
 
