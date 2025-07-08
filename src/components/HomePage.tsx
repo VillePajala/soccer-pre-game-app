@@ -1842,6 +1842,7 @@ function HomePage() {
     setSavedGames,
     resetHistory,
     handleOpenSaveGameModal,
+    showToast,
     gameSessionState // This now covers all migrated game session fields
   ]);
   // --- END Quick Save Handler ---
