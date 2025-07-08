@@ -575,6 +575,16 @@ describe('Saved Games Utilities', () => {
       await expect(importGamesFromJson(invalidJsonData, false)).rejects.toThrow();
     });
 
+    it('should reject if a game fails validation', async () => {
+      const invalidGame = { ...mockGame2_AppState } as any;
+      delete invalidGame.teamName; // required field missing
+      const gamesToImport: SavedGamesCollection = { invalid: invalidGame };
+      const jsonData = JSON.stringify(gamesToImport);
+
+      await expect(importGamesFromJson(jsonData, false)).rejects.toThrow('Invalid game data');
+      expect(localStorageMock.setItem).not.toHaveBeenCalled();
+    });
+
     it('should reject if internal getSavedGames fails', async () => {
       localStorageMock.getItem.mockImplementation(() => { 
         throw new Error('LocalStorage get failure'); 

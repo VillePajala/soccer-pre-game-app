@@ -416,7 +416,12 @@ export const exportGamesAsJson = async (): Promise<string | null> => {
  * @param overwrite - Whether to overwrite existing games with the same ID
  * @returns Promise resolving to the number of games successfully imported, or null on error
  */
-export const importGamesFromJson = async (jsonData: string, overwrite: boolean = false): Promise<number> => {
+import { appStateSchema } from './appStateSchema';
+
+export const importGamesFromJson = async (
+  jsonData: string,
+  overwrite: boolean = false
+): Promise<number> => {
   let importedCount = 0;
   try {
     const gamesToImport = JSON.parse(jsonData) as SavedGamesCollection;
@@ -433,8 +438,11 @@ export const importGamesFromJson = async (jsonData: string, overwrite: boolean =
           console.log(`Skipping import for existing game ID: ${gameId} (overwrite is false).`);
           continue;
         }
-        // TODO: Add validation here to ensure gamesToImport[gameId] conforms to AppState
-        gamesToSave[gameId] = gamesToImport[gameId];
+        const validation = appStateSchema.safeParse(gamesToImport[gameId]);
+        if (!validation.success) {
+          throw new Error(`Invalid game data for ID ${gameId}`);
+        }
+        gamesToSave[gameId] = validation.data;
         importedCount++;
       }
     }
