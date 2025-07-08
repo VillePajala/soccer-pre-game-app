@@ -579,8 +579,8 @@ describe('Saved Games Utilities', () => {
     });
 
     it('should reject if a game fails validation', async () => {
-      const invalidGame: Record<string, unknown> = { ...mockGame2_AppState };
-      delete invalidGame.teamName; // required field missing
+      const invalidGame = { ...mockGame2_AppState } as Record<string, unknown>;
+      delete invalidGame.teamName; // remove required field
       const gamesToImport: SavedGamesCollection = {
         invalid: invalidGame as unknown as AppState,
       };
