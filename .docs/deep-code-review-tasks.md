@@ -14,8 +14,14 @@ Manual verification after implementing the above:
   5. Switch the app language using the language selector to confirm translations still update across the page.
 
 ## 2. Local Storage Utilities
-- [ ] The helpers in `src/utils/localStorage.ts` wrap synchronous APIs in async functions. Evaluate replacing them with direct synchronous calls or a unified wrapper that checks for `window` availability. Remove unnecessary `Promise.resolve`/`Promise.reject` usage.
-- [ ] Harden error handling in `appSettings.ts` and `savedGames.ts` when localStorage fails (e.g. private browsing).
+- [x] The helpers in `src/utils/localStorage.ts` wrap synchronous APIs in async functions. Evaluate replacing them with direct synchronous calls or a unified wrapper that checks for `window` availability. Remove unnecessary `Promise.resolve`/`Promise.reject` usage.
+- [x] Harden error handling in `appSettings.ts` and `savedGames.ts` when localStorage fails (e.g. private browsing).
+
+Manual verification after implementing the above:
+  1. Disable localStorage in the browser's devtools (simulate private mode) and confirm that saving settings displays an error but the app does not crash.
+  2. Create a new game and ensure it still appears in the saved games list after a page reload.
+  3. Import a backup file and verify that overwriting existing data prompts the user for confirmation and succeeds.
+  4. Trigger quota exceeded errors via devtools and confirm graceful error messages are shown for saving games or settings.
 
 ## 3. Game Import Validation
 - [ ] Implement schema validation inside `importGamesFromJson` before persisting data. Use `zod` or similar to ensure each imported object conforms to `AppState`.

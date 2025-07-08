@@ -15,7 +15,7 @@ export const getLocalStorageItem = (key: string): string | null => {
     return storage.getItem(key);
   } catch (error) {
     console.error(`[getLocalStorageItem] Error getting item for key "${key}":`, error);
-    return null;
+    throw error;
   }
 };
 
@@ -26,6 +26,7 @@ export const setLocalStorageItem = (key: string, value: string): void => {
     storage.setItem(key, value);
   } catch (error) {
     console.error(`[setLocalStorageItem] Error setting item for key "${key}":`, error);
+    throw error;
   }
 };
 
@@ -36,6 +37,7 @@ export const removeLocalStorageItem = (key: string): void => {
     storage.removeItem(key);
   } catch (error) {
     console.error(`[removeLocalStorageItem] Error removing item for key "${key}":`, error);
+    throw error;
   }
 };
 
@@ -46,5 +48,6 @@ export const clearLocalStorage = (): void => {
     storage.clear();
   } catch (error) {
     console.error('[clearLocalStorage] Error clearing localStorage:', error);
+    throw error;
   }
 };
