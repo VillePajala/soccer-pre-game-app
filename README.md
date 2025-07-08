@@ -87,6 +87,7 @@ The app is designed to be an all-in-one digital assistant for game day, from pre
 6. Run `npm run generate:i18n-types` and ensure `src/i18n-types.ts` is updated without errors.
 7. Switch the language selector between English and Finnish and confirm all text updates immediately.
 8. Build the project with `npm run build` and open the production build to verify no missing translation warnings appear.
+9. Review the additional [Manual Testing Guide](./MANUAL_TESTING.md) for steps covering score updates, timer resets and modal interactions.
 
 ---
 
