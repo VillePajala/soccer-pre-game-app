@@ -92,6 +92,19 @@
   - Create toggleable formation/tactics views
   - Impact: Streamlines team setup process
 
+### Season & Tournament Management
+- [ ] **Season & Tournament Management Enhancements**
+  - Add fields for default game parameters (location, number of periods, period duration)
+  - Allow setting a date range or list of dates for tournaments
+  - Automatically prefill new games with these settings
+  - Provide an archive toggle for old seasons or tournaments
+  - Enable default roster assignments
+  - Include notes or description fields
+  - Add color or badge customization options
+  - Show quick statistics like total games played and goals scored
+  - Implement import and export of season or tournament setups
+  - Offer calendar (.ics) file generation when dates are defined
+
 ## 🎨 UI/UX Improvements
 
 ### Accessibility
