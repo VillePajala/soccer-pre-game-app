@@ -48,6 +48,7 @@ import { useGameDataQueries } from '@/hooks/useGameDataQueries';
 import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { useTacticalBoard } from '@/hooks/useTacticalBoard';
 import { useRoster } from '@/hooks/useRoster';
+import ModalProvider, { useModalContext } from '@/contexts/ModalProvider';
 // Import async localStorage utilities
 import { getLocalStorageItemAsync, setLocalStorageItemAsync, removeLocalStorageItemAsync } from '@/utils/localStorage';
 // Import query keys
@@ -113,7 +114,7 @@ const initialState: AppState = {
 
 
 
-export default function Home() {
+function HomePage() {
   console.log('--- page.tsx RENDER ---');
   const { t } = useTranslation(); // Get translation function
   const queryClient = useQueryClient(); // Get query client instance
@@ -342,22 +343,33 @@ export default function Home() {
   // <<< ADD: State for home/away status >>>
   const [initialLoadComplete, setInitialLoadComplete] = useState<boolean>(false);
   const [hasSkippedInitialSetup, setHasSkippedInitialSetup] = useState<boolean>(false);
-  const [isGameSettingsModalOpen, setIsGameSettingsModalOpen] = useState<boolean>(false); // <<< ADDED State Declaration
-  const [isLoadGameModalOpen, setIsLoadGameModalOpen] = useState<boolean>(false);
-  const [isRosterModalOpen, setIsRosterModalOpen] = useState<boolean>(false); // State for the new modal
-  const [isSeasonTournamentModalOpen, setIsSeasonTournamentModalOpen] = useState<boolean>(false);
+  const {
+    isGameSettingsModalOpen,
+    setIsGameSettingsModalOpen,
+    isLoadGameModalOpen,
+    setIsLoadGameModalOpen,
+    isRosterModalOpen,
+    setIsRosterModalOpen,
+    isSeasonTournamentModalOpen,
+    setIsSeasonTournamentModalOpen,
+    isTrainingResourcesOpen,
+    setIsTrainingResourcesOpen,
+    isGoalLogModalOpen,
+    setIsGoalLogModalOpen,
+    isGameStatsModalOpen,
+    setIsGameStatsModalOpen,
+    isNewGameSetupModalOpen,
+    setIsNewGameSetupModalOpen,
+    isSaveGameModalOpen,
+    setIsSaveGameModalOpen,
+  } = useModalContext();
   // const [isPlayerStatsModalOpen, setIsPlayerStatsModalOpen] = useState(false);
   const [selectedPlayerForStats, setSelectedPlayerForStats] = useState<Player | null>(null);
 
   // --- Timer State (Still needed here) ---
   const [showLargeTimerOverlay, setShowLargeTimerOverlay] = useState<boolean>(false); // State for overlay visibility
   
-  // --- Modal States (Still needed here) ---
-  const [isTrainingResourcesOpen, setIsTrainingResourcesOpen] = useState<boolean>(false); 
-  const [isGoalLogModalOpen, setIsGoalLogModalOpen] = useState<boolean>(false); 
-  const [isGameStatsModalOpen, setIsGameStatsModalOpen] = useState<boolean>(false);
-  const [isNewGameSetupModalOpen, setIsNewGameSetupModalOpen] = useState<boolean>(false);
-  const [isSaveGameModalOpen, setIsSaveGameModalOpen] = useState<boolean>(false);
+  // --- Modal States handled via context ---
 
   // <<< ADD State to hold player IDs for the next new game >>>
   const [playerIdsForNewGame, setPlayerIdsForNewGame] = useState<string[] | null>(null);
@@ -2556,3 +2568,4 @@ export default function Home() {
     </main>
   );
 }
+export default function Home() { return (<ModalProvider><HomePage /></ModalProvider>); }
