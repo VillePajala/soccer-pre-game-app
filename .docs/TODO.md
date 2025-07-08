@@ -119,7 +119,7 @@
 ## 🌐 Internationalization
 
 ### Language Support
-- [ ] **Finnish Translation Completion**
+- [x] **Finnish Translation Completion**
   - Audit existing Finnish translations
   - Fix remaining English text
   - Update translation key structure
@@ -174,5 +174,19 @@
 - [x] Import Game Data
 - [x] Allow sorting Player Stats table
 - [x] Add filter input for Player Stats
-- [x] Allow editing goal log entries
-- [x] Add Export Functionality (JSON/CSV) 
+- [x] Allow editing goal log entries- [x] Add Export Functionality (JSON/CSV)
+
+## 🚀 Major Roadmap
+
+- **Migrate to IndexedDB**
+  - Replace all remaining localStorage usage with IndexedDB for robust offline storage.
+  - See `Archive/indexeddb-migration-plan.md` for detailed steps.
+
+- **Introduce Supabase Backend**
+  - Add optional user authentication and cloud sync using Supabase.
+  - Keep IndexedDB as the local cache and synchronize on sign in.
+
+- **Player Performance Evaluations**
+  - Add a modal with ten sliders to rate each player after a game.
+  - Store ratings per player and game to build aggregated stats.
+  - Use collected data to generate a player profile/analysis view.
