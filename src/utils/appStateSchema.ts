@@ -72,9 +72,9 @@ export const appStateSchema = z.object({
   subIntervalMinutes: z.number().optional(),
   completedIntervalDurations: z.array(intervalLogSchema).optional(),
   lastSubConfirmationTimeSeconds: z.number().optional(),
-  tacticalDiscs: z.array(tacticalDiscSchema).optional(),
-  tacticalDrawings: z.array(z.array(pointSchema)).optional(),
-  tacticalBallPosition: pointSchema.nullable().optional(),
+  tacticalDiscs: z.array(tacticalDiscSchema),
+  tacticalDrawings: z.array(z.array(pointSchema)),
+  tacticalBallPosition: pointSchema.nullable(),
 });
 
 export type AppStateSchema = typeof appStateSchema;

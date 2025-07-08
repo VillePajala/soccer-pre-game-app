@@ -78,6 +78,9 @@ describe('Saved Games Utilities', () => {
     subIntervalMinutes: 5,
     completedIntervalDurations: [],
     lastSubConfirmationTimeSeconds: 0,
+    tacticalDiscs: [],
+    tacticalDrawings: [],
+    tacticalBallPosition: { relX: 0, relY: 0 },
   };
 
   const mockGame1_AppState: AppState = {
@@ -576,9 +579,11 @@ describe('Saved Games Utilities', () => {
     });
 
     it('should reject if a game fails validation', async () => {
-      const invalidGame = { ...mockGame2_AppState } as any;
+      const invalidGame: Record<string, unknown> = { ...mockGame2_AppState };
       delete invalidGame.teamName; // required field missing
-      const gamesToImport: SavedGamesCollection = { invalid: invalidGame };
+      const gamesToImport: SavedGamesCollection = {
+        invalid: invalidGame as unknown as AppState,
+      };
       const jsonData = JSON.stringify(gamesToImport);
 
       await expect(importGamesFromJson(jsonData, false)).rejects.toThrow('Invalid game data');
