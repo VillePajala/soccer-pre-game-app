@@ -74,12 +74,11 @@ The build process includes a custom manifest generation step that runs before Ne
 All data is stored in browser localStorage. The app includes backup/restore functionality through `src/utils/fullBackup.ts`.
 
 ### Internationalization
-The app supports English and Finnish with i18next. Translation files are in `src/locales/` and `public/locales/`.
+The app supports English and Finnish with i18next. All translation files now live in `public/locales/`.
 
 ### PWA Features
 The app includes install prompts, update notifications, and works offline. The service worker is updated during build to trigger cache updates.
 
 ### Testing Strategy
 - Unit tests for utilities and components
-- Test files are co-located with source files (`.test.tsx` suffix)
-- Jest configuration excludes Playwright specs in `/tests/` directory
+- Test files are co-located with source files (`.test.tsx` suffix)- Jest configuration excludes Playwright specs in `/tests/` directory
