@@ -156,6 +156,17 @@ This document lists the translation keys used in each modal.
 - playerStats.selectPlayer
 - playerStats.selectPlayerLabel
 - playerStats.title
+- playerStats.assists
+- playerStats.gameLog
+- playerStats.gamesPlayed
+- playerStats.gamesPlayed_short
+- playerStats.goals
+- playerStats.noGames
+- playerStats.perGame
+- playerStats.points
+- playerStats.seasonPerformance
+- playerStats.tournamentPerformance
+- playerStats.vs
 
 ## GoalLogModal
 - common.cancel
