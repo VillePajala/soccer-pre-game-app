@@ -11,6 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run lint` - Run ESLint
 - `npm test` - Run all Jest tests (executes `jest`)
 - `npm run test:unit` - Alias for `npm test`
+- `npm run generate:i18n-types` - Generate TypeScript types for translations
 
 ### Build Process
 The build process includes a custom manifest generation step that runs before Next.js build:
@@ -79,6 +80,5 @@ The app supports English and Finnish with i18next. All translation files now liv
 ### PWA Features
 The app includes install prompts, update notifications, and works offline. The service worker is updated during build to trigger cache updates.
 
-### Testing Strategy
-- Unit tests for utilities and components
-- Test files are co-located with source files (`.test.tsx` suffix)- Jest configuration excludes Playwright specs in `/tests/` directory
+### Testing Strategy- Unit tests cover utilities and components and are co-located with source files using the `.test.tsx` suffix
+- The Jest configuration excludes Playwright specs located in the `/tests/` directory

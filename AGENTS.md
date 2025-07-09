@@ -17,3 +17,4 @@ This repository uses Node.js 20, Next.js 15 and React 19 with TypeScript. Follow
 - Include references to relevant documentation or code lines when explaining changes.
 
 For more context on project architecture and commands see `CLAUDE.md` and `README.md`.
+Consult `MANUAL_TESTING.md` for a checklist of key workflows to verify after updates.
