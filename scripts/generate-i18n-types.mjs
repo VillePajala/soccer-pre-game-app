@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync } from 'fs';
 import path from 'path';
 
 const baseLang = 'en';
-const translationPath = path.resolve('src/locales', `${baseLang}.json`);
+const translationPath = path.resolve('public/locales', baseLang, 'common.json');
 const data = JSON.parse(readFileSync(translationPath, 'utf8'));
 
 function flatten(obj, prefix = '') {
