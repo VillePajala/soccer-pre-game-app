@@ -1,44 +1,46 @@
-# App Workflow Screen Recording Transcript
+# App Workflow Screen Recording Script
 
-This transcript outlines a simple walkthrough to showcase the main features of the Soccer Pre-Game app using existing demo data. Follow these steps when recording your phone screen.
+This short script walks through the key features of the Soccer Pre-Game app using your existing demo data. Use it as a guide while recording the phone screen.
 
-## 1. Launch the App
-1. Open the Soccer Pre-Game app from your device's home screen.
-2. From the start page, tap **Load Game** and choose a recently saved match. This loads your pre-existing roster and game settings.
+## 1. Prepare and Launch
+1. Start your device's screen recording.
+2. Open **Soccer Pre-Game** from the home screen.
+3. From the start page, tap **Load Game** and select a recent match.
 
-## 2. Review Team Roster
-1. Open the **Roster** modal to display all players.
-2. Briefly scroll through the list and highlight that the roster is already populated from previous sessions.
+## 2. Review the Roster
+1. Open the **Roster** modal to show the player list.
+2. Scroll briefly to highlight that names and numbers are already filled in.
 3. Close the modal to return to the main screen.
 
-## 3. Start the Game Timer
-1. Tap **Start** to begin the live game clock.
-2. Demonstrate pausing and resuming the timer, then show the large overlay timer for better visibility.
+## 3. Run the Game Clock
+1. Tap **Start** to begin the live timer.
+2. Pause and resume once, then open the large overlay timer for better visibility.
 
-## 4. Log a Few Key Events
-1. Record a goal for your team using the **Add Goal** button and select the scorer and assister.
-2. Show logging an opponent goal and issuing a card from the event menu.
-3. Point out that events appear instantly in the score and timeline.
+## 4. Log Key Events
+1. Record a goal for your team using **Add Goal** and choose the scorer and assister.
+2. Log an opponent goal and demonstrate adding a card from the event menu.
+3. Note how each event instantly updates the score and timeline.
 
-## 5. Use the Substitution Timer
-1. Open **Game Settings** and confirm a substitution interval is set.
-2. Resume the timer and wait for the substitution alert to appear.
-3. Acknowledge the on-screen notification and continue.
+## 5. Show Substitution Reminders
+1. Confirm a substitution interval is set in **Game Settings**.
+2. Resume the timer and wait a moment for the alert.
+3. Acknowledge the on-screen substitution prompt.
 
-## 6. Draw on the Tactics Board
-1. Toggle to the **Tactics** view.
-2. Drag players on the field and draw quick arrows or lines to illustrate a play.
-3. Toggle back to the main game screen.
+## 6. Draw Plays on the Tactics Board
+1. Switch to the **Tactics** tab.
+2. Drag players into position and draw a quick arrow to illustrate a move.
+3. Return to the main game view.
 
-## 7. Check Game Statistics
+## 7. View Statistics
 1. Open the **Stats** modal.
-2. Scroll through player statistics and show switching between game-only and season totals.
+2. Toggle between single-game and season totals to show the aggregated data.
 3. Close the modal when finished.
 
-## 8. Save and Exit
-1. Tap **Quick Save** to store the latest state.
-2. Return to the start page and show that the saved game now appears in the load list.
+## 8. Save Progress and Wrap Up
+1. Tap **Quick Save**.
+2. Return to the start page and show that the saved game appears in the load list.
+3. Stop the screen recording.
 
-> **Tip:** If you need to switch languages, use the language selector in the top bar to demonstrate instant translation updates.
+> **Tip:** Use the language selector in the top bar to demonstrate instant translation updates if desired.
 
-This recording sequence will provide a concise overview of the app's core functionality without recreating data from scratch.
+Following these steps will produce a concise video introducing the app to new users without recreating any data.
