@@ -451,12 +451,12 @@
     "avgPointsShort": "Avg Points Short",
     "away": "Away",
     "cancel": "Cancel",
-    "cancelButton": "Cancel Button",
+    "cancelButton": "Cancel",
     "clear": "Clear",
     "close": "Close",
     "date": "Date",
     "delete": "Delete",
-    "doneButton": "Done Button",
+    "doneButton": "Done",
     "edit": "Edit",
     "error": "Error",
     "exportCsv": "Export Csv",
@@ -518,7 +518,18 @@
   },
   "playerStats": {
     "selectPlayer": "Select Player",
-    "selectPlayerLabel": "Select Player Label",
-    "title": "Title"
+    "selectPlayerLabel": "Select Player",
+    "title": "Player Stats",
+    "assists": "Assists",
+    "gameLog": "Game Log",
+    "gamesPlayed": "Games Played",
+    "gamesPlayed_short": "GP",
+    "goals": "Goals",
+    "noGames": "No game data available.",
+    "perGame": "/ game",
+    "points": "Points",
+    "seasonPerformance": "Season Performance",
+    "tournamentPerformance": "Tournament Performance",
+    "vs": "vs"
   }
 }
