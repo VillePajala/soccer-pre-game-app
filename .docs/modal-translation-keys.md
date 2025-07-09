@@ -152,6 +152,28 @@ This document lists the translation keys used in each modal.
 - gameStatsModal.titleSeason
 - gameStatsModal.titleTournament
 - gameStatsModal.tournamentStats
+- gameStatsModal.assistPrefix
+- gameStatsModal.assistsHeader
+- gameStatsModal.cancelButton
+- gameStatsModal.closeButton
+- gameStatsModal.draw
+- gameStatsModal.editButton
+- gameStatsModal.editNotesButton
+- gameStatsModal.exportExcelButton
+- gameStatsModal.exportJsonButton
+- gameStatsModal.goalsHeader
+- gameStatsModal.losing
+- gameStatsModal.noGoalsLogged
+- gameStatsModal.opponentPlaceholder
+- gameStatsModal.playerHeader
+- gameStatsModal.resetConfirmation
+- gameStatsModal.resetStatsButton
+- gameStatsModal.saveButton
+- gameStatsModal.tapToEdit
+- gameStatsModal.tapToEditScore
+- gameStatsModal.tasoLink
+- gameStatsModal.title
+- gameStatsModal.winning
 - newGameSetupModal.periodsLabel
 - playerStats.selectPlayer
 - playerStats.selectPlayerLabel
@@ -179,6 +201,10 @@ This document lists the translation keys used in each modal.
 - goalLogModal.selectPlaceholder
 - goalLogModal.timeLabel
 - goalLogModal.title
+- goalLogModal.cancelButton
+- goalLogModal.closeButton
+- goalLogModal.logButton
+- goalLogModal.logOpponentButton
 
 ## LoadGameModal
 - common.close
@@ -198,12 +224,29 @@ This document lists the translation keys used in each modal.
 - loadGameModal.noGamesSaved
 - loadGameModal.restoreButton
 - loadGameModal.title
+- loadGameModal.actionsMenuTooltip
+- loadGameModal.closeButton
+- loadGameModal.deleteButtonTooltip
+- loadGameModal.exportAllExcelButton
+- loadGameModal.exportAllExcelError
+- loadGameModal.exportAllExcelTooltip
+- loadGameModal.exportAllJsonButton
+- loadGameModal.exportAllJsonError
+- loadGameModal.exportAllJsonTooltip
+- loadGameModal.exportAllTitle
+- loadGameModal.loadButtonTooltip
+- loadGameModal.loadMenuItem
+- loadGameModal.noGamesToExport
+- loadGameModal.noSavedGames
 
 ## SaveGameModal
 - common.cancel
 - common.save
 - saveGameModal.label
 - saveGameModal.title
+- saveGameModal.cancelButton
+- saveGameModal.placeholder
+- saveGameModal.saveButton
 
 ## TrainingResourcesModal
 - common.doneButton
@@ -224,6 +267,8 @@ This document lists the translation keys used in each modal.
 - trainingResourcesModal.exampleDrills.point3
 - trainingResourcesModal.exampleDrills.title
 - trainingResourcesModal.title
+- trainingResourcesModal.navExampleDrills
+- trainingResourcesModal.navWarmup
 
 ## NewGameSetupModal
 - common.away
@@ -231,6 +276,11 @@ This document lists the translation keys used in each modal.
 - common.close
 - common.error
 - common.home
+- newGameSetupModal.cancelButton
+- newGameSetupModal.dateLabel
+- newGameSetupModal.opponentLabel
+- newGameSetupModal.opponentRequiredAlert
+- newGameSetupModal.startButton
 - newGameSetupModal.addButton
 - newGameSetupModal.cancelCreate
 - newGameSetupModal.confirmAndStart
@@ -296,6 +346,13 @@ This document lists the translation keys used in each modal.
 - rosterSettingsModal.selectedPlayersShort
 - rosterSettingsModal.title
 - rosterSettingsModal.totalPlayersShort
+- rosterSettingsModal.addNewPlayerTitle
+- rosterSettingsModal.goalieStatus
+- rosterSettingsModal.jerseyNumber
+- rosterSettingsModal.notesExist
+- rosterSettingsModal.playerNotes
+- rosterSettingsModal.setGoalie
+- rosterSettingsModal.unsetGoalie
 
 ## SeasonTournamentManagementModal
 - common.cancel
@@ -306,3 +363,5 @@ This document lists the translation keys used in each modal.
 - seasonTournamentModal.newSeasonPlaceholder
 - seasonTournamentModal.newTournamentPlaceholder
 - seasonTournamentModal.title
+- seasonTournamentModal.seasons
+- seasonTournamentModal.tournaments
