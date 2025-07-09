@@ -273,7 +273,7 @@
   "loadGameModal": {
     "title": "Lataa Peli",
     "loadButtonTooltip": "Lataa tämä peli",
-    "deleteButtonTooltip": "Poista tämä tallennettu peli",
+    "deleteButtonTooltip": "Poista tallennettu peli",
     "deleteConfirm": "Haluatko varmasti poistaa tallennetun pelin \"{gameName}\"? Toimintoa ei voi peruuttaa.",
     "noSavedGames": "Tallennettuja pelejä ei löytynyt.",
     "closeButton": "Sulje",
@@ -291,15 +291,23 @@
     "deleteMenuItem": "Poista",
     "exportAllTitle": "Lataa kaikki ottelut",
     "filterPlaceholder": "Suodata nimen, päivämäärän jne. perusteella",
-    "backupButton": "Varmuuskopioi Kaikki",
-    "restoreButton": "Palauta Varmuuskopiosta",
-    "currentlyLoaded": "Currently Loaded",
-    "filterByTooltip": "Filter By Tooltip",
-    "importReadError": "Import Read Error",
-    "loadButton": "Load Button",
-    "loadingGames": "Loading Games",
-    "noGamesMatchFilter": "No Games Match Filter",
-    "noGamesSaved": "No Games Saved"
+    "backupButton": "Varmuuskopioi kaikki",
+    "restoreButton": "Palauta varmuuskopiosta",
+    "currentlyLoaded": "Ladattu",
+    "filterByTooltip": "Suodata {{name}} mukaan",
+    "importReadError": "Virhe luettaessa tiedostoa",
+    "loadButton": "Lataa peli",
+    "loadingGames": "Ladataan pelejä...",
+    "noGamesMatchFilter": "Yhtään peliä ei vastaa suodatinta",
+    "noGamesSaved": "Yhtään peliä ei ole tallennettu",
+    "errors": {
+      "listLoadFailed": "Tallennettujen pelien listan lataus epäonnistui.",
+      "loadFailed": "Pelin lataaminen epäonnistui. Yritä uudelleen.",
+      "notFound": "Tallennettua peliä ei löytynyt: {gameId}",
+      "cannotDeleteDefault": "Et voi poistaa nykyistä tallentamatonta peliä.",
+      "deleteFailedNotFound": "Pelin poistaminen epäonnistui: {gameId}. Peliä ei löytynyt tai tunnus oli virheellinen.",
+      "deleteFailedCatch": "Tallennetun pelin poistaminen epäonnistui: {gameId}. Virhe: {errorMessage}"
+    }
   },
   "newGameSetupModal": {
     "title": "Uuden pelin asetukset",

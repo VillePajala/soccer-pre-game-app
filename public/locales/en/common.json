@@ -302,13 +302,21 @@
     "filterPlaceholder": "Filter by name, date, etc...",
     "backupButton": "Backup All Data",
     "restoreButton": "Restore from Backup",
-    "currentlyLoaded": "Currently Loaded",
-    "filterByTooltip": "Filter By Tooltip",
-    "importReadError": "Import Read Error",
-    "loadButton": "Load Button",
-    "loadingGames": "Loading Games",
-    "noGamesMatchFilter": "No Games Match Filter",
-    "noGamesSaved": "No Games Saved"
+    "currentlyLoaded": "Loaded",
+    "filterByTooltip": "Filter by {{name}}",
+    "importReadError": "Error reading file content.",
+    "loadButton": "Load Game",
+    "loadingGames": "Loading games...",
+    "noGamesMatchFilter": "No saved games match your filter.",
+    "noGamesSaved": "No games have been saved yet.",
+    "errors": {
+      "listLoadFailed": "Failed to load saved games list.",
+      "loadFailed": "Error loading game state. Please try again.",
+      "notFound": "Could not find saved game: {gameId}",
+      "cannotDeleteDefault": "Cannot delete the current unsaved game progress.",
+      "deleteFailedNotFound": "Error deleting game: {gameId}. Game not found or ID was invalid.",
+      "deleteFailedCatch": "Error deleting saved game: {gameId}. Details: {errorMessage}"
+    }
   },
   "newGameSetupModal": {
     "title": "New Game Setup",
