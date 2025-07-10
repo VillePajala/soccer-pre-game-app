@@ -46,7 +46,8 @@ describe('App Settings Utilities', () => {
       expect(result).toEqual({
         currentGameId: null,
         lastHomeTeamName: '',
-        language: 'en'
+        language: 'en',
+        hasSeenAppGuide: false
       });
     });
 
@@ -60,7 +61,8 @@ describe('App Settings Utilities', () => {
       expect(result).toEqual({
         currentGameId: 'game123',
         lastHomeTeamName: 'Team X',
-        language: 'en' // From default settings
+        language: 'en', // From default settings
+        hasSeenAppGuide: false
       });
     });
 
@@ -74,7 +76,8 @@ describe('App Settings Utilities', () => {
       expect(result).toEqual({
         currentGameId: null,
         lastHomeTeamName: '',
-        language: 'en'
+        language: 'en',
+        hasSeenAppGuide: false
       });
       
       consoleSpy.mockRestore();
@@ -91,7 +94,8 @@ describe('App Settings Utilities', () => {
       expect(result).toEqual({
         currentGameId: null,
         lastHomeTeamName: '',
-        language: 'en'
+        language: 'en',
+        hasSeenAppGuide: false
       });
       consoleSpy.mockRestore();
     });
@@ -133,7 +137,8 @@ describe('App Settings Utilities', () => {
       const currentSettings: AppSettings = {
         currentGameId: 'game123',
         lastHomeTeamName: 'Team A',
-        language: 'en'
+        language: 'en',
+        hasSeenAppGuide: false
       };
       localStorageMock.getItem.mockReturnValue(JSON.stringify(currentSettings));
       
@@ -142,7 +147,8 @@ describe('App Settings Utilities', () => {
       expect(result).toEqual({
         currentGameId: 'game456', // Updated
         lastHomeTeamName: 'Team A', // Preserved
-        language: 'en' // Preserved
+        language: 'en', // Preserved
+        hasSeenAppGuide: false
       });
       
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
@@ -150,7 +156,8 @@ describe('App Settings Utilities', () => {
         JSON.stringify({
           currentGameId: 'game456',
           lastHomeTeamName: 'Team A',
-          language: 'en'
+          language: 'en',
+          hasSeenAppGuide: false
         })
       );
     });
@@ -206,7 +213,8 @@ describe('App Settings Utilities', () => {
       const currentSettings: AppSettings = {
         currentGameId: 'oldGameId',
         lastHomeTeamName: 'Team B',
-        language: 'fi'
+        language: 'fi',
+        hasSeenAppGuide: false
       };
       localStorageMock.getItem.mockReturnValue(JSON.stringify(currentSettings));
       // Mock setItem to simulate successful save by updateAppSettings
@@ -217,9 +225,10 @@ describe('App Settings Utilities', () => {
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
         APP_SETTINGS_KEY,
         JSON.stringify({
-          currentGameId: 'newGameId', 
-          lastHomeTeamName: 'Team B', 
-          language: 'fi' 
+          currentGameId: 'newGameId',
+          lastHomeTeamName: 'Team B',
+          language: 'fi',
+          hasSeenAppGuide: false
         })
       );
       expect(result).toBe(true);
@@ -284,7 +293,8 @@ describe('App Settings Utilities', () => {
       const currentSettings: AppSettings = {
         currentGameId: 'game123',
         lastHomeTeamName: 'Old Team Name',
-        language: 'en'
+        language: 'en',
+        hasSeenAppGuide: false
       };
       localStorageMock.getItem.mockReturnValue(JSON.stringify(currentSettings)); // For getAppSettings call in updateAppSettings
       localStorageMock.setItem.mockImplementation(() => {}); // Default successful save
@@ -337,7 +347,8 @@ describe('App Settings Utilities', () => {
         JSON.stringify({
           currentGameId: null,
           lastHomeTeamName: '',
-          language: 'en'
+          language: 'en',
+          hasSeenAppGuide: false
         })
       );
       expect(result).toBe(true);

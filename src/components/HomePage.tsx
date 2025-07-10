@@ -14,6 +14,7 @@ import NewGameSetupModal from '@/components/NewGameSetupModal';
 import RosterSettingsModal from '@/components/RosterSettingsModal';
 import GameSettingsModal from '@/components/GameSettingsModal';
 import SeasonTournamentManagementModal from '@/components/SeasonTournamentManagementModal';
+import InstructionsModal from '@/components/InstructionsModal';
 import { useTranslation } from 'react-i18next';
 import { useGameState, UseGameStateReturn } from '@/hooks/useGameState';
 import GameInfoBar from '@/components/GameInfoBar';
@@ -34,6 +35,8 @@ import { saveGame as utilSaveGame, deleteGame as utilDeleteGame, getLatestGameId
 import {
   saveCurrentGameIdSetting as utilSaveCurrentGameIdSetting,
   resetAppSettings as utilResetAppSettings,
+  getHasSeenAppGuide,
+  saveHasSeenAppGuide,
 } from '@/utils/appSettings';
 import { deleteSeason as utilDeleteSeason, updateSeason as utilUpdateSeason, addSeason as utilAddSeason } from '@/utils/seasons';
 import { deleteTournament as utilDeleteTournament, updateTournament as utilUpdateTournament, addTournament as utilAddTournament } from '@/utils/tournaments';
@@ -375,6 +378,7 @@ function HomePage() {
 
   // --- Timer State (Still needed here) ---
   const [showLargeTimerOverlay, setShowLargeTimerOverlay] = useState<boolean>(false); // State for overlay visibility
+  const [isInstructionsModalOpen, setIsInstructionsModalOpen] = useState<boolean>(false);
   
   // --- Modal States handled via context ---
 
@@ -734,6 +738,11 @@ function HomePage() {
           removeLocalStorageItem(TIMER_STATE_KEY);
         }
         // --- END TIMER RESTORATION LOGIC ---
+
+        const seenGuide = await getHasSeenAppGuide();
+        if (!seenGuide) {
+          setIsInstructionsModalOpen(true);
+        }
 
         // This is now the single source of truth for loading completion.
         setInitialLoadComplete(true);
@@ -1293,6 +1302,13 @@ function HomePage() {
   // Training Resources Modal
   const handleToggleTrainingResources = () => {
     setIsTrainingResourcesOpen(!isTrainingResourcesOpen);
+  };
+
+  const handleToggleInstructionsModal = () => {
+    if (isInstructionsModalOpen) {
+      saveHasSeenAppGuide(true);
+    }
+    setIsInstructionsModalOpen(!isInstructionsModalOpen);
   };
 
   // NEW: Handler for Hard Reset
@@ -2426,14 +2442,19 @@ function HomePage() {
           onToggleTacticsBoard={handleToggleTacticsBoard}
           onAddHomeDisc={() => handleAddTacticalDisc('home')}
           onAddOpponentDisc={() => handleAddTacticalDisc('opponent')}
+          onToggleInstructionsModal={handleToggleInstructionsModal}
         />
       </div>
 
       {/* Modals and Overlays */}
       {/* Training Resources Modal */}
-      <TrainingResourcesModal 
-        isOpen={isTrainingResourcesOpen} 
+      <TrainingResourcesModal
+        isOpen={isTrainingResourcesOpen}
         onClose={handleToggleTrainingResources}
+      />
+      <InstructionsModal
+        isOpen={isInstructionsModalOpen}
+        onClose={handleToggleInstructionsModal}
       />
       {/* Goal Log Modal */}
       <GoalLogModal 
