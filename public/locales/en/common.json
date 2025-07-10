@@ -273,13 +273,6 @@
     "resetCurrentStats": "Reset Current Stats",
     "backButton": "Back"
   },
-  "saveGameModal": {
-    "title": "Save Game As...",
-    "label": "Game Name:",
-    "placeholder": "e.g., vs Lapa FC (Home)",
-    "cancelButton": "Cancel",
-    "saveButton": "Save Game"
-  },
   "loadGameModal": {
     "title": "Load Game",
     "loadButtonTooltip": "Load this game",

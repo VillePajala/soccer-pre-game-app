@@ -264,13 +264,6 @@
     "notesPlaceholder": "Lisää muistiinpanot tähän...",
     "noNotes": "Ei muistiinpanoja"
   },
-  "saveGameModal": {
-    "title": "Tallenna Peli Nimellä...",
-    "label": "Pelin Nimi:",
-    "placeholder": "esim. vs Lapa FC (Koti)",
-    "cancelButton": "Peruuta",
-    "saveButton": "Tallenna Peli"
-  },
   "loadGameModal": {
     "title": "Lataa Peli",
     "loadButtonTooltip": "Lataa tämä peli",
