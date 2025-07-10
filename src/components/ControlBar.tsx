@@ -70,6 +70,7 @@ interface ControlBarProps {
   onToggleTacticsBoard: () => void;
   onAddHomeDisc: () => void;
   onAddOpponentDisc: () => void;
+  onToggleInstructionsModal: () => void;
 }
 
 const ControlBar: React.FC<ControlBarProps> = ({
@@ -100,6 +101,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   onToggleTacticsBoard,
   onAddHomeDisc,
   onAddOpponentDisc,
+  onToggleInstructionsModal,
 }) => {
   const { t, i18n } = useTranslation(); // Standard hook
   logger.log('[ControlBar Render] Received highlightRosterButton prop:', highlightRosterButton); // <<< Log prop value
@@ -239,8 +241,8 @@ const ControlBar: React.FC<ControlBarProps> = ({
         </button>
 
         {/* <<< ADD Game Settings Button >>> */}
-        <button 
-            onClick={onOpenGameSettingsModal} 
+        <button
+            onClick={onOpenGameSettingsModal}
             // Disable if no game is loaded? Keep enabled for consistency?
             // Let's keep it enabled, the modal itself might handle the state.
             // disabled={!isGameLoaded} 
@@ -248,6 +250,14 @@ const ControlBar: React.FC<ControlBarProps> = ({
             title={t('controlBar.gameSettings', 'Game Settings') ?? "Game Settings"}
         >
             <HiOutlineAdjustmentsHorizontal className={iconSize} />
+        </button>
+
+        <button
+          onClick={onToggleInstructionsModal}
+          className={`${baseButtonStyle} ${secondaryColor}`}
+          title={t('controlBar.appGuide') ?? 'App Guide'}
+        >
+            <HiOutlineQuestionMarkCircle className={iconSize} />
         </button>
 
         {/* Toggle Overlay Button */}

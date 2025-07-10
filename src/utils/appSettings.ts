@@ -19,6 +19,7 @@ export interface AppSettings {
   currentGameId: string | null;
   lastHomeTeamName?: string;
   language?: string;
+  hasSeenAppGuide?: boolean;
   // Add other settings as needed
 }
 
@@ -29,6 +30,7 @@ const DEFAULT_APP_SETTINGS: AppSettings = {
   currentGameId: null,
   lastHomeTeamName: '',
   language: 'en',
+  hasSeenAppGuide: false,
 };
 
 /**
@@ -150,6 +152,29 @@ export const saveLastHomeTeamName = async (teamName: string): Promise<boolean> =
     return true;
   } catch (error) {
     logger.error('Error saving last home team name:', error);
+    return false;
+  }
+};
+
+/**
+ * Gets whether the user has seen the app guide
+ * @returns A promise that resolves to true if seen, false otherwise
+ */
+export const getHasSeenAppGuide = async (): Promise<boolean> => {
+  const settings = await getAppSettings();
+  return settings.hasSeenAppGuide ?? false;
+};
+
+/**
+ * Saves the hasSeenAppGuide flag
+ * @param value - Whether the guide has been viewed
+ * @returns A promise that resolves to true if successful, false otherwise
+ */
+export const saveHasSeenAppGuide = async (value: boolean): Promise<boolean> => {
+  try {
+    await updateAppSettings({ hasSeenAppGuide: value });
+    return true;
+  } catch {
     return false;
   }
 };
