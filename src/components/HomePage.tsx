@@ -12,9 +12,11 @@ import LoadGameModal from '@/components/LoadGameModal';
 import NewGameSetupModal from '@/components/NewGameSetupModal';
 import RosterSettingsModal from '@/components/RosterSettingsModal';
 import GameSettingsModal from '@/components/GameSettingsModal';
+import SettingsModal from '@/components/SettingsModal';
 import SeasonTournamentManagementModal from '@/components/SeasonTournamentManagementModal';
 import InstructionsModal from '@/components/InstructionsModal';
 import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
 import { useGameState, UseGameStateReturn } from '@/hooks/useGameState';
 import GameInfoBar from '@/components/GameInfoBar';
 import { useGameTimer } from '@/hooks/useGameTimer';
@@ -36,6 +38,9 @@ import {
   resetAppSettings as utilResetAppSettings,
   getHasSeenAppGuide,
   saveHasSeenAppGuide,
+  getLastHomeTeamName as utilGetLastHomeTeamName,
+  saveLastHomeTeamName as utilSaveLastHomeTeamName,
+  updateAppSettings as utilUpdateAppSettings,
 } from '@/utils/appSettings';
 import { deleteSeason as utilDeleteSeason, updateSeason as utilUpdateSeason, addSeason as utilAddSeason } from '@/utils/seasons';
 import { deleteTournament as utilDeleteTournament, updateTournament as utilUpdateTournament, addTournament as utilAddTournament } from '@/utils/tournaments';
@@ -351,6 +356,17 @@ function HomePage() {
   // <<< ADD: State for home/away status >>>
   const [initialLoadComplete, setInitialLoadComplete] = useState<boolean>(false);
   const [hasSkippedInitialSetup, setHasSkippedInitialSetup] = useState<boolean>(false);
+  const [defaultTeamNameSetting, setDefaultTeamNameSetting] = useState<string>('');
+  const [appLanguage, setAppLanguage] = useState<string>(i18n.language);
+
+  useEffect(() => {
+    utilGetLastHomeTeamName().then((name) => setDefaultTeamNameSetting(name));
+  }, []);
+
+  useEffect(() => {
+    i18n.changeLanguage(appLanguage);
+    utilUpdateAppSettings({ language: appLanguage }).catch(() => {});
+  }, [appLanguage]);
   const {
     isGameSettingsModalOpen,
     setIsGameSettingsModalOpen,
@@ -368,6 +384,8 @@ function HomePage() {
     setIsGameStatsModalOpen,
     isNewGameSetupModalOpen,
     setIsNewGameSetupModalOpen,
+    isSettingsModalOpen,
+    setIsSettingsModalOpen,
   } = useModalContext();
   const { showToast } = useToast();
   // const [isPlayerStatsModalOpen, setIsPlayerStatsModalOpen] = useState(false);
@@ -1797,6 +1815,13 @@ function HomePage() {
     setIsGameSettingsModalOpen(false); // Corrected State Setter
   };
 
+  const handleOpenSettingsModal = () => {
+    setIsSettingsModalOpen(true);
+  };
+  const handleCloseSettingsModal = () => {
+    setIsSettingsModalOpen(false);
+  };
+
   // --- Placeholder Handlers for GameSettingsModal (will be implemented properly later) ---
   const handleGameLocationChange = (location: string) => {
     dispatchGameSession({ type: 'SET_GAME_LOCATION', payload: location });
@@ -2360,6 +2385,7 @@ function HomePage() {
           onOpenRosterModal={openRosterModal}
           onQuickSave={handleQuickSaveGame}
           onOpenGameSettingsModal={handleOpenGameSettingsModal}
+          onOpenSettingsModal={handleOpenSettingsModal}
           isGameLoaded={!!currentGameId && currentGameId !== DEFAULT_GAME_ID}
           onPlaceAllPlayers={handlePlaceAllPlayers}
           highlightRosterButton={highlightRosterButton}
@@ -2537,6 +2563,21 @@ function HomePage() {
         isAddingTournament={addTournamentMutation.isPending}
         timeElapsedInSeconds={timeElapsedInSeconds}
         updateGameDetailsMutation={updateGameDetailsMutation}
+      />
+
+      <SettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={handleCloseSettingsModal}
+        language={appLanguage}
+        onLanguageChange={(lang) => setAppLanguage(lang)}
+        defaultTeamName={defaultTeamNameSetting}
+        onDefaultTeamNameChange={(name) => {
+          setDefaultTeamNameSetting(name);
+          utilSaveLastHomeTeamName(name);
+        }}
+        onResetGuide={() => {
+          saveHasSeenAppGuide(false);
+        }}
       />
     </main>
   );

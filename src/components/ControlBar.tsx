@@ -65,6 +65,7 @@ interface ControlBarProps {
   onPlaceAllPlayers: () => void; // New prop for placing all players on the field
   highlightRosterButton: boolean; // <<< ADD prop for highlighting
   onOpenSeasonTournamentModal: () => void;
+  onOpenSettingsModal: () => void;
   isTacticsBoardView: boolean;
   onToggleTacticsBoard: () => void;
   onAddHomeDisc: () => void;
@@ -95,6 +96,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   onPlaceAllPlayers,
   highlightRosterButton, // <<< Receive prop
   onOpenSeasonTournamentModal,
+  onOpenSettingsModal,
   isTacticsBoardView,
   onToggleTacticsBoard,
   onAddHomeDisc,
@@ -382,11 +384,14 @@ const ControlBar: React.FC<ControlBarProps> = ({
                        {/* Group 5: Settings & Actions (Revised) */}
                        <div className="py-0.5">
                          {/* Language Toggle - Fix translation */}
-                         <button onClick={handleLanguageToggle} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
-                           <HiOutlineLanguage className={menuIconSize} /> 
-                           {t('controlBar.toggleLanguage', i18n.language === 'en' ? 'Switch to Finnish' : 'Vaihda Englantiin')} ({i18n.language === 'en' ? 'FI' : 'EN'})
-                         </button>
-                         {/* Hard Reset */}
+                       <button onClick={handleLanguageToggle} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
+                         <HiOutlineLanguage className={menuIconSize} />
+                         {t('controlBar.toggleLanguage', i18n.language === 'en' ? 'Switch to Finnish' : 'Vaihda Englantiin')} ({i18n.language === 'en' ? 'FI' : 'EN'})
+                       </button>
+                        <button onClick={wrapHandler(onOpenSettingsModal)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
+                          <HiOutlineCog6Tooth className={menuIconSize} /> {t('controlBar.appSettings', 'App Settings')}
+                        </button>
+                        {/* Hard Reset */}
                          <button onClick={wrapHandler(onHardResetApp)} className="w-full flex items-center px-3 py-1.5 text-sm text-red-400 hover:bg-red-900/50">
                            <HiOutlineExclamationTriangle className={menuIconSize} /> {t('controlBar.hardReset', 'Hard Reset App')}
                          </button>

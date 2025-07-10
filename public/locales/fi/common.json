@@ -43,6 +43,7 @@
   "controlBar.gameSettingsButton": "Otteluasetukset",
   "controlBar.manageRoster": "Kokoonpanoasetukset",
   "controlBar.manageSeasonsAndTournaments": "Hallinnoi kausia ja turnauksia",
+  "controlBar.appSettings": "Asetukset",
   "controlBar.rules": "Säännöt",
   "controlBar.coachingMaterials": "Valmennusmateriaalit",
   "controlBar.exportData": "Vie tiedot",
@@ -509,6 +510,13 @@
       "title": "Title"
     },
     "title": "Title"
+  },
+  "settingsModal": {
+    "title": "Sovelluksen asetukset",
+    "languageLabel": "Kieli",
+    "defaultTeamNameLabel": "Oletusjoukkueen nimi",
+    "resetGuideButton": "Näytä opastus uudelleen",
+    "doneButton": "Valmis"
   },
   "playerStats": {
     "selectPlayer": "Valitse pelaaja",

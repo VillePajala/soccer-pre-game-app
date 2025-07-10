@@ -24,3 +24,6 @@ This document outlines the proposed Settings modal for the Soccer Pre-Game App. 
 - Reuse modal patterns from `.docs/STYLE_GUIDE.md` for layout and visual effects.
 - Update `ModalProvider` and `ControlBar.tsx` so the existing settings button opens this modal.
 - Persist all changes through the helpers in `appSettings.ts`.
+
+## Status
+- [x] Implemented basic settings modal allowing language selection and default team name, with reset guide option. Updated layout to follow style guide.
