@@ -1,35 +1,39 @@
 # Product Requirements Document
 
 ## 1. Elevator Pitch
-A mobile-first app for soccer coaches to quickly visualize tactical player positioning and strategies on the field. Coaches can drag and drop named player disks onto a virtual field, reposition them freely, and draw arrows or lines to communicate formations or movement—all designed for fast, on-the-go use before matches. The coach can also toggle player name visibility to reduce visual clutter when needed.
+A mobile-first progressive web app for soccer coaches to manage rosters, log game events and design tactics.  Coaches can drag players onto the field, keep score with a built in timer and record goals or cards as they happen.  Everything is stored locally so the app works offline and remains fast on the sideline.
 
 ## 2. Who is this app for
-This app is for soccer coaches working with youth teams who need a quick, intuitive way to explain player roles and team structure on the field using just their phone or tablet.
+Coaches of youth and amateur teams who need a single tool for pre‑game planning, live event tracking and quick tactical visualization on phones or tablets.
 
 ## 3. Functional Requirements
-- Display a virtual soccer field
-- Allow adding, naming, and storing player disks
-- Enable drag-and-drop functionality to place players on the field
-- Support repositioning players freely
-- Support freehand drawing (e.g., arrows, movement paths)
-- Local device storage for player names and data
+- Visualize player positioning on a drag-and-drop soccer field
+- Maintain a persistent master roster with jersey numbers and goalie status
+- Select available players for each match
+- Log goals, assists and Fair Play cards in real time
+- Track score, period and a running game clock with optional substitution timer
+- View cumulative player statistics by game, season or tournament
+- Export stats to CSV or JSON
+- Save and load complete game states
+- Dedicated tactics board with freehand drawing tools
 - Toggle player name visibility
-- Mobile-first responsive design
-- Optional: future support for saving formations
+- Responsive design for mobile and desktop
+- Offline first using `localStorage`
+- Internationalization for English and Finnish
 
 ## 4. User Stories
-- As a coach, I want to drag player disks from a side menu onto the field.
-- As a coach, I want to rename player disks to match my team’s lineup.
-- As a coach, I want to move player disks freely on the field to explain positioning.
-- As a coach, I want to draw arrows to show strategy or movement paths.
-- As a coach, I want to toggle player names on/off to reduce distraction.
-- As a coach, I want to reset the field quickly to start a new setup.
+- As a coach, I want to manage my roster and select players for today’s match.
+- As a coach, I want to drag players or opponents onto the field and reposition them freely.
+- As a coach, I want to log goals and cards so that stats are accurate later.
+- As a coach, I want to save a game and reload it later for review.
+- As a coach, I want to export season statistics for sharing with parents.
+- As a coach, I want a dedicated tactics board where I can draw quick plays.
 
 ## 5. User Interface
-- A top-down soccer field view as the main canvas
-- A collapsible side menu with customizable player disks
-- Touch-based drag-and-drop for player movement
-- Simple color-coded disks with player names
-- A drawing tool (pen/erase) for arrows and paths
-- Toggle button to show/hide player names
-- Clear/reset button to wipe the field
+- Top bar with timer, score and quick access to modals
+- Collapsible player bar containing draggable roster disks
+- Main soccer field canvas for placing players and drawing
+- Bottom control bar with undo/redo, timer controls and settings
+- Modals for roster management, game stats, save/load and instructions
+- Dedicated tactics view that hides the scoreboard for a clean drawing space
+

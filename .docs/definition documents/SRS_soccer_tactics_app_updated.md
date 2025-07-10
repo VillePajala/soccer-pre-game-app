@@ -1,43 +1,43 @@
 # Software Requirements Specification (SRS)
 
 ## System Design
-- Mobile-first soccer strategy visualization app
-- Interactive drag-and-drop UI with touch support
-- Inline drawing support on canvas for strategy sketching
-- Name visibility toggle for simplifying visuals
-- Minimalist, local-only architecture—no external database
+- Mobile-first PWA for roster management, live stat tracking and tactical drawing
+- Interactive drag-and-drop UI with full touch support
+- Inline drawing tools on the field or in a dedicated tactics board
+- Scoreboard with timer, period tracking and substitution alerts
+- Works completely offline using browser `localStorage`
 
 ## Architecture pattern
-- **Client-side SPA** using Next.js with CSR (Client Side Rendering)
-- Modular component architecture
-- Local storage for persistence
+- **Next.js** App Router with primarily client components
+- React 19 functional components with hooks
+- TanStack Query for data loading from localStorage
+- Modular component and hook architecture
 - Canvas-based rendering for field and drawings
 
 ## State management
-- React `useState` and `useReducer` for:
-  - Player positions
-  - Drawing history
-  - Undo/Redo stack
-  - Name visibility toggle
-- Context API for global access to shared state (optional)
+- React `useState` and `useReducer` with custom hooks
+- TanStack Query caching for roster, seasons, tournaments and saved games
+- Undo/Redo stack maintained via a dedicated hook
+- Context providers for modal state and toasts
 
 ## Data flow
-- Player names initialized from `localStorage`
-- Actions like add/move/draw/toggleNameVisibility trigger state updates
-- Undo/Redo affects in-memory state and optionally localStorage
-- Drawing and player positions never leave the client
+- All data is read and written through utility functions
+- Player, game and settings data persisted in `localStorage`
+- Game events update the score and player stats in real time
+- Undo/Redo operations update in-memory state and history
+- No network requests are required for core features
 
 ## Technical Stack
-- **Framework:** Next.js (with React 18+)
+- **Framework:** Next.js 15
+- **Language:** TypeScript / React 19
 - **Canvas:** HTML5 Canvas API
-- **Styling:** Tailwind CSS or CSS Modules
+- **Styling:** Tailwind CSS
+- **State:** React hooks with TanStack Query
 - **Persistence:** Browser `localStorage`
-- **Optional Libraries:** 
-  - `zustand` or `redux` (for state, if needed)
-  - `fabric.js` (for drawing, optional)
+- **Internationalization:** i18next
 
 ## Authentication Process
-- **None required** – single-user, offline-first application
+- **None** – single user, offline first
 
 ## Route Design
 - `/` : Main app interface
@@ -70,3 +70,4 @@
   }
 }
 ```
+
