@@ -25,6 +25,14 @@ const customJestConfig = {
     '!src/**/*.d.ts',
     '!src/**/*.stories.{js,jsx,ts,tsx}'
   ],
+  coverageThreshold: {
+    global: {
+      branches: 30,
+      functions: 40,
+      lines: 40,
+      statements: 40,
+    },
+  },
   // Add transform for ts-jest if needed, but next/jest should handle it
   // transform: {
   //   '^.+\\.(ts|tsx)$?': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.json' }],
