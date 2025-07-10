@@ -239,15 +239,6 @@ This document lists the translation keys used in each modal.
 - loadGameModal.noGamesToExport
 - loadGameModal.noSavedGames
 
-## SaveGameModal
-- common.cancel
-- common.save
-- saveGameModal.label
-- saveGameModal.title
-- saveGameModal.cancelButton
-- saveGameModal.placeholder
-- saveGameModal.saveButton
-
 ## TrainingResourcesModal
 - common.doneButton
 - matchPreparation.duringGame.points

@@ -56,7 +56,6 @@ interface ControlBarProps {
   onToggleGoalLogModal: () => void; // Add prop for goal modal
   onToggleGameStatsModal: () => void;
   onHardResetApp: () => void; // Add the new prop type
-  // onOpenSaveGameModal: () => void; // REMOVED - Button commented out
   onOpenLoadGameModal: () => void; // NEW PROP
   onStartNewGame: () => void; // CHANGED from onResetGameStats
   onOpenRosterModal: () => void; // Add prop for opening roster modal
@@ -87,7 +86,6 @@ const ControlBar: React.FC<ControlBarProps> = ({
   onToggleGoalLogModal,
   onToggleGameStatsModal,
   onHardResetApp,
-  // onOpenSaveGameModal, // REMOVED
   onOpenLoadGameModal,
   onStartNewGame,
   onOpenRosterModal,

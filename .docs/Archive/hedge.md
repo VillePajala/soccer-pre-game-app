@@ -7,7 +7,7 @@ This document summarizes potential improvements and new feature ideas for the So
 - **Unify the translation system**
   - `src/i18n.ts` merges JSON files with programmatic strings. Consolidating these into a single source would simplify maintenance and reduce missing key issues.
 - **Remove deprecated components**
-  - The TODO list mentions removing `SaveGameModal`. Cleaning up unused code keeps the bundle smaller and easier to navigate.
+  - The TODO list previously mentioned removing `SaveGameModal`. This cleanup has been completed, keeping the bundle smaller and easier to navigate.
 - **Validation utilities**
   - Implement explicit validation functions for player names and jersey numbers to prevent duplicates and maintain data integrity.
 - **Centralized local storage helpers**

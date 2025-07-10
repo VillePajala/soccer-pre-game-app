@@ -101,7 +101,7 @@ This file tracks potential new features and enhancements for the soccer coaching
     *   **Current Thoughts on Timing**: Low priority, as the current system works. Good candidate for a future code quality improvement sprint.
 
 16. **Clean Up Deprecated SaveGameModal**:
-    *   **Status**: Not Implemented
+    *   **Status**: Completed
     *   **Description**: The `SaveGameModal` component and its related code are no longer in use, as the application has moved to using only quick save functionality. This cleanup task involves:
         - Removing the `SaveGameModal.tsx` component
         - Cleaning up related translations in all locale files

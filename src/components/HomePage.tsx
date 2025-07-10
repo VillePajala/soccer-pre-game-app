@@ -8,7 +8,6 @@ import TimerOverlay from '@/components/TimerOverlay';
 import GoalLogModal from '@/components/GoalLogModal';
 import GameStatsModal from '@/components/GameStatsModal';
 import TrainingResourcesModal from '@/components/TrainingResourcesModal';
-import SaveGameModal from '@/components/SaveGameModal';
 import LoadGameModal from '@/components/LoadGameModal';
 import NewGameSetupModal from '@/components/NewGameSetupModal';
 import RosterSettingsModal from '@/components/RosterSettingsModal';
@@ -31,7 +30,7 @@ import {
 // Removed unused import of utilGetMasterRoster
 
 // Import utility functions for seasons and tournaments
-import { saveGame as utilSaveGame, deleteGame as utilDeleteGame, getLatestGameId } from '@/utils/savedGames';
+import { saveGame as utilSaveGame, deleteGame as utilDeleteGame, getLatestGameId, createGame } from '@/utils/savedGames';
 import {
   saveCurrentGameIdSetting as utilSaveCurrentGameIdSetting,
   resetAppSettings as utilResetAppSettings,
@@ -369,8 +368,6 @@ function HomePage() {
     setIsGameStatsModalOpen,
     isNewGameSetupModalOpen,
     setIsNewGameSetupModalOpen,
-    isSaveGameModalOpen,
-    setIsSaveGameModalOpen,
   } = useModalContext();
   const { showToast } = useToast();
   // const [isPlayerStatsModalOpen, setIsPlayerStatsModalOpen] = useState(false);
@@ -388,7 +385,6 @@ function HomePage() {
   // const [showRosterPrompt, setShowRosterPrompt] = useState<boolean>(false);
 
   // State for game saving error (loading state is from saveGameMutation.isLoading)
-  const [gameSaveError, setGameSaveError] = useState<string | null>(null);
 
   // NEW: States for LoadGameModal operations
   const [isLoadingGamesList, setIsLoadingGamesList] = useState(false);
@@ -423,36 +419,6 @@ function HomePage() {
     saveStateToHistory,
   });
 
-  // --- Mutation for Saving Game (Initial definition with mutationFn only) ---
-  const saveGameMutation = useMutation<
-    string, // Return type: gameId successfully saved
-    Error,  // Error type
-    { gameIdToSave: string; snapshot: AppState; gameName: string; /* isOverwrite: boolean; */ } // Variables type
-  >({
-    mutationFn: async ({ gameIdToSave, snapshot }) => {
-      await utilSaveGame(gameIdToSave, snapshot);
-      await utilSaveCurrentGameIdSetting(gameIdToSave);
-      return gameIdToSave;
-    },
-    onSuccess: (savedGameId, variables) => {
-      logger.log('[Mutation Success] Game saved:', savedGameId);
-      queryClient.invalidateQueries({ queryKey: queryKeys.savedGames });
-      queryClient.invalidateQueries({ queryKey: queryKeys.appSettingsCurrentGameId });
-
-      if (variables.gameIdToSave !== currentGameId || currentGameId === DEFAULT_GAME_ID) {
-         setCurrentGameId(variables.gameIdToSave); 
-      }
-      
-      setSavedGames(prev => ({ ...prev, [variables.gameIdToSave]: variables.snapshot }));
-
-      setIsSaveGameModalOpen(false);
-      setGameSaveError(null); 
-    },
-    onError: (error, variables) => {
-      logger.error(`[Mutation Error] Failed to save game ${variables.gameName} (ID: ${variables.gameIdToSave}):`, error);
-      setGameSaveError(t('saveGameModal.errors.saveFailed', 'Error saving game. Please try again.'));
-    },
-  });
   // --- Mutation for Adding a new Season ---
   const addSeasonMutation = useMutation<
     Season | null, // Return type from utilAddSeason
@@ -1327,14 +1293,6 @@ function HomePage() {
 
   
   // Placeholder handlers for Save/Load Modals
-  const handleOpenSaveGameModal = useCallback(() => {
-    logger.log("Opening Save Game Modal...");
-    setIsSaveGameModalOpen(true);
-  }, [setIsSaveGameModalOpen]);
-
-  const handleCloseSaveGameModal = () => {
-    setIsSaveGameModalOpen(false);
-  };
 
   const handleOpenLoadGameModal = () => {
     logger.log("Opening Load Game Modal...");
@@ -1353,75 +1311,6 @@ function HomePage() {
     setIsSeasonTournamentModalOpen(false);
   };
 
-  // Function to handle the actual saving
-  const handleSaveGame = useCallback(async (gameName: string) => {
-    logger.log(`Attempting to save game: '${gameName}'`);
-    
-    let idToSave: string;
-    const isOverwritingExistingLoadedGame = currentGameId && currentGameId !== DEFAULT_GAME_ID;
-
-    if (isOverwritingExistingLoadedGame) {
-      idToSave = currentGameId;
-      logger.log(`Overwriting existing game with ID: ${idToSave}`);
-    } else {
-      idToSave = `game_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-      logger.log(`Saving as new game with ID: ${idToSave}`);
-    }
-
-      const currentSnapshot: AppState = { // Corrected type to AppState
-        // Persisted fields from gameSessionState
-        teamName: gameSessionState.teamName,
-        opponentName: gameSessionState.opponentName,
-        gameDate: gameSessionState.gameDate,
-        homeScore: gameSessionState.homeScore,
-        awayScore: gameSessionState.awayScore,
-        gameNotes: gameSessionState.gameNotes,
-        homeOrAway: gameSessionState.homeOrAway,
-        numberOfPeriods: gameSessionState.numberOfPeriods,
-        periodDurationMinutes: gameSessionState.periodDurationMinutes,
-        currentPeriod: gameSessionState.currentPeriod,
-        gameStatus: gameSessionState.gameStatus,
-        seasonId: gameSessionState.seasonId,
-        tournamentId: gameSessionState.tournamentId,
-        gameLocation: gameSessionState.gameLocation,
-        gameTime: gameSessionState.gameTime,
-        subIntervalMinutes: gameSessionState.subIntervalMinutes,
-        completedIntervalDurations: gameSessionState.completedIntervalDurations,
-        lastSubConfirmationTimeSeconds: gameSessionState.lastSubConfirmationTimeSeconds,
-        showPlayerNames: gameSessionState.showPlayerNames,
-        selectedPlayerIds: gameSessionState.selectedPlayerIds,
-        gameEvents: gameSessionState.gameEvents,
-
-        // Other states
-        playersOnField,
-        opponents,
-        drawings,
-        tacticalDiscs,
-        tacticalDrawings,
-        tacticalBallPosition,
-        availablePlayers: masterRosterQueryResultData || availablePlayers, // Master roster snapshot
-        
-        // Volatile timer states are EXCLUDED.
-      };
-
-    saveGameMutation.mutate({
-      gameName,
-      gameIdToSave: idToSave,
-      snapshot: currentSnapshot as AppState, // Cast to AppState for the util
-    });
-  }, [
-    saveGameMutation,
-    currentGameId,
-    gameSessionState,
-    playersOnField,
-    opponents,
-    drawings,
-    tacticalDiscs,
-    tacticalDrawings,
-    tacticalBallPosition,
-    availablePlayers,
-    masterRosterQueryResultData,
-  ]);
 
   // Function to handle loading a selected game
   const handleLoadGame = async (gameId: string) => {
@@ -1839,11 +1728,49 @@ function HomePage() {
         alert("Error quick saving game.");
       }
     } else {
-      // If no valid current game ID, trigger the "Save As" modal
-      // Note: This case might not be reachable if Quick Save button is only enabled for loaded games,
-      // but kept for robustness.
-      logger.log("No current game ID, opening Save As modal instead for Quick Save.");
-      handleOpenSaveGameModal(); 
+      // If no current game ID, create a new saved game entry
+      try {
+        const newSnapshot: AppState = {
+          playersOnField,
+          opponents,
+          drawings,
+          tacticalDiscs,
+          tacticalDrawings,
+          tacticalBallPosition,
+          availablePlayers: availablePlayers,
+          showPlayerNames: gameSessionState.showPlayerNames,
+          teamName: gameSessionState.teamName,
+          gameEvents: gameSessionState.gameEvents,
+          opponentName: gameSessionState.opponentName,
+          gameDate: gameSessionState.gameDate,
+          homeScore: gameSessionState.homeScore,
+          awayScore: gameSessionState.awayScore,
+          gameNotes: gameSessionState.gameNotes,
+          numberOfPeriods: gameSessionState.numberOfPeriods,
+          periodDurationMinutes: gameSessionState.periodDurationMinutes,
+          currentPeriod: gameSessionState.currentPeriod,
+          gameStatus: gameSessionState.gameStatus,
+          selectedPlayerIds: gameSessionState.selectedPlayerIds,
+          seasonId: gameSessionState.seasonId,
+          tournamentId: gameSessionState.tournamentId,
+          gameLocation: gameSessionState.gameLocation,
+          gameTime: gameSessionState.gameTime,
+          subIntervalMinutes: gameSessionState.subIntervalMinutes,
+          completedIntervalDurations: gameSessionState.completedIntervalDurations,
+          lastSubConfirmationTimeSeconds: gameSessionState.lastSubConfirmationTimeSeconds,
+          homeOrAway: gameSessionState.homeOrAway,
+        };
+
+        const { gameId, gameData } = await createGame(newSnapshot);
+        setSavedGames(prev => ({ ...prev, [gameId]: gameData }));
+        setCurrentGameId(gameId);
+        await utilSaveCurrentGameIdSetting(gameId);
+        resetHistory(gameData);
+        showToast('Game saved!');
+      } catch (error) {
+        logger.error('Failed to save new game:', error);
+        alert('Error quick saving game.');
+      }
     }
   },    [
     currentGameId,
@@ -1857,7 +1784,6 @@ function HomePage() {
     availablePlayers,
     setSavedGames,
     resetHistory,
-    handleOpenSaveGameModal,
     showToast,
     gameSessionState // This now covers all migrated game session fields
   ]);
@@ -2147,7 +2073,7 @@ function HomePage() {
        setPlayerIdsForNewGame(gameSessionState.selectedPlayerIds);  // Use the current selection
     setIsNewGameSetupModalOpen(true); // Open setup modal (moved here for save & continue path)
 
-  }, [t, currentGameId, savedGames, /* handleOpenSaveGameModal, */ handleQuickSaveGame, setIsNewGameSetupModalOpen, 
+  }, [t, currentGameId, savedGames, handleQuickSaveGame, setIsNewGameSetupModalOpen,
       // <<< ADD dependencies >>>
       availablePlayers, gameSessionState.selectedPlayerIds, setPlayerIdsForNewGame
      ]); 
@@ -2496,18 +2422,6 @@ function HomePage() {
           onGameClick={handleGameLogClick}
         />
       )}
-      {/* Save Game Modal */}
-      <SaveGameModal
-        isOpen={isSaveGameModalOpen}
-        onClose={handleCloseSaveGameModal}
-        onSave={handleSaveGame} 
-        teamName={gameSessionState.teamName}
-        opponentName={gameSessionState.opponentName}
-        gameDate={gameSessionState.gameDate}
-        // Pass loading/error state props from useMutation
-        isGameSaving={saveGameMutation.isPending} // CORRECTED: Use isPending for loading state
-        gameSaveError={gameSaveError} 
-      />
       <LoadGameModal 
         isOpen={isLoadGameModalOpen}
         onClose={handleCloseLoadGameModal}
