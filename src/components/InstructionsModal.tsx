@@ -39,8 +39,6 @@ const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, onClose }
             <ul className="list-disc list-inside space-y-1 text-slate-300">
               <li>{t('instructionsModal.playerBar.selectPlayer')}</li>
               <li>{t('instructionsModal.playerBar.deselectPlayer')}</li>
-              <li>{t('instructionsModal.playerBar.renamePlayer')}</li>
-              <li>{t('instructionsModal.playerBar.renameTeam')}</li>
               <li>{t('instructionsModal.playerBar.scrollBar')}</li>
             </ul>
           </section>
@@ -67,7 +65,6 @@ const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, onClose }
               <li>{t('instructionsModal.controlBar.toggleTimerOverlay')}</li>
               <li>{t('instructionsModal.controlBar.timerControls')}</li>
               <li>{t('instructionsModal.controlBar.help')}</li>
-              <li>{t('instructionsModal.controlBar.fullscreen')}</li>
               <li>{t('instructionsModal.controlBar.languageToggle')}</li>
               <li>{t('instructionsModal.controlBar.hardReset')}</li>
               <li>{t('instructionsModal.controlBar.saveGameAs')}</li>
@@ -91,7 +88,6 @@ const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, onClose }
             <ul className="list-disc list-inside space-y-1 text-slate-300">
               <li>{t('instructionsModal.general.touchInteractions')}</li>
               <li>{t('instructionsModal.general.saving')}</li>
-              <li>{t('instructionsModal.general.fullscreen')}</li>
             </ul>
           </section>
         </div>

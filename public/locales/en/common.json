@@ -22,7 +22,6 @@
   "controlBar.settings": "Settings",
   "controlBar.training": "Training",
   "controlBar.logGoal": "Log Goal",
-  "controlBar.fullscreen": "Toggle fullscreen mode.",
   "controlBar.enterFullscreen": "Enter Fullscreen",
   "controlBar.exitFullscreen": "Exit Fullscreen",
   "controlBar.languageToggle": "Switch between English (EN) and Finnish (FI).",
@@ -70,8 +69,6 @@
     "playerBar": {
       "selectPlayer": "Select Player: Tap a player disk to select it for placement.",
       "deselectPlayer": "Deselect Player: Tap the selected player disk again or tap the bar background.",
-      "renamePlayer": "Rename Player: Double-tap/click a player disk.",
-      "renameTeam": "Rename Team: Double-tap/click the team name.",
       "scrollBar": "Scroll Bar: If players overflow, swipe horizontally to scroll."
     },
     "fieldAreaTitle": "Field Area",
@@ -92,14 +89,19 @@
       "toggleTimerOverlay": "Show/hide the large timer/substitution overlay.",
       "timerControls": "Start/Pause/Reset the match timer.",
       "help": "Show/hide these instructions.",
-      "fullscreen": "Toggle fullscreen mode.",
       "languageToggle": "Switch between English (EN) and Finnish (FI).",
       "hardReset": "Hard Reset App",
       "hardResetConfirmation": "Are you sure you want to completely reset the application? All saved data (players, stats, positions) will be permanently lost.",
       "saveGameAs": "Save Game As...",
-      "loadGame": "Load Game..."
+      "loadGame": "Load Game...",
+      "saveGame": "Quick Save the current match.",
+      "stats": "Open match and season statistics.",
+      "manageRoster": "Edit player roster and notes.",
+      "gameSettingsButton": "Adjust match settings.",
+      "manageSeasonsAndTournaments": "Manage seasons and tournaments.",
+      "exportData": "Export saved matches and stats."
     },
-    "timerOverlayTitle": "Timer Overlay",
+    "timerOverlayTitle": "Match Clock Overlay",
     "timerOverlay": {
       "setInterval": "Adjust Sub Interval: Use +/- buttons.",
       "subAlerts": "Sub Alerts: Yellow = 1 min warning, Red = Due.",
@@ -110,8 +112,7 @@
     "generalTitle": "General",
     "general": {
       "touchInteractions": "Touch: Double-tap is used for removing/editing.",
-      "saving": "Saving: All changes are saved automatically to your browser.",
-      "fullscreen": "Fullscreen: Toggle via the control bar button."
+      "saving": "Saving: All changes are saved automatically to your browser."
     }
   },
   "warmup": {

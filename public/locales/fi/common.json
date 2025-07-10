@@ -22,7 +22,6 @@
   "controlBar.settings": "Asetukset",
   "controlBar.training": "Harjoitusmateriaalit",
   "controlBar.logGoal": "Kirjaa maali",
-  "controlBar.fullscreen": "Vaihda koko näytön tilaan.",
   "controlBar.enterFullscreen": "Siirry koko näyttöön",
   "controlBar.exitFullscreen": "Poistu koko näytöstä",
   "controlBar.languageToggle": "Vaihda kieli englannin (EN) ja suomen (FI) välillä.",
@@ -70,8 +69,6 @@
     "playerBar": {
       "selectPlayer": "Valitse pelaaja: Napauta pelaajakiekkoa valitaksesi sen sijoittamista varten.",
       "deselectPlayer": "Poista valinta: Napauta valittua pelaajakiekkoa uudelleen tai napauta palkin taustaa.",
-      "renamePlayer": "Nimeä pelaaja uudelleen: Kaksoisnapauta/napsauta pelaajakiekkoa.",
-      "renameTeam": "Nimeä joukkue uudelleen: Kaksoisnapauta/napsauta joukkueen nimeä.",
       "scrollBar": "Vieritä palkkia: Jos pelaajat ylittävät tilan, vieritä vaakasuunnassa."
     },
     "fieldAreaTitle": "Kenttäalue",
@@ -89,17 +86,22 @@
       "clearDrawings": "Poista kaikki piirretyt viivat.",
       "addOpponent": "Lisää vastustajamerkki kentän keskelle.",
       "resetField": "Tyhjennä kaikki pelaajat, vastustajat ja piirrokset kentältä.",
-      "toggleTimerOverlay": "Näytä/piilota suuri ajastin/vaihto-overlay.",
+      "toggleTimerOverlay": "Näytä/piilota iso ottelukello ja vaihtonäkymä.",
       "timerControls": "Käynnistä/pysäytä/nollaa otteluajastin.",
       "help": "Näytä/piilota nämä ohjeet.",
-      "fullscreen": "Vaihda koko näytön tilaan.",
       "languageToggle": "Vaihda kieli englannin (EN) ja suomen (FI) välillä.",
       "hardReset": "Nollaa Sovellus",
       "hardResetConfirmation": "Haluatko varmasti nollata koko sovelluksen? Kaikki tallennetut tiedot (pelaajat, tilastot, sijainnit) menetetään pysyvästi.",
       "saveGameAs": "Tallenna Peli Nimellä...",
-      "loadGame": "Lataa Peli..."
+      "loadGame": "Lataa Peli...",
+      "saveGame": "Pikatallennus nykyinen peli.",
+      "stats": "Avaa ottelu- ja kausitilastot.",
+      "manageRoster": "Muokkaa kokoonpanoa ja muistiinpanoja.",
+      "gameSettingsButton": "Säädä otteluasetuksia.",
+      "manageSeasonsAndTournaments": "Hallinnoi kausia ja turnauksia.",
+      "exportData": "Vie tallennetut pelit ja tilastot."
     },
-    "timerOverlayTitle": "Ajastin Overlay",
+    "timerOverlayTitle": "Ottelukello",
     "timerOverlay": {
       "setInterval": "Säädä vaihtointervallia: Käytä +/- -painikkeita.",
       "subAlerts": "Vaihtohälytykset: Keltainen = 1 min varoitus, Punainen = Aika.",
@@ -109,8 +111,7 @@
     "generalTitle": "Yleistä",
     "general": {
       "touchInteractions": "Kosketus: Kaksoisnapautusta käytetään poistamiseen/muokkaamiseen.",
-      "saving": "Tallennus: Kaikki muutokset tallennetaan automaattisesti selaimeesi.",
-      "fullscreen": "Koko näyttö: Vaihda ohjauspalkin painikkeella."
+      "saving": "Tallennus: Kaikki muutokset tallennetaan automaattisesti selaimeesi."
     }
   },
   "warmup": {
