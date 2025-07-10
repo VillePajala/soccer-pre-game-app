@@ -44,6 +44,7 @@
   "controlBar.gameSettingsButton": "Game Settings",
   "controlBar.manageRoster": "Manage Roster",
   "controlBar.manageSeasonsAndTournaments": "Manage Seasons & Tournaments",
+  "controlBar.appSettings": "App Settings",
   "controlBar.rules": "Rules",
   "controlBar.coachingMaterials": "Coaching Materials",
   "controlBar.exportData": "Export Data",
@@ -221,7 +222,7 @@
     "cancelButton": "Cancel",
     "gameInfoTitle": "Game Information",
     "opponentPlaceholder": "Opponent Name",
-    "playerStatsTitle": "Player Stats",
+  "playerStatsTitle": "Player Stats",
     "playerHeader": "Player",
     "goalsHeader": "G",
     "assistsHeader": "A",
@@ -517,6 +518,13 @@
       "title": "Title"
     },
     "title": "Title"
+  },
+  "settingsModal": {
+    "title": "App Settings",
+    "languageLabel": "Language",
+    "defaultTeamNameLabel": "Default Team Name",
+    "resetGuideButton": "Reset App Guide",
+    "doneButton": "Done"
   },
   "playerStats": {
     "selectPlayer": "Select Player",

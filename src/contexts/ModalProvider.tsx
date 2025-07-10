@@ -17,6 +17,8 @@ interface ModalContextValue {
   setIsGameStatsModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isNewGameSetupModalOpen: boolean;
   setIsNewGameSetupModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  isSettingsModalOpen: boolean;
+  setIsSettingsModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const ModalContext = createContext<ModalContextValue | undefined>(undefined);
@@ -30,6 +32,7 @@ export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
   const [isGoalLogModalOpen, setIsGoalLogModalOpen] = useState(false);
   const [isGameStatsModalOpen, setIsGameStatsModalOpen] = useState(false);
   const [isNewGameSetupModalOpen, setIsNewGameSetupModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
   const value: ModalContextValue = {
     isGameSettingsModalOpen,
@@ -48,6 +51,8 @@ export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
     setIsGameStatsModalOpen,
     isNewGameSetupModalOpen,
     setIsNewGameSetupModalOpen,
+    isSettingsModalOpen,
+    setIsSettingsModalOpen,
   };
 
   return <ModalContext.Provider value={value}>{children}</ModalContext.Provider>;
