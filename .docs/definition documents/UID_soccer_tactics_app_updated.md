@@ -1,33 +1,36 @@
 # User Interface Design Document
 
 ## Layout Structure
-- Full-screen soccer field as the central canvas.
-- Top horizontal scrollable bar with player disks.
-- Bottom fixed bar with minimal controls (Undo, Redo, Toggle Names, optional Reset).
+- Full-screen soccer field as the primary canvas
+- Top horizontal player bar with draggable roster disks
+- Fixed bottom control bar with Undo, Redo, Timer controls and Settings
+- Overlay timer for large clock display
+- Optional tactics view that hides the score for clean drawing
 
 ## Core Components
-- **Player Disks:** Custom-named circular elements representing players.
-- **Field Canvas:** Touchable area for placing/moving players and drawing.
+- **Player Disks:** Custom-named circular elements representing players
+- **Field Canvas:** Interactive area for placing players and drawing tactics
+- **Info Bar:** Shows team names, current period and score
 - **Bottom Bar Controls:**
-  - Undo
-  - Redo
-  - Toggle Names (show/hide player names)
-  - (Optional) Reset Field
+  - Undo / Redo
+  - Timer start, pause and reset
+  - Toggle player names
+  - Open modals (stats, roster, settings, save/load)
 
 ## Interaction patterns
-- **Tap on a player disk** in the top bar to rename (inline edit).
-- **Drag a disk** from the top bar to place it on the field.
-- **Drag a placed player** to reposition.
-- **Draw by touching and dragging** on any empty field area (freehand arrows/lines).
-- **Undo/Redo** buttons revert drawing or movement steps.
-- **Toggle player names** on or off with a single button press—applies to all players on the field.
+- **Tap a roster disk** to rename or edit jersey number
+- **Drag players** from the bar onto the field or move them to new positions
+- **Draw on the field** to illustrate movement or set pieces
+- **Toggle tactics view** to focus on drawing only
+- **Undo/Redo** revert the latest drawing or movement
+- **Open stats or roster modals** from the control bar
 
 ## Visual Design Elements & Color Scheme
-- Green soccer field with clear lines and zones.
-- Color-coded player disks (e.g., team colors or default blue/red).
-- Thin, smooth freehand lines for drawings (arrows, paths).
-- Clean white or light-gray UI controls with soft shadows.
-- When names are hidden, disks show only color; when visible, names are centered and bold.
+- Green soccer field with clear pitch markings
+- Color-coded player disks for home, away and goalie
+- Smooth freehand lines for drawings
+- Light UI controls with subtle shadows
+- Player names centered and bold when visible
 
 ## Mobile, Web App, Desktop considerations
 - **Mobile-first design** optimized for single-hand use and touch input.
@@ -45,3 +48,4 @@
 - Support for both left- and right-handed users (drag from top center).
 - Font sizes and contrast adhere to WCAG AA minimums.
 - Name toggle state is programmatically labeled for screen readers.
+

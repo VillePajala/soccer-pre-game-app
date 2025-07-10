@@ -12,6 +12,7 @@ We've already made progress in centralizing data access for certain entities:
 
 - ✅ Refactored seasons and tournaments to use utility functions instead of direct localStorage access
 - ✅ Centralized type definitions for Season and Tournament in the types directory
+- ✅ Converted data utilities to async functions and integrated TanStack Query for loading and mutations
 
 ## Refactoring Steps
 
@@ -191,3 +192,4 @@ We've already made progress in centralizing data access for certain entities:
 1. **Component Refactoring Completion**: Finish refactoring any remaining components (if any, outside of `page.tsx` and already reviewed modals) to use the utility layer and ensure they all have proper test coverage.
 2. **Begin Async Transition (Supabase Specifics)**: While utility functions are async, the next phase of this would be planning the Supabase client integration and how these utilities will call Supabase methods.
 3. **Testing Strategy**: Continue implementing comprehensive tests to ensure stability during migration. Use mocks for utility functions to test components in isolation. 
+
