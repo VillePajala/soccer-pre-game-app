@@ -387,6 +387,7 @@ export type TranslationKey =
   | 'playerStats.selectPlayer'
   | 'playerStats.selectPlayerLabel'
   | 'playerStats.title'
+  | 'playerStats.totalsRow'
   | 'playerStats.tournamentPerformance'
   | 'playerStats.vs'
   | 'rosterSettingsModal.addNewPlayerTitle'

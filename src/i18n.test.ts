@@ -43,6 +43,7 @@ const testResources = {
       "common.opponentGoal": "Opponent Goal",
       "common.assist": "Assist: {{player}}",
       "common.notSet": "Not Set",
+      "playerStats.totalsRow": "Totals"
       // Add any other keys used in GameStatsModal or its tests
     }
   },
@@ -61,9 +62,9 @@ const testResources = {
       "gameStatsModal.editGoalTooltip": "Muokkaa Maalia",
       "gameStatsModal.deleteGoalTooltip": "Poista Maali",
       "gameStatsModal.saveGoalTooltip": "Tallenna Maali",
-      "gameStatsModal.cancelEditGoalTooltip": "Peruuta Muokkaus", "gameStatsModal.confirmDeleteEvent": "Haluatko varmasti poistaa t�m�n tapahtuman?",
+      "gameStatsModal.cancelEditGoalTooltip": "Peruuta Muokkaus", "gameStatsModal.confirmDeleteEvent": "Haluatko varmasti poistaa tämän tapahtuman?",
       "common.opponent": "Vastustaja",
-      "common.date": "Päivämäärä",
+      "common.date": "PÃ¤ivÃ¤mÃ¤Ã¤rÃ¤",
       "common.location": "Paikka",
       "common.time": "Aika",
       "common.home": "Koti",
@@ -83,8 +84,9 @@ const testResources = {
       "common.fp": "FP",
       "common.goal": "Maali",
       "common.opponentGoal": "Vastustajan Maali",
-      "common.assist": "Syöttäjä: {{player}}",
+      "common.assist": "SyÃ¶ttÃ¤jÃ¤: {{player}}",
       "common.notSet": "Ei asetettu",
+      "playerStats.totalsRow": "Yhteensä",
     }
   },
   // Add other languages if needed for specific tests

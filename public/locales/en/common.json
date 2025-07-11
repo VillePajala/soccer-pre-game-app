@@ -549,6 +549,7 @@
     "points": "Points",
     "seasonPerformance": "Season Performance",
     "tournamentPerformance": "Tournament Performance",
-    "vs": "vs"
+    "vs": "vs",
+    "totalsRow": "Totals"
   }
 }

@@ -215,6 +215,20 @@ describe('GameStatsModal', () => {
     expect(aliceRow).toHaveTextContent('1');    // Total Points
   });
 
+  test('shows totals row with aggregated stats', async () => {
+    await act(async () => {
+      renderComponent(getDefaultProps());
+    });
+
+    const totalsRow = screen.getByText(i18n.t('playerStats.totalsRow'));
+    const cells = totalsRow.closest('tr')!.querySelectorAll('td');
+    expect(cells[1]).toHaveTextContent('3'); // games played total
+    expect(cells[2]).toHaveTextContent('2'); // goals total
+    expect(cells[3]).toHaveTextContent('1'); // assists total
+    expect(cells[4]).toHaveTextContent('3'); // total score
+    expect(cells[5]).toHaveTextContent('1.0'); // average points
+  });
+
   test('displays game event log correctly', async () => {
     await act(async () => {
       renderComponent(getDefaultProps());
