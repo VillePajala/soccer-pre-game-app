@@ -22,6 +22,18 @@ describe('App Settings Utilities', () => {
     key: jest.fn()
   };
 
+  const defaultSettings: AppSettings = {
+    currentGameId: null,
+    lastHomeTeamName: '',
+    language: 'en',
+    hasSeenAppGuide: false,
+    encryptionEnabled: false,
+    encryptionPassphrase: '',
+    autoBackupEnabled: false,
+    backupIntervalDays: 1,
+    lastBackupAt: ''
+  };
+
   // Replace global localStorage with mock
   Object.defineProperty(window, 'localStorage', {
     value: localStorageMock
@@ -43,12 +55,7 @@ describe('App Settings Utilities', () => {
       const result = await getAppSettings();
       
       expect(localStorageMock.getItem).toHaveBeenCalledWith(APP_SETTINGS_KEY);
-      expect(result).toEqual({
-        currentGameId: null,
-        lastHomeTeamName: '',
-        language: 'en',
-        hasSeenAppGuide: false
-      });
+      expect(result).toEqual(defaultSettings);
     });
 
     it('should return merged settings if stored settings exist', async () => {
@@ -59,10 +66,9 @@ describe('App Settings Utilities', () => {
       
       expect(localStorageMock.getItem).toHaveBeenCalledWith(APP_SETTINGS_KEY);
       expect(result).toEqual({
+        ...defaultSettings,
         currentGameId: 'game123',
-        lastHomeTeamName: 'Team X',
-        language: 'en', // From default settings
-        hasSeenAppGuide: false
+        lastHomeTeamName: 'Team X'
       });
     });
 
@@ -73,12 +79,7 @@ describe('App Settings Utilities', () => {
       const result = await getAppSettings();
       
       expect(consoleSpy).toHaveBeenCalled();
-      expect(result).toEqual({
-        currentGameId: null,
-        lastHomeTeamName: '',
-        language: 'en',
-        hasSeenAppGuide: false
-      });
+      expect(result).toEqual(defaultSettings);
       
       consoleSpy.mockRestore();
     });
@@ -91,12 +92,7 @@ describe('App Settings Utilities', () => {
       const result = await getAppSettings();
 
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Error getting item'), error);
-      expect(result).toEqual({
-        currentGameId: null,
-        lastHomeTeamName: '',
-        language: 'en',
-        hasSeenAppGuide: false
-      });
+      expect(result).toEqual(defaultSettings);
       consoleSpy.mockRestore();
     });
   });
@@ -135,29 +131,26 @@ describe('App Settings Utilities', () => {
   describe('updateAppSettings', () => {
     it('should update only specified settings and return updated settings', async () => {
       const currentSettings: AppSettings = {
+        ...defaultSettings,
         currentGameId: 'game123',
-        lastHomeTeamName: 'Team A',
-        language: 'en',
-        hasSeenAppGuide: false
+        lastHomeTeamName: 'Team A'
       };
       localStorageMock.getItem.mockReturnValue(JSON.stringify(currentSettings));
       
       const result = await updateAppSettings({ currentGameId: 'game456' });
       
       expect(result).toEqual({
+        ...defaultSettings,
         currentGameId: 'game456', // Updated
-        lastHomeTeamName: 'Team A', // Preserved
-        language: 'en', // Preserved
-        hasSeenAppGuide: false
+        lastHomeTeamName: 'Team A' // Preserved
       });
       
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
         APP_SETTINGS_KEY,
         JSON.stringify({
+          ...defaultSettings,
           currentGameId: 'game456',
-          lastHomeTeamName: 'Team A',
-          language: 'en',
-          hasSeenAppGuide: false
+          lastHomeTeamName: 'Team A'
         })
       );
     });
@@ -211,10 +204,10 @@ describe('App Settings Utilities', () => {
   describe('saveCurrentGameIdSetting', () => {
     it('should update only the current game ID setting and return true', async () => {
       const currentSettings: AppSettings = {
+        ...defaultSettings,
         currentGameId: 'oldGameId',
         lastHomeTeamName: 'Team B',
-        language: 'fi',
-        hasSeenAppGuide: false
+        language: 'fi'
       };
       localStorageMock.getItem.mockReturnValue(JSON.stringify(currentSettings));
       // Mock setItem to simulate successful save by updateAppSettings
@@ -225,10 +218,10 @@ describe('App Settings Utilities', () => {
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
         APP_SETTINGS_KEY,
         JSON.stringify({
+          ...defaultSettings,
           currentGameId: 'newGameId',
           lastHomeTeamName: 'Team B',
-          language: 'fi',
-          hasSeenAppGuide: false
+          language: 'fi'
         })
       );
       expect(result).toBe(true);
@@ -291,10 +284,9 @@ describe('App Settings Utilities', () => {
   describe('saveLastHomeTeamName', () => {
     it('should save to both app settings and legacy location and return true', async () => {
       const currentSettings: AppSettings = {
+        ...defaultSettings,
         currentGameId: 'game123',
-        lastHomeTeamName: 'Old Team Name',
-        language: 'en',
-        hasSeenAppGuide: false
+        lastHomeTeamName: 'Old Team Name'
       };
       localStorageMock.getItem.mockReturnValue(JSON.stringify(currentSettings)); // For getAppSettings call in updateAppSettings
       localStorageMock.setItem.mockImplementation(() => {}); // Default successful save
@@ -309,8 +301,8 @@ describe('App Settings Utilities', () => {
       if (appSettingsCall) {
         const savedSettings = JSON.parse(appSettingsCall[1]);
         expect(savedSettings).toEqual({
-          ...currentSettings, // Ensure other settings are preserved
-          lastHomeTeamName: 'New Team Name' // The updated value
+          ...currentSettings,
+          lastHomeTeamName: 'New Team Name'
         });
       }
 
@@ -344,12 +336,7 @@ describe('App Settings Utilities', () => {
       
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
         APP_SETTINGS_KEY,
-        JSON.stringify({
-          currentGameId: null,
-          lastHomeTeamName: '',
-          language: 'en',
-          hasSeenAppGuide: false
-        })
+        JSON.stringify(defaultSettings)
       );
       expect(result).toBe(true);
     });

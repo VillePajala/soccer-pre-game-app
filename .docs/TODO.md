@@ -197,7 +197,6 @@
   - Add optional user authentication and cloud sync using Supabase.
   - Keep localStorage as the local cache and synchronize on sign in.
 
-- **Player Performance Evaluations**
-  - Add a modal with ten sliders to rate each player after a game.
-  - Store ratings per player and game to build aggregated stats.
-  - Use collected data to generate a player profile/analysis view.
+- [x] **Player Performance Evaluations**
+  - Implemented full Player Assessment modal with per-player save and expanded metrics.
+  - Ratings are stored with each game for future profile generation.
