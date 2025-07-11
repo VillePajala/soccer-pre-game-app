@@ -39,9 +39,15 @@ describe('<SettingsModal />', () => {
     expect(defaultProps.onClose).toHaveBeenCalled();
   });
 
-  test('calls onHardResetApp when Hard Reset button clicked', () => {
+  test('requires typing RESET before Hard Reset', () => {
     render(<SettingsModal {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: /Hard Reset App/i }));
+    const resetBtn = screen.getByRole('button', { name: /Hard Reset App/i });
+    expect(resetBtn).toBeDisabled();
+    fireEvent.change(
+      screen.getByLabelText('Type RESET to confirm'),
+      { target: { value: 'RESET' } }
+    );
+    fireEvent.click(resetBtn);
     expect(defaultProps.onHardResetApp).toHaveBeenCalled();
   });
 });

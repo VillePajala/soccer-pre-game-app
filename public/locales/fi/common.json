@@ -517,7 +517,12 @@
     "defaultTeamNameLabel": "Oletusjoukkueen nimi",
     "resetGuideButton": "Näytä opastus uudelleen",
     "hardResetButton": "Nollaa Sovellus",
-    "doneButton": "Valmis"
+    "doneButton": "Valmis",
+    "aboutTitle": "Tietoja",
+    "appVersion": "Sovelluksen versio",
+    "documentationLink": "Dokumentaatio",
+    "dangerZoneTitle": "Vaaravyöhyke",
+    "confirmResetLabel": "Kirjoita RESET vahvistaaksesi"
   },
   "playerStats": {
     "selectPlayer": "Valitse pelaaja",

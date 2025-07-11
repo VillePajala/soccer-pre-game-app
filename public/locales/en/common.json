@@ -525,7 +525,12 @@
     "defaultTeamNameLabel": "Default Team Name",
     "resetGuideButton": "Reset App Guide",
     "hardResetButton": "Hard Reset App",
-    "doneButton": "Done"
+    "doneButton": "Done",
+    "aboutTitle": "About",
+    "appVersion": "App Version",
+    "documentationLink": "Documentation",
+    "dangerZoneTitle": "Danger Zone",
+    "confirmResetLabel": "Type RESET to confirm"
   },
   "playerStats": {
     "selectPlayer": "Select Player",
