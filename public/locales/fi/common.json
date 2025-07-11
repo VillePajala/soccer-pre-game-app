@@ -538,6 +538,18 @@
     "saveButton": "Tallenna",
     "noPlayers": "Ei valittuja pelaajia"
   },
+  "assessmentMetrics": {
+    "intensity": "Intensiteetti",
+    "courage": "Rohkeus",
+    "duels": "Kaksinkamppailut",
+    "technique": "Tekniikka",
+    "creativity": "Luovuus",
+    "decisions": "Päätöksenteko",
+    "awareness": "Pelitaju",
+    "teamwork": "Joukkuepeli",
+    "fair_play": "Reilu peli",
+    "impact": "Vaikuttavuus"
+  },
   "playerStats": {
     "selectPlayer": "Valitse pelaaja",
     "selectPlayerLabel": "Valitse pelaaja",
@@ -553,6 +565,9 @@
     "seasonPerformance": "Kausisuoritus",
     "tournamentPerformance": "Turnaussuoritus",
     "vs": "vs",
-    "totalsRow": "Yhteensä"
+    "totalsRow": "Yhteensä",
+    "performanceRatings": "Suoritusarviot",
+    "avgRating": "Keskiarvo",
+    "ratedGames": "Arvioituja"
   }
 }

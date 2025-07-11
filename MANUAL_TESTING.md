@@ -10,5 +10,6 @@ Use this short checklist to manually verify key workflows after making changes t
 6. **Assess players after a game** – After ending a game, open the Player Assessment modal via the new button. Adjust a slider for a player, tap **Save**, then close and reopen the modal to confirm the rating was stored.
 7. **Try new assessment UI** – Expand a player card and verify the segmented overall selector, sliders and notes input work. Saving should collapse the card and show a checkmark.
 8. **Review assessment progress** – Save ratings for multiple players and ensure the header progress updates and saved players show a ✔ icon.
+9. **Check performance averages** – Open a player's stats page and confirm the new Performance Ratings section shows average slider values and number of rated games. In Game Stats, open the Overall tab to see team rating averages.
 
 Running through these steps after updates helps catch regressions before deploying.

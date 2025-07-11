@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { TranslationKey } from '@/i18n-types';
 import logger from '@/utils/logger';
 // Import types from the types directory
 import { Player, PlayerStatRow, Season, Tournament } from '@/types';
@@ -15,6 +16,7 @@ import { getSeasons as utilGetSeasons } from '@/utils/seasons';
 import { getTournaments as utilGetTournaments } from '@/utils/tournaments';
 import { FaSort, FaSortUp, FaSortDown, FaEdit, FaSave, FaTimes, FaTrashAlt } from 'react-icons/fa';
 import PlayerStatsView from './PlayerStatsView';
+import { calculateTeamAssessmentAverages } from '@/utils/assessmentStats';
 
 // Define the type for sortable columns
 type SortableColumn = 'name' | 'goals' | 'assists' | 'totalScore' | 'fpAwards' | 'gamesPlayed' | 'avgPoints';
@@ -335,6 +337,11 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
         averageGoalsFor: goalsFor / gamesPlayed,
         averageGoalsAgainst: goalsAgainst / gamesPlayed,
     };
+  }, [activeTab, savedGames]);
+
+  const teamAssessmentAverages = useMemo(() => {
+    if (activeTab !== 'overall') return null;
+    return calculateTeamAssessmentAverages(savedGames);
   }, [activeTab, savedGames]);
 
   // ADD calculation for tournament/season statistics
@@ -1025,6 +1032,22 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                           <div className="text-yellow-400 font-bold">{overallTeamStats.averageGoalsAgainst.toFixed(1)}</div>
                         </div>
                       </div>
+                      {teamAssessmentAverages && (
+                        <div className="mt-4">
+                          <h4 className="text-md font-semibold mb-2">{t('playerStats.performanceRatings', 'Performance Ratings')}</h4>
+                          <div className="space-y-1 text-sm">
+                            {Object.entries(teamAssessmentAverages.averages).map(([metric, avg]) => (
+                              <div key={metric} className="flex justify-between px-2">
+                                <span>{t(`assessmentMetrics.${metric}` as TranslationKey, metric)}</span>
+                                <span className="text-yellow-400 font-semibold">{avg.toFixed(1)}</span>
+                              </div>
+                            ))}
+                            <div className="text-xs text-slate-400 text-right">
+                              {teamAssessmentAverages.count} {t('playerStats.ratedGames', 'rated')}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                   </div>
                 )}
 

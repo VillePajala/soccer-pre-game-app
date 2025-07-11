@@ -1,6 +1,7 @@
 import { renderHook, act } from '@testing-library/react';
 import usePlayerAssessments, { validateAssessment } from '../usePlayerAssessments';
 import { getPlayerAssessments, savePlayerAssessment } from '@/utils/playerAssessments';
+import type { AppState } from '@/types';
 
 jest.mock('@/utils/playerAssessments');
 
@@ -31,7 +32,7 @@ describe('usePlayerAssessments', () => {
 
   it('saves assessment', async () => {
     mockedGet.mockResolvedValue({});
-    mockedSave.mockResolvedValue({ assessments: { p1: assessment } } as any);
+    mockedSave.mockResolvedValue({ assessments: { p1: assessment } } as AppState);
     const { result } = renderHook(() => usePlayerAssessments('g1'));
     await act(async () => {
       await result.current.saveAssessment('p1', assessment);

@@ -546,6 +546,18 @@
     "saveButton": "Save",
     "noPlayers": "No players selected"
   },
+  "assessmentMetrics": {
+    "intensity": "Intensity",
+    "courage": "Courage",
+    "duels": "Duels",
+    "technique": "Technique",
+    "creativity": "Creativity",
+    "decisions": "Decisions",
+    "awareness": "Awareness",
+    "teamwork": "Teamwork",
+    "fair_play": "Fair Play",
+    "impact": "Impact"
+  },
   "playerStats": {
     "selectPlayer": "Select Player",
     "selectPlayerLabel": "Select Player",
@@ -561,6 +573,9 @@
     "seasonPerformance": "Season Performance",
     "tournamentPerformance": "Tournament Performance",
     "vs": "vs",
-    "totalsRow": "Totals"
+    "totalsRow": "Totals",
+    "performanceRatings": "Performance Ratings",
+    "avgRating": "Avg Rating",
+    "ratedGames": "Rated Games"
   }
 }
