@@ -58,7 +58,7 @@ describe('<SettingsModal />', () => {
       quota: 2 * 1048576,
     });
     render(<SettingsModal {...defaultProps} />);
-    expect(await screen.findByText(/512\.0 KB.*2\.0 MB/)).toBeInTheDocument();
+    expect(await screen.findByText(/512\.0 KB.*5\.0 MB/)).toBeInTheDocument();
   });
 
   test('calls onClose when Done clicked', () => {
