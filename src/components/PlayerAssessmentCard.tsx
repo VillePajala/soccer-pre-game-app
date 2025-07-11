@@ -52,7 +52,13 @@ const PlayerAssessmentCard: React.FC<PlayerAssessmentCardProps> = ({ player, onS
 
   return (
     <div className="p-2 rounded-md border bg-slate-800/40 border-slate-700/50 hover:bg-slate-800/60 transition-colors text-slate-100">
-      <div className="flex items-center justify-between" onClick={() => setExpanded((v) => !v)}>
+      <button
+        type="button"
+        className="flex items-center justify-between w-full"
+        onClick={() => setExpanded(v => !v)}
+        aria-expanded={expanded}
+        title={expanded ? t('playerAssessmentModal.collapse', { name: player.name }) : t('playerAssessmentModal.expand', { name: player.name })}
+      >
         <span className="font-semibold">
           {player.name}
           {player.jerseyNumber ? ` #${player.jerseyNumber}` : ''}
@@ -62,7 +68,7 @@ const PlayerAssessmentCard: React.FC<PlayerAssessmentCardProps> = ({ player, onS
         ) : (
           <HiXCircle className="text-slate-500" />
         )}
-      </div>
+      </button>
       {expanded && (
         <div className="mt-2 space-y-3">
           <OverallRatingSelector value={overall} onChange={setOverall} />
@@ -82,6 +88,8 @@ const PlayerAssessmentCard: React.FC<PlayerAssessmentCardProps> = ({ player, onS
               onChange={(e) => setNotes(e.target.value)}
               maxLength={280}
               className="w-full bg-slate-700 border border-slate-600 rounded-md text-white p-2"
+              placeholder={t('playerAssessmentModal.notesPlaceholder', 'Add notes...')}
+              aria-label={t('playerAssessmentModal.notesPlaceholder', 'Add notes...')}
               rows={3}
             />
             <div className="text-xs text-slate-400 text-right">{notes.length}/280</div>
@@ -91,6 +99,7 @@ const PlayerAssessmentCard: React.FC<PlayerAssessmentCardProps> = ({ player, onS
             className="px-4 py-2 rounded-md text-sm font-medium transition-colors shadow-sm bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50"
             onClick={handleSave}
             disabled={!isValid}
+            aria-label={t('playerAssessmentModal.saveButton', 'Save')}
           >
             {t('playerAssessmentModal.saveButton', 'Save')}
           </button>

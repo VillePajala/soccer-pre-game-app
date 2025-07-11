@@ -536,7 +536,10 @@
   "playerAssessmentModal": {
     "title": "Arvioi Pelaajat",
     "saveButton": "Tallenna",
-    "noPlayers": "Ei valittuja pelaajia"
+    "noPlayers": "Ei valittuja pelaajia",
+    "notesPlaceholder": "Kirjoita muistiinpanoja...",
+    "expand": "Avaa arviointi pelaajalle {{name}}",
+    "collapse": "Sulje arviointi pelaajalle {{name}}"
   },
   "assessmentMetrics": {
     "intensity": "Intensiteetti",
