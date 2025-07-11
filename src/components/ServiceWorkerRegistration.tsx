@@ -1,18 +1,31 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import UpdateBanner from './UpdateBanner'; // Import the new component
+import UpdateBanner from './UpdateBanner';
 import logger from '@/utils/logger';
 
 export default function ServiceWorkerRegistration() {
   const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
   const [showUpdateBanner, setShowUpdateBanner] = useState(false);
+  const [releaseNotes, setReleaseNotes] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
       logger.log('[PWA] Service Worker is not supported or not in browser.');
       return;
     }
+
+    const fetchReleaseNotes = async () => {
+      try {
+        const res = await fetch('/release-notes.json', { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          setReleaseNotes(data.notes);
+        }
+      } catch (error) {
+        logger.error('Failed to fetch release notes', error);
+      }
+    };
 
     const swUrl = '/sw.js';
 
@@ -22,6 +35,7 @@ export default function ServiceWorkerRegistration() {
       // Look for a waiting service worker
       if (registration.waiting) {
         setWaitingWorker(registration.waiting);
+        fetchReleaseNotes();
         setShowUpdateBanner(true);
         return;
       }
@@ -34,10 +48,11 @@ export default function ServiceWorkerRegistration() {
           newWorker.onstatechange = () => {
             logger.log('[PWA] New service worker state changed:', newWorker.state);
             // When the new worker is installed and waiting
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              setWaitingWorker(newWorker);
-              setShowUpdateBanner(true);
-            }
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                setWaitingWorker(newWorker);
+                fetchReleaseNotes();
+                setShowUpdateBanner(true);
+              }
           };
         }
       };
@@ -63,5 +78,5 @@ export default function ServiceWorkerRegistration() {
     }
   };
 
-  return showUpdateBanner ? <UpdateBanner onUpdate={handleUpdate} /> : null;
-} 
+  return showUpdateBanner ? <UpdateBanner onUpdate={handleUpdate} notes={releaseNotes || undefined} /> : null;
+}
