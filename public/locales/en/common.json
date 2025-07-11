@@ -544,7 +544,10 @@
   "playerAssessmentModal": {
     "title": "Assess Players",
     "saveButton": "Save",
-    "noPlayers": "No players selected"
+    "noPlayers": "No players selected",
+    "notesPlaceholder": "Add notes...",
+    "expand": "Expand assessment for {{name}}",
+    "collapse": "Collapse assessment for {{name}}"
   },
   "assessmentMetrics": {
     "intensity": "Intensity",
