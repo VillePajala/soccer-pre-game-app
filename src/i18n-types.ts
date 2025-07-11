@@ -358,6 +358,7 @@ export type TranslationKey =
   | 'newGameSetupModal.newTournamentNameRequired'
   | 'newGameSetupModal.newTournamentPlaceholder'
   | 'newGameSetupModal.noPlayersInRoster'
+  | 'newGameSetupModal.noPlayersSelected'
   | 'newGameSetupModal.numPeriodsLabel'
   | 'newGameSetupModal.opponentLabel'
   | 'newGameSetupModal.opponentNameLabel'

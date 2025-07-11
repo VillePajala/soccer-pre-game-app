@@ -329,6 +329,7 @@
     "playersSelected": "valittuna",
     "selectAll": "Valitse kaikki",
     "noPlayersInRoster": "Rosteri on tyhjä. Lisää pelaajat kokoonpanosta.",
+    "noPlayersSelected": "Valitse vähintään yksi pelaaja.",
     "gameDateLabel": "Pelin päivämäärä",
     "gameLocationLabel": "Sijainti (valinnainen)",
     "locationPlaceholder": "esim. Keskuspuisto kenttä 2",
