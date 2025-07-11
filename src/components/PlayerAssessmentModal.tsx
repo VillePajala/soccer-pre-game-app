@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Player, PlayerAssessment } from '@/types';
+import PlayerAssessmentCard from './PlayerAssessmentCard';
 
 interface PlayerAssessmentModalProps {
   isOpen: boolean;
@@ -20,7 +21,6 @@ const PlayerAssessmentModal: React.FC<PlayerAssessmentModalProps> = ({
   onSave,
 }) => {
   const { t } = useTranslation();
-  const [ratings, setRatings] = useState<Record<string, number>>({});
 
   if (!isOpen) return null;
 
@@ -34,11 +34,6 @@ const PlayerAssessmentModal: React.FC<PlayerAssessmentModalProps> = ({
     `${buttonBaseStyle} bg-gradient-to-b from-indigo-500 to-indigo-600 text-white hover:from-indigo-600 hover:to-indigo-700 shadow-lg`;
 
   const getPlayer = (id: string) => availablePlayers.find(p => p.id === id);
-
-  const handleSave = (playerId: string) => {
-    const overall = ratings[playerId] ?? 3;
-    onSave(playerId, { overall });
-  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60] font-display">
@@ -56,23 +51,11 @@ const PlayerAssessmentModal: React.FC<PlayerAssessmentModalProps> = ({
               const player = getPlayer(pid);
               if (!player) return null;
               return (
-                <div key={pid} className="p-2 rounded-md border bg-slate-800/40 border-slate-700/50 hover:bg-slate-800/60 transition-colors">
-                  <div className="flex items-center justify-between mb-2 text-slate-100">
-                    <span>{player.name}{player.jerseyNumber ? ` #${player.jerseyNumber}` : ''}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min={1}
-                    max={5}
-                    step={1}
-                    value={ratings[pid] ?? 3}
-                    onChange={e => setRatings(prev => ({ ...prev, [pid]: Number(e.target.value) }))}
-                    className="w-full"
-                  />
-                  <button onClick={() => handleSave(pid)} className={`${primaryButtonStyle} mt-2`}>
-                    {t('playerAssessmentModal.saveButton', 'Save')}
-                  </button>
-                </div>
+                <PlayerAssessmentCard
+                  key={pid}
+                  player={player}
+                  onSave={(assessment) => onSave(pid, assessment)}
+                />
               );
             })}
             {selectedPlayerIds.length === 0 && (
