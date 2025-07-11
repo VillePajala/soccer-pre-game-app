@@ -295,6 +295,11 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
         return;
     }
 
+    if (selectedPlayerIds.length === 0) {
+        alert(t('newGameSetupModal.noPlayersSelected', 'Please select at least one player.') || 'Please select at least one player.');
+        return;
+    }
+
     // Format game time properly
     const formattedHour = gameHour.padStart(2, '0');
     const formattedMinute = gameMinute.padStart(2, '0');

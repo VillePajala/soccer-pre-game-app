@@ -338,6 +338,7 @@
     "playersSelected": "selected",
     "selectAll": "Select All",
     "noPlayersInRoster": "No players in roster. Add players in Roster Settings.",
+    "noPlayersSelected": "Please select at least one player.",
     "gameDateLabel": "Game Date",
     "gameLocationLabel": "Location (Optional)",
     "locationPlaceholder": "e.g., Central Park Field 2",
