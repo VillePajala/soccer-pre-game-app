@@ -2,7 +2,9 @@
 
 import React, { useState } from 'react';
 import { HiCheckCircle, HiXCircle } from 'react-icons/hi';
+import { useTranslation } from 'react-i18next';
 import type { Player, PlayerAssessment } from '@/types';
+import type { TranslationKey } from '@/i18n-types';
 import OverallRatingSelector from './OverallRatingSelector';
 import AssessmentSlider from './AssessmentSlider';
 import { validateAssessment } from '@/hooks/usePlayerAssessments';
@@ -27,6 +29,7 @@ const initialSliders = {
 };
 
 const PlayerAssessmentCard: React.FC<PlayerAssessmentCardProps> = ({ player, onSave, isSaved }) => {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [overall, setOverall] = useState<number>(5);
   const [sliders, setSliders] = useState<Record<string, number>>(initialSliders);
@@ -63,11 +66,11 @@ const PlayerAssessmentCard: React.FC<PlayerAssessmentCardProps> = ({ player, onS
       {expanded && (
         <div className="mt-2 space-y-3">
           <OverallRatingSelector value={overall} onChange={setOverall} />
-          <div className="grid grid-cols-5 gap-2">
+          <div className="space-y-2">
             {Object.entries(sliders).map(([key, value]) => (
               <AssessmentSlider
                 key={key}
-                label={key}
+                label={t(`assessmentMetrics.${key}` as TranslationKey, key)}
                 value={value}
                 onChange={(v) => handleSliderChange(key, v)}
               />
@@ -89,7 +92,7 @@ const PlayerAssessmentCard: React.FC<PlayerAssessmentCardProps> = ({ player, onS
             onClick={handleSave}
             disabled={!isValid}
           >
-            Save
+            {t('playerAssessmentModal.saveButton', 'Save')}
           </button>
         </div>
       )}
