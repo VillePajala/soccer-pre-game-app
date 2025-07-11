@@ -1483,12 +1483,15 @@ function HomePage() {
         0,
       ) / 60,
     );
-    await utilSavePlayerAssessment(currentGameId, playerId, {
+    const updated = await utilSavePlayerAssessment(currentGameId, playerId, {
       ...(assessment as PlayerAssessment),
       minutesPlayed,
       createdAt: Date.now(),
       createdBy: 'local',
     });
+    if (updated) {
+      setSavedGames(prev => ({ ...prev, [currentGameId]: updated }));
+    }
   };
   
   
