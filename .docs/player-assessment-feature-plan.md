@@ -51,7 +51,7 @@
 3. Update manual testing checklist to include opening the Player Assessment modal and saving ratings.
 
 ## 8. Incremental Delivery Steps
-1. **Data layer** – implement `PlayerAssessment` type, AppState updates and Firestore helpers.
+1. **Data layer** – implement `PlayerAssessment` type, AppState updates and Firestore helpers. ✅
 2. **Modal skeleton** – create modal component with simple Save per player, using dummy sliders.
 3. **UI components** – build sliders and rating selector, integrate into cards.
 4. **Persistence** – wire up `updateDoc` and local state with validation.

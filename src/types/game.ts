@@ -1,4 +1,5 @@
-import type { Player } from "./index";
+import type { Player } from './index';
+import type { PlayerAssessment } from './playerAssessment';
 export interface Point {
   relX: number;
   relY: number;
@@ -57,6 +58,7 @@ export interface AppState {
   currentPeriod: number;
   gameStatus: 'notStarted' | 'inProgress' | 'periodEnd' | 'gameEnd';
   selectedPlayerIds: string[];
+  assessments?: { [playerId: string]: PlayerAssessment };
   seasonId: string;
   tournamentId: string;
   gameLocation?: string;

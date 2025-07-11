@@ -26,7 +26,9 @@ export interface Season {
 }
 
 export interface Tournament {
-  id: string; 
-  name: string; 
-} 
+  id: string;
+  name: string;
+}
+
+export * from './playerAssessment';
 export * from "./game";

@@ -32,6 +32,7 @@ describe('exportGames utilities', () => {
     currentPeriod: 1,
     gameStatus: 'inProgress',
     selectedPlayerIds: ['p1', 'p2'],
+    assessments: {},
     seasonId: 's1',
     tournamentId: 't1',
     gameLocation: 'Stadium',
@@ -103,6 +104,7 @@ describe('exportGames utilities', () => {
       ...baseGame,
       availablePlayers: playersWithExtra,
       selectedPlayerIds: ['p1', 'p2'],
+      assessments: {},
     };
 
     exportCsv('game1', gameWithExtra, playersWithExtra, [{ id: 's1', name: 'Season' } as Season], [{ id: 't1', name: 'Tournament' } as Tournament]);

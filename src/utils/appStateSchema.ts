@@ -46,6 +46,26 @@ export const tacticalDiscSchema = z.object({
   type: z.enum(['home', 'opponent', 'goalie']),
 });
 
+export const playerAssessmentSchema = z.object({
+  overall: z.number(),
+  sliders: z.object({
+    intensity: z.number(),
+    courage: z.number(),
+    duels: z.number(),
+    technique: z.number(),
+    creativity: z.number(),
+    decisions: z.number(),
+    awareness: z.number(),
+    teamwork: z.number(),
+    fair_play: z.number(),
+    impact: z.number(),
+  }),
+  notes: z.string(),
+  minutesPlayed: z.number(),
+  createdAt: z.number(),
+  createdBy: z.string(),
+});
+
 export const appStateSchema = z.object({
   playersOnField: z.array(playerSchema),
   opponents: z.array(opponentSchema),
@@ -65,6 +85,7 @@ export const appStateSchema = z.object({
   currentPeriod: z.number(),
   gameStatus: z.enum(['notStarted', 'inProgress', 'periodEnd', 'gameEnd']),
   selectedPlayerIds: z.array(z.string()),
+  assessments: z.record(z.string(), playerAssessmentSchema).optional(),
   seasonId: z.string(),
   tournamentId: z.string(),
   gameLocation: z.string().optional(),
