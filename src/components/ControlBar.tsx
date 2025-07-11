@@ -67,6 +67,7 @@ interface ControlBarProps {
   onAddHomeDisc: () => void;
   onAddOpponentDisc: () => void;
   onToggleInstructionsModal: () => void;
+  onOpenSettingsModal: () => void;
 }
 
 const ControlBar: React.FC<ControlBarProps> = ({
@@ -96,6 +97,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   onAddHomeDisc,
   onAddOpponentDisc,
   onToggleInstructionsModal,
+  onOpenSettingsModal,
 }) => {
   const { t } = useTranslation(); // Standard hook
   logger.log('[ControlBar Render] Received highlightRosterButton prop:', highlightRosterButton); // <<< Log prop value
@@ -367,8 +369,14 @@ const ControlBar: React.FC<ControlBarProps> = ({
 
                        {/* ADD Subtle Divider - slightly more visible */}
                        <hr className="border-slate-600/40 my-1 mx-2" />
-                       
-                      {/* Group 5 removed: Language toggle, app settings, hard reset now live in SettingsModal */}
+
+                     {/* Group 5: App Settings */}
+                     <div className="py-0.5">
+                       <button onClick={wrapHandler(onOpenSettingsModal)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
+                         <HiOutlineCog6Tooth className={menuIconSize} /> {t('controlBar.appSettings', 'App Settings')}
+                       </button>
+                     </div>
+
                      </nav>
                    </div>{/* End Main Menu View */}
 
