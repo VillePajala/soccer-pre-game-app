@@ -11,11 +11,8 @@ This document outlines the design for a new feature that adds a player performan
   - Only visible when a game is in progress or just finished.
 - **Player Cards**
   - Display all players selected for the current match (`selectedPlayerIds` from state).
-  - Each player card collapses to show name/number, goals, assists and a completion icon.
-  - Expanding a card reveals fields:
-    - Overall rating 1–10.
-    - Ten sliders (1–5, step 0.5) for intensity, courage, duels, technique, creativity, decisions, awareness, teamwork, fair_play and impact.
-    - Free text notes up to 280 characters.
+  - Each player card shows the player's name/number and contains ten sliders for performance metrics.
+  - Slider values range 1–5. Metric labels will be finalized later and stored in translations.
 - **State Handling**
   - Ratings are stored in `AppState` under a new `playerEvaluations` field keyed by player ID and game ID.
   - Use local storage with the existing `SAVED_GAMES_KEY` mechanism so evaluations persist with each saved game.

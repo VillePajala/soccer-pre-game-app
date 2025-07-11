@@ -4,16 +4,8 @@ import {
   getLocalStorageItem,
   setLocalStorageItem,
 } from './localStorage';
-import type {
-  SavedGamesCollection,
-  AppState,
-  GameEvent as PageGameEvent,
-  Point,
-  Opponent,
-  IntervalLog,
-  Player,
-  PlayerAssessment,
-} from '@/types';
+import type { SavedGamesCollection, AppState, GameEvent as PageGameEvent, Point, Opponent, IntervalLog } from '@/types';
+import type { Player } from '@/types';
 import logger from '@/utils/logger';
 
 // Note: AppState (imported from @/types) is the primary type used for live game state
@@ -304,21 +296,6 @@ export const updateGameDetails = async (
     logger.error('Error updating game details:', error);
     throw error; // Propagate error
   }
-};
-
-export const updatePlayerAssessment = async (
-  gameId: string,
-  playerId: string,
-  assessment: PlayerAssessment
-): Promise<AppState | null> => {
-  const game = await getGame(gameId);
-  if (!game) {
-    logger.warn(`Game with ID ${gameId} not found for assessment update.`);
-    return null;
-  }
-  const current = game.assessments ?? {};
-  const updated = { ...current, [playerId]: assessment };
-  return updateGameDetails(gameId, { assessments: updated });
 };
 
 /**

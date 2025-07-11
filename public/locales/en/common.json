@@ -44,7 +44,6 @@
   "controlBar.gameSettingsButton": "Game Settings",
   "controlBar.manageRoster": "Manage Roster",
   "controlBar.manageSeasonsAndTournaments": "Manage Seasons & Tournaments",
-  "controlBar.performance": "Performance",
   "controlBar.appSettings": "App Settings",
   "controlBar.rules": "Rules",
   "controlBar.coachingMaterials": "Coaching Materials",
@@ -223,7 +222,7 @@
     "cancelButton": "Cancel",
     "gameInfoTitle": "Game Information",
     "opponentPlaceholder": "Opponent Name",
-    "playerStatsTitle": "Player Stats",
+  "playerStatsTitle": "Player Stats",
     "playerHeader": "Player",
     "goalsHeader": "G",
     "assistsHeader": "A",
@@ -446,8 +445,7 @@
     "createNew": "Create New",
     "title": "Manage Seasons & Tournaments",
     "seasons": "Seasons",
-    "tournaments": "Tournaments"
-  },
+    "tournaments": "Tournaments"  },
   "common": {
     "actions": "Actions",
     "assist": "Assist",
@@ -557,22 +555,5 @@
     "tournamentPerformance": "Tournament Performance",
     "vs": "vs",
     "totalsRow": "Totals"
-  },
-  "playerAssessment": {
-    "title": "Player Assessment",
-    "saveAndMarkDone": "Save & Mark Done",
-    "assessedCount": "Assessed {{done}}/{{total}} players",
-    "overall": "Overall",
-    "intensity": "Intensity",
-    "courage": "Courage",
-    "duels": "Duels",
-    "technique": "Technique",
-    "creativity": "Creativity",
-    "decisions": "Decisions",
-    "awareness": "Awareness",
-    "teamwork": "Teamwork",
-    "fair_play": "Fair Play",
-    "impact": "Impact",
-    "notes": "Notes"
   }
 }

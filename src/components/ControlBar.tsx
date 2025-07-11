@@ -31,7 +31,6 @@ import {
     // HiOutlineXCircle, // REMOVE unused
     // HiOutlineRectangleGroup, // REMOVE unused
     HiOutlineTrophy,
-    HiOutlineChartBar,
 } from 'react-icons/hi2'; // Using hi2 for Heroicons v2 Outline
 // REMOVE FaClock, FaUsers, FaCog (FaFutbol remains)
 import { FaFutbol } from 'react-icons/fa';
@@ -63,7 +62,6 @@ interface ControlBarProps {
   onPlaceAllPlayers: () => void; // New prop for placing all players on the field
   highlightRosterButton: boolean; // <<< ADD prop for highlighting
   onOpenSeasonTournamentModal: () => void;
-  onOpenPerformanceModal: () => void;
   isTacticsBoardView: boolean;
   onToggleTacticsBoard: () => void;
   onAddHomeDisc: () => void;
@@ -94,7 +92,6 @@ const ControlBar: React.FC<ControlBarProps> = ({
   onPlaceAllPlayers,
   highlightRosterButton, // <<< Receive prop
   onOpenSeasonTournamentModal,
-  onOpenPerformanceModal,
   isTacticsBoardView,
   onToggleTacticsBoard,
   onAddHomeDisc,
@@ -322,12 +319,9 @@ const ControlBar: React.FC<ControlBarProps> = ({
                      
                        {/* Group 3: Information/Export */} 
                        <div className="py-0.5">
-                        <button onClick={wrapHandler(onToggleGameStatsModal)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
-                          <HiOutlineClipboardDocumentList className={menuIconSize} />{t('controlBar.stats', 'Stats')}
-                        </button>
-                        <button onClick={wrapHandler(onOpenPerformanceModal)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
-                          <HiOutlineChartBar className={menuIconSize} />{t('controlBar.performance', 'Performance')}
-                        </button>
+                         <button onClick={wrapHandler(onToggleGameStatsModal)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
+                           <HiOutlineClipboardDocumentList className={menuIconSize} />{t('controlBar.stats', 'Stats')}
+                         </button>
                          <button onClick={wrapHandler(onToggleTrainingResources)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
                            <HiOutlineBookOpen className={menuIconSize} />{t('controlBar.training', 'Training')}
                          </button>

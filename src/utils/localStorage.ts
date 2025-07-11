@@ -1,6 +1,4 @@
 import logger from '@/utils/logger';
-import { encryptString, decryptString } from './encryption';
-import { getEncryptionPassphrase } from './appSettings';
 
 export const getStorage = (): Storage | null => {
   if (typeof window === 'undefined') return null;
@@ -23,20 +21,6 @@ export const getLocalStorageItem = (key: string): string | null => {
   }
 };
 
-export const getSecureLocalStorageItem = async (key: string): Promise<string | null> => {
-  const raw = getLocalStorageItem(key);
-  const pass = await getEncryptionPassphrase();
-  if (raw && pass) {
-    try {
-      return await decryptString(raw, pass);
-    } catch (e) {
-      logger.error('[localStorage] decrypt error:', e);
-      return null;
-    }
-  }
-  return raw;
-};
-
 export const setLocalStorageItem = (key: string, value: string): void => {
   const storage = getStorage();
   if (!storage) return;
@@ -46,20 +30,6 @@ export const setLocalStorageItem = (key: string, value: string): void => {
     logger.error(`[setLocalStorageItem] Error setting item for key "${key}":`, error);
     throw error;
   }
-};
-
-export const setSecureLocalStorageItem = async (key: string, value: string): Promise<void> => {
-  const pass = await getEncryptionPassphrase();
-  if (pass) {
-    try {
-      const enc = await encryptString(value, pass);
-      setLocalStorageItem(key, enc);
-      return;
-    } catch (e) {
-      logger.error('[localStorage] encrypt error:', e);
-    }
-  }
-  setLocalStorageItem(key, value);
 };
 
 export const removeLocalStorageItem = (key: string): void => {
