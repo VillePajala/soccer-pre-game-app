@@ -3,7 +3,21 @@ import { writeFileSync, readFileSync } from 'fs';
 
 function getLastCommitMessage() {
   try {
-    return execSync('git log -1 --format=%B').toString().trim();
+    const full = execSync('git log -1 --format=%B').toString().trim();
+    const lines = full
+      .split(/\r?\n/)
+      .map(line => line.trim())
+      .filter(Boolean);
+
+    if (lines.length === 0) {
+      return '';
+    }
+
+    if (lines[0].startsWith('Merge pull request')) {
+      return lines[lines.length - 1];
+    }
+
+    return lines[0];
   } catch (err) {
     console.error('Failed to get commit message', err);
     return '';
