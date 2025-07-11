@@ -1295,6 +1295,12 @@ function HomePage() {
     setIsInstructionsModalOpen(!isInstructionsModalOpen);
   };
 
+  const handleShowAppGuide = () => {
+    saveHasSeenAppGuide(false);
+    setIsSettingsModalOpen(false);
+    setIsInstructionsModalOpen(true);
+  };
+
   // NEW: Handler for Hard Reset
   const handleHardResetApp = useCallback(async () => {
     if (window.confirm(t('controlBar.hardResetConfirmation', 'Are you sure you want to completely reset the application? All saved data (players, stats, positions) will be permanently lost.'))) {
@@ -2573,9 +2579,7 @@ function HomePage() {
           setDefaultTeamNameSetting(name);
           utilSaveLastHomeTeamName(name);
         }}
-        onResetGuide={() => {
-          saveHasSeenAppGuide(false);
-        }}
+        onResetGuide={handleShowAppGuide}
         onHardResetApp={handleHardResetApp}
       />
     </main>

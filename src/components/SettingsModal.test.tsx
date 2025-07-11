@@ -50,4 +50,10 @@ describe('<SettingsModal />', () => {
     fireEvent.click(resetBtn);
     expect(defaultProps.onHardResetApp).toHaveBeenCalled();
   });
+
+  test('calls onResetGuide when Reset App Guide clicked', () => {
+    render(<SettingsModal {...defaultProps} />);
+    fireEvent.click(screen.getByRole('button', { name: /Reset App Guide/i }));
+    expect(defaultProps.onResetGuide).toHaveBeenCalled();
+  });
 });
