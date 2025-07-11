@@ -524,6 +524,7 @@
     "languageLabel": "Language",
     "defaultTeamNameLabel": "Default Team Name",
     "resetGuideButton": "Reset App Guide",
+    "hardResetButton": "Hard Reset App",
     "doneButton": "Done"
   },
   "playerStats": {

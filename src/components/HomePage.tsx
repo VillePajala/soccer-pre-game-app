@@ -1814,10 +1814,6 @@ function HomePage() {
   const handleCloseGameSettingsModal = () => {
     setIsGameSettingsModalOpen(false); // Corrected State Setter
   };
-
-  const handleOpenSettingsModal = () => {
-    setIsSettingsModalOpen(true);
-  };
   const handleCloseSettingsModal = () => {
     setIsSettingsModalOpen(false);
   };
@@ -2379,13 +2375,11 @@ function HomePage() {
           onToggleTrainingResources={handleToggleTrainingResources}
           onToggleGoalLogModal={handleToggleGoalLogModal}
           onToggleGameStatsModal={handleToggleGameStatsModal}
-          onHardResetApp={handleHardResetApp}
           onOpenLoadGameModal={handleOpenLoadGameModal}
           onStartNewGame={handleStartNewGame}
           onOpenRosterModal={openRosterModal}
           onQuickSave={handleQuickSaveGame}
           onOpenGameSettingsModal={handleOpenGameSettingsModal}
-          onOpenSettingsModal={handleOpenSettingsModal}
           isGameLoaded={!!currentGameId && currentGameId !== DEFAULT_GAME_ID}
           onPlaceAllPlayers={handlePlaceAllPlayers}
           highlightRosterButton={highlightRosterButton}
@@ -2578,6 +2572,7 @@ function HomePage() {
         onResetGuide={() => {
           saveHasSeenAppGuide(false);
         }}
+        onHardResetApp={handleHardResetApp}
       />
     </main>
   );

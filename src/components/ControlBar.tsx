@@ -11,13 +11,11 @@ import {
     HiOutlineClock,
     HiOutlineClipboardDocumentList, // Replaces FaClipboardList
     HiOutlineClipboard, // Icon for Tactics Board
-    HiOutlineLanguage,
     HiOutlineCog6Tooth, // Settings icon
     HiOutlineBookOpen, // Import for Training Resources
     HiOutlineArrowTopRightOnSquare, // External link icon
     HiOutlineChevronRight, // Chevron for submenu
     HiOutlineChevronLeft, // Chevron for Back button
-    HiOutlineExclamationTriangle, // Icon for Hard Reset
     HiOutlineQuestionMarkCircle, // Icon for rules
     HiOutlinePlusCircle, // Icon for adding discs
     // HiOutlineMinusCircle, // Icon for adding opponent discs
@@ -55,7 +53,6 @@ interface ControlBarProps {
   onToggleTrainingResources: () => void; // Add prop for training modal
   onToggleGoalLogModal: () => void; // Add prop for goal modal
   onToggleGameStatsModal: () => void;
-  onHardResetApp: () => void; // Add the new prop type
   onOpenLoadGameModal: () => void; // NEW PROP
   onStartNewGame: () => void; // CHANGED from onResetGameStats
   onOpenRosterModal: () => void; // Add prop for opening roster modal
@@ -65,7 +62,6 @@ interface ControlBarProps {
   onPlaceAllPlayers: () => void; // New prop for placing all players on the field
   highlightRosterButton: boolean; // <<< ADD prop for highlighting
   onOpenSeasonTournamentModal: () => void;
-  onOpenSettingsModal: () => void;
   isTacticsBoardView: boolean;
   onToggleTacticsBoard: () => void;
   onAddHomeDisc: () => void;
@@ -86,7 +82,6 @@ const ControlBar: React.FC<ControlBarProps> = ({
   onToggleTrainingResources,
   onToggleGoalLogModal,
   onToggleGameStatsModal,
-  onHardResetApp,
   onOpenLoadGameModal,
   onStartNewGame,
   onOpenRosterModal,
@@ -96,14 +91,13 @@ const ControlBar: React.FC<ControlBarProps> = ({
   onPlaceAllPlayers,
   highlightRosterButton, // <<< Receive prop
   onOpenSeasonTournamentModal,
-  onOpenSettingsModal,
   isTacticsBoardView,
   onToggleTacticsBoard,
   onAddHomeDisc,
   onAddOpponentDisc,
   onToggleInstructionsModal,
 }) => {
-  const { t, i18n } = useTranslation(); // Standard hook
+  const { t } = useTranslation(); // Standard hook
   logger.log('[ControlBar Render] Received highlightRosterButton prop:', highlightRosterButton); // <<< Log prop value
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
   const [menuView, setMenuView] = useState<'main' | 'tulospalvelu'>('main'); // NEW state for menu view
@@ -120,13 +114,6 @@ const ControlBar: React.FC<ControlBarProps> = ({
   const logGoalColor = "bg-blue-600 hover:bg-blue-500 focus:ring-blue-500"; 
   // --- END RE-ADD BUTTON STYLES --- 
 
-  const handleLanguageToggle = () => {
-    const nextLang = i18n.language === 'en' ? 'fi' : 'en';
-    i18n.changeLanguage(nextLang);
-    logger.log(`Changed language to ${nextLang}`);
-    setIsSettingsMenuOpen(false); // Close menu after action
-    setMenuView('main'); 
-  };
 
   const handleSettingsButtonClick = () => {
     setIsSettingsMenuOpen(!isSettingsMenuOpen);
@@ -381,21 +368,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
                        {/* ADD Subtle Divider - slightly more visible */}
                        <hr className="border-slate-600/40 my-1 mx-2" />
                        
-                       {/* Group 5: Settings & Actions (Revised) */}
-                       <div className="py-0.5">
-                         {/* Language Toggle - Fix translation */}
-                       <button onClick={handleLanguageToggle} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
-                         <HiOutlineLanguage className={menuIconSize} />
-                         {t('controlBar.toggleLanguage', i18n.language === 'en' ? 'Switch to Finnish' : 'Vaihda Englantiin')} ({i18n.language === 'en' ? 'FI' : 'EN'})
-                       </button>
-                        <button onClick={wrapHandler(onOpenSettingsModal)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
-                          <HiOutlineCog6Tooth className={menuIconSize} /> {t('controlBar.appSettings', 'App Settings')}
-                        </button>
-                        {/* Hard Reset */}
-                         <button onClick={wrapHandler(onHardResetApp)} className="w-full flex items-center px-3 py-1.5 text-sm text-red-400 hover:bg-red-900/50">
-                           <HiOutlineExclamationTriangle className={menuIconSize} /> {t('controlBar.hardReset', 'Hard Reset App')}
-                         </button>
-                       </div>
+                      {/* Group 5 removed: Language toggle, app settings, hard reset now live in SettingsModal */}
                      </nav>
                    </div>{/* End Main Menu View */}
 
