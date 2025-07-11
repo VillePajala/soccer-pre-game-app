@@ -531,6 +531,11 @@
     "dangerZoneTitle": "Vaaravyöhyke",
     "confirmResetLabel": "Kirjoita RESET vahvistaaksesi"
   },
+  "playerAssessmentModal": {
+    "title": "Arvioi Pelaajat",
+    "saveButton": "Tallenna",
+    "noPlayers": "Ei valittuja pelaajia"
+  },
   "playerStats": {
     "selectPlayer": "Valitse pelaaja",
     "selectPlayerLabel": "Valitse pelaaja",
