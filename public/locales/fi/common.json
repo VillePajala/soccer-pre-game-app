@@ -43,7 +43,6 @@
   "controlBar.gameSettingsButton": "Otteluasetukset",
   "controlBar.manageRoster": "Kokoonpanoasetukset",
   "controlBar.manageSeasonsAndTournaments": "Hallinnoi kausia ja turnauksia",
-  "controlBar.performance": "Suoritukset",
   "controlBar.appSettings": "Asetukset",
   "controlBar.rules": "Säännöt",
   "controlBar.coachingMaterials": "Valmennusmateriaalit",
@@ -548,22 +547,5 @@
     "tournamentPerformance": "Turnaussuoritus",
     "vs": "vs",
     "totalsRow": "Yhteensä"
-  },
-  "playerAssessment": {
-    "title": "Player Assessment",
-    "saveAndMarkDone": "Save & Mark Done",
-    "assessedCount": "Assessed {{done}}/{{total}} players",
-    "overall": "Overall",
-    "intensity": "Intensity",
-    "courage": "Courage",
-    "duels": "Duels",
-    "technique": "Technique",
-    "creativity": "Creativity",
-    "decisions": "Decisions",
-    "awareness": "Awareness",
-    "teamwork": "Teamwork",
-    "fair_play": "Fair Play",
-    "impact": "Impact",
-    "notes": "Notes"
   }
 }

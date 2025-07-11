@@ -11,8 +11,8 @@ import {
 import logger from '@/utils/logger';
 // Import the new async localStorage utility functions
 import {
-  getSecureLocalStorageItem,
-  setSecureLocalStorageItem,
+  getLocalStorageItem,
+  setLocalStorageItem,
   removeLocalStorageItem,
 } from './localStorage';
 
@@ -52,7 +52,7 @@ export const exportFullBackup = async (): Promise<void> => {
     ];
 
     for (const key of keysToBackup) {
-      const itemJson = await getSecureLocalStorageItem(key);
+      const itemJson = getLocalStorageItem(key);
       if (itemJson) {
         try {
           // Assign parsed data directly to the correct key in backupData.localStorage
@@ -130,7 +130,7 @@ export const importFullBackup = async (jsonContent: string): Promise<boolean> =>
       const dataToRestore = backupData.localStorage[key];
       if (dataToRestore !== undefined && dataToRestore !== null) {
         try {
-          await setSecureLocalStorageItem(key, JSON.stringify(dataToRestore));
+          setLocalStorageItem(key, JSON.stringify(dataToRestore));
           logger.log(`Restored data for key: ${key}`);
         } catch (innerError) { 
           logger.error(`Error stringifying or setting localStorage item for key ${key}:`, innerError);
@@ -141,7 +141,7 @@ export const importFullBackup = async (jsonContent: string): Promise<boolean> =>
       } else {
         // If data for this key is null/undefined in backup, remove it from localStorage if it exists
         // Check if item exists before attempting removal to avoid unnecessary operations/logs
-        const currentItem = await getSecureLocalStorageItem(key); // Check if item exists
+        const currentItem = getLocalStorageItem(key); // Check if item exists
         if (currentItem !== null) {
           removeLocalStorageItem(key);
           logger.log(`Removed existing data for key: ${key} as it was explicitly null or not present in the backup.`);
