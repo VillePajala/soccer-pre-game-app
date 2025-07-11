@@ -11,6 +11,7 @@ interface SettingsModalProps {
   defaultTeamName: string;
   onDefaultTeamNameChange: (name: string) => void;
   onResetGuide: () => void;
+  onHardResetApp: () => void;
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -21,6 +22,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   defaultTeamName,
   onDefaultTeamNameChange,
   onResetGuide,
+  onHardResetApp,
 }) => {
   const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -49,6 +51,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
     'px-4 py-2 rounded-md text-sm font-medium transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed';
   const primaryButtonStyle =
     `${buttonStyle} bg-gradient-to-b from-indigo-500 to-indigo-600 text-white hover:from-indigo-600 hover:to-indigo-700 shadow-lg`;
+  const dangerButtonStyle =
+    `${buttonStyle} bg-gradient-to-b from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 shadow-lg`;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60] font-display">
@@ -89,6 +93,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
             <button onClick={onResetGuide} className={primaryButtonStyle}>
               {t('settingsModal.resetGuideButton', 'Reset App Guide')}
+            </button>
+            <button onClick={onHardResetApp} className={dangerButtonStyle}>
+              {t('settingsModal.hardResetButton', 'Hard Reset App')}
             </button>
           </div>
           <div className="p-4 border-t border-slate-700/20 backdrop-blur-sm bg-slate-900/20 flex-shrink-0">

@@ -417,6 +417,7 @@ export type TranslationKey =
   | 'seasonTournamentModal.tournaments'
   | 'settingsModal.defaultTeamNameLabel'
   | 'settingsModal.doneButton'
+  | 'settingsModal.hardResetButton'
   | 'settingsModal.languageLabel'
   | 'settingsModal.resetGuideButton'
   | 'settingsModal.title'

@@ -18,6 +18,7 @@ const defaultProps = {
   defaultTeamName: 'My Team',
   onDefaultTeamNameChange: jest.fn(),
   onResetGuide: jest.fn(),
+  onHardResetApp: jest.fn(),
 };
 
 describe('<SettingsModal />', () => {
@@ -36,5 +37,11 @@ describe('<SettingsModal />', () => {
     render(<SettingsModal {...defaultProps} />);
     fireEvent.click(screen.getByRole('button', { name: /Done/i }));
     expect(defaultProps.onClose).toHaveBeenCalled();
+  });
+
+  test('calls onHardResetApp when Hard Reset button clicked', () => {
+    render(<SettingsModal {...defaultProps} />);
+    fireEvent.click(screen.getByRole('button', { name: /Hard Reset App/i }));
+    expect(defaultProps.onHardResetApp).toHaveBeenCalled();
   });
 });

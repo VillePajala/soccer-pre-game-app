@@ -516,6 +516,7 @@
     "languageLabel": "Kieli",
     "defaultTeamNameLabel": "Oletusjoukkueen nimi",
     "resetGuideButton": "Näytä opastus uudelleen",
+    "hardResetButton": "Nollaa Sovellus",
     "doneButton": "Valmis"
   },
   "playerStats": {
