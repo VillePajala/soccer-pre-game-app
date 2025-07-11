@@ -1814,6 +1814,9 @@ function HomePage() {
   const handleCloseGameSettingsModal = () => {
     setIsGameSettingsModalOpen(false); // Corrected State Setter
   };
+  const handleOpenSettingsModal = () => {
+    setIsSettingsModalOpen(true);
+  };
   const handleCloseSettingsModal = () => {
     setIsSettingsModalOpen(false);
   };
@@ -2389,6 +2392,7 @@ function HomePage() {
           onAddHomeDisc={() => handleAddTacticalDisc('home')}
           onAddOpponentDisc={() => handleAddTacticalDisc('opponent')}
           onToggleInstructionsModal={handleToggleInstructionsModal}
+          onOpenSettingsModal={handleOpenSettingsModal}
         />
       </div>
 
