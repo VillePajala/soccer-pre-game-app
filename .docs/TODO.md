@@ -191,13 +191,11 @@
 
 ## 🚀 Major Roadmap
 
-- **Migrate to IndexedDB**
-  - Replace all remaining localStorage usage with IndexedDB for robust offline storage.
-  - See `Archive/indexeddb-migration-plan.md` for detailed steps.
+<!-- Removed IndexedDB migration plan -->
 
 - **Introduce Supabase Backend**
   - Add optional user authentication and cloud sync using Supabase.
-  - Keep IndexedDB as the local cache and synchronize on sign in.
+  - Keep localStorage as the local cache and synchronize on sign in.
 
 - **Player Performance Evaluations**
   - Add a modal with ten sliders to rate each player after a game.
