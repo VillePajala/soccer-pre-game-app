@@ -29,6 +29,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const [teamName, setTeamName] = useState(defaultTeamName);
   const [resetConfirm, setResetConfirm] = useState('');
+  const [storageEstimate, setStorageEstimate] = useState<{ usage: number; quota: number } | null>(null);
 
   useEffect(() => {
     setTeamName(defaultTeamName);
@@ -37,6 +38,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 100);
+      if (navigator.storage?.estimate) {
+        navigator.storage
+          .estimate()
+          .then(res => setStorageEstimate({ usage: res.usage || 0, quota: res.quota || 0 }))
+          .catch(() => setStorageEstimate(null));
+      } else {
+        setStorageEstimate(null);
+      }
     }
   }, [isOpen]);
 
@@ -100,6 +109,28 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               <p className="text-sm text-slate-300">
                 {t('settingsModal.appVersion', 'App Version')}: {packageJson.version}
               </p>
+              <div className="space-y-1">
+                <label className={labelStyle}>{t('settingsModal.storageUsageLabel', 'Storage Usage')}</label>
+                <p className="text-sm text-slate-300">
+                  {storageEstimate
+                    ? t('settingsModal.storageUsageDetails', {
+                        used: `${(storageEstimate.usage / 1048576).toFixed(1)} MB`,
+                        quota: `${(storageEstimate.quota / 1048576).toFixed(1)} MB`,
+                      })
+                    : t(
+                        'settingsModal.storageUsageUnavailable',
+                        'Storage usage information unavailable.'
+                      )}
+                </p>
+                {storageEstimate && (
+                  <div className="w-full bg-slate-700 rounded-md h-2 overflow-hidden">
+                    <div
+                      className="bg-indigo-500 h-2"
+                      style={{ width: `${Math.min(100, (storageEstimate.usage / storageEstimate.quota) * 100)}%` }}
+                    />
+                  </div>
+                )}
+              </div>
               <div className="space-y-1">
                 <a
                   href="https://github.com/VillePajala/soccer-pre-game-app"

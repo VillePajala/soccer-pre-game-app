@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
@@ -6,7 +7,13 @@ import SettingsModal from './SettingsModal';
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback?: string) => fallback || _key,
+    t: (key: string, fallbackOrOpts?: any) => {
+      if (typeof fallbackOrOpts === 'string') return fallbackOrOpts;
+      if (key === 'settingsModal.storageUsageDetails' && fallbackOrOpts) {
+        return `${fallbackOrOpts.used} of ${fallbackOrOpts.quota} used`;
+      }
+      return fallbackOrOpts || key;
+    },
   }),
 }));
 
@@ -24,6 +31,12 @@ const defaultProps = {
 describe('<SettingsModal />', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    Object.defineProperty(navigator, 'storage', {
+      configurable: true,
+      value: {
+        estimate: jest.fn().mockResolvedValue({ usage: 1048576, quota: 5242880 }),
+      },
+    });
   });
 
   test('renders when open', () => {
@@ -31,6 +44,12 @@ describe('<SettingsModal />', () => {
     expect(screen.getByText('App Settings')).toBeInTheDocument();
     expect(screen.getByLabelText('Language')).toBeInTheDocument();
     expect(screen.getByLabelText('Default Team Name')).toBeInTheDocument();
+  });
+
+  test('displays storage usage when available', async () => {
+    render(<SettingsModal {...defaultProps} />);
+    expect(await screen.findByText('Storage Usage')).toBeInTheDocument();
+    expect(await screen.findByText(/1\.0 MB.*5\.0 MB/)).toBeInTheDocument();
   });
 
   test('calls onClose when Done clicked', () => {

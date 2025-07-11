@@ -525,6 +525,9 @@
     "appVersion": "Sovelluksen versio",
     "documentationLink": "Dokumentaatio",
     "documentationDescription": "Lue täydellinen käyttöohje ja vianetsintäopas.",
+    "storageUsageLabel": "Tallennustila",
+    "storageUsageDetails": "{{used}} / {{quota}} käytössä",
+    "storageUsageUnavailable": "Tallennustilan tietoja ei saatavilla.",
     "dangerZoneTitle": "Vaaravyöhyke",
     "confirmResetLabel": "Kirjoita RESET vahvistaaksesi"
   },
