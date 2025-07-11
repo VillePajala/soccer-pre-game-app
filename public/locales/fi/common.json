@@ -547,5 +547,20 @@
     "tournamentPerformance": "Turnaussuoritus",
     "vs": "vs",
     "totalsRow": "Yhteensä"
+  },
+  "playerAssessmentModal": {
+    "title": "Pelaaja-arvioinnit",
+    "overall": "Kokonaisarvio",
+    "notesPlaceholder": "Muistiinpanot...",
+    "intensity": "Intensiteetti",
+    "courage": "Rohkeus",
+    "duels": "Kaksinkamppailut",
+    "technique": "Tekniikka",
+    "creativity": "Luovuus",
+    "decisions": "Päätökset",
+    "awareness": "Tilannetaju",
+    "teamwork": "Joukkuetyö",
+    "fair_play": "Reilu peli",
+    "impact": "Vaikutus"
   }
 }

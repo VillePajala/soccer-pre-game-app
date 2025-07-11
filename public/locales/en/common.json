@@ -555,5 +555,20 @@
     "tournamentPerformance": "Tournament Performance",
     "vs": "vs",
     "totalsRow": "Totals"
+  },
+  "playerAssessmentModal": {
+    "title": "Player Assessments",
+    "overall": "Overall",
+    "notesPlaceholder": "Notes...",
+    "intensity": "Intensity",
+    "courage": "Courage",
+    "duels": "Duels",
+    "technique": "Technique",
+    "creativity": "Creativity",
+    "decisions": "Decisions",
+    "awareness": "Awareness",
+    "teamwork": "Teamwork",
+    "fair_play": "Fair Play",
+    "impact": "Impact"
   }
 }

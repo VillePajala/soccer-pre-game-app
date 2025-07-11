@@ -8,5 +8,6 @@ Use this short checklist to manually verify key workflows after making changes t
 4. **Switch languages** – Toggle between English and Finnish and verify all visible text changes without reloading the page.
 5. **Save and reload a game** – Perform a quick save, refresh the page and load the saved game to confirm state persistence.
 6. **Assess players after a game** – After ending a game, open the Player Assessment modal via the new button. Rate at least one player and ensure the data persists after closing and reopening the modal.
+7. **Verify assessment modal UI** – With a finished game loaded, open the Player Assessment modal. Expand a player card and ensure the overall rating buttons, vertical sliders and notes field appear. Confirm the Save button enables after selecting ratings and that saving does not throw errors.
 
 Running through these steps after updates helps catch regressions before deploying.
