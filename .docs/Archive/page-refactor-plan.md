@@ -146,7 +146,7 @@
 
 ---
 
-## 8. Introduce **Modal Visibility Context**  
+## 8. Introduce **Modal Visibility Context** – ✅ Completed
 *(optional but reduces prop-drilling)*
 
 **Tasks**
