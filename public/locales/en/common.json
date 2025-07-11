@@ -533,6 +533,9 @@
     "appVersion": "App Version",
     "documentationLink": "Documentation",
     "documentationDescription": "Read the full user guide and troubleshooting tips.",
+    "storageUsageLabel": "Storage Usage",
+    "storageUsageDetails": "{{used}} of {{quota}} used",
+    "storageUsageUnavailable": "Storage usage information unavailable.",
     "dangerZoneTitle": "Danger Zone",
     "confirmResetLabel": "Type RESET to confirm"
   },
