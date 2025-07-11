@@ -539,6 +539,11 @@
     "dangerZoneTitle": "Danger Zone",
     "confirmResetLabel": "Type RESET to confirm"
   },
+  "playerAssessmentModal": {
+    "title": "Assess Players",
+    "saveButton": "Save",
+    "noPlayers": "No players selected"
+  },
   "playerStats": {
     "selectPlayer": "Select Player",
     "selectPlayerLabel": "Select Player",
