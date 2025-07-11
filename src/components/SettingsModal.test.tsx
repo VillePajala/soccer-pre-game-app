@@ -52,6 +52,15 @@ describe('<SettingsModal />', () => {
     expect(await screen.findByText(/1\.0 MB.*5\.0 MB/)).toBeInTheDocument();
   });
 
+  test('displays usage in KB when below 1 MB', async () => {
+    (navigator.storage.estimate as jest.Mock).mockResolvedValueOnce({
+      usage: 512 * 1024,
+      quota: 2 * 1048576,
+    });
+    render(<SettingsModal {...defaultProps} />);
+    expect(await screen.findByText(/512\.0 KB.*2\.0 MB/)).toBeInTheDocument();
+  });
+
   test('calls onClose when Done clicked', () => {
     render(<SettingsModal {...defaultProps} />);
     fireEvent.click(screen.getByRole('button', { name: /Done/i }));

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatBytes } from '@/utils/bytes';
 import packageJson from '../../package.json';
 
 interface SettingsModalProps {
@@ -111,17 +112,17 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               </p>
               <div className="space-y-1">
                 <label className={labelStyle}>{t('settingsModal.storageUsageLabel', 'Storage Usage')}</label>
-                <p className="text-sm text-slate-300">
-                  {storageEstimate
-                    ? t('settingsModal.storageUsageDetails', {
-                        used: `${(storageEstimate.usage / 1048576).toFixed(1)} MB`,
-                        quota: `${(storageEstimate.quota / 1048576).toFixed(1)} MB`,
-                      })
-                    : t(
-                        'settingsModal.storageUsageUnavailable',
-                        'Storage usage information unavailable.'
-                      )}
-                </p>
+                  <p className="text-sm text-slate-300">
+                    {storageEstimate
+                      ? t('settingsModal.storageUsageDetails', {
+                          used: formatBytes(storageEstimate.usage),
+                          quota: formatBytes(storageEstimate.quota),
+                        })
+                      : t(
+                          'settingsModal.storageUsageUnavailable',
+                          'Storage usage information unavailable.'
+                        )}
+                  </p>
                 {storageEstimate && (
                   <div className="w-full bg-slate-700 rounded-md h-2 overflow-hidden">
                     <div
