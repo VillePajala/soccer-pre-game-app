@@ -1,8 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { TranslationKey } from '@/i18n-types';
 import { Player, Season, Tournament } from '@/types';
 import { AppState } from '@/types';
 import { calculatePlayerStats, PlayerStats as PlayerStatsData } from '@/utils/playerStats';
+import { calculatePlayerAssessmentAverages } from '@/utils/assessmentStats';
 import { format } from 'date-fns';
 import { fi, enUS } from 'date-fns/locale';
 import SparklineChart from './SparklineChart';
@@ -17,6 +19,13 @@ interface PlayerStatsViewProps {
 
 const PlayerStatsView: React.FC<PlayerStatsViewProps> = ({ player, savedGames, onGameClick, seasons, tournaments }) => {
   const { t, i18n } = useTranslation();
+
+  const [showRatings, setShowRatings] = useState(false);
+
+  const assessmentAverages = useMemo(() => {
+    if (!player) return null;
+    return calculatePlayerAssessmentAverages(player.id, savedGames);
+  }, [player, savedGames]);
 
   const playerStats: PlayerStatsData | null = useMemo(() => {
     if (!player) return null;
@@ -77,14 +86,41 @@ const PlayerStatsView: React.FC<PlayerStatsViewProps> = ({ player, savedGames, o
         {/* Game by Game Stats - Title and Chart */}
         <div className="mt-6">
           <h3 className="text-lg font-semibold mb-2">{t('playerStats.gameLog', 'Game Log')}</h3>
-          <div className="mb-4">
-            <SparklineChart 
-              data={playerStats.gameByGameStats} 
-              goalsLabel={t('playerStats.goals', 'Goals')}
-              assistsLabel={t('playerStats.assists', 'Assists')}
-            />
-          </div>
+        <div className="mb-4">
+          <SparklineChart
+            data={playerStats.gameByGameStats}
+            goalsLabel={t('playerStats.goals', 'Goals')}
+            assistsLabel={t('playerStats.assists', 'Assists')}
+          />
         </div>
+      </div>
+
+      {assessmentAverages && (
+        <div className="mt-6">
+          <button
+            type="button"
+            onClick={() => setShowRatings(v => !v)}
+            className="text-left w-full bg-slate-800/60 p-3 rounded-lg flex justify-between items-center"
+            aria-expanded={showRatings}
+          >
+            <span className="font-semibold">{t('playerStats.performanceRatings', 'Performance Ratings')}</span>
+            <span className="text-sm text-slate-400">{showRatings ? '-' : '+'}</span>
+          </button>
+          {showRatings && (
+            <div className="mt-2 space-y-1 text-sm">
+              {Object.entries(assessmentAverages.averages).map(([metric, avg]) => (
+                <div key={metric} className="flex justify-between px-2">
+                  <span>{t(`assessmentMetrics.${metric}` as TranslationKey, metric)}</span>
+                  <span className="text-yellow-400 font-semibold">{avg.toFixed(1)}</span>
+                </div>
+              ))}
+              <div className="text-xs text-slate-400 text-right">
+                {assessmentAverages.count} {t('playerStats.ratedGames', 'rated')}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
         {/* Performance by Season/Tournament */}
         <div className="space-y-4 mt-2">

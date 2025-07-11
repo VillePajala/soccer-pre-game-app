@@ -44,6 +44,7 @@
   "controlBar.gameSettingsButton": "Game Settings",
   "controlBar.manageRoster": "Manage Roster",
   "controlBar.manageSeasonsAndTournaments": "Manage Seasons & Tournaments",
+  "controlBar.assessPlayers": "Assess Players",
   "controlBar.appSettings": "App Settings",
   "controlBar.rules": "Rules",
   "controlBar.coachingMaterials": "Coaching Materials",
@@ -100,7 +101,8 @@
       "manageRoster": "Edit player roster and notes.",
       "gameSettingsButton": "Adjust match settings.",
       "manageSeasonsAndTournaments": "Manage seasons and tournaments.",
-      "exportData": "Export saved matches and stats."
+      "exportData": "Export saved matches and stats.",
+      "assessPlayers": "Open the player assessment modal after a game."
     },
     "timerOverlayTitle": "Match Clock Overlay",
     "timerOverlay": {
@@ -544,6 +546,18 @@
     "saveButton": "Save",
     "noPlayers": "No players selected"
   },
+  "assessmentMetrics": {
+    "intensity": "Intensity",
+    "courage": "Courage",
+    "duels": "Duels",
+    "technique": "Technique",
+    "creativity": "Creativity",
+    "decisions": "Decisions",
+    "awareness": "Awareness",
+    "teamwork": "Teamwork",
+    "fair_play": "Fair Play",
+    "impact": "Impact"
+  },
   "playerStats": {
     "selectPlayer": "Select Player",
     "selectPlayerLabel": "Select Player",
@@ -559,6 +573,9 @@
     "seasonPerformance": "Season Performance",
     "tournamentPerformance": "Tournament Performance",
     "vs": "vs",
-    "totalsRow": "Totals"
+    "totalsRow": "Totals",
+    "performanceRatings": "Performance Ratings",
+    "avgRating": "Avg Rating",
+    "ratedGames": "Rated Games"
   }
 }
