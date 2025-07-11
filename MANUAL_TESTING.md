@@ -9,5 +9,6 @@ Use this short checklist to manually verify key workflows after making changes t
 5. **Save and reload a game** – Perform a quick save, refresh the page and load the saved game to confirm state persistence.
 6. **Assess players after a game** – After ending a game, open the Player Assessment modal via the new button. Adjust a slider for a player, tap **Save**, then close and reopen the modal to confirm the rating was stored.
 7. **Try new assessment UI** – Expand a player card and verify the segmented overall selector, sliders and notes input work. Saving should collapse the card and show a checkmark.
+8. **Review assessment progress** – Save ratings for multiple players and ensure the header progress updates and saved players show a ✔ icon.
 
 Running through these steps after updates helps catch regressions before deploying.

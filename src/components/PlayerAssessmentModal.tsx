@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Player, PlayerAssessment } from '@/types';
 import PlayerAssessmentCard from './PlayerAssessmentCard';
@@ -21,6 +21,7 @@ const PlayerAssessmentModal: React.FC<PlayerAssessmentModalProps> = ({
   onSave,
 }) => {
   const { t } = useTranslation();
+  const [savedIds, setSavedIds] = useState<string[]>([]);
 
   if (!isOpen) return null;
 
@@ -35,6 +36,11 @@ const PlayerAssessmentModal: React.FC<PlayerAssessmentModalProps> = ({
 
   const getPlayer = (id: string) => availablePlayers.find(p => p.id === id);
 
+  const handleSave = async (playerId: string, assessment: Partial<PlayerAssessment>) => {
+    await onSave(playerId, assessment);
+    setSavedIds(prev => (prev.includes(playerId) ? prev : [...prev, playerId]));
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60] font-display">
       <div className={`${modalContainerStyle} bg-noise-texture relative overflow-hidden h-full w-full`}>
@@ -44,7 +50,9 @@ const PlayerAssessmentModal: React.FC<PlayerAssessmentModalProps> = ({
         <div className="absolute -inset-[50px] bg-indigo-600/5 blur-2xl bottom-0 opacity-50" />
         <div className="relative z-10 flex flex-col h-full">
           <div className="flex justify-center items-center pt-10 pb-4 backdrop-blur-sm bg-slate-900/20">
-            <h2 className={titleStyle}>{t('playerAssessmentModal.title', 'Assess Players')}</h2>
+            <h2 className={titleStyle}>
+              {t('playerAssessmentModal.title', 'Assess Players')} {savedIds.length}/{selectedPlayerIds.length}
+            </h2>
           </div>
           <div className="flex-1 overflow-y-auto min-h-0 space-y-4 p-4">
             {selectedPlayerIds.map(pid => {
@@ -54,7 +62,8 @@ const PlayerAssessmentModal: React.FC<PlayerAssessmentModalProps> = ({
                 <PlayerAssessmentCard
                   key={pid}
                   player={player}
-                  onSave={(assessment) => onSave(pid, assessment)}
+                  isSaved={savedIds.includes(pid)}
+                  onSave={(assessment) => handleSave(pid, assessment)}
                 />
               );
             })}

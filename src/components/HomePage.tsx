@@ -15,6 +15,7 @@ import GameSettingsModal from '@/components/GameSettingsModal';
 import SettingsModal from '@/components/SettingsModal';
 import SeasonTournamentManagementModal from '@/components/SeasonTournamentManagementModal';
 import InstructionsModal from '@/components/InstructionsModal';
+import PlayerAssessmentModal from '@/components/PlayerAssessmentModal';
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
 import { useGameState, UseGameStateReturn } from '@/hooks/useGameState';
@@ -47,7 +48,7 @@ import { deleteTournament as utilDeleteTournament, updateTournament as utilUpdat
 // Import Player from types directory
 import { Player, Season, Tournament } from '@/types';
 // Import saveMasterRoster utility
-import type { GameEvent, AppState, SavedGamesCollection, TimerState } from "@/types";
+import type { GameEvent, AppState, SavedGamesCollection, TimerState, PlayerAssessment } from "@/types";
 import { saveMasterRoster } from '@/utils/masterRoster';
 // Import useQuery, useMutation, useQueryClient
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -67,6 +68,7 @@ import { queryKeys } from '@/config/queryKeys';
 // Also import addSeason and addTournament for the new mutations
 import { updateGameDetails as utilUpdateGameDetails } from '@/utils/savedGames';
 import { DEFAULT_GAME_ID } from '@/config/constants';
+import { savePlayerAssessment as utilSavePlayerAssessment } from '@/utils/playerAssessments';
 import { MASTER_ROSTER_KEY, TIMER_STATE_KEY, SEASONS_LIST_KEY } from "@/config/storageKeys";
 import { exportJson, exportCsv, exportAggregateJson, exportAggregateCsv } from '@/utils/exportGames';
 import { useToast } from '@/contexts/ToastProvider';
@@ -386,6 +388,8 @@ function HomePage() {
     setIsNewGameSetupModalOpen,
     isSettingsModalOpen,
     setIsSettingsModalOpen,
+    isPlayerAssessmentModalOpen,
+    setIsPlayerAssessmentModalOpen,
   } = useModalContext();
   const { showToast } = useToast();
   // const [isPlayerStatsModalOpen, setIsPlayerStatsModalOpen] = useState(false);
@@ -1464,6 +1468,28 @@ function HomePage() {
     setIsRosterModalOpen(true);
     setHighlightRosterButton(false); // <<< Remove highlight when modal is opened
   };
+
+  const openPlayerAssessmentModal = () => setIsPlayerAssessmentModalOpen(true);
+  const closePlayerAssessmentModal = () => setIsPlayerAssessmentModalOpen(false);
+
+  const handleSavePlayerAssessment = async (
+    playerId: string,
+    assessment: Partial<PlayerAssessment>,
+  ) => {
+    if (!currentGameId) return;
+    const minutesPlayed = Math.round(
+      (gameSessionState.completedIntervalDurations || []).reduce(
+        (s, i) => s + i.duration,
+        0,
+      ) / 60,
+    );
+    await utilSavePlayerAssessment(currentGameId, playerId, {
+      ...(assessment as PlayerAssessment),
+      minutesPlayed,
+      createdAt: Date.now(),
+      createdBy: 'local',
+    });
+  };
   
   
   // ... (other code in Home component) ...
@@ -2399,6 +2425,7 @@ function HomePage() {
           onAddOpponentDisc={() => handleAddTacticalDisc('opponent')}
           onToggleInstructionsModal={handleToggleInstructionsModal}
           onOpenSettingsModal={handleOpenSettingsModal}
+          onOpenPlayerAssessmentModal={openPlayerAssessmentModal}
         />
       </div>
 
@@ -2581,6 +2608,14 @@ function HomePage() {
         }}
         onResetGuide={handleShowAppGuide}
         onHardResetApp={handleHardResetApp}
+      />
+
+      <PlayerAssessmentModal
+        isOpen={isPlayerAssessmentModalOpen}
+        onClose={closePlayerAssessmentModal}
+        selectedPlayerIds={gameSessionState.selectedPlayerIds}
+        availablePlayers={availablePlayers}
+        onSave={handleSavePlayerAssessment}
       />
     </main>
   );

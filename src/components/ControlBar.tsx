@@ -68,6 +68,7 @@ interface ControlBarProps {
   onAddOpponentDisc: () => void;
   onToggleInstructionsModal: () => void;
   onOpenSettingsModal: () => void;
+  onOpenPlayerAssessmentModal: () => void;
 }
 
 const ControlBar: React.FC<ControlBarProps> = ({
@@ -98,6 +99,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   onAddOpponentDisc,
   onToggleInstructionsModal,
   onOpenSettingsModal,
+  onOpenPlayerAssessmentModal,
 }) => {
   const { t } = useTranslation(); // Standard hook
   logger.log('[ControlBar Render] Received highlightRosterButton prop:', highlightRosterButton); // <<< Log prop value
@@ -319,12 +321,15 @@ const ControlBar: React.FC<ControlBarProps> = ({
                      
                        {/* Group 3: Information/Export */} 
                        <div className="py-0.5">
-                         <button onClick={wrapHandler(onToggleGameStatsModal)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
-                           <HiOutlineClipboardDocumentList className={menuIconSize} />{t('controlBar.stats', 'Stats')}
-                         </button>
-                         <button onClick={wrapHandler(onToggleTrainingResources)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
-                           <HiOutlineBookOpen className={menuIconSize} />{t('controlBar.training', 'Training')}
-                         </button>
+                        <button onClick={wrapHandler(onToggleGameStatsModal)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
+                          <HiOutlineClipboardDocumentList className={menuIconSize} />{t('controlBar.stats', 'Stats')}
+                        </button>
+                        <button onClick={wrapHandler(onOpenPlayerAssessmentModal)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
+                          <HiOutlineClipboard className={menuIconSize} />{t('controlBar.assessPlayers', 'Assess Players')}
+                        </button>
+                        <button onClick={wrapHandler(onToggleTrainingResources)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
+                          <HiOutlineBookOpen className={menuIconSize} />{t('controlBar.training', 'Training')}
+                        </button>
                          <a
                            href="https://tulospalvelu.palloliitto.fi/category/P9EKK!splita_ekk25/info/playingmethod"
                            target="_blank"

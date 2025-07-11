@@ -54,7 +54,7 @@
 1. **Data layer** – implement `PlayerAssessment` type, AppState updates and Firestore helpers. ✅
 2. **Modal skeleton** – create modal component with simple Save per player, using dummy sliders. ✅
 3. **UI components** – build sliders and rating selector, integrate into cards. ✅
-4. **Persistence** – wire up `updateDoc` and local state with validation.
+4. **Persistence** – wire up `updateDoc` and local state with validation. ✅
 5. **Statistics integration** – display averages in PlayerStatsView and GameStatsModal.
 6. **Polish & translations** – finalize tooltips, accessibility labels and translation keys.
 7. **Testing & docs** – add unit/integration tests and update documentation.

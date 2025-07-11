@@ -43,6 +43,7 @@
   "controlBar.gameSettingsButton": "Otteluasetukset",
   "controlBar.manageRoster": "Kokoonpanoasetukset",
   "controlBar.manageSeasonsAndTournaments": "Hallinnoi kausia ja turnauksia",
+  "controlBar.assessPlayers": "Arvioi pelaajat",
   "controlBar.appSettings": "Asetukset",
   "controlBar.rules": "Säännöt",
   "controlBar.coachingMaterials": "Valmennusmateriaalit",
@@ -100,7 +101,8 @@
       "manageRoster": "Muokkaa kokoonpanoa ja muistiinpanoja.",
       "gameSettingsButton": "Säädä otteluasetuksia.",
       "manageSeasonsAndTournaments": "Hallinnoi kausia ja turnauksia.",
-      "exportData": "Vie tallennetut pelit ja tilastot."
+      "exportData": "Vie tallennetut pelit ja tilastot.",
+      "assessPlayers": "Avaa pelaaja-arviointi pelin p\u00e4\u00e4tytty\u00e4."
     },
     "timerOverlayTitle": "Ottelukello",
     "timerOverlay": {

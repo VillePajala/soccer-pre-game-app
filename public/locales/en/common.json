@@ -44,6 +44,7 @@
   "controlBar.gameSettingsButton": "Game Settings",
   "controlBar.manageRoster": "Manage Roster",
   "controlBar.manageSeasonsAndTournaments": "Manage Seasons & Tournaments",
+  "controlBar.assessPlayers": "Assess Players",
   "controlBar.appSettings": "App Settings",
   "controlBar.rules": "Rules",
   "controlBar.coachingMaterials": "Coaching Materials",
@@ -100,7 +101,8 @@
       "manageRoster": "Edit player roster and notes.",
       "gameSettingsButton": "Adjust match settings.",
       "manageSeasonsAndTournaments": "Manage seasons and tournaments.",
-      "exportData": "Export saved matches and stats."
+      "exportData": "Export saved matches and stats.",
+      "assessPlayers": "Open the player assessment modal after a game."
     },
     "timerOverlayTitle": "Match Clock Overlay",
     "timerOverlay": {

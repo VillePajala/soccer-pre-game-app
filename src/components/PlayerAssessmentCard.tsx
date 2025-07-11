@@ -5,10 +5,12 @@ import { HiCheckCircle, HiXCircle } from 'react-icons/hi';
 import type { Player, PlayerAssessment } from '@/types';
 import OverallRatingSelector from './OverallRatingSelector';
 import AssessmentSlider from './AssessmentSlider';
+import { validateAssessment } from '@/hooks/usePlayerAssessments';
 
 interface PlayerAssessmentCardProps {
   player: Player;
   onSave: (assessment: Partial<PlayerAssessment>) => void;
+  isSaved?: boolean;
 }
 
 const initialSliders = {
@@ -24,12 +26,12 @@ const initialSliders = {
   impact: 3,
 };
 
-const PlayerAssessmentCard: React.FC<PlayerAssessmentCardProps> = ({ player, onSave }) => {
+const PlayerAssessmentCard: React.FC<PlayerAssessmentCardProps> = ({ player, onSave, isSaved }) => {
   const [expanded, setExpanded] = useState(false);
   const [overall, setOverall] = useState<number>(5);
   const [sliders, setSliders] = useState<Record<string, number>>(initialSliders);
   const [notes, setNotes] = useState('');
-  const isValid = notes.length <= 280;
+  const isValid = validateAssessment({ overall, sliders: sliders as PlayerAssessment['sliders'], notes });
 
   const handleSliderChange = (key: string, value: number) => {
     setSliders((prev) => ({ ...prev, [key]: value }));
@@ -52,7 +54,11 @@ const PlayerAssessmentCard: React.FC<PlayerAssessmentCardProps> = ({ player, onS
           {player.name}
           {player.jerseyNumber ? ` #${player.jerseyNumber}` : ''}
         </span>
-        {expanded ? <HiCheckCircle className="text-indigo-400" /> : <HiXCircle className="text-slate-500" />}
+        {isSaved ? (
+          <HiCheckCircle className="text-indigo-400" />
+        ) : (
+          <HiXCircle className="text-slate-500" />
+        )}
       </div>
       {expanded && (
         <div className="mt-2 space-y-3">
