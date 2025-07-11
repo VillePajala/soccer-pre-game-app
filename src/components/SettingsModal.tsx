@@ -31,6 +31,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   const [teamName, setTeamName] = useState(defaultTeamName);
   const [resetConfirm, setResetConfirm] = useState('');
   const [storageEstimate, setStorageEstimate] = useState<{ usage: number; quota: number } | null>(null);
+  const MAX_LOCAL_STORAGE = 5 * 1024 * 1024; // 5 MB assumption for localStorage
 
   useEffect(() => {
     setTeamName(defaultTeamName);
@@ -42,13 +43,15 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
       if (navigator.storage?.estimate) {
         navigator.storage
           .estimate()
-          .then(res => setStorageEstimate({ usage: res.usage || 0, quota: res.quota || 0 }))
+          .then(res =>
+            setStorageEstimate({ usage: res.usage || 0, quota: MAX_LOCAL_STORAGE })
+          )
           .catch(() => setStorageEstimate(null));
       } else {
         setStorageEstimate(null);
       }
     }
-  }, [isOpen]);
+  }, [isOpen, MAX_LOCAL_STORAGE]);
 
   if (!isOpen) return null;
 
@@ -116,7 +119,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     {storageEstimate
                       ? t('settingsModal.storageUsageDetails', {
                           used: formatBytes(storageEstimate.usage),
-                          quota: formatBytes(storageEstimate.quota),
+                          quota: formatBytes(MAX_LOCAL_STORAGE),
                         })
                       : t(
                           'settingsModal.storageUsageUnavailable',
@@ -127,7 +130,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                   <div className="w-full bg-slate-700 rounded-md h-2 overflow-hidden">
                     <div
                       className="bg-indigo-500 h-2"
-                      style={{ width: `${Math.min(100, (storageEstimate.usage / storageEstimate.quota) * 100)}%` }}
+                      style={{ width: `${Math.min(100, (storageEstimate.usage / MAX_LOCAL_STORAGE) * 100)}%` }}
                     />
                   </div>
                 )}
