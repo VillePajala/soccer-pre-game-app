@@ -171,6 +171,7 @@ export const createGame = async (gameData: Partial<AppState>): Promise<{ gameId:
       currentPeriod: gameData.currentPeriod || 1,
       gameStatus: gameData.gameStatus || 'notStarted',
       selectedPlayerIds: gameData.selectedPlayerIds || [],
+      assessments: gameData.assessments || {},
       seasonId: gameData.seasonId || '',
       tournamentId: gameData.tournamentId || '',
       gameLocation: gameData.gameLocation || '',

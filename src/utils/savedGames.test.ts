@@ -71,6 +71,7 @@ describe('Saved Games Utilities', () => {
     currentPeriod: 1,
     gameStatus: 'inProgress',
     selectedPlayerIds: ['player_1'],
+    assessments: {},
     seasonId: 'season_1',
     tournamentId: 'tournament_1',
     gameLocation: 'Stadium A',
@@ -93,6 +94,7 @@ describe('Saved Games Utilities', () => {
     teamName: 'Eagles', // Was homeTeam
     opponentName: 'Condors', // Was awayTeam
     gameEvents: [mockEvent2],
+    assessments: {},
       seasonId: 'season_2',
     tournamentId: '', // AppState.tournamentId is string, use '' for empty
     homeScore: 0,

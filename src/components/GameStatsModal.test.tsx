@@ -59,6 +59,7 @@ const minimalMockAppState: AppState = {
   currentPeriod: 1,
   gameStatus: 'notStarted',
   selectedPlayerIds: [],
+  assessments: {},
   seasonId: '',
   tournamentId: '',
   gameLocation: '',
