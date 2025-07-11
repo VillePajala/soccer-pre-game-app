@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import packageJson from '../../package.json';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -27,6 +28,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
   const [teamName, setTeamName] = useState(defaultTeamName);
+  const [resetConfirm, setResetConfirm] = useState('');
 
   useEffect(() => {
     setTeamName(defaultTeamName);
@@ -91,12 +93,50 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 className={inputStyle}
               />
             </div>
-            <button onClick={onResetGuide} className={primaryButtonStyle}>
-              {t('settingsModal.resetGuideButton', 'Reset App Guide')}
-            </button>
-            <button onClick={onHardResetApp} className={dangerButtonStyle}>
-              {t('settingsModal.hardResetButton', 'Hard Reset App')}
-            </button>
+            <div className="pt-2 border-t border-slate-700/40 space-y-2">
+              <h3 className="text-lg font-semibold text-slate-200">
+                {t('settingsModal.aboutTitle', 'About')}
+              </h3>
+              <p className="text-sm text-slate-300">
+                {t('settingsModal.appVersion', 'App Version')}: {packageJson.version}
+              </p>
+              <a
+                href="https://github.com/VillePajala/soccer-pre-game-app"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-indigo-400 underline"
+              >
+                {t('settingsModal.documentationLink', 'Documentation')}
+              </a>
+              <button onClick={onResetGuide} className={primaryButtonStyle}>
+                {t('settingsModal.resetGuideButton', 'Reset App Guide')}
+              </button>
+            </div>
+            <div className="pt-2 border-t border-slate-700/40 space-y-2">
+              <h3 className="text-lg font-semibold text-red-300">
+                {t('settingsModal.dangerZoneTitle', 'Danger Zone')}
+              </h3>
+              <label htmlFor="hard-reset-confirm" className={labelStyle}>
+                {t('settingsModal.confirmResetLabel', 'Type RESET to confirm')}
+              </label>
+              <input
+                id="hard-reset-confirm"
+                type="text"
+                value={resetConfirm}
+                onChange={(e) => setResetConfirm(e.target.value)}
+                className={inputStyle}
+              />
+              <button
+                onClick={() => {
+                  onHardResetApp();
+                  setResetConfirm('');
+                }}
+                className={dangerButtonStyle}
+                disabled={resetConfirm !== 'RESET'}
+              >
+                {t('settingsModal.hardResetButton', 'Hard Reset App')}
+              </button>
+            </div>
           </div>
           <div className="p-4 border-t border-slate-700/20 backdrop-blur-sm bg-slate-900/20 flex-shrink-0">
             <button onClick={onClose} className={primaryButtonStyle}>
