@@ -792,6 +792,19 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
     selectedPlayerIds
   ]);
 
+  const totals = useMemo(() => {
+    return playerStats.reduce(
+      (acc, p) => {
+        acc.gamesPlayed += p.gamesPlayed;
+        acc.goals += p.goals;
+        acc.assists += p.assists;
+        acc.totalScore += p.totalScore;
+        return acc;
+      },
+      { gamesPlayed: 0, goals: 0, assists: 0, totalScore: 0 }
+    );
+  }, [playerStats]);
+
   // Use localGameEvents for display
   const sortedGoals = useMemo(() => {
     if (activeTab === 'currentGame') {
@@ -1207,7 +1220,8 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                         </tr>
                       </thead>
                       <tbody className="text-slate-100">
-                         {playerStats.length > 0 ? (playerStats.map(player => (
+                         {playerStats.length > 0 ? (
+                          playerStats.map(player => (
                           <tr key={player.id} className="border-b border-slate-800 hover:bg-slate-800/40 cursor-pointer" onClick={() => handlePlayerRowClick(player)}>
                             <td className="px-2 py-2 font-medium whitespace-nowrap">{player.name}</td>
                             <td className="px-1 py-2 text-center text-yellow-400 font-semibold">{player.gamesPlayed}</td>
@@ -1216,8 +1230,19 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                             <td className="px-1 py-2 text-center text-yellow-400 font-bold">{player.totalScore}</td>
                             <td className="px-1 py-2 text-center text-yellow-400 font-semibold">{player.avgPoints.toFixed(1)}</td>
                           </tr>
-                        ))) : (
+                        ))
+                        ) : (
                           <tr><td colSpan={6} className="py-4 text-center text-slate-400">{t('common.noPlayersMatchFilter', 'Ei pelaajia hakusuodattimella')}</td></tr>
+                        )}
+                        {playerStats.length > 0 && (
+                          <tr className="border-t border-slate-700 bg-slate-800/60 font-semibold">
+                            <td className="px-2 py-2">{t('playerStats.totalsRow', 'Totals')}</td>
+                            <td className="px-1 py-2 text-center text-yellow-400">{totals.gamesPlayed}</td>
+                            <td className="px-1 py-2 text-center text-yellow-400">{totals.goals}</td>
+                            <td className="px-1 py-2 text-center text-yellow-400">{totals.assists}</td>
+                            <td className="px-1 py-2 text-center text-yellow-400 font-bold">{totals.totalScore}</td>
+                            <td className="px-1 py-2 text-center text-yellow-400">{(totals.gamesPlayed > 0 ? (totals.totalScore / totals.gamesPlayed).toFixed(1) : '0.0')}</td>
+                          </tr>
                         )}
                       </tbody>
                     </table>

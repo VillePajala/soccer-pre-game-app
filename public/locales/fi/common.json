@@ -542,6 +542,7 @@
     "points": "Pisteet",
     "seasonPerformance": "Kausisuoritus",
     "tournamentPerformance": "Turnaussuoritus",
-    "vs": "vs"
+    "vs": "vs",
+    "totalsRow": "Yhteensä"
   }
 }
