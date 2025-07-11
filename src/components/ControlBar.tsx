@@ -324,7 +324,11 @@ const ControlBar: React.FC<ControlBarProps> = ({
                         <button onClick={wrapHandler(onToggleGameStatsModal)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
                           <HiOutlineClipboardDocumentList className={menuIconSize} />{t('controlBar.stats', 'Stats')}
                         </button>
-                        <button onClick={wrapHandler(onOpenPlayerAssessmentModal)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
+                        <button
+                          onClick={wrapHandler(onOpenPlayerAssessmentModal)}
+                          className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75"
+                          title={t('instructionsModal.controlBar.assessPlayers') ?? undefined}
+                        >
                           <HiOutlineClipboard className={menuIconSize} />{t('controlBar.assessPlayers', 'Assess Players')}
                         </button>
                         <button onClick={wrapHandler(onToggleTrainingResources)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">

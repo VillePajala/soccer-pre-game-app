@@ -56,5 +56,10 @@
 3. **UI components** – build sliders and rating selector, integrate into cards. ✅
 4. **Persistence** – wire up `updateDoc` and local state with validation. ✅
 5. **Statistics integration** – display averages in PlayerStatsView and GameStatsModal. ✅
-6. **Polish & translations** – finalize tooltips, accessibility labels and translation keys.
+6. **Polish & translations** – finalize tooltips, accessibility labels and translation keys. ✅
 7. **Testing & docs** – add unit/integration tests and update documentation.
+
+### Manual Testing Suggestions
+- Open a finished game and select **Assess Players** from the menu. Verify the modal appears and each card expands/collapses with a tooltip.
+- Enter slider values and notes for a player, press **Save** and confirm the header progress updates.
+- Close and reopen the modal to ensure saved players show a check mark and notes persist.
