@@ -7,6 +7,7 @@ import ControlBar from '@/components/ControlBar';
 import TimerOverlay from '@/components/TimerOverlay';
 import GoalLogModal from '@/components/GoalLogModal';
 import GameStatsModal from '@/components/GameStatsModal';
+import PlayerAssessmentModal from '@/components/PlayerAssessmentModal';
 import TrainingResourcesModal from '@/components/TrainingResourcesModal';
 import LoadGameModal from '@/components/LoadGameModal';
 import NewGameSetupModal from '@/components/NewGameSetupModal';
@@ -20,6 +21,7 @@ import i18n from '../i18n';
 import { useGameState, UseGameStateReturn } from '@/hooks/useGameState';
 import GameInfoBar from '@/components/GameInfoBar';
 import { useGameTimer } from '@/hooks/useGameTimer';
+import { useAutoBackup } from '@/hooks/useAutoBackup';
 // Import the new game session reducer and related types
 import {
   gameSessionReducer,
@@ -45,7 +47,7 @@ import {
 import { deleteSeason as utilDeleteSeason, updateSeason as utilUpdateSeason, addSeason as utilAddSeason } from '@/utils/seasons';
 import { deleteTournament as utilDeleteTournament, updateTournament as utilUpdateTournament, addTournament as utilAddTournament } from '@/utils/tournaments';
 // Import Player from types directory
-import { Player, Season, Tournament } from '@/types';
+import { Player, Season, Tournament, PlayerAssessment } from '@/types';
 // Import saveMasterRoster utility
 import type { GameEvent, AppState, SavedGamesCollection, TimerState } from "@/types";
 import { saveMasterRoster } from '@/utils/masterRoster';
@@ -65,7 +67,7 @@ import {
 // Import query keys
 import { queryKeys } from '@/config/queryKeys';
 // Also import addSeason and addTournament for the new mutations
-import { updateGameDetails as utilUpdateGameDetails } from '@/utils/savedGames';
+import { updateGameDetails as utilUpdateGameDetails, updatePlayerAssessment } from '@/utils/savedGames';
 import { DEFAULT_GAME_ID } from '@/config/constants';
 import { MASTER_ROSTER_KEY, TIMER_STATE_KEY, SEASONS_LIST_KEY } from "@/config/storageKeys";
 import { exportJson, exportCsv, exportAggregateJson, exportAggregateCsv } from '@/utils/exportGames';
@@ -131,6 +133,7 @@ function HomePage() {
   logger.log('--- page.tsx RENDER ---');
   const { t } = useTranslation(); // Get translation function
   const queryClient = useQueryClient(); // Get query client instance
+  useAutoBackup();
 
  
   
@@ -390,6 +393,7 @@ function HomePage() {
   const { showToast } = useToast();
   // const [isPlayerStatsModalOpen, setIsPlayerStatsModalOpen] = useState(false);
   const [selectedPlayerForStats, setSelectedPlayerForStats] = useState<Player | null>(null);
+  const [isPerformanceModalOpen, setIsPerformanceModalOpen] = useState(false);
 
   // --- Timer State (Still needed here) ---
   const [showLargeTimerOverlay, setShowLargeTimerOverlay] = useState<boolean>(false); // State for overlay visibility
@@ -1244,6 +1248,22 @@ function HomePage() {
       setSelectedPlayerForStats(null);
     }
     setIsGameStatsModalOpen(!isGameStatsModalOpen);
+  };
+
+  const handleTogglePerformanceModal = () => {
+    setIsPerformanceModalOpen(v => !v);
+  };
+
+  const handleSavePlayerAssessment = async (
+    playerId: string,
+    assessment: PlayerAssessment
+  ) => {
+    if (!currentGameId) return;
+    try {
+      await updatePlayerAssessment(currentGameId, playerId, assessment);
+    } catch (e) {
+      logger.error('Failed to save assessment', e);
+    }
   };
 
   // Placeholder handlers for updating game info (will be passed to modal)
@@ -2393,6 +2413,7 @@ function HomePage() {
           onPlaceAllPlayers={handlePlaceAllPlayers}
           highlightRosterButton={highlightRosterButton}
           onOpenSeasonTournamentModal={handleOpenSeasonTournamentModal}
+          onOpenPerformanceModal={handleTogglePerformanceModal}
           isTacticsBoardView={isTacticsBoardView}
           onToggleTacticsBoard={handleToggleTacticsBoard}
           onAddHomeDisc={() => handleAddTacticalDisc('home')}
@@ -2449,10 +2470,16 @@ function HomePage() {
           onExportAggregateJson={handleExportAggregateJson}
           onExportAggregateCsv={handleExportAggregateCsv}
           initialSelectedPlayerId={selectedPlayerForStats?.id}
-          onGameClick={handleGameLogClick}
-        />
+        onGameClick={handleGameLogClick}
+      />
       )}
-      <LoadGameModal 
+      <PlayerAssessmentModal
+        isOpen={isPerformanceModalOpen}
+        onClose={handleTogglePerformanceModal}
+        players={playersForCurrentGame}
+        onSave={handleSavePlayerAssessment}
+      />
+      <LoadGameModal
         isOpen={isLoadGameModalOpen}
         onClose={handleCloseLoadGameModal}
         savedGames={savedGames} 

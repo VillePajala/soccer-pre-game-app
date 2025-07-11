@@ -20,6 +20,11 @@ export interface AppSettings {
   lastHomeTeamName?: string;
   language?: string;
   hasSeenAppGuide?: boolean;
+  encryptionEnabled?: boolean;
+  encryptionPassphrase?: string;
+  autoBackupEnabled?: boolean;
+  backupIntervalDays?: number;
+  lastBackupAt?: string;
   // Add other settings as needed
 }
 
@@ -31,6 +36,11 @@ const DEFAULT_APP_SETTINGS: AppSettings = {
   lastHomeTeamName: '',
   language: 'en',
   hasSeenAppGuide: false,
+  encryptionEnabled: false,
+  encryptionPassphrase: '',
+  autoBackupEnabled: false,
+  backupIntervalDays: 1,
+  lastBackupAt: '',
 };
 
 /**
@@ -177,6 +187,43 @@ export const saveHasSeenAppGuide = async (value: boolean): Promise<boolean> => {
   } catch {
     return false;
   }
+};
+
+export const getEncryptionPassphrase = async (): Promise<string | undefined> => {
+  const settings = await getAppSettings();
+  return settings.encryptionEnabled ? settings.encryptionPassphrase : undefined;
+};
+
+export const saveEncryptionSettings = async (
+  enabled: boolean,
+  passphrase: string
+): Promise<AppSettings> => {
+  return updateAppSettings({ encryptionEnabled: enabled, encryptionPassphrase: passphrase });
+};
+
+export const getAutoBackupSettings = async (): Promise<{
+  enabled: boolean;
+  intervalDays: number;
+  lastBackupAt: string;
+}> => {
+  const settings = await getAppSettings();
+  return {
+    enabled: settings.autoBackupEnabled ?? false,
+    intervalDays: settings.backupIntervalDays ?? 1,
+    lastBackupAt: settings.lastBackupAt ?? ''
+  };
+};
+
+export const saveAutoBackupSettings = async (
+  enabled: boolean,
+  intervalDays: number,
+  lastBackupAt?: string
+): Promise<AppSettings> => {
+  return updateAppSettings({
+    autoBackupEnabled: enabled,
+    backupIntervalDays: intervalDays,
+    ...(lastBackupAt ? { lastBackupAt } : {})
+  });
 };
 
 /**

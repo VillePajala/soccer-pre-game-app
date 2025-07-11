@@ -38,6 +38,26 @@ export interface TacticalDisc {
   type: 'home' | 'opponent' | 'goalie';
 }
 
+export interface PlayerAssessment {
+  overall: number;
+  sliders: {
+    intensity: number;
+    courage: number;
+    duels: number;
+    technique: number;
+    creativity: number;
+    decisions: number;
+    awareness: number;
+    teamwork: number;
+    fair_play: number;
+    impact: number;
+  };
+  notes: string;
+  minutesPlayed: number;
+  createdAt: string;
+  createdBy: string;
+}
+
 export interface AppState {
   playersOnField: Player[];
   opponents: Opponent[];
@@ -67,6 +87,7 @@ export interface AppState {
   tacticalDiscs: TacticalDisc[];
   tacticalDrawings: Point[][];
   tacticalBallPosition: Point | null;
+  assessments?: Record<string, PlayerAssessment>;
 }
 
 export interface SavedGamesCollection {
