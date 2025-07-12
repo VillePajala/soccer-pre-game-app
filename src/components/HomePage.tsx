@@ -153,7 +153,7 @@ function HomePage() {
     periodDurationMinutes: initialState.periodDurationMinutes,
     currentPeriod: initialState.currentPeriod,
     gameStatus: initialState.gameStatus,
-    demandFactor: initialState.demandFactor,
+    demandFactor: initialState.demandFactor ?? 1,
     selectedPlayerIds: initialState.selectedPlayerIds,
     seasonId: initialState.seasonId,
     tournamentId: initialState.tournamentId,
