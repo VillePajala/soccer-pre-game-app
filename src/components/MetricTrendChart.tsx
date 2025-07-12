@@ -21,7 +21,7 @@ const MetricTrendChart: React.FC<MetricTrendChartProps> = ({ data }) => {
           <CartesianGrid stroke="#4b5563" strokeDasharray="3 3" vertical={false} />
           <YAxis hide domain={[0, max]} />
           <Tooltip cursor={{ stroke: '#334155' }} labelFormatter={(v) => new Date(v as string).toLocaleDateString()} />
-          <Line type="monotone" dataKey="value" stroke="#facc15" dot={false} strokeWidth={2} />
+          <Line type="monotone" dataKey="value" stroke="#facc15" dot={false} activeDot={false} strokeWidth={2} />
         </LineChart>
       </ResponsiveContainer>
     </div>
