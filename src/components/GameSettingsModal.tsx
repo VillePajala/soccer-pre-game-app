@@ -895,7 +895,10 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                       onChange={(v) => {
                         onDemandFactorChange(v);
                         if (currentGameId) {
-                          updateGameDetails(currentGameId, { demandFactor: v });
+                          updateGameDetailsMutation.mutate({
+                            gameId: currentGameId,
+                            updates: { demandFactor: v },
+                          });
                         }
                       }}
                       min={0.5}

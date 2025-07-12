@@ -103,6 +103,8 @@ describe('NewGameSetupModal', () => {
     addSeasonMutation: mockAddSeasonMutation as UseMutationResult<Season | null, Error, { name: string }, unknown>,
     addTournamentMutation: mockAddTournamentMutation as UseMutationResult<Tournament | null, Error, { name: string }, unknown>,
     isAddingSeason: false, isAddingTournament: false,
+    demandFactor: 1,
+    onDemandFactorChange: jest.fn(),
   };
 
   const mockSeasonsData = [{ id: 'season1', name: 'Spring 2024' }, { id: 'season2', name: 'Summer 2024' }];
