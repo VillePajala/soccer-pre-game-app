@@ -58,7 +58,10 @@ const SparklineChart: React.FC<SparklineChartProps> = ({ data, goalsLabel, assis
             domain={[0, maxPoints]}
             allowDecimals={false}
           />
-          <Tooltip content={<CustomTooltip goalsLabel={goalsLabel} assistsLabel={assistsLabel} />} />
+          <Tooltip
+            content={<CustomTooltip goalsLabel={goalsLabel} assistsLabel={assistsLabel} />}
+            wrapperStyle={{ backgroundColor: 'transparent', border: 'none', boxShadow: 'none' }}
+          />
           <Legend 
             iconType="circle"
             iconSize={8}
