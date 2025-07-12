@@ -48,46 +48,69 @@ export function getPlayerAssessmentNotes(playerId: string, games: SavedGamesColl
   return notes;
 }
 
-export function calculatePlayerAssessmentAverages(playerId: string, games: SavedGamesCollection): MetricAverages | null {
+export function calculatePlayerAssessmentAverages(
+  playerId: string,
+  games: SavedGamesCollection,
+  useDemandCorrection = false
+): MetricAverages | null {
   let count = 0;
   const totals: Record<string, number> = {};
-  METRICS.forEach(m => totals[m] = 0);
+  METRICS.forEach(m => (totals[m] = 0));
   let overallTotal = 0;
+  let denominator = 0;
   for (const game of Object.values(games)) {
     const a = game.assessments?.[playerId];
     if (!a) continue;
     count++;
-    METRICS.forEach(m => { totals[m] += a.sliders[m]; });
-    overallTotal += a.overall;
+    const factor = useDemandCorrection ? game.demandFactor ?? 1 : 1;
+    METRICS.forEach(m => {
+      totals[m] += a.sliders[m] * factor;
+    });
+    overallTotal += a.overall * factor;
+    denominator += factor;
   }
   if (count === 0) return null;
+  const divisor = useDemandCorrection ? denominator : count;
   const averages: Record<string, number> = {};
-  METRICS.forEach(m => { averages[m] = totals[m] / count; });
-  return { count, averages, overall: overallTotal / count };
+  METRICS.forEach(m => {
+    averages[m] = totals[m] / divisor;
+  });
+  return { count, averages, overall: overallTotal / divisor };
 }
 
-export function calculateTeamAssessmentAverages(games: SavedGamesCollection): MetricAverages | null {
+export function calculateTeamAssessmentAverages(
+  games: SavedGamesCollection,
+  useDemandCorrection = false
+): MetricAverages | null {
   let count = 0;
   const totals: Record<string, number> = {};
-  METRICS.forEach(m => totals[m] = 0);
+  METRICS.forEach(m => (totals[m] = 0));
   let overallTotal = 0;
+  let denominator = 0;
   for (const game of Object.values(games)) {
     if (!game.assessments) continue;
     const players = Object.values(game.assessments);
     if (players.length === 0) continue;
     count++;
+    const factor = useDemandCorrection ? game.demandFactor ?? 1 : 1;
     const perMetricTotals: Record<string, number> = {};
-    METRICS.forEach(m => perMetricTotals[m] = 0);
+    METRICS.forEach(m => (perMetricTotals[m] = 0));
     players.forEach(a => {
-      METRICS.forEach(m => { perMetricTotals[m] += a.sliders[m]; });
+      METRICS.forEach(m => {
+        perMetricTotals[m] += a.sliders[m];
+      });
     });
-    overallTotal += players.reduce((s, a) => s + a.overall, 0) / players.length;
+    overallTotal += (players.reduce((s, a) => s + a.overall, 0) / players.length) * factor;
     METRICS.forEach(m => {
-      totals[m] += perMetricTotals[m] / players.length;
+      totals[m] += (perMetricTotals[m] / players.length) * factor;
     });
+    denominator += factor;
   }
   if (count === 0) return null;
+  const divisor = useDemandCorrection ? denominator : count;
   const averages: Record<string, number> = {};
-  METRICS.forEach(m => { averages[m] = totals[m] / count; });
-  return { count, averages, overall: overallTotal / count };
+  METRICS.forEach(m => {
+    averages[m] = totals[m] / divisor;
+  });
+  return { count, averages, overall: overallTotal / divisor };
 }

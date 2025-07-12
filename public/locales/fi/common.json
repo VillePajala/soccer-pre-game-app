@@ -582,6 +582,8 @@
     "notes": "Arvioinnin muistiinpanot",
     "metricTrends": "Arvioiden trendit",
     "metricSelect": "Valitse mittari",
-    "goalsAssists": "Maalit ja syötöt"
+    "goalsAssists": "Maalit ja syötöt",
+    "useDemandCorrection": "Painota vaikeuden mukaan",
+    "useDemandCorrectionTooltip": "Kun käytössä, vaikeiden pelien arviot vaikuttavat enemmän"
   }
 }

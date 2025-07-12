@@ -50,7 +50,8 @@ describe('App Settings Utilities', () => {
         hasSeenAppGuide: false,
         autoBackupEnabled: false,
         autoBackupIntervalHours: 24,
-        lastBackupTime: undefined
+        lastBackupTime: undefined,
+        useDemandCorrection: false
       });
     });
 
@@ -68,7 +69,8 @@ describe('App Settings Utilities', () => {
         hasSeenAppGuide: false,
         autoBackupEnabled: false,
         autoBackupIntervalHours: 24,
-        lastBackupTime: undefined
+        lastBackupTime: undefined,
+        useDemandCorrection: false
       });
     });
 
@@ -86,7 +88,8 @@ describe('App Settings Utilities', () => {
         hasSeenAppGuide: false,
         autoBackupEnabled: false,
         autoBackupIntervalHours: 24,
-        lastBackupTime: undefined
+        lastBackupTime: undefined,
+        useDemandCorrection: false
       });
       
       consoleSpy.mockRestore();
@@ -107,7 +110,8 @@ describe('App Settings Utilities', () => {
         hasSeenAppGuide: false,
         autoBackupEnabled: false,
         autoBackupIntervalHours: 24,
-        lastBackupTime: undefined
+        lastBackupTime: undefined,
+        useDemandCorrection: false
       });
       consoleSpy.mockRestore();
     });
@@ -165,7 +169,8 @@ describe('App Settings Utilities', () => {
         hasSeenAppGuide: false,
         autoBackupEnabled: false,
         autoBackupIntervalHours: 24,
-        lastBackupTime: undefined
+        lastBackupTime: undefined,
+        useDemandCorrection: false
       });
       
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
@@ -177,7 +182,8 @@ describe('App Settings Utilities', () => {
           hasSeenAppGuide: false,
           autoBackupEnabled: false,
           autoBackupIntervalHours: 24,
-          lastBackupTime: undefined
+          lastBackupTime: undefined,
+          useDemandCorrection: false
         })
       );
     });
@@ -254,7 +260,8 @@ describe('App Settings Utilities', () => {
           language: 'fi',
           hasSeenAppGuide: false,
           autoBackupEnabled: false,
-          autoBackupIntervalHours: 24
+          autoBackupIntervalHours: 24,
+          useDemandCorrection: false
         })
       );
       expect(result).toBe(true);
@@ -338,7 +345,8 @@ describe('App Settings Utilities', () => {
         const savedSettings = JSON.parse(appSettingsCall[1]);
         expect(savedSettings).toEqual({
           ...currentSettings, // Ensure other settings are preserved
-          lastHomeTeamName: 'New Team Name' // The updated value
+          lastHomeTeamName: 'New Team Name', // The updated value
+          useDemandCorrection: false
         });
       }
 
@@ -379,7 +387,8 @@ describe('App Settings Utilities', () => {
           hasSeenAppGuide: false,
           autoBackupEnabled: false,
           autoBackupIntervalHours: 24,
-          lastBackupTime: undefined
+          lastBackupTime: undefined,
+          useDemandCorrection: false
         })
       );
       expect(result).toBe(true);

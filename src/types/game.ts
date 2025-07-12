@@ -61,6 +61,8 @@ export interface AppState {
   assessments?: { [playerId: string]: PlayerAssessment };
   seasonId: string;
   tournamentId: string;
+  /** Difficulty weighting factor for demand-correction averages */
+  demandFactor?: number;
   gameLocation?: string;
   gameTime?: string;
   subIntervalMinutes?: number;

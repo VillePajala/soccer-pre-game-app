@@ -23,6 +23,7 @@ export interface AppSettings {
   autoBackupEnabled?: boolean;
   autoBackupIntervalHours?: number;
   lastBackupTime?: string;
+  useDemandCorrection?: boolean;
   // Add other settings as needed
 }
 
@@ -37,6 +38,7 @@ const DEFAULT_APP_SETTINGS: AppSettings = {
   autoBackupEnabled: false,
   autoBackupIntervalHours: 24,
   lastBackupTime: undefined,
+  useDemandCorrection: false,
 };
 
 /**

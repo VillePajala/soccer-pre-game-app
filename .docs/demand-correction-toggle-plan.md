@@ -29,3 +29,6 @@ Certain matches are more demanding than others, making raw performance scores ha
 - Update manual testing docs to verify that enabling the toggle changes displayed averages.
 
 This feature will help coaches compare player performance more fairly when some opponents present tougher challenges.
+
+## Status
+- [x] Demand correction toggle implemented and documented.
