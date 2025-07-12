@@ -21,11 +21,11 @@ We've already made progress in centralizing data access for certain entities:
 **Objective**: Create a complete abstraction layer for all localStorage operations to provide a single point of change when switching to Supabase.
 
 **Tasks**:
-- [ ] 1.1. Create `src/utils/masterRoster.ts` with CRUD operations for player management
-- [ ] 1.2. Create `src/utils/savedGames.ts` with CRUD operations for game state management
-- [ ] 1.3. Create `src/utils/appSettings.ts` for user preferences and application settings
-- [ ] 1.4. Refactor components to use these utility functions instead of direct localStorage access
-- [ ] 1.5. Create consistent error handling patterns across all data utilities
+- [x] 1.1. Create `src/utils/masterRoster.ts` with CRUD operations for player management
+- [x] 1.2. Create `src/utils/savedGames.ts` with CRUD operations for game state management
+- [x] 1.3. Create `src/utils/appSettings.ts` for user preferences and application settings
+- [x] 1.4. Refactor components to use these utility functions instead of direct localStorage access
+- [x] 1.5. Create consistent error handling patterns across all data utilities
 
 **Success Criteria**:
 - No direct localStorage access in component files
@@ -37,11 +37,11 @@ We've already made progress in centralizing data access for certain entities:
 **Objective**: Adapt the application to handle asynchronous data operations, which will be required when using Supabase.
 
 **Tasks**:
-- [ ] 2.1. Refactor utility functions to return Promises, even while still using localStorage
-- [ ] 2.2. Update components to handle async/await or .then() patterns
-- [ ] 2.3. Add appropriate loading states to components that depend on data
-- [ ] 2.4. Implement error states for failed data operations
-- [ ] 2.5. Consider incorporating React Query or SWR for data fetching management
+- [x] 2.1. Refactor utility functions to return Promises, even while still using localStorage
+- [x] 2.2. Update components to handle async/await or .then() patterns
+- [x] 2.3. Add appropriate loading states to components that depend on data
+- [x] 2.4. Implement error states for failed data operations
+- [x] 2.5. Consider incorporating React Query or SWR for data fetching management
 
 **Success Criteria**:
 - Utility functions return Promises

@@ -37,11 +37,14 @@ export const getLocalStorageItemAsync = async (key: string): Promise<string | nu
 While the intent is to provide a consistent async API, these wrappers still run synchronously. Consider using the synchronous API directly or implementing validation to ensure `localStorage` is available (checking `typeof window !== 'undefined'`).
 
 ## 4. Missing Validation on Game Imports
-In `importGamesFromJson` there is a TODO comment reminding to validate imported data before saving:
+`importGamesFromJson` originally contained a TODO reminder to validate imported
+data before saving:
 ```ts
 // TODO: Add validation here to ensure gamesToImport[gameId] conforms to AppState
 ```
-Without validation, malformed data could corrupt saved games. Implement a schema or runtime type check before writing to storage.
+This has since been implemented using `appStateSchema.safeParse` to verify each
+game object before persisting. Malformed data now throws an error and is not
+saved, preventing corruption of existing games.
 
 ## 5. Monolithic Home Page Component
 `src/app/page.tsx` contains hundreds of lines of logic, state, and utility functions. Large components are difficult to maintain.
