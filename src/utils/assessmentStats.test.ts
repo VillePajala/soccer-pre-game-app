@@ -122,4 +122,37 @@ describe('assessmentStats', () => {
     const expected = (4 * 1 + 2 * 0.5) / divisor;
     expect(result?.overall).toBeCloseTo(expected);
   });
+
+  it('calculates finalScore for a single game', () => {
+    const assessment: PlayerAssessment = {
+      ...sampleAssessment(0),
+      overall: 5,
+      sliders: {
+        intensity: 4,
+        courage: 6,
+        duels: 2,
+        technique: 3,
+        creativity: 5,
+        decisions: 4,
+        awareness: 5,
+        teamwork: 6,
+        fair_play: 5,
+        impact: 4,
+      },
+    };
+    const games: SavedGamesCollection = { g1: { ...baseGame, assessments: { p1: assessment } } };
+    const result = calculatePlayerAssessmentAverages('p1', games);
+    expect(result?.finalScore).toBeCloseTo(4.4);
+  });
+
+  it('weights finalScore using demand factor', () => {
+    const games: SavedGamesCollection = {
+      g1: { ...baseGame, demandFactor: 2, assessments: { p1: sampleAssessment(4) } },
+      g2: { ...baseGame, demandFactor: 1, assessments: { p1: sampleAssessment(6) } },
+    };
+    const result = calculatePlayerAssessmentAverages('p1', games, true);
+    const divisor = 2 + 1;
+    const expected = (4 * 2 + 6 * 1) / divisor;
+    expect(result?.finalScore).toBeCloseTo(expected);
+  });
 });

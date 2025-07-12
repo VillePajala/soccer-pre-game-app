@@ -2,9 +2,10 @@ export interface MetricAverages {
   count: number;
   averages: { [metric: string]: number };
   overall: number;
+  finalScore: number;
 }
 
-import type { SavedGamesCollection } from '@/types';
+import type { SavedGamesCollection, PlayerAssessment } from '@/types';
 
 const METRICS = [
   'intensity',
@@ -22,6 +23,14 @@ const METRICS = [
 export interface MetricTrendPoint {
   date: string;
   value: number;
+}
+
+export function calculateFinalScore(assessment: PlayerAssessment): number {
+  let sum = 0;
+  METRICS.forEach(m => {
+    sum += assessment.sliders[m];
+  });
+  return sum / METRICS.length;
 }
 
 export function getPlayerAssessmentTrends(playerId: string, games: SavedGamesCollection): { [metric: string]: MetricTrendPoint[] } {
@@ -57,6 +66,7 @@ export function calculatePlayerAssessmentAverages(
   const totals: Record<string, number> = {};
   METRICS.forEach(m => (totals[m] = 0));
   let overallTotal = 0;
+  let finalScoreTotal = 0;
   let denominator = 0;
   for (const game of Object.values(games)) {
     const a = game.assessments?.[playerId];
@@ -67,6 +77,7 @@ export function calculatePlayerAssessmentAverages(
       totals[m] += a.sliders[m] * factor;
     });
     overallTotal += a.overall * factor;
+    finalScoreTotal += calculateFinalScore(a) * factor;
     denominator += factor;
   }
   if (count === 0) return null;
@@ -75,7 +86,7 @@ export function calculatePlayerAssessmentAverages(
   METRICS.forEach(m => {
     averages[m] = totals[m] / divisor;
   });
-  return { count, averages, overall: overallTotal / divisor };
+  return { count, averages, overall: overallTotal / divisor, finalScore: finalScoreTotal / divisor };
 }
 
 export function calculateTeamAssessmentAverages(
@@ -86,6 +97,7 @@ export function calculateTeamAssessmentAverages(
   const totals: Record<string, number> = {};
   METRICS.forEach(m => (totals[m] = 0));
   let overallTotal = 0;
+  let finalScoreTotal = 0;
   let denominator = 0;
   for (const game of Object.values(games)) {
     if (!game.assessments) continue;
@@ -101,6 +113,7 @@ export function calculateTeamAssessmentAverages(
       });
     });
     overallTotal += (players.reduce((s, a) => s + a.overall, 0) / players.length) * factor;
+    finalScoreTotal += (players.reduce((s, a) => s + calculateFinalScore(a), 0) / players.length) * factor;
     METRICS.forEach(m => {
       totals[m] += (perMetricTotals[m] / players.length) * factor;
     });
@@ -112,5 +125,5 @@ export function calculateTeamAssessmentAverages(
   METRICS.forEach(m => {
     averages[m] = totals[m] / divisor;
   });
-  return { count, averages, overall: overallTotal / divisor };
+  return { count, averages, overall: overallTotal / divisor, finalScore: finalScoreTotal / divisor };
 }
