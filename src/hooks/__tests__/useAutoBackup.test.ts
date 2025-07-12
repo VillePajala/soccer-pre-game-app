@@ -12,6 +12,7 @@ jest.mock('@/utils/appSettings', () => ({
   updateAppSettings: jest.fn(),
 }));
 import { getAppSettings, updateAppSettings } from '@/utils/appSettings';
+import type { AppSettings } from '@/utils/appSettings';
 
 jest.useFakeTimers();
 
@@ -23,14 +24,14 @@ describe('useAutoBackup', () => {
   });
 
   it('triggers backup after remaining interval', async () => {
-    (getAppSettings as jest.Mock).mockResolvedValue({
+    (getAppSettings as jest.MockedFunction<typeof getAppSettings>).mockResolvedValue({
       currentGameId: null,
       autoBackupEnabled: true,
       autoBackupIntervalHours: 1,
       lastBackupTime: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-    } as any);
-    const updateSpy = updateAppSettings as jest.Mock;
-    updateSpy.mockResolvedValue({} as any);
+    });
+    const updateSpy = updateAppSettings as jest.MockedFunction<typeof updateAppSettings>;
+    updateSpy.mockResolvedValue({} as unknown as AppSettings);
     const exportSpy = exportFullBackup as jest.Mock;
     exportSpy.mockResolvedValue(undefined);
 
@@ -48,11 +49,11 @@ describe('useAutoBackup', () => {
   });
 
   it('does nothing when disabled', async () => {
-    (getAppSettings as jest.Mock).mockResolvedValue({
+    (getAppSettings as jest.MockedFunction<typeof getAppSettings>).mockResolvedValue({
       currentGameId: null,
       autoBackupEnabled: false,
       autoBackupIntervalHours: 1,
-    } as any);
+    });
     const exportSpy = exportFullBackup as jest.Mock;
     exportSpy.mockResolvedValue(undefined);
 
