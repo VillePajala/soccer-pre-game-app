@@ -49,7 +49,8 @@ export const deletePlayerAssessment = async (
       logger.warn(`Assessment for player ${playerId} not found in game ${gameId}.`);
       return null;
     }
-    const { [playerId]: _removed, ...rest } = game.assessments;
+    const rest = { ...game.assessments };
+    delete rest[playerId];
     const updatedGame: AppState = {
       ...game,
       assessments: rest,
