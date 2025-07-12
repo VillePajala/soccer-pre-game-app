@@ -12,6 +12,7 @@ import { getTournaments } from '@/utils/tournaments';
 import { updateGameDetails, updateGameEvent, removeGameEvent } from '@/utils/savedGames';
 import { UseMutationResult } from '@tanstack/react-query';
 import { TFunction } from 'i18next';
+import AssessmentSlider from './AssessmentSlider';
 
 export type GameEventType = 'goal' | 'opponentGoal' | 'substitution' | 'periodEnd' | 'gameEnd' | 'fairPlayCard';
 
@@ -42,6 +43,7 @@ export interface GameSettingsModalProps {
   availablePlayers: Player[];
   numPeriods: number;
   periodDurationMinutes: number;
+  demandFactor?: number;
   selectedPlayerIds: string[];
   onSelectedPlayersChange: (playerIds: string[]) => void;
   // --- Handlers for updating game data ---
@@ -56,6 +58,7 @@ export interface GameSettingsModalProps {
   onAwardFairPlayCard: (playerId: string | null, time: number) => void;
   onNumPeriodsChange: (num: number) => void;
   onPeriodDurationChange: (minutes: number) => void;
+  onDemandFactorChange: (factor: number) => void;
   onSeasonIdChange: (seasonId: string | undefined) => void;
   onTournamentIdChange: (tournamentId: string | undefined) => void;
   homeOrAway: 'home' | 'away';
@@ -129,8 +132,10 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   tournamentId,
   numPeriods,
   periodDurationMinutes,
+  demandFactor = 1,
   onNumPeriodsChange,
   onPeriodDurationChange,
+  onDemandFactorChange,
   onSeasonIdChange,
   onTournamentIdChange,
   homeOrAway,
@@ -879,6 +884,23 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                       onChange={(e) => onPeriodDurationChange(parseInt(e.target.value, 10))}
                       className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                       min="1"
+                    />
+                  </div>
+
+                  {/* Demand Factor Slider */}
+                  <div className="mb-4">
+                    <AssessmentSlider
+                      label={t('gameSettingsModal.demandFactorLabel', 'Game Demand Level')}
+                      value={demandFactor}
+                      onChange={(v) => {
+                        onDemandFactorChange(v);
+                        if (currentGameId) {
+                          updateGameDetails(currentGameId, { demandFactor: v });
+                        }
+                      }}
+                      min={0.5}
+                      max={1.5}
+                      step={0.05}
                     />
                   </div>
                 </div>

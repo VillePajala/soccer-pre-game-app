@@ -353,6 +353,7 @@
     "periodsLabel": "Peliasetukset",
     "numPeriodsLabel": "Jaksojen määrä",
     "periodDurationLabel": "Jakson kesto (minuuteissa)",
+    "demandFactorLabel": "Pelin vaativuustaso",
     "homeOrAwayLabel": "Joukkueesi on",
     "confirmAndStart": "Vahvista ja aloita peli"
   },
@@ -409,6 +410,7 @@
     "periodsLabel": "Erät",
     "numPeriodsLabel": "Erien lukumäärä",
     "periodDurationLabel": "Erän kesto (minuuteissa)",
+    "demandFactorLabel": "Pelin vaativuustaso",
     "linkita": "Linkitä",
     "eiMitaan": "Ei mitään",
     "kausi": "Kausi",

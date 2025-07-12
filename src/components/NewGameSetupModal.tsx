@@ -10,6 +10,7 @@ import { getTournaments as utilGetTournaments } from '@/utils/tournaments';
 import { getMasterRoster } from '@/utils/masterRosterManager';
 import { getLastHomeTeamName as utilGetLastHomeTeamName, saveLastHomeTeamName as utilSaveLastHomeTeamName } from '@/utils/appSettings';
 import { UseMutationResult } from '@tanstack/react-query';
+import AssessmentSlider from './AssessmentSlider';
 
 interface NewGameSetupModalProps {
   isOpen: boolean;
@@ -23,9 +24,10 @@ interface NewGameSetupModalProps {
     gameTime: string,
     seasonId: string | null,
     tournamentId: string | null,
-    numPeriods: 1 | 2, 
+    numPeriods: 1 | 2,
     periodDuration: number,
-    homeOrAway: 'home' | 'away'
+    homeOrAway: 'home' | 'away',
+    demandFactor: number
   ) => void;
   onCancel: () => void;
   addSeasonMutation: UseMutationResult<Season | null, Error, { name: string }, unknown>;
@@ -71,6 +73,8 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   // state for periods and duration
   const [localNumPeriods, setLocalNumPeriods] = useState<1 | 2>(2);
   const [localPeriodDurationString, setLocalPeriodDurationString] = useState<string>('10');
+
+  const [demandFactor, setDemandFactor] = useState(1);
 
   // <<< Step 4a: State for Home/Away >>>
   const [localHomeOrAway, setLocalHomeOrAway] = useState<'home' | 'away'>('home');
@@ -333,7 +337,8 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
       selectedTournamentId,
       localNumPeriods,
       duration, // use validated duration
-      localHomeOrAway // <<< Step 4a: Pass Home/Away >>>
+      localHomeOrAway, // <<< Step 4a: Pass Home/Away >>>
+      demandFactor
     );
 
     // Modal will be closed by parent component after onStart
@@ -772,13 +777,25 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                         <label htmlFor="periodDurationInput" className="block text-sm font-medium text-slate-300 mb-1">
                           {t('newGameSetupModal.periodDurationLabel', 'Period Duration (minutes)')}
                         </label>
-                        <input
+                      <input
                           type="number"
                           id="periodDurationInput"
                           value={localPeriodDurationString}
                           onChange={(e) => setLocalPeriodDurationString(e.target.value)}
                           className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                           min="1"
+                        />
+                      </div>
+
+                      {/* Demand Factor Slider */}
+                      <div className="mb-4">
+                        <AssessmentSlider
+                          label={t('newGameSetupModal.demandFactorLabel', 'Game Demand Level')}
+                          value={demandFactor}
+                          onChange={setDemandFactor}
+                          min={0.5}
+                          max={1.5}
+                          step={0.05}
                         />
                       </div>
 

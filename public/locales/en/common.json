@@ -362,6 +362,7 @@
     "periodsLabel": "Game Settings",
     "numPeriodsLabel": "Number of Periods",
     "periodDurationLabel": "Period Duration (minutes)",
+    "demandFactorLabel": "Game Demand Level",
     "homeOrAwayLabel": "Your Team is",
     "confirmAndStart": "Confirm & Start Game"
   },
@@ -409,6 +410,7 @@
     "periodsLabel": "Periods",
     "numPeriodsLabel": "Number of Periods",
     "periodDurationLabel": "Period Duration (minutes)",
+    "demandFactorLabel": "Game Demand Level",
     "linkita": "Link",
     "eiMitaan": "None",
     "kausi": "Season",

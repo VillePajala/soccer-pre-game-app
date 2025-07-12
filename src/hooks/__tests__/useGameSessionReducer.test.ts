@@ -17,6 +17,7 @@ const baseState: GameSessionState = {
   tournamentId: '',
   gameLocation: '',
   gameTime: '',
+  demandFactor: 1,
   gameEvents: [],
   timeElapsedInSeconds: 0,
   startTimestamp: null,
