@@ -189,6 +189,10 @@ const PlayerStatsView: React.FC<PlayerStatsViewProps> = ({ player, savedGames, o
                   <span className="w-28 shrink-0">{t('playerAssessmentModal.overallLabel', 'Overall')}</span>
                   <RatingBar value={assessmentAverages.overall} />
                 </div>
+                <div className="flex items-center space-x-2 px-2">
+                  <span className="w-28 shrink-0">{t('playerStats.avgRating', 'Avg Rating')}</span>
+                  <RatingBar value={assessmentAverages.finalScore} />
+                </div>
                 <div className="text-xs text-slate-400 text-right">
                   {assessmentAverages.count} {t('playerStats.ratedGames', 'rated')}
                 </div>

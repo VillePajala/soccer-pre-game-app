@@ -1047,6 +1047,10 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                               <span className="w-28 shrink-0">{t('playerAssessmentModal.overallLabel', 'Overall')}</span>
                               <RatingBar value={teamAssessmentAverages.overall} />
                             </div>
+                            <div className="flex items-center space-x-2 px-2">
+                              <span className="w-28 shrink-0">{t('playerStats.avgRating', 'Avg Rating')}</span>
+                              <RatingBar value={teamAssessmentAverages.finalScore} />
+                            </div>
                             <div className="text-xs text-slate-400 text-right">
                               {teamAssessmentAverages.count} {t('playerStats.ratedGames', 'rated')}
                             </div>
