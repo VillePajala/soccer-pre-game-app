@@ -22,6 +22,7 @@ const renderModal = (props = {}) =>
       onClose={() => {}}
       selectedPlayerIds={['p1']}
       availablePlayers={players}
+      assessments={{}}
       onSave={jest.fn()}
       {...props}
     />
@@ -39,5 +40,21 @@ describe('PlayerAssessmentModal', () => {
     fireEvent.click(screen.getByText('Player One #10'));
     fireEvent.click(screen.getByRole('button', { name: /Save/i }));
     expect(onSave).toHaveBeenCalled();
+  });
+
+  it('shows checkmark for saved players', () => {
+    const { container } = renderModal({
+      assessments: {
+        p1: {
+          overall: 5,
+          sliders: { intensity: 3, courage: 3, duels: 3, technique: 3, creativity: 3, decisions: 3, awareness: 3, teamwork: 3, fair_play: 3, impact: 3 },
+          notes: '',
+          minutesPlayed: 0,
+          createdAt: 0,
+          createdBy: 'test',
+        },
+      },
+    });
+    expect(container.querySelector('.text-indigo-400')).toBeInTheDocument();
   });
 });

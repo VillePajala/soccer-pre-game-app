@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Player, PlayerAssessment } from '@/types';
 import PlayerAssessmentCard from './PlayerAssessmentCard';
@@ -10,6 +10,7 @@ interface PlayerAssessmentModalProps {
   onClose: () => void;
   selectedPlayerIds: string[];
   availablePlayers: Player[];
+  assessments: { [id: string]: PlayerAssessment };
   onSave: (playerId: string, assessment: Partial<PlayerAssessment>) => void;
 }
 
@@ -18,10 +19,17 @@ const PlayerAssessmentModal: React.FC<PlayerAssessmentModalProps> = ({
   onClose,
   selectedPlayerIds,
   availablePlayers,
+  assessments,
   onSave,
 }) => {
   const { t } = useTranslation();
   const [savedIds, setSavedIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setSavedIds(Object.keys(assessments || {}));
+    }
+  }, [isOpen, assessments]);
 
   if (!isOpen) return null;
 
