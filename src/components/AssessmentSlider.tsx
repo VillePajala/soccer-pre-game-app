@@ -10,7 +10,7 @@ interface AssessmentSliderProps {
 
 const AssessmentSlider: React.FC<AssessmentSliderProps> = ({ label, value, onChange }) => {
   const [showPicker, setShowPicker] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const numbers = Array.from({ length: 19 }, (_, i) => 1 + i * 0.5);
 
