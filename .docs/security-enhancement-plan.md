@@ -37,3 +37,6 @@ This document summarizes a security audit of the Soccer Pre-Game App and outline
    - This reduces the chance of data corruption when updating the app.
 
 Implementing these features will reduce the likelihood of accidental data loss and provide an option for more secure local storage.
+
+## Status
+- [x] Automatic periodic backups added via useAutoBackup hook.

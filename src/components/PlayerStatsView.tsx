@@ -1,10 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TranslationKey } from '@/i18n-types';
 import { Player, Season, Tournament } from '@/types';
 import { AppState } from '@/types';
 import { calculatePlayerStats, PlayerStats as PlayerStatsData } from '@/utils/playerStats';
 import { calculatePlayerAssessmentAverages, getPlayerAssessmentTrends, getPlayerAssessmentNotes } from '@/utils/assessmentStats';
+import { getAppSettings, updateAppSettings } from '@/utils/appSettings';
 import { format } from 'date-fns';
 import { fi, enUS } from 'date-fns/locale';
 import SparklineChart from './SparklineChart';
@@ -25,11 +26,18 @@ const PlayerStatsView: React.FC<PlayerStatsViewProps> = ({ player, savedGames, o
 
   const [showRatings, setShowRatings] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState('goalsAssists');
+  const [useDemandCorrection, setUseDemandCorrection] = useState(false);
+
+  useEffect(() => {
+    getAppSettings().then(s => {
+      setUseDemandCorrection(s.useDemandCorrection ?? false);
+    });
+  }, []);
 
   const assessmentAverages = useMemo(() => {
     if (!player) return null;
-    return calculatePlayerAssessmentAverages(player.id, savedGames);
-  }, [player, savedGames]);
+    return calculatePlayerAssessmentAverages(player.id, savedGames, useDemandCorrection);
+  }, [player, savedGames, useDemandCorrection]);
 
   const assessmentTrends = useMemo(() => {
     if (!player) return null;
@@ -154,6 +162,20 @@ const PlayerStatsView: React.FC<PlayerStatsViewProps> = ({ player, savedGames, o
           </button>
           {showRatings && (
             <div className="mt-2 space-y-4 text-sm">
+              <label className="flex items-center space-x-2 px-2">
+                <input
+                  type="checkbox"
+                  checked={useDemandCorrection}
+                  onChange={(e) => {
+                    const val = e.target.checked;
+                    setUseDemandCorrection(val);
+                    updateAppSettings({ useDemandCorrection: val }).catch(() => {});
+                  }}
+                  title={t('playerStats.useDemandCorrectionTooltip', 'When enabled, ratings from harder games count more')}
+                  className="form-checkbox h-4 w-4 text-indigo-600 bg-slate-600 border-slate-500 rounded focus:ring-indigo-500"
+                />
+                <span>{t('playerStats.useDemandCorrection', 'Weight by Difficulty')}</span>
+              </label>
               <div className="space-y-2">
                 {Object.entries(assessmentAverages.averages).map(([metric, avg]) => (
                   <div key={metric} className="flex items-center space-x-2 px-2">

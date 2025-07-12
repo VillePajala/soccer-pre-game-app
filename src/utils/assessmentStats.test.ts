@@ -111,4 +111,15 @@ describe('assessmentStats', () => {
     const notes = getPlayerAssessmentNotes('p1', games);
     expect(notes[0].notes).toBe('good');
   });
+
+  it('weights averages using demand factor when enabled', () => {
+    const games: SavedGamesCollection = {
+      g1: { ...baseGame, demandFactor: 1, assessments: { p1: sampleAssessment(4) } },
+      g2: { ...baseGame, demandFactor: 0.5, assessments: { p1: sampleAssessment(2) } },
+    };
+    const result = calculatePlayerAssessmentAverages('p1', games, true);
+    const divisor = 1 + 0.5;
+    const expected = (4 * 1 + 2 * 0.5) / divisor;
+    expect(result?.overall).toBeCloseTo(expected);
+  });
 });
