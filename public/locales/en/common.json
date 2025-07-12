@@ -539,7 +539,12 @@
     "storageUsageDetails": "{{used}} of {{quota}} used",
     "storageUsageUnavailable": "Storage usage information unavailable.",
     "dangerZoneTitle": "Danger Zone",
-    "confirmResetLabel": "Type RESET to confirm"
+    "confirmResetLabel": "Type RESET to confirm",
+    "backupTitle": "Automatic Backup",
+    "autoBackupLabel": "Enable Automatic Backup",
+    "backupIntervalLabel": "Backup Interval (hours)",
+    "lastBackupLabel": "Last Backup",
+    "never": "Never"
   },
   "playerAssessmentModal": {
     "title": "Assess Players",
