@@ -549,7 +549,7 @@
     "overallLabel": "Overall",
   "expand": "Expand assessment for {{name}}",
   "collapse": "Collapse assessment for {{name}}",
-  "deleteButton": "Delete"
+  "resetButton": "Reset"
   },
   "assessmentMetrics": {
     "intensity": "Intensity",
