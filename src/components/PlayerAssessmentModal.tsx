@@ -71,6 +71,7 @@ const PlayerAssessmentModal: React.FC<PlayerAssessmentModalProps> = ({
                   key={pid}
                   player={player}
                   isSaved={savedIds.includes(pid)}
+                  assessment={assessments[pid]}
                   onSave={(assessment) => handleSave(pid, assessment)}
                 />
               );

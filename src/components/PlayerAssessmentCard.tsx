@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { HiCheckCircle, HiXCircle } from 'react-icons/hi';
 import { useTranslation } from 'react-i18next';
 import type { Player, PlayerAssessment } from '@/types';
@@ -13,6 +13,7 @@ interface PlayerAssessmentCardProps {
   player: Player;
   onSave: (assessment: Partial<PlayerAssessment>) => void;
   isSaved?: boolean;
+  assessment?: PlayerAssessment;
 }
 
 const initialSliders = {
@@ -28,12 +29,18 @@ const initialSliders = {
   impact: 3,
 };
 
-const PlayerAssessmentCard: React.FC<PlayerAssessmentCardProps> = ({ player, onSave, isSaved }) => {
+const PlayerAssessmentCard: React.FC<PlayerAssessmentCardProps> = ({ player, onSave, isSaved, assessment }) => {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
-  const [overall, setOverall] = useState<number>(5);
-  const [sliders, setSliders] = useState<Record<string, number>>(initialSliders);
-  const [notes, setNotes] = useState('');
+  const [overall, setOverall] = useState<number>(assessment?.overall ?? 5);
+  const [sliders, setSliders] = useState<Record<string, number>>(assessment?.sliders ?? initialSliders);
+  const [notes, setNotes] = useState(assessment?.notes ?? '');
+
+  useEffect(() => {
+    setOverall(assessment?.overall ?? 5);
+    setSliders(assessment?.sliders ?? initialSliders);
+    setNotes(assessment?.notes ?? '');
+  }, [assessment]);
   const isValid = validateAssessment({ overall, sliders: sliders as PlayerAssessment['sliders'], notes });
 
   const handleSliderChange = (key: string, value: number) => {

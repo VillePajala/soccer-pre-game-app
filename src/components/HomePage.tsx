@@ -933,6 +933,7 @@ function HomePage() {
           showPlayerNames: gameSessionState.showPlayerNames, // from gameSessionState
           selectedPlayerIds: gameSessionState.selectedPlayerIds, // from gameSessionState
           gameEvents: gameSessionState.gameEvents, // from gameSessionState
+          assessments: playerAssessments,
 
           // Other states
           playersOnField,
@@ -969,6 +970,7 @@ function HomePage() {
       // Local states that are part of the snapshot but not yet in gameSessionState:
       // gameEvents, // REMOVE - Now from gameSessionState
       gameSessionState,
+      playerAssessments,
       tacticalDiscs,
       tacticalDrawings,
       tacticalBallPosition,
@@ -1739,6 +1741,7 @@ function HomePage() {
           showPlayerNames: gameSessionState.showPlayerNames, // USE gameSessionState
           teamName: gameSessionState.teamName,
           gameEvents: gameSessionState.gameEvents, // USE gameSessionState
+          assessments: playerAssessments,
           opponentName: gameSessionState.opponentName,
           gameDate: gameSessionState.gameDate,
           homeScore: gameSessionState.homeScore,
@@ -1841,7 +1844,8 @@ function HomePage() {
     setSavedGames,
     resetHistory,
     showToast,
-    gameSessionState // This now covers all migrated game session fields
+    gameSessionState, // This now covers all migrated game session fields
+    playerAssessments
   ]);
   // --- END Quick Save Handler ---
 
