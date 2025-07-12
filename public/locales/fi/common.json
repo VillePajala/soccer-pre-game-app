@@ -531,7 +531,12 @@
     "storageUsageDetails": "{{used}} / {{quota}} käytössä",
     "storageUsageUnavailable": "Tallennustilan tietoja ei saatavilla.",
     "dangerZoneTitle": "Vaaravyöhyke",
-    "confirmResetLabel": "Kirjoita RESET vahvistaaksesi"
+    "confirmResetLabel": "Kirjoita RESET vahvistaaksesi",
+    "backupTitle": "Automaattinen varmuuskopio",
+    "autoBackupLabel": "Ota automaattinen varmuuskopio käyttöön",
+    "backupIntervalLabel": "Varmuuskopiointiväli (tuntia)",
+    "lastBackupLabel": "Viimeinen varmuuskopio",
+    "never": "Ei koskaan"
   },
   "playerAssessmentModal": {
     "title": "Arvioi Pelaajat",

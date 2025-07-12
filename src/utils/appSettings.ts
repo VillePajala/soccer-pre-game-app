@@ -20,6 +20,9 @@ export interface AppSettings {
   lastHomeTeamName?: string;
   language?: string;
   hasSeenAppGuide?: boolean;
+  autoBackupEnabled?: boolean;
+  autoBackupIntervalHours?: number;
+  lastBackupTime?: string;
   // Add other settings as needed
 }
 
@@ -31,6 +34,9 @@ const DEFAULT_APP_SETTINGS: AppSettings = {
   lastHomeTeamName: '',
   language: 'en',
   hasSeenAppGuide: false,
+  autoBackupEnabled: false,
+  autoBackupIntervalHours: 24,
+  lastBackupTime: undefined,
 };
 
 /**

@@ -47,7 +47,10 @@ describe('App Settings Utilities', () => {
         currentGameId: null,
         lastHomeTeamName: '',
         language: 'en',
-        hasSeenAppGuide: false
+        hasSeenAppGuide: false,
+        autoBackupEnabled: false,
+        autoBackupIntervalHours: 24,
+        lastBackupTime: undefined
       });
     });
 
@@ -62,7 +65,10 @@ describe('App Settings Utilities', () => {
         currentGameId: 'game123',
         lastHomeTeamName: 'Team X',
         language: 'en', // From default settings
-        hasSeenAppGuide: false
+        hasSeenAppGuide: false,
+        autoBackupEnabled: false,
+        autoBackupIntervalHours: 24,
+        lastBackupTime: undefined
       });
     });
 
@@ -77,7 +83,10 @@ describe('App Settings Utilities', () => {
         currentGameId: null,
         lastHomeTeamName: '',
         language: 'en',
-        hasSeenAppGuide: false
+        hasSeenAppGuide: false,
+        autoBackupEnabled: false,
+        autoBackupIntervalHours: 24,
+        lastBackupTime: undefined
       });
       
       consoleSpy.mockRestore();
@@ -95,7 +104,10 @@ describe('App Settings Utilities', () => {
         currentGameId: null,
         lastHomeTeamName: '',
         language: 'en',
-        hasSeenAppGuide: false
+        hasSeenAppGuide: false,
+        autoBackupEnabled: false,
+        autoBackupIntervalHours: 24,
+        lastBackupTime: undefined
       });
       consoleSpy.mockRestore();
     });
@@ -138,7 +150,9 @@ describe('App Settings Utilities', () => {
         currentGameId: 'game123',
         lastHomeTeamName: 'Team A',
         language: 'en',
-        hasSeenAppGuide: false
+        hasSeenAppGuide: false,
+        autoBackupEnabled: false,
+        autoBackupIntervalHours: 24
       };
       localStorageMock.getItem.mockReturnValue(JSON.stringify(currentSettings));
       
@@ -148,7 +162,10 @@ describe('App Settings Utilities', () => {
         currentGameId: 'game456', // Updated
         lastHomeTeamName: 'Team A', // Preserved
         language: 'en', // Preserved
-        hasSeenAppGuide: false
+        hasSeenAppGuide: false,
+        autoBackupEnabled: false,
+        autoBackupIntervalHours: 24,
+        lastBackupTime: undefined
       });
       
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
@@ -157,7 +174,10 @@ describe('App Settings Utilities', () => {
           currentGameId: 'game456',
           lastHomeTeamName: 'Team A',
           language: 'en',
-          hasSeenAppGuide: false
+          hasSeenAppGuide: false,
+          autoBackupEnabled: false,
+          autoBackupIntervalHours: 24,
+          lastBackupTime: undefined
         })
       );
     });
@@ -166,7 +186,9 @@ describe('App Settings Utilities', () => {
       const currentSettings: AppSettings = {
         currentGameId: 'initialGame',
         lastHomeTeamName: 'InitialTeam',
-        language: 'en'
+        language: 'en',
+        autoBackupEnabled: false,
+        autoBackupIntervalHours: 24
       };
       // Simulate getAppSettings returning current settings initially
       localStorageMock.getItem.mockReturnValueOnce(JSON.stringify(currentSettings));
@@ -214,7 +236,9 @@ describe('App Settings Utilities', () => {
         currentGameId: 'oldGameId',
         lastHomeTeamName: 'Team B',
         language: 'fi',
-        hasSeenAppGuide: false
+        hasSeenAppGuide: false,
+        autoBackupEnabled: false,
+        autoBackupIntervalHours: 24
       };
       localStorageMock.getItem.mockReturnValue(JSON.stringify(currentSettings));
       // Mock setItem to simulate successful save by updateAppSettings
@@ -228,7 +252,9 @@ describe('App Settings Utilities', () => {
           currentGameId: 'newGameId',
           lastHomeTeamName: 'Team B',
           language: 'fi',
-          hasSeenAppGuide: false
+          hasSeenAppGuide: false,
+          autoBackupEnabled: false,
+          autoBackupIntervalHours: 24
         })
       );
       expect(result).toBe(true);
@@ -294,7 +320,9 @@ describe('App Settings Utilities', () => {
         currentGameId: 'game123',
         lastHomeTeamName: 'Old Team Name',
         language: 'en',
-        hasSeenAppGuide: false
+        hasSeenAppGuide: false,
+        autoBackupEnabled: false,
+        autoBackupIntervalHours: 24
       };
       localStorageMock.getItem.mockReturnValue(JSON.stringify(currentSettings)); // For getAppSettings call in updateAppSettings
       localStorageMock.setItem.mockImplementation(() => {}); // Default successful save
@@ -348,7 +376,10 @@ describe('App Settings Utilities', () => {
           currentGameId: null,
           lastHomeTeamName: '',
           language: 'en',
-          hasSeenAppGuide: false
+          hasSeenAppGuide: false,
+          autoBackupEnabled: false,
+          autoBackupIntervalHours: 24,
+          lastBackupTime: undefined
         })
       );
       expect(result).toBe(true);

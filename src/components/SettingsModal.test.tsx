@@ -26,6 +26,11 @@ const defaultProps = {
   onDefaultTeamNameChange: jest.fn(),
   onResetGuide: jest.fn(),
   onHardResetApp: jest.fn(),
+  autoBackupEnabled: true,
+  backupIntervalHours: 24,
+  lastBackupTime: '2024-01-01T00:00:00.000Z',
+  onAutoBackupEnabledChange: jest.fn(),
+  onBackupIntervalChange: jest.fn(),
 };
 
 describe('<SettingsModal />', () => {
@@ -83,5 +88,16 @@ describe('<SettingsModal />', () => {
     render(<SettingsModal {...defaultProps} />);
     fireEvent.click(screen.getByRole('button', { name: /Reset App Guide/i }));
     expect(defaultProps.onResetGuide).toHaveBeenCalled();
+  });
+
+  test('backup controls trigger callbacks', () => {
+    render(<SettingsModal {...defaultProps} />);
+    const checkbox = screen.getByLabelText('Enable Automatic Backup');
+    fireEvent.click(checkbox);
+    expect(defaultProps.onAutoBackupEnabledChange).toHaveBeenCalledWith(false);
+
+    const intervalInput = screen.getByLabelText('Backup Interval (hours)');
+    fireEvent.change(intervalInput, { target: { value: '12' } });
+    expect(defaultProps.onBackupIntervalChange).toHaveBeenCalledWith(12);
   });
 });

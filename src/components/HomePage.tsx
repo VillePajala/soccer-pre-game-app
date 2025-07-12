@@ -22,6 +22,7 @@ import i18n from '../i18n';
 import { useGameState, UseGameStateReturn } from '@/hooks/useGameState';
 import GameInfoBar from '@/components/GameInfoBar';
 import { useGameTimer } from '@/hooks/useGameTimer';
+import useAutoBackup from '@/hooks/useAutoBackup';
 // Import the new game session reducer and related types
 import {
   gameSessionReducer,
@@ -43,6 +44,7 @@ import {
   getLastHomeTeamName as utilGetLastHomeTeamName,
   saveLastHomeTeamName as utilSaveLastHomeTeamName,
   updateAppSettings as utilUpdateAppSettings,
+  getAppSettings,
 } from '@/utils/appSettings';
 import { deleteSeason as utilDeleteSeason, updateSeason as utilUpdateSeason, addSeason as utilAddSeason } from '@/utils/seasons';
 import { deleteTournament as utilDeleteTournament, updateTournament as utilUpdateTournament, addTournament as utilAddTournament } from '@/utils/tournaments';
@@ -369,9 +371,22 @@ function HomePage() {
   const [hasSkippedInitialSetup, setHasSkippedInitialSetup] = useState<boolean>(false);
   const [defaultTeamNameSetting, setDefaultTeamNameSetting] = useState<string>('');
   const [appLanguage, setAppLanguage] = useState<string>(i18n.language);
+  const [autoBackupEnabled, setAutoBackupEnabled] = useState<boolean>(false);
+  const [backupIntervalHours, setBackupIntervalHours] = useState<number>(24);
+  const [lastBackupTime, setLastBackupTime] = useState<string | null>(null);
 
   useEffect(() => {
     utilGetLastHomeTeamName().then((name) => setDefaultTeamNameSetting(name));
+  }, []);
+
+  useAutoBackup();
+
+  useEffect(() => {
+    getAppSettings().then((s) => {
+      setAutoBackupEnabled(s.autoBackupEnabled ?? false);
+      setBackupIntervalHours(s.autoBackupIntervalHours ?? 24);
+      setLastBackupTime(s.lastBackupTime ?? null);
+    });
   }, []);
 
   useEffect(() => {
@@ -1866,6 +1881,11 @@ function HomePage() {
     setIsGameSettingsModalOpen(false); // Corrected State Setter
   };
   const handleOpenSettingsModal = () => {
+    getAppSettings().then((s) => {
+      setAutoBackupEnabled(s.autoBackupEnabled ?? false);
+      setBackupIntervalHours(s.autoBackupIntervalHours ?? 24);
+      setLastBackupTime(s.lastBackupTime ?? null);
+    });
     setIsSettingsModalOpen(true);
   };
   const handleCloseSettingsModal = () => {
@@ -2627,6 +2647,18 @@ function HomePage() {
         }}
         onResetGuide={handleShowAppGuide}
         onHardResetApp={handleHardResetApp}
+        autoBackupEnabled={autoBackupEnabled}
+        backupIntervalHours={backupIntervalHours}
+        lastBackupTime={lastBackupTime || undefined}
+        onAutoBackupEnabledChange={(enabled) => {
+          setAutoBackupEnabled(enabled);
+          utilUpdateAppSettings({ autoBackupEnabled: enabled }).catch(() => {});
+        }}
+        onBackupIntervalChange={(hours) => {
+          const val = Math.max(1, hours);
+          setBackupIntervalHours(val);
+          utilUpdateAppSettings({ autoBackupIntervalHours: val }).catch(() => {});
+        }}
       />
 
       <PlayerAssessmentModal
