@@ -8,9 +8,9 @@
   - Remove component, translations, states, and all related code
   - Impact: Reduces codebase complexity and maintenance burden
 
-- [ ] **Refactor Game Settings Data Persistence**
-  - Current implementation uses indirect auto-save in page component
-  - Need to move saving logic directly into GameSettingsModal
+- [x] **Refactor Game Settings Data Persistence**
+  - Saving logic now lives inside `GameSettingsModal` via `updateGameDetails` mutations
+  - Auto-save still exists for ongoing games, but settings edits persist directly
   - Impact: Improves code maintainability and reduces potential for data loss
 
 ### Data Validation
