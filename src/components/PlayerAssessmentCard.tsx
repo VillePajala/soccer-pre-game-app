@@ -132,7 +132,7 @@ const PlayerAssessmentCard: React.FC<PlayerAssessmentCardProps> = ({ player, onS
               className="ml-2 px-3 py-2 rounded-md text-sm font-medium transition-colors bg-red-600 hover:bg-red-700"
               onClick={() => onDelete()}
             >
-              {t('playerAssessmentModal.deleteButton', 'Delete')}
+              {t('playerAssessmentModal.resetButton', 'Reset')}
             </button>
           )}
         </div>

@@ -57,4 +57,24 @@ describe('PlayerAssessmentModal', () => {
     });
     expect(container.querySelector('.text-indigo-400')).toBeInTheDocument();
   });
+
+  it('calls onDelete when reset button clicked', () => {
+    const onDelete = jest.fn();
+    renderModal({
+      assessments: {
+        p1: {
+          overall: 5,
+          sliders: { intensity: 3, courage: 3, duels: 3, technique: 3, creativity: 3, decisions: 3, awareness: 3, teamwork: 3, fair_play: 3, impact: 3 },
+          notes: '',
+          minutesPlayed: 0,
+          createdAt: 0,
+          createdBy: 'test',
+        },
+      },
+      onDelete,
+    });
+    fireEvent.click(screen.getByText('Player One'));
+    fireEvent.click(screen.getByRole('button', { name: /Reset/i }));
+    expect(onDelete).toHaveBeenCalledWith('p1');
+  });
 });

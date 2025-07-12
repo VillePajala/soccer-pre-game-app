@@ -541,7 +541,7 @@
     "overallLabel": "Kokonaisarvio",
   "expand": "Avaa arviointi pelaajalle {{name}}",
   "collapse": "Sulje arviointi pelaajalle {{name}}",
-  "deleteButton": "Poista"
+  "resetButton": "Nollaa"
   },
   "assessmentMetrics": {
     "intensity": "Intensiteetti",

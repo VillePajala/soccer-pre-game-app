@@ -344,6 +344,7 @@ function HomePage() {
   const {
     assessments: playerAssessments,
     saveAssessment,
+    deleteAssessment,
   } = usePlayerAssessments(
     currentGameId || '',
     gameSessionState.completedIntervalDurations,
@@ -1498,6 +1499,14 @@ function HomePage() {
       setSavedGames(prev => ({ ...prev, [currentGameId]: updated }));
     }
   };
+
+  const handleDeletePlayerAssessment = async (playerId: string) => {
+    if (!currentGameId) return;
+    const updated = await deleteAssessment(playerId);
+    if (updated) {
+      setSavedGames(prev => ({ ...prev, [currentGameId]: updated }));
+    }
+  };
   
   
   // ... (other code in Home component) ...
@@ -2627,6 +2636,7 @@ function HomePage() {
         availablePlayers={availablePlayers}
         assessments={playerAssessments}
         onSave={handleSavePlayerAssessment}
+        onDelete={handleDeletePlayerAssessment}
       />
     </main>
   );

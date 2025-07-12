@@ -52,6 +52,12 @@ const PlayerAssessmentModal: React.FC<PlayerAssessmentModalProps> = ({
     setSavedIds(prev => (prev.includes(playerId) ? prev : [...prev, playerId]));
   };
 
+  const handleDelete = async (playerId: string) => {
+    if (!onDelete) return;
+    await onDelete(playerId);
+    setSavedIds(prev => prev.filter(id => id !== playerId));
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60] font-display">
       <div className={`${modalContainerStyle} bg-noise-texture relative overflow-hidden h-full w-full`}>
@@ -79,7 +85,7 @@ const PlayerAssessmentModal: React.FC<PlayerAssessmentModalProps> = ({
                   isSaved={savedIds.includes(pid)}
                   assessment={assessments[pid]}
                   onSave={(assessment) => handleSave(pid, assessment)}
-                  onDelete={onDelete ? () => onDelete(pid) : undefined}
+                  onDelete={onDelete ? () => handleDelete(pid) : undefined}
                 />
               );
             })}
