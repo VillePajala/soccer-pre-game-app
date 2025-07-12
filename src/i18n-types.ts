@@ -392,6 +392,7 @@ export type TranslationKey =
   | 'playerAssessmentModal.expand'
   | 'playerAssessmentModal.noPlayers'
   | 'playerAssessmentModal.notesPlaceholder'
+  | 'playerAssessmentModal.overallLabel'
   | 'playerAssessmentModal.saveButton'
   | 'playerAssessmentModal.title'
   | 'playerStats.assists'

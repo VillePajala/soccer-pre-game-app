@@ -546,6 +546,7 @@
     "saveButton": "Save",
     "noPlayers": "No players selected",
     "notesPlaceholder": "Add notes...",
+    "overallLabel": "Overall",
     "expand": "Expand assessment for {{name}}",
     "collapse": "Collapse assessment for {{name}}"
   },

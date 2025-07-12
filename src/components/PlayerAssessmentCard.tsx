@@ -17,16 +17,16 @@ interface PlayerAssessmentCardProps {
 }
 
 const initialSliders = {
-  intensity: 3,
-  courage: 3,
-  duels: 3,
-  technique: 3,
-  creativity: 3,
-  decisions: 3,
-  awareness: 3,
-  teamwork: 3,
-  fair_play: 3,
-  impact: 3,
+  intensity: 5,
+  courage: 5,
+  duels: 5,
+  technique: 5,
+  creativity: 5,
+  decisions: 5,
+  awareness: 5,
+  teamwork: 5,
+  fair_play: 5,
+  impact: 5,
 };
 
 const PlayerAssessmentCard: React.FC<PlayerAssessmentCardProps> = ({ player, onSave, isSaved, assessment }) => {
@@ -78,7 +78,12 @@ const PlayerAssessmentCard: React.FC<PlayerAssessmentCardProps> = ({ player, onS
       </button>
       {expanded && (
         <div className="mt-2 space-y-3">
-          <OverallRatingSelector value={overall} onChange={setOverall} />
+          <div className="flex items-center space-x-2">
+            <label className="text-sm text-slate-300 w-24 shrink-0">
+              {t('playerAssessmentModal.overallLabel', 'Overall')}
+            </label>
+            <OverallRatingSelector value={overall} onChange={setOverall} />
+          </div>
           <div className="space-y-2">
             {Object.entries(sliders).map(([key, value]) => (
               <AssessmentSlider

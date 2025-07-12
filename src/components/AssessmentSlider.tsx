@@ -15,7 +15,7 @@ const AssessmentSlider: React.FC<AssessmentSliderProps> = ({ label, value, onCha
       <input
         type="range"
         min={1}
-        max={5}
+        max={10}
         step={1}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}

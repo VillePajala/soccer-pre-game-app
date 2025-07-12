@@ -68,6 +68,7 @@ describe('assessmentStats', () => {
     expect(result?.count).toBe(2);
     expect(result?.averages.intensity).toBe(3);
     expect(result?.averages.impact).toBe(3);
+    expect(result?.overall).toBe(3);
   });
 
   it('computes team averages across games', () => {
@@ -88,5 +89,6 @@ describe('assessmentStats', () => {
     expect(result?.count).toBe(2);
     expect(result?.averages.intensity).toBe(3);
     expect(result?.averages.fair_play).toBe(3);
+    expect(result?.overall).toBe(3);
   });
 });

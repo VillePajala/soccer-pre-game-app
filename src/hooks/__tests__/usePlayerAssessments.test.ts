@@ -47,5 +47,6 @@ describe('validateAssessment', () => {
     expect(validateAssessment(assessment)).toBe(true);
     expect(validateAssessment({ ...assessment, overall: 11 })).toBe(false);
     expect(validateAssessment({ ...assessment, sliders: { ...assessment.sliders, intensity: 0 } })).toBe(false);
+    expect(validateAssessment({ ...assessment, sliders: { ...assessment.sliders, intensity: 11 } })).toBe(false);
   });
 });
