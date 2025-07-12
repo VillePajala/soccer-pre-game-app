@@ -17,6 +17,7 @@ import { getTournaments as utilGetTournaments } from '@/utils/tournaments';
 import { FaSort, FaSortUp, FaSortDown, FaEdit, FaSave, FaTimes, FaTrashAlt } from 'react-icons/fa';
 import PlayerStatsView from './PlayerStatsView';
 import { calculateTeamAssessmentAverages } from '@/utils/assessmentStats';
+import RatingBar from './RatingBar';
 
 // Define the type for sortable columns
 type SortableColumn = 'name' | 'goals' | 'assists' | 'totalScore' | 'fpAwards' | 'gamesPlayed' | 'avgPoints';
@@ -1035,13 +1036,17 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                       {teamAssessmentAverages && (
                         <div className="mt-4">
                           <h4 className="text-md font-semibold mb-2">{t('playerStats.performanceRatings', 'Performance Ratings')}</h4>
-                          <div className="space-y-1 text-sm">
+                          <div className="space-y-2 text-sm">
                             {Object.entries(teamAssessmentAverages.averages).map(([metric, avg]) => (
-                              <div key={metric} className="flex justify-between px-2">
-                                <span>{t(`assessmentMetrics.${metric}` as TranslationKey, metric)}</span>
-                                <span className="text-yellow-400 font-semibold">{avg.toFixed(1)}</span>
+                              <div key={metric} className="flex items-center space-x-2 px-2">
+                                <span className="w-28 shrink-0">{t(`assessmentMetrics.${metric}` as TranslationKey, metric)}</span>
+                                <RatingBar value={avg} />
                               </div>
                             ))}
+                            <div className="flex items-center space-x-2 px-2 mt-2">
+                              <span className="w-28 shrink-0">{t('playerAssessmentModal.overallLabel', 'Overall')}</span>
+                              <RatingBar value={teamAssessmentAverages.overall} />
+                            </div>
                             <div className="text-xs text-slate-400 text-right">
                               {teamAssessmentAverages.count} {t('playerStats.ratedGames', 'rated')}
                             </div>

@@ -6,7 +6,7 @@ import logger from '@/utils/logger';
 export const validateAssessment = (a: Partial<PlayerAssessment>): boolean => {
   if (typeof a.overall !== 'number' || a.overall < 1 || a.overall > 10) return false;
   if (!a.sliders) return false;
-  const inRange = Object.values(a.sliders).every(v => v >= 1 && v <= 5);
+  const inRange = Object.values(a.sliders).every(v => v >= 1 && v <= 10);
   if (!inRange) return false;
   if (a.notes && a.notes.length > 280) return false;
   return true;

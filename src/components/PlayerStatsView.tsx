@@ -8,6 +8,7 @@ import { calculatePlayerAssessmentAverages } from '@/utils/assessmentStats';
 import { format } from 'date-fns';
 import { fi, enUS } from 'date-fns/locale';
 import SparklineChart from './SparklineChart';
+import RatingBar from './RatingBar';
 
 interface PlayerStatsViewProps {
   player: Player | null;
@@ -107,13 +108,17 @@ const PlayerStatsView: React.FC<PlayerStatsViewProps> = ({ player, savedGames, o
             <span className="text-sm text-slate-400">{showRatings ? '-' : '+'}</span>
           </button>
           {showRatings && (
-            <div className="mt-2 space-y-1 text-sm">
+            <div className="mt-2 space-y-2 text-sm">
               {Object.entries(assessmentAverages.averages).map(([metric, avg]) => (
-                <div key={metric} className="flex justify-between px-2">
-                  <span>{t(`assessmentMetrics.${metric}` as TranslationKey, metric)}</span>
-                  <span className="text-yellow-400 font-semibold">{avg.toFixed(1)}</span>
+                <div key={metric} className="flex items-center space-x-2 px-2">
+                  <span className="w-28 shrink-0">{t(`assessmentMetrics.${metric}` as TranslationKey, metric)}</span>
+                  <RatingBar value={avg} />
                 </div>
               ))}
+              <div className="flex items-center space-x-2 px-2 mt-2">
+                <span className="w-28 shrink-0">{t('playerAssessmentModal.overallLabel', 'Overall')}</span>
+                <RatingBar value={assessmentAverages.overall} />
+              </div>
               <div className="text-xs text-slate-400 text-right">
                 {assessmentAverages.count} {t('playerStats.ratedGames', 'rated')}
               </div>
