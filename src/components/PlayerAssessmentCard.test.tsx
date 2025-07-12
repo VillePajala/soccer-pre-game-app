@@ -9,13 +9,13 @@ describe('PlayerAssessmentCard', () => {
 
   it('renders player name', () => {
     render(<PlayerAssessmentCard player={player} onSave={jest.fn()} />);
-    expect(screen.getByText('Test #9')).toBeInTheDocument();
+    expect(screen.getByText('Test')).toBeInTheDocument();
   });
 
   it('calls onSave with assessment', () => {
     const onSave = jest.fn();
     render(<PlayerAssessmentCard player={player} onSave={onSave} />);
-    fireEvent.click(screen.getByText('Test #9'));
+    fireEvent.click(screen.getByText('Test'));
     fireEvent.click(screen.getByRole('button', { name: /Save/i }));
     expect(onSave).toHaveBeenCalled();
   });
@@ -35,7 +35,7 @@ describe('PlayerAssessmentCard', () => {
         }}
       />
     );
-    fireEvent.click(screen.getByText('Test #9'));
+    fireEvent.click(screen.getByText('Test'));
     expect(screen.getByDisplayValue('note')).toBeInTheDocument();
   });
 });
