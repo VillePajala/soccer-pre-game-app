@@ -22,7 +22,7 @@
 ## 3. Modal UI Components
 1. Create reusable components:
    - `OverallRatingSelector` – segmented buttons 1‒10.
-   - `AssessmentSlider` – vertical slider with ±0.5 step and long‑press wheel picker.
+   - `AssessmentSlider` – vertical slider with ±0.5 step.
    - Multiline notes `TextInput` with character count.
 2. Build `PlayerAssessmentCard` showing player avatar, name, jersey number, goal/assist counts and status icon.
 3. Follow modal styling rules in `.docs/STYLE_GUIDE.md` for container, header, body and footer classes.
