@@ -15,6 +15,8 @@ import AssessmentSlider from './AssessmentSlider';
 interface NewGameSetupModalProps {
   isOpen: boolean;
   initialPlayerSelection: string[] | null;
+  demandFactor: number;
+  onDemandFactorChange: (factor: number) => void;
   onStart: (
     initialSelectedPlayerIds: string[],
     homeTeamName: string,
@@ -39,6 +41,8 @@ interface NewGameSetupModalProps {
 const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   isOpen,
   initialPlayerSelection,
+  demandFactor,
+  onDemandFactorChange,
   onStart,
   onCancel,
   addSeasonMutation,
@@ -73,8 +77,6 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   // state for periods and duration
   const [localNumPeriods, setLocalNumPeriods] = useState<1 | 2>(2);
   const [localPeriodDurationString, setLocalPeriodDurationString] = useState<string>('10');
-
-  const [demandFactor, setDemandFactor] = useState(1);
 
   // <<< Step 4a: State for Home/Away >>>
   const [localHomeOrAway, setLocalHomeOrAway] = useState<'home' | 'away'>('home');
@@ -792,7 +794,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                         <AssessmentSlider
                           label={t('newGameSetupModal.demandFactorLabel', 'Game Demand Level')}
                           value={demandFactor}
-                          onChange={setDemandFactor}
+                          onChange={onDemandFactorChange}
                           min={0.5}
                           max={1.5}
                           step={0.05}

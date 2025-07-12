@@ -429,6 +429,7 @@ function HomePage() {
 
   // <<< ADD State to hold player IDs for the next new game >>>
   const [playerIdsForNewGame, setPlayerIdsForNewGame] = useState<string[] | null>(null);
+  const [newGameDemandFactor, setNewGameDemandFactor] = useState(1);
   // <<< ADD State for the roster prompt toast >>>
   // const [showRosterPrompt, setShowRosterPrompt] = useState<boolean>(false);
 
@@ -825,6 +826,7 @@ function HomePage() {
         tournamentId: gameData.tournamentId ?? undefined,
         gameLocation: gameData.gameLocation,
         gameTime: gameData.gameTime,
+        demandFactor: gameData.demandFactor,
         gameEvents: gameData.gameEvents,
         subIntervalMinutes: gameData.subIntervalMinutes,
         completedIntervalDurations: gameData.completedIntervalDurations,
@@ -882,6 +884,7 @@ function HomePage() {
       tournamentId: gameData?.tournamentId ?? initialGameSessionData.tournamentId,
       gameLocation: gameData?.gameLocation ?? initialGameSessionData.gameLocation,
       gameTime: gameData?.gameTime ?? initialGameSessionData.gameTime,
+      demandFactor: gameData?.demandFactor ?? initialGameSessionData.demandFactor,
       subIntervalMinutes: gameData?.subIntervalMinutes ?? initialGameSessionData.subIntervalMinutes,
       completedIntervalDurations: gameData?.completedIntervalDurations ?? initialGameSessionData.completedIntervalDurations,
       lastSubConfirmationTimeSeconds: gameData?.lastSubConfirmationTimeSeconds ?? initialGameSessionData.lastSubConfirmationTimeSeconds,
@@ -945,6 +948,7 @@ function HomePage() {
           tournamentId: gameSessionState.tournamentId, // USE gameSessionState
           gameLocation: gameSessionState.gameLocation,
           gameTime: gameSessionState.gameTime,
+          demandFactor: gameSessionState.demandFactor,
           subIntervalMinutes: gameSessionState.subIntervalMinutes,
           completedIntervalDurations: gameSessionState.completedIntervalDurations,
           lastSubConfirmationTimeSeconds: gameSessionState.lastSubConfirmationTimeSeconds,
@@ -2088,6 +2092,7 @@ function HomePage() {
 
       // Close the setup modal
       setIsNewGameSetupModalOpen(false);
+      setNewGameDemandFactor(1);
 
       // <<< Trigger the roster button highlight >>>
       logger.log('[handleStartNewGameWithSetup] Setting highlightRosterButton to true.'); // Log highlight trigger
@@ -2118,6 +2123,7 @@ function HomePage() {
 
     setHasSkippedInitialSetup(true); // Still mark as skipped if needed elsewhere
     setIsNewGameSetupModalOpen(false); // ADDED: Explicitly close the modal
+    setNewGameDemandFactor(1);
 
   // REMOVED initialState from dependencies
   }, [setHasSkippedInitialSetup, setIsNewGameSetupModalOpen]); // Updated dependencies
@@ -2551,6 +2557,8 @@ function HomePage() {
         <NewGameSetupModal
           isOpen={isNewGameSetupModalOpen}
           initialPlayerSelection={playerIdsForNewGame} // <<< Pass the state here
+          demandFactor={newGameDemandFactor}
+          onDemandFactorChange={setNewGameDemandFactor}
           onStart={handleStartNewGameWithSetup} // CORRECTED Handler
           onCancel={handleCancelNewGameSetup} 
           // Pass the new mutation functions
