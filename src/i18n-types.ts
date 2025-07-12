@@ -417,6 +417,8 @@ export type TranslationKey =
   | 'playerStats.title'
   | 'playerStats.totalsRow'
   | 'playerStats.tournamentPerformance'
+  | 'playerStats.useDemandCorrection'
+  | 'playerStats.useDemandCorrectionTooltip'
   | 'playerStats.vs'
   | 'rosterSettingsModal.addNewPlayerTitle'
   | 'rosterSettingsModal.addPlayerButton'

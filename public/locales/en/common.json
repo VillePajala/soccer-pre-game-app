@@ -590,6 +590,8 @@
     "notes": "Assessment Notes",
     "metricTrends": "Rating Trends",
     "metricSelect": "Select Metric",
-    "goalsAssists": "Goals & Assists"
+    "goalsAssists": "Goals & Assists",
+    "useDemandCorrection": "Weight by Difficulty",
+    "useDemandCorrectionTooltip": "When enabled, ratings from harder games count more"
   }
 }
