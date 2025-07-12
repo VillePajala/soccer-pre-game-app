@@ -14,7 +14,7 @@ const AssessmentSlider: React.FC<AssessmentSliderProps> = ({ label, value, onCha
 
   const numbers = Array.from({ length: 19 }, (_, i) => 1 + i * 0.5);
 
-  const handlePointerDown = () => {
+  const startTimer = () => {
     timeoutRef.current = setTimeout(() => setShowPicker(true), 500);
   };
 
@@ -24,7 +24,7 @@ const AssessmentSlider: React.FC<AssessmentSliderProps> = ({ label, value, onCha
     }
   };
 
-  const handlePointerUp = () => {
+  const endTimer = () => {
     clearTimer();
   };
 
@@ -38,9 +38,15 @@ const AssessmentSlider: React.FC<AssessmentSliderProps> = ({ label, value, onCha
         step={0.5}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        onPointerDown={handlePointerDown}
-        onPointerUp={handlePointerUp}
-        onPointerLeave={handlePointerUp}
+        onPointerDown={startTimer}
+        onPointerUp={endTimer}
+        onPointerLeave={endTimer}
+        onMouseDown={startTimer}
+        onMouseUp={endTimer}
+        onMouseLeave={endTimer}
+        onTouchStart={startTimer}
+        onTouchEnd={endTimer}
+        onTouchCancel={endTimer}
         className="flex-1 h-2 rounded-lg appearance-none cursor-pointer bg-slate-600 accent-indigo-600"
       />
       <span className="text-sm text-yellow-400 w-6 text-right">{value}</span>
