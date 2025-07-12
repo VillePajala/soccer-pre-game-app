@@ -112,6 +112,7 @@ const initialState: AppState = {
   periodDurationMinutes: 10, // Default to 10 minutes
   currentPeriod: 1,
   gameStatus: 'notStarted', // Initialize game status
+  demandFactor: 1,
   // Initialize selectedPlayerIds with all players from initial data
   selectedPlayerIds: initialAvailablePlayersData.map(p => p.id),
   // gameType: 'season', // REMOVED
@@ -152,6 +153,7 @@ function HomePage() {
     periodDurationMinutes: initialState.periodDurationMinutes,
     currentPeriod: initialState.currentPeriod,
     gameStatus: initialState.gameStatus,
+    demandFactor: initialState.demandFactor,
     selectedPlayerIds: initialState.selectedPlayerIds,
     seasonId: initialState.seasonId,
     tournamentId: initialState.tournamentId,
@@ -1902,6 +1904,10 @@ function HomePage() {
     // REMOVED: saveStateToHistory({ gameTime: time });
   };
 
+  const handleSetDemandFactor = (factor: number) => {
+    dispatchGameSession({ type: 'SET_DEMAND_FACTOR', payload: factor });
+  };
+
   // Add handler for home/away status
   const handleSetHomeOrAway = (status: 'home' | 'away') => {
     dispatchGameSession({ type: 'SET_HOME_OR_AWAY', payload: status });
@@ -1980,7 +1986,8 @@ function HomePage() {
     tournamentId: string | null,
     numPeriods: 1 | 2, // Parameter
     periodDuration: number, // Parameter
-    homeOrAway: 'home' | 'away' // <<< Step 4b: Add parameter
+    homeOrAway: 'home' | 'away', // <<< Step 4b: Add parameter
+    demandFactor: number
   ) => {
       // ADD LOGGING HERE:
       logger.log('[handleStartNewGameWithSetup] Received Params:', { 
@@ -1992,9 +1999,10 @@ function HomePage() {
         gameTime, 
         seasonId, 
         tournamentId, 
-        numPeriods, 
-        periodDuration, 
-        homeOrAway 
+        numPeriods,
+        periodDuration,
+        homeOrAway,
+        demandFactor
       });
       // No need to log initialState references anymore
 
@@ -2018,6 +2026,7 @@ function HomePage() {
           gameNotes: '',
           teamName: homeTeamName, // Use current teamName state
           homeOrAway: homeOrAway, // <<< Step 4b: Use parameter value
+          demandFactor: demandFactor,
           availablePlayers: availablePlayers, // <<< ADD: Use current global roster
           selectedPlayerIds: finalSelectedPlayerIds, // <-- USE PASSED OR FALLBACK
           playersOnField: [], // Always start with empty field
@@ -2610,6 +2619,7 @@ function HomePage() {
         onSelectedPlayersChange={handleUpdateSelectedPlayers}
         numPeriods={gameSessionState.numberOfPeriods}
         periodDurationMinutes={gameSessionState.periodDurationMinutes}
+        demandFactor={gameSessionState.demandFactor}
         onTeamNameChange={handleTeamNameChange}
         onOpponentNameChange={handleOpponentNameChange}
         onGameDateChange={handleGameDateChange}
@@ -2621,6 +2631,7 @@ function HomePage() {
         onDeleteGameEvent={handleDeleteGameEvent}
         onNumPeriodsChange={handleSetNumberOfPeriods}
         onPeriodDurationChange={handleSetPeriodDuration}
+        onDemandFactorChange={handleSetDemandFactor}
         seasonId={gameSessionState.seasonId}
         tournamentId={gameSessionState.tournamentId}
         onSeasonIdChange={handleSetSeasonId}

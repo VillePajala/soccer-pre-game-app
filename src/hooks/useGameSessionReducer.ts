@@ -19,6 +19,7 @@ export interface GameSessionState {
   tournamentId: string;
   gameLocation?: string;
   gameTime?: string;
+  demandFactor: number;
   gameEvents: GameEvent[];
   // Timer related state
   timeElapsedInSeconds: number; // This will now represent the time elapsed *when paused*
@@ -63,6 +64,7 @@ export const initialGameSessionStatePlaceholder: GameSessionState = {
   tournamentId: '',
   gameLocation: '',
   gameTime: '',
+  demandFactor: 1,
   gameEvents: [],
   timeElapsedInSeconds: 0,
   startTimestamp: null,
@@ -100,6 +102,7 @@ export type GameSessionAction =
   | { type: 'SET_TOURNAMENT_ID'; payload: string }
   | { type: 'SET_GAME_LOCATION'; payload: string }
   | { type: 'SET_GAME_TIME'; payload: string }
+  | { type: 'SET_DEMAND_FACTOR'; payload: number }
   | { type: 'ADD_GAME_EVENT'; payload: GameEvent }
   | { type: 'UPDATE_GAME_EVENT'; payload: GameEvent }
   | { type: 'DELETE_GAME_EVENT'; payload: string } // eventId
@@ -214,6 +217,8 @@ export const gameSessionReducer = (state: GameSessionState, action: GameSessionA
       return { ...state, gameLocation: action.payload };
     case 'SET_GAME_TIME':
       return { ...state, gameTime: action.payload };
+    case 'SET_DEMAND_FACTOR':
+      return { ...state, demandFactor: action.payload };
     case 'ADD_GAME_EVENT':
       return { ...state, gameEvents: [...state.gameEvents, action.payload] };
     case 'UPDATE_GAME_EVENT': {
@@ -356,6 +361,7 @@ export const gameSessionReducer = (state: GameSessionState, action: GameSessionA
       const tournamentId = loadedData.tournamentId ?? '';
       const gameLocation = loadedData.gameLocation ?? '';
       const gameTime = loadedData.gameTime ?? '';
+      const demandFactor = loadedData.demandFactor ?? 1;
       const gameEvents = loadedData.gameEvents ?? [];
       const subIntervalMinutes = loadedData.subIntervalMinutes ?? initialGameSessionStatePlaceholder.subIntervalMinutes;
       const showPlayerNames = loadedData.showPlayerNames ?? initialGameSessionStatePlaceholder.showPlayerNames;
@@ -385,6 +391,7 @@ export const gameSessionReducer = (state: GameSessionState, action: GameSessionA
         tournamentId,
         gameLocation,
         gameTime,
+        demandFactor,
         gameEvents,
         subIntervalMinutes,
         showPlayerNames,

@@ -171,7 +171,7 @@ describe('NewGameSetupModal', () => {
     });
     expect(mockOnStart).toHaveBeenCalledWith(
       expect.arrayContaining(['player1', 'player2']), 'New Team Name', 'Opponent Team',
-      expect.any(String), '', '', null, null, 2, 10, 'home' 
+      expect.any(String), '', '', null, null, 2, 10, 'home', 1
     );
   });
 

@@ -8,7 +8,7 @@ test('startPause toggles running state', () => {
     teamName: '', opponentName: '', gameDate: '', homeScore: 0, awayScore: 0,
     gameNotes: '', homeOrAway: 'home', numberOfPeriods: 2, periodDurationMinutes: 1,
     currentPeriod: 1, gameStatus: 'notStarted', selectedPlayerIds: [], seasonId: '',
-    tournamentId: '', gameLocation: '', gameTime: '', gameEvents: [],
+    tournamentId: '', gameLocation: '', gameTime: '', demandFactor: 1, gameEvents: [],
     timeElapsedInSeconds: 0, startTimestamp: null, isTimerRunning: false,
     subIntervalMinutes: 1, nextSubDueTimeSeconds: 60, subAlertLevel: 'none',
     lastSubConfirmationTimeSeconds: 0, completedIntervalDurations: [], showPlayerNames: true
@@ -32,7 +32,7 @@ test('timer increments over time using a stable interval', () => {
     teamName: '', opponentName: '', gameDate: '', homeScore: 0, awayScore: 0,
     gameNotes: '', homeOrAway: 'home', numberOfPeriods: 2, periodDurationMinutes: 1,
     currentPeriod: 1, gameStatus: 'notStarted', selectedPlayerIds: [], seasonId: '',
-    tournamentId: '', gameLocation: '', gameTime: '', gameEvents: [],
+    tournamentId: '', gameLocation: '', gameTime: '', demandFactor: 1, gameEvents: [],
     timeElapsedInSeconds: 0, startTimestamp: null, isTimerRunning: false,
     subIntervalMinutes: 1, nextSubDueTimeSeconds: 60, subAlertLevel: 'none',
     lastSubConfirmationTimeSeconds: 0, completedIntervalDurations: [], showPlayerNames: true
