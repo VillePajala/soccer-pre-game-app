@@ -10,7 +10,7 @@ interface OverallRatingSelectorProps {
 const OverallRatingSelector: React.FC<OverallRatingSelectorProps> = ({ value, onChange }) => {
   const numbers = Array.from({ length: 10 }, (_, i) => i + 1);
   return (
-    <div className="flex space-x-1">
+    <div className="flex flex-wrap gap-1">
       {numbers.map((n) => (
         <button
           key={n}
