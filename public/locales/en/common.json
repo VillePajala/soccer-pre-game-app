@@ -583,6 +583,8 @@
     "avgRating": "Avg Rating",
     "ratedGames": "Rated Games",
     "notes": "Assessment Notes",
-    "metricTrends": "Rating Trends"
+    "metricTrends": "Rating Trends",
+    "metricSelect": "Select Metric",
+    "goalsAssists": "Goals & Assists"
   }
 }

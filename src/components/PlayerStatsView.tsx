@@ -10,6 +10,7 @@ import { fi, enUS } from 'date-fns/locale';
 import SparklineChart from './SparklineChart';
 import RatingBar from './RatingBar';
 import MetricTrendChart from './MetricTrendChart';
+import MetricAreaChart from './MetricAreaChart';
 
 interface PlayerStatsViewProps {
   player: Player | null;
@@ -23,6 +24,7 @@ const PlayerStatsView: React.FC<PlayerStatsViewProps> = ({ player, savedGames, o
   const { t, i18n } = useTranslation();
 
   const [showRatings, setShowRatings] = useState(false);
+  const [selectedMetric, setSelectedMetric] = useState('goalsAssists');
 
   const assessmentAverages = useMemo(() => {
     if (!player) return null;
@@ -51,6 +53,14 @@ const PlayerStatsView: React.FC<PlayerStatsViewProps> = ({ player, savedGames, o
         </div>
     );
   }
+
+  const metricOptions = [
+    { key: 'goalsAssists', label: t('playerStats.goalsAssists', 'Goals & Assists') },
+    { key: 'goals', label: t('playerStats.goals', 'Goals') },
+    { key: 'assists', label: t('playerStats.assists', 'Assists') },
+    { key: 'points', label: t('playerStats.points', 'Points') },
+    ...(assessmentTrends ? Object.keys(assessmentTrends).map(m => ({ key: m, label: t(`assessmentMetrics.${m}` as TranslationKey, m) })) : [])
+  ];
 
   const getResultClass = (result: 'W' | 'L' | 'D' | 'N/A') => {
     switch (result) {
@@ -98,12 +108,36 @@ const PlayerStatsView: React.FC<PlayerStatsViewProps> = ({ player, savedGames, o
         {/* Game by Game Stats - Title and Chart */}
         <div className="mt-6">
           <h3 className="text-lg font-semibold mb-2">{t('playerStats.gameLog', 'Game Log')}</h3>
+          <div className="mb-2">
+            <label htmlFor="metric-select" className="block text-sm font-medium text-slate-300 mb-1">{t('playerStats.metricSelect', 'Select Metric')}</label>
+            <select
+              id="metric-select"
+              value={selectedMetric}
+              onChange={(e) => setSelectedMetric(e.target.value)}
+              className="w-full bg-slate-700 border border-slate-600 rounded-md text-white px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            >
+              {metricOptions.map(opt => (
+                <option key={opt.key} value={opt.key}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
         <div className="mb-4">
-          <SparklineChart
-            data={playerStats.gameByGameStats}
-            goalsLabel={t('playerStats.goals', 'Goals')}
-            assistsLabel={t('playerStats.assists', 'Assists')}
-          />
+          {selectedMetric === 'goalsAssists' ? (
+            <SparklineChart
+              data={playerStats.gameByGameStats}
+              goalsLabel={t('playerStats.goals', 'Goals')}
+              assistsLabel={t('playerStats.assists', 'Assists')}
+            />
+          ) : (
+            <MetricAreaChart
+              data={
+                selectedMetric === 'goals' || selectedMetric === 'assists' || selectedMetric === 'points'
+                  ? playerStats.gameByGameStats.map(g => ({ date: g.date, value: g[selectedMetric] }))
+                  : (assessmentTrends?.[selectedMetric] || [])
+              }
+              label={metricOptions.find(o => o.key === selectedMetric)?.label || selectedMetric}
+            />
+          )}
         </div>
       </div>
 

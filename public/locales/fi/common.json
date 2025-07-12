@@ -575,6 +575,8 @@
     "avgRating": "Keskiarvo",
     "ratedGames": "Arvioituja",
     "notes": "Arvioinnin muistiinpanot",
-    "metricTrends": "Arvioiden trendit"
+    "metricTrends": "Arvioiden trendit",
+    "metricSelect": "Valitse mittari",
+    "goalsAssists": "Maalit ja syötöt"
   }
 }

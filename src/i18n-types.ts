@@ -402,6 +402,8 @@ export type TranslationKey =
   | 'playerStats.gamesPlayed'
   | 'playerStats.gamesPlayed_short'
   | 'playerStats.goals'
+  | 'playerStats.goalsAssists'
+  | 'playerStats.metricSelect'
   | 'playerStats.metricTrends'
   | 'playerStats.noGames'
   | 'playerStats.notes'
