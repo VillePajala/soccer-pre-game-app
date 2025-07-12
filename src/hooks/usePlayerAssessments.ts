@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { PlayerAssessment, IntervalLog } from '@/types';
-import { getPlayerAssessments, savePlayerAssessment } from '@/utils/playerAssessments';
+import { getPlayerAssessments, savePlayerAssessment, deletePlayerAssessment } from '@/utils/playerAssessments';
 import logger from '@/utils/logger';
 
 export const validateAssessment = (a: Partial<PlayerAssessment>): boolean => {
@@ -44,7 +44,13 @@ export function usePlayerAssessments(gameId: string, intervals?: IntervalLog[]) 
     return updated;
   }, [gameId, intervals]);
 
-  return { assessments, loading, error, saveAssessment };
+  const deleteAssessment = useCallback(async (playerId: string) => {
+    const updated = await deletePlayerAssessment(gameId, playerId);
+    if (updated) setAssessments(updated.assessments || {});
+    return updated;
+  }, [gameId]);
+
+  return { assessments, loading, error, saveAssessment, deleteAssessment };
 }
 
 export default usePlayerAssessments;

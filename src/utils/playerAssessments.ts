@@ -38,3 +38,25 @@ export const savePlayerAssessment = async (
     throw error;
   }
 };
+
+export const deletePlayerAssessment = async (
+  gameId: string,
+  playerId: string,
+): Promise<AppState | null> => {
+  try {
+    const game = await getGame(gameId);
+    if (!game || !game.assessments || !game.assessments[playerId]) {
+      logger.warn(`Assessment for player ${playerId} not found in game ${gameId}.`);
+      return null;
+    }
+    const { [playerId]: _removed, ...rest } = game.assessments;
+    const updatedGame: AppState = {
+      ...game,
+      assessments: rest,
+    };
+    return saveGame(gameId, updatedGame);
+  } catch (error) {
+    logger.error('Error deleting player assessment:', error);
+    throw error;
+  }
+};

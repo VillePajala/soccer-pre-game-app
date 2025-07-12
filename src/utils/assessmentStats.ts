@@ -19,6 +19,35 @@ const METRICS = [
   'impact',
 ] as const;
 
+export interface MetricTrendPoint {
+  date: string;
+  value: number;
+}
+
+export function getPlayerAssessmentTrends(playerId: string, games: SavedGamesCollection): { [metric: string]: MetricTrendPoint[] } {
+  const trends: { [metric: string]: MetricTrendPoint[] } = {};
+  METRICS.forEach(m => { trends[m] = []; });
+  for (const game of Object.values(games)) {
+    const a = game.assessments?.[playerId];
+    if (!a) continue;
+    METRICS.forEach(m => {
+      trends[m].push({ date: game.gameDate, value: a.sliders[m] });
+    });
+  }
+  METRICS.forEach(m => trends[m].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
+  return trends;
+}
+
+export function getPlayerAssessmentNotes(playerId: string, games: SavedGamesCollection): { date: string; notes: string }[] {
+  const notes: { date: string; notes: string }[] = [];
+  for (const game of Object.values(games)) {
+    const a = game.assessments?.[playerId];
+    if (a && a.notes) notes.push({ date: game.gameDate, notes: a.notes });
+  }
+  notes.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  return notes;
+}
+
 export function calculatePlayerAssessmentAverages(playerId: string, games: SavedGamesCollection): MetricAverages | null {
   let count = 0;
   const totals: Record<string, number> = {};

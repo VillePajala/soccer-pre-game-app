@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Player, PlayerAssessment } from '@/types';
 import PlayerAssessmentCard from './PlayerAssessmentCard';
+import ProgressBar from './ProgressBar';
 
 interface PlayerAssessmentModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface PlayerAssessmentModalProps {
   availablePlayers: Player[];
   assessments: { [id: string]: PlayerAssessment };
   onSave: (playerId: string, assessment: Partial<PlayerAssessment>) => void;
+  onDelete?: (playerId: string) => void;
 }
 
 const PlayerAssessmentModal: React.FC<PlayerAssessmentModalProps> = ({
@@ -21,6 +23,7 @@ const PlayerAssessmentModal: React.FC<PlayerAssessmentModalProps> = ({
   availablePlayers,
   assessments,
   onSave,
+  onDelete,
 }) => {
   const { t } = useTranslation();
   const [savedIds, setSavedIds] = useState<string[]>([]);
@@ -57,10 +60,13 @@ const PlayerAssessmentModal: React.FC<PlayerAssessmentModalProps> = ({
         <div className="absolute -inset-[50px] bg-sky-400/5 blur-2xl top-0 opacity-50" />
         <div className="absolute -inset-[50px] bg-indigo-600/5 blur-2xl bottom-0 opacity-50" />
         <div className="relative z-10 flex flex-col h-full">
-          <div className="flex justify-center items-center pt-10 pb-4 backdrop-blur-sm bg-slate-900/20">
+          <div className="flex flex-col items-center pt-10 pb-4 backdrop-blur-sm bg-slate-900/20 space-y-2">
             <h2 className={titleStyle}>
               {t('playerAssessmentModal.title', 'Assess Players')} {savedIds.length}/{selectedPlayerIds.length}
             </h2>
+            <div className="w-1/2">
+              <ProgressBar current={savedIds.length} total={selectedPlayerIds.length} />
+            </div>
           </div>
           <div className="flex-1 overflow-y-auto min-h-0 space-y-4 p-4">
             {selectedPlayerIds.map(pid => {
@@ -73,6 +79,7 @@ const PlayerAssessmentModal: React.FC<PlayerAssessmentModalProps> = ({
                   isSaved={savedIds.includes(pid)}
                   assessment={assessments[pid]}
                   onSave={(assessment) => handleSave(pid, assessment)}
+                  onDelete={onDelete ? () => onDelete(pid) : undefined}
                 />
               );
             })}

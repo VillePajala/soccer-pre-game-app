@@ -1,10 +1,12 @@
-import { getPlayerAssessments, savePlayerAssessment } from './playerAssessments';
+import { getPlayerAssessments, savePlayerAssessment, deletePlayerAssessment } from './playerAssessments';
 import { getGame, saveGame } from './savedGames';
 import type { PlayerAssessment, AppState } from '@/types';
 
 jest.mock('./savedGames');
 const mockedGetGame = getGame as jest.MockedFunction<typeof getGame>;
 const mockedSaveGame = saveGame as jest.MockedFunction<typeof saveGame>;
+
+jest.mock('./playerAssessments', () => jest.requireActual('./playerAssessments'));
 
 const baseGame: AppState = {
   playersOnField: [],
@@ -58,5 +60,14 @@ describe('playerAssessments utils', () => {
     const result = await savePlayerAssessment('game1', 'p1', assessment);
     expect(mockedSaveGame).toHaveBeenCalled();
     expect(result).not.toBeNull();
+  });
+
+  it('deletes assessment and returns updated game', async () => {
+    const game = { ...baseGame, assessments: { p1: {} as PlayerAssessment } };
+    mockedGetGame.mockResolvedValue(game);
+    mockedSaveGame.mockResolvedValue({ ...game, assessments: {} });
+    const result = await deletePlayerAssessment('game1', 'p1');
+    expect(mockedSaveGame).toHaveBeenCalled();
+    expect(result?.assessments).toEqual({});
   });
 });

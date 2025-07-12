@@ -4,11 +4,12 @@ import type { TranslationKey } from '@/i18n-types';
 import { Player, Season, Tournament } from '@/types';
 import { AppState } from '@/types';
 import { calculatePlayerStats, PlayerStats as PlayerStatsData } from '@/utils/playerStats';
-import { calculatePlayerAssessmentAverages } from '@/utils/assessmentStats';
+import { calculatePlayerAssessmentAverages, getPlayerAssessmentTrends, getPlayerAssessmentNotes } from '@/utils/assessmentStats';
 import { format } from 'date-fns';
 import { fi, enUS } from 'date-fns/locale';
 import SparklineChart from './SparklineChart';
 import RatingBar from './RatingBar';
+import MetricTrendChart from './MetricTrendChart';
 
 interface PlayerStatsViewProps {
   player: Player | null;
@@ -26,6 +27,16 @@ const PlayerStatsView: React.FC<PlayerStatsViewProps> = ({ player, savedGames, o
   const assessmentAverages = useMemo(() => {
     if (!player) return null;
     return calculatePlayerAssessmentAverages(player.id, savedGames);
+  }, [player, savedGames]);
+
+  const assessmentTrends = useMemo(() => {
+    if (!player) return null;
+    return getPlayerAssessmentTrends(player.id, savedGames);
+  }, [player, savedGames]);
+
+  const assessmentNotes = useMemo(() => {
+    if (!player) return [];
+    return getPlayerAssessmentNotes(player.id, savedGames);
   }, [player, savedGames]);
 
   const playerStats: PlayerStatsData | null = useMemo(() => {
@@ -108,20 +119,44 @@ const PlayerStatsView: React.FC<PlayerStatsViewProps> = ({ player, savedGames, o
             <span className="text-sm text-slate-400">{showRatings ? '-' : '+'}</span>
           </button>
           {showRatings && (
-            <div className="mt-2 space-y-2 text-sm">
-              {Object.entries(assessmentAverages.averages).map(([metric, avg]) => (
-                <div key={metric} className="flex items-center space-x-2 px-2">
-                  <span className="w-28 shrink-0">{t(`assessmentMetrics.${metric}` as TranslationKey, metric)}</span>
-                  <RatingBar value={avg} />
+            <div className="mt-2 space-y-4 text-sm">
+              <div className="space-y-2">
+                {Object.entries(assessmentAverages.averages).map(([metric, avg]) => (
+                  <div key={metric} className="flex items-center space-x-2 px-2">
+                    <span className="w-28 shrink-0">{t(`assessmentMetrics.${metric}` as TranslationKey, metric)}</span>
+                    <RatingBar value={avg} />
+                  </div>
+                ))}
+                <div className="flex items-center space-x-2 px-2 mt-2">
+                  <span className="w-28 shrink-0">{t('playerAssessmentModal.overallLabel', 'Overall')}</span>
+                  <RatingBar value={assessmentAverages.overall} />
                 </div>
-              ))}
-              <div className="flex items-center space-x-2 px-2 mt-2">
-                <span className="w-28 shrink-0">{t('playerAssessmentModal.overallLabel', 'Overall')}</span>
-                <RatingBar value={assessmentAverages.overall} />
+                <div className="text-xs text-slate-400 text-right">
+                  {assessmentAverages.count} {t('playerStats.ratedGames', 'rated')}
+                </div>
               </div>
-              <div className="text-xs text-slate-400 text-right">
-                {assessmentAverages.count} {t('playerStats.ratedGames', 'rated')}
-              </div>
+              {assessmentTrends && (
+                <div className="grid grid-cols-2 gap-2">
+                  {Object.entries(assessmentTrends).map(([metric, data]) => (
+                    <div key={metric} className="bg-slate-800/40 p-2 rounded">
+                      <p className="text-xs text-slate-300 mb-1">{t(`assessmentMetrics.${metric}` as TranslationKey, metric)}</p>
+                      <MetricTrendChart data={data} />
+                    </div>
+                  ))}
+                </div>
+              )}
+              {assessmentNotes.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-semibold mb-1">{t('playerStats.notes', 'Assessment Notes')}</h4>
+                  <ul className="list-disc list-inside space-y-1">
+                    {assessmentNotes.map(n => (
+                      <li key={n.date} className="text-xs text-slate-300">
+                        {new Date(n.date).toLocaleDateString()} - {n.notes}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
         </div>
