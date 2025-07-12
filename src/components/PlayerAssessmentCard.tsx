@@ -80,10 +80,7 @@ const PlayerAssessmentCard: React.FC<PlayerAssessmentCardProps> = ({ player, onS
         aria-expanded={expanded}
         title={expanded ? t('playerAssessmentModal.collapse', { name: player.name }) : t('playerAssessmentModal.expand', { name: player.name })}
       >
-        <span className="font-semibold">
-          {player.name}
-          {player.jerseyNumber ? ` #${player.jerseyNumber}` : ''}
-        </span>
+        <span className="font-semibold">{player.name}</span>
         {isSaved ? (
           <HiCheckCircle className="text-indigo-400" />
         ) : (
