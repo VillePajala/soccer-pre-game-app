@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { HiCheckCircle, HiXCircle } from 'react-icons/hi';
 import { useTranslation } from 'react-i18next';
 import type { Player, PlayerAssessment } from '@/types';
@@ -12,6 +12,7 @@ import { validateAssessment } from '@/hooks/usePlayerAssessments';
 interface PlayerAssessmentCardProps {
   player: Player;
   onSave: (assessment: Partial<PlayerAssessment>) => void;
+  onDelete?: () => void;
   isSaved?: boolean;
   assessment?: PlayerAssessment;
 }
@@ -29,12 +30,13 @@ const initialSliders = {
   impact: 5,
 };
 
-const PlayerAssessmentCard: React.FC<PlayerAssessmentCardProps> = ({ player, onSave, isSaved, assessment }) => {
+const PlayerAssessmentCard: React.FC<PlayerAssessmentCardProps> = ({ player, onSave, onDelete, isSaved, assessment }) => {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [overall, setOverall] = useState<number>(assessment?.overall ?? 5);
   const [sliders, setSliders] = useState<Record<string, number>>(assessment?.sliders ?? initialSliders);
   const [notes, setNotes] = useState(assessment?.notes ?? '');
+  const prev = useRef({ overall, sliders, notes });
 
   useEffect(() => {
     setOverall(assessment?.overall ?? 5);
@@ -42,6 +44,18 @@ const PlayerAssessmentCard: React.FC<PlayerAssessmentCardProps> = ({ player, onS
     setNotes(assessment?.notes ?? '');
   }, [assessment]);
   const isValid = validateAssessment({ overall, sliders: sliders as PlayerAssessment['sliders'], notes });
+
+  useEffect(() => {
+    if (!isValid) return;
+    const timeout = setTimeout(() => {
+      const current = { overall, sliders, notes };
+      if (JSON.stringify(prev.current) !== JSON.stringify(current)) {
+        onSave({ overall, sliders: sliders as PlayerAssessment['sliders'], notes });
+        prev.current = current;
+      }
+    }, 800);
+    return () => clearTimeout(timeout);
+  }, [overall, sliders, notes, isValid, onSave]);
 
   const handleSliderChange = (key: string, value: number) => {
     setSliders((prev) => ({ ...prev, [key]: value }));
@@ -115,6 +129,15 @@ const PlayerAssessmentCard: React.FC<PlayerAssessmentCardProps> = ({ player, onS
           >
             {t('playerAssessmentModal.saveButton', 'Save')}
           </button>
+          {assessment && onDelete && (
+            <button
+              type="button"
+              className="ml-2 px-3 py-2 rounded-md text-sm font-medium transition-colors bg-red-600 hover:bg-red-700"
+              onClick={() => onDelete()}
+            >
+              {t('playerAssessmentModal.deleteButton', 'Delete')}
+            </button>
+          )}
         </div>
       )}
     </div>

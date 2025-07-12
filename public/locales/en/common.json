@@ -547,8 +547,9 @@
     "noPlayers": "No players selected",
     "notesPlaceholder": "Add notes...",
     "overallLabel": "Overall",
-    "expand": "Expand assessment for {{name}}",
-    "collapse": "Collapse assessment for {{name}}"
+  "expand": "Expand assessment for {{name}}",
+  "collapse": "Collapse assessment for {{name}}",
+  "deleteButton": "Delete"
   },
   "assessmentMetrics": {
     "intensity": "Intensity",
@@ -580,6 +581,8 @@
     "totalsRow": "Totals",
     "performanceRatings": "Performance Ratings",
     "avgRating": "Avg Rating",
-    "ratedGames": "Rated Games"
+    "ratedGames": "Rated Games",
+    "notes": "Assessment Notes",
+    "metricTrends": "Rating Trends"
   }
 }

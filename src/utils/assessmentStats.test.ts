@@ -1,4 +1,4 @@
-import { calculatePlayerAssessmentAverages, calculateTeamAssessmentAverages } from './assessmentStats';
+import { calculatePlayerAssessmentAverages, calculateTeamAssessmentAverages, getPlayerAssessmentTrends, getPlayerAssessmentNotes } from './assessmentStats';
 import type { SavedGamesCollection, AppState, PlayerAssessment } from '@/types';
 
 const baseGame: AppState = {
@@ -90,5 +90,25 @@ describe('assessmentStats', () => {
     expect(result?.averages.intensity).toBe(3);
     expect(result?.averages.fair_play).toBe(3);
     expect(result?.overall).toBe(3);
+  });
+
+  it('provides trend data', () => {
+    const games: SavedGamesCollection = {
+      g1: { ...baseGame, gameDate: '2024-01-01', assessments: { p1: sampleAssessment(4) } },
+      g2: { ...baseGame, gameDate: '2024-02-01', assessments: { p1: sampleAssessment(2) } },
+    };
+    const trends = getPlayerAssessmentTrends('p1', games);
+    expect(trends.intensity.length).toBe(2);
+    expect(trends.intensity[0].value).toBe(4);
+    expect(trends.intensity[1].value).toBe(2);
+  });
+
+  it('collects notes', () => {
+    const games: SavedGamesCollection = {
+      g1: { ...baseGame, gameDate: '2024-01-01', assessments: { p1: { ...sampleAssessment(4), notes: 'good' } } },
+      g2: { ...baseGame, gameDate: '2024-02-01', assessments: { p1: sampleAssessment(2) } },
+    };
+    const notes = getPlayerAssessmentNotes('p1', games);
+    expect(notes[0].notes).toBe('good');
   });
 });

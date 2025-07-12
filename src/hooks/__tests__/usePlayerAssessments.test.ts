@@ -1,12 +1,13 @@
 import { renderHook, act } from '@testing-library/react';
 import usePlayerAssessments, { validateAssessment } from '../usePlayerAssessments';
-import { getPlayerAssessments, savePlayerAssessment } from '@/utils/playerAssessments';
+import { getPlayerAssessments, savePlayerAssessment, deletePlayerAssessment } from '@/utils/playerAssessments';
 import type { AppState } from '@/types';
 
 jest.mock('@/utils/playerAssessments');
 
 const mockedGet = getPlayerAssessments as jest.MockedFunction<typeof getPlayerAssessments>;
 const mockedSave = savePlayerAssessment as jest.MockedFunction<typeof savePlayerAssessment>;
+const mockedDelete = deletePlayerAssessment as jest.MockedFunction<typeof deletePlayerAssessment>;
 
 const assessment = {
   overall: 5,
@@ -21,6 +22,7 @@ describe('usePlayerAssessments', () => {
   beforeEach(() => {
     mockedGet.mockReset();
     mockedSave.mockReset();
+    mockedDelete.mockReset();
   });
 
   it('loads assessments', async () => {
@@ -39,6 +41,17 @@ describe('usePlayerAssessments', () => {
     });
     expect(mockedSave).toHaveBeenCalled();
     expect(result.current.assessments.p1).toEqual(assessment);
+  });
+
+  it('deletes assessment', async () => {
+    mockedGet.mockResolvedValue({ p1: assessment });
+    mockedDelete.mockResolvedValue({ assessments: {} } as AppState);
+    const { result } = renderHook(() => usePlayerAssessments('g1'));
+    await act(async () => {
+      await result.current.deleteAssessment('p1');
+    });
+    expect(mockedDelete).toHaveBeenCalled();
+    expect(result.current.assessments.p1).toBeUndefined();
   });
 });
 

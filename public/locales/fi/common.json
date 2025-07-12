@@ -539,8 +539,9 @@
     "noPlayers": "Ei valittuja pelaajia",
     "notesPlaceholder": "Kirjoita muistiinpanoja...",
     "overallLabel": "Kokonaisarvio",
-    "expand": "Avaa arviointi pelaajalle {{name}}",
-    "collapse": "Sulje arviointi pelaajalle {{name}}"
+  "expand": "Avaa arviointi pelaajalle {{name}}",
+  "collapse": "Sulje arviointi pelaajalle {{name}}",
+  "deleteButton": "Poista"
   },
   "assessmentMetrics": {
     "intensity": "Intensiteetti",
@@ -572,6 +573,8 @@
     "totalsRow": "Yhteensä",
     "performanceRatings": "Suoritusarviot",
     "avgRating": "Keskiarvo",
-    "ratedGames": "Arvioituja"
+    "ratedGames": "Arvioituja",
+    "notes": "Arvioinnin muistiinpanot",
+    "metricTrends": "Arvioiden trendit"
   }
 }
