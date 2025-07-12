@@ -65,8 +65,8 @@ const SparklineChart: React.FC<SparklineChartProps> = ({ data, goalsLabel, assis
             wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} 
           />
           <ReferenceLine y={averagePoints} stroke="#94a3b8" strokeDasharray="4 4" />
-          <Area type="monotone" dataKey="goals" fill="#22c55e" stroke="#22c55e" name={goalsLabel} fillOpacity={0.2} dot={<CustomizedDot />} />
-          <Area type="monotone" dataKey="assists" fill="#3b82f6" stroke="#3b82f6" name={assistsLabel} fillOpacity={0.2} dot={<CustomizedDot />} />
+          <Area type="monotone" dataKey="goals" fill="#22c55e" stroke="#22c55e" name={goalsLabel} fillOpacity={0.2} dot={<CustomizedDot />} activeDot={false} />
+          <Area type="monotone" dataKey="assists" fill="#3b82f6" stroke="#3b82f6" name={assistsLabel} fillOpacity={0.2} dot={<CustomizedDot />} activeDot={false} />
         </ComposedChart>
       </ResponsiveContainer>
     </div>
