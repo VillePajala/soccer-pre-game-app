@@ -526,23 +526,29 @@ function HomePage() {
   });
 
   const updateGameDetailsMutation = useMutation({
-    mutationFn: ({ gameId, updates }: { gameId: string, updates: Partial<AppState> }) => utilUpdateGameDetails(gameId, updates),
+    mutationFn: ({ gameId, updates }: { gameId: string, updates: Partial<AppState> }) =>
+      utilUpdateGameDetails(gameId, updates),
     onSuccess: (data, variables) => {
       // After a successful update, invalidate the savedGames query to refetch
       queryClient.invalidateQueries({ queryKey: queryKeys.savedGames });
-      
-      // OPTIONALLY: Optimistically update the query data
+
+      // Optimistically update the query cache
       queryClient.setQueryData(queryKeys.savedGames, (oldData: SavedGamesCollection | undefined) => {
         if (!oldData) return oldData;
-        const gameId = variables.gameId;
-        const existingGame = oldData[gameId];
-        if (existingGame) {
-          return {
-            ...oldData,
-            [gameId]: { ...existingGame, ...variables.updates },
-          };
-        }
-        return oldData;
+        const existing = oldData[variables.gameId];
+        return {
+          ...oldData,
+          [variables.gameId]: { ...existing, ...variables.updates },
+        };
+      });
+
+      // Keep local state in sync so components using savedGames see the update
+      setSavedGames(prev => {
+        const existing = prev[variables.gameId];
+        return {
+          ...prev,
+          [variables.gameId]: data ?? { ...existing, ...variables.updates },
+        };
       });
     },
     onError: (error) => {
