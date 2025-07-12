@@ -16,6 +16,7 @@ import SettingsModal from '@/components/SettingsModal';
 import SeasonTournamentManagementModal from '@/components/SeasonTournamentManagementModal';
 import InstructionsModal from '@/components/InstructionsModal';
 import PlayerAssessmentModal from '@/components/PlayerAssessmentModal';
+import usePlayerAssessments from '@/hooks/usePlayerAssessments';
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
 import { useGameState, UseGameStateReturn } from '@/hooks/useGameState';
@@ -68,7 +69,6 @@ import { queryKeys } from '@/config/queryKeys';
 // Also import addSeason and addTournament for the new mutations
 import { updateGameDetails as utilUpdateGameDetails } from '@/utils/savedGames';
 import { DEFAULT_GAME_ID } from '@/config/constants';
-import { savePlayerAssessment as utilSavePlayerAssessment } from '@/utils/playerAssessments';
 import { MASTER_ROSTER_KEY, TIMER_STATE_KEY, SEASONS_LIST_KEY } from "@/config/storageKeys";
 import { exportJson, exportCsv, exportAggregateJson, exportAggregateCsv } from '@/utils/exportGames';
 import { useToast } from '@/contexts/ToastProvider';
@@ -340,6 +340,14 @@ function HomePage() {
   const gameIdRef = useRef(currentGameId);
 
   useEffect(() => { gameIdRef.current = currentGameId; }, [currentGameId]);
+
+  const {
+    assessments: playerAssessments,
+    saveAssessment,
+  } = usePlayerAssessments(
+    currentGameId || '',
+    gameSessionState.completedIntervalDurations,
+  );
 
   const {
     timeElapsedInSeconds,
@@ -1477,18 +1485,13 @@ function HomePage() {
     assessment: Partial<PlayerAssessment>,
   ) => {
     if (!currentGameId) return;
-    const minutesPlayed = Math.round(
-      (gameSessionState.completedIntervalDurations || []).reduce(
-        (s, i) => s + i.duration,
-        0,
-      ) / 60,
-    );
-    const updated = await utilSavePlayerAssessment(currentGameId, playerId, {
+    const data: PlayerAssessment = {
       ...(assessment as PlayerAssessment),
-      minutesPlayed,
+      minutesPlayed: 0,
       createdAt: Date.now(),
       createdBy: 'local',
-    });
+    };
+    const updated = await saveAssessment(playerId, data);
     if (updated) {
       setSavedGames(prev => ({ ...prev, [currentGameId]: updated }));
     }
@@ -2618,6 +2621,7 @@ function HomePage() {
         onClose={closePlayerAssessmentModal}
         selectedPlayerIds={gameSessionState.selectedPlayerIds}
         availablePlayers={availablePlayers}
+        assessments={playerAssessments}
         onSave={handleSavePlayerAssessment}
       />
     </main>
