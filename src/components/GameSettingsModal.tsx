@@ -336,10 +336,9 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
         });
       }
     }
-    if (s.defaultRosterId) {
-      const allIds = availablePlayers.map(p => p.id);
-      if (selectedPlayerIds.length !== allIds.length) {
-        onSelectedPlayersChange(allIds);
+    if (s.defaultRoster && s.defaultRoster.length > 0) {
+      if (selectedPlayerIds.length !== s.defaultRoster.length || !s.defaultRoster.every(id => selectedPlayerIds.includes(id))) {
+        onSelectedPlayersChange(s.defaultRoster);
       }
     }
   }, [seasonId, seasons, isOpen, currentGameId, availablePlayers, selectedPlayerIds, onGameLocationChange, onNumPeriodsChange, onPeriodDurationChange, onSelectedPlayersChange, updateGameDetailsMutation]);
@@ -379,10 +378,9 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
         });
       }
     }
-    if (t.defaultRosterId) {
-      const allIds = availablePlayers.map(p => p.id);
-      if (selectedPlayerIds.length !== allIds.length) {
-        onSelectedPlayersChange(allIds);
+    if (t.defaultRoster && t.defaultRoster.length > 0) {
+      if (selectedPlayerIds.length !== t.defaultRoster.length || !t.defaultRoster.every(id => selectedPlayerIds.includes(id))) {
+        onSelectedPlayersChange(t.defaultRoster);
       }
     }
   }, [tournamentId, tournaments, isOpen, currentGameId, availablePlayers, selectedPlayerIds, onGameLocationChange, onNumPeriodsChange, onPeriodDurationChange, onSelectedPlayersChange, updateGameDetailsMutation]);

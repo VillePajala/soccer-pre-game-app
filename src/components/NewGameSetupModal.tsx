@@ -182,8 +182,8 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
         setGameLocation(s.location || '');
         setLocalNumPeriods((s.periodCount as 1 | 2) || 2);
         setLocalPeriodDurationString(s.periodDuration ? String(s.periodDuration) : '10');
-        if (s.defaultRosterId) {
-          setSelectedPlayerIds(availablePlayersForSetup.map(p => p.id));
+        if (s.defaultRoster && s.defaultRoster.length > 0) {
+          setSelectedPlayerIds(s.defaultRoster);
         }
       }
     }
@@ -208,8 +208,8 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
         setGameLocation(t.location || '');
         setLocalNumPeriods((t.periodCount as 1 | 2) || 2);
         setLocalPeriodDurationString(t.periodDuration ? String(t.periodDuration) : '10');
-        if (t.defaultRosterId) {
-          setSelectedPlayerIds(availablePlayersForSetup.map(p => p.id));
+        if (t.defaultRoster && t.defaultRoster.length > 0) {
+          setSelectedPlayerIds(t.defaultRoster);
         }
       }
     }

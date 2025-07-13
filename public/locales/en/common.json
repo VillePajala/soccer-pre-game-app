@@ -458,9 +458,6 @@
     "gameDatesLabel": "Game Dates (comma separated)",
     "archiveLabel": "Archive",
     "notesLabel": "Notes",
-    "defaultRosterLabel": "Default Roster ID",
-    "colorLabel": "Color",
-    "badgeLabel": "Badge",
     "statsGames": "Games",
     "statsGoals": "Goals",
     "editDetails": "Edit Details"

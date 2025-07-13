@@ -31,6 +31,7 @@ export interface Season {
   gameDates?: string[];
   archived?: boolean;
   defaultRosterId?: string;
+  defaultRoster?: string[];
   notes?: string;
   color?: string;
   badge?: string;
@@ -47,6 +48,7 @@ export interface Tournament {
   gameDates?: string[];
   archived?: boolean;
   defaultRosterId?: string;
+  defaultRoster?: string[];
   notes?: string;
   color?: string;
   badge?: string;
