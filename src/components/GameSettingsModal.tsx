@@ -64,8 +64,8 @@ export interface GameSettingsModalProps {
   homeOrAway: 'home' | 'away';
   onSetHomeOrAway: (status: 'home' | 'away') => void;
   // Add mutation props for creating seasons and tournaments
-  addSeasonMutation: UseMutationResult<Season | null, Error, { name: string }, unknown>;
-  addTournamentMutation: UseMutationResult<Tournament | null, Error, { name: string }, unknown>;
+  addSeasonMutation: UseMutationResult<Season | null, Error, Partial<Season> & { name: string }, unknown>;
+  addTournamentMutation: UseMutationResult<Tournament | null, Error, Partial<Tournament> & { name: string }, unknown>;
   isAddingSeason: boolean;
   isAddingTournament: boolean;
   // Add current time for fair play card
