@@ -1322,7 +1322,8 @@ function HomePage() {
   };
 
   const handleSetPeriodDuration = (minutes: number) => {
-    const newMinutes = Math.max(1, minutes);
+    const safeMinutes = Number.isFinite(minutes) ? minutes : 1;
+    const newMinutes = Math.max(1, safeMinutes);
     dispatchGameSession({ type: 'SET_PERIOD_DURATION', payload: newMinutes });
     logger.log(`Period duration set to: ${newMinutes} minutes`);
   };
