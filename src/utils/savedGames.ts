@@ -174,6 +174,8 @@ export const createGame = async (gameData: Partial<AppState>): Promise<{ gameId:
       assessments: gameData.assessments || {},
       seasonId: gameData.seasonId || '',
       tournamentId: gameData.tournamentId || '',
+      tournamentLevel: gameData.tournamentLevel || '',
+      ageGroup: gameData.ageGroup || '',
       gameLocation: gameData.gameLocation || '',
       gameTime: gameData.gameTime || '',
       tacticalDiscs: gameData.tacticalDiscs || [],

@@ -88,6 +88,8 @@ export const appStateSchema = z.object({
   assessments: z.record(z.string(), playerAssessmentSchema).optional(),
   seasonId: z.string(),
   tournamentId: z.string(),
+  tournamentLevel: z.string().optional(),
+  ageGroup: z.string().optional(),
   gameLocation: z.string().optional(),
   gameTime: z.string().optional(),
   subIntervalMinutes: z.number().optional(),

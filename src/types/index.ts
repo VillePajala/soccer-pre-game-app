@@ -52,6 +52,8 @@ export interface Tournament {
   notes?: string;
   color?: string;
   badge?: string;
+  level?: string;
+  ageGroup?: string;
 }
 
 export * from './playerAssessment';

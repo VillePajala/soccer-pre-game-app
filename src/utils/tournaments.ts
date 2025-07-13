@@ -19,7 +19,14 @@ export const getTournaments = async (): Promise<Tournament[]> => {
     if (!tournamentsJson) {
       return Promise.resolve([]);
     }
-    return Promise.resolve(JSON.parse(tournamentsJson) as Tournament[]);
+    const tournaments = JSON.parse(tournamentsJson) as Tournament[];
+    return Promise.resolve(
+      tournaments.map(t => ({
+        ...t,
+        level: t.level ?? undefined,
+        ageGroup: t.ageGroup ?? undefined,
+      }))
+    );
   } catch (error) {
     logger.error('[getTournaments] Error getting tournaments from localStorage:', error);
     return Promise.resolve([]);
@@ -60,10 +67,13 @@ export const addTournament = async (newTournamentName: string, extra: Partial<To
       logger.error(`[addTournament] Validation failed: A tournament with name "${trimmedName}" already exists.`);
       return Promise.resolve(null);
     }
+    const { level, ageGroup, ...rest } = extra;
     const newTournament: Tournament = {
       id: `tournament_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
       name: trimmedName,
-      ...extra,
+      ...rest,
+      ...(level ? { level } : {}),
+      ...(ageGroup ? { ageGroup } : {}),
     };
     const updatedTournaments = [...currentTournaments, newTournament];
     const success = await saveTournaments(updatedTournaments);
@@ -105,7 +115,11 @@ export const updateTournament = async (updatedTournamentData: Tournament): Promi
     }
 
     const tournamentsToUpdate = [...currentTournaments];
-    tournamentsToUpdate[tournamentIndex] = { ...updatedTournamentData, name: trimmedName };
+    tournamentsToUpdate[tournamentIndex] = {
+      ...currentTournaments[tournamentIndex],
+      ...updatedTournamentData,
+      name: trimmedName,
+    };
 
     const success = await saveTournaments(tournamentsToUpdate);
 

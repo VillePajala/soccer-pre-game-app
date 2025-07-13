@@ -61,6 +61,9 @@ export interface AppState {
   assessments?: { [playerId: string]: PlayerAssessment };
   seasonId: string;
   tournamentId: string;
+  tournamentLevel?: string;
+  /** Age group for the game, independent of tournament/season */
+  ageGroup?: string;
   /** Difficulty weighting factor for demand-correction averages */
   demandFactor?: number;
   gameLocation?: string;
