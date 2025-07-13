@@ -36,6 +36,16 @@ Key modules that interact with storage are:
 3. **Enable Row Level Security (RLS)** – If using authentication, enable RLS and create policies allowing users to access their own data.
 4. **Generate service key and anon key** – These credentials will be stored as environment variables in `.env.local`.
 
+### Data Rework Considerations
+
+Before connecting the app to Supabase, review the existing local data for potential schema adjustments:
+
+- **ID formats** – Local records use string IDs like `"player_<timestamp>_<random>"`. Decide whether to keep these values or convert them to UUIDs on import.
+- **Flattening game data** – The `AppState` object stores events and assessments as nested arrays. For efficient queries, consider normalising this information into `game_events` and `player_assessments` tables.
+- **Season and tournament fields** – Some optional fields (`location`, `periodCount`, `archived`, etc.) may be missing in older records. Populate sensible defaults or handle `null` values during migration.
+- **Transformation utilities** – Build helper functions that map the current TypeScript types to the new table structure. These utilities make it easier to validate and transform data during import.
+- **App settings per user** – Once authentication is enabled, settings should be keyed by `user_id`. Link existing local settings to the signed‑in user on first login.
+
 ## 3. Installing supabase-js
 
 Add the official client library and types:
