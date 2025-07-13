@@ -1921,6 +1921,14 @@ function HomePage() {
     // REMOVED: saveStateToHistory({ gameTime: time });
   };
 
+  const handleAgeGroupChange = (group: string) => {
+    dispatchGameSession({ type: 'SET_AGE_GROUP', payload: group });
+  };
+
+  const handleTournamentLevelChange = (level: string) => {
+    dispatchGameSession({ type: 'SET_TOURNAMENT_LEVEL', payload: level });
+  };
+
   const handleSetDemandFactor = (factor: number) => {
     dispatchGameSession({ type: 'SET_DEMAND_FACTOR', payload: factor });
   };
@@ -2641,6 +2649,8 @@ function HomePage() {
         gameLocation={gameSessionState.gameLocation}
         gameTime={gameSessionState.gameTime}
         gameNotes={gameSessionState.gameNotes}
+        ageGroup={gameSessionState.ageGroup}
+        tournamentLevel={gameSessionState.tournamentLevel}
         gameEvents={gameSessionState.gameEvents}
         availablePlayers={availablePlayers}
         selectedPlayerIds={gameSessionState.selectedPlayerIds}
@@ -2654,6 +2664,8 @@ function HomePage() {
         onGameLocationChange={handleGameLocationChange}
         onGameTimeChange={handleGameTimeChange}
         onGameNotesChange={handleGameNotesChange}
+        onAgeGroupChange={handleAgeGroupChange}
+        onTournamentLevelChange={handleTournamentLevelChange}
         onUpdateGameEvent={handleUpdateGameEvent}
         onAwardFairPlayCard={handleAwardFairPlayCard}
         onDeleteGameEvent={handleDeleteGameEvent}
