@@ -44,9 +44,10 @@ export const saveTournaments = async (tournaments: Tournament[]): Promise<boolea
 /**
  * Adds a new tournament to the list of tournaments in localStorage.
  * @param newTournamentName - The name of the new tournament.
+ * @param extra - Optional additional fields for the tournament.
  * @returns A promise that resolves to the newly created Tournament object, or null if validation/save fails.
  */
-export const addTournament = async (newTournamentName: string): Promise<Tournament | null> => {
+export const addTournament = async (newTournamentName: string, extra: Partial<Tournament> = {}): Promise<Tournament | null> => {
   const trimmedName = newTournamentName.trim();
   if (!trimmedName) {
     logger.error('[addTournament] Validation failed: Tournament name cannot be empty.');
@@ -62,6 +63,7 @@ export const addTournament = async (newTournamentName: string): Promise<Tourname
     const newTournament: Tournament = {
       id: `tournament_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
       name: trimmedName,
+      ...extra,
     };
     const updatedTournaments = [...currentTournaments, newTournament];
     const success = await saveTournaments(updatedTournaments);
