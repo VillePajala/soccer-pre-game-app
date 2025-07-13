@@ -315,8 +315,9 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
         });
       }
     }
-    if (s.periodCount) {
-      const count = (s.periodCount as 1 | 2) || 2;
+    const parsedCount = Number(s.periodCount);
+    if (parsedCount === 1 || parsedCount === 2) {
+      const count = parsedCount as 1 | 2;
       onNumPeriodsChange(count);
       if (currentGameId) {
         updateGameDetailsMutation.mutate({
@@ -325,12 +326,13 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
         });
       }
     }
-    if (s.periodDuration) {
-      onPeriodDurationChange(s.periodDuration);
+    const parsedDuration = Number(s.periodDuration);
+    if (Number.isFinite(parsedDuration) && parsedDuration > 0) {
+      onPeriodDurationChange(parsedDuration);
       if (currentGameId) {
         updateGameDetailsMutation.mutate({
           gameId: currentGameId,
-          updates: { periodDurationMinutes: s.periodDuration },
+          updates: { periodDurationMinutes: parsedDuration },
         });
       }
     }
@@ -356,8 +358,9 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
         });
       }
     }
-    if (t.periodCount) {
-      const count = (t.periodCount as 1 | 2) || 2;
+    const parsedCount = Number(t.periodCount);
+    if (parsedCount === 1 || parsedCount === 2) {
+      const count = parsedCount as 1 | 2;
       onNumPeriodsChange(count);
       if (currentGameId) {
         updateGameDetailsMutation.mutate({
@@ -366,12 +369,13 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
         });
       }
     }
-    if (t.periodDuration) {
-      onPeriodDurationChange(t.periodDuration);
+    const parsedDuration = Number(t.periodDuration);
+    if (Number.isFinite(parsedDuration) && parsedDuration > 0) {
+      onPeriodDurationChange(parsedDuration);
       if (currentGameId) {
         updateGameDetailsMutation.mutate({
           gameId: currentGameId,
-          updates: { periodDurationMinutes: t.periodDuration },
+          updates: { periodDurationMinutes: parsedDuration },
         });
       }
     }
