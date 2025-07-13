@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import GameSettingsModal from './GameSettingsModal';
 import { type GameSettingsModalProps } from './GameSettingsModal';
-import { Player, Season, Tournament } from '@/types';
+import { Player, Season, Tournament, AppState } from '@/types';
 import { GameEvent, GameEventType } from './GameSettingsModal';
 import { getSeasons } from '@/utils/seasons';
 import { getTournaments } from '@/utils/tournaments';
@@ -112,8 +112,14 @@ const mockGameEvents: GameEvent[] = [
   { id: 'goal1', type: 'goal' as GameEventType, time: 120, scorerId: 'p1', assisterId: 'p2' },
   { id: 'goal2', type: 'opponentGoal' as GameEventType, time: 300 },
 ];
-const mockSeasons: Season[] = [ { id: 's1', name: 'Spring League 2024' }, { id: 's2', name: 'Winter League 2023' }];
-const mockTournaments: Tournament[] = [ { id: 't1', name: 'Summer Cup' }, { id: 't2', name: 'Annual Gala' } ];
+const mockSeasons: Season[] = [
+  { id: 's1', name: 'Spring League 2024', location: 'Arena', periodCount: 2, periodDuration: 25, defaultRosterId: 'r1' },
+  { id: 's2', name: 'Winter League 2023', location: 'Dome', periodCount: 1, periodDuration: 30 },
+];
+const mockTournaments: Tournament[] = [
+  { id: 't1', name: 'Summer Cup', location: 'Cup Arena', periodCount: 2, periodDuration: 20, defaultRosterId: 'r2' },
+  { id: 't2', name: 'Annual Gala', location: 'Gala Field', periodCount: 2, periodDuration: 15 },
+];
 
 const defaultProps: GameSettingsModalProps = {
   isOpen: true,
@@ -157,6 +163,9 @@ const defaultProps: GameSettingsModalProps = {
   } as unknown as UseMutationResult<Tournament | null, Error, { name: string }, unknown>,
   isAddingSeason: false,
   isAddingTournament: false,
+  updateGameDetailsMutation: {
+    mutate: jest.fn(),
+  } as unknown as UseMutationResult<AppState | null, Error, { gameId: string; updates: Partial<AppState> }, unknown>,
 };
 
 describe('<GameSettingsModal />', () => {
@@ -318,12 +327,56 @@ describe('<GameSettingsModal />', () => {
     };
 
     test('initially shows "None" selected and no combobox if no IDs provided', async () => {
-        await renderAndWaitForLoad();
-        const section = getAssociationSection();
-        const noneButton = within(section).getByText(t('gameSettingsModal.eiMitaan'));
-        expect(noneButton).toHaveClass('bg-indigo-600');
-        expect(within(section).queryByRole('combobox')).not.toBeInTheDocument();
+      await renderAndWaitForLoad();
+      const section = getAssociationSection();
+      const noneButton = within(section).getByText(t('gameSettingsModal.eiMitaan'));
+      expect(noneButton).toHaveClass('bg-indigo-600');
+      expect(within(section).queryByRole('combobox')).not.toBeInTheDocument();
+    });
+
+    test('selecting a season prefills game data', async () => {
+      const user = userEvent.setup();
+      const { rerender } = render(<GameSettingsModal {...defaultProps} />);
+      await waitFor(() => {
+        expect(getSeasons).toHaveBeenCalled();
+        expect(getTournaments).toHaveBeenCalled();
       });
+      const section = getAssociationSection();
+      const seasonTab = within(section).getByText(t('gameSettingsModal.kausi'));
+      await user.click(seasonTab);
+      const select = within(section).getByRole('combobox');
+      await user.selectOptions(select, 's1');
+      rerender(<GameSettingsModal {...defaultProps} seasonId="s1" isOpen={true} />);
+      await waitFor(() => {
+        expect(mockOnSeasonIdChange).toHaveBeenCalledWith('s1');
+        expect(mockOnGameLocationChange).toHaveBeenCalledWith('Arena');
+        expect(mockOnNumPeriodsChange).toHaveBeenCalledWith(2);
+        expect(mockOnPeriodDurationChange).toHaveBeenCalledWith(25);
+        expect(defaultProps.onSelectedPlayersChange).toHaveBeenCalledWith(mockPlayers.map(p => p.id));
+      });
+    });
+
+    test('selecting a tournament prefills game data', async () => {
+      const user = userEvent.setup();
+      const { rerender } = render(<GameSettingsModal {...defaultProps} />);
+      await waitFor(() => {
+        expect(getSeasons).toHaveBeenCalled();
+        expect(getTournaments).toHaveBeenCalled();
+      });
+      const section = getAssociationSection();
+      const tournamentTab = within(section).getByText(t('gameSettingsModal.turnaus'));
+      await user.click(tournamentTab);
+      const select = within(section).getByRole('combobox');
+      await user.selectOptions(select, 't1');
+      rerender(<GameSettingsModal {...defaultProps} tournamentId="t1" isOpen={true} />);
+      await waitFor(() => {
+        expect(mockOnTournamentIdChange).toHaveBeenCalledWith('t1');
+        expect(mockOnGameLocationChange).toHaveBeenCalledWith('Cup Arena');
+        expect(mockOnNumPeriodsChange).toHaveBeenCalledWith(2);
+        expect(mockOnPeriodDurationChange).toHaveBeenCalledWith(20);
+        expect(defaultProps.onSelectedPlayersChange).toHaveBeenCalledWith(mockPlayers.map(p => p.id));
+      });
+    });
   });
 
   describe('Event Log Interactions', () => {

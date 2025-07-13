@@ -301,6 +301,88 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
     }
   }, [inlineEditingField]);
 
+  // Prefill game settings when selecting a season
+  useEffect(() => {
+    if (!isOpen || !seasonId) return;
+    const s = seasons.find(se => se.id === seasonId);
+    if (!s) return;
+    if (s.location !== undefined) {
+      onGameLocationChange(s.location || '');
+      if (currentGameId) {
+        updateGameDetailsMutation.mutate({
+          gameId: currentGameId,
+          updates: { gameLocation: s.location || '' },
+        });
+      }
+    }
+    if (s.periodCount) {
+      const count = (s.periodCount as 1 | 2) || 2;
+      onNumPeriodsChange(count);
+      if (currentGameId) {
+        updateGameDetailsMutation.mutate({
+          gameId: currentGameId,
+          updates: { numberOfPeriods: count },
+        });
+      }
+    }
+    if (s.periodDuration) {
+      onPeriodDurationChange(s.periodDuration);
+      if (currentGameId) {
+        updateGameDetailsMutation.mutate({
+          gameId: currentGameId,
+          updates: { periodDurationMinutes: s.periodDuration },
+        });
+      }
+    }
+    if (s.defaultRosterId) {
+      const allIds = availablePlayers.map(p => p.id);
+      if (selectedPlayerIds.length !== allIds.length) {
+        onSelectedPlayersChange(allIds);
+      }
+    }
+  }, [seasonId, seasons, isOpen, currentGameId, availablePlayers, selectedPlayerIds, onGameLocationChange, onNumPeriodsChange, onPeriodDurationChange, onSelectedPlayersChange, updateGameDetailsMutation]);
+
+  // Prefill game settings when selecting a tournament
+  useEffect(() => {
+    if (!isOpen || !tournamentId) return;
+    const t = tournaments.find(tt => tt.id === tournamentId);
+    if (!t) return;
+    if (t.location !== undefined) {
+      onGameLocationChange(t.location || '');
+      if (currentGameId) {
+        updateGameDetailsMutation.mutate({
+          gameId: currentGameId,
+          updates: { gameLocation: t.location || '' },
+        });
+      }
+    }
+    if (t.periodCount) {
+      const count = (t.periodCount as 1 | 2) || 2;
+      onNumPeriodsChange(count);
+      if (currentGameId) {
+        updateGameDetailsMutation.mutate({
+          gameId: currentGameId,
+          updates: { numberOfPeriods: count },
+        });
+      }
+    }
+    if (t.periodDuration) {
+      onPeriodDurationChange(t.periodDuration);
+      if (currentGameId) {
+        updateGameDetailsMutation.mutate({
+          gameId: currentGameId,
+          updates: { periodDurationMinutes: t.periodDuration },
+        });
+      }
+    }
+    if (t.defaultRosterId) {
+      const allIds = availablePlayers.map(p => p.id);
+      if (selectedPlayerIds.length !== allIds.length) {
+        onSelectedPlayersChange(allIds);
+      }
+    }
+  }, [tournamentId, tournaments, isOpen, currentGameId, availablePlayers, selectedPlayerIds, onGameLocationChange, onNumPeriodsChange, onPeriodDurationChange, onSelectedPlayersChange, updateGameDetailsMutation]);
+
   // --- Event Handlers ---
 
   const handleSeasonChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
