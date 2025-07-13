@@ -14,9 +14,8 @@ import {
     HiOutlineCog6Tooth, // Settings icon
     HiOutlineBookOpen, // Import for Training Resources
     HiOutlineArrowTopRightOnSquare, // External link icon
-    HiOutlineChevronRight, // Chevron for submenu
     HiOutlineChevronLeft, // Chevron for Back button
-    HiOutlineQuestionMarkCircle, // Icon for rules
+    HiOutlineQuestionMarkCircle, // Icon for help
     HiOutlinePlusCircle, // Icon for adding discs
     // HiOutlineMinusCircle, // Icon for adding opponent discs
     // HiOutlineFolderArrowDown,   // Icon for Save Game As... (COMMENTED OUT)
@@ -104,7 +103,6 @@ const ControlBar: React.FC<ControlBarProps> = ({
   const { t } = useTranslation(); // Standard hook
   logger.log('[ControlBar Render] Received highlightRosterButton prop:', highlightRosterButton); // <<< Log prop value
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
-  const [menuView, setMenuView] = useState<'main' | 'tulospalvelu'>('main'); // NEW state for menu view
   const settingsMenuRef = useRef<HTMLDivElement>(null);
   
   // --- RE-ADD BUTTON STYLES --- 
@@ -128,7 +126,6 @@ const ControlBar: React.FC<ControlBarProps> = ({
     const handleClickOutside = (event: MouseEvent) => {
       if (settingsMenuRef.current && !settingsMenuRef.current.contains(event.target as Node)) {
         setIsSettingsMenuOpen(false);
-        setMenuView('main'); // Reset view when closing menu
       }
     };
 
@@ -150,14 +147,12 @@ const ControlBar: React.FC<ControlBarProps> = ({
   const wrapHandler = (handler: () => void) => () => {
     handler();
     setIsSettingsMenuOpen(false);
-    setMenuView('main'); 
   };
 
   // Callback to handle StartNewGame button click
   const handleStartNewGame = () => {
     onStartNewGame();
     setIsSettingsMenuOpen(false);
-    setMenuView('main'); 
   };
 
   return (
@@ -277,14 +272,14 @@ const ControlBar: React.FC<ControlBarProps> = ({
                // Adjust position higher up to not overlap control bar too much
                className={`fixed top-auto bottom-10 left-4 right-4 pt-1 pb-2 mt-auto mb-0 max-h-[85%] bg-slate-800/98 backdrop-blur-sm rounded-t-md shadow-xl z-50 border-x border-t border-slate-600/50 overflow-hidden transition-all duration-200 ease-in-out transform ${isSettingsMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full'}`}
             >
-               {/* Wrapper for Menu Views */}
-               <div className={`flex w-[200%] transition-transform duration-200 ease-out ${menuView === 'tulospalvelu' ? 'transform -translate-x-1/2' : ''}`}>
-                 
+               {/* Wrapper for Menu View */}
+               <div className="flex w-full transition-transform duration-200 ease-out">
+
                    {/* --- Main Menu View --- */}
-                   <div className="w-1/2 flex-shrink-0 overflow-y-auto max-h-[85vh]">
+                   <div className="w-full flex-shrink-0 overflow-y-auto max-h-[85vh]">
                      <div className="px-3 py-2 flex justify-between items-center border-b border-slate-700/80">
                        <h3 className="text-base font-semibold text-yellow-300">{t('controlBar.menu.title', 'Menu')}</h3>
-                       <button onClick={() => { setIsSettingsMenuOpen(false); setMenuView('main'); }} className="text-slate-400 hover:text-slate-200" title={t('common.closeMenu', 'Close Menu') ?? undefined}><HiOutlineChevronLeft className="w-5 h-5"/></button>
+                       <button onClick={() => { setIsSettingsMenuOpen(false); }} className="text-slate-400 hover:text-slate-200" title={t('common.closeMenu', 'Close Menu') ?? undefined}><HiOutlineChevronLeft className="w-5 h-5"/></button>
                      </div>
                      <nav className="flex flex-col p-2 space-y-1 text-sm">
                        {/* Group 1: Game Management */} 
@@ -334,22 +329,12 @@ const ControlBar: React.FC<ControlBarProps> = ({
                         <button onClick={wrapHandler(onToggleTrainingResources)} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
                           <HiOutlineBookOpen className={menuIconSize} />{t('controlBar.training', 'Training')}
                         </button>
-                         <a
-                           href="https://tulospalvelu.palloliitto.fi/category/P9EKK!splita_ekk25/info/playingmethod"
-                           target="_blank"
-                           rel="noopener noreferrer"
-                           onClick={() => { setIsSettingsMenuOpen(false); setMenuView('main'); }} // Close menu on click
-                           className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75"
-                         >
-                           <HiOutlineQuestionMarkCircle className={menuIconSize} />
-                           {t('controlBar.rules', 'Rules')}
-                         </a>
                          {/* Coaching Materials Link (MOVED HERE AND STYLED CONSISTENTLY) */}
                          <a
                            href="https://www.palloliitto.fi/valmentajien-materiaalit-jalkapallo"
                            target="_blank"
                            rel="noopener noreferrer"
-                           onClick={() => { setIsSettingsMenuOpen(false); setMenuView('main'); }} // Close menu on click
+                           onClick={() => { setIsSettingsMenuOpen(false); }} // Close menu on click
                            className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75"
                          >
                            <HiOutlineArrowTopRightOnSquare className={menuIconSize} />
@@ -369,11 +354,6 @@ const ControlBar: React.FC<ControlBarProps> = ({
                          <a href="https://taso.palloliitto.fi" target="_blank" rel="noopener noreferrer" className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75" onClick={wrapHandler(() => {})}>
                            <HiOutlineArrowTopRightOnSquare className={menuIconSize} />{t('controlBar.tasoLink', 'Taso')}
                          </a>
-                         {/* Button to navigate to Tulospalvelu submenu */}
-                         <button onClick={() => setMenuView('tulospalvelu')} className="w-full flex items-center justify-between px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-600/75">
-                           <span className="flex items-center"><HiOutlineArrowTopRightOnSquare className={menuIconSize} />{t('controlBar.tulospalveluLink', 'Tulospalvelu')}</span>
-                           <HiOutlineChevronRight className="w-4 h-4" />
-                         </button>
                        </div>
 
                        {/* ADD Subtle Divider - slightly more visible */}
@@ -389,23 +369,6 @@ const ControlBar: React.FC<ControlBarProps> = ({
                      </nav>
                    </div>{/* End Main Menu View */}
 
-                   {/* --- Tulospalvelu View --- */}
-                   <div className="w-1/2 flex-shrink-0 overflow-y-auto max-h-[85vh]">
-                     <div className="py-1"> 
-                       <button onClick={() => setMenuView('main')} className="w-full flex items-center px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-600 hover:text-slate-100 mb-1 border-b border-slate-600/50">
-                         <HiOutlineChevronLeft className="w-4 h-4 mr-2" />
-                         {t('controlBar.backButton', 'Back')}
-                       </button>
-                       <a href="https://tulospalvelu.palloliitto.fi/category/P91!Itajp25/tables" target="_blank" rel="noopener noreferrer" className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-500" onClick={wrapHandler(() => {})}>
-                         <HiOutlineArrowTopRightOnSquare className="w-4 h-4 mr-2 opacity-70" />
-                         {t('controlBar.tulospalveluP9', 'P9 Alue Taso 1')}
-                       </a>
-                       <a href="https://tulospalvelu.palloliitto.fi/category/P9EKK!splita_ekk25/tables" target="_blank" rel="noopener noreferrer" className="w-full flex items-center px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-500 border-t border-slate-500/50" onClick={wrapHandler(() => {})}>
-                         <HiOutlineArrowTopRightOnSquare className="w-4 h-4 mr-2 opacity-70" />
-                         {t('controlBar.tulospalveluP9EK', 'P/T 9 EK Kortteli (2016)')}
-                       </a>
-                     </div>
-                   </div>{/* End Tulospalvelu View */} 
                    
                </div> {/* End inner wrapper */} 
             </div>
