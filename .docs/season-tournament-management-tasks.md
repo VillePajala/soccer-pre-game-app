@@ -14,8 +14,9 @@ It builds on the plan in [`season-tournament-management-plan.md`](./season-tourn
 - [ ] Auto-select the default roster if one is set.
 
 ## 3. Import/Export Utilities
-- [ ] Implement JSON import/export for season and tournament configurations.
-- [ ] Offer calendar (`.ics`) export when dates are defined.
+- [x] Implement JSON import/export for season and tournament configurations.
+- [x] Offer calendar (`.ics`) export when dates are defined.
 
 ## Status
-- [ ] Tasks pending
+- [ ] Modal and prefill tasks pending
+- [x] Import/export utilities complete
