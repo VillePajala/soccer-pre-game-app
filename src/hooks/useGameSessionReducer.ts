@@ -17,6 +17,8 @@ export interface GameSessionState {
   selectedPlayerIds: string[];
   seasonId: string;
   tournamentId: string;
+  ageGroup?: string;
+  tournamentLevel?: string;
   gameLocation?: string;
   gameTime?: string;
   demandFactor: number;
@@ -62,6 +64,8 @@ export const initialGameSessionStatePlaceholder: GameSessionState = {
   selectedPlayerIds: [],
   seasonId: '',
   tournamentId: '',
+  ageGroup: '',
+  tournamentLevel: '',
   gameLocation: '',
   gameTime: '',
   demandFactor: 1,
@@ -102,6 +106,8 @@ export type GameSessionAction =
   | { type: 'SET_TOURNAMENT_ID'; payload: string }
   | { type: 'SET_GAME_LOCATION'; payload: string }
   | { type: 'SET_GAME_TIME'; payload: string }
+  | { type: 'SET_AGE_GROUP'; payload: string }
+  | { type: 'SET_TOURNAMENT_LEVEL'; payload: string }
   | { type: 'SET_DEMAND_FACTOR'; payload: number }
   | { type: 'ADD_GAME_EVENT'; payload: GameEvent }
   | { type: 'UPDATE_GAME_EVENT'; payload: GameEvent }
@@ -217,6 +223,10 @@ export const gameSessionReducer = (state: GameSessionState, action: GameSessionA
       return { ...state, gameLocation: action.payload };
     case 'SET_GAME_TIME':
       return { ...state, gameTime: action.payload };
+    case 'SET_AGE_GROUP':
+      return { ...state, ageGroup: action.payload };
+    case 'SET_TOURNAMENT_LEVEL':
+      return { ...state, tournamentLevel: action.payload };
     case 'SET_DEMAND_FACTOR':
       return { ...state, demandFactor: action.payload };
     case 'ADD_GAME_EVENT':

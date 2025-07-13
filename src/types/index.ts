@@ -35,6 +35,7 @@ export interface Season {
   notes?: string;
   color?: string;
   badge?: string;
+  ageGroup?: string;
 }
 
 export interface Tournament {

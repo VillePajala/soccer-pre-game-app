@@ -19,7 +19,8 @@ export const getSeasons = async (): Promise<Season[]> => {
     if (!seasonsJson) {
       return Promise.resolve([]);
     }
-    return Promise.resolve(JSON.parse(seasonsJson) as Season[]);
+    const seasons = JSON.parse(seasonsJson) as Season[];
+    return Promise.resolve(seasons.map(s => ({ ...s, ageGroup: s.ageGroup ?? undefined })));
   } catch (error) {
     logger.error('[getSeasons] Error reading seasons from localStorage:', error);
     return Promise.resolve([]); // Resolve with empty array on error

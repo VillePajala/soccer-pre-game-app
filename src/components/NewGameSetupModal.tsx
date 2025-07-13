@@ -29,7 +29,9 @@ interface NewGameSetupModalProps {
     numPeriods: 1 | 2,
     periodDuration: number,
     homeOrAway: 'home' | 'away',
-    demandFactor: number
+    demandFactor: number,
+    ageGroup: string,
+    tournamentLevel: string
   ) => void;
   onCancel: () => void;
   addSeasonMutation: UseMutationResult<Season | null, Error, Partial<Season> & { name: string }, unknown>;
@@ -57,6 +59,8 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   const [gameLocation, setGameLocation] = useState('');
   const [gameHour, setGameHour] = useState<string>('');
   const [gameMinute, setGameMinute] = useState<string>('');
+  const [ageGroup, setAgeGroup] = useState('');
+  const [tournamentLevel, setTournamentLevel] = useState('');
   const homeTeamInputRef = useRef<HTMLInputElement>(null);
   const opponentInputRef = useRef<HTMLInputElement>(null);
 
@@ -180,6 +184,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
       const s = seasons.find(se => se.id === selectedSeasonId);
       if (s) {
         setGameLocation(s.location || '');
+        setAgeGroup(s.ageGroup || '');
         setLocalNumPeriods((s.periodCount as 1 | 2) || 2);
         setLocalPeriodDurationString(s.periodDuration ? String(s.periodDuration) : '10');
         if (s.defaultRoster && s.defaultRoster.length > 0) {
@@ -206,6 +211,8 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
       const t = tournaments.find(tt => tt.id === selectedTournamentId);
       if (t) {
         setGameLocation(t.location || '');
+        setAgeGroup(t.ageGroup || '');
+        setTournamentLevel(t.level || '');
         setLocalNumPeriods((t.periodCount as 1 | 2) || 2);
         setLocalPeriodDurationString(t.periodDuration ? String(t.periodDuration) : '10');
         if (t.defaultRoster && t.defaultRoster.length > 0) {
@@ -368,7 +375,9 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
       localNumPeriods,
       duration, // use validated duration
       localHomeOrAway, // <<< Step 4a: Pass Home/Away >>>
-      demandFactor
+      demandFactor,
+      ageGroup,
+      tournamentLevel
     );
 
     // Modal will be closed by parent component after onStart
@@ -484,9 +493,25 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                 className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                 placeholder={t('newGameSetupModal.homeTeamPlaceholder', 'e.g., Galaxy U10')}
                 onKeyDown={handleKeyDown}
-                disabled={isLoading}
-              />
-            </div>
+                    disabled={isLoading}
+                  />
+                </div>
+
+                {/* Age Group */}
+                <div className="mb-4">
+                  <label htmlFor="ageGroupInput" className="block text-sm font-medium text-slate-300 mb-1">
+                    {t('newGameSetupModal.ageGroupLabel', 'Age Group (Optional)')}
+                  </label>
+                  <input
+                    type="text"
+                    id="ageGroupInput"
+                    value={ageGroup}
+                    onChange={(e) => setAgeGroup(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                    disabled={isLoading}
+                  />
+                </div>
 
             {/* Opponent Name - Also critical */}
             <div className="mb-4">
@@ -611,9 +636,25 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                             title={showNewTournamentInput ? t('newGameSetupModal.cancelCreate', 'Cancel creation') : t('newGameSetupModal.createTournament', 'Create new tournament')}
                             disabled={isAddingSeason || isAddingTournament}
                           >
-                            <HiPlusCircle className={`w-6 h-6 transition-transform ${showNewTournamentInput ? 'rotate-45' : ''}`} />
+                          <HiPlusCircle className={`w-6 h-6 transition-transform ${showNewTournamentInput ? 'rotate-45' : ''}`} />
                           </button>
                         </div>
+                        {selectedTournamentId && (
+                          <div className="mt-2">
+                            <label htmlFor="tournamentLevelInput" className="block text-sm font-medium text-slate-300 mb-1">
+                              {t('newGameSetupModal.levelLabel', 'Level')}
+                            </label>
+                            <input
+                              type="text"
+                              id="tournamentLevelInput"
+                              value={tournamentLevel}
+                              onChange={(e) => setTournamentLevel(e.target.value)}
+                              onKeyDown={handleKeyDown}
+                              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                              disabled={isLoading}
+                            />
+                          </div>
+                        )}
                         {showNewTournamentInput && (
                           <div className="mt-2 flex flex-wrap items-center gap-2">
                             <input

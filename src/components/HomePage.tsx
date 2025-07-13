@@ -118,6 +118,8 @@ const initialState: AppState = {
   // gameType: 'season', // REMOVED
   seasonId: '', // Initialize season ID
   tournamentId: '', // Initialize tournament ID
+  ageGroup: '',
+  tournamentLevel: '',
   gameLocation: '', // Initialize optional fields
   gameTime: '', // Initialize optional fields
   // Timer related state
@@ -157,6 +159,8 @@ function HomePage() {
     selectedPlayerIds: initialState.selectedPlayerIds,
     seasonId: initialState.seasonId,
     tournamentId: initialState.tournamentId,
+    ageGroup: initialState.ageGroup,
+    tournamentLevel: initialState.tournamentLevel,
     gameLocation: initialState.gameLocation,
     gameTime: initialState.gameTime,
     gameEvents: initialState.gameEvents,
@@ -2000,7 +2004,9 @@ function HomePage() {
     numPeriods: 1 | 2, // Parameter
     periodDuration: number, // Parameter
     homeOrAway: 'home' | 'away', // <<< Step 4b: Add parameter
-    demandFactor: number
+    demandFactor: number,
+    ageGroup: string,
+    tournamentLevel: string
   ) => {
       // ADD LOGGING HERE:
       logger.log('[handleStartNewGameWithSetup] Received Params:', { 
@@ -2015,7 +2021,9 @@ function HomePage() {
         numPeriods,
         periodDuration,
         homeOrAway,
-        demandFactor
+        demandFactor,
+        ageGroup,
+        tournamentLevel
       });
       // No need to log initialState references anymore
 
@@ -2032,6 +2040,8 @@ function HomePage() {
           gameTime: gameTime,
           seasonId: seasonId || '',
           tournamentId: tournamentId || '',
+          ageGroup: ageGroup,
+          tournamentLevel: tournamentLevel,
           numberOfPeriods: numPeriods, // Use parameter
           periodDurationMinutes: periodDuration, // Use parameter
           homeScore: 0,

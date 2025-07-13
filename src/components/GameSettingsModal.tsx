@@ -37,6 +37,8 @@ export interface GameSettingsModalProps {
   gameLocation?: string;
   gameTime?: string;
   gameNotes?: string;
+  ageGroup?: string;
+  tournamentLevel?: string;
   seasonId?: string | null;
   tournamentId?: string | null;
   gameEvents: GameEvent[];
@@ -53,6 +55,8 @@ export interface GameSettingsModalProps {
   onGameLocationChange: (location: string) => void;
   onGameTimeChange: (time: string) => void;
   onGameNotesChange: (notes: string) => void;
+  onAgeGroupChange: (age: string) => void;
+  onTournamentLevelChange: (level: string) => void;
   onUpdateGameEvent: (updatedEvent: GameEvent) => void;
   onDeleteGameEvent?: (goalId: string) => void;
   onAwardFairPlayCard: (playerId: string | null, time: number) => void;
@@ -115,12 +119,16 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   gameLocation = '',
   gameTime = '',
   gameNotes = '',
+  ageGroup = '',
+  tournamentLevel = '',
   onTeamNameChange,
   onOpponentNameChange,
   onGameDateChange,
   onGameLocationChange,
   onGameTimeChange,
   onGameNotesChange,
+  onAgeGroupChange,
+  onTournamentLevelChange,
   onUpdateGameEvent,
   onDeleteGameEvent,
   onAwardFairPlayCard,
@@ -315,6 +323,12 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
         });
       }
     }
+    if (s.ageGroup) {
+      onAgeGroupChange(s.ageGroup);
+      if (currentGameId) {
+        updateGameDetailsMutation.mutate({ gameId: currentGameId, updates: { ageGroup: s.ageGroup } });
+      }
+    }
     const parsedCount = Number(s.periodCount);
     if (parsedCount === 1 || parsedCount === 2) {
       const count = parsedCount as 1 | 2;
@@ -341,7 +355,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
         onSelectedPlayersChange(s.defaultRoster);
       }
     }
-  }, [seasonId, seasons, isOpen, currentGameId, availablePlayers, selectedPlayerIds, onGameLocationChange, onNumPeriodsChange, onPeriodDurationChange, onSelectedPlayersChange, updateGameDetailsMutation]);
+  }, [seasonId, seasons, isOpen, currentGameId, availablePlayers, selectedPlayerIds, onGameLocationChange, onNumPeriodsChange, onPeriodDurationChange, onSelectedPlayersChange, updateGameDetailsMutation, onAgeGroupChange]);
 
   // Prefill game settings when selecting a tournament
   useEffect(() => {
@@ -355,6 +369,18 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
           gameId: currentGameId,
           updates: { gameLocation: t.location || '' },
         });
+      }
+    }
+    if (t.ageGroup) {
+      onAgeGroupChange(t.ageGroup);
+      if (currentGameId) {
+        updateGameDetailsMutation.mutate({ gameId: currentGameId, updates: { ageGroup: t.ageGroup } });
+      }
+    }
+    if (t.level) {
+      onTournamentLevelChange(t.level);
+      if (currentGameId) {
+        updateGameDetailsMutation.mutate({ gameId: currentGameId, updates: { tournamentLevel: t.level } });
       }
     }
     const parsedCount = Number(t.periodCount);
@@ -383,7 +409,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
         onSelectedPlayersChange(t.defaultRoster);
       }
     }
-  }, [tournamentId, tournaments, isOpen, currentGameId, availablePlayers, selectedPlayerIds, onGameLocationChange, onNumPeriodsChange, onPeriodDurationChange, onSelectedPlayersChange, updateGameDetailsMutation]);
+  }, [tournamentId, tournaments, isOpen, currentGameId, availablePlayers, selectedPlayerIds, onGameLocationChange, onNumPeriodsChange, onPeriodDurationChange, onSelectedPlayersChange, updateGameDetailsMutation, onAgeGroupChange, onTournamentLevelChange]);
 
   // --- Event Handlers ---
 
@@ -1067,6 +1093,45 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                     className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                   />
                 </div>
+
+                {/* Age Group */}
+                <div className="mb-4">
+                  <label htmlFor="ageGroupInput" className="block text-sm font-medium text-slate-300 mb-1">
+                    {t('gameSettingsModal.ageGroupLabel', 'Age Group (Optional)')}
+                  </label>
+                  <input
+                    type="text"
+                    id="ageGroupInput"
+                    value={ageGroup}
+                    onChange={(e) => {
+                      onAgeGroupChange(e.target.value);
+                      if (currentGameId) {
+                        updateGameDetailsMutation.mutate({ gameId: currentGameId, updates: { ageGroup: e.target.value } });
+                      }
+                    }}
+                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                  />
+                </div>
+
+                {tournamentId && (
+                <div className="mb-4">
+                  <label htmlFor="levelInput" className="block text-sm font-medium text-slate-300 mb-1">
+                    {t('gameSettingsModal.levelLabel', 'Level')}
+                  </label>
+                  <input
+                    type="text"
+                    id="levelInput"
+                    value={tournamentLevel}
+                    onChange={(e) => {
+                      onTournamentLevelChange(e.target.value);
+                      if (currentGameId) {
+                        updateGameDetailsMutation.mutate({ gameId: currentGameId, updates: { tournamentLevel: e.target.value } });
+                      }
+                    }}
+                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                  />
+                </div>
+                )}
 
                 {/* Home/Away Selection */}
                 <div className="mb-4">
