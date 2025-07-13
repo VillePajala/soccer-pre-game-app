@@ -52,6 +52,16 @@ describe('playerAssessments utils', () => {
     await expect(getPlayerAssessments('game1')).resolves.toEqual(game.assessments);
   });
 
+  it('returns null when no game found', async () => {
+    mockedGetGame.mockResolvedValue(undefined as unknown as AppState);
+    await expect(getPlayerAssessments('missing')).resolves.toBeNull();
+  });
+
+  it('throws when get fails', async () => {
+    mockedGetGame.mockRejectedValue(new Error('fail'));
+    await expect(getPlayerAssessments('g')).rejects.toThrow('fail');
+  });
+
   it('saves assessment and returns updated game', async () => {
     const game = { ...baseGame };
     mockedGetGame.mockResolvedValue(game);
@@ -62,6 +72,18 @@ describe('playerAssessments utils', () => {
     expect(result).not.toBeNull();
   });
 
+  it('returns null when saving and game missing', async () => {
+    mockedGetGame.mockResolvedValue(null as unknown as AppState);
+    const result = await savePlayerAssessment('g','p',{overall:1,sliders:{intensity:1,courage:1,duels:1,technique:1,creativity:1,decisions:1,awareness:1,teamwork:1,fair_play:1,impact:1},notes:'',minutesPlayed:0,createdAt:0,createdBy:'x'});
+    expect(result).toBeNull();
+  });
+
+  it('propagates error on save', async () => {
+    mockedGetGame.mockRejectedValue(new Error('x'));
+    const assessment: PlayerAssessment = { overall: 1, sliders: { intensity: 1, courage: 1, duels: 1, technique: 1, creativity: 1, decisions: 1, awareness: 1, teamwork: 1, fair_play: 1, impact: 1 }, notes: '', minutesPlayed: 0, createdAt: 0, createdBy: 'x' };
+    await expect(savePlayerAssessment('g','p', assessment)).rejects.toThrow('x');
+  });
+
   it('deletes assessment and returns updated game', async () => {
     const game = { ...baseGame, assessments: { p1: {} as PlayerAssessment } };
     mockedGetGame.mockResolvedValue(game);
@@ -69,5 +91,17 @@ describe('playerAssessments utils', () => {
     const result = await deletePlayerAssessment('game1', 'p1');
     expect(mockedSaveGame).toHaveBeenCalled();
     expect(result?.assessments).toEqual({});
+  });
+
+  it('returns null when deleting missing assessment', async () => {
+    const game = { ...baseGame };
+    mockedGetGame.mockResolvedValue(game);
+    const result = await deletePlayerAssessment('g','p');
+    expect(result).toBeNull();
+  });
+
+  it('throws when delete fails', async () => {
+    mockedGetGame.mockRejectedValue(new Error('e'));
+    await expect(deletePlayerAssessment('g','p')).rejects.toThrow('e');
   });
 });
