@@ -30,6 +30,20 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
         const parsed = parseInt(value, 10);
         return isNaN(parsed) ? undefined : parsed;
     };
+
+    const sanitizeFields = (fields: Partial<Season>): Partial<Season> => {
+        const sanitized: Partial<Season> = { ...fields };
+        if (sanitized.periodCount !== undefined) {
+            sanitized.periodCount =
+                sanitized.periodCount === 1 || sanitized.periodCount === 2
+                    ? sanitized.periodCount
+                    : undefined;
+        }
+        if (sanitized.periodDuration !== undefined) {
+            sanitized.periodDuration = sanitized.periodDuration > 0 ? sanitized.periodDuration : undefined;
+        }
+        return sanitized;
+    };
     const [newSeasonName, setNewSeasonName] = useState('');
     const [showNewSeasonInput, setShowNewSeasonInput] = useState(false);
 
@@ -72,12 +86,14 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
 
     const handleSave = (type: 'season' | 'tournament') => {
         if (type === 'season' && newSeasonName.trim()) {
-            addSeasonMutation.mutate({ name: newSeasonName.trim(), ...newSeasonFields });
+            const sanitized = sanitizeFields(newSeasonFields);
+            addSeasonMutation.mutate({ name: newSeasonName.trim(), ...sanitized });
             setNewSeasonName('');
             setNewSeasonFields({});
             setShowNewSeasonInput(false);
         } else if (type === 'tournament' && newTournamentName.trim()) {
-            addTournamentMutation.mutate({ name: newTournamentName.trim(), ...newTournamentFields });
+            const sanitized = sanitizeFields(newTournamentFields);
+            addTournamentMutation.mutate({ name: newTournamentName.trim(), ...sanitized });
             setNewTournamentName('');
             setNewTournamentFields({});
             setShowNewTournamentInput(false);
@@ -110,7 +126,8 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
 
     const handleSaveEdit = (id: string, type: 'season' | 'tournament') => {
         if (editingName.trim()) {
-            const base = { id, name: editingName.trim(), ...editingFields } as Season;
+            const sanitized = sanitizeFields(editingFields);
+            const base = { id, name: editingName.trim(), ...sanitized } as Season;
             if (type === 'season') {
                 updateSeasonMutation.mutate(base);
             } else {
