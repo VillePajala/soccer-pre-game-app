@@ -44,9 +44,10 @@ export const saveSeasons = async (seasons: Season[]): Promise<boolean> => {
 /**
  * Adds a new season to the list of seasons in localStorage.
  * @param newSeasonName - The name of the new season.
+ * @param extra - Optional additional fields for the season.
  * @returns A promise that resolves to the newly created Season object, or null if validation/save fails.
  */
-export const addSeason = async (newSeasonName: string): Promise<Season | null> => {
+export const addSeason = async (newSeasonName: string, extra: Partial<Season> = {}): Promise<Season | null> => {
   const trimmedName = newSeasonName.trim();
   if (!trimmedName) {
     logger.error('[addSeason] Validation failed: Season name cannot be empty.');
@@ -62,6 +63,7 @@ export const addSeason = async (newSeasonName: string): Promise<Season | null> =
     const newSeason: Season = {
       id: `season_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
       name: trimmedName,
+      ...extra,
     };
     const updatedSeasons = [...currentSeasons, newSeason];
     const success = await saveSeasons(updatedSeasons);

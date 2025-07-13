@@ -21,13 +21,35 @@ export interface PlayerStatRow extends Player {
 }
 
 export interface Season {
-  id: string; 
-  name: string; 
+  id: string;
+  name: string;
+  location?: string;
+  periodCount?: number;
+  periodDuration?: number;
+  startDate?: string;
+  endDate?: string;
+  gameDates?: string[];
+  archived?: boolean;
+  defaultRosterId?: string;
+  notes?: string;
+  color?: string;
+  badge?: string;
 }
 
 export interface Tournament {
   id: string;
   name: string;
+  location?: string;
+  periodCount?: number;
+  periodDuration?: number;
+  startDate?: string;
+  endDate?: string;
+  gameDates?: string[];
+  archived?: boolean;
+  defaultRosterId?: string;
+  notes?: string;
+  color?: string;
+  badge?: string;
 }
 
 export * from './playerAssessment';

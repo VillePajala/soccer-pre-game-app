@@ -103,7 +103,8 @@
   - Add color or badge customization options
   - Show quick statistics like total games played and goals scored
   - Implement import and export of season or tournament setups
-  - Offer calendar (.ics) file generation when dates are defined
+- Offer calendar (.ics) file generation when dates are defined
+  - See `season-tournament-management-plan.md` for planning details
 
 ## 🎨 UI/UX Improvements
 
@@ -197,7 +198,7 @@
   - Add optional user authentication and cloud sync using Supabase.
   - Keep localStorage as the local cache and synchronize on sign in.
 
-- **Player Performance Evaluations**
+- [x] **Player Performance Evaluations**
   - Add a modal with ten sliders to rate each player after a game.
   - Store ratings per player and game to build aggregated stats.
   - Use collected data to generate a player profile/analysis view.
