@@ -19,13 +19,17 @@ interface SeasonTournamentManagementModalProps {
     deleteTournamentMutation: UseMutationResult<boolean, Error, string, unknown>;
 }
 
-const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalProps> = ({ 
+const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalProps> = ({
     isOpen, onClose, seasons, tournaments, 
     addSeasonMutation, addTournamentMutation, 
     updateSeasonMutation, deleteSeasonMutation, 
     updateTournamentMutation, deleteTournamentMutation 
 }) => {
     const { t } = useTranslation();
+    const parseIntOrUndefined = (value: string): number | undefined => {
+        const parsed = parseInt(value, 10);
+        return isNaN(parsed) ? undefined : parsed;
+    };
     const [newSeasonName, setNewSeasonName] = useState('');
     const [showNewSeasonInput, setShowNewSeasonInput] = useState(false);
 
@@ -165,8 +169,8 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                             className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:ring-indigo-500 focus:border-indigo-500"
                         />
                         <div className="grid grid-cols-2 gap-2">
-                            <input type="number" value={(type==='season'?newSeasonFields.periodCount:newTournamentFields.periodCount) || ''} onChange={(e)=>type==='season'?setNewSeasonFields(f=>({...f,periodCount:parseInt(e.target.value)})):setNewTournamentFields(f=>({...f,periodCount:parseInt(e.target.value)}))} placeholder={t('seasonTournamentModal.periodCountLabel')} className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:ring-indigo-500 focus:border-indigo-500" />
-                            <input type="number" value={(type==='season'?newSeasonFields.periodDuration:newTournamentFields.periodDuration) || ''} onChange={(e)=>type==='season'?setNewSeasonFields(f=>({...f,periodDuration:parseInt(e.target.value)})):setNewTournamentFields(f=>({...f,periodDuration:parseInt(e.target.value)}))} placeholder={t('seasonTournamentModal.periodDurationLabel')} className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:ring-indigo-500 focus:border-indigo-500" />
+                            <input type="number" value={(type==='season'?newSeasonFields.periodCount:newTournamentFields.periodCount) || ''} onChange={(e)=>type==='season'?setNewSeasonFields(f=>({...f,periodCount:parseIntOrUndefined(e.target.value)})):setNewTournamentFields(f=>({...f,periodCount:parseIntOrUndefined(e.target.value)}))} placeholder={t('seasonTournamentModal.periodCountLabel')} className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:ring-indigo-500 focus:border-indigo-500" />
+                            <input type="number" value={(type==='season'?newSeasonFields.periodDuration:newTournamentFields.periodDuration) || ''} onChange={(e)=>type==='season'?setNewSeasonFields(f=>({...f,periodDuration:parseIntOrUndefined(e.target.value)})):setNewTournamentFields(f=>({...f,periodDuration:parseIntOrUndefined(e.target.value)}))} placeholder={t('seasonTournamentModal.periodDurationLabel')} className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:ring-indigo-500 focus:border-indigo-500" />
                         </div>
                         {type==='tournament' && (
                             <>
@@ -196,8 +200,8 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                                     <input type="text" value={editingName} onChange={(e)=>setEditingName(e.target.value)} className="w-full px-2 py-1 bg-slate-700 border border-indigo-500 rounded-md text-white" />
                                     <input type="text" value={editingFields.location || ''} onChange={(e)=>setEditingFields(f=>({...f,location:e.target.value}))} placeholder={t('seasonTournamentModal.locationLabel')} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white" />
                                     <div className="grid grid-cols-2 gap-2">
-                                        <input type="number" value={editingFields.periodCount || ''} onChange={(e)=>setEditingFields(f=>({...f,periodCount:parseInt(e.target.value)}))} placeholder={t('seasonTournamentModal.periodCountLabel')} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white" />
-                                        <input type="number" value={editingFields.periodDuration || ''} onChange={(e)=>setEditingFields(f=>({...f,periodDuration:parseInt(e.target.value)}))} placeholder={t('seasonTournamentModal.periodDurationLabel')} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white" />
+                                        <input type="number" value={editingFields.periodCount || ''} onChange={(e)=>setEditingFields(f=>({...f,periodCount:parseIntOrUndefined(e.target.value)}))} placeholder={t('seasonTournamentModal.periodCountLabel')} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white" />
+                                        <input type="number" value={editingFields.periodDuration || ''} onChange={(e)=>setEditingFields(f=>({...f,periodDuration:parseIntOrUndefined(e.target.value)}))} placeholder={t('seasonTournamentModal.periodDurationLabel')} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white" />
                                     </div>
                                     {type==='tournament' && (
                                         <>
