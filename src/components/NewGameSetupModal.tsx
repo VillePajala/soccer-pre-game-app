@@ -32,8 +32,8 @@ interface NewGameSetupModalProps {
     demandFactor: number
   ) => void;
   onCancel: () => void;
-  addSeasonMutation: UseMutationResult<Season | null, Error, { name: string }, unknown>;
-  addTournamentMutation: UseMutationResult<Tournament | null, Error, { name: string }, unknown>;
+  addSeasonMutation: UseMutationResult<Season | null, Error, Partial<Season> & { name: string }, unknown>;
+  addTournamentMutation: UseMutationResult<Tournament | null, Error, Partial<Tournament> & { name: string }, unknown>;
   isAddingSeason: boolean;
   isAddingTournament: boolean;
 }
@@ -167,7 +167,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
     const value = e.target.value;
     if (value) {
       setSelectedSeasonId(value);
-      setSelectedTournamentId(null); 
+      setSelectedTournamentId(null);
       setShowNewSeasonInput(false); // Hide create input if selecting existing
       setNewSeasonName('');
     } else {
@@ -175,17 +175,45 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
     }
   };
 
+  useEffect(() => {
+    if (selectedSeasonId) {
+      const s = seasons.find(se => se.id === selectedSeasonId);
+      if (s) {
+        setGameLocation(s.location || '');
+        setLocalNumPeriods((s.periodCount as 1 | 2) || 2);
+        setLocalPeriodDurationString(s.periodDuration ? String(s.periodDuration) : '10');
+        if (s.defaultRosterId) {
+          setSelectedPlayerIds(availablePlayersForSetup.map(p => p.id));
+        }
+      }
+    }
+  }, [selectedSeasonId, seasons, availablePlayersForSetup]);
+
   const handleTournamentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
     if (value) {
       setSelectedTournamentId(value);
-      setSelectedSeasonId(null); 
+      setSelectedSeasonId(null);
       setShowNewTournamentInput(false); // Hide create input if selecting existing
       setNewTournamentName('');
     } else {
       setSelectedTournamentId(null);
     }
   };
+
+  useEffect(() => {
+    if (selectedTournamentId) {
+      const t = tournaments.find(tt => tt.id === selectedTournamentId);
+      if (t) {
+        setGameLocation(t.location || '');
+        setLocalNumPeriods((t.periodCount as 1 | 2) || 2);
+        setLocalPeriodDurationString(t.periodDuration ? String(t.periodDuration) : '10');
+        if (t.defaultRosterId) {
+          setSelectedPlayerIds(availablePlayersForSetup.map(p => p.id));
+        }
+      }
+    }
+  }, [selectedTournamentId, tournaments, availablePlayersForSetup]);
 
   // --- Handlers for Create New Buttons ---
   const handleShowCreateSeason = () => {

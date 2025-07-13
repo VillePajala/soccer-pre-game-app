@@ -365,7 +365,21 @@
     "createNew": "Luo Uusi",
     "title": "Hallinnoi Kausia ja Turnauksia",
     "seasons": "Kaudet",
-    "tournaments": "Turnaukset"
+    "tournaments": "Turnaukset",
+    "locationLabel": "Oletussijainti",
+    "periodCountLabel": "Erät",
+    "periodDurationLabel": "Erän kesto",
+    "startDateLabel": "Alkupäivä",
+    "endDateLabel": "Loppupäivä",
+    "gameDatesLabel": "Pelipäivät pilkulla eroteltuna",
+    "archiveLabel": "Arkistoi",
+    "notesLabel": "Muistiinpanot",
+    "defaultRosterLabel": "Oletusrosterin ID",
+    "colorLabel": "Väri",
+    "badgeLabel": "Tunnus",
+    "statsGames": "Ottelut",
+    "statsGoals": "Maalit",
+    "editDetails": "Muokkaa tietoja"
   },
   "gameSettingsModal": {
     "unknownPlayer": "Tuntematon pelaaja",

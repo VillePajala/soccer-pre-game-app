@@ -470,12 +470,13 @@ function HomePage() {
 
   // --- Mutation for Adding a new Season ---
   const addSeasonMutation = useMutation<
-    Season | null, // Return type from utilAddSeason
-    Error,         // Error type
-    { name: string } // Variables type (season name)
+    Season | null,
+    Error,
+    Partial<Season> & { name: string }
   >({
-    mutationFn: async ({ name }) => {
-      return utilAddSeason(name);
+    mutationFn: async (data) => {
+      const { name, ...extra } = data;
+      return utilAddSeason(name, extra);
     },
     onSuccess: (newSeason, variables) => {
       if (newSeason) {
@@ -496,8 +497,8 @@ function HomePage() {
     },
   });
 
-  const updateSeasonMutation = useMutation<Season | null, Error, { id: string; name: string }>({
-    mutationFn: async ({ id, name }) => utilUpdateSeason({ id, name }),
+  const updateSeasonMutation = useMutation<Season | null, Error, Season>({
+    mutationFn: async (season) => utilUpdateSeason(season),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.seasons });
     },
@@ -510,8 +511,8 @@ function HomePage() {
     },
   });
 
-  const updateTournamentMutation = useMutation<Tournament | null, Error, { id: string; name: string }>({
-      mutationFn: async ({ id, name }) => utilUpdateTournament({ id, name }),
+  const updateTournamentMutation = useMutation<Tournament | null, Error, Tournament>({
+      mutationFn: async (tournament) => utilUpdateTournament(tournament),
       onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: queryKeys.tournaments });
       },
@@ -559,12 +560,13 @@ function HomePage() {
 
   // --- Mutation for Adding a new Tournament ---
   const addTournamentMutation = useMutation<
-    Tournament | null, // Return type from utilAddTournament
-    Error,             // Error type
-    { name: string }   // Variables type (tournament name)
+    Tournament | null,
+    Error,
+    Partial<Tournament> & { name: string }
   >({
-    mutationFn: async ({ name }) => {
-      return utilAddTournament(name);
+    mutationFn: async (data) => {
+      const { name, ...extra } = data;
+      return utilAddTournament(name, extra);
     },
     onSuccess: (newTournament, variables) => {
       if (newTournament) {

@@ -11,11 +11,11 @@ interface SeasonTournamentManagementModalProps {
     onClose: () => void;
     seasons: Season[];
     tournaments: Tournament[];
-    addSeasonMutation: UseMutationResult<Season | null, Error, { name: string }, unknown>;
-    addTournamentMutation: UseMutationResult<Tournament | null, Error, { name: string }, unknown>;
-    updateSeasonMutation: UseMutationResult<Season | null, Error, { id: string; name: string }, unknown>;
+    addSeasonMutation: UseMutationResult<Season | null, Error, Partial<Season> & { name: string }, unknown>;
+    addTournamentMutation: UseMutationResult<Tournament | null, Error, Partial<Tournament> & { name: string }, unknown>;
+    updateSeasonMutation: UseMutationResult<Season | null, Error, Season, unknown>;
     deleteSeasonMutation: UseMutationResult<boolean, Error, string, unknown>;
-    updateTournamentMutation: UseMutationResult<Tournament | null, Error, { id: string; name: string }, unknown>;
+    updateTournamentMutation: UseMutationResult<Tournament | null, Error, Tournament, unknown>;
     deleteTournamentMutation: UseMutationResult<boolean, Error, string, unknown>;
 }
 
@@ -34,6 +34,33 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
 
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editingName, setEditingName] = useState('');
+    const [editingFields, setEditingFields] = useState<Partial<Season>>({});
+
+    const [newSeasonFields, setNewSeasonFields] = useState<Partial<Season>>({});
+    const [newTournamentFields, setNewTournamentFields] = useState<Partial<Tournament>>({});
+
+    const [stats, setStats] = useState<Record<string, { games: number; goals: number }>>({});
+
+    React.useEffect(() => {
+        const loadStats = async () => {
+            const { getFilteredGames } = await import('@/utils/savedGames');
+            const seasonStats: Record<string, { games: number; goals: number }> = {};
+            for (const s of seasons) {
+                const games = await getFilteredGames({ seasonId: s.id });
+                const goals = games.reduce((sum, [, g]) => sum + (g.gameEvents?.filter(e => e.type === 'goal').length || 0), 0);
+                seasonStats[s.id] = { games: games.length, goals };
+            }
+            for (const t of tournaments) {
+                const games = await getFilteredGames({ tournamentId: t.id });
+                const goals = games.reduce((sum, [, g]) => sum + (g.gameEvents?.filter(e => e.type === 'goal').length || 0), 0);
+                seasonStats[t.id] = { games: games.length, goals };
+            }
+            setStats(seasonStats);
+        };
+        if (isOpen) {
+            loadStats();
+        }
+    }, [isOpen, seasons, tournaments]);
 
     if (!isOpen) {
         return null;
@@ -41,12 +68,14 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
 
     const handleSave = (type: 'season' | 'tournament') => {
         if (type === 'season' && newSeasonName.trim()) {
-            addSeasonMutation.mutate({ name: newSeasonName.trim() });
+            addSeasonMutation.mutate({ name: newSeasonName.trim(), ...newSeasonFields });
             setNewSeasonName('');
+            setNewSeasonFields({});
             setShowNewSeasonInput(false);
         } else if (type === 'tournament' && newTournamentName.trim()) {
-            addTournamentMutation.mutate({ name: newTournamentName.trim() });
+            addTournamentMutation.mutate({ name: newTournamentName.trim(), ...newTournamentFields });
             setNewTournamentName('');
+            setNewTournamentFields({});
             setShowNewTournamentInput(false);
         }
     };
@@ -54,19 +83,34 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
     const handleEditClick = (item: Season | Tournament) => {
         setEditingId(item.id);
         setEditingName(item.name);
+        setEditingFields({
+            location: item.location,
+            periodCount: item.periodCount,
+            periodDuration: item.periodDuration,
+            startDate: item.startDate,
+            endDate: item.endDate,
+            gameDates: item.gameDates,
+            archived: item.archived,
+            notes: item.notes,
+            defaultRosterId: item.defaultRosterId,
+            color: item.color,
+            badge: item.badge
+        });
     };
 
     const handleCancelEdit = () => {
         setEditingId(null);
         setEditingName('');
+        setEditingFields({});
     };
 
     const handleSaveEdit = (id: string, type: 'season' | 'tournament') => {
         if (editingName.trim()) {
+            const base = { id, name: editingName.trim(), ...editingFields } as Season;
             if (type === 'season') {
-                updateSeasonMutation.mutate({ id, name: editingName.trim() });
+                updateSeasonMutation.mutate(base);
             } else {
-                updateTournamentMutation.mutate({ id, name: editingName.trim() });
+                updateTournamentMutation.mutate(base as Tournament);
             }
             handleCancelEdit();
         }
@@ -113,39 +157,77 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                             placeholder={placeholder}
                             className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:ring-indigo-500 focus:border-indigo-500"
                         />
+                        <input
+                            type="text"
+                            value={(type==='season'?newSeasonFields.location:newTournamentFields.location) || ''}
+                            onChange={(e) => type==='season'?setNewSeasonFields(f=>({...f,location:e.target.value})):setNewTournamentFields(f=>({...f,location:e.target.value}))}
+                            placeholder={t('seasonTournamentModal.locationLabel')}
+                            className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:ring-indigo-500 focus:border-indigo-500"
+                        />
+                        <div className="grid grid-cols-2 gap-2">
+                            <input type="number" value={(type==='season'?newSeasonFields.periodCount:newTournamentFields.periodCount) || ''} onChange={(e)=>type==='season'?setNewSeasonFields(f=>({...f,periodCount:parseInt(e.target.value)})):setNewTournamentFields(f=>({...f,periodCount:parseInt(e.target.value)}))} placeholder={t('seasonTournamentModal.periodCountLabel')} className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:ring-indigo-500 focus:border-indigo-500" />
+                            <input type="number" value={(type==='season'?newSeasonFields.periodDuration:newTournamentFields.periodDuration) || ''} onChange={(e)=>type==='season'?setNewSeasonFields(f=>({...f,periodDuration:parseInt(e.target.value)})):setNewTournamentFields(f=>({...f,periodDuration:parseInt(e.target.value)}))} placeholder={t('seasonTournamentModal.periodDurationLabel')} className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:ring-indigo-500 focus:border-indigo-500" />
+                        </div>
+                        {type==='tournament' && (
+                            <>
+                                <input type="date" value={(newTournamentFields.startDate as string) || ''} onChange={e=>setNewTournamentFields(f=>({...f,startDate:e.target.value}))} className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white focus:ring-indigo-500 focus:border-indigo-500" placeholder={t('seasonTournamentModal.startDateLabel')} />
+                                <input type="date" value={(newTournamentFields.endDate as string) || ''} onChange={e=>setNewTournamentFields(f=>({...f,endDate:e.target.value}))} className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white focus:ring-indigo-500 focus:border-indigo-500" placeholder={t('seasonTournamentModal.endDateLabel')} />
+                                <input type="text" value={(newTournamentFields.gameDates as string[] | undefined)?.join(',') || ''} onChange={e=>setNewTournamentFields(f=>({...f,gameDates:e.target.value.split(',').map(d=>d.trim()).filter(Boolean)}))} placeholder={t('seasonTournamentModal.gameDatesLabel')} className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:ring-indigo-500 focus:border-indigo-500" />
+                            </>
+                        )}
+                        <textarea value={(type==='season'?newSeasonFields.notes:newTournamentFields.notes) || ''} onChange={(e)=>type==='season'?setNewSeasonFields(f=>({...f,notes:e.target.value})):setNewTournamentFields(f=>({...f,notes:e.target.value}))} placeholder={t('seasonTournamentModal.notesLabel')} className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:ring-indigo-500 focus:border-indigo-500" />
+                        <input type="text" value={(type==='season'?newSeasonFields.defaultRosterId:newTournamentFields.defaultRosterId) || ''} onChange={(e)=>type==='season'?setNewSeasonFields(f=>({...f,defaultRosterId:e.target.value})):setNewTournamentFields(f=>({...f,defaultRosterId:e.target.value}))} placeholder={t('seasonTournamentModal.defaultRosterLabel')} className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:ring-indigo-500 focus:border-indigo-500" />
+                        <input type="text" value={(type==='season'?newSeasonFields.color:newTournamentFields.color) || ''} onChange={(e)=>type==='season'?setNewSeasonFields(f=>({...f,color:e.target.value})):setNewTournamentFields(f=>({...f,color:e.target.value}))} placeholder={t('seasonTournamentModal.colorLabel')} className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:ring-indigo-500 focus:border-indigo-500" />
+                        <input type="text" value={(type==='season'?newSeasonFields.badge:newTournamentFields.badge) || ''} onChange={(e)=>type==='season'?setNewSeasonFields(f=>({...f,badge:e.target.value})):setNewTournamentFields(f=>({...f,badge:e.target.value}))} placeholder={t('seasonTournamentModal.badgeLabel')} className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:ring-indigo-500 focus:border-indigo-500" />
+                        <div className="flex items-center gap-2">
+                            <label className="text-slate-200 text-sm flex items-center gap-1"><input type="checkbox" checked={(type==='season'?newSeasonFields.archived:newTournamentFields.archived) || false} onChange={(e)=>type==='season'?setNewSeasonFields(f=>({...f,archived:e.target.checked})):setNewTournamentFields(f=>({...f,archived:e.target.checked}))} className="form-checkbox h-4 w-4" />{t('seasonTournamentModal.archiveLabel')}</label>
+                        </div>
                         <div className="flex justify-end gap-2">
-                            <button onClick={() => setShowInput(false)} className="px-3 py-1 text-xs rounded bg-slate-600 hover:bg-slate-500">{t('common.cancel')}</button>
+                            <button onClick={() => {setShowInput(false); if(type==='season'){setNewSeasonFields({});} else {setNewTournamentFields({});}}} className="px-3 py-1 text-xs rounded bg-slate-600 hover:bg-slate-500">{t('common.cancel')}</button>
                             <button onClick={() => handleSave(type)} className="px-3 py-1 text-xs rounded bg-indigo-600 hover:bg-indigo-500" data-testid={`save-new-${type}-button`}>{t('common.save')}</button>
                         </div>
                     </div>
                 )}
                 <div className="space-y-2">
                     {data.map(item => (
-                        <div key={item.id} className="bg-slate-800/60 p-2 rounded-md flex justify-between items-center">
+                        <div key={item.id} className="bg-slate-800/60 p-2 rounded-md">
                             {editingId === item.id ? (
-                                <input
-                                    type="text"
-                                    value={editingName}
-                                    onChange={(e) => setEditingName(e.target.value)}
-                                    className="w-full px-2 py-1 bg-slate-700 border border-indigo-500 rounded-md text-white"
-                                    onKeyDown={(e) => e.key === 'Enter' && handleSaveEdit(item.id, type)}
-                                />
-                            ) : (
-                                <span className="text-sm text-slate-200">{item.name}</span>
-                            )}
-                            <div className="flex items-center gap-2 ml-2">
-                                {editingId === item.id ? (
-                                    <>
+                                <div className="space-y-2">
+                                    <input type="text" value={editingName} onChange={(e)=>setEditingName(e.target.value)} className="w-full px-2 py-1 bg-slate-700 border border-indigo-500 rounded-md text-white" />
+                                    <input type="text" value={editingFields.location || ''} onChange={(e)=>setEditingFields(f=>({...f,location:e.target.value}))} placeholder={t('seasonTournamentModal.locationLabel')} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white" />
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <input type="number" value={editingFields.periodCount || ''} onChange={(e)=>setEditingFields(f=>({...f,periodCount:parseInt(e.target.value)}))} placeholder={t('seasonTournamentModal.periodCountLabel')} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white" />
+                                        <input type="number" value={editingFields.periodDuration || ''} onChange={(e)=>setEditingFields(f=>({...f,periodDuration:parseInt(e.target.value)}))} placeholder={t('seasonTournamentModal.periodDurationLabel')} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white" />
+                                    </div>
+                                    {type==='tournament' && (
+                                        <>
+                                            <input type="date" value={editingFields.startDate as string || ''} onChange={e=>setEditingFields(f=>({...f,startDate:e.target.value}))} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white" />
+                                            <input type="date" value={editingFields.endDate as string || ''} onChange={e=>setEditingFields(f=>({...f,endDate:e.target.value}))} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white" />
+                                            <input type="text" value={(editingFields.gameDates as string[] | undefined)?.join(',') || ''} onChange={e=>setEditingFields(f=>({...f,gameDates:e.target.value.split(',').map(d=>d.trim()).filter(Boolean)}))} placeholder={t('seasonTournamentModal.gameDatesLabel')} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white" />
+                                        </>
+                                    )}
+                                    <textarea value={editingFields.notes || ''} onChange={e=>setEditingFields(f=>({...f,notes:e.target.value}))} placeholder={t('seasonTournamentModal.notesLabel')} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white" />
+                                    <input type="text" value={editingFields.defaultRosterId || ''} onChange={e=>setEditingFields(f=>({...f,defaultRosterId:e.target.value}))} placeholder={t('seasonTournamentModal.defaultRosterLabel')} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white" />
+                                    <input type="text" value={editingFields.color || ''} onChange={e=>setEditingFields(f=>({...f,color:e.target.value}))} placeholder={t('seasonTournamentModal.colorLabel')} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white" />
+                                    <input type="text" value={editingFields.badge || ''} onChange={e=>setEditingFields(f=>({...f,badge:e.target.value}))} placeholder={t('seasonTournamentModal.badgeLabel')} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white" />
+                                    <label className="text-slate-200 text-sm flex items-center gap-1"><input type="checkbox" checked={editingFields.archived || false} onChange={e=>setEditingFields(f=>({...f,archived:e.target.checked}))} className="form-checkbox h-4 w-4" />{t('seasonTournamentModal.archiveLabel')}</label>
+                                    <div className="flex justify-end gap-2">
                                         <button onClick={() => handleSaveEdit(item.id, type)} className="p-1 text-green-400 hover:text-green-300" aria-label={`Save ${item.name}`}><HiOutlineCheck className="w-5 h-5" /></button>
                                         <button onClick={handleCancelEdit} className="p-1 text-slate-400 hover:text-slate-200" aria-label="Cancel edit"><HiOutlineX className="w-5 h-5" /></button>
-                                    </>
-                                ) : (
-                                    <>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex justify-between items-center">
+                                    <div>
+                                        <p className="text-sm text-slate-200 font-semibold">{item.name}</p>
+                                        <p className="text-xs text-slate-400">{t('seasonTournamentModal.statsGames')}: {stats[item.id]?.games || 0} | {t('seasonTournamentModal.statsGoals')}: {stats[item.id]?.goals || 0}</p>
+                                    </div>
+                                    <div className="flex items-center gap-2 ml-2">
                                         <button onClick={() => handleEditClick(item)} className="p-1 text-slate-400 hover:text-indigo-400" aria-label={`Edit ${item.name}`}><HiOutlinePencil className="w-5 h-5" /></button>
                                         <button onClick={() => handleDelete(item.id, type)} className="p-1 text-slate-400 hover:text-red-500" aria-label={`Delete ${item.name}`}><HiOutlineTrash className="w-5 h-5" /></button>
-                                    </>
-                                )}
-                            </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>
