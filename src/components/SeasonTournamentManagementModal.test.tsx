@@ -17,6 +17,7 @@ const defaultProps = {
   onClose: jest.fn(),
   seasons: [{ id: 's1', name: 'Season 1' }],
   tournaments: [{ id: 't1', name: 'Tournament 1' }],
+  availablePlayers: [{ id: 'p1', name: 'Player 1' }],
   addSeasonMutation: mockMutation() as unknown as UseMutationResult<Season | null, Error, { name: string; }>,
   addTournamentMutation: mockMutation() as unknown as UseMutationResult<Tournament | null, Error, { name: string; }>,
   updateSeasonMutation: mockMutation() as unknown as UseMutationResult<Season | null, Error, { id: string; name: string; }>,
@@ -58,7 +59,7 @@ describe('SeasonTournamentManagementModal', () => {
     const saveButton = screen.getByTestId('save-new-season-button');
     await user.click(saveButton);
 
-    expect(defaultProps.addSeasonMutation.mutate).toHaveBeenCalledWith({ name: 'New Amazing Season' });
+    expect(defaultProps.addSeasonMutation.mutate).toHaveBeenCalledWith({ name: 'New Amazing Season', defaultRoster: ['p1'] });
   });
 
   it('allows creating a new tournament', async () => {
@@ -74,7 +75,7 @@ describe('SeasonTournamentManagementModal', () => {
     const saveButton = screen.getByTestId('save-new-tournament-button');
     await user.click(saveButton);
 
-    expect(defaultProps.addTournamentMutation.mutate).toHaveBeenCalledWith({ name: 'New Awesome Tournament' });
+    expect(defaultProps.addTournamentMutation.mutate).toHaveBeenCalledWith({ name: 'New Awesome Tournament', defaultRoster: ['p1'] });
   });
 
   it('allows editing a season', async () => {
@@ -91,7 +92,7 @@ describe('SeasonTournamentManagementModal', () => {
     const saveButton = screen.getByRole('button', { name: 'Save Season 1' });
     await user.click(saveButton);
 
-    expect(defaultProps.updateSeasonMutation.mutate).toHaveBeenCalledWith({ id: 's1', name: 'Updated Season Name' });
+    expect(defaultProps.updateSeasonMutation.mutate).toHaveBeenCalledWith({ id: 's1', name: 'Updated Season Name', defaultRoster: ['p1'] });
   });
 
   it('allows editing a tournament', async () => {
@@ -108,7 +109,7 @@ describe('SeasonTournamentManagementModal', () => {
     const saveButton = screen.getByRole('button', { name: 'Save Tournament 1' });
     await user.click(saveButton);
 
-    expect(defaultProps.updateTournamentMutation.mutate).toHaveBeenCalledWith({ id: 't1', name: 'Updated Tournament Name' });
+    expect(defaultProps.updateTournamentMutation.mutate).toHaveBeenCalledWith({ id: 't1', name: 'Updated Tournament Name', defaultRoster: ['p1'] });
   });
 
   it('allows deleting a season', async () => {

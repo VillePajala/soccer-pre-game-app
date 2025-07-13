@@ -374,9 +374,6 @@
     "gameDatesLabel": "Pelipäivät pilkulla eroteltuna",
     "archiveLabel": "Arkistoi",
     "notesLabel": "Muistiinpanot",
-    "defaultRosterLabel": "Oletusrosterin ID",
-    "colorLabel": "Väri",
-    "badgeLabel": "Tunnus",
     "statsGames": "Ottelut",
     "statsGoals": "Maalit",
     "editDetails": "Muokkaa tietoja"

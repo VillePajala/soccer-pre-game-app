@@ -2604,6 +2604,7 @@ function HomePage() {
         onClose={handleCloseSeasonTournamentModal}
         seasons={seasons}
         tournaments={tournaments}
+        availablePlayers={availablePlayers}
         addSeasonMutation={addSeasonMutation}
         addTournamentMutation={addTournamentMutation}
         updateSeasonMutation={updateSeasonMutation}
