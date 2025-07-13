@@ -102,9 +102,10 @@
   - Include notes or description fields
   - Add color or badge customization options
   - Show quick statistics like total games played and goals scored
-  - Implement import and export of season or tournament setups
+- Implement import and export of season or tournament setups
 - Offer calendar (.ics) file generation when dates are defined
   - See `season-tournament-management-plan.md` for planning details
+  - Task breakdown in `season-tournament-management-tasks.md`
 
 ## 🎨 UI/UX Improvements
 
