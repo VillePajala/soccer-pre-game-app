@@ -500,6 +500,8 @@
     "levelKilpa": "Competition",
     "levelHaaste": "Challenger",
     "levelHarraste": "Recreational",
+    "selectAgeGroup": "-- Select Age Group --",
+    "selectLevel": "-- Select Level --",
     "player": "Player",
     "record": "Record",
     "remove": "Remove",

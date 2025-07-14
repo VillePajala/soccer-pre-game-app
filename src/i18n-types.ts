@@ -56,6 +56,8 @@ export type TranslationKey =
   | 'common.scorer'
   | 'common.season'
   | 'common.select'
+  | 'common.selectAgeGroup'
+  | 'common.selectLevel'
   | 'common.stats'
   | 'common.ties'
   | 'common.time'
