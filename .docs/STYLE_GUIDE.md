@@ -208,10 +208,10 @@ This section tracks which components have been updated to match the style guide 
   - [x] Layout update
   - [x] Finnish translations
   - [x] Style guide compliance
-  - [ ] **Planned Enhancements:**
-    - [ ] Add fields to set default game parameters for a season or tournament (location, number of periods, period duration).
-    - [ ] Explore adding a date range or a list of dates for tournaments.
-    - [ ] When a new game is created and linked to a season/tournament, it should automatically inherit these preset values.
+  - [x] **Planned Enhancements:**
+    - [x] Add fields to set default game parameters for a season or tournament (location, number of periods, period duration).
+    - [x] Explore adding a date range or a list of dates for tournaments.
+    - [x] When a new game is created and linked to a season/tournament, it should automatically inherit these preset values.
 
 ## 13. Modal Updates Complete
 
