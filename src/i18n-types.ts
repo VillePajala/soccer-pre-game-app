@@ -152,6 +152,7 @@ export type TranslationKey =
   | 'gameSettingsModal.invalidTimeFormat'
   | 'gameSettingsModal.invalidTimeFormatInline'
   | 'gameSettingsModal.kausi'
+  | 'gameSettingsModal.levelLabel'
   | 'gameSettingsModal.linkita'
   | 'gameSettingsModal.locationLabel'
   | 'gameSettingsModal.locationPlaceholder'

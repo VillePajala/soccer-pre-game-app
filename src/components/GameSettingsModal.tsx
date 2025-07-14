@@ -1031,6 +1031,31 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
               )}
             </div>
 
+            {/* Age Group */}
+            <div className="mb-4">
+              <label htmlFor="ageGroupSelect" className="block text-sm font-medium text-slate-300 mb-1">
+                {t('gameSettingsModal.ageGroupLabel', 'Age Group (Optional)')}
+              </label>
+              <select
+                id="ageGroupSelect"
+                value={ageGroup}
+                onChange={(e) => {
+                  onAgeGroupChange(e.target.value);
+                  if (currentGameId) {
+                    updateGameDetailsMutation.mutate({ gameId: currentGameId, updates: { ageGroup: e.target.value } });
+                  }
+                }}
+                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+              >
+                <option value="">{t('common.none', 'None')}</option>
+                {AGE_GROUPS.map((group) => (
+                  <option key={group} value={group}>
+                    {group}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {/* Game Info Section */}
             <div className="bg-slate-900/70 p-4 rounded-lg border border-slate-700 shadow-inner">
               <h3 className="text-lg font-semibold text-slate-200 mb-4">
@@ -1094,31 +1119,6 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                     placeholder={t('gameSettingsModal.locationPlaceholder', 'e.g., Central Park Field 2')}
                     className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                   />
-                </div>
-
-                {/* Age Group */}
-                <div className="mb-4">
-                  <label htmlFor="ageGroupSelect" className="block text-sm font-medium text-slate-300 mb-1">
-                    {t('gameSettingsModal.ageGroupLabel', 'Age Group (Optional)')}
-                  </label>
-                  <select
-                    id="ageGroupSelect"
-                    value={ageGroup}
-                    onChange={(e) => {
-                      onAgeGroupChange(e.target.value);
-                      if (currentGameId) {
-                        updateGameDetailsMutation.mutate({ gameId: currentGameId, updates: { ageGroup: e.target.value } });
-                      }
-                    }}
-                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
-                  >
-                    <option value="">{t('common.none', 'None')}</option>
-                    {AGE_GROUPS.map((group) => (
-                      <option key={group} value={group}>
-                        {group}
-                      </option>
-                    ))}
-                  </select>
                 </div>
 
                 {tournamentId && (
