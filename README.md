@@ -14,6 +14,7 @@ The app is designed to be an all-in-one digital assistant for game day, from pre
 *   **Live Game Clock:** A simple and reliable timer with start, pause, and reset functionality, including a large overlay view for high visibility.
 *   **Substitution Timer:** Set a custom interval to receive on-screen alerts, ensuring timely player rotations.
 *   **Drawing & Annotation:** Draw directly on the field in both player view and tactics view to visualize runs and positions. Includes undo/redo support.
+*   **Training Resources:** Access warmup plans and drills from a built-in modal, plus quick links to external coaching materials.
 
 ### 📊 Statistics & Analysis
 
@@ -23,13 +24,16 @@ The app is designed to be an all-in-one digital assistant for game day, from pre
 *   **Sortable Player Data:** Instantly sort players by Games Played, Goals, Assists, Total Points, and Average Points per Game.
 *   **Individual Player Deep-Dive:** Click any player to open a dedicated modal showing their complete game log and a **performance trend graph** for goals and assists over time.
 *   **Data Export:** Export stats for a single game or aggregated data to **JSON** or **CSV** for offline analysis or sharing.
+*   **Performance Ratings:** Assess players after each match on key metrics and view averages and trend graphs. Enable *Weight by Difficulty* to factor in each game's demand level.
 
 ### 👥 Roster & Team Management
 
 *   **Master Roster:** Maintain a persistent list of all your players, including names, jersey numbers, and goalie status.
 *   **Match-Day Selection:** Easily select which players from the master roster are available for the current game.
 *   **Season & Tournament Creation:** Organize your games by creating custom seasons and tournaments.
+*   **Management Enhancements:** Store default game settings, assign default rosters, archive old competitions and view quick stats. Import or export season setups for easy reuse.
 *   **Full Backup & Restore:** Safeguard your data by exporting and importing a single file containing all players, games, and settings.
+*   **Automatic Backups:** Background process periodically saves a full backup file so your data stays safe even if you forget to export manually.
 *   **Save & Load Games:** Save an unlimited number of game states and load them back at any time for review or continuation.
 
 ### 🚀 Technology & Usability
@@ -39,6 +43,7 @@ The app is designed to be an all-in-one digital assistant for game day, from pre
 *   **Responsive Design:** A clean, touch-friendly interface that works seamlessly on tablets, phones, and laptops.
 *   **Internationalization:** Full support for English and Finnish.
 *   **Vercel Analytics:** Web analytics are enabled to help improve the user experience.
+*   **Settings Modal:** Adjust language, default team name and automatic backup interval, view storage usage and perform a hard reset when needed.
 
 ## Tech Stack
 
@@ -104,4 +109,3 @@ By contributing to this project, you agree to transfer all IP rights of your con
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for full terms.
 
 
-1234
