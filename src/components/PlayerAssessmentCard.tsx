@@ -88,7 +88,7 @@ const PlayerAssessmentCard: React.FC<PlayerAssessmentCardProps> = ({ player, onS
         )}
       </button>
       {expanded && (
-        <div className="mt-2 space-y-3">
+        <div className="mt-3 p-4 space-y-4 bg-slate-900/70 rounded-lg border border-slate-700 shadow-inner">
           <div className="flex items-center space-x-2">
             <label className="text-sm text-slate-300 w-24 shrink-0">
               {t('playerAssessmentModal.overallLabel', 'Overall')}
