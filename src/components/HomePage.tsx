@@ -118,6 +118,8 @@ const initialState: AppState = {
   // gameType: 'season', // REMOVED
   seasonId: '', // Initialize season ID
   tournamentId: '', // Initialize tournament ID
+  ageGroup: '',
+  tournamentLevel: '',
   gameLocation: '', // Initialize optional fields
   gameTime: '', // Initialize optional fields
   // Timer related state
@@ -157,6 +159,8 @@ function HomePage() {
     selectedPlayerIds: initialState.selectedPlayerIds,
     seasonId: initialState.seasonId,
     tournamentId: initialState.tournamentId,
+    ageGroup: initialState.ageGroup,
+    tournamentLevel: initialState.tournamentLevel,
     gameLocation: initialState.gameLocation,
     gameTime: initialState.gameTime,
     gameEvents: initialState.gameEvents,
@@ -1917,6 +1921,14 @@ function HomePage() {
     // REMOVED: saveStateToHistory({ gameTime: time });
   };
 
+  const handleAgeGroupChange = (group: string) => {
+    dispatchGameSession({ type: 'SET_AGE_GROUP', payload: group });
+  };
+
+  const handleTournamentLevelChange = (level: string) => {
+    dispatchGameSession({ type: 'SET_TOURNAMENT_LEVEL', payload: level });
+  };
+
   const handleSetDemandFactor = (factor: number) => {
     dispatchGameSession({ type: 'SET_DEMAND_FACTOR', payload: factor });
   };
@@ -2000,7 +2012,9 @@ function HomePage() {
     numPeriods: 1 | 2, // Parameter
     periodDuration: number, // Parameter
     homeOrAway: 'home' | 'away', // <<< Step 4b: Add parameter
-    demandFactor: number
+    demandFactor: number,
+    ageGroup: string,
+    tournamentLevel: string
   ) => {
       // ADD LOGGING HERE:
       logger.log('[handleStartNewGameWithSetup] Received Params:', { 
@@ -2015,7 +2029,9 @@ function HomePage() {
         numPeriods,
         periodDuration,
         homeOrAway,
-        demandFactor
+        demandFactor,
+        ageGroup,
+        tournamentLevel
       });
       // No need to log initialState references anymore
 
@@ -2032,6 +2048,8 @@ function HomePage() {
           gameTime: gameTime,
           seasonId: seasonId || '',
           tournamentId: tournamentId || '',
+          ageGroup: ageGroup,
+          tournamentLevel: tournamentLevel,
           numberOfPeriods: numPeriods, // Use parameter
           periodDurationMinutes: periodDuration, // Use parameter
           homeScore: 0,
@@ -2631,6 +2649,8 @@ function HomePage() {
         gameLocation={gameSessionState.gameLocation}
         gameTime={gameSessionState.gameTime}
         gameNotes={gameSessionState.gameNotes}
+        ageGroup={gameSessionState.ageGroup}
+        tournamentLevel={gameSessionState.tournamentLevel}
         gameEvents={gameSessionState.gameEvents}
         availablePlayers={availablePlayers}
         selectedPlayerIds={gameSessionState.selectedPlayerIds}
@@ -2644,6 +2664,8 @@ function HomePage() {
         onGameLocationChange={handleGameLocationChange}
         onGameTimeChange={handleGameTimeChange}
         onGameNotesChange={handleGameNotesChange}
+        onAgeGroupChange={handleAgeGroupChange}
+        onTournamentLevelChange={handleTournamentLevelChange}
         onUpdateGameEvent={handleUpdateGameEvent}
         onAwardFairPlayCard={handleAwardFairPlayCard}
         onDeleteGameEvent={handleDeleteGameEvent}
