@@ -19,7 +19,7 @@
   - Implement proper validation in player creation forms
   - Impact: Prevents data inconsistency issues
 
-- [ ] **Game Selection Validation**
+- [x] **Game Selection Validation**
   - Improve player selection validation in game setup
   - Enhance season/tournament association logic
   - Impact: Ensures data integrity for game records
@@ -93,7 +93,7 @@
   - Impact: Streamlines team setup process
 
 ### Season & Tournament Management
-- [ ] **Season & Tournament Management Enhancements**
+- [x] **Season & Tournament Management Enhancements**
   - Add fields for default game parameters (location, number of periods, period duration)
   - Allow setting a date range or list of dates for tournaments
   - Automatically prefill new games with these settings
@@ -118,7 +118,7 @@
   - Impact: Makes app usable for all users
 
 ### Responsive Design
-- [ ] **Mobile Optimization**
+- [x] **Mobile Optimization**
   - Review modal layouts on small screens
   - Optimize timer and stats displays
   - Improve touch interactions
