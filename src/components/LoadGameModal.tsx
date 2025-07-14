@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { SavedGamesCollection } from '@/types'; // Keep this if SavedGamesCollection is from here
 import { Season, Tournament } from '@/types'; // Corrected import path
 import logger from '@/utils/logger';
-import { 
+import {
   HiOutlineDocumentArrowDown,
   HiOutlineEllipsisVertical,
   HiOutlineTrash,
@@ -14,7 +14,11 @@ import {
   HiOutlineDocumentArrowUp,
   HiOutlineClock,
   HiOutlineMapPin,
-  HiOutlineMagnifyingGlass
+  HiOutlineMagnifyingGlass,
+  HiOutlineChevronDown,
+  HiOutlineChevronUp,
+  HiCheckCircle,
+  HiXCircle
 } from 'react-icons/hi2';
 // REMOVE unused Fa icons and useGameState hook
 // import { FaTimes, FaUpload, FaDownload, FaTrash, FaExclamationTriangle, FaSearch } from 'react-icons/fa';
@@ -72,6 +76,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
   const [filterId, setFilterId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const restoreFileInputRef = useRef<HTMLInputElement>(null);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
   // State for seasons and tournaments
   const [seasons, setSeasons] = useState<Season[]>([]);
@@ -245,6 +250,18 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
     event.target.value = '';
   };
 
+  const toggleExpanded = (id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
   if (!isOpen) return null;
 
   // Scrollable Content Area
@@ -313,128 +330,143 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
 
           // Get game status
           const gameStatus = game.gameStatus || 'notStarted';
-          // removed unused isGameOpen
+          const totalPlayers = game.selectedPlayerIds?.length || 0;
+          const assessmentsDone = Object.keys(game.assessments || {}).length;
+          const assessmentsComplete = totalPlayers > 0 && assessmentsDone >= totalPlayers;
+          const isExpanded = expandedIds.has(gameId);
 
           return (
-            <li 
-              key={gameId} 
+            <li
+              key={gameId}
               className={`p-4 transition-colors rounded-lg mb-3 last:mb-0 bg-slate-700/80 border border-slate-600/50 ${
                 isCurrent ? 'ring-2 ring-yellow-400/50' : ''
               }`}
               data-testid={`game-item-${gameId}`}
             >
-              <div className="flex flex-col space-y-2">
-                {/* Header row with teams and score */}
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <h3 className={`text-base font-medium ${isCurrent ? 'text-amber-400' : 'text-slate-100'}`}>
-                      {displayHomeTeamName} vs {displayAwayTeamName}
-                    </h3>
-                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                      {contextName && contextType && contextId && (
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); handleBadgeClick(contextType.toLowerCase() as ('season' | 'tournament'), contextId); }}
-                          className={`text-xs uppercase font-semibold tracking-wide ${
-                            contextType.toLowerCase() === 'tournament' ? 'bg-purple-600' : 'bg-blue-600'
-                          } text-white px-2 py-0.5 rounded-sm hover:opacity-90 transition-opacity ${
-                            filterType === contextType.toLowerCase() && filterId === contextId ? 'ring-2 ring-white/50' : ''
-                          }`}
-                          title={t('loadGameModal.filterByTooltip', 'Filter by {{name}}', { name: contextName }) ?? `Filter by ${contextName}`}
-                        >
-                          {contextName}
-                        </button>
-                      )}
-                      {(gameStatus === 'inProgress') && (
-                        <span className="text-xs uppercase font-semibold tracking-wide bg-amber-600 text-white px-2 py-0.5 rounded-sm">
-                          OPEN
-                        </span>
-                      )}
-                      {isCurrent && (
-                        <span className="text-xs uppercase font-semibold tracking-wide bg-green-600/90 text-white px-2 py-0.5 rounded-sm shadow-lg shadow-green-500/50">
-                          {t('loadGameModal.currentlyLoaded', 'Loaded')}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  {/* Score */}
-                  <div className="text-2xl font-bold text-yellow-300 ml-4">
-                    {game.homeScore ?? 0} - {game.awayScore ?? 0}
-                  </div>
-                </div>
-
-                {/* Date, time, location row */}
-                <div className="flex items-center text-sm text-slate-400 gap-2 flex-wrap">
-                  {game.gameDate && <span>{new Date(game.gameDate).toLocaleDateString('fi-FI')}</span>}
-                  {game.gameTime && <span className="flex items-center"><HiOutlineClock className="w-3.5 h-3.5 mr-1 flex-shrink-0" /> {game.gameTime}</span>}
-                  {game.gameLocation && <span className="flex items-center"><HiOutlineMapPin className="w-3.5 h-3.5 mr-1 flex-shrink-0" /> {game.gameLocation}</span>}
-                </div>
-
-                {/* Actions row */}
-                <div className="flex justify-between items-center pt-1">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onLoad(gameId); onClose(); }}
-                    className={`px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors flex items-center justify-center ${
-                      isLoadActionActive ? 'opacity-50 cursor-not-allowed' : ''
-                    }`}
-                    disabled={disableActions || isLoadActionActive}
-                  >
-                    {isLoadActionActive ? (
-                      <svg className="animate-spin h-4 w-4 text-white mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                    ) : (
-                      <HiOutlineDocumentArrowDown className="h-4 w-4 mr-2" />
+              <button
+                type="button"
+                onClick={() => toggleExpanded(gameId)}
+                aria-expanded={isExpanded}
+                aria-label={isExpanded ? t('loadGameModal.collapseCard', 'Collapse details') : t('loadGameModal.expandCard', 'Expand details')}
+                className="w-full flex justify-between items-start text-left"
+              >
+                <div className="flex-1">
+                  <h3 className={`text-base font-medium ${isCurrent ? 'text-amber-400' : 'text-slate-100'}`}>{displayHomeTeamName} vs {displayAwayTeamName}</h3>
+                  <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                    {contextName && contextType && contextId && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleBadgeClick(contextType.toLowerCase() as ('season' | 'tournament'), contextId); }}
+                        className={`text-xs uppercase font-semibold tracking-wide ${
+                          contextType.toLowerCase() === 'tournament' ? 'bg-purple-600' : 'bg-blue-600'
+                        } text-white px-2 py-0.5 rounded-sm hover:opacity-90 transition-opacity ${
+                          filterType === contextType.toLowerCase() && filterId === contextId ? 'ring-2 ring-white/50' : ''
+                        }`}
+                        title={t('loadGameModal.filterByTooltip', 'Filter by {{name}}', { replace: { name: contextName } }) ?? `Filter by ${contextName}`}
+                      >
+                        {contextName}
+                      </button>
                     )}
-                    {t('loadGameModal.loadButton', 'Lataa Peli')}
-                  </button>
+                    {gameStatus === 'inProgress' && (
+                      <span className="text-xs uppercase font-semibold tracking-wide bg-amber-600 text-white px-2 py-0.5 rounded-sm">OPEN</span>
+                    )}
+                    {isCurrent && (
+                      <span className="text-xs uppercase font-semibold tracking-wide bg-green-600/90 text-white px-2 py-0.5 rounded-sm shadow-lg shadow-green-500/50">
+                        {t('loadGameModal.currentlyLoaded', 'Loaded')}
+                      </span>
+                    )}
+                    {totalPlayers > 0 && (
+                      assessmentsComplete ? (
+                        <HiCheckCircle className="w-4 h-4 text-green-400" title={t('loadGameModal.assessmentsComplete', 'All assessments complete')} />
+                      ) : (
+                        <HiXCircle className="w-4 h-4 text-red-500" title={t('loadGameModal.assessmentsIncomplete', 'Assessments incomplete')} />
+                      )
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 ml-4">
+                  <div className="text-2xl font-bold text-yellow-300">{game.homeScore ?? 0} - {game.awayScore ?? 0}</div>
+                  {isExpanded ? <HiOutlineChevronUp className="w-5 h-5 text-slate-400" /> : <HiOutlineChevronDown className="w-5 h-5 text-slate-400" />}
+                </div>
+              </button>
 
-                  {/* Actions menu */}
-                  <div className="relative inline-block text-left">
+              {isExpanded && (
+                <div className="mt-2 space-y-2">
+                  <div className="flex items-center text-sm text-slate-400 gap-2 flex-wrap">
+                    {game.gameDate && <span>{new Date(game.gameDate).toLocaleDateString('fi-FI')}</span>}
+                    {game.gameTime && <span className="flex items-center"><HiOutlineClock className="w-3.5 h-3.5 mr-1 flex-shrink-0" /> {game.gameTime}</span>}
+                    {game.gameLocation && <span className="flex items-center"><HiOutlineMapPin className="w-3.5 h-3.5 mr-1 flex-shrink-0" /> {game.gameLocation}</span>}
+                  </div>
+                  {game.gameNotes && <p className="text-sm text-slate-300 whitespace-pre-line">{game.gameNotes}</p>}
+                  {totalPlayers > 0 && (
+                    <div className="text-sm text-slate-300 flex items-center gap-2">
+                      <span>{t('loadGameModal.assessmentsProgress', `${assessmentsDone}/${totalPlayers} assessments`, { replace: { done: assessmentsDone.toString(), total: totalPlayers.toString() } })}</span>
+                      <div className="flex-1 h-2 bg-slate-700 rounded">
+                        <div className="h-2 bg-indigo-500 rounded" style={{ width: `${(assessmentsDone / totalPlayers) * 100}%` }}></div>
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center pt-1">
                     <button
-                      onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === gameId ? null : gameId); }}
-                      className={`p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-600 rounded-md transition-colors ${
+                      onClick={(e) => { e.stopPropagation(); onLoad(gameId); onClose(); }}
+                      className={`px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors flex items-center justify-center ${
                         isLoadActionActive ? 'opacity-50 cursor-not-allowed' : ''
                       }`}
                       disabled={disableActions || isLoadActionActive}
-                      title="Options"
                     >
-                      <HiOutlineEllipsisVertical className="h-5 w-5" />
+                      {isLoadActionActive ? (
+                        <svg className="animate-spin h-4 w-4 text-white mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      ) : (
+                        <HiOutlineDocumentArrowDown className="h-4 w-4 mr-2" />
+                      )}
+                      {t('loadGameModal.loadButton', 'Lataa Peli')}
                     </button>
-                    {openMenuId === gameId && (
-                      <div 
-                        ref={menuRef} 
-                        data-testid={`game-item-menu-${gameId}`}
-                        className="absolute right-0 z-20 mt-1 w-48 origin-top-right rounded-md bg-slate-900 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none border border-slate-700"
+                    <div className="relative inline-block text-left">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === gameId ? null : gameId); }}
+                        className={`p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-600 rounded-md transition-colors ${
+                          isLoadActionActive ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
+                        disabled={disableActions || isLoadActionActive}
+                        title="Options"
                       >
-                        <div className="py-1">
-                          <button onClick={(e) => { e.stopPropagation(); onExportOneJson(gameId); setOpenMenuId(null); }} className="group flex w-full items-center px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white">
-                            <HiOutlineDocumentText className="mr-3 h-5 w-5 text-slate-400 group-hover:text-slate-300" />
-                            {t('loadGameModal.exportJsonMenuItem', 'Export JSON')}
-                          </button>
-                          <button onClick={(e) => { e.stopPropagation(); onExportOneCsv(gameId); setOpenMenuId(null); }} className="group flex w-full items-center px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white">
-                            <HiOutlineTableCells className="mr-3 h-5 w-5 text-slate-400 group-hover:text-slate-300" />
-                            {t('loadGameModal.exportExcelMenuItem', 'Export CSV')}
-                          </button>
-                          <div className="border-t border-slate-700 my-1"></div>
-                          <button onClick={(e) => { e.stopPropagation(); handleDeleteClick(gameId, `${game.teamName || 'Team'} vs ${game.opponentName || 'Opponent'}`); }} className="group flex w-full items-center px-4 py-2 text-sm text-red-400 hover:bg-red-800/50 hover:text-red-300">
-                            <HiOutlineTrash className="mr-3 h-5 w-5" />
-                            {t('loadGameModal.deleteMenuItem', 'Delete')}
-                          </button>
+                        <HiOutlineEllipsisVertical className="h-5 w-5" />
+                      </button>
+                      {openMenuId === gameId && (
+                        <div
+                          ref={menuRef}
+                          data-testid={`game-item-menu-${gameId}`}
+                          className="absolute right-0 z-20 mt-1 w-48 origin-top-right rounded-md bg-slate-900 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none border border-slate-700"
+                        >
+                          <div className="py-1">
+                            <button onClick={(e) => { e.stopPropagation(); onExportOneJson(gameId); setOpenMenuId(null); }} className="group flex w-full items-center px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white">
+                              <HiOutlineDocumentText className="mr-3 h-5 w-5 text-slate-400 group-hover:text-slate-300" />
+                              {t('loadGameModal.exportJsonMenuItem', 'Export JSON')}
+                            </button>
+                            <button onClick={(e) => { e.stopPropagation(); onExportOneCsv(gameId); setOpenMenuId(null); }} className="group flex w-full items-center px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white">
+                              <HiOutlineTableCells className="mr-3 h-5 w-5 text-slate-400 group-hover:text-slate-300" />
+                              {t('loadGameModal.exportExcelMenuItem', 'Export CSV')}
+                            </button>
+                            <div className="border-t border-slate-700 my-1"></div>
+                            <button onClick={(e) => { e.stopPropagation(); handleDeleteClick(gameId, `${game.teamName || 'Team'} vs ${game.opponentName || 'Opponent'}`); }} className="group flex w-full items-center px-4 py-2 text-sm text-red-400 hover:bg-red-800/50 hover:text-red-300">
+                              <HiOutlineTrash className="mr-3 h-5 w-5" />
+                              {t('loadGameModal.deleteMenuItem', 'Delete')}
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
+                  {isProcessingThisGame && gameLoadError && (
+                    <p className="text-xs text-red-400 mt-1 animate-pulse">{gameLoadError}</p>
+                  )}
+                  {isProcessingThisGame && gameDeleteError && (
+                    <p className="text-xs text-red-400 mt-1 animate-pulse">{gameDeleteError}</p>
+                  )}
                 </div>
-
-                {/* Display item-specific error if processing this game resulted in an error */}
-                {isProcessingThisGame && gameLoadError && (
-                  <p className="text-xs text-red-400 mt-1 animate-pulse">{gameLoadError}</p>
-                )}
-                {isProcessingThisGame && gameDeleteError && (
-                  <p className="text-xs text-red-400 mt-1 animate-pulse">{gameDeleteError}</p>
-                )}
-              </div>
+              )}
             </li>
           );
         })}

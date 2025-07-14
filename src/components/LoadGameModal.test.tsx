@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, within, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import LoadGameModal from './LoadGameModal';
-import { SavedGamesCollection, AppState } from '@/types';
+import { SavedGamesCollection, AppState, PlayerAssessment } from '@/types';
 import { Season, Tournament } from '@/types';
 
 // Mock react-i18next
@@ -41,9 +41,11 @@ const createSampleGames = (): SavedGamesCollection => ({
     teamName: 'Lions',
     opponentName: 'Tigers',
     gameDate: '2023-05-15',
-    homeOrAway: 'home', 
+    homeOrAway: 'home',
     seasonId: 'season_1',
     tournamentId: '',
+    selectedPlayerIds: ['p1', 'p2'],
+    assessments: { p1: {} as unknown as PlayerAssessment },
   } as unknown as AppState,
   'game_1659223456_def': {
     teamName: 'Eagles',
@@ -52,6 +54,8 @@ const createSampleGames = (): SavedGamesCollection => ({
     homeOrAway: 'away',
     seasonId: '',
     tournamentId: 'tourn_1',
+    selectedPlayerIds: ['p1'],
+    assessments: { p1: {} as unknown as PlayerAssessment },
   } as unknown as AppState,
 });
 
@@ -103,19 +107,21 @@ describe('LoadGameModal', () => {
   it('calls onLoad and onClose when a game is loaded', async () => {
     renderModal();
     const gameItem = await screen.findByText('Lions vs Tigers');
+    fireEvent.click(gameItem.closest('button')!);
     const loadButton = within(gameItem.closest('li')!).getByRole('button', { name: /loadGameModal.loadButton/i });
 
-      fireEvent.click(loadButton);
-      expect(mockHandlers.onLoad).toHaveBeenCalledWith('game_1659123456_abc');
+    fireEvent.click(loadButton);
+    expect(mockHandlers.onLoad).toHaveBeenCalledWith('game_1659123456_abc');
     expect(mockHandlers.onClose).toHaveBeenCalled();
-    });
+  });
 
   it('calls onDelete when delete is confirmed', async () => {
     (window.confirm as jest.Mock).mockReturnValue(true);
     renderModal();
     const gameItem = await screen.findByText('Hawks vs Eagles');
+    fireEvent.click(gameItem.closest('button')!);
     const optionsButton = within(gameItem.closest('li')!).getByTitle('Options');
-      fireEvent.click(optionsButton);
+    fireEvent.click(optionsButton);
 
     const deleteButton = await screen.findByRole('button', { name: 'loadGameModal.deleteMenuItem' });
       fireEvent.click(deleteButton);
