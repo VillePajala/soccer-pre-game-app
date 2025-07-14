@@ -87,26 +87,34 @@ const TrainingResourcesModal: React.FC<TrainingResourcesModalProps> = ({ isOpen,
                   <div className="p-4 text-sm sm:text-base border-t border-slate-700">
                     {section.key === 'warmup' && (
                         <div className="space-y-6">
-                        <h3 className="text-xl font-semibold text-yellow-300">{t('matchPreparation.title')}</h3>
+                        <h3 className="text-xl font-semibold text-yellow-300">{t('warmup.title')}</h3>
                         <section>
-                          <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('matchPreparation.section1.title')}</h4>
-                          <ul className="list-disc list-inside space-y-1.5 pl-2">{renderListItems(t('matchPreparation.section1.points', { returnObjects: true }) as ListItem[], 's1')}</ul>
+                          <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('warmup.section1Title')}</h4>
+                          <ul className="list-disc list-inside space-y-1.5 pl-2">{renderListItems(t('warmup.section1Points', { returnObjects: true }) as ListItem[], 's1')}</ul>
                         </section>
                         <section>
-                            <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('matchPreparation.section2.title')}</h4>
-                          <ul className="list-disc list-inside space-y-1.5 pl-2">{renderListItems(t('matchPreparation.section2.points', { returnObjects: true }) as ListItem[], 's2')}</ul>
+                            <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('warmup.section2Title')}</h4>
+                          <ul className="list-disc list-inside space-y-1.5 pl-2">{renderListItems(t('warmup.section2Activities', { returnObjects: true }) as ListItem[], 's2')}</ul>
                           </section>
                           <section>
-                            <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('matchPreparation.section3.title')}</h4>
-                          <ul className="list-disc list-inside space-y-1.5 pl-2">{renderListItems(t('matchPreparation.section3.points', { returnObjects: true }) as ListItem[], 's3')}</ul>
+                            <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('warmup.section3Title')}</h4>
+                          <ul className="list-disc list-inside space-y-1.5 pl-2">{renderListItems(t('warmup.section3PairWorkPoints', { returnObjects: true }) as ListItem[], 's3')}</ul>
                           </section>
                           <section>
-                            <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('matchPreparation.section4.title')}</h4>
-                          <ul className="list-disc list-inside space-y-1.5 pl-2">{renderListItems(t('matchPreparation.section4.points', { returnObjects: true }) as ListItem[], 's4')}</ul>
+                            <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('warmup.section3GoalieWarmup')}</h4>
+                          <ul className="list-disc list-inside space-y-1.5 pl-2">{renderListItems(t('warmup.section3GoalieWarmupPoints', { returnObjects: true }) as ListItem[], 's4')}</ul>
                           </section>
                           <section>
-                            <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('matchPreparation.duringGame.title')}</h4>
-                          <ul className="list-disc list-inside space-y-1.5 pl-2">{renderListItems(t('matchPreparation.duringGame.points', { returnObjects: true }) as ListItem[], 'dg')}</ul>
+                            <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('warmup.section3CombinedGoalieWarmup')}</h4>
+                          <ul className="list-disc list-inside space-y-1.5 pl-2">{renderListItems(t('warmup.section3CombinedGoalieWarmupPoints', { returnObjects: true }) as ListItem[], 'dg')}</ul>
+                          </section>
+                          <section>
+                            <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('warmup.section4Title')}</h4>
+                          <ul className="list-disc list-inside space-y-1.5 pl-2">{renderListItems(t('warmup.section4Points', { returnObjects: true }) as ListItem[], 's5')}</ul>
+                          </section>
+                          <section>
+                            <h4 className="text-lg font-bold mb-2 text-yellow-200">{t('warmup.duringGameTitle')}</h4>
+                          <ul className="list-disc list-inside space-y-1.5 pl-2">{renderListItems(t('warmup.duringGamePoints', { returnObjects: true }) as ListItem[], 's6')}</ul>
                           </section>
                         </div>
                     )}
