@@ -69,7 +69,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
   isGamesImporting = false,
   processingGameId = null,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [searchText, setSearchText] = useState<string>('');
   const [filterType, setFilterType] = useState<'season' | 'tournament' | null>(null);
@@ -392,7 +392,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
               {isExpanded && (
                 <div className="mt-2 space-y-2">
                   <div className="flex items-center text-sm text-slate-400 gap-2 flex-wrap">
-                    {game.gameDate && <span>{new Date(game.gameDate).toLocaleDateString('fi-FI')}</span>}
+                    {game.gameDate && <span>{new Date(game.gameDate).toLocaleDateString(i18n.language)}</span>}
                     {game.gameTime && <span className="flex items-center"><HiOutlineClock className="w-3.5 h-3.5 mr-1 flex-shrink-0" /> {game.gameTime}</span>}
                     {game.gameLocation && <span className="flex items-center"><HiOutlineMapPin className="w-3.5 h-3.5 mr-1 flex-shrink-0" /> {game.gameLocation}</span>}
                   </div>
