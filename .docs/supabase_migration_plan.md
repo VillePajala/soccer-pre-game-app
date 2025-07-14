@@ -31,10 +31,10 @@ Migrate the entire persistence layer to Supabase, enabling multi‑user, real‑
 
 ## Step‑by‑Step Execution Plan
 
-### Core Steps  
-- [ ] **1 — Inventory Current Data**
-  - [ ] Parse codebase for every `localStorage.*` usage
-  - [ ] Generate `/docs/localStorage-map.json` with keys & samples
+### Core Steps
+- [x] **1 — Inventory Current Data**
+  - [x] Parse codebase for every `localStorage.*` usage
+  - [x] Generate `/docs/localStorage-map.json` with keys & samples
 
 - [ ] **2 — Design Supabase Schema**
   - [ ] Infer TS interfaces (Game, Player, Stats, Settings…)
