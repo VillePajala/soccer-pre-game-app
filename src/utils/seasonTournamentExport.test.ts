@@ -1,4 +1,4 @@
-import { exportSeasonsJson, exportTournamentsJson, importSeasonsJson, importTournamentsJson, exportSeasonCalendar, exportTournamentCalendar } from './seasonTournamentExport';
+import { exportSeasonsJson, exportTournamentsJson, importSeasonsJson, importTournamentsJson } from './seasonTournamentExport';
 import type { Season, Tournament } from '@/types';
 
 interface BlobWithText extends Blob { text: () => Promise<string>; }
@@ -65,18 +65,5 @@ describe('season/tournament export utilities', () => {
     expect(importTournamentsJson('bad')).toBeNull();
   });
 
-  it('exports season calendar when dates provided', () => {
-    const season: Season = { id: 's1', name: 'Season 1', gameDates: ['2025-01-01'] };
-    exportSeasonCalendar(season);
-    const anchor = (document.createElement as jest.Mock).mock.results[0].value as HTMLAnchorElement;
-    expect(anchor.download).toBe('season_s1.ics');
-  });
-
-  it('exports tournament calendar when dates provided', () => {
-    const tournament: Tournament = { id: 't1', name: 'Tournament 1', gameDates: ['2025-02-02'] };
-    exportTournamentCalendar(tournament);
-    const anchor = (document.createElement as jest.Mock).mock.results[0].value as HTMLAnchorElement;
-    expect(anchor.download).toBe('tournament_t1.ics');
-  });
 });
 

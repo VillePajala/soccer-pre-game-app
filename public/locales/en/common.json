@@ -455,7 +455,6 @@
     "levelLabel": "Level",
     "startDateLabel": "Start Date",
     "endDateLabel": "End Date",
-    "gameDatesLabel": "Game Dates (comma separated)",
     "archiveLabel": "Archive",
     "notesLabel": "Notes",
     "statsGames": "Games",

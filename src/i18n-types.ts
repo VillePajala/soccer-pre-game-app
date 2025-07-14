@@ -451,7 +451,6 @@ export type TranslationKey =
   | 'seasonTournamentModal.createNew'
   | 'seasonTournamentModal.editDetails'
   | 'seasonTournamentModal.endDateLabel'
-  | 'seasonTournamentModal.gameDatesLabel'
   | 'seasonTournamentModal.levelLabel'
   | 'seasonTournamentModal.locationLabel'
   | 'seasonTournamentModal.newSeasonPlaceholder'

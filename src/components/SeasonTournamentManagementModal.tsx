@@ -118,7 +118,6 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
             periodDuration: item.periodDuration,
             startDate: (item as Tournament).startDate,
             endDate: (item as Tournament).endDate,
-            gameDates: (item as Tournament).gameDates,
             archived: item.archived,
             notes: item.notes,
             ageGroup: (item as Tournament).ageGroup ?? (item as Season).ageGroup,
@@ -224,7 +223,6 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                             <>
                                 <input type="date" value={(newTournamentFields.startDate as string) || ''} onChange={e=>setNewTournamentFields(f=>({...f,startDate:e.target.value}))} className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white focus:ring-indigo-500 focus:border-indigo-500" placeholder={t('seasonTournamentModal.startDateLabel')} />
                                 <input type="date" value={(newTournamentFields.endDate as string) || ''} onChange={e=>setNewTournamentFields(f=>({...f,endDate:e.target.value}))} className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white focus:ring-indigo-500 focus:border-indigo-500" placeholder={t('seasonTournamentModal.endDateLabel')} />
-                                <input type="text" value={(newTournamentFields.gameDates as string[] | undefined)?.join(',') || ''} onChange={e=>setNewTournamentFields(f=>({...f,gameDates:e.target.value.split(',').map(d=>d.trim()).filter(Boolean)}))} placeholder={t('seasonTournamentModal.gameDatesLabel')} className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:ring-indigo-500 focus:border-indigo-500" />
                             </>
                         )}
                         <textarea value={(type==='season'?newSeasonFields.notes:newTournamentFields.notes) || ''} onChange={(e)=>type==='season'?setNewSeasonFields(f=>({...f,notes:e.target.value})):setNewTournamentFields(f=>({...f,notes:e.target.value}))} placeholder={t('seasonTournamentModal.notesLabel')} className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:ring-indigo-500 focus:border-indigo-500" />
@@ -271,7 +269,6 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                                         <>
                                             <input type="date" value={editingFields.startDate as string || ''} onChange={e=>setEditingFields(f=>({...f,startDate:e.target.value}))} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white" />
                                             <input type="date" value={editingFields.endDate as string || ''} onChange={e=>setEditingFields(f=>({...f,endDate:e.target.value}))} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white" />
-                                            <input type="text" value={(editingFields.gameDates as string[] | undefined)?.join(',') || ''} onChange={e=>setEditingFields(f=>({...f,gameDates:e.target.value.split(',').map(d=>d.trim()).filter(Boolean)}))} placeholder={t('seasonTournamentModal.gameDatesLabel')} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white" />
                                         </>
                                     )}
                                     <textarea value={editingFields.notes || ''} onChange={e=>setEditingFields(f=>({...f,notes:e.target.value}))} placeholder={t('seasonTournamentModal.notesLabel')} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white" />
@@ -286,6 +283,9 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                                 <div className="flex justify-between items-center">
                                     <div>
                                         <p className="text-sm text-slate-200 font-semibold">{item.name}</p>
+                                        {type==='tournament' && ((item as Tournament).startDate || (item as Tournament).endDate) && (
+                                            <p className="text-xs text-slate-400">{(item as Tournament).startDate || ''}{(item as Tournament).startDate && (item as Tournament).endDate ? ' - ' : ''}{(item as Tournament).endDate || ''}</p>
+                                        )}
                                         <p className="text-xs text-slate-400">{t('seasonTournamentModal.statsGames')}: {stats[item.id]?.games || 0} | {t('seasonTournamentModal.statsGoals')}: {stats[item.id]?.goals || 0}</p>
                                     </div>
                                     <div className="flex items-center gap-2 ml-2">
