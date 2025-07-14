@@ -1,0 +1,63 @@
+{
+  "soccerSeasons": [
+    {
+      "id": "season_1",
+      "name": "Sample Season"
+    }
+  ],
+  "soccerTournaments": [
+    {
+      "id": "tournament_1",
+      "name": "Sample Tournament"
+    }
+  ],
+  "savedSoccerGames": {
+    "game_1": {
+      "teamName": "Team A",
+      "opponentName": "Team B",
+      "playersOnField": [],
+      "opponents": [],
+      "drawings": [],
+      "availablePlayers": [],
+      "showPlayerNames": true,
+      "gameEvents": [],
+      "gameDate": "2024-01-01",
+      "homeScore": 0,
+      "awayScore": 0,
+      "gameNotes": "",
+      "homeOrAway": "home",
+      "numberOfPeriods": 2,
+      "periodDurationMinutes": 45,
+      "currentPeriod": 1,
+      "gameStatus": "notStarted",
+      "selectedPlayerIds": [],
+      "seasonId": "season_1",
+      "tournamentId": "tournament_1",
+      "tacticalDiscs": [],
+      "tacticalDrawings": [],
+      "tacticalBallPosition": null
+    }
+  },
+  "soccerAppSettings": {
+    "currentGameId": null,
+    "lastHomeTeamName": "",
+    "language": "en",
+    "hasSeenAppGuide": false,
+    "autoBackupEnabled": false,
+    "autoBackupIntervalHours": 24,
+    "useDemandCorrection": false
+  },
+  "soccerMasterRoster": [
+    {
+      "id": "player_1",
+      "name": "Sample Player"
+    }
+  ],
+  "lastHomeTeamName": "FC Sample",
+  "soccerTimerState": {
+    "gameId": "game_1",
+    "timeElapsedInSeconds": 0,
+    "timestamp": 1752494829206
+  },
+  "installPromptDismissed": "1752494829206"
+}
