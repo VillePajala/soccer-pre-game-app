@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import { Season, Tournament, Player } from '@/types';
+import { AGE_GROUPS, LEVELS } from '@/config/gameOptions';
+import type { TranslationKey } from '@/i18n-types';
 import { HiPlusCircle, HiOutlinePencil, HiOutlineTrash, HiOutlineCheck, HiOutlineX } from 'react-icons/hi';
 import { UseMutationResult } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -192,21 +194,27 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                             placeholder={t('seasonTournamentModal.locationLabel')}
                             className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:ring-indigo-500 focus:border-indigo-500"
                         />
-                        <input
-                            type="text"
+                        <select
                             value={(type==='season'?newSeasonFields.ageGroup:newTournamentFields.ageGroup) || ''}
                             onChange={(e)=>type==='season'?setNewSeasonFields(f=>({...f,ageGroup:e.target.value})):setNewTournamentFields(f=>({...f,ageGroup:e.target.value}))}
-                            placeholder={t('seasonTournamentModal.ageGroupLabel')}
-                            className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:ring-indigo-500 focus:border-indigo-500"
-                        />
+                            className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white focus:ring-indigo-500 focus:border-indigo-500"
+                        >
+                            <option value="">{t('common.none', 'None')}</option>
+                            {AGE_GROUPS.map(group => (
+                                <option key={group} value={group}>{group}</option>
+                            ))}
+                        </select>
                         {type==='tournament' && (
-                            <input
-                                type="text"
+                            <select
                                 value={newTournamentFields.level || ''}
                                 onChange={e=>setNewTournamentFields(f=>({...f,level:e.target.value}))}
-                                placeholder={t('seasonTournamentModal.levelLabel')}
-                                className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:ring-indigo-500 focus:border-indigo-500"
-                            />
+                                className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white focus:ring-indigo-500 focus:border-indigo-500"
+                            >
+                                <option value="">{t('common.none', 'None')}</option>
+                                {LEVELS.map(lvl => (
+                                    <option key={lvl} value={lvl}>{t(`common.level${lvl}` as TranslationKey, lvl)}</option>
+                                ))}
+                            </select>
                         )}
                         <div className="grid grid-cols-2 gap-2">
                             <input type="number" value={(type==='season'?newSeasonFields.periodCount:newTournamentFields.periodCount) || ''} onChange={(e)=>type==='season'?setNewSeasonFields(f=>({...f,periodCount:parseIntOrUndefined(e.target.value)})):setNewTournamentFields(f=>({...f,periodCount:parseIntOrUndefined(e.target.value)}))} placeholder={t('seasonTournamentModal.periodCountLabel')} className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:ring-indigo-500 focus:border-indigo-500" />
@@ -241,9 +249,19 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                                 <div className="space-y-2">
                                     <input type="text" value={editingName} onChange={(e)=>setEditingName(e.target.value)} className="w-full px-2 py-1 bg-slate-700 border border-indigo-500 rounded-md text-white" />
                                     <input type="text" value={editingFields.location || ''} onChange={(e)=>setEditingFields(f=>({...f,location:e.target.value}))} placeholder={t('seasonTournamentModal.locationLabel')} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white" />
-                                    <input type="text" value={editingFields.ageGroup || ''} onChange={e=>setEditingFields(f=>({...f,ageGroup:e.target.value}))} placeholder={t('seasonTournamentModal.ageGroupLabel')} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white" />
+                                    <select value={editingFields.ageGroup || ''} onChange={e=>setEditingFields(f=>({...f,ageGroup:e.target.value}))} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white">
+                                        <option value="">{t('common.none', 'None')}</option>
+                                        {AGE_GROUPS.map(group => (
+                                            <option key={group} value={group}>{group}</option>
+                                        ))}
+                                    </select>
                                     {type==='tournament' && (
-                                        <input type="text" value={editingFields.level || ''} onChange={e=>setEditingFields(f=>({...f,level:e.target.value}))} placeholder={t('seasonTournamentModal.levelLabel')} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white" />
+                                        <select value={editingFields.level || ''} onChange={e=>setEditingFields(f=>({...f,level:e.target.value}))} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white">
+                                            <option value="">{t('common.none', 'None')}</option>
+                                            {LEVELS.map(lvl => (
+                                                <option key={lvl} value={lvl}>{t(`common.level${lvl}` as TranslationKey, lvl)}</option>
+                                            ))}
+                                        </select>
                                     )}
                                     <div className="grid grid-cols-2 gap-2">
                                         <input type="number" value={editingFields.periodCount || ''} onChange={(e)=>setEditingFields(f=>({...f,periodCount:parseIntOrUndefined(e.target.value)}))} placeholder={t('seasonTournamentModal.periodCountLabel')} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white" />
