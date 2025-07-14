@@ -26,4 +26,20 @@ describe('AssessmentSlider', () => {
     expect(onChange).toHaveBeenCalledWith(1.2);
   });
 
+  it('applies reversed color when reverseColor is true', () => {
+    render(
+      <AssessmentSlider
+        label="level"
+        value={1.5}
+        onChange={() => {}}
+        min={0.5}
+        max={1.5}
+        step={0.05}
+        reverseColor
+      />
+    );
+    const slider = screen.getByRole('slider');
+    expect(slider.style.accentColor).toBe('hsl(0, 70%, 50%)');
+  });
+
 });
