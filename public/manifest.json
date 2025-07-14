@@ -4,6 +4,7 @@
     "description": "TEST VERSION - Soccer Tactics and Timer App for Coaches",
     "start_url": "/",
     "display": "fullscreen",
+    "orientation": "portrait",
     "background_color": "#111827",
     "theme_color": "#1e293b",
     "icons": [
