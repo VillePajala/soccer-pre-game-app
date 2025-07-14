@@ -499,27 +499,6 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                   />
                 </div>
 
-                {/* Age Group */}
-                <div className="mb-4">
-                  <label htmlFor="ageGroupSelect" className="block text-sm font-medium text-slate-300 mb-1">
-                    {t('newGameSetupModal.ageGroupLabel', 'Age Group (Optional)')}
-                  </label>
-                  <select
-                    id="ageGroupSelect"
-                    value={ageGroup}
-                    onChange={(e) => setAgeGroup(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
-                    disabled={isLoading}
-                  >
-                    <option value="">{t('common.none', 'None')}</option>
-                    {AGE_GROUPS.map((group) => (
-                      <option key={group} value={group}>
-                        {group}
-                      </option>
-                    ))}
-                  </select>
-                </div>
 
             {/* Opponent Name - Also critical */}
             <div className="mb-4">
@@ -701,9 +680,30 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                             </div>
                           </div>
                         )}
-                      </div>
                     </div>
+                  </div>
 
+                    {/* Age Group */}
+                    <div className="mb-4">
+                      <label htmlFor="ageGroupSelect" className="block text-sm font-medium text-slate-300 mb-1">
+                        {t('newGameSetupModal.ageGroupLabel', 'Age Group (Optional)')}
+                      </label>
+                      <select
+                        id="ageGroupSelect"
+                        value={ageGroup}
+                        onChange={(e) => setAgeGroup(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                        disabled={isLoading}
+                      >
+                        <option value="">{t('common.none', 'None')}</option>
+                        {AGE_GROUPS.map((group) => (
+                          <option key={group} value={group}>
+                            {group}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
 
                     {/* Game Date */}
