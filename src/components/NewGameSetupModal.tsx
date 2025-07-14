@@ -885,6 +885,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                           min={0.5}
                           max={1.5}
                           step={0.05}
+                          reverseColor
                         />
                       </div>
 
