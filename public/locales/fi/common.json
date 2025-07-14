@@ -491,6 +491,8 @@
     "levelKilpa": "Kilpa",
     "levelHaaste": "Haaste",
     "levelHarraste": "Harraste",
+    "selectAgeGroup": "-- Valitse ikäluokka --",
+    "selectLevel": "-- Valitse taso --",
     "player": "Pelaaja",
     "record": "Rekordi",
     "remove": "Poista",

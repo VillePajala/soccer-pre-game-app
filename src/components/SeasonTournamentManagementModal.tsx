@@ -199,7 +199,7 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                             onChange={(e)=>type==='season'?setNewSeasonFields(f=>({...f,ageGroup:e.target.value})):setNewTournamentFields(f=>({...f,ageGroup:e.target.value}))}
                             className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white focus:ring-indigo-500 focus:border-indigo-500"
                         >
-                            <option value="">{t('common.none', 'None')}</option>
+                            <option value="">{t('common.selectAgeGroup', '-- Select Age Group --')}</option>
                             {AGE_GROUPS.map(group => (
                                 <option key={group} value={group}>{group}</option>
                             ))}
@@ -210,7 +210,7 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                                 onChange={e=>setNewTournamentFields(f=>({...f,level:e.target.value}))}
                                 className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white focus:ring-indigo-500 focus:border-indigo-500"
                             >
-                                <option value="">{t('common.none', 'None')}</option>
+                                <option value="">{t('common.selectLevel', '-- Select Level --')}</option>
                                 {LEVELS.map(lvl => (
                                     <option key={lvl} value={lvl}>{t(`common.level${lvl}` as TranslationKey, lvl)}</option>
                                 ))}
@@ -250,14 +250,14 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                                     <input type="text" value={editingName} onChange={(e)=>setEditingName(e.target.value)} className="w-full px-2 py-1 bg-slate-700 border border-indigo-500 rounded-md text-white" />
                                     <input type="text" value={editingFields.location || ''} onChange={(e)=>setEditingFields(f=>({...f,location:e.target.value}))} placeholder={t('seasonTournamentModal.locationLabel')} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white" />
                                     <select value={editingFields.ageGroup || ''} onChange={e=>setEditingFields(f=>({...f,ageGroup:e.target.value}))} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white">
-                                        <option value="">{t('common.none', 'None')}</option>
+                                        <option value="">{t('common.selectAgeGroup', '-- Select Age Group --')}</option>
                                         {AGE_GROUPS.map(group => (
                                             <option key={group} value={group}>{group}</option>
                                         ))}
                                     </select>
                                     {type==='tournament' && (
                                         <select value={editingFields.level || ''} onChange={e=>setEditingFields(f=>({...f,level:e.target.value}))} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white">
-                                            <option value="">{t('common.none', 'None')}</option>
+                                            <option value="">{t('common.selectLevel', '-- Select Level --')}</option>
                                             {LEVELS.map(lvl => (
                                                 <option key={lvl} value={lvl}>{t(`common.level${lvl}` as TranslationKey, lvl)}</option>
                                             ))}
