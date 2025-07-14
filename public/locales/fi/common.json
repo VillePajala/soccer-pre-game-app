@@ -27,7 +27,7 @@
   "controlBar.languageToggle": "Vaihda kieli englannin (EN) ja suomen (FI) välillä.",
   "controlBar.tasoLink": "Taso",
   "controlBar.saveGameAs": "Tallenna Peli Nimellä...",
-  "controlBar.loadGame": "Lataa Peli...",
+  "controlBar.loadGame": "Tallennetut pelit",
   "controlBar.startNewGame": "Aloita uusi ottelu",
   "controlBar.startNewGameConfirm": "Haluatko varmasti aloittaa uuden ottelun? Nykyisen ottelun tallentamattomat tiedot menetetään.",
   "controlBar.hardReset": "Nollaa Sovellus",
@@ -262,7 +262,7 @@
     "noNotes": "Ei muistiinpanoja"
   },
   "loadGameModal": {
-    "title": "Lataa Peli",
+    "title": "Tallennetut pelit",
     "loadButtonTooltip": "Lataa tämä peli",
     "deleteButtonTooltip": "Poista tallennettu peli",
     "deleteConfirm": "Haluatko varmasti poistaa tallennetun pelin \"{gameName}\"? Toimintoa ei voi peruuttaa.",
