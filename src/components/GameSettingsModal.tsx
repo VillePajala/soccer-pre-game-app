@@ -13,6 +13,8 @@ import { updateGameDetails, updateGameEvent, removeGameEvent } from '@/utils/sav
 import { UseMutationResult } from '@tanstack/react-query';
 import { TFunction } from 'i18next';
 import AssessmentSlider from './AssessmentSlider';
+import { AGE_GROUPS, LEVELS } from '@/config/gameOptions';
+import type { TranslationKey } from '@/i18n-types';
 
 export type GameEventType = 'goal' | 'opponentGoal' | 'substitution' | 'periodEnd' | 'gameEnd' | 'fairPlayCard';
 
@@ -1096,12 +1098,11 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
 
                 {/* Age Group */}
                 <div className="mb-4">
-                  <label htmlFor="ageGroupInput" className="block text-sm font-medium text-slate-300 mb-1">
+                  <label htmlFor="ageGroupSelect" className="block text-sm font-medium text-slate-300 mb-1">
                     {t('gameSettingsModal.ageGroupLabel', 'Age Group (Optional)')}
                   </label>
-                  <input
-                    type="text"
-                    id="ageGroupInput"
+                  <select
+                    id="ageGroupSelect"
                     value={ageGroup}
                     onChange={(e) => {
                       onAgeGroupChange(e.target.value);
@@ -1109,8 +1110,15 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                         updateGameDetailsMutation.mutate({ gameId: currentGameId, updates: { ageGroup: e.target.value } });
                       }
                     }}
-                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
-                  />
+                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                  >
+                    <option value="">{t('common.none', 'None')}</option>
+                    {AGE_GROUPS.map((group) => (
+                      <option key={group} value={group}>
+                        {group}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {tournamentId && (
@@ -1118,8 +1126,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                   <label htmlFor="levelInput" className="block text-sm font-medium text-slate-300 mb-1">
                     {t('gameSettingsModal.levelLabel', 'Level')}
                   </label>
-                  <input
-                    type="text"
+                  <select
                     id="levelInput"
                     value={tournamentLevel}
                     onChange={(e) => {
@@ -1128,8 +1135,15 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                         updateGameDetailsMutation.mutate({ gameId: currentGameId, updates: { tournamentLevel: e.target.value } });
                       }
                     }}
-                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
-                  />
+                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                  >
+                    <option value="">{t('common.none', 'None')}</option>
+                    {LEVELS.map((lvl) => (
+                      <option key={lvl} value={lvl}>
+                        {t(`common.level${lvl}` as TranslationKey, lvl)}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 )}
 

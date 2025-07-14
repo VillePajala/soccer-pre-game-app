@@ -11,6 +11,8 @@ import { getMasterRoster } from '@/utils/masterRosterManager';
 import { getLastHomeTeamName as utilGetLastHomeTeamName, saveLastHomeTeamName as utilSaveLastHomeTeamName } from '@/utils/appSettings';
 import { UseMutationResult } from '@tanstack/react-query';
 import AssessmentSlider from './AssessmentSlider';
+import { AGE_GROUPS, LEVELS } from '@/config/gameOptions';
+import type { TranslationKey } from '@/i18n-types';
 
 interface NewGameSetupModalProps {
   isOpen: boolean;
@@ -499,18 +501,24 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
 
                 {/* Age Group */}
                 <div className="mb-4">
-                  <label htmlFor="ageGroupInput" className="block text-sm font-medium text-slate-300 mb-1">
+                  <label htmlFor="ageGroupSelect" className="block text-sm font-medium text-slate-300 mb-1">
                     {t('newGameSetupModal.ageGroupLabel', 'Age Group (Optional)')}
                   </label>
-                  <input
-                    type="text"
-                    id="ageGroupInput"
+                  <select
+                    id="ageGroupSelect"
                     value={ageGroup}
                     onChange={(e) => setAgeGroup(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                     disabled={isLoading}
-                  />
+                  >
+                    <option value="">{t('common.none', 'None')}</option>
+                    {AGE_GROUPS.map((group) => (
+                      <option key={group} value={group}>
+                        {group}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
             {/* Opponent Name - Also critical */}
@@ -644,15 +652,21 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                             <label htmlFor="tournamentLevelInput" className="block text-sm font-medium text-slate-300 mb-1">
                               {t('newGameSetupModal.levelLabel', 'Level')}
                             </label>
-                            <input
-                              type="text"
+                            <select
                               id="tournamentLevelInput"
                               value={tournamentLevel}
                               onChange={(e) => setTournamentLevel(e.target.value)}
                               onKeyDown={handleKeyDown}
-                              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                               disabled={isLoading}
-                            />
+                            >
+                              <option value="">{t('common.none', 'None')}</option>
+                              {LEVELS.map((lvl) => (
+                                <option key={lvl} value={lvl}>
+                                  {t(`common.level${lvl}` as TranslationKey, lvl)}
+                                </option>
+                              ))}
+                            </select>
                           </div>
                         )}
                         {showNewTournamentInput && (
