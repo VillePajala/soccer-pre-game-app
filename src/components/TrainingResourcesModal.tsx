@@ -9,11 +9,11 @@ interface TrainingResourcesModalProps {
   onClose: () => void;
 }
 
-type TrainingSection = 'warmup' | 'exampleDrills';
+type TrainingSection = 'warmup';
 
 const TrainingResourcesModal: React.FC<TrainingResourcesModalProps> = ({ isOpen, onClose }) => {
   const { t } = useTranslation();
-  const [expandedSection, setExpandedSection] = useState<TrainingSection | null>(null);
+  const [expandedSection, setExpandedSection] = useState<TrainingSection | null>('warmup');
 
   if (!isOpen) return null;
 
@@ -55,7 +55,6 @@ const TrainingResourcesModal: React.FC<TrainingResourcesModalProps> = ({ isOpen,
 
   const sections: { key: TrainingSection; titleKey: string }[] = [
     { key: 'warmup', titleKey: 'trainingResourcesModal.navWarmup' },
-    { key: 'exampleDrills', titleKey: 'trainingResourcesModal.navExampleDrills' },
   ];
 
   return (
@@ -117,17 +116,6 @@ const TrainingResourcesModal: React.FC<TrainingResourcesModalProps> = ({ isOpen,
                           <ul className="list-disc list-inside space-y-1.5 pl-2">{renderListItems(t('warmup.duringGamePoints', { returnObjects: true }) as ListItem[], 's6')}</ul>
                           </section>
                         </div>
-                    )}
-                    {section.key === 'exampleDrills' && (
-                      <div className="space-y-4">
-                         <h3 className="text-xl font-semibold text-yellow-300">{t('trainingResourcesModal.exampleDrills.title')}</h3>
-                         <p className="text-slate-300">{t('trainingResourcesModal.exampleDrills.description')}</p>
-                         <ul className="list-disc list-inside space-y-1 pl-2 text-slate-300">
-                             <li>{t('trainingResourcesModal.exampleDrills.point1')}</li>
-                             <li>{t('trainingResourcesModal.exampleDrills.point2')}</li>
-                             <li>{t('trainingResourcesModal.exampleDrills.point3')}</li>
-                           </ul>
-                      </div>
                     )}
                   </div>
                 )}
