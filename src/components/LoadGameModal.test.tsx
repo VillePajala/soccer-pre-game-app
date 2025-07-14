@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, within, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import LoadGameModal from './LoadGameModal';
-import { SavedGamesCollection, AppState } from '@/types';
+import { SavedGamesCollection, AppState, PlayerAssessment } from '@/types';
 import { Season, Tournament } from '@/types';
 
 // Mock react-i18next
@@ -45,7 +45,7 @@ const createSampleGames = (): SavedGamesCollection => ({
     seasonId: 'season_1',
     tournamentId: '',
     selectedPlayerIds: ['p1', 'p2'],
-    assessments: { p1: {} as any },
+    assessments: { p1: {} as unknown as PlayerAssessment },
   } as unknown as AppState,
   'game_1659223456_def': {
     teamName: 'Eagles',
@@ -55,7 +55,7 @@ const createSampleGames = (): SavedGamesCollection => ({
     seasonId: '',
     tournamentId: 'tourn_1',
     selectedPlayerIds: ['p1'],
-    assessments: { p1: {} as any },
+    assessments: { p1: {} as unknown as PlayerAssessment },
   } as unknown as AppState,
 });
 
