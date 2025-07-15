@@ -13,7 +13,6 @@ import NewGameSetupModal from '@/components/NewGameSetupModal';
 import RosterSettingsModal from '@/components/RosterSettingsModal';
 import GameSettingsModal from '@/components/GameSettingsModal';
 import SettingsModal from '@/components/SettingsModal';
-import StartScreen from '@/components/StartScreen';
 import SeasonTournamentManagementModal from '@/components/SeasonTournamentManagementModal';
 import InstructionsModal from '@/components/InstructionsModal';
 import PlayerAssessmentModal from '@/components/PlayerAssessmentModal';
@@ -37,7 +36,6 @@ import {
 
 // Import utility functions for seasons and tournaments
 import { saveGame as utilSaveGame, deleteGame as utilDeleteGame, getLatestGameId, createGame } from '@/utils/savedGames';
-import { getSavedGames } from '@/utils/savedGames';
 import {
   saveCurrentGameIdSetting as utilSaveCurrentGameIdSetting,
   resetAppSettings as utilResetAppSettings,
@@ -47,7 +45,6 @@ import {
   saveLastHomeTeamName as utilSaveLastHomeTeamName,
   updateAppSettings as utilUpdateAppSettings,
   getAppSettings,
-  getCurrentGameIdSetting,
 } from '@/utils/appSettings';
 import { deleteSeason as utilDeleteSeason, updateSeason as utilUpdateSeason, addSeason as utilAddSeason } from '@/utils/seasons';
 import { deleteTournament as utilDeleteTournament, updateTournament as utilUpdateTournament, addTournament as utilAddTournament } from '@/utils/tournaments';
@@ -433,8 +430,6 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   // --- Timer State (Still needed here) ---
   const [showLargeTimerOverlay, setShowLargeTimerOverlay] = useState<boolean>(false); // State for overlay visibility
   const [isInstructionsModalOpen, setIsInstructionsModalOpen] = useState<boolean>(false);
-  const [isStartMenuOpen, setIsStartMenuOpen] = useState<boolean>(false);
-  const [canResumeGame, setCanResumeGame] = useState<boolean>(false);
 
   useEffect(() => {
     if (!initialAction) return;
@@ -1370,25 +1365,6 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     }
     setIsInstructionsModalOpen(!isInstructionsModalOpen);
   };
-
-  useEffect(() => {
-    const checkResume = async () => {
-      try {
-        const lastId = await getCurrentGameIdSetting();
-        if (!lastId) return;
-        const games = await getSavedGames();
-        if (games[lastId]) {
-          setCanResumeGame(true);
-        }
-      } catch {
-        setCanResumeGame(false);
-      }
-    };
-    checkResume();
-  }, []);
-
-  const openStartMenu = () => setIsStartMenuOpen(true);
-  const closeStartMenu = () => setIsStartMenuOpen(false);
 
   const handleShowAppGuide = () => {
     saveHasSeenAppGuide(false);
@@ -2534,17 +2510,25 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           onAddOpponent={handleAddOpponent}
           showLargeTimerOverlay={showLargeTimerOverlay}
           onToggleLargeTimerOverlay={handleToggleLargeTimerOverlay}
+          onToggleTrainingResources={handleToggleTrainingResources}
           onToggleGoalLogModal={handleToggleGoalLogModal}
+          onToggleGameStatsModal={handleToggleGameStatsModal}
+          onOpenLoadGameModal={handleOpenLoadGameModal}
+          onStartNewGame={handleStartNewGame}
           onOpenRosterModal={openRosterModal}
+          onQuickSave={handleQuickSaveGame}
           onOpenGameSettingsModal={handleOpenGameSettingsModal}
+          isGameLoaded={!!currentGameId && currentGameId !== DEFAULT_GAME_ID}
           onPlaceAllPlayers={handlePlaceAllPlayers}
           highlightRosterButton={highlightRosterButton}
+          onOpenSeasonTournamentModal={handleOpenSeasonTournamentModal}
           isTacticsBoardView={isTacticsBoardView}
           onToggleTacticsBoard={handleToggleTacticsBoard}
           onAddHomeDisc={() => handleAddTacticalDisc('home')}
           onAddOpponentDisc={() => handleAddTacticalDisc('opponent')}
           onToggleInstructionsModal={handleToggleInstructionsModal}
-          onOpenMenu={openStartMenu}
+          onOpenSettingsModal={handleOpenSettingsModal}
+          onOpenPlayerAssessmentModal={openPlayerAssessmentModal}
         />
       </div>
 
@@ -2759,43 +2743,6 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         onSave={handleSavePlayerAssessment}
         onDelete={handleDeletePlayerAssessment}
       />
-
-      {isStartMenuOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60] font-display">
-          <StartScreen
-            onStartNewGame={() => {
-              closeStartMenu();
-              handleStartNewGame();
-            }}
-            onLoadGame={() => {
-              closeStartMenu();
-              handleOpenLoadGameModal();
-            }}
-            onResumeGame={canResumeGame ? () => {
-              closeStartMenu();
-              handleOpenLoadGameModal();
-            } : undefined}
-            canResume={canResumeGame}
-            onCreateSeason={() => {
-              closeStartMenu();
-              handleOpenSeasonTournamentModal();
-            }}
-            onViewStats={() => {
-              closeStartMenu();
-              handleToggleGameStatsModal();
-            }}
-            onAssessPlayers={() => {
-              closeStartMenu();
-              openPlayerAssessmentModal();
-            }}
-            onOpenSettings={() => {
-              closeStartMenu();
-              handleOpenSettingsModal();
-            }}
-            onClose={closeStartMenu}
-          />
-        </div>
-      )}
     </main>
   );
 }
