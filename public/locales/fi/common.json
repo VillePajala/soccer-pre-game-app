@@ -220,7 +220,11 @@
     "nameHeader": "Nimi",
     "jerseyHeader": "Numero",
     "confirmAddPlayer": "Lisää Pelaaja",
-    "confirmDeletePlayer": "Haluatko varmasti poistaa tämän pelaajan?"
+    "confirmDeletePlayer": "Haluatko varmasti poistaa tämän pelaajan?",
+    "searchPlaceholder": "Etsi pelaajaa...",
+    "sortLabel": "Järjestä",
+    "sortByName": "Nimen mukaan",
+    "sortByJersey": "Numeron mukaan"
   },
   "gameStatsModal": {
     "title": "Ottelutilastot",
