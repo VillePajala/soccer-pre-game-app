@@ -34,6 +34,7 @@ The app is designed to be an all-in-one digital assistant for game day, from pre
 *   **Management Enhancements:** Store default game settings, assign default rosters, archive old competitions and view quick stats. Import or export season setups for easy reuse.
 *   **Full Backup & Restore:** Safeguard your data by exporting and importing a single file containing all players, games, and settings.
 *   **Automatic Backups:** Background process periodically saves a full backup file so your data stays safe even if you forget to export manually.
+*   **Email Backups:** Optionally send each backup file to a configured email address for off-device safety.
 *   **Save & Load Games:** Save an unlimited number of game states and load them back at any time for review or continuation.
 
 ### 🚀 Technology & Usability
