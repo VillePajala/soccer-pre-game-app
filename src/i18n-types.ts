@@ -494,6 +494,7 @@ export type TranslationKey =
   | 'settingsModal.title'
   | 'startScreen.createSeasonTournament'
   | 'startScreen.loadGame'
+  | 'startScreen.resumeGame'
   | 'startScreen.startNewGame'
   | 'startScreen.viewStats'
   | 'timerOverlay.confirmSubButton'
