@@ -186,19 +186,4 @@ describe('<RosterSettingsModal />', () => {
     expect(screen.getByText('P2')).toBeInTheDocument();
   });
 
-  test('sorts players by jersey number', () => {
-    const players: Player[] = [
-      { id: 'p1', name: 'Zeta', nickname: 'Z', jerseyNumber: '10', notes: '' },
-      { id: 'p2', name: 'Alpha', nickname: 'A', jerseyNumber: '20', notes: '' },
-      { id: 'p3', name: 'Beta', nickname: 'B', jerseyNumber: '5', notes: '' },
-    ];
-    const { container } = render(
-      <RosterSettingsModal {...defaultProps} availablePlayers={players} />
-    );
-    const getNames = () =>
-      Array.from(container.querySelectorAll('span[title]')).map(el => el.textContent);
-    expect(getNames()).toEqual(['A', 'B', 'Z']);
-    fireEvent.change(screen.getByLabelText('Sort by'), { target: { value: 'jersey' } });
-    expect(getNames()).toEqual(['B', 'Z', 'A']);
-  });
 });

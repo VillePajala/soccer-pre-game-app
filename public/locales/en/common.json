@@ -222,10 +222,7 @@
     "jerseyHeader": "Jersey #",
     "confirmAddPlayer": "Add Player",
     "confirmDeletePlayer": "Are you sure you want to remove this player?",
-    "searchPlaceholder": "Search players...",
-    "sortLabel": "Sort by",
-    "sortByName": "Name",
-    "sortByJersey": "Jersey #"
+    "searchPlaceholder": "Search players..."
   },
   "gameStatsModal": {
     "title": "Game Statistics",
