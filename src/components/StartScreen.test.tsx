@@ -17,6 +17,8 @@ describe('StartScreen', () => {
       onResumeGame: jest.fn(),
       onCreateSeason: jest.fn(),
       onViewStats: jest.fn(),
+      onAssessPlayers: jest.fn(),
+      onOpenSettings: jest.fn(),
     };
 
     render(
@@ -27,6 +29,9 @@ describe('StartScreen', () => {
         canResume
         onCreateSeason={handlers.onCreateSeason}
         onViewStats={handlers.onViewStats}
+        onAssessPlayers={handlers.onAssessPlayers}
+        onOpenSettings={handlers.onOpenSettings}
+        onClose={() => {}}
       />
     );
 
@@ -35,6 +40,9 @@ describe('StartScreen', () => {
     expect(screen.getByRole('button', { name: 'Load Game' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Create Season/Tournament' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'View Stats' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Assess Players' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'App Settings' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Start New Game' }));
     expect(handlers.onStartNewGame).toHaveBeenCalled();
