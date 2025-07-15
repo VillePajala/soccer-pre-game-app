@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { HiOutlineXMark } from 'react-icons/hi2';
 
 interface StartScreenProps {
   onStartNewGame: () => void;
@@ -10,9 +9,6 @@ interface StartScreenProps {
   onResumeGame?: () => void;
   onCreateSeason: () => void;
   onViewStats: () => void;
-  onAssessPlayers?: () => void;
-  onOpenSettings?: () => void;
-  onClose?: () => void;
   canResume?: boolean;
 }
 
@@ -22,9 +18,6 @@ const StartScreen: React.FC<StartScreenProps> = ({
   onResumeGame,
   onCreateSeason,
   onViewStats,
-  onAssessPlayers,
-  onOpenSettings,
-  onClose,
   canResume = false,
 }) => {
   const { t } = useTranslation();
@@ -45,16 +38,6 @@ const StartScreen: React.FC<StartScreenProps> = ({
       <div className="absolute -inset-[50px] bg-sky-400/5 blur-2xl top-0 opacity-50" />
       <div className="absolute -inset-[50px] bg-indigo-600/5 blur-2xl bottom-0 opacity-50" />
 
-      {onClose ? (
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-slate-300 hover:text-white"
-          title={t('common.close', 'Close')}
-        >
-          <HiOutlineXMark className="w-8 h-8" />
-        </button>
-      ) : null}
-
       <div className="relative z-10 flex flex-col items-center space-y-4">
         <h1 className={titleStyle}>Soccer Pre-Game</h1>
         {canResume && onResumeGame ? (
@@ -74,16 +57,6 @@ const StartScreen: React.FC<StartScreenProps> = ({
         <button className={buttonStyle} onClick={onViewStats}>
           {t('startScreen.viewStats', 'View Stats')}
         </button>
-        {onAssessPlayers ? (
-          <button className={buttonStyle} onClick={onAssessPlayers}>
-            {t('controlBar.assessPlayers', 'Assess Players')}
-          </button>
-        ) : null}
-        {onOpenSettings ? (
-          <button className={buttonStyle} onClick={onOpenSettings}>
-            {t('controlBar.appSettings', 'App Settings')}
-          </button>
-        ) : null}
       </div>
     </div>
   );
