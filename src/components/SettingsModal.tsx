@@ -19,6 +19,8 @@ interface SettingsModalProps {
   lastBackupTime?: string | null;
   onAutoBackupEnabledChange: (enabled: boolean) => void;
   onBackupIntervalChange: (hours: number) => void;
+  backupEmail: string;
+  onBackupEmailChange: (email: string) => void;
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -35,10 +37,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   lastBackupTime,
   onAutoBackupEnabledChange,
   onBackupIntervalChange,
+  backupEmail,
+  onBackupEmailChange,
 }) => {
   const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
   const [teamName, setTeamName] = useState(defaultTeamName);
+  const [emailValue, setEmailValue] = useState(backupEmail);
   const [resetConfirm, setResetConfirm] = useState('');
   const [storageEstimate, setStorageEstimate] = useState<{ usage: number; quota: number } | null>(null);
   const MAX_LOCAL_STORAGE = 5 * 1024 * 1024; // 5 MB assumption for localStorage
@@ -46,6 +51,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   useEffect(() => {
     setTeamName(defaultTeamName);
   }, [defaultTeamName]);
+
+  useEffect(() => {
+    setEmailValue(backupEmail);
+  }, [backupEmail]);
 
   useEffect(() => {
     if (isOpen) {
@@ -139,6 +148,17 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                   min={1}
                   value={backupIntervalHours}
                   onChange={(e) => onBackupIntervalChange(Number(e.target.value))}
+                  className={inputStyle}
+                />
+              </div>
+              <div>
+                <label htmlFor="backup-email" className={labelStyle}>{t('settingsModal.backupEmailLabel', 'Backup Email')}</label>
+                <input
+                  id="backup-email"
+                  type="email"
+                  value={emailValue}
+                  onChange={(e) => setEmailValue(e.target.value)}
+                  onBlur={() => onBackupEmailChange(emailValue)}
                   className={inputStyle}
                 />
               </div>

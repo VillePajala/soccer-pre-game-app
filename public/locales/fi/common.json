@@ -580,6 +580,7 @@
     "backupTitle": "Automaattinen varmuuskopio",
     "autoBackupLabel": "Ota automaattinen varmuuskopio käyttöön",
     "backupIntervalLabel": "Varmuuskopiointiväli (tuntia)",
+    "backupEmailLabel": "Varmuuskopio-sähköposti",
     "lastBackupLabel": "Viimeinen varmuuskopio",
     "never": "Ei koskaan"
   },

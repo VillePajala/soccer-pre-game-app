@@ -473,6 +473,7 @@ export type TranslationKey =
   | 'settingsModal.aboutTitle'
   | 'settingsModal.appVersion'
   | 'settingsModal.autoBackupLabel'
+  | 'settingsModal.backupEmailLabel'
   | 'settingsModal.backupIntervalLabel'
   | 'settingsModal.backupTitle'
   | 'settingsModal.confirmResetLabel'

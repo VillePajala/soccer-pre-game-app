@@ -31,6 +31,8 @@ const defaultProps = {
   lastBackupTime: '2024-01-01T00:00:00.000Z',
   onAutoBackupEnabledChange: jest.fn(),
   onBackupIntervalChange: jest.fn(),
+  backupEmail: 'coach@example.com',
+  onBackupEmailChange: jest.fn(),
 };
 
 describe('<SettingsModal />', () => {
@@ -99,5 +101,10 @@ describe('<SettingsModal />', () => {
     const intervalInput = screen.getByLabelText('Backup Interval (hours)');
     fireEvent.change(intervalInput, { target: { value: '12' } });
     expect(defaultProps.onBackupIntervalChange).toHaveBeenCalledWith(12);
+
+    const emailInput = screen.getByLabelText('Backup Email');
+    fireEvent.change(emailInput, { target: { value: 'new@example.com' } });
+    fireEvent.blur(emailInput);
+    expect(defaultProps.onBackupEmailChange).toHaveBeenCalledWith('new@example.com');
   });
 });
