@@ -460,6 +460,7 @@
   "noNotes": "No notes yet. Click to add."
   },
   "startScreen": {
+    "tagline": "Your Ultimate Sideline Assistant",
     "startNewGame": "Start New Game",
     "loadGame": "Load Game",
     "resumeGame": "Resume Last Game",

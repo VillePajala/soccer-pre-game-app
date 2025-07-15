@@ -496,6 +496,7 @@ export type TranslationKey =
   | 'startScreen.loadGame'
   | 'startScreen.resumeGame'
   | 'startScreen.startNewGame'
+  | 'startScreen.tagline'
   | 'startScreen.viewStats'
   | 'timerOverlay.confirmSubButton'
   | 'timerOverlay.gameEnded'

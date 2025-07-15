@@ -29,11 +29,14 @@ const StartScreen: React.FC<StartScreenProps> = ({
   const containerStyle =
     'relative flex flex-col items-center justify-center min-h-screen bg-slate-900 text-slate-100 font-display overflow-hidden';
 
+  const taglineStyle = 'text-xl text-slate-300 mb-6 text-center max-w-xs';
+
   const titleStyle = 'text-4xl font-bold text-yellow-400 tracking-wide drop-shadow-lg mb-8';
 
   return (
     <div className={containerStyle}>
       <div className="absolute inset-0 bg-noise-texture" />
+      <div className="absolute inset-0 bg-gradient-radial from-indigo-900 via-slate-900/80 to-slate-900" />
       <div className="absolute inset-0 bg-indigo-600/10 mix-blend-soft-light" />
       <div className="absolute inset-0 bg-gradient-to-b from-sky-400/10 via-transparent to-transparent" />
       <div className="absolute -inset-[50px] bg-sky-400/5 blur-2xl top-0 opacity-50" />
@@ -45,9 +48,10 @@ const StartScreen: React.FC<StartScreenProps> = ({
           alt="MatchDay Coach Logo"
           width={128}
           height={128}
-          className="mb-4"
+          className="mb-4 animate-pulse-slow"
         />
         <h1 className={titleStyle}>MatchDay Coach</h1>
+        <p className={taglineStyle}>{t('startScreen.tagline', 'Your Ultimate Sideline Assistant')}</p>
         {canResume && onResumeGame ? (
           <button className={buttonStyle} onClick={onResumeGame}>
             {t('startScreen.resumeGame', 'Resume Last Game')}
