@@ -1,13 +1,14 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
-import styles from './InstallPrompt.module.css';
-import logger from '@/utils/logger';
+import React, { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
+import styles from "./InstallPrompt.module.css";
+import logger from "@/utils/logger";
 
 // Define proper interfaces for better type safety
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
 // Define an interface for iOS navigator with standalone property
@@ -17,17 +18,18 @@ interface IosNavigator extends Navigator {
 
 // This component shows a prompt to install the PWA when available
 const InstallPrompt: React.FC = () => {
-  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [installPrompt, setInstallPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
   const [isVisible, setIsVisible] = useState(false);
 
   const checkInstallationStatus = useCallback(() => {
     // Only run this in the browser
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     // Check if app is already installed (PWA or iOS)
-    const isAppInstalled = 
-      window.matchMedia('(display-mode: standalone)').matches || 
-      window.matchMedia('(display-mode: fullscreen)').matches || 
+    const isAppInstalled =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      window.matchMedia("(display-mode: fullscreen)").matches ||
       (window.navigator as IosNavigator).standalone === true;
 
     if (isAppInstalled) {
@@ -36,14 +38,17 @@ const InstallPrompt: React.FC = () => {
     }
 
     // Check localStorage to see if the user dismissed the prompt recently
-    const lastPromptTime = localStorage.getItem('installPromptDismissed');
-    if (lastPromptTime && Date.now() - Number(lastPromptTime) < 24 * 60 * 60 * 1000) {
+    const lastPromptTime = localStorage.getItem("installPromptDismissed");
+    if (
+      lastPromptTime &&
+      Date.now() - Number(lastPromptTime) < 24 * 60 * 60 * 1000
+    ) {
       return; // Don't show prompt if dismissed in the last 24 hours
     }
 
     // If not installed and not recently dismissed, check if we have a prompt event
     if (installPrompt) {
-        setIsVisible(true);
+      setIsVisible(true);
     }
   }, [installPrompt]);
 
@@ -55,15 +60,18 @@ const InstallPrompt: React.FC = () => {
       setIsVisible(true); // Show immediately when event is caught
     };
 
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    window.addEventListener('focus', checkInstallationStatus); // Re-check on focus
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    window.addEventListener("focus", checkInstallationStatus); // Re-check on focus
 
     // Initial check
     checkInstallationStatus();
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      window.removeEventListener('focus', checkInstallationStatus);
+      window.removeEventListener(
+        "beforeinstallprompt",
+        handleBeforeInstallPrompt,
+      );
+      window.removeEventListener("focus", checkInstallationStatus);
     };
   }, [installPrompt, checkInstallationStatus]); // Rerun effect if installPrompt changes
 
@@ -73,16 +81,16 @@ const InstallPrompt: React.FC = () => {
     try {
       await installPrompt.prompt();
       const choiceResult = await installPrompt.userChoice;
-      
-      if (choiceResult.outcome === 'accepted') {
-        logger.log('User accepted the install prompt');
+
+      if (choiceResult.outcome === "accepted") {
+        logger.log("User accepted the install prompt");
       } else {
-        logger.log('User dismissed the install prompt');
+        logger.log("User dismissed the install prompt");
         // Store the time when dismissed to avoid showing it again too soon
-        localStorage.setItem('installPromptDismissed', Date.now().toString());
+        localStorage.setItem("installPromptDismissed", Date.now().toString());
       }
     } catch (error) {
-      logger.error('Error showing install prompt:', error);
+      logger.error("Error showing install prompt:", error);
     }
 
     setInstallPrompt(null);
@@ -90,33 +98,27 @@ const InstallPrompt: React.FC = () => {
   };
 
   const handleDismiss = () => {
-    localStorage.setItem('installPromptDismissed', Date.now().toString());
+    localStorage.setItem("installPromptDismissed", Date.now().toString());
     setIsVisible(false);
   };
+
+  const { t } = useTranslation();
 
   if (!isVisible) return null;
 
   return (
     <div className={styles.installPrompt}>
-      <p className={styles.installPromptText}>
-        Install Coaching Companion for a better, faster experience and offline access!
-      </p>
+      <p className={styles.installPromptText}>{t("installPrompt.message")}</p>
       <div className={styles.installPromptButtons}>
-        <button 
-          className={styles.installButton} 
-          onClick={handleInstall}
-        >
-          Install
+        <button className={styles.installButton} onClick={handleInstall}>
+          {t("installPrompt.installButton")}
         </button>
-        <button 
-          className={styles.dismissButton} 
-          onClick={handleDismiss}
-        >
-          Not now
+        <button className={styles.dismissButton} onClick={handleDismiss}>
+          {t("installPrompt.dismissButton")}
         </button>
       </div>
     </div>
   );
 };
 
-export default InstallPrompt; 
+export default InstallPrompt;

@@ -589,9 +589,9 @@
     "noPlayers": "Ei valittuja pelaajia",
     "notesPlaceholder": "Kirjoita muistiinpanoja...",
     "overallLabel": "Kokonaisarvio",
-  "expand": "Avaa arviointi pelaajalle {{name}}",
-  "collapse": "Sulje arviointi pelaajalle {{name}}",
-  "resetButton": "Nollaa"
+    "expand": "Avaa arviointi pelaajalle {{name}}",
+    "collapse": "Sulje arviointi pelaajalle {{name}}",
+    "resetButton": "Nollaa"
   },
   "assessmentMetrics": {
     "intensity": "Intensiteetti",
@@ -630,5 +630,22 @@
     "goalsAssists": "Maalit ja syötöt",
     "useDemandCorrection": "Painota vaikeuden mukaan",
     "useDemandCorrectionTooltip": "Kun käytössä, vaikeiden pelien arviot vaikuttavat enemmän"
+  },
+  "updateBanner": {
+    "message": "Sovelluksesta on saatavilla uusi versio.",
+    "reloadButton": "Päivitä"
+  },
+  "installPrompt": {
+    "message": "Asenna Coaching Companion saadaksesi nopeamman ja offline-toimivan kokemuksen!",
+    "installButton": "Asenna",
+    "dismissButton": "Ei nyt"
+  },
+  "fullBackup": {
+    "exportSuccess": "Varmuuskopio vietiin onnistuneesti.",
+    "exportError": "Varmuuskopion vienti epäonnistui. Katso konsoli.",
+    "confirmRestore": "Palautetaanko varmuuskopio? Tämä korvaa kaikki tiedot.",
+    "restoreKeyError": "Kohteen {{key}} palautus epäonnistui. Tuonti peruttiin.",
+    "restoreSuccess": "Varmuuskopio palautettu. Sovellus latautuu uudelleen...",
+    "restoreError": "Virhe varmuuskopion tuonnissa: {{error}}"
   }
 }
