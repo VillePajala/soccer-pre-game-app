@@ -1,6 +1,6 @@
 # Data Security Enhancement Plan
 
-This document summarizes a security audit of the Soccer Pre-Game App and outlines recommended enhancements to better protect user data stored in the browser.
+This document summarizes a security audit of the MatchDay Coach app and outlines recommended enhancements to better protect user data stored in the browser.
 
 ## 1. Current Data Handling
 

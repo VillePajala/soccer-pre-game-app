@@ -1,4 +1,4 @@
-# Soccer Pre-Game & Tactics Board
+# MatchDay Coach
 
 ## Yleiskuvaus
 Moderni PWA, joka muuttaa puhelimet ja tabletit täysiverisiksi valmentajan työkaluiksi ottelupäivänä.
@@ -7,7 +7,7 @@ Moderni PWA, joka muuttaa puhelimet ja tabletit täysiverisiksi valmentajan työ
 Valmentajat sähläävät usein muistivihkojen, taulukoiden ja ajastinsovellusten kanssa, jolloin tärkeitä havaintoja katoaa ja aikaa kuluu hukkaan kentän laidalla.
 
 ## Ratkaisumme
-Soccer Pre-Game yhdistää pelaajaluettelon hallinnan, reaaliaikaisen tapahtumakirjauksen ja interaktiivisen taktiikkataulun yhteen selkeään käyttöliittymään. Voit suunnitella, toteuttaa ja analysoida peliä poistumatta kentältä.
+MatchDay Coach yhdistää pelaajaluettelon hallinnan, reaaliaikaisen tapahtumakirjauksen ja interaktiivisen taktiikkataulun yhteen selkeään käyttöliittymään. Voit suunnitella, toteuttaa ja analysoida peliä poistumatta kentältä.
 
 ## Keskeiset ominaisuudet
 ### Otteluun valmistautuminen

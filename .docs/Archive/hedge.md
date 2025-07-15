@@ -1,6 +1,6 @@
 # HEDGE - High-level Enhancement & Development Guide
 
-This document summarizes potential improvements and new feature ideas for the Soccer Pre-Game application after reviewing the current code base.
+This document summarizes potential improvements and new feature ideas for the MatchDay Coach application after reviewing the current code base.
 
 ## 1. Codebase Improvements
 

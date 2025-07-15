@@ -1,6 +1,6 @@
 # Migrating to Supabase
 
-This document explains how to move the Soccer Pre-Game & Tactics Board application from storing data in browser `localStorage` to using Supabase as a backend. It assumes familiarity with the current architecture described in [README.md](./README.md) and [CLAUDE.md](./CLAUDE.md).
+This document explains how to move the MatchDay Coach application from storing data in browser `localStorage` to using Supabase as a backend. It assumes familiarity with the current architecture described in [README.md](./README.md) and [CLAUDE.md](./CLAUDE.md).
 
 ## 1. Current State Overview
 

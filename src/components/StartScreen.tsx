@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
 
 interface StartScreenProps {
@@ -39,7 +40,14 @@ const StartScreen: React.FC<StartScreenProps> = ({
       <div className="absolute -inset-[50px] bg-indigo-600/5 blur-2xl bottom-0 opacity-50" />
 
       <div className="relative z-10 flex flex-col items-center space-y-4">
-        <h1 className={titleStyle}>Soccer Pre-Game</h1>
+        <Image
+          src="/pepo-logo.png"
+          alt="MatchDay Coach Logo"
+          width={128}
+          height={128}
+          className="mb-4"
+        />
+        <h1 className={titleStyle}>MatchDay Coach</h1>
         {canResume && onResumeGame ? (
           <button className={buttonStyle} onClick={onResumeGame}>
             {t('startScreen.resumeGame', 'Resume Last Game')}

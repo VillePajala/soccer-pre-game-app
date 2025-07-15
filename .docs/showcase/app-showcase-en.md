@@ -1,4 +1,4 @@
-# Soccer Pre-Game & Tactics Board
+# MatchDay Coach
 
 ## Overview
 Modern PWA that turns phones and tablets into a complete coaching assistant for match day.
@@ -7,7 +7,7 @@ Modern PWA that turns phones and tablets into a complete coaching assistant for 
 Coaches often juggle notebooks, spreadsheets and timer apps, losing valuable insights and wasting precious time on the sideline.
 
 ## Our Solution
-The Soccer Pre-Game app merges roster management, live event logging and an interactive tactics board in one streamlined interface. Plan, execute and analyze without leaving the field.
+The MatchDay Coach app merges roster management, live event logging and an interactive tactics board in one streamlined interface. Plan, execute and analyze without leaving the field.
 
 ## Key Features
 ### Match Preparation
