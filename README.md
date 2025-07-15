@@ -1,4 +1,4 @@
-# Soccer Pre-Game & Tactics Board
+# MatchDay Coach
 
 A comprehensive PWA for soccer coaches to manage rosters, track live game events, analyze detailed statistics, and design plays on an interactive tactics board. Built for the sideline, available on any device.
 

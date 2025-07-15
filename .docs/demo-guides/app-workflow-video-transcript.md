@@ -1,10 +1,10 @@
 # App Workflow Screen Recording Script
 
-This short script walks through the key features of the Soccer Pre-Game app using your existing demo data. Use it as a guide while recording the phone screen.
+This short script walks through the key features of the MatchDay Coach app using your existing demo data. Use it as a guide while recording the phone screen.
 
 ## 1. Prepare and Launch
 1. Start your device's screen recording.
-2. Open **Soccer Pre-Game** from the home screen.
+2. Open **MatchDay Coach** from the home screen.
 3. From the **Start Screen**, tap **Load Game** and select a recent match.
 
 ## 2. Review the Roster

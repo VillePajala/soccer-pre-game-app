@@ -1,6 +1,6 @@
 # Settings Modal Plan
 
-This document outlines the proposed Settings modal for the Soccer Pre-Game App. The project already stores a few preferences in `src/utils/appSettings.ts` but has no dedicated UI to modify them. The modal will consolidate all global options in one place and build on existing persistence utilities.
+This document outlines the proposed Settings modal for the MatchDay Coach app. The project already stores a few preferences in `src/utils/appSettings.ts` but has no dedicated UI to modify them. The modal will consolidate all global options in one place and build on existing persistence utilities.
 
 ## 1. General
 - **Language selection** – toggle language and persist via `updateAppSettings({ language })`.

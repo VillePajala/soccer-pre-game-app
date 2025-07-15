@@ -1,6 +1,6 @@
 # UI/UX Style Guide
 
-This document outlines the design system and styling conventions for the Soccer Pre-Game App to ensure a cohesive and professional user experience.
+This document outlines the design system and styling conventions for the MatchDay Coach app to ensure a cohesive and professional user experience.
 
 ## 1. Color Palette & Effects
 

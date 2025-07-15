@@ -1,6 +1,6 @@
 # Hedge Companion App Ideas
 
-These concepts expand on the core Soccer Pre-Game application and help hedge development efforts by diversifying the toolset available to coaches.
+These concepts expand on the core MatchDay Coach application and help hedge development efforts by diversifying the toolset available to coaches.
 
 ## 1. Training Session Planner
 - Create practice schedules, assign drills, and track attendance.
