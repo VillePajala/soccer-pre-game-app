@@ -374,6 +374,7 @@
   },
   "timerOverlay.subIntervalLabel": "Vaihdon Aikaväli:",
   "startScreen": {
+    "tagline": "Valmentajan ykkösapuri",
     "startNewGame": "Aloita uusi ottelu",
     "loadGame": "Lataa peli",
     "resumeGame": "Jatka edellistä peliä",
