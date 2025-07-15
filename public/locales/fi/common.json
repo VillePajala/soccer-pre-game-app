@@ -373,6 +373,12 @@
     "confirmAndStart": "Vahvista ja aloita peli"
   },
   "timerOverlay.subIntervalLabel": "Vaihdon Aikaväli:",
+  "startScreen": {
+    "startNewGame": "Aloita uusi ottelu",
+    "loadGame": "Lataa peli",
+    "createSeasonTournament": "Luo kausi/turnaus",
+    "viewStats": "Näytä tilastot"
+  },
   "seasonTournamentModal": {
     "confirmDelete": "Haluatko varmasti poistaa {{name}}?",
     "newSeasonPlaceholder": "Anna uuden kauden nimi...",

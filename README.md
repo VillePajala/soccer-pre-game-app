@@ -77,6 +77,8 @@ The app is designed to be an all-in-one digital assistant for game day, from pre
 
 4.  Open [http://localhost:3000](http://localhost:3000) with your browser to start using the app.
 
+   When launched, a **Start Screen** appears with options to start a new game, load an existing one, create a season or tournament, or view statistics. Select an action to continue to the main field view.
+
 ## Running Tests
 
 Install project dependencies with `npm install` as shown above. Then execute the automated test suite with:
@@ -107,6 +109,3 @@ All rights reserved. No part of this codebase may be copied, reused, or distribu
 
 By contributing to this project, you agree to transfer all IP rights of your contributions to Ville Pajala.  
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for full terms.
-
-
-123

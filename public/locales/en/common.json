@@ -457,7 +457,13 @@
     "noGoalsLogged": "No goals logged yet.",
     "notesTitle": "Game Notes",
     "notesPlaceholder": "Write notes...",
-    "noNotes": "No notes yet. Click to add."
+  "noNotes": "No notes yet. Click to add."
+  },
+  "startScreen": {
+    "startNewGame": "Start New Game",
+    "loadGame": "Load Game",
+    "createSeasonTournament": "Create Season/Tournament",
+    "viewStats": "View Stats"
   },
   "seasonTournamentModal": {
     "confirmDelete": "Are you sure you want to delete {{name}}?",
