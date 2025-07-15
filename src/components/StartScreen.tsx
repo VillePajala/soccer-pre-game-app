@@ -29,7 +29,8 @@ const StartScreen: React.FC<StartScreenProps> = ({
   const containerStyle =
     'relative flex flex-col items-center justify-center min-h-screen bg-slate-900 text-slate-100 font-display overflow-hidden';
 
-  const taglineStyle = 'text-xl text-slate-300 mb-6 text-center max-w-xs';
+  const taglineStyle =
+    'text-xl text-slate-300 mb-8 text-center max-w-xs drop-shadow-md';
 
   const titleStyle = 'text-4xl font-bold text-yellow-400 tracking-wide drop-shadow-lg mb-8';
 
@@ -41,6 +42,17 @@ const StartScreen: React.FC<StartScreenProps> = ({
       <div className="absolute inset-0 bg-gradient-to-b from-sky-400/10 via-transparent to-transparent" />
       <div className="absolute -inset-[50px] bg-sky-400/5 blur-2xl top-0 opacity-50" />
       <div className="absolute -inset-[50px] bg-indigo-600/5 blur-2xl bottom-0 opacity-50" />
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="relative w-[450px] h-[450px]">
+          <div className="absolute inset-0 rounded-full bg-gradient-to-b from-indigo-500/20 via-indigo-700/30 to-transparent blur-3xl" />
+          <Image
+            src="/ball.png"
+            alt=""
+            fill
+            className="object-contain opacity-5 animate-rotate-slow"
+          />
+        </div>
+      </div>
 
       <div className="relative z-10 flex flex-col items-center space-y-4">
         <Image

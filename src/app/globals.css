@@ -51,6 +51,19 @@ body > div {
   animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+@keyframes rotate-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-rotate-slow {
+  animation: rotate-slow 60s linear infinite;
+}
+
 /* Flash feedback for button clicks */
 .flash-feedback {
   animation: flash 0.3s ease-out;
