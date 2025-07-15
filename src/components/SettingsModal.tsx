@@ -4,7 +4,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatBytes } from '@/utils/bytes';
 import packageJson from '../../package.json';
-import { inputBaseStyle } from '@/styles/styleConstants';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -71,7 +70,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   const titleStyle =
     'text-3xl font-bold text-yellow-400 tracking-wide drop-shadow-lg';
   const labelStyle = 'text-sm font-medium text-slate-300 mb-1';
-  const inputStyle = inputBaseStyle;
+  const inputStyle =
+    'block w-full bg-slate-700 border border-slate-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-indigo-500 sm:text-sm text-white';
   const buttonStyle =
     'px-4 py-2 rounded-md text-sm font-medium transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed';
   const primaryButtonStyle =

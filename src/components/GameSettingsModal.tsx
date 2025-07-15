@@ -15,7 +15,6 @@ import { TFunction } from 'i18next';
 import AssessmentSlider from './AssessmentSlider';
 import { AGE_GROUPS, LEVELS } from '@/config/gameOptions';
 import type { TranslationKey } from '@/i18n-types';
-import { inputBaseStyle } from '@/styles/styleConstants';
 
 export type GameEventType = 'goal' | 'opponentGoal' | 'substitution' | 'periodEnd' | 'gameEnd' | 'fairPlayCard';
 
@@ -160,7 +159,6 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
 }) => {
   // logger.log('[GameSettingsModal Render] Props received:', { seasonId, tournamentId, currentGameId });
   const { t } = useTranslation();
-  const inputStyle = inputBaseStyle;
 
   // State for event editing within the modal
   const [localGameEvents, setLocalGameEvents] = useState<GameEvent[]>(gameEvents);
@@ -845,9 +843,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                 id="teamNameInput"
                 value={teamName}
                 onChange={(e) => onTeamNameChange(e.target.value)}
-                className={
-                  `${inputStyle} placeholder-slate-400`
-                }
+                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                 placeholder={t('gameSettingsModal.teamNamePlaceholder', 'Enter team name')}
               />
             </div>
@@ -862,7 +858,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                 id="opponentNameInput"
                 value={opponentName}
                 onChange={(e) => onOpponentNameChange(e.target.value)}
-                className={`${inputStyle} placeholder-slate-400`}
+                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                 placeholder={t('gameSettingsModal.opponentNamePlaceholder', 'Enter opponent name')}
               />
             </div>
@@ -918,7 +914,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                       id="seasonSelect"
                       value={seasonId || ''}
                       onChange={handleSeasonChange}
-                      className={`${inputStyle} flex-1`}
+                      className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                     >
                       <option value="">{t('gameSettingsModal.selectSeason', '-- Select Season --')}</option>
                       {seasons.map((season) => (
@@ -946,7 +942,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                         onChange={(e) => setNewSeasonName(e.target.value)}
                         onKeyDown={handleNewSeasonKeyDown}
                         placeholder={t('gameSettingsModal.newSeasonPlaceholder', 'Enter new season name...')}
-                        className={`${inputStyle} flex-1 min-w-[200px] placeholder-slate-400`}
+                        className="flex-1 min-w-[200px] px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                         disabled={isAddingSeason}
                       />
                       <div className="flex gap-2 shrink-0">
@@ -980,7 +976,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                       id="tournamentSelect"
                       value={tournamentId || ''}
                       onChange={handleTournamentChange}
-                      className={`${inputStyle} flex-1`}
+                      className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                     >
                       <option value="">{t('gameSettingsModal.selectTournament', '-- Select Tournament --')}</option>
                       {tournaments.map((tournament) => (
@@ -1008,7 +1004,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                         onChange={(e) => setNewTournamentName(e.target.value)}
                         onKeyDown={handleNewTournamentKeyDown}
                         placeholder={t('gameSettingsModal.newTournamentPlaceholder', 'Enter new tournament name...')}
-                        className={`${inputStyle} flex-1 min-w-[200px] placeholder-slate-400`}
+                        className="flex-1 min-w-[200px] px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                         disabled={isAddingTournament}
                       />
                       <div className="flex gap-2 shrink-0">
@@ -1049,7 +1045,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                     updateGameDetailsMutation.mutate({ gameId: currentGameId, updates: { ageGroup: e.target.value } });
                   }
                 }}
-                className={inputStyle}
+                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
               >
                 <option value="">{t('common.none', 'None')}</option>
                 {AGE_GROUPS.map((group) => (
@@ -1076,7 +1072,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                     id="gameDateInput"
                     value={gameDate}
                     onChange={(e) => onGameDateChange(e.target.value)}
-                    className={inputStyle}
+                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                   />
                 </div>
 
@@ -1093,7 +1089,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                       value={gameHour}
                       onChange={handleHourChange}
                       placeholder={t('gameSettingsModal.hourPlaceholder', 'HH')}
-                      className={`${inputStyle} w-1/2 placeholder-slate-400`}
+                      className="w-1/2 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                       maxLength={2}
                     />
                     <span className="text-slate-400">:</span>
@@ -1104,7 +1100,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                       value={gameMinute}
                       onChange={handleMinuteChange}
                       placeholder={t('gameSettingsModal.minutePlaceholder', 'MM')}
-                      className={`${inputStyle} w-1/2 placeholder-slate-400`}
+                      className="w-1/2 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                       maxLength={2}
                     />
                   </div>
@@ -1121,7 +1117,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                     value={gameLocation}
                     onChange={(e) => onGameLocationChange(e.target.value)}
                     placeholder={t('gameSettingsModal.locationPlaceholder', 'e.g., Central Park Field 2')}
-                    className={`${inputStyle} placeholder-slate-400`}
+                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                   />
                 </div>
 
@@ -1139,7 +1135,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                         updateGameDetailsMutation.mutate({ gameId: currentGameId, updates: { tournamentLevel: e.target.value } });
                       }
                     }}
-                    className={inputStyle}
+                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                   >
                     <option value="">{t('common.none', 'None')}</option>
                     {LEVELS.map((lvl) => (
@@ -1197,7 +1193,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                       id="numPeriodsSelect"
                       value={numPeriods}
                       onChange={(e) => onNumPeriodsChange(parseInt(e.target.value) as 1 | 2)}
-                      className={inputStyle}
+                      className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                     >
                       <option value={1}>1</option>
                       <option value={2}>2</option>
@@ -1214,7 +1210,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                       id="periodDurationInput"
                       value={periodDurationMinutes}
                       onChange={(e) => onPeriodDurationChange(parseInt(e.target.value, 10))}
-                      className={inputStyle}
+                      className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                       min="1"
                     />
                   </div>
@@ -1256,7 +1252,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                       <select
                         value={availablePlayers.find(p => p.receivedFairPlayCard)?.id || ''}
                         onChange={(e) => handleFairPlayCardClick(e.target.value || null)}
-                        className={`${inputStyle} flex-1`}
+                        className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                       >
                         <option value="">{t('gameSettingsModal.selectPlayerForFairPlay', '-- Select Player --')}</option>
                         {availablePlayers.map((player) => (
@@ -1378,14 +1374,14 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                           value={editGoalTime}
                           onChange={(e) => setEditGoalTime(e.target.value)}
                           placeholder={t('gameSettingsModal.timeFormatPlaceholder', 'MM:SS')}
-                          className={`${inputStyle} placeholder-slate-400`}
+                          className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                         />
                         {event.type === 'goal' && (
                           <>
                             <select
                               value={editGoalScorerId}
                               onChange={(e) => setEditGoalScorerId(e.target.value)}
-                              className={`${inputStyle} appearance-none`}
+                              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm appearance-none"
                             >
                               <option value="">{t('gameSettingsModal.selectScorer', 'Select Scorer...')}</option>
                               {availablePlayers.map(player => (
@@ -1395,7 +1391,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                             <select
                               value={editGoalAssisterId}
                               onChange={(e) => setEditGoalAssisterId(e.target.value || undefined)}
-                              className={`${inputStyle} appearance-none`}
+                              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm appearance-none"
                             >
                               <option value="">{t('gameSettingsModal.selectAssister', 'Select Assister (Optional)...')}</option>
                               {availablePlayers.map(player => (
@@ -1471,7 +1467,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                     value={inlineEditValue}
                     onChange={(e) => setInlineEditValue(e.target.value)}
                     onKeyDown={handleInlineEditKeyDown}
-                    className={`${inputStyle} h-32 resize-none placeholder-slate-400`}
+                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm h-32 resize-none"
                     placeholder={t('gameSettingsModal.notesPlaceholder', 'Write notes...')}
                     disabled={isProcessing}
                   />

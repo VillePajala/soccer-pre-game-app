@@ -6,7 +6,6 @@ import { useTranslation } from 'react-i18next'; // Import translation hook
 import { IntervalLog } from '@/types'; // Import the IntervalLog interface
 import { formatTime } from '@/utils/time';
 import logger from '@/utils/logger';
-import { inputBaseStyle } from '@/styles/styleConstants';
 
 
 interface TimerOverlayProps {
@@ -65,7 +64,6 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
   isLoaded,
 }) => {
   const { t } = useTranslation(); // Initialize translation hook
-  const inputStyle = inputBaseStyle;
 
   // --- State for Opponent Name Editing ---
   const [isEditingOpponentName, setIsEditingOpponentName] = useState(false);
@@ -194,7 +192,7 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
                     onChange={handleOpponentInputChange}
                     onBlur={handleSaveOpponentName} // Save on blur
                     onKeyDown={handleOpponentKeyDown}
-                    className={`${inputStyle} text-xl font-semibold w-28`} // Adjust width as needed
+                    className="bg-slate-700 text-slate-100 text-xl font-semibold outline-none rounded px-2 py-0.5 w-28" // Adjust width as needed
                     onClick={(e) => e.stopPropagation()} // Prevent triggering underlying handlers
                 />
             ) : (
