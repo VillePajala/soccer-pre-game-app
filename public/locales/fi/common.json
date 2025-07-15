@@ -376,6 +376,7 @@
   "startScreen": {
     "startNewGame": "Aloita uusi ottelu",
     "loadGame": "Lataa peli",
+    "resumeGame": "Jatka edellistä peliä",
     "createSeasonTournament": "Luo kausi/turnaus",
     "viewStats": "Näytä tilastot"
   },

@@ -14,6 +14,7 @@ describe('StartScreen', () => {
     const handlers = {
       onStartNewGame: jest.fn(),
       onLoadGame: jest.fn(),
+      onResumeGame: jest.fn(),
       onCreateSeason: jest.fn(),
       onViewStats: jest.fn(),
     };
@@ -22,11 +23,14 @@ describe('StartScreen', () => {
       <StartScreen
         onStartNewGame={handlers.onStartNewGame}
         onLoadGame={handlers.onLoadGame}
+        onResumeGame={handlers.onResumeGame}
+        canResume
         onCreateSeason={handlers.onCreateSeason}
         onViewStats={handlers.onViewStats}
       />
     );
 
+    expect(screen.getByRole('button', { name: 'Resume Last Game' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Start New Game' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Load Game' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Create Season/Tournament' })).toBeInTheDocument();
@@ -34,5 +38,8 @@ describe('StartScreen', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Start New Game' }));
     expect(handlers.onStartNewGame).toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Resume Last Game' }));
+    expect(handlers.onResumeGame).toHaveBeenCalled();
   });
 });

@@ -132,7 +132,7 @@ const initialState: AppState = {
 };
 
 interface HomePageProps {
-  initialAction?: 'newGame' | 'loadGame' | 'season' | 'stats';
+  initialAction?: 'newGame' | 'loadGame' | 'resumeGame' | 'season' | 'stats';
   skipInitialSetup?: boolean;
 }
 
