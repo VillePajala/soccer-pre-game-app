@@ -14,6 +14,7 @@ import SparklineChart from './SparklineChart';
 import RatingBar from './RatingBar';
 import MetricTrendChart from './MetricTrendChart';
 import MetricAreaChart from './MetricAreaChart';
+import { inputBaseStyle } from '@/styles/styleConstants';
 
 interface PlayerStatsViewProps {
   player: Player | null;
@@ -124,7 +125,7 @@ const PlayerStatsView: React.FC<PlayerStatsViewProps> = ({ player, savedGames, o
               id="metric-select"
               value={selectedMetric}
               onChange={(e) => setSelectedMetric(e.target.value)}
-              className="w-full bg-slate-700 border border-slate-600 rounded-md text-white px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className={`${inputBaseStyle} py-1.5 text-sm`}
             >
               {metricOptions.map(opt => (
                 <option key={opt.key} value={opt.key}>{opt.label}</option>

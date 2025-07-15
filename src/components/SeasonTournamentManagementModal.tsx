@@ -8,6 +8,7 @@ import { HiPlusCircle, HiOutlinePencil, HiOutlineTrash, HiOutlineCheck, HiOutlin
 import { UseMutationResult } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import RosterSelection from './RosterSelection';
+import { inputBaseStyle } from '@/styles/styleConstants';
 
 interface SeasonTournamentManagementModalProps {
     isOpen: boolean;
@@ -184,19 +185,19 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             placeholder={placeholder}
-                            className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:ring-indigo-500 focus:border-indigo-500"
+                            className={`${inputBaseStyle} placeholder-slate-400 py-1.5`}
                         />
                         <input
                             type="text"
                             value={(type==='season'?newSeasonFields.location:newTournamentFields.location) || ''}
                             onChange={(e) => type==='season'?setNewSeasonFields(f=>({...f,location:e.target.value})):setNewTournamentFields(f=>({...f,location:e.target.value}))}
                             placeholder={t('seasonTournamentModal.locationLabel')}
-                            className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:ring-indigo-500 focus:border-indigo-500"
+                            className={`${inputBaseStyle} placeholder-slate-400 py-1.5`}
                         />
                         <select
                             value={(type==='season'?newSeasonFields.ageGroup:newTournamentFields.ageGroup) || ''}
                             onChange={(e)=>type==='season'?setNewSeasonFields(f=>({...f,ageGroup:e.target.value})):setNewTournamentFields(f=>({...f,ageGroup:e.target.value}))}
-                            className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white focus:ring-indigo-500 focus:border-indigo-500"
+                            className={`${inputBaseStyle} py-1.5`}
                         >
                             <option value="">{t('common.selectAgeGroup', '-- Select Age Group --')}</option>
                             {AGE_GROUPS.map(group => (
@@ -207,7 +208,7 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                             <select
                                 value={newTournamentFields.level || ''}
                                 onChange={e=>setNewTournamentFields(f=>({...f,level:e.target.value}))}
-                                className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white focus:ring-indigo-500 focus:border-indigo-500"
+                                className={`${inputBaseStyle} py-1.5`}
                             >
                                 <option value="">{t('common.selectLevel', '-- Select Level --')}</option>
                                 {LEVELS.map(lvl => (
@@ -216,16 +217,16 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                             </select>
                         )}
                         <div className="grid grid-cols-2 gap-2">
-                            <input type="number" value={(type==='season'?newSeasonFields.periodCount:newTournamentFields.periodCount) || ''} onChange={(e)=>type==='season'?setNewSeasonFields(f=>({...f,periodCount:parseIntOrUndefined(e.target.value)})):setNewTournamentFields(f=>({...f,periodCount:parseIntOrUndefined(e.target.value)}))} placeholder={t('seasonTournamentModal.periodCountLabel')} className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:ring-indigo-500 focus:border-indigo-500" />
-                            <input type="number" value={(type==='season'?newSeasonFields.periodDuration:newTournamentFields.periodDuration) || ''} onChange={(e)=>type==='season'?setNewSeasonFields(f=>({...f,periodDuration:parseIntOrUndefined(e.target.value)})):setNewTournamentFields(f=>({...f,periodDuration:parseIntOrUndefined(e.target.value)}))} placeholder={t('seasonTournamentModal.periodDurationLabel')} className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:ring-indigo-500 focus:border-indigo-500" />
+                            <input type="number" value={(type==='season'?newSeasonFields.periodCount:newTournamentFields.periodCount) || ''} onChange={(e)=>type==='season'?setNewSeasonFields(f=>({...f,periodCount:parseIntOrUndefined(e.target.value)})):setNewTournamentFields(f=>({...f,periodCount:parseIntOrUndefined(e.target.value)}))} placeholder={t('seasonTournamentModal.periodCountLabel')} className={`${inputBaseStyle} placeholder-slate-400 py-1.5`} />
+                            <input type="number" value={(type==='season'?newSeasonFields.periodDuration:newTournamentFields.periodDuration) || ''} onChange={(e)=>type==='season'?setNewSeasonFields(f=>({...f,periodDuration:parseIntOrUndefined(e.target.value)})):setNewTournamentFields(f=>({...f,periodDuration:parseIntOrUndefined(e.target.value)}))} placeholder={t('seasonTournamentModal.periodDurationLabel')} className={`${inputBaseStyle} placeholder-slate-400 py-1.5`} />
                         </div>
                         {type==='tournament' && (
                             <>
-                                <input type="date" value={(newTournamentFields.startDate as string) || ''} onChange={e=>setNewTournamentFields(f=>({...f,startDate:e.target.value}))} className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white focus:ring-indigo-500 focus:border-indigo-500" placeholder={t('seasonTournamentModal.startDateLabel')} />
-                                <input type="date" value={(newTournamentFields.endDate as string) || ''} onChange={e=>setNewTournamentFields(f=>({...f,endDate:e.target.value}))} className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white focus:ring-indigo-500 focus:border-indigo-500" placeholder={t('seasonTournamentModal.endDateLabel')} />
+                                <input type="date" value={(newTournamentFields.startDate as string) || ''} onChange={e=>setNewTournamentFields(f=>({...f,startDate:e.target.value}))} className={`${inputBaseStyle} py-1.5`} placeholder={t('seasonTournamentModal.startDateLabel')} />
+                                <input type="date" value={(newTournamentFields.endDate as string) || ''} onChange={e=>setNewTournamentFields(f=>({...f,endDate:e.target.value}))} className={`${inputBaseStyle} py-1.5`} placeholder={t('seasonTournamentModal.endDateLabel')} />
                             </>
                         )}
-                        <textarea value={(type==='season'?newSeasonFields.notes:newTournamentFields.notes) || ''} onChange={(e)=>type==='season'?setNewSeasonFields(f=>({...f,notes:e.target.value})):setNewTournamentFields(f=>({...f,notes:e.target.value}))} placeholder={t('seasonTournamentModal.notesLabel')} className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:ring-indigo-500 focus:border-indigo-500" />
+                        <textarea value={(type==='season'?newSeasonFields.notes:newTournamentFields.notes) || ''} onChange={(e)=>type==='season'?setNewSeasonFields(f=>({...f,notes:e.target.value})):setNewTournamentFields(f=>({...f,notes:e.target.value}))} placeholder={t('seasonTournamentModal.notesLabel')} className={`${inputBaseStyle} placeholder-slate-400 py-1.5`} />
                         <RosterSelection
                             players={availablePlayers}
                             selectedIds={type==='season'?newSeasonRoster:newTournamentRoster}
@@ -245,16 +246,16 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                         <div key={item.id} className="bg-slate-800/60 p-2 rounded-md">
                             {editingId === item.id ? (
                                 <div className="space-y-2">
-                                    <input type="text" value={editingName} onChange={(e)=>setEditingName(e.target.value)} className="w-full px-2 py-1 bg-slate-700 border border-indigo-500 rounded-md text-white" />
-                                    <input type="text" value={editingFields.location || ''} onChange={(e)=>setEditingFields(f=>({...f,location:e.target.value}))} placeholder={t('seasonTournamentModal.locationLabel')} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white" />
-                                    <select value={editingFields.ageGroup || ''} onChange={e=>setEditingFields(f=>({...f,ageGroup:e.target.value}))} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white">
+                                    <input type="text" value={editingName} onChange={(e)=>setEditingName(e.target.value)} className={`${inputBaseStyle} py-1 px-2 border-indigo-500`} />
+                                    <input type="text" value={editingFields.location || ''} onChange={(e)=>setEditingFields(f=>({...f,location:e.target.value}))} placeholder={t('seasonTournamentModal.locationLabel')} className={`${inputBaseStyle} py-1 px-2`} />
+                                    <select value={editingFields.ageGroup || ''} onChange={e=>setEditingFields(f=>({...f,ageGroup:e.target.value}))} className={`${inputBaseStyle} py-1 px-2`}>
                                         <option value="">{t('common.selectAgeGroup', '-- Select Age Group --')}</option>
                                         {AGE_GROUPS.map(group => (
                                             <option key={group} value={group}>{group}</option>
                                         ))}
                                     </select>
                                     {type==='tournament' && (
-                                        <select value={editingFields.level || ''} onChange={e=>setEditingFields(f=>({...f,level:e.target.value}))} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white">
+                                        <select value={editingFields.level || ''} onChange={e=>setEditingFields(f=>({...f,level:e.target.value}))} className={`${inputBaseStyle} py-1 px-2`}>
                                             <option value="">{t('common.selectLevel', '-- Select Level --')}</option>
                                             {LEVELS.map(lvl => (
                                                 <option key={lvl} value={lvl}>{t(`common.level${lvl}` as TranslationKey, lvl)}</option>
@@ -262,16 +263,16 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                                         </select>
                                     )}
                                     <div className="grid grid-cols-2 gap-2">
-                                        <input type="number" value={editingFields.periodCount || ''} onChange={(e)=>setEditingFields(f=>({...f,periodCount:parseIntOrUndefined(e.target.value)}))} placeholder={t('seasonTournamentModal.periodCountLabel')} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white" />
-                                        <input type="number" value={editingFields.periodDuration || ''} onChange={(e)=>setEditingFields(f=>({...f,periodDuration:parseIntOrUndefined(e.target.value)}))} placeholder={t('seasonTournamentModal.periodDurationLabel')} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white" />
+                                        <input type="number" value={editingFields.periodCount || ''} onChange={(e)=>setEditingFields(f=>({...f,periodCount:parseIntOrUndefined(e.target.value)}))} placeholder={t('seasonTournamentModal.periodCountLabel')} className={`${inputBaseStyle} py-1 px-2`} />
+                                        <input type="number" value={editingFields.periodDuration || ''} onChange={(e)=>setEditingFields(f=>({...f,periodDuration:parseIntOrUndefined(e.target.value)}))} placeholder={t('seasonTournamentModal.periodDurationLabel')} className={`${inputBaseStyle} py-1 px-2`} />
                                     </div>
                                     {type==='tournament' && (
                                         <>
-                                            <input type="date" value={editingFields.startDate as string || ''} onChange={e=>setEditingFields(f=>({...f,startDate:e.target.value}))} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white" placeholder={t('seasonTournamentModal.startDateLabel')} />
-                                            <input type="date" value={editingFields.endDate as string || ''} onChange={e=>setEditingFields(f=>({...f,endDate:e.target.value}))} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white" placeholder={t('seasonTournamentModal.endDateLabel')} />
+                                            <input type="date" value={editingFields.startDate as string || ''} onChange={e=>setEditingFields(f=>({...f,startDate:e.target.value}))} className={`${inputBaseStyle} py-1 px-2`} placeholder={t('seasonTournamentModal.startDateLabel')} />
+                                            <input type="date" value={editingFields.endDate as string || ''} onChange={e=>setEditingFields(f=>({...f,endDate:e.target.value}))} className={`${inputBaseStyle} py-1 px-2`} placeholder={t('seasonTournamentModal.endDateLabel')} />
                                         </>
                                     )}
-                                    <textarea value={editingFields.notes || ''} onChange={e=>setEditingFields(f=>({...f,notes:e.target.value}))} placeholder={t('seasonTournamentModal.notesLabel')} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white" />
+                                    <textarea value={editingFields.notes || ''} onChange={e=>setEditingFields(f=>({...f,notes:e.target.value}))} placeholder={t('seasonTournamentModal.notesLabel')} className={`${inputBaseStyle} py-1 px-2`} />
                                     <RosterSelection players={availablePlayers} selectedIds={editRoster} onChange={setEditRoster} />
                                     <label className="text-slate-200 text-sm flex items-center gap-1"><input type="checkbox" checked={editingFields.archived || false} onChange={e=>setEditingFields(f=>({...f,archived:e.target.checked}))} className="form-checkbox h-4 w-4" />{t('seasonTournamentModal.archiveLabel')}</label>
                                     <div className="flex justify-end gap-2">

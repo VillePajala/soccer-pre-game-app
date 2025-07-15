@@ -11,6 +11,7 @@ import {
 } from 'react-icons/hi2';
 import { useTranslation } from 'react-i18next';
 import logger from '@/utils/logger';
+import { inputBaseStyle } from '@/styles/styleConstants';
 
 interface RosterSettingsModalProps {
   isOpen: boolean;
@@ -267,7 +268,6 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
   const titleStyle = "text-3xl font-bold text-yellow-400 tracking-wide";
   const cardStyle = "bg-slate-900/70 p-4 rounded-lg border border-slate-700 shadow-inner";
   const labelStyle = "text-sm font-medium text-slate-300 mb-1";
-  const inputBaseStyle = "block w-full bg-slate-700 border border-slate-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-indigo-500 sm:text-sm text-white";
   const buttonBaseStyle = "px-4 py-2 rounded-md text-sm font-medium transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed";
   const primaryButtonStyle = `${buttonBaseStyle} bg-gradient-to-b from-indigo-500 to-indigo-600 text-white hover:from-indigo-600 hover:to-indigo-700 shadow-lg`;
   const secondaryButtonStyle = `${buttonBaseStyle} bg-gradient-to-b from-slate-600 to-slate-700 text-slate-200 hover:from-slate-700 hover:to-slate-600`;

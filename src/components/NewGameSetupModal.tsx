@@ -13,6 +13,7 @@ import { UseMutationResult } from '@tanstack/react-query';
 import AssessmentSlider from './AssessmentSlider';
 import { AGE_GROUPS, LEVELS } from '@/config/gameOptions';
 import type { TranslationKey } from '@/i18n-types';
+import { inputBaseStyle } from '@/styles/styleConstants';
 
 interface NewGameSetupModalProps {
   isOpen: boolean;
@@ -492,7 +493,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                 ref={homeTeamInputRef}
                 value={homeTeamName}
                 onChange={(e) => setHomeTeamName(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                className={`${inputBaseStyle} placeholder-slate-400`}
                 placeholder={t('newGameSetupModal.homeTeamPlaceholder', 'e.g., Galaxy U10')}
                 onKeyDown={handleKeyDown}
                     disabled={isLoading}
@@ -513,7 +514,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                 onChange={(e) => setOpponentName(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={t('newGameSetupModal.opponentPlaceholder', 'Enter opponent name')}
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                className={`${inputBaseStyle} placeholder-slate-400`}
                 disabled={isLoading}
               />
             </div>
@@ -544,7 +545,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                             id="seasonSelect"
                             value={selectedSeasonId || ''}
                             onChange={handleSeasonChange}
-                            className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                            className={`${inputBaseStyle} flex-1`}
                           >
                             <option value="">{t('newGameSetupModal.selectSeason', '-- Select Season --')}</option>
                             {seasons.map((season) => (
@@ -572,7 +573,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                               onChange={(e) => setNewSeasonName(e.target.value)}
                               onKeyDown={handleNewSeasonKeyDown}
                               placeholder={t('newGameSetupModal.newSeasonPlaceholder', 'Enter new season name...')}
-                              className="flex-1 min-w-[200px] px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                            className={`${inputBaseStyle} flex-1 min-w-[200px] placeholder-slate-400`}
                               disabled={isAddingSeason}
                             />
                             <div className="flex gap-2 shrink-0">
@@ -607,7 +608,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                             id="tournamentSelect"
                             value={selectedTournamentId || ''}
                             onChange={handleTournamentChange}
-                            className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                            className={`${inputBaseStyle} flex-1`}
                           >
                             <option value="">{t('newGameSetupModal.selectTournament', '-- Select Tournament --')}</option>
                             {tournaments.map((tournament) => (
@@ -636,7 +637,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                               value={tournamentLevel}
                               onChange={(e) => setTournamentLevel(e.target.value)}
                               onKeyDown={handleKeyDown}
-                              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                              className={`${inputBaseStyle}`} 
                               disabled={isLoading}
                             >
                               <option value="">{t('common.none', 'None')}</option>
@@ -657,7 +658,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                               onChange={(e) => setNewTournamentName(e.target.value)}
                               onKeyDown={handleNewTournamentKeyDown}
                               placeholder={t('newGameSetupModal.newTournamentPlaceholder', 'Enter new tournament name...')}
-                              className="flex-1 min-w-[200px] px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                              className={`${inputBaseStyle} flex-1 min-w-[200px] placeholder-slate-400`}
                               disabled={isAddingTournament}
                             />
                             <div className="flex gap-2 shrink-0">
@@ -693,7 +694,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                         value={ageGroup}
                         onChange={(e) => setAgeGroup(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                        className={`${inputBaseStyle}`}
                         disabled={isLoading}
                       >
                         <option value="">{t('common.none', 'None')}</option>
@@ -717,7 +718,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                         value={gameDate}
                         onChange={(e) => setGameDate(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                        className={inputBaseStyle}
                         disabled={isLoading}
                       />
                     </div>
@@ -734,7 +735,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                         onChange={(e) => setGameLocation(e.target.value)}
                         onKeyDown={handleKeyDown}
                         placeholder={t('newGameSetupModal.locationPlaceholder', 'e.g., Central Park Field 2')}
-                        className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                        className={`${inputBaseStyle} placeholder-slate-400`}
                         disabled={isLoading}
                       />
                     </div>
@@ -751,7 +752,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                           onChange={handleHourChange}
                           onKeyDown={handleKeyDown}
                           placeholder={t('newGameSetupModal.hourPlaceholder', 'HH')}
-                          className="w-1/2 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                          className={`${inputBaseStyle} w-1/2 placeholder-slate-400`}
                           min="0"
                           max="23"
                           disabled={isLoading}
@@ -763,7 +764,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                           onChange={handleMinuteChange}
                           onKeyDown={handleKeyDown}
                           placeholder={t('newGameSetupModal.minutePlaceholder', 'MM')}
-                          className="w-1/2 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                          className={`${inputBaseStyle} w-1/2 placeholder-slate-400`}
                           min="0"
                           max="59"
                           disabled={isLoading}
@@ -854,7 +855,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                           id="numPeriodsSelect"
                           value={localNumPeriods}
                           onChange={(e) => setLocalNumPeriods(parseInt(e.target.value) as 1 | 2)}
-                          className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                          className={inputBaseStyle}
                         >
                           <option value={1}>1</option>
                           <option value={2}>2</option>
@@ -871,7 +872,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                           id="periodDurationInput"
                           value={localPeriodDurationString}
                           onChange={(e) => setLocalPeriodDurationString(e.target.value)}
-                          className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                          className={inputBaseStyle}
                           min="1"
                         />
                       </div>

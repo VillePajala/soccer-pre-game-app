@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { inputBaseStyle } from '@/styles/styleConstants';
 
 interface GameInfoBarProps {
   teamName: string;
@@ -92,7 +93,7 @@ const GameInfoBar: React.FC<GameInfoBarProps> = ({
     }
   };
 
-  const inputClasses = "bg-transparent border-none outline-none text-slate-100 text-sm font-medium px-1 py-0 focus:bg-slate-700 rounded";
+  const inputClasses = `${inputBaseStyle} bg-transparent border-none px-1 py-0 text-sm font-medium`;
 
   const leftTeamName = homeOrAway === 'home' ? teamName : opponentName;
   const rightTeamName = homeOrAway === 'home' ? opponentName : teamName;
