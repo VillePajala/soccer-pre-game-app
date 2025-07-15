@@ -30,7 +30,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
   const { t } = useTranslation();
 
   const buttonStyle =
-    'w-64 px-5 py-2 rounded-md text-lg font-semibold flex items-center justify-center gap-2 bg-gradient-to-br from-indigo-500 via-purple-600 to-indigo-700 text-white shadow-lg transition-all hover:shadow-xl hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900 glow-indigo';
+    'w-64 px-4 py-2 rounded-md text-lg font-semibold flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500';
 
   const containerStyle =
     'relative flex flex-col items-center justify-center min-h-screen bg-slate-900 text-slate-100 font-display overflow-hidden';
@@ -46,19 +46,9 @@ const StartScreen: React.FC<StartScreenProps> = ({
       <div className="absolute inset-0 bg-gradient-radial from-indigo-900 via-slate-900/80 to-slate-900" />
       <div className="absolute inset-0 bg-indigo-600/10 mix-blend-soft-light" />
       <div className="absolute inset-0 bg-gradient-to-b from-sky-400/10 via-transparent to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-700 opacity-30 animate-gradient" />
       <div className="absolute -inset-[50px] bg-sky-400/5 blur-2xl top-0 opacity-50" />
       <div className="absolute -inset-[50px] bg-indigo-600/5 blur-2xl bottom-0 opacity-50" />
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div className="relative w-[450px] h-[450px]">
-          <div className="absolute inset-0 rounded-full bg-gradient-to-b from-indigo-500/20 via-indigo-700/30 to-transparent blur-3xl" />
-          <Image
-            src="/ball.png"
-            alt=""
-            fill
-            className="object-contain opacity-5 animate-rotate-slow"
-          />
-        </div>
-      </div>
 
       <div className="relative z-10 flex flex-col items-center space-y-4">
         <Image
