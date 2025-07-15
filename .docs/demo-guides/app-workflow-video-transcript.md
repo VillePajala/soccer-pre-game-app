@@ -5,7 +5,7 @@ This short script walks through the key features of the Soccer Pre-Game app usin
 ## 1. Prepare and Launch
 1. Start your device's screen recording.
 2. Open **Soccer Pre-Game** from the home screen.
-3. From the start page, tap **Load Game** and select a recent match.
+3. From the **Start Screen**, tap **Load Game** and select a recent match.
 
 ## 2. Review the Roster
 1. Open the **Roster** modal to show the player list.
@@ -38,7 +38,7 @@ This short script walks through the key features of the Soccer Pre-Game app usin
 
 ## 8. Save Progress and Wrap Up
 1. Tap **Quick Save**.
-2. Return to the start page and show that the saved game appears in the load list.
+2. Return to the **Start Screen** and show that the saved game appears in the load list.
 3. Stop the screen recording.
 
 > **Tip:** Use the language selector in the top bar to demonstrate instant translation updates if desired.

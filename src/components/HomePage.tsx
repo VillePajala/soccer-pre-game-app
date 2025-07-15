@@ -131,10 +131,12 @@ const initialState: AppState = {
   tacticalBallPosition: { relX: 0.5, relY: 0.5 },
 };
 
+interface HomePageProps {
+  initialAction?: 'newGame' | 'loadGame' | 'season' | 'stats';
+  skipInitialSetup?: boolean;
+}
 
-
-
-function HomePage() {
+function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   logger.log('--- page.tsx RENDER ---');
   const { t } = useTranslation(); // Get translation function
   const queryClient = useQueryClient(); // Get query client instance
@@ -374,7 +376,7 @@ function HomePage() {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   // <<< ADD: State for home/away status >>>
   const [initialLoadComplete, setInitialLoadComplete] = useState<boolean>(false);
-  const [hasSkippedInitialSetup, setHasSkippedInitialSetup] = useState<boolean>(false);
+  const [hasSkippedInitialSetup, setHasSkippedInitialSetup] = useState<boolean>(skipInitialSetup);
   const [defaultTeamNameSetting, setDefaultTeamNameSetting] = useState<string>('');
   const [appLanguage, setAppLanguage] = useState<string>(i18n.language);
   const [autoBackupEnabled, setAutoBackupEnabled] = useState<boolean>(false);
@@ -428,6 +430,26 @@ function HomePage() {
   // --- Timer State (Still needed here) ---
   const [showLargeTimerOverlay, setShowLargeTimerOverlay] = useState<boolean>(false); // State for overlay visibility
   const [isInstructionsModalOpen, setIsInstructionsModalOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!initialAction) return;
+    switch (initialAction) {
+      case 'newGame':
+        setIsNewGameSetupModalOpen(true);
+        break;
+      case 'loadGame':
+        setIsLoadGameModalOpen(true);
+        break;
+      case 'season':
+        setIsSeasonTournamentModalOpen(true);
+        break;
+      case 'stats':
+        setIsGameStatsModalOpen(true);
+        break;
+      default:
+        break;
+    }
+  }, [initialAction, setIsNewGameSetupModalOpen, setIsLoadGameModalOpen, setIsSeasonTournamentModalOpen, setIsGameStatsModalOpen]);
   
   // --- Modal States handled via context ---
 
