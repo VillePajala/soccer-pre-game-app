@@ -171,10 +171,34 @@ describe('<RosterSettingsModal />', () => {
 
   test('opens player stats', () => {
     render(<RosterSettingsModal {...defaultProps} />);
-    
+
     const statsButtons = screen.getAllByTitle('Stats');
     fireEvent.click(statsButtons[0]); // Open stats for first player
-    
+
     expect(mockOnOpenPlayerStats).toHaveBeenCalledWith('p1');
   });
-}); 
+
+  test('filters players by search input', () => {
+    render(<RosterSettingsModal {...defaultProps} />);
+    const searchInput = screen.getByPlaceholderText('Search players...');
+    fireEvent.change(searchInput, { target: { value: 'Two' } });
+    expect(screen.queryByText('P1')).not.toBeInTheDocument();
+    expect(screen.getByText('P2')).toBeInTheDocument();
+  });
+
+  test('sorts players by jersey number', () => {
+    const players: Player[] = [
+      { id: 'p1', name: 'Zeta', nickname: 'Z', jerseyNumber: '10', notes: '' },
+      { id: 'p2', name: 'Alpha', nickname: 'A', jerseyNumber: '20', notes: '' },
+      { id: 'p3', name: 'Beta', nickname: 'B', jerseyNumber: '5', notes: '' },
+    ];
+    const { container } = render(
+      <RosterSettingsModal {...defaultProps} availablePlayers={players} />
+    );
+    const getNames = () =>
+      Array.from(container.querySelectorAll('span[title]')).map(el => el.textContent);
+    expect(getNames()).toEqual(['A', 'B', 'Z']);
+    fireEvent.change(screen.getByLabelText('Sort by'), { target: { value: 'jersey' } });
+    expect(getNames()).toEqual(['B', 'Z', 'A']);
+  });
+});

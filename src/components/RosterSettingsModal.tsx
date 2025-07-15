@@ -60,6 +60,9 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
   const [isAddingPlayer, setIsAddingPlayer] = useState(false);
   const [newPlayerData, setNewPlayerData] = useState({ name: '', jerseyNumber: '', notes: '', nickname: '' });
 
+  const [searchText, setSearchText] = useState('');
+  const [sortBy, setSortBy] = useState<'name' | 'jersey'>('name');
+
   // State for the actions menu
   const [actionsMenuPlayerId, setActionsMenuPlayerId] = useState<string | null>(null);
   const actionsMenuRef = useRef<HTMLDivElement>(null); // Ref for click outside
@@ -197,6 +200,12 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
     setNewPlayerData({ name: '', jerseyNumber: '', notes: '', nickname: '' });
     setIsAddingPlayer(false);
   };
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchText(e.target.value);
+  };
+  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSortBy(e.target.value as 'name' | 'jersey');
+  };
   // --- End New Player Handlers ---
 
   // Handle team name input change
@@ -234,6 +243,24 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
   }, [teamName]);
 
   if (!isOpen) return null;
+
+  const filteredPlayers = [...availablePlayers]
+    .filter(p => {
+      if (!searchText) return true;
+      const search = searchText.toLowerCase();
+      return (
+        p.name.toLowerCase().includes(search) ||
+        (p.nickname && p.nickname.toLowerCase().includes(search))
+      );
+    })
+    .sort((a, b) => {
+      if (sortBy === 'name') {
+        return a.name.localeCompare(b.name);
+      }
+      const aNum = parseInt(a.jerseyNumber || '0', 10);
+      const bNum = parseInt(b.jerseyNumber || '0', 10);
+      return aNum - bNum;
+    });
 
   // --- Style Guide Definitions ---
   const modalContainerStyle = "bg-slate-800 rounded-none shadow-xl flex flex-col border-0 overflow-hidden";
@@ -318,6 +345,28 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                   </div>
                 )}
               </div>
+
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <input
+                  type="text"
+                  placeholder={t('rosterSettingsModal.searchPlaceholder', 'Search players...')}
+                  value={searchText}
+                  onChange={handleSearchChange}
+                  className={inputBaseStyle}
+                />
+                <div>
+                  <label htmlFor="sort-select" className={labelStyle}>{t('rosterSettingsModal.sortLabel', 'Sort by')}</label>
+                  <select
+                    id="sort-select"
+                    value={sortBy}
+                    onChange={handleSortChange}
+                    className={`${inputBaseStyle} mt-1`}
+                  >
+                    <option value="name">{t('rosterSettingsModal.sortByName', 'Name')}</option>
+                    <option value="jersey">{t('rosterSettingsModal.sortByJersey', 'Jersey #')}</option>
+                  </select>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -353,8 +402,8 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                 </div>
               </div>
               <div className="space-y-1.5">
-                {availablePlayers.map((player, index) => (
-                  <div 
+                {filteredPlayers.map((player, index) => (
+                  <div
                     key={player.id}
                     ref={(el) => { playerRefs.current[index] = el; }}
                     className={`p-2 rounded-md border ${editingPlayerId === player.id ? 'bg-slate-700/75 border-indigo-500' : 'bg-slate-800/40 border-slate-700/50 hover:bg-slate-800/60 transition-colors'}`}
