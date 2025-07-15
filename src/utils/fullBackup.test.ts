@@ -1,12 +1,22 @@
 // src/utils/fullBackup.test.ts
 import { importFullBackup, exportFullBackup } from './fullBackup'; // Adding exportFullBackup
-import { 
-  SAVED_GAMES_KEY, 
-  APP_SETTINGS_KEY, 
-  SEASONS_LIST_KEY, 
-  TOURNAMENTS_LIST_KEY, 
-  MASTER_ROSTER_KEY 
+import {
+  SAVED_GAMES_KEY,
+  APP_SETTINGS_KEY,
+  SEASONS_LIST_KEY,
+  TOURNAMENTS_LIST_KEY,
+  MASTER_ROSTER_KEY
 } from '@/config/storageKeys'; // Using path alias from jest.config.js
+
+jest.mock('@/utils/appSettings', () => ({
+  getAppSettings: jest.fn().mockResolvedValue({ backupEmail: '' }),
+}));
+import { getAppSettings } from '@/utils/appSettings';
+jest.mock('@/utils/emailBackup', () => ({
+  __esModule: true,
+  default: jest.fn(),
+}));
+import sendBackupEmail from '@/utils/emailBackup';
 
 // Mock localStorage globally for all tests in this file
 const localStorageMock = (() => {
@@ -462,6 +472,8 @@ describe('exportFullBackup', () => {
       }
       return originalCreateElement.call(document, tagName);
     }) as jest.Mock;
+    (sendBackupEmail as jest.Mock).mockClear();
+    (getAppSettings as jest.Mock).mockResolvedValue({ backupEmail: '' });
   });
 
   afterEach(() => {
@@ -549,6 +561,18 @@ describe('exportFullBackup', () => {
     expect(backupData.localStorage[MASTER_ROSTER_KEY]).toBeNull();
     expect(backupData.localStorage[SEASONS_LIST_KEY]).toBeNull();
     expect(backupData.localStorage[TOURNAMENTS_LIST_KEY]).toBeNull();
+  });
+
+  it('sends backup via email when address configured', async () => {
+    (getAppSettings as jest.Mock).mockResolvedValue({ backupEmail: 'test@example.com' });
+    await exportFullBackup();
+    expect(sendBackupEmail).toHaveBeenCalledWith(expect.any(Blob), 'test@example.com');
+  });
+
+  it('does not send email when address empty', async () => {
+    (getAppSettings as jest.Mock).mockResolvedValue({ backupEmail: '' });
+    await exportFullBackup();
+    expect(sendBackupEmail).not.toHaveBeenCalled();
   });
 
   it('should log an error and set value to null if a localStorage item is malformed JSON', async () => {

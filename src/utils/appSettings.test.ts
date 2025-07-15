@@ -51,6 +51,7 @@ describe('App Settings Utilities', () => {
         autoBackupEnabled: false,
         autoBackupIntervalHours: 24,
         lastBackupTime: undefined,
+        backupEmail: '',
         useDemandCorrection: false
       });
     });
@@ -70,6 +71,7 @@ describe('App Settings Utilities', () => {
         autoBackupEnabled: false,
         autoBackupIntervalHours: 24,
         lastBackupTime: undefined,
+        backupEmail: '',
         useDemandCorrection: false
       });
     });
@@ -89,6 +91,7 @@ describe('App Settings Utilities', () => {
         autoBackupEnabled: false,
         autoBackupIntervalHours: 24,
         lastBackupTime: undefined,
+        backupEmail: '',
         useDemandCorrection: false
       });
       
@@ -111,6 +114,7 @@ describe('App Settings Utilities', () => {
         autoBackupEnabled: false,
         autoBackupIntervalHours: 24,
         lastBackupTime: undefined,
+        backupEmail: '',
         useDemandCorrection: false
       });
       consoleSpy.mockRestore();
@@ -170,6 +174,7 @@ describe('App Settings Utilities', () => {
         autoBackupEnabled: false,
         autoBackupIntervalHours: 24,
         lastBackupTime: undefined,
+        backupEmail: '',
         useDemandCorrection: false
       });
       
@@ -183,6 +188,7 @@ describe('App Settings Utilities', () => {
           autoBackupEnabled: false,
           autoBackupIntervalHours: 24,
           lastBackupTime: undefined,
+          backupEmail: '',
           useDemandCorrection: false
         })
       );
@@ -261,6 +267,7 @@ describe('App Settings Utilities', () => {
           hasSeenAppGuide: false,
           autoBackupEnabled: false,
           autoBackupIntervalHours: 24,
+          backupEmail: '',
           useDemandCorrection: false
         })
       );
@@ -346,6 +353,7 @@ describe('App Settings Utilities', () => {
         expect(savedSettings).toEqual({
           ...currentSettings, // Ensure other settings are preserved
           lastHomeTeamName: 'New Team Name', // The updated value
+          backupEmail: '',
           useDemandCorrection: false
         });
       }
@@ -388,6 +396,7 @@ describe('App Settings Utilities', () => {
           autoBackupEnabled: false,
           autoBackupIntervalHours: 24,
           lastBackupTime: undefined,
+          backupEmail: '',
           useDemandCorrection: false
         })
       );

@@ -9,6 +9,8 @@ import {
   MASTER_ROSTER_KEY
 } from '@/config/storageKeys';
 import logger from '@/utils/logger';
+import { getAppSettings } from '@/utils/appSettings';
+import sendBackupEmail from '@/utils/emailBackup';
 // Import the new async localStorage utility functions
 import {
   getLocalStorageItem,
@@ -87,6 +89,16 @@ export const exportFullBackup = async (): Promise<void> => {
     URL.revokeObjectURL(url);
     logger.log(`Full backup exported successfully as ${a.download}`);
     alert('Full backup exported successfully!'); // Provide user feedback
+
+    const settings = await getAppSettings();
+    if (settings.backupEmail) {
+      try {
+        await sendBackupEmail(blob, settings.backupEmail);
+        logger.log(`Backup emailed to ${settings.backupEmail}`);
+      } catch (err) {
+        logger.error('Failed to send backup email:', err);
+      }
+    }
 
   } catch (error) {
     logger.error("Failed to export full backup:", error);

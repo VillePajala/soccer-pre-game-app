@@ -589,6 +589,7 @@
     "backupTitle": "Automatic Backup",
     "autoBackupLabel": "Enable Automatic Backup",
     "backupIntervalLabel": "Backup Interval (hours)",
+    "backupEmailLabel": "Backup Email",
     "lastBackupLabel": "Last Backup",
     "never": "Never"
   },
