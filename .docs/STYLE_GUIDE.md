@@ -75,13 +75,6 @@ Our theme combines deep, professional slate backgrounds with subtle gradients an
   border-slate-500 rounded
   focus:ring-indigo-500
   ```
-- **Text Inputs:**
-  ```css
-  block w-full bg-slate-700 border border-slate-600 rounded-md shadow-sm
-  py-2 px-3 focus:outline-none focus:ring-2 focus:ring-offset-2
-  focus:ring-offset-slate-800 focus:ring-indigo-500 sm:text-sm text-white
-  ```
-  Used for all editable text fields such as the team name input in `RosterSettingsModal`.
 
 ## 4. List Items
 - **Container:**

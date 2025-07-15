@@ -4,7 +4,6 @@ import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next';
 import type { TranslationKey } from '@/i18n-types';
 import logger from '@/utils/logger';
-import { inputBaseStyle } from '@/styles/styleConstants';
 // Import types from the types directory
 import { Player, PlayerStatRow, Season, Tournament } from '@/types';
 import { GameEvent, SavedGamesCollection } from '@/types';
@@ -129,7 +128,6 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   onGameClick = () => {},
 }) => {
   const { t, i18n } = useTranslation();
-  const inputStyle = inputBaseStyle;
 
   // <<< ADD DIAGNOSTIC LOG >>>
   // logger.log('[GameStatsModal Render] gameEvents prop:', JSON.stringify(gameEvents));
@@ -943,13 +941,13 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
               </div>
 
               {activeTab === 'season' && (
-                <select value={selectedSeasonIdFilter} onChange={(e) => setSelectedSeasonIdFilter(e.target.value)} className={`${inputStyle} mt-2 px-3 py-1.5 text-sm w-full bg-slate-700 border-slate-600`}>
+                <select value={selectedSeasonIdFilter} onChange={(e) => setSelectedSeasonIdFilter(e.target.value)} className="w-full mt-2 bg-slate-700 border border-slate-600 rounded-md text-white px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500">
                   <option value="all">{t('gameStatsModal.filterAllSeasons')}</option>
                   {seasons.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
               )}
               {activeTab === 'tournament' && (
-                <select value={selectedTournamentIdFilter} onChange={(e) => setSelectedTournamentIdFilter(e.target.value)} className={`${inputStyle} mt-2 px-3 py-1.5 text-sm w-full bg-slate-700 border-slate-600`}>
+                <select value={selectedTournamentIdFilter} onChange={(e) => setSelectedTournamentIdFilter(e.target.value)} className="w-full mt-2 bg-slate-700 border border-slate-600 rounded-md text-white px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500">
                   <option value="all">{t('gameStatsModal.filterAllTournaments')}</option>
                   {tournaments.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                 </select>
@@ -972,7 +970,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                       const newSelectedPlayer = availablePlayers.find(p => p.id === e.target.value) || null;
                       setSelectedPlayer(newSelectedPlayer);
                     }}
-                    className={`${inputStyle} px-3 py-1.5 text-sm w-full`}
+                    className="w-full bg-slate-700 border border-slate-600 rounded-md text-white px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   >
                     <option value="" disabled>{t('playerStats.selectPlayer', 'Select a player to view their stats.')}</option>
                     {availablePlayers.map(p => (
@@ -1223,7 +1221,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                       value={filterText}
                       onChange={handleFilterChange}
                       placeholder={t('common.filterByName', 'Filter by name...')}
-                      className={`${inputStyle} pl-8 pr-3 py-1.5 text-sm bg-slate-800 border-slate-700`}
+                      className="bg-slate-800 border border-slate-700 rounded-md text-white pl-8 pr-3 py-1.5 text-sm w-full focus:outline-none focus:ring-1 focus:ring-indigo-500"
                     />
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -1298,21 +1296,21 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                   <div>
                                     <label className="block text-xs font-medium text-slate-400 mb-1">{t('common.time', 'Time')}</label>
-                                    <input
-                                      type="text"
-                                      value={editGoalTime}
-                                      onChange={e => setEditGoalTime(e.target.value)}
+                                    <input 
+                                      type="text" 
+                                      value={editGoalTime} 
+                                      onChange={e => setEditGoalTime(e.target.value)} 
                                       onKeyDown={handleGoalEditKeyDown}
                                       placeholder="MM:SS"
-                                      className={`${inputStyle} px-2 py-1.5 text-sm`}
+                                      className="w-full bg-slate-700 border border-slate-600 rounded-md px-2 py-1.5 text-sm"
                                     />
                                   </div>
                                   <div>
                                     <label className="block text-xs font-medium text-slate-400 mb-1">{t('common.scorer', 'Scorer')}</label>
-                                    <select
-                                      value={editGoalScorerId}
+                                    <select 
+                                      value={editGoalScorerId} 
                                       onChange={e => setEditGoalScorerId(e.target.value)}
-                                      className={`${inputStyle} px-2 py-1.5 text-sm`}
+                                      className="w-full bg-slate-700 border border-slate-600 rounded-md px-2 py-1.5 text-sm"
                                     >
                                       <option value="">{t('common.select', 'Select...')}</option>
                                       {availablePlayers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -1320,10 +1318,10 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                                   </div>
                                   <div>
                                     <label className="block text-xs font-medium text-slate-400 mb-1">{t('common.assist', 'Assist')}</label>
-                                    <select
-                                      value={editGoalAssisterId}
+                                    <select 
+                                      value={editGoalAssisterId} 
                                       onChange={e => setEditGoalAssisterId(e.target.value || '')}
-                                      className={`${inputStyle} px-2 py-1.5 text-sm`}
+                                      className="w-full bg-slate-700 border border-slate-600 rounded-md px-2 py-1.5 text-sm"
                                     >
                                       <option value="">{t('common.none', 'None')}</option>
                                       {availablePlayers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -1372,7 +1370,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                         </div>
                       </div>
                        {isEditingNotes ? (
-                          <textarea ref={notesTextareaRef} value={editGameNotes} onChange={(e) => setEditGameNotes(e.target.value)} className={`${inputStyle} h-24 p-2 text-sm text-slate-100`} placeholder={t('gameStatsModal.notesPlaceholder', 'Notes...') ?? undefined} />
+                          <textarea ref={notesTextareaRef} value={editGameNotes} onChange={(e) => setEditGameNotes(e.target.value)} className="w-full h-24 p-2 bg-slate-700 border border-slate-500 rounded-md shadow-sm text-sm text-slate-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder={t('gameStatsModal.notesPlaceholder', 'Notes...') ?? undefined} />
                       ) : (
                           <div className="min-h-[6rem] p-2 text-sm text-slate-300 whitespace-pre-wrap">
                               {gameNotes || <span className="italic text-slate-400">{t('gameStatsModal.noNotes', 'No notes.')}</span>}
