@@ -3,6 +3,12 @@
 import React from 'react';
 import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
+import {
+  HiOutlinePlayCircle,
+  HiOutlineFolderOpen,
+  HiOutlineTrophy,
+  HiOutlineChartBar,
+} from 'react-icons/hi2';
 
 interface StartScreenProps {
   onStartNewGame: () => void;
@@ -24,12 +30,13 @@ const StartScreen: React.FC<StartScreenProps> = ({
   const { t } = useTranslation();
 
   const buttonStyle =
-    'px-4 py-2 rounded-md text-lg font-medium transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 bg-gradient-to-b from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white w-64';
+    'w-64 px-5 py-2 rounded-md text-lg font-semibold flex items-center justify-center gap-2 bg-gradient-to-br from-indigo-500 via-purple-600 to-indigo-700 text-white shadow-lg transition-all hover:shadow-xl hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900 glow-indigo';
 
   const containerStyle =
     'relative flex flex-col items-center justify-center min-h-screen bg-slate-900 text-slate-100 font-display overflow-hidden';
 
-  const taglineStyle = 'text-xl text-slate-300 mb-6 text-center max-w-xs';
+  const taglineStyle =
+    'text-xl text-slate-300 mb-10 text-center max-w-sm drop-shadow-lg italic';
 
   const titleStyle = 'text-4xl font-bold text-yellow-400 tracking-wide drop-shadow-lg mb-8';
 
@@ -41,6 +48,17 @@ const StartScreen: React.FC<StartScreenProps> = ({
       <div className="absolute inset-0 bg-gradient-to-b from-sky-400/10 via-transparent to-transparent" />
       <div className="absolute -inset-[50px] bg-sky-400/5 blur-2xl top-0 opacity-50" />
       <div className="absolute -inset-[50px] bg-indigo-600/5 blur-2xl bottom-0 opacity-50" />
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="relative w-[450px] h-[450px]">
+          <div className="absolute inset-0 rounded-full bg-gradient-to-b from-indigo-500/20 via-indigo-700/30 to-transparent blur-3xl" />
+          <Image
+            src="/ball.png"
+            alt=""
+            fill
+            className="object-contain opacity-5 animate-rotate-slow"
+          />
+        </div>
+      </div>
 
       <div className="relative z-10 flex flex-col items-center space-y-4">
         <Image
@@ -51,22 +69,27 @@ const StartScreen: React.FC<StartScreenProps> = ({
           className="mb-4 animate-pulse-slow"
         />
         <h1 className={titleStyle}>MatchDay Coach</h1>
-        <p className={taglineStyle}>{t('startScreen.tagline', 'Your Ultimate Sideline Assistant')}</p>
+        <p className={taglineStyle}>{t('startScreen.tagline', 'Elevate Your Game')}</p>
         {canResume && onResumeGame ? (
           <button className={buttonStyle} onClick={onResumeGame}>
+            <HiOutlinePlayCircle className="w-5 h-5" />
             {t('startScreen.resumeGame', 'Resume Last Game')}
           </button>
         ) : null}
         <button className={buttonStyle} onClick={onStartNewGame}>
+          <HiOutlinePlayCircle className="w-5 h-5" />
           {t('startScreen.startNewGame', 'Start New Game')}
         </button>
         <button className={buttonStyle} onClick={onLoadGame}>
+          <HiOutlineFolderOpen className="w-5 h-5" />
           {t('startScreen.loadGame', 'Load Game')}
         </button>
         <button className={buttonStyle} onClick={onCreateSeason}>
+          <HiOutlineTrophy className="w-5 h-5" />
           {t('startScreen.createSeasonTournament', 'Create Season/Tournament')}
         </button>
         <button className={buttonStyle} onClick={onViewStats}>
+          <HiOutlineChartBar className="w-5 h-5" />
           {t('startScreen.viewStats', 'View Stats')}
         </button>
       </div>
