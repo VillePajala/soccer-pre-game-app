@@ -232,7 +232,7 @@
     "cancelButton": "Cancel",
     "gameInfoTitle": "Game Information",
     "opponentPlaceholder": "Opponent Name",
-  "playerStatsTitle": "Player Stats",
+    "playerStatsTitle": "Player Stats",
     "playerHeader": "Player",
     "goalsHeader": "G",
     "assistsHeader": "A",
@@ -306,15 +306,15 @@
     "exportAllTitle": "Download All Games",
     "filterPlaceholder": "Filter by name, date, etc...",
     "backupButton": "Backup All Data",
-  "restoreButton": "Restore from Backup",
-  "currentlyLoaded": "Loaded",
-  "filterByTooltip": "Filter by {{name}}",
-  "expandCard": "Expand game details",
-  "collapseCard": "Collapse game details",
-  "assessmentsIncomplete": "Assessments incomplete",
-  "assessmentsComplete": "All assessments complete",
-  "assessmentsProgress": "{{done}}/{{total}} assessments",
-  "importReadError": "Error reading file content.",
+    "restoreButton": "Restore from Backup",
+    "currentlyLoaded": "Loaded",
+    "filterByTooltip": "Filter by {{name}}",
+    "expandCard": "Expand game details",
+    "collapseCard": "Collapse game details",
+    "assessmentsIncomplete": "Assessments incomplete",
+    "assessmentsComplete": "All assessments complete",
+    "assessmentsProgress": "{{done}}/{{total}} assessments",
+    "importReadError": "Error reading file content.",
     "loadButton": "Load Game",
     "loadingGames": "Loading games...",
     "noGamesMatchFilter": "No saved games match your filter.",
@@ -457,7 +457,7 @@
     "noGoalsLogged": "No goals logged yet.",
     "notesTitle": "Game Notes",
     "notesPlaceholder": "Write notes...",
-  "noNotes": "No notes yet. Click to add."
+    "noNotes": "No notes yet. Click to add."
   },
   "startScreen": {
     "tagline": "Elevate Your Game",
@@ -598,9 +598,9 @@
     "noPlayers": "No players selected",
     "notesPlaceholder": "Add notes...",
     "overallLabel": "Overall",
-  "expand": "Expand assessment for {{name}}",
-  "collapse": "Collapse assessment for {{name}}",
-  "resetButton": "Reset"
+    "expand": "Expand assessment for {{name}}",
+    "collapse": "Collapse assessment for {{name}}",
+    "resetButton": "Reset"
   },
   "assessmentMetrics": {
     "intensity": "Intensity",
@@ -639,5 +639,22 @@
     "goalsAssists": "Goals & Assists",
     "useDemandCorrection": "Weight by Difficulty",
     "useDemandCorrectionTooltip": "When enabled, ratings from harder games count more"
+  },
+  "updateBanner": {
+    "message": "A new version of the app is available.",
+    "reloadButton": "Reload"
+  },
+  "installPrompt": {
+    "message": "Install Coaching Companion for a faster, offline experience!",
+    "installButton": "Install",
+    "dismissButton": "Not now"
+  },
+  "fullBackup": {
+    "exportSuccess": "Backup exported successfully.",
+    "exportError": "Error exporting backup. Check the console.",
+    "confirmRestore": "Restore from backup? This will replace all data.",
+    "restoreKeyError": "Failed to restore item {{key}}. Import canceled.",
+    "restoreSuccess": "Backup restored. Reloading app...",
+    "restoreError": "Error importing backup: {{error}}"
   }
 }
