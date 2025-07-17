@@ -38,7 +38,8 @@ const StartScreen: React.FC<StartScreenProps> = ({
   const taglineStyle =
     'text-xl text-slate-300 mb-10 text-center max-w-sm drop-shadow-lg italic';
 
-  const titleStyle = 'text-4xl font-bold text-yellow-400 tracking-wide drop-shadow-lg mb-8';
+  const titleStyle =
+    'text-5xl font-bold text-yellow-400 tracking-wide drop-shadow-lg mb-8';
 
   return (
     <div className={containerStyle}>
@@ -49,14 +50,21 @@ const StartScreen: React.FC<StartScreenProps> = ({
       <div className="absolute inset-0 bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-700 opacity-30 animate-gradient" />
       <div className="absolute -inset-[50px] bg-sky-400/5 blur-2xl top-0 opacity-50" />
       <div className="absolute -inset-[50px] bg-indigo-600/5 blur-2xl bottom-0 opacity-50" />
+      <Image
+        src="/ball.png"
+        alt=""
+        width={320}
+        height={320}
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-20 blur-2xl pointer-events-none"
+      />
 
-      <div className="relative z-10 flex flex-col items-center space-y-4">
+      <div className="relative z-10 flex flex-col items-center space-y-5">
         <Image
           src="/pepo-logo.png"
           alt="MatchDay Coach Logo"
           width={128}
           height={128}
-          className="mb-4 animate-pulse-slow"
+          className="mb-4 animate-pulse-slow animate-rotate-slow"
         />
         <h1 className={titleStyle}>MatchDay Coach</h1>
         <p className={taglineStyle}>{t('startScreen.tagline', 'Elevate Your Game')}</p>
