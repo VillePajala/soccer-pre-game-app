@@ -8,22 +8,19 @@ const toBase64 = (data: string): string => {
 };
 
 export const sendBackupEmail = async (json: string, email: string): Promise<void> => {
+  if (typeof window === 'undefined') {
+    throw new Error('Email send not supported on server');
+  }
   const filename = `SoccerApp_Backup_${new Date()
     .toISOString()
     .replace(/[:.]/g, '-')}.json`;
-  const res = await fetch('/api/send-backup', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, filename, content: toBase64(json) }),
-  });
-  if (!res.ok) {
-    let message = 'Email send failed';
-    try {
-      const data = await res.json();
-      if (data && data.error) message = data.error;
-    } catch {
-      // ignore JSON parse errors
-    }
-    throw new Error(message);
+  const base64 = toBase64(json);
+  const subject = encodeURIComponent(`Soccer App Backup - ${filename}`);
+  const body = encodeURIComponent(base64);
+  const url = `mailto:${encodeURIComponent(email)}?subject=${subject}&body=${body}`;
+  try {
+    window.location.href = url;
+  } catch {
+    throw new Error('Email send failed');
   }
 };
