@@ -3,14 +3,15 @@ import sgMail from '@sendgrid/mail';
 
 export const runtime = 'nodejs';
 
-const apiKey = process.env.SENDGRID_API_KEY;
-if (!apiKey) {
-  console.error('SENDGRID_API_KEY not set');
-}
-sgMail.setApiKey(apiKey || '');
-
 export async function POST(req: NextRequest) {
   try {
+    const apiKey = process.env.SENDGRID_API_KEY;
+    if (!apiKey) {
+      console.error('SENDGRID_API_KEY not set');
+      return NextResponse.json({ error: 'Missing SendGrid API key' }, { status: 500 });
+    }
+    sgMail.setApiKey(apiKey);
+
     const { email, filename, content } = await req.json();
     if (!email || !content || !filename) {
       return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
