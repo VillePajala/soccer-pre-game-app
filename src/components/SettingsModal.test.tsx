@@ -48,14 +48,14 @@ describe('<SettingsModal />', () => {
   });
 
   test('renders when open', () => {
-    const { rerender } = render(<SettingsModal {...defaultProps} />);
+    render(<SettingsModal {...defaultProps} />);
     expect(screen.getByText('App Settings')).toBeInTheDocument();
     expect(screen.getByLabelText('Language')).toBeInTheDocument();
     expect(screen.getByLabelText('Default Team Name')).toBeInTheDocument();
   });
 
   test('displays storage usage when available', async () => {
-    const { rerender } = render(<SettingsModal {...defaultProps} />);
+    render(<SettingsModal {...defaultProps} />);
     expect(await screen.findByText('Storage Usage')).toBeInTheDocument();
     expect(await screen.findByText(/1\.0 MB.*5\.0 MB/)).toBeInTheDocument();
   });
