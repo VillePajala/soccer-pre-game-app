@@ -29,8 +29,11 @@ const defaultProps = {
   autoBackupEnabled: true,
   backupIntervalHours: 24,
   lastBackupTime: '2024-01-01T00:00:00.000Z',
+  backupEmail: '',
   onAutoBackupEnabledChange: jest.fn(),
   onBackupIntervalChange: jest.fn(),
+  onBackupEmailChange: jest.fn(),
+  onSendBackup: jest.fn(),
 };
 
 describe('<SettingsModal />', () => {
@@ -45,14 +48,14 @@ describe('<SettingsModal />', () => {
   });
 
   test('renders when open', () => {
-    render(<SettingsModal {...defaultProps} />);
+    const { rerender } = render(<SettingsModal {...defaultProps} />);
     expect(screen.getByText('App Settings')).toBeInTheDocument();
     expect(screen.getByLabelText('Language')).toBeInTheDocument();
     expect(screen.getByLabelText('Default Team Name')).toBeInTheDocument();
   });
 
   test('displays storage usage when available', async () => {
-    render(<SettingsModal {...defaultProps} />);
+    const { rerender } = render(<SettingsModal {...defaultProps} />);
     expect(await screen.findByText('Storage Usage')).toBeInTheDocument();
     expect(await screen.findByText(/1\.0 MB.*5\.0 MB/)).toBeInTheDocument();
   });
@@ -91,7 +94,7 @@ describe('<SettingsModal />', () => {
   });
 
   test('backup controls trigger callbacks', () => {
-    render(<SettingsModal {...defaultProps} />);
+    const { rerender } = render(<SettingsModal {...defaultProps} />);
     const checkbox = screen.getByLabelText('Enable Automatic Backup');
     fireEvent.click(checkbox);
     expect(defaultProps.onAutoBackupEnabledChange).toHaveBeenCalledWith(false);
@@ -99,5 +102,11 @@ describe('<SettingsModal />', () => {
     const intervalInput = screen.getByLabelText('Backup Interval (hours)');
     fireEvent.change(intervalInput, { target: { value: '12' } });
     expect(defaultProps.onBackupIntervalChange).toHaveBeenCalledWith(12);
+
+    const emailInput = screen.getByLabelText('Backup Email');
+    fireEvent.change(emailInput, { target: { value: 'a@test.com' } });
+    expect(defaultProps.onBackupEmailChange).toHaveBeenCalledWith('a@test.com');
+
+    rerender(<SettingsModal {...defaultProps} backupEmail="a@test.com" />);
   });
 });

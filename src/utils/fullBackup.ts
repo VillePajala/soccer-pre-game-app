@@ -20,8 +20,8 @@ import {
 // Define the structure of the backup file
 interface FullBackupData {
   meta: {
-    schema: number; // Version number for future migrations
-    exportedAt: string; // ISO timestamp
+    schema: number;
+    exportedAt: string;
   };
   localStorage: {
     [SAVED_GAMES_KEY]?: SavedGamesCollection | null;
@@ -32,52 +32,47 @@ interface FullBackupData {
   };
 }
 
+export const generateFullBackupJson = async (): Promise<string> => {
+  const backupData: FullBackupData = {
+    meta: {
+      schema: 1,
+      exportedAt: new Date().toISOString(),
+    },
+    localStorage: {},
+  };
+
+  const keysToBackup = [
+    SAVED_GAMES_KEY,
+    APP_SETTINGS_KEY,
+    SEASONS_LIST_KEY,
+    TOURNAMENTS_LIST_KEY,
+    MASTER_ROSTER_KEY,
+  ];
+
+  for (const key of keysToBackup) {
+    const itemJson = getLocalStorageItem(key);
+    if (itemJson) {
+      try {
+        backupData.localStorage[key as keyof FullBackupData['localStorage']] = JSON.parse(itemJson);
+        logger.log(`Backed up data for key: ${key}`);
+      } catch (error) {
+        logger.error(`Error parsing localStorage item for key ${key}:`, error);
+        backupData.localStorage[key as keyof FullBackupData['localStorage']] = null;
+      }
+    } else {
+      logger.log(`No data found for key: ${key}, setting to null.`);
+      backupData.localStorage[key as keyof FullBackupData['localStorage']] = null;
+    }
+  }
+
+  return JSON.stringify(backupData, null, 2);
+};
+
 // Function to export all relevant localStorage data
-export const exportFullBackup = async (): Promise<void> => {
+export const exportFullBackup = async (): Promise<string> => {
   logger.log("Starting full backup export...");
   try {
-    const backupData: FullBackupData = {
-      meta: {
-        schema: 1, // Current schema version
-        exportedAt: new Date().toISOString(),
-      },
-      localStorage: {},
-    };
-
-    const keysToBackup = [
-      SAVED_GAMES_KEY,
-      APP_SETTINGS_KEY,
-      SEASONS_LIST_KEY,
-      TOURNAMENTS_LIST_KEY,
-      MASTER_ROSTER_KEY,
-    ];
-
-    for (const key of keysToBackup) {
-      const itemJson = getLocalStorageItem(key);
-      if (itemJson) {
-        try {
-          // Assign parsed data directly to the correct key in backupData.localStorage
-          backupData.localStorage[key as keyof FullBackupData["localStorage"]] =
-            JSON.parse(itemJson);
-          logger.log(`Backed up data for key: ${key}`);
-        } catch (error) {
-          logger.error(
-            `Error parsing localStorage item for key ${key}:`,
-            error,
-          );
-          // Explicitly set to null on parsing error
-          backupData.localStorage[key as keyof FullBackupData["localStorage"]] =
-            null;
-        }
-      } else {
-        // Explicitly set to null if item doesn't exist or getter failed (it resolves to null)
-        logger.log(`No data found for key: ${key}, setting to null.`);
-        backupData.localStorage[key as keyof FullBackupData["localStorage"]] =
-          null;
-      }
-    }
-
-    const jsonString = JSON.stringify(backupData, null, 2); // Pretty print
+    const jsonString = await generateFullBackupJson();
     const blob = new Blob([jsonString], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -94,9 +89,11 @@ export const exportFullBackup = async (): Promise<void> => {
     URL.revokeObjectURL(url);
     logger.log(`Full backup exported successfully as ${a.download}`);
     alert(i18n.t("fullBackup.exportSuccess"));
+    return jsonString;
   } catch (error) {
     logger.error("Failed to export full backup:", error);
     alert(i18n.t("fullBackup.exportError"));
+    throw error;
   }
 };
 

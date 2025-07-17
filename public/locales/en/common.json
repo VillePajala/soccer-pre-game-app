@@ -589,6 +589,10 @@
     "backupTitle": "Automatic Backup",
     "autoBackupLabel": "Enable Automatic Backup",
     "backupIntervalLabel": "Backup Interval (hours)",
+    "backupEmailLabel": "Backup Email",
+    "sendBackupButton": "Create & Send Backup",
+    "sendBackupSuccess": "Backup sent successfully.",
+    "sendBackupError": "Failed to send backup.",
     "lastBackupLabel": "Last Backup",
     "never": "Never"
   },

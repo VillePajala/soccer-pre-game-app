@@ -23,6 +23,8 @@ import { useGameState, UseGameStateReturn } from '@/hooks/useGameState';
 import GameInfoBar from '@/components/GameInfoBar';
 import { useGameTimer } from '@/hooks/useGameTimer';
 import useAutoBackup from '@/hooks/useAutoBackup';
+import { exportFullBackup } from '@/utils/fullBackup';
+import { sendBackupEmail } from '@/utils/sendBackupEmail';
 // Import the new game session reducer and related types
 import {
   gameSessionReducer,
@@ -382,6 +384,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   const [autoBackupEnabled, setAutoBackupEnabled] = useState<boolean>(false);
   const [backupIntervalHours, setBackupIntervalHours] = useState<number>(24);
   const [lastBackupTime, setLastBackupTime] = useState<string | null>(null);
+  const [backupEmail, setBackupEmail] = useState<string>('');
 
   useEffect(() => {
     utilGetLastHomeTeamName().then((name) => setDefaultTeamNameSetting(name));
@@ -394,6 +397,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       setAutoBackupEnabled(s.autoBackupEnabled ?? false);
       setBackupIntervalHours(s.autoBackupIntervalHours ?? 24);
       setLastBackupTime(s.lastBackupTime ?? null);
+      setBackupEmail(s.backupEmail ?? '');
     });
   }, []);
 
@@ -1386,6 +1390,22 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     }
   }, [t]);
 
+  const handleCreateAndSendBackup = async () => {
+    try {
+      const json = await exportFullBackup();
+      if (backupEmail) {
+        await sendBackupEmail(json, backupEmail);
+      }
+      const iso = new Date().toISOString();
+      setLastBackupTime(iso);
+      utilUpdateAppSettings({ lastBackupTime: iso }).catch(() => {});
+      alert(t('settingsModal.sendBackupSuccess', 'Backup sent successfully.'));
+    } catch (err) {
+      logger.error('Failed to send backup', err);
+      alert(t('settingsModal.sendBackupError', 'Failed to send backup.'));
+    }
+  };
+
   
   // Placeholder handlers for Save/Load Modals
 
@@ -1926,6 +1946,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       setAutoBackupEnabled(s.autoBackupEnabled ?? false);
       setBackupIntervalHours(s.autoBackupIntervalHours ?? 24);
       setLastBackupTime(s.lastBackupTime ?? null);
+      setBackupEmail(s.backupEmail ?? '');
     });
     setIsSettingsModalOpen(true);
   };
@@ -2723,6 +2744,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         autoBackupEnabled={autoBackupEnabled}
         backupIntervalHours={backupIntervalHours}
         lastBackupTime={lastBackupTime || undefined}
+        backupEmail={backupEmail}
         onAutoBackupEnabledChange={(enabled) => {
           setAutoBackupEnabled(enabled);
           utilUpdateAppSettings({ autoBackupEnabled: enabled }).catch(() => {});
@@ -2732,6 +2754,11 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           setBackupIntervalHours(val);
           utilUpdateAppSettings({ autoBackupIntervalHours: val }).catch(() => {});
         }}
+        onBackupEmailChange={(email) => {
+          setBackupEmail(email);
+          utilUpdateAppSettings({ backupEmail: email }).catch(() => {});
+        }}
+        onSendBackup={handleCreateAndSendBackup}
       />
 
       <PlayerAssessmentModal
