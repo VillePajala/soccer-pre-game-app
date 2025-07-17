@@ -109,4 +109,10 @@ describe('<SettingsModal />', () => {
 
     rerender(<SettingsModal {...defaultProps} backupEmail="a@test.com" />);
   });
+
+  test('does not auto focus team name input on open', () => {
+    render(<SettingsModal {...defaultProps} />);
+    const input = screen.getByLabelText('Default Team Name');
+    expect(input).not.toHaveFocus();
+  });
 });

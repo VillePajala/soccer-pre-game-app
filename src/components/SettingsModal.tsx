@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatBytes } from '@/utils/bytes';
 import packageJson from '../../package.json';
@@ -43,7 +43,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   onSendBackup,
 }) => {
   const { t } = useTranslation();
-  const inputRef = useRef<HTMLInputElement>(null);
   const [teamName, setTeamName] = useState(defaultTeamName);
   const [resetConfirm, setResetConfirm] = useState('');
   const [storageEstimate, setStorageEstimate] = useState<{ usage: number; quota: number } | null>(null);
@@ -55,7 +54,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 100);
       if (navigator.storage?.estimate) {
         navigator.storage
           .estimate()
@@ -114,7 +112,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               <label htmlFor="team-name-input" className={labelStyle}>{t('settingsModal.defaultTeamNameLabel', 'Default Team Name')}</label>
               <input
                 id="team-name-input"
-                ref={inputRef}
                 type="text"
                 value={teamName}
                 onChange={(e) => setTeamName(e.target.value)}
