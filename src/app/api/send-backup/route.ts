@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import sgMail from '@sendgrid/mail';
 
-sgMail.setApiKey(process.env.SENDGRID_API_KEY || '');
+export const runtime = 'nodejs';
+
+const apiKey = process.env.SENDGRID_API_KEY;
+if (!apiKey) {
+  console.error('SENDGRID_API_KEY not set');
+}
+sgMail.setApiKey(apiKey || '');
 
 export async function POST(req: NextRequest) {
   try {
