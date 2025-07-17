@@ -194,6 +194,36 @@ describe('App Settings Utilities', () => {
       );
     });
 
+    it('should update the backup email', async () => {
+      const currentSettings: AppSettings = {
+        currentGameId: 'game123',
+        lastHomeTeamName: 'Team A',
+        language: 'en',
+        hasSeenAppGuide: false,
+        autoBackupEnabled: false,
+        autoBackupIntervalHours: 24,
+      };
+      localStorageMock.getItem.mockReturnValue(JSON.stringify(currentSettings));
+
+      const result = await updateAppSettings({ backupEmail: 'a@test.com' });
+
+      expect(result).toEqual({
+        ...currentSettings,
+        lastBackupTime: undefined,
+        backupEmail: 'a@test.com',
+        useDemandCorrection: false,
+      });
+      expect(localStorageMock.setItem).toHaveBeenCalledWith(
+        APP_SETTINGS_KEY,
+        JSON.stringify({
+          ...currentSettings,
+          lastBackupTime: undefined,
+          backupEmail: 'a@test.com',
+          useDemandCorrection: false,
+        })
+      );
+    });
+
     it('should throw an error if update fails', async () => {
       const currentSettings: AppSettings = {
         currentGameId: 'initialGame',
