@@ -17,6 +17,13 @@ export const sendBackupEmail = async (json: string, email: string): Promise<void
     body: JSON.stringify({ email, filename, content: toBase64(json) }),
   });
   if (!res.ok) {
-    throw new Error('Email send failed');
+    let message = 'Email send failed';
+    try {
+      const data = await res.json();
+      if (data && data.error) message = data.error;
+    } catch {
+      // ignore JSON parse errors
+    }
+    throw new Error(message);
   }
 };

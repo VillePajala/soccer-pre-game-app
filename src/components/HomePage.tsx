@@ -1402,7 +1402,10 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       alert(t('settingsModal.sendBackupSuccess', 'Backup sent successfully.'));
     } catch (err) {
       logger.error('Failed to send backup', err);
-      alert(t('settingsModal.sendBackupError', 'Failed to send backup.'));
+      const message = err instanceof Error ? err.message : String(err);
+      alert(
+        `${t('settingsModal.sendBackupError', 'Failed to send backup.')}: ${message}`,
+      );
     }
   };
 

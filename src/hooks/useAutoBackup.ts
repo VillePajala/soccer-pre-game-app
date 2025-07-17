@@ -22,9 +22,10 @@ const useAutoBackup = (): void => {
 
       const run = async () => {
         try {
+          const runSettings = await getAppSettings();
           const json = await exportFullBackup();
-          if (settings.backupEmail) {
-            await sendBackupEmail(json, settings.backupEmail);
+          if (runSettings.backupEmail) {
+            await sendBackupEmail(json, runSettings.backupEmail);
           }
           await updateAppSettings({ lastBackupTime: new Date().toISOString() });
         } catch (err) {
