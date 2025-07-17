@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { getAppSettings, updateAppSettings } from '@/utils/appSettings';
 import { exportFullBackup } from '@/utils/fullBackup';
+import { sendBackupEmail } from '@/utils/sendBackupEmail';
 import logger from '@/utils/logger';
 
 const useAutoBackup = (): void => {
@@ -21,7 +22,10 @@ const useAutoBackup = (): void => {
 
       const run = async () => {
         try {
-          await exportFullBackup();
+          const json = await exportFullBackup();
+          if (settings.backupEmail) {
+            await sendBackupEmail(json, settings.backupEmail);
+          }
           await updateAppSettings({ lastBackupTime: new Date().toISOString() });
         } catch (err) {
           logger.error('Automatic backup failed:', err);

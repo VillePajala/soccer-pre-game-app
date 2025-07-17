@@ -17,8 +17,11 @@ interface SettingsModalProps {
   autoBackupEnabled: boolean;
   backupIntervalHours: number;
   lastBackupTime?: string | null;
+  backupEmail: string;
   onAutoBackupEnabledChange: (enabled: boolean) => void;
   onBackupIntervalChange: (hours: number) => void;
+  onBackupEmailChange: (email: string) => void;
+  onSendBackup: () => void;
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -33,8 +36,11 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   autoBackupEnabled,
   backupIntervalHours,
   lastBackupTime,
+  backupEmail,
   onAutoBackupEnabledChange,
   onBackupIntervalChange,
+  onBackupEmailChange,
+  onSendBackup,
 }) => {
   const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -142,6 +148,23 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                   className={inputStyle}
                 />
               </div>
+              <div>
+                <label htmlFor="backup-email" className={labelStyle}>{t('settingsModal.backupEmailLabel', 'Backup Email')}</label>
+                <input
+                  id="backup-email"
+                  type="email"
+                  value={backupEmail}
+                  onChange={(e) => onBackupEmailChange(e.target.value)}
+                  className={inputStyle}
+                />
+              </div>
+              <button
+                onClick={onSendBackup}
+                className={primaryButtonStyle}
+                disabled={!backupEmail}
+              >
+                {t('settingsModal.sendBackupButton', 'Create & Send Backup')}
+              </button>
               <p className="text-sm text-slate-300">
                 {t('settingsModal.lastBackupLabel', 'Last Backup')}: {lastBackupTime ? new Date(lastBackupTime).toLocaleString() : t('settingsModal.never', 'Never')}
               </p>
