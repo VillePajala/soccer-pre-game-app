@@ -30,10 +30,10 @@ const StartScreen: React.FC<StartScreenProps> = ({
     'relative flex flex-col items-center justify-center min-h-screen bg-slate-950 text-slate-100 font-display overflow-hidden pt-12 pb-24';
 
   const taglineStyle =
-    'text-xl text-slate-300 mb-10 text-center max-w-sm drop-shadow-lg italic';
+    'text-xl text-slate-300 mb-6 text-center max-w-sm drop-shadow-lg italic';
 
   const titleStyle =
-    'text-5xl font-bold text-yellow-400 tracking-wide drop-shadow-lg mb-8';
+    'text-5xl font-bold text-yellow-400 tracking-wide drop-shadow-lg mb-8 text-center';
 
   return (
     <div className={containerStyle}>
