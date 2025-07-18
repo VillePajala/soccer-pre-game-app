@@ -465,6 +465,8 @@
     "loadGame": "Load Game",
     "resumeGame": "Resume Last Game",
     "languageLabel": "Language",
+    "languageEnglish": "English",
+    "languageFinnish": "Finnish",
     "createSeasonTournament": "Create Season/Tournament",
     "viewStats": "View Stats"
   },

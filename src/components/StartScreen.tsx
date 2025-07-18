@@ -74,18 +74,29 @@ const StartScreen: React.FC<StartScreenProps> = ({
         </h1>
         <p className={taglineStyle}>{t('startScreen.tagline', 'Elevate Your Game')}</p>
         <div className="flex flex-col items-center">
-          <label htmlFor="start-language-select" className="text-sm font-medium text-slate-300 mb-1">
+          <span className="text-sm font-medium text-slate-300 mb-1">
             {t('startScreen.languageLabel', 'Language')}
-          </label>
-          <select
-            id="start-language-select"
-            value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-            className="px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
-          >
-            <option value="en">English</option>
-            <option value="fi">Suomi</option>
-          </select>
+          </span>
+          <div className="flex space-x-2">
+            <button
+              aria-label={t('startScreen.languageEnglish', 'English')}
+              onClick={() => setLanguage('en')}
+              className={`w-10 h-8 rounded-md border text-xl flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${language === 'en' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-700 border-slate-600 text-white hover:bg-slate-600'}`}
+            >
+              <span role="img" aria-hidden="true">
+                🇬🇧
+              </span>
+            </button>
+            <button
+              aria-label={t('startScreen.languageFinnish', 'Finnish')}
+              onClick={() => setLanguage('fi')}
+              className={`w-10 h-8 rounded-md border text-xl flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${language === 'fi' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-700 border-slate-600 text-white hover:bg-slate-600'}`}
+            >
+              <span role="img" aria-hidden="true">
+                🇫🇮
+              </span>
+            </button>
+          </div>
         </div>
         {canResume && onResumeGame ? (
           <button className={buttonStyle} onClick={onResumeGame}>

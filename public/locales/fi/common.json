@@ -379,6 +379,8 @@
     "loadGame": "Lataa peli",
     "resumeGame": "Jatka edellistä peliä",
     "languageLabel": "Kieli",
+    "languageEnglish": "Englanti",
+    "languageFinnish": "Suomi",
     "createSeasonTournament": "Luo kausi/turnaus",
     "viewStats": "Näytä tilastot"
   },
