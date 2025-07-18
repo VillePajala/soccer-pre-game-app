@@ -507,6 +507,7 @@ export type TranslationKey =
   | 'settingsModal.storageUsageUnavailable'
   | 'settingsModal.title'
   | 'startScreen.createSeasonTournament'
+  | 'startScreen.languageLabel'
   | 'startScreen.loadGame'
   | 'startScreen.resumeGame'
   | 'startScreen.startNewGame'

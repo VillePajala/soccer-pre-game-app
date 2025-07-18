@@ -1,8 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
+import { updateAppSettings, getAppSettings } from '@/utils/appSettings';
 
 interface StartScreenProps {
   onStartNewGame: () => void;
@@ -22,6 +24,20 @@ const StartScreen: React.FC<StartScreenProps> = ({
   canResume = false,
 }) => {
   const { t } = useTranslation();
+  const [language, setLanguage] = useState<string>(i18n.language);
+
+  useEffect(() => {
+    getAppSettings().then((settings) => {
+      if (settings.language) {
+        setLanguage(settings.language);
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    i18n.changeLanguage(language);
+    updateAppSettings({ language }).catch(() => {});
+  }, [language]);
 
   const buttonStyle =
     'w-64 px-4 py-2 rounded-md text-lg font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500';
@@ -57,6 +73,20 @@ const StartScreen: React.FC<StartScreenProps> = ({
           <span className="block">Coach</span>
         </h1>
         <p className={taglineStyle}>{t('startScreen.tagline', 'Elevate Your Game')}</p>
+        <div className="flex flex-col items-center">
+          <label htmlFor="start-language-select" className="text-sm font-medium text-slate-300 mb-1">
+            {t('startScreen.languageLabel', 'Language')}
+          </label>
+          <select
+            id="start-language-select"
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
+            className="px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          >
+            <option value="en">English</option>
+            <option value="fi">Suomi</option>
+          </select>
+        </div>
         {canResume && onResumeGame ? (
           <button className={buttonStyle} onClick={onResumeGame}>
             {t('startScreen.resumeGame', 'Resume Last Game')}

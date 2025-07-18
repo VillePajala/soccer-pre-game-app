@@ -3,6 +3,23 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import StartScreen from './StartScreen';
 
+jest.mock('@/i18n', () => ({
+  __esModule: true,
+  default: {
+    language: 'en',
+    changeLanguage: jest.fn(),
+    isInitialized: true,
+    on: jest.fn(),
+    off: jest.fn(),
+  },
+}));
+
+jest.mock('@/utils/appSettings', () => ({
+  __esModule: true,
+  getAppSettings: jest.fn().mockResolvedValue({ language: 'en' }),
+  updateAppSettings: jest.fn().mockResolvedValue({}),
+}));
+
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, fallback?: string) => fallback || key,
@@ -35,6 +52,7 @@ describe('StartScreen', () => {
     expect(screen.getByRole('button', { name: 'Load Game' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Create Season/Tournament' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'View Stats' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Language')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Start New Game' }));
     expect(handlers.onStartNewGame).toHaveBeenCalled();
