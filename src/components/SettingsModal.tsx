@@ -163,6 +163,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 {t('settingsModal.sendBackupButton', 'Create & Send Backup')}
               </button>
               <p className="text-sm text-slate-300">
+                {t(
+                  'settingsModal.sendBackupDescription',
+                  'A backup file will download and your email app will open. Attach the file before sending.'
+                )}
+              </p>
+              <p className="text-sm text-slate-300">
                 {t('settingsModal.lastBackupLabel', 'Last Backup')}: {lastBackupTime ? new Date(lastBackupTime).toLocaleString() : t('settingsModal.never', 'Never')}
               </p>
             </div>

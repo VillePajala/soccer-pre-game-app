@@ -591,6 +591,7 @@
     "backupIntervalLabel": "Backup Interval (hours)",
     "backupEmailLabel": "Backup Email",
     "sendBackupButton": "Create & Send Backup",
+    "sendBackupDescription": "A backup file will download and your email app will open. Attach the file before sending.",
     "sendBackupSuccess": "Backup sent successfully.",
     "sendBackupError": "Failed to send backup.",
     "lastBackupLabel": "Last Backup",

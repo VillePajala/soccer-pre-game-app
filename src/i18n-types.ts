@@ -499,6 +499,7 @@ export type TranslationKey =
   | 'settingsModal.resetGuideButton'
   | 'settingsModal.resetGuideDescription'
   | 'settingsModal.sendBackupButton'
+  | 'settingsModal.sendBackupDescription'
   | 'settingsModal.sendBackupError'
   | 'settingsModal.sendBackupSuccess'
   | 'settingsModal.storageUsageDetails'
