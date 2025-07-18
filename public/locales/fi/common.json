@@ -582,6 +582,7 @@
     "backupIntervalLabel": "Varmuuskopiointiväli (tuntia)",
     "backupEmailLabel": "Varmuuskopion sähköposti",
     "sendBackupButton": "Luo ja lähetä varmuuskopio",
+    "sendBackupDescription": "Lataa varmuuskopiotiedosto ja avaa sähköpostisovellus. Liitä tiedosto viestiin ennen lähettämistä.",
     "sendBackupSuccess": "Varmuuskopio lähetetty.",
     "sendBackupError": "Varmuuskopion lähetys epäonnistui.",
     "lastBackupLabel": "Viimeinen varmuuskopio",
