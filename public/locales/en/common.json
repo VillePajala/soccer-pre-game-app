@@ -464,6 +464,7 @@
     "startNewGame": "Start New Game",
     "loadGame": "Load Game",
     "resumeGame": "Resume Last Game",
+    "languageLabel": "Language",
     "createSeasonTournament": "Create Season/Tournament",
     "viewStats": "View Stats"
   },
