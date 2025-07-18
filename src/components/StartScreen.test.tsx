@@ -1,7 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import StartScreen from './StartScreen';
 
 jest.mock('@/i18n', () => ({
   __esModule: true,
@@ -25,6 +24,9 @@ jest.mock('react-i18next', () => ({
     t: (key: string, fallback?: string) => fallback || key,
   }),
 }));
+
+import i18n from '@/i18n';
+import StartScreen from './StartScreen';
 
 describe('StartScreen', () => {
   it('renders all action buttons', () => {
@@ -62,6 +64,6 @@ describe('StartScreen', () => {
     expect(handlers.onResumeGame).toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole('button', { name: 'Finnish' }));
-    expect(require('@/i18n').default.changeLanguage).toHaveBeenCalledWith('fi');
+    expect(i18n.changeLanguage).toHaveBeenCalledWith('fi');
   });
 });
