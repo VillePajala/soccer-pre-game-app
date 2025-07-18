@@ -52,12 +52,16 @@ describe('StartScreen', () => {
     expect(screen.getByRole('button', { name: 'Load Game' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Create Season/Tournament' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'View Stats' })).toBeInTheDocument();
-    expect(screen.getByLabelText('Language')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'English' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Finnish' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Start New Game' }));
     expect(handlers.onStartNewGame).toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole('button', { name: 'Resume Last Game' }));
     expect(handlers.onResumeGame).toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Finnish' }));
+    expect(require('@/i18n').default.changeLanguage).toHaveBeenCalledWith('fi');
   });
 });
