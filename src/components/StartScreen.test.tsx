@@ -1,7 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import StartScreen from './StartScreen';
 
 jest.mock('@/i18n', () => ({
   __esModule: true,
@@ -25,6 +24,9 @@ jest.mock('react-i18next', () => ({
     t: (key: string, fallback?: string) => fallback || key,
   }),
 }));
+
+import i18n from '@/i18n';
+import StartScreen from './StartScreen';
 
 describe('StartScreen', () => {
   it('renders all action buttons', () => {
@@ -52,12 +54,16 @@ describe('StartScreen', () => {
     expect(screen.getByRole('button', { name: 'Load Game' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Create Season/Tournament' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'View Stats' })).toBeInTheDocument();
-    expect(screen.getByLabelText('Language')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'English' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Finnish' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Start New Game' }));
     expect(handlers.onStartNewGame).toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole('button', { name: 'Resume Last Game' }));
     expect(handlers.onResumeGame).toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Finnish' }));
+    expect(i18n.changeLanguage).toHaveBeenCalledWith('fi');
   });
 });
