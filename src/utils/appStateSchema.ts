@@ -92,6 +92,7 @@ export const appStateSchema = z.object({
   ageGroup: z.string().optional(),
   gameLocation: z.string().optional(),
   gameTime: z.string().optional(),
+  isPlayed: z.boolean().optional(),
   subIntervalMinutes: z.number().optional(),
   completedIntervalDurations: z.array(intervalLogSchema).optional(),
   lastSubConfirmationTimeSeconds: z.number().optional(),

@@ -22,6 +22,7 @@ describe('appStateSchema', () => {
     selectedPlayerIds: [],
     seasonId: 's',
     tournamentId: 't',
+    isPlayed: true,
     tacticalDiscs: [],
     tacticalDrawings: [],
     tacticalBallPosition: { relX: 0, relY: 0 },

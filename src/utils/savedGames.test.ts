@@ -76,6 +76,7 @@ describe('Saved Games Utilities', () => {
     tournamentId: 'tournament_1',
     gameLocation: 'Stadium A',
     gameTime: '14:00',
+    isPlayed: true,
     subIntervalMinutes: 5,
     completedIntervalDurations: [],
     lastSubConfirmationTimeSeconds: 0,

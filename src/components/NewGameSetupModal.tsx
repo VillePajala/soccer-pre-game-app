@@ -33,7 +33,8 @@ interface NewGameSetupModalProps {
     homeOrAway: 'home' | 'away',
     demandFactor: number,
     ageGroup: string,
-    tournamentLevel: string
+    tournamentLevel: string,
+    isPlayed: boolean
   ) => void;
   onCancel: () => void;
   addSeasonMutation: UseMutationResult<Season | null, Error, Partial<Season> & { name: string }, unknown>;
@@ -86,6 +87,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
 
   // <<< Step 4a: State for Home/Away >>>
   const [localHomeOrAway, setLocalHomeOrAway] = useState<'home' | 'away'>('home');
+  const [isPlayed, setIsPlayed] = useState(false);
 
   // MOVED state declarations for availablePlayersForSetup and selectedPlayerIds here
   const [availablePlayersForSetup, setAvailablePlayersForSetup] = useState<Player[]>([]);
@@ -112,6 +114,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
       setLocalNumPeriods(2);
       setLocalPeriodDurationString('10');
       setLocalHomeOrAway('home');
+      setIsPlayed(false);
       // End of reinstated form reset logic
 
       setError(null); 
@@ -379,7 +382,8 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
       localHomeOrAway, // <<< Step 4a: Pass Home/Away >>>
       demandFactor,
       ageGroup,
-      tournamentLevel
+      tournamentLevel,
+      isPlayed
     );
 
     // Modal will be closed by parent component after onStart
@@ -681,6 +685,19 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                           </div>
                         )}
                     </div>
+                  </div>
+
+                  {/* Not Played Yet */}
+                  <div className="mb-4">
+                    <label className="inline-flex items-center text-sm text-slate-300">
+                      <input
+                        type="checkbox"
+                        checked={!isPlayed}
+                        onChange={(e) => setIsPlayed(!e.target.checked)}
+                        className="form-checkbox h-4 w-4 text-indigo-600 bg-slate-700 border-slate-500 rounded focus:ring-indigo-500 focus:ring-offset-slate-800"
+                      />
+                      <span className="ml-2">{t('newGameSetupModal.notPlayedYet', 'Not played yet')}</span>
+                    </label>
                   </div>
 
                     {/* Age Group */}

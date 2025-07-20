@@ -124,6 +124,7 @@ const initialState: AppState = {
   tournamentLevel: '',
   gameLocation: '', // Initialize optional fields
   gameTime: '', // Initialize optional fields
+  isPlayed: false,
   // Timer related state
   subIntervalMinutes: 5, // Add sub interval with default
   completedIntervalDurations: [], // Initialize completed interval logs
@@ -167,6 +168,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     tournamentLevel: initialState.tournamentLevel,
     gameLocation: initialState.gameLocation,
     gameTime: initialState.gameTime,
+    isPlayed: initialState.isPlayed,
     gameEvents: initialState.gameEvents,
     timeElapsedInSeconds: 0, // Initial timer state should be 0
     isTimerRunning: false,    // Initial timer state
@@ -1985,6 +1987,10 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     // REMOVED: saveStateToHistory({ homeOrAway: status });
   };
 
+  const handleSetIsPlayed = (played: boolean) => {
+    dispatchGameSession({ type: 'SET_IS_PLAYED', payload: played });
+  };
+
   // --- NEW Handlers for Setting Season/Tournament ID ---
   const handleSetSeasonId = useCallback((newSeasonId: string | undefined) => {
     const idToSet = newSeasonId || ''; // Ensure empty string instead of null
@@ -2060,7 +2066,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     homeOrAway: 'home' | 'away', // <<< Step 4b: Add parameter
     demandFactor: number,
     ageGroup: string,
-    tournamentLevel: string
+    tournamentLevel: string,
+    isPlayed: boolean
   ) => {
       // ADD LOGGING HERE:
       logger.log('[handleStartNewGameWithSetup] Received Params:', { 
@@ -2077,7 +2084,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         homeOrAway,
         demandFactor,
         ageGroup,
-        tournamentLevel
+        tournamentLevel,
+        isPlayed
       });
       // No need to log initialState references anymore
 
@@ -2096,6 +2104,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           tournamentId: tournamentId || '',
           ageGroup: ageGroup,
           tournamentLevel: tournamentLevel,
+          isPlayed: isPlayed,
           numberOfPeriods: numPeriods, // Use parameter
           periodDurationMinutes: periodDuration, // Use parameter
           homeScore: 0,
@@ -2724,6 +2733,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         onTournamentIdChange={handleSetTournamentId}
         homeOrAway={gameSessionState.homeOrAway}
         onSetHomeOrAway={handleSetHomeOrAway}
+        isPlayed={gameSessionState.isPlayed}
+        onSetIsPlayed={handleSetIsPlayed}
         addSeasonMutation={addSeasonMutation}
         addTournamentMutation={addTournamentMutation}
         isAddingSeason={addSeasonMutation.isPending}

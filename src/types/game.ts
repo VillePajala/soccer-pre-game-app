@@ -68,6 +68,8 @@ export interface AppState {
   demandFactor?: number;
   gameLocation?: string;
   gameTime?: string;
+  /** Whether the game has been played */
+  isPlayed?: boolean;
   subIntervalMinutes?: number;
   completedIntervalDurations?: IntervalLog[];
   lastSubConfirmationTimeSeconds?: number;

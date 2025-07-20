@@ -379,6 +379,7 @@
     "periodDurationLabel": "Period Duration (minutes)",
     "demandFactorLabel": "Game Demand Level",
     "homeOrAwayLabel": "Your Team is",
+    "notPlayedYet": "Not played yet",
     "confirmAndStart": "Confirm & Start Game"
   },
   "timerOverlay.subIntervalLabel": "Sub Interval:",
@@ -421,6 +422,7 @@
     "locationPlaceholder": "e.g., Central Park Field 2",
     "ageGroupLabel": "Age Group (Optional)",
     "homeOrAwayLabel": "Home / Away",
+    "notPlayedYet": "Not played yet",
     "home": "Home",
     "away": "Away",
     "periodsLabel": "Periods",

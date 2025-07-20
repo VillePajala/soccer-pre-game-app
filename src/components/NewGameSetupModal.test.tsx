@@ -49,6 +49,7 @@ const translations: { [key: string]: string } = {
   'newGameSetupModal.addTournamentPlaceholder': 'Enter new tournament name...',
   'common.add': 'Add',
   'common.cancel': 'Cancel',
+  'newGameSetupModal.notPlayedYet': 'Not played yet',
   'newGameSetupModal.confirmButton': 'Confirm & Start Game',
   'newGameSetupModal.errorHomeTeamRequired': 'Home Team Name is required.',
 };
@@ -173,7 +174,7 @@ describe('NewGameSetupModal', () => {
     });
     expect(mockOnStart).toHaveBeenCalledWith(
       expect.arrayContaining(['player1', 'player2']), 'New Team Name', 'Opponent Team',
-      expect.any(String), '', '', null, null, 2, 10, 'home', 1, '', ''
+      expect.any(String), '', '', null, null, 2, 10, 'home', 1, '', '', false
     );
   });
 

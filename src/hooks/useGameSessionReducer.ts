@@ -21,6 +21,7 @@ export interface GameSessionState {
   tournamentLevel?: string;
   gameLocation?: string;
   gameTime?: string;
+  isPlayed: boolean;
   demandFactor: number;
   gameEvents: GameEvent[];
   // Timer related state
@@ -68,6 +69,7 @@ export const initialGameSessionStatePlaceholder: GameSessionState = {
   tournamentLevel: '',
   gameLocation: '',
   gameTime: '',
+  isPlayed: false,
   demandFactor: 1,
   gameEvents: [],
   timeElapsedInSeconds: 0,
@@ -94,6 +96,7 @@ export type GameSessionAction =
   | { type: 'ADJUST_SCORE_FOR_EVENT'; payload: { eventType: 'goal' | 'opponentGoal', action: 'add' | 'delete' } }
   | { type: 'SET_GAME_NOTES'; payload: string }
   | { type: 'SET_HOME_OR_AWAY'; payload: 'home' | 'away' }
+  | { type: 'SET_IS_PLAYED'; payload: boolean }
   | { type: 'SET_NUMBER_OF_PERIODS'; payload: 1 | 2 }
   | { type: 'SET_PERIOD_DURATION'; payload: number }
   | { type: 'SET_GAME_STATUS'; payload: GameSessionState['gameStatus'] }
@@ -161,6 +164,8 @@ export const gameSessionReducer = (state: GameSessionState, action: GameSessionA
       return { ...state, gameNotes: action.payload };
     case 'SET_HOME_OR_AWAY':
       return { ...state, homeOrAway: action.payload };
+    case 'SET_IS_PLAYED':
+      return { ...state, isPlayed: action.payload };
     case 'SET_NUMBER_OF_PERIODS':
       return { ...state, numberOfPeriods: action.payload };
     case 'SET_PERIOD_DURATION':

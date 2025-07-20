@@ -178,6 +178,7 @@ export const createGame = async (gameData: Partial<AppState>): Promise<{ gameId:
       ageGroup: gameData.ageGroup || '',
       gameLocation: gameData.gameLocation || '',
       gameTime: gameData.gameTime || '',
+      isPlayed: gameData.isPlayed === undefined ? false : gameData.isPlayed,
       tacticalDiscs: gameData.tacticalDiscs || [],
       tacticalDrawings: gameData.tacticalDrawings || [],
       tacticalBallPosition: gameData.tacticalBallPosition === undefined ? { relX: 0.5, relY: 0.5 } : gameData.tacticalBallPosition,

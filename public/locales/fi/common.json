@@ -370,6 +370,7 @@
     "periodDurationLabel": "Jakson kesto (minuuteissa)",
     "demandFactorLabel": "Pelin vaativuustaso",
     "homeOrAwayLabel": "Joukkueesi on",
+    "notPlayedYet": "Ei vielä pelattu",
     "confirmAndStart": "Vahvista ja aloita peli"
   },
   "timerOverlay.subIntervalLabel": "Vaihdon Aikaväli:",
@@ -445,6 +446,7 @@
     "locationPlaceholder": "esim. Keskuspuisto kenttä 2",
     "ageGroupLabel": "Ikäluokka (valinnainen)",
     "homeOrAwayLabel": "Koti / Vieras",
+    "notPlayedYet": "Ei vielä pelattu",
     "home": "Koti",
     "away": "Vieras",
     "periodsLabel": "Erät",

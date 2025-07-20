@@ -69,6 +69,8 @@ export interface GameSettingsModalProps {
   onTournamentIdChange: (tournamentId: string | undefined) => void;
   homeOrAway: 'home' | 'away';
   onSetHomeOrAway: (status: 'home' | 'away') => void;
+  isPlayed: boolean;
+  onSetIsPlayed: (played: boolean) => void;
   // Add mutation props for creating seasons and tournaments
   addSeasonMutation: UseMutationResult<Season | null, Error, Partial<Season> & { name: string }, unknown>;
   addTournamentMutation: UseMutationResult<Tournament | null, Error, Partial<Tournament> & { name: string }, unknown>;
@@ -150,6 +152,8 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   onTournamentIdChange,
   homeOrAway,
   onSetHomeOrAway,
+  isPlayed,
+  onSetIsPlayed,
   addSeasonMutation,
   addTournamentMutation,
   isAddingSeason,
@@ -197,6 +201,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   // NEW: Loading and Error states for modal operations
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [localIsPlayed, setLocalIsPlayed] = useState(isPlayed);
 
   // State for game time
   const [gameHour, setGameHour] = useState<string>('');
@@ -213,6 +218,10 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
       setGameMinute('');
     }
   }, [gameTime]);
+
+  useEffect(() => {
+    setLocalIsPlayed(isPlayed);
+  }, [isPlayed]);
 
   // Handle time changes
   const handleHourChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -437,6 +446,19 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
     }
     setShowNewTournamentInput(false);
     setNewTournamentName('');
+  };
+
+  const handleIsPlayedToggle = async (checked: boolean) => {
+    const played = !checked;
+    setLocalIsPlayed(played);
+    onSetIsPlayed(played);
+    if (currentGameId) {
+      try {
+        await updateGameDetails(currentGameId, { isPlayed: played });
+      } catch (err) {
+        logger.error('Failed to update isPlayed', err);
+      }
+    }
   };
 
   // Handle Goal Event Editing
@@ -1111,7 +1133,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                   <label htmlFor="gameLocationInput" className="block text-sm font-medium text-slate-300 mb-1">
                     {t('gameSettingsModal.locationLabel', 'Location (Optional)')}
                   </label>
-                  <input
+                <input
                     type="text"
                     id="gameLocationInput"
                     value={gameLocation}
@@ -1119,6 +1141,19 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                     placeholder={t('gameSettingsModal.locationPlaceholder', 'e.g., Central Park Field 2')}
                     className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                   />
+                </div>
+
+                {/* Not Played Yet */}
+                <div className="mb-4">
+                  <label className="inline-flex items-center text-sm text-slate-300">
+                    <input
+                      type="checkbox"
+                      checked={!localIsPlayed}
+                      onChange={(e) => handleIsPlayedToggle(e.target.checked)}
+                      className="form-checkbox h-4 w-4 text-indigo-600 bg-slate-700 border-slate-500 rounded focus:ring-indigo-500 focus:ring-offset-slate-800"
+                    />
+                    <span className="ml-2">{t('gameSettingsModal.notPlayedYet', 'Not played yet')}</span>
+                  </label>
                 </div>
 
                 {tournamentId && (
