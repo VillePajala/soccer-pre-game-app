@@ -74,6 +74,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
   const [searchText, setSearchText] = useState<string>('');
   const [filterType, setFilterType] = useState<'season' | 'tournament' | null>(null);
   const [filterId, setFilterId] = useState<string | null>(null);
+  const [showUnplayedOnly, setShowUnplayedOnly] = useState<boolean>(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const restoreFileInputRef = useRef<HTMLInputElement>(null);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
@@ -128,7 +129,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
       );
     });
 
-    const filteredByBadge = filteredBySearch.filter(id => { 
+    const filteredByBadge = filteredBySearch.filter(id => {
       if (!filterType || !filterId) return true;
       const gameData = savedGames[id];
       if (!gameData) return false;
@@ -144,7 +145,14 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
       return match;
     });
 
-    const sortedIds = filteredByBadge.sort((a, b) => {
+    const filteredByPlayed = filteredByBadge.filter(id => {
+      if (!showUnplayedOnly) return true;
+      const gameData = savedGames[id];
+      if (!gameData) return false;
+      return gameData.isPlayed === false;
+    });
+
+    const sortedIds = filteredByPlayed.sort((a, b) => {
       const gameA = savedGames[a];
       const gameB = savedGames[b];
       
@@ -176,7 +184,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
       return 0; 
     });
     return sortedIds;
-  }, [savedGames, searchText, seasons, tournaments, filterType, filterId]);
+  }, [savedGames, searchText, seasons, tournaments, filterType, filterId, showUnplayedOnly]);
 
   const handleDeleteClick = (gameId: string, gameName: string) => {
     // Use a confirmation dialog
@@ -380,6 +388,11 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                     {gameStatus === 'inProgress' && (
                       <span className="text-xs uppercase font-semibold tracking-wide bg-amber-600 text-white px-2 py-0.5 rounded-sm">OPEN</span>
                     )}
+                    {game.isPlayed === false && (
+                      <span className="text-xs uppercase font-semibold tracking-wide bg-red-700 text-white px-2 py-0.5 rounded-sm">
+                        {t('loadGameModal.unplayedBadge', 'NOT PLAYED')}
+                      </span>
+                    )}
                     {isCurrent && (
                       <span className="text-xs uppercase font-semibold tracking-wide bg-green-600/90 text-white px-2 py-0.5 rounded-sm shadow-lg shadow-green-500/50">
                         {t('loadGameModal.currentlyLoaded', 'Loaded')}
@@ -498,6 +511,15 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
             <input type="text" placeholder={t('loadGameModal.filterPlaceholder', 'Filter by name, date, etc...')} value={searchText} onChange={handleSearchChange} className="w-full pl-10 pr-4 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
             <HiOutlineMagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
           </div>
+          <label className="mt-2 flex items-center gap-2 text-sm text-slate-300">
+            <input
+              type="checkbox"
+              checked={showUnplayedOnly}
+              onChange={(e) => setShowUnplayedOnly(e.target.checked)}
+              className="form-checkbox h-4 w-4 text-indigo-600 bg-slate-700 border-slate-500 rounded focus:ring-indigo-500 focus:ring-offset-slate-800"
+            />
+            {t('loadGameModal.showUnplayedOnly', 'Show only unplayed games')}
+          </label>
         </div>
         <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6">
           {mainContent}

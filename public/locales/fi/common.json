@@ -305,6 +305,8 @@
     "assessmentsIncomplete": "Arviointeja puuttuu",
     "assessmentsComplete": "Kaikki arvioinnit tehty",
     "assessmentsProgress": "{{done}}/{{total}} arvioitu",
+    "unplayedBadge": "EI PELATTU",
+    "showUnplayedOnly": "Näytä vain pelaamattomat pelit",
     "importReadError": "Virhe luettaessa tiedostoa",
     "loadButton": "Lataa peli",
     "loadingGames": "Ladataan pelejä...",

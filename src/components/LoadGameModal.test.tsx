@@ -44,6 +44,7 @@ const createSampleGames = (): SavedGamesCollection => ({
     homeOrAway: 'home',
     seasonId: 'season_1',
     tournamentId: '',
+    isPlayed: true,
     selectedPlayerIds: ['p1', 'p2'],
     assessments: { p1: {} as unknown as PlayerAssessment },
   } as unknown as AppState,
@@ -54,6 +55,7 @@ const createSampleGames = (): SavedGamesCollection => ({
     homeOrAway: 'away',
     seasonId: '',
     tournamentId: 'tourn_1',
+    isPlayed: false,
     selectedPlayerIds: ['p1'],
     assessments: { p1: {} as unknown as PlayerAssessment },
   } as unknown as AppState,
@@ -100,9 +102,26 @@ describe('LoadGameModal', () => {
     const searchInput = screen.getByPlaceholderText('loadGameModal.filterPlaceholder');
       fireEvent.change(searchInput, { target: { value: 'Lions' } });
 
-      expect(await screen.findByText('Lions vs Tigers')).toBeInTheDocument();
+    expect(await screen.findByText('Lions vs Tigers')).toBeInTheDocument();
     expect(screen.queryByText('Hawks vs Eagles')).not.toBeInTheDocument();
     });
+
+  it('shows a NOT PLAYED badge for unplayed games', async () => {
+    renderModal();
+    const badge = await screen.findByText('loadGameModal.unplayedBadge');
+    expect(badge).toBeInTheDocument();
+  });
+
+  it('filters to only unplayed games when toggle checked', async () => {
+    renderModal();
+    await screen.findByText('Lions vs Tigers');
+
+    const toggle = screen.getByLabelText('loadGameModal.showUnplayedOnly');
+    fireEvent.click(toggle);
+
+    expect(screen.queryByText('Lions vs Tigers')).not.toBeInTheDocument();
+    expect(screen.getByText('Hawks vs Eagles')).toBeInTheDocument();
+  });
 
   it('calls onLoad and onClose when a game is loaded', async () => {
     renderModal();

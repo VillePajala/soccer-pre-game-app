@@ -57,6 +57,8 @@ export interface AppState {
   periodDurationMinutes: number;
   currentPeriod: number;
   gameStatus: 'notStarted' | 'inProgress' | 'periodEnd' | 'gameEnd';
+  /** Indicates if the game has been fully played */
+  isPlayed?: boolean;
   selectedPlayerIds: string[];
   assessments?: { [playerId: string]: PlayerAssessment };
   seasonId: string;
