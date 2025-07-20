@@ -33,7 +33,8 @@ interface NewGameSetupModalProps {
     homeOrAway: 'home' | 'away',
     demandFactor: number,
     ageGroup: string,
-    tournamentLevel: string
+    tournamentLevel: string,
+    isPlayed: boolean
   ) => void;
   onCancel: () => void;
   addSeasonMutation: UseMutationResult<Season | null, Error, Partial<Season> & { name: string }, unknown>;
@@ -86,6 +87,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
 
   // <<< Step 4a: State for Home/Away >>>
   const [localHomeOrAway, setLocalHomeOrAway] = useState<'home' | 'away'>('home');
+  const [isPlayed, setIsPlayed] = useState<boolean>(true);
 
   // MOVED state declarations for availablePlayersForSetup and selectedPlayerIds here
   const [availablePlayersForSetup, setAvailablePlayersForSetup] = useState<Player[]>([]);
@@ -379,7 +381,8 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
       localHomeOrAway, // <<< Step 4a: Pass Home/Away >>>
       demandFactor,
       ageGroup,
-      tournamentLevel
+      tournamentLevel,
+      isPlayed
     );
 
     // Modal will be closed by parent component after onStart
@@ -905,23 +908,34 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                           >
                             {t('common.home', 'Home')}
                           </button>
-                          <button
-                            onClick={() => setLocalHomeOrAway('away')}
-                            className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 ${
-                              localHomeOrAway === 'away'
-                                ? 'bg-indigo-600 text-white'
-                                : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                            }`}
-                          >
-                            {t('common.away', 'Away')}
-                          </button>
-                        </div>
-                      </div>
+                      <button
+                        onClick={() => setLocalHomeOrAway('away')}
+                        className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 ${
+                          localHomeOrAway === 'away'
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                        }`}
+                      >
+                        {t('common.away', 'Away')}
+                      </button>
                     </div>
-                  </>
-                )}
+                  </div>
+                  <div className="mb-4">
+                    <label className="inline-flex items-center text-sm text-slate-300">
+                      <input
+                        type="checkbox"
+                        checked={!isPlayed}
+                        onChange={(e) => setIsPlayed(!e.target.checked)}
+                        className="form-checkbox h-4 w-4 text-indigo-600 bg-slate-700 border-slate-500 rounded focus:ring-indigo-500 focus:ring-offset-slate-800"
+                      />
+                      <span className="ml-2">{t('newGameSetupModal.unplayedToggle', 'Not played yet')}</span>
+                    </label>
+                  </div>
+                </div>
               </>
             )}
+          </>
+        )}
           </div>
 
           {/* Footer */}

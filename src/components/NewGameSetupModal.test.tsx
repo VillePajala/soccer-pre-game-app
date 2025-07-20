@@ -51,6 +51,7 @@ const translations: { [key: string]: string } = {
   'common.cancel': 'Cancel',
   'newGameSetupModal.confirmButton': 'Confirm & Start Game',
   'newGameSetupModal.errorHomeTeamRequired': 'Home Team Name is required.',
+  'newGameSetupModal.unplayedToggle': 'Not played yet',
 };
 
 const mockT = jest.fn((key: string, fallback?: any) => {
@@ -173,7 +174,7 @@ describe('NewGameSetupModal', () => {
     });
     expect(mockOnStart).toHaveBeenCalledWith(
       expect.arrayContaining(['player1', 'player2']), 'New Team Name', 'Opponent Team',
-      expect.any(String), '', '', null, null, 2, 10, 'home', 1, '', ''
+      expect.any(String), '', '', null, null, 2, 10, 'home', 1, '', '', true
     );
   });
 
@@ -209,6 +210,24 @@ describe('NewGameSetupModal', () => {
     });
     
     await waitFor(() => expect(mockAddTournamentMutation.mutateAsync).toHaveBeenCalledWith({ name: 'National Cup' }));
+  });
+
+  test('passes isPlayed false when not played toggle checked', async () => {
+    await renderAndWaitForLoad();
+    const opponentInput = screen.getByRole('textbox', { name: /Opponent Name/i });
+    fireEvent.change(opponentInput, { target: { value: 'Opponent Team' } });
+    const toggle = screen.getByLabelText(translations['newGameSetupModal.unplayedToggle']);
+    fireEvent.click(toggle);
+    const startButton = screen.getByRole('button', { name: /Confirm & Start Game/i });
+    await act(async () => {
+        fireEvent.click(startButton);
+    });
+    await waitFor(() => {
+      expect(mockOnStart).toHaveBeenCalledWith(
+        expect.arrayContaining(['player1', 'player2']), 'Last Team', 'Opponent Team',
+        expect.any(String), '', '', null, null, 2, 10, 'home', 1, '', '', false
+      );
+    });
   });
 
   test('does not call onStart if home team name is empty, and saveLastHomeTeamName is not called', async () => {

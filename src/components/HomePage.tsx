@@ -347,6 +347,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   // Persistence state
   const [savedGames, setSavedGames] = useState<SavedGamesCollection>({});
   const [currentGameId, setCurrentGameId] = useState<string | null>(DEFAULT_GAME_ID);
+  const [isPlayed, setIsPlayed] = useState<boolean>(true);
   
   // This ref needs to be declared after currentGameId
   const gameIdRef = useRef(currentGameId);
@@ -874,6 +875,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       dispatchGameSession({ type: 'LOAD_PERSISTED_GAME_DATA', payload });
     } else {
       dispatchGameSession({ type: 'RESET_TO_INITIAL_STATE', payload: initialGameSessionData });
+      setIsPlayed(true);
     }
 
     // Update non-reducer states (these will eventually be migrated or handled differently)
@@ -885,6 +887,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     setTacticalDiscs(gameData?.tacticalDiscs || (isInitialDefaultLoad ? initialState.tacticalDiscs : []));
     setTacticalDrawings(gameData?.tacticalDrawings || (isInitialDefaultLoad ? initialState.tacticalDrawings : []));
     setTacticalBallPosition(gameData?.tacticalBallPosition || { relX: 0.5, relY: 0.5 });
+    setIsPlayed(gameData?.isPlayed === false ? false : true);
     
     // Update gameEvents from gameData if present, otherwise from initial state if it's an initial default load
     // setGameEvents(gameData?.events || (isInitialDefaultLoad ? initialState.gameEvents : [])); // REMOVE - Handled by LOAD_PERSISTED_GAME_DATA in reducer
@@ -1985,6 +1988,10 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     // REMOVED: saveStateToHistory({ homeOrAway: status });
   };
 
+  const handleSetIsPlayed = (played: boolean) => {
+    setIsPlayed(played);
+  };
+
   // --- NEW Handlers for Setting Season/Tournament ID ---
   const handleSetSeasonId = useCallback((newSeasonId: string | undefined) => {
     const idToSet = newSeasonId || ''; // Ensure empty string instead of null
@@ -2060,7 +2067,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     homeOrAway: 'home' | 'away', // <<< Step 4b: Add parameter
     demandFactor: number,
     ageGroup: string,
-    tournamentLevel: string
+    tournamentLevel: string,
+    isPlayed: boolean
   ) => {
       // ADD LOGGING HERE:
       logger.log('[handleStartNewGameWithSetup] Received Params:', { 
@@ -2077,7 +2085,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         homeOrAway,
         demandFactor,
         ageGroup,
-        tournamentLevel
+        tournamentLevel,
+        isPlayed
       });
       // No need to log initialState references anymore
 
@@ -2104,6 +2113,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           teamName: homeTeamName, // Use current teamName state
           homeOrAway: homeOrAway, // <<< Step 4b: Use parameter value
           demandFactor: demandFactor,
+          isPlayed: isPlayed,
           availablePlayers: availablePlayers, // <<< ADD: Use current global roster
           selectedPlayerIds: finalSelectedPlayerIds, // <-- USE PASSED OR FALLBACK
           playersOnField: [], // Always start with empty field
@@ -2158,6 +2168,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
       // 4. Reset History with the new state
       resetHistory(newGameState);
+
+      setIsPlayed(isPlayed);
 
       // 5. Set the current game ID - This will trigger the loading useEffect
       setCurrentGameId(newGameId);
@@ -2724,6 +2736,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         onTournamentIdChange={handleSetTournamentId}
         homeOrAway={gameSessionState.homeOrAway}
         onSetHomeOrAway={handleSetHomeOrAway}
+        isPlayed={isPlayed}
+        onIsPlayedChange={handleSetIsPlayed}
         addSeasonMutation={addSeasonMutation}
         addTournamentMutation={addTournamentMutation}
         isAddingSeason={addSeasonMutation.isPending}
