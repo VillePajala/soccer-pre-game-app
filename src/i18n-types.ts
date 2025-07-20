@@ -473,6 +473,7 @@ export type TranslationKey =
   | 'seasonTournamentModal.notesLabel'
   | 'seasonTournamentModal.periodCountLabel'
   | 'seasonTournamentModal.periodDurationLabel'
+  | 'seasonTournamentModal.searchPlaceholder'
   | 'seasonTournamentModal.seasons'
   | 'seasonTournamentModal.startDateLabel'
   | 'seasonTournamentModal.statsGames'

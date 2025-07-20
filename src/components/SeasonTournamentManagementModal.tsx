@@ -66,6 +66,8 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
 
     const [stats, setStats] = useState<Record<string, { games: number; goals: number }>>({});
 
+    const [searchText, setSearchText] = useState('');
+
     React.useEffect(() => {
         const loadStats = async () => {
             const { getFilteredGames } = await import('@/utils/savedGames');
@@ -158,6 +160,7 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
 
     const renderList = (type: 'season' | 'tournament') => {
         const data = type === 'season' ? seasons : tournaments;
+        const filtered = data.filter(d => d.name.toLowerCase().includes(searchText.toLowerCase()));
         const showInput = type === 'season' ? showNewSeasonInput : showNewTournamentInput;
         const setShowInput = type === 'season' ? setShowNewSeasonInput : setShowNewTournamentInput;
         const name = type === 'season' ? newSeasonName : newTournamentName;
@@ -241,7 +244,7 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                     </div>
                 )}
                 <div className="space-y-2">
-                    {data.map(item => (
+                    {filtered.map(item => (
                         <div key={item.id} className="bg-slate-800/60 p-2 rounded-md">
                             {editingId === item.id ? (
                                 <div className="space-y-2">
@@ -312,9 +315,18 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
         </div>
         
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-            {renderList('season')}
-            {renderList('tournament')}
+        <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6">
+            <input
+                type="text"
+                placeholder={t('seasonTournamentModal.searchPlaceholder')}
+                value={searchText}
+                onChange={e => setSearchText(e.target.value)}
+                className="w-full mb-4 px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:ring-indigo-500 focus:border-indigo-500"
+            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {renderList('season')}
+                {renderList('tournament')}
+            </div>
         </div>
 
         {/* Footer */}

@@ -489,7 +489,8 @@
     "notesLabel": "Notes",
     "statsGames": "Games",
     "statsGoals": "Goals",
-    "editDetails": "Edit Details"
+    "editDetails": "Edit Details",
+    "searchPlaceholder": "Search..."
   },
   "common": {
     "actions": "Actions",
