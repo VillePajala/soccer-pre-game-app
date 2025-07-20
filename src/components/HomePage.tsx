@@ -168,7 +168,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     tournamentLevel: initialState.tournamentLevel,
     gameLocation: initialState.gameLocation,
     gameTime: initialState.gameTime,
-    isPlayed: initialState.isPlayed,
+    isPlayed: initialState.isPlayed ?? false,
     gameEvents: initialState.gameEvents,
     timeElapsedInSeconds: 0, // Initial timer state should be 0
     isTimerRunning: false,    // Initial timer state
