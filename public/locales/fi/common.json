@@ -403,7 +403,8 @@
     "notesLabel": "Muistiinpanot",
     "statsGames": "Ottelut",
     "statsGoals": "Maalit",
-    "editDetails": "Muokkaa tietoja"
+    "editDetails": "Muokkaa tietoja",
+    "searchPlaceholder": "Etsi..."
   },
   "gameSettingsModal": {
     "unknownPlayer": "Tuntematon pelaaja",

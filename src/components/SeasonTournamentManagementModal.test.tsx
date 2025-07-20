@@ -135,4 +135,24 @@ describe('SeasonTournamentManagementModal', () => {
     expect(window.confirm).toHaveBeenCalled();
     expect(defaultProps.deleteTournamentMutation.mutate).toHaveBeenCalledWith('t1');
   });
-}); 
+
+  it('filters items by search text', async () => {
+    const user = userEvent.setup();
+    renderWithProviders({
+      seasons: [
+        { id: 's1', name: 'Winter Season' },
+        { id: 's2', name: 'Summer Season' }
+      ],
+      tournaments: [
+        { id: 't1', name: 'Autumn Cup' }
+      ]
+    });
+
+    const searchInput = screen.getByPlaceholderText(i18n.t('seasonTournamentModal.searchPlaceholder'));
+    await user.type(searchInput, 'Winter');
+
+    expect(screen.getByText('Winter Season')).toBeInTheDocument();
+    expect(screen.queryByText('Summer Season')).toBeNull();
+    expect(screen.queryByText('Autumn Cup')).toBeNull();
+  });
+});
