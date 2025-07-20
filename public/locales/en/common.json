@@ -381,6 +381,7 @@
     "periodDurationLabel": "Period Duration (minutes)",
     "demandFactorLabel": "Game Demand Level",
     "homeOrAwayLabel": "Your Team is",
+    "unplayedToggle": "Not played yet",
     "confirmAndStart": "Confirm & Start Game"
   },
   "timerOverlay.subIntervalLabel": "Sub Interval:",
@@ -429,6 +430,7 @@
     "numPeriodsLabel": "Number of Periods",
     "periodDurationLabel": "Period Duration (minutes)",
     "demandFactorLabel": "Game Demand Level",
+    "unplayedToggle": "Not played yet",
     "linkita": "Link",
     "eiMitaan": "None",
     "kausi": "Season",

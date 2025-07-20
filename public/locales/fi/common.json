@@ -372,6 +372,7 @@
     "periodDurationLabel": "Jakson kesto (minuuteissa)",
     "demandFactorLabel": "Pelin vaativuustaso",
     "homeOrAwayLabel": "Joukkueesi on",
+    "unplayedToggle": "Ei vielä pelattu",
     "confirmAndStart": "Vahvista ja aloita peli"
   },
   "timerOverlay.subIntervalLabel": "Vaihdon Aikaväli:",
@@ -453,6 +454,7 @@
     "numPeriodsLabel": "Erien lukumäärä",
     "periodDurationLabel": "Erän kesto (minuuteissa)",
     "demandFactorLabel": "Pelin vaativuustaso",
+    "unplayedToggle": "Ei vielä pelattu",
     "linkita": "Linkitä",
     "eiMitaan": "Ei mitään",
     "kausi": "Kausi",

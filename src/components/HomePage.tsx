@@ -2060,7 +2060,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     homeOrAway: 'home' | 'away', // <<< Step 4b: Add parameter
     demandFactor: number,
     ageGroup: string,
-    tournamentLevel: string
+    tournamentLevel: string,
+    isPlayed: boolean
   ) => {
       // ADD LOGGING HERE:
       logger.log('[handleStartNewGameWithSetup] Received Params:', { 
@@ -2077,7 +2078,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         homeOrAway,
         demandFactor,
         ageGroup,
-        tournamentLevel
+        tournamentLevel,
+        isPlayed
       });
       // No need to log initialState references anymore
 
@@ -2104,6 +2106,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           teamName: homeTeamName, // Use current teamName state
           homeOrAway: homeOrAway, // <<< Step 4b: Use parameter value
           demandFactor: demandFactor,
+          isPlayed: isPlayed,
           availablePlayers: availablePlayers, // <<< ADD: Use current global roster
           selectedPlayerIds: finalSelectedPlayerIds, // <-- USE PASSED OR FALLBACK
           playersOnField: [], // Always start with empty field

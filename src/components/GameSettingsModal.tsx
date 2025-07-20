@@ -69,6 +69,8 @@ export interface GameSettingsModalProps {
   onTournamentIdChange: (tournamentId: string | undefined) => void;
   homeOrAway: 'home' | 'away';
   onSetHomeOrAway: (status: 'home' | 'away') => void;
+  isPlayed: boolean;
+  onIsPlayedChange: (played: boolean) => void;
   // Add mutation props for creating seasons and tournaments
   addSeasonMutation: UseMutationResult<Season | null, Error, Partial<Season> & { name: string }, unknown>;
   addTournamentMutation: UseMutationResult<Tournament | null, Error, Partial<Tournament> & { name: string }, unknown>;
@@ -150,6 +152,8 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   onTournamentIdChange,
   homeOrAway,
   onSetHomeOrAway,
+  isPlayed,
+  onIsPlayedChange,
   addSeasonMutation,
   addTournamentMutation,
   isAddingSeason,
@@ -1234,6 +1238,23 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                       step={0.05}
                       reverseColor
                     />
+                  </div>
+                  <div className="mb-4">
+                    <label className="inline-flex items-center text-sm text-slate-300">
+                      <input
+                        type="checkbox"
+                        checked={!isPlayed}
+                        onChange={(e) => {
+                          const newValue = !e.target.checked;
+                          onIsPlayedChange(newValue);
+                          if (currentGameId) {
+                            updateGameDetailsMutation.mutate({ gameId: currentGameId, updates: { isPlayed: newValue } });
+                          }
+                        }}
+                        className="form-checkbox h-4 w-4 text-indigo-600 bg-slate-700 border-slate-500 rounded focus:ring-indigo-500 focus:ring-offset-slate-800"
+                      />
+                      <span className="ml-2">{t('gameSettingsModal.unplayedToggle', 'Not played yet')}</span>
+                    </label>
                   </div>
                 </div>
 

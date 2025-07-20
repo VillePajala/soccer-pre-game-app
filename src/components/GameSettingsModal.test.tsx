@@ -65,6 +65,7 @@ jest.mock('react-i18next', () => ({
         'gameSettingsModal.errors.genericDeleteError': 'Tapahtuman poistamisessa tapahtui odottamaton virhe.',
         'gameSettingsModal.home': 'Koti',
         'gameSettingsModal.away': 'Vieras',
+        'gameSettingsModal.unplayedToggle': 'Ei vielä pelattu',
       };
       
       let translation = translations[key] || key;
@@ -155,6 +156,8 @@ const defaultProps: GameSettingsModalProps = {
   onTournamentIdChange: mockOnTournamentIdChange,
   homeOrAway: 'home',
   onSetHomeOrAway: mockOnSetHomeOrAway,
+  isPlayed: true,
+  onIsPlayedChange: jest.fn(),
   addSeasonMutation: {
     mutate: jest.fn(),
   } as unknown as UseMutationResult<Season | null, Error, { name: string }, unknown>,
