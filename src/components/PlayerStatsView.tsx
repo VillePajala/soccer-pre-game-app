@@ -271,23 +271,24 @@ const PlayerStatsView: React.FC<PlayerStatsViewProps> = ({ player, savedGames, o
               playerStats.gameByGameStats.map(game => (
                 <button
                   key={game.gameId}
-                  className="w-full bg-slate-800/40 border border-slate-700/50 p-3 rounded-md flex justify-between items-center text-left hover:bg-slate-800/60 transition-colors"
+                  className="relative w-full bg-slate-800/40 border border-slate-700/50 p-4 rounded-md flex justify-between items-center text-left hover:bg-slate-800/60 transition-colors shadow-inner"
                   onClick={() => onGameClick(game.gameId)}
                 >
-                  <div className="flex items-center">
-                    <span className={`w-2 h-8 rounded-full mr-3 ${getResultClass(game.result)}`}></span>
+                  <div className="absolute inset-0 bg-gradient-to-b from-sky-400/10 via-transparent to-transparent pointer-events-none rounded-md" />
+                  <span className={`absolute inset-y-0 left-0 w-1 rounded-l-md ${getResultClass(game.result)}`}></span>
+                  <div className="flex items-center pl-2">
                     <div>
-                      <p className="font-semibold">{t('playerStats.vs', 'vs')} {game.opponentName}</p>
+                      <p className="font-semibold drop-shadow-lg">{t('playerStats.vs', 'vs')} {game.opponentName}</p>
                       <p className="text-xs text-slate-400">{format(new Date(game.date), i18n.language === 'fi' ? 'd.M.yyyy' : 'PP', { locale: i18n.language === 'fi' ? fi : enUS })}</p>
                     </div>
                   </div>
                   <div className="flex items-center">
                     <div className="text-center mx-2">
-                      <p className={`font-bold text-lg ${game.goals > 0 ? 'text-green-400' : 'text-slate-300'}`}>{game.goals}</p>
+                      <p className={`font-bold text-xl ${game.goals > 0 ? 'text-green-400' : 'text-slate-300'}`}>{game.goals}</p>
                       <p className="text-xs text-slate-400">{t('playerStats.goals', 'Goals')}</p>
                     </div>
                     <div className="text-center mx-2">
-                      <p className={`font-bold text-lg ${game.assists > 0 ? 'text-blue-400' : 'text-slate-300'}`}>{game.assists}</p>
+                      <p className={`font-bold text-xl ${game.assists > 0 ? 'text-blue-400' : 'text-slate-300'}`}>{game.assists}</p>
                       <p className="text-xs text-slate-400">{t('playerStats.assists', 'Assists')}</p>
                     </div>
                   </div>
