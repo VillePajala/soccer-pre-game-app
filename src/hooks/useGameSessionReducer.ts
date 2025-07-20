@@ -381,6 +381,7 @@ export const gameSessionReducer = (state: GameSessionState, action: GameSessionA
       const subIntervalMinutes = loadedData.subIntervalMinutes ?? initialGameSessionStatePlaceholder.subIntervalMinutes;
       const showPlayerNames = loadedData.showPlayerNames ?? initialGameSessionStatePlaceholder.showPlayerNames;
       const completedIntervalDurations = loadedData.completedIntervalDurations ?? [];
+      const isPlayed = loadedData.isPlayed ?? false;
 
       let timeElapsedAtLoad = 0;
       if (gameStatus === 'periodEnd' || gameStatus === 'gameEnd') {
@@ -406,6 +407,7 @@ export const gameSessionReducer = (state: GameSessionState, action: GameSessionA
         tournamentId,
         gameLocation,
         gameTime,
+        isPlayed,
         demandFactor,
         gameEvents,
         subIntervalMinutes,
