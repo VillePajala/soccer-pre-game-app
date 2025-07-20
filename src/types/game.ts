@@ -76,6 +76,8 @@ export interface AppState {
   tacticalDiscs: TacticalDisc[];
   tacticalDrawings: Point[][];
   tacticalBallPosition: Point | null;
+  /** Whether the game has been played. Defaults to true for existing games */
+  isPlayed?: boolean;
 }
 
 export interface SavedGamesCollection {

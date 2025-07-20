@@ -37,6 +37,9 @@ export const calculatePlayerStats = (player: Player, savedGames: { [key: string]
   const performanceByTournament: { [tournamentId: string]: { name: string, gamesPlayed: number, goals: number, assists: number, points: number } } = {};
 
   Object.entries(savedGames).forEach(([gameId, game]) => {
+    if (game.isPlayed === false) {
+      return;
+    }
     // Check if the player was part of this game's roster
     if (game.selectedPlayerIds?.includes(player.id)) {
       const goals = game.gameEvents?.filter(e => e.type === 'goal' && e.scorerId === player.id).length || 0;
