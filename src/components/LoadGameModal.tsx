@@ -334,15 +334,26 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
           const assessmentsDone = Object.keys(game.assessments || {}).length;
           const assessmentsComplete = totalPlayers > 0 && assessmentsDone >= totalPlayers;
           const isExpanded = expandedIds.has(gameId);
+          const getResultColor = () => {
+            if (game.homeScore > game.awayScore) {
+              return game.homeOrAway === 'home' ? 'bg-green-500' : 'bg-red-500';
+            }
+            if (game.awayScore > game.homeScore) {
+              return game.homeOrAway === 'home' ? 'bg-red-500' : 'bg-green-500';
+            }
+            return 'bg-gray-500';
+          };
 
           return (
             <li
               key={gameId}
-              className={`p-4 transition-colors rounded-lg mb-3 last:mb-0 bg-slate-700/80 border border-slate-600/50 ${
+              className={`relative p-4 transition-colors rounded-lg mb-3 last:mb-0 bg-slate-900/70 border border-slate-700 shadow-inner hover:bg-slate-900/80 ${
                 isCurrent ? 'ring-2 ring-yellow-400/50' : ''
               }`}
               data-testid={`game-item-${gameId}`}
             >
+              <div className="absolute inset-0 bg-gradient-to-b from-sky-400/10 via-transparent to-transparent pointer-events-none rounded-lg" />
+              <span className={`absolute inset-y-0 left-0 w-1 rounded-l-md ${getResultColor()}`} />
               <button
                 type="button"
                 onClick={() => toggleExpanded(gameId)}
@@ -351,7 +362,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                 className="w-full flex justify-between items-start text-left"
               >
                 <div className="flex-1">
-                  <h3 className={`text-base font-medium ${isCurrent ? 'text-amber-400' : 'text-slate-100'}`}>{displayHomeTeamName} vs {displayAwayTeamName}</h3>
+                  <h3 className={`text-lg font-semibold drop-shadow-lg ${isCurrent ? 'text-amber-400' : 'text-slate-100'}`}>{displayHomeTeamName} vs {displayAwayTeamName}</h3>
                   <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                     {contextName && contextType && contextId && (
                       <button
@@ -384,7 +395,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                   </div>
                 </div>
                 <div className="flex items-center gap-2 ml-4">
-                  <div className="text-2xl font-bold text-yellow-300">{game.homeScore ?? 0} - {game.awayScore ?? 0}</div>
+                  <div className="text-3xl font-extrabold text-yellow-300 drop-shadow-lg">{game.homeScore ?? 0} - {game.awayScore ?? 0}</div>
                   {isExpanded ? <HiOutlineChevronUp className="w-5 h-5 text-slate-400" /> : <HiOutlineChevronDown className="w-5 h-5 text-slate-400" />}
                 </div>
               </button>
