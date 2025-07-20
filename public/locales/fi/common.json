@@ -310,6 +310,7 @@
     "loadingGames": "Ladataan pelejä...",
     "noGamesMatchFilter": "Yhtään peliä ei vastaa suodatinta",
     "noGamesSaved": "Yhtään peliä ei ole tallennettu",
+    "notPlayedYet": "Ei vielä pelattu",
     "errors": {
       "listLoadFailed": "Tallennettujen pelien listan lataus epäonnistui.",
       "loadFailed": "Pelin lataaminen epäonnistui. Yritä uudelleen.",

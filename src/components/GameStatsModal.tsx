@@ -306,7 +306,9 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   const overallTeamStats = useMemo(() => {
     if (activeTab !== 'overall') return null;
 
-    const allGameIds = Object.keys(savedGames || {});
+    const allGameIds = Object.keys(savedGames || {}).filter(
+      id => savedGames?.[id]?.isPlayed !== false
+    );
     let wins = 0;
     let losses = 0;
     let ties = 0;
@@ -606,7 +608,9 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
       return [];
     };
 
-    const allGameIds = Object.keys(savedGames || {});
+    const allGameIds = Object.keys(savedGames || {}).filter(
+      id => savedGames?.[id]?.isPlayed !== false
+    );
     return calculateStats(allGameIds);
   }, [activeTab, savedGames, seasons, tournaments, selectedSeasonIdFilter, selectedTournamentIdFilter]);
 
@@ -639,7 +643,9 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
       }
     } else {
       // Handle 'season', 'tournament', 'overall' tabs
-      const allGameIds = Object.keys(savedGames || {});
+      const allGameIds = Object.keys(savedGames || {}).filter(
+        id => savedGames?.[id]?.isPlayed !== false
+      );
       
       // Filter game IDs based on tab and selected filter
       processedGameIds = allGameIds.filter(gameId => {

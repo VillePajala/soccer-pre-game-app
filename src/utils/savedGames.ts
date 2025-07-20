@@ -52,7 +52,13 @@ export const getSavedGames = async (): Promise<SavedGamesCollection> => {
     if (!gamesJson) {
       return {};
     }
-    return JSON.parse(gamesJson) as SavedGamesCollection;
+    const parsed = JSON.parse(gamesJson) as SavedGamesCollection;
+    Object.values(parsed).forEach(game => {
+      if (game.isPlayed === undefined) {
+        game.isPlayed = true;
+      }
+    });
+    return parsed;
   } catch (error) {
     logger.error('Error getting saved games from localStorage:', error);
     throw error;

@@ -335,6 +335,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
           const assessmentsComplete = totalPlayers > 0 && assessmentsDone >= totalPlayers;
           const isExpanded = expandedIds.has(gameId);
           const getResultColor = () => {
+            if (game.isPlayed === false) return 'bg-gray-500';
             if (game.homeScore > game.awayScore) {
               return game.homeOrAway === 'home' ? 'bg-green-500' : 'bg-red-500';
             }
@@ -395,8 +396,20 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                   </div>
                 </div>
                 <div className="flex items-center gap-2 ml-4">
-                  <div className="text-3xl font-extrabold text-yellow-300 drop-shadow-lg">{game.homeScore ?? 0} - {game.awayScore ?? 0}</div>
-                  {isExpanded ? <HiOutlineChevronUp className="w-5 h-5 text-slate-400" /> : <HiOutlineChevronDown className="w-5 h-5 text-slate-400" />}
+                  {game.isPlayed !== false ? (
+                    <div className="text-3xl font-extrabold text-yellow-300 drop-shadow-lg">
+                      {game.homeScore ?? 0} - {game.awayScore ?? 0}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-slate-400">
+                      {t('loadGameModal.notPlayedYet', 'Not played yet')}
+                    </div>
+                  )}
+                  {isExpanded ? (
+                    <HiOutlineChevronUp className="w-5 h-5 text-slate-400" />
+                  ) : (
+                    <HiOutlineChevronDown className="w-5 h-5 text-slate-400" />
+                  )}
                 </div>
               </button>
 

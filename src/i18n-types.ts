@@ -345,6 +345,7 @@ export type TranslationKey =
   | 'loadGameModal.noGamesSaved'
   | 'loadGameModal.noGamesToExport'
   | 'loadGameModal.noSavedGames'
+  | 'loadGameModal.notPlayedYet'
   | 'loadGameModal.restoreButton'
   | 'loadGameModal.title'
   | 'matchPreparation.duringGame.points'

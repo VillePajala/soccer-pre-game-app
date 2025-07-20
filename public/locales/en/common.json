@@ -319,6 +319,7 @@
     "loadingGames": "Loading games...",
     "noGamesMatchFilter": "No saved games match your filter.",
     "noGamesSaved": "No games have been saved yet.",
+    "notPlayedYet": "Not played yet",
     "errors": {
       "listLoadFailed": "Failed to load saved games list.",
       "loadFailed": "Error loading game state. Please try again.",
