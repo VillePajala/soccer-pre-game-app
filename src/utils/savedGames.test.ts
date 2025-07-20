@@ -306,6 +306,8 @@ describe('Saved Games Utilities', () => {
       // Check some default fields from AppState that createGame sets
       expect(result.gameData.opponentName).toBe('Opponent'); // Default from createGame via AppState structure
       expect(result.gameData.gameStatus).toBe('notStarted');
+      // Default isPlayed value should be false for a new game
+      expect(result.gameData.isPlayed).toBe(false);
 
       // Verify it was saved to localStorage
       expect(localStorageMock.setItem).toHaveBeenCalledTimes(1);
@@ -327,6 +329,7 @@ describe('Saved Games Utilities', () => {
       expect(result.gameData.numberOfPeriods).toBe(2);
       expect(result.gameData.periodDurationMinutes).toBe(10);
       expect(result.gameData.subIntervalMinutes).toBe(5);
+      expect(result.gameData.isPlayed).toBe(false);
     });
 
     it('should reject if internal saveGame fails', async () => {
