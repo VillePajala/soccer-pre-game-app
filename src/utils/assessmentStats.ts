@@ -37,6 +37,7 @@ export function getPlayerAssessmentTrends(playerId: string, games: SavedGamesCol
   const trends: { [metric: string]: MetricTrendPoint[] } = {};
   METRICS.forEach(m => { trends[m] = []; });
   for (const game of Object.values(games)) {
+    if (game.isPlayed === false) continue;
     const a = game.assessments?.[playerId];
     if (!a) continue;
     METRICS.forEach(m => {
@@ -50,6 +51,7 @@ export function getPlayerAssessmentTrends(playerId: string, games: SavedGamesCol
 export function getPlayerAssessmentNotes(playerId: string, games: SavedGamesCollection): { date: string; notes: string }[] {
   const notes: { date: string; notes: string }[] = [];
   for (const game of Object.values(games)) {
+    if (game.isPlayed === false) continue;
     const a = game.assessments?.[playerId];
     if (a && a.notes) notes.push({ date: game.gameDate, notes: a.notes });
   }
@@ -69,6 +71,7 @@ export function calculatePlayerAssessmentAverages(
   let finalScoreTotal = 0;
   let denominator = 0;
   for (const game of Object.values(games)) {
+    if (game.isPlayed === false) continue;
     const a = game.assessments?.[playerId];
     if (!a) continue;
     count++;
@@ -100,6 +103,7 @@ export function calculateTeamAssessmentAverages(
   let finalScoreTotal = 0;
   let denominator = 0;
   for (const game of Object.values(games)) {
+    if (game.isPlayed === false) continue;
     if (!game.assessments) continue;
     const players = Object.values(game.assessments);
     if (players.length === 0) continue;
