@@ -15,6 +15,7 @@ import { GameEvent, SavedGamesCollection } from '@/types';
 import { getSeasons as utilGetSeasons } from '@/utils/seasons';
 import { getTournaments as utilGetTournaments } from '@/utils/tournaments';
 import { FaSort, FaSortUp, FaSortDown, FaEdit, FaSave, FaTimes, FaTrashAlt } from 'react-icons/fa';
+import { Combobox } from '@headlessui/react';
 import PlayerStatsView from './PlayerStatsView';
 import { calculateTeamAssessmentAverages } from '@/utils/assessmentStats';
 import RatingBar from './RatingBar';
@@ -202,6 +203,17 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   const [localFairPlayPlayerId, setLocalFairPlayPlayerId] = useState<string | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [playerSearchText, setPlayerSearchText] = useState('');
+
+  const filteredPlayers = useMemo(() => {
+    const search = playerSearchText.toLowerCase();
+    return availablePlayers.filter(p => {
+      if (!search) return true;
+      return (
+        p.name.toLowerCase().includes(search) ||
+        (p.nickname && p.nickname.toLowerCase().includes(search))
+      );
+    });
+  }, [availablePlayers, playerSearchText]);
 
   // ** Calculate initial winner ID using useMemo **
   const initialFairPlayWinnerId = useMemo(() => {
@@ -969,32 +981,34 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
              <div className="p-4 sm:p-6">
                 {/* Player Selection Dropdown */}
                 <div className="mb-4">
-                  <label htmlFor="player-select" className="block text-sm font-medium text-slate-300 mb-1">{t('playerStats.selectPlayerLabel', 'Select Player')}</label>
-                  <input
-                    type="text"
-                    placeholder={t('playerStats.searchPlaceholder', 'Search players...')}
-                    value={playerSearchText}
-                    onChange={(e) => setPlayerSearchText(e.target.value)}
-                    className="w-full bg-slate-700 border border-slate-600 rounded-md text-white px-3 py-1.5 text-sm mb-2 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                  />
-                  <select
-                    id="player-select"
-                    value={selectedPlayer?.id || ''}
-                    onChange={(e) => {
-                      const newSelectedPlayer = availablePlayers.find(p => p.id === e.target.value) || null;
-                      setSelectedPlayer(newSelectedPlayer);
-                    }}
-                    className="w-full bg-slate-700 border border-slate-600 rounded-md text-white px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                  >
-                    <option value="" disabled>{t('playerStats.selectPlayer', 'Select a player to view their stats.')}</option>
-                    {availablePlayers.filter(p => {
-                      if (!playerSearchText) return true;
-                      const search = playerSearchText.toLowerCase();
-                      return p.name.toLowerCase().includes(search) || (p.nickname && p.nickname.toLowerCase().includes(search));
-                    }).map(p => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
-                    ))}
-                  </select>
+                  <Combobox value={selectedPlayer} onChange={setSelectedPlayer} nullable>
+                    <Combobox.Label className="block text-sm font-medium text-slate-300 mb-1">
+                      {t('playerStats.selectPlayerLabel', 'Select Player')}
+                    </Combobox.Label>
+                    <div className="relative">
+                      <Combobox.Input
+                        className="w-full bg-slate-700 border border-slate-600 rounded-md text-white px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        displayValue={(player: Player) => player?.name || ''}
+                        onChange={(e) => setPlayerSearchText(e.target.value)}
+                        placeholder={t('playerStats.searchPlaceholder', 'Search players...')}
+                      />
+                      {filteredPlayers.length > 0 && (
+                        <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-slate-800/90 backdrop-blur-sm border border-slate-700/50">
+                          {filteredPlayers.map((p) => (
+                            <Combobox.Option
+                              key={p.id}
+                              value={p}
+                              className={({ active }) =>
+                                `cursor-pointer select-none py-1.5 px-3 text-sm ${active ? 'bg-slate-800/60 text-slate-100' : 'text-slate-300'}`
+                              }
+                            >
+                              {p.name}
+                            </Combobox.Option>
+                          ))}
+                        </Combobox.Options>
+                      )}
+                    </div>
+                  </Combobox>
                 </div>
 
                 <PlayerStatsView 
