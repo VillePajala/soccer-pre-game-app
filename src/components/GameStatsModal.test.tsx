@@ -9,6 +9,13 @@ import * as tournamentsUtils from '@/utils/tournaments';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '../i18n.test';
 
+// Mock ResizeObserver for headlessui components
+global.ResizeObserver = class ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};
+
 // Mocks
 jest.mock('@/utils/seasons');
 jest.mock('@/utils/tournaments');
@@ -371,23 +378,37 @@ describe('GameStatsModal', () => {
     expect(mockProps.onDeleteGameEvent).toHaveBeenCalledWith('g1');
   });
 
-  test('filters players in select by search input', async () => {
+  test('filters players in combobox and selects with mouse', async () => {
     const props = getDefaultProps();
     await act(async () => {
       renderComponent(props);
     });
 
-    // Switch to Player tab
     fireEvent.click(screen.getByRole('button', { name: i18n.t('gameStatsModal.tabs.player', 'Player') }));
 
-    const searchInput = await screen.findByPlaceholderText('Search players...');
-    fireEvent.change(searchInput, { target: { value: 'Bob' } });
+    const input = await screen.findByPlaceholderText('Search players...');
+    fireEvent.change(input, { target: { value: 'Bob' } });
 
-    const select = screen.getByLabelText('Select Player');
-    const options = within(select).getAllByRole('option');
-    expect(options).toHaveLength(2); // placeholder + Bob
-    expect(within(select).getByText('Bob')).toBeInTheDocument();
-    expect(within(select).queryByText('Alice')).not.toBeInTheDocument();
+    const option = await screen.findByRole('option', { name: 'Bob' });
+    fireEvent.click(option);
+
+    expect(input).toHaveValue('Bob');
+  });
+
+  test('allows selecting player with keyboard', async () => {
+    const props = getDefaultProps();
+    await act(async () => {
+      renderComponent(props);
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('gameStatsModal.tabs.player', 'Player') }));
+
+    const input = await screen.findByPlaceholderText('Search players...');
+    fireEvent.change(input, { target: { value: 'Cha' } });
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    expect(input).toHaveValue('Charlie');
   });
 
   // Add more tests for:
