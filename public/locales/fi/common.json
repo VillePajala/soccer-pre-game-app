@@ -647,7 +647,8 @@
   },
   "updateBanner": {
     "message": "Sovelluksesta on saatavilla uusi versio.",
-    "reloadButton": "Päivitä"
+    "reloadButton": "Päivitä",
+    "dismissButton": "Sulje"
   },
   "installPrompt": {
     "message": "Asenna Coaching Companion saadaksesi nopeamman ja offline-toimivan kokemuksen!",

@@ -554,6 +554,7 @@ export type TranslationKey =
   | 'trainingResourcesModal.navExampleDrills'
   | 'trainingResourcesModal.navWarmup'
   | 'trainingResourcesModal.title'
+  | 'updateBanner.dismissButton'
   | 'updateBanner.message'
   | 'updateBanner.reloadButton'
   | 'warmup.duringGamePoints'

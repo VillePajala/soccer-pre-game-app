@@ -656,7 +656,8 @@
   },
   "updateBanner": {
     "message": "A new version of the app is available.",
-    "reloadButton": "Reload"
+    "reloadButton": "Reload",
+    "dismissButton": "Dismiss"
   },
   "installPrompt": {
     "message": "Install Coaching Companion for a faster, offline experience!",
