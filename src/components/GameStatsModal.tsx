@@ -985,7 +985,14 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                   <label className="block text-sm font-medium text-slate-300 mb-1">
                     {t('playerStats.selectPlayerLabel', 'Select Player')}
                   </label>
-                  <Combobox value={selectedPlayer} onChange={setSelectedPlayer} nullable>
+                  <Combobox
+                    value={selectedPlayer}
+                    onChange={(player) => {
+                      setSelectedPlayer(player);
+                      setPlayerQuery('');
+                    }}
+                    nullable
+                  >
                     <div className="relative">
                       <Combobox.Input
                         className="w-full bg-slate-700 border border-slate-600 rounded-md text-white px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
