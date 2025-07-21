@@ -78,5 +78,11 @@ export default function ServiceWorkerRegistration() {
     }
   };
 
-  return showUpdateBanner ? <UpdateBanner onUpdate={handleUpdate} notes={releaseNotes || undefined} /> : null;
+  return showUpdateBanner ? (
+    <UpdateBanner
+      onUpdate={handleUpdate}
+      notes={releaseNotes || undefined}
+      onDismiss={() => setShowUpdateBanner(false)}
+    />
+  ) : null;
 }

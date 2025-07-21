@@ -20,5 +20,6 @@ module.exports = {
   plugins: [],
   safelist: [
     'animate-pulse',
+    'animate-fade-in-out',
   ],
-} 
+}

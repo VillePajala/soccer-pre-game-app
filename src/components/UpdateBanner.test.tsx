@@ -13,4 +13,11 @@ describe('UpdateBanner', () => {
     render(<UpdateBanner onUpdate={() => {}} />);
     expect(screen.queryByText('Some fixes')).not.toBeInTheDocument();
   });
+
+  it('hides banner when dismissed', () => {
+    render(<UpdateBanner onUpdate={() => {}} />);
+    const button = screen.getByRole('button', { name: /dismiss/i });
+    button.click();
+    expect(screen.queryByText(/new version/i)).not.toBeInTheDocument();
+  });
 });
