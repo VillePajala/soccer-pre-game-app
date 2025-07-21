@@ -15,7 +15,6 @@ import { GameEvent, SavedGamesCollection } from '@/types';
 import { getSeasons as utilGetSeasons } from '@/utils/seasons';
 import { getTournaments as utilGetTournaments } from '@/utils/tournaments';
 import { FaSort, FaSortUp, FaSortDown, FaEdit, FaSave, FaTimes, FaTrashAlt } from 'react-icons/fa';
-import { Combobox } from '@headlessui/react';
 import PlayerStatsView from './PlayerStatsView';
 import { calculateTeamAssessmentAverages } from '@/utils/assessmentStats';
 import RatingBar from './RatingBar';
@@ -979,38 +978,38 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
         <div className="flex-1 overflow-y-auto min-h-0">
           {activeTab === 'player' ? (
              <div className="p-4 sm:p-6">
-                {/* Player Selection Dropdown */}
-                <div className="mb-4">
-                  <Combobox value={selectedPlayer} onChange={setSelectedPlayer} nullable>
-                    <Combobox.Label className="block text-sm font-medium text-slate-300 mb-1">
-                      {t('playerStats.selectPlayerLabel', 'Select Player')}
-                    </Combobox.Label>
-                    <div className="relative">
-                      <Combobox.Input
-                        className="w-full bg-slate-700 border border-slate-600 rounded-md text-white px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                        displayValue={(player: Player) => player?.name || ''}
-                        onChange={(e) => setPlayerSearchText(e.target.value)}
-                        placeholder={t('playerStats.searchPlaceholder', 'Search players...')}
-                      />
-                      {filteredPlayers.length > 0 && (
-                        <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-slate-800/90 backdrop-blur-sm border border-slate-700/50">
-                          {filteredPlayers.map((p) => (
-                            <Combobox.Option
-                              key={p.id}
-                              value={p}
-                              className={({ active }) =>
-                                `cursor-pointer select-none py-1.5 px-3 text-sm ${active ? 'bg-slate-800/60 text-slate-100' : 'text-slate-300'}`
-                              }
-                            >
-                              {p.name}
-                            </Combobox.Option>
-                          ))}
-                        </Combobox.Options>
-                      )}
-                    </div>
-                  </Combobox>
-                </div>
 
+                {/* Player Selection */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-slate-300 mb-1">
+                    {t('playerStats.selectPlayerLabel', 'Select Player')}
+                  </label>
+                  <input
+                    type="text"
+                    value={playerSearchText}
+                    onChange={(e) => setPlayerSearchText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && filteredPlayers.length > 0) {
+                        setSelectedPlayer(filteredPlayers[0]);
+                      }
+                    }}
+                    className="w-full bg-slate-700 border border-slate-600 rounded-md text-white px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    placeholder={t('playerStats.searchPlaceholder', 'Search players...')}
+                  />
+                </div>
+                <ul className="space-y-1.5 mb-4">
+                  {filteredPlayers.map((p) => (
+                    <li key={p.id}>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedPlayer(p)}
+                        className={`w-full text-left p-2 rounded-md border ${selectedPlayer?.id === p.id ? 'bg-slate-700/75 border-indigo-500' : 'bg-slate-800/40 border-slate-700/50 hover:bg-slate-800/60 transition-colors'}`}
+                      >
+                        {p.name}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
                 <PlayerStatsView 
                   player={selectedPlayer} 
                   savedGames={savedGames} 

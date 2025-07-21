@@ -378,7 +378,7 @@ describe('GameStatsModal', () => {
     expect(mockProps.onDeleteGameEvent).toHaveBeenCalledWith('g1');
   });
 
-  test('filters players in combobox and selects with mouse', async () => {
+  test('filters player list and selects with mouse', async () => {
     const props = getDefaultProps();
     await act(async () => {
       renderComponent(props);
@@ -387,12 +387,13 @@ describe('GameStatsModal', () => {
     fireEvent.click(screen.getByRole('button', { name: i18n.t('gameStatsModal.tabs.player', 'Player') }));
 
     const input = await screen.findByPlaceholderText('Search players...');
+    expect(screen.getByRole('button', { name: 'Alice' })).toBeInTheDocument();
     fireEvent.change(input, { target: { value: 'Bob' } });
+    expect(screen.queryByRole('button', { name: 'Alice' })).not.toBeInTheDocument();
+    const bobButton = screen.getByRole('button', { name: 'Bob' });
+    fireEvent.click(bobButton);
 
-    const option = await screen.findByRole('option', { name: 'Bob' });
-    fireEvent.click(option);
-
-    expect(input).toHaveValue('Bob');
+    expect(screen.getByRole('heading', { name: 'Bob' })).toBeInTheDocument();
   });
 
   test('allows selecting player with keyboard', async () => {
@@ -405,10 +406,9 @@ describe('GameStatsModal', () => {
 
     const input = await screen.findByPlaceholderText('Search players...');
     fireEvent.change(input, { target: { value: 'Cha' } });
-    fireEvent.keyDown(input, { key: 'ArrowDown' });
     fireEvent.keyDown(input, { key: 'Enter' });
 
-    expect(input).toHaveValue('Charlie');
+    expect(screen.getByRole('heading', { name: 'Charlie' })).toBeInTheDocument();
   });
 
   // Add more tests for:
