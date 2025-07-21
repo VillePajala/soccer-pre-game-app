@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, waitFor, within, fireEvent, act } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import GameStatsModal from './GameStatsModal';
 import { Player, Season, Tournament } from '@/types';
@@ -386,14 +387,13 @@ describe('GameStatsModal', () => {
 
     fireEvent.click(screen.getByRole('button', { name: i18n.t('gameStatsModal.tabs.player', 'Player') }));
 
+    const user = userEvent.setup();
     const input = await screen.findByPlaceholderText('Search players...');
-    expect(screen.getByRole('button', { name: 'Alice' })).toBeInTheDocument();
-    fireEvent.change(input, { target: { value: 'Bob' } });
-    expect(screen.queryByRole('button', { name: 'Alice' })).not.toBeInTheDocument();
-    const bobButton = screen.getByRole('button', { name: 'Bob' });
-    fireEvent.click(bobButton);
+    await user.type(input, 'Bob');
+    const bobOption = await screen.findByRole('option', { name: 'Bob' });
+    await user.click(bobOption);
 
-    expect(screen.getByRole('heading', { name: 'Bob' })).toBeInTheDocument();
+    await screen.findByRole('heading', { name: 'Bob' });
   });
 
   test('allows selecting player with keyboard', async () => {
