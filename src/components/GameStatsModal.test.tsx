@@ -371,6 +371,25 @@ describe('GameStatsModal', () => {
     expect(mockProps.onDeleteGameEvent).toHaveBeenCalledWith('g1');
   });
 
+  test('filters players in select by search input', async () => {
+    const props = getDefaultProps();
+    await act(async () => {
+      renderComponent(props);
+    });
+
+    // Switch to Player tab
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('gameStatsModal.tabs.player', 'Player') }));
+
+    const searchInput = await screen.findByPlaceholderText('Search players...');
+    fireEvent.change(searchInput, { target: { value: 'Bob' } });
+
+    const select = screen.getByLabelText('Select Player');
+    const options = within(select).getAllByRole('option');
+    expect(options).toHaveLength(2); // placeholder + Bob
+    expect(within(select).getByText('Bob')).toBeInTheDocument();
+    expect(within(select).queryByText('Alice')).not.toBeInTheDocument();
+  });
+
   // Add more tests for:
   // - Filtering stats table
   // - Sorting stats table

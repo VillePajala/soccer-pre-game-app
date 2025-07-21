@@ -201,6 +201,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   const [localGameEvents, setLocalGameEvents] = useState<GameEvent[]>(gameEvents); // Ensure local copy for editing/deleting
   const [localFairPlayPlayerId, setLocalFairPlayPlayerId] = useState<string | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [playerSearchText, setPlayerSearchText] = useState('');
 
   // ** Calculate initial winner ID using useMemo **
   const initialFairPlayWinnerId = useMemo(() => {
@@ -963,6 +964,13 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                 {/* Player Selection Dropdown */}
                 <div className="mb-4">
                   <label htmlFor="player-select" className="block text-sm font-medium text-slate-300 mb-1">{t('playerStats.selectPlayerLabel', 'Select Player')}</label>
+                  <input
+                    type="text"
+                    placeholder={t('playerStats.searchPlaceholder', 'Search players...')}
+                    value={playerSearchText}
+                    onChange={(e) => setPlayerSearchText(e.target.value)}
+                    className="w-full bg-slate-700 border border-slate-600 rounded-md text-white px-3 py-1.5 text-sm mb-2 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  />
                   <select
                     id="player-select"
                     value={selectedPlayer?.id || ''}
@@ -973,7 +981,11 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                     className="w-full bg-slate-700 border border-slate-600 rounded-md text-white px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   >
                     <option value="" disabled>{t('playerStats.selectPlayer', 'Select a player to view their stats.')}</option>
-                    {availablePlayers.map(p => (
+                    {availablePlayers.filter(p => {
+                      if (!playerSearchText) return true;
+                      const search = playerSearchText.toLowerCase();
+                      return p.name.toLowerCase().includes(search) || (p.nickname && p.nickname.toLowerCase().includes(search));
+                    }).map(p => (
                       <option key={p.id} value={p.id}>{p.name}</option>
                     ))}
                   </select>
