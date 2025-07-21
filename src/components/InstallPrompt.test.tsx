@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import "@/i18n";
 import InstallPrompt from "./InstallPrompt";
@@ -33,21 +33,33 @@ describe("InstallPrompt", () => {
 
   it("shows and handles install prompt", async () => {
     const promptMock = jest.fn().mockResolvedValue(undefined);
-    render(<InstallPrompt />);
+    await act(async () => {
+      render(<InstallPrompt />);
+    });
 
-    dispatchInstallEvent(promptMock);
-    // Install button should appear
+    act(() => {
+      dispatchInstallEvent(promptMock);
+    });
+
     const installBtn = await screen.findByText("Asenna");
-    fireEvent.click(installBtn);
+    await act(async () => {
+      fireEvent.click(installBtn);
+    });
 
     expect(promptMock).toHaveBeenCalled();
   });
 
   it("dismisses the prompt", async () => {
-    render(<InstallPrompt />);
-    dispatchInstallEvent(jest.fn());
+    await act(async () => {
+      render(<InstallPrompt />);
+    });
+    act(() => {
+      dispatchInstallEvent(jest.fn());
+    });
     const dismissBtn = await screen.findByText("Ei nyt");
-    fireEvent.click(dismissBtn);
+    await act(async () => {
+      fireEvent.click(dismissBtn);
+    });
     expect(localStorage.getItem("installPromptDismissed")).not.toBeNull();
   });
 });

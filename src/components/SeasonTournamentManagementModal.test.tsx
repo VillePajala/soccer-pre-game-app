@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import SeasonTournamentManagementModal from './SeasonTournamentManagementModal';
 import { UseMutationResult } from '@tanstack/react-query';
@@ -40,15 +40,21 @@ describe('SeasonTournamentManagementModal', () => {
     jest.clearAllMocks();
   });
 
-  it('renders seasons and tournaments lists', () => {
-    renderWithProviders();
+  it('renders seasons and tournaments lists', async () => {
+    await act(async () => {
+      renderWithProviders();
+    });
+    await act(async () => {});
     expect(screen.getByText('Season 1')).toBeInTheDocument();
     expect(screen.getByText('Tournament 1')).toBeInTheDocument();
   });
 
   it('allows creating a new season', async () => {
     const user = userEvent.setup();
-    renderWithProviders();
+    await act(async () => {
+      renderWithProviders();
+    });
+    await act(async () => {});
 
     const createSeasonButton = screen.getByTestId('create-season-button');
     await user.click(createSeasonButton);
@@ -64,7 +70,10 @@ describe('SeasonTournamentManagementModal', () => {
 
   it('allows creating a new tournament', async () => {
     const user = userEvent.setup();
-    renderWithProviders();
+    await act(async () => {
+      renderWithProviders();
+    });
+    await act(async () => {});
 
     const createTournamentButton = screen.getByTestId('create-tournament-button');
     await user.click(createTournamentButton);
@@ -80,7 +89,10 @@ describe('SeasonTournamentManagementModal', () => {
 
   it('allows editing a season', async () => {
     const user = userEvent.setup();
-    renderWithProviders();
+    await act(async () => {
+      renderWithProviders();
+    });
+    await act(async () => {});
     
     const editButton = screen.getByRole('button', { name: 'Edit Season 1' });
     await user.click(editButton);
@@ -97,7 +109,10 @@ describe('SeasonTournamentManagementModal', () => {
 
   it('allows editing a tournament', async () => {
     const user = userEvent.setup();
-    renderWithProviders();
+    await act(async () => {
+      renderWithProviders();
+    });
+    await act(async () => {});
     
     const editButton = screen.getByRole('button', { name: 'Edit Tournament 1' });
     await user.click(editButton);
@@ -115,7 +130,10 @@ describe('SeasonTournamentManagementModal', () => {
   it('allows deleting a season', async () => {
     window.confirm = jest.fn(() => true); // Mock window.confirm
     const user = userEvent.setup();
-    renderWithProviders();
+    await act(async () => {
+      renderWithProviders();
+    });
+    await act(async () => {});
 
     const deleteButton = screen.getByRole('button', { name: 'Delete Season 1' });
     await user.click(deleteButton);
@@ -127,7 +145,10 @@ describe('SeasonTournamentManagementModal', () => {
   it('allows deleting a tournament', async () => {
     window.confirm = jest.fn(() => true); // Mock window.confirm
     const user = userEvent.setup();
-    renderWithProviders();
+    await act(async () => {
+      renderWithProviders();
+    });
+    await act(async () => {});
 
     const deleteButton = screen.getByRole('button', { name: 'Delete Tournament 1' });
     await user.click(deleteButton);
@@ -138,15 +159,18 @@ describe('SeasonTournamentManagementModal', () => {
 
   it('filters items by search text', async () => {
     const user = userEvent.setup();
-    renderWithProviders({
-      seasons: [
-        { id: 's1', name: 'Winter Season' },
-        { id: 's2', name: 'Summer Season' }
-      ],
-      tournaments: [
-        { id: 't1', name: 'Autumn Cup' }
-      ]
+    await act(async () => {
+      renderWithProviders({
+        seasons: [
+          { id: 's1', name: 'Winter Season' },
+          { id: 's2', name: 'Summer Season' }
+        ],
+        tournaments: [
+          { id: 't1', name: 'Autumn Cup' }
+        ]
+      });
     });
+    await act(async () => {});
 
     const searchInput = screen.getByPlaceholderText(i18n.t('seasonTournamentModal.searchPlaceholder'));
     await user.type(searchInput, 'Winter');
