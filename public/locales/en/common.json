@@ -630,6 +630,7 @@
   "playerStats": {
     "selectPlayer": "Select Player",
     "selectPlayerLabel": "Select Player",
+    "searchPlaceholder": "Search players...",
     "title": "Player Stats",
     "assists": "Assists",
     "gameLog": "Game Log",

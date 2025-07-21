@@ -621,6 +621,7 @@
   "playerStats": {
     "selectPlayer": "Valitse pelaaja",
     "selectPlayerLabel": "Valitse pelaaja",
+    "searchPlaceholder": "Etsi pelaajaa...",
     "title": "Pelaajatilastot",
     "assists": "Syötöt",
     "gameLog": "Otteluloki",

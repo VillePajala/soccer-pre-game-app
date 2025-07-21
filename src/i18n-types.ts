@@ -435,6 +435,7 @@ export type TranslationKey =
   | 'playerStats.performanceRatings'
   | 'playerStats.points'
   | 'playerStats.ratedGames'
+  | 'playerStats.searchPlaceholder'
   | 'playerStats.seasonPerformance'
   | 'playerStats.selectPlayer'
   | 'playerStats.selectPlayerLabel'
