@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
+import { Combobox } from '@headlessui/react';
+import { HiOutlineChevronUpDown } from 'react-icons/hi2';
 import { useTranslation } from 'react-i18next';
 import type { TranslationKey } from '@/i18n-types';
 import logger from '@/utils/logger';
@@ -201,10 +203,10 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   const [localGameEvents, setLocalGameEvents] = useState<GameEvent[]>(gameEvents); // Ensure local copy for editing/deleting
   const [localFairPlayPlayerId, setLocalFairPlayPlayerId] = useState<string | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
-  const [playerSearchText, setPlayerSearchText] = useState('');
+  const [playerQuery, setPlayerQuery] = useState('');
 
   const filteredPlayers = useMemo(() => {
-    const search = playerSearchText.toLowerCase();
+    const search = playerQuery.toLowerCase();
     return availablePlayers.filter(p => {
       if (!search) return true;
       return (
@@ -212,7 +214,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
         (p.nickname && p.nickname.toLowerCase().includes(search))
       );
     });
-  }, [availablePlayers, playerSearchText]);
+  }, [availablePlayers, playerQuery]);
 
   // ** Calculate initial winner ID using useMemo **
   const initialFairPlayWinnerId = useMemo(() => {
@@ -977,46 +979,53 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
         {/* Scrollable Content Area */}
         <div className="flex-1 overflow-y-auto min-h-0">
           {activeTab === 'player' ? (
-             <div className="p-4 sm:p-6">
-
-                {/* Player Selection */}
-                <div className="mb-4">
+            <div className="p-4 sm:p-6">
+              <div className="grid grid-cols-1 md:grid-cols-[40%_60%] gap-4">
+                <div>
                   <label className="block text-sm font-medium text-slate-300 mb-1">
                     {t('playerStats.selectPlayerLabel', 'Select Player')}
                   </label>
-                  <input
-                    type="text"
-                    value={playerSearchText}
-                    onChange={(e) => setPlayerSearchText(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && filteredPlayers.length > 0) {
-                        setSelectedPlayer(filteredPlayers[0]);
-                      }
-                    }}
-                    className="w-full bg-slate-700 border border-slate-600 rounded-md text-white px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    placeholder={t('playerStats.searchPlaceholder', 'Search players...')}
-                  />
+                  <Combobox value={selectedPlayer} onChange={setSelectedPlayer} nullable>
+                    <div className="relative">
+                      <Combobox.Input
+                        className="w-full bg-slate-700 border border-slate-600 rounded-md text-white px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        onChange={(e) => setPlayerQuery(e.target.value)}
+                        displayValue={(p: Player) => (p ? p.name : '')}
+                        placeholder={t('playerStats.searchPlaceholder', 'Search players...')}
+                      />
+                      <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
+                        <HiOutlineChevronUpDown className="w-5 h-5 text-slate-300" />
+                      </Combobox.Button>
+                      {filteredPlayers.length > 0 && (
+                        <Combobox.Options className="absolute z-10 mt-1 w-full max-h-60 overflow-auto rounded-md border border-slate-700/50 bg-slate-800/40 py-1 text-sm shadow-lg focus:outline-none">
+                          {filteredPlayers.map((p) => (
+                            <Combobox.Option
+                              key={p.id}
+                              value={p}
+                              className={({ active }) =>
+                                `p-2 rounded-md border border-slate-700/50 ${
+                                  active
+                                    ? 'bg-slate-800/60'
+                                    : 'bg-slate-800/40 hover:bg-slate-800/60'
+                                }`
+                              }
+                            >
+                              {p.name}
+                            </Combobox.Option>
+                          ))}
+                        </Combobox.Options>
+                      )}
+                    </div>
+                  </Combobox>
                 </div>
-                <ul className="space-y-1.5 mb-4">
-                  {filteredPlayers.map((p) => (
-                    <li key={p.id}>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedPlayer(p)}
-                        className={`w-full text-left p-2 rounded-md border ${selectedPlayer?.id === p.id ? 'bg-slate-700/75 border-indigo-500' : 'bg-slate-800/40 border-slate-700/50 hover:bg-slate-800/60 transition-colors'}`}
-                      >
-                        {p.name}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-                <PlayerStatsView 
-                  player={selectedPlayer} 
-                  savedGames={savedGames} 
-                  onGameClick={onGameClick} 
+                <PlayerStatsView
+                  player={selectedPlayer}
+                  savedGames={savedGames}
+                  onGameClick={onGameClick}
                   seasons={seasons}
                   tournaments={tournaments}
                 />
+              </div>
             </div>
           ) : (
             <div className="p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
