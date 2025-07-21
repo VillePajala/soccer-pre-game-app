@@ -307,14 +307,16 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   const overallTeamStats = useMemo(() => {
     if (activeTab !== 'overall') return null;
 
-    const allGameIds = Object.keys(savedGames || {});
+    const playedGameIds = Object.keys(savedGames || {}).filter(
+      id => savedGames?.[id]?.isPlayed !== false
+    );
     let wins = 0;
     let losses = 0;
     let ties = 0;
     let goalsFor = 0;
     let goalsAgainst = 0;
 
-    allGameIds.forEach(gameId => {
+    playedGameIds.forEach(gameId => {
         const game = savedGames?.[gameId];
         if (!game || typeof game.homeScore !== 'number' || typeof game.awayScore !== 'number') return;
         
@@ -329,7 +331,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
         else ties++;
     });
 
-    const gamesPlayed = allGameIds.length;
+    const gamesPlayed = playedGameIds.length;
     if (gamesPlayed === 0) return null;
 
     return {
@@ -607,8 +609,10 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
       return [];
     };
 
-    const allGameIds = Object.keys(savedGames || {});
-    return calculateStats(allGameIds);
+    const playedGameIds = Object.keys(savedGames || {}).filter(
+      id => savedGames?.[id]?.isPlayed !== false
+    );
+    return calculateStats(playedGameIds);
   }, [activeTab, savedGames, seasons, tournaments, selectedSeasonIdFilter, selectedTournamentIdFilter]);
 
   // Modify filteredAndSortedPlayerStats useMemo to also return the list of game IDs processed
@@ -640,7 +644,9 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
       }
     } else {
       // Handle 'season', 'tournament', 'overall' tabs
-      const allGameIds = Object.keys(savedGames || {});
+      const allGameIds = Object.keys(savedGames || {}).filter(
+        id => savedGames?.[id]?.isPlayed !== false
+      );
       
       // Filter game IDs based on tab and selected filter
       processedGameIds = allGameIds.filter(gameId => {
