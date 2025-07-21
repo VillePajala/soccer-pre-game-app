@@ -1004,7 +1004,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                         <HiOutlineChevronUpDown className="w-5 h-5 text-slate-300" />
                       </Combobox.Button>
                       {filteredPlayers.length > 0 && (
-                        <Combobox.Options className="absolute z-10 mt-1 w-full max-h-60 overflow-auto rounded-md border border-slate-700/50 bg-slate-800/40 py-1 text-sm shadow-lg focus:outline-none">
+                        <Combobox.Options className="absolute z-20 mt-1 w-full max-h-80 overflow-auto rounded-md border border-slate-700/50 bg-slate-800/90 backdrop-blur-sm py-1 text-sm shadow-xl focus:outline-none">
                           {filteredPlayers.map((p) => (
                             <Combobox.Option
                               key={p.id}
