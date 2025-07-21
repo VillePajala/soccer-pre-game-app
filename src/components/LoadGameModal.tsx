@@ -373,8 +373,20 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                   <h3 className={`text-lg font-semibold drop-shadow-lg ${isCurrent ? 'text-amber-400' : 'text-slate-100'}`}>{displayHomeTeamName} vs {displayAwayTeamName}</h3>
                   <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                     {contextName && contextType && contextId && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleBadgeClick(contextType.toLowerCase() as ('season' | 'tournament'), contextId); }}
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleBadgeClick(contextType.toLowerCase() as ('season' | 'tournament'), contextId);
+                          }
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleBadgeClick(contextType.toLowerCase() as ('season' | 'tournament'), contextId);
+                        }}
                         className={`text-xs uppercase font-semibold tracking-wide ${
                           contextType.toLowerCase() === 'tournament' ? 'bg-purple-600' : 'bg-blue-600'
                         } text-white px-2 py-0.5 rounded-sm hover:opacity-90 transition-opacity ${
@@ -383,7 +395,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                         title={t('loadGameModal.filterByTooltip', 'Filter by {{name}}', { replace: { name: contextName } }) ?? `Filter by ${contextName}`}
                       >
                         {contextName}
-                      </button>
+                      </span>
                     )}
                     {gameStatus === 'inProgress' && (
                       <span className="text-xs uppercase font-semibold tracking-wide bg-amber-600 text-white px-2 py-0.5 rounded-sm">OPEN</span>
