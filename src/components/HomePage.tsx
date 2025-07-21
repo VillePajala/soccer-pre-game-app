@@ -981,6 +981,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           awayScore: gameSessionState.awayScore,
           gameNotes: gameSessionState.gameNotes,
           homeOrAway: gameSessionState.homeOrAway,
+          isPlayed,
           numberOfPeriods: gameSessionState.numberOfPeriods,
           periodDurationMinutes: gameSessionState.periodDurationMinutes,
           currentPeriod: gameSessionState.currentPeriod, // Persisted
@@ -1037,6 +1038,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       tacticalDiscs,
       tacticalDrawings,
       tacticalBallPosition,
+      isPlayed,
     ]);
 
   // **** ADDED: Effect to prompt for setup if default game ID is loaded ****
@@ -1909,6 +1911,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           completedIntervalDurations: gameSessionState.completedIntervalDurations,
           lastSubConfirmationTimeSeconds: gameSessionState.lastSubConfirmationTimeSeconds,
           homeOrAway: gameSessionState.homeOrAway,
+          isPlayed,
         };
 
         const { gameId, gameData } = await createGame(newSnapshot);
@@ -1936,7 +1939,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     resetHistory,
     showToast,
     gameSessionState, // This now covers all migrated game session fields
-    playerAssessments
+    playerAssessments,
+    isPlayed
   ]);
   // --- END Quick Save Handler ---
 
