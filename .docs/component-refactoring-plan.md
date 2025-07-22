@@ -203,78 +203,161 @@ Several components have grown to unmanageable sizes:
 ## Refactoring Plan 2: GameStatsModal.tsx (1,469 → ~250 lines)
 
 **Current Status**: 🔴 Not Started  
-**Priority**: Critical  
-**Target Completion**: After HomePage.tsx completion
+**Priority**: Critical (Next highest priority)  
+**Target Completion**: 2-3 weeks  
+**Estimated Effort**: High complexity due to statistics calculations and multiple tabs
 
-### Phase 1: Extract Statistics Logic
+### Phase 1: Extract Statistics Logic (Week 1)
 - [ ] **1.1** Create `src/hooks/useGameStatistics.ts` (~250 lines)
   - **Actions:**
-    - Extract `overallTeamStats` useMemo logic
-    - Extract `teamAssessmentAverages` useMemo logic  
-    - Extract `tournamentSeasonStats` useMemo logic
-    - Extract totals calculation logic
+    - Extract `overallTeamStats` useMemo logic (team-level aggregations)
+    - Extract `teamAssessmentAverages` useMemo logic (assessment scoring)
+    - Extract `tournamentSeasonStats` useMemo logic (filtered statistics)
+    - Extract totals calculation logic (wins/losses/draws)
+    - Move statistics computation utilities
+    - Add proper TypeScript types for all statistics
   - **Manual Testing:**
-    - Verify statistics calculations are identical
-    - Test with different game data scenarios
-    - Check performance of statistics calculations
+    - Verify statistics calculations are identical to original
+    - Test with different game data scenarios (empty, single game, multiple games)
+    - Check performance of statistics calculations with large datasets
+    - Test edge cases (no games, incomplete data)
+  - **Success Criteria:**
+    - All statistics calculations produce identical results
+    - Performance is maintained or improved
+    - Hook is testable independently
 
 - [ ] **1.2** Create `src/hooks/usePlayerStatistics.ts` (~200 lines)
   - **Actions:**
     - Extract player filtering and sorting logic
-    - Extract games played calculation
-    - Extract goals/assists aggregation
-    - Extract average points calculation
+    - Extract games played calculation per player
+    - Extract goals/assists aggregation logic
+    - Extract average points calculation per player
+    - Move player comparison and ranking logic
+    - Add player performance metrics calculations
   - **Manual Testing:**
-    - Test player statistics accuracy
-    - Verify sorting and filtering works
-    - Check aggregation calculations
+    - Test player statistics accuracy across multiple games
+    - Verify sorting and filtering works for all criteria
+    - Check aggregation calculations with edge cases
+    - Test performance with large player datasets
+  - **Success Criteria:**
+    - Player statistics match original calculations exactly
+    - Sorting and filtering work correctly
+    - Hook can handle edge cases gracefully
 
-### Phase 2: Extract Tab Components
+### Phase 2: Extract Tab Components (Week 1-2)
 - [ ] **2.1** Create `src/components/GameStatsModal/components/CurrentGameTab.tsx` (~300 lines)
   - **Actions:**
-    - Extract current game specific content
+    - Extract current game specific content and state management
     - Move goal log with editing functionality
-    - Move game notes section
+    - Move game notes section with inline editing
     - Move goal editing form and handlers
+    - Extract goal event CRUD operations
+    - Add proper component props and TypeScript types
   - **Manual Testing:**
-    - Test goal editing functionality
-    - Verify game notes editing
+    - Test goal editing functionality (add, edit, delete)
+    - Verify game notes editing works correctly
     - Check goal log display and interactions
+    - Test real-time updates and state synchronization
+  - **Success Criteria:**
+    - Goal editing works identically to original
+    - Game notes persist correctly
+    - Component is reusable and well-typed
 
 - [ ] **2.2** Create `src/components/GameStatsModal/components/StatisticsTab.tsx` (~200 lines)
   - **Actions:**
     - Extract statistics table for season/tournament/overall tabs
-    - Move column sorting functionality
-    - Move export buttons
+    - Move column sorting functionality with state management
+    - Move export buttons and handlers
     - Move overall statistics summary cards
+    - Extract table pagination and filtering
+    - Add responsive design considerations
   - **Manual Testing:**
-    - Test statistics table display
-    - Verify column sorting works
-    - Check export functionality
+    - Test statistics table display with various data sets
+    - Verify column sorting works for all columns
+    - Check export functionality (CSV, JSON)
+    - Test table performance with large datasets
+  - **Success Criteria:**
+    - Statistics display correctly in all scenarios
+    - Sorting and filtering work seamlessly
+    - Export functions produce correct files
 
 - [ ] **2.3** Create remaining tab components
-  - Create `PlayerTab.tsx` (~150 lines)
-  - Create `StatsTabNavigation.tsx` (~100 lines)
-  - Test tab switching and navigation
+  - **Actions:**
+    - Create `PlayerTab.tsx` (~150 lines) - individual player performance
+    - Create `StatsTabNavigation.tsx` (~100 lines) - tab switching logic
+    - Create `TournamentSeasonTabs.tsx` (~120 lines) - sub-tab navigation
+    - Extract shared tab state management
+  - **Manual Testing:**
+    - Test tab switching and navigation
+    - Verify state persistence across tabs
+    - Check responsive behavior on mobile
+  - **Success Criteria:**
+    - Tab navigation works smoothly
+    - State is preserved when switching tabs
+    - All components are properly typed
 
-### Phase 3: Extract Utility Components
-- [ ] **3.1** Create shared components
-  - Create `StatisticsTable.tsx` (~150 lines)
-  - Create `GoalLogItem.tsx` (~100 lines)  
-  - Create `GameNotesEditor.tsx` (~80 lines)
-  - Test component reusability
+### Phase 3: Extract Utility Components (Week 2)
+- [ ] **3.1** Create shared reusable components
+  - **Actions:**
+    - Create `StatisticsTable.tsx` (~150 lines) - reusable data table with sorting
+    - Create `GoalLogItem.tsx` (~100 lines) - individual goal entry component
+    - Create `GameNotesEditor.tsx` (~80 lines) - inline editing component
+    - Create `StatsSummaryCard.tsx` (~60 lines) - statistics display card
+    - Add proper prop types and documentation
+  - **Manual Testing:**
+    - Test component reusability across different contexts
+    - Verify all components work with various data inputs
+    - Check accessibility and responsive design
+  - **Success Criteria:**
+    - Components are truly reusable
+    - All components are well-typed and documented
+    - Performance is maintained
 
-### Phase 4: Extract Utility Hooks
-- [ ] **4.1** Create utility hooks
-  - Create `useGoalEditing.ts` (~100 lines)
-  - Create `useGameFilters.ts` (~80 lines)
-  - Test hook functionality and state management
+### Phase 4: Extract Utility Hooks (Week 2)
+- [ ] **4.1** Create specialized utility hooks
+  - **Actions:**
+    - Create `useGoalEditing.ts` (~100 lines) - goal CRUD operations
+    - Create `useGameFilters.ts` (~80 lines) - filtering and search logic
+    - Create `useStatsExport.ts` (~60 lines) - export functionality
+    - Create `useTabNavigation.ts` (~50 lines) - tab state management
+    - Add comprehensive TypeScript types
+  - **Manual Testing:**
+    - Test hook functionality and state management
+    - Verify hooks work independently and together
+    - Test edge cases and error handling
+  - **Success Criteria:**
+    - All hooks are testable independently
+    - State management is clean and predictable
+    - Error handling is robust
 
-### Phase 5: Final Integration
+### Phase 5: Final Integration (Week 2-3)
 - [ ] **5.1** Refactor main GameStatsModal.tsx (~200-250 lines)
-  - Integrate all extracted components and hooks
-  - Test full modal functionality
-  - Update tests and documentation
+  - **Actions:**
+    - Integrate all extracted components and hooks
+    - Optimize prop passing and component composition
+    - Clean up remaining code and optimize imports
+    - Add proper error boundaries and loading states
+  - **Manual Testing:**
+    - Test full modal functionality end-to-end
+    - Verify all features work as before
+    - Check performance with large datasets
+    - Test modal opening/closing and state persistence
+  - **Success Criteria:**
+    - Modal size reduced from 1,469 to ~250 lines
+    - All functionality preserved
+    - Performance maintained or improved
+    - Code is maintainable and well-organized
+
+- [ ] **5.2** Update tests and documentation
+  - **Actions:**
+    - Update existing tests to work with new structure
+    - Add unit tests for each extracted component and hook
+    - Update component documentation and README
+    - Run full test suite and fix any issues
+  - **Success Criteria:**
+    - All tests pass
+    - Test coverage is maintained or improved
+    - Components and hooks are well documented
 
 ---
 
