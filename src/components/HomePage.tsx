@@ -19,14 +19,12 @@ import PlayerAssessmentModal from '@/components/PlayerAssessmentModal';
 import usePlayerRosterManager from '@/hooks/usePlayerRosterManager';
 import usePlayerFieldManager from '@/hooks/usePlayerFieldManager';
 import useGameEventsManager from '@/hooks/useGameEventsManager';
+import useAppSettingsManager from '@/hooks/useAppSettingsManager';
 import { useTranslation } from 'react-i18next';
-import i18n from '../i18n';
 import { useGameState, UseGameStateReturn } from '@/hooks/useGameState';
 import GameInfoBar from '@/components/GameInfoBar';
 import { useGameTimer } from '@/hooks/useGameTimer';
 import useAutoBackup from '@/hooks/useAutoBackup';
-import { exportFullBackup } from '@/utils/fullBackup';
-import { sendBackupEmail } from '@/utils/sendBackupEmail';
 // Import the new game session reducer and related types
 import {
   gameSessionReducer,
@@ -43,12 +41,9 @@ import { saveGame as utilSaveGame } from '@/utils/savedGames';
 // Removed - now handled by useGameDataManager: deleteGame, getLatestGameId, createGame
 import {
   saveCurrentGameIdSetting as utilSaveCurrentGameIdSetting,
-  resetAppSettings as utilResetAppSettings,
   getHasSeenAppGuide,
   saveHasSeenAppGuide,
   getLastHomeTeamName as utilGetLastHomeTeamName,
-  saveLastHomeTeamName as utilSaveLastHomeTeamName,
-  updateAppSettings as utilUpdateAppSettings,
   getAppSettings,
 } from '@/utils/appSettings';
 // Removed - now handled by useGameDataManager:
@@ -398,32 +393,9 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   // <<< ADD: State for home/away status >>>
   const [initialLoadComplete, setInitialLoadComplete] = useState<boolean>(false);
   const [hasSkippedInitialSetup, setHasSkippedInitialSetup] = useState<boolean>(skipInitialSetup);
-  const [defaultTeamNameSetting, setDefaultTeamNameSetting] = useState<string>('');
-  const [appLanguage, setAppLanguage] = useState<string>(i18n.language);
-  const [autoBackupEnabled, setAutoBackupEnabled] = useState<boolean>(false);
-  const [backupIntervalHours, setBackupIntervalHours] = useState<number>(24);
-  const [lastBackupTime, setLastBackupTime] = useState<string | null>(null);
-  const [backupEmail, setBackupEmail] = useState<string>('');
-
-  useEffect(() => {
-    utilGetLastHomeTeamName().then((name) => setDefaultTeamNameSetting(name));
-  }, []);
 
   useAutoBackup();
 
-  useEffect(() => {
-    getAppSettings().then((s) => {
-      setAutoBackupEnabled(s.autoBackupEnabled ?? false);
-      setBackupIntervalHours(s.autoBackupIntervalHours ?? 24);
-      setLastBackupTime(s.lastBackupTime ?? null);
-      setBackupEmail(s.backupEmail ?? '');
-    });
-  }, []);
-
-  useEffect(() => {
-    i18n.changeLanguage(appLanguage);
-    utilUpdateAppSettings({ language: appLanguage }).catch(() => {});
-  }, [appLanguage]);
   const {
     isGameSettingsModalOpen,
     setIsGameSettingsModalOpen,
@@ -627,6 +599,46 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     saveStateToHistory,
     setIsGoalLogModalOpen,
   });
+
+  // --- App Settings Manager ---
+  const {
+    appLanguage,
+    defaultTeamNameSetting,
+    autoBackupEnabled,
+    backupIntervalHours,
+    lastBackupTime,
+    backupEmail,
+    setDefaultTeamNameSetting,
+    setAutoBackupEnabled,
+    setBackupIntervalHours,
+    setLastBackupTime,
+    setBackupEmail,
+    handleShowAppGuide,
+    handleHardResetApp,
+    handleCreateAndSendBackup,
+    handleLanguageChange,
+    handleDefaultTeamNameChange,
+    handleAutoBackupEnabledChange,
+    handleBackupIntervalChange,
+    handleBackupEmailChange,
+  } = useAppSettingsManager({
+    setIsSettingsModalOpen,
+    setIsInstructionsModalOpen,
+  });
+
+  // --- Settings Initialization Effects ---
+  useEffect(() => {
+    utilGetLastHomeTeamName().then((name) => setDefaultTeamNameSetting(name));
+  }, [setDefaultTeamNameSetting]);
+
+  useEffect(() => {
+    getAppSettings().then((s) => {
+      setAutoBackupEnabled(s.autoBackupEnabled ?? false);
+      setBackupIntervalHours(s.autoBackupIntervalHours ?? 24);
+      setLastBackupTime(s.lastBackupTime ?? null);
+      setBackupEmail(s.backupEmail ?? '');
+    });
+  }, [setAutoBackupEnabled, setBackupIntervalHours, setLastBackupTime, setBackupEmail]);
 
   // --- Export Wrapper Functions ---
   const handleExportOneJsonWrapper = useCallback((gameId: string) => {
@@ -1178,49 +1190,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     setIsInstructionsModalOpen(!isInstructionsModalOpen);
   };
 
-  const handleShowAppGuide = () => {
-    saveHasSeenAppGuide(false);
-    setIsSettingsModalOpen(false);
-    setIsInstructionsModalOpen(true);
-  };
 
-  // NEW: Handler for Hard Reset
-  const handleHardResetApp = useCallback(async () => {
-    if (window.confirm(t('controlBar.hardResetConfirmation', 'Are you sure you want to completely reset the application? All saved data (players, stats, positions) will be permanently lost.'))) {
-      try {
-        logger.log("Performing hard reset using utility...");
-        await utilResetAppSettings(); // Use utility function
-        window.location.reload();
-      } catch (error) {
-        logger.error("Error during hard reset:", error);
-        alert("Failed to reset application data.");
-      }
-    }
-  }, [t]);
 
-  const handleCreateAndSendBackup = async () => {
-    try {
-      const json = await exportFullBackup();
-      if (backupEmail) {
-        const confirmSend = window.confirm(
-          t('settingsModal.sendBackupPrompt', 'Send backup via email?'),
-        );
-        if (confirmSend) {
-          await sendBackupEmail(json, backupEmail);
-          alert(t('settingsModal.sendBackupSuccess', 'Backup sent successfully.'));
-        }
-      }
-      const iso = new Date().toISOString();
-      setLastBackupTime(iso);
-      utilUpdateAppSettings({ lastBackupTime: iso }).catch(() => {});
-    } catch (err) {
-      logger.error('Failed to send backup', err);
-      const message = err instanceof Error ? err.message : String(err);
-      alert(
-        `${t('settingsModal.sendBackupError', 'Failed to send backup.')}: ${message}`,
-      );
-    }
-  };
 
   
   // Placeholder handlers for Save/Load Modals
@@ -1989,31 +1960,18 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         isOpen={isSettingsModalOpen}
         onClose={handleCloseSettingsModal}
         language={appLanguage}
-        onLanguageChange={(lang) => setAppLanguage(lang)}
+        onLanguageChange={handleLanguageChange}
         defaultTeamName={defaultTeamNameSetting}
-        onDefaultTeamNameChange={(name) => {
-          setDefaultTeamNameSetting(name);
-          utilSaveLastHomeTeamName(name);
-        }}
+        onDefaultTeamNameChange={handleDefaultTeamNameChange}
         onResetGuide={handleShowAppGuide}
         onHardResetApp={handleHardResetApp}
         autoBackupEnabled={autoBackupEnabled}
         backupIntervalHours={backupIntervalHours}
         lastBackupTime={lastBackupTime || undefined}
         backupEmail={backupEmail}
-        onAutoBackupEnabledChange={(enabled) => {
-          setAutoBackupEnabled(enabled);
-          utilUpdateAppSettings({ autoBackupEnabled: enabled }).catch(() => {});
-        }}
-        onBackupIntervalChange={(hours) => {
-          const val = Math.max(1, hours);
-          setBackupIntervalHours(val);
-          utilUpdateAppSettings({ autoBackupIntervalHours: val }).catch(() => {});
-        }}
-        onBackupEmailChange={(email) => {
-          setBackupEmail(email);
-          utilUpdateAppSettings({ backupEmail: email }).catch(() => {});
-        }}
+        onAutoBackupEnabledChange={handleAutoBackupEnabledChange}
+        onBackupIntervalChange={handleBackupIntervalChange}
+        onBackupEmailChange={handleBackupEmailChange}
         onSendBackup={handleCreateAndSendBackup}
       />
 
