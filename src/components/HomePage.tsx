@@ -17,6 +17,7 @@ import SeasonTournamentManagementModal from '@/components/SeasonTournamentManage
 import InstructionsModal from '@/components/InstructionsModal';
 import PlayerAssessmentModal from '@/components/PlayerAssessmentModal';
 import usePlayerRosterManager from '@/hooks/usePlayerRosterManager';
+import usePlayerFieldManager from '@/hooks/usePlayerFieldManager';
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
 import { useGameState, UseGameStateReturn } from '@/hooks/useGameState';
@@ -348,7 +349,6 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   // ... Timer state ...
   // ... Modal states ...
   // ... UI/Interaction states ...
-  const [draggingPlayerFromBarInfo, setDraggingPlayerFromBarInfo] = useState<Player | null>(null);
   // Persistence state
   const [savedGames, setSavedGames] = useState<SavedGamesCollection>({});
   const [currentGameId, setCurrentGameId] = useState<string | null>(DEFAULT_GAME_ID);
@@ -575,6 +575,37 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     setOpponents,
     setDrawings,
     setIsPlayed,
+  });
+
+  const {
+    states: { draggingPlayerFromBarInfo },
+    handlers: {
+      handleDropOnField,
+      handlePlayerMove,
+      handlePlayerMoveEnd,
+      handlePlayerRemove,
+      handlePlayerDragStartFromBar,
+      handlePlayerTapInBar,
+      handlePlayerDropViaTouch,
+      handlePlayerDragCancelViaTouch,
+      handlePlaceAllPlayers,
+      handleResetField,
+      handleClearDrawingsForView,
+    },
+    setDraggingPlayerFromBarInfo,
+  } = usePlayerFieldManager({
+    playersOnField,
+    setPlayersOnField,
+    setOpponents,
+    setDrawings,
+    setTacticalDrawings,
+    availablePlayers,
+    selectedPlayerIds: gameSessionState.selectedPlayerIds,
+    handlePlayerDrop,
+    saveStateToHistory,
+    handleClearDrawings,
+    clearTacticalElements,
+    isTacticsBoardView,
   });
 
   // --- Export Wrapper Functions ---
@@ -1028,94 +1059,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   // Depend only on load completion and skip status
   }, [initialLoadComplete, hasSkippedInitialSetup, currentGameId, setIsNewGameSetupModalOpen]);
 
-  // --- Player Management Handlers (Updated for relative coords) ---
-  // Wrapped handleDropOnField in useCallback as suggested
-  const handleDropOnField = useCallback((playerId: string, relX: number, relY: number) => {
-    const droppedPlayer = availablePlayers.find(p => p.id === playerId);
-    if (droppedPlayer) {
-      handlePlayerDrop(droppedPlayer, { relX, relY }); // Call the handler from the hook
-    } else {
-      logger.error(`Dropped player with ID ${playerId} not found in availablePlayers.`);
-    }
-  }, [availablePlayers, handlePlayerDrop]); 
-
-  const handlePlayerMove = useCallback((playerId: string, relX: number, relY: number) => {
-    // Update visual state immediately
-    setPlayersOnField(prevPlayers => 
-      prevPlayers.map(p => 
-        p.id === playerId ? { ...p, relX, relY } : p
-      )
-    );
-    // State saved on move end
-  }, [setPlayersOnField]); // ADDED setPlayersOnField dependency
-
-  const handlePlayerMoveEnd = useCallback(() => {
-    saveStateToHistory({ playersOnField });
-  }, [playersOnField, saveStateToHistory]);
-
-  const handlePlayerRemove = useCallback((playerId: string) => {
-    logger.log(`Removing player ${playerId} from field`);
-    const updatedPlayersOnField = playersOnField.filter(p => p.id !== playerId);
-    setPlayersOnField(updatedPlayersOnField); 
-    saveStateToHistory({ playersOnField: updatedPlayersOnField });
-  }, [playersOnField, saveStateToHistory, setPlayersOnField]); 
-  
-
-
-  // --- Reset Handler ---
-  const handleResetField = useCallback(() => {
-    if (isTacticsBoardView) {
-      clearTacticalElements();
-    } else {
-      // Only clear game elements in normal view
-      setPlayersOnField([]);
-      setOpponents([]);
-      setDrawings([]);
-      saveStateToHistory({ playersOnField: [], opponents: [], drawings: [] });
-    }
-    }, [isTacticsBoardView, saveStateToHistory, setDrawings, setOpponents, setPlayersOnField, clearTacticalElements]);
-
-  const handleClearDrawingsForView = () => {
-    if (isTacticsBoardView) {
-      setTacticalDrawings([]);
-      saveStateToHistory({ tacticalDrawings: [] });
-    } else {
-      handleClearDrawings();
-    }
-  };
-
-  // --- Touch Drag from Bar Handlers (Updated for relative coords) ---
-  const handlePlayerDragStartFromBar = useCallback((playerInfo: Player) => {
-    // This is now primarily for HTML Drag and Drop OR potential long-press drag
-    setDraggingPlayerFromBarInfo(playerInfo);
-    logger.log("Setting draggingPlayerFromBarInfo (Drag Start):", playerInfo);
-  }, []);
-
-  // NEW Handler for simple tap selection in the bar
-  const handlePlayerTapInBar = useCallback((playerInfo: Player | null) => {
-    // If the tapped player is already selected, deselect them
-    if (draggingPlayerFromBarInfo?.id === playerInfo?.id) {
-      logger.log("Tapped already selected player, deselecting:", playerInfo?.id);
-      setDraggingPlayerFromBarInfo(null);
-    } else {
-      // Otherwise, select the tapped player
-      logger.log("Setting draggingPlayerFromBarInfo (Tap):", playerInfo);
-      setDraggingPlayerFromBarInfo(playerInfo);
-    }
-  }, [draggingPlayerFromBarInfo]); // Dependency needed
-
-  const handlePlayerDropViaTouch = useCallback((relX: number, relY: number) => {
-    // This handler might be less relevant now if tap-on-field works
-    if (draggingPlayerFromBarInfo) {
-      logger.log("Player Drop Via Touch (field):", { id: draggingPlayerFromBarInfo.id, relX, relY });
-      handleDropOnField(draggingPlayerFromBarInfo.id, relX, relY); 
-      setDraggingPlayerFromBarInfo(null); // Deselect player after placing
-    }
-  }, [draggingPlayerFromBarInfo, handleDropOnField]);
-
-  const handlePlayerDragCancelViaTouch = useCallback(() => {
-    setDraggingPlayerFromBarInfo(null);
-  }, []);
+  // --- Player Management Handlers moved to usePlayerFieldManager ---
 
   
 
@@ -1797,118 +1741,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
      ]); 
   // --- END Start New Game Handler ---
 
-  // New handler to place all selected players on the field at once
-  const handlePlaceAllPlayers = useCallback(() => {
-    // Get the list of selected players who are not yet on the field
-           const selectedButNotOnField = gameSessionState.selectedPlayerIds.filter((id: string) => 
-      !playersOnField.some(fieldPlayer => fieldPlayer.id === id)
-    );
-    
-    if (selectedButNotOnField.length === 0) {
-      // All selected players are already on the field
-      logger.log('All selected players are already on the field');
-      return;
-    }
-
-    // Find the corresponding player objects from availablePlayers
-    const playersToPlace = selectedButNotOnField
-      .map(id => availablePlayers.find(p => p.id === id))
-      .filter((p): p is Player => p !== undefined);
-    
-    logger.log(`Placing ${playersToPlace.length} players on the field...`);
-
-    // Define a reasonable soccer formation based on number of players
-    // For simplicity, we'll use these common formations:
-    // 3-4 players: simple triangle or diamond
-    // 5-7 players: 2-3-1 or 2-3-2 formation
-    // 8+ players: 3-3-2 or 3-4-1 formation
-    
-    // Calculate positions for players in a reasonable soccer formation
-    const newFieldPlayers: Player[] = [...playersOnField]; // Start with existing players
-    
-    // Find if there's a goalie in the players to place
-    const goalieIndex = playersToPlace.findIndex(p => p.isGoalie);
-    let goalie: Player | null = null;
-    
-    if (goalieIndex !== -1) {
-      // Remove goalie from the array and handle separately
-      goalie = playersToPlace.splice(goalieIndex, 1)[0];
-    }
-    
-    // Place goalie first if one exists
-    if (goalie) {
-      // Place at the goal line, slightly offset from center
-      newFieldPlayers.push({
-        ...goalie,
-        relX: 0.5,
-        relY: 0.95 // Near our own goal line
-      });
-    }
-    
-    // Determine formation based on remaining players
-    const remainingCount = playersToPlace.length;
-    let positions: { relX: number, relY: number }[] = [];
-    
-    if (remainingCount <= 3) {
-      // Simple triangle/diamond formation for 1-3 players (not including goalie)
-      if (remainingCount >= 1) positions.push({ relX: 0.5, relY: 0.8 }); // Defender
-      if (remainingCount >= 2) positions.push({ relX: 0.5, relY: 0.5 }); // Midfielder
-      if (remainingCount >= 3) positions.push({ relX: 0.5, relY: 0.3 }); // Forward
-    } 
-    else if (remainingCount <= 7) {
-      // 2-3-1 or 2-3-2 formation for 6-7 players (not including goalie)
-      // Defenders
-      positions.push({ relX: 0.3, relY: 0.8 });
-      positions.push({ relX: 0.7, relY: 0.8 });
-      
-      // Midfielders
-      positions.push({ relX: 0.25, relY: 0.6 });
-      positions.push({ relX: 0.5, relY: 0.55 });
-      positions.push({ relX: 0.75, relY: 0.6 });
-      
-      // Forwards
-      positions.push({ relX: 0.35, relY: 0.3 });
-      if (remainingCount >= 7) positions.push({ relX: 0.65, relY: 0.3 });
-    }
-    else {
-      // 3-4-1 or 3-3-2 formation for 8+ players (not including goalie)
-      // Defenders
-      positions.push({ relX: 0.25, relY: 0.85 });
-      positions.push({ relX: 0.5, relY: 0.8 });
-      positions.push({ relX: 0.75, relY: 0.85 });
-      
-      // Midfielders
-      positions.push({ relX: 0.2, relY: 0.6 });
-      positions.push({ relX: 0.4, relY: 0.55 });
-      positions.push({ relX: 0.6, relY: 0.55 });
-      positions.push({ relX: 0.8, relY: 0.6 });
-      
-      // Forwards
-      positions.push({ relX: 0.5, relY: 0.3 });
-      if (remainingCount >= 9) positions.push({ relX: 0.35, relY: 0.3 });
-      if (remainingCount >= 10) positions.push({ relX: 0.65, relY: 0.3 });
-    }
-    
-    // Take only the positions we need for the remaining players
-    positions = positions.slice(0, remainingCount);
-    
-    // Add player in each position
-    playersToPlace.forEach((player, index) => {
-      if (index < positions.length) {
-        newFieldPlayers.push({
-          ...player,
-          relX: positions[index].relX,
-          relY: positions[index].relY
-        });
-      }
-    });
-    
-    // Update players on field
-    setPlayersOnField(newFieldPlayers);
-    saveStateToHistory({ playersOnField: newFieldPlayers });
-    
-    logger.log(`Successfully placed ${playersToPlace.length} players on the field`);
-         }, [playersOnField, gameSessionState.selectedPlayerIds, availablePlayers, saveStateToHistory, setPlayersOnField]);
+  // --- Player placement handler moved to usePlayerFieldManager ---
 
   // --- END Quick Save Handler ---
 
