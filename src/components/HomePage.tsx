@@ -64,6 +64,7 @@ import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { useTacticalBoard } from '@/hooks/useTacticalBoard';
 import { useRoster } from '@/hooks/useRoster';
 import { useGameDataManager } from '@/hooks/useGameDataManager';
+import { useGameStateManager } from '@/hooks/useGameStateManager';
 import { useModalContext } from '@/contexts/ModalProvider';
 // Import async localStorage utilities
 import {
@@ -523,8 +524,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     handlers: {
       handleQuickSaveGame,
       handleDeleteGame,
-      handleExportOneJson,
-      handleExportOneCsv,
+      handleExportOneJson: handleExportOneJsonRaw,
+      handleExportOneCsv: handleExportOneCsvRaw,
     },
   } = useGameDataManager({
     currentGameId,
@@ -540,6 +541,44 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     tacticalDrawings,
     tacticalBallPosition,
   });
+
+  // --- Game State Management (Extracted to useGameStateManager hook) ---
+  const {
+    handleTeamNameChange,
+    handleOpponentNameChange,
+    handleGameDateChange,
+    handleGameNotesChange,
+    handleGameLocationChange,
+    handleGameTimeChange,
+    handleSetNumberOfPeriods,
+    handleSetPeriodDuration,
+    handleSetDemandFactor,
+    handleSetHomeOrAway,
+    handleSetSeasonId,
+    handleSetTournamentId,
+    handleSetAgeGroup,
+    handleSetTournamentLevel,
+    handleTogglePlayerSelection,
+    handleUpdateSelectedPlayers,
+    applyHistoryState,
+  } = useGameStateManager({
+    gameSessionState,
+    dispatchGameSession,
+    initialGameSessionData,
+    setPlayersOnField,
+    setOpponents,
+    setDrawings,
+    setIsPlayed,
+  });
+
+  // --- Export Wrapper Functions ---
+  const handleExportOneJsonWrapper = useCallback((gameId: string) => {
+    handleExportOneJsonRaw(gameId, seasons, tournaments);
+  }, [handleExportOneJsonRaw, seasons, tournaments]);
+
+  const handleExportOneCsvWrapper = useCallback((gameId: string) => {
+    handleExportOneCsvRaw(gameId, availablePlayers, seasons, tournaments);
+  }, [handleExportOneCsvRaw, availablePlayers, seasons, tournaments]);
   useEffect(() => {
     if (isMasterRosterQueryLoading) {
       logger.log('[TanStack Query] Master Roster is loading...');
@@ -1075,50 +1114,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   
 
   // --- Team Name Handler ---
-  const handleTeamNameChange = (newName: string) => {
-    const trimmedName = newName.trim();
-    if (trimmedName) {
-        logger.log("Updating team name to:", trimmedName);
-        dispatchGameSession({ type: 'SET_TEAM_NAME', payload: trimmedName });
-        // REMOVED: saveStateToHistory({ teamName: trimmedName }); 
-    }
-  };
 
-  const applyHistoryState = (state: AppState) => {
-    setPlayersOnField(state.playersOnField);
-    setOpponents(state.opponents);
-    setDrawings(state.drawings);
-    setAvailablePlayers(state.availablePlayers);
-    dispatchGameSession({ type: 'SET_TEAM_NAME', payload: state.teamName });
-    dispatchGameSession({ type: 'SET_HOME_SCORE', payload: state.homeScore });
-    dispatchGameSession({ type: 'SET_AWAY_SCORE', payload: state.awayScore });
-    dispatchGameSession({ type: 'SET_OPPONENT_NAME', payload: state.opponentName });
-    dispatchGameSession({ type: 'SET_GAME_DATE', payload: state.gameDate });
-    dispatchGameSession({ type: 'SET_GAME_NOTES', payload: state.gameNotes });
-    dispatchGameSession({ type: 'SET_NUMBER_OF_PERIODS', payload: state.numberOfPeriods });
-    dispatchGameSession({ type: 'SET_PERIOD_DURATION', payload: state.periodDurationMinutes });
-    dispatchGameSession({
-      type: 'LOAD_STATE_FROM_HISTORY',
-      payload: {
-        currentPeriod: state.currentPeriod,
-        gameStatus: state.gameStatus,
-        completedIntervalDurations: state.completedIntervalDurations ?? [],
-        lastSubConfirmationTimeSeconds: state.lastSubConfirmationTimeSeconds ?? 0,
-        showPlayerNames: state.showPlayerNames,
-        gameEvents: state.gameEvents,
-        selectedPlayerIds: state.selectedPlayerIds,
-        seasonId: state.seasonId,
-        tournamentId: state.tournamentId,
-        gameLocation: state.gameLocation,
-        gameTime: state.gameTime,
-      },
-    });
-    dispatchGameSession({ type: 'SET_SUB_INTERVAL', payload: state.subIntervalMinutes ?? 5 });
-    dispatchGameSession({ type: 'SET_HOME_OR_AWAY', payload: state.homeOrAway });
-    setTacticalDiscs(state.tacticalDiscs || []);
-    setTacticalDrawings(state.tacticalDrawings || []);
-    setTacticalBallPosition(state.tacticalBallPosition || null);
-  };
 
   const handleUndo = () => {
     const prevState = undoHistory();
@@ -1252,42 +1248,15 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   };
 
   // Placeholder handlers for updating game info (will be passed to modal)
-  const handleOpponentNameChange = (newName: string) => {
-    logger.log('[page.tsx] handleOpponentNameChange called with:', newName);
-    dispatchGameSession({ type: 'SET_OPPONENT_NAME', payload: newName });
-  };
-  const handleGameDateChange = (newDate: string) => {
-    dispatchGameSession({ type: 'SET_GAME_DATE', payload: newDate });
-  };
   // const handleHomeScoreChange = (newScore: number) => {
   //   dispatchGameSession({ type: 'SET_HOME_SCORE', payload: newScore });
   // };
   // const handleAwayScoreChange = (newScore: number) => {
   //   dispatchGameSession({ type: 'SET_AWAY_SCORE', payload: newScore });
   // };
-  const handleGameNotesChange = (notes: string) => {
-    dispatchGameSession({ type: 'SET_GAME_NOTES', payload: notes });
-  };
 
   // --- Handlers for Game Structure ---
-  const handleSetNumberOfPeriods = (periods: number) => { 
-    // Keep the check inside
-    if (periods === 1 || periods === 2) {
-      // Keep the type assertion for the state setter
-      const validPeriods = periods as (1 | 2); 
-      dispatchGameSession({ type: 'SET_NUMBER_OF_PERIODS', payload: validPeriods });
-      logger.log(`Number of periods set to: ${validPeriods}`);
-    } else {
-      logger.warn(`Invalid number of periods attempted: ${periods}. Must be 1 or 2.`);
-    }
-  };
 
-  const handleSetPeriodDuration = (minutes: number) => {
-    const safeMinutes = Number.isFinite(minutes) ? minutes : 1;
-    const newMinutes = Math.max(1, safeMinutes);
-    dispatchGameSession({ type: 'SET_PERIOD_DURATION', payload: newMinutes });
-    logger.log(`Period duration set to: ${newMinutes} minutes`);
-  };
 
   // Training Resources Modal
   const handleToggleTrainingResources = () => {
@@ -1657,27 +1626,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     }, [availablePlayers, playersOnField, setAvailablePlayers, setPlayersOnField, saveStateToHistory, currentGameId]);
 
   // --- NEW: Handler to Toggle Player Selection for Current Match ---
-  const handleTogglePlayerSelection = (playerId: string) => {
-    const currentSelectedIds = gameSessionState.selectedPlayerIds;
-    const isSelected = currentSelectedIds.includes(playerId);
-    
-    let newSelectedIds;
-    if (isSelected) {
-      // If player is already selected, remove them
-      newSelectedIds = currentSelectedIds.filter(id => id !== playerId);
-    } else {
-      // If player is not selected, add them
-      newSelectedIds = [...currentSelectedIds, playerId];
-    }
 
-    dispatchGameSession({ type: 'SET_SELECTED_PLAYER_IDS', payload: newSelectedIds });
-  };
-
-  const handleUpdateSelectedPlayers = (playerIds: string[]) => {
-    // This function is used by GameSettingsModal to set the roster for that specific game.
-    // It replaces the entire selection.
-    dispatchGameSession({ type: 'SET_SELECTED_PLAYER_IDS', payload: playerIds });
-  };
 
   // --- NEW: Quick Save Handler ---
   // --- Quick Save Handler - MOVED TO useGameDataManager hook ---
@@ -1704,49 +1653,18 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   };
 
   // --- Placeholder Handlers for GameSettingsModal (will be implemented properly later) ---
-  const handleGameLocationChange = (location: string) => {
-    dispatchGameSession({ type: 'SET_GAME_LOCATION', payload: location });
-    // REMOVED: saveStateToHistory({ gameLocation: location });
-  };
-  const handleGameTimeChange = (time: string) => {
-    dispatchGameSession({ type: 'SET_GAME_TIME', payload: time });
-    // REMOVED: saveStateToHistory({ gameTime: time });
-  };
 
-  const handleAgeGroupChange = (group: string) => {
-    dispatchGameSession({ type: 'SET_AGE_GROUP', payload: group });
-  };
 
-  const handleTournamentLevelChange = (level: string) => {
-    dispatchGameSession({ type: 'SET_TOURNAMENT_LEVEL', payload: level });
-  };
 
-  const handleSetDemandFactor = (factor: number) => {
-    dispatchGameSession({ type: 'SET_DEMAND_FACTOR', payload: factor });
-  };
 
   // Add handler for home/away status
-  const handleSetHomeOrAway = (status: 'home' | 'away') => {
-    dispatchGameSession({ type: 'SET_HOME_OR_AWAY', payload: status });
-    // REMOVED: saveStateToHistory({ homeOrAway: status });
-  };
 
   const handleSetIsPlayed = (played: boolean) => {
     setIsPlayed(played);
   };
 
   // --- NEW Handlers for Setting Season/Tournament ID ---
-  const handleSetSeasonId = useCallback((newSeasonId: string | undefined) => {
-    const idToSet = newSeasonId || ''; // Ensure empty string instead of null
-    logger.log('[page.tsx] handleSetSeasonId called with:', idToSet);
-    dispatchGameSession({ type: 'SET_SEASON_ID', payload: idToSet }); 
-  }, []); // No dependencies needed since we're only using dispatchGameSession which is stable
 
-  const handleSetTournamentId = useCallback((newTournamentId: string | undefined) => {
-    const idToSet = newTournamentId || ''; // Ensure empty string instead of null
-    logger.log('[page.tsx] handleSetTournamentId called with:', idToSet);
-    dispatchGameSession({ type: 'SET_TOURNAMENT_ID', payload: idToSet });
-  }, []); // No dependencies needed since we're only using dispatchGameSession which is stable
 
   // --- AGGREGATE EXPORT HANDLERS --- 
   
@@ -2353,8 +2271,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           savedGames={savedGames}
           currentGameId={currentGameId}
           onDeleteGameEvent={handleDeleteGameEvent}
-          onExportOneJson={handleExportOneJson}
-          onExportOneCsv={handleExportOneCsv}
+          onExportOneJson={handleExportOneJsonWrapper}
+          onExportOneCsv={handleExportOneCsvWrapper}
           onExportAggregateJson={handleExportAggregateJson}
           onExportAggregateCsv={handleExportAggregateCsv}
           initialSelectedPlayerId={selectedPlayerForStats?.id}
@@ -2367,8 +2285,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         savedGames={savedGames} 
         onLoad={handleLoadGame}
         onDelete={handleDeleteGame}
-        onExportOneJson={handleExportOneJson}
-        onExportOneCsv={handleExportOneCsv}
+        onExportOneJson={handleExportOneJsonWrapper}
+        onExportOneCsv={handleExportOneCsvWrapper}
         currentGameId={currentGameId || undefined} // Convert null to undefined
         // Pass loading and error state props for LoadGameModal
         isLoadingGamesList={isLoadingGamesList}
@@ -2466,8 +2384,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         onGameLocationChange={handleGameLocationChange}
         onGameTimeChange={handleGameTimeChange}
         onGameNotesChange={handleGameNotesChange}
-        onAgeGroupChange={handleAgeGroupChange}
-        onTournamentLevelChange={handleTournamentLevelChange}
+        onAgeGroupChange={handleSetAgeGroup}
+        onTournamentLevelChange={handleSetTournamentLevel}
         onUpdateGameEvent={handleUpdateGameEvent}
         onAwardFairPlayCard={handleAwardFairPlayCard}
         onDeleteGameEvent={handleDeleteGameEvent}

@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "feat(refactor): create useGameDataManager hook for HomePage.tsx"
+  "notes": "docs(refactor): update refactoring plan with Phase 1 completion"
 }

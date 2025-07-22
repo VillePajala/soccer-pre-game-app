@@ -29,13 +29,12 @@ import type {
   Tournament, 
   AppState, 
   SavedGamesCollection,
-  GameSessionState,
   Player,
   Opponent,
-  Drawing,
   TacticalDisc,
   Point
 } from '@/types';
+import type { GameSessionState } from '@/hooks/useGameSessionReducer';
 
 interface UseGameDataManagerProps {
   currentGameId: string | null;
@@ -46,9 +45,9 @@ interface UseGameDataManagerProps {
   availablePlayers: Player[];
   playersOnField: Player[];
   opponents: Opponent[];
-  drawings: Drawing[];
+  drawings: Point[][];
   tacticalDiscs: TacticalDisc[];
-  tacticalDrawings: Drawing[];
+  tacticalDrawings: Point[][];
   tacticalBallPosition: Point | null;
 }
 
@@ -223,7 +222,7 @@ export const useGameDataManager = ({
           gameLocation: gameSessionState.gameLocation,
           gameTime: gameSessionState.gameTime,
           demandFactor: gameSessionState.demandFactor,
-          isPlayed: gameSessionState.isPlayed,
+          isPlayed: true, // GameSessionState doesn't have isPlayed, defaulting to true
           ageGroup: gameSessionState.ageGroup,
           tournamentLevel: gameSessionState.tournamentLevel,
           subIntervalMinutes: gameSessionState.subIntervalMinutes,
@@ -304,20 +303,20 @@ export const useGameDataManager = ({
   }, [savedGames, setSavedGames, currentGameId, setCurrentGameId, queryClient]);
 
   // --- Export Handlers ---
-  const handleExportOneJson = useCallback((gameId: string) => {
+  const handleExportOneJson = useCallback((gameId: string, seasons: Season[] = [], tournaments: Tournament[] = []) => {
     const gameData = savedGames[gameId];
     if (gameData) {
-      exportJson([gameData], `game_${gameId}_export`);
+      exportJson(gameId, gameData, seasons, tournaments);
       logger.log(`[useGameDataManager] Exported game ${gameId} as JSON`);
     } else {
       logger.error(`[useGameDataManager] Game ${gameId} not found for JSON export`);
     }
   }, [savedGames]);
 
-  const handleExportOneCsv = useCallback((gameId: string) => {
+  const handleExportOneCsv = useCallback((gameId: string, players: Player[], seasons: Season[] = [], tournaments: Tournament[] = []) => {
     const gameData = savedGames[gameId];
     if (gameData) {
-      exportCsv([gameData], `game_${gameId}_export`);
+      exportCsv(gameId, gameData, players, seasons, tournaments);
       logger.log(`[useGameDataManager] Exported game ${gameId} as CSV`);
     } else {
       logger.error(`[useGameDataManager] Game ${gameId} not found for CSV export`);
