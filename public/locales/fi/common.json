@@ -385,7 +385,8 @@
     "languageEnglish": "Englanti",
     "languageFinnish": "Suomi",
     "createSeasonTournament": "Luo kausi/turnaus",
-    "viewStats": "Näytä tilastot"
+    "viewStats": "Näytä tilastot",
+    "backupNow": "Varmuuskopioi nyt"
   },
   "seasonTournamentModal": {
     "confirmDelete": "Haluatko varmasti poistaa {{name}}?",
@@ -593,6 +594,7 @@
     "sendBackupDescription": "Lataa varmuuskopiotiedosto ja avaa sähköpostisovellus. Liitä tiedosto viestiin ennen lähettämistä.",
     "sendBackupSuccess": "Varmuuskopio lähetetty.",
     "sendBackupError": "Varmuuskopion lähetys epäonnistui.",
+    "sendBackupPrompt": "Lähetä varmuuskopio sähköpostilla?",
     "lastBackupLabel": "Viimeinen varmuuskopio",
     "never": "Ei koskaan"
   },

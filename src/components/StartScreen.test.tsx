@@ -19,6 +19,16 @@ jest.mock('@/utils/appSettings', () => ({
   updateAppSettings: jest.fn().mockResolvedValue({}),
 }));
 
+jest.mock('@/utils/fullBackup', () => ({
+  __esModule: true,
+  exportFullBackup: jest.fn().mockResolvedValue('{}'),
+}));
+
+jest.mock('@/utils/sendBackupEmail', () => ({
+  __esModule: true,
+  sendBackupEmail: jest.fn().mockResolvedValue(undefined),
+}));
+
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, fallback?: string) => fallback || key,
@@ -54,6 +64,7 @@ describe('StartScreen', () => {
     expect(screen.getByRole('button', { name: 'Load Game' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Create Season/Tournament' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'View Stats' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Backup Now' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'English' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Finnish' })).toBeInTheDocument();
 

@@ -472,7 +472,8 @@
     "languageEnglish": "English",
     "languageFinnish": "Finnish",
     "createSeasonTournament": "Create Season/Tournament",
-    "viewStats": "View Stats"
+    "viewStats": "View Stats",
+    "backupNow": "Backup Now"
   },
   "seasonTournamentModal": {
     "confirmDelete": "Are you sure you want to delete {{name}}?",
@@ -602,6 +603,7 @@
     "sendBackupDescription": "A backup file will download and your email app will open. Attach the file before sending.",
     "sendBackupSuccess": "Backup sent successfully.",
     "sendBackupError": "Failed to send backup.",
+    "sendBackupPrompt": "Send backup via email?",
     "lastBackupLabel": "Last Backup",
     "never": "Never"
   },

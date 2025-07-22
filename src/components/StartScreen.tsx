@@ -4,7 +4,13 @@ import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
-import { updateAppSettings, getAppSettings } from '@/utils/appSettings';
+import {
+  updateAppSettings,
+  getAppSettings,
+} from '@/utils/appSettings';
+import { exportFullBackup } from '@/utils/fullBackup';
+import { sendBackupEmail } from '@/utils/sendBackupEmail';
+import logger from '@/utils/logger';
 
 interface StartScreenProps {
   onStartNewGame: () => void;
@@ -50,6 +56,30 @@ const StartScreen: React.FC<StartScreenProps> = ({
 
   const titleStyle =
     'text-5xl font-bold text-yellow-400 tracking-wide drop-shadow-lg mb-8 text-center';
+
+  const handleBackupNow = async () => {
+    try {
+      const settings = await getAppSettings();
+      const json = await exportFullBackup();
+      if (settings.backupEmail) {
+        const confirmSend = window.confirm(
+          t('settingsModal.sendBackupPrompt', 'Send backup via email?'),
+        );
+        if (confirmSend) {
+          await sendBackupEmail(json, settings.backupEmail);
+          alert(t('settingsModal.sendBackupSuccess', 'Backup sent successfully.'));
+        }
+      }
+      const iso = new Date().toISOString();
+      updateAppSettings({ lastBackupTime: iso }).catch(() => {});
+    } catch (err) {
+      logger.error('Failed to send backup', err);
+      const message = err instanceof Error ? err.message : String(err);
+      alert(
+        `${t('settingsModal.sendBackupError', 'Failed to send backup.')}: ${message}`,
+      );
+    }
+  };
 
   return (
     <div className={containerStyle}>
@@ -114,6 +144,9 @@ const StartScreen: React.FC<StartScreenProps> = ({
         </button>
         <button className={buttonStyle} onClick={onViewStats}>
           {t('startScreen.viewStats', 'View Stats')}
+        </button>
+        <button className={buttonStyle} onClick={handleBackupNow}>
+          {t('startScreen.backupNow', 'Backup Now')}
         </button>
       </div>
     </div>
