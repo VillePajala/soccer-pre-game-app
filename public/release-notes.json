@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "feat(refactor): extract useGameEventsManager hook from HomePage.tsx"
+  "notes": "feat(refactor): extract useAppSettingsManager hook from HomePage.tsx"
 }
