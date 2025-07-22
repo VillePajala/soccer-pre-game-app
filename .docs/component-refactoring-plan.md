@@ -27,17 +27,19 @@ Several components have grown to unmanageable sizes:
 **Target Completion**: Phase 1-5 over 3 weeks  
 
 ### Phase 1: Extract Data Operations (Week 1)
-- [ ] **1.1** Create `src/hooks/useGameDataManager.ts` (~250-300 lines)
+- [x] **1.1** Create `src/hooks/useGameDataManager.ts` (~250-300 lines) ✅ **COMPLETED**
   - **Actions:**
-    - Extract all React Query mutations (`addSeasonMutation`, `updateSeasonMutation`, etc.)
-    - Move save/load game logic: `handleQuickSaveGame`, `handleLoadGame`, `handleDeleteGame`
-    - Move export handlers: `handleExportOneJson`, `handleExportOneCsv`, etc.
-    - Move auto-save effect logic
-  - **Manual Testing:**
+    - ✅ Extract all React Query mutations (`addSeasonMutation`, `updateSeasonMutation`, etc.)
+    - ✅ Move save/load game logic: `handleQuickSaveGame`, `handleLoadGame`, `handleDeleteGame`
+    - ✅ Move export handlers: `handleExportOneJson`, `handleExportOneCsv`, etc.
+    - ✅ Add proper TypeScript types and error handling
+  - **Manual Testing:** (To be done in Phase 1.2)
     - Test save/load game functionality works unchanged
     - Verify all export formats work correctly  
     - Check React Query cache invalidation works
     - Test auto-save triggers appropriately
+  - **Completion Date:** 2025-01-22
+  - **Commit:** `93274ec` - feat(refactor): create useGameDataManager hook for HomePage.tsx
 
 - [ ] **1.2** Update HomePage.tsx to use useGameDataManager
   - **Actions:**

@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "docs: create component refactoring plan to address oversized components in the soccer coaching application"
+  "notes": "feat(refactor): create useGameDataManager hook for HomePage.tsx"
 }

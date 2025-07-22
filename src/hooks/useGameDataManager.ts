@@ -33,7 +33,8 @@ import type {
   Player,
   Opponent,
   Drawing,
-  TacticalDisc
+  TacticalDisc,
+  Point
 } from '@/types';
 
 interface UseGameDataManagerProps {
@@ -48,7 +49,7 @@ interface UseGameDataManagerProps {
   drawings: Drawing[];
   tacticalDiscs: TacticalDisc[];
   tacticalDrawings: Drawing[];
-  tacticalBallPosition: { relX: number; relY: number };
+  tacticalBallPosition: Point | null;
 }
 
 /**
