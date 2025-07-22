@@ -125,7 +125,7 @@ Several components have grown to unmanageable sizes:
     - Test field reset and clear drawings functionality
 
 ### Phase 4: Extract Specialized Logic (Week 2-3)
-- [ ] **4.1** Create `src/hooks/useGameEventsManager.ts` (~150-200 lines)
+- [x] **4.1** Create `src/hooks/useGameEventsManager.ts` (~150-200 lines) ✅ **COMPLETED**
   - **Actions:**
     - Extract event handlers: `handleAddGoalEvent`, `handleLogOpponentGoal`, etc.
     - Move event update/delete handlers: `handleUpdateGameEvent`, `handleDeleteGameEvent`
@@ -389,4 +389,4 @@ This refactoring will be implemented incrementally, with each phase thoroughly t
 
 **Document Status**: 📝 Created - Ready for Implementation  
 **Last Updated**: 2025-07-22
-**Next Update**: After Phase 4.1 completion
+**Next Update**: After Phase 4.2 completion
