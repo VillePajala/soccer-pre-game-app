@@ -11,6 +11,8 @@ import { getMasterRoster } from '@/utils/masterRosterManager';
 import { getLastHomeTeamName as utilGetLastHomeTeamName, saveLastHomeTeamName as utilSaveLastHomeTeamName } from '@/utils/appSettings';
 import { UseMutationResult } from '@tanstack/react-query';
 import AssessmentSlider from './AssessmentSlider';
+import PlayerSelectionSection from './PlayerSelectionSection';
+import TeamOpponentInputs from './TeamOpponentInputs';
 import { AGE_GROUPS, LEVELS } from '@/config/gameOptions';
 import type { TranslationKey } from '@/i18n-types';
 
@@ -161,15 +163,6 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
     }
   }, [isOpen, initialPlayerSelection, t]);
 
-  // ADD Handler for toggling player selection
-  const handlePlayerSelectionToggle = (playerId: string) => {
-    setSelectedPlayerIds(prevSelectedIds => {
-      if (prevSelectedIds.includes(playerId)) {
-        return prevSelectedIds.filter(id => id !== playerId);
-    }
-      return [...prevSelectedIds, playerId];
-    });
-  };
 
   const handleSeasonChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
@@ -484,42 +477,20 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
 
           {/* Fixed Controls Section */}
           <div className="px-6 pt-3 pb-4 backdrop-blur-sm bg-slate-900/20">
-            {/* Home Team Name - Critical input that should always be visible */}
-            <div className="mb-4">
-              <label htmlFor="homeTeamName" className="block text-sm font-medium text-slate-300 mb-1">
-                {t('newGameSetupModal.homeTeamName', 'Your Team Name')} *
-              </label>
-              <input
-                type="text"
-                id="homeTeamName"
-                ref={homeTeamInputRef}
-                value={homeTeamName}
-                onChange={(e) => setHomeTeamName(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
-                placeholder={t('newGameSetupModal.homeTeamPlaceholder', 'e.g., Galaxy U10')}
-                onKeyDown={handleKeyDown}
-                    disabled={isLoading}
-                  />
-                </div>
-
-
-            {/* Opponent Name - Also critical */}
-            <div className="mb-4">
-              <label htmlFor="opponentNameInput" className="block text-sm font-medium text-slate-300 mb-1">
-                {t('newGameSetupModal.opponentNameLabel', 'Opponent Name')} *
-              </label>
-              <input
-                ref={opponentInputRef}
-                type="text"
-                id="opponentNameInput"
-                value={opponentName}
-                onChange={(e) => setOpponentName(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={t('newGameSetupModal.opponentPlaceholder', 'Enter opponent name')}
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
-                disabled={isLoading}
-              />
-            </div>
+            <TeamOpponentInputs
+              teamName={homeTeamName}
+              opponentName={opponentName}
+              onTeamNameChange={setHomeTeamName}
+              onOpponentNameChange={setOpponentName}
+              teamLabel={t('newGameSetupModal.homeTeamName', 'Your Team Name') + ' *'}
+              teamPlaceholder={t('newGameSetupModal.homeTeamPlaceholder', 'e.g., Galaxy U10')}
+              opponentLabel={t('newGameSetupModal.opponentNameLabel', 'Opponent Name') + ' *'}
+              opponentPlaceholder={t('newGameSetupModal.opponentPlaceholder', 'Enter opponent name')}
+              teamInputRef={homeTeamInputRef}
+              opponentInputRef={opponentInputRef}
+              onKeyDown={handleKeyDown}
+              disabled={isLoading}
+            />
           </div>
 
           {/* Scrollable Content Area */}
@@ -776,71 +747,16 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
 
 
                     {/* Player Selection Section */}
-                    <div className="space-y-4 bg-slate-900/70 p-4 rounded-lg border border-slate-700 shadow-inner">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold text-slate-200">
-                          {t('newGameSetupModal.selectPlayers', 'Select Players')}
-                        </h3>
-                        <div className="text-sm text-slate-400">
-                          <span className="text-yellow-400 font-semibold">{selectedPlayerIds.length}</span>
-                          {" / "}
-                          <span className="text-yellow-400 font-semibold">{availablePlayersForSetup.length}</span>
-                          {" "}{t('newGameSetupModal.playersSelected', 'selected')}
-                        </div>
-                      </div>
-
-                      {availablePlayersForSetup.length > 0 ? (
-                        <>
-                          {/* Select All Header */}
-                          <div className="flex items-center py-2 px-1 border-b border-slate-700/50">
-                            <label className="flex items-center text-sm text-slate-300 hover:text-slate-200 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={availablePlayersForSetup.length === selectedPlayerIds.length}
-                                onChange={() => {
-                                  if (selectedPlayerIds.length === availablePlayersForSetup.length) {
-                                    setSelectedPlayerIds([]);
-                                  } else {
-                                    setSelectedPlayerIds(availablePlayersForSetup.map(p => p.id));
-                                  }
-                                }}
-                                className="form-checkbox h-4 w-4 text-indigo-600 bg-slate-700 border-slate-500 rounded focus:ring-indigo-500 focus:ring-offset-slate-800"
-                              />
-                              <span className="ml-2">{t('newGameSetupModal.selectAll', 'Select All')}</span>
-                            </label>
-                          </div>
-
-                          {/* Player List */}
-                          <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
-                            {availablePlayersForSetup.map((player) => (
-                              <div
-                                key={player.id}
-                                className="flex items-center py-1.5 px-1 rounded hover:bg-slate-800/40 transition-colors"
-                              >
-                                <label className="flex items-center flex-1 cursor-pointer">
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedPlayerIds.includes(player.id)}
-                                    onChange={() => handlePlayerSelectionToggle(player.id)}
-                                    className="form-checkbox h-4 w-4 text-indigo-600 bg-slate-700 border-slate-500 rounded focus:ring-indigo-500 focus:ring-offset-slate-800"
-                                  />
-                                  <span className="ml-2 text-slate-200">
-                                    {player.name}
-                                    {player.nickname && (
-                                      <span className="text-slate-400 ml-1">({player.nickname})</span>
-                                    )}
-                                  </span>
-                                </label>
-                              </div>
-                            ))}
-                          </div>
-                        </>
-                      ) : (
-                        <div className="text-center py-4 text-slate-400">
-                          {t('newGameSetupModal.noPlayersInRoster', 'No players in roster. Add players in Roster Settings.')}
-                        </div>
-                      )}
-                    </div>
+                    <PlayerSelectionSection
+                      availablePlayers={availablePlayersForSetup}
+                      selectedPlayerIds={selectedPlayerIds}
+                      onSelectedPlayersChange={setSelectedPlayerIds}
+                      title={t('newGameSetupModal.selectPlayers', 'Select Players')}
+                      playersSelectedText={t('newGameSetupModal.playersSelected', 'selected')}
+                      selectAllText={t('newGameSetupModal.selectAll', 'Select All')}
+                      noPlayersText={t('newGameSetupModal.noPlayersInRoster', 'No players in roster. Add players in Roster Settings.')}
+                      disabled={isLoading}
+                    />
 
                     {/* Game Settings Section */}
                     <div className="space-y-4 bg-slate-900/70 p-4 rounded-lg border border-slate-700 shadow-inner">
