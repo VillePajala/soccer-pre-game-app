@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "docs(refactor): update refactoring plan with Phase 1 completion"
+  "notes": "feat(refactor): create useGameStateManager hook for game state handlers"
 }

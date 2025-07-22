@@ -560,6 +560,9 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     handleSetTournamentLevel,
     handleTogglePlayerSelection,
     handleUpdateSelectedPlayers,
+    handleSetHomeScore,
+    handleSetAwayScore,
+    handleResetToInitialState,
     applyHistoryState,
   } = useGameStateManager({
     gameSessionState,
