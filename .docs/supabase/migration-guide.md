@@ -1,4 +1,4 @@
-# Supabase Migration Guide
+# Enhanced Supabase Migration Guide
 
 This guide consolidates all repository documentation about migrating the app from `localStorage` to Supabase.
 
@@ -148,11 +148,11 @@ Migrating to Supabase centralizes data, enables real-time features and simplifie
 ---
 
 ## Context
-- App: mobile‑first PWA (TypeScript + React)  
+- App: mobile‑first PWA (TypeScript + React)  
 - Current persistence: **localStorage** only  
-- Target: Supabase (Postgres + Auth + Realtime)  
+- Target: Supabase (Postgres + Auth + Realtime)  
 - Repo: Vite / Next.js layout  
-- Node ≥ 18
+- Node ≥ 18
 
 ---
 
@@ -171,73 +171,460 @@ Migrate the entire persistence layer to Supabase, enabling multi‑user, real‑
 
 ---
 
-## Step‑by‑Step Execution Plan
+## Step‑by‑Step Execution Plan with Detailed Implementation Guide
 
-### Core Steps
-- [x] **1 — Inventory Current Data**
-  - [x] Parse codebase for every `localStorage.*` usage
-  - [x] Generate `/docs/localStorage-map.json` with keys & samples
+---
 
-- [ ] **2 — Design Supabase Schema**
-  - [ ] Infer TS interfaces (Game, Player, Stats, Settings…)
-  - [ ] Normalise into tables / JSONB as needed
-  - [ ] Draft `schema.sql` (tables, PK/FK, RLS, indexes)
-  - [ ] Create ER diagram (ASCII / Mermaid)
+### **STEP 1 — Inventory Current Data** ✅ COMPLETED
 
-- [ ] **3 — Bootstrap Supabase Project**
-  - [ ] `supabase init` → `.supabase`
-  - [ ] `supabase db push` with `schema.sql`
-  - [ ] Add anon & service keys to `.env.sample`
+- [x] **1.1** Parse codebase for every `localStorage.*` usage
+- [x] **1.2** Generate `/docs/localStorage-map.json` with keys & samples
 
-- [ ] **4 — Build Storage Abstraction Layer**
-  - [ ] Implement `LocalDriver` (wrap existing logic)
-  - [ ] Implement `SupabaseDriver` with `@supabase/supabase-js`
-  - [ ] Expose runtime‑switchable `storage` API
+---
 
-- [ ] **5 — Refactor App to use `storage`**
-  - [ ] Replace direct `localStorage` calls (codemod/regex)
-  - [ ] Commit: `refactor(storage): centralise persistence`
+### **STEP 2 — Design Supabase Schema**
 
-- [ ] **6 — Add Authentication**
-  - [ ] Enable Email‑Link & OAuth in Supabase
-  - [ ] Add `AuthProvider` React context
-  - [ ] Store user profile in `profiles` table
+- [ ] **2.1** Analyze current TypeScript interfaces in `src/types/index.ts`
+  - **Actions:**
+    - Review `Player`, `Season`, `Tournament`, `AppState`, `GameEvent` interfaces
+    - Document current data relationships and constraints
+    - Create mapping document: `localStorage structure → Supabase tables`
+  - **Manual Testing:**
+    - Verify all localStorage keys from `localStorage-map.json` have corresponding type definitions
+    - Check that no data fields are missing from type definitions
+    - Validate sample data matches interface definitions
 
-- [ ] **7 — Write One‑Shot Migration Script**
-  - [ ] Transform local data → Supabase schema
-  - [ ] Insert on first login
-  - [ ] Set `migrationDone` flag per user
+- [ ] **2.2** Design normalized database schema
+  - **Actions:**
+    - Create `users` table for authentication
+    - Design `players` table with user_id FK
+    - Design `seasons` and `tournaments` tables with user_id FK
+    - Design `games` table with relationships to seasons/tournaments
+    - Design `game_events` table normalized from AppState.gameEvents
+    - Design `app_settings` table with user_id FK
+  - **Manual Testing:**
+    - Draw entity relationship diagram on paper
+    - Verify all foreign key relationships make sense
+    - Check that user data isolation is properly designed
 
-- [ ] **8 — Offline Cache / Sync (optional)**
-  - [ ] Add IndexedDB layer (`idb-keyval`)
-  - [ ] Queue writes offline, flush on reconnect
+- [ ] **2.3** Create `schema.sql` file
+  - **Actions:**
+    - Write CREATE TABLE statements for all tables
+    - Add primary keys, foreign keys, and constraints
+    - Add indexes for common query patterns
+    - Write Row Level Security (RLS) policies
+    - Add helpful comments explaining table purposes
+  - **Manual Testing:**
+    - Run schema.sql in a test PostgreSQL instance
+    - Insert sample data to verify constraints work
+    - Test RLS policies with different user contexts
 
-- [ ] **9 — Testing & QA**
-  - [ ] Unit tests for each driver
-  - [ ] Cypress flow: signup → create data → multi‑device
+- [ ] **2.4** Create data transformation utilities
+  - **Actions:**
+    - Create `src/utils/transforms/toSupabase.ts`
+    - Create `src/utils/transforms/fromSupabase.ts` 
+    - Write functions to convert localStorage data → Supabase format
+    - Write functions to convert Supabase data → app format
+  - **Manual Testing:**
+    - Test transforms with real localStorage data from development
+    - Verify round-trip conversion (localStorage → Supabase → localStorage) produces identical data
+    - Test edge cases: missing fields, null values, empty arrays
 
-- [ ] **10 — Feature Flag Roll‑Out**
-  - [ ] Env var `ENABLE_SUPABASE`
-  - [ ] Default false until QA passes
+---
 
-- [ ] **11 — Documentation & Handoff**
-  - [ ] Finish `migration-supabase.md`
-  - [ ] Update `README.md`
+### **STEP 3 — Bootstrap Supabase Project**
 
-- [ ] **12 — Post‑Migration Cleanup**
-  - [ ] Remove unused localStorage keys
-  - [ ] Schedule sunset for `LocalDriver`
+- [ ] **3.1** Install Supabase CLI and initialize project
+  - **Actions:**
+    - Run `npm install -g supabase`
+    - Run `supabase init` in project root
+    - Commit `.supabase/` directory to git
+  - **Manual Testing:**
+    - Verify `.supabase/config.toml` exists and has correct project settings
+    - Check that `supabase status` shows project as initialized
+    - Ensure git tracks .supabase folder properly
 
-### Quality Gates
-- [ ] ESLint + Prettier pass
-- [ ] `pnpm test` green
+- [ ] **3.2** Create remote Supabase project
+  - **Actions:**
+    - Sign up for Supabase account if needed
+    - Create new project in Supabase dashboard
+    - Note project URL and API keys
+    - Link local project: `supabase link --project-ref YOUR_PROJECT_REF`
+  - **Manual Testing:**
+    - Verify you can access project dashboard at supabase.com
+    - Test that `supabase db pull` works without errors
+    - Check project settings show correct database configuration
+
+- [ ] **3.3** Apply database schema
+  - **Actions:**
+    - Copy `schema.sql` to `supabase/migrations/001_initial_schema.sql`
+    - Run `supabase db push`
+    - Verify tables created successfully in Supabase dashboard
+  - **Manual Testing:**
+    - Check Supabase dashboard → Database → Tables shows all expected tables
+    - Verify RLS is enabled on tables that need it
+    - Test inserting and querying sample data through dashboard
+
+- [ ] **3.4** Configure environment variables
+  - **Actions:**
+    - Add Supabase URL and anon key to `.env.local`
+    - Add same variables to `.env.example`
+    - Document environment setup in README
+  - **Manual Testing:**
+    - Verify `process.env.NEXT_PUBLIC_SUPABASE_URL` is accessible in browser console
+    - Test that build process includes environment variables
+    - Check that `.env.local` is properly gitignored
+
+---
+
+### **STEP 4 — Build Storage Abstraction Layer**
+
+- [ ] **4.1** Install Supabase client library
+  - **Actions:**
+    - Run `npm install @supabase/supabase-js`
+    - Create `src/lib/supabase.ts` with client configuration
+    - Export configured Supabase client
+  - **Manual Testing:**
+    - Import supabase client in browser console
+    - Verify `supabase.auth.getSession()` returns expected structure
+    - Test basic query: `supabase.from('players').select('count')`
+
+- [ ] **4.2** Create LocalStorageDriver
+  - **Actions:**
+    - Create `src/lib/storage/LocalStorageDriver.ts`
+    - Wrap existing localStorage utilities with consistent interface
+    - Implement `get()`, `set()`, `delete()`, `list()` methods
+    - Add error handling and logging
+  - **Manual Testing:**
+    - Test each CRUD operation through driver interface
+    - Verify existing app functionality works unchanged
+    - Check error handling with invalid localStorage operations
+
+- [ ] **4.3** Create SupabaseDriver
+  - **Actions:**
+    - Create `src/lib/storage/SupabaseDriver.ts`
+    - Implement same interface as LocalStorageDriver
+    - Use transformation utilities for data conversion
+    - Handle authentication state and user context
+  - **Manual Testing:**
+    - Test CRUD operations against Supabase (with test data)
+    - Verify data transformations work correctly
+    - Test error handling with network issues
+    - Check user context is properly applied
+
+- [ ] **4.4** Create StorageManager abstraction
+  - **Actions:**
+    - Create `src/lib/storage/StorageManager.ts`
+    - Implement factory pattern to switch between drivers
+    - Add environment flag to control which driver is used
+    - Export unified storage interface
+  - **Manual Testing:**
+    - Switch between drivers and verify same operations work
+    - Test feature flag switching between localStorage and Supabase
+    - Verify error handling is consistent across drivers
+
+---
+
+### **STEP 5 — Refactor App to use Storage Abstraction**
+
+- [ ] **5.1** Update masterRosterManager.ts
+  - **Actions:**
+    - Replace direct localStorage calls with StorageManager
+    - Update all CRUD functions to use new interface
+    - Maintain existing async function signatures
+    - Update error handling to match new patterns
+  - **Manual Testing:**
+    - Test player creation, editing, deletion through app UI
+    - Verify roster loads correctly on app startup
+    - Check that player search and filtering still work
+    - Test goalie status changes persist correctly
+
+- [ ] **5.2** Update seasons.ts utility
+  - **Actions:**
+    - Replace localStorage calls with StorageManager
+    - Update season CRUD operations
+    - Maintain existing function signatures
+  - **Manual Testing:**
+    - Create new seasons through game setup modal
+    - Verify seasons appear in dropdowns
+    - Test season editing and deletion
+    - Check season associations with saved games
+
+- [ ] **5.3** Update tournaments.ts utility
+  - **Actions:**
+    - Replace localStorage calls with StorageManager
+    - Update tournament CRUD operations
+    - Maintain existing function signatures
+  - **Manual Testing:**
+    - Create new tournaments through game setup modal
+    - Verify tournaments appear in dropdowns
+    - Test tournament editing and deletion
+    - Check tournament associations with saved games
+
+- [ ] **5.4** Update savedGames.ts utility
+  - **Actions:**
+    - Replace localStorage calls with StorageManager
+    - Update game save/load operations
+    - Handle complex AppState serialization
+  - **Manual Testing:**
+    - Save games during active gameplay
+    - Load saved games and verify all state restores correctly
+    - Test game deletion and bulk operations
+    - Check auto-save functionality works
+
+- [ ] **5.5** Update appSettings.ts utility
+  - **Actions:**
+    - Replace localStorage calls with StorageManager
+    - Update settings CRUD operations
+    - Handle user-scoped settings preparation
+  - **Manual Testing:**
+    - Change app settings (language, preferences)
+    - Verify settings persist across app restarts
+    - Test settings reset functionality
+    - Check that default settings work for new users
+
+- [ ] **5.6** Create comprehensive integration tests
+  - **Actions:**
+    - Add tests that verify LocalStorageDriver maintains existing behavior
+    - Add tests for StorageManager driver switching
+    - Test error scenarios and fallback behavior
+  - **Manual Testing:**
+    - Run full app regression test with LocalStorageDriver
+    - Switch to SupabaseDriver and test core workflows
+    - Test app behavior when Supabase is unreachable
+    - Verify no data loss during driver switches
+
+---
+
+### **STEP 6 — Add Authentication**
+
+- [ ] **6.1** Enable authentication in Supabase
+  - **Actions:**
+    - Enable Email/Password auth in Supabase dashboard
+    - Configure email templates and settings
+    - Set up allowed domains and redirect URLs
+    - Enable Google OAuth (optional)
+  - **Manual Testing:**
+    - Test user registration through Supabase Auth UI
+    - Verify email confirmation flow works
+    - Test password reset functionality
+    - Check OAuth login if enabled
+
+- [ ] **6.2** Create AuthProvider component
+  - **Actions:**
+    - Create `src/context/AuthContext.tsx`
+    - Implement `useAuth` hook
+    - Handle authentication state management
+    - Add login, logout, and session management
+  - **Manual Testing:**
+    - Test auth state persistence across page reloads
+    - Verify auth state updates trigger re-renders
+    - Test logout clears all auth state
+    - Check session timeout handling
+
+- [ ] **6.3** Add authentication UI components
+  - **Actions:**
+    - Create login/register modals or pages
+    - Add profile management UI
+    - Implement auth state indicators
+    - Add logout functionality to app navigation
+  - **Manual Testing:**
+    - Test complete registration flow
+    - Verify login/logout UI flow
+    - Test form validation and error handling
+    - Check responsive design on mobile
+
+- [ ] **6.4** Update SupabaseDriver for user context
+  - **Actions:**
+    - Modify all database operations to include user_id
+    - Add RLS policy enforcement
+    - Handle unauthenticated state gracefully
+    - Add user isolation for all data operations
+  - **Manual Testing:**
+    - Test data isolation between different users
+    - Verify unauthenticated users can't access data
+    - Check that user switching shows different data sets
+    - Test error handling for authentication failures
+
+---
+
+### **STEP 7 — Write Migration Script**
+
+- [ ] **7.1** Create migration detection system
+  - **Actions:**
+    - Add `migration_status` table in Supabase
+    - Create functions to check if user needs migration
+    - Add migration progress tracking
+  - **Manual Testing:**
+    - Test migration status detection for new users
+    - Verify migration status persists correctly
+    - Test migration status for users with/without localStorage data
+
+- [ ] **7.2** Create localStorage data export utility
+  - **Actions:**
+    - Create `src/utils/migration/exportLocalData.ts`
+    - Export all localStorage data in structured format
+    - Include data validation and cleanup
+  - **Manual Testing:**
+    - Export localStorage data from development browser
+    - Verify exported data includes all game saves, roster, settings
+    - Test export with missing or corrupted localStorage data
+    - Check exported data against original localStorage contents
+
+- [ ] **7.3** Create Supabase import utility
+  - **Actions:**
+    - Create `src/utils/migration/importToSupabase.ts`
+    - Transform and insert localStorage data into Supabase
+    - Handle ID conflicts and data validation
+    - Add progress reporting and error recovery
+  - **Manual Testing:**
+    - Import exported data into clean Supabase database
+    - Verify all games, players, settings imported correctly
+    - Test import with partial/corrupted export data
+    - Check that imported data displays correctly in app
+
+- [ ] **7.4** Create migration UI flow
+  - **Actions:**
+    - Create migration modal/page component
+    - Add progress indicators and status messages
+    - Implement migration trigger on first login
+    - Add option to skip migration for new users
+  - **Manual Testing:**
+    - Test complete migration flow from start to finish
+    - Verify progress indicators work correctly
+    - Test migration cancellation and retry
+    - Check post-migration app functionality
+
+---
+
+### **STEP 8 — Offline Support (Optional)**
+
+- [ ] **8.1** Evaluate offline requirements
+  - **Actions:**
+    - Document which features need offline support
+    - Research IndexedDB integration with Supabase
+    - Plan sync conflict resolution strategy
+  - **Manual Testing:**
+    - Test current app behavior when offline
+    - Identify critical offline workflows
+    - Check PWA offline capabilities
+
+- [ ] **8.2** Implement IndexedDB caching layer
+  - **Actions:**
+    - Add `idb-keyval` or similar IndexedDB library
+    - Create offline cache manager
+    - Implement cache-first data access pattern
+  - **Manual Testing:**
+    - Test data access when offline
+    - Verify cache updates when online
+    - Test cache invalidation strategies
+
+---
+
+### **STEP 9 — Testing & QA**
+
+- [ ] **9.1** Create comprehensive unit tests
+  - **Actions:**
+    - Add tests for all storage drivers
+    - Test transformation utilities thoroughly
+    - Add authentication flow tests
+    - Test migration script functionality
+  - **Manual Testing:**
+    - Run `npm test` and verify all tests pass
+    - Check test coverage is adequate (>80%)
+    - Test all edge cases and error scenarios
+
+- [ ] **9.2** Create integration test flows
+  - **Actions:**
+    - Test complete user signup → data creation → multi-device sync
+    - Add tests for offline/online transitions
+    - Test migration flows with real data
+  - **Manual Testing:**
+    - Test complete user journey on multiple devices
+    - Verify data sync works correctly
+    - Test app behavior during network interruptions
+
+---
+
+### **STEP 10 — Feature Flag Implementation**
+
+- [ ] **10.1** Add Supabase feature flag
+  - **Actions:**
+    - Add `ENABLE_SUPABASE` environment variable
+    - Default to `false` in production
+    - Update StorageManager to respect flag
+  - **Manual Testing:**
+    - Test app with flag enabled/disabled
+    - Verify seamless switching between storage backends
+    - Check that flag changes don't lose data
+
+---
+
+### **STEP 11 — Documentation & Deployment**
+
+- [ ] **11.1** Update project documentation
+  - **Actions:**
+    - Update README with Supabase setup instructions
+    - Document environment variables
+    - Add migration troubleshooting guide
+  - **Manual Testing:**
+    - Follow setup instructions on fresh machine
+    - Verify all environment variables are documented
+    - Test migration instructions with real user data
+
+---
+
+### **STEP 12 — Post-Migration Cleanup**
+
+- [ ] **12.1** Plan localStorage deprecation
+  - **Actions:**
+    - Add deprecation warnings for localStorage usage
+    - Plan timeline for removing LocalStorageDriver
+    - Document migration completion criteria
+  - **Manual Testing:**
+    - Verify all users have successfully migrated
+    - Test app functionality with localStorage disabled
+    - Confirm no localStorage dependencies remain
+
+---
+
+## Step Completion Protocol
+
+**After each step:**
+1. **Run Quality Gates:**
+   - `npm run lint` - must pass
+   - `npm test` - must pass  
+   - `npm run build` - must pass
+   - Manual testing checklist - must pass
+
+2. **Create commit:**
+   - Use conventional commit format: `feat(supabase): implement step X.Y - description`
+   - Include detailed commit message explaining changes
+   - Reference step number in commit
+
+3. **Update progress:**
+   - Mark step as completed: `[x]`
+   - Add completion date and notes
+   - Update any dependent steps if needed
+
+**Testing Validation:**
+- Each step must include manual testing that validates the step's functionality
+- Manual testing should cover both happy path and error scenarios
+- Testing should verify no regressions in existing functionality
+- Cross-browser testing for UI changes
+
+---
+
+## Quality Gates
+- [ ] ESLint + Prettier pass
+- [ ] `npm test` green
 - [ ] Conventional commit messages
 - [ ] No secrets committed
 
 ---
 
 ## Success Criteria
-- All data saved in Supabase; `LocalDriver` only used when flag off  
+- All data saved in Supabase; `LocalDriver` only used when flag off  
 - Multi‑device sync works with auth  
 - One‑shot migration succeeds for legacy users  
 - Tests green, docs complete  
@@ -246,211 +633,3 @@ Migrate the entire persistence layer to Supabase, enabling multi‑user, real‑
 
 **Agent protocol:**  
 Before each major step, create `/logs/{step}-plan.md` with sub‑tasks & exit criteria. After completing, run tests & lint, then commit to `supabase-migration-{step}` branch and open PR.
-
----
-## TODO Notes
-
-- **Introduce Supabase Backend**
-  - Add optional user authentication and cloud sync using Supabase.
-  - Keep localStorage as the local cache and synchronize on sign in.
-
-- [x] **Player Performance Evaluations**
-  - Add a modal with ten sliders to rate each player after a game.
-
----
-
-# Refactoring Plan for Supabase & Clerk Migration
-
-## Introduction
-
-This document outlines the refactoring steps needed to prepare our soccer coaching application for migration from localStorage to Supabase, and to integrate Clerk for authentication. The goal is to modify our code structure to make the eventual migration process smoother and less disruptive.
-
-Based on the [migration plan](./MIGRATION_TO_SUPABASE_AND_CLERK.md), we've identified several architectural improvements that should be implemented before the actual migration begins.
-
-## Current Status
-
-We've already made progress in centralizing data access for certain entities:
-
-- ✅ Refactored seasons and tournaments to use utility functions instead of direct localStorage access
-- ✅ Centralized type definitions for Season and Tournament in the types directory
-- ✅ Converted data utilities to async functions and integrated TanStack Query for loading and mutations
-
-## Refactoring Steps
-
-### 1. Complete Data Access Layer Abstraction
-
-**Objective**: Create a complete abstraction layer for all localStorage operations to provide a single point of change when switching to Supabase.
-
-**Tasks**:
-- [x] 1.1. Create `src/utils/masterRoster.ts` with CRUD operations for player management
-- [x] 1.2. Create `src/utils/savedGames.ts` with CRUD operations for game state management
-- [x] 1.3. Create `src/utils/appSettings.ts` for user preferences and application settings
-- [x] 1.4. Refactor components to use these utility functions instead of direct localStorage access
-- [x] 1.5. Create consistent error handling patterns across all data utilities
-
-**Success Criteria**:
-- No direct localStorage access in component files
-- All data operations funnel through utility functions
-- Consistent error handling strategy across all data operations
-
-### 2. Prepare for Asynchronous Operations
-
-**Objective**: Adapt the application to handle asynchronous data operations, which will be required when using Supabase.
-
-**Tasks**:
-- [x] 2.1. Refactor utility functions to return Promises, even while still using localStorage
-- [x] 2.2. Update components to handle async/await or .then() patterns
-- [x] 2.3. Add appropriate loading states to components that depend on data
-- [x] 2.4. Implement error states for failed data operations
-- [x] 2.5. Consider incorporating React Query or SWR for data fetching management
-
-**Success Criteria**:
-- Utility functions return Promises
-- Components properly handle asynchronous data loading
-- User experience includes appropriate loading and error states
-
-### 3. Create User Authentication Context
-
-**Objective**: Prepare the architecture for user-specific data access, which will be required with Clerk authentication.
-
-**Tasks**:
-- [ ] 3.1. Create `src/context/AuthContext.tsx` with placeholder authentication state
-- [ ] 3.2. Implement `useAuth` hook for accessing authentication state
-- [ ] 3.3. Update utility functions to accept a `userId` parameter (which can be null pre-migration)
-- [ ] 3.4. Wrap the application with the AuthContext provider
-- [ ] 3.5. Prepare components to handle authenticated/unauthenticated states
-
-**Success Criteria**:
-- Authentication context is in place and usable
-- Components can adapt to authenticated/unauthenticated states
-- Data utility functions are prepared for user-scoped data
-
-### 4. Implement Schema Transformation Layer
-
-**Objective**: Create transformation functions to bridge current data structures and planned Supabase schema.
-
-**Tasks**:
-- [ ] 4.1. Create `src/utils/transforms/` directory for transformation functions
-- [ ] 4.2. Implement transforms between current data structures and planned Supabase schema
-- [ ] 4.3. Add validation functions to ensure data integrity
-- [ ] 4.4. Create unit tests for transformation functions
-
-**Success Criteria**:
-- Clean separation between application data models and storage models
-- Robust validation to ensure data integrity
-- Test coverage for transformation functions
-
-### 5. Prepare Migration Utilities
-
-**Objective**: Create the foundation for one-time migration from localStorage to Supabase.
-
-**Tasks**:
-- [ ] 5.1. Create `src/utils/migration/` directory for migration utilities
-- [ ] 5.2. Implement skeleton functions for migrating each data entity
-- [ ] 5.3. Add mechanisms to track migration progress and status
-- [ ] 5.4. Create UI components for migration feedback
-
-**Success Criteria**:
-- Clear migration path for each data entity
-- Progress tracking for multi-step migrations
-- User feedback mechanisms for migration process
-
-### 6. Centralize and Complete Type Definitions
-
-**Objective**: Ensure all types are centralized and compatible with planned Supabase schema.
-
-**Tasks**:
-- [ ] 6.1. Audit and move any remaining inline type definitions to `src/types/`
-- [ ] 6.2. Ensure types align with planned Supabase schema
-- [ ] 6.3. Add comprehensive JSDoc comments to type definitions
-- [ ] 6.4. Implement type guards where appropriate
-
-**Success Criteria**:
-- All type definitions centralized in types directory
-- Type structures compatible with planned Supabase schema
-- Clear documentation for type usage
-
-### 7. Implement Persistent Cache Strategy
-
-**Objective**: Prepare the application for potential offline capabilities if required post-migration.
-
-**Tasks**:
-- [ ] 7.1. Evaluate requirements for offline functionality
-- [ ] 7.2. Research and choose appropriate caching strategy
-- [ ] 7.3. Implement basic caching mechanisms that could work with both localStorage and Supabase
-
-**Success Criteria**:
-- Clear understanding of offline requirements
-- Strategy document for implementing offline capabilities
-- Basic caching mechanisms in place if required
-
-## Progress Tracking
-
-| Step | Description | Status | Completion Date | Notes |
-|------|-------------|--------|----------------|-------|
-| 1.1  | Create masterRoster utility | ✅ Completed | 2024-07-31 | Created utility functions with consistent error handling pattern and unit tests |
-| 1.2  | Create savedGames utility | ✅ Completed | 2024-07-31 | Created comprehensive game management APIs with proper error handling and tests |
-| 1.2.1 | Fix type issues in savedGames | ✅ Completed | 2024-08-01 | Resolved type compatibility issues between GameData and AppState, improved error handling |
-| 1.3  | Create appSettings utility | ✅ Completed | 2024-07-31 | Created utility with support for both modern settings and legacy settings |
-| 1.4  | Refactor components to use utilities | 🔄 In Progress | | Breaking this down into sub-tasks |
-| 1.4.1 | Refactor app/page.tsx | ✅ Completed | 2024-08-03 | Extensive refactoring to use TanStack Query for data fetching (masterRoster, seasons, tournaments, savedGames, appSettings). Implemented TanStack Query mutations for saveGame, updatePlayer, setGoalieStatus, removePlayer, addPlayer. Updated other handlers (deleteGame, quickSave, autoSave, import/export, fairPlayCard) to use async utilities. Addressed complex undo/redo scenarios involving roster state. |
-| 1.4.2 | Refactor GameSettingsModal | ✅ Completed | 2024-08-01 | Implemented direct calls to savedGames utility functions for data persistence |
-| 1.4.2.1 | Add tests for GameSettingsModal | ✅ Completed | 2024-08-01 | Created comprehensive tests for utility function integration and component behavior |
-| 1.4.3 | Refactor NewGameSetupModal | ✅ Completed | 2024-08-02 | Replaced direct localStorage access with utility functions for team name persistence |
-| 1.4.3.1 | Add tests for NewGameSetupModal | ✅ Completed | 2024-08-02 | Created comprehensive tests for utility function integration with proper test isolation |
-| 1.4.4 | Refactor LoadGameModal | ✅ Completed | 2024-08-02 | Verified component uses utility functions/props; updated tests to mock utilities. |
-| 1.4.5 | Refactor GameStatsModal | ✅ Completed | 2024-08-02 | Component refactored to use getSeasons/getTournaments utilities; tests already correctly mock these. |
-| 1.5  | Implement error handling patterns | ✅ Completed | 2024-08-03 | Implemented for seasons.ts and tournaments.ts. Reviewed masterRoster.ts, which already aligns. |
-| 1.5.1 | Refactor src/utils/seasons.ts error handling | ✅ Completed | 2024-08-02 | Aligned with defined error handling strategy (return null/false, console.error). Tests updated. |
-| 1.5.2 | Refactor src/utils/tournaments.ts error handling | ✅ Completed | 2024-08-03 | Aligned with defined error handling strategy. Tests updated to match new logging and error details, successfully refactored to test by controlling localStorage mock directly. |
-| 1.5.3 | Review src/utils/masterRoster.ts error handling | ✅ Completed | 2024-08-03 | Error handling patterns (return values, console.error with prefixes) already align with project standards. | N/A |
-| 1.5.4 | Review src/utils/seasons.ts error handling    | ✅ Completed | 2024-08-03 | Error handling patterns align. | N/A |
-| 1.5.5 | Review src/utils/tournaments.ts error handling| ✅ Completed | 2024-08-03 | Error handling patterns align. | N/A |
-| 1.6  | Ensure real-time UI updates for GameStatsModal | ✅ Completed | 2024-08-03 | Modified GameStatsModal to use localGameEvents state (derived from gameEvents prop) for its 'currentGame' tab calculations, ensuring immediate UI reflection of new game events. | N/A |
-| Feature: Link to Coaching Materials | ✅ Completed | 2024-08-03 | Added a link to external coaching materials (Palloliitto) in the ControlBar settings menu, with i18n translations. | `FEATURE_IDEAS.md` item #2 |
-| 2.1  | Make utility functions return Promises | ✅ Completed | 2024-08-03 | Refactored src/utils/appSettings.ts. Components using it (NewGameSetupModal.tsx) and its tests updated. Refactored src/utils/seasons.ts. Components using it (NewGameSetupModal.tsx, GameStatsModal.tsx) and their tests updated. Refactored src/utils/tournaments.ts. Components using it (NewGameSetupModal.tsx, GameStatsModal.tsx) and their tests updated. Refactored src/utils/masterRoster.ts and its tests. Refactored/verified src/utils/savedGames.ts and its tests. All verified. |
-| 2.2  | Update components for async operations | ✅ Completed | 2024-08-03 | Components like `page.tsx`, `LoadGameModal.tsx`, `GameSettingsModal.tsx` now handle async operations, primarily through TanStack Query hooks or updated `useEffect` hooks calling async utility functions. `NewGameSetupModal` and `RosterSettingsModal` rely on async handlers/mutations from `page.tsx`. |
-| 2.3  | Add loading states | ✅ Completed | 2024-08-03 | Loading states are managed by TanStack Query (`isLoading`, `isPending` flags) for major data fetching and mutations in `page.tsx`. Individual modals also manage their specific loading states (e.g., `isGameLoading` in `LoadGameModal`). |
-| 2.4  | Implement error states | ✅ Completed | 2024-08-03 | Error states are managed by TanStack Query (`isError`, `error` objects) in `page.tsx`. Components like `LoadGameModal` and `RosterSettingsModal` use local state for displaying specific operational errors (e.g., `gameLoadError`, `rosterError`). |
-| 2.5  | Evaluate React Query/SWR | ✅ Completed | 2024-08-03 | React Query (TanStack Query) has been successfully implemented and is now the core data fetching and server state management library in `page.tsx`. |
-| 3.1  | Create AuthContext | 📝 Planned | | |
-| 3.2  | Implement useAuth hook | 📝 Planned | | |
-| 3.3  | Update utilities for userId parameter | 📝 Planned | | |
-| 3.4  | Wrap app with AuthContext provider | 📝 Planned | | |
-| 3.5  | Prepare components for auth states | 📝 Planned | | |
-| 4.1  | Create transforms directory | 📝 Planned | | |
-| 4.2  | Implement transformation functions | 📝 Planned | | |
-| 4.3  | Add validation functions | 📝 Planned | | |
-| 4.4  | Create transform unit tests | 📝 Planned | | |
-| 5.1  | Create migration utilities directory | 📝 Planned | | |
-| 5.2  | Implement migration skeleton functions | 📝 Planned | | |
-| 5.3  | Add migration progress tracking | 📝 Planned | | |
-| 5.4  | Create migration UI components | 📝 Planned | | |
-| 6.1  | Audit and move type definitions | 📝 Planned | | |
-| 6.2  | Align types with Supabase schema | 📝 Planned | | |
-| 6.3  | Add JSDoc comments | 📝 Planned | | |
-| 6.4  | Implement type guards | 📝 Planned | | |
-| 7.1  | Evaluate offline requirements | 📝 Planned | | |
-| 7.2  | Choose caching strategy | 📝 Planned | | |
-| 7.3  | Implement basic caching | 📝 Planned | | |
-
-## Legend
-- ✅ Completed
-- 🔄 In Progress
-- 📝 Planned
-- ❓ Under Review
-- ❌ Blocked
-
-## Next Steps
-
-### Immediate Focus
-1. **Thorough Undo/Redo Testing**: Conduct comprehensive testing of Undo/Redo functionality, especially for roster-related changes (name, jersey, goalie status) and player selection, to ensure consistency between `PlayerBar`, on-field display, and historical states.
-2. **Review `gameUtils.ts`**: Identify if any functions within `src/utils/gameUtils.ts` are actively used and require refactoring to async, or if the file can be deprecated or significantly cleaned up.
-3. **Type System Review**: While `AppState` is the primary type for game state and its usage in `savedGames.ts` is confirmed, a broader review of types, especially the legacy `GameData` interface, could be beneficial for long-term clarity.
-4. **General Regression Testing**: After significant refactoring, perform a general sweep of application functionality to catch any unforeseen issues.
-
-### Mid-term Goals
-1. **Component Refactoring Completion**: Finish refactoring any remaining components (if any, outside of `page.tsx` and already reviewed modals) to use the utility layer and ensure they all have proper test coverage.
-2. **Begin Async Transition (Supabase Specifics)**: While utility functions are async, the next phase of this would be planning the Supabase client integration and how these utilities will call Supabase methods.
-3. **Testing Strategy**: Continue implementing comprehensive tests to ensure stability during migration. Use mocks for utility functions to test components in isolation. 
-
