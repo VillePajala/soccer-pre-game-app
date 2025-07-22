@@ -16,7 +16,7 @@ import SettingsModal from '@/components/SettingsModal';
 import SeasonTournamentManagementModal from '@/components/SeasonTournamentManagementModal';
 import InstructionsModal from '@/components/InstructionsModal';
 import PlayerAssessmentModal from '@/components/PlayerAssessmentModal';
-import usePlayerAssessments from '@/hooks/usePlayerAssessments';
+import usePlayerRosterManager from '@/hooks/usePlayerRosterManager';
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
 import { useGameState, UseGameStateReturn } from '@/hooks/useGameState';
@@ -55,7 +55,7 @@ import {
 // Import Player from types directory
 import { Player, Season, Tournament } from '@/types';
 // Import saveMasterRoster utility
-import type { GameEvent, AppState, SavedGamesCollection, TimerState, PlayerAssessment } from "@/types";
+import type { GameEvent, AppState, SavedGamesCollection, TimerState } from "@/types";
 import { saveMasterRoster } from '@/utils/masterRoster';
 // Removed - now handled by useGameDataManager: 
 // import { useQueryClient } from '@tanstack/react-query';
@@ -322,23 +322,19 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     // masterRosterKey: MASTER_ROSTER_KEY, // Removed as no longer used by useGameState
   });
 
+  const roster = useRoster({
+    initialPlayers: initialState.availablePlayers,
+    selectedPlayerIds: gameSessionState.selectedPlayerIds,
+  });
   const {
     availablePlayers,
     setAvailablePlayers,
     highlightRosterButton,
     setHighlightRosterButton,
     isRosterUpdating,
-    setRosterError,
     rosterError,
     playersForCurrentGame,
-    handleAddPlayer,
-    handleUpdatePlayer,
-    handleRemovePlayer,
-    handleSetGoalieStatus,
-  } = useRoster({
-    initialPlayers: initialState.availablePlayers,
-    selectedPlayerIds: gameSessionState.selectedPlayerIds,
-  });
+  } = roster;
 
   // --- State Management (Remaining in Home component) ---
   // const [showPlayerNames, setShowPlayerNames] = useState<boolean>(initialState.showPlayerNames); // REMOVE - Migrated to gameSessionState
@@ -364,13 +360,26 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   useEffect(() => { gameIdRef.current = currentGameId; }, [currentGameId]);
 
   const {
-    assessments: playerAssessments,
-    saveAssessment,
-    deleteAssessment,
-  } = usePlayerAssessments(
-    currentGameId || '',
-    gameSessionState.completedIntervalDurations,
-  );
+    playerAssessments,
+    handleRenamePlayerForModal,
+    handleSetJerseyNumberForModal,
+    handleSetPlayerNotesForModal,
+    handleRemovePlayerForModal,
+    handleAddPlayerForModal,
+    handleToggleGoalieForModal,
+    handleTogglePlayerSelection,
+    handleUpdateSelectedPlayers,
+    handleSavePlayerAssessment,
+    handleDeletePlayerAssessment,
+  } = usePlayerRosterManager({
+    roster,
+    masterRosterPlayers: masterRosterQueryResultData,
+    selectedPlayerIds: gameSessionState.selectedPlayerIds,
+    dispatchGameSession,
+    currentGameId,
+    completedIntervals: gameSessionState.completedIntervalDurations || [],
+    setSavedGames,
+  });
 
   const {
     timeElapsedInSeconds,
@@ -558,11 +567,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     handleSetTournamentId,
     handleSetAgeGroup,
     handleSetTournamentLevel,
-    handleTogglePlayerSelection,
-    handleUpdateSelectedPlayers,
     applyHistoryState,
   } = useGameStateManager({
-    gameSessionState,
     dispatchGameSession,
     initialGameSessionData,
     setPlayersOnField,
@@ -1398,153 +1404,9 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   const openPlayerAssessmentModal = () => setIsPlayerAssessmentModalOpen(true);
   const closePlayerAssessmentModal = () => setIsPlayerAssessmentModalOpen(false);
 
-  const handleSavePlayerAssessment = async (
-    playerId: string,
-    assessment: Partial<PlayerAssessment>,
-  ) => {
-    if (!currentGameId) return;
-    const data: PlayerAssessment = {
-      ...(assessment as PlayerAssessment),
-      minutesPlayed: 0,
-      createdAt: Date.now(),
-      createdBy: 'local',
-    };
-    const updated = await saveAssessment(playerId, data);
-    if (updated) {
-      setSavedGames(prev => ({ ...prev, [currentGameId]: updated }));
-    }
-  };
-
-  const handleDeletePlayerAssessment = async (playerId: string) => {
-    if (!currentGameId) return;
-    const updated = await deleteAssessment(playerId);
-    if (updated) {
-      setSavedGames(prev => ({ ...prev, [currentGameId]: updated }));
-    }
-  };
-  
-  
   // ... (other code in Home component) ...
 
   const closeRosterModal = () => setIsRosterModalOpen(false);
-
-  // --- ASYNC Roster Management Handlers for RosterSettingsModal ---
-  const handleRenamePlayerForModal = useCallback(async (playerId: string, playerData: { name: string; nickname?: string }) => {
-    logger.log(`[Page.tsx] handleRenamePlayerForModal attempting mutation for ID: ${playerId}, new name: ${playerData.name}`);
-    setRosterError(null); // Clear previous specific errors
-    try {
-      await handleUpdatePlayer(playerId, { name: playerData.name, nickname: playerData.nickname });
-      logger.log(`[Page.tsx] rename player success for ${playerId}.`);
-    } catch (error) {
-      logger.error(`[Page.tsx] Exception during rename of ${playerId}:`, error);
-    }
-  }, [handleUpdatePlayer, setRosterError]);
-  
-  const handleSetJerseyNumberForModal = useCallback(async (playerId: string, jerseyNumber: string) => {
-    logger.log(`[Page.tsx] handleSetJerseyNumberForModal attempting mutation for ID: ${playerId}, new number: ${jerseyNumber}`);
-    setRosterError(null);
-
-    try {
-      await handleUpdatePlayer(playerId, { jerseyNumber });
-      logger.log(`[Page.tsx] jersey number update successful for ${playerId}.`);
-    } catch (error) {
-      logger.error(`[Page.tsx] Exception during jersey number update of ${playerId}:`, error);
-    }
-  }, [handleUpdatePlayer, setRosterError]);
-
-  const handleSetPlayerNotesForModal = useCallback(async (playerId: string, notes: string) => {
-    logger.log(`[Page.tsx] handleSetPlayerNotesForModal attempting mutation for ID: ${playerId}`);
-    setRosterError(null);
-
-    try {
-      await handleUpdatePlayer(playerId, { notes });
-      logger.log(`[Page.tsx] notes update successful for ${playerId}.`);
-    } catch (error) {
-      logger.error(`[Page.tsx] Exception during notes update of ${playerId}:`, error);
-    }
-  }, [handleUpdatePlayer, setRosterError]);
-
-      // ... (rest of the code remains unchanged)
-
-    const handleRemovePlayerForModal = useCallback(async (playerId: string) => {
-      logger.log(`[Page.tsx] handleRemovePlayerForModal attempting mutation for ID: ${playerId}`);
-      setRosterError(null);
-
-      try {
-        await handleRemovePlayer(playerId);
-        logger.log(`[Page.tsx] player removed: ${playerId}.`);
-      } catch (error) {
-        logger.error(`[Page.tsx] Exception during removal of ${playerId}:`, error);
-      }
-    }, [handleRemovePlayer, setRosterError]);
-
-    // ... (rest of the code remains unchanged)
-
-    const handleAddPlayerForModal = useCallback(async (playerData: { name: string; jerseyNumber: string; notes: string; nickname: string }) => {
-      logger.log('[Page.tsx] handleAddPlayerForModal attempting to add player:', playerData);
-      setRosterError(null); // Clear previous specific errors first
-
-      const currentRoster = masterRosterQueryResultData || [];
-      const newNameTrimmedLower = playerData.name.trim().toLowerCase();
-      const newNumberTrimmed = playerData.jerseyNumber.trim();
-
-      // Check for empty name after trimming
-      if (!newNameTrimmedLower) {
-        setRosterError(t('rosterSettingsModal.errors.nameRequired', 'Player name cannot be empty.'));
-        return;
-      }
-
-      // Check for duplicate name (case-insensitive)
-      const nameExists = currentRoster.some(p => p.name.trim().toLowerCase() === newNameTrimmedLower);
-      if (nameExists) {
-        setRosterError(t('rosterSettingsModal.errors.duplicateName', 'A player with this name already exists. Please use a different name.'));
-        return;
-      }
-
-      // Check for duplicate jersey number (only if a number is provided and not empty)
-      if (newNumberTrimmed) {
-        const numberExists = currentRoster.some(p => p.jerseyNumber && p.jerseyNumber.trim() === newNumberTrimmed);
-        if (numberExists) {
-          setRosterError(t('rosterSettingsModal.errors.duplicateNumber', 'A player with this jersey number already exists. Please use a different number or leave it blank.'));
-          return;
-        }
-      }
-
-      // If all checks pass, proceed with the mutation
-      try {
-        logger.log('[Page.tsx] No duplicates found. Proceeding with addPlayer for:', playerData);
-        await handleAddPlayer(playerData);
-        logger.log(`[Page.tsx] add player success: ${playerData.name}.`);
-      } catch (error) {
-        // This catch block is for unexpected errors directly from mutateAsync call itself (e.g., network issues before mutationFn runs).
-        // Errors from within mutationFn (like from the addPlayer utility) should ideally be handled by the mutation's onError callback.
-        logger.error(`[Page.tsx] Exception during addPlayerMutation.mutateAsync for player ${playerData.name}:`, error);
-        // Set a generic error message if rosterError hasn't been set by the mutation's onError callback.
-        setRosterError(t('rosterSettingsModal.errors.addFailed', 'Error adding player {playerName}. Please try again.', { playerName: playerData.name }));
-      }
-    }, [masterRosterQueryResultData, handleAddPlayer, t, setRosterError]);
-
-    // ... (rest of the code remains unchanged)
-
-  const handleToggleGoalieForModal = useCallback(async (playerId: string) => {
-    const player = availablePlayers.find(p => p.id === playerId);
-    if (!player) {
-        logger.error(`[Page.tsx] Player ${playerId} not found in availablePlayers for goalie toggle.`);
-        setRosterError(t('rosterSettingsModal.errors.playerNotFound', 'Player not found. Cannot toggle goalie status.'));
-        return;
-    }
-    const targetGoalieStatus = !player.isGoalie;
-    logger.log(`[Page.tsx] handleToggleGoalieForModal attempting mutation for ID: ${playerId}, target status: ${targetGoalieStatus}`);
-    
-    setRosterError(null); // Clear previous specific errors
-
-    try {
-      await handleSetGoalieStatus(playerId, targetGoalieStatus);
-      logger.log(`[Page.tsx] goalie toggle success for ${playerId}.`);
-    } catch (error) {
-      logger.error(`[Page.tsx] Exception during goalie toggle of ${playerId}:`, error);
-    }
-  }, [availablePlayers, handleSetGoalieStatus, setRosterError, t]);
 
   // --- END Roster Management Handlers ---
 
