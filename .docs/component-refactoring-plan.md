@@ -80,9 +80,9 @@ Several components have grown to unmanageable sizes:
     - **Functionality:** 100% preserved with improved type safety
     - **Integration:** Seamlessly integrated with existing useGameDataManager
   - **Completion Date:** 2025-01-22
-  - **Commit:** [To be created] - feat(refactor): create useGameStateManager hook for game state handlers
+  - **Commit:** `a379bae` - feat(refactor): create useGameStateManager hook for game state handlers
 
-- [ ] **2.2** Create `src/hooks/usePlayerRosterManager.ts` (~200-250 lines)
+- [x] **2.2** Create `src/hooks/usePlayerRosterManager.ts` (~200-250 lines) ✅ **COMPLETED**
   - **Actions:**
     - Extract roster mutation handlers: `handleRenamePlayerForModal`, `handleSetJerseyNumberForModal`, etc.
     - Move player selection logic: `handleTogglePlayerSelection`, `handleUpdateSelectedPlayers`
@@ -92,6 +92,13 @@ Several components have grown to unmanageable sizes:
     - Verify jersey number changes work
     - Check player selection in UI updates correctly
     - Test player assessments save/load
+  - **Results:**
+    - **Lines Added:** 226 lines in new usePlayerRosterManager hook
+    - **Lines Removed:** ~170 lines from HomePage and useGameStateManager
+    - **Functionality:** Roster actions centralized and integrated
+    - **Integration:** Works with game session reducer and assessments
+  - **Completion Date:** 2025-07-22
+  - **Commit:** `8f0d1d5` - implement usePlayerRosterManager hook
 
 ### Phase 3: Extract UI Logic (Week 2)
 - [ ] **3.1** Create `src/hooks/useModalManager.ts` (~300-400 lines)

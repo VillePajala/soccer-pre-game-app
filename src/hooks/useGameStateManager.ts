@@ -4,7 +4,6 @@ import { GameSessionState, GameSessionAction } from './useGameSessionReducer';
 import logger from '@/utils/logger';
 
 interface UseGameStateManagerProps {
-  gameSessionState: GameSessionState;
   dispatchGameSession: React.Dispatch<GameSessionAction>;
   initialGameSessionData: GameSessionState;
   setPlayersOnField: (players: Player[]) => void;
@@ -19,7 +18,6 @@ interface UseGameStateManagerProps {
  * Centralizes all dispatchGameSession calls and related game state logic.
  */
 export const useGameStateManager = ({
-  gameSessionState,
   dispatchGameSession,
   initialGameSessionData,
   setPlayersOnField,
@@ -109,23 +107,6 @@ export const useGameStateManager = ({
     dispatchGameSession({ type: 'SET_TOURNAMENT_LEVEL', payload: level });
   }, [dispatchGameSession]);
 
-  // --- Player Selection Management ---
-  const handleTogglePlayerSelection = useCallback((playerId: string) => {
-    const currentSelected = gameSessionState.selectedPlayerIds;
-    const isSelected = currentSelected.includes(playerId);
-    
-    const newSelectedIds = isSelected
-      ? currentSelected.filter(id => id !== playerId)
-      : [...currentSelected, playerId];
-    
-    logger.log('[useGameStateManager] Toggling player selection:', { playerId, isSelected: !isSelected });
-    dispatchGameSession({ type: 'SET_SELECTED_PLAYER_IDS', payload: newSelectedIds });
-  }, [gameSessionState.selectedPlayerIds, dispatchGameSession]);
-
-  const handleUpdateSelectedPlayers = useCallback((playerIds: string[]) => {
-    logger.log('[useGameStateManager] Updating selected player IDs:', playerIds);
-    dispatchGameSession({ type: 'SET_SELECTED_PLAYER_IDS', payload: playerIds });
-  }, [dispatchGameSession]);
 
   // --- Score Management ---
   const handleSetHomeScore = useCallback((newScore: number) => {
@@ -219,9 +200,6 @@ export const useGameStateManager = ({
     handleSetAgeGroup,
     handleSetTournamentLevel,
     
-    // Player selection handlers
-    handleTogglePlayerSelection,
-    handleUpdateSelectedPlayers,
     
     // Score handlers
     handleSetHomeScore,
