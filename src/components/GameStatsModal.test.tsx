@@ -17,6 +17,30 @@ global.ResizeObserver = class ResizeObserver {
   disconnect() {}
 };
 
+beforeAll(() => {
+  Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
+    configurable: true,
+    value: 800,
+  });
+  Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+    configurable: true,
+    value: 600,
+  });
+  HTMLElement.prototype.getBoundingClientRect = function () {
+    return {
+      width: 800,
+      height: 600,
+      top: 0,
+      left: 0,
+      bottom: 600,
+      right: 800,
+      x: 0,
+      y: 0,
+      toJSON: () => {},
+    } as DOMRect;
+  };
+});
+
 // Mocks
 jest.mock('@/utils/seasons');
 jest.mock('@/utils/tournaments');
@@ -151,9 +175,11 @@ const getDefaultProps = (): TestProps => ({
 // Helper to render with mocked context/providers if needed
 const renderComponent = (props: TestProps) => {
   return render(
-    <I18nextProvider i18n={i18n}>
-      <GameStatsModal {...props} />
-    </I18nextProvider>
+    <div style={{ width: 800, height: 600 }}>
+      <I18nextProvider i18n={i18n}>
+        <GameStatsModal {...props} />
+      </I18nextProvider>
+    </div>
   );
 };
 
