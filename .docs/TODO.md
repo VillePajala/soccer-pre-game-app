@@ -195,9 +195,6 @@
 
 <!-- Removed IndexedDB migration plan -->
 
-- **Introduce Supabase Backend**
-  - Add optional user authentication and cloud sync using Supabase.
-  - Keep localStorage as the local cache and synchronize on sign in.
 
 - [x] **Player Performance Evaluations**
   - Add a modal with ten sliders to rate each player after a game.
