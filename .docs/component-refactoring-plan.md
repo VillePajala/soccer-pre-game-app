@@ -101,7 +101,7 @@ Several components have grown to unmanageable sizes:
   - **Commit:** `8f0d1d5` - implement usePlayerRosterManager hook
 
 ### Phase 3: Extract UI Logic (Week 2)
-- [ ] **3.1** Create `src/hooks/useModalManager.ts` (~300-400 lines)
+- [x] **3.1** Create `src/hooks/useModalManager.ts` (~300-400 lines) ✅ **COMPLETED**
   - **Actions:**
     - Extract all modal state variables (~15 useState calls)
     - Create unified modal open/close handlers
