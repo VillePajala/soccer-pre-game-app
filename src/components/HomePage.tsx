@@ -1399,12 +1399,17 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     try {
       const json = await exportFullBackup();
       if (backupEmail) {
-        await sendBackupEmail(json, backupEmail);
+        const confirmSend = window.confirm(
+          t('settingsModal.sendBackupPrompt', 'Send backup via email?'),
+        );
+        if (confirmSend) {
+          await sendBackupEmail(json, backupEmail);
+          alert(t('settingsModal.sendBackupSuccess', 'Backup sent successfully.'));
+        }
       }
       const iso = new Date().toISOString();
       setLastBackupTime(iso);
       utilUpdateAppSettings({ lastBackupTime: iso }).catch(() => {});
-      alert(t('settingsModal.sendBackupSuccess', 'Backup sent successfully.'));
     } catch (err) {
       logger.error('Failed to send backup', err);
       const message = err instanceof Error ? err.message : String(err);
