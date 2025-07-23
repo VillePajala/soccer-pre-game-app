@@ -2,6 +2,7 @@
 import { render, screen, waitFor, act } from '@testing-library/react';
 import { useAuth, AuthProvider } from '../AuthContext';
 import { ReactNode } from 'react';
+import type { Session } from '@supabase/supabase-js';
 
 // Mock Supabase client
 const mockSupabase = {
@@ -150,7 +151,7 @@ describe('AuthContext', () => {
     });
 
     it('should handle auth state changes', async () => {
-      let authStateCallback: (event: string, session: any) => void;
+      let authStateCallback: (event: string, session: Session | null) => void;
       
       mockSupabase.auth.onAuthStateChange.mockImplementation((callback) => {
         authStateCallback = callback;

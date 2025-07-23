@@ -52,7 +52,7 @@ The app is designed to be an all-in-one digital assistant for game day, from pre
 *   **UI Library:** [React](https://reactjs.org/)
 *   **Styling:** [Tailwind CSS](https://tailwindcss.com/)
 *   **State Management:** React Hooks (`useState`, `useReducer`, `useContext`) & Custom Hooks
-*   **Data Persistence:** Browser `localStorage` API
+*   **Data Persistence:** Browser `localStorage` API *(deprecated; migrating to Supabase)*
 *   **Internationalization:** [i18next](https://www.i18next.com/) / [react-i18next](https://react-i18next.com/)
 *   **PWA:** Custom Service Worker & Web App Manifest
 *   **Analytics:** [@vercel/analytics](https://vercel.com/analytics)
@@ -70,12 +70,20 @@ The app is designed to be an all-in-one digital assistant for game day, from pre
     npm install
     ```
 
-3.  **Run the development server:**
+3.  **Create a `.env.local` file:**
+    ```bash
+    cp .env.example .env.local
+    ```
+    Then fill in your Supabase project details:
+    `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and feature
+    flags such as `NEXT_PUBLIC_ENABLE_SUPABASE`.
+
+4.  **Run the development server:**
     ```bash
     npm run dev
     ```
 
-4.  Open [http://localhost:3000](http://localhost:3000) with your browser to start using the app.
+5.  Open [http://localhost:3000](http://localhost:3000) with your browser to start using the app.
 
    When launched, a **Start Screen** appears with options to start a new game, load an existing one, create a season or tournament, or view statistics. Select an action to continue to the main field view.
 
@@ -91,9 +99,27 @@ npm run test:unit
 
 The tests rely on [Jest](https://jestjs.io/) and [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/).
 
+## Environment Variables
+
+Create a `.env.local` file using `.env.example` as a template. The key variables are:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=public-anon-key
+# Enable Supabase storage
+NEXT_PUBLIC_ENABLE_SUPABASE=true
+# Optional fallback behavior
+NEXT_PUBLIC_DISABLE_FALLBACK=false
+# Server-side service key (optional)
+SUPABASE_SERVICE_KEY=your-service-role-key
+```
+
+These values configure Supabase access and feature flags.
+
 ## Important Notes
 
-*   **Data Storage:** All your data is stored in your browser's `localStorage`. This is fast and enables offline use, but it means clearing your browser data will erase everything. **Use the "Full Backup" feature regularly!**
+*   **Data Storage:** By default all data is kept in your browser's `localStorage`. When `NEXT_PUBLIC_ENABLE_SUPABASE=true`, your data will be synced to your Supabase project instead. Either way, continue using the **Full Backup** feature to safeguard your records.
+*   **Deprecation Notice:** localStorage support will be removed in a future release. Please migrate your data to Supabase.
 *   **Offline Use:** To get the best experience, install the app on your device when prompted by your browser ("Add to Home Screen" on mobile, or an install icon in the address bar on desktop).
 
 ---
