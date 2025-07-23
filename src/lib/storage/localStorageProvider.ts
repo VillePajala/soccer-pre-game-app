@@ -13,6 +13,16 @@ import { getSavedGames, saveGame, deleteGame } from '../../utils/savedGames';
 import { generateFullBackupJson, importFullBackup } from '../../utils/fullBackup';
 
 export class LocalStorageProvider implements IStorageProvider {
+  private static warned = false;
+
+  constructor() {
+    if (!LocalStorageProvider.warned && process.env.NODE_ENV !== 'test') {
+      console.warn(
+        '[Deprecation] LocalStorageProvider will be removed once all users migrate to Supabase.'
+      );
+      LocalStorageProvider.warned = true;
+    }
+  }
   
   getProviderName(): string {
     return 'localStorage';

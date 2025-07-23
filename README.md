@@ -107,6 +107,7 @@ The tests rely on [Jest](https://jestjs.io/) and [React Testing Library](https:/
 ## Important Notes
 
 *   **Data Storage:** All your data is stored in your browser's `localStorage`. This is fast and enables offline use, but it means clearing your browser data will erase everything. **Use the "Full Backup" feature regularly!**
+*   **Deprecation Notice:** localStorage support will be removed after the v2.1 release. Please migrate your data to Supabase using the migration script.
 *   **Offline Use:** To get the best experience, install the app on your device when prompted by your browser ("Add to Home Screen" on mobile, or an install icon in the address bar on desktop).
 
 ---

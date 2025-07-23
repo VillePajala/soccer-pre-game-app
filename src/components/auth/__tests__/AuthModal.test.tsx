@@ -1,5 +1,5 @@
 // Unit tests for AuthModal component
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AuthModal } from '../AuthModal';
 
@@ -95,10 +95,12 @@ describe('AuthModal', () => {
     });
 
     it('should display loading state during sign in', async () => {
-      let resolveSignIn: (value: any) => void;
-      mockAuth.signIn.mockReturnValue(new Promise(resolve => {
-        resolveSignIn = resolve;
-      }));
+      let resolveSignIn: () => void;
+      mockAuth.signIn.mockReturnValue(
+        new Promise<void>(resolve => {
+          resolveSignIn = resolve;
+        })
+      );
       
       render(<AuthModal isOpen={true} onClose={mockOnClose} />);
       
@@ -114,7 +116,7 @@ describe('AuthModal', () => {
       expect(submitButton).toBeDisabled();
       
       // Resolve the promise to clean up
-      resolveSignIn(undefined);
+      resolveSignIn();
     });
 
     it('should handle sign in errors', async () => {

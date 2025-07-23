@@ -20,7 +20,7 @@ jest.mock('../../lib/supabase', () => ({
 
 // Simple test component
 const TestComponent = () => {
-  const { user, session, loading } = useAuth();
+  const { user, loading } = useAuth();
   
   return (
     <div>

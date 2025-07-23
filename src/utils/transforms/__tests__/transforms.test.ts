@@ -334,7 +334,7 @@ describe('Data Transformation Utilities', () => {
         id: 'player-1',
         name: 'Test Player',
         nickname: undefined,
-        jerseyNumber: null as any,
+        jerseyNumber: null as unknown as string | null,
         notes: '',
         isGoalie: false,
         receivedFairPlayCard: false
