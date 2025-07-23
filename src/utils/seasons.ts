@@ -1,6 +1,14 @@
 import type { Season } from '@/types'; // Import Season type from shared types
 import { storageManager } from '@/lib/storage';
 import logger from '@/utils/logger';
+import { SEASONS_LIST_KEY } from '@/config/storageKeys';
+import { getLocalStorageItem, setLocalStorageItem } from './localStorage';
+
+// Helper to detect when local provider is calling these utils to avoid recursion
+const usingLocalProvider = () =>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (globalThis as any).__USE_DIRECT_STORAGE__ === true ||
+  storageManager.getCurrentProviderName() === 'localStorage';
 
 // Define the Season type (consider moving to a shared types file if not already there)
 // export interface Season { // Remove local definition
@@ -14,12 +22,22 @@ import logger from '@/utils/logger';
  * @returns A promise that resolves to an array of Season objects.
  */
 export const getSeasons = async (): Promise<Season[]> => {
+  if (usingLocalProvider()) {
+    try {
+      const json = getLocalStorageItem(SEASONS_LIST_KEY);
+      if (!json) return [];
+      return JSON.parse(json) as Season[];
+    } catch (error) {
+      logger.error('[getSeasons] Error reading seasons from localStorage:', error);
+      return [];
+    }
+  }
   try {
     const seasons = await storageManager.getSeasons();
     return seasons.map(s => ({ ...s, ageGroup: s.ageGroup ?? undefined }));
   } catch (error) {
     logger.error('[getSeasons] Error reading seasons:', error);
-    return []; // Return empty array on error
+    return [];
   }
 };
 
@@ -29,11 +47,58 @@ export const getSeasons = async (): Promise<Season[]> => {
  * @returns A promise that resolves to the saved Season object.
  */
 export const saveSeason = async (season: Season): Promise<Season> => {
+  if (usingLocalProvider()) {
+    try {
+      const seasons = await getSeasons();
+      let saved = season;
+      if (season.id) {
+        const idx = seasons.findIndex(s => s.id === season.id);
+        if (idx >= 0) {
+          seasons[idx] = { ...seasons[idx], ...season };
+          saved = seasons[idx];
+        } else {
+          seasons.push(season);
+        }
+      } else {
+        saved = { ...season, id: `season_${Date.now()}_${Math.random().toString(36).substring(2, 9)}` };
+        seasons.push(saved);
+      }
+      setLocalStorageItem(SEASONS_LIST_KEY, JSON.stringify(seasons));
+      return saved;
+    } catch (error) {
+      logger.error('[saveSeason] Error saving season to localStorage:', error);
+      throw error;
+    }
+  }
   try {
     return await storageManager.saveSeason(season);
   } catch (error) {
     logger.error('[saveSeason] Error saving season:', error);
     throw error;
+  }
+};
+
+/**
+ * Saves an array of seasons, replacing existing ones when using localStorage.
+ */
+export const saveSeasons = async (seasons: Season[]): Promise<boolean> => {
+  if (usingLocalProvider()) {
+    try {
+      setLocalStorageItem(SEASONS_LIST_KEY, JSON.stringify(seasons));
+      return true;
+    } catch (error) {
+      logger.error('[saveSeasons] Error saving seasons to localStorage:', error);
+      return false;
+    }
+  }
+  try {
+    for (const season of seasons) {
+      await saveSeason(season);
+    }
+    return true;
+  } catch (error) {
+    logger.error('[saveSeasons] Error saving seasons:', error);
+    return false;
   }
 };
 
@@ -90,13 +155,25 @@ export const updateSeason = async (seasonId: string, updates: Partial<Season>): 
         logger.error('[updateSeason] Season name cannot be empty.');
         return null;
       }
-      
+
       const currentSeasons = await getSeasons();
       if (currentSeasons.some(s => s.id !== seasonId && s.name.toLowerCase() === trimmedName.toLowerCase())) {
         logger.error(`[updateSeason] Validation failed: Another season with name "${trimmedName}" already exists.`);
         return null;
       }
       updates.name = trimmedName;
+    }
+    if (usingLocalProvider()) {
+      const seasons = await getSeasons();
+      const idx = seasons.findIndex(s => s.id === seasonId);
+      if (idx === -1) {
+        logger.error(`[updateSeason] Season with ID ${seasonId} not found.`);
+        return null;
+      }
+      const updated = { ...seasons[idx], ...updates } as Season;
+      seasons[idx] = updated;
+      setLocalStorageItem(SEASONS_LIST_KEY, JSON.stringify(seasons));
+      return updated;
     }
 
     const updatedSeason = await storageManager.updateSeason(seasonId, updates);
@@ -118,6 +195,16 @@ export const deleteSeason = async (seasonId: string): Promise<boolean> => {
      return false;
   }
   try {
+    if (usingLocalProvider()) {
+      const seasons = await getSeasons();
+      const updated = seasons.filter(s => s.id !== seasonId);
+      if (updated.length === seasons.length) {
+        logger.error(`[deleteSeason] Season with id ${seasonId} not found.`);
+        return false;
+      }
+      setLocalStorageItem(SEASONS_LIST_KEY, JSON.stringify(updated));
+      return true;
+    }
     await storageManager.deleteSeason(seasonId);
     return true;
   } catch (error) {
@@ -136,3 +223,5 @@ export const updateSeasonLegacy = async (updatedSeasonData: Season): Promise<Sea
   const { id, ...updates } = updatedSeasonData;
   return updateSeason(id, updates);
 };
+
+export {};
