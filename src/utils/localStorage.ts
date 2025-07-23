@@ -1,7 +1,18 @@
 import logger from '@/utils/logger';
 
+let warnedDeprecation = false;
+const warnDeprecation = () => {
+  if (!warnedDeprecation) {
+    logger.warn(
+      '[localStorage] Deprecation notice: localStorage support will be removed after the Supabase migration.'
+    );
+    warnedDeprecation = true;
+  }
+};
+
 export const getStorage = (): Storage | null => {
   if (typeof window === 'undefined') return null;
+  warnDeprecation();
   try {
     return window.localStorage;
   } catch (error) {

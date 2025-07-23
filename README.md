@@ -52,7 +52,7 @@ The app is designed to be an all-in-one digital assistant for game day, from pre
 *   **UI Library:** [React](https://reactjs.org/)
 *   **Styling:** [Tailwind CSS](https://tailwindcss.com/)
 *   **State Management:** React Hooks (`useState`, `useReducer`, `useContext`) & Custom Hooks
-*   **Data Persistence:** Browser `localStorage` API
+*   **Data Persistence:** Browser `localStorage` API *(deprecated; migrating to Supabase)*
 *   **Internationalization:** [i18next](https://www.i18next.com/) / [react-i18next](https://react-i18next.com/)
 *   **PWA:** Custom Service Worker & Web App Manifest
 *   **Analytics:** [@vercel/analytics](https://vercel.com/analytics)
@@ -119,6 +119,7 @@ These values configure Supabase access and feature flags.
 ## Important Notes
 
 *   **Data Storage:** By default all data is kept in your browser's `localStorage`. When `NEXT_PUBLIC_ENABLE_SUPABASE=true`, your data will be synced to your Supabase project instead. Either way, continue using the **Full Backup** feature to safeguard your records.
+*   **Deprecation Notice:** localStorage support will be removed in a future release. Please migrate your data to Supabase.
 *   **Offline Use:** To get the best experience, install the app on your device when prompted by your browser ("Add to Home Screen" on mobile, or an install icon in the address bar on desktop).
 
 ---
