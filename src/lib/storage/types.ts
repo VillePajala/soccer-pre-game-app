@@ -1,5 +1,6 @@
 // Storage abstraction types
-import type { Player, Season, Tournament, AppSettings } from '../../types';
+import type { Player, Season, Tournament } from '../../types';
+import type { AppSettings } from '../../utils/appSettings';
 
 // Storage provider interface
 export interface IStorageProvider {

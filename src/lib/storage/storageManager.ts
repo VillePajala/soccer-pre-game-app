@@ -96,6 +96,7 @@ export class StorageManager implements IStorageProvider {
 
   async savePlayer(player: unknown) {
     return this.executeWithFallback(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       () => this.currentProvider.savePlayer(player as any),
       'savePlayer'
     );
@@ -110,7 +111,8 @@ export class StorageManager implements IStorageProvider {
 
   async updatePlayer(playerId: string, updates: unknown) {
     return this.executeWithFallback(
-      () => this.currentProvider.updatePlayer(playerId, updates),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      () => this.currentProvider.updatePlayer(playerId, updates as any),
       'updatePlayer'
     );
   }
@@ -125,7 +127,8 @@ export class StorageManager implements IStorageProvider {
 
   async saveSeason(season: unknown) {
     return this.executeWithFallback(
-      () => this.currentProvider.saveSeason(season),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      () => this.currentProvider.saveSeason(season as any),
       'saveSeason'
     );
   }
@@ -139,7 +142,8 @@ export class StorageManager implements IStorageProvider {
 
   async updateSeason(seasonId: string, updates: unknown) {
     return this.executeWithFallback(
-      () => this.currentProvider.updateSeason(seasonId, updates),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      () => this.currentProvider.updateSeason(seasonId, updates as any),
       'updateSeason'
     );
   }
@@ -154,7 +158,8 @@ export class StorageManager implements IStorageProvider {
 
   async saveTournament(tournament: unknown) {
     return this.executeWithFallback(
-      () => this.currentProvider.saveTournament(tournament),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      () => this.currentProvider.saveTournament(tournament as any),
       'saveTournament'
     );
   }
@@ -168,7 +173,8 @@ export class StorageManager implements IStorageProvider {
 
   async updateTournament(tournamentId: string, updates: unknown) {
     return this.executeWithFallback(
-      () => this.currentProvider.updateTournament(tournamentId, updates),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      () => this.currentProvider.updateTournament(tournamentId, updates as any),
       'updateTournament'
     );
   }
@@ -183,7 +189,8 @@ export class StorageManager implements IStorageProvider {
 
   async saveAppSettings(settings: unknown) {
     return this.executeWithFallback(
-      () => this.currentProvider.saveAppSettings(settings),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      () => this.currentProvider.saveAppSettings(settings as any),
       'saveAppSettings'
     );
   }
@@ -198,7 +205,8 @@ export class StorageManager implements IStorageProvider {
 
   async saveSavedGame(gameData: unknown) {
     return this.executeWithFallback(
-      () => this.currentProvider.saveSavedGame(gameData),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      () => this.currentProvider.saveSavedGame(gameData as any),
       'saveSavedGame'
     );
   }
@@ -220,7 +228,8 @@ export class StorageManager implements IStorageProvider {
 
   async importAllData(data: unknown) {
     return this.executeWithFallback(
-      () => this.currentProvider.importAllData(data),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      () => this.currentProvider.importAllData(data as any),
       'importAllData'
     );
   }
