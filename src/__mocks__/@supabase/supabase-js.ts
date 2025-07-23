@@ -1,7 +1,6 @@
 // Mock for @supabase/supabase-js
-export * from './supabase';
 
-export const createClient = jest.fn().mockImplementation(() => ({
+const mockClient = {
   auth: {
     getSession: jest.fn().mockResolvedValue({ data: { session: null }, error: null }),
     getUser: jest.fn().mockResolvedValue({ data: { user: null }, error: null }),
@@ -24,4 +23,7 @@ export const createClient = jest.fn().mockImplementation(() => ({
     single: jest.fn().mockResolvedValue({ data: null, error: null }),
     then: jest.fn().mockResolvedValue({ data: [], error: null }),
   }),
-}));
+};
+
+export const createClient = jest.fn().mockImplementation(() => mockClient);
+export const createBrowserClient = jest.fn().mockImplementation(() => mockClient);

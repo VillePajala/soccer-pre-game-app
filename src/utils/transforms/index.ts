@@ -4,29 +4,52 @@ import type { AppSettings } from '../appSettings';
 
 // Placeholder transforms for now - these would be implemented in the next phase
 export const toSupabase = {
-  player: (player: Player, userId: string) => ({
-    ...player,
-    user_id: userId,
-    is_goalie: player.isGoalie,
-    received_fair_play_card: player.receivedFairPlayCard
-  }),
+  player: (player: Player, userId: string) => {
+    const result = {
+      id: player.id,
+      user_id: userId,
+      name: player.name,
+      nickname: player.nickname,
+      jerseyNumber: player.jerseyNumber,
+      notes: player.notes,
+      is_goalie: player.isGoalie,
+      received_fair_play_card: player.receivedFairPlayCard
+    };
+    // Remove undefined values
+    return Object.fromEntries(Object.entries(result).filter(([, v]) => v !== undefined));
+  },
   
-  playerUpdate: (updates: Partial<Player>, userId: string) => ({
-    ...updates,
-    user_id: userId,
-    ...(updates.isGoalie !== undefined && { is_goalie: updates.isGoalie }),
-    ...(updates.receivedFairPlayCard !== undefined && { received_fair_play_card: updates.receivedFairPlayCard })
-  }),
+  playerUpdate: (updates: Partial<Player>, userId: string) => {
+    const result: Record<string, unknown> = {
+      user_id: userId
+    };
+    
+    // Only include fields that are actually being updated
+    if (updates.name !== undefined) result.name = updates.name;
+    if (updates.nickname !== undefined) result.nickname = updates.nickname;
+    if (updates.jerseyNumber !== undefined) result.jerseyNumber = updates.jerseyNumber;
+    if (updates.notes !== undefined) result.notes = updates.notes;
+    if (updates.isGoalie !== undefined) result.is_goalie = updates.isGoalie;
+    if (updates.receivedFairPlayCard !== undefined) result.received_fair_play_card = updates.receivedFairPlayCard;
+    
+    return result;
+  },
 
   season: (season: Season, userId: string) => ({
-    ...season,
+    id: season.id,
     user_id: userId,
+    name: season.name,
+    location: season.location,
     start_date: season.startDate,
     end_date: season.endDate,
     period_count: season.periodCount,
     period_duration: season.periodDuration,
     game_dates: season.gameDates,
+    archived: season.archived,
     default_roster_ids: season.defaultRosterId,
+    notes: season.notes,
+    color: season.color,
+    badge: season.badge,
     age_group: season.ageGroup
   }),
 
@@ -43,14 +66,21 @@ export const toSupabase = {
   }),
 
   tournament: (tournament: Tournament, userId: string) => ({
-    ...tournament,
+    id: tournament.id,
     user_id: userId,
+    name: tournament.name,
+    location: tournament.location,
     start_date: tournament.startDate,
     end_date: tournament.endDate,
     period_count: tournament.periodCount,
     period_duration: tournament.periodDuration,
     game_dates: tournament.gameDates,
+    archived: tournament.archived,
     default_roster_ids: tournament.defaultRosterId,
+    notes: tournament.notes,
+    color: tournament.color,
+    badge: tournament.badge,
+    level: tournament.level,
     age_group: tournament.ageGroup
   }),
 
@@ -69,12 +99,9 @@ export const toSupabase = {
   appSettings: (settings: AppSettings, userId: string) => ({
     user_id: userId,
     current_game_id: settings.currentGameId,
-    last_home_team_name: settings.lastHomeTeamName,
-    language: settings.language,
-    has_seen_app_guide: settings.hasSeenAppGuide,
-    auto_backup_enabled: settings.autoBackupEnabled,
-    auto_backup_interval_hours: settings.autoBackupIntervalHours,
-    use_demand_correction: settings.useDemandCorrection
+    last_backup_date: settings.lastBackupDate,
+    preferred_language: settings.preferredLanguage,
+    theme: settings.theme
   }),
 
   game: (gameData: unknown, userId: string) => ({
@@ -136,12 +163,9 @@ export const fromSupabase = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   appSettings: (dbSettings: any) => ({
     currentGameId: dbSettings.current_game_id,
-    lastHomeTeamName: dbSettings.last_home_team_name,
-    language: dbSettings.language,
-    hasSeenAppGuide: dbSettings.has_seen_app_guide,
-    autoBackupEnabled: dbSettings.auto_backup_enabled,
-    autoBackupIntervalHours: dbSettings.auto_backup_interval_hours,
-    useDemandCorrection: dbSettings.use_demand_correction
+    lastBackupDate: dbSettings.last_backup_date,
+    preferredLanguage: dbSettings.preferred_language,
+    theme: dbSettings.theme
   }),
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
