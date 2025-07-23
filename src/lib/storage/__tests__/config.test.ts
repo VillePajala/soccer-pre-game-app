@@ -51,11 +51,27 @@ describe('Storage Configuration', () => {
       process.env.NEXT_PUBLIC_DISABLE_FALLBACK = 'true';
 
       const config = getStorageConfig();
-      
+
       expect(config).toEqual({
         provider: 'supabase',
         fallbackToLocalStorage: false,
       });
+    });
+
+    it('should use localStorage when user is not authenticated', () => {
+      process.env.NEXT_PUBLIC_ENABLE_SUPABASE = 'true';
+
+      const config = getStorageConfig({ isAuthenticated: false });
+
+      expect(config.provider).toBe('localStorage');
+    });
+
+    it('should use supabase when enabled and authenticated', () => {
+      process.env.NEXT_PUBLIC_ENABLE_SUPABASE = 'true';
+
+      const config = getStorageConfig({ isAuthenticated: true });
+
+      expect(config.provider).toBe('supabase');
     });
   });
 

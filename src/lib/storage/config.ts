@@ -12,12 +12,20 @@ export const DEFAULT_STORAGE_CONFIG: StorageConfig = {
 /**
  * Get storage configuration based on feature flags
  */
-export function getStorageConfig(): StorageConfig {
-  const enableSupabase = process.env.NEXT_PUBLIC_ENABLE_SUPABASE === 'true';
+export interface StorageConfigOptions {
+  isAuthenticated?: boolean;
+  enableSupabase?: boolean;
+}
+
+export function getStorageConfig(options: StorageConfigOptions = {}): StorageConfig {
+  const envSupabase = process.env.NEXT_PUBLIC_ENABLE_SUPABASE === 'true';
+  const enableSupabase = options.enableSupabase ?? envSupabase;
   const disableFallback = process.env.NEXT_PUBLIC_DISABLE_FALLBACK === 'true';
-  
+
+  const useSupabase = enableSupabase && (options.isAuthenticated ?? true);
+
   return {
-    provider: enableSupabase ? 'supabase' : 'localStorage',
+    provider: useSupabase ? 'supabase' : 'localStorage',
     fallbackToLocalStorage: !disableFallback,
   };
 }
