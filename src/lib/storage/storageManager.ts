@@ -257,8 +257,36 @@ export class StorageManager implements IStorageProvider {
   }
 }
 
+// Create storage manager synchronously with inline config
+function createStorageManagerSync(): StorageManager {
+  // Inline configuration to avoid require() issues
+  const enableSupabase = process.env.NEXT_PUBLIC_ENABLE_SUPABASE === 'true';
+  const disableFallback = process.env.NEXT_PUBLIC_DISABLE_FALLBACK === 'true';
+  
+  // Basic validation if Supabase is enabled
+  if (enableSupabase && process.env.NODE_ENV !== 'test') {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    
+    if (!url || !key) {
+      throw new Error(
+        'Supabase is enabled but required environment variables are missing.\n' +
+        'Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in your .env.local file.\n' +
+        'See .env.example for reference.'
+      );
+    }
+  }
+  
+  const config = {
+    provider: enableSupabase ? 'supabase' as const : 'localStorage' as const,
+    fallbackToLocalStorage: !disableFallback,
+  };
+  
+  return new StorageManager(config);
+}
+
 // Export a singleton instance
-export const storageManager = new StorageManager();
+export const storageManager = createStorageManagerSync();
 
 // Export types and classes for direct usage if needed
 export * from './types';

@@ -5,9 +5,11 @@ import { createBrowserClient } from '@supabase/ssr';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://test.supabase.co';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'test-key';
 
-if (process.env.NODE_ENV !== 'test' && (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)) {
-  throw new Error('Missing Supabase environment variables');
-}
+// Import config validation
+import { validateSupabaseConfig } from './storage/config';
+
+// Validate Supabase configuration if enabled
+validateSupabaseConfig();
 
 // Client-side Supabase client with auth configuration
 export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey, {
