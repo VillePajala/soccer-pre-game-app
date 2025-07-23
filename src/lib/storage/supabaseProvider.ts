@@ -1,6 +1,8 @@
 // Supabase storage provider implementation
-import type { IStorageProvider, StorageError, NetworkError, AuthenticationError } from './types';
-import type { Player, Season, Tournament, AppSettings } from '../../types';
+import type { IStorageProvider } from './types';
+import { StorageError, NetworkError, AuthenticationError } from './types';
+import type { Player, Season, Tournament } from '../../types';
+import type { AppSettings } from '../../utils/appSettings';
 import { supabase } from '../supabase';
 import { toSupabase, fromSupabase } from '../../utils/transforms';
 
@@ -415,7 +417,7 @@ export class SupabaseProvider implements IStorageProvider {
   }
 
   // Saved games (simplified - using games table)
-  async getSavedGames(): Promise<any[]> {
+  async getSavedGames(): Promise<unknown[]> {
     try {
       const userId = await this.getCurrentUserId();
       const { data, error } = await supabase
@@ -437,7 +439,7 @@ export class SupabaseProvider implements IStorageProvider {
     }
   }
 
-  async saveSavedGame(gameData: any): Promise<any> {
+  async saveSavedGame(gameData: unknown): Promise<unknown> {
     try {
       const userId = await this.getCurrentUserId();
       const supabaseGame = toSupabase.game(gameData, userId);
@@ -482,7 +484,7 @@ export class SupabaseProvider implements IStorageProvider {
   }
 
   // Backup/restore (TODO: implement full backup/restore logic)
-  async exportAllData(): Promise<any> {
+  async exportAllData(): Promise<unknown> {
     try {
       const [players, seasons, tournaments, settings] = await Promise.all([
         this.getPlayers(),
@@ -504,7 +506,8 @@ export class SupabaseProvider implements IStorageProvider {
     }
   }
 
-  async importAllData(data: any): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async importAllData(_data: unknown): Promise<void> {
     try {
       // TODO: Implement full import logic
       // This would involve batch inserts and handling conflicts

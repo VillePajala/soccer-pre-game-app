@@ -1,5 +1,6 @@
 // Storage manager with provider selection and fallback logic
-import type { IStorageProvider, StorageConfig, StorageError, NetworkError, AuthenticationError } from './types';
+import type { IStorageProvider, StorageConfig } from './types';
+import { StorageError, NetworkError, AuthenticationError } from './types';
 import { LocalStorageProvider } from './localStorageProvider';
 import { SupabaseProvider } from './supabaseProvider';
 
@@ -93,9 +94,9 @@ export class StorageManager implements IStorageProvider {
     );
   }
 
-  async savePlayer(player: any) {
+  async savePlayer(player: unknown) {
     return this.executeWithFallback(
-      () => this.currentProvider.savePlayer(player),
+      () => this.currentProvider.savePlayer(player as any),
       'savePlayer'
     );
   }
@@ -107,7 +108,7 @@ export class StorageManager implements IStorageProvider {
     );
   }
 
-  async updatePlayer(playerId: string, updates: any) {
+  async updatePlayer(playerId: string, updates: unknown) {
     return this.executeWithFallback(
       () => this.currentProvider.updatePlayer(playerId, updates),
       'updatePlayer'
@@ -122,7 +123,7 @@ export class StorageManager implements IStorageProvider {
     );
   }
 
-  async saveSeason(season: any) {
+  async saveSeason(season: unknown) {
     return this.executeWithFallback(
       () => this.currentProvider.saveSeason(season),
       'saveSeason'
@@ -136,7 +137,7 @@ export class StorageManager implements IStorageProvider {
     );
   }
 
-  async updateSeason(seasonId: string, updates: any) {
+  async updateSeason(seasonId: string, updates: unknown) {
     return this.executeWithFallback(
       () => this.currentProvider.updateSeason(seasonId, updates),
       'updateSeason'
@@ -151,7 +152,7 @@ export class StorageManager implements IStorageProvider {
     );
   }
 
-  async saveTournament(tournament: any) {
+  async saveTournament(tournament: unknown) {
     return this.executeWithFallback(
       () => this.currentProvider.saveTournament(tournament),
       'saveTournament'
@@ -165,7 +166,7 @@ export class StorageManager implements IStorageProvider {
     );
   }
 
-  async updateTournament(tournamentId: string, updates: any) {
+  async updateTournament(tournamentId: string, updates: unknown) {
     return this.executeWithFallback(
       () => this.currentProvider.updateTournament(tournamentId, updates),
       'updateTournament'
@@ -180,7 +181,7 @@ export class StorageManager implements IStorageProvider {
     );
   }
 
-  async saveAppSettings(settings: any) {
+  async saveAppSettings(settings: unknown) {
     return this.executeWithFallback(
       () => this.currentProvider.saveAppSettings(settings),
       'saveAppSettings'
@@ -195,7 +196,7 @@ export class StorageManager implements IStorageProvider {
     );
   }
 
-  async saveSavedGame(gameData: any) {
+  async saveSavedGame(gameData: unknown) {
     return this.executeWithFallback(
       () => this.currentProvider.saveSavedGame(gameData),
       'saveSavedGame'
@@ -217,7 +218,7 @@ export class StorageManager implements IStorageProvider {
     );
   }
 
-  async importAllData(data: any) {
+  async importAllData(data: unknown) {
     return this.executeWithFallback(
       () => this.currentProvider.importAllData(data),
       'importAllData'

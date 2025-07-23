@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "docs: update migration guide with pre-migration refactoring details"
+  "notes": "feat(supabase): complete storage abstraction layer - step 4"
 }

@@ -1,6 +1,8 @@
 // localStorage storage provider implementation
-import type { IStorageProvider, StorageError } from './types';
-import type { Player, Season, Tournament, AppSettings } from '../../types';
+import type { IStorageProvider } from './types';
+import { StorageError } from './types';
+import type { Player, Season, Tournament } from '../../types';
+import type { AppSettings } from '../../utils/appSettings';
 
 // Import existing localStorage utilities
 import { getMasterRoster, addPlayer, updatePlayer as updatePlayerInRoster, deletePlayer as removePlayerFromRoster } from '../../utils/masterRosterManager';
@@ -8,7 +10,7 @@ import { getSeasons, saveSeason, deleteSeason, updateSeason } from '../../utils/
 import { getTournaments, saveTournament, deleteTournament, updateTournament } from '../../utils/tournaments';
 import { getAppSettings, saveAppSettings } from '../../utils/appSettings';
 import { getSavedGames, saveGame, deleteGame } from '../../utils/savedGames';
-import { exportAllData, importAllData } from '../../utils/fullBackup';
+import { generateFullBackupJson, importFullBackup } from '../../utils/fullBackup';
 
 export class LocalStorageProvider implements IStorageProvider {
   
@@ -41,6 +43,7 @@ export class LocalStorageProvider implements IStorageProvider {
         return updated;
       } else {
         // Create new player
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { id, isGoalie, receivedFairPlayCard, ...playerData } = player;
         const newPlayer = await addPlayer(playerData);
         if (!newPlayer) {
@@ -100,7 +103,11 @@ export class LocalStorageProvider implements IStorageProvider {
 
   async updateSeason(seasonId: string, updates: Partial<Season>): Promise<Season> {
     try {
-      return await updateSeason(seasonId, updates);
+      const updated = await updateSeason(seasonId, updates);
+      if (!updated) {
+        throw new Error('Season update returned null');
+      }
+      return updated;
     } catch (error) {
       throw new StorageError('Failed to update season', 'localStorage', 'updateSeason', error as Error);
     }
@@ -133,7 +140,11 @@ export class LocalStorageProvider implements IStorageProvider {
 
   async updateTournament(tournamentId: string, updates: Partial<Tournament>): Promise<Tournament> {
     try {
-      return await updateTournament(tournamentId, updates);
+      const updated = await updateTournament(tournamentId, updates);
+      if (!updated) {
+        throw new Error('Tournament update returned null');
+      }
+      return updated;
     } catch (error) {
       throw new StorageError('Failed to update tournament', 'localStorage', 'updateTournament', error as Error);
     }
@@ -157,17 +168,20 @@ export class LocalStorageProvider implements IStorageProvider {
   }
 
   // Saved games
-  async getSavedGames(): Promise<any[]> {
+  async getSavedGames(): Promise<unknown[]> {
     try {
-      return await getSavedGames();
+      const savedGames = await getSavedGames();
+      return Object.values(savedGames);
     } catch (error) {
       throw new StorageError('Failed to get saved games', 'localStorage', 'getSavedGames', error as Error);
     }
   }
 
-  async saveSavedGame(gameData: any): Promise<any> {
+  async saveSavedGame(gameData: unknown): Promise<unknown> {
     try {
-      return await saveGame(gameData);
+      const gameWithId = gameData as { id?: string };
+      const gameId = gameWithId.id || `game_${Date.now()}`;
+      return await saveGame(gameId, gameData);
     } catch (error) {
       throw new StorageError('Failed to save game', 'localStorage', 'saveSavedGame', error as Error);
     }
@@ -182,17 +196,19 @@ export class LocalStorageProvider implements IStorageProvider {
   }
 
   // Backup/restore
-  async exportAllData(): Promise<any> {
+  async exportAllData(): Promise<unknown> {
     try {
-      return await exportAllData();
+      const jsonString = await generateFullBackupJson();
+      return JSON.parse(jsonString);
     } catch (error) {
       throw new StorageError('Failed to export data', 'localStorage', 'exportAllData', error as Error);
     }
   }
 
-  async importAllData(data: any): Promise<void> {
+  async importAllData(data: unknown): Promise<void> {
     try {
-      await importAllData(data);
+      const jsonString = JSON.stringify(data);
+      await importFullBackup(jsonString);
     } catch (error) {
       throw new StorageError('Failed to import data', 'localStorage', 'importAllData', error as Error);
     }
