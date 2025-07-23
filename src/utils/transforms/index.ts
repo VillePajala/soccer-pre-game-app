@@ -26,7 +26,7 @@ export const toSupabase = {
     period_count: season.periodCount,
     period_duration: season.periodDuration,
     game_dates: season.gameDates,
-    default_roster_ids: season.defaultRosterIds,
+    default_roster_ids: season.defaultRosterId,
     age_group: season.ageGroup
   }),
 
@@ -38,7 +38,7 @@ export const toSupabase = {
     ...(updates.periodCount !== undefined && { period_count: updates.periodCount }),
     ...(updates.periodDuration !== undefined && { period_duration: updates.periodDuration }),
     ...(updates.gameDates !== undefined && { game_dates: updates.gameDates }),
-    ...(updates.defaultRosterIds !== undefined && { default_roster_ids: updates.defaultRosterIds }),
+    ...(updates.defaultRosterId !== undefined && { default_roster_ids: updates.defaultRosterId }),
     ...(updates.ageGroup !== undefined && { age_group: updates.ageGroup })
   }),
 
@@ -50,7 +50,7 @@ export const toSupabase = {
     period_count: tournament.periodCount,
     period_duration: tournament.periodDuration,
     game_dates: tournament.gameDates,
-    default_roster_ids: tournament.defaultRosterIds,
+    default_roster_ids: tournament.defaultRosterId,
     age_group: tournament.ageGroup
   }),
 
@@ -62,7 +62,7 @@ export const toSupabase = {
     ...(updates.periodCount !== undefined && { period_count: updates.periodCount }),
     ...(updates.periodDuration !== undefined && { period_duration: updates.periodDuration }),
     ...(updates.gameDates !== undefined && { game_dates: updates.gameDates }),
-    ...(updates.defaultRosterIds !== undefined && { default_roster_ids: updates.defaultRosterIds }),
+    ...(updates.defaultRosterId !== undefined && { default_roster_ids: updates.defaultRosterId }),
     ...(updates.ageGroup !== undefined && { age_group: updates.ageGroup })
   }),
 
@@ -107,7 +107,7 @@ export const fromSupabase = {
     endDate: dbSeason.end_date,
     gameDates: dbSeason.game_dates,
     archived: dbSeason.archived,
-    defaultRosterIds: dbSeason.default_roster_ids,
+    defaultRosterId: dbSeason.default_roster_ids,
     notes: dbSeason.notes,
     color: dbSeason.color,
     badge: dbSeason.badge,
@@ -125,7 +125,7 @@ export const fromSupabase = {
     endDate: dbTournament.end_date,
     gameDates: dbTournament.game_dates,
     archived: dbTournament.archived,
-    defaultRosterIds: dbTournament.default_roster_ids,
+    defaultRosterId: dbTournament.default_roster_ids,
     notes: dbTournament.notes,
     color: dbTournament.color,
     badge: dbTournament.badge,
