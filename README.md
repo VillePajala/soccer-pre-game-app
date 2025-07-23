@@ -79,6 +79,19 @@ The app is designed to be an all-in-one digital assistant for game day, from pre
 
    When launched, a **Start Screen** appears with options to start a new game, load an existing one, create a season or tournament, or view statistics. Select an action to continue to the main field view.
 
+## Supabase Setup
+
+1. Copy `.env.example` to `.env.local` and fill in your Supabase credentials.
+2. Enable Supabase by setting `NEXT_PUBLIC_ENABLE_SUPABASE=true` in `.env.local`.
+3. Run the migration script from the Settings modal to import your existing data.
+
+See [docs/migration-troubleshooting.md](docs/migration-troubleshooting.md) for common issues.
+### Environment Variables
+- `NEXT_PUBLIC_ENABLE_SUPABASE` — set to `true` to switch the app to Supabase.
+- `NEXT_PUBLIC_DISABLE_FALLBACK` — if `true`, the app will not fall back to localStorage.
+- `NEXT_PUBLIC_SUPABASE_URL` — your Supabase project URL.
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — the anonymous API key.
+
 ## Running Tests
 
 Install project dependencies with `npm install` as shown above. Then execute the automated test suite with:
