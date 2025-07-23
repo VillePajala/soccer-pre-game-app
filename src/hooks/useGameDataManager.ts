@@ -12,12 +12,12 @@ import {
 } from '@/utils/appSettings';
 import { 
   deleteSeason as utilDeleteSeason, 
-  updateSeason as utilUpdateSeason, 
+  updateSeasonLegacy as utilUpdateSeasonLegacy,
   addSeason as utilAddSeason 
 } from '@/utils/seasons';
 import { 
   deleteTournament as utilDeleteTournament, 
-  updateTournament as utilUpdateTournament, 
+  updateTournamentLegacy as utilUpdateTournamentLegacy, 
   addTournament as utilAddTournament 
 } from '@/utils/tournaments';
 import { exportJson, exportCsv } from '@/utils/exportGames';
@@ -97,7 +97,7 @@ export const useGameDataManager = ({
   });
 
   const updateSeasonMutation = useMutation<Season | null, Error, Season>({
-    mutationFn: async (season) => utilUpdateSeason(season),
+    mutationFn: async (season) => utilUpdateSeasonLegacy(season),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.seasons });
     },
@@ -140,7 +140,7 @@ export const useGameDataManager = ({
   });
 
   const updateTournamentMutation = useMutation<Tournament | null, Error, Tournament>({
-    mutationFn: async (tournament) => utilUpdateTournament(tournament),
+    mutationFn: async (tournament) => utilUpdateTournamentLegacy(tournament),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.tournaments });
     },

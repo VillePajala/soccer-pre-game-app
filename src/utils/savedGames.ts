@@ -1,9 +1,5 @@
 import { DEFAULT_GAME_ID } from '@/config/constants';
-import { SAVED_GAMES_KEY } from '@/config/storageKeys';
-import {
-  getLocalStorageItem,
-  setLocalStorageItem,
-} from './localStorage';
+import { storageManager } from '@/lib/storage';
 import type { SavedGamesCollection, AppState, GameEvent as PageGameEvent, Point, Opponent, IntervalLog } from '@/types';
 import type { Player } from '@/types';
 import logger from '@/utils/logger';
@@ -43,39 +39,46 @@ export interface GameData {
 }
 
 /**
- * Gets all saved games from localStorage
+ * Gets all saved games using the storage abstraction layer
  * @returns Promise resolving to an Object containing saved games mapped by ID
  */
 export const getSavedGames = async (): Promise<SavedGamesCollection> => {
   try {
-    const gamesJson = getLocalStorageItem(SAVED_GAMES_KEY);
-    if (!gamesJson) {
-      return {};
-    }
-    return JSON.parse(gamesJson) as SavedGamesCollection;
+    const gamesArray = await storageManager.getSavedGames();
+    // Convert array to collection format for backward compatibility
+    const gamesCollection: SavedGamesCollection = {};
+    gamesArray.forEach((game, index) => {
+      const gameId = game.id || `game_${index}`;
+      gamesCollection[gameId] = game;
+    });
+    return gamesCollection;
   } catch (error) {
-    logger.error('Error getting saved games from localStorage:', error);
+    logger.error('Error getting saved games:', error);
     throw error;
   }
 };
 
 /**
- * Saves all games to localStorage
+ * Saves all games using the storage abstraction layer
  * @param games - Collection of games to save
  * @returns Promise resolving when complete
  */
 export const saveGames = async (games: SavedGamesCollection): Promise<void> => {
   try {
-    setLocalStorageItem(SAVED_GAMES_KEY, JSON.stringify(games));
+    // For now, we'll save each game individually
+    // This could be optimized with a batch save method in the future
+    for (const [gameId, gameData] of Object.entries(games)) {
+      await storageManager.saveSavedGame({ ...gameData, id: gameId });
+    }
     return;
   } catch (error) {
-    logger.error('Error saving games to localStorage:', error);
+    logger.error('Error saving games:', error);
     throw error;
   }
 };
 
 /**
- * Saves a single game to localStorage
+ * Saves a single game using the storage abstraction layer
  * @param gameId - ID of the game to save
  * @param gameData - Game data to save
  * @returns Promise resolving to the saved game data
@@ -86,10 +89,9 @@ export const saveGame = async (gameId: string, gameData: unknown): Promise<AppSt
       throw new Error('Game ID is required');
     }
     
-    const allGames = await getSavedGames();
-    allGames[gameId] = gameData as AppState;
-    await saveGames(allGames);
-    return gameData as AppState;
+    const gameWithId = { ...(gameData as AppState), id: gameId };
+    const savedGame = await storageManager.saveSavedGame(gameWithId);
+    return savedGame as AppState;
   } catch (error) {
     logger.error('Error saving game:', error);
     throw error;
@@ -117,7 +119,7 @@ export const getGame = async (gameId: string): Promise<AppState | null> => {
 };
 
 /**
- * Deletes a game from localStorage
+ * Deletes a game using the storage abstraction layer
  * @param gameId - ID of the game to delete
  * @returns Promise resolving to the gameId if the game was deleted, null otherwise
  */
@@ -128,14 +130,7 @@ export const deleteGame = async (gameId: string): Promise<string | null> => {
       return null;
     }
     
-    const allGames = await getSavedGames();
-    if (!allGames[gameId]) {
-      logger.warn(`deleteGame: Game with ID ${gameId} not found.`);
-      return null; // Game not found
-    }
-    
-    delete allGames[gameId];
-    await saveGames(allGames);
+    await storageManager.deleteSavedGame(gameId);
     logger.log(`deleteGame: Game with ID ${gameId} successfully deleted.`);
     return gameId; // Successfully deleted, return the gameId
   } catch (error) {
