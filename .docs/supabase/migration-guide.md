@@ -180,6 +180,13 @@ Migrate the entire persistence layer to Supabase, enabling multi‑user, real‑
 - [x] **1.1** Parse codebase for every `localStorage.*` usage
 - [x] **1.2** Generate `/docs/localStorage-map.json` with keys & samples
 
+**Note**: Significant pre-migration refactoring has been completed:
+- ✅ Data access layer abstraction (utility functions in place)
+- ✅ Async operation preparation (all utilities return Promises)  
+- ✅ React Query integration (@tanstack/react-query installed and configured)
+- ✅ Error handling patterns standardized
+- ✅ Component refactoring to use utility layer completed
+
 ---
 
 ### **STEP 2 — Design Supabase Schema**
@@ -281,7 +288,7 @@ Migrate the entire persistence layer to Supabase, enabling multi‑user, real‑
 
 - [ ] **4.1** Install Supabase client library
   - **Actions:**
-    - Run `npm install @supabase/supabase-js`
+    - Run `npm install @supabase/supabase-js @supabase/auth-helpers-nextjs`
     - Create `src/lib/supabase.ts` with client configuration
     - Export configured Supabase client
   - **Manual Testing:**
@@ -299,6 +306,7 @@ Migrate the entire persistence layer to Supabase, enabling multi‑user, real‑
     - Test each CRUD operation through driver interface
     - Verify existing app functionality works unchanged
     - Check error handling with invalid localStorage operations
+  - **Note**: This can largely reuse existing utility functions in `src/utils/` since they're already abstracted
 
 - [ ] **4.3** Create SupabaseDriver
   - **Actions:**
@@ -338,6 +346,7 @@ Migrate the entire persistence layer to Supabase, enabling multi‑user, real‑
     - Verify roster loads correctly on app startup
     - Check that player search and filtering still work
     - Test goalie status changes persist correctly
+  - **Note**: This step may be minimal since `masterRosterManager.ts` already provides a clean abstraction layer
 
 - [ ] **5.2** Update seasons.ts utility
   - **Actions:**
