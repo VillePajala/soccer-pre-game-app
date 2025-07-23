@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "feat(supabase): implement step 6 - authentication system"
+  "notes": "feat(supabase): implement step 7 - migration script system"
 }
