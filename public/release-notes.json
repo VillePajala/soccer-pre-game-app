@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "feat(refactor): extract useAppSettingsManager hook from HomePage.tsx"
+  "notes": "docs: update migration guide with pre-migration refactoring details"
 }
