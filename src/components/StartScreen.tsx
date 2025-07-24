@@ -34,15 +34,19 @@ const StartScreen: React.FC<StartScreenProps> = ({
 
   useEffect(() => {
     getAppSettings().then((settings) => {
-      if (settings.language) {
+      if (settings.language && settings.language !== language) {
         setLanguage(settings.language);
+        i18n.changeLanguage(settings.language);
       }
     });
   }, []);
 
   useEffect(() => {
-    i18n.changeLanguage(language);
-    updateAppSettings({ language }).catch(() => {});
+    // Only update if language actually changed from what's in i18n
+    if (language !== i18n.language) {
+      i18n.changeLanguage(language);
+      updateAppSettings({ language }).catch(() => {});
+    }
   }, [language]);
 
   const buttonStyle =

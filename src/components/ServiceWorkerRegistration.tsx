@@ -15,6 +15,18 @@ export default function ServiceWorkerRegistration() {
       return;
     }
 
+    // Disable service worker in development
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      // Unregister any existing service worker in development
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        registrations.forEach(registration => {
+          registration.unregister();
+          logger.log('[PWA] Service Worker unregistered in development');
+        });
+      });
+      return; // Don't register SW in development
+    }
+
     const fetchReleaseNotes = async () => {
       try {
         const res = await fetch('/release-notes.json', { cache: 'no-store' });

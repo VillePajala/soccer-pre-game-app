@@ -36,8 +36,11 @@ export const useAppSettingsManager = ({
 
   // --- Language Management ---
   useEffect(() => {
-    i18n.changeLanguage(appLanguage);
-    utilUpdateAppSettings({ language: appLanguage }).catch(() => {});
+    // Only update if language actually changed
+    if (i18n.language !== appLanguage) {
+      i18n.changeLanguage(appLanguage);
+      utilUpdateAppSettings({ language: appLanguage }).catch(() => {});
+    }
   }, [appLanguage]);
 
   // --- App Guide Handler ---

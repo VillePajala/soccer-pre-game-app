@@ -5,16 +5,19 @@ import type { AppSettings } from '../appSettings';
 // Placeholder transforms for now - these would be implemented in the next phase
 export const toSupabase = {
   player: (player: Player, userId: string) => {
-    const result = {
-      id: player.id,
+    const result: Record<string, unknown> = {
       user_id: userId,
       name: player.name,
       nickname: player.nickname,
-      jerseyNumber: player.jerseyNumber,
+      jersey_number: player.jerseyNumber,  // Changed to snake_case
       notes: player.notes,
       is_goalie: player.isGoalie,
       received_fair_play_card: player.receivedFairPlayCard
     };
+    // Only include id if it's not empty
+    if (player.id && player.id !== '') {
+      result.id = player.id;
+    }
     // Remove undefined values
     return Object.fromEntries(Object.entries(result).filter(([, v]) => v !== undefined));
   },
@@ -27,7 +30,7 @@ export const toSupabase = {
     // Only include fields that are actually being updated
     if (updates.name !== undefined) result.name = updates.name;
     if (updates.nickname !== undefined) result.nickname = updates.nickname;
-    if (updates.jerseyNumber !== undefined) result.jerseyNumber = updates.jerseyNumber;
+    if (updates.jerseyNumber !== undefined) result.jersey_number = updates.jerseyNumber;  // Changed to snake_case
     if (updates.notes !== undefined) result.notes = updates.notes;
     if (updates.isGoalie !== undefined) result.is_goalie = updates.isGoalie;
     if (updates.receivedFairPlayCard !== undefined) result.received_fair_play_card = updates.receivedFairPlayCard;
@@ -98,17 +101,38 @@ export const toSupabase = {
 
   appSettings: (settings: AppSettings, userId: string) => ({
     user_id: userId,
+    language: settings.language || 'en',
+    default_team_name: settings.defaultTeamName,
+    auto_backup_enabled: settings.autoBackupEnabled || false,
+    auto_backup_interval_hours: settings.autoBackupIntervalHours || 24,
+    last_backup_time: settings.lastBackupTime,
+    backup_email: settings.backupEmail,
     current_game_id: settings.currentGameId,
-    last_backup_date: settings.lastBackupTime,
-    preferred_language: settings.language,
-    theme: undefined // theme property doesn't exist in AppSettings
+    settings: {} // Store any additional settings as JSON
   }),
 
-  game: (gameData: unknown, userId: string) => ({
-    // This is a placeholder - would need proper implementation
-    user_id: userId,
-    ...(gameData as Record<string, unknown>)
-  })
+  game: (gameData: unknown, userId: string) => {
+    const game = gameData as any;
+    return {
+      id: game.id,
+      user_id: userId,
+      team_name: game.teamName || game.homeTeam || '',
+      opponent_name: game.opponentName || game.awayTeam || '',
+      game_date: game.gameDate || new Date().toISOString().split('T')[0],
+      home_score: game.homeScore || 0,
+      away_score: game.awayScore || 0,
+      home_or_away: game.homeOrAway || 'home',
+      game_notes: game.gameNotes || game.notes || '',
+      number_of_periods: game.numberOfPeriods || 2,
+      period_duration_minutes: game.periodDurationMinutes || 45,
+      current_period: game.currentPeriod || 1,
+      game_status: game.gameStatus || 'notStarted',
+      is_played: game.isPlayed || false,
+      season_id: game.seasonId || null,
+      tournament_id: game.tournamentId || null,
+      game_data: game // Store the full game data as JSONB
+    };
+  }
 };
 
 export const fromSupabase = {
@@ -162,16 +186,42 @@ export const fromSupabase = {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   appSettings: (dbSettings: any) => ({
-    currentGameId: dbSettings.current_game_id,
-    lastBackupDate: dbSettings.last_backup_date,
-    preferredLanguage: dbSettings.preferred_language,
-    theme: dbSettings.theme
+    language: dbSettings.language,
+    defaultTeamName: dbSettings.default_team_name,
+    autoBackupEnabled: dbSettings.auto_backup_enabled,
+    autoBackupIntervalHours: dbSettings.auto_backup_interval_hours,
+    lastBackupTime: dbSettings.last_backup_time,
+    backupEmail: dbSettings.backup_email,
+    currentGameId: dbSettings.current_game_id
   }),
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  game: (dbGame: any) => ({
-    // This is a placeholder - would need proper implementation
-    id: dbGame.id,
-    ...dbGame
-  })
+  game: (dbGame: any) => {
+    // If we have the full game data stored, use it
+    if (dbGame.game_data) {
+      return {
+        ...dbGame.game_data,
+        id: dbGame.id // Ensure the ID is from the database
+      };
+    }
+    
+    // Otherwise, reconstruct from individual fields
+    return {
+      id: dbGame.id,
+      teamName: dbGame.team_name,
+      opponentName: dbGame.opponent_name,
+      gameDate: dbGame.game_date,
+      homeScore: dbGame.home_score,
+      awayScore: dbGame.away_score,
+      homeOrAway: dbGame.home_or_away,
+      gameNotes: dbGame.game_notes,
+      numberOfPeriods: dbGame.number_of_periods,
+      periodDurationMinutes: dbGame.period_duration_minutes,
+      currentPeriod: dbGame.current_period,
+      gameStatus: dbGame.game_status,
+      isPlayed: dbGame.is_played,
+      seasonId: dbGame.season_id,
+      tournamentId: dbGame.tournament_id
+    };
+  }
 };

@@ -30,6 +30,8 @@ export function useMigrationTrigger() {
 
   const handleMigrationComplete = () => {
     setShowMigrationModal(false);
+    // Refresh the page to ensure clean state after migration
+    window.location.reload();
   };
 
   const handleMigrationClose = () => {

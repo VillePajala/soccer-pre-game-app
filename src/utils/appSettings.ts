@@ -71,8 +71,22 @@ export const updateAppSettings = async (settingsUpdate: Partial<AppSettings>): P
   try {
     // Get current settings. If this fails, the error will propagate.
     const currentSettings = await getAppSettings();
+    
+    // Check if any values actually changed
+    let hasChanges = false;
+    for (const [key, value] of Object.entries(settingsUpdate)) {
+      if (currentSettings[key as keyof AppSettings] !== value) {
+        hasChanges = true;
+        break;
+      }
+    }
+    
+    // If no changes, return current settings without saving
+    if (!hasChanges) {
+      return currentSettings;
+    }
+    
     const updatedSettings = { ...currentSettings, ...settingsUpdate };
-
     // Save the updated settings and return the result
     return await saveAppSettings(updatedSettings);
   } catch (error) {

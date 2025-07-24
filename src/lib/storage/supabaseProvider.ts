@@ -53,9 +53,12 @@ export class SupabaseProvider implements IStorageProvider {
   }
 
   async savePlayer(player: Player): Promise<Player> {
+    console.log('[SupabaseProvider] savePlayer called with:', player);
     try {
       const userId = await this.getCurrentUserId();
+      console.log('[SupabaseProvider] Current user ID:', userId);
       const supabasePlayer = toSupabase.player(player, userId);
+      console.log('[SupabaseProvider] Transformed player for Supabase:', supabasePlayer);
 
       let result;
       if (player.id) {
@@ -81,8 +84,10 @@ export class SupabaseProvider implements IStorageProvider {
           .single();
 
         if (error) {
+          console.error('[SupabaseProvider] Error inserting player:', error);
           throw new NetworkError('supabase', 'savePlayer', error);
         }
+        console.log('[SupabaseProvider] Player inserted successfully:', data);
         result = data;
       }
 

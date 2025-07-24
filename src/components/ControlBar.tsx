@@ -257,10 +257,12 @@ const ControlBar: React.FC<ControlBarProps> = ({
         </button>
         
         {/* Auth Button */}
-        <AuthButton 
-          className={`${baseButtonStyle} ${secondaryColor}`}
-          iconSize={iconSize}
-        />
+        {process.env.NEXT_PUBLIC_ENABLE_SUPABASE === 'true' && (
+          <AuthButton 
+            className={`${baseButtonStyle} ${secondaryColor}`}
+            iconSize={iconSize}
+          />
+        )}
         
         {/* Settings Menu Button (REMAINING) */}
         <div className="relative" ref={settingsMenuRef}>

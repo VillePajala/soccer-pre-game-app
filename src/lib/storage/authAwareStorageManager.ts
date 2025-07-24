@@ -10,7 +10,13 @@ export class AuthAwareStorageManager extends StorageManager {
   };
 
   constructor() {
-    super(getStorageConfig());
+    // Start with localStorage until auth state is known
+    super({
+      provider: 'localStorage',
+      fallbackToLocalStorage: false,
+    });
+    
+    // Will be reconfigured when auth state is updated
   }
 
   /**
@@ -19,6 +25,13 @@ export class AuthAwareStorageManager extends StorageManager {
   updateAuthState(isAuthenticated: boolean, userId: string | null = null): void {
     const previousAuth = this.authState.isAuthenticated;
     this.authState = { isAuthenticated, userId };
+    
+    console.log('[AuthAwareStorageManager] Auth state updated:', {
+      isAuthenticated,
+      userId,
+      previousAuth,
+      willReconfigure: previousAuth !== isAuthenticated
+    });
 
     // Only reconfigure if auth state actually changed
     if (previousAuth !== isAuthenticated) {
@@ -46,7 +59,23 @@ export class AuthAwareStorageManager extends StorageManager {
       return;
     }
 
-    const newConfig = getStorageConfig();
+    // Use the recommended provider based on auth state
+    const recommendedProvider = this.getRecommendedProvider();
+    const baseConfig = getStorageConfig();
+    
+    // Override the provider based on authentication state
+    const newConfig: StorageConfig = {
+      ...baseConfig,
+      provider: recommendedProvider,
+      // Keep fallback enabled when using Supabase
+      fallbackToLocalStorage: recommendedProvider === 'supabase' ? baseConfig.fallbackToLocalStorage : false,
+    };
+    
+    console.log('[AuthAwareStorageManager] Reconfiguring storage:', {
+      recommendedProvider,
+      currentAuth: this.authState,
+      newConfig
+    });
 
     this.setConfig(newConfig);
   }

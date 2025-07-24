@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "Update release notes and refactor localStorageProvider for improved player and app settings management"
+  "notes": "Enhance offline support and storage management"
 }
