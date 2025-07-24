@@ -99,9 +99,9 @@ export const toSupabase = {
   appSettings: (settings: AppSettings, userId: string) => ({
     user_id: userId,
     current_game_id: settings.currentGameId,
-    last_backup_date: settings.lastBackupDate,
-    preferred_language: settings.preferredLanguage,
-    theme: settings.theme
+    last_backup_date: settings.lastBackupTime,
+    preferred_language: settings.language,
+    theme: undefined // theme property doesn't exist in AppSettings
   }),
 
   game: (gameData: unknown, userId: string) => ({

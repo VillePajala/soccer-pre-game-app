@@ -46,10 +46,7 @@ export class AuthAwareStorageManager extends StorageManager {
       return;
     }
 
-    const newConfig = getStorageConfig({
-      isAuthenticated: this.authState.isAuthenticated,
-      enableSupabase: isSupabaseEnabled(),
-    });
+    const newConfig = getStorageConfig();
 
     this.setConfig(newConfig);
   }
