@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { queryKeys } from '@/config/queryKeys';
 import {
   getMasterRoster,
@@ -25,30 +26,45 @@ export interface GameDataQueriesResult {
 }
 
 export function useGameDataQueries(): GameDataQueriesResult {
+  // Stable empty defaults to prevent infinite loops
+  const emptyPlayers = useMemo<Player[]>(() => [], []);
+  const emptySeasons = useMemo<Season[]>(() => [], []);
+  const emptyTournaments = useMemo<Tournament[]>(() => [], []);
+  const emptySavedGames = useMemo<SavedGamesCollection>(() => ({}), []);
+
   const masterRoster = useQuery<Player[], Error>({
     queryKey: queryKeys.masterRoster,
     queryFn: getMasterRoster,
+    staleTime: 5000, // 5 seconds
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
   const seasons = useQuery<Season[], Error>({
     queryKey: queryKeys.seasons,
     queryFn: getSeasons,
+    staleTime: 5000, // 5 seconds
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
   const tournaments = useQuery<Tournament[], Error>({
     queryKey: queryKeys.tournaments,
     queryFn: getTournaments,
+    staleTime: 5000, // 5 seconds
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
   const savedGames = useQuery<SavedGamesCollection | null, Error>({
     queryKey: queryKeys.savedGames,
     queryFn: getSavedGames,
-    initialData: {},
+    staleTime: 5000, // 5 seconds
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
   const currentGameId = useQuery<string | null, Error>({
     queryKey: queryKeys.appSettingsCurrentGameId,
     queryFn: getCurrentGameIdSetting,
+    staleTime: 5000, // 5 seconds
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
   const loading =
@@ -67,10 +83,10 @@ export function useGameDataQueries(): GameDataQueriesResult {
     null;
 
   return {
-    masterRoster: masterRoster.data || [],
-    seasons: seasons.data || [],
-    tournaments: tournaments.data || [],
-    savedGames: savedGames.data || null,
+    masterRoster: masterRoster.data || emptyPlayers,
+    seasons: seasons.data || emptySeasons,
+    tournaments: tournaments.data || emptyTournaments,
+    savedGames: savedGames.data || emptySavedGames,
     currentGameId: currentGameId.data || null,
     loading,
     error,

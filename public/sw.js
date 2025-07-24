@@ -1,3 +1,17 @@
+// Disable service worker in development
+if (self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1') {
+  self.addEventListener('install', () => self.skipWaiting());
+  self.addEventListener('activate', () => {
+    self.clients.claim();
+    // Unregister this service worker
+    self.registration.unregister().then(() => {
+      console.log('[SW] Service worker unregistered in development');
+    });
+  });
+  self.addEventListener('fetch', () => {}); // Do nothing
+  return; // Exit early for development
+}
+
 // Listen for the install event
 self.addEventListener('install', (event) => {
   console.log('[SW] Service worker installing...');
@@ -134,4 +148,4 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
-// Build Timestamp: 2025-07-24T14:53:30.072Z
+// Build Timestamp: 2025-07-24T20:05:17.925Z

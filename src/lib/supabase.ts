@@ -16,6 +16,7 @@ const hasValidConfig = supabaseUrl && supabaseAnonKey &&
                       supabaseUrl !== 'https://your-project.supabase.co' && 
                       supabaseAnonKey !== 'public-anon-key';
 
+
 // Client-side Supabase client with auth configuration
 export const supabase = hasValidConfig 
   ? createBrowserClient(supabaseUrl, supabaseAnonKey, {

@@ -1,6 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import type { Player } from '@/types';
 import { addPlayer, updatePlayer, removePlayer, setGoalieStatus } from '@/utils/masterRosterManager';
+import { queryKeys } from '@/config/queryKeys';
 
 interface UseRosterArgs {
   initialPlayers: Player[];
@@ -8,6 +10,7 @@ interface UseRosterArgs {
 }
 
 export const useRoster = ({ initialPlayers, selectedPlayerIds }: UseRosterArgs) => {
+  const queryClient = useQueryClient();
   const [availablePlayers, setAvailablePlayers] = useState<Player[]>(initialPlayers);
   const [highlightRosterButton, setHighlightRosterButton] = useState(false);
   const [showRosterPrompt, setShowRosterPrompt] = useState(false);
@@ -18,6 +21,11 @@ export const useRoster = ({ initialPlayers, selectedPlayerIds }: UseRosterArgs) 
     () => availablePlayers.filter((p) => selectedPlayerIds.includes(p.id)),
     [availablePlayers, selectedPlayerIds]
   );
+
+  // Sync availablePlayers when initialPlayers prop changes
+  useEffect(() => {
+    setAvailablePlayers(initialPlayers);
+  }, [initialPlayers]);
 
   const handleAddPlayer = async (
     data: Omit<Player, 'id' | 'isGoalie' | 'receivedFairPlayCard'>,
@@ -38,6 +46,8 @@ export const useRoster = ({ initialPlayers, selectedPlayerIds }: UseRosterArgs) 
           players.map((p) => (p.id === temp.id ? saved : p)),
         );
         setRosterError(null);
+        // Invalidate the master roster query to refetch from storage
+        await queryClient.invalidateQueries({ queryKey: queryKeys.masterRoster });
       } else {
         setAvailablePlayers(prev);
         setRosterError('Failed to add player');
@@ -89,6 +99,8 @@ export const useRoster = ({ initialPlayers, selectedPlayerIds }: UseRosterArgs) 
         setRosterError('Failed to remove player');
       } else {
         setRosterError(null);
+        // Invalidate the master roster query to refetch from storage
+        await queryClient.invalidateQueries({ queryKey: queryKeys.masterRoster });
       }
     } catch {
       setAvailablePlayers(prev);

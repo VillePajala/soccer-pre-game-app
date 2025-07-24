@@ -85,19 +85,7 @@ import logger from '@/utils/logger';
 
 
 // Placeholder data - Initialize new fields
-const initialAvailablePlayersData: Player[] = [
-  { id: 'p1', name: 'Player 1', isGoalie: false, jerseyNumber: '1', notes: '' },
-  { id: 'p2', name: 'Player 2', isGoalie: false, jerseyNumber: '2', notes: '' },
-  { id: 'p3', name: 'Player 3', isGoalie: false, jerseyNumber: '3', notes: '' },
-  { id: 'p4', name: 'Player 4', isGoalie: false, jerseyNumber: '4', notes: '' },
-  { id: 'p5', name: 'Player 5', isGoalie: false, jerseyNumber: '5', notes: '' },
-  { id: 'p6', name: 'Player 6', isGoalie: false, jerseyNumber: '6', notes: '' },
-  { id: 'p7', name: 'Player 7', isGoalie: false, jerseyNumber: '7', notes: '' },
-  { id: 'p8', name: 'Player 8', isGoalie: false, jerseyNumber: '8', notes: '' },
-  { id: 'p9', name: 'Player 9', isGoalie: false, jerseyNumber: '9', notes: '' },
-  { id: 'p10', name: 'Player 10', isGoalie: false, jerseyNumber: '10', notes: '' },
-  { id: 'p11', name: 'Player 11', isGoalie: false, jerseyNumber: '11', notes: '' },
-];
+const initialAvailablePlayersData: Player[] = [];
 
 const initialState: AppState = {
   playersOnField: [], // Start with no players on field
@@ -121,7 +109,7 @@ const initialState: AppState = {
   gameStatus: 'notStarted', // Initialize game status
   demandFactor: 1,
   // Initialize selectedPlayerIds with all players from initial data
-  selectedPlayerIds: initialAvailablePlayersData.map(p => p.id),
+  selectedPlayerIds: [],
   // gameType: 'season', // REMOVED
   seasonId: '', // Initialize season ID
   tournamentId: '', // Initialize tournament ID
@@ -449,7 +437,13 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       default:
         break;
     }
-  }, [initialAction, setIsNewGameSetupModalOpen, setIsLoadGameModalOpen, setIsSeasonTournamentModalOpen, setIsGameStatsModalOpen]);
+  }, [
+    initialAction,
+    setIsNewGameSetupModalOpen,
+    setIsLoadGameModalOpen,
+    setIsSeasonTournamentModalOpen,
+    setIsGameStatsModalOpen
+  ]);
   
   // --- Modal States handled via context ---
 
@@ -631,18 +625,31 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   });
 
   // --- Settings Initialization Effects ---
+  // Combine both effects and use a single ref to track initialization
+  const settingsInitializedRef = useRef(false);
+  
   useEffect(() => {
-    utilGetLastHomeTeamName().then((name) => setDefaultTeamNameSetting(name));
-  }, [setDefaultTeamNameSetting]);
-
-  useEffect(() => {
-    getAppSettings().then((s) => {
-      setAutoBackupEnabled(s.autoBackupEnabled ?? false);
-      setBackupIntervalHours(s.autoBackupIntervalHours ?? 24);
-      setLastBackupTime(s.lastBackupTime ?? null);
-      setBackupEmail(s.backupEmail ?? '');
-    });
-  }, [setAutoBackupEnabled, setBackupIntervalHours, setLastBackupTime, setBackupEmail]);
+    if (!settingsInitializedRef.current) {
+      settingsInitializedRef.current = true;
+      
+      // Load last home team name
+      utilGetLastHomeTeamName().then((name) => setDefaultTeamNameSetting(name));
+      
+      // Load app settings
+      getAppSettings().then((s) => {
+        setAutoBackupEnabled(s.autoBackupEnabled ?? false);
+        setBackupIntervalHours(s.autoBackupIntervalHours ?? 24);
+        setLastBackupTime(s.lastBackupTime ?? null);
+        setBackupEmail(s.backupEmail ?? '');
+      });
+    }
+  }, [
+    setDefaultTeamNameSetting,
+    setAutoBackupEnabled,
+    setBackupIntervalHours,
+    setLastBackupTime,
+    setBackupEmail
+  ]);
 
   // --- Export Wrapper Functions ---
   const handleExportOneJsonWrapper = useCallback((gameId: string) => {
@@ -652,12 +659,23 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   const handleExportOneCsvWrapper = useCallback((gameId: string) => {
     handleExportOneCsvRaw(gameId, availablePlayers, seasons, tournaments);
   }, [handleExportOneCsvRaw, availablePlayers, seasons, tournaments]);
+  // Use a ref to track the last synced data to prevent loops
+  const lastSyncedRosterRef = useRef<string>('');
+  
   useEffect(() => {
     if (isMasterRosterQueryLoading) {
       logger.log('[TanStack Query] Master Roster is loading...');
     }
-    if (masterRosterQueryResultData) {
-      setAvailablePlayers(masterRosterQueryResultData);
+    if (masterRosterQueryResultData && !isMasterRosterQueryLoading) {
+      // Create a unique key for the current data
+      const dataKey = JSON.stringify(masterRosterQueryResultData.map(p => ({ id: p.id, name: p.name })));
+      
+      // Only update if this is different from what we last synced
+      if (dataKey !== lastSyncedRosterRef.current) {
+        lastSyncedRosterRef.current = dataKey;
+        logger.log('[HomePage] Syncing roster from React Query:', masterRosterQueryResultData.length, 'players');
+        setAvailablePlayers(masterRosterQueryResultData);
+      }
     }
     if (isMasterRosterQueryError) {
       logger.error('[TanStack Query] Error loading master roster:', masterRosterQueryErrorData);
@@ -677,7 +695,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       logger.error('[TanStack Query] Error loading seasons:', seasonsQueryErrorData);
       setSeasons([]);
     }
-  }, [seasonsQueryResultData, areSeasonsQueryLoading, isSeasonsQueryError, seasonsQueryErrorData, setSeasons]);
+  }, [seasonsQueryResultData, areSeasonsQueryLoading, isSeasonsQueryError, seasonsQueryErrorData]);
 
   // --- Effect to update tournaments from useQuery ---
   useEffect(() => {
@@ -691,7 +709,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       logger.error('[TanStack Query] Error loading tournaments:', tournamentsQueryErrorData);
       setTournaments([]);
     }
-  }, [tournamentsQueryResultData, areTournamentsQueryLoading, isTournamentsQueryError, tournamentsQueryErrorData, setTournaments]);
+  }, [tournamentsQueryResultData, areTournamentsQueryLoading, isTournamentsQueryError, tournamentsQueryErrorData]);
 
   // --- Effect to sync playersOnField details with availablePlayers changes ---
   useEffect(() => {
@@ -724,16 +742,13 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           return fieldPlayer; // Return original if no corresponding roster player or no changes
         });
 
-        // Only save to history if actual changes were made to playersOnField
-        if (JSON.stringify(prevPlayersOnField) !== JSON.stringify(nextPlayersOnField)) {
-          // logger.log('[EFFECT syncPoF] playersOnField updated due to availablePlayers change. Saving to history.');
-          saveStateToHistory({ playersOnField: nextPlayersOnField });
-        }
+        // Don't save to history here - let other mechanisms handle history
+        // This prevents circular updates
         return nextPlayersOnField;
       });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [availablePlayers, saveStateToHistory]); // setPlayersOnField is from useGameState, should be stable if not changing the hook itself
+  }, [availablePlayers]); // Removed saveStateToHistory to prevent circular updates
   // Note: We don't want setPlayersOnField in deps if it causes loops.
   // saveStateToHistory is also a dependency as it's used inside.
   
@@ -1092,7 +1107,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         logger.log('Not prompting: Specific game loaded.');
     }
     }
-  // Depend only on load completion and skip status
+  // Depend only on load completion and skip status - removed setIsNewGameSetupModalOpen from deps
   }, [initialLoadComplete, hasSkippedInitialSetup, currentGameId, setIsNewGameSetupModalOpen]);
 
   // --- Player Management Handlers moved to usePlayerFieldManager ---
@@ -1535,7 +1550,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     setNewGameDemandFactor(1);
 
   // REMOVED initialState from dependencies
-  }, [setHasSkippedInitialSetup, setIsNewGameSetupModalOpen]); // Updated dependencies
+  }, []); // Removed setter functions from dependencies
 
   // --- Start New Game Handler (Uses Quick Save) ---
   const handleStartNewGame = useCallback(() => {
@@ -1856,6 +1871,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         <NewGameSetupModal
           isOpen={isNewGameSetupModalOpen}
           initialPlayerSelection={playerIdsForNewGame} // <<< Pass the state here
+          availablePlayers={availablePlayers} // Pass the players from state
           demandFactor={newGameDemandFactor}
           onDemandFactorChange={setNewGameDemandFactor}
           onStart={handleStartNewGameWithSetup} // CORRECTED Handler

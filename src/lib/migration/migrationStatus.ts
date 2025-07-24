@@ -48,9 +48,13 @@ export async function checkMigrationStatus(userId: string): Promise<MigrationSta
       .eq('user_id', userId)
       .single();
 
-    if (error && error.code !== 'PGRST116') {
-      // Error other than "no rows returned"
-      throw error;
+    if (error) {
+      // PGRST116 = no rows returned (expected when user hasn't migrated)
+      // 42P01 = table does not exist (expected if migration_status table not created yet)
+      if (error.code !== 'PGRST116' && error.code !== '42P01') {
+        console.warn('Migration status check warning:', error.code, error.message);
+      }
+      // Continue with default values
     }
 
     const migrationRecord = data || {
@@ -71,8 +75,8 @@ export async function checkMigrationStatus(userId: string): Promise<MigrationSta
       errorMessage: migrationRecord.error_message,
       dataTypes: localData,
     };
-  } catch (error) {
-    console.error('Error checking migration status:', error);
+  } catch (error: any) {
+    console.warn('Migration status check failed:', error?.message || 'Unknown error');
     // Return default status if we can't check Supabase
     return {
       userId,
@@ -109,8 +113,11 @@ export async function updateMigrationStatus(
     .upsert(supabaseUpdates, { onConflict: 'user_id' });
 
   if (error) {
-    console.error('Error updating migration status:', error);
-    throw error;
+    console.error('Error updating migration status:', error.message || 'Unknown error', error);
+    // Don't throw if table doesn't exist - migration can continue
+    if (error.code !== '42P01') {
+      throw error;
+    }
   }
 }
 

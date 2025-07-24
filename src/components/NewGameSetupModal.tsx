@@ -7,7 +7,6 @@ import { HiPlusCircle } from 'react-icons/hi';
 import logger from '@/utils/logger';
 import { getSeasons as utilGetSeasons } from '@/utils/seasons';
 import { getTournaments as utilGetTournaments } from '@/utils/tournaments';
-import { getMasterRoster } from '@/utils/masterRosterManager';
 import { getLastHomeTeamName as utilGetLastHomeTeamName, saveLastHomeTeamName as utilSaveLastHomeTeamName } from '@/utils/appSettings';
 import { UseMutationResult } from '@tanstack/react-query';
 import AssessmentSlider from './AssessmentSlider';
@@ -19,6 +18,7 @@ import type { TranslationKey } from '@/i18n-types';
 interface NewGameSetupModalProps {
   isOpen: boolean;
   initialPlayerSelection: string[] | null;
+  availablePlayers: Player[];
   demandFactor: number;
   onDemandFactorChange: (factor: number) => void;
   onStart: (
@@ -48,6 +48,7 @@ interface NewGameSetupModalProps {
 const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   isOpen,
   initialPlayerSelection,
+  availablePlayers,
   demandFactor,
   onDemandFactorChange,
   onStart,
@@ -91,8 +92,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   const [localHomeOrAway, setLocalHomeOrAway] = useState<'home' | 'away'>('home');
   const [isPlayed, setIsPlayed] = useState<boolean>(true);
 
-  // MOVED state declarations for availablePlayersForSetup and selectedPlayerIds here
-  const [availablePlayersForSetup, setAvailablePlayersForSetup] = useState<Player[]>([]);
+  // MOVED state declarations for selectedPlayerIds here
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>(initialPlayerSelection || []);
 
   // NEW: Loading and error states for initial data fetch
@@ -128,12 +128,11 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
 
       const fetchData = async () => {
       try {
-          const roster: Player[] = await getMasterRoster();
-          setAvailablePlayersForSetup(roster || []);
+          // Use availablePlayers from props instead of fetching
           if (initialPlayerSelection && initialPlayerSelection.length > 0) {
             setSelectedPlayerIds(initialPlayerSelection);
-          } else if (roster && roster.length > 0) {
-            setSelectedPlayerIds(roster.map(p => p.id));
+          } else if (availablePlayers && availablePlayers.length > 0) {
+            setSelectedPlayerIds(availablePlayers.map(p => p.id));
           }
 
           const lastHomeTeam = await utilGetLastHomeTeamName();
@@ -153,7 +152,6 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
           setHomeTeamName(t('newGameSetupModal.defaultTeamName', 'My Team'));
           setSeasons([]);
           setTournaments([]);
-          setAvailablePlayersForSetup([]); // Reset on error too
           setSelectedPlayerIds(initialPlayerSelection || []); // Reset selection on error
         } finally {
           setIsLoading(false);
@@ -161,7 +159,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
       };
       fetchData();
     }
-  }, [isOpen, initialPlayerSelection, t]);
+  }, [isOpen, initialPlayerSelection, availablePlayers, t]);
 
 
   const handleSeasonChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -189,7 +187,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
         }
       }
     }
-  }, [selectedSeasonId, seasons, availablePlayersForSetup]);
+  }, [selectedSeasonId, seasons, availablePlayers]);
 
   const handleTournamentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
@@ -217,7 +215,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
         }
       }
     }
-  }, [selectedTournamentId, tournaments, availablePlayersForSetup]);
+  }, [selectedTournamentId, tournaments, availablePlayers]);
 
   // --- Handlers for Create New Buttons ---
   const handleShowCreateSeason = () => {
@@ -748,7 +746,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
 
                     {/* Player Selection Section */}
                     <PlayerSelectionSection
-                      availablePlayers={availablePlayersForSetup}
+                      availablePlayers={availablePlayers}
                       selectedPlayerIds={selectedPlayerIds}
                       onSelectedPlayersChange={setSelectedPlayerIds}
                       title={t('newGameSetupModal.selectPlayers', 'Select Players')}

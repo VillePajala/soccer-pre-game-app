@@ -28,7 +28,7 @@ export const getMasterRoster = async (): Promise<Player[]> => {
 export const addPlayer = async (
     playerData: Omit<Player, 'id' | 'isGoalie' | 'receivedFairPlayCard'>
 ): Promise<Player | null> => {
-    // logger.log('[masterRosterManager] addPlayer called with:', playerData);
+    logger.log('[masterRosterManager] addPlayer called with:', playerData);
     try {
         // Create player object with default values
         const player: Player = {
@@ -37,8 +37,10 @@ export const addPlayer = async (
             receivedFairPlayCard: false,
             ...playerData
         };
+        logger.log('[masterRosterManager] Current storage provider:', (storageManager as any).getCurrentProviderName?.());
+        logger.log('[masterRosterManager] Calling storageManager.savePlayer...');
         const newPlayer = await storageManager.savePlayer(player);
-        // logger.log('[masterRosterManager] Player added:', newPlayer);
+        logger.log('[masterRosterManager] Player added:', newPlayer);
         return newPlayer;
     } catch (error) {
         logger.error("[masterRosterManager] Error in addPlayer:", error);

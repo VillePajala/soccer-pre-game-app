@@ -95,6 +95,7 @@ export class StorageManager implements IStorageProvider {
   }
 
   async savePlayer(player: unknown) {
+    console.log('[StorageManager] savePlayer called, current provider:', this.getCurrentProviderName());
     return this.executeWithFallback(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       () => this.currentProvider.savePlayer(player as any),
