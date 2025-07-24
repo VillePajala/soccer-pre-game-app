@@ -1,5 +1,5 @@
 import { DEFAULT_GAME_ID } from '@/config/constants';
-import { storageManager } from '@/lib/storage';
+import { authAwareStorageManager as storageManager } from '@/lib/storage';
 import type { SavedGamesCollection, AppState, GameEvent as PageGameEvent, Point, Opponent, IntervalLog } from '@/types';
 import type { Player } from '@/types';
 import logger from '@/utils/logger';

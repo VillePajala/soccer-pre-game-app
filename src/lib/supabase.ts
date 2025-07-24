@@ -2,8 +2,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { createBrowserClient } from '@supabase/ssr';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://test.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'test-key';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 // Import config validation
 import { validateSupabaseConfig } from './storage/config';
@@ -11,17 +11,26 @@ import { validateSupabaseConfig } from './storage/config';
 // Validate Supabase configuration if enabled
 validateSupabaseConfig();
 
+// Only create clients if we have valid configuration
+const hasValidConfig = supabaseUrl && supabaseAnonKey && 
+                      supabaseUrl !== 'https://your-project.supabase.co' && 
+                      supabaseAnonKey !== 'public-anon-key';
+
 // Client-side Supabase client with auth configuration
-export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    detectSessionInUrl: true,
-    autoRefreshToken: true,
-  }
-});
+export const supabase = hasValidConfig 
+  ? createBrowserClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        detectSessionInUrl: true,
+        autoRefreshToken: true,
+      }
+    })
+  : ({} as ReturnType<typeof createBrowserClient>); // Type assertion for development
 
 // Legacy client for backwards compatibility
-export const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+export const supabaseClient = hasValidConfig 
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : ({} as ReturnType<typeof createClient>);
 
 // Database types (will be generated later with supabase gen types)
 export type Database = {

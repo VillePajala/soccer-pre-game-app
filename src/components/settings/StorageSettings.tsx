@@ -24,8 +24,11 @@ export default function StorageSettings({ className = '' }: StorageSettingsProps
   const testConnection = async () => {
     setIsLoading(true);
     try {
-      const status = await storageManager.testConnection();
-      setConnectionStatus(status);
+      const online = await storageManager.isOnline();
+      setConnectionStatus({
+        provider: storageManager.getProviderName(),
+        online,
+      });
     } catch (error) {
       setConnectionStatus({
         provider: getProviderType(),
@@ -34,16 +37,6 @@ export default function StorageSettings({ className = '' }: StorageSettingsProps
       });
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const switchProvider = async (provider: 'localStorage' | 'supabase') => {
-    try {
-      await storageManager.switchProvider(provider);
-      setConfigInfo(getConfigInfo());
-      setConnectionStatus(null); // Reset connection status
-    } catch (error) {
-      console.error('Failed to switch provider:', error);
     }
   };
 
@@ -104,24 +97,6 @@ export default function StorageSettings({ className = '' }: StorageSettingsProps
             {isLoading ? 'Testing...' : 'Test Connection'}
           </button>
 
-          {process.env.NODE_ENV === 'development' && (
-            <>
-              <button
-                onClick={() => switchProvider('localStorage')}
-                disabled={configInfo.provider === 'localStorage'}
-                className="px-3 py-2 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Use localStorage
-              </button>
-              <button
-                onClick={() => switchProvider('supabase')}
-                disabled={configInfo.provider === 'supabase' || !configInfo.supabaseConfigured}
-                className="px-3 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Use Supabase
-              </button>
-            </>
-          )}
         </div>
 
         {connectionStatus && (

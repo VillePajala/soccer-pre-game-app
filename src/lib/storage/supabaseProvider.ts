@@ -483,36 +483,124 @@ export class SupabaseProvider implements IStorageProvider {
     }
   }
 
-  // Backup/restore (TODO: implement full backup/restore logic)
+  // Backup/restore
   async exportAllData(): Promise<unknown> {
     try {
-      const [players, seasons, tournaments, settings] = await Promise.all([
+      const userId = await this.getCurrentUserId();
+      
+      // Fetch all data including games
+      const [players, seasons, tournaments, gamesResponse, settings] = await Promise.all([
         this.getPlayers(),
         this.getSeasons(),
         this.getTournaments(),
+        supabase
+          .from('games')
+          .select('*')
+          .eq('user_id', userId),
         this.getAppSettings()
       ]);
+
+      if (gamesResponse.error) {
+        throw new NetworkError('supabase', 'exportAllData', gamesResponse.error);
+      }
+
+      // Transform games back to local format
+      const games: Record<string, unknown> = {};
+      for (const game of gamesResponse.data) {
+        const localGame = fromSupabase.game(game);
+        games[localGame.id] = localGame;
+      }
 
       return {
         players,
         seasons,
         tournaments,
+        savedGames: games,
         appSettings: settings,
         exportDate: new Date().toISOString(),
+        version: '1.0',
         source: 'supabase'
       };
     } catch (error) {
+      if (error instanceof AuthenticationError || error instanceof NetworkError) {
+        throw error;
+      }
       throw new StorageError('Failed to export data', 'supabase', 'exportAllData', error as Error);
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async importAllData(_data: unknown): Promise<void> {
+  async importAllData(data: unknown): Promise<void> {
     try {
-      // TODO: Implement full import logic
-      // This would involve batch inserts and handling conflicts
-      throw new Error('Import not yet implemented for Supabase provider');
+      const importData = data as {
+        players?: Player[];
+        seasons?: Season[];
+        tournaments?: Tournament[];
+        savedGames?: Record<string, unknown>;
+        appSettings?: AppSettings;
+      };
+
+      const errors: string[] = [];
+
+      // Import players
+      if (importData.players?.length) {
+        for (const player of importData.players) {
+          try {
+            await this.savePlayer(player);
+          } catch (error) {
+            errors.push(`Failed to import player ${player.name}: ${error}`);
+          }
+        }
+      }
+
+      // Import seasons
+      if (importData.seasons?.length) {
+        for (const season of importData.seasons) {
+          try {
+            await this.saveSeason(season);
+          } catch (error) {
+            errors.push(`Failed to import season ${season.name}: ${error}`);
+          }
+        }
+      }
+
+      // Import tournaments
+      if (importData.tournaments?.length) {
+        for (const tournament of importData.tournaments) {
+          try {
+            await this.saveTournament(tournament);
+          } catch (error) {
+            errors.push(`Failed to import tournament ${tournament.name}: ${error}`);
+          }
+        }
+      }
+
+      // Import games
+      if (importData.savedGames) {
+        for (const [gameId, game] of Object.entries(importData.savedGames)) {
+          try {
+            await this.saveSavedGame(gameId, game);
+          } catch (error) {
+            errors.push(`Failed to import game ${gameId}: ${error}`);
+          }
+        }
+      }
+
+      // Import settings
+      if (importData.appSettings) {
+        try {
+          await this.saveAppSettings(importData.appSettings);
+        } catch (error) {
+          errors.push(`Failed to import app settings: ${error}`);
+        }
+      }
+
+      if (errors.length > 0) {
+        throw new Error(`Import completed with errors: ${errors.join('; ')}`);
+      }
     } catch (error) {
+      if (error instanceof AuthenticationError) {
+        throw error;
+      }
       throw new StorageError('Failed to import data', 'supabase', 'importAllData', error as Error);
     }
   }

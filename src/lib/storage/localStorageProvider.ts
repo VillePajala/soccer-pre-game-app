@@ -16,9 +16,7 @@ interface AppSettings {
 }
 
 // Import storage keys
-import { MASTER_ROSTER_KEY } from '../../config/storageKeys';
-import { getSeasons, saveSeason, deleteSeason, updateSeason } from '../../utils/seasons';
-import { getTournaments, saveTournament, deleteTournament, updateTournament } from '../../utils/tournaments';
+import { MASTER_ROSTER_KEY, SEASONS_LIST_KEY, TOURNAMENTS_LIST_KEY } from '../../config/storageKeys';
 // Removed circular import of appSettings
 import { generateFullBackupJson, importFullBackup } from '../../utils/fullBackup';
 import { getLocalStorageItem, setLocalStorageItem } from '../../utils/localStorage';
@@ -128,18 +126,51 @@ export class LocalStorageProvider implements IStorageProvider {
     }
   }
 
-  // Season management
+  // Season management - implemented directly to avoid circular dependency
   async getSeasons(): Promise<Season[]> {
     try {
-      return await getSeasons();
+      const seasonsStr = getLocalStorageItem(SEASONS_LIST_KEY);
+      if (!seasonsStr) {
+        return [];
+      }
+      return JSON.parse(seasonsStr) as Season[];
     } catch (error) {
       throw new StorageError('Failed to get seasons', 'localStorage', 'getSeasons', error as Error);
     }
   }
 
+  private async saveSeasons(seasons: Season[]): Promise<void> {
+    try {
+      setLocalStorageItem(SEASONS_LIST_KEY, JSON.stringify(seasons));
+    } catch (error) {
+      throw new Error(`Failed to save seasons to localStorage: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
   async saveSeason(season: Season): Promise<Season> {
     try {
-      return await saveSeason(season);
+      const currentSeasons = await this.getSeasons();
+      
+      if (season.id) {
+        // Update existing season
+        const seasonIndex = currentSeasons.findIndex(s => s.id === season.id);
+        if (seasonIndex === -1) {
+          throw new Error('Season not found for update');
+        }
+        currentSeasons[seasonIndex] = season;
+      } else {
+        // Create new season with unique ID
+        const newSeason: Season = {
+          ...season,
+          id: `season_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
+        };
+        currentSeasons.push(newSeason);
+        await this.saveSeasons(currentSeasons);
+        return newSeason;
+      }
+      
+      await this.saveSeasons(currentSeasons);
+      return season;
     } catch (error) {
       throw new StorageError('Failed to save season', 'localStorage', 'saveSeason', error as Error);
     }
@@ -147,7 +178,14 @@ export class LocalStorageProvider implements IStorageProvider {
 
   async deleteSeason(seasonId: string): Promise<void> {
     try {
-      await deleteSeason(seasonId);
+      const currentSeasons = await this.getSeasons();
+      const updatedSeasons = currentSeasons.filter(s => s.id !== seasonId);
+      
+      if (updatedSeasons.length === currentSeasons.length) {
+        throw new Error('Season not found for deletion');
+      }
+      
+      await this.saveSeasons(updatedSeasons);
     } catch (error) {
       throw new StorageError('Failed to delete season', 'localStorage', 'deleteSeason', error as Error);
     }
@@ -155,28 +193,73 @@ export class LocalStorageProvider implements IStorageProvider {
 
   async updateSeason(seasonId: string, updates: Partial<Season>): Promise<Season> {
     try {
-      const updated = await updateSeason(seasonId, updates);
-      if (!updated) {
-        throw new Error('Season update returned null');
+      const currentSeasons = await this.getSeasons();
+      const seasonIndex = currentSeasons.findIndex(s => s.id === seasonId);
+      
+      if (seasonIndex === -1) {
+        throw new Error('Season not found for update');
       }
-      return updated;
+      
+      // Create updated season object
+      const updatedSeason = {
+        ...currentSeasons[seasonIndex],
+        ...updates,
+        id: seasonId // Ensure ID doesn't change
+      };
+      
+      currentSeasons[seasonIndex] = updatedSeason;
+      await this.saveSeasons(currentSeasons);
+      return updatedSeason;
     } catch (error) {
       throw new StorageError('Failed to update season', 'localStorage', 'updateSeason', error as Error);
     }
   }
 
-  // Tournament management
+  // Tournament management - implemented directly to avoid circular dependency
   async getTournaments(): Promise<Tournament[]> {
     try {
-      return await getTournaments();
+      const tournamentsStr = getLocalStorageItem(TOURNAMENTS_LIST_KEY);
+      if (!tournamentsStr) {
+        return [];
+      }
+      return JSON.parse(tournamentsStr) as Tournament[];
     } catch (error) {
       throw new StorageError('Failed to get tournaments', 'localStorage', 'getTournaments', error as Error);
     }
   }
 
+  private async saveTournaments(tournaments: Tournament[]): Promise<void> {
+    try {
+      setLocalStorageItem(TOURNAMENTS_LIST_KEY, JSON.stringify(tournaments));
+    } catch (error) {
+      throw new Error(`Failed to save tournaments to localStorage: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
   async saveTournament(tournament: Tournament): Promise<Tournament> {
     try {
-      return await saveTournament(tournament);
+      const currentTournaments = await this.getTournaments();
+      
+      if (tournament.id) {
+        // Update existing tournament
+        const tournamentIndex = currentTournaments.findIndex(t => t.id === tournament.id);
+        if (tournamentIndex === -1) {
+          throw new Error('Tournament not found for update');
+        }
+        currentTournaments[tournamentIndex] = tournament;
+      } else {
+        // Create new tournament with unique ID
+        const newTournament: Tournament = {
+          ...tournament,
+          id: `tournament_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
+        };
+        currentTournaments.push(newTournament);
+        await this.saveTournaments(currentTournaments);
+        return newTournament;
+      }
+      
+      await this.saveTournaments(currentTournaments);
+      return tournament;
     } catch (error) {
       throw new StorageError('Failed to save tournament', 'localStorage', 'saveTournament', error as Error);
     }
@@ -184,7 +267,14 @@ export class LocalStorageProvider implements IStorageProvider {
 
   async deleteTournament(tournamentId: string): Promise<void> {
     try {
-      await deleteTournament(tournamentId);
+      const currentTournaments = await this.getTournaments();
+      const updatedTournaments = currentTournaments.filter(t => t.id !== tournamentId);
+      
+      if (updatedTournaments.length === currentTournaments.length) {
+        throw new Error('Tournament not found for deletion');
+      }
+      
+      await this.saveTournaments(updatedTournaments);
     } catch (error) {
       throw new StorageError('Failed to delete tournament', 'localStorage', 'deleteTournament', error as Error);
     }
@@ -192,11 +282,23 @@ export class LocalStorageProvider implements IStorageProvider {
 
   async updateTournament(tournamentId: string, updates: Partial<Tournament>): Promise<Tournament> {
     try {
-      const updated = await updateTournament(tournamentId, updates);
-      if (!updated) {
-        throw new Error('Tournament update returned null');
+      const currentTournaments = await this.getTournaments();
+      const tournamentIndex = currentTournaments.findIndex(t => t.id === tournamentId);
+      
+      if (tournamentIndex === -1) {
+        throw new Error('Tournament not found for update');
       }
-      return updated;
+      
+      // Create updated tournament object
+      const updatedTournament = {
+        ...currentTournaments[tournamentIndex],
+        ...updates,
+        id: tournamentId // Ensure ID doesn't change
+      };
+      
+      currentTournaments[tournamentIndex] = updatedTournament;
+      await this.saveTournaments(currentTournaments);
+      return updatedTournament;
     } catch (error) {
       throw new StorageError('Failed to update tournament', 'localStorage', 'updateTournament', error as Error);
     }

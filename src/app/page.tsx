@@ -6,11 +6,15 @@ import StartScreen from '@/components/StartScreen';
 import { useState, useEffect } from 'react';
 import { getCurrentGameIdSetting } from '@/utils/appSettings';
 import { getSavedGames } from '@/utils/savedGames';
+import { useAuthStorage } from '@/hooks/useAuthStorage';
 
 export default function Home() {
   const [screen, setScreen] = useState<'start' | 'home'>('start');
   const [initialAction, setInitialAction] = useState<'newGame' | 'loadGame' | 'resumeGame' | 'season' | 'stats' | null>(null);
   const [canResume, setCanResume] = useState(false);
+  
+  // Sync auth state with storage manager
+  useAuthStorage();
 
   useEffect(() => {
     const checkResume = async () => {

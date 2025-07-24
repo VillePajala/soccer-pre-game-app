@@ -1,5 +1,5 @@
 import type { Tournament } from '@/types'; // Import Tournament type from shared types
-import { storageManager } from '@/lib/storage';
+import { authAwareStorageManager as storageManager } from '@/lib/storage';
 import logger from '@/utils/logger';
 
 // Define the Tournament type (consider moving to a shared types file)
