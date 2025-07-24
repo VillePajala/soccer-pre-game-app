@@ -1,5 +1,5 @@
 import { Player } from '@/types'; // Assuming Player type is in @/types
-import { storageManager } from '@/lib/storage';
+import { authAwareStorageManager as storageManager } from '@/lib/storage';
 import logger from '@/utils/logger';
 
 /**

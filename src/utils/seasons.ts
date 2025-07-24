@@ -1,5 +1,5 @@
 import type { Season } from '@/types'; // Import Season type from shared types
-import { storageManager } from '@/lib/storage';
+import { authAwareStorageManager as storageManager } from '@/lib/storage';
 import logger from '@/utils/logger';
 
 // Define the Season type (consider moving to a shared types file if not already there)

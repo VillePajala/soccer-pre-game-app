@@ -37,6 +37,13 @@ export function isFallbackDisabled(): boolean {
 }
 
 /**
+ * Check if offline cache is enabled
+ */
+export function isOfflineCacheEnabled(): boolean {
+  return process.env.NEXT_PUBLIC_ENABLE_OFFLINE_CACHE === 'true';
+}
+
+/**
  * Get provider type as string for logging/debugging
  */
 export function getProviderType(): 'localStorage' | 'supabase' {

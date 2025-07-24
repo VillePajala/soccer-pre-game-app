@@ -1,4 +1,4 @@
-import { storageManager } from '@/lib/storage';
+import { authAwareStorageManager as storageManager } from '@/lib/storage';
 import logger from '@/utils/logger';
 /**
  * Interface for application settings

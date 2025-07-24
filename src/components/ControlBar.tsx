@@ -37,6 +37,7 @@ import { FaFutbol } from 'react-icons/fa';
 // Import translation hook
 import { useTranslation } from 'react-i18next';
 import logger from '@/utils/logger';
+import { AuthButton } from '@/components/auth/AuthButton';
 
 // Define props for ControlBar
 interface ControlBarProps {
@@ -255,6 +256,11 @@ const ControlBar: React.FC<ControlBarProps> = ({
             {showLargeTimerOverlay ? <HiOutlineStopCircle className={iconSize} /> : <HiOutlineClock className={iconSize} />}
         </button>
         
+        {/* Auth Button */}
+        <AuthButton 
+          className={`${baseButtonStyle} ${secondaryColor}`}
+          iconSize={iconSize}
+        />
         
         {/* Settings Menu Button (REMAINING) */}
         <div className="relative" ref={settingsMenuRef}>

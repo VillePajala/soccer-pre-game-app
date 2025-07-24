@@ -25,6 +25,7 @@ import { useGameState, UseGameStateReturn } from '@/hooks/useGameState';
 import GameInfoBar from '@/components/GameInfoBar';
 import { useGameTimer } from '@/hooks/useGameTimer';
 import useAutoBackup from '@/hooks/useAutoBackup';
+import { useMigrationTrigger } from '@/hooks/useMigrationTrigger';
 // Import the new game session reducer and related types
 import {
   gameSessionReducer,
@@ -395,6 +396,9 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   const [hasSkippedInitialSetup, setHasSkippedInitialSetup] = useState<boolean>(skipInitialSetup);
 
   useAutoBackup();
+  
+  // Migration trigger
+  const { MigrationModalComponent } = useMigrationTrigger();
 
   const {
     isGameSettingsModalOpen,
@@ -1984,6 +1988,9 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         onSave={handleSavePlayerAssessment}
         onDelete={handleDeletePlayerAssessment}
       />
+      
+      {/* Migration Modal */}
+      {MigrationModalComponent}
     </main>
   );
 }
