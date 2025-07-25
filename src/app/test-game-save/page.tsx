@@ -120,7 +120,7 @@ export default function TestGameSavePage() {
       addLog('ERROR checking games: ' + JSON.stringify(error));
     } else {
       addLog(`Found ${data?.length || 0} games:`);
-      data?.forEach((game, i) => {
+      data?.forEach((game: { id: string; team_name: string; opponent_name: string }, i) => {
         addLog(`${i + 1}. ${game.team_name} vs ${game.opponent_name} (${game.id.substring(0, 8)}...)`);
       });
     }
