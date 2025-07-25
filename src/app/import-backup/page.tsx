@@ -135,6 +135,7 @@ export default function ImportBackupPage() {
         const game = savedGames[gameId];
         if (game && typeof game === 'object') {
           // Don't include any ID - let Supabase generate a new UUID
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { id, ...gameWithoutId } = game;
           await storageManager.saveSavedGame(gameWithoutId);
           stats.games++;
