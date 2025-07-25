@@ -429,7 +429,7 @@ export class SupabaseProvider implements IStorageProvider {
   }
 
   // Saved games (simplified - using games table)
-  async getSavedGames(): Promise<unknown[]> {
+  async getSavedGames(): Promise<unknown> {
     try {
       const userId = await this.getCurrentUserId();
       const { data, error } = await supabase
@@ -442,7 +442,14 @@ export class SupabaseProvider implements IStorageProvider {
         throw new NetworkError('supabase', 'getSavedGames', error);
       }
 
-      return data.map(fromSupabase.game);
+      // Convert array to object format expected by the app
+      const gamesCollection: Record<string, unknown> = {};
+      data.forEach(game => {
+        const transformedGame = fromSupabase.game(game);
+        gamesCollection[game.id] = transformedGame;
+      });
+      
+      return gamesCollection;
     } catch (error) {
       if (error instanceof AuthenticationError || error instanceof NetworkError) {
         throw error;
