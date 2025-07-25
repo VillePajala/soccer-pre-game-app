@@ -4,7 +4,22 @@ import { useEffect, useState } from 'react';
 import { authAwareStorageManager as storageManager } from '@/lib/storage';
 
 export default function CheckDataPage() {
-  const [data, setData] = useState<any>({});
+  const [data, setData] = useState<{
+    provider?: string;
+    currentData?: {
+      players: number;
+      seasons: number;
+      tournaments: number;
+      games: number;
+    };
+    localStorageData?: {
+      players: number;
+      seasons: number;
+      tournaments: number;
+      games: number;
+    };
+    error?: string;
+  }>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
