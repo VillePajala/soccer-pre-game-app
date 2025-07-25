@@ -84,9 +84,9 @@ export default function TestAuthPage() {
       <div className="bg-red-100 p-6 rounded-lg">
         <h2 className="text-xl font-semibold">Troubleshooting Steps</h2>
         <ol className="list-decimal list-inside space-y-2">
-          <li>Check if the icon appears in the "Icon Test" section above</li>
-          <li>Check if AuthButton renders in the "Direct AuthButton Render" section</li>
-          <li>Verify the environment variable value matches exactly "true"</li>
+          <li>Check if the icon appears in the &quot;Icon Test&quot; section above</li>
+          <li>Check if AuthButton renders in the &quot;Direct AuthButton Render&quot; section</li>
+          <li>Verify the environment variable value matches exactly &quot;true&quot;</li>
           <li>Check the browser console for any errors</li>
           <li>Inspect the top-right corner of your main app - the button might be there but hard to see</li>
         </ol>

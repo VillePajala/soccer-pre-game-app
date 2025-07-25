@@ -12,7 +12,7 @@ export default function TopBarDebug() {
   return (
     <div className="fixed top-0 left-0 right-0 bg-yellow-200 text-black p-2 z-50">
       <div className="text-xs space-y-1">
-        <p>TopBarDebug - ENV: {envValue || 'undefined'} | === "true": {checkString ? 'YES' : 'NO'} | truthy: {checkTruthy ? 'YES' : 'NO'}</p>
+        <p>TopBarDebug - ENV: {envValue || 'undefined'} | === &quot;true&quot;: {checkString ? 'YES' : 'NO'} | truthy: {checkTruthy ? 'YES' : 'NO'}</p>
         <div className="flex gap-2 items-center">
           <span>Always show button:</span>
           <AuthButton 
