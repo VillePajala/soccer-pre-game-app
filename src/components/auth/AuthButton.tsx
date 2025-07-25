@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { HiOutlineUser, HiOutlineArrowRightOnRectangle } from 'react-icons/hi2';
 import { AuthModal } from './AuthModal';
@@ -16,11 +16,28 @@ export function AuthButton({ className = '', iconSize = 'w-5 h-5' }: AuthButtonP
   const { t } = useTranslation();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
+      }
+    };
+    
+    if (showUserMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showUserMenu]);
 
   const handleAuthClick = () => {
+    console.log('[AuthButton] Clicked, user:', user);
     if (user) {
       setShowUserMenu(!showUserMenu);
     } else {
+      console.log('[AuthButton] Opening auth modal');
       setShowAuthModal(true);
     }
   };
@@ -40,7 +57,7 @@ export function AuthButton({ className = '', iconSize = 'w-5 h-5' }: AuthButtonP
 
   return (
     <>
-      <div className="relative">
+      <div className="relative" ref={menuRef}>
         <button
           onClick={handleAuthClick}
           className={className}
@@ -51,7 +68,7 @@ export function AuthButton({ className = '', iconSize = 'w-5 h-5' }: AuthButtonP
 
         {/* User menu dropdown */}
         {user && showUserMenu && (
-          <div className="absolute bottom-full right-0 mb-2 w-48 bg-slate-800 rounded-md shadow-lg py-1 z-50">
+          <div className="absolute top-full right-0 mt-2 w-48 bg-slate-800 rounded-md shadow-lg py-1 z-50">
             <div className="px-4 py-2 text-sm text-slate-300 border-b border-slate-700">
               {user.email}
             </div>
