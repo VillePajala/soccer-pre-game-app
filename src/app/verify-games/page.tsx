@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 
 export default function VerifyGamesPage() {
   const { user } = useAuth();
-  const [games, setGames] = useState<any[]>([]);
+  const [games, setGames] = useState<Array<Record<string, unknown>>>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -73,22 +73,22 @@ export default function VerifyGamesPage() {
 
       <div className="space-y-4">
         {games.map((game, index) => (
-          <div key={game.id} className="bg-gray-100 p-4 rounded-lg">
+          <div key={String(game.id)} className="bg-gray-100 p-4 rounded-lg">
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="font-semibold">Game {index + 1}</h3>
-                <p><strong>ID:</strong> {game.id}</p>
-                <p><strong>Team:</strong> {game.teamName || 'No team name'}</p>
-                <p><strong>Opponent:</strong> {game.opponentName || 'No opponent name'}</p>
-                <p><strong>Score:</strong> {game.homeScore || 0} - {game.awayScore || 0}</p>
-                <p><strong>Date:</strong> {game.gameDate || 'No date'}</p>
-                <p><strong>Status:</strong> {game.gameStatus || 'No status'}</p>
-                {game.opponentName && game.opponentName.match(/^\d+$/) && (
+                <p><strong>ID:</strong> {String(game.id)}</p>
+                <p><strong>Team:</strong> {String(game.teamName || 'No team name')}</p>
+                <p><strong>Opponent:</strong> {String(game.opponentName || 'No opponent name')}</p>
+                <p><strong>Score:</strong> {Number(game.homeScore || 0)} - {Number(game.awayScore || 0)}</p>
+                <p><strong>Date:</strong> {String(game.gameDate || 'No date')}</p>
+                <p><strong>Status:</strong> {String(game.gameStatus || 'No status')}</p>
+                {game.opponentName && String(game.opponentName).match(/^\d+$/) && (
                   <p className="text-red-600 font-semibold">⚠️ Opponent name appears to be corrupted!</p>
                 )}
               </div>
               <button
-                onClick={() => deleteGame(game.id)}
+                onClick={() => deleteGame(String(game.id))}
                 className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
               >
                 Delete
