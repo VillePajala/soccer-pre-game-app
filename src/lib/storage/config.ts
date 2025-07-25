@@ -53,17 +53,19 @@ export function getProviderType(): 'localStorage' | 'supabase' {
 /**
  * Validate that required environment variables are set when Supabase is enabled
  */
-export function validateSupabaseConfig(): void {
+export function validateSupabaseConfig(): boolean {
   if (isSupabaseEnabled() && process.env.NODE_ENV !== 'test') {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     
     if (!url || !key) {
-      throw new Error(
+      console.error(
         'Supabase is enabled but required environment variables are missing.\n' +
-        'Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in your .env.local file.\n' +
-        'See .env.example for reference.'
+        'Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in your environment.\n' +
+        'See .env.example for reference.\n' +
+        'Falling back to localStorage.'
       );
+      return false;
     }
     
     // Basic URL validation
@@ -75,7 +77,11 @@ export function validateSupabaseConfig(): void {
     if (key.length < 32) {
       console.warn('Warning: NEXT_PUBLIC_SUPABASE_ANON_KEY appears to be too short');
     }
+    
+    return true;
   }
+  
+  return false;
 }
 
 /**
