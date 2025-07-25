@@ -239,13 +239,20 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
   };
 
   const handleRestore = () => {
+    // Clear the file input value to ensure onChange fires even for same file
+    if (restoreFileInputRef.current) {
+      restoreFileInputRef.current.value = '';
+    }
     restoreFileInputRef.current?.click();
   };
   
   const handleRestoreFileSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     console.log('[LoadGameModal] File selected:', file?.name, file?.size);
-    if (!file) return;
+    if (!file) {
+      console.log('[LoadGameModal] No file selected');
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = async (e) => {

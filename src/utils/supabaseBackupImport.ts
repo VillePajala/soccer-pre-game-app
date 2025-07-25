@@ -107,6 +107,21 @@ export async function importBackupToSupabase(jsonContent: string): Promise<{
       settings: false
     };
     
+    // Check if user wants to proceed
+    if (!window.confirm(
+      `This will import:\n` +
+      `- ${playersToImport.length} players\n` +
+      `- ${seasonsToImport.length} seasons\n` +
+      `- ${tournamentsToImport.length} tournaments\n` +
+      `- ${Object.keys(gamesToImport).length} games\n\n` +
+      `This will merge with your existing data. Continue?`
+    )) {
+      return {
+        success: false,
+        message: 'Import cancelled by user'
+      };
+    }
+    
     // Import players
     logger.log(`[SupabaseBackupImport] Importing ${playersToImport.length} players...`);
     for (const player of playersToImport) {
