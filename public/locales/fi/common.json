@@ -386,7 +386,8 @@
     "languageFinnish": "Suomi",
     "createSeasonTournament": "Luo kausi/turnaus",
     "viewStats": "Näytä tilastot",
-    "backupNow": "Varmuuskopioi nyt"
+    "backupNow": "Varmuuskopioi nyt",
+    "explore": "Tutki sovellusta"
   },
   "seasonTournamentModal": {
     "confirmDelete": "Haluatko varmasti poistaa {{name}}?",
