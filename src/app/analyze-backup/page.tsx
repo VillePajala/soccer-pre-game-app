@@ -37,6 +37,7 @@ export default function AnalyzeBackupPage() {
 
       // Check localStorage structure
       if (data.localStorage) {
+        if (!analysis.structure) analysis.structure = {};
         analysis.structure.localStorage = {
           keys: Object.keys(data.localStorage),
           masterRoster: Array.isArray(data.localStorage.masterRoster) 
@@ -72,6 +73,7 @@ export default function AnalyzeBackupPage() {
       }
 
       // Check direct structure
+      if (!analysis.structure) analysis.structure = {};
       analysis.structure.direct = {
         players: Array.isArray(data.players) ? data.players.length : 'Not found',
         seasons: Array.isArray(data.seasons) ? data.seasons.length : 'Not found',
