@@ -48,7 +48,7 @@ export default function CheckDataPage() {
             players: players.length,
             seasons: seasons.length,
             tournaments: tournaments.length,
-            games: Object.keys(games).length
+            games: Object.keys(games as Record<string, unknown>).length
           },
           localStorageData: {
             players: localStorageData.masterRoster.length,
