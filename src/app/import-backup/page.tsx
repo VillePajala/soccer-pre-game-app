@@ -134,9 +134,9 @@ export default function ImportBackupPage() {
       try {
         const game = savedGames[gameId];
         if (game && typeof game === 'object') {
-          // Ensure game has an ID and clear it for Supabase
-          const gameToSave = { ...game, id: '' };
-          await storageManager.saveSavedGame(gameToSave);
+          // Don't include any ID - let Supabase generate a new UUID
+          const { id, ...gameWithoutId } = game;
+          await storageManager.saveSavedGame(gameWithoutId);
           stats.games++;
           addLog(`Imported game: ${game.teamName || 'Unknown'} vs ${game.opponentName || 'Unknown'}`, 'info');
         }

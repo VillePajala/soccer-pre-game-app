@@ -172,10 +172,17 @@ export async function importBackupToSupabase(jsonContent: string): Promise<{
       try {
         const game = gamesToImport[gameId];
         if (game && typeof game === 'object') {
-          // Ensure the game has an ID
-          const gameWithId = { ...game, id: gameId };
-          logger.log(`[SupabaseBackupImport] Importing game ${gameId}`);
-          await storageManager.saveSavedGame(gameWithId);
+          // Don't include the original game ID - let Supabase generate a new one
+          // The old game ID format (game_1745586344283_mvfcd9b) is not a valid UUID
+          logger.log(`[SupabaseBackupImport] Importing game: ${game.teamName} vs ${game.opponentName}`);
+          console.log('[SupabaseBackupImport] Game data:', {
+            teamName: game.teamName,
+            opponentName: game.opponentName,
+            homeScore: game.homeScore,
+            awayScore: game.awayScore,
+            gameDate: game.gameDate
+          });
+          await storageManager.saveSavedGame(game);
           stats.games++;
         }
       } catch (error) {
