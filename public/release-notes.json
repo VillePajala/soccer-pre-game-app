@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "feat: add debug components and environment checks for auth functionality"
+  "notes": "feat: add check-supabase-games page to debug game storage"
 }
