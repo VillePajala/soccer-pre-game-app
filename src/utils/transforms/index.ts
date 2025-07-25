@@ -144,7 +144,7 @@ export const toSupabase = {
     return result;
   },
 
-  game: (gameData: unknown, userId: string) => {
+  game: (gameData: unknown, userId: string): Record<string, unknown> => {
     const game = gameData as Record<string, unknown>;
     const result: Record<string, unknown> = {
       user_id: userId,

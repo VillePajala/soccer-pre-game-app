@@ -195,6 +195,10 @@ export default function ImportBackupPage() {
       addLog('=== IMPORT COMPLETE ===', 'success');
       addLog(`Total imported: ${stats.players} players, ${stats.seasons} seasons, ${stats.tournaments} tournaments, ${stats.games} games`, 'success');
 
+      // Wait a moment for database to commit
+      addLog('Waiting for database sync...');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
       // Verify
       addLog('Verifying import...');
       const [newPlayers, newSeasons, newTournaments, newGames] = await Promise.all([

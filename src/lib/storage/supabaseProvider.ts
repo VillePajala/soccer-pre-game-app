@@ -463,22 +463,47 @@ export class SupabaseProvider implements IStorageProvider {
     console.log('[SupabaseProvider] saveSavedGame called with:', gameData);
     try {
       const userId = await this.getCurrentUserId();
-      const supabaseGame = toSupabase.game(gameData, userId);
+      const supabaseGame = toSupabase.game(gameData, userId) as Record<string, unknown> & { id?: string };
       console.log('[SupabaseProvider] Transformed game for Supabase:', supabaseGame);
+      console.log('[SupabaseProvider] Game has ID:', !!supabaseGame.id);
 
-      const { data, error } = await supabase
-        .from('games')
-        .upsert(supabaseGame, { onConflict: 'id' })
-        .select()
-        .single();
-
-      if (error) {
-        console.error('[SupabaseProvider] Error saving game:', error);
-        throw new NetworkError('supabase', 'saveSavedGame', error);
+      let result;
+      
+      // If game has no ID, do an insert (not upsert)
+      if (!supabaseGame.id) {
+        console.log('[SupabaseProvider] Inserting new game (no ID)');
+        const { data, error } = await supabase
+          .from('games')
+          .insert(supabaseGame)
+          .select()
+          .single();
+          
+        if (error) {
+          console.error('[SupabaseProvider] Error inserting game:', error);
+          console.error('[SupabaseProvider] Game data that failed:', JSON.stringify(supabaseGame, null, 2));
+          throw new NetworkError('supabase', 'saveSavedGame', error);
+        }
+        result = data;
+      } else {
+        console.log('[SupabaseProvider] Upserting game with ID:', supabaseGame.id);
+        const { data, error } = await supabase
+          .from('games')
+          .upsert(supabaseGame, { onConflict: 'id' })
+          .select()
+          .single();
+          
+        if (error) {
+          console.error('[SupabaseProvider] Error upserting game:', error);
+          console.error('[SupabaseProvider] Game data that failed:', JSON.stringify(supabaseGame, null, 2));
+          throw new NetworkError('supabase', 'saveSavedGame', error);
+        }
+        result = data;
       }
 
-      return fromSupabase.game(data);
+      console.log('[SupabaseProvider] Game saved successfully:', (result as Record<string, unknown>).id);
+      return fromSupabase.game(result);
     } catch (error) {
+      console.error('[SupabaseProvider] saveSavedGame error:', error);
       if (error instanceof AuthenticationError || error instanceof NetworkError) {
         throw error;
       }
