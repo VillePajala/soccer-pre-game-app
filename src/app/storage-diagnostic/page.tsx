@@ -8,19 +8,19 @@ import { useAuth } from '@/context/AuthContext';
 
 export default function StorageDiagnosticPage() {
   const { user, loading: authLoading } = useAuth();
-  const [diagnostics, setDiagnostics] = useState<any>({});
+  const [diagnostics, setDiagnostics] = useState<Record<string, unknown>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const runDiagnostics = async () => {
       try {
         // Get base manager info
-        let baseManager = storageManager;
+        const baseManager = storageManager;
         let actualManager = baseManager;
         
         // Check if wrapped in offline cache
         if (baseManager instanceof OfflineCacheManager) {
-          actualManager = (baseManager as any).primaryProvider;
+          actualManager = (baseManager as unknown as { primaryProvider: AuthAwareStorageManager }).primaryProvider;
         }
         
         // Get auth state
@@ -54,7 +54,7 @@ export default function StorageDiagnosticPage() {
           'savedGames'
         ];
         
-        const localStorageData: any = {};
+        const localStorageData: Record<string, number | string> = {};
         localStorageKeys.forEach(key => {
           try {
             const value = localStorage.getItem(key);
@@ -64,7 +64,7 @@ export default function StorageDiagnosticPage() {
             } else {
               localStorageData[key] = 0;
             }
-          } catch (e) {
+          } catch {
             localStorageData[key] = 'error';
           }
         });
@@ -132,8 +132,8 @@ export default function StorageDiagnosticPage() {
           {diagnostics.storageManager?.currentProviderName === 'localStorage' && diagnostics.auth?.user !== 'Not signed in' && (
             <p>• You are signed in but still using localStorage. The auth state may not have synced.</p>
           )}
-          {diagnostics.localStorage && Object.values(diagnostics.localStorage).some((v: any) => v > 0) && 
-           diagnostics.currentData && Object.values(diagnostics.currentData).some((v: any) => v === 0 || v?.error) && (
+          {diagnostics.localStorage && Object.values(diagnostics.localStorage as Record<string, unknown>).some((v) => typeof v === 'number' && v > 0) && 
+           diagnostics.currentData && Object.values(diagnostics.currentData as Record<string, unknown>).some((v) => v === 0 || (v && typeof v === 'object' && 'error' in v)) && (
             <p>• Data exists in localStorage but not in current storage provider.</p>
           )}
         </div>
