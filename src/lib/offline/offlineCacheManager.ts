@@ -242,7 +242,7 @@ export class OfflineCacheManager implements IStorageProvider {
     return this.saveWithCache('appSettings', settings, () => this.primaryProvider.saveAppSettings(settings));
   }
 
-  async getSavedGames(): Promise<unknown[]> {
+  async getSavedGames(): Promise<unknown> {
     return this.getCachedOrFetch('savedGames', () => this.primaryProvider.getSavedGames());
   }
 
