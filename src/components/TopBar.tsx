@@ -5,7 +5,9 @@ import { AuthButton } from '@/components/auth/AuthButton';
 
 export default function TopBar() {
   // Only show auth button if Supabase is enabled
-  const showAuthButton = process.env.NEXT_PUBLIC_ENABLE_SUPABASE === 'true';
+  // Check for both 'true' and 'True' to handle case sensitivity
+  const envValue = process.env.NEXT_PUBLIC_ENABLE_SUPABASE;
+  const showAuthButton = envValue === 'true' || envValue === 'True';
   
   if (!showAuthButton) {
     return null;
