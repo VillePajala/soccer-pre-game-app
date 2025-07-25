@@ -83,7 +83,7 @@ export default function TestSupabasePage() {
       <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded">
         <h2 className="font-semibold mb-2">Test Results:</h2>
         {results.length === 0 ? (
-          <p className="text-gray-500">Click "Run Tests" to start</p>
+          <p className="text-gray-500">Click &quot;Run Tests&quot; to start</p>
         ) : (
           <ul className="space-y-1 font-mono text-sm">
             {results.map((result, index) => (
@@ -95,7 +95,7 @@ export default function TestSupabasePage() {
 
       <div className="mt-4 p-4 bg-yellow-100 dark:bg-yellow-900 rounded">
         <p className="text-sm">
-          This page tests your Supabase connection. Make sure you're logged in first!
+          This page tests your Supabase connection. Make sure you&apos;re logged in first!
         </p>
       </div>
     </div>
