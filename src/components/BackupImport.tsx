@@ -37,7 +37,7 @@ export const BackupImport: React.FC<BackupImportProps> = ({ onClose, onSuccess }
         await queryClient.invalidateQueries({ queryKey: queryKeys.seasons });
         await queryClient.invalidateQueries({ queryKey: queryKeys.tournaments });
         await queryClient.invalidateQueries({ queryKey: queryKeys.savedGames });
-        await queryClient.invalidateQueries({ queryKey: queryKeys.appSettings });
+        await queryClient.invalidateQueries({ queryKey: queryKeys.appSettingsCurrentGameId });
         
         // Call success callback after a delay
         setTimeout(() => {
