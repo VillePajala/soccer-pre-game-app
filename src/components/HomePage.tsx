@@ -1550,7 +1550,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     setNewGameDemandFactor(1);
 
   // REMOVED initialState from dependencies
-  }, []); // Removed setter functions from dependencies
+  }, [setIsNewGameSetupModalOpen]); // Added setter function to dependencies
 
   // --- Start New Game Handler (Uses Quick Save) ---
   const handleStartNewGame = useCallback(() => {

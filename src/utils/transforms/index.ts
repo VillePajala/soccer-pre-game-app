@@ -120,7 +120,7 @@ export const toSupabase = {
     const result: Record<string, unknown> = {
       user_id: userId,
       language: settings.language || 'en',
-      default_team_name: settings.defaultTeamName || settings.lastHomeTeamName,
+      default_team_name: settings.lastHomeTeamName,
       auto_backup_enabled: settings.autoBackupEnabled || false,
       auto_backup_interval_hours: settings.autoBackupIntervalHours || 24,
       last_backup_time: settings.lastBackupTime,
@@ -145,7 +145,7 @@ export const toSupabase = {
   },
 
   game: (gameData: unknown, userId: string) => {
-    const game = gameData as any;
+    const game = gameData as Record<string, unknown>;
     const result: Record<string, unknown> = {
       user_id: userId,
       team_name: game.teamName || game.homeTeam || '',
@@ -170,7 +170,7 @@ export const toSupabase = {
     // Only include id if it's a valid UUID (not the app's custom format)
     // Otherwise, let Supabase generate a new UUID
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (game.id && uuidRegex.test(game.id)) {
+    if (game.id && typeof game.id === 'string' && uuidRegex.test(game.id)) {
       result.id = game.id;
     }
     

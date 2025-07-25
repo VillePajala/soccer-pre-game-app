@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 
 function ResetPasswordForm() {
@@ -12,39 +13,42 @@ function ResetPasswordForm() {
   const [success, setSuccess] = useState(false);
   const [isValidToken, setIsValidToken] = useState(false);
   const router = useRouter();
-  const searchParams = useSearchParams();
+  useSearchParams(); // Required for Suspense boundary
 
   useEffect(() => {
-    // Supabase sends the recovery token in the URL hash fragment
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const accessToken = hashParams.get('access_token');
-    const type = hashParams.get('type');
+    const checkSession = async () => {
+      // Supabase sends the recovery token in the URL hash fragment
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = hashParams.get('access_token');
+      const type = hashParams.get('type');
 
-    if (type === 'recovery' && accessToken) {
-      // We have a valid recovery token
-      setIsValidToken(true);
-      
-      // Set the session with the recovery token
-      supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: hashParams.get('refresh_token') || '',
-      }).then(({ error }) => {
+      if (type === 'recovery' && accessToken) {
+        // We have a valid recovery token
+        setIsValidToken(true);
+        
+        // Set the session with the recovery token
+        const { error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: hashParams.get('refresh_token') || '',
+        });
+        
         if (error) {
           console.error('Error setting session:', error);
           setError('Invalid or expired reset link. Please request a new password reset.');
           setIsValidToken(false);
         }
-      });
-    } else {
-      // Check if we already have a recovery session
-      supabase.auth.getSession().then(({ data: { session } }) => {
+      } else {
+        // Check if we already have a recovery session
+        const { data: { session } } = await supabase.auth.getSession();
         if (session?.user?.recovery_sent_at) {
           setIsValidToken(true);
         } else {
           setError('Invalid or expired reset link. Please request a new password reset.');
         }
-      });
-    }
+      }
+    };
+
+    checkSession();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -76,7 +80,7 @@ function ResetPasswordForm() {
           router.push('/');
         }, 3000);
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred');
     } finally {
       setLoading(false);
@@ -100,9 +104,9 @@ function ResetPasswordForm() {
         <div className="bg-gray-800 rounded-lg p-8 max-w-md w-full text-center">
           <h1 className="text-2xl font-bold text-red-400 mb-4">Invalid Reset Link</h1>
           <p className="text-gray-300 mb-4">{error}</p>
-          <a href="/" className="text-blue-400 hover:underline">
+          <Link href="/" className="text-blue-400 hover:underline">
             Back to app
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -161,9 +165,9 @@ function ResetPasswordForm() {
           </button>
 
           <div className="text-center mt-4">
-            <a href="/" className="text-blue-400 hover:underline text-sm">
+            <Link href="/" className="text-blue-400 hover:underline text-sm">
               Back to app
-            </a>
+            </Link>
           </div>
         </form>
       </div>

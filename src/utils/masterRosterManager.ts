@@ -37,7 +37,7 @@ export const addPlayer = async (
             receivedFairPlayCard: false,
             ...playerData
         };
-        logger.log('[masterRosterManager] Current storage provider:', (storageManager as any).getCurrentProviderName?.());
+        logger.log('[masterRosterManager] Current storage provider:', storageManager.getProviderName?.());
         logger.log('[masterRosterManager] Calling storageManager.savePlayer...');
         const newPlayer = await storageManager.savePlayer(player);
         logger.log('[masterRosterManager] Player added:', newPlayer);

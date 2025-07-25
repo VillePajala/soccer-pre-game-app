@@ -75,8 +75,8 @@ export async function checkMigrationStatus(userId: string): Promise<MigrationSta
       errorMessage: migrationRecord.error_message,
       dataTypes: localData,
     };
-  } catch (error: any) {
-    console.warn('Migration status check failed:', error?.message || 'Unknown error');
+  } catch (error) {
+    console.warn('Migration status check failed:', error instanceof Error ? error.message : 'Unknown error');
     // Return default status if we can't check Supabase
     return {
       userId,
