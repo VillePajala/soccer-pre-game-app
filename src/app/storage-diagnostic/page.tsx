@@ -31,7 +31,7 @@ export default function StorageDiagnosticPage() {
 
         // Get provider info
         const providerName = storageManager.getProviderName?.() || 'unknown';
-        const currentProviderName = actualManager.getCurrentProviderName?.() || 'unknown';
+        const currentProviderName = actualManager.getProviderName?.() || 'unknown';
         
         // Check Supabase config
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
