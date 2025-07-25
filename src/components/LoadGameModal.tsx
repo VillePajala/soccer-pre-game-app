@@ -244,28 +244,39 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
   
   const handleRestoreFileSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+    console.log('[LoadGameModal] File selected:', file?.name, file?.size);
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = async (e) => {
       const jsonContent = e.target?.result as string;
+      console.log('[LoadGameModal] File read, content length:', jsonContent?.length);
       if (jsonContent) {
         // Check if we're using Supabase
         const providerName = storageManager.getProviderName?.() || 'localStorage';
+        console.log('[LoadGameModal] Current storage provider:', providerName);
         
         if (providerName === 'supabase') {
-          // Use the new Supabase-aware import
-          const result = await importBackupToSupabase(jsonContent);
-          if (result.success) {
-            alert(result.message);
-            // Reload to refresh all data (same as localStorage import)
-            setTimeout(() => {
-              window.location.reload();
-            }, 500);
-          } else {
-            alert(t('loadGameModal.importError', { defaultValue: 'Import failed: ' }) + result.message);
+          try {
+            console.log('[LoadGameModal] Using Supabase import...');
+            // Use the new Supabase-aware import
+            const result = await importBackupToSupabase(jsonContent);
+            console.log('[LoadGameModal] Import result:', result);
+            if (result.success) {
+              alert(result.message);
+              // Reload to refresh all data (same as localStorage import)
+              setTimeout(() => {
+                window.location.reload();
+              }, 500);
+            } else {
+              alert(t('loadGameModal.importError', { defaultValue: 'Import failed: ' }) + result.message);
+            }
+          } catch (error) {
+            console.error('[LoadGameModal] Import error:', error);
+            alert(t('loadGameModal.importError', { defaultValue: 'Import failed: ' }) + (error instanceof Error ? error.message : 'Unknown error'));
           }
         } else {
+          console.log('[LoadGameModal] Using localStorage import...');
           // Use the old localStorage import for backwards compatibility
           importFullBackup(jsonContent);
         }
@@ -273,7 +284,10 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
         alert(t('loadGameModal.importReadError', 'Error reading file content.'));
       }
     };
-    reader.onerror = () => alert(t('loadGameModal.importReadError', 'Error reading file content.'));
+    reader.onerror = (error) => {
+      console.error('[LoadGameModal] FileReader error:', error);
+      alert(t('loadGameModal.importReadError', 'Error reading file content.'));
+    };
     reader.readAsText(file);
     event.target.value = '';
   };

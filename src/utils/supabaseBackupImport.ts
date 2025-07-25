@@ -43,9 +43,22 @@ export async function importBackupToSupabase(jsonContent: string): Promise<{
   };
 }> {
   logger.log('[SupabaseBackupImport] Starting import...');
+  console.log('[SupabaseBackupImport] Starting import with content length:', jsonContent.length);
+  
+  // Check authentication status
+  const providerName = storageManager.getProviderName?.() || 'unknown';
+  console.log('[SupabaseBackupImport] Current provider:', providerName);
   
   try {
     const backupData: BackupData = JSON.parse(jsonContent);
+    console.log('[SupabaseBackupImport] Parsed backup data:', {
+      hasLocalStorage: !!backupData.localStorage,
+      hasPlayers: !!backupData.players,
+      hasSeasons: !!backupData.seasons,
+      hasTournaments: !!backupData.tournaments,
+      hasSavedGames: !!backupData.savedGames,
+      keys: Object.keys(backupData)
+    });
     
     let playersToImport: Player[] = [];
     let seasonsToImport: Season[] = [];
@@ -56,12 +69,21 @@ export async function importBackupToSupabase(jsonContent: string): Promise<{
     // Check if it's the old localStorage format
     if (backupData.localStorage) {
       logger.log('[SupabaseBackupImport] Detected localStorage format backup');
+      console.log('[SupabaseBackupImport] localStorage keys:', Object.keys(backupData.localStorage));
       
       playersToImport = backupData.localStorage[MASTER_ROSTER_KEY] || [];
       seasonsToImport = backupData.localStorage[SEASONS_LIST_KEY] || [];
       tournamentsToImport = backupData.localStorage[TOURNAMENTS_LIST_KEY] || [];
       gamesToImport = backupData.localStorage[SAVED_GAMES_KEY] || {};
       settingsToImport = backupData.localStorage[APP_SETTINGS_KEY] || null;
+      
+      console.log('[SupabaseBackupImport] Data to import:', {
+        players: playersToImport.length,
+        seasons: seasonsToImport.length,
+        tournaments: tournamentsToImport.length,
+        games: Object.keys(gamesToImport).length,
+        hasSettings: !!settingsToImport
+      });
     } 
     // Or the new Supabase export format
     else if (backupData.players || backupData.seasons || backupData.tournaments) {
