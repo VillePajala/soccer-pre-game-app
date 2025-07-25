@@ -9,8 +9,8 @@ import { isSupabaseEnabled, validateSupabaseConfig, getConfigInfo } from '@/lib/
 
 export default function DebugStoragePage() {
   const { user, loading: authLoading } = useAuth();
-  const [status, setStatus] = useState<any>({});
-  const [managerInfo, setManagerInfo] = useState<any>({});
+  const [status, setStatus] = useState<Record<string, unknown>>({});
+  const [managerInfo, setManagerInfo] = useState<Record<string, unknown>>({});
 
   useEffect(() => {
     const checkStatus = async () => {
