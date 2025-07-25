@@ -72,10 +72,14 @@ export default function ImportBackupPage() {
     
     if (data.localStorage) {
       addLog('Detected localStorage format backup');
-      masterRoster = data.localStorage.masterRoster || [];
-      seasonsList = data.localStorage.seasonsList || [];
-      tournamentsList = data.localStorage.tournamentsList || [];
-      savedGames = data.localStorage.savedGames || {};
+      // Check for both old and new key names
+      masterRoster = data.localStorage.masterRoster || data.localStorage.soccerMasterRoster || [];
+      seasonsList = data.localStorage.seasonsList || data.localStorage.soccerSeasons || [];
+      tournamentsList = data.localStorage.tournamentsList || data.localStorage.soccerTournaments || [];
+      savedGames = data.localStorage.savedGames || data.localStorage.savedSoccerGames || {};
+      
+      // Log what we found
+      addLog(`Found keys: ${Object.keys(data.localStorage).join(', ')}`);
     } else {
       addLog('Detected direct format backup');
       masterRoster = data.players || data.masterRoster || [];

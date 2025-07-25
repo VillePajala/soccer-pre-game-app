@@ -71,11 +71,17 @@ export async function importBackupToSupabase(jsonContent: string): Promise<{
       logger.log('[SupabaseBackupImport] Detected localStorage format backup');
       console.log('[SupabaseBackupImport] localStorage keys:', Object.keys(backupData.localStorage));
       
-      playersToImport = backupData.localStorage[MASTER_ROSTER_KEY] || [];
-      seasonsToImport = backupData.localStorage[SEASONS_LIST_KEY] || [];
-      tournamentsToImport = backupData.localStorage[TOURNAMENTS_LIST_KEY] || [];
-      gamesToImport = backupData.localStorage[SAVED_GAMES_KEY] || {};
-      settingsToImport = backupData.localStorage[APP_SETTINGS_KEY] || null;
+      // Check for both old and new key names
+      playersToImport = backupData.localStorage[MASTER_ROSTER_KEY] || 
+                       backupData.localStorage['soccerMasterRoster'] || [];
+      seasonsToImport = backupData.localStorage[SEASONS_LIST_KEY] || 
+                       backupData.localStorage['soccerSeasons'] || [];
+      tournamentsToImport = backupData.localStorage[TOURNAMENTS_LIST_KEY] || 
+                           backupData.localStorage['soccerTournaments'] || [];
+      gamesToImport = backupData.localStorage[SAVED_GAMES_KEY] || 
+                     backupData.localStorage['savedSoccerGames'] || {};
+      settingsToImport = backupData.localStorage[APP_SETTINGS_KEY] || 
+                        backupData.localStorage['soccerAppSettings'] || null;
       
       console.log('[SupabaseBackupImport] Data to import:', {
         players: playersToImport.length,
