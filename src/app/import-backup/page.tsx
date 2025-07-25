@@ -161,6 +161,14 @@ export default function ImportBackupPage() {
         return;
       }
 
+      // Check if using Supabase
+      if (!storageManager.getProviderName?.().includes('supabase')) {
+        addLog('WARNING: Not using Supabase storage! The storage manager is using localStorage.', 'error');
+        addLog('This usually means the auth state is not synced properly.', 'error');
+        addLog('Try going to /fix-auth first to sync auth state.', 'error');
+        return;
+      }
+
       const text = await file.text();
       addLog(`File read successfully, size: ${text.length} characters`);
 
