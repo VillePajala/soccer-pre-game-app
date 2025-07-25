@@ -6,9 +6,34 @@ import { AuthAwareStorageManager } from '@/lib/storage/authAwareStorageManager';
 import { OfflineCacheManager } from '@/lib/offline/offlineCacheManager';
 import { useAuth } from '@/context/AuthContext';
 
+interface Diagnostics {
+  timestamp?: string;
+  auth?: {
+    user: string;
+    userId: string | null;
+    authLoading: boolean;
+    authState: unknown;
+  };
+  config?: {
+    supabaseEnabled: string | undefined;
+    supabaseUrlSet: boolean;
+    supabaseKeySet: boolean;
+    supabaseUrl: string;
+  };
+  storageManager?: {
+    providerName: string;
+    currentProviderName: string;
+    isOfflineCacheWrapped: boolean;
+    isAuthAware: boolean;
+  };
+  currentData?: Record<string, unknown>;
+  localStorage?: Record<string, number | string>;
+  error?: string;
+}
+
 export default function StorageDiagnosticPage() {
   const { user, loading: authLoading } = useAuth();
-  const [diagnostics, setDiagnostics] = useState<Record<string, unknown>>({});
+  const [diagnostics, setDiagnostics] = useState<Diagnostics>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
