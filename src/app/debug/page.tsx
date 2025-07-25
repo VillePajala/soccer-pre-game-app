@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { getConfigInfo } from '@/lib/storage/config';
 
 export default function DebugPage() {
-  const [configInfo, setConfigInfo] = useState<any>(null);
-  const [envVars, setEnvVars] = useState<any>(null);
+  const [configInfo, setConfigInfo] = useState<Record<string, unknown> | null>(null);
+  const [envVars, setEnvVars] = useState<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     // Get configuration info

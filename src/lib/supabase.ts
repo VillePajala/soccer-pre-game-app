@@ -1,5 +1,4 @@
 // Supabase client configuration for Next.js
-import { createClient } from '@supabase/supabase-js';
 import { createBrowserClient } from '@supabase/ssr';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -69,6 +68,7 @@ const dummyClient = {
       })
     }),
   }),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 } as any;
 
 // Client-side Supabase client with auth configuration
