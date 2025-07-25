@@ -19,6 +19,8 @@ export default function TopBarDebug() {
             className="bg-gray-800 hover:bg-gray-700 text-white px-2 py-1 rounded"
             iconSize="w-4 h-4"
           />
+          <span>| Simple button:</span>
+          <button className="bg-blue-500 text-white px-2 py-1 rounded">Test</button>
         </div>
       </div>
     </div>
