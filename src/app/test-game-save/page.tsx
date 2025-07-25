@@ -40,7 +40,7 @@ export default function TestGameSavePage() {
         number_of_periods: 2,
         period_duration_minutes: 45,
         current_period: 2,
-        game_status: 'gameEnd',
+        game_status: 'game_end',
         is_played: true,
         season_id: null,
         tournament_id: null,
@@ -73,6 +73,7 @@ export default function TestGameSavePage() {
       
       // Now try through storage manager
       addLog('\\nTesting through storage manager...');
+      addLog('Current storage provider: ' + (storageManager.getProviderName?.() || 'unknown'));
       const testGameForManager = {
         teamName: 'Manager Test Team',
         opponentName: 'Manager Test Opponent',
