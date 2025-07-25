@@ -83,9 +83,9 @@ export default function VerifyGamesPage() {
                 <p><strong>Score:</strong> {Number(game.homeScore || 0)} - {Number(game.awayScore || 0)}</p>
                 <p><strong>Date:</strong> {String(game.gameDate || 'No date')}</p>
                 <p><strong>Status:</strong> {String(game.gameStatus || 'No status')}</p>
-                {game.opponentName && String(game.opponentName).match(/^\d+$/) && (
+                {game.opponentName && String(game.opponentName).match(/^\d+$/) ? (
                   <p className="text-red-600 font-semibold">⚠️ Opponent name appears to be corrupted!</p>
-                )}
+                ) : null}
               </div>
               <button
                 onClick={() => deleteGame(String(game.id))}
