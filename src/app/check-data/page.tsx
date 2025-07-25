@@ -59,7 +59,7 @@ export default function CheckDataPage() {
         });
       } catch (error) {
         console.error('Error loading data:', error);
-        setData({ error: error.toString() });
+        setData({ error: error instanceof Error ? error.message : String(error) });
       } finally {
         setLoading(false);
       }
