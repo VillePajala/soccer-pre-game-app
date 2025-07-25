@@ -46,7 +46,8 @@ export default function ImportBackupPage() {
       addLog(`Deleted ${tournaments.length} tournaments`, 'success');
 
       // Delete all games
-      const gameIds = Object.keys(games);
+      const gamesObj = games as Record<string, unknown>;
+      const gameIds = Object.keys(gamesObj);
       for (const gameId of gameIds) {
         await storageManager.deleteSavedGame(gameId);
       }
@@ -203,7 +204,7 @@ export default function ImportBackupPage() {
         storageManager.getSavedGames()
       ]);
 
-      addLog(`Verification: Found ${newPlayers.length} players, ${newSeasons.length} seasons, ${newTournaments.length} tournaments, ${Object.keys(newGames).length} games in storage`, 'success');
+      addLog(`Verification: Found ${newPlayers.length} players, ${newSeasons.length} seasons, ${newTournaments.length} tournaments, ${Object.keys(newGames as Record<string, unknown>).length} games in storage`, 'success');
 
     } catch (error) {
       addLog(`CRITICAL ERROR: ${error}`, 'error');
