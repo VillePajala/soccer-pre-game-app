@@ -30,9 +30,9 @@ export default function DebugPage() {
         <h2 className="text-xl font-semibold mb-2">Auth Button Status</h2>
         <div className="space-y-2">
           <p><strong>Auth Button Visible:</strong> {envVars?.NEXT_PUBLIC_ENABLE_SUPABASE === 'true' ? '✅ YES' : '❌ NO'}</p>
-          <p><strong>NEXT_PUBLIC_ENABLE_SUPABASE:</strong> {envVars?.NEXT_PUBLIC_ENABLE_SUPABASE || 'NOT SET'}</p>
+          <p><strong>NEXT_PUBLIC_ENABLE_SUPABASE:</strong> {String(envVars?.NEXT_PUBLIC_ENABLE_SUPABASE || 'NOT SET')}</p>
           <p className="text-sm text-gray-600">
-            The auth button only shows when NEXT_PUBLIC_ENABLE_SUPABASE is exactly "true" (as a string)
+            The auth button only shows when NEXT_PUBLIC_ENABLE_SUPABASE is exactly &quot;true&quot; (as a string)
           </p>
         </div>
       </section>
