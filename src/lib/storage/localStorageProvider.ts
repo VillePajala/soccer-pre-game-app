@@ -327,14 +327,14 @@ export class LocalStorageProvider implements IStorageProvider {
   }
 
   // Saved games - implemented directly to avoid circular dependency
-  async getSavedGames(): Promise<unknown[]> {
+  async getSavedGames(): Promise<unknown> {
     try {
       const savedGamesStr = getLocalStorageItem('savedGames');
       if (!savedGamesStr) {
-        return [];
+        return {};
       }
       const savedGamesCollection = JSON.parse(savedGamesStr);
-      return Object.values(savedGamesCollection);
+      return savedGamesCollection;
     } catch (error) {
       throw new StorageError('Failed to get saved games', 'localStorage', 'getSavedGames', error as Error);
     }

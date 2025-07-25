@@ -27,7 +27,7 @@ export interface IStorageProvider {
   saveAppSettings(settings: AppSettings): Promise<AppSettings>;
 
   // Saved games (generic JSON storage)
-  getSavedGames(): Promise<unknown[]>;
+  getSavedGames(): Promise<unknown>;
   saveSavedGame(gameData: unknown): Promise<unknown>;
   deleteSavedGame(gameId: string): Promise<void>;
 
