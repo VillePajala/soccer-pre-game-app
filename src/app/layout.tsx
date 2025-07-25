@@ -10,7 +10,6 @@ import { Analytics } from "@vercel/analytics/react";
 import { manifestConfig } from "@/config/manifest.config.js";
 import { AuthProvider } from "@/context/AuthContext";
 import TopBar from "@/components/TopBar";
-import TopBarDebug from "@/components/TopBarDebug";
 
 // Configure Rajdhani font
 const rajdhani = Rajdhani({
@@ -55,7 +54,6 @@ export default function RootLayout({
           <InstallPrompt />
           <QueryProvider>
             <AuthProvider>
-              <TopBarDebug />
               <TopBar />
               <ClientWrapper>{children}</ClientWrapper>
             </AuthProvider>
