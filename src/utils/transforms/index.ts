@@ -159,11 +159,11 @@ export const toSupabase = {
       period_duration_minutes: game.periodDurationMinutes || 45,
       current_period: game.currentPeriod || 1,
       game_status: game.gameStatus ? 
-        (game.gameStatus === 'notStarted' ? 'not_started' :
-         game.gameStatus === 'inProgress' ? 'in_progress' :
-         game.gameStatus === 'periodEnd' ? 'period_end' :
-         game.gameStatus === 'gameEnd' ? 'game_end' :
-         game.gameStatus) : 'not_started',
+        (game.gameStatus === 'notStarted' ? 'notStarted' :
+         game.gameStatus === 'inProgress' ? 'inProgress' :
+         game.gameStatus === 'periodEnd' ? 'finished' :
+         game.gameStatus === 'gameEnd' ? 'finished' :
+         'notStarted') : 'notStarted',
       is_played: game.isPlayed !== undefined ? game.isPlayed : false,
       season_id: game.seasonId || null,
       tournament_id: game.tournamentId || null,
@@ -272,11 +272,10 @@ export const fromSupabase = {
       periodDurationMinutes: dbGame.period_duration_minutes,
       currentPeriod: dbGame.current_period,
       gameStatus: dbGame.game_status ? 
-        (dbGame.game_status === 'not_started' ? 'notStarted' :
-         dbGame.game_status === 'in_progress' ? 'inProgress' :
-         dbGame.game_status === 'period_end' ? 'periodEnd' :
-         dbGame.game_status === 'game_end' ? 'gameEnd' :
-         dbGame.game_status) : 'notStarted',
+        (dbGame.game_status === 'notStarted' ? 'notStarted' :
+         dbGame.game_status === 'inProgress' ? 'inProgress' :
+         dbGame.game_status === 'finished' ? 'gameEnd' :
+         'notStarted') : 'notStarted',
       isPlayed: dbGame.is_played,
       seasonId: dbGame.season_id,
       tournamentId: dbGame.tournament_id,
