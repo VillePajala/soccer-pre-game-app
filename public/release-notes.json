@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix: use correct snake_case game_status in test page"
+  "notes": "fix: update release notes and remove unused game constraint pages"
 }
