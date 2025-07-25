@@ -2,8 +2,20 @@
 
 import { useState, useRef } from 'react';
 
+interface BackupAnalysis {
+  fileName?: string;
+  fileSize?: number;
+  topLevelKeys?: string[];
+  structure?: {
+    localStorage?: Record<string, unknown>;
+    direct?: Record<string, unknown>;
+  };
+  otherKeys?: string[];
+  error?: string;
+}
+
 export default function AnalyzeBackupPage() {
-  const [analysis, setAnalysis] = useState<any>(null);
+  const [analysis, setAnalysis] = useState<BackupAnalysis | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const analyzeFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -16,7 +28,7 @@ export default function AnalyzeBackupPage() {
       
       // Analyze structure
       const topLevelKeys = Object.keys(data);
-      const analysis: any = {
+      const analysis: BackupAnalysis = {
         fileName: file.name,
         fileSize: file.size,
         topLevelKeys: topLevelKeys,
