@@ -38,23 +38,31 @@ export const toSupabase = {
     return result;
   },
 
-  season: (season: Season, userId: string) => ({
-    id: season.id,
-    user_id: userId,
-    name: season.name,
-    location: season.location,
-    start_date: season.startDate,
-    end_date: season.endDate,
-    period_count: season.periodCount,
-    period_duration: season.periodDuration,
-    game_dates: season.gameDates,
-    archived: season.archived,
-    default_roster_ids: season.defaultRosterId,
-    notes: season.notes,
-    color: season.color,
-    badge: season.badge,
-    age_group: season.ageGroup
-  }),
+  season: (season: Season, userId: string) => {
+    const result: Record<string, unknown> = {
+      user_id: userId,
+      name: season.name,
+      location: season.location,
+      start_date: season.startDate,
+      end_date: season.endDate,
+      period_count: season.periodCount,
+      period_duration: season.periodDuration,
+      game_dates: season.gameDates,
+      archived: season.archived,
+      default_roster_ids: season.defaultRosterId,
+      notes: season.notes,
+      color: season.color,
+      badge: season.badge,
+      age_group: season.ageGroup
+    };
+    
+    // Only include id if it exists and is not empty
+    if (season.id && season.id !== '') {
+      result.id = season.id;
+    }
+    
+    return result;
+  },
 
   seasonUpdate: (updates: Partial<Season>, userId: string) => ({
     ...updates,
@@ -68,24 +76,33 @@ export const toSupabase = {
     ...(updates.ageGroup !== undefined && { age_group: updates.ageGroup })
   }),
 
-  tournament: (tournament: Tournament, userId: string) => ({
-    id: tournament.id,
-    user_id: userId,
-    name: tournament.name,
-    location: tournament.location,
-    start_date: tournament.startDate,
-    end_date: tournament.endDate,
-    period_count: tournament.periodCount,
-    period_duration: tournament.periodDuration,
-    game_dates: tournament.gameDates,
-    archived: tournament.archived,
-    default_roster_ids: tournament.defaultRosterId,
-    notes: tournament.notes,
-    color: tournament.color,
-    badge: tournament.badge,
-    level: tournament.level,
-    age_group: tournament.ageGroup
-  }),
+  tournament: (tournament: Tournament, userId: string) => {
+    const result: Record<string, unknown> = {
+      user_id: userId,
+      name: tournament.name,
+      location: tournament.location,
+      start_date: tournament.startDate,
+      end_date: tournament.endDate,
+      period_count: tournament.periodCount,
+      period_duration: tournament.periodDuration,
+      game_dates: tournament.gameDates,
+      archived: tournament.archived,
+      default_roster_ids: tournament.defaultRosterId,
+      notes: tournament.notes,
+      color: tournament.color,
+      badge: tournament.badge,
+      level: tournament.level,
+      age_group: tournament.ageGroup,
+      season_id: tournament.seasonId || null
+    };
+    
+    // Only include id if it exists and is not empty
+    if (tournament.id && tournament.id !== '') {
+      result.id = tournament.id;
+    }
+    
+    return result;
+  },
 
   tournamentUpdate: (updates: Partial<Tournament>, userId: string) => ({
     ...updates,
@@ -99,22 +116,37 @@ export const toSupabase = {
     ...(updates.ageGroup !== undefined && { age_group: updates.ageGroup })
   }),
 
-  appSettings: (settings: AppSettings, userId: string) => ({
-    user_id: userId,
-    language: settings.language || 'en',
-    default_team_name: settings.defaultTeamName,
-    auto_backup_enabled: settings.autoBackupEnabled || false,
-    auto_backup_interval_hours: settings.autoBackupIntervalHours || 24,
-    last_backup_time: settings.lastBackupTime,
-    backup_email: settings.backupEmail,
-    current_game_id: settings.currentGameId,
-    settings: {} // Store any additional settings as JSON
-  }),
+  appSettings: (settings: AppSettings, userId: string) => {
+    const result: Record<string, unknown> = {
+      user_id: userId,
+      language: settings.language || 'en',
+      default_team_name: settings.defaultTeamName || settings.lastHomeTeamName,
+      auto_backup_enabled: settings.autoBackupEnabled || false,
+      auto_backup_interval_hours: settings.autoBackupIntervalHours || 24,
+      last_backup_time: settings.lastBackupTime,
+      backup_email: settings.backupEmail,
+      settings: {
+        // Store non-UUID game IDs and other settings in JSONB
+        currentGameId: settings.currentGameId,
+        hasSeenAppGuide: settings.hasSeenAppGuide,
+        useDemandCorrection: settings.useDemandCorrection
+      }
+    };
+    
+    // Only set current_game_id if it's a valid UUID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (settings.currentGameId && uuidRegex.test(settings.currentGameId)) {
+      result.current_game_id = settings.currentGameId;
+    } else {
+      result.current_game_id = null; // Set to null if not a valid UUID
+    }
+    
+    return result;
+  },
 
   game: (gameData: unknown, userId: string) => {
     const game = gameData as any;
-    return {
-      id: game.id,
+    const result: Record<string, unknown> = {
       user_id: userId,
       team_name: game.teamName || game.homeTeam || '',
       opponent_name: game.opponentName || game.awayTeam || '',
@@ -127,11 +159,22 @@ export const toSupabase = {
       period_duration_minutes: game.periodDurationMinutes || 45,
       current_period: game.currentPeriod || 1,
       game_status: game.gameStatus || 'notStarted',
-      is_played: game.isPlayed || false,
+      is_played: game.isPlayed !== undefined ? game.isPlayed : false,
       season_id: game.seasonId || null,
       tournament_id: game.tournamentId || null,
+      game_location: game.gameLocation || null,
+      game_time: game.gameTime || null,
       game_data: game // Store the full game data as JSONB
     };
+    
+    // Only include id if it's a valid UUID (not the app's custom format)
+    // Otherwise, let Supabase generate a new UUID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (game.id && uuidRegex.test(game.id)) {
+      result.id = game.id;
+    }
+    
+    return result;
   }
 };
 
@@ -169,6 +212,7 @@ export const fromSupabase = {
   tournament: (dbTournament: any) => ({
     id: dbTournament.id,
     name: dbTournament.name,
+    seasonId: dbTournament.season_id,
     location: dbTournament.location,
     periodCount: dbTournament.period_count,
     periodDuration: dbTournament.period_duration,
@@ -188,11 +232,15 @@ export const fromSupabase = {
   appSettings: (dbSettings: any) => ({
     language: dbSettings.language,
     defaultTeamName: dbSettings.default_team_name,
+    lastHomeTeamName: dbSettings.default_team_name, // Map both fields
     autoBackupEnabled: dbSettings.auto_backup_enabled,
     autoBackupIntervalHours: dbSettings.auto_backup_interval_hours,
     lastBackupTime: dbSettings.last_backup_time,
     backupEmail: dbSettings.backup_email,
-    currentGameId: dbSettings.current_game_id
+    // Get currentGameId from JSONB settings if not in current_game_id
+    currentGameId: dbSettings.current_game_id || dbSettings.settings?.currentGameId || null,
+    hasSeenAppGuide: dbSettings.settings?.hasSeenAppGuide,
+    useDemandCorrection: dbSettings.settings?.useDemandCorrection
   }),
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -221,7 +269,9 @@ export const fromSupabase = {
       gameStatus: dbGame.game_status,
       isPlayed: dbGame.is_played,
       seasonId: dbGame.season_id,
-      tournamentId: dbGame.tournament_id
+      tournamentId: dbGame.tournament_id,
+      gameLocation: dbGame.game_location,
+      gameTime: dbGame.game_time
     };
   }
 };

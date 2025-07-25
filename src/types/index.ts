@@ -41,6 +41,7 @@ export interface Season {
 export interface Tournament {
   id: string;
   name: string;
+  seasonId?: string;
   location?: string;
   periodCount?: number;
   periodDuration?: number;

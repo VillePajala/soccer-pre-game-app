@@ -170,9 +170,11 @@ export class SupabaseProvider implements IStorageProvider {
   }
 
   async saveSeason(season: Season): Promise<Season> {
+    console.log('[SupabaseProvider] saveSeason called with:', season);
     try {
       const userId = await this.getCurrentUserId();
       const supabaseSeason = toSupabase.season(season, userId);
+      console.log('[SupabaseProvider] Transformed season for Supabase:', supabaseSeason);
 
       let result;
       if (season.id) {
@@ -282,9 +284,11 @@ export class SupabaseProvider implements IStorageProvider {
   }
 
   async saveTournament(tournament: Tournament): Promise<Tournament> {
+    console.log('[SupabaseProvider] saveTournament called with:', tournament);
     try {
       const userId = await this.getCurrentUserId();
       const supabaseTournament = toSupabase.tournament(tournament, userId);
+      console.log('[SupabaseProvider] Transformed tournament for Supabase:', supabaseTournament);
 
       let result;
       if (tournament.id) {
@@ -398,9 +402,11 @@ export class SupabaseProvider implements IStorageProvider {
   }
 
   async saveAppSettings(settings: AppSettings): Promise<AppSettings> {
+    console.log('[SupabaseProvider] saveAppSettings called with:', settings);
     try {
       const userId = await this.getCurrentUserId();
       const supabaseSettings = toSupabase.appSettings(settings, userId);
+      console.log('[SupabaseProvider] Transformed settings for Supabase:', supabaseSettings);
 
       const { data, error } = await supabase
         .from('app_settings')
@@ -409,6 +415,7 @@ export class SupabaseProvider implements IStorageProvider {
         .single();
 
       if (error) {
+        console.error('[SupabaseProvider] Error saving app settings:', error);
         throw new NetworkError('supabase', 'saveAppSettings', error);
       }
 
@@ -445,9 +452,11 @@ export class SupabaseProvider implements IStorageProvider {
   }
 
   async saveSavedGame(gameData: unknown): Promise<unknown> {
+    console.log('[SupabaseProvider] saveSavedGame called with:', gameData);
     try {
       const userId = await this.getCurrentUserId();
       const supabaseGame = toSupabase.game(gameData, userId);
+      console.log('[SupabaseProvider] Transformed game for Supabase:', supabaseGame);
 
       const { data, error } = await supabase
         .from('games')
@@ -456,6 +465,7 @@ export class SupabaseProvider implements IStorageProvider {
         .single();
 
       if (error) {
+        console.error('[SupabaseProvider] Error saving game:', error);
         throw new NetworkError('supabase', 'saveSavedGame', error);
       }
 
@@ -583,7 +593,7 @@ export class SupabaseProvider implements IStorageProvider {
       if (importData.savedGames) {
         for (const [gameId, game] of Object.entries(importData.savedGames)) {
           try {
-            await this.saveSavedGame(gameId, game);
+            await this.saveSavedGame(game);
           } catch (error) {
             errors.push(`Failed to import game ${gameId}: ${error}`);
           }
