@@ -12,7 +12,7 @@ export default function SimpleTestPage() {
         
         {enableSupabase === 'true' && (
           <div className="mt-4 p-4 bg-green-100 rounded">
-            ✅ Environment variable is correctly set to "true"
+            ✅ Environment variable is correctly set to &quot;true&quot;
           </div>
         )}
         
@@ -24,7 +24,7 @@ export default function SimpleTestPage() {
         
         {enableSupabase && enableSupabase !== 'true' && (
           <div className="mt-4 p-4 bg-yellow-100 rounded">
-            ⚠️ Environment variable is set to "{enableSupabase}" but needs to be exactly "true"
+            ⚠️ Environment variable is set to &quot;{enableSupabase}&quot; but needs to be exactly &quot;true&quot;
           </div>
         )}
       </div>
