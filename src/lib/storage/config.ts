@@ -13,7 +13,7 @@ export const DEFAULT_STORAGE_CONFIG: StorageConfig = {
  * Get storage configuration based on feature flags
  */
 export function getStorageConfig(): StorageConfig {
-  const enableSupabase = process.env.NEXT_PUBLIC_ENABLE_SUPABASE === 'true';
+  const enableSupabase = isSupabaseEnabled();
   const disableFallback = process.env.NEXT_PUBLIC_DISABLE_FALLBACK === 'true';
   
   return {
@@ -26,7 +26,8 @@ export function getStorageConfig(): StorageConfig {
  * Check if Supabase is enabled via feature flag
  */
 export function isSupabaseEnabled(): boolean {
-  return process.env.NEXT_PUBLIC_ENABLE_SUPABASE === 'true';
+  const value = process.env.NEXT_PUBLIC_ENABLE_SUPABASE;
+  return value === 'true' || value === 'True';
 }
 
 /**
