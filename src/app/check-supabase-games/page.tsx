@@ -6,7 +6,20 @@ import { useAuth } from '@/context/AuthContext';
 
 export default function CheckSupabaseGamesPage() {
   const { user } = useAuth();
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<{
+    error?: string;
+    userId?: string;
+    gameCount?: number;
+    games?: Array<{
+      id: string;
+      team_name: string;
+      opponent_name: string;
+      home_score: number;
+      away_score: number;
+      game_date: string;
+      created_at: string;
+    }>;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -51,20 +64,20 @@ export default function CheckSupabaseGamesPage() {
       <h1 className="text-3xl font-bold mb-8">Check Supabase Games Directly</h1>
       
       <div className="mb-4 p-4 bg-blue-100 rounded">
-        <p><strong>User ID:</strong> {data.userId || 'Not authenticated'}</p>
-        <p><strong>Total games in Supabase:</strong> {data.gameCount || 0}</p>
+        <p><strong>User ID:</strong> {data?.userId || 'Not authenticated'}</p>
+        <p><strong>Total games in Supabase:</strong> {data?.gameCount || 0}</p>
       </div>
 
-      {data.error && (
+      {data?.error && (
         <div className="mb-4 p-4 bg-red-100 rounded">
           <p className="text-red-600">{data.error}</p>
         </div>
       )}
 
-      {data.games && data.games.length > 0 && (
+      {data?.games && data.games.length > 0 && (
         <div className="space-y-2">
           <h2 className="text-xl font-semibold mb-2">Games in Database:</h2>
-          {data.games.map((game: any, index: number) => (
+          {data.games.map((game, index) => (
             <div key={game.id} className="bg-gray-100 p-3 rounded">
               <p className="text-sm">
                 <strong>{index + 1}.</strong> {game.team_name} vs {game.opponent_name} | 
