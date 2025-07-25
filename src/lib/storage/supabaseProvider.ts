@@ -444,7 +444,7 @@ export class SupabaseProvider implements IStorageProvider {
 
       // Convert array to object format expected by the app
       const gamesCollection: Record<string, unknown> = {};
-      data.forEach(game => {
+      data.forEach((game: any) => {
         const transformedGame = fromSupabase.game(game);
         gamesCollection[game.id] = transformedGame;
       });
