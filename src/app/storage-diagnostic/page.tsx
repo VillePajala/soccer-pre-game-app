@@ -93,7 +93,7 @@ export default function StorageDiagnosticPage() {
             players: Array.isArray(storageData[0]) ? storageData[0].length : storageData[0],
             seasons: Array.isArray(storageData[1]) ? storageData[1].length : storageData[1],
             tournaments: Array.isArray(storageData[2]) ? storageData[2].length : storageData[2],
-            games: storageData[3] && typeof storageData[3] === 'object' && !storageData[3].error 
+            games: storageData[3] && typeof storageData[3] === 'object' && !('error' in storageData[3])
               ? Object.keys(storageData[3]).length 
               : storageData[3]
           },
