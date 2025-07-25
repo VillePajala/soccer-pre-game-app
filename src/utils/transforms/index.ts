@@ -147,6 +147,8 @@ export const toSupabase = {
   game: (gameData: unknown, userId: string): Record<string, unknown> => {
     const game = gameData as Record<string, unknown>;
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    
+    // Ensure required fields have defaults
     const result: Record<string, unknown> = {
       user_id: userId,
       team_name: game.teamName || game.homeTeam || '',
