@@ -14,7 +14,7 @@ export default function VerifyGamesPage() {
       if (!user) return;
       
       try {
-        const savedGames = await storageManager.getSavedGames();
+        const savedGames = await storageManager.getSavedGames() as Record<string, unknown>;
         const gamesList = Object.entries(savedGames).map(([id, game]) => ({
           id,
           ...(typeof game === 'object' && game !== null ? game : {})
@@ -36,7 +36,7 @@ export default function VerifyGamesPage() {
     try {
       await storageManager.deleteSavedGame(gameId);
       // Reload games
-      const savedGames = await storageManager.getSavedGames();
+      const savedGames = await storageManager.getSavedGames() as Record<string, unknown>;
       const gamesList = Object.entries(savedGames).map(([id, game]) => ({
         id,
         ...(typeof game === 'object' && game !== null ? game : {})
