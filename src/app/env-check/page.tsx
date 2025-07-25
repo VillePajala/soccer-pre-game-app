@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 
 export default function EnvCheckPage() {
-  const [checks, setChecks] = useState<Record<string, any>>({});
+  const [checks, setChecks] = useState<Record<string, unknown>>({});
   
   useEffect(() => {
     // Check all environment variables
@@ -76,7 +76,7 @@ export default function EnvCheckPage() {
           <h2 className="text-xl font-semibold mb-2">⚡ Quick Test</h2>
           <p>After redeploying, the yellow debug bar should show:</p>
           <code className="block bg-white p-2 rounded mt-2">
-            TopBarDebug - ENV: true | === "true": YES | truthy: YES
+            TopBarDebug - ENV: true | === &quot;true&quot;: YES | truthy: YES
           </code>
         </div>
       </div>
