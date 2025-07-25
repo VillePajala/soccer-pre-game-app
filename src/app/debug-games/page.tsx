@@ -70,7 +70,7 @@ export default function DebugGamesPage() {
             addInfo(`Supabase error: ${error.message}`);
           } else {
             addInfo(`Found ${data?.length || 0} games in Supabase`);
-            data?.forEach((game) => {
+            data?.forEach((game: { id: string; team_name: string; opponent_name: string }) => {
               addInfo(`- ${game.team_name} vs ${game.opponent_name} (${game.id.substring(0, 8)}...)`);
             });
           }
