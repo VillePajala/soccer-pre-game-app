@@ -26,6 +26,17 @@ export default function DebugPage() {
     <div className="p-4 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Debug Information</h1>
       
+      <section className="mb-6 p-4 bg-purple-100 border border-purple-400 rounded">
+        <h2 className="text-xl font-semibold mb-2">Auth Button Status</h2>
+        <div className="space-y-2">
+          <p><strong>Auth Button Visible:</strong> {envVars?.NEXT_PUBLIC_ENABLE_SUPABASE === 'true' ? '✅ YES' : '❌ NO'}</p>
+          <p><strong>NEXT_PUBLIC_ENABLE_SUPABASE:</strong> {envVars?.NEXT_PUBLIC_ENABLE_SUPABASE || 'NOT SET'}</p>
+          <p className="text-sm text-gray-600">
+            The auth button only shows when NEXT_PUBLIC_ENABLE_SUPABASE is exactly "true" (as a string)
+          </p>
+        </div>
+      </section>
+      
       <section className="mb-6">
         <h2 className="text-xl font-semibold mb-2">Configuration</h2>
         <pre className="bg-gray-100 p-4 rounded overflow-auto">

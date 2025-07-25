@@ -473,7 +473,8 @@
     "languageFinnish": "Finnish",
     "createSeasonTournament": "Create Season/Tournament",
     "viewStats": "View Stats",
-    "backupNow": "Backup Now"
+    "backupNow": "Backup Now",
+    "explore": "Just Explore"
   },
   "seasonTournamentModal": {
     "confirmDelete": "Are you sure you want to delete {{name}}?",
