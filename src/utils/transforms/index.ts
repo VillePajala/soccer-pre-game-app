@@ -146,6 +146,7 @@ export const toSupabase = {
 
   game: (gameData: unknown, userId: string): Record<string, unknown> => {
     const game = gameData as Record<string, unknown>;
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     const result: Record<string, unknown> = {
       user_id: userId,
       team_name: game.teamName || game.homeTeam || '',
@@ -164,17 +165,21 @@ export const toSupabase = {
          game.gameStatus === 'periodEnd' ? 'finished' :
          game.gameStatus === 'gameEnd' ? 'finished' :
          'notStarted') : 'notStarted',
-      is_played: game.isPlayed !== undefined ? game.isPlayed : false,
-      season_id: game.seasonId || null,
-      tournament_id: game.tournamentId || null,
+      is_played: game.isPlayed !== undefined ? game.isPlayed : 
+        (game.gameStatus === 'gameEnd' || game.gameStatus === 'finished'),
+      season_id: game.seasonId && game.seasonId !== '' ? 
+        (uuidRegex.test(game.seasonId as string) ? game.seasonId : null) : null,
+      tournament_id: game.tournamentId && game.tournamentId !== '' ? 
+        (uuidRegex.test(game.tournamentId as string) ? game.tournamentId : null) : null,
       game_location: game.gameLocation || null,
-      game_time: game.gameTime || null,
+      game_time: game.gameTime ? 
+        (typeof game.gameTime === 'string' && game.gameTime.includes(':') ? 
+          game.gameTime : `${game.gameTime}:00`) : null,
       game_data: game // Store the full game data as JSONB
     };
     
     // Only include id if it's a valid UUID (not the app's custom format)
     // Otherwise, let Supabase generate a new UUID
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (game.id && typeof game.id === 'string' && uuidRegex.test(game.id)) {
       result.id = game.id;
     }
