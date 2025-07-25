@@ -9,6 +9,7 @@ import I18nInitializer from "@/components/I18nInitializer";
 import { Analytics } from "@vercel/analytics/react";
 import { manifestConfig } from "@/config/manifest.config.js";
 import { AuthProvider } from "@/context/AuthContext";
+import TopBar from "@/components/TopBar";
 
 // Configure Rajdhani font
 const rajdhani = Rajdhani({
@@ -53,6 +54,7 @@ export default function RootLayout({
           <InstallPrompt />
           <QueryProvider>
             <AuthProvider>
+              <TopBar />
               <ClientWrapper>{children}</ClientWrapper>
             </AuthProvider>
           </QueryProvider>

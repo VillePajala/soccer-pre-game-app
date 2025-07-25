@@ -37,7 +37,7 @@ import { FaFutbol } from 'react-icons/fa';
 // Import translation hook
 import { useTranslation } from 'react-i18next';
 import logger from '@/utils/logger';
-import { AuthButton } from '@/components/auth/AuthButton';
+// Removed - AuthButton now in TopBar: import { AuthButton } from '@/components/auth/AuthButton';
 
 // Define props for ControlBar
 interface ControlBarProps {
@@ -256,13 +256,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
             {showLargeTimerOverlay ? <HiOutlineStopCircle className={iconSize} /> : <HiOutlineClock className={iconSize} />}
         </button>
         
-        {/* Auth Button */}
-        {process.env.NEXT_PUBLIC_ENABLE_SUPABASE === 'true' && (
-          <AuthButton 
-            className={`${baseButtonStyle} ${secondaryColor}`}
-            iconSize={iconSize}
-          />
-        )}
+        {/* Auth Button - Moved to TopBar */}
         
         {/* Settings Menu Button (REMAINING) */}
         <div className="relative" ref={settingsMenuRef}>
