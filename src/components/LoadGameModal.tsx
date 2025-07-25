@@ -24,6 +24,8 @@ import {
 // import { FaTimes, FaUpload, FaDownload, FaTrash, FaExclamationTriangle, FaSearch } from 'react-icons/fa';
 // import { useGameState } from '@/hooks/useGameState';
 import { exportFullBackup, importFullBackup } from '@/utils/fullBackup';
+import { importBackupToSupabase } from '@/utils/supabaseBackupImport';
+import { authAwareStorageManager as storageManager } from '@/lib/storage';
 // Import new utility functions
 import { getSeasons as utilGetSeasons } from '@/utils/seasons';
 import { getTournaments as utilGetTournaments } from '@/utils/tournaments';
@@ -240,15 +242,31 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
     restoreFileInputRef.current?.click();
   };
   
-  const handleRestoreFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleRestoreFileSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       const jsonContent = e.target?.result as string;
       if (jsonContent) {
-        importFullBackup(jsonContent);
+        // Check if we're using Supabase
+        const providerName = storageManager.getProviderName?.() || 'localStorage';
+        
+        if (providerName === 'supabase') {
+          // Use the new Supabase-aware import
+          const result = await importBackupToSupabase(jsonContent);
+          if (result.success) {
+            alert(result.message);
+            // Refresh the saved games list
+            refetch();
+          } else {
+            alert(t('loadGameModal.importError', { defaultValue: 'Import failed: ' }) + result.message);
+          }
+        } else {
+          // Use the old localStorage import for backwards compatibility
+          importFullBackup(jsonContent);
+        }
       } else {
         alert(t('loadGameModal.importReadError', 'Error reading file content.'));
       }
