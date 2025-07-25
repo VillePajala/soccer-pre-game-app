@@ -17,7 +17,7 @@ export default function VerifyGamesPage() {
         const savedGames = await storageManager.getSavedGames();
         const gamesList = Object.entries(savedGames).map(([id, game]) => ({
           id,
-          ...game
+          ...(typeof game === 'object' && game !== null ? game : {})
         }));
         setGames(gamesList);
       } catch (error) {
@@ -39,7 +39,7 @@ export default function VerifyGamesPage() {
       const savedGames = await storageManager.getSavedGames();
       const gamesList = Object.entries(savedGames).map(([id, game]) => ({
         id,
-        ...game
+        ...(typeof game === 'object' && game !== null ? game : {})
       }));
       setGames(gamesList);
     } catch (error) {
