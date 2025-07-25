@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix: update release notes and remove unused game constraint pages"
+  "notes": "feat: add test pages for game constraints and saving"
 }
