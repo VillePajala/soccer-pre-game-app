@@ -132,8 +132,8 @@ export default function ImportBackupPage() {
     const gameIds = Object.keys(savedGames);
     addLog(`Importing ${gameIds.length} games...`);
     for (const gameId of gameIds) {
+      const game = savedGames[gameId];
       try {
-        const game = savedGames[gameId];
         if (game && typeof game === 'object') {
           // Don't include any ID - let Supabase generate a new UUID
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -144,6 +144,8 @@ export default function ImportBackupPage() {
         }
       } catch (error) {
         addLog(`Failed to import game ${gameId}: ${error}`, 'error');
+        console.error('Game import error:', error);
+        console.error('Game data that failed:', game);
       }
     }
     addLog(`Imported ${stats.games}/${gameIds.length} games`, 'success');
