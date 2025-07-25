@@ -18,6 +18,7 @@ interface StartScreenProps {
   onResumeGame?: () => void;
   onCreateSeason: () => void;
   onViewStats: () => void;
+  onExplore: () => void;
   canResume?: boolean;
 }
 
@@ -27,6 +28,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
   onResumeGame,
   onCreateSeason,
   onViewStats,
+  onExplore,
   canResume = false,
 }) => {
   const { t } = useTranslation();
@@ -151,6 +153,9 @@ const StartScreen: React.FC<StartScreenProps> = ({
         </button>
         <button className={buttonStyle} onClick={handleBackupNow}>
           {t('startScreen.backupNow', 'Backup Now')}
+        </button>
+        <button className={buttonStyle} onClick={onExplore}>
+          {t('startScreen.explore', 'Just Explore')}
         </button>
       </div>
     </div>
