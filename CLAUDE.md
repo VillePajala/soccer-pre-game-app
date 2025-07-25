@@ -71,6 +71,28 @@ The build process includes a custom manifest generation step that runs before Ne
 
 ## Development Notes
 
+### TypeScript Best Practices
+
+When working with storage manager methods that return `Promise<unknown>`:
+- `getSavedGames()` returns `Promise<unknown>` but the actual data is `Record<string, AppState>`
+- Always cast the result when using it: `const games = await storageManager.getSavedGames() as Record<string, unknown>;`
+- When using with Object.keys/entries/values, cast inline: `Object.keys(games as Record<string, unknown>)`
+- For type safety, consider creating typed wrapper functions in utilities
+
+Common patterns to avoid TypeScript errors:
+```typescript
+// ❌ Will cause TypeScript error
+const games = await storageManager.getSavedGames();
+const gameCount = Object.keys(games).length;
+
+// ✅ Correct approach
+const games = await storageManager.getSavedGames() as Record<string, unknown>;
+const gameCount = Object.keys(games).length;
+
+// ✅ Or inline cast
+const gameCount = Object.keys(await storageManager.getSavedGames() as Record<string, unknown>).length;
+```
+
 ### Data Storage
 All data is stored in browser localStorage. The app includes backup/restore functionality through `src/utils/fullBackup.ts`.
 
@@ -80,5 +102,6 @@ The app supports English and Finnish with i18next. All translation files now liv
 ### PWA Features
 The app includes install prompts, update notifications, and works offline. The service worker is updated during build to trigger cache updates.
 
-### Testing Strategy- Unit tests cover utilities and components and are co-located with source files using the `.test.tsx` suffix
+### Testing Strategy
+- Unit tests cover utilities and components and are co-located with source files using the `.test.tsx` suffix
 - The Jest configuration excludes Playwright specs located in the `/tests/` directory
