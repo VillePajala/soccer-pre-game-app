@@ -158,7 +158,12 @@ export const toSupabase = {
       number_of_periods: game.numberOfPeriods || 2,
       period_duration_minutes: game.periodDurationMinutes || 45,
       current_period: game.currentPeriod || 1,
-      game_status: game.gameStatus || 'notStarted',
+      game_status: game.gameStatus ? 
+        (game.gameStatus === 'notStarted' ? 'not_started' :
+         game.gameStatus === 'inProgress' ? 'in_progress' :
+         game.gameStatus === 'periodEnd' ? 'period_end' :
+         game.gameStatus === 'gameEnd' ? 'game_end' :
+         game.gameStatus) : 'not_started',
       is_played: game.isPlayed !== undefined ? game.isPlayed : false,
       season_id: game.seasonId || null,
       tournament_id: game.tournamentId || null,
@@ -266,7 +271,12 @@ export const fromSupabase = {
       numberOfPeriods: dbGame.number_of_periods,
       periodDurationMinutes: dbGame.period_duration_minutes,
       currentPeriod: dbGame.current_period,
-      gameStatus: dbGame.game_status,
+      gameStatus: dbGame.game_status ? 
+        (dbGame.game_status === 'not_started' ? 'notStarted' :
+         dbGame.game_status === 'in_progress' ? 'inProgress' :
+         dbGame.game_status === 'period_end' ? 'periodEnd' :
+         dbGame.game_status === 'game_end' ? 'gameEnd' :
+         dbGame.game_status) : 'notStarted',
       isPlayed: dbGame.is_played,
       seasonId: dbGame.season_id,
       tournamentId: dbGame.tournament_id,
