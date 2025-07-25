@@ -166,11 +166,15 @@ export async function importBackupToSupabase(jsonContent: string): Promise<{
       try {
         const game = gamesToImport[gameId];
         if (game && typeof game === 'object') {
-          await storageManager.saveSavedGame(game);
+          // Ensure the game has an ID
+          const gameWithId = { ...game, id: gameId };
+          logger.log(`[SupabaseBackupImport] Importing game ${gameId}`);
+          await storageManager.saveSavedGame(gameWithId);
           stats.games++;
         }
       } catch (error) {
         logger.error(`[SupabaseBackupImport] Failed to import game ${gameId}:`, error);
+        console.error('[SupabaseBackupImport] Game import error details:', error);
       }
     }
     
