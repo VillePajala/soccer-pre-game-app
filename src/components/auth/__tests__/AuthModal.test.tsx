@@ -14,7 +14,7 @@ const mockAuth = {
   resetPassword: jest.fn(),
 };
 
-jest.mock('../../context/AuthContext', () => ({
+jest.mock('../../../context/AuthContext', () => ({
   useAuth: () => mockAuth,
 }));
 
