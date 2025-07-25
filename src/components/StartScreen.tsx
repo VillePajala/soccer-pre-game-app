@@ -39,7 +39,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
         i18n.changeLanguage(settings.language);
       }
     });
-  }, []);
+  }, [language]);
 
   useEffect(() => {
     // Only update if language actually changed from what's in i18n
