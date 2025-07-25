@@ -1,21 +1,60 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { authAwareStorageManager as storageManager } from '@/lib/storage';
 import { importBackupToSupabase } from '@/utils/supabaseBackupImport';
 
 export default function TestRestorePage() {
   const [log, setLog] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const addLog = (message: string) => {
     setLog(prev => [...prev, `${new Date().toISOString()}: ${message}`]);
     console.log('[TestRestore]', message);
   };
 
+  const testStorage = async () => {
+    addLog('Testing storage manager...');
+    try {
+      // Test if we can save a simple player
+      const testPlayer = {
+        id: '',
+        name: 'Test Player ' + Date.now(),
+        nickname: 'Test',
+        isActive: true
+      };
+      
+      addLog(`Saving test player: ${testPlayer.name}`);
+      await storageManager.savePlayer(testPlayer);
+      addLog('Test player saved successfully');
+      
+      // Try to fetch all players
+      const players = await storageManager.getPlayers();
+      addLog(`Fetched ${players.length} players from storage`);
+      
+      // Find our test player
+      const found = players.find(p => p.name === testPlayer.name);
+      if (found) {
+        addLog(`Found test player with ID: ${found.id}`);
+        // Clean up
+        await storageManager.deletePlayer(found.id);
+        addLog('Test player deleted');
+      } else {
+        addLog('ERROR: Test player not found after save');
+      }
+    } catch (error) {
+      addLog(`ERROR in storage test: ${error}`);
+    }
+  };
+
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    addLog('File input changed event triggered');
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      addLog('No file selected');
+      return;
+    }
 
     setLoading(true);
     setLog([]);
@@ -110,16 +149,39 @@ export default function TestRestorePage() {
       <h1 className="text-3xl font-bold mb-8">Backup Restore Test</h1>
       
       <div className="mb-8">
-        <label className="block mb-4">
+        <div className="mb-4">
           <span className="text-lg font-semibold mb-2 block">Select backup file:</span>
           <input
+            ref={fileInputRef}
             type="file"
             accept=".json"
             onChange={handleFileSelect}
             disabled={loading}
-            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            className="hidden"
           />
-        </label>
+          <button
+            onClick={() => {
+              addLog('Button clicked - triggering file input');
+              fileInputRef.current?.click();
+            }}
+            disabled={loading}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          >
+            Choose Backup File
+          </button>
+        </div>
+        
+        <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+          <p className="text-sm">
+            <strong>Current auth status:</strong> {storageManager.getProviderName?.() || 'unknown'}
+          </p>
+          <button
+            onClick={testStorage}
+            className="mt-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+          >
+            Test Storage
+          </button>
+        </div>
       </div>
 
       <div className="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm overflow-auto max-h-96">
