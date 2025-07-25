@@ -16,7 +16,7 @@ export default function CheckGameConstraintsPage() {
           
         if (error) {
           // Try alternative query if RPC doesn't exist
-          const { data: tableInfo, error: tableError } = await supabase
+          const { error: tableError } = await supabase
             .from('games')
             .select()
             .limit(0);
@@ -127,7 +127,7 @@ export default function CheckGameConstraintsPage() {
       
       <div className="mt-8">
         <p className="text-sm text-gray-600">
-          The error "violates check constraint games_game_status_check" means the game_status 
+          The error &quot;violates check constraint games_game_status_check&quot; means the game_status 
           field only accepts specific values. We need to use snake_case values instead of camelCase.
         </p>
       </div>
