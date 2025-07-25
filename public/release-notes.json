@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "Enhance SupabaseProvider and data transformations with improved logging and validation"
+  "notes": "feat: add Supabase-aware backup import functionality"
 }

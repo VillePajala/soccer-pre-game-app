@@ -258,8 +258,10 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
           const result = await importBackupToSupabase(jsonContent);
           if (result.success) {
             alert(result.message);
-            // Refresh the saved games list
-            refetch();
+            // Reload to refresh all data (same as localStorage import)
+            setTimeout(() => {
+              window.location.reload();
+            }, 500);
           } else {
             alert(t('loadGameModal.importError', { defaultValue: 'Import failed: ' }) + result.message);
           }
