@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { AuthButton } from '@/components/auth/AuthButton';
+import { SimpleAuthButton } from '@/components/SimpleAuthButton';
 import { HiOutlineUser } from 'react-icons/hi2';
 
 export default function TopBarDebug() {
@@ -24,6 +25,8 @@ export default function TopBarDebug() {
           <button className="bg-blue-500 text-white px-2 py-1 rounded">Test</button>
           <span>| Icon test:</span>
           <HiOutlineUser className="w-5 h-5 text-black" />
+          <span>| Simple:</span>
+          <SimpleAuthButton />
         </div>
       </div>
     </div>
