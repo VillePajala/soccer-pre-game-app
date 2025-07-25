@@ -44,16 +44,8 @@ export interface GameData {
  */
 export const getSavedGames = async (): Promise<SavedGamesCollection> => {
   try {
-    const gamesArray = await storageManager.getSavedGames();
-    // Convert array to collection format for backward compatibility
-    const gamesCollection: SavedGamesCollection = {};
-    gamesArray.forEach((game, index) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const gameId = (game as any).id || `game_${index}`;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      gamesCollection[gameId] = game as any;
-    });
-    return gamesCollection;
+    const games = await storageManager.getSavedGames() as SavedGamesCollection;
+    return games;
   } catch (error) {
     logger.error('Error getting saved games:', error);
     throw error;
