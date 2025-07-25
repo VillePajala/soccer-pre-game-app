@@ -12,9 +12,9 @@ export default function TopBar() {
   }
 
   return (
-    <div className="fixed top-0 right-0 z-50 p-4">
+    <div className="fixed top-0 right-0 z-40 p-4">
       <AuthButton 
-        className="bg-gray-800/90 backdrop-blur hover:bg-gray-700 text-white px-4 py-2 rounded-lg shadow-lg border border-gray-700"
+        className="bg-gray-800/90 backdrop-blur hover:bg-gray-700 text-white px-4 py-2 rounded-lg shadow-lg border border-gray-700 transition-colors"
         iconSize="w-5 h-5"
       />
     </div>
