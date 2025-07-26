@@ -218,7 +218,7 @@ export default function DiagnoseUuidIssue() {
                 <p className="text-sm mb-2">Game ID: {gameWithGoals.id}</p>
                 {goalEvents.map((event, idx) => (
                   <div key={idx} className="border-b border-slate-700 py-2 text-sm">
-                    <p>Goal at {event.gameTime}&apos;</p>
+                    <p>Goal at {String(event.gameTime || 0)}&apos;</p>
                     <p>Scorer ID: {String(event.scorerId || 'none')}</p>
                     <p>Scorer in roster: {players.find(p => p.id === event.scorerId) ? 'Yes' : 'No'}</p>
                     {event.assisterId && (
