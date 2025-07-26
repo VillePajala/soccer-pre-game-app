@@ -3,6 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { importBackupToSupabase } from '@/utils/supabaseBackupImport';
+import { cleanImportToSupabase } from '@/utils/supabaseCleanImport';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/config/queryKeys';
 
@@ -15,6 +16,7 @@ export const BackupImport: React.FC<BackupImportProps> = ({ onClose, onSuccess }
   const { t } = useTranslation();
   const [isImporting, setIsImporting] = useState(false);
   const [importResult, setImportResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [importType, setImportType] = useState<'merge' | 'replace'>('merge');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
@@ -27,7 +29,9 @@ export const BackupImport: React.FC<BackupImportProps> = ({ onClose, onSuccess }
 
     try {
       const fileContent = await file.text();
-      const result = await importBackupToSupabase(fileContent);
+      const result = importType === 'replace' 
+        ? await cleanImportToSupabase(fileContent)
+        : await importBackupToSupabase(fileContent);
       
       setImportResult(result);
       
@@ -67,6 +71,35 @@ export const BackupImport: React.FC<BackupImportProps> = ({ onClose, onSuccess }
           {t('settings.importBackupDescription', 'Import your backup file to restore your data. This supports both old localStorage backups and new Supabase exports.')}
         </p>
         
+        {/* Import type selection */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Import Type:
+          </label>
+          <div className="space-y-2">
+            <label className="flex items-center space-x-2">
+              <input
+                type="radio"
+                value="merge"
+                checked={importType === 'merge'}
+                onChange={(e) => setImportType(e.target.value as 'merge' | 'replace')}
+                className="text-blue-600"
+              />
+              <span className="text-sm">Merge with existing data (adds new records)</span>
+            </label>
+            <label className="flex items-center space-x-2">
+              <input
+                type="radio"
+                value="replace"
+                checked={importType === 'replace'}
+                onChange={(e) => setImportType(e.target.value as 'merge' | 'replace')}
+                className="text-blue-600"
+              />
+              <span className="text-sm text-red-600">Replace all data (⚠️ deletes existing data first)</span>
+            </label>
+          </div>
+        </div>
+        
         <input
           ref={fileInputRef}
           type="file"
@@ -79,7 +112,11 @@ export const BackupImport: React.FC<BackupImportProps> = ({ onClose, onSuccess }
         <button
           onClick={handleImportClick}
           disabled={isImporting}
-          className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+          className={`w-full px-4 py-2 text-white rounded-md disabled:bg-gray-400 disabled:cursor-not-allowed ${
+            importType === 'replace' 
+              ? 'bg-red-600 hover:bg-red-700' 
+              : 'bg-blue-600 hover:bg-blue-700'
+          }`}
         >
           {isImporting ? t('common.importing') : t('settings.selectBackupFile')}
         </button>
