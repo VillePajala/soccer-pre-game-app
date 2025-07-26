@@ -687,10 +687,11 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
       processedGameIds.forEach(gameId => {
           const game: SavedGame | undefined = savedGames?.[gameId];
           game?.selectedPlayerIds?.forEach(playerId => {
-              const playerInGame = game.availablePlayers?.find(p => p.id === playerId);
-              if (playerInGame && !statsMap[playerId]) {
+              // Look for player in the main availablePlayers prop, not in the saved game
+              const playerInRoster = availablePlayers.find(p => p.id === playerId);
+              if (playerInRoster && !statsMap[playerId]) {
                   statsMap[playerId] = {
-                      ...playerInGame,
+                      ...playerInRoster,
                       goals: 0,
                       assists: 0,
                       totalScore: 0,
@@ -722,15 +723,52 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
     // Process relevant events
     relevantGameEvents.forEach(event => {
       if (event.type === 'goal') {
-        if (event.scorerId && statsMap[event.scorerId]) {
-          statsMap[event.scorerId].goals = (statsMap[event.scorerId].goals || 0) + 1;
-          statsMap[event.scorerId].totalScore = (statsMap[event.scorerId].totalScore || 0) + 1;
-        } else if (event.scorerId) {
+        // Handle scorer
+        if (event.scorerId) {
+          // If scorer is not in statsMap, try to add them from availablePlayers
+          if (!statsMap[event.scorerId]) {
+            const player = availablePlayers.find(p => p.id === event.scorerId);
+            if (player) {
+              statsMap[event.scorerId] = {
+                ...player,
+                goals: 0,
+                assists: 0,
+                totalScore: 0,
+                gamesPlayed: activeTab === 'currentGame' ? 1 : 0,
+                avgPoints: 0,
+              };
+            }
+          }
+          
+          // Now increment the goal if player exists in statsMap
+          if (statsMap[event.scorerId]) {
+            statsMap[event.scorerId].goals = (statsMap[event.scorerId].goals || 0) + 1;
+            statsMap[event.scorerId].totalScore = (statsMap[event.scorerId].totalScore || 0) + 1;
+          }
         }
-        if (event.assisterId && statsMap[event.assisterId]) {
-          statsMap[event.assisterId].assists = (statsMap[event.assisterId].assists || 0) + 1;
-          statsMap[event.assisterId].totalScore = (statsMap[event.assisterId].totalScore || 0) + 1;
-        } else if (event.assisterId) {
+        
+        // Handle assister
+        if (event.assisterId) {
+          // If assister is not in statsMap, try to add them from availablePlayers
+          if (!statsMap[event.assisterId]) {
+            const player = availablePlayers.find(p => p.id === event.assisterId);
+            if (player) {
+              statsMap[event.assisterId] = {
+                ...player,
+                goals: 0,
+                assists: 0,
+                totalScore: 0,
+                gamesPlayed: activeTab === 'currentGame' ? 1 : 0,
+                avgPoints: 0,
+              };
+            }
+          }
+          
+          // Now increment the assist if player exists in statsMap
+          if (statsMap[event.assisterId]) {
+            statsMap[event.assisterId].assists = (statsMap[event.assisterId].assists || 0) + 1;
+            statsMap[event.assisterId].totalScore = (statsMap[event.assisterId].totalScore || 0) + 1;
+          }
         }
       }
       // Add calculations for other stats if needed
