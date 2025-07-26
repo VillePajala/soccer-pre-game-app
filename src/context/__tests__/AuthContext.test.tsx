@@ -55,8 +55,12 @@ const TestComponent = ({ testId = 'test-component' }: { testId?: string }) => {
   );
 };
 
-const renderWithAuthProvider = (children: ReactNode) => {
-  return render(<AuthProvider>{children}</AuthProvider>);
+const renderWithAuthProvider = async (children: ReactNode) => {
+  let utils: ReturnType<typeof render> | undefined;
+  await act(async () => {
+    utils = render(<AuthProvider>{children}</AuthProvider>);
+  });
+  return utils as ReturnType<typeof render>;
 };
 
 describe('AuthContext', () => {
@@ -98,7 +102,7 @@ describe('AuthContext', () => {
 
   describe('Initialization', () => {
     it('should initialize with null user and session, and loading true', async () => {
-      renderWithAuthProvider(<TestComponent />);
+      await renderWithAuthProvider(<TestComponent />);
       
       expect(screen.getByTestId('user')).toHaveTextContent('null');
       expect(screen.getByTestId('session')).toHaveTextContent('null');
@@ -111,7 +115,7 @@ describe('AuthContext', () => {
     });
 
     it('should call getSession and getUser on mount', async () => {
-      renderWithAuthProvider(<TestComponent />);
+      await renderWithAuthProvider(<TestComponent />);
       
       await waitFor(() => {
         expect(mockSupabase.auth.getSession).toHaveBeenCalled();
@@ -119,8 +123,8 @@ describe('AuthContext', () => {
       });
     });
 
-    it('should set up auth state change listener', () => {
-      renderWithAuthProvider(<TestComponent />);
+    it('should set up auth state change listener', async () => {
+      await renderWithAuthProvider(<TestComponent />);
       
       expect(mockSupabase.auth.onAuthStateChange).toHaveBeenCalled();
     });
@@ -141,7 +145,7 @@ describe('AuthContext', () => {
         error: null,
       });
       
-      renderWithAuthProvider(<TestComponent />);
+      await renderWithAuthProvider(<TestComponent />);
       
       await waitFor(() => {
         expect(screen.getByTestId('user')).toHaveTextContent(JSON.stringify(mockUser));
@@ -158,7 +162,7 @@ describe('AuthContext', () => {
         return { data: { subscription: { unsubscribe: mockUnsubscribe } } };
       });
       
-      renderWithAuthProvider(<TestComponent />);
+      await renderWithAuthProvider(<TestComponent />);
       
       // Wait for initial load
       await waitFor(() => {
@@ -190,7 +194,7 @@ describe('AuthContext', () => {
         error: null,
       });
       
-      renderWithAuthProvider(<TestComponent />);
+      await renderWithAuthProvider(<TestComponent />);
       
       await waitFor(() => {
         expect(screen.getByTestId('loading')).toHaveTextContent('false');
@@ -216,7 +220,7 @@ describe('AuthContext', () => {
         error: mockError,
       });
       
-      renderWithAuthProvider(<TestComponent />);
+      await renderWithAuthProvider(<TestComponent />);
       
       await waitFor(() => {
         expect(screen.getByTestId('loading')).toHaveTextContent('false');
@@ -240,7 +244,7 @@ describe('AuthContext', () => {
         error: null,
       });
       
-      renderWithAuthProvider(<TestComponent />);
+      await renderWithAuthProvider(<TestComponent />);
       
       await waitFor(() => {
         expect(screen.getByTestId('loading')).toHaveTextContent('false');
@@ -259,7 +263,7 @@ describe('AuthContext', () => {
     });
 
     it('should handle sign out', async () => {
-      renderWithAuthProvider(<TestComponent />);
+      await renderWithAuthProvider(<TestComponent />);
       
       await waitFor(() => {
         expect(screen.getByTestId('loading')).toHaveTextContent('false');
@@ -275,7 +279,7 @@ describe('AuthContext', () => {
     });
 
     it('should handle password reset', async () => {
-      renderWithAuthProvider(<TestComponent />);
+      await renderWithAuthProvider(<TestComponent />);
       
       await waitFor(() => {
         expect(screen.getByTestId('loading')).toHaveTextContent('false');
@@ -294,8 +298,8 @@ describe('AuthContext', () => {
   });
 
   describe('Cleanup', () => {
-    it('should unsubscribe from auth state changes on unmount', () => {
-      const { unmount } = renderWithAuthProvider(<TestComponent />);
+    it('should unsubscribe from auth state changes on unmount', async () => {
+      const { unmount } = await renderWithAuthProvider(<TestComponent />);
       
       unmount();
       
@@ -307,7 +311,7 @@ describe('AuthContext', () => {
     it('should handle getSession errors gracefully', async () => {
       mockSupabase.auth.getSession.mockRejectedValue(new Error('Session error'));
       
-      renderWithAuthProvider(<TestComponent />);
+      await renderWithAuthProvider(<TestComponent />);
       
       await waitFor(() => {
         expect(screen.getByTestId('loading')).toHaveTextContent('false');
@@ -319,7 +323,7 @@ describe('AuthContext', () => {
     it('should handle getUser errors gracefully', async () => {
       mockSupabase.auth.getUser.mockRejectedValue(new Error('User error'));
       
-      renderWithAuthProvider(<TestComponent />);
+      await renderWithAuthProvider(<TestComponent />);
       
       await waitFor(() => {
         expect(screen.getByTestId('loading')).toHaveTextContent('false');
