@@ -52,7 +52,8 @@ The app is designed to be an all-in-one digital assistant for game day, from pre
 *   **UI Library:** [React](https://reactjs.org/)
 *   **Styling:** [Tailwind CSS](https://tailwindcss.com/)
 *   **State Management:** React Hooks (`useState`, `useReducer`, `useContext`) & Custom Hooks
-*   **Data Persistence:** Browser `localStorage` API *(deprecated; migrating to Supabase)*
+*   **Data Persistence:** [Supabase](https://supabase.com/) Postgres database
+*   **Authentication:** Supabase Auth with email/password sign in
 *   **Internationalization:** [i18next](https://www.i18next.com/) / [react-i18next](https://react-i18next.com/)
 *   **PWA:** Custom Service Worker & Web App Manifest
 *   **Analytics:** [@vercel/analytics](https://vercel.com/analytics)
@@ -87,6 +88,8 @@ The app is designed to be an all-in-one digital assistant for game day, from pre
 
    When launched, a **Start Screen** appears with options to start a new game, load an existing one, create a season or tournament, or view statistics. Select an action to continue to the main field view.
 
+6.  You'll be prompted to sign up or log in using Supabase Auth before any data is saved.
+
 ## Running Tests
 
 Install project dependencies with `npm install` as shown above. Then execute the automated test suite with:
@@ -118,8 +121,8 @@ These values configure Supabase access and feature flags.
 
 ## Important Notes
 
-*   **Data Storage:** By default all data is kept in your browser's `localStorage`. When `NEXT_PUBLIC_ENABLE_SUPABASE=true`, your data will be synced to your Supabase project instead. Either way, continue using the **Full Backup** feature to safeguard your records.
-*   **Deprecation Notice:** localStorage support will be removed in a future release. Please migrate your data to Supabase.
+*   **Data Storage:** All data is stored in Supabase by default. A localStorage fallback can be enabled for offline-first testing.
+*   **Deprecation Notice:** Legacy localStorage-only mode is deprecated and will be removed in a future release.
 *   **Offline Use:** To get the best experience, install the app on your device when prompted by your browser ("Add to Home Screen" on mobile, or an install icon in the address bar on desktop).
 
 ---
