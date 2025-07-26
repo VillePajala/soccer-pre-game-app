@@ -8,7 +8,7 @@ import { authAwareStorageManager as storageManager } from '@/lib/storage';
 export default function CheckSupabaseDirect() {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string>('');
-  const [directGames, setDirectGames] = useState<any[]>([]);
+  const [directGames, setDirectGames] = useState<Array<Record<string, unknown>>>([]);
   const [storageGames, setStorageGames] = useState<Record<string, unknown>>({});
   const [error, setError] = useState<string>('');
   const [storageError, setStorageError] = useState<string>('');
