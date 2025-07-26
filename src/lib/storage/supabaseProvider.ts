@@ -458,22 +458,29 @@ export class SupabaseProvider implements IStorageProvider {
       // This is less efficient but more reliable
       for (const game of gamesData) {
         try {
-          // Fetch game events
-          const { data: events } = await supabase
-            .from('game_events')
-            .select('*')
-            .eq('game_id', game.id);
+          const currentGame = gamesCollection[game.id] as Record<string, unknown>;
           
-          if (events && events.length > 0) {
-            const currentGame = gamesCollection[game.id] as Record<string, unknown>;
-            currentGame.gameEvents = events.map((e: Record<string, unknown>) => ({
-              id: e.id,
-              type: e.event_type,
-              time: e.time_seconds,
-              scorerId: e.scorer_id,
-              assisterId: e.assister_id,
-              entityId: e.entity_id
-            }));
+          // Only fetch events if they don't already exist in game_data
+          if (!currentGame.gameEvents || (Array.isArray(currentGame.gameEvents) && currentGame.gameEvents.length === 0)) {
+            // Fetch game events
+            const { data: events } = await supabase
+              .from('game_events')
+              .select('*')
+              .eq('game_id', game.id);
+            
+            if (events && events.length > 0) {
+              currentGame.gameEvents = events.map((e: Record<string, unknown>) => ({
+                id: e.id,
+                type: e.event_type,
+                time: e.time_seconds,
+                scorerId: e.scorer_id,
+                assisterId: e.assister_id,
+                entityId: e.entity_id
+              }));
+              console.log(`Loaded ${events.length} events from game_events table for game ${game.id}`);
+            }
+          } else {
+            console.log(`Game ${game.id} already has ${(currentGame.gameEvents as unknown[]).length} events from game_data`);
           }
         } catch (err) {
           console.warn(`Failed to fetch events for game ${game.id}:`, err);
