@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { authAwareStorageManager as storageManager } from '@/lib/storage';
 import { fixGameEventPlayerIds } from '@/utils/fixGameEventPlayerIds';
 import type { Player } from '@/types';
@@ -166,7 +167,7 @@ export default function DebugPlayerIds() {
           ) : (
             <>
               <div className="bg-red-900 rounded-lg p-4 mb-4">
-                <p>⚠️ Found {playerIdIssues.length} player IDs in game events that don't exist in current roster:</p>
+                <p>⚠️ Found {playerIdIssues.length} player IDs in game events that don&apos;t exist in current roster:</p>
               </div>
               <div className="bg-slate-800 rounded-lg p-4">
                 <table className="w-full">
@@ -224,9 +225,9 @@ export default function DebugPlayerIds() {
         </div>
 
         <div className="mt-8">
-          <a href="/" className="text-indigo-400 hover:text-indigo-300">
+          <Link href="/" className="text-indigo-400 hover:text-indigo-300">
             ← Back to App
-          </a>
+          </Link>
         </div>
       </div>
     </div>
