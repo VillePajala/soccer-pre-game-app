@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { authAwareStorageManager as storageManager } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
 
 export default function DebugSupabaseGames() {
   const [loading, setLoading] = useState(true);
   const [storageGames, setStorageGames] = useState<Record<string, unknown>>({});
-  const [directGames, setDirectGames] = useState<any[]>([]);
+  const [directGames, setDirectGames] = useState<Array<Record<string, unknown>>>([]);
   const [error, setError] = useState<string>('');
   const [userId, setUserId] = useState<string>('');
 
@@ -104,7 +105,7 @@ export default function DebugSupabaseGames() {
               </thead>
               <tbody>
                 {Object.entries(storageGames).map(([id, game]) => {
-                  const g = game as any;
+                  const g = game as Record<string, unknown>;
                   return (
                     <tr key={id} className="border-b border-slate-700">
                       <td className="py-2 font-mono text-xs">{id}</td>
@@ -160,9 +161,9 @@ export default function DebugSupabaseGames() {
         </div>
 
         <div className="mt-8">
-          <a href="/" className="text-indigo-400 hover:text-indigo-300">
+          <Link href="/" className="text-indigo-400 hover:text-indigo-300">
             ← Back to App
-          </a>
+          </Link>
         </div>
       </div>
     </div>
