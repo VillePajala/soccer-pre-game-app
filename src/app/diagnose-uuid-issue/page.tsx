@@ -37,6 +37,9 @@ export default function DiagnoseUuidIssue() {
         return;
       }
 
+      // Explicitly update the storage manager with the auth state
+      (storageManager as any).updateAuthState?.(!!user, user.id);
+
       // Load players
       const loadedPlayers = await storageManager.getPlayers();
       setPlayers(loadedPlayers);
