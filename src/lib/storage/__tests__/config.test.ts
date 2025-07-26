@@ -119,20 +119,32 @@ describe('Storage Configuration', () => {
       expect(() => validateSupabaseConfig()).not.toThrow();
     });
 
-    it('should throw when Supabase enabled but URL missing', () => {
+    it('should return false and log error when Supabase enabled but URL missing', () => {
       process.env.NEXT_PUBLIC_ENABLE_SUPABASE = 'true';
       delete process.env.NEXT_PUBLIC_SUPABASE_URL;
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-key';
-
-      expect(() => validateSupabaseConfig()).toThrow('required environment variables are missing');
+      
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      const result = validateSupabaseConfig();
+      
+      expect(result).toBe(false);
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('required environment variables are missing'));
+      
+      consoleSpy.mockRestore();
     });
 
-    it('should throw when Supabase enabled but key missing', () => {
+    it('should return false and log error when Supabase enabled but key missing', () => {
       process.env.NEXT_PUBLIC_ENABLE_SUPABASE = 'true';
       process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
       delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-      expect(() => validateSupabaseConfig()).toThrow('required environment variables are missing');
+      
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      const result = validateSupabaseConfig();
+      
+      expect(result).toBe(false);
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('required environment variables are missing'));
+      
+      consoleSpy.mockRestore();
     });
 
     it('should not throw when both URL and key are provided', () => {
