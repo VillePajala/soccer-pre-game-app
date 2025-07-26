@@ -550,16 +550,15 @@ export class SupabaseProvider implements IStorageProvider {
     console.log('[SupabaseProvider] saveSavedGame called with:', gameData);
     try {
       const userId = await this.getCurrentUserId();
-      const appState = gameData as AppState;
+      const gameWithId = gameData as AppState & { id?: string };
+      let gameId = gameWithId.id || crypto.randomUUID();
       
       // First, save the main game data
       const supabaseGame = toSupabaseTransforms.transformGameToSupabase(
-        appState.id || crypto.randomUUID(), 
-        appState, 
+        gameId, 
+        gameWithId, 
         userId
       );
-      
-      let gameId: string;
       
       // Save or update the game
       if (supabaseGame.id) {
@@ -599,7 +598,7 @@ export class SupabaseProvider implements IStorageProvider {
       ]);
       
       // Save game players
-      const gamePlayers = toSupabaseTransforms.transformGamePlayersToSupabase(gameId, appState);
+      const gamePlayers = toSupabaseTransforms.transformGamePlayersToSupabase(gameId, gameWithId);
       if (gamePlayers.length > 0) {
         const { error } = await supabase
           .from('game_players')
@@ -610,8 +609,8 @@ export class SupabaseProvider implements IStorageProvider {
       }
       
       // Save game opponents
-      if (appState.opponents && appState.opponents.length > 0) {
-        const gameOpponents = toSupabaseTransforms.transformGameOpponentsToSupabase(gameId, appState.opponents);
+      if (gameWithId.opponents && gameWithId.opponents.length > 0) {
+        const gameOpponents = toSupabaseTransforms.transformGameOpponentsToSupabase(gameId, gameWithId.opponents);
         const { error } = await supabase
           .from('game_opponents')
           .insert(gameOpponents);
@@ -621,8 +620,8 @@ export class SupabaseProvider implements IStorageProvider {
       }
       
       // Save game events
-      if (appState.gameEvents && appState.gameEvents.length > 0) {
-        const gameEvents = toSupabaseTransforms.transformGameEventsToSupabase(gameId, appState.gameEvents);
+      if (gameWithId.gameEvents && gameWithId.gameEvents.length > 0) {
+        const gameEvents = toSupabaseTransforms.transformGameEventsToSupabase(gameId, gameWithId.gameEvents);
         const { error } = await supabase
           .from('game_events')
           .insert(gameEvents);
@@ -632,8 +631,8 @@ export class SupabaseProvider implements IStorageProvider {
       }
       
       // Save player assessments
-      if (appState.assessments && Object.keys(appState.assessments).length > 0) {
-        const assessments = toSupabaseTransforms.transformPlayerAssessmentsToSupabase(gameId, appState.assessments);
+      if (gameWithId.assessments && Object.keys(gameWithId.assessments).length > 0) {
+        const assessments = toSupabaseTransforms.transformPlayerAssessmentsToSupabase(gameId, gameWithId.assessments);
         const { error } = await supabase
           .from('player_assessments')
           .insert(assessments);
@@ -643,8 +642,8 @@ export class SupabaseProvider implements IStorageProvider {
       }
       
       // Save tactical discs
-      if (appState.tacticalDiscs && appState.tacticalDiscs.length > 0) {
-        const tacticalDiscs = toSupabaseTransforms.transformTacticalDiscsToSupabase(gameId, appState.tacticalDiscs);
+      if (gameWithId.tacticalDiscs && gameWithId.tacticalDiscs.length > 0) {
+        const tacticalDiscs = toSupabaseTransforms.transformTacticalDiscsToSupabase(gameId, gameWithId.tacticalDiscs);
         const { error } = await supabase
           .from('tactical_discs')
           .insert(tacticalDiscs);
@@ -654,8 +653,8 @@ export class SupabaseProvider implements IStorageProvider {
       }
       
       // Save drawings
-      if (appState.drawings && appState.drawings.length > 0) {
-        const drawings = toSupabaseTransforms.transformDrawingsToSupabase(gameId, appState.drawings, 'field');
+      if (gameWithId.drawings && gameWithId.drawings.length > 0) {
+        const drawings = toSupabaseTransforms.transformDrawingsToSupabase(gameId, gameWithId.drawings, 'field');
         if (drawings.length > 0) {
           const { error } = await supabase
             .from('game_drawings')
@@ -667,8 +666,8 @@ export class SupabaseProvider implements IStorageProvider {
       }
       
       // Save tactical drawings
-      if (appState.tacticalDrawings && appState.tacticalDrawings.length > 0) {
-        const tacticalDrawings = toSupabaseTransforms.transformDrawingsToSupabase(gameId, appState.tacticalDrawings, 'tactical');
+      if (gameWithId.tacticalDrawings && gameWithId.tacticalDrawings.length > 0) {
+        const tacticalDrawings = toSupabaseTransforms.transformDrawingsToSupabase(gameId, gameWithId.tacticalDrawings, 'tactical');
         if (tacticalDrawings.length > 0) {
           const { error } = await supabase
             .from('tactical_drawings')
@@ -680,8 +679,8 @@ export class SupabaseProvider implements IStorageProvider {
       }
       
       // Save completed intervals
-      if (appState.completedIntervalDurations && appState.completedIntervalDurations.length > 0) {
-        const intervals = toSupabaseTransforms.transformCompletedIntervalsToSupabase(gameId, appState.completedIntervalDurations);
+      if (gameWithId.completedIntervalDurations && gameWithId.completedIntervalDurations.length > 0) {
+        const intervals = toSupabaseTransforms.transformCompletedIntervalsToSupabase(gameId, gameWithId.completedIntervalDurations);
         const { error } = await supabase
           .from('completed_intervals')
           .insert(intervals);
@@ -691,7 +690,7 @@ export class SupabaseProvider implements IStorageProvider {
       }
       
       // Return the saved game with its new ID
-      return { ...appState, id: gameId };
+      return { ...gameWithId, id: gameId };
     } catch (error) {
       console.error('[SupabaseProvider] saveSavedGame error:', error);
       if (error instanceof AuthenticationError || error instanceof NetworkError) {
