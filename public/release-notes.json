@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "Enhance SupabaseProvider to fetch and save comprehensive game data"
+  "notes": "Implement Auth Debug Page for enhanced authentication and storage management"
 }

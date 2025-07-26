@@ -5,14 +5,25 @@ import { useAuth } from '@/context/AuthContext';
 import { useAuthStorage } from '@/hooks/useAuthStorage';
 import { authAwareStorageManager } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
+import type { Session } from '@supabase/supabase-js';
+import type { AuthAwareStorageManager } from '@/lib/storage/authAwareStorageManager';
+
+interface StorageStatus {
+  currentProvider: string;
+  recommendedProvider: string;
+  isAuthenticated: boolean;
+  canUseSupabase: boolean;
+  online: boolean;
+  error?: string;
+}
 
 export default function AuthDebugPage() {
   const { user, session, loading: authLoading } = useAuth();
   const { isAuthenticated, userId } = useAuthStorage();
-  const [storageStatus, setStorageStatus] = useState<any>(null);
-  const [supabaseSession, setSupabaseSession] = useState<any>(null);
+  const [storageStatus, setStorageStatus] = useState<StorageStatus | null>(null);
+  const [supabaseSession, setSupabaseSession] = useState<Session | null>(null);
   const [error, setError] = useState<string>('');
-  const [games, setGames] = useState<any>(null);
+  const [games, setGames] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -22,7 +33,7 @@ export default function AuthDebugPage() {
   const checkStatus = async () => {
     try {
       // Get storage manager status
-      const status = await authAwareStorageManager.getStatus();
+      const status = await (authAwareStorageManager as unknown as AuthAwareStorageManager).getStatus();
       setStorageStatus(status);
 
       // Get Supabase session directly
@@ -45,16 +56,16 @@ export default function AuthDebugPage() {
       console.log('Supabase ping result:', pingError ? 'Failed' : 'Success');
 
       // Test 2: Get current user
-      const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser();
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
       console.log('Current user:', currentUser);
 
       // Test 3: Try to fetch games
       const gamesResult = await authAwareStorageManager.getSavedGames();
       console.log('Games from storage manager:', gamesResult);
-      setGames(gamesResult);
+      setGames(gamesResult as Record<string, unknown>);
 
       // Test 4: Check what provider is actually being used
-      console.log('Current provider:', authAwareStorageManager.getCurrentProviderName());
+      console.log('Current provider:', authAwareStorageManager.getProviderName());
       
       await checkStatus();
     } catch (err) {
@@ -68,7 +79,7 @@ export default function AuthDebugPage() {
   const forceSupabase = async () => {
     try {
       console.log('Forcing Supabase provider...');
-      await (authAwareStorageManager as any).forceProvider('supabase');
+      await (authAwareStorageManager as unknown as AuthAwareStorageManager).forceProvider('supabase');
       await checkStatus();
     } catch (err) {
       console.error('Error forcing Supabase:', err);
