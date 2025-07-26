@@ -5,7 +5,7 @@ import { authAwareStorageManager as storageManager } from '@/lib/storage';
 import { useAuth } from '@/context/AuthContext';
 import { useAuthStorage } from '@/hooks/useAuthStorage';
 import { calculatePlayerStats } from '@/utils/playerStats';
-import { Player, Season, Tournament } from '@/types';
+import { Player, Season, Tournament, AppState } from '@/types';
 
 export default function DebugPlayerStatsPage() {
   const { user } = useAuth();
@@ -19,7 +19,7 @@ export default function DebugPlayerStatsPage() {
     
     try {
       // Load all data
-      const games = await storageManager.getSavedGames() as Record<string, unknown>;
+      const games = await storageManager.getSavedGames() as Record<string, AppState>;
       const players = await storageManager.getPlayers() as Player[];
       const seasons = await storageManager.getSeasons() as Season[];
       const tournaments = await storageManager.getTournaments() as Tournament[];

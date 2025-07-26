@@ -30,16 +30,24 @@ export default function DebugStatsDetailedPage() {
       
       for (const [gameId, game] of Object.entries(games)) {
         const gameIssues: string[] = [];
+        const gameData = game as { 
+          gameEvents?: Array<{ type: string; scorerId?: string; assisterId?: string; time?: number }>; 
+          selectedPlayerIds?: string[]; 
+          teamName?: string; 
+          opponentName?: string; 
+          gameDate?: string; 
+          seasonId?: string; 
+          tournamentId?: string 
+        };
         
         // Check if game has events
-        if (!game.gameEvents || game.gameEvents.length === 0) {
+        if (!gameData.gameEvents || gameData.gameEvents.length === 0) {
           continue; // Skip games without events
         }
         
         // Get all scorer/assister IDs from events
         const eventPlayerIds = new Set<string>();
-        const gameData = game as { gameEvents?: Array<{ type: string; scorerId?: string; assisterId?: string }> };
-        gameData.gameEvents?.forEach((event) => {
+        gameData.gameEvents.forEach((event) => {
           if (event.type === 'goal') {
             if (event.scorerId) eventPlayerIds.add(event.scorerId);
             if (event.assisterId) eventPlayerIds.add(event.assisterId);
@@ -47,7 +55,7 @@ export default function DebugStatsDetailedPage() {
         });
         
         // Check if all event players are in selectedPlayerIds
-        const selectedSet = new Set(game.selectedPlayerIds || []);
+        const selectedSet = new Set(gameData.selectedPlayerIds || []);
         const missingFromSelected: string[] = [];
         
         eventPlayerIds.forEach(playerId => {
@@ -60,22 +68,21 @@ export default function DebugStatsDetailedPage() {
         
         if (missingFromSelected.length > 0) {
           issueCount++;
-          gameIssues.push(`Game: ${game.teamName} vs ${game.opponentName} (${game.gameDate})`);
+          gameIssues.push(`Game: ${gameData.teamName} vs ${gameData.opponentName} (${gameData.gameDate})`);
           gameIssues.push(`  Game ID: ${gameId}`);
           gameIssues.push(`  ⚠️ Players with events but NOT in selectedPlayerIds:`);
           missingFromSelected.forEach(p => gameIssues.push(`    - ${p}`));
-          gameIssues.push(`  Selected players: ${game.selectedPlayerIds?.length || 0}`);
-          gameIssues.push(`  Total events: ${game.gameEvents.length}`);
+          gameIssues.push(`  Selected players: ${gameData.selectedPlayerIds?.length || 0}`);
+          gameIssues.push(`  Total events: ${gameData.gameEvents.length}`);
           
           // Show sample events
-          const gameEventsData = game as { gameEvents?: Array<{ type: string; scorerId?: string; time?: number }> };
-          const sampleEvents = gameEventsData.gameEvents
-            ?.filter((e) => e.type === 'goal' && missingFromSelected.some(m => m.includes(e.scorerId || '')))
-            ?.slice(0, 3) || [];
+          const sampleEvents = gameData.gameEvents
+            .filter((e) => e.type === 'goal' && missingFromSelected.some(m => m.includes(e.scorerId || '')))
+            .slice(0, 3);
           if (sampleEvents.length > 0) {
             gameIssues.push('  Sample problematic events:');
-            sampleEvents.forEach((e: { type: string; scorerId: string; time: number }) => {
-              gameIssues.push(`    - Goal by ${e.scorerId} at ${e.time}s`);
+            sampleEvents.forEach((e) => {
+              gameIssues.push(`    - Goal by ${e.scorerId || 'Unknown'} at ${e.time || 0}s`);
             });
           }
           gameIssues.push('');
@@ -109,7 +116,8 @@ export default function DebugStatsDetailedPage() {
       
       // Check data structure from Supabase
       output.push(`\n=== SUPABASE DATA STRUCTURE CHECK ===`);
-      const firstGame = Object.values(games)[0];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const firstGame = Object.values(games)[0] as any;
       if (firstGame) {
         output.push(`Sample game structure:`);
         output.push(`- Has gameEvents: ${!!firstGame.gameEvents}`);
