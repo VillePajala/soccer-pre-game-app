@@ -190,6 +190,9 @@ export const toSupabase = {
   }
 };
 
+// Import the detailed transformation functions
+import { reconstructAppStateFromSupabase, type SupabaseGameData } from './fromSupabase';
+
 export const fromSupabase = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   player: (dbPlayer: any) => ({
@@ -289,5 +292,8 @@ export const fromSupabase = {
       gameLocation: dbGame.game_location,
       gameTime: dbGame.game_time
     };
-  }
+  },
+
+  // Add the reconstructAppStateFromSupabase function to the exported object
+  reconstructAppStateFromSupabase: (gameData: SupabaseGameData) => reconstructAppStateFromSupabase(gameData)
 };
