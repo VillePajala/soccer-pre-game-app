@@ -71,6 +71,20 @@ The build process includes a custom manifest generation step that runs before Ne
 
 ## Development Notes
 
+### TypeScript and ESLint Best Practices for Vercel Builds
+
+**IMPORTANT: Always check for TypeScript and ESLint errors before committing:**
+1. Run `npm run lint` before every commit to catch ESLint errors
+2. Run `npm run build` locally to catch TypeScript compilation errors
+3. Common Vercel build failures to avoid:
+   - **Unescaped entities**: Use `&apos;` for apostrophes, `&quot;` for quotes in JSX
+   - **`any` types**: Always use proper TypeScript types, avoid `any`. Use `Record<string, unknown>` or specific interfaces
+   - **Next.js Link**: Use `import Link from 'next/link'` instead of `<a>` tags for internal navigation
+   - **Type casting in JSX**: When rendering unknown types, always cast: `{String(value || '')}`
+   - **React keys**: Use `String(item.id)` for keys when the ID type is unknown
+   - **useEffect dependencies**: Include all dependencies or use the callback pattern to avoid warnings
+   - **Conditional rendering**: Ensure conditions return boolean: `{Boolean(condition) && <Component />}`
+
 ### TypeScript Best Practices
 
 When working with storage manager methods that return `Promise<unknown>`:
