@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { getConfigInfo } from '@/lib/storage/config';
-import { storageManager } from '@/lib/storage';
+import { authAwareStorageManager } from '@/lib/storage';
 
 export default function StorageConfigPage() {
   const [config, setConfig] = useState<ReturnType<typeof getConfigInfo> | null>(null);
@@ -12,10 +13,21 @@ export default function StorageConfigPage() {
   useEffect(() => {
     // Get configuration info
     setConfig(getConfigInfo());
-    setProviderName(storageManager.getCurrentProviderName());
+    setProviderName(authAwareStorageManager.getProviderName());
     
     // Test connection
-    storageManager.testConnection().then(setConnectionTest);
+    authAwareStorageManager.isOnline().then(online => {
+      setConnectionTest({
+        provider: authAwareStorageManager.getProviderName(),
+        online
+      });
+    }).catch(error => {
+      setConnectionTest({
+        provider: authAwareStorageManager.getProviderName(),
+        online: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    });
   }, []);
 
   if (!config) {
@@ -109,9 +121,9 @@ export default function StorageConfigPage() {
         </div>
 
         <div className="mt-8">
-          <a href="/" className="text-indigo-400 hover:text-indigo-300">
+          <Link href="/" className="text-indigo-400 hover:text-indigo-300">
             ← Back to App
-          </a>
+          </Link>
         </div>
       </div>
     </div>
