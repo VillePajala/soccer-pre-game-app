@@ -1484,22 +1484,29 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       const newGameId = `game_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
       // 3. Explicitly save the new game state immediately to state and localStorage
+      let finalId = newGameId;
       try {
-        const updatedSavedGamesCollection = {
+        const provisionalCollection = {
           ...savedGames,
           [newGameId]: newGameState
         };
-        setSavedGames(updatedSavedGamesCollection);
-        // localStorage.setItem(SAVED_GAMES_KEY, JSON.stringify(updatedSavedGames)); // OLD
-        // logger.log(`Explicitly saved initial state for new game ID: ${newGameId}`); // OLD
+        setSavedGames(provisionalCollection);
 
-        // const currentSettings: AppSettings = { currentGameId: newGameId }; // OLD
-        // localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(currentSettings)); // OLD
-        // logger.log(`Updated app settings with new game ID: ${newGameId}`); // OLD
+        const saved = await utilSaveGame(newGameId, newGameState);
+        const savedId = saved.id;
 
-        await utilSaveGame(newGameId, newGameState);
-        await utilSaveCurrentGameIdSetting(newGameId);
-        logger.log(`Saved new game ${newGameId} and settings via utility functions.`);
+        if (savedId && savedId !== newGameId) {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { [newGameId]: _unused, ...rest } = provisionalCollection;
+          const finalCollection = { ...rest, [savedId]: saved };
+          setSavedGames(finalCollection);
+          await utilSaveCurrentGameIdSetting(savedId);
+          finalId = savedId;
+        } else {
+          await utilSaveCurrentGameIdSetting(newGameId);
+        }
+
+        logger.log(`Saved new game ${finalId} and settings via utility functions.`);
 
       } catch (error) {
          logger.error("Error explicitly saving new game state:", error);
@@ -1511,8 +1518,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       setIsPlayed(isPlayed);
 
       // 5. Set the current game ID - This will trigger the loading useEffect
-      setCurrentGameId(newGameId);
-      logger.log(`Set current game ID to: ${newGameId}. Loading useEffect will sync component state.`);
+      setCurrentGameId(finalId);
+      logger.log(`Set current game ID to: ${finalId}. Loading useEffect will sync component state.`);
 
       // Close the setup modal
       setIsNewGameSetupModalOpen(false);

@@ -26,6 +26,7 @@ import {
   getLatestGameId,
   // GameData, // No longer importing GameData for test mocks, using AppState
 } from './savedGames';
+import { authAwareStorageManager as storageManager } from '@/lib/storage';
 import { SAVED_GAMES_KEY } from '@/config/storageKeys';
 
 // TestGameEvent is no longer needed, use PageGameEvent directly
@@ -331,12 +332,30 @@ describe('Saved Games Utilities', () => {
     });
 
     it('should reject if internal saveGame fails', async () => {
-      localStorageMock.setItem.mockImplementation(() => { 
-        throw new Error('LocalStorage set failure during create'); 
+      localStorageMock.setItem.mockImplementation(() => {
+        throw new Error('LocalStorage set failure during create');
       });
       const initialGamePartial: Partial<AppState> = { teamName: 'Fail Team' };
-      
+
       await expect(createGame(initialGamePartial)).rejects.toThrow('LocalStorage set failure during create');
+    });
+
+    it('should return Supabase ID when storage layer assigns a UUID', async () => {
+      const initialGamePartial: Partial<AppState> = { teamName: 'Supabase FC' };
+      const supabaseId = '11111111-1111-1111-1111-111111111111';
+
+      jest.spyOn(storageManager, 'saveSavedGame').mockResolvedValue({
+        ...mockBaseAppState,
+        id: supabaseId,
+        teamName: 'Supabase FC'
+      });
+
+      const result = await createGame(initialGamePartial);
+
+      expect(result.gameData.id).toBe(supabaseId);
+      expect(result.gameData.id).not.toBe(result.gameId);
+
+      (storageManager.saveSavedGame as jest.Mock).mockRestore();
     });
   });
 
