@@ -128,13 +128,22 @@ export async function importBackupToSupabase(jsonContent: string): Promise<{
       };
     }
     
-    // Import players
+    // Import players and track ID mapping
+    const playerIdMapping: Record<string, string> = {}; // Map old ID -> new ID
     logger.log(`[SupabaseBackupImport] Importing ${playersToImport.length} players...`);
     for (const player of playersToImport) {
       try {
+        const oldPlayerId = player.id;
         // Clear the ID to let Supabase generate new ones
         const playerToSave = { ...player, id: '' };
-        await storageManager.savePlayer(playerToSave);
+        const savedPlayer = await storageManager.savePlayer(playerToSave);
+        const newPlayerId = (savedPlayer as Player).id;
+        
+        if (newPlayerId && newPlayerId !== oldPlayerId) {
+          playerIdMapping[oldPlayerId] = newPlayerId;
+          logger.log(`[SupabaseBackupImport] Player ID mapped: ${oldPlayerId} -> ${newPlayerId}`);
+        }
+        
         stats.players++;
       } catch (error) {
         logger.error(`[SupabaseBackupImport] Failed to import player ${player.name}:`, error);
@@ -175,7 +184,55 @@ export async function importBackupToSupabase(jsonContent: string): Promise<{
         if (game && typeof game === 'object') {
           // Don't include the original game ID - let Supabase generate a new one
           // The old game ID format (game_1745586344283_mvfcd9b) is not a valid UUID
-          const gameData = game as Record<string, unknown>;
+          const gameData = { ...game } as Record<string, unknown>;
+          
+          // Update player IDs in game events
+          if (gameData.gameEvents && Array.isArray(gameData.gameEvents)) {
+            gameData.gameEvents = (gameData.gameEvents as Array<Record<string, unknown>>).map(event => {
+              const updatedEvent = { ...event };
+              
+              // Update scorerId if it exists and has a mapping
+              if (event.scorerId && typeof event.scorerId === 'string' && playerIdMapping[event.scorerId]) {
+                updatedEvent.scorerId = playerIdMapping[event.scorerId];
+                logger.log(`[SupabaseBackupImport] Updated scorerId in event: ${event.scorerId} -> ${updatedEvent.scorerId}`);
+              }
+              
+              // Update assisterId if it exists and has a mapping
+              if (event.assisterId && typeof event.assisterId === 'string' && playerIdMapping[event.assisterId]) {
+                updatedEvent.assisterId = playerIdMapping[event.assisterId];
+                logger.log(`[SupabaseBackupImport] Updated assisterId in event: ${event.assisterId} -> ${updatedEvent.assisterId}`);
+              }
+              
+              return updatedEvent;
+            });
+          }
+          
+          // Update selectedPlayerIds with new player IDs
+          if (gameData.selectedPlayerIds && Array.isArray(gameData.selectedPlayerIds)) {
+            gameData.selectedPlayerIds = (gameData.selectedPlayerIds as string[]).map(oldId => 
+              playerIdMapping[oldId] || oldId
+            );
+          }
+          
+          // Update availablePlayers with new player IDs
+          if (gameData.availablePlayers && Array.isArray(gameData.availablePlayers)) {
+            gameData.availablePlayers = (gameData.availablePlayers as Array<Record<string, unknown>>).map(player => {
+              if (player.id && typeof player.id === 'string' && playerIdMapping[player.id]) {
+                return { ...player, id: playerIdMapping[player.id] };
+              }
+              return player;
+            });
+          }
+          
+          // Update playersOnField with new player IDs
+          if (gameData.playersOnField && Array.isArray(gameData.playersOnField)) {
+            gameData.playersOnField = (gameData.playersOnField as Array<Record<string, unknown>>).map(player => {
+              if (player.id && typeof player.id === 'string' && playerIdMapping[player.id]) {
+                return { ...player, id: playerIdMapping[player.id] };
+              }
+              return player;
+            });
+          }
           logger.log(`[SupabaseBackupImport] Importing game: ${gameData.teamName || 'Unknown'} vs ${gameData.opponentName || 'Unknown'}`);
           console.log('[SupabaseBackupImport] Game data:', {
             teamName: gameData.teamName,
@@ -187,7 +244,7 @@ export async function importBackupToSupabase(jsonContent: string): Promise<{
           });
           
           // Save the game and get the new ID from Supabase
-          const savedGame = await storageManager.saveSavedGame(game);
+          const savedGame = await storageManager.saveSavedGame(gameData);
           const newGameId = (savedGame as Record<string, unknown> & { id?: string }).id;
           
           if (newGameId && newGameId !== oldGameId) {

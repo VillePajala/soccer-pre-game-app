@@ -120,11 +120,20 @@ export async function cleanImportToSupabase(jsonContent: string): Promise<{
     
     // Track ID mappings
     const gameIdMapping: Record<string, string> = {};
+    const playerIdMapping: Record<string, string> = {};
     
-    // Import players
+    // Import players and track ID mapping
     for (const player of playersToImport) {
       try {
-        await storageManager.savePlayer({ ...player, id: '' });
+        const oldPlayerId = player.id;
+        const savedPlayer = await storageManager.savePlayer({ ...player, id: '' });
+        const newPlayerId = (savedPlayer as Player).id;
+        
+        if (newPlayerId && newPlayerId !== oldPlayerId) {
+          playerIdMapping[oldPlayerId] = newPlayerId;
+          logger.log(`[SupabaseCleanImport] Player ID mapped: ${oldPlayerId} -> ${newPlayerId}`);
+        }
+        
         stats.players++;
       } catch (error) {
         logger.error(`Failed to import player:`, error);
@@ -155,7 +164,55 @@ export async function cleanImportToSupabase(jsonContent: string): Promise<{
     for (const [oldGameId, game] of Object.entries(gamesToImport)) {
       try {
         if (game && typeof game === 'object') {
-          const savedGame = await storageManager.saveSavedGame(game);
+          const gameData = { ...game } as Record<string, unknown>;
+          
+          // Update player IDs in game events
+          if (gameData.gameEvents && Array.isArray(gameData.gameEvents)) {
+            gameData.gameEvents = (gameData.gameEvents as Array<Record<string, unknown>>).map(event => {
+              const updatedEvent = { ...event };
+              
+              // Update scorerId if it exists and has a mapping
+              if (event.scorerId && typeof event.scorerId === 'string' && playerIdMapping[event.scorerId]) {
+                updatedEvent.scorerId = playerIdMapping[event.scorerId];
+              }
+              
+              // Update assisterId if it exists and has a mapping
+              if (event.assisterId && typeof event.assisterId === 'string' && playerIdMapping[event.assisterId]) {
+                updatedEvent.assisterId = playerIdMapping[event.assisterId];
+              }
+              
+              return updatedEvent;
+            });
+          }
+          
+          // Update selectedPlayerIds with new player IDs
+          if (gameData.selectedPlayerIds && Array.isArray(gameData.selectedPlayerIds)) {
+            gameData.selectedPlayerIds = (gameData.selectedPlayerIds as string[]).map(oldId => 
+              playerIdMapping[oldId] || oldId
+            );
+          }
+          
+          // Update availablePlayers with new player IDs
+          if (gameData.availablePlayers && Array.isArray(gameData.availablePlayers)) {
+            gameData.availablePlayers = (gameData.availablePlayers as Array<Record<string, unknown>>).map(player => {
+              if (player.id && typeof player.id === 'string' && playerIdMapping[player.id]) {
+                return { ...player, id: playerIdMapping[player.id] };
+              }
+              return player;
+            });
+          }
+          
+          // Update playersOnField with new player IDs
+          if (gameData.playersOnField && Array.isArray(gameData.playersOnField)) {
+            gameData.playersOnField = (gameData.playersOnField as Array<Record<string, unknown>>).map(player => {
+              if (player.id && typeof player.id === 'string' && playerIdMapping[player.id]) {
+                return { ...player, id: playerIdMapping[player.id] };
+              }
+              return player;
+            });
+          }
+          
+          const savedGame = await storageManager.saveSavedGame(gameData);
           const newGameId = (savedGame as Record<string, unknown> & { id?: string }).id;
           
           if (newGameId && newGameId !== oldGameId) {
