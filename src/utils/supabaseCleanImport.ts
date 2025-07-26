@@ -31,11 +31,20 @@ async function clearAllSupabaseData(): Promise<void> {
   if (!user) throw new Error('No authenticated user');
   
   // Delete in order to avoid foreign key constraints
-  await supabase.from('games').delete().eq('user_id', user.id);
-  await supabase.from('tournaments').delete().eq('user_id', user.id);
-  await supabase.from('seasons').delete().eq('user_id', user.id);
-  await supabase.from('players').delete().eq('user_id', user.id);
-  await supabase.from('app_settings').delete().eq('user_id', user.id);
+  const { error: gamesError } = await supabase.from('games').delete().eq('user_id', user.id);
+  if (gamesError) throw new Error(`Failed to delete games: ${gamesError.message}`);
+  
+  const { error: tournamentsError } = await supabase.from('tournaments').delete().eq('user_id', user.id);
+  if (tournamentsError) throw new Error(`Failed to delete tournaments: ${tournamentsError.message}`);
+  
+  const { error: seasonsError } = await supabase.from('seasons').delete().eq('user_id', user.id);
+  if (seasonsError) throw new Error(`Failed to delete seasons: ${seasonsError.message}`);
+  
+  const { error: playersError } = await supabase.from('players').delete().eq('user_id', user.id);
+  if (playersError) throw new Error(`Failed to delete players: ${playersError.message}`);
+  
+  const { error: settingsError } = await supabase.from('app_settings').delete().eq('user_id', user.id);
+  if (settingsError) throw new Error(`Failed to delete settings: ${settingsError.message}`);
   
   logger.log('[SupabaseCleanImport] All data cleared');
 }
@@ -96,6 +105,10 @@ export async function cleanImportToSupabase(jsonContent: string): Promise<{
     
     // Clear all existing data first
     await clearAllSupabaseData();
+    
+    // Wait a moment for database to fully commit the deletions
+    logger.log('[SupabaseCleanImport] Waiting for database sync...');
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
     const stats = {
       players: 0,

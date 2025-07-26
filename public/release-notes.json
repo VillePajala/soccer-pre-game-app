@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "feat: add clean import functionality for Supabase data"
+  "notes": "feat: add clean import option to replace all Supabase data"
 }
