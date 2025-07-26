@@ -5,10 +5,21 @@ import Link from 'next/link';
 import { authAwareStorageManager as storageManager } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
 
+interface GameRecord {
+  id: string;
+  team_name: string;
+  opponent_name: string;
+  game_date: string;
+  home_score: number;
+  away_score: number;
+  created_at: string;
+  game_data?: Record<string, unknown>;
+}
+
 export default function DebugSupabaseGames() {
   const [loading, setLoading] = useState(true);
   const [storageGames, setStorageGames] = useState<Record<string, unknown>>({});
-  const [directGames, setDirectGames] = useState<Array<Record<string, unknown>>>([]);
+  const [directGames, setDirectGames] = useState<GameRecord[]>([]);
   const [error, setError] = useState<string>('');
   const [userId, setUserId] = useState<string>('');
 
@@ -109,10 +120,10 @@ export default function DebugSupabaseGames() {
                   return (
                     <tr key={id} className="border-b border-slate-700">
                       <td className="py-2 font-mono text-xs">{id}</td>
-                      <td className="py-2">{g.teamName} vs {g.opponentName}</td>
-                      <td className="py-2">{g.gameDate}</td>
-                      <td className="py-2">{g.homeScore}-{g.awayScore}</td>
-                      <td className="py-2">{g.gameEvents?.length || 0}</td>
+                      <td className="py-2">{String(g.teamName || '')} vs {String(g.opponentName || '')}</td>
+                      <td className="py-2">{String(g.gameDate || '')}</td>
+                      <td className="py-2">{String(g.homeScore || 0)}-{String(g.awayScore || 0)}</td>
+                      <td className="py-2">{Array.isArray(g.gameEvents) ? g.gameEvents.length : 0}</td>
                     </tr>
                   );
                 })}
@@ -135,7 +146,7 @@ export default function DebugSupabaseGames() {
                 </tr>
               </thead>
               <tbody>
-                {directGames.map((game) => (
+                {directGames.map((game: GameRecord) => (
                   <tr key={game.id} className="border-b border-slate-700">
                     <td className="py-2 font-mono text-xs">{game.id}</td>
                     <td className="py-2">{game.team_name} vs {game.opponent_name}</td>

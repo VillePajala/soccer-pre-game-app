@@ -4,9 +4,19 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 
+interface GameRecord {
+  id: string;
+  team_name: string;
+  opponent_name: string;
+  game_date: string;
+  home_score: number;
+  away_score: number;
+  created_at: string;
+}
+
 export default function CheckAllGames() {
   const [loading, setLoading] = useState(true);
-  const [games, setGames] = useState<Array<Record<string, unknown>>>([]);
+  const [games, setGames] = useState<GameRecord[]>([]);
   const [error, setError] = useState<string>('');
   const [userId, setUserId] = useState<string>('');
 
@@ -82,7 +92,7 @@ export default function CheckAllGames() {
                 </tr>
               </thead>
               <tbody>
-                {games.map((game) => (
+                {games.map((game: GameRecord) => (
                   <tr key={game.id} className="border-b border-slate-700">
                     <td className="py-2 font-mono text-xs">{game.id}</td>
                     <td className="py-2">{game.team_name} vs {game.opponent_name}</td>

@@ -5,9 +5,20 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { authAwareStorageManager as storageManager } from '@/lib/storage';
 
+interface GameRecord {
+  id: string;
+  team_name: string;
+  opponent_name: string;
+  game_date: string;
+  home_score: number;
+  away_score: number;
+  created_at: string;
+  game_data?: Record<string, unknown>;
+}
+
 export default function DebugImportedGames() {
   const [loading, setLoading] = useState(true);
-  const [directGames, setDirectGames] = useState<Array<Record<string, unknown>>>([]);
+  const [directGames, setDirectGames] = useState<GameRecord[]>([]);
   const [storageGames, setStorageGames] = useState<Record<string, unknown>>({});
   const [error, setError] = useState<string>('');
 
@@ -144,8 +155,8 @@ export default function DebugImportedGames() {
                 </tr>
               </thead>
               <tbody>
-                {directGames.map((game) => {
-                  const gameData = game.game_data as Record<string, unknown>;
+                {directGames.map((game: GameRecord) => {
+                  const gameData = game.game_data;
                   const isVisible = storageGames[game.id] !== undefined;
                   return (
                     <tr key={game.id} className="border-b border-slate-700">
