@@ -13,6 +13,7 @@ export const ResetSupabaseData: React.FC<ResetSupabaseDataProps> = ({ onSuccess 
   const [isResetting, setIsResetting] = useState(false);
   const [resetResult, setResetResult] = useState<{ success: boolean; message: string } | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [confirmText, setConfirmText] = useState('');
   const queryClient = useQueryClient();
 
   const handleResetClick = () => {
@@ -53,6 +54,7 @@ export const ResetSupabaseData: React.FC<ResetSupabaseDataProps> = ({ onSuccess 
 
   const handleCancelReset = () => {
     setShowConfirm(false);
+    setConfirmText('');
   };
 
   return (
@@ -111,21 +113,16 @@ export const ResetSupabaseData: React.FC<ResetSupabaseDataProps> = ({ onSuccess 
             type="text"
             className="w-full px-3 py-2 border border-red-300 rounded-md mb-4 dark:bg-gray-800 dark:border-red-600"
             placeholder="Type DELETE ALL to confirm"
-            onChange={(e) => {
-              const confirmButton = document.getElementById('confirm-delete-btn') as HTMLButtonElement;
-              if (confirmButton) {
-                confirmButton.disabled = e.target.value !== 'DELETE ALL';
-              }
-            }}
+            value={confirmText}
+            onChange={(e) => setConfirmText(e.target.value)}
           />
           <div className="flex gap-2">
             <button
-              id="confirm-delete-btn"
               onClick={handleConfirmReset}
-              disabled={true}
+              disabled={confirmText !== 'DELETE ALL' || isResetting}
               className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-semibold"
             >
-              Yes, Delete Everything
+              {isResetting ? 'Deleting...' : 'Yes, Delete Everything'}
             </button>
             <button
               onClick={handleCancelReset}
