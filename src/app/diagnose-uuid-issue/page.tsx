@@ -221,7 +221,7 @@ export default function DiagnoseUuidIssue() {
                     <p>Goal at {String(event.gameTime || 0)}&apos;</p>
                     <p>Scorer ID: {String(event.scorerId || 'none')}</p>
                     <p>Scorer in roster: {players.find(p => p.id === event.scorerId) ? 'Yes' : 'No'}</p>
-                    {event.assisterId && (
+                    {Boolean(event.assisterId) && (
                       <>
                         <p>Assist ID: {String(event.assisterId)}</p>
                         <p>Assister in roster: {players.find(p => p.id === event.assisterId) ? 'Yes' : 'No'}</p>
