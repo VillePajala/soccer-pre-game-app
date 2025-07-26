@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "Update release notes and service worker timestamp; enhance SupabaseProvider to optimize game event fetching"
+  "notes": "Implement player stats fix and debugging tools for accurate statistics display"
 }
