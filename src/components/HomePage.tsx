@@ -1480,29 +1480,34 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       // });
       logger.log('[handleStartNewGameWithSetup] DIRECTLY CONSTRUCTED newGameState:', JSON.parse(JSON.stringify(newGameState)));
 
-      // 2. Auto-generate ID
-      const newGameId = `game_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      // 2. Auto-generate temporary ID
+      const tempGameId = `game_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-      // 3. Explicitly save the new game state immediately to state and localStorage
+      // 3. Save the new game state and get the actual ID from Supabase
+      let actualGameId = tempGameId;
       try {
+        // Save to storage (Supabase will generate a new UUID if using Supabase provider)
+        const savedGameResult = await utilSaveGame(tempGameId, newGameState);
+        
+        // Get the actual ID from the saved result (Supabase may have generated a new UUID)
+        actualGameId = (savedGameResult as AppState & { id?: string }).id || tempGameId;
+        logger.log(`Game saved with actual ID: ${actualGameId} (temp was: ${tempGameId})`);
+        
+        // Update local state with the actual ID
         const updatedSavedGamesCollection = {
           ...savedGames,
-          [newGameId]: newGameState
+          [actualGameId]: savedGameResult
         };
         setSavedGames(updatedSavedGamesCollection);
-        // localStorage.setItem(SAVED_GAMES_KEY, JSON.stringify(updatedSavedGames)); // OLD
-        // logger.log(`Explicitly saved initial state for new game ID: ${newGameId}`); // OLD
 
-        // const currentSettings: AppSettings = { currentGameId: newGameId }; // OLD
-        // localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(currentSettings)); // OLD
-        // logger.log(`Updated app settings with new game ID: ${newGameId}`); // OLD
-
-        await utilSaveGame(newGameId, newGameState);
-        await utilSaveCurrentGameIdSetting(newGameId);
-        logger.log(`Saved new game ${newGameId} and settings via utility functions.`);
+        // Save the actual game ID to settings
+        await utilSaveCurrentGameIdSetting(actualGameId);
+        logger.log(`Saved new game ${actualGameId} and settings via utility functions.`);
 
       } catch (error) {
          logger.error("Error explicitly saving new game state:", error);
+         // Fall back to temp ID if save failed
+         actualGameId = tempGameId;
       }
 
       // 4. Reset History with the new state
@@ -1511,8 +1516,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       setIsPlayed(isPlayed);
 
       // 5. Set the current game ID - This will trigger the loading useEffect
-      setCurrentGameId(newGameId);
-      logger.log(`Set current game ID to: ${newGameId}. Loading useEffect will sync component state.`);
+      setCurrentGameId(actualGameId);
+      logger.log(`Set current game ID to: ${actualGameId}. Loading useEffect will sync component state.`);
 
       // Close the setup modal
       setIsNewGameSetupModalOpen(false);
