@@ -105,7 +105,9 @@ export default function ImportBackupPage() {
         // Map old ID to new ID
         if (oldId && savedPlayer.id) {
           playerIdMap.set(oldId, savedPlayer.id);
-          addLog(`Mapped player ID: ${oldId} → ${savedPlayer.id}`, 'info');
+          addLog(`Mapped player ID: ${oldId} → ${savedPlayer.id} (${savedPlayer.name})`, 'info');
+        } else {
+          addLog(`Warning: Could not map player ${player.name} - old ID: ${oldId}, new ID: ${savedPlayer.id}`, 'error');
         }
         
         stats.players++;
@@ -189,9 +191,15 @@ export default function ImportBackupPage() {
           
           // Update selectedPlayerIds with new IDs
           if (gameWithoutId.selectedPlayerIds && Array.isArray(gameWithoutId.selectedPlayerIds)) {
-            gameWithoutId.selectedPlayerIds = gameWithoutId.selectedPlayerIds.map((oldId: string) => 
-              playerIdMap.get(oldId) || oldId
-            );
+            const originalIds = [...gameWithoutId.selectedPlayerIds];
+            gameWithoutId.selectedPlayerIds = gameWithoutId.selectedPlayerIds.map((oldId: string) => {
+              const newId = playerIdMap.get(oldId);
+              if (!newId) {
+                addLog(`Warning: No mapping found for player ID ${oldId} in game`, 'error');
+              }
+              return newId || oldId;
+            });
+            addLog(`Updated selectedPlayerIds: ${originalIds.length} IDs mapped`, 'info');
           }
           
           // Update availablePlayers with new IDs (if present)
@@ -247,7 +255,12 @@ export default function ImportBackupPage() {
     }
     addLog(`Imported ${stats.games}/${gameIds.length} games`, 'success');
 
-    return stats;
+    return { 
+      stats, 
+      playerIdMap, 
+      seasonIdMap, 
+      tournamentIdMap 
+    };
   };
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -289,10 +302,20 @@ export default function ImportBackupPage() {
       await clearExistingData();
 
       // Import new data
-      const stats = await importBackupData(text);
+      const result = await importBackupData(text);
 
       addLog('=== IMPORT COMPLETE ===', 'success');
-      addLog(`Total imported: ${stats.players} players, ${stats.seasons} seasons, ${stats.tournaments} tournaments, ${stats.games} games`, 'success');
+      addLog(`Total imported: ${result.stats.players} players, ${result.stats.seasons} seasons, ${result.stats.tournaments} tournaments, ${result.stats.games} games`, 'success');
+      
+      // Show ID mapping summary
+      addLog('\n=== ID MAPPING SUMMARY ===', 'info');
+      addLog(`Player ID mappings created: ${result.playerIdMap.size}`, 'info');
+      addLog(`Season ID mappings created: ${result.seasonIdMap.size}`, 'info');
+      addLog(`Tournament ID mappings created: ${result.tournamentIdMap.size}`, 'info');
+      
+      if (result.playerIdMap.size === 0) {
+        addLog('WARNING: No player ID mappings were created! This will cause invalid references.', 'error');
+      }
 
       // Wait a moment for database to commit
       addLog('Waiting for database sync...');
