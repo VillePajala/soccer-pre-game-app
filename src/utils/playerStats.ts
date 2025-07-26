@@ -40,10 +40,15 @@ export const calculatePlayerStats = (player: Player, savedGames: { [key: string]
     if (game.isPlayed === false) {
       return;
     }
-    // Check if the player was part of this game's roster
-    if (game.selectedPlayerIds?.includes(player.id)) {
-      const goals = game.gameEvents?.filter(e => e.type === 'goal' && e.scorerId === player.id).length || 0;
-      const assists = game.gameEvents?.filter(e => e.type === 'goal' && e.assisterId === player.id).length || 0;
+    
+    // Check if player has any events in this game (goals or assists)
+    const goals = game.gameEvents?.filter(e => e.type === 'goal' && e.scorerId === player.id).length || 0;
+    const assists = game.gameEvents?.filter(e => e.type === 'goal' && e.assisterId === player.id).length || 0;
+    
+    // Include player if they were selected OR if they have any events
+    const playerParticipated = game.selectedPlayerIds?.includes(player.id) || goals > 0 || assists > 0;
+    
+    if (playerParticipated) {
       const points = goals + assists;
 
       // Aggregate stats by season
