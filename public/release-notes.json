@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix: resolve ESLint errors in debug pages"
+  "notes": "fix: resolve TypeScript any type in check-supabase-direct page"
 }

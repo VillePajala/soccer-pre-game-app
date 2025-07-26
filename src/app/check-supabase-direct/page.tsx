@@ -89,12 +89,12 @@ export default function CheckSupabaseDirect() {
               <div className="mt-4">
                 <p className="text-sm text-gray-400 mb-2">First 5 games:</p>
                 {directGames.slice(0, 5).map((game) => (
-                  <div key={game.id} className="border-b border-slate-700 py-2">
+                  <div key={String(game.id)} className="border-b border-slate-700 py-2">
                     <p className="text-sm">
-                      {game.team_name} vs {game.opponent_name} - {game.game_date}
+                      {String(game.team_name || '')} vs {String(game.opponent_name || '')} - {String(game.game_date || '')}
                     </p>
                     <p className="text-xs text-gray-400">
-                      ID: {game.id} | Has game_data: {game.game_data ? 'Yes' : 'No'}
+                      ID: {String(game.id || '')} | Has game_data: {game.game_data ? 'Yes' : 'No'}
                     </p>
                   </div>
                 ))}
