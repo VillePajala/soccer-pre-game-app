@@ -5,6 +5,15 @@ import React, { useState } from 'react';
 import { fixGameEventPlayerIds } from '@/utils/fixGameEventPlayerIds';
 import { authAwareStorageManager as storageManager } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
+import type { IStorageProvider } from '@/lib/storage/types';
+
+// Define a more specific type for the storage manager to satisfy the linter
+type AuthAwareManager = IStorageProvider & {
+  updateAuthState?: (isAuthenticated: boolean, userId: string | null) => void;
+  primaryProvider?: {
+    updateAuthState?: (isAuthenticated: boolean, userId: string | null) => void;
+  };
+};
 
 export default function FixPlayerIdsPage() {
   const [loading, setLoading] = useState(false);
@@ -16,7 +25,7 @@ export default function FixPlayerIdsPage() {
     try {
       // First, ensure the storage manager is authenticated
       const { data: { user } } = await supabase.auth.getUser();
-      const manager = storageManager as any;
+      const manager: AuthAwareManager = storageManager;
       if (manager.primaryProvider && typeof manager.primaryProvider.updateAuthState === 'function') {
         manager.primaryProvider.updateAuthState(!!user, user?.id);
       } else if (typeof manager.updateAuthState === 'function') {
