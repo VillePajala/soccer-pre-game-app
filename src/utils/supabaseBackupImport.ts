@@ -165,12 +165,13 @@ export async function importBackupToSupabase(jsonContent: string): Promise<{
       }
     }
     
-    // Import games
+    // Import games and track ID mapping
     const gameIds = Object.keys(gamesToImport);
+    const gameIdMapping: Record<string, string> = {}; // Map old ID -> new ID
     logger.log(`[SupabaseBackupImport] Importing ${gameIds.length} games...`);
-    for (const gameId of gameIds) {
+    for (const oldGameId of gameIds) {
       try {
-        const game = gamesToImport[gameId];
+        const game = gamesToImport[oldGameId];
         if (game && typeof game === 'object') {
           // Don't include the original game ID - let Supabase generate a new one
           // The old game ID format (game_1745586344283_mvfcd9b) is not a valid UUID
@@ -181,13 +182,23 @@ export async function importBackupToSupabase(jsonContent: string): Promise<{
             opponentName: gameData.opponentName,
             homeScore: gameData.homeScore,
             awayScore: gameData.awayScore,
-            gameDate: gameData.gameDate
+            gameDate: gameData.gameDate,
+            oldId: oldGameId
           });
-          await storageManager.saveSavedGame(game);
+          
+          // Save the game and get the new ID from Supabase
+          const savedGame = await storageManager.saveSavedGame(game);
+          const newGameId = (savedGame as Record<string, unknown> & { id?: string }).id;
+          
+          if (newGameId && newGameId !== oldGameId) {
+            gameIdMapping[oldGameId] = newGameId;
+            logger.log(`[SupabaseBackupImport] Game ID mapped: ${oldGameId} -> ${newGameId}`);
+          }
+          
           stats.games++;
         }
       } catch (error) {
-        logger.error(`[SupabaseBackupImport] Failed to import game ${gameId}:`, error);
+        logger.error(`[SupabaseBackupImport] Failed to import game ${oldGameId}:`, error);
         console.error('[SupabaseBackupImport] Game import error details:', error);
       }
     }
@@ -196,7 +207,17 @@ export async function importBackupToSupabase(jsonContent: string): Promise<{
     if (settingsToImport) {
       try {
         logger.log('[SupabaseBackupImport] Importing app settings...');
-        await storageManager.saveAppSettings(settingsToImport);
+        
+        // Check if currentGameId needs to be mapped to a new ID
+        const settingsToSave = { ...settingsToImport };
+        if (settingsToSave.currentGameId && gameIdMapping[settingsToSave.currentGameId]) {
+          const oldId = settingsToSave.currentGameId;
+          const newId = gameIdMapping[oldId];
+          settingsToSave.currentGameId = newId;
+          logger.log(`[SupabaseBackupImport] Updated currentGameId in settings: ${oldId} -> ${newId}`);
+        }
+        
+        await storageManager.saveAppSettings(settingsToSave);
         stats.settings = true;
       } catch (error) {
         logger.error('[SupabaseBackupImport] Failed to import app settings:', error);

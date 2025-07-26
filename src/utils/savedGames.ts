@@ -140,7 +140,7 @@ export const deleteGame = async (gameId: string): Promise<string | null> => {
  */
 export const createGame = async (gameData: Partial<AppState>): Promise<{ gameId: string, gameData: AppState }> => {
   try {
-    const gameId = `game_${Date.now()}`;
+    const gameId = `game_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     const newGameAppState: AppState = {
       playersOnField: gameData.playersOnField || [],
       opponents: gameData.opponents || [],
@@ -178,7 +178,9 @@ export const createGame = async (gameData: Partial<AppState>): Promise<{ gameId:
     };
     
     const result = await saveGame(gameId, newGameAppState);
-    return { gameId, gameData: result };
+    // Return the ID from the saved game (which might be different if Supabase generated a new UUID)
+    const actualGameId = (result as AppState & { id?: string }).id || gameId;
+    return { gameId: actualGameId, gameData: result };
   } catch (error) {
     logger.error('Error creating new game:', error);
     throw error; // Rethrow to indicate failure
