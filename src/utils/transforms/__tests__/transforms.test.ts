@@ -26,7 +26,7 @@ describe('Data Transformation Utilities', () => {
           user_id: mockUserId,
           name: 'John Doe',
           nickname: 'Johnny',
-          jerseyNumber: '10',
+          jersey_number: '10',
           notes: 'Good player',
           is_goalie: false,
           received_fair_play_card: true
@@ -234,7 +234,10 @@ describe('Data Transformation Utilities', () => {
           default_roster_ids: 'roster-2',
           notes: 'Annual tournament',
           color: '#28a745',
-          age_group: 'U14'
+          badge: undefined,
+          level: undefined,
+          age_group: 'U14',
+          season_id: null
         });
       });
     });
@@ -283,10 +286,15 @@ describe('Data Transformation Utilities', () => {
 
   describe('App Settings Transformations', () => {
     const mockAppSettings: AppSettings = {
-      currentGameId: 'game-123',
-      lastBackupDate: '2024-01-01',
-      preferredLanguage: 'en',
-      theme: 'light'
+      currentGameId: '550e8400-e29b-41d4-a716-446655440000',
+      language: 'en',
+      hasSeenAppGuide: true,
+      lastHomeTeamName: 'My Team',
+      autoBackupEnabled: true,
+      autoBackupIntervalHours: 48,
+      lastBackupTime: '2024-01-01',
+      backupEmail: 'test@example.com',
+      useDemandCorrection: false
     };
 
     describe('toSupabase.appSettings', () => {
@@ -295,10 +303,18 @@ describe('Data Transformation Utilities', () => {
 
         expect(result).toEqual({
           user_id: mockUserId,
-          current_game_id: 'game-123',
-          last_backup_date: '2024-01-01',
-          preferred_language: 'en',
-          theme: 'light'
+          current_game_id: '550e8400-e29b-41d4-a716-446655440000',
+          language: 'en',
+          default_team_name: 'My Team',
+          auto_backup_enabled: true,
+          auto_backup_interval_hours: 48,
+          last_backup_time: '2024-01-01',
+          backup_email: 'test@example.com',
+          settings: {
+            currentGameId: '550e8400-e29b-41d4-a716-446655440000',
+            hasSeenAppGuide: true,
+            useDemandCorrection: false
+          }
         });
       });
     });
@@ -308,10 +324,18 @@ describe('Data Transformation Utilities', () => {
         const supabaseSettings = {
           id: 'settings-1',
           user_id: mockUserId,
-          current_game_id: 'game-123',
-          last_backup_date: '2024-01-01',
-          preferred_language: 'en',
-          theme: 'light',
+          current_game_id: '550e8400-e29b-41d4-a716-446655440000',
+          language: 'en',
+          default_team_name: 'My Team',
+          auto_backup_enabled: true,
+          auto_backup_interval_hours: 48,
+          last_backup_time: '2024-01-01',
+          backup_email: 'test@example.com',
+          settings: {
+            currentGameId: '550e8400-e29b-41d4-a716-446655440000',
+            hasSeenAppGuide: true,
+            useDemandCorrection: false
+          },
           created_at: '2024-01-01T00:00:00Z',
           updated_at: '2024-01-01T00:00:00Z'
         };
@@ -319,10 +343,16 @@ describe('Data Transformation Utilities', () => {
         const result = fromSupabase.appSettings(supabaseSettings);
 
         expect(result).toEqual({
-          currentGameId: 'game-123',
-          lastBackupDate: '2024-01-01',
-          preferredLanguage: 'en',
-          theme: 'light'
+          currentGameId: '550e8400-e29b-41d4-a716-446655440000',
+          language: 'en',
+          defaultTeamName: 'My Team',
+          lastHomeTeamName: 'My Team',
+          autoBackupEnabled: true,
+          autoBackupIntervalHours: 48,
+          lastBackupTime: '2024-01-01',
+          backupEmail: 'test@example.com',
+          hasSeenAppGuide: true,
+          useDemandCorrection: false
         });
       });
     });
@@ -347,7 +377,7 @@ describe('Data Transformation Utilities', () => {
         user_id: mockUserId,
         name: 'Test Player',
         nickname: undefined,
-        jerseyNumber: null,
+        jersey_number: null,
         notes: '',
         is_goalie: false,
         received_fair_play_card: false

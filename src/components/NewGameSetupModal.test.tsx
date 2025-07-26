@@ -87,6 +87,13 @@ describe('NewGameSetupModal', () => {
   const mockOnStart = jest.fn();
   const mockOnCancel = jest.fn();
 
+  const mockSeasonsData = [{ id: 'season1', name: 'Spring 2024' }, { id: 'season2', name: 'Summer 2024' }];
+  const mockTournamentsData = [{ id: 'tournament1', name: 'City Cup' }, { id: 'tournament2', name: 'Regional Tournament' }];
+  const mockPlayersData = [
+    { id: 'player1', name: 'John Doe', jerseyNumber: '10', isGoalie: false, receivedFairPlayCard: false },
+    { id: 'player2', name: 'Jane Smith', jerseyNumber: '7', isGoalie: false, receivedFairPlayCard: false }
+  ];
+
   const mockAddSeasonMutation = {
     mutate: jest.fn(),
     mutateAsync: jest.fn(),
@@ -100,17 +107,18 @@ describe('NewGameSetupModal', () => {
   } as any;
   
   const defaultProps = {
-    isOpen: true, initialPlayerSelection: ['player1', 'player2'], onStart: mockOnStart, onCancel: mockOnCancel,
+    isOpen: true, 
+    initialPlayerSelection: ['player1', 'player2'], 
+    availablePlayers: mockPlayersData,
+    onStart: mockOnStart, 
+    onCancel: mockOnCancel,
     addSeasonMutation: mockAddSeasonMutation as UseMutationResult<Season | null, Error, { name: string }, unknown>,
     addTournamentMutation: mockAddTournamentMutation as UseMutationResult<Tournament | null, Error, { name: string }, unknown>,
-    isAddingSeason: false, isAddingTournament: false,
+    isAddingSeason: false, 
+    isAddingTournament: false,
     demandFactor: 1,
     onDemandFactorChange: jest.fn(),
   };
-
-  const mockSeasonsData = [{ id: 'season1', name: 'Spring 2024' }, { id: 'season2', name: 'Summer 2024' }];
-  const mockTournamentsData = [{ id: 'tournament1', name: 'City Cup' }, { id: 'tournament2', name: 'Regional Tournament' }];
-  const mockPlayersData = [{ id: 'player1', name: 'John Doe', jerseyNumber: 10 },{ id: 'player2', name: 'Jane Smith', jerseyNumber: 7 }];
 
   beforeEach(() => {
     jest.clearAllMocks();
