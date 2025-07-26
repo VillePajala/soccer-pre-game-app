@@ -1,7 +1,7 @@
 import { authAwareStorageManager as storageManager } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
 import logger from '@/utils/logger';
-import type { SavedGamesCollection } from '@/types';
+import type { Player, Season, Tournament, SavedGamesCollection } from '@/types';
 import type { AppSettings } from '@/utils/appSettings';
 import {
   SAVED_GAMES_KEY,
@@ -15,9 +15,9 @@ interface BackupData {
   localStorage?: {
     [SAVED_GAMES_KEY]?: SavedGamesCollection | null;
     [APP_SETTINGS_KEY]?: AppSettings | null;
-    [SEASONS_LIST_KEY]?: unknown[] | null;
-    [TOURNAMENTS_LIST_KEY]?: unknown[] | null;
-    [MASTER_ROSTER_KEY]?: unknown[] | null;
+    [SEASONS_LIST_KEY]?: Season[] | null;
+    [TOURNAMENTS_LIST_KEY]?: Tournament[] | null;
+    [MASTER_ROSTER_KEY]?: Player[] | null;
   };
 }
 
@@ -63,16 +63,19 @@ export async function cleanImportToSupabase(jsonContent: string): Promise<{
       throw new Error('Invalid backup format - missing localStorage data');
     }
     
-    const playersToImport = backupData.localStorage[MASTER_ROSTER_KEY] || 
-                           backupData.localStorage['soccerMasterRoster'] || [];
-    const seasonsToImport = backupData.localStorage[SEASONS_LIST_KEY] || 
-                           backupData.localStorage['soccerSeasons'] || [];
-    const tournamentsToImport = backupData.localStorage[TOURNAMENTS_LIST_KEY] || 
-                               backupData.localStorage['soccerTournaments'] || [];
-    const gamesToImport = backupData.localStorage[SAVED_GAMES_KEY] || 
-                         backupData.localStorage['savedSoccerGames'] || {};
-    const settingsToImport = backupData.localStorage[APP_SETTINGS_KEY] || 
-                            backupData.localStorage['soccerAppSettings'] || null;
+    // Type the localStorage object for old key access
+    const localStorage = backupData.localStorage as Record<string, unknown>;
+    
+    const playersToImport = (localStorage[MASTER_ROSTER_KEY] || 
+                           localStorage['soccerMasterRoster'] || []) as Player[];
+    const seasonsToImport = (localStorage[SEASONS_LIST_KEY] || 
+                           localStorage['soccerSeasons'] || []) as Season[];
+    const tournamentsToImport = (localStorage[TOURNAMENTS_LIST_KEY] || 
+                               localStorage['soccerTournaments'] || []) as Tournament[];
+    const gamesToImport = (localStorage[SAVED_GAMES_KEY] || 
+                         localStorage['savedSoccerGames'] || {}) as SavedGamesCollection;
+    const settingsToImport = (localStorage[APP_SETTINGS_KEY] || 
+                            localStorage['soccerAppSettings'] || null) as AppSettings | null;
     
     // Show confirmation with strong warning
     if (!window.confirm(
