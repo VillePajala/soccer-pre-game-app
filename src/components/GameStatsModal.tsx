@@ -320,6 +320,9 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   const overallTeamStats = useMemo(() => {
     if (activeTab !== 'overall') return null;
 
+    console.log('[GameStatsModal] savedGames object:', savedGames);
+    console.log('[GameStatsModal] savedGames keys:', Object.keys(savedGames || {}));
+    
     const playedGameIds = Object.keys(savedGames || {}).filter(
       id => savedGames?.[id]?.isPlayed !== false
     );

@@ -233,6 +233,11 @@ export async function importBackupToSupabase(jsonContent: string): Promise<{
               return player;
             });
           }
+          
+          // Ensure isPlayed is set (default to true for imported games)
+          if (gameData.isPlayed === undefined || gameData.isPlayed === null) {
+            gameData.isPlayed = true;
+          }
           logger.log(`[SupabaseBackupImport] Importing game: ${gameData.teamName || 'Unknown'} vs ${gameData.opponentName || 'Unknown'}`);
           console.log('[SupabaseBackupImport] Game data:', {
             teamName: gameData.teamName,

@@ -447,12 +447,16 @@ export class SupabaseProvider implements IStorageProvider {
       // Convert array to object format expected by the app
       const gamesCollection: Record<string, unknown> = {};
       
+      console.log(`[SupabaseProvider] Found ${gamesData.length} games for user ${userId}`);
+      
       // For now, just transform the basic game data
       // This ensures the app continues to work even if the complex query fails
       for (const game of gamesData) {
         const transformedGame = fromSupabase.game(game);
         gamesCollection[game.id] = transformedGame;
       }
+      
+      console.log('[SupabaseProvider] Games collection keys:', Object.keys(gamesCollection));
       
       // Try to fetch related data separately for each game
       // This is less efficient but more reliable

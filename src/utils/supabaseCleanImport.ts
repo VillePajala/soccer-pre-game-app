@@ -212,6 +212,11 @@ export async function cleanImportToSupabase(jsonContent: string): Promise<{
             });
           }
           
+          // Ensure isPlayed is set (default to true for imported games)
+          if (gameData.isPlayed === undefined || gameData.isPlayed === null) {
+            gameData.isPlayed = true;
+          }
+          
           const savedGame = await storageManager.saveSavedGame(gameData);
           const newGameId = (savedGame as Record<string, unknown> & { id?: string }).id;
           
