@@ -46,6 +46,7 @@ export const calculatePlayerStats = (player: Player, savedGames: { [key: string]
     const assists = game.gameEvents?.filter(e => e.type === 'goal' && e.assisterId === player.id).length || 0;
     
     // Include player if they were selected OR if they have any events
+    // This handles cases where substitutes scored but weren't in selectedPlayerIds
     const playerParticipated = game.selectedPlayerIds?.includes(player.id) || goals > 0 || assists > 0;
     
     if (playerParticipated) {
