@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 
 export default function CheckAllGames() {
   const [loading, setLoading] = useState(true);
-  const [games, setGames] = useState<any[]>([]);
+  const [games, setGames] = useState<Array<Record<string, unknown>>>([]);
   const [error, setError] = useState<string>('');
   const [userId, setUserId] = useState<string>('');
 
@@ -96,9 +97,9 @@ export default function CheckAllGames() {
         )}
 
         <div className="mt-8">
-          <a href="/" className="text-indigo-400 hover:text-indigo-300">
+          <Link href="/" className="text-indigo-400 hover:text-indigo-300">
             ← Back to App
-          </a>
+          </Link>
         </div>
       </div>
     </div>

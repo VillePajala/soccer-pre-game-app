@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { authAwareStorageManager as storageManager } from '@/lib/storage';
 
 export default function DebugImportedGames() {
   const [loading, setLoading] = useState(true);
-  const [directGames, setDirectGames] = useState<any[]>([]);
-  const [storageGames, setStorageGames] = useState<Record<string, any>>({});
+  const [directGames, setDirectGames] = useState<Array<Record<string, unknown>>>([]);
+  const [storageGames, setStorageGames] = useState<Record<string, unknown>>({});
   const [error, setError] = useState<string>('');
 
   useEffect(() => {
@@ -61,7 +62,7 @@ export default function DebugImportedGames() {
       for (const game of directGames) {
         if (game.game_data && typeof game.game_data === 'object') {
           // Check if isPlayed is missing or undefined
-          const gameData = game.game_data as any;
+          const gameData = game.game_data as Record<string, unknown>;
           if (gameData.isPlayed === undefined || gameData.isPlayed === null) {
             // Set isPlayed to true for all imported games
             gameData.isPlayed = true;
@@ -144,7 +145,7 @@ export default function DebugImportedGames() {
               </thead>
               <tbody>
                 {directGames.map((game) => {
-                  const gameData = game.game_data as any;
+                  const gameData = game.game_data as Record<string, unknown>;
                   const isVisible = storageGames[game.id] !== undefined;
                   return (
                     <tr key={game.id} className="border-b border-slate-700">
@@ -171,9 +172,9 @@ export default function DebugImportedGames() {
         </div>
 
         <div className="mt-8">
-          <a href="/" className="text-indigo-400 hover:text-indigo-300">
+          <Link href="/" className="text-indigo-400 hover:text-indigo-300">
             ← Back to App
-          </a>
+          </Link>
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/config/queryKeys';
 import { authAwareStorageManager as storageManager } from '@/lib/storage';
@@ -8,7 +9,7 @@ import { authAwareStorageManager as storageManager } from '@/lib/storage';
 export default function RefreshGamesCache() {
   const queryClient = useQueryClient();
   const [status, setStatus] = useState<string>('');
-  const [games, setGames] = useState<Record<string, any>>({});
+  const [games, setGames] = useState<Record<string, unknown>>({});
 
   const handleRefreshCache = async () => {
     setStatus('Refreshing...');
@@ -88,13 +89,16 @@ export default function RefreshGamesCache() {
                   </tr>
                 </thead>
                 <tbody>
-                  {Object.entries(games).map(([id, game]: [string, any]) => (
-                    <tr key={id} className="border-b border-slate-700">
-                      <td className="py-2 font-mono text-xs">{id}</td>
-                      <td className="py-2">{game.teamName} vs {game.opponentName}</td>
-                      <td className="py-2">{game.gameDate}</td>
-                    </tr>
-                  ))}
+                  {Object.entries(games).map(([id, game]) => {
+                    const g = game as Record<string, unknown>;
+                    return (
+                      <tr key={id} className="border-b border-slate-700">
+                        <td className="py-2 font-mono text-xs">{id}</td>
+                        <td className="py-2">{g.teamName} vs {g.opponentName}</td>
+                        <td className="py-2">{g.gameDate}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -102,9 +106,9 @@ export default function RefreshGamesCache() {
         )}
 
         <div className="mt-8">
-          <a href="/" className="text-indigo-400 hover:text-indigo-300">
+          <Link href="/" className="text-indigo-400 hover:text-indigo-300">
             ← Back to App
-          </a>
+          </Link>
         </div>
       </div>
     </div>
