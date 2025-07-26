@@ -575,30 +575,14 @@ export class SupabaseProvider implements IStorageProvider {
   // Backup/restore
   async exportAllData(): Promise<unknown> {
     try {
-      const userId = await this.getCurrentUserId();
-      
-      // Fetch all data including games
-      const [players, seasons, tournaments, gamesResponse, settings] = await Promise.all([
+      // Fetch all data including games using the provider's methods
+      const [players, seasons, tournaments, games, settings] = await Promise.all([
         this.getPlayers(),
         this.getSeasons(),
         this.getTournaments(),
-        supabase
-          .from('games')
-          .select('*')
-          .eq('user_id', userId),
+        this.getSavedGames(), // Use the provider's getSavedGames method
         this.getAppSettings()
       ]);
-
-      if (gamesResponse.error) {
-        throw new NetworkError('supabase', 'exportAllData', gamesResponse.error);
-      }
-
-      // Transform games back to local format
-      const games: Record<string, unknown> = {};
-      for (const game of gamesResponse.data) {
-        const localGame = fromSupabase.game(game);
-        games[localGame.id] = localGame;
-      }
 
       return {
         players,
