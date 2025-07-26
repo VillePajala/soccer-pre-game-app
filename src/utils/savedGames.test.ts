@@ -155,7 +155,7 @@ describe('Saved Games Utilities', () => {
       localStorageMock.getItem.mockImplementation(() => { 
         throw new Error('LocalStorage failure'); 
       });
-      await expect(getGame('game_123')).rejects.toThrow('LocalStorage failure');
+      await expect(getGame('game_123')).rejects.toThrow('Failed to get saved games');
     });
   });
 
@@ -225,14 +225,14 @@ describe('Saved Games Utilities', () => {
       localStorageMock.getItem.mockImplementation(() => { 
         throw new Error('LocalStorage failure'); 
       });
-      await expect(saveGame('game_123', mockGame1_AppState)).rejects.toThrow('LocalStorage failure');
+      await expect(saveGame('game_123', mockGame1_AppState)).rejects.toThrow('Failed to get saved games');
     });
 
     it('should reject if internal saveGames fails', async () => {
-      localStorageMock.setItem.mockImplementation(() => { 
-        throw new Error('LocalStorage set failure'); 
+      localStorageMock.setItem.mockImplementation(() => {
+        throw new Error('LocalStorage set failure');
       });
-      await expect(saveGame('game_123', mockGame1_AppState)).rejects.toThrow('LocalStorage set failure');
+      await expect(saveGame('game_123', mockGame1_AppState)).rejects.toThrow('Failed to save game');
     });
   });
 
@@ -267,14 +267,14 @@ describe('Saved Games Utilities', () => {
       localStorageMock.getItem.mockImplementation(() => { 
         throw new Error('LocalStorage failure'); 
       });
-      await expect(deleteGame('game_123')).rejects.toThrow('LocalStorage failure');
+      await expect(deleteGame('game_123')).rejects.toThrow('Failed to get saved games');
     });
 
     it('should reject if internal saveGames (after delete) fails', async () => {
       localStorageMock.setItem.mockImplementation(() => { 
         throw new Error('LocalStorage set failure after delete'); 
       });
-      await expect(deleteGame('game_123')).rejects.toThrow('LocalStorage set failure after delete');
+      await expect(deleteGame('game_123')).rejects.toThrow('Failed to delete saved game');
     });
   });
 
@@ -336,7 +336,7 @@ describe('Saved Games Utilities', () => {
       });
       const initialGamePartial: Partial<AppState> = { teamName: 'Fail Team' };
       
-      await expect(createGame(initialGamePartial)).rejects.toThrow('LocalStorage set failure during create');
+      await expect(createGame(initialGamePartial)).rejects.toThrow('Failed to save game');
     });
   });
 
@@ -374,7 +374,7 @@ describe('Saved Games Utilities', () => {
       localStorageMock.getItem.mockImplementation(() => { 
         throw new Error('LocalStorage get failure'); 
       });
-      await expect(addGameEvent('game_123', mockEvent1)).rejects.toThrow('LocalStorage get failure');
+      await expect(addGameEvent('game_123', mockEvent1)).rejects.toThrow('Failed to get saved games');
     });
 
     it('should reject if internal saveGame fails', async () => {
@@ -387,7 +387,7 @@ describe('Saved Games Utilities', () => {
         await addGameEvent('game_123', mockEvent1);
         throw new Error('addGameEvent did not reject as expected');
       } catch (error) {
-        expect((error as Error).message).toBe('LocalStorage set failure');
+        expect((error as Error).message).toBe('Failed to save game');
       }
     });
   });
@@ -431,7 +431,7 @@ describe('Saved Games Utilities', () => {
       localStorageMock.getItem.mockImplementation(() => { 
         throw new Error('LocalStorage get failure'); 
       });
-      await expect(updateGameEvent('game_123', 0, mockEvent1)).rejects.toThrow('LocalStorage get failure');
+      await expect(updateGameEvent('game_123', 0, mockEvent1)).rejects.toThrow('Failed to get saved games');
     });
 
     it('should reject if internal saveGame fails', async () => {
@@ -445,7 +445,7 @@ describe('Saved Games Utilities', () => {
         await updateGameEvent('game_123', 0, eventData);
         throw new Error('updateGameEvent did not reject as expected');
       } catch (error) {
-        expect((error as Error).message).toBe('LocalStorage set failure');
+        expect((error as Error).message).toBe('Failed to save game');
       }
     });
   });
@@ -488,7 +488,7 @@ describe('Saved Games Utilities', () => {
       localStorageMock.getItem.mockImplementation(() => { 
         throw new Error('LocalStorage get failure'); 
       });
-      await expect(removeGameEvent('game_123', 0)).rejects.toThrow('LocalStorage get failure');
+      await expect(removeGameEvent('game_123', 0)).rejects.toThrow('Failed to get saved games');
     });
 
     it('should reject if internal saveGame fails', async () => {
@@ -501,7 +501,7 @@ describe('Saved Games Utilities', () => {
         await removeGameEvent('game_123', 0);
         throw new Error('removeGameEvent did not reject as expected');
       } catch (error) {
-        expect((error as Error).message).toBe('LocalStorage set failure');
+        expect((error as Error).message).toBe('Failed to save game');
       }
     });
   });
@@ -528,7 +528,7 @@ describe('Saved Games Utilities', () => {
       localStorageMock.getItem.mockImplementation(() => { 
         throw new Error('LocalStorage failure'); 
       });
-      await expect(exportGamesAsJson()).rejects.toThrow('LocalStorage failure');
+      await expect(exportGamesAsJson()).rejects.toThrow('Failed to get saved games');
     });
   });
 
@@ -600,7 +600,7 @@ describe('Saved Games Utilities', () => {
       });
       const gamesToImport: SavedGamesCollection = { 'new_game': mockGame2_AppState };
       const jsonData = JSON.stringify(gamesToImport);
-      await expect(importGamesFromJson(jsonData, false)).rejects.toThrow('LocalStorage get failure');
+      await expect(importGamesFromJson(jsonData, false)).rejects.toThrow('Failed to get saved games');
     });
 
     it('should reject if internal saveGames fails during import', async () => {
@@ -612,7 +612,7 @@ describe('Saved Games Utilities', () => {
       });
       const gamesToImport: SavedGamesCollection = { 'new_game': mockGame2_AppState };
       const jsonData = JSON.stringify(gamesToImport);
-      await expect(importGamesFromJson(jsonData, false)).rejects.toThrow('LocalStorage set failure during import');
+      await expect(importGamesFromJson(jsonData, false)).rejects.toThrow('Failed to save game');
     });
 
   });
@@ -640,7 +640,7 @@ describe('Saved Games Utilities', () => {
       localStorageMock.getItem.mockImplementation(() => { 
         throw new Error('LocalStorage failure'); 
       });
-      await expect(getAllGameIds()).rejects.toThrow('LocalStorage failure');
+      await expect(getAllGameIds()).rejects.toThrow('Failed to get saved games');
     });
   });
 
@@ -695,7 +695,7 @@ describe('Saved Games Utilities', () => {
       localStorageMock.getItem.mockImplementation(() => {
         throw new Error('LocalStorage get failure for filter');
       });
-      await expect(getFilteredGames({ seasonId: 'season_1' })).rejects.toThrow('LocalStorage get failure for filter');
+      await expect(getFilteredGames({ seasonId: 'season_1' })).rejects.toThrow('Failed to get saved games');
     });
   });
 
@@ -756,7 +756,7 @@ describe('Saved Games Utilities', () => {
         throw new Error('LocalStorage get failure for update'); 
       });
       const updates: Partial<AppState> = { teamName: 'Still Matters Not' };
-      await expect(updateGameDetails('game_123', updates)).rejects.toThrow('LocalStorage get failure for update');
+      await expect(updateGameDetails('game_123', updates)).rejects.toThrow('Failed to get saved games');
     });
 
     it('should reject if internal saveGame (after update) fails', async () => {
@@ -770,7 +770,7 @@ describe('Saved Games Utilities', () => {
         await updateGameDetails('game_123', updates);
         throw new Error('updateGameDetails did not reject as expected');
       } catch (error) {
-        expect((error as Error).message).toBe('LocalStorage set failure for update');
+        expect((error as Error).message).toBe('Failed to save game');
       }
     });
   });
