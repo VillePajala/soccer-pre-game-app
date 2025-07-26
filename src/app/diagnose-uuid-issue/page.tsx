@@ -5,6 +5,15 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { authAwareStorageManager as storageManager } from '@/lib/storage';
 import type { Player } from '@/types';
+import type { IStorageProvider } from '@/lib/storage/types';
+
+// Define a more specific type for the storage manager to satisfy the linter
+type AuthAwareManager = IStorageProvider & {
+  updateAuthState?: (isAuthenticated: boolean, userId: string | null) => void;
+  primaryProvider?: {
+    updateAuthState?: (isAuthenticated: boolean, userId: string | null) => void;
+  };
+};
 
 interface GameRecord {
   id: string;
@@ -38,7 +47,7 @@ export default function DiagnoseUuidIssue() {
       }
 
       // Explicitly update the storage manager with the auth state
-      const manager = storageManager as any;
+      const manager: AuthAwareManager = storageManager;
       if (manager.primaryProvider && typeof manager.primaryProvider.updateAuthState === 'function') {
         manager.primaryProvider.updateAuthState(!!user, user.id);
       } else if (typeof manager.updateAuthState === 'function') {
