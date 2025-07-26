@@ -1,10 +1,11 @@
 // Supabase storage provider implementation
 import type { IStorageProvider } from './types';
 import { StorageError, NetworkError, AuthenticationError } from './types';
-import type { Player, Season, Tournament } from '../../types';
+import type { Player, Season, Tournament, AppState } from '../../types';
 import type { AppSettings } from '../../utils/appSettings';
 import { supabase } from '../supabase';
 import { toSupabase, fromSupabase } from '../../utils/transforms';
+import * as toSupabaseTransforms from '../../utils/transforms/toSupabase';
 
 export class SupabaseProvider implements IStorageProvider {
   
@@ -428,27 +429,113 @@ export class SupabaseProvider implements IStorageProvider {
     }
   }
 
-  // Saved games (simplified - using games table)
+  // Saved games with all related data
   async getSavedGames(): Promise<unknown> {
     try {
       const userId = await this.getCurrentUserId();
-      const { data, error } = await supabase
+      
+      // Fetch games with all related data
+      const { data: gamesData, error: gamesError } = await supabase
         .from('games')
-        .select('*')
+        .select(`
+          *,
+          game_players!game_players_game_id_fkey (
+            player_id,
+            rel_x,
+            rel_y,
+            color,
+            is_selected,
+            is_on_field
+          ),
+          game_opponents!game_opponents_game_id_fkey (
+            opponent_id,
+            rel_x,
+            rel_y
+          ),
+          game_events!game_events_game_id_fkey (
+            id,
+            event_type,
+            time_seconds,
+            scorer_id,
+            assister_id,
+            entity_id
+          ),
+          player_assessments!player_assessments_game_id_fkey (
+            player_id,
+            overall_rating,
+            intensity,
+            courage,
+            duels,
+            technique,
+            creativity,
+            decisions,
+            awareness,
+            teamwork,
+            fair_play,
+            impact,
+            notes,
+            minutes_played,
+            created_by
+          ),
+          tactical_discs!tactical_discs_game_id_fkey (
+            disc_id,
+            rel_x,
+            rel_y,
+            disc_type
+          ),
+          game_drawings!game_drawings_game_id_fkey (
+            drawing_data,
+            drawing_type
+          ),
+          tactical_drawings!tactical_drawings_game_id_fkey (
+            drawing_data,
+            drawing_type
+          ),
+          completed_intervals!completed_intervals_game_id_fkey (
+            period,
+            duration,
+            timestamp
+          )
+        `)
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        throw new NetworkError('supabase', 'getSavedGames', error);
+      if (gamesError) {
+        throw new NetworkError('supabase', 'getSavedGames', gamesError);
+      }
+
+      // Fetch all players for this user to have complete player data
+      const { data: playersData, error: playersError } = await supabase
+        .from('players')
+        .select('*')
+        .eq('user_id', userId);
+
+      if (playersError) {
+        throw new NetworkError('supabase', 'getSavedGames players', playersError);
       }
 
       // Convert array to object format expected by the app
       const gamesCollection: Record<string, unknown> = {};
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      data.forEach((game: any) => {
-        const transformedGame = fromSupabase.game(game);
+      
+      for (const game of gamesData) {
+        // Reconstruct the full AppState using the transformation utilities
+        const gameData = {
+          game: game,
+          gamePlayers: game.game_players || [],
+          gameOpponents: game.game_opponents || [],
+          gameEvents: game.game_events || [],
+          playerAssessments: game.player_assessments || [],
+          tacticalDiscs: game.tactical_discs || [],
+          gameDrawings: game.game_drawings || [],
+          tacticalDrawings: game.tactical_drawings || [],
+          completedIntervals: game.completed_intervals || [],
+          players: playersData
+        };
+        
+        // Use the reconstructAppStateFromSupabase function to build the full state
+        const transformedGame = fromSupabase.reconstructAppStateFromSupabase(gameData);
         gamesCollection[game.id] = transformedGame;
-      });
+      }
       
       return gamesCollection;
     } catch (error) {
@@ -463,29 +550,19 @@ export class SupabaseProvider implements IStorageProvider {
     console.log('[SupabaseProvider] saveSavedGame called with:', gameData);
     try {
       const userId = await this.getCurrentUserId();
-      const supabaseGame = toSupabase.game(gameData, userId) as Record<string, unknown> & { id?: string };
-      console.log('[SupabaseProvider] Transformed game for Supabase:', supabaseGame);
-      console.log('[SupabaseProvider] Game has ID:', !!supabaseGame.id);
-
-      let result;
+      const appState = gameData as AppState;
       
-      // If game has no ID, do an insert (not upsert)
-      if (!supabaseGame.id) {
-        console.log('[SupabaseProvider] Inserting new game (no ID)');
-        const { data, error } = await supabase
-          .from('games')
-          .insert(supabaseGame)
-          .select()
-          .single();
-          
-        if (error) {
-          console.error('[SupabaseProvider] Error inserting game:', error);
-          console.error('[SupabaseProvider] Game data that failed:', JSON.stringify(supabaseGame, null, 2));
-          throw new NetworkError('supabase', 'saveSavedGame', error);
-        }
-        result = data;
-      } else {
-        console.log('[SupabaseProvider] Upserting game with ID:', supabaseGame.id);
+      // First, save the main game data
+      const supabaseGame = toSupabaseTransforms.transformGameToSupabase(
+        appState.id || crypto.randomUUID(), 
+        appState, 
+        userId
+      );
+      
+      let gameId: string;
+      
+      // Save or update the game
+      if (supabaseGame.id) {
         const { data, error } = await supabase
           .from('games')
           .upsert(supabaseGame, { onConflict: 'id' })
@@ -493,15 +570,128 @@ export class SupabaseProvider implements IStorageProvider {
           .single();
           
         if (error) {
-          console.error('[SupabaseProvider] Error upserting game:', error);
-          console.error('[SupabaseProvider] Game data that failed:', JSON.stringify(supabaseGame, null, 2));
           throw new NetworkError('supabase', 'saveSavedGame', error);
         }
-        result = data;
+        gameId = data.id;
+      } else {
+        const { data, error } = await supabase
+          .from('games')
+          .insert(supabaseGame)
+          .select()
+          .single();
+          
+        if (error) {
+          throw new NetworkError('supabase', 'saveSavedGame', error);
+        }
+        gameId = data.id;
       }
-
-      console.log('[SupabaseProvider] Game saved successfully:', (result as Record<string, unknown>).id);
-      return fromSupabase.game(result);
+      
+      // Delete existing related data before inserting new data
+      await Promise.all([
+        supabase.from('game_players').delete().eq('game_id', gameId),
+        supabase.from('game_opponents').delete().eq('game_id', gameId),
+        supabase.from('game_events').delete().eq('game_id', gameId),
+        supabase.from('player_assessments').delete().eq('game_id', gameId),
+        supabase.from('tactical_discs').delete().eq('game_id', gameId),
+        supabase.from('game_drawings').delete().eq('game_id', gameId),
+        supabase.from('tactical_drawings').delete().eq('game_id', gameId),
+        supabase.from('completed_intervals').delete().eq('game_id', gameId)
+      ]);
+      
+      // Save game players
+      const gamePlayers = toSupabaseTransforms.transformGamePlayersToSupabase(gameId, appState);
+      if (gamePlayers.length > 0) {
+        const { error } = await supabase
+          .from('game_players')
+          .insert(gamePlayers);
+        if (error) {
+          console.error('Error saving game players:', error);
+        }
+      }
+      
+      // Save game opponents
+      if (appState.opponents && appState.opponents.length > 0) {
+        const gameOpponents = toSupabaseTransforms.transformGameOpponentsToSupabase(gameId, appState.opponents);
+        const { error } = await supabase
+          .from('game_opponents')
+          .insert(gameOpponents);
+        if (error) {
+          console.error('Error saving game opponents:', error);
+        }
+      }
+      
+      // Save game events
+      if (appState.gameEvents && appState.gameEvents.length > 0) {
+        const gameEvents = toSupabaseTransforms.transformGameEventsToSupabase(gameId, appState.gameEvents);
+        const { error } = await supabase
+          .from('game_events')
+          .insert(gameEvents);
+        if (error) {
+          console.error('Error saving game events:', error);
+        }
+      }
+      
+      // Save player assessments
+      if (appState.assessments && Object.keys(appState.assessments).length > 0) {
+        const assessments = toSupabaseTransforms.transformPlayerAssessmentsToSupabase(gameId, appState.assessments);
+        const { error } = await supabase
+          .from('player_assessments')
+          .insert(assessments);
+        if (error) {
+          console.error('Error saving player assessments:', error);
+        }
+      }
+      
+      // Save tactical discs
+      if (appState.tacticalDiscs && appState.tacticalDiscs.length > 0) {
+        const tacticalDiscs = toSupabaseTransforms.transformTacticalDiscsToSupabase(gameId, appState.tacticalDiscs);
+        const { error } = await supabase
+          .from('tactical_discs')
+          .insert(tacticalDiscs);
+        if (error) {
+          console.error('Error saving tactical discs:', error);
+        }
+      }
+      
+      // Save drawings
+      if (appState.drawings && appState.drawings.length > 0) {
+        const drawings = toSupabaseTransforms.transformDrawingsToSupabase(gameId, appState.drawings, 'field');
+        if (drawings.length > 0) {
+          const { error } = await supabase
+            .from('game_drawings')
+            .insert(drawings);
+          if (error) {
+            console.error('Error saving drawings:', error);
+          }
+        }
+      }
+      
+      // Save tactical drawings
+      if (appState.tacticalDrawings && appState.tacticalDrawings.length > 0) {
+        const tacticalDrawings = toSupabaseTransforms.transformDrawingsToSupabase(gameId, appState.tacticalDrawings, 'tactical');
+        if (tacticalDrawings.length > 0) {
+          const { error } = await supabase
+            .from('tactical_drawings')
+            .insert(tacticalDrawings);
+          if (error) {
+            console.error('Error saving tactical drawings:', error);
+          }
+        }
+      }
+      
+      // Save completed intervals
+      if (appState.completedIntervalDurations && appState.completedIntervalDurations.length > 0) {
+        const intervals = toSupabaseTransforms.transformCompletedIntervalsToSupabase(gameId, appState.completedIntervalDurations);
+        const { error } = await supabase
+          .from('completed_intervals')
+          .insert(intervals);
+        if (error) {
+          console.error('Error saving completed intervals:', error);
+        }
+      }
+      
+      // Return the saved game with its new ID
+      return { ...appState, id: gameId };
     } catch (error) {
       console.error('[SupabaseProvider] saveSavedGame error:', error);
       if (error instanceof AuthenticationError || error instanceof NetworkError) {
