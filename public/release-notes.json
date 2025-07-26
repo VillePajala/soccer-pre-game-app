@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "Update release notes to reflect player stats fix and debugging tools; update service worker timestamp"
+  "notes": "fix: preserve player ID relationships during backup import"
 }
