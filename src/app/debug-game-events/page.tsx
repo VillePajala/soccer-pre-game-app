@@ -151,7 +151,7 @@ export default function DebugGameEvents() {
                     {selectedGame.gameEvents.map((event, index) => (
                       <tr key={index} className="border-b border-slate-700">
                         <td className="py-2">{event.type}</td>
-                        <td className="py-2">{event.gameTime}'</td>
+                        <td className="py-2">{event.gameTime}&apos;</td>
                         <td className="py-2">{event.period}</td>
                         <td className="py-2">{getPlayerName(event.scorerId)}</td>
                         <td className="py-2">{getPlayerName(event.assisterId)}</td>
