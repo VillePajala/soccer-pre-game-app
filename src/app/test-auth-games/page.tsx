@@ -12,8 +12,27 @@ export default function TestAuthGames() {
   const [error, setError] = useState<string>('');
 
   useEffect(() => {
+    const fetchGames = async () => {
+      setLoading(true);
+      try {
+        if (!user) {
+          setError('Not authenticated');
+          setGames({});
+        } else {
+          const savedGames = await storageManager.getSavedGames() as Record<string, unknown>;
+          setGames(savedGames || {});
+          setError('');
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+        setGames({});
+      } finally {
+        setLoading(false);
+      }
+    };
+
     if (!authLoading) {
-      loadGames();
+      fetchGames();
     }
   }, [authLoading, user]);
 
