@@ -353,7 +353,8 @@ describe('Saved Games Utilities', () => {
       const result = await createGame(initialGamePartial);
 
       expect(result.gameData.id).toBe(supabaseId);
-      expect(result.gameData.id).not.toBe(result.gameId);
+      expect(result.gameId).toBe(supabaseId);
+      expect(result.gameId).not.toBe(expectedNewGameId);
 
       (storageManager.saveSavedGame as jest.Mock).mockRestore();
     });

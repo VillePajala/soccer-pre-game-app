@@ -178,7 +178,8 @@ export const createGame = async (gameData: Partial<AppState>): Promise<{ gameId:
     };
     
     const result = await saveGame(gameId, newGameAppState);
-    return { gameId, gameData: result };
+    const finalId = (result as { id?: string }).id || gameId;
+    return { gameId: finalId, gameData: result };
   } catch (error) {
     logger.error('Error creating new game:', error);
     throw error; // Rethrow to indicate failure
