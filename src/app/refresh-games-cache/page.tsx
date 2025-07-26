@@ -94,8 +94,8 @@ export default function RefreshGamesCache() {
                     return (
                       <tr key={id} className="border-b border-slate-700">
                         <td className="py-2 font-mono text-xs">{id}</td>
-                        <td className="py-2">{g.teamName} vs {g.opponentName}</td>
-                        <td className="py-2">{g.gameDate}</td>
+                        <td className="py-2">{String(g.teamName || '')} vs {String(g.opponentName || '')}</td>
+                        <td className="py-2">{String(g.gameDate || '')}</td>
                       </tr>
                     );
                   })}
