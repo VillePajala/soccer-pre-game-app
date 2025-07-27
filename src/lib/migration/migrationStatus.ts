@@ -2,6 +2,7 @@
 import React from 'react';
 import { supabase } from '../supabase';
 import { useAuth } from '../../context/AuthContext';
+import type { AppSettings } from '../../utils/appSettings';
 
 export interface MigrationStatus {
   userId: string;
@@ -31,6 +32,56 @@ export function checkLocalStorageData(): MigrationStatus['dataTypes'] {
   const settings = Boolean(localStorage.getItem('appSettings'));
 
   return { players, seasons, tournaments, games, settings };
+}
+
+/**
+ * Legacy initializer used in unit tests
+ */
+export async function initializeMigrationStatus(userId: string): Promise<MigrationStatus> {
+  try {
+    const players = JSON.parse(localStorage.getItem('master-roster') || '[]').length;
+    const seasons = JSON.parse(localStorage.getItem('seasons-list') || '[]').length;
+    const tournaments = JSON.parse(localStorage.getItem('tournaments-list') || '[]').length;
+    const games = Object.keys(JSON.parse(localStorage.getItem('saved-games') || '{}')).length;
+
+    const hasLocalData = players > 0 || seasons > 0 || tournaments > 0 || games > 0;
+
+    return {
+      userId,
+      hasLocalData,
+      migrationCompleted: false,
+      migrationStarted: false,
+      lastMigrationAttempt: null,
+      migrationProgress: 0,
+    } as MigrationStatus;
+  } catch {
+    return {
+      userId,
+      hasLocalData: false,
+      migrationCompleted: false,
+      migrationStarted: false,
+      lastMigrationAttempt: null,
+      migrationProgress: 0,
+    } as MigrationStatus;
+  }
+}
+
+/**
+ * Retrieve migration status from storage, initializing if missing
+ */
+export async function getMigrationStatus(userId: string): Promise<MigrationStatus> {
+  try {
+    const { storageManager } = await import('../storage');
+    const settings = await storageManager.getAppSettings();
+    const stored = settings as { migrationStatus?: MigrationStatus } | null;
+    if (stored?.migrationStatus) {
+      return stored.migrationStatus;
+    }
+  } catch (err) {
+    console.warn('Failed to load migration status from storage:', err);
+  }
+
+  return initializeMigrationStatus(userId);
 }
 
 /**
@@ -95,9 +146,9 @@ export async function checkMigrationStatus(userId: string): Promise<MigrationSta
  * Update migration status in Supabase
  */
 export async function updateMigrationStatus(
-  userId: string, 
+  userId: string,
   updates: Partial<Omit<MigrationStatus, 'userId' | 'hasLocalData' | 'dataTypes'>>
-): Promise<void> {
+): Promise<MigrationStatus> {
   const supabaseUpdates = {
     user_id: userId,
     migration_completed: updates.migrationCompleted,
@@ -119,6 +170,32 @@ export async function updateMigrationStatus(
       throw error;
     }
   }
+
+  const current = await getMigrationStatus(userId);
+  const updated: MigrationStatus = {
+    ...current,
+    ...updates,
+    lastMigrationAttempt: updates.lastMigrationAttempt || new Date().toISOString(),
+  };
+
+  try {
+    const { storageManager } = await import('../storage');
+    type MigrationSettings = AppSettings & { migrationStatus: MigrationStatus };
+    await storageManager.saveAppSettings({ migrationStatus: updated } as MigrationSettings);
+  } catch (err) {
+    console.warn('Failed to persist migration status:', err);
+  }
+
+  return updated;
+}
+
+/** Mark migration as complete and persist */
+export function completeMigration(userId: string): Promise<MigrationStatus> {
+  return updateMigrationStatus(userId, {
+    migrationCompleted: true,
+    migrationProgress: 100,
+    lastMigrationAttempt: new Date().toISOString(),
+  });
 }
 
 /**
