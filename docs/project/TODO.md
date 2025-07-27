@@ -13,6 +13,15 @@
   - Auto-save still exists for ongoing games, but settings edits persist directly
   - Impact: Improves code maintainability and reduces potential for data loss
 
+### CI/CD Infrastructure
+- [ ] **Fix Broken CI Pipeline**
+  - CI currently only runs lint and tests, missing build step
+  - Add `npm run build` to verify production build succeeds
+  - Add bundle size monitoring
+  - Add type checking step
+  - Consider adding E2E tests to CI
+  - Impact: Ensures code quality and prevents broken deployments
+
 ### Data Validation
 - [x] **Player Name/Number Validation**
   - Add warnings for duplicate player names or numbers
