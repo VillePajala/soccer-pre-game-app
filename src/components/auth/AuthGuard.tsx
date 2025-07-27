@@ -21,12 +21,12 @@ export function AuthGuard({
   showAuthModal = true 
 }: AuthGuardProps) {
   const { isAnonymous, loading } = useAuthHelpers();
-  const [showModal, setShowModal] = useState(false);
+  const [showModal, setShowModal] = useState(showAuthModal && requireAuth);
 
   // Show loading state while checking auth
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8">
+      <div className="flex items-center justify-center p-8" data-testid="auth-loading">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
     );
@@ -40,7 +40,7 @@ export function AuthGuard({
 
     return (
       <>
-        <div className="text-center p-8 bg-gray-50 rounded-lg">
+        <div data-testid="auth-required" className="text-center p-8 bg-gray-50 rounded-lg">
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
             Authentication Required
           </h3>
@@ -51,6 +51,7 @@ export function AuthGuard({
             <button
               onClick={() => setShowModal(true)}
               className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+              data-testid="open-auth-modal"
             >
               Sign In
             </button>
