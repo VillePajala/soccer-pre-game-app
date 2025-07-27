@@ -72,11 +72,11 @@
 - [x] Check Supabase dashboard for updated data
 
 ### 2.3 Delete Players
-- [ ] Select a player
-- [ ] Delete the player
-- [ ] Confirm deletion
-- [ ] Verify player is removed from roster
-- [ ] Check Supabase dashboard to confirm deletion
+- [x] Select a player
+- [x] Delete the player
+- [x] Confirm deletion
+- [x] Verify player is removed from roster
+- [x] Check Supabase dashboard to confirm deletion
 
 ---
 
