@@ -1,22 +1,9 @@
 // Basic unit tests for AuthContext
 import { render, screen, waitFor, act } from '@testing-library/react';
 import { useAuth, AuthProvider } from '../AuthContext';
+import { supabase as mockSupabase } from '../lib/supabase';
 
-// Mock Supabase client
-const mockSupabase = {
-  auth: {
-    getSession: jest.fn(),
-    onAuthStateChange: jest.fn(),
-    signUp: jest.fn(),
-    signInWithPassword: jest.fn(),
-    signOut: jest.fn(),
-    resetPasswordForEmail: jest.fn(),
-  },
-};
-
-jest.mock('../../lib/supabase', () => ({
-  supabase: mockSupabase,
-}));
+jest.mock('../lib/supabase');
 
 // Simple test component
 const TestComponent = () => {

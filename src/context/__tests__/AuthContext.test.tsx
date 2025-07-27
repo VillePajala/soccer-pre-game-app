@@ -3,23 +3,9 @@ import { render, screen, waitFor, act } from '@testing-library/react';
 import { useAuth, AuthProvider } from '../AuthContext';
 import { ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
+import { supabase as mockSupabase } from '../lib/supabase';
 
-// Mock Supabase client
-const mockSupabase = {
-  auth: {
-    getSession: jest.fn(),
-    getUser: jest.fn(),
-    onAuthStateChange: jest.fn(),
-    signUp: jest.fn(),
-    signInWithPassword: jest.fn(),
-    signOut: jest.fn(),
-    resetPasswordForEmail: jest.fn(),
-  },
-};
-
-jest.mock('../../lib/supabase', () => ({
-  supabase: mockSupabase,
-}));
+jest.mock('../lib/supabase');
 
 // Test component to access auth context
 const TestComponent = ({ testId = 'test-component' }: { testId?: string }) => {
