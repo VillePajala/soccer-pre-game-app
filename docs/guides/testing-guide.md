@@ -47,17 +47,17 @@
 ## Phase 2: Player Management Testing
 
 ### 2.1 Create Players
-- [ ] Navigate to Roster Settings
-- [ ] Click "Add Player"
-- [ ] Fill in player details:
+- [x] Navigate to Roster Settings
+- [x] Click "Add Player"
+- [x] Fill in player details:
   - Name: "Test Player 1"
   - Jersey Number: "10"
   - Position: Not Goalie
   - Notes: "Test notes"
-- [ ] Save the player
-- [ ] Verify player appears in roster
-- [ ] Check Supabase dashboard → `players` table for the new entry
-- [ ] Repeat for 2-3 more players with different attributes:
+- [x] Save the player
+- [x] Verify player appears in roster
+- [x] Check Supabase dashboard → `players` table for the new entry
+- [x] Repeat for 2-3 more players with different attributes:
   - One goalie
   - One with special characters in name
   - One with no jersey number
