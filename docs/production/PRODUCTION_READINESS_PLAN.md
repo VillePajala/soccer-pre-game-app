@@ -156,12 +156,20 @@ This comprehensive plan outlines all steps required to transform MatchDay Coach 
   - [ ] Enforce consistent code style
 
 ### 2.3 CI/CD Pipeline Enhancement
+- [ ] **Fix Current Broken CI Pipeline**
+  - [ ] Add missing build step (`npm run build`)
+  - [ ] Add TypeScript type checking (`npx tsc --noEmit`)
+  - [ ] Separate jobs for lint, test, and build
+  - [ ] Fix branch configuration (add supabase-migration branch)
+  - [ ] Ensure CI runs on all PRs and main branches
+  
 - [ ] **Expand GitHub Actions**
-  - [ ] Add build step to CI
   - [ ] Add bundle size monitoring
+  - [ ] Add code coverage reporting with Codecov
   - [ ] Add performance testing
   - [ ] Add security scanning (npm audit, SAST)
   - [ ] Add automated deployment to staging
+  - [ ] Add E2E tests to CI pipeline
 
 - [ ] **Quality gates**
   - [ ] Block merge if tests fail
@@ -594,16 +602,18 @@ This comprehensive plan outlines all steps required to transform MatchDay Coach 
 ## Next Steps
 
 1. **Immediate actions**
-   - Set up project management tool
-   - Assign team responsibilities
-   - Create detailed sprint plans
-   - Begin security audit
+   - [ ] Fix broken CI pipeline (add build step, type checking)
+   - [ ] Set up project management tool
+   - [ ] Assign team responsibilities
+   - [ ] Create detailed sprint plans
+   - [ ] Begin security audit
 
 2. **Week 1 priorities**
-   - Complete security assessment
-   - Set up enhanced CI/CD
-   - Begin test coverage expansion
-   - Start performance profiling
+   - [ ] Complete CI/CD enhancement (from basic fix to full pipeline)
+   - [ ] Complete security assessment
+   - [ ] Begin test coverage expansion
+   - [ ] Start performance profiling
+   - [ ] Set up Sentry for error tracking
 
 3. **Stakeholder communication**
    - Weekly progress updates
