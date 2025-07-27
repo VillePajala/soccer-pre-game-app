@@ -13,6 +13,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
   const [mode, setMode] = useState<'signin' | 'signup' | 'reset'>(defaultMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -27,7 +28,8 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
 
     try {
       if (mode === 'signin') {
-        const { error } = await signIn(email, password);
+        const result = await signIn(email, password);
+        const error = (result as { error?: { message: string } | null })?.error;
         if (error) {
           setError(error.message);
         } else {
@@ -35,22 +37,28 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
           onClose();
         }
       } else if (mode === 'signup') {
-        const { error } = await signUp(email, password);
+        if (password !== confirmPassword) {
+          setError('auth.passwordMismatch');
+          return;
+        }
+        const result = await signUp(email, password);
+        const error = (result as { error?: { message: string } | null })?.error;
         if (error) {
           setError(error.message);
         } else {
           setMessage('Check your email for verification link!');
         }
       } else if (mode === 'reset') {
-        const { error } = await resetPassword(email);
+        const result = await resetPassword(email);
+        const error = (result as { error?: { message: string } | null })?.error;
         if (error) {
           setError(error.message);
         } else {
           setMessage('Password reset link sent to your email!');
         }
       }
-    } catch {
-      setError('An unexpected error occurred');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
@@ -59,6 +67,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
   const resetForm = () => {
     setEmail('');
     setPassword('');
+    setConfirmPassword('');
     setError(null);
     setMessage(null);
   };
@@ -71,8 +80,18 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
   if (!isOpen) return null;
 
   return (
-    <div data-testid="modal-backdrop" className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
-      <div data-testid="auth-modal" className="bg-white rounded-lg p-6 w-full max-w-md">
+    <div
+      data-testid="modal-backdrop"
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        data-testid="auth-modal"
+        className="bg-white rounded-lg p-6 w-full max-w-md"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">
             {mode === 'signin' && 'Sign In'}
@@ -133,8 +152,8 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
               <input
                 type="password"
                 id="confirm-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 required
                 minLength={6}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
