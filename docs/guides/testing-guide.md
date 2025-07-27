@@ -63,13 +63,13 @@
   - One with no jersey number
 
 ### 2.2 Edit Players
-- [ ] Select a player from roster
-- [ ] Click Edit
-- [ ] Change jersey number and notes
-- [ ] Save changes
-- [ ] Verify changes persist
-- [ ] Refresh page and verify changes are still there
-- [ ] Check Supabase dashboard for updated data
+- [x] Select a player from roster
+- [x] Click Edit
+- [x] Change jersey number and notes
+- [x] Save changes
+- [x] Verify changes persist
+- [x] Refresh page and verify changes are still there
+- [x] Check Supabase dashboard for updated data
 
 ### 2.3 Delete Players
 - [ ] Select a player
