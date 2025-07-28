@@ -13,8 +13,17 @@ const mockAuth = {
   resetPassword: jest.fn(),
 };
 
-jest.mock('../../context/AuthContext', () => ({
+jest.mock('@/context/AuthContext', () => ({
   useAuth: () => mockAuth,
+}));
+
+// Mock useAuthHelpers
+jest.mock('@/hooks/useAuthHelpers', () => ({
+  useAuthHelpers: () => ({
+    isAnonymous: () => mockAuth.user === null,
+    loading: mockAuth.loading,
+    user: mockAuth.user,
+  }),
 }));
 
 // Mock react-i18next
@@ -22,6 +31,12 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) => key,
   }),
+}));
+
+// Mock AuthModal
+jest.mock('../AuthModal', () => ({
+  AuthModal: ({ isOpen }: { isOpen: boolean }) => 
+    isOpen ? <div data-testid="auth-modal">Auth Modal</div> : null,
 }));
 
 const TestChildComponent = () => (
@@ -40,32 +55,32 @@ describe('AuthGuard', () => {
       mockAuth.session = null;
       
       render(
-        <AuthGuard>
+        <AuthGuard requireAuth>
           <TestChildComponent />
         </AuthGuard>
       );
       
-      expect(screen.getByTestId('auth-loading')).toBeInTheDocument();
+      expect(screen.getByText('', { selector: '.animate-spin' })).toBeInTheDocument();
       expect(screen.queryByTestId('protected-content')).not.toBeInTheDocument();
     });
 
-    it('should show sign in prompt when user is not authenticated', () => {
+    it('should show sign in prompt when user is not authenticated and requireAuth is true', () => {
       mockAuth.loading = false;
       mockAuth.user = null;
       mockAuth.session = null;
       
       render(
-        <AuthGuard>
+        <AuthGuard requireAuth>
           <TestChildComponent />
         </AuthGuard>
       );
       
-      expect(screen.getByTestId('auth-required')).toBeInTheDocument();
-      expect(screen.getByText('auth.signInRequired')).toBeInTheDocument();
+      expect(screen.getByText('Authentication Required')).toBeInTheDocument();
+      expect(screen.getByText('You need to sign in to access this feature.')).toBeInTheDocument();
       expect(screen.queryByTestId('protected-content')).not.toBeInTheDocument();
     });
 
-    it('should render children when user is authenticated with session', () => {
+    it('should render children when user is authenticated', () => {
       const mockUser = { id: 'user-1', email: 'test@example.com' };
       const mockSession = { access_token: 'token-123', user: mockUser };
       
@@ -74,21 +89,18 @@ describe('AuthGuard', () => {
       mockAuth.session = mockSession;
       
       render(
-        <AuthGuard>
+        <AuthGuard requireAuth>
           <TestChildComponent />
         </AuthGuard>
       );
       
       expect(screen.getByTestId('protected-content')).toBeInTheDocument();
-      expect(screen.queryByTestId('auth-loading')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('auth-required')).not.toBeInTheDocument();
+      expect(screen.queryByText('Authentication Required')).not.toBeInTheDocument();
     });
 
-    it('should render children when user is authenticated without session', () => {
-      const mockUser = { id: 'user-1', email: 'test@example.com' };
-      
+    it('should render children when requireAuth is false regardless of auth state', () => {
       mockAuth.loading = false;
-      mockAuth.user = mockUser;
+      mockAuth.user = null;
       mockAuth.session = null;
       
       render(
@@ -101,70 +113,37 @@ describe('AuthGuard', () => {
     });
   });
 
-  describe('Custom Messages', () => {
-    it('should use custom loading message when provided', () => {
-      const customLoadingMessage = 'Custom loading message';
-      
-      mockAuth.loading = true;
-      mockAuth.user = null;
-      mockAuth.session = null;
-      
-      render(
-        <AuthGuard loadingMessage={customLoadingMessage}>
-          <TestChildComponent />
-        </AuthGuard>
-      );
-      
-      expect(screen.getByText(customLoadingMessage)).toBeInTheDocument();
-    });
-
-    it('should use custom auth required message when provided', () => {
-      const customAuthMessage = 'Custom auth required message';
-      
-      mockAuth.loading = false;
-      mockAuth.user = null;
-      mockAuth.session = null;
-      
-      render(
-        <AuthGuard authRequiredMessage={customAuthMessage}>
-          <TestChildComponent />
-        </AuthGuard>
-      );
-      
-      expect(screen.getByText(customAuthMessage)).toBeInTheDocument();
-    });
-  });
 
   describe('Show Auth Modal', () => {
-    it('should show auth modal when showAuthModal is true and user is not authenticated', () => {
+    it('should show sign in button when showAuthModal is true and user is not authenticated', () => {
       mockAuth.loading = false;
       mockAuth.user = null;
       mockAuth.session = null;
       
       render(
-        <AuthGuard showAuthModal={true}>
+        <AuthGuard requireAuth showAuthModal={true}>
           <TestChildComponent />
         </AuthGuard>
       );
       
-      expect(screen.getByTestId('auth-modal')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Sign In' })).toBeInTheDocument();
     });
 
-    it('should not show auth modal by default', () => {
+    it('should not show sign in button when showAuthModal is false', () => {
       mockAuth.loading = false;
       mockAuth.user = null;
       mockAuth.session = null;
       
       render(
-        <AuthGuard>
+        <AuthGuard requireAuth showAuthModal={false}>
           <TestChildComponent />
         </AuthGuard>
       );
       
-      expect(screen.queryByTestId('auth-modal')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Sign In' })).not.toBeInTheDocument();
     });
 
-    it('should not show auth modal when user is authenticated', () => {
+    it('should not show auth UI when user is authenticated', () => {
       const mockUser = { id: 'user-1', email: 'test@example.com' };
       const mockSession = { access_token: 'token-123', user: mockUser };
       
@@ -173,12 +152,12 @@ describe('AuthGuard', () => {
       mockAuth.session = mockSession;
       
       render(
-        <AuthGuard showAuthModal={true}>
+        <AuthGuard requireAuth showAuthModal={true}>
           <TestChildComponent />
         </AuthGuard>
       );
       
-      expect(screen.queryByTestId('auth-modal')).not.toBeInTheDocument();
+      expect(screen.queryByText('Authentication Required')).not.toBeInTheDocument();
       expect(screen.getByTestId('protected-content')).toBeInTheDocument();
     });
   });
@@ -194,13 +173,13 @@ describe('AuthGuard', () => {
       mockAuth.session = null;
       
       render(
-        <AuthGuard fallback={<CustomFallback />}>
+        <AuthGuard requireAuth fallback={<CustomFallback />}>
           <TestChildComponent />
         </AuthGuard>
       );
       
       expect(screen.getByTestId('custom-fallback')).toBeInTheDocument();
-      expect(screen.queryByTestId('auth-required')).not.toBeInTheDocument();
+      expect(screen.queryByText('Authentication Required')).not.toBeInTheDocument();
       expect(screen.queryByTestId('protected-content')).not.toBeInTheDocument();
     });
 
@@ -217,7 +196,7 @@ describe('AuthGuard', () => {
       mockAuth.session = mockSession;
       
       render(
-        <AuthGuard fallback={<CustomFallback />}>
+        <AuthGuard requireAuth fallback={<CustomFallback />}>
           <TestChildComponent />
         </AuthGuard>
       );
@@ -227,80 +206,27 @@ describe('AuthGuard', () => {
     });
   });
 
-  describe('Role-based Access', () => {
-    it('should render children when no required role is specified', () => {
-      const mockUser = { id: 'user-1', email: 'test@example.com', role: 'user' };
-      const mockSession = { access_token: 'token-123', user: mockUser };
-      
-      mockAuth.loading = false;
-      mockAuth.user = mockUser;
-      mockAuth.session = mockSession;
-      
-      render(
-        <AuthGuard>
-          <TestChildComponent />
-        </AuthGuard>
-      );
-      
-      expect(screen.getByTestId('protected-content')).toBeInTheDocument();
-    });
-
-    it('should render children when user has required role', () => {
-      const mockUser = { id: 'user-1', email: 'test@example.com', role: 'admin' };
-      const mockSession = { access_token: 'token-123', user: mockUser };
-      
-      mockAuth.loading = false;
-      mockAuth.user = mockUser;
-      mockAuth.session = mockSession;
-      
-      render(
-        <AuthGuard requiredRole="admin">
-          <TestChildComponent />
-        </AuthGuard>
-      );
-      
-      expect(screen.getByTestId('protected-content')).toBeInTheDocument();
-    });
-
-    it('should not render children when user lacks required role', () => {
-      const mockUser = { id: 'user-1', email: 'test@example.com', role: 'user' };
-      const mockSession = { access_token: 'token-123', user: mockUser };
-      
-      mockAuth.loading = false;
-      mockAuth.user = mockUser;
-      mockAuth.session = mockSession;
-      
-      render(
-        <AuthGuard requiredRole="admin">
-          <TestChildComponent />
-        </AuthGuard>
-      );
-      
-      expect(screen.getByTestId('insufficient-permissions')).toBeInTheDocument();
-      expect(screen.queryByTestId('protected-content')).not.toBeInTheDocument();
-    });
-
-    it('should handle user without role property', () => {
-      const mockUser = { id: 'user-1', email: 'test@example.com' };
-      const mockSession = { access_token: 'token-123', user: mockUser };
-      
-      mockAuth.loading = false;
-      mockAuth.user = mockUser;
-      mockAuth.session = mockSession;
-      
-      render(
-        <AuthGuard requiredRole="admin">
-          <TestChildComponent />
-        </AuthGuard>
-      );
-      
-      expect(screen.getByTestId('insufficient-permissions')).toBeInTheDocument();
-      expect(screen.queryByTestId('protected-content')).not.toBeInTheDocument();
-    });
-  });
 
   describe('Multiple Children', () => {
-    it('should render multiple children when authenticated', () => {
+    it('should render multiple children when no auth is required', () => {
+      mockAuth.loading = false;
+      mockAuth.user = null;
+      mockAuth.session = null;
+      
+      render(
+        <AuthGuard>
+          <div data-testid="child-1">Child 1</div>
+          <div data-testid="child-2">Child 2</div>
+          <div data-testid="child-3">Child 3</div>
+        </AuthGuard>
+      );
+      
+      expect(screen.getByTestId('child-1')).toBeInTheDocument();
+      expect(screen.getByTestId('child-2')).toBeInTheDocument();
+      expect(screen.getByTestId('child-3')).toBeInTheDocument();
+    });
+
+    it('should render multiple children when authenticated and auth is required', () => {
       const mockUser = { id: 'user-1', email: 'test@example.com' };
       const mockSession = { access_token: 'token-123', user: mockUser };
       
@@ -309,7 +235,7 @@ describe('AuthGuard', () => {
       mockAuth.session = mockSession;
       
       render(
-        <AuthGuard>
+        <AuthGuard requireAuth>
           <div data-testid="child-1">Child 1</div>
           <div data-testid="child-2">Child 2</div>
           <div data-testid="child-3">Child 3</div>

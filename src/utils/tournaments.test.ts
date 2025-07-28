@@ -18,14 +18,18 @@ jest.mock('@/lib/storage', () => ({
 }));
 
 // Mock logger to avoid console output during tests
-jest.mock('@/utils/logger', () => ({
-  default: {
+jest.mock('@/utils/logger', () => {
+  const mockLogger = {
     error: jest.fn(),
     warn: jest.fn(),
     info: jest.fn(),
     debug: jest.fn(),
-  }
-}));
+  };
+  return {
+    __esModule: true,
+    default: mockLogger,
+  };
+});
 
 import { authAwareStorageManager as storageManager } from '@/lib/storage';
 import logger from '@/utils/logger';
@@ -185,7 +189,7 @@ describe('Tournament Management Utilities (Storage Abstraction)', () => {
       
       expect(result).toBeNull();
       expect(mockLogger.error).toHaveBeenCalledWith(
-        '[addTournament] Error adding tournament:',
+        '[addTournament] Unexpected error adding tournament:',
         error
       );
     });
@@ -193,37 +197,38 @@ describe('Tournament Management Utilities (Storage Abstraction)', () => {
 
   describe('updateTournament', () => {
     it('should update existing tournament and return updated object', async () => {
-      const updatedTournament = { ...sampleTournaments[0], name: 'Updated Name' };
+      const updates = { name: 'Updated Name' };
+      const updatedTournament = { ...sampleTournaments[0], ...updates };
       mockStorageManager.updateTournament.mockResolvedValue(updatedTournament);
+      mockStorageManager.getTournaments.mockResolvedValue([]);
       
-      const result = await updateTournament(updatedTournament);
+      const result = await updateTournament(sampleTournaments[0].id, updates);
       
       expect(result).toEqual(updatedTournament);
-      expect(mockStorageManager.updateTournament).toHaveBeenCalledWith(updatedTournament);
+      expect(mockStorageManager.updateTournament).toHaveBeenCalledWith(sampleTournaments[0].id, updates);
     });
 
     it('should return null for invalid tournament data', async () => {
-      const invalidTournament = { ...sampleTournaments[0], name: '   ' };
-      
-      const result = await updateTournament(invalidTournament);
+      const result = await updateTournament('', { name: 'Test' });
       
       expect(result).toBeNull();
       expect(mockLogger.error).toHaveBeenCalledWith(
-        '[updateTournament] Invalid tournament data provided for update.'
+        '[updateTournament] Invalid parameters provided for update.'
       );
       expect(mockStorageManager.updateTournament).not.toHaveBeenCalled();
     });
 
     it('should return null on update failure', async () => {
-      const tournament = sampleTournaments[0];
       const error = new Error('Update failed');
+      const updates = { name: 'Updated Name' };
       mockStorageManager.updateTournament.mockRejectedValue(error);
+      mockStorageManager.getTournaments.mockResolvedValue([]);
       
-      const result = await updateTournament(tournament);
+      const result = await updateTournament(sampleTournaments[0].id, updates);
       
       expect(result).toBeNull();
       expect(mockLogger.error).toHaveBeenCalledWith(
-        '[updateTournament] Error updating tournament:',
+        '[updateTournament] Unexpected error updating tournament:',
         error
       );
     });
@@ -257,7 +262,7 @@ describe('Tournament Management Utilities (Storage Abstraction)', () => {
       
       expect(result).toBe(false);
       expect(mockLogger.error).toHaveBeenCalledWith(
-        '[deleteTournament] Error deleting tournament:',
+        '[deleteTournament] Unexpected error deleting tournament:',
         error
       );
     });

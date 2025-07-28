@@ -4,22 +4,11 @@ import { useAuth, AuthProvider } from '../AuthContext';
 import { ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
 
-// Mock Supabase client
-const mockSupabase = {
-  auth: {
-    getSession: jest.fn(),
-    getUser: jest.fn(),
-    onAuthStateChange: jest.fn(),
-    signUp: jest.fn(),
-    signInWithPassword: jest.fn(),
-    signOut: jest.fn(),
-    resetPasswordForEmail: jest.fn(),
-  },
-};
+// Manual mock
+jest.mock('../../lib/supabase');
 
-jest.mock('../../lib/supabase', () => ({
-  supabase: mockSupabase,
-}));
+// Import after mock
+import { supabase } from '../../lib/supabase';
 
 // Test component to access auth context
 const TestComponent = ({ testId = 'test-component' }: { testId?: string }) => {
@@ -65,61 +54,64 @@ const renderWithAuthProvider = async (children: ReactNode) => {
 
 describe('AuthContext', () => {
   let mockUnsubscribe: jest.Mock;
+  const mockSupabase = supabase as jest.Mocked<typeof supabase>;
 
   beforeEach(() => {
     jest.clearAllMocks();
     mockUnsubscribe = jest.fn();
     
+    // Setup auth mocks
+    mockSupabase.auth = {
+      getSession: jest.fn(),
+      onAuthStateChange: jest.fn(),
+      signUp: jest.fn(),
+      signInWithPassword: jest.fn(),
+      signOut: jest.fn(),
+      resetPasswordForEmail: jest.fn(),
+    } as any;
+    
     // Default mock implementations
-    mockSupabase.auth.getSession.mockResolvedValue({
+    (mockSupabase.auth.getSession as jest.Mock).mockResolvedValue({
       data: { session: null },
       error: null,
     });
     
-    mockSupabase.auth.getUser.mockResolvedValue({
-      data: { user: null },
-      error: null,
-    });
-    
-    mockSupabase.auth.onAuthStateChange.mockReturnValue({
+    (mockSupabase.auth.onAuthStateChange as jest.Mock).mockReturnValue({
       data: { subscription: { unsubscribe: mockUnsubscribe } },
     });
     
-    mockSupabase.auth.signUp.mockResolvedValue({
+    (mockSupabase.auth.signUp as jest.Mock).mockResolvedValue({
       data: { user: null, session: null },
       error: null,
     });
     
-    mockSupabase.auth.signInWithPassword.mockResolvedValue({
+    (mockSupabase.auth.signInWithPassword as jest.Mock).mockResolvedValue({
       data: { user: null, session: null },
       error: null,
     });
     
-    mockSupabase.auth.signOut.mockResolvedValue({ error: null });
+    (mockSupabase.auth.signOut as jest.Mock).mockResolvedValue({ error: null });
     
-    mockSupabase.auth.resetPasswordForEmail.mockResolvedValue({ error: null });
+    (mockSupabase.auth.resetPasswordForEmail as jest.Mock).mockResolvedValue({ error: null });
   });
 
   describe('Initialization', () => {
-    it('should initialize with null user and session, and loading true', async () => {
+    it('should initialize with null user and session, and loading becomes false', async () => {
       await renderWithAuthProvider(<TestComponent />);
       
-      expect(screen.getByTestId('user')).toHaveTextContent('null');
-      expect(screen.getByTestId('session')).toHaveTextContent('null');
-      expect(screen.getByTestId('loading')).toHaveTextContent('true');
-      
-      // Wait for initialization to complete
+      // Since useEffect runs immediately, loading should already be false after render
       await waitFor(() => {
+        expect(screen.getByTestId('user')).toHaveTextContent('null');
+        expect(screen.getByTestId('session')).toHaveTextContent('null');
         expect(screen.getByTestId('loading')).toHaveTextContent('false');
       });
     });
 
-    it('should call getSession and getUser on mount', async () => {
+    it('should call getSession on mount', async () => {
       await renderWithAuthProvider(<TestComponent />);
       
       await waitFor(() => {
         expect(mockSupabase.auth.getSession).toHaveBeenCalled();
-        expect(mockSupabase.auth.getUser).toHaveBeenCalled();
       });
     });
 
@@ -137,11 +129,6 @@ describe('AuthContext', () => {
       
       mockSupabase.auth.getSession.mockResolvedValue({
         data: { session: mockSession },
-        error: null,
-      });
-      
-      mockSupabase.auth.getUser.mockResolvedValue({
-        data: { user: mockUser },
         error: null,
       });
       
@@ -171,7 +158,7 @@ describe('AuthContext', () => {
       
       // Simulate auth state change
       const newUser = { id: 'user-2', email: 'new@example.com' };
-      const newSession = { access_token: 'new-token', user: newUser };
+      const newSession = { access_token: 'new-token', user: newUser } as unknown as Session;
       
       act(() => {
         authStateCallback('SIGNED_IN', newSession);
@@ -291,7 +278,10 @@ describe('AuthContext', () => {
       
       await waitFor(() => {
         expect(mockSupabase.auth.resetPasswordForEmail).toHaveBeenCalledWith(
-          'test@example.com'
+          'test@example.com',
+          expect.objectContaining({
+            redirectTo: expect.stringContaining('/auth/reset-password'),
+          })
         );
       });
     });
@@ -317,17 +307,6 @@ describe('AuthContext', () => {
         expect(screen.getByTestId('loading')).toHaveTextContent('false');
         expect(screen.getByTestId('user')).toHaveTextContent('null');
         expect(screen.getByTestId('session')).toHaveTextContent('null');
-      });
-    });
-
-    it('should handle getUser errors gracefully', async () => {
-      mockSupabase.auth.getUser.mockRejectedValue(new Error('User error'));
-      
-      await renderWithAuthProvider(<TestComponent />);
-      
-      await waitFor(() => {
-        expect(screen.getByTestId('loading')).toHaveTextContent('false');
-        expect(screen.getByTestId('user')).toHaveTextContent('null');
       });
     });
   });

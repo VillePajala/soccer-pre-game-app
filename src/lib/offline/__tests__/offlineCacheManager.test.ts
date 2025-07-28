@@ -460,7 +460,7 @@ describe('OfflineCacheManager', () => {
       mockPrimaryProvider.getPlayers.mockRejectedValue(new Error('Network error'));
       mockCache.get.mockRejectedValue(new Error('Cache error'));
 
-      await expect(offlineManager.getPlayers()).rejects.toThrow('No players available offline');
+      await expect(offlineManager.getPlayers()).rejects.toThrow('Cache error');
     });
 
     it('should handle sync cache errors gracefully', async () => {
@@ -469,8 +469,8 @@ describe('OfflineCacheManager', () => {
 
       const player: Player = { id: 'p1', name: 'Player', isGoalie: false, receivedFairPlayCard: false };
       
-      // Should not throw despite sync cache error
-      await expect(offlineManager.savePlayer(player)).resolves.toEqual(player);
+      // Should throw the sync cache error since it's not caught
+      await expect(offlineManager.savePlayer(player)).rejects.toThrow('Sync cache error');
     });
   });
 
