@@ -20,6 +20,9 @@ import { FaSort, FaSortUp, FaSortDown, FaEdit, FaSave, FaTimes, FaTrashAlt } fro
 import PlayerStatsView from './PlayerStatsView';
 import { calculateTeamAssessmentAverages } from '@/utils/assessmentStats';
 import RatingBar from './RatingBar';
+import { usePlayerStats } from '@/hooks/usePlayerStats';
+import { useOverallTeamStats } from '@/hooks/useOverallTeamStats';
+import { useGoalEditing } from '@/hooks/useGoalEditing';
 
 // Define the type for sortable columns
 type SortableColumn = 'name' | 'goals' | 'assists' | 'totalScore' | 'fpAwards' | 'gamesPlayed' | 'avgPoints';
@@ -28,15 +31,7 @@ type SortDirection = 'asc' | 'desc';
 // Define tab types
 type StatsTab = 'currentGame' | 'season' | 'tournament' | 'overall' | 'player';
 
-// ADD Minimal interface for saved game structure used in this component
-interface SavedGame {
-  availablePlayers?: Player[];
-  selectedPlayerIds?: string[];
-  seasonId?: string | null;
-  tournamentId?: string | null;
-  gameEvents?: GameEvent[];
-  // Note: Add other properties from AppState if they are accessed via 'game' variable below
-}
+// SavedGame interface now defined in hooks
 
 // ADD new interfaces for tournament and season statistics
 interface TournamentSeasonStats {
@@ -190,11 +185,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   const [sortColumn, setSortColumn] = useState<SortableColumn>('totalScore');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [filterText, setFilterText] = useState<string>('');
-  const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
-  const [editGoalTime, setEditGoalTime] = useState<string>(''); // Use string MM:SS for input
-  const [editGoalScorerId, setEditGoalScorerId] = useState<string>('');
-  const [editGoalAssisterId, setEditGoalAssisterId] = useState<string | undefined>(undefined);
-  const goalTimeInputRef = useRef<HTMLInputElement>(null);
+  // Goal editing state managed by useGoalEditing hook
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [activeTab, setActiveTab] = useState<StatsTab>('currentGame');
@@ -204,6 +195,35 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   const [localFairPlayPlayerId, setLocalFairPlayPlayerId] = useState<string | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [playerQuery, setPlayerQuery] = useState('');
+
+  // Use custom hooks for complex state management
+  const goalEditing = useGoalEditing({
+    gameEvents,
+    onUpdateGameEvent,
+    onDeleteGameEvent,
+    setLocalGameEvents,
+    formatTime,
+    t,
+  });
+
+  const overallTeamStats = useOverallTeamStats({
+    activeTab,
+    savedGames,
+  });
+
+  const { stats: playerStats, gameIds: processedGameIds } = usePlayerStats({
+    activeTab,
+    availablePlayers,
+    selectedPlayerIds,
+    localGameEvents,
+    savedGames,
+    currentGameId,
+    selectedSeasonIdFilter,
+    selectedTournamentIdFilter,
+    sortColumn,
+    sortDirection,
+    filterText,
+  });
 
   const filteredPlayers = useMemo(() => {
     const search = playerQuery.toLowerCase();
@@ -271,8 +291,11 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
 
   // Focus goal time input
   useEffect(() => {
-      if (editingGoalId) { goalTimeInputRef.current?.focus(); goalTimeInputRef.current?.select(); }
-  }, [editingGoalId]);
+      if (goalEditing.editingGoalId) { 
+        goalEditing.goalTimeInputRef.current?.focus(); 
+        goalEditing.goalTimeInputRef.current?.select(); 
+      }
+  }, [goalEditing.editingGoalId, goalEditing.goalTimeInputRef]);
 
   // ADD Effect to reset filters when tab changes
   useEffect(() => {
@@ -317,44 +340,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
   //     return null;
   // }, [seasonId, tournamentId, seasons, tournaments]);
 
-  const overallTeamStats = useMemo(() => {
-    if (activeTab !== 'overall') return null;
-    
-    const playedGameIds = Object.keys(savedGames || {}).filter(
-      id => savedGames?.[id]?.isPlayed !== false
-    );
-    let wins = 0;
-    let losses = 0;
-    let ties = 0;
-    let goalsFor = 0;
-    let goalsAgainst = 0;
-
-    playedGameIds.forEach(gameId => {
-        const game = savedGames?.[gameId];
-        if (!game || typeof game.homeScore !== 'number' || typeof game.awayScore !== 'number') return;
-        
-        const ourScore = game.homeOrAway === 'home' ? game.homeScore : game.awayScore;
-        const theirScore = game.homeOrAway === 'home' ? game.awayScore : game.homeScore;
-
-        goalsFor += ourScore;
-        goalsAgainst += theirScore;
-
-        if (ourScore > theirScore) wins++;
-        else if (ourScore < theirScore) losses++;
-        else ties++;
-    });
-
-    const gamesPlayed = playedGameIds.length;
-    if (gamesPlayed === 0) return null;
-
-    return {
-        gamesPlayed, wins, losses, ties, goalsFor, goalsAgainst,
-        goalDifference: goalsFor - goalsAgainst,
-        winPercentage: (wins / gamesPlayed) * 100,
-        averageGoalsFor: goalsFor / gamesPlayed,
-        averageGoalsAgainst: goalsAgainst / gamesPlayed,
-    };
-  }, [activeTab, savedGames]);
+  // overallTeamStats now handled by useOverallTeamStats hook
 
   const teamAssessmentAverages = useMemo(() => {
     if (activeTab !== 'overall') return null;
@@ -628,235 +614,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
     return calculateStats(playedGameIds);
   }, [activeTab, savedGames, seasons, tournaments, selectedSeasonIdFilter, selectedTournamentIdFilter]);
 
-  // Modify filteredAndSortedPlayerStats useMemo to also return the list of game IDs processed
-  const { stats: playerStats, gameIds: processedGameIds } = useMemo(() => {
-    // logger.log("Recalculating player stats...", { activeTab, filterText, selectedSeasonIdFilter, selectedTournamentIdFilter, gameEvents: activeTab === 'currentGame' ? gameEvents : null, savedGames: activeTab !== 'currentGame' ? savedGames : null });
-
-    // Initialize stats map - MODIFIED: Initialize differently based on tab
-    const statsMap: { [key: string]: PlayerStatRow } = {};
-    let relevantGameEvents: GameEvent[] = [];
-    let processedGameIds: string[] = []; // Keep track of games considered for GP calc
-
-    if (activeTab === 'currentGame') {
-      // Current game: Only include players that were selected
-      const playersInGame = availablePlayers.filter(p => selectedPlayerIds?.includes(p.id));
-      playersInGame.forEach(player => {
-          statsMap[player.id] = {
-              ...player,
-              goals: 0,
-              assists: 0,
-              totalScore: 0,
-              gamesPlayed: 1,
-              avgPoints: 0,
-          };
-      });
-
-      relevantGameEvents = localGameEvents || []; // MODIFIED: Use localGameEvents
-      if (currentGameId) {
-        processedGameIds = [currentGameId];
-      }
-    } else {
-      // Handle 'season', 'tournament', 'overall' tabs
-      const allGameIds = Object.keys(savedGames || {}).filter(
-        id => savedGames?.[id]?.isPlayed !== false
-      );
-      
-      // Filter game IDs based on tab and selected filter
-      processedGameIds = allGameIds.filter(gameId => {
-        const game: SavedGame | undefined = savedGames?.[gameId];
-        if (!game) return false;
-
-        if (activeTab === 'season') {
-          // Stricter Check: If 'all', include only if it has a seasonId AND NOT a tournamentId.
-          return selectedSeasonIdFilter === 'all'
-            ? game.seasonId != null && (game.tournamentId == null || game.tournamentId === '')
-            : game.seasonId === selectedSeasonIdFilter;
-        } else if (activeTab === 'tournament') {
-          // Stricter Check: If 'all', include only if it has a tournamentId AND NOT a seasonId.
-          return selectedTournamentIdFilter === 'all'
-            ? game.tournamentId != null && (game.seasonId == null || game.seasonId === '')
-            : game.tournamentId === selectedTournamentIdFilter;
-        } else if (activeTab === 'overall') {
-          // Overall still includes everything
-          return true;
-        }
-        return false; // Default case, should not happen
-      });
-
-      // Aggregate views: Build statsMap from players that actually played
-      processedGameIds.forEach(gameId => {
-          const game: SavedGame | undefined = savedGames?.[gameId];
-          game?.selectedPlayerIds?.forEach(playerId => {
-              // Look for player in the main availablePlayers prop, not in the saved game
-              const playerInRoster = availablePlayers.find(p => p.id === playerId);
-              if (playerInRoster && !statsMap[playerId]) {
-                  statsMap[playerId] = {
-                      ...playerInRoster,
-                      goals: 0,
-                      assists: 0,
-                      totalScore: 0,
-                      gamesPlayed: 0,
-                      avgPoints: 0,
-                  };
-              }
-          });
-      });
-
-      // Collect events from the filtered games
-      relevantGameEvents = processedGameIds.flatMap(id => (savedGames?.[id] as SavedGame)?.gameEvents || []); // USE TYPE ASSERTION
-
-      // Calculate Games Played and FP Awards for aggregate views
-      processedGameIds.forEach(gameId => {
-        const game: SavedGame | undefined = savedGames?.[gameId];
-        if (game) {
-            // Existing GP calculation
-            game.selectedPlayerIds?.forEach(playerId => {
-              if (statsMap[playerId]) {
-                // Increment gamesPlayed only if the player exists in the main availablePlayers list
-                statsMap[playerId].gamesPlayed = (statsMap[playerId].gamesPlayed || 0) + 1;
-              }
-            });
-        }
-      });
-    }
-
-    // Process relevant events
-    relevantGameEvents.forEach(event => {
-      if (event.type === 'goal') {
-        // Handle scorer
-        if (event.scorerId) {
-          // If scorer is not in statsMap, try to add them from availablePlayers
-          if (!statsMap[event.scorerId]) {
-            const player = availablePlayers.find(p => p.id === event.scorerId);
-            if (player) {
-              statsMap[event.scorerId] = {
-                ...player,
-                goals: 0,
-                assists: 0,
-                totalScore: 0,
-                gamesPlayed: activeTab === 'currentGame' ? 1 : 0,
-                avgPoints: 0,
-              };
-            }
-          }
-          
-          // Now increment the goal if player exists in statsMap
-          if (statsMap[event.scorerId]) {
-            statsMap[event.scorerId].goals = (statsMap[event.scorerId].goals || 0) + 1;
-            statsMap[event.scorerId].totalScore = (statsMap[event.scorerId].totalScore || 0) + 1;
-          }
-        }
-        
-        // Handle assister
-        if (event.assisterId) {
-          // If assister is not in statsMap, try to add them from availablePlayers
-          if (!statsMap[event.assisterId]) {
-            const player = availablePlayers.find(p => p.id === event.assisterId);
-            if (player) {
-              statsMap[event.assisterId] = {
-                ...player,
-                goals: 0,
-                assists: 0,
-                totalScore: 0,
-                gamesPlayed: activeTab === 'currentGame' ? 1 : 0,
-                avgPoints: 0,
-              };
-            }
-          }
-          
-          // Now increment the assist if player exists in statsMap
-          if (statsMap[event.assisterId]) {
-            statsMap[event.assisterId].assists = (statsMap[event.assisterId].assists || 0) + 1;
-            statsMap[event.assisterId].totalScore = (statsMap[event.assisterId].totalScore || 0) + 1;
-          }
-        }
-      }
-      // Add calculations for other stats if needed
-    });
-
-    // Calculate average points for all players before filtering and sorting
-    Object.values(statsMap).forEach(player => {
-      player.avgPoints = player.gamesPlayed > 0 ? player.totalScore / player.gamesPlayed : 0;
-    });
-
-    // Filter and sort
-    const filteredAndSortedStats = Object.values(statsMap)
-      .filter(player => player.gamesPlayed > 0 && player.name.toLowerCase().includes(filterText.toLowerCase()));
-
-    // Apply sorting
-    if (sortColumn) {
-      filteredAndSortedStats.sort((a, b) => {
-        // Primary sort: by gamesPlayed (players with GP > 0 come before players with GP === 0)
-        if (a.gamesPlayed > 0 && b.gamesPlayed === 0) {
-          return -1; // a comes first
-        }
-        if (a.gamesPlayed === 0 && b.gamesPlayed > 0) {
-          return 1;  // b comes first
-        }
-
-        // Secondary sort: by the selected sortColumn if GP is the same (e.g., both > 0 or both === 0)
-        let aValue: string | number = '';
-        let bValue: string | number = '';
-
-        switch (sortColumn) {
-            case 'name':
-                aValue = a.name.toLowerCase();
-                bValue = b.name.toLowerCase();
-                break;
-            case 'goals':
-                aValue = a.goals;
-                bValue = b.goals;
-                break;
-            case 'assists':
-                aValue = a.assists;
-                bValue = b.assists;
-                break;
-            case 'totalScore':
-                aValue = a.totalScore;
-                bValue = b.totalScore;
-                break;
-            case 'fpAwards':
-                aValue = a.fpAwards ?? 0;
-                bValue = b.fpAwards ?? 0;
-                break;
-             case 'gamesPlayed': // If primary sort is by GP itself (e.g., user clicks GP header)
-                 // The primary GP sort above already handled the main separation.
-                 // This will sort within the GP > 0 group and GP === 0 group respectively.
-                 aValue = a.gamesPlayed;
-                 bValue = b.gamesPlayed;
-                 break;
-            case 'avgPoints':
-                aValue = a.avgPoints;
-                bValue = b.avgPoints;
-                break;
-        }
-
-        // Apply direction for secondary sort key
-        if (typeof aValue === 'string' && typeof bValue === 'string') {
-          return sortDirection === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
-        } else if (typeof aValue === 'number' && typeof bValue === 'number') {
-          return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
-        }
-        return 0;
-      });
-    }
-
-    // Return both stats and the processed game IDs
-    return { stats: filteredAndSortedStats, gameIds: processedGameIds };
-
-  }, [
-    activeTab,
-    localGameEvents,
-    savedGames,
-    availablePlayers,
-    sortColumn,
-    sortDirection,
-    filterText,
-    selectedSeasonIdFilter,
-    selectedTournamentIdFilter,
-    currentGameId,
-    selectedPlayerIds
-  ]);
+  // playerStats and processedGameIds now handled by usePlayerStats hook
 
   const totals = useMemo(() => {
     return playerStats.reduce(
@@ -903,44 +661,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
     setSelectedPlayer(player);
     setActiveTab('player');
   };
-  const handleStartEditGoal = (goal: GameEvent) => {
-    setEditingGoalId(goal.id);
-    setEditGoalTime(formatTime(goal.time));
-    setEditGoalScorerId(goal.scorerId ?? '');
-    setEditGoalAssisterId(goal.assisterId ?? '');
-    setIsEditingNotes(false);
-    setInlineEditingField(null);
-  };
-  const handleCancelEditGoal = () => { setEditingGoalId(null); };
-  const handleSaveEditGoal = () => {
-    if (!editingGoalId) return;
-    const originalGoal = gameEvents.find(e => e.id === editingGoalId); if (!originalGoal) { handleCancelEditGoal(); return; }
-    const timeParts = editGoalTime.match(/^(\d{1,2}):(\d{1,2})$/); let timeInSeconds = 0;
-    if (timeParts) { const m = parseInt(timeParts[1], 10), s = parseInt(timeParts[2], 10); if (!isNaN(m) && !isNaN(s) && m >= 0 && s >= 0 && s < 60) timeInSeconds = m * 60 + s; else { alert(t('gameStatsModal.invalidTimeFormat', 'Invalid time format. MM:SS')); goalTimeInputRef.current?.focus(); return; } } else { alert(t('gameStatsModal.invalidTimeFormat', 'Invalid time format. MM:SS')); goalTimeInputRef.current?.focus(); return; }
-    const updatedScorerId = editGoalScorerId; const updatedAssisterId = editGoalAssisterId || undefined;
-    if (!updatedScorerId) { alert(t('gameStatsModal.scorerRequired', 'Scorer must be selected.')); return; }
-    const updatedEvent: GameEvent = { ...originalGoal, time: timeInSeconds, scorerId: updatedScorerId, assisterId: updatedAssisterId };
-    if (typeof onUpdateGameEvent === 'function') {
-        onUpdateGameEvent(updatedEvent);
-    }
-          handleCancelEditGoal();
-  };
-  const handleGoalEditKeyDown = (event: React.KeyboardEvent) => { if (event.key === 'Enter') handleSaveEditGoal(); else if (event.key === 'Escape') handleCancelEditGoal(); }
-
-  // Wrap call in check
-  const triggerDeleteEvent = (goalId: string) => {
-    // Add confirmation dialog before deleting
-    if (window.confirm(t('gameStatsModal.confirmDeleteEvent', 'Are you sure you want to delete this event? This cannot be undone.'))) {
-      // Combine checks for clarity and add non-null assertion
-      if (onDeleteGameEvent && typeof onDeleteGameEvent === 'function') { 
-        onDeleteGameEvent!(goalId); // ADD non-null assertion (!)
-        setLocalGameEvents(prevEvents => prevEvents.filter(event => event.id !== goalId));
-        // logger.log(`Locally deleted event ${goalId} and called parent handler.`);
-        } else {
-        // logger.warn("Delete handler (onDeleteGameEvent) not available or not a function.");
-      }
-    }
-  };
+  // Goal editing handlers now provided by useGoalEditing hook
 
   // --- Dynamic Title based on Tab ---
   const modalTitle = useMemo(() => {
@@ -1375,17 +1096,18 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                       <h3 className="text-xl font-semibold text-slate-200 mb-4">{t('gameStatsModal.goalLogTitle', 'Goal Log')}</h3>
                       <div className="space-y-2">
                         {sortedGoals.filter(g => g.type === 'goal' || g.type === 'opponentGoal').map(goal => (
-                          <div key={goal.id} className={`p-3 rounded-md border transition-all ${editingGoalId === goal.id ? 'bg-slate-700/75 border-indigo-500' : 'bg-slate-800/40 border-slate-700/50'}`}>
-                            {editingGoalId === goal.id ? (
+                          <div key={goal.id} className={`p-3 rounded-md border transition-all ${goalEditing.editingGoalId === goal.id ? 'bg-slate-700/75 border-indigo-500' : 'bg-slate-800/40 border-slate-700/50'}`}>
+                            {goalEditing.editingGoalId === goal.id ? (
                               <div className="space-y-3">
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                   <div>
                                     <label className="block text-xs font-medium text-slate-400 mb-1">{t('common.time', 'Time')}</label>
                                     <input 
+                                      ref={goalEditing.goalTimeInputRef}
                                       type="text" 
-                                      value={editGoalTime} 
-                                      onChange={e => setEditGoalTime(e.target.value)} 
-                                      onKeyDown={handleGoalEditKeyDown}
+                                      value={goalEditing.editGoalTime} 
+                                      onChange={e => goalEditing.setEditGoalTime(e.target.value)} 
+                                      onKeyDown={goalEditing.handleGoalEditKeyDown}
                                       placeholder="MM:SS"
                                       className="w-full bg-slate-700 border border-slate-600 rounded-md px-2 py-1.5 text-sm"
                                     />
@@ -1393,8 +1115,8 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                                   <div>
                                     <label className="block text-xs font-medium text-slate-400 mb-1">{t('common.scorer', 'Scorer')}</label>
                                     <select 
-                                      value={editGoalScorerId} 
-                                      onChange={e => setEditGoalScorerId(e.target.value)}
+                                      value={goalEditing.editGoalScorerId} 
+                                      onChange={e => goalEditing.setEditGoalScorerId(e.target.value)}
                                       className="w-full bg-slate-700 border border-slate-600 rounded-md px-2 py-1.5 text-sm"
                                     >
                                       <option value="">{t('common.select', 'Select...')}</option>
@@ -1404,8 +1126,8 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                                   <div>
                                     <label className="block text-xs font-medium text-slate-400 mb-1">{t('common.assist', 'Assist')}</label>
                                     <select 
-                                      value={editGoalAssisterId} 
-                                      onChange={e => setEditGoalAssisterId(e.target.value || '')}
+                                      value={goalEditing.editGoalAssisterId} 
+                                      onChange={e => goalEditing.setEditGoalAssisterId(e.target.value || '')}
                                       className="w-full bg-slate-700 border border-slate-600 rounded-md px-2 py-1.5 text-sm"
                                     >
                                       <option value="">{t('common.none', 'None')}</option>
@@ -1414,8 +1136,8 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                                   </div>
                                 </div>
                                 <div className="flex justify-end gap-2 pt-2">
-                                  <button onClick={handleCancelEditGoal} className="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-slate-200 rounded-md text-sm font-medium transition-colors">{t('common.cancel', 'Cancel')}</button>
-                                  <button onClick={handleSaveEditGoal} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-sm font-medium transition-colors">{t('common.save', 'Save Changes')}</button>
+                                  <button onClick={goalEditing.handleCancelEditGoal} className="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-slate-200 rounded-md text-sm font-medium transition-colors">{t('common.cancel', 'Cancel')}</button>
+                                  <button onClick={goalEditing.handleSaveEditGoal} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-sm font-medium transition-colors">{t('common.save', 'Save Changes')}</button>
                                 </div>
                               </div>
                             ) : (
@@ -1430,8 +1152,8 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <button onClick={() => handleStartEditGoal(goal)} className="p-1.5 text-slate-400 hover:text-indigo-400 rounded-md transition-colors" aria-label={t('common.edit', 'Edit')}><FaEdit /></button>
-                                  <button onClick={() => triggerDeleteEvent(goal.id)} className="p-1.5 text-slate-400 hover:text-red-500 rounded-md transition-colors" aria-label={t('common.delete', 'Delete')}><FaTrashAlt /></button>
+                                  <button onClick={() => goalEditing.handleStartEditGoal(goal)} className="p-1.5 text-slate-400 hover:text-indigo-400 rounded-md transition-colors" aria-label={t('common.edit', 'Edit')}><FaEdit /></button>
+                                  <button onClick={() => goalEditing.triggerDeleteEvent(goal.id)} className="p-1.5 text-slate-400 hover:text-red-500 rounded-md transition-colors" aria-label={t('common.delete', 'Delete')}><FaTrashAlt /></button>
                                 </div>
                               </div>
                             )}
