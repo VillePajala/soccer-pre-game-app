@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "refactor: fix all TypeScript any types in production code"
+  "notes": "refactor: extract custom hooks from GameStatsModal (Phase 1)"
 }
