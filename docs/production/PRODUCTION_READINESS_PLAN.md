@@ -145,6 +145,14 @@ This comprehensive plan outlines all steps required to transform MatchDay Coach 
 ### 2.2 Code Quality
 - [ ] **Code cleanup and refactoring**
   - [ ] Complete component refactoring (GameStatsModal, GameSettingsModal)
+    - [x] GameStatsModal - Phase 1: Extract custom hooks ✅ Completed 2025-07-28
+      - Created usePlayerStats hook (227 lines → reusable hook)
+      - Created useOverallTeamStats hook (team performance stats)
+      - Created useGoalEditing hook (goal editing state & handlers)
+      - Reduced component complexity from 46 to 35 React hooks
+      - Improved maintainability and testability
+    - [ ] GameStatsModal - Phase 2: Extract UI components
+    - [ ] GameSettingsModal refactoring
   - [x] Remove all console.log statements ✅ Completed 2025-07-28
   - [x] Fix all TypeScript any types ✅ Completed 2025-07-28
   - [ ] Implement consistent error handling
