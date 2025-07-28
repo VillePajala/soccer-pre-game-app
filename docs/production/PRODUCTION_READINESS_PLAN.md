@@ -116,10 +116,13 @@ This comprehensive plan outlines all steps required to transform MatchDay Coach 
   - [x] Document test fixing progress
   - **Results**: Reduced failing tests from 31 to 0 (with 2 test suites skipped)
   
-- [ ] **Expand unit test coverage**
-  - [ ] Achieve 80% code coverage minimum
-  - [ ] Test all utility functions
-  - [ ] Test all custom hooks
+- [x] **Expand unit test coverage** ✅ Phase 1 Completed 2025-07-28
+  - [x] Created comprehensive error handling tests (ErrorBoundary, useErrorHandler)
+  - [x] Achieved 100% coverage for core utilities (time.ts, logger.ts, bytes.ts, localStorage.ts)
+  - [x] Created test infrastructure for custom hooks (usePlayerStats, useGoalEditing)
+  - [ ] Achieve 80% overall code coverage minimum
+  - [ ] Test remaining custom hooks (useSeasonTournamentManagement, useOverallTeamStats)
+  - [ ] Test component integration flows
   - [ ] Test all data transformations
   - [ ] Add snapshot tests for components
 
