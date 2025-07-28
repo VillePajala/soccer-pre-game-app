@@ -56,26 +56,32 @@ describe('logger utility', () => {
     
     beforeEach(() => {
       originalEnv = process.env.NODE_ENV;
+      // Clear module cache to force re-evaluation
+      jest.resetModules();
       process.env.NODE_ENV = 'production';
-      // Clear any previous mock calls
       jest.clearAllMocks();
     });
     
     afterEach(() => {
       process.env.NODE_ENV = originalEnv;
+      jest.resetModules();
     });
 
     it('should not log regular messages in production', () => {
+      // Re-import logger with production NODE_ENV
+      const logger = require('../logger').default;
       logger.log('test message');
       expect(console.log).not.toHaveBeenCalled();
     });
 
     it('should still log errors in production', () => {
+      const logger = require('../logger').default;
       logger.error('error message');
       expect(console.error).toHaveBeenCalledWith('error message');
     });
 
     it('should not log warnings in production', () => {
+      const logger = require('../logger').default;
       logger.warn('warning message');
       expect(console.warn).not.toHaveBeenCalled();
     });

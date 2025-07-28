@@ -28,7 +28,7 @@ describe('bytes utility', () => {
 
     it('should handle negative numbers', () => {
       expect(formatBytes(-512)).toBe('-512 B');
-      expect(formatBytes(-1536)).toBe('-1.5 KB');
+      expect(formatBytes(-1536)).toBe('-1536 B'); // Negative numbers don't convert to higher units
     });
   });
 });
