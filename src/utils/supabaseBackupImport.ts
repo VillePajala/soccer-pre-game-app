@@ -43,22 +43,12 @@ export async function importBackupToSupabase(jsonContent: string): Promise<{
   };
 }> {
   logger.log('[SupabaseBackupImport] Starting import...');
-  console.log('[SupabaseBackupImport] Starting import with content length:', jsonContent.length);
   
   // Check authentication status
-  const providerName = storageManager.getProviderName?.() || 'unknown';
-  console.log('[SupabaseBackupImport] Current provider:', providerName);
+  // Note: providerName is retrieved but not currently used in this function
   
   try {
     const backupData: BackupData = JSON.parse(jsonContent);
-    console.log('[SupabaseBackupImport] Parsed backup data:', {
-      hasLocalStorage: !!backupData.localStorage,
-      hasPlayers: !!backupData.players,
-      hasSeasons: !!backupData.seasons,
-      hasTournaments: !!backupData.tournaments,
-      hasSavedGames: !!backupData.savedGames,
-      keys: Object.keys(backupData)
-    });
     
     let playersToImport: Player[] = [];
     let seasonsToImport: Season[] = [];
@@ -69,7 +59,6 @@ export async function importBackupToSupabase(jsonContent: string): Promise<{
     // Check if it's the old localStorage format
     if (backupData.localStorage) {
       logger.log('[SupabaseBackupImport] Detected localStorage format backup');
-      console.log('[SupabaseBackupImport] localStorage keys:', Object.keys(backupData.localStorage));
       
       // Check for both old and new key names
       playersToImport = backupData.localStorage[MASTER_ROSTER_KEY] || 
@@ -82,14 +71,6 @@ export async function importBackupToSupabase(jsonContent: string): Promise<{
                      backupData.localStorage['savedSoccerGames'] || {};
       settingsToImport = backupData.localStorage[APP_SETTINGS_KEY] || 
                         backupData.localStorage['soccerAppSettings'] || null;
-      
-      console.log('[SupabaseBackupImport] Data to import:', {
-        players: playersToImport.length,
-        seasons: seasonsToImport.length,
-        tournaments: tournamentsToImport.length,
-        games: Object.keys(gamesToImport).length,
-        hasSettings: !!settingsToImport
-      });
     } 
     // Or the new Supabase export format
     else if (backupData.players || backupData.seasons || backupData.tournaments) {
@@ -141,7 +122,6 @@ export async function importBackupToSupabase(jsonContent: string): Promise<{
         
         if (newPlayerId && newPlayerId !== oldPlayerId) {
           playerIdMapping[oldPlayerId] = newPlayerId;
-          logger.log(`[SupabaseBackupImport] Player ID mapped: ${oldPlayerId} -> ${newPlayerId}`);
         }
         
         stats.players++;
@@ -194,13 +174,11 @@ export async function importBackupToSupabase(jsonContent: string): Promise<{
               // Update scorerId if it exists and has a mapping
               if (event.scorerId && typeof event.scorerId === 'string' && playerIdMapping[event.scorerId]) {
                 updatedEvent.scorerId = playerIdMapping[event.scorerId];
-                logger.log(`[SupabaseBackupImport] Updated scorerId in event: ${event.scorerId} -> ${updatedEvent.scorerId}`);
               }
               
               // Update assisterId if it exists and has a mapping
               if (event.assisterId && typeof event.assisterId === 'string' && playerIdMapping[event.assisterId]) {
                 updatedEvent.assisterId = playerIdMapping[event.assisterId];
-                logger.log(`[SupabaseBackupImport] Updated assisterId in event: ${event.assisterId} -> ${updatedEvent.assisterId}`);
               }
               
               return updatedEvent;
@@ -239,14 +217,6 @@ export async function importBackupToSupabase(jsonContent: string): Promise<{
             gameData.isPlayed = true;
           }
           logger.log(`[SupabaseBackupImport] Importing game: ${gameData.teamName || 'Unknown'} vs ${gameData.opponentName || 'Unknown'}`);
-          console.log('[SupabaseBackupImport] Game data:', {
-            teamName: gameData.teamName,
-            opponentName: gameData.opponentName,
-            homeScore: gameData.homeScore,
-            awayScore: gameData.awayScore,
-            gameDate: gameData.gameDate,
-            oldId: oldGameId
-          });
           
           // Save the game and get the new ID from Supabase
           const savedGame = await storageManager.saveSavedGame(gameData);
@@ -254,14 +224,12 @@ export async function importBackupToSupabase(jsonContent: string): Promise<{
           
           if (newGameId && newGameId !== oldGameId) {
             gameIdMapping[oldGameId] = newGameId;
-            logger.log(`[SupabaseBackupImport] Game ID mapped: ${oldGameId} -> ${newGameId}`);
           }
           
           stats.games++;
         }
       } catch (error) {
         logger.error(`[SupabaseBackupImport] Failed to import game ${oldGameId}:`, error);
-        console.error('[SupabaseBackupImport] Game import error details:', error);
       }
     }
     
@@ -276,7 +244,6 @@ export async function importBackupToSupabase(jsonContent: string): Promise<{
           const oldId = settingsToSave.currentGameId;
           const newId = gameIdMapping[oldId];
           settingsToSave.currentGameId = newId;
-          logger.log(`[SupabaseBackupImport] Updated currentGameId in settings: ${oldId} -> ${newId}`);
         }
         
         await storageManager.saveAppSettings(settingsToSave);

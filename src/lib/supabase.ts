@@ -5,7 +5,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 // Import config validation
-import { isSupabaseEnabled } from './storage/config';
+// Note: isSupabaseEnabled is imported but not used in this file
 
 // Only create clients if we have valid configuration
 const hasValidConfig = supabaseUrl && supabaseAnonKey && 
@@ -14,15 +14,6 @@ const hasValidConfig = supabaseUrl && supabaseAnonKey &&
                       supabaseUrl.length > 0 &&
                       supabaseAnonKey.length > 0;
 
-// Log configuration status for debugging
-if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-  console.log('[Supabase] Configuration status:', {
-    hasValidConfig,
-    urlProvided: !!supabaseUrl && supabaseUrl !== 'https://your-project.supabase.co',
-    keyProvided: !!supabaseAnonKey && supabaseAnonKey !== 'public-anon-key',
-    supabaseEnabled: isSupabaseEnabled()
-  });
-}
 
 // Create a dummy client for development/fallback
 const dummyClient = {
