@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { GameEvent } from '@/types';
+import { useErrorHandler } from './useErrorHandler';
 
 interface UseGoalEditingProps {
   gameEvents: GameEvent[];
@@ -18,6 +19,7 @@ export function useGoalEditing({
   formatTime,
   t,
 }: UseGoalEditingProps) {
+  const { handleValidationError } = useErrorHandler();
   const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
   const [editGoalTime, setEditGoalTime] = useState<string>('');
   const [editGoalScorerId, setEditGoalScorerId] = useState<string>('');
@@ -52,12 +54,12 @@ export function useGoalEditing({
       if (!isNaN(m) && !isNaN(s) && m >= 0 && s >= 0 && s < 60) {
         timeInSeconds = m * 60 + s; 
       } else { 
-        alert(t('gameStatsModal.invalidTimeFormat', 'Invalid time format. MM:SS')); 
+        handleValidationError(t('gameStatsModal.invalidTimeFormat', 'Invalid time format. MM:SS'), 'Goal Time'); 
         goalTimeInputRef.current?.focus(); 
         return; 
       } 
     } else { 
-      alert(t('gameStatsModal.invalidTimeFormat', 'Invalid time format. MM:SS')); 
+      handleValidationError(t('gameStatsModal.invalidTimeFormat', 'Invalid time format. MM:SS'), 'Goal Time'); 
       goalTimeInputRef.current?.focus(); 
       return; 
     }
@@ -66,7 +68,7 @@ export function useGoalEditing({
     const updatedAssisterId = editGoalAssisterId || undefined;
     
     if (!updatedScorerId) { 
-      alert(t('gameStatsModal.scorerRequired', 'Scorer must be selected.')); 
+      handleValidationError(t('gameStatsModal.scorerRequired', 'Scorer must be selected.'), 'Scorer'); 
       return; 
     }
 

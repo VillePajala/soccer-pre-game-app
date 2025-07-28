@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { OfflineCacheManager } from '../lib/offline/offlineCacheManager';
 import { storageManager } from '../lib/storage';
 import { useAuth } from '../context/AuthContext';
+import { useErrorHandler } from './useErrorHandler';
 import type { OfflineStatus } from '../lib/offline/offlineCacheManager';
 
 interface OfflineManagerState {
@@ -17,6 +18,7 @@ interface OfflineManagerState {
  */
 export function useOfflineManager() {
   const { user } = useAuth();
+  const { handleStorageError, handleNetworkError } = useErrorHandler();
   const [state, setState] = useState<OfflineManagerState>({
     isOnline: navigator.onLine,
     offlineStatus: null,
@@ -41,13 +43,14 @@ export function useOfflineManager() {
         isLoading: false,
       }));
     } catch (error) {
+      handleStorageError(error, 'initialize offline manager');
       setState(prev => ({
         ...prev,
         error: error instanceof Error ? error.message : 'Failed to initialize offline manager',
         isLoading: false,
       }));
     }
-  }, [user]);
+  }, [user, handleStorageError]);
 
   // Update offline status
   const updateOfflineStatus = useCallback(async () => {
@@ -61,9 +64,9 @@ export function useOfflineManager() {
         isOnline: offlineStatus.isOnline,
       }));
     } catch (error) {
-      console.error('Failed to get offline status:', error);
+      handleStorageError(error, 'get offline status');
     }
-  }, [state.cacheManager]);
+  }, [state.cacheManager, handleStorageError]);
 
   // Listen for online/offline events
   useEffect(() => {
@@ -104,9 +107,9 @@ export function useOfflineManager() {
       // Update status after sync attempt
       setTimeout(updateOfflineStatus, 1000);
     } catch (error) {
-      console.error('Failed to trigger sync:', error);
+      handleNetworkError(error);
     }
-  }, [state.cacheManager, state.isOnline, updateOfflineStatus]);
+  }, [state.cacheManager, state.isOnline, updateOfflineStatus, handleNetworkError]);
 
   // Clear offline data
   const clearOfflineData = useCallback(async () => {
@@ -116,9 +119,9 @@ export function useOfflineManager() {
       await state.cacheManager.clearOfflineData();
       updateOfflineStatus();
     } catch (error) {
-      console.error('Failed to clear offline data:', error);
+      handleStorageError(error, 'clear offline data');
     }
-  }, [state.cacheManager, updateOfflineStatus]);
+  }, [state.cacheManager, updateOfflineStatus, handleStorageError]);
 
   // Get cached data size estimate
   const getCacheSize = useCallback(async (): Promise<number> => {
@@ -129,10 +132,10 @@ export function useOfflineManager() {
       // For now, return 0
       return 0;
     } catch (error) {
-      console.error('Failed to get cache size:', error);
+      handleStorageError(error, 'get cache size');
       return 0;
     }
-  }, [state.cacheManager]);
+  }, [state.cacheManager, handleStorageError]);
 
   return {
     isOnline: state.isOnline,

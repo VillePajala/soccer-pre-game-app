@@ -3,6 +3,7 @@ import { UseMutationResult } from '@tanstack/react-query';
 import { Season, Tournament } from '@/types';
 import { getSeasons } from '@/utils/seasons';
 import { getTournaments } from '@/utils/tournaments';
+import { useErrorHandler } from './useErrorHandler';
 import logger from '@/utils/logger';
 
 interface UseSeasonTournamentManagementProps {
@@ -54,6 +55,8 @@ export function useSeasonTournamentManagement({
   addTournamentMutation,
   t,
 }: UseSeasonTournamentManagementProps): UseSeasonTournamentManagementReturn {
+  const { handleValidationError, handleStorageError } = useErrorHandler();
+  
   // State for seasons and tournaments
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
@@ -149,7 +152,7 @@ export function useSeasonTournamentManagement({
   const handleAddNewSeason = async () => {
     const trimmedName = newSeasonName.trim();
     if (!trimmedName) {
-      alert(t('gameSettingsModal.newSeasonNameRequired', 'Please enter a name for the new season.'));
+      handleValidationError(t('gameSettingsModal.newSeasonNameRequired', 'Please enter a name for the new season.'), 'Season Name');
       newSeasonInputRef.current?.focus();
       return;
     }
@@ -169,14 +172,14 @@ export function useSeasonTournamentManagement({
       }
     } catch (error) {
       logger.error('[GameSettingsModal] Error adding season:', error);
-      alert(t('gameSettingsModal.errorAddingSeason', 'Error adding season. Please try again.'));
+      handleStorageError(error, 'add season');
     }
   };
 
   const handleAddNewTournament = async () => {
     const trimmedName = newTournamentName.trim();
     if (!trimmedName) {
-      alert(t('gameSettingsModal.newTournamentNameRequired', 'Please enter a name for the new tournament.'));
+      handleValidationError(t('gameSettingsModal.newTournamentNameRequired', 'Please enter a name for the new tournament.'), 'Tournament Name');
       newTournamentInputRef.current?.focus();
       return;
     }
@@ -196,7 +199,7 @@ export function useSeasonTournamentManagement({
       }
     } catch (error) {
       logger.error('[GameSettingsModal] Error adding tournament:', error);
-      alert(t('gameSettingsModal.errorAddingTournament', 'Error adding tournament. Please try again.'));
+      handleStorageError(error, 'add tournament');
     }
   };
 
