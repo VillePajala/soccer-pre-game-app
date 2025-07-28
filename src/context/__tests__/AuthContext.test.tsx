@@ -295,19 +295,23 @@ describe('AuthContext', () => {
   });
 
   describe('Error Handling', () => {
-    it.skip('should handle getSession errors gracefully', async () => {
-      // This test is flaky due to timing issues with promise rejection
-      // The AuthContext correctly handles the error but the test timing is unreliable
+    it('should handle getSession errors gracefully', async () => {
+      // Mock console.error to avoid noise during test
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      
       mockSupabaseAuth.getSession.mockRejectedValue(new Error('Session error'));
       
       await renderWithAuthProvider(<TestComponent />);
       
+      // Wait for loading to finish and error to be handled
       await waitFor(() => {
         expect(screen.getByTestId('loading')).toHaveTextContent('false');
-      }, { timeout: 3000 });
+      }, { timeout: 5000 });
       
       expect(screen.getByTestId('user')).toHaveTextContent('null');
       expect(screen.getByTestId('session')).toHaveTextContent('null');
+      
+      consoleSpy.mockRestore();
     });
   });
 
