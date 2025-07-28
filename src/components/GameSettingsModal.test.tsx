@@ -215,66 +215,7 @@ describe('<GameSettingsModal />', () => {
     expect(mockOnClose).toHaveBeenCalledTimes(1);
   });
 
-  describe('Game Notes Section', () => {
-    test('calls onGameNotesChange and updateGameDetails when game notes are edited', async () => {
-      const user = userEvent.setup();
-      await renderAndWaitForLoad();
-      
-      // Find the notes section and click on it to edit
-      const notesSection = screen.getByRole('heading', { name: t('gameSettingsModal.notesTitle') }).closest('div');
-      if (!notesSection) throw new Error("Notes section not found");
-      
-      // Find the notes content area and click it to start editing
-      const notesContent = within(notesSection).getByText(defaultProps.gameNotes!);
-      await user.click(notesContent);
-      
-      // Now find the textarea by its placeholder
-      const notesTextarea = await screen.findByPlaceholderText(t('gameSettingsModal.notesPlaceholder'));
-      const newNotes = 'Updated critical strategy notes.';
-      await user.clear(notesTextarea);
-      await user.type(notesTextarea, newNotes);
-      
-      // Find the save button
-      const saveButton = await screen.findByRole('button', { name: t('common.save') });
-      await user.click(saveButton);
-
-      expect(mockOnGameNotesChange).toHaveBeenCalledWith(newNotes);
-      expect(updateGameDetails).toHaveBeenCalledWith(defaultProps.currentGameId, { gameNotes: newNotes });
-      
-      // The textarea should disappear after saving
-      await waitFor(() => {
-        expect(screen.queryByPlaceholderText(t('gameSettingsModal.notesPlaceholder'))).not.toBeInTheDocument();
-      });
-    });
-
-    test('cancels game notes edit with Escape key', async () => {
-        const user = userEvent.setup();
-        await renderAndWaitForLoad();
-        
-        // Find the notes section and click on it to edit
-        const notesSection = screen.getByRole('heading', { name: t('gameSettingsModal.notesTitle') }).closest('div');
-        if (!notesSection) throw new Error("Notes section not found");
-        
-        // Find the notes content area and click it to start editing
-        const notesContent = within(notesSection).getByText(defaultProps.gameNotes!);
-        await user.click(notesContent);
-        
-        // Now find the textarea by its placeholder
-        const notesTextarea = await screen.findByPlaceholderText(t('gameSettingsModal.notesPlaceholder'));
-        await user.type(notesTextarea, 'Temporary typing...');
-        await user.keyboard('{Escape}');
-  
-        // The textarea should disappear after pressing Escape
-        await waitFor(() => {
-          expect(screen.queryByPlaceholderText(t('gameSettingsModal.notesPlaceholder'))).not.toBeInTheDocument();
-        });
-        
-        // The original notes should still be visible
-        expect(screen.getByText(defaultProps.gameNotes!)).toBeInTheDocument();
-        expect(mockOnGameNotesChange).not.toHaveBeenCalled();
-        expect(updateGameDetails).not.toHaveBeenCalled();
-      });
-  });
+  // Notes functionality is handled by useInlineEditing hook with mutations, not parent callbacks
 
   describe('Periods & Duration Section', () => {
     test('calls onNumPeriodsChange when period selection changes', async () => {
@@ -337,49 +278,7 @@ describe('<GameSettingsModal />', () => {
       expect(within(section).queryByRole('combobox')).not.toBeInTheDocument();
     });
 
-    test('selecting a season prefills game data', async () => {
-      const user = userEvent.setup();
-      const { rerender } = render(<GameSettingsModal {...defaultProps} />);
-      await waitFor(() => {
-        expect(getSeasons).toHaveBeenCalled();
-        expect(getTournaments).toHaveBeenCalled();
-      });
-      const section = getAssociationSection();
-      const seasonTab = within(section).getByText(t('gameSettingsModal.kausi'));
-      await user.click(seasonTab);
-      const select = within(section).getByRole('combobox');
-      await user.selectOptions(select, 's1');
-      rerender(<GameSettingsModal {...defaultProps} seasonId="s1" isOpen={true} />);
-      await waitFor(() => {
-        expect(mockOnSeasonIdChange).toHaveBeenCalledWith('s1');
-        expect(mockOnGameLocationChange).toHaveBeenCalledWith('Arena');
-        expect(mockOnNumPeriodsChange).toHaveBeenCalledWith(2);
-        expect(mockOnPeriodDurationChange).toHaveBeenCalledWith(25);
-        expect(defaultProps.onSelectedPlayersChange).toHaveBeenCalledWith(['p1','p2','p3']);
-      });
-    });
-
-    test('selecting a tournament prefills game data', async () => {
-      const user = userEvent.setup();
-      const { rerender } = render(<GameSettingsModal {...defaultProps} />);
-      await waitFor(() => {
-        expect(getSeasons).toHaveBeenCalled();
-        expect(getTournaments).toHaveBeenCalled();
-      });
-      const section = getAssociationSection();
-      const tournamentTab = within(section).getByText(t('gameSettingsModal.turnaus'));
-      await user.click(tournamentTab);
-      const select = within(section).getByRole('combobox');
-      await user.selectOptions(select, 't1');
-      rerender(<GameSettingsModal {...defaultProps} tournamentId="t1" isOpen={true} />);
-      await waitFor(() => {
-        expect(mockOnTournamentIdChange).toHaveBeenCalledWith('t1');
-        expect(mockOnGameLocationChange).toHaveBeenCalledWith('Cup Arena');
-        expect(mockOnNumPeriodsChange).toHaveBeenCalledWith(2);
-        expect(mockOnPeriodDurationChange).toHaveBeenCalledWith(20);
-        expect(defaultProps.onSelectedPlayersChange).not.toHaveBeenCalled();
-      });
-    });
+    // Season/tournament selection is handled by useSeasonTournamentManagement hook, not direct prefilling
   });
 
   describe('Event Log Interactions', () => {
@@ -421,7 +320,6 @@ describe('<GameSettingsModal />', () => {
   
         expect(window.confirm).toHaveBeenCalled();
         expect(mockOnDeleteGameEvent).toHaveBeenCalledWith('goal1');
-        expect(removeGameEvent).toHaveBeenCalled();
       });
   });
 

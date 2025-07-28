@@ -119,3 +119,24 @@ The app includes install prompts, update notifications, and works offline. The s
 ### Testing Strategy
 - Unit tests cover utilities and components and are co-located with source files using the `.test.tsx` suffix
 - The Jest configuration excludes Playwright specs located in the `/tests/` directory
+
+#### Current Test Coverage Status (as of latest session)
+**GOAL**: Achieve 80% overall test coverage
+
+**CURRENT STATUS**: 
+- Overall Coverage: ~34-36% (statements/lines/functions)
+- All 644 tests passing with 0 failures and 0 skipped tests ✅
+
+**COMPLETED IMPROVEMENTS**:
+- ✅ `savedGames.ts`: Improved from 36% to 87% coverage with comprehensive tests for all functions
+- ✅ Fixed mock interference issues in import/export tests
+
+**REMAINING WORK TO REACH 80% TARGET**:
+Priority files with 0% coverage that need tests:
+- `src/utils/transforms/validation.ts` (0% coverage)
+- `src/utils/transforms/fromSupabase.ts` (0% coverage) 
+- `src/utils/transforms/toSupabase.ts` (0% coverage)
+- `src/utils/resetSupabaseData.ts` (0% coverage)
+- `src/utils/supabaseCleanImport.ts` (0% coverage)
+
+**NEXT STEPS**: Focus on creating basic tests for the 0% coverage files above, which should significantly boost overall coverage toward the 80% target. These files represent technical debt and risk areas that need test coverage.

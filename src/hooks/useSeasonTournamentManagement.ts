@@ -32,6 +32,14 @@ interface UseSeasonTournamentManagementReturn {
   newTournamentName: string;
   setNewTournamentName: React.Dispatch<React.SetStateAction<string>>;
   
+  // Tab management
+  activeTab: 'none' | 'season' | 'tournament';
+  handleTabChange: (tab: 'none' | 'season' | 'tournament') => void;
+  
+  // Processing state
+  isProcessing: boolean;
+  error: string | null;
+  
   // Refs
   newSeasonInputRef: React.RefObject<HTMLInputElement>;
   newTournamentInputRef: React.RefObject<HTMLInputElement>;
@@ -43,6 +51,8 @@ interface UseSeasonTournamentManagementReturn {
   handleAddNewTournament: () => Promise<void>;
   handleCancelNewSeason: () => void;
   handleCancelNewTournament: () => void;
+  handleNewSeasonKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  handleNewTournamentKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 }
 
 export function useSeasonTournamentManagement({
@@ -65,6 +75,17 @@ export function useSeasonTournamentManagement({
   const [showNewTournamentInput, setShowNewTournamentInput] = useState(false);
   const [newTournamentName, setNewTournamentName] = useState('');
   
+  // Tab management state
+  const [activeTab, setActiveTab] = useState<'none' | 'season' | 'tournament'>(() => {
+    if (seasonId) return 'season';
+    if (tournamentId) return 'tournament';
+    return 'none';
+  });
+  
+  // Processing and error state
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
   // Refs for focusing inputs
   const newSeasonInputRef = useRef<HTMLInputElement>(null);
   const newTournamentInputRef = useRef<HTMLInputElement>(null);
@@ -74,6 +95,9 @@ export function useSeasonTournamentManagement({
     if (!isOpen) return;
 
     const loadData = async () => {
+      setIsProcessing(true);
+      setError(null);
+      
       try {
         const [loadedSeasons, loadedTournaments] = await Promise.all([
           getSeasons(),
@@ -88,11 +112,15 @@ export function useSeasonTournamentManagement({
           tournamentsCount: loadedTournaments.length,
         });
       } catch (error) {
+        setError(t('gameSettingsModal.errors.loadDataFailed', 'Failed to load seasons and tournaments. Please try again.'));
         handleStorageError(error, 'load seasons and tournaments');
+      } finally {
+        setIsProcessing(false);
       }
     };
 
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   // Auto-focus new input fields when they become visible
@@ -107,6 +135,17 @@ export function useSeasonTournamentManagement({
       newTournamentInputRef.current?.focus();
     }
   }, [showNewTournamentInput]);
+
+  // Sync tab state with current seasonId/tournamentId
+  useEffect(() => {
+    if (seasonId && activeTab !== 'season') {
+      setActiveTab('season');
+    } else if (tournamentId && activeTab !== 'tournament') {
+      setActiveTab('tournament');
+    } else if (!seasonId && !tournamentId && activeTab !== 'none') {
+      setActiveTab('none');
+    }
+  }, [seasonId, tournamentId, activeTab]);
 
   // Auto-prefill fields based on season/tournament selection
   useEffect(() => {
@@ -152,10 +191,13 @@ export function useSeasonTournamentManagement({
   const handleAddNewSeason = async () => {
     const trimmedName = newSeasonName.trim();
     if (!trimmedName) {
-      handleValidationError(t('gameSettingsModal.newSeasonNameRequired', 'Please enter a name for the new season.'), 'Season Name');
+      setError(t('gameSettingsModal.newSeasonNameRequired', 'Please enter a name for the new season.'));
       newSeasonInputRef.current?.focus();
       return;
     }
+
+    setIsProcessing(true);
+    setError(null);
 
     try {
       const newSeason = await addSeasonMutation.mutateAsync({ name: trimmedName });
@@ -171,17 +213,23 @@ export function useSeasonTournamentManagement({
         logger.log('[GameSettingsModal] New season added:', newSeason.name);
       }
     } catch (error) {
+      setError(t('gameSettingsModal.errors.addSeasonFailed', 'Failed to add new season. Please try again.'));
       handleStorageError(error, 'add new season');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   const handleAddNewTournament = async () => {
     const trimmedName = newTournamentName.trim();
     if (!trimmedName) {
-      handleValidationError(t('gameSettingsModal.newTournamentNameRequired', 'Please enter a name for the new tournament.'), 'Tournament Name');
+      setError(t('gameSettingsModal.newTournamentNameRequired', 'Please enter a name for the new tournament.'));
       newTournamentInputRef.current?.focus();
       return;
     }
+
+    setIsProcessing(true);
+    setError(null);
 
     try {
       const newTournament = await addTournamentMutation.mutateAsync({ name: trimmedName });
@@ -197,7 +245,10 @@ export function useSeasonTournamentManagement({
         logger.log('[GameSettingsModal] New tournament added:', newTournament.name);
       }
     } catch (error) {
+      setError(t('gameSettingsModal.errors.addTournamentFailed', 'Failed to add new tournament. Please try again.'));
       handleStorageError(error, 'add new tournament');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -209,6 +260,49 @@ export function useSeasonTournamentManagement({
   const handleCancelNewTournament = () => {
     setShowNewTournamentInput(false);
     setNewTournamentName('');
+  };
+
+  // Tab change handler
+  const handleTabChange = (tab: 'none' | 'season' | 'tournament') => {
+    setActiveTab(tab);
+    setError(null);
+    
+    // Clear form states when switching tabs
+    setShowNewSeasonInput(false);
+    setShowNewTournamentInput(false);
+    setNewSeasonName('');
+    setNewTournamentName('');
+    
+    // Update parent state based on tab
+    if (tab === 'none') {
+      onSeasonIdChange(undefined);
+      onTournamentIdChange(undefined);
+    } else if (tab === 'season') {
+      onTournamentIdChange(undefined);
+    } else if (tab === 'tournament') {
+      onSeasonIdChange(undefined);
+    }
+  };
+
+  // Keyboard handlers for new input fields
+  const handleNewSeasonKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddNewSeason();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      handleCancelNewSeason();
+    }
+  };
+
+  const handleNewTournamentKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddNewTournament();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      handleCancelNewTournament();
+    }
   };
 
   return {
@@ -226,6 +320,14 @@ export function useSeasonTournamentManagement({
     newTournamentName,
     setNewTournamentName,
     
+    // Tab management
+    activeTab,
+    handleTabChange,
+    
+    // Processing state
+    isProcessing,
+    error,
+    
     // Refs
     newSeasonInputRef,
     newTournamentInputRef,
@@ -237,5 +339,7 @@ export function useSeasonTournamentManagement({
     handleAddNewTournament,
     handleCancelNewSeason,
     handleCancelNewTournament,
+    handleNewSeasonKeyDown,
+    handleNewTournamentKeyDown,
   };
 }
