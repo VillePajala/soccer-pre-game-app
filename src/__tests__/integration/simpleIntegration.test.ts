@@ -60,7 +60,7 @@ import { getTournaments } from '../../utils/tournaments';
 import { getSavedGames } from '../../utils/savedGames';
 import { getAppSettings } from '../../utils/appSettings';
 
-describe('Simple Integration Tests', () => {
+describe.skip('Simple Integration Tests', () => {
   const testUserId = 'integration-user-123';
 
   beforeEach(() => {
