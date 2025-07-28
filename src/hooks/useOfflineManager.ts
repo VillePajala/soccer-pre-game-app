@@ -43,14 +43,15 @@ export function useOfflineManager() {
         isLoading: false,
       }));
     } catch (error) {
-      handleStorageError(error, 'initialize offline manager');
+      console.error('Failed to initialize offline manager:', error);
       setState(prev => ({
         ...prev,
         error: error instanceof Error ? error.message : 'Failed to initialize offline manager',
         isLoading: false,
       }));
     }
-  }, [user, handleStorageError]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   // Update offline status
   const updateOfflineStatus = useCallback(async () => {
@@ -64,9 +65,9 @@ export function useOfflineManager() {
         isOnline: offlineStatus.isOnline,
       }));
     } catch (error) {
-      handleStorageError(error, 'get offline status');
+      console.error('Failed to get offline status:', error);
     }
-  }, [state.cacheManager, handleStorageError]);
+  }, [state.cacheManager]);
 
   // Listen for online/offline events
   useEffect(() => {
@@ -107,9 +108,9 @@ export function useOfflineManager() {
       // Update status after sync attempt
       setTimeout(updateOfflineStatus, 1000);
     } catch (error) {
-      handleNetworkError(error);
+      console.error('Failed to trigger sync:', error);
     }
-  }, [state.cacheManager, state.isOnline, updateOfflineStatus, handleNetworkError]);
+  }, [state.cacheManager, state.isOnline, updateOfflineStatus]);
 
   // Clear offline data
   const clearOfflineData = useCallback(async () => {
@@ -119,9 +120,9 @@ export function useOfflineManager() {
       await state.cacheManager.clearOfflineData();
       updateOfflineStatus();
     } catch (error) {
-      handleStorageError(error, 'clear offline data');
+      console.error('Failed to clear offline data:', error);
     }
-  }, [state.cacheManager, updateOfflineStatus, handleStorageError]);
+  }, [state.cacheManager, updateOfflineStatus]);
 
   // Get cached data size estimate
   const getCacheSize = useCallback(async (): Promise<number> => {
@@ -132,10 +133,10 @@ export function useOfflineManager() {
       // For now, return 0
       return 0;
     } catch (error) {
-      handleStorageError(error, 'get cache size');
+      console.error('Failed to get cache size:', error);
       return 0;
     }
-  }, [state.cacheManager, handleStorageError]);
+  }, [state.cacheManager]);
 
   return {
     isOnline: state.isOnline,

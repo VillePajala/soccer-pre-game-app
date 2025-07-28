@@ -1,6 +1,18 @@
-// Unit tests for useOfflineManager hook
-import { renderHook, act, waitFor } from '@testing-library/react';
-import { useOfflineManager } from '../useOfflineManager';
+// Mock useErrorHandler first, before any imports
+jest.mock('../useErrorHandler', () => ({
+  useErrorHandler: () => ({
+    handleStorageError: jest.fn(),
+    handleNetworkError: jest.fn(),
+    handleValidationError: jest.fn(),
+    handleGenericError: jest.fn(),
+  }),
+}));
+
+// Mock AuthContext
+const mockUser = { id: 'user-123', email: 'test@example.com' };
+jest.mock('../../context/AuthContext', () => ({
+  useAuth: jest.fn(() => ({ user: mockUser })),
+}));
 
 // Mock the OfflineCacheManager
 const mockOfflineManager = {
@@ -24,11 +36,9 @@ jest.mock('../../lib/storage', () => ({
   },
 }));
 
-// Mock AuthContext
-const mockUser = { id: 'user-123', email: 'test@example.com' };
-jest.mock('../../context/AuthContext', () => ({
-  useAuth: jest.fn(() => ({ user: mockUser })),
-}));
+// Unit tests for useOfflineManager hook
+import { renderHook, act, waitFor } from '@/__tests__/test-utils';
+import { useOfflineManager } from '../useOfflineManager';
 
 import { useAuth } from '../../context/AuthContext';
 const mockUseAuth = useAuth as jest.Mock;

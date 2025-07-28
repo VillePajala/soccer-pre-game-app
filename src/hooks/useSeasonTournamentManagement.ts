@@ -88,7 +88,7 @@ export function useSeasonTournamentManagement({
           tournamentsCount: loadedTournaments.length,
         });
       } catch (error) {
-        logger.error('[GameSettingsModal] Error loading seasons/tournaments:', error);
+        handleStorageError(error, 'load seasons and tournaments');
       }
     };
 
@@ -171,8 +171,7 @@ export function useSeasonTournamentManagement({
         logger.log('[GameSettingsModal] New season added:', newSeason.name);
       }
     } catch (error) {
-      logger.error('[GameSettingsModal] Error adding season:', error);
-      handleStorageError(error, 'add season');
+      handleStorageError(error, 'add new season');
     }
   };
 
@@ -198,8 +197,7 @@ export function useSeasonTournamentManagement({
         logger.log('[GameSettingsModal] New tournament added:', newTournament.name);
       }
     } catch (error) {
-      logger.error('[GameSettingsModal] Error adding tournament:', error);
-      handleStorageError(error, 'add tournament');
+      handleStorageError(error, 'add new tournament');
     }
   };
 
