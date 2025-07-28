@@ -11,6 +11,7 @@ import { manifestConfig } from "@/config/manifest.config.js";
 import { AuthProvider } from "@/context/AuthContext";
 import TopBar from "@/components/TopBar";
 import AuthStorageSync from "@/components/AuthStorageSync";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 // Configure Rajdhani font
 const rajdhani = Rajdhani({
@@ -53,13 +54,15 @@ export default function RootLayout({
         <I18nInitializer>
           <ServiceWorkerRegistration />
           <InstallPrompt />
-          <QueryProvider>
-            <AuthProvider>
-              <AuthStorageSync />
-              <TopBar />
-              <ClientWrapper>{children}</ClientWrapper>
-            </AuthProvider>
-          </QueryProvider>
+          <ErrorBoundary>
+            <QueryProvider>
+              <AuthProvider>
+                <AuthStorageSync />
+                <TopBar />
+                <ClientWrapper>{children}</ClientWrapper>
+              </AuthProvider>
+            </QueryProvider>
+          </ErrorBoundary>
         </I18nInitializer>
         <Analytics />
       </body>
