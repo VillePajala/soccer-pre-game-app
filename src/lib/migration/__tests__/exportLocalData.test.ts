@@ -1,5 +1,18 @@
 // Unit tests for export local data functionality
-import { exportLocalData, validateExportedData } from '../exportLocalData';
+import { exportLocalStorageData, downloadLocalDataExport, getLocalDataSummary, hasSignificantLocalData, validateExportedData } from '../exportLocalData';
+
+// Mock the utility modules
+jest.mock('../../../utils/masterRosterManager');
+jest.mock('../../../utils/seasons');
+jest.mock('../../../utils/tournaments');
+jest.mock('../../../utils/savedGames');
+jest.mock('../../../utils/appSettings');
+
+import { getMasterRoster } from '../../../utils/masterRosterManager';
+import { getSeasons } from '../../../utils/seasons';
+import { getTournaments } from '../../../utils/tournaments';
+import { getSavedGames } from '../../../utils/savedGames';
+import { getAppSettings } from '../../../utils/appSettings';
 
 // Mock localStorage
 const mockLocalStorage = {
@@ -19,11 +32,18 @@ describe('Export Local Data', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockLocalStorage.getItem.mockReturnValue(null);
+    
+    // Setup default mock implementations
+    (getMasterRoster as jest.Mock).mockResolvedValue([]);
+    (getSeasons as jest.Mock).mockResolvedValue([]);
+    (getTournaments as jest.Mock).mockResolvedValue([]);
+    (getSavedGames as jest.Mock).mockResolvedValue({});
+    (getAppSettings as jest.Mock).mockResolvedValue(null);
   });
 
-  describe('exportLocalData', () => {
+  describe('exportLocalStorageData', () => {
     it('should export all available data types', async () => {
-      // Mock data in localStorage
+      // Mock data
       const mockPlayers = [
         { id: 'p1', name: 'Player 1', isGoalie: false, receivedFairPlayCard: false },
         { id: 'p2', name: 'Player 2', isGoalie: true, receivedFairPlayCard: false }
@@ -37,9 +57,9 @@ describe('Export Local Data', () => {
         { id: 't1', name: 'Tournament 1', startDate: '2024-07-01', endDate: '2024-07-15' }
       ];
 
-      const mockGames = [
-        { id: 'g1', date: '2024-03-15', teamName: 'Team A', gameState: {} }
-      ];
+      const mockGames = {
+        'g1': { id: 'g1', date: '2024-03-15', teamName: 'Team A', gameState: {} }
+      };
 
       const mockSettings = {
         currentGameId: 'g1',
@@ -47,113 +67,98 @@ describe('Export Local Data', () => {
         theme: 'light'
       };
 
-      mockLocalStorage.getItem
-        .mockImplementation((key: string) => {
-          switch (key) {
-            case 'master-roster':
-              return JSON.stringify(mockPlayers);
-            case 'seasons-list':
-              return JSON.stringify(mockSeasons);
-            case 'tournaments-list':
-              return JSON.stringify(mockTournaments);
-            case 'saved-games':
-              return JSON.stringify(mockGames);
-            case 'app-settings':
-              return JSON.stringify(mockSettings);
-            default:
-              return null;
-          }
-        });
+      // Set up mocks
+      (getMasterRoster as jest.Mock).mockResolvedValue(mockPlayers);
+      (getSeasons as jest.Mock).mockResolvedValue(mockSeasons);
+      (getTournaments as jest.Mock).mockResolvedValue(mockTournaments);
+      (getSavedGames as jest.Mock).mockResolvedValue(mockGames);
+      (getAppSettings as jest.Mock).mockResolvedValue(mockSettings);
 
-      const exportedData = await exportLocalData();
+      const exportedData = await exportLocalStorageData();
 
       expect(exportedData).toEqual({
-        metadata: {
-          exportDate: expect.any(String),
-          version: '1.0',
-          dataTypes: ['players', 'seasons', 'tournaments', 'games', 'settings']
-        },
+        exportVersion: '1.0.0',
+        exportDate: expect.any(String),
+        source: 'localStorage',
         data: {
           players: mockPlayers,
           seasons: mockSeasons,
           tournaments: mockTournaments,
-          games: mockGames,
-          settings: mockSettings
+          savedGames: mockGames,
+          appSettings: mockSettings
+        },
+        stats: {
+          totalPlayers: 2,
+          totalSeasons: 1,
+          totalTournaments: 1,
+          totalGames: 1,
+          hasSettings: true
         }
       });
     });
 
     it('should handle missing data gracefully', async () => {
       // Only provide players data
-      mockLocalStorage.getItem.mockImplementation((key: string) => {
-        if (key === 'master-roster') {
-          return JSON.stringify([{ id: 'p1', name: 'Player 1' }]);
-        }
-        return null;
-      });
+      (getMasterRoster as jest.Mock).mockResolvedValue([{ id: 'p1', name: 'Player 1', isGoalie: false, receivedFairPlayCard: false }]);
+      (getSeasons as jest.Mock).mockResolvedValue([]);
+      (getTournaments as jest.Mock).mockResolvedValue([]);
+      (getSavedGames as jest.Mock).mockResolvedValue({});
+      (getAppSettings as jest.Mock).mockResolvedValue(null);
 
-      const exportedData = await exportLocalData();
+      const exportedData = await exportLocalStorageData();
 
       expect(exportedData.data.players).toHaveLength(1);
       expect(exportedData.data.seasons).toEqual([]);
       expect(exportedData.data.tournaments).toEqual([]);
-      expect(exportedData.data.games).toEqual([]);
-      expect(exportedData.data.settings).toEqual({});
-      expect(exportedData.metadata.dataTypes).toEqual(['players']);
+      expect(exportedData.data.savedGames).toEqual({});
+      expect(exportedData.data.appSettings).toBeNull();
+      expect(exportedData.stats.totalPlayers).toBe(1);
+      expect(exportedData.stats.totalSeasons).toBe(0);
+      expect(exportedData.stats.totalTournaments).toBe(0);
+      expect(exportedData.stats.totalGames).toBe(0);
+      expect(exportedData.stats.hasSettings).toBe(false);
     });
 
-    it('should handle corrupted JSON data', async () => {
-      mockLocalStorage.getItem.mockImplementation((key: string) => {
-        if (key === 'master-roster') {
-          return 'invalid-json';
-        }
-        if (key === 'seasons-list') {
-          return JSON.stringify([{ id: 's1', name: 'Valid Season' }]);
-        }
-        return null;
-      });
+    it('should handle errors from utility functions', async () => {
+      // Mock error for getMasterRoster
+      (getMasterRoster as jest.Mock).mockRejectedValue(new Error('Failed to get roster'));
+      (getSeasons as jest.Mock).mockResolvedValue([{ id: 's1', name: 'Valid Season', startDate: '2024-01-01', endDate: '2024-06-01' }]);
+      (getTournaments as jest.Mock).mockResolvedValue([]);
+      (getSavedGames as jest.Mock).mockResolvedValue({});
+      (getAppSettings as jest.Mock).mockResolvedValue(null);
 
-      const exportedData = await exportLocalData();
-
-      // Should skip corrupted data and continue with valid data
-      expect(exportedData.data.players).toEqual([]);
-      expect(exportedData.data.seasons).toHaveLength(1);
-      expect(exportedData.metadata.dataTypes).toEqual(['seasons']);
+      // Should throw an error
+      await expect(exportLocalStorageData()).rejects.toThrow('Failed to export localStorage data');
     });
 
     it('should include export timestamp', async () => {
       const beforeExport = new Date().toISOString();
-      const exportedData = await exportLocalData();
+      const exportedData = await exportLocalStorageData();
       const afterExport = new Date().toISOString();
 
-      expect(exportedData.metadata.exportDate).toBeGreaterThanOrEqual(beforeExport);
-      expect(exportedData.metadata.exportDate).toBeLessThanOrEqual(afterExport);
+      expect(Date.parse(exportedData.exportDate)).toBeGreaterThanOrEqual(Date.parse(beforeExport));
+      expect(Date.parse(exportedData.exportDate)).toBeLessThanOrEqual(Date.parse(afterExport));
     });
 
-    it('should handle localStorage access errors', async () => {
-      mockLocalStorage.getItem.mockImplementation(() => {
-        throw new Error('localStorage access denied');
-      });
+    it('should validate exported data', async () => {
+      // Mock data with invalid player (missing name)
+      (getMasterRoster as jest.Mock).mockResolvedValue([{ id: 'p1' }]);
+      (getSeasons as jest.Mock).mockResolvedValue([]);
+      (getTournaments as jest.Mock).mockResolvedValue([]);
+      (getSavedGames as jest.Mock).mockResolvedValue({});
+      (getAppSettings as jest.Mock).mockResolvedValue(null);
 
-      const exportedData = await exportLocalData();
-
-      expect(exportedData.data.players).toEqual([]);
-      expect(exportedData.data.seasons).toEqual([]);
-      expect(exportedData.data.tournaments).toEqual([]);
-      expect(exportedData.data.games).toEqual([]);
-      expect(exportedData.data.settings).toEqual({});
-      expect(exportedData.metadata.dataTypes).toEqual([]);
+      // Should throw validation error
+      await expect(exportLocalStorageData()).rejects.toThrow('Invalid player at index 0');
     });
   });
 
   describe('validateExportedData', () => {
     it('should validate correct export format', () => {
       const validData = {
-        metadata: {
-          exportDate: new Date().toISOString(),
-          version: '1.0',
-          dataTypes: ['players', 'seasons']
-        },
+        exportVersion: '1.0.0',
+        exportDate: new Date().toISOString(),
+        source: 'localStorage',
         data: {
           players: [
             { id: 'p1', name: 'Player 1', isGoalie: false, receivedFairPlayCard: false }
@@ -162,8 +167,15 @@ describe('Export Local Data', () => {
             { id: 's1', name: 'Season 1', startDate: '2024-01-01', endDate: '2024-06-01' }
           ],
           tournaments: [],
-          games: [],
-          settings: {}
+          savedGames: {},
+          appSettings: null
+        },
+        stats: {
+          totalPlayers: 1,
+          totalSeasons: 1,
+          totalTournaments: 0,
+          totalGames: 0,
+          hasSettings: false
         }
       };
 
@@ -173,29 +185,37 @@ describe('Export Local Data', () => {
       expect(result.errors).toEqual([]);
     });
 
-    it('should detect missing metadata', () => {
+    it('should detect missing required fields', () => {
       const invalidData = {
         data: {
           players: [],
           seasons: [],
           tournaments: [],
-          games: [],
-          settings: {}
+          savedGames: {},
+          appSettings: null
         }
       };
 
       const result = validateExportedData(invalidData);
 
       expect(result.isValid).toBe(false);
-      expect(result.errors).toContain('Missing metadata');
+      expect(result.errors).toContain('Missing exportVersion');
+      expect(result.errors).toContain('Missing exportDate');
+      expect(result.errors).toContain('Missing source');
+      expect(result.errors).toContain('Missing stats section');
     });
 
     it('should detect missing data section', () => {
       const invalidData = {
-        metadata: {
-          exportDate: new Date().toISOString(),
-          version: '1.0',
-          dataTypes: ['players']
+        exportVersion: '1.0.0',
+        exportDate: new Date().toISOString(),
+        source: 'localStorage',
+        stats: {
+          totalPlayers: 0,
+          totalSeasons: 0,
+          totalTournaments: 0,
+          totalGames: 0,
+          hasSettings: false
         }
       };
 
@@ -207,19 +227,24 @@ describe('Export Local Data', () => {
 
     it('should detect invalid player data', () => {
       const invalidData = {
-        metadata: {
-          exportDate: new Date().toISOString(),
-          version: '1.0',
-          dataTypes: ['players']
-        },
+        exportVersion: '1.0.0',
+        exportDate: new Date().toISOString(),
+        source: 'localStorage',
         data: {
           players: [
             { id: 'p1' } // Missing required fields
           ],
           seasons: [],
           tournaments: [],
-          games: [],
-          settings: {}
+          savedGames: {},
+          appSettings: null
+        },
+        stats: {
+          totalPlayers: 1,
+          totalSeasons: 0,
+          totalTournaments: 0,
+          totalGames: 0,
+          hasSettings: false
         }
       };
 
@@ -231,19 +256,24 @@ describe('Export Local Data', () => {
 
     it('should detect invalid season data', () => {
       const invalidData = {
-        metadata: {
-          exportDate: new Date().toISOString(),
-          version: '1.0',
-          dataTypes: ['seasons']
-        },
+        exportVersion: '1.0.0',
+        exportDate: new Date().toISOString(),
+        source: 'localStorage',
         data: {
           players: [],
           seasons: [
             { id: 's1' } // Missing required fields
           ],
           tournaments: [],
-          games: [],
-          settings: {}
+          savedGames: {},
+          appSettings: null
+        },
+        stats: {
+          totalPlayers: 0,
+          totalSeasons: 1,
+          totalTournaments: 0,
+          totalGames: 0,
+          hasSettings: false
         }
       };
 
@@ -255,19 +285,24 @@ describe('Export Local Data', () => {
 
     it('should detect invalid tournament data', () => {
       const invalidData = {
-        metadata: {
-          exportDate: new Date().toISOString(),
-          version: '1.0',
-          dataTypes: ['tournaments']
-        },
+        exportVersion: '1.0.0',
+        exportDate: new Date().toISOString(),
+        source: 'localStorage',
         data: {
           players: [],
           seasons: [],
           tournaments: [
             { id: 't1' } // Missing required fields
           ],
-          games: [],
-          settings: {}
+          savedGames: {},
+          appSettings: null
+        },
+        stats: {
+          totalPlayers: 0,
+          totalSeasons: 0,
+          totalTournaments: 1,
+          totalGames: 0,
+          hasSettings: false
         }
       };
 
@@ -279,19 +314,24 @@ describe('Export Local Data', () => {
 
     it('should detect invalid game data', () => {
       const invalidData = {
-        metadata: {
-          exportDate: new Date().toISOString(),
-          version: '1.0',
-          dataTypes: ['games']
-        },
+        exportVersion: '1.0.0',
+        exportDate: new Date().toISOString(),
+        source: 'localStorage',
         data: {
           players: [],
           seasons: [],
           tournaments: [],
-          games: [
-            { id: 'g1' } // Missing required fields
-          ],
-          settings: {}
+          savedGames: {
+            'g1': { id: 'g1' } // Missing required fields
+          },
+          appSettings: null
+        },
+        stats: {
+          totalPlayers: 0,
+          totalSeasons: 0,
+          totalTournaments: 0,
+          totalGames: 1,
+          hasSettings: false
         }
       };
 
@@ -303,7 +343,7 @@ describe('Export Local Data', () => {
 
     it('should handle multiple validation errors', () => {
       const invalidData = {
-        // Missing metadata
+        // Missing required fields
         data: {
           players: [
             { id: 'p1' } // Invalid player
@@ -312,8 +352,8 @@ describe('Export Local Data', () => {
             { id: 's1' } // Invalid season
           ],
           tournaments: [],
-          games: [],
-          settings: {}
+          savedGames: {},
+          appSettings: null
         }
       };
 
@@ -321,9 +361,9 @@ describe('Export Local Data', () => {
 
       expect(result.isValid).toBe(false);
       expect(result.errors.length).toBeGreaterThan(1);
-      expect(result.errors).toContain('Missing metadata');
-      expect(result.errors).toContain('Invalid player data: missing required fields');
-      expect(result.errors).toContain('Invalid season data: missing required fields');
+      expect(result.errors).toContain('Missing exportVersion');
+      // Should detect the missing required fields but not validate the data content
+      // since required fields are missing
     });
 
     it('should handle null or undefined input', () => {
@@ -334,21 +374,27 @@ describe('Export Local Data', () => {
 
     it('should validate data consistency', () => {
       const inconsistentData = {
-        metadata: {
-          exportDate: new Date().toISOString(),
-          version: '1.0',
-          dataTypes: ['players', 'seasons', 'games'] // Claims to have games
-        },
+        exportVersion: '1.0.0',
+        exportDate: new Date().toISOString(),
+        source: 'localStorage',
         data: {
           players: [
-            { id: 'p1', name: 'Player 1', isGoalie: false, receivedFairPlayCard: false }
+            { id: 'p1', name: 'Player 1', isGoalie: false, receivedFairPlayCard: false },
+            { id: 'p2', name: 'Player 2', isGoalie: false, receivedFairPlayCard: false }
           ],
           seasons: [
             { id: 's1', name: 'Season 1', startDate: '2024-01-01', endDate: '2024-06-01' }
           ],
           tournaments: [],
-          games: [], // But games array is empty
-          settings: {}
+          savedGames: {},
+          appSettings: null
+        },
+        stats: {
+          totalPlayers: 1, // Inconsistent - actually has 2 players
+          totalSeasons: 1,
+          totalTournaments: 0,
+          totalGames: 0,
+          hasSettings: false
         }
       };
 
@@ -362,22 +408,17 @@ describe('Export Local Data', () => {
   describe('Integration', () => {
     it('should export and validate data successfully', async () => {
       // Setup mock data
-      mockLocalStorage.getItem.mockImplementation((key: string) => {
-        switch (key) {
-          case 'master-roster':
-            return JSON.stringify([
-              { id: 'p1', name: 'Player 1', isGoalie: false, receivedFairPlayCard: false }
-            ]);
-          case 'seasons-list':
-            return JSON.stringify([
-              { id: 's1', name: 'Season 1', startDate: '2024-01-01', endDate: '2024-06-01' }
-            ]);
-          default:
-            return null;
-        }
-      });
+      (getMasterRoster as jest.Mock).mockResolvedValue([
+        { id: 'p1', name: 'Player 1', isGoalie: false, receivedFairPlayCard: false }
+      ]);
+      (getSeasons as jest.Mock).mockResolvedValue([
+        { id: 's1', name: 'Season 1', startDate: '2024-01-01', endDate: '2024-06-01' }
+      ]);
+      (getTournaments as jest.Mock).mockResolvedValue([]);
+      (getSavedGames as jest.Mock).mockResolvedValue({});
+      (getAppSettings as jest.Mock).mockResolvedValue(null);
 
-      const exportedData = await exportLocalData();
+      const exportedData = await exportLocalStorageData();
       const validation = validateExportedData(exportedData);
 
       expect(validation.isValid).toBe(true);
