@@ -28,6 +28,11 @@ export interface LocalDataExport {
   };
 }
 
+export interface ValidationResult {
+  isValid: boolean;
+  errors: string[];
+}
+
 /**
  * Export all localStorage data in a structured format
  */
@@ -86,7 +91,7 @@ export async function exportLocalStorageData(): Promise<LocalDataExport> {
 /**
  * Validate exported data for completeness and integrity
  */
-function validateExportData(exportData: LocalDataExport): void {
+export function validateExportData(exportData: LocalDataExport): void {
   const { data, stats } = exportData;
 
   // Validate players
@@ -207,4 +212,104 @@ export async function hasSignificantLocalData(): Promise<boolean> {
          summary.totalSeasons > 0 || 
          summary.totalTournaments > 0 || 
          summary.totalGames > 0;
+}
+
+/**
+ * Validate exported data and return validation result
+ */
+export function validateExportedData(exportData: unknown): ValidationResult {
+  const errors: string[] = [];
+
+  // Check if data is an object
+  if (!exportData || typeof exportData !== 'object') {
+    return { isValid: false, errors: ['Invalid data: not an object'] };
+  }
+
+  const data = exportData as Record<string, unknown>;
+
+  // Check required fields
+  if (!data.exportVersion) errors.push('Missing exportVersion');
+  if (!data.exportDate) errors.push('Missing exportDate');
+  if (!data.source) errors.push('Missing source');
+  if (!data.data) errors.push('Missing data section');
+  if (!data.stats) errors.push('Missing stats section');
+
+  if (errors.length > 0) {
+    return { isValid: false, errors };
+  }
+
+  // Validate data section
+  const dataSection = data.data as Record<string, unknown>;
+  
+  // Validate players
+  if (!Array.isArray(dataSection.players)) {
+    errors.push('Invalid players data: not an array');
+  } else {
+    dataSection.players.forEach((player: unknown, index: number) => {
+      if (!player || typeof player !== 'object') {
+        errors.push(`Invalid player at index ${index}: not an object`);
+      } else {
+        const p = player as Record<string, unknown>;
+        if (!p.id || !p.name) {
+          errors.push('Invalid player data: missing required fields');
+        }
+      }
+    });
+  }
+
+  // Validate seasons
+  if (!Array.isArray(dataSection.seasons)) {
+    errors.push('Invalid seasons data: not an array');
+  } else {
+    dataSection.seasons.forEach((season: unknown, index: number) => {
+      if (!season || typeof season !== 'object') {
+        errors.push(`Invalid season at index ${index}: not an object`);
+      } else {
+        const s = season as Record<string, unknown>;
+        if (!s.id || !s.name) {
+          errors.push('Invalid season data: missing required fields');
+        }
+      }
+    });
+  }
+
+  // Validate tournaments
+  if (!Array.isArray(dataSection.tournaments)) {
+    errors.push('Invalid tournaments data: not an array');
+  } else {
+    dataSection.tournaments.forEach((tournament: unknown, index: number) => {
+      if (!tournament || typeof tournament !== 'object') {
+        errors.push(`Invalid tournament at index ${index}: not an object`);
+      } else {
+        const t = tournament as Record<string, unknown>;
+        if (!t.id || !t.name) {
+          errors.push('Invalid tournament data: missing required fields');
+        }
+      }
+    });
+  }
+
+  // Validate saved games
+  if (!dataSection.savedGames || typeof dataSection.savedGames !== 'object') {
+    errors.push('Invalid savedGames data: not an object');
+  } else {
+    Object.entries(dataSection.savedGames).forEach(([gameId, game]) => {
+      if (!game || typeof game !== 'object') {
+        errors.push(`Invalid game ${gameId}: not an object`);
+      } else {
+        const g = game as Record<string, unknown>;
+        if (!g.teamName) {
+          errors.push('Invalid game data: missing required fields');
+        }
+      }
+    });
+  }
+
+  // Validate stats match data
+  const statsSection = data.stats as Record<string, unknown>;
+  if (Array.isArray(dataSection.players) && statsSection.totalPlayers !== dataSection.players.length) {
+    errors.push('Data types in metadata do not match actual data');
+  }
+
+  return { isValid: errors.length === 0, errors };
 }
