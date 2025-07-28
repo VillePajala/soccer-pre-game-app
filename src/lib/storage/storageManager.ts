@@ -3,6 +3,8 @@ import type { IStorageProvider, StorageConfig } from './types';
 import { StorageError, NetworkError, AuthenticationError } from './types';
 import { LocalStorageProvider } from './localStorageProvider';
 import { SupabaseProvider } from './supabaseProvider';
+import type { Player, Season, Tournament } from '../../types';
+import type { AppSettings } from '../../utils/appSettings';
 
 export class StorageManager implements IStorageProvider {
   private localStorage: LocalStorageProvider;
@@ -94,10 +96,9 @@ export class StorageManager implements IStorageProvider {
     );
   }
 
-  async savePlayer(player: unknown) {
+  async savePlayer(player: Player) {
     return this.executeWithFallback(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      () => this.currentProvider.savePlayer(player as any),
+      () => this.currentProvider.savePlayer(player),
       'savePlayer'
     );
   }
@@ -109,10 +110,9 @@ export class StorageManager implements IStorageProvider {
     );
   }
 
-  async updatePlayer(playerId: string, updates: unknown) {
+  async updatePlayer(playerId: string, updates: Partial<Player>) {
     return this.executeWithFallback(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      () => this.currentProvider.updatePlayer(playerId, updates as any),
+      () => this.currentProvider.updatePlayer(playerId, updates),
       'updatePlayer'
     );
   }
@@ -125,10 +125,9 @@ export class StorageManager implements IStorageProvider {
     );
   }
 
-  async saveSeason(season: unknown) {
+  async saveSeason(season: Season) {
     return this.executeWithFallback(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      () => this.currentProvider.saveSeason(season as any),
+      () => this.currentProvider.saveSeason(season),
       'saveSeason'
     );
   }
@@ -140,10 +139,9 @@ export class StorageManager implements IStorageProvider {
     );
   }
 
-  async updateSeason(seasonId: string, updates: unknown) {
+  async updateSeason(seasonId: string, updates: Partial<Season>) {
     return this.executeWithFallback(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      () => this.currentProvider.updateSeason(seasonId, updates as any),
+      () => this.currentProvider.updateSeason(seasonId, updates),
       'updateSeason'
     );
   }
@@ -156,10 +154,9 @@ export class StorageManager implements IStorageProvider {
     );
   }
 
-  async saveTournament(tournament: unknown) {
+  async saveTournament(tournament: Tournament) {
     return this.executeWithFallback(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      () => this.currentProvider.saveTournament(tournament as any),
+      () => this.currentProvider.saveTournament(tournament),
       'saveTournament'
     );
   }
@@ -171,10 +168,9 @@ export class StorageManager implements IStorageProvider {
     );
   }
 
-  async updateTournament(tournamentId: string, updates: unknown) {
+  async updateTournament(tournamentId: string, updates: Partial<Tournament>) {
     return this.executeWithFallback(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      () => this.currentProvider.updateTournament(tournamentId, updates as any),
+      () => this.currentProvider.updateTournament(tournamentId, updates),
       'updateTournament'
     );
   }
@@ -187,10 +183,9 @@ export class StorageManager implements IStorageProvider {
     );
   }
 
-  async saveAppSettings(settings: unknown) {
+  async saveAppSettings(settings: AppSettings) {
     return this.executeWithFallback(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      () => this.currentProvider.saveAppSettings(settings as any),
+      () => this.currentProvider.saveAppSettings(settings),
       'saveAppSettings'
     );
   }
@@ -205,8 +200,7 @@ export class StorageManager implements IStorageProvider {
 
   async saveSavedGame(gameData: unknown) {
     return this.executeWithFallback(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      () => this.currentProvider.saveSavedGame(gameData as any),
+      () => this.currentProvider.saveSavedGame(gameData),
       'saveSavedGame'
     );
   }
@@ -228,8 +222,7 @@ export class StorageManager implements IStorageProvider {
 
   async importAllData(data: unknown) {
     return this.executeWithFallback(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      () => this.currentProvider.importAllData(data as any),
+      () => this.currentProvider.importAllData(data),
       'importAllData'
     );
   }

@@ -293,8 +293,7 @@ async function importTournament(tournament: Tournament, userId: string): Promise
 /**
  * Import a single game to Supabase
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function importGame(game: any, userId: string): Promise<void> {
+async function importGame(game: Record<string, unknown>, userId: string): Promise<void> {
   const supabaseGame = toSupabase.game(game, userId);
   
   const { error } = await supabase
@@ -309,8 +308,7 @@ async function importGame(game: any, userId: string): Promise<void> {
 /**
  * Import app settings to Supabase
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function importAppSettings(settings: any, userId: string): Promise<void> {
+async function importAppSettings(settings: Record<string, unknown>, userId: string): Promise<void> {
   const supabaseSettings = toSupabase.appSettings(settings, userId);
   
   const { error } = await supabase

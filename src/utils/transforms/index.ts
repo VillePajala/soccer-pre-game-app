@@ -2,6 +2,73 @@
 import type { Player, Season, Tournament } from '../../types';
 import type { AppSettings } from '../appSettings';
 
+// Database record interfaces
+interface DbPlayer {
+  id: string;
+  name: string;
+  nickname?: string;
+  jersey_number?: number;
+  notes?: string;
+  is_goalie: boolean;
+  received_fair_play_card: boolean;
+  user_id: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface DbSeason {
+  id: string;
+  name: string;
+  location?: string;
+  start_date?: string;
+  end_date?: string;
+  period_count: number;
+  period_duration: number;
+  game_dates?: string[];
+  user_id: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface DbTournament {
+  id: string;
+  name: string;
+  location?: string;
+  start_date?: string;
+  end_date?: string;
+  format?: string;
+  matches?: unknown[];
+  user_id: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface DbAppSettings {
+  id: string;
+  timer_settings?: Record<string, unknown>;
+  ui_preferences?: Record<string, unknown>;
+  game_defaults?: Record<string, unknown>;
+  notification_settings?: Record<string, unknown>;
+  user_id: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface DbGame {
+  id: string;
+  game_data: Record<string, unknown>;
+  team_name?: string;
+  opponent_name?: string;
+  start_time?: string;
+  end_time?: string;
+  is_played: boolean;
+  season_id?: string;
+  tournament_id?: string;
+  user_id: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 // Placeholder transforms for now - these would be implemented in the next phase
 export const toSupabase = {
   player: (player: Player, userId: string) => {
@@ -191,8 +258,7 @@ export const toSupabase = {
 };
 
 export const fromSupabase = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  player: (dbPlayer: any) => ({
+  player: (dbPlayer: DbPlayer) => ({
     id: dbPlayer.id,
     name: dbPlayer.name,
     nickname: dbPlayer.nickname,
@@ -202,8 +268,7 @@ export const fromSupabase = {
     receivedFairPlayCard: dbPlayer.received_fair_play_card
   }),
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  season: (dbSeason: any) => ({
+  season: (dbSeason: DbSeason) => ({
     id: dbSeason.id,
     name: dbSeason.name,
     location: dbSeason.location,
@@ -220,8 +285,7 @@ export const fromSupabase = {
     ageGroup: dbSeason.age_group
   }),
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  tournament: (dbTournament: any) => ({
+  tournament: (dbTournament: DbTournament) => ({
     id: dbTournament.id,
     name: dbTournament.name,
     seasonId: dbTournament.season_id,
@@ -240,8 +304,7 @@ export const fromSupabase = {
     ageGroup: dbTournament.age_group
   }),
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  appSettings: (dbSettings: any) => ({
+  appSettings: (dbSettings: DbAppSettings) => ({
     language: dbSettings.language,
     defaultTeamName: dbSettings.default_team_name,
     lastHomeTeamName: dbSettings.default_team_name, // Map both fields
@@ -255,8 +318,7 @@ export const fromSupabase = {
     useDemandCorrection: dbSettings.settings?.useDemandCorrection
   }),
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  game: (dbGame: any) => {
+  game: (dbGame: DbGame) => {
     // If we have the full game data stored, use it
     if (dbGame.game_data) {
       return {
