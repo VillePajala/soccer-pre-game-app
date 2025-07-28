@@ -2,21 +2,11 @@
 import { render, screen, waitFor, act } from '@testing-library/react';
 import { useAuth, AuthProvider } from '../AuthContext';
 
-// Mock Supabase client
-const mockSupabase = {
-  auth: {
-    getSession: jest.fn(),
-    onAuthStateChange: jest.fn(),
-    signUp: jest.fn(),
-    signInWithPassword: jest.fn(),
-    signOut: jest.fn(),
-    resetPasswordForEmail: jest.fn(),
-  },
-};
+// Mock Supabase using the same approach as the main test
+jest.mock('../../lib/supabase');
 
-jest.mock('../../lib/supabase', () => ({
-  supabase: mockSupabase,
-}));
+// Import after mock
+import { supabase } from '../../lib/supabase';
 
 // Simple test component
 const TestComponent = () => {
@@ -30,17 +20,26 @@ const TestComponent = () => {
   );
 };
 
-describe.skip('AuthContext', () => {
+describe('AuthContext', () => {
+  const mockSupabaseAuth = supabase.auth as {
+    getSession: jest.Mock;
+    onAuthStateChange: jest.Mock;
+    signUp: jest.Mock;
+    signInWithPassword: jest.Mock;
+    signOut: jest.Mock;
+    resetPasswordForEmail: jest.Mock;
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
     
     // Default mocks
-    mockSupabase.auth.getSession.mockResolvedValue({
+    mockSupabaseAuth.getSession.mockResolvedValue({
       data: { session: null },
       error: null,
     });
     
-    mockSupabase.auth.onAuthStateChange.mockReturnValue({
+    mockSupabaseAuth.onAuthStateChange.mockReturnValue({
       data: { 
         subscription: { 
           unsubscribe: jest.fn() 
@@ -75,8 +74,8 @@ describe.skip('AuthContext', () => {
     });
     
     await waitFor(() => {
-      expect(mockSupabase.auth.getSession).toHaveBeenCalled();
-      expect(mockSupabase.auth.onAuthStateChange).toHaveBeenCalled();
+      expect(mockSupabaseAuth.getSession).toHaveBeenCalled();
+      expect(mockSupabaseAuth.onAuthStateChange).toHaveBeenCalled();
     });
   });
 
@@ -84,7 +83,7 @@ describe.skip('AuthContext', () => {
     const mockUser = { id: 'user-1', email: 'test@example.com' };
     const mockSession = { user: mockUser, access_token: 'token' };
     
-    mockSupabase.auth.getSession.mockResolvedValue({
+    mockSupabaseAuth.getSession.mockResolvedValue({
       data: { session: mockSession },
       error: null,
     });

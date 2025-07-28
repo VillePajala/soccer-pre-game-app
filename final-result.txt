@@ -1,0 +1,2664 @@
+
+> test-pro-soccer-coach@0.1.0 test
+> jest
+
+PASS src/lib/migration/__tests__/exportLocalData.test.ts
+  ● Console
+
+    console.log
+      Starting localStorage data export...
+
+      at log (src/lib/migration/exportLocalData.ts:41:13)
+
+    console.log
+      Data fetched: { players: 2, seasons: 1, tournaments: 1, games: 1, hasSettings: true }
+
+      at log (src/lib/migration/exportLocalData.ts:52:13)
+
+    console.log
+      Export data validation passed
+
+      at log (src/lib/migration/exportLocalData.ts:142:11)
+
+    console.log
+      localStorage export completed successfully
+
+      at log (src/lib/migration/exportLocalData.ts:83:13)
+
+    console.log
+      Starting localStorage data export...
+
+      at log (src/lib/migration/exportLocalData.ts:41:13)
+
+    console.log
+      Data fetched: {
+        players: 1,
+        seasons: 0,
+        tournaments: 0,
+        games: 0,
+        hasSettings: false
+      }
+
+      at log (src/lib/migration/exportLocalData.ts:52:13)
+
+    console.log
+      Export data validation passed
+
+      at log (src/lib/migration/exportLocalData.ts:142:11)
+
+    console.log
+      localStorage export completed successfully
+
+      at log (src/lib/migration/exportLocalData.ts:83:13)
+
+    console.log
+      Starting localStorage data export...
+
+      at log (src/lib/migration/exportLocalData.ts:41:13)
+
+    console.error
+      Error exporting localStorage data: Error: Failed to get roster
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/migration/__tests__/exportLocalData.test.ts:124:56)
+          at Promise.then.completed (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      84 |     return exportData;
+      85 |   } catch (error) {
+    > 86 |     console.error('Error exporting localStorage data:', error);
+         |             ^
+      87 |     throw new Error(`Failed to export localStorage data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      88 |   }
+      89 | }
+
+      at error (src/lib/migration/exportLocalData.ts:86:13)
+      at Object.<anonymous> (src/lib/migration/__tests__/exportLocalData.test.ts:131:7)
+
+    console.log
+      Starting localStorage data export...
+
+      at log (src/lib/migration/exportLocalData.ts:41:13)
+
+    console.log
+      Data fetched: {
+        players: 0,
+        seasons: 0,
+        tournaments: 0,
+        games: 0,
+        hasSettings: false
+      }
+
+      at log (src/lib/migration/exportLocalData.ts:52:13)
+
+    console.log
+      Export data validation passed
+
+      at log (src/lib/migration/exportLocalData.ts:142:11)
+
+    console.log
+      localStorage export completed successfully
+
+      at log (src/lib/migration/exportLocalData.ts:83:13)
+
+    console.log
+      Starting localStorage data export...
+
+      at log (src/lib/migration/exportLocalData.ts:41:13)
+
+    console.log
+      Data fetched: {
+        players: 1,
+        seasons: 0,
+        tournaments: 0,
+        games: 0,
+        hasSettings: false
+      }
+
+      at log (src/lib/migration/exportLocalData.ts:52:13)
+
+    console.error
+      Error exporting localStorage data: Error: Invalid player at index 0: missing id or name
+          at /home/villepajala/projects/soccer-pre-game-app/src/lib/migration/exportLocalData.ts:104:13
+          at Array.forEach (<anonymous>)
+          at forEach (/home/villepajala/projects/soccer-pre-game-app/src/lib/migration/exportLocalData.ts:102:16)
+          at validateExportData (/home/villepajala/projects/soccer-pre-game-app/src/lib/migration/exportLocalData.ts:81:5)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/migration/__tests__/exportLocalData.test.ts:152:7)
+
+      84 |     return exportData;
+      85 |   } catch (error) {
+    > 86 |     console.error('Error exporting localStorage data:', error);
+         |             ^
+      87 |     throw new Error(`Failed to export localStorage data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      88 |   }
+      89 | }
+
+      at error (src/lib/migration/exportLocalData.ts:86:13)
+      at Object.<anonymous> (src/lib/migration/__tests__/exportLocalData.test.ts:152:7)
+
+    console.log
+      Starting localStorage data export...
+
+      at log (src/lib/migration/exportLocalData.ts:41:13)
+
+    console.log
+      Data fetched: {
+        players: 1,
+        seasons: 1,
+        tournaments: 0,
+        games: 0,
+        hasSettings: false
+      }
+
+      at log (src/lib/migration/exportLocalData.ts:52:13)
+
+    console.log
+      Export data validation passed
+
+      at log (src/lib/migration/exportLocalData.ts:142:11)
+
+    console.log
+      localStorage export completed successfully
+
+      at log (src/lib/migration/exportLocalData.ts:83:13)
+
+PASS src/components/GoalLogModal.test.tsx
+PASS src/components/PlayerAssessmentCard.test.tsx
+PASS src/hooks/__tests__/useGameTimer.test.ts
+  ● Console
+
+    console.log
+      Screen Wake Lock API not supported.
+
+      at Object.log (src/utils/logger.ts:5:26)
+
+    console.log
+      [gameSessionReducer] action type: START_PERIOD
+
+      at Object.log (src/utils/logger.ts:5:26)
+
+    console.log
+      Screen Wake Lock API not supported.
+
+      at Object.log (src/utils/logger.ts:5:26)
+
+    console.log
+      [gameSessionReducer] action type: START_PERIOD
+
+      at Object.log (src/utils/logger.ts:5:26)
+
+    console.warn
+      [localStorage] Deprecation notice: localStorage support will be removed after the Supabase migration.
+
+       6 |   },
+       7 |   warn: (...args: unknown[]) => {
+    >  8 |     if (!isProd) console.warn(...args);
+         |                          ^
+       9 |   },
+      10 |   error: (...args: unknown[]) => {
+      11 |     console.error(...args);
+
+      at Object.warn (src/utils/logger.ts:8:26)
+      at warn (src/utils/localStorage.ts:6:12)
+      at warnDeprecation (src/utils/localStorage.ts:15:3)
+      at getStorage (src/utils/localStorage.ts:36:19)
+      at src/hooks/useGameTimer.ts:80:30
+      at callTimer (node_modules/@sinonjs/fake-timers/src/fake-timers-src.js:744:24)
+      at doTickInner (node_modules/@sinonjs/fake-timers/src/fake-timers-src.js:1312:29)
+      at doTick (node_modules/@sinonjs/fake-timers/src/fake-timers-src.js:1393:20)
+      at Object.tick (node_modules/@sinonjs/fake-timers/src/fake-timers-src.js:1401:20)
+      at FakeTimers.advanceTimersByTime (node_modules/@jest/fake-timers/build/modernFakeTimers.js:94:19)
+      at advanceTimersByTime (src/hooks/__tests__/useGameTimer.test.ts:55:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:48:24
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at Object.<anonymous> (src/hooks/__tests__/useGameTimer.test.ts:54:6)
+
+    console.log
+      [gameSessionReducer] action type: SET_TIMER_ELAPSED
+
+      at Object.log (src/utils/logger.ts:5:26)
+
+    console.log
+      [gameSessionReducer] action type: SET_TIMER_ELAPSED
+
+      at Object.log (src/utils/logger.ts:5:26)
+
+    console.log
+      [gameSessionReducer] action type: SET_TIMER_ELAPSED
+
+      at Object.log (src/utils/logger.ts:5:26)
+
+PASS src/components/UpdateBanner.test.tsx
+  ● Console
+
+    console.error
+      An update to UpdateBanner inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      18 |
+      19 |   const handleDismiss = () => {
+    > 20 |     setHidden(true);
+         |     ^
+      21 |     onDismiss?.();
+      22 |   };
+      23 |
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:16023:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16022:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at dispatchSetState (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at setHidden (src/components/UpdateBanner.tsx:20:5)
+      at executeDispatch (node_modules/react-dom/cjs/react-dom-client.development.js:16368:9)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at processDispatchQueue (node_modules/react-dom/cjs/react-dom-client.development.js:16418:19)
+      at node_modules/react-dom/cjs/react-dom-client.development.js:17016:9
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom-client.development.js:3262:40)
+      at dispatchEventForPluginEventSystem (node_modules/react-dom/cjs/react-dom-client.development.js:16572:7)
+      at dispatchEvent (node_modules/react-dom/cjs/react-dom-client.development.js:20658:11)
+      at dispatchDiscreteEvent (node_modules/react-dom/cjs/react-dom-client.development.js:20626:11)
+      at HTMLDivElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:350:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:286:3)
+      at HTMLButtonElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:233:9)
+      at fireAnEvent (node_modules/jsdom/lib/jsdom/living/helpers/events.js:18:36)
+      at HTMLButtonElementImpl.click (node_modules/jsdom/lib/jsdom/living/nodes/HTMLElement-impl.js:79:5)
+      at HTMLButtonElement.click (node_modules/jsdom/lib/jsdom/living/generated/HTMLElement.js:108:34)
+      at Object.click (src/components/UpdateBanner.test.tsx:34:12)
+
+PASS src/hooks/__tests__/useModalManager.test.tsx
+  ● Console
+
+    console.warn
+      react-i18next:: useTranslation: You will need to pass in an i18next instance by using initReactI18next { code: 'NO_I18NEXT_INSTANCE' }
+
+      11 |  */
+      12 | export const useModalManager = () => {
+    > 13 |   const { t } = useTranslation();
+         |                               ^
+      14 |   const {
+      15 |     isGameSettingsModalOpen,
+      16 |     setIsGameSettingsModalOpen,
+
+      at warn (node_modules/react-i18next/dist/commonjs/utils.js:19:13)
+      at warnOnce (node_modules/react-i18next/dist/commonjs/utils.js:27:3)
+      at useTranslation (node_modules/react-i18next/dist/commonjs/useTranslation.js:31:25)
+      at useModalManager (src/hooks/useModalManager.ts:13:31)
+      at wrapper.wrapper (src/hooks/__tests__/useModalManager.test.tsx:34:56)
+      at TestComponent (node_modules/@testing-library/react/dist/pure.js:331:27)
+      at Object.react-stack-bottom-frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14419:13)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:859:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at renderHook (node_modules/@testing-library/react/dist/pure.js:340:7)
+      at Object.<anonymous> (src/hooks/__tests__/useModalManager.test.tsx:34:34)
+
+PASS src/hooks/__tests__/useOfflineManager.test.ts
+  ● Console
+
+    console.error
+      Failed to get offline status: Error: Status load failed
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/hooks/__tests__/useOfflineManager.test.ts:154:59)
+          at Promise.then.completed (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:316:40)
+          at _runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      62 |       }));
+      63 |     } catch (error) {
+    > 64 |       console.error('Failed to get offline status:', error);
+         |               ^
+      65 |     }
+      66 |   }, [state.cacheManager]);
+      67 |
+
+      at error (src/hooks/useOfflineManager.ts:64:15)
+
+    console.error
+      An update to TestComponent inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      56 |     try {
+      57 |       const offlineStatus = await state.cacheManager.getOfflineStatus();
+    > 58 |       setState(prev => ({
+         |       ^
+      59 |         ...prev,
+      60 |         offlineStatus,
+      61 |         isOnline: offlineStatus.isOnline,
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:16023:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16022:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at dispatchSetState (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at setState (src/hooks/useOfflineManager.ts:58:7)
+
+PASS src/components/SettingsModal.test.tsx
+  ● Console
+
+    console.error
+      An update to SettingsModal inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      59 |           .estimate()
+      60 |           .then(res =>
+    > 61 |             setStorageEstimate({ usage: res.usage || 0, quota: MAX_LOCAL_STORAGE })
+         |             ^
+      62 |           )
+      63 |           .catch(() => setStorageEstimate(null));
+      64 |       } else {
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:16023:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16022:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at dispatchSetState (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at setStorageEstimate (src/components/SettingsModal.tsx:61:13)
+
+    console.error
+      An update to SettingsModal inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      59 |           .estimate()
+      60 |           .then(res =>
+    > 61 |             setStorageEstimate({ usage: res.usage || 0, quota: MAX_LOCAL_STORAGE })
+         |             ^
+      62 |           )
+      63 |           .catch(() => setStorageEstimate(null));
+      64 |       } else {
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:16023:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16022:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at dispatchSetState (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at setStorageEstimate (src/components/SettingsModal.tsx:61:13)
+
+    console.error
+      An update to SettingsModal inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      59 |           .estimate()
+      60 |           .then(res =>
+    > 61 |             setStorageEstimate({ usage: res.usage || 0, quota: MAX_LOCAL_STORAGE })
+         |             ^
+      62 |           )
+      63 |           .catch(() => setStorageEstimate(null));
+      64 |       } else {
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:16023:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16022:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at dispatchSetState (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at setStorageEstimate (src/components/SettingsModal.tsx:61:13)
+
+    console.error
+      An update to SettingsModal inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      59 |           .estimate()
+      60 |           .then(res =>
+    > 61 |             setStorageEstimate({ usage: res.usage || 0, quota: MAX_LOCAL_STORAGE })
+         |             ^
+      62 |           )
+      63 |           .catch(() => setStorageEstimate(null));
+      64 |       } else {
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:16023:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16022:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at dispatchSetState (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at setStorageEstimate (src/components/SettingsModal.tsx:61:13)
+
+    console.error
+      An update to SettingsModal inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      59 |           .estimate()
+      60 |           .then(res =>
+    > 61 |             setStorageEstimate({ usage: res.usage || 0, quota: MAX_LOCAL_STORAGE })
+         |             ^
+      62 |           )
+      63 |           .catch(() => setStorageEstimate(null));
+      64 |       } else {
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:16023:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16022:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at dispatchSetState (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at setStorageEstimate (src/components/SettingsModal.tsx:61:13)
+
+    console.error
+      An update to SettingsModal inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      59 |           .estimate()
+      60 |           .then(res =>
+    > 61 |             setStorageEstimate({ usage: res.usage || 0, quota: MAX_LOCAL_STORAGE })
+         |             ^
+      62 |           )
+      63 |           .catch(() => setStorageEstimate(null));
+      64 |       } else {
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:16023:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16022:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at dispatchSetState (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at setStorageEstimate (src/components/SettingsModal.tsx:61:13)
+
+PASS src/components/PlayerBar.test.tsx
+PASS src/hooks/__tests__/usePlayerAssessments.test.ts
+PASS src/components/StartScreen.test.tsx
+  ● Console
+
+    console.error
+      An update to StartScreen inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      38 |     getAppSettings().then((settings) => {
+      39 |       if (settings.language && settings.language !== language) {
+    > 40 |         setLanguage(settings.language);
+         |         ^
+      41 |         i18n.changeLanguage(settings.language);
+      42 |       }
+      43 |     });
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:16023:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16022:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at dispatchSetState (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at setLanguage (src/components/StartScreen.tsx:40:9)
+
+PASS src/hooks/__tests__/useRoster.test.tsx
+PASS src/components/auth/__tests__/AuthGuard.test.tsx
+PASS src/lib/storage/__tests__/storageManager.test.ts
+  ● Console
+
+    console.warn
+      Supabase getPlayers failed, falling back to localStorage: Network operation failed
+
+      38 |         (error instanceof NetworkError || error instanceof AuthenticationError)
+      39 |       ) {
+    > 40 |         console.warn(`Supabase ${operationName} failed, falling back to localStorage:`, error.message);
+         |                 ^
+      41 |         
+      42 |         // Temporarily switch to localStorage for this operation
+      43 |         const originalProvider = this.currentProvider;
+
+      at StorageManager.warn [as executeWithFallback] (src/lib/storage/storageManager.ts:40:17)
+
+    console.warn
+      Supabase getPlayers failed, falling back to localStorage: Authentication required
+
+      38 |         (error instanceof NetworkError || error instanceof AuthenticationError)
+      39 |       ) {
+    > 40 |         console.warn(`Supabase ${operationName} failed, falling back to localStorage:`, error.message);
+         |                 ^
+      41 |         
+      42 |         // Temporarily switch to localStorage for this operation
+      43 |         const originalProvider = this.currentProvider;
+
+      at StorageManager.warn [as executeWithFallback] (src/lib/storage/storageManager.ts:40:17)
+
+    console.warn
+      Supabase getPlayers failed, falling back to localStorage: Network operation failed
+
+      38 |         (error instanceof NetworkError || error instanceof AuthenticationError)
+      39 |       ) {
+    > 40 |         console.warn(`Supabase ${operationName} failed, falling back to localStorage:`, error.message);
+         |                 ^
+      41 |         
+      42 |         // Temporarily switch to localStorage for this operation
+      43 |         const originalProvider = this.currentProvider;
+
+      at StorageManager.warn [as executeWithFallback] (src/lib/storage/storageManager.ts:40:17)
+
+    console.log
+      [StorageManager] savePlayer called, current provider: localStorage
+
+      at StorageManager.log [as savePlayer] (src/lib/storage/storageManager.ts:98:13)
+
+PASS src/components/OverallRatingSelector.test.tsx
+PASS src/components/PlayerAssessmentModal.test.tsx
+  ● Console
+
+    console.error
+      An update to PlayerAssessmentModal inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      50 |   const handleSave = async (playerId: string, assessment: Partial<PlayerAssessment>) => {
+      51 |     await onSave(playerId, assessment);
+    > 52 |     setSavedIds(prev => (prev.includes(playerId) ? prev : [...prev, playerId]));
+         |     ^
+      53 |   };
+      54 |
+      55 |   const handleDelete = async (playerId: string) => {
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:16023:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16022:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at dispatchSetState (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at setSavedIds (src/components/PlayerAssessmentModal.tsx:52:5)
+
+    console.error
+      An update to PlayerAssessmentModal inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      56 |     if (!onDelete) return;
+      57 |     await onDelete(playerId);
+    > 58 |     setSavedIds(prev => prev.filter(id => id !== playerId));
+         |     ^
+      59 |   };
+      60 |
+      61 |   return (
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:16023:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16022:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at dispatchSetState (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at setSavedIds (src/components/PlayerAssessmentModal.tsx:58:5)
+
+PASS src/components/InstallPrompt.test.tsx
+  ● Console
+
+    console.log
+      User accepted the install prompt
+
+      at Object.log (src/utils/logger.ts:5:26)
+
+PASS src/components/__tests__/ServiceWorkerRegistration.test.tsx
+PASS src/lib/migration/__tests__/exportLocalData.actual.test.ts
+  ● Console
+
+    console.log
+      Starting localStorage data export...
+
+      at log (src/lib/migration/exportLocalData.ts:41:13)
+
+    console.log
+      Data fetched: { players: 2, seasons: 1, tournaments: 1, games: 2, hasSettings: true }
+
+      at log (src/lib/migration/exportLocalData.ts:52:13)
+
+    console.log
+      Export data validation passed
+
+      at log (src/lib/migration/exportLocalData.ts:142:11)
+
+    console.log
+      localStorage export completed successfully
+
+      at log (src/lib/migration/exportLocalData.ts:83:13)
+
+    console.log
+      Starting localStorage data export...
+
+      at log (src/lib/migration/exportLocalData.ts:41:13)
+
+    console.log
+      Data fetched: { players: 2, seasons: 1, tournaments: 1, games: 2, hasSettings: true }
+
+      at log (src/lib/migration/exportLocalData.ts:52:13)
+
+    console.log
+      Export data validation passed
+
+      at log (src/lib/migration/exportLocalData.ts:142:11)
+
+    console.log
+      localStorage export completed successfully
+
+      at log (src/lib/migration/exportLocalData.ts:83:13)
+
+    console.log
+      Starting localStorage data export...
+
+      at log (src/lib/migration/exportLocalData.ts:41:13)
+
+    console.log
+      Data fetched: {
+        players: 0,
+        seasons: 0,
+        tournaments: 0,
+        games: 0,
+        hasSettings: false
+      }
+
+      at log (src/lib/migration/exportLocalData.ts:52:13)
+
+    console.log
+      Export data validation passed
+
+      at log (src/lib/migration/exportLocalData.ts:142:11)
+
+    console.log
+      localStorage export completed successfully
+
+      at log (src/lib/migration/exportLocalData.ts:83:13)
+
+    console.log
+      Starting localStorage data export...
+
+      at log (src/lib/migration/exportLocalData.ts:41:13)
+
+    console.error
+      Error exporting localStorage data: Error: Failed to get players
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/migration/__tests__/exportLocalData.actual.test.ts:170:56)
+          at Promise.then.completed (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      84 |     return exportData;
+      85 |   } catch (error) {
+    > 86 |     console.error('Error exporting localStorage data:', error);
+         |             ^
+      87 |     throw new Error(`Failed to export localStorage data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      88 |   }
+      89 | }
+
+      at error (src/lib/migration/exportLocalData.ts:86:13)
+      at Object.<anonymous> (src/lib/migration/__tests__/exportLocalData.actual.test.ts:172:7)
+
+    console.log
+      Starting localStorage data export...
+
+      at log (src/lib/migration/exportLocalData.ts:41:13)
+
+    console.log
+      Data fetched: { players: 1, seasons: 1, tournaments: 1, games: 2, hasSettings: true }
+
+      at log (src/lib/migration/exportLocalData.ts:52:13)
+
+    console.error
+      Error exporting localStorage data: Error: Invalid player at index 0: missing id or name
+          at /home/villepajala/projects/soccer-pre-game-app/src/lib/migration/exportLocalData.ts:104:13
+          at Array.forEach (<anonymous>)
+          at forEach (/home/villepajala/projects/soccer-pre-game-app/src/lib/migration/exportLocalData.ts:102:16)
+          at validateExportData (/home/villepajala/projects/soccer-pre-game-app/src/lib/migration/exportLocalData.ts:81:5)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/migration/__tests__/exportLocalData.actual.test.ts:179:7)
+
+      84 |     return exportData;
+      85 |   } catch (error) {
+    > 86 |     console.error('Error exporting localStorage data:', error);
+         |             ^
+      87 |     throw new Error(`Failed to export localStorage data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      88 |   }
+      89 | }
+
+      at error (src/lib/migration/exportLocalData.ts:86:13)
+      at Object.<anonymous> (src/lib/migration/__tests__/exportLocalData.actual.test.ts:179:7)
+
+    console.error
+      Error getting local data summary: Error: Database error
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/migration/__tests__/exportLocalData.actual.test.ts:197:56)
+          at Promise.then.completed (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      193 |     };
+      194 |   } catch (error) {
+    > 195 |     console.error('Error getting local data summary:', error);
+          |             ^
+      196 |     return {
+      197 |       totalPlayers: 0,
+      198 |       totalSeasons: 0,
+
+      at error (src/lib/migration/exportLocalData.ts:195:13)
+      at Object.<anonymous> (src/lib/migration/__tests__/exportLocalData.actual.test.ts:199:22)
+
+    console.log
+      Starting localStorage data export...
+
+      at log (src/lib/migration/exportLocalData.ts:41:13)
+
+    console.log
+      Data fetched: { players: 2, seasons: 1, tournaments: 1, games: 2, hasSettings: true }
+
+      at log (src/lib/migration/exportLocalData.ts:52:13)
+
+    console.log
+      Export data validation passed
+
+      at log (src/lib/migration/exportLocalData.ts:142:11)
+
+    console.log
+      localStorage export completed successfully
+
+      at log (src/lib/migration/exportLocalData.ts:83:13)
+
+    console.log
+      Export file downloaded successfully
+
+      at log (src/lib/migration/exportLocalData.ts:167:13)
+
+    console.log
+      Starting localStorage data export...
+
+      at log (src/lib/migration/exportLocalData.ts:41:13)
+
+    console.log
+      Data fetched: { players: 2, seasons: 1, tournaments: 1, games: 2, hasSettings: true }
+
+      at log (src/lib/migration/exportLocalData.ts:52:13)
+
+    console.log
+      Export data validation passed
+
+      at log (src/lib/migration/exportLocalData.ts:142:11)
+
+    console.log
+      localStorage export completed successfully
+
+      at log (src/lib/migration/exportLocalData.ts:83:13)
+
+    console.log
+      Export file downloaded successfully
+
+      at log (src/lib/migration/exportLocalData.ts:167:13)
+
+    console.log
+      Starting localStorage data export...
+
+      at log (src/lib/migration/exportLocalData.ts:41:13)
+
+    console.error
+      Error exporting localStorage data: Error: Export failed
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/migration/__tests__/exportLocalData.actual.test.ts:290:56)
+          at Promise.then.completed (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      84 |     return exportData;
+      85 |   } catch (error) {
+    > 86 |     console.error('Error exporting localStorage data:', error);
+         |             ^
+      87 |     throw new Error(`Failed to export localStorage data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      88 |   }
+      89 | }
+
+      at error (src/lib/migration/exportLocalData.ts:86:13)
+      at downloadLocalDataExport (src/lib/migration/exportLocalData.ts:150:24)
+      at Object.<anonymous> (src/lib/migration/__tests__/exportLocalData.actual.test.ts:292:7)
+
+    console.error
+      Error downloading export: Error: Failed to export localStorage data: Export failed
+          at exportLocalStorageData (/home/villepajala/projects/soccer-pre-game-app/src/lib/migration/exportLocalData.ts:87:11)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at downloadLocalDataExport (/home/villepajala/projects/soccer-pre-game-app/src/lib/migration/exportLocalData.ts:150:24)
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/migration/__tests__/exportLocalData.actual.test.ts:292:7)
+
+      167 |     console.log('Export file downloaded successfully');
+      168 |   } catch (error) {
+    > 169 |     console.error('Error downloading export:', error);
+          |             ^
+      170 |     throw error;
+      171 |   }
+      172 | }
+
+      at error (src/lib/migration/exportLocalData.ts:169:13)
+      at Object.<anonymous> (src/lib/migration/__tests__/exportLocalData.actual.test.ts:292:7)
+
+    console.log
+      Starting localStorage data export...
+
+      at log (src/lib/migration/exportLocalData.ts:41:13)
+
+    console.log
+      Data fetched: { players: 1, seasons: 1, tournaments: 1, games: 2, hasSettings: true }
+
+      at log (src/lib/migration/exportLocalData.ts:52:13)
+
+    console.error
+      Error exporting localStorage data: Error: Invalid player at index 0: missing id or name
+          at /home/villepajala/projects/soccer-pre-game-app/src/lib/migration/exportLocalData.ts:104:13
+          at Array.forEach (<anonymous>)
+          at forEach (/home/villepajala/projects/soccer-pre-game-app/src/lib/migration/exportLocalData.ts:102:16)
+          at validateExportData (/home/villepajala/projects/soccer-pre-game-app/src/lib/migration/exportLocalData.ts:81:5)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/migration/__tests__/exportLocalData.actual.test.ts:302:7)
+
+      84 |     return exportData;
+      85 |   } catch (error) {
+    > 86 |     console.error('Error exporting localStorage data:', error);
+         |             ^
+      87 |     throw new Error(`Failed to export localStorage data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      88 |   }
+      89 | }
+
+      at error (src/lib/migration/exportLocalData.ts:86:13)
+      at Object.<anonymous> (src/lib/migration/__tests__/exportLocalData.actual.test.ts:302:7)
+
+    console.log
+      Starting localStorage data export...
+
+      at log (src/lib/migration/exportLocalData.ts:41:13)
+
+    console.log
+      Data fetched: { players: 2, seasons: 1, tournaments: 1, games: 2, hasSettings: true }
+
+      at log (src/lib/migration/exportLocalData.ts:52:13)
+
+    console.error
+      Error exporting localStorage data: Error: Invalid season at index 0: missing id or name
+          at /home/villepajala/projects/soccer-pre-game-app/src/lib/migration/exportLocalData.ts:115:13
+          at Array.forEach (<anonymous>)
+          at forEach (/home/villepajala/projects/soccer-pre-game-app/src/lib/migration/exportLocalData.ts:113:16)
+          at validateExportData (/home/villepajala/projects/soccer-pre-game-app/src/lib/migration/exportLocalData.ts:81:5)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/migration/__tests__/exportLocalData.actual.test.ts:310:7)
+
+      84 |     return exportData;
+      85 |   } catch (error) {
+    > 86 |     console.error('Error exporting localStorage data:', error);
+         |             ^
+      87 |     throw new Error(`Failed to export localStorage data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      88 |   }
+      89 | }
+
+      at error (src/lib/migration/exportLocalData.ts:86:13)
+      at Object.<anonymous> (src/lib/migration/__tests__/exportLocalData.actual.test.ts:310:7)
+
+    console.log
+      Starting localStorage data export...
+
+      at log (src/lib/migration/exportLocalData.ts:41:13)
+
+    console.log
+      Data fetched: { players: 2, seasons: 1, tournaments: 1, games: 2, hasSettings: true }
+
+      at log (src/lib/migration/exportLocalData.ts:52:13)
+
+    console.error
+      Error exporting localStorage data: Error: Invalid tournament at index 0: missing id or name
+          at /home/villepajala/projects/soccer-pre-game-app/src/lib/migration/exportLocalData.ts:126:13
+          at Array.forEach (<anonymous>)
+          at forEach (/home/villepajala/projects/soccer-pre-game-app/src/lib/migration/exportLocalData.ts:124:20)
+          at validateExportData (/home/villepajala/projects/soccer-pre-game-app/src/lib/migration/exportLocalData.ts:81:5)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/migration/__tests__/exportLocalData.actual.test.ts:318:7)
+
+      84 |     return exportData;
+      85 |   } catch (error) {
+    > 86 |     console.error('Error exporting localStorage data:', error);
+         |             ^
+      87 |     throw new Error(`Failed to export localStorage data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      88 |   }
+      89 | }
+
+      at error (src/lib/migration/exportLocalData.ts:86:13)
+      at Object.<anonymous> (src/lib/migration/__tests__/exportLocalData.actual.test.ts:318:7)
+
+    console.log
+      Starting localStorage data export...
+
+      at log (src/lib/migration/exportLocalData.ts:41:13)
+
+    console.log
+      Data fetched: { players: 2, seasons: 1, tournaments: 1, games: 1, hasSettings: true }
+
+      at log (src/lib/migration/exportLocalData.ts:52:13)
+
+    console.error
+      Error exporting localStorage data: Error: Invalid game game1: missing gameId or teamName
+          at /home/villepajala/projects/soccer-pre-game-app/src/lib/migration/exportLocalData.ts:138:13
+          at Array.forEach (<anonymous>)
+          at forEach (/home/villepajala/projects/soccer-pre-game-app/src/lib/migration/exportLocalData.ts:136:35)
+          at validateExportData (/home/villepajala/projects/soccer-pre-game-app/src/lib/migration/exportLocalData.ts:81:5)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/migration/__tests__/exportLocalData.actual.test.ts:326:7)
+
+      84 |     return exportData;
+      85 |   } catch (error) {
+    > 86 |     console.error('Error exporting localStorage data:', error);
+         |             ^
+      87 |     throw new Error(`Failed to export localStorage data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      88 |   }
+      89 | }
+
+      at error (src/lib/migration/exportLocalData.ts:86:13)
+      at Object.<anonymous> (src/lib/migration/__tests__/exportLocalData.actual.test.ts:326:7)
+
+    console.log
+      Starting localStorage data export...
+
+      at log (src/lib/migration/exportLocalData.ts:41:13)
+
+    console.log
+      Data fetched: { players: 2, seasons: 1, tournaments: 1, games: 2, hasSettings: true }
+
+      at log (src/lib/migration/exportLocalData.ts:52:13)
+
+    console.log
+      Export data validation passed
+
+      at log (src/lib/migration/exportLocalData.ts:142:11)
+
+    console.log
+      localStorage export completed successfully
+
+      at log (src/lib/migration/exportLocalData.ts:83:13)
+
+    console.log
+      Starting localStorage data export...
+
+      at log (src/lib/migration/exportLocalData.ts:41:13)
+
+    console.log
+      Data fetched: { players: 2, seasons: 1, tournaments: 1, games: 2, hasSettings: true }
+
+      at log (src/lib/migration/exportLocalData.ts:52:13)
+
+    console.log
+      Export data validation passed
+
+      at log (src/lib/migration/exportLocalData.ts:142:11)
+
+    console.log
+      localStorage export completed successfully
+
+      at log (src/lib/migration/exportLocalData.ts:83:13)
+
+PASS src/lib/offline/__tests__/offlineCacheManager.test.ts
+  ● Console
+
+    console.warn
+      [OfflineCache] Failed to fetch players from primary provider: Error: Network error
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/offline/__tests__/offlineCacheManager.test.ts:184:58)
+          at Promise.then.completed (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      94 |       }
+      95 |     } catch (error) {
+    > 96 |       console.warn('[OfflineCache] Failed to fetch players from primary provider:', error);
+         |               ^
+      97 |     }
+      98 |
+      99 |     // Fallback to cache
+
+      at OfflineCacheManager.warn [as getPlayers] (src/lib/offline/offlineCacheManager.ts:96:15)
+      at Object.<anonymous> (src/lib/offline/__tests__/offlineCacheManager.test.ts:187:24)
+
+    console.log
+      [OfflineCache] Returning cached players
+
+      at OfflineCacheManager.log [as getPlayers] (src/lib/offline/offlineCacheManager.ts:102:15)
+
+    console.warn
+      [OfflineCache] Failed to fetch players from primary provider: Error: Network error
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/offline/__tests__/offlineCacheManager.test.ts:194:58)
+          at Promise.then.completed (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      94 |       }
+      95 |     } catch (error) {
+    > 96 |       console.warn('[OfflineCache] Failed to fetch players from primary provider:', error);
+         |               ^
+      97 |     }
+      98 |
+      99 |     // Fallback to cache
+
+      at OfflineCacheManager.warn [as getPlayers] (src/lib/offline/offlineCacheManager.ts:96:15)
+      at Object.<anonymous> (src/lib/offline/__tests__/offlineCacheManager.test.ts:197:9)
+
+    console.log
+      [OfflineCache] Returning cached players
+
+      at OfflineCacheManager.log [as getPlayers] (src/lib/offline/offlineCacheManager.ts:102:15)
+
+    console.warn
+      [OfflineCache] Failed to save player to primary provider: Error: Network error
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/offline/__tests__/offlineCacheManager.test.ts:232:58)
+          at Promise.then.completed (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      124 |       }
+      125 |     } catch (error) {
+    > 126 |       console.warn('[OfflineCache] Failed to save player to primary provider:', error);
+          |               ^
+      127 |     }
+      128 |
+      129 |     // Queue for sync
+
+      at OfflineCacheManager.warn [as savePlayer] (src/lib/offline/offlineCacheManager.ts:126:15)
+      at Object.<anonymous> (src/lib/offline/__tests__/offlineCacheManager.test.ts:235:24)
+
+    console.log
+      [OfflineCache] Queued create operation for players
+
+      at OfflineCacheManager.log [as queueForSync] (src/lib/offline/offlineCacheManager.ts:349:13)
+
+    console.log
+      [OfflineCache] Queued create operation for players
+
+      at OfflineCacheManager.log [as queueForSync] (src/lib/offline/offlineCacheManager.ts:349:13)
+
+    console.warn
+      [OfflineCache] Failed to delete player from primary provider: Error: Network error
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/offline/__tests__/offlineCacheManager.test.ts:283:60)
+          at Promise.then.completed (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      154 |       }
+      155 |     } catch (error) {
+    > 156 |       console.warn('[OfflineCache] Failed to delete player from primary provider:', error);
+          |               ^
+      157 |     }
+      158 |
+      159 |     // Queue for sync
+
+      at OfflineCacheManager.warn [as deletePlayer] (src/lib/offline/offlineCacheManager.ts:156:15)
+      at Object.<anonymous> (src/lib/offline/__tests__/offlineCacheManager.test.ts:286:9)
+
+    console.log
+      [OfflineCache] Queued delete operation for players
+
+      at OfflineCacheManager.log [as queueForSync] (src/lib/offline/offlineCacheManager.ts:349:13)
+
+    console.warn
+      [OfflineCache] Failed to update player in primary provider: Error: Network error
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/offline/__tests__/offlineCacheManager.test.ts:316:60)
+          at Promise.then.completed (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      184 |       }
+      185 |     } catch (error) {
+    > 186 |       console.warn('[OfflineCache] Failed to update player in primary provider:', error);
+          |               ^
+      187 |     }
+      188 |
+      189 |     // Queue for sync
+
+      at OfflineCacheManager.warn [as updatePlayer] (src/lib/offline/offlineCacheManager.ts:186:15)
+      at Object.<anonymous> (src/lib/offline/__tests__/offlineCacheManager.test.ts:319:24)
+
+    console.log
+      [OfflineCache] Queued update operation for players
+
+      at OfflineCacheManager.log [as queueForSync] (src/lib/offline/offlineCacheManager.ts:349:13)
+
+    console.warn
+      [OfflineCache] Failed to update player in primary provider: Error: Network error
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/offline/__tests__/offlineCacheManager.test.ts:334:60)
+          at Promise.then.completed (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      184 |       }
+      185 |     } catch (error) {
+    > 186 |       console.warn('[OfflineCache] Failed to update player in primary provider:', error);
+          |               ^
+      187 |     }
+      188 |
+      189 |     // Queue for sync
+
+      at OfflineCacheManager.warn [as updatePlayer] (src/lib/offline/offlineCacheManager.ts:186:15)
+      at Object.<anonymous> (src/lib/offline/__tests__/offlineCacheManager.test.ts:337:9)
+
+    console.log
+      [OfflineCache] Queued update operation for players
+
+      at OfflineCacheManager.log [as queueForSync] (src/lib/offline/offlineCacheManager.ts:349:13)
+
+    console.warn
+      [OfflineCache] Failed to save player to primary provider: Error: Network error
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/offline/__tests__/offlineCacheManager.test.ts:376:56)
+          at Promise.then.completed (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      124 |       }
+      125 |     } catch (error) {
+    > 126 |       console.warn('[OfflineCache] Failed to save player to primary provider:', error);
+          |               ^
+      127 |     }
+      128 |
+      129 |     // Queue for sync
+
+      at OfflineCacheManager.warn [as savePlayer] (src/lib/offline/offlineCacheManager.ts:126:15)
+      at Object.<anonymous> (src/lib/offline/__tests__/offlineCacheManager.test.ts:379:7)
+
+    console.warn
+      [OfflineCache] Failed to save player to primary provider: Error: Network error
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/offline/__tests__/offlineCacheManager.test.ts:385:56)
+          at Promise.then.completed (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      124 |       }
+      125 |     } catch (error) {
+    > 126 |       console.warn('[OfflineCache] Failed to save player to primary provider:', error);
+          |               ^
+      127 |     }
+      128 |
+      129 |     // Queue for sync
+
+      at OfflineCacheManager.warn [as savePlayer] (src/lib/offline/offlineCacheManager.ts:126:15)
+      at Object.<anonymous> (src/lib/offline/__tests__/offlineCacheManager.test.ts:390:7)
+
+    console.log
+      [OfflineCache] Queued create operation for players
+
+      at OfflineCacheManager.log [as queueForSync] (src/lib/offline/offlineCacheManager.ts:349:13)
+
+    console.warn
+      [OfflineCache] Failed to save player to primary provider: Error: Network error
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/offline/__tests__/offlineCacheManager.test.ts:385:56)
+          at Promise.then.completed (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      124 |       }
+      125 |     } catch (error) {
+    > 126 |       console.warn('[OfflineCache] Failed to save player to primary provider:', error);
+          |               ^
+      127 |     }
+      128 |
+      129 |     // Queue for sync
+
+      at OfflineCacheManager.warn [as savePlayer] (src/lib/offline/offlineCacheManager.ts:126:15)
+      at Object.<anonymous> (src/lib/offline/__tests__/offlineCacheManager.test.ts:391:7)
+
+    console.log
+      [OfflineCache] Queued create operation for players
+
+      at OfflineCacheManager.log [as queueForSync] (src/lib/offline/offlineCacheManager.ts:349:13)
+
+    console.warn
+      [OfflineCache] Failed to fetch players from primary provider: Error: Network error
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/offline/__tests__/offlineCacheManager.test.ts:460:56)
+          at Promise.then.completed (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      94 |       }
+      95 |     } catch (error) {
+    > 96 |       console.warn('[OfflineCache] Failed to fetch players from primary provider:', error);
+         |               ^
+      97 |     }
+      98 |
+      99 |     // Fallback to cache
+
+      at OfflineCacheManager.warn [as getPlayers] (src/lib/offline/offlineCacheManager.ts:96:15)
+      at Object.<anonymous> (src/lib/offline/__tests__/offlineCacheManager.test.ts:463:7)
+
+    console.warn
+      [OfflineCache] Failed to save player to primary provider: Error: Network error
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/offline/__tests__/offlineCacheManager.test.ts:467:56)
+          at Promise.then.completed (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      124 |       }
+      125 |     } catch (error) {
+    > 126 |       console.warn('[OfflineCache] Failed to save player to primary provider:', error);
+          |               ^
+      127 |     }
+      128 |
+      129 |     // Queue for sync
+
+      at OfflineCacheManager.warn [as savePlayer] (src/lib/offline/offlineCacheManager.ts:126:15)
+      at Object.<anonymous> (src/lib/offline/__tests__/offlineCacheManager.test.ts:473:7)
+
+    console.log
+      [OfflineCache] Back online - starting sync
+
+      at OfflineCacheManager.log [as handleOnline] (src/lib/offline/offlineCacheManager.ts:46:13)
+
+    console.log
+      [OfflineCache] Processing 0 queued operations
+
+      at OfflineCacheManager.log [as processSyncQueue] (src/lib/offline/offlineCacheManager.ts:358:15)
+
+    console.log
+      [OfflineCache] Gone offline - switching to cache-first mode
+
+      at OfflineCacheManager.log [as handleOffline] (src/lib/offline/offlineCacheManager.ts:52:13)
+
+PASS src/lib/offline/__tests__/indexedDBCache.test.ts
+  ● Console
+
+    console.error
+      Error retrieving from cache: Error: IndexedDB error
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/offline/__tests__/indexedDBCache.test.ts:198:33)
+          at Promise.then.completed (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/testWorker.js:106:12)
+
+       97 |       return entry.data;
+       98 |     } catch (error) {
+    >  99 |       console.error('Error retrieving from cache:', error);
+          |               ^
+      100 |       return null;
+      101 |     }
+      102 |   }
+
+      at IndexedDBCache.error [as get] (src/lib/offline/indexedDBCache.ts:99:15)
+      at Object.<anonymous> (src/lib/offline/__tests__/indexedDBCache.test.ts:200:22)
+
+    console.error
+      Error checking cache: Error: IndexedDB error
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/offline/__tests__/indexedDBCache.test.ts:261:33)
+          at Promise.then.completed (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      116 |       return true;
+      117 |     } catch (error) {
+    > 118 |       console.error('Error checking cache:', error);
+          |               ^
+      119 |       return false;
+      120 |     }
+      121 |   }
+
+      at IndexedDBCache.error [as has] (src/lib/offline/indexedDBCache.ts:118:15)
+      at Object.<anonymous> (src/lib/offline/__tests__/indexedDBCache.test.ts:263:22)
+
+    console.error
+      Error deleting from cache: Error: Delete failed
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/offline/__tests__/indexedDBCache.test.ts:277:33)
+          at Promise.then.completed (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      129 |       await del(cacheKey);
+      130 |     } catch (error) {
+    > 131 |       console.error('Error deleting from cache:', error);
+          |               ^
+      132 |     }
+      133 |   }
+      134 |
+
+      at IndexedDBCache.error [as delete] (src/lib/offline/indexedDBCache.ts:131:15)
+      at Object.<anonymous> (src/lib/offline/__tests__/indexedDBCache.test.ts:279:7)
+
+    console.error
+      Error getting cache keys: Error: Keys failed
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/offline/__tests__/indexedDBCache.test.ts:314:34)
+          at Promise.then.completed (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      143 |         .map(key => (key as string).replace(`${this.prefix}:`, ''));
+      144 |     } catch (error) {
+    > 145 |       console.error('Error getting cache keys:', error);
+          |               ^
+      146 |       return [];
+      147 |     }
+      148 |   }
+
+      at IndexedDBCache.error [as getAllKeys] (src/lib/offline/indexedDBCache.ts:145:15)
+      at Object.<anonymous> (src/lib/offline/__tests__/indexedDBCache.test.ts:316:22)
+
+    console.error
+      Error deleting from cache: Error: Delete failed
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/offline/__tests__/indexedDBCache.test.ts:277:33)
+          at Promise.then.completed (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      129 |       await del(cacheKey);
+      130 |     } catch (error) {
+    > 131 |       console.error('Error deleting from cache:', error);
+          |               ^
+      132 |     }
+      133 |   }
+      134 |
+
+      at IndexedDBCache.error [as delete] (src/lib/offline/indexedDBCache.ts:131:15)
+          at async Promise.all (index 0)
+      at IndexedDBCache.clearAll (src/lib/offline/indexedDBCache.ts:156:7)
+      at Object.<anonymous> (src/lib/offline/__tests__/indexedDBCache.test.ts:329:7)
+
+    console.error
+      Error deleting from cache: Error: Delete failed
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/offline/__tests__/indexedDBCache.test.ts:277:33)
+          at Promise.then.completed (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      129 |       await del(cacheKey);
+      130 |     } catch (error) {
+    > 131 |       console.error('Error deleting from cache:', error);
+          |               ^
+      132 |     }
+      133 |   }
+      134 |
+
+      at IndexedDBCache.error [as delete] (src/lib/offline/indexedDBCache.ts:131:15)
+          at async Promise.all (index 1)
+      at IndexedDBCache.clearAll (src/lib/offline/indexedDBCache.ts:156:7)
+      at Object.<anonymous> (src/lib/offline/__tests__/indexedDBCache.test.ts:329:7)
+
+    console.error
+      Error deleting from cache: Error: Delete failed
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/offline/__tests__/indexedDBCache.test.ts:277:33)
+          at Promise.then.completed (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      129 |       await del(cacheKey);
+      130 |     } catch (error) {
+    > 131 |       console.error('Error deleting from cache:', error);
+          |               ^
+      132 |     }
+      133 |   }
+      134 |
+
+      at IndexedDBCache.error [as delete] (src/lib/offline/indexedDBCache.ts:131:15)
+          at async Promise.all (index 2)
+      at IndexedDBCache.clearAll (src/lib/offline/indexedDBCache.ts:156:7)
+      at Object.<anonymous> (src/lib/offline/__tests__/indexedDBCache.test.ts:329:7)
+
+    console.error
+      Error clearing cache: Error: Get keys failed
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/offline/__tests__/indexedDBCache.test.ts:338:57)
+          at Promise.then.completed (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      156 |       await Promise.all(cacheKeys.map(key => this.delete(key)));
+      157 |     } catch (error) {
+    > 158 |       console.error('Error clearing cache:', error);
+          |               ^
+      159 |     }
+      160 |   }
+      161 |
+
+      at IndexedDBCache.error [as clearAll] (src/lib/offline/indexedDBCache.ts:158:15)
+      at Object.<anonymous> (src/lib/offline/__tests__/indexedDBCache.test.ts:340:7)
+
+    console.error
+      Error deleting from cache: Error: Delete failed
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/offline/__tests__/indexedDBCache.test.ts:277:33)
+          at Promise.then.completed (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      129 |       await del(cacheKey);
+      130 |     } catch (error) {
+    > 131 |       console.error('Error deleting from cache:', error);
+          |               ^
+      132 |     }
+      133 |   }
+      134 |
+
+      at IndexedDBCache.error [as delete] (src/lib/offline/indexedDBCache.ts:131:15)
+      at IndexedDBCache.clearExpired (src/lib/offline/indexedDBCache.ts:175:11)
+      at Object.<anonymous> (src/lib/offline/__tests__/indexedDBCache.test.ts:377:28)
+
+    console.error
+      Error deleting from cache: Error: Delete failed
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/offline/__tests__/indexedDBCache.test.ts:277:33)
+          at Promise.then.completed (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      129 |       await del(cacheKey);
+      130 |     } catch (error) {
+    > 131 |       console.error('Error deleting from cache:', error);
+          |               ^
+      132 |     }
+      133 |   }
+      134 |
+
+      at IndexedDBCache.error [as delete] (src/lib/offline/indexedDBCache.ts:131:15)
+      at IndexedDBCache.clearExpired (src/lib/offline/indexedDBCache.ts:175:11)
+      at Object.<anonymous> (src/lib/offline/__tests__/indexedDBCache.test.ts:377:28)
+
+    console.error
+      Error clearing expired cache: Error: Clear expired failed
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/offline/__tests__/indexedDBCache.test.ts:387:57)
+          at Promise.then.completed (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      180 |       return clearedCount;
+      181 |     } catch (error) {
+    > 182 |       console.error('Error clearing expired cache:', error);
+          |               ^
+      183 |       return 0;
+      184 |     }
+      185 |   }
+
+      at IndexedDBCache.error [as clearExpired] (src/lib/offline/indexedDBCache.ts:182:15)
+      at Object.<anonymous> (src/lib/offline/__tests__/indexedDBCache.test.ts:389:22)
+
+    console.error
+      Error getting cache stats: Error: Stats failed
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/offline/__tests__/indexedDBCache.test.ts:431:57)
+          at Promise.then.completed (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      224 |       };
+      225 |     } catch (error) {
+    > 226 |       console.error('Error getting cache stats:', error);
+          |               ^
+      227 |       return {
+      228 |         totalEntries: 0,
+      229 |         totalSize: 0,
+
+      at IndexedDBCache.error [as getStats] (src/lib/offline/indexedDBCache.ts:226:15)
+      at Object.<anonymous> (src/lib/offline/__tests__/indexedDBCache.test.ts:433:21)
+
+    console.error
+      Error deleting from cache: Error: Delete failed
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/lib/offline/__tests__/indexedDBCache.test.ts:277:33)
+          at Promise.then.completed (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      129 |       await del(cacheKey);
+      130 |     } catch (error) {
+    > 131 |       console.error('Error deleting from cache:', error);
+          |               ^
+      132 |     }
+      133 |   }
+      134 |
+
+      at IndexedDBCache.error [as delete] (src/lib/offline/indexedDBCache.ts:131:15)
+      at Object.<anonymous> (src/lib/offline/__tests__/indexedDBCache.test.ts:469:7)
+
+PASS src/hooks/__tests__/useGameDataQueries.test.ts
+PASS src/contexts/__tests__/ToastProvider.test.tsx
+  ● Console
+
+    console.error
+      Encountered two children with the same key, `1753730221631`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+      24 |   expect(screen.getByText('Saved!')).toHaveClass('bg-green-600');
+      25 |
+    > 26 |   fireEvent.click(screen.getByText('Error'));
+         |             ^
+      27 |   expect(screen.getByText('Error!')).toHaveClass('bg-red-600');
+      28 |
+      29 |   act(() => {
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:7563:23
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at warnOnInvalidKey (node_modules/react-dom/cjs/react-dom-client.development.js:7562:13)
+      at reconcileChildrenArray (node_modules/react-dom/cjs/react-dom-client.development.js:7631:31)
+      at reconcileChildFibersImpl (node_modules/react-dom/cjs/react-dom-client.development.js:7952:30)
+      at node_modules/react-dom/cjs/react-dom-client.development.js:8057:33
+      at reconcileChildren (node_modules/react-dom/cjs/react-dom-client.development.js:8622:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10793:13)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14419:13)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:16231:7)
+      at flushSyncWorkAcrossRoots_impl (node_modules/react-dom/cjs/react-dom-client.development.js:16079:21)
+      at processRootScheduleInMicrotask (node_modules/react-dom/cjs/react-dom-client.development.js:16116:7)
+      at node_modules/react-dom/cjs/react-dom-client.development.js:16241:11
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:859:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at Object.eventWrapper (node_modules/@testing-library/react/dist/pure.js:107:28)
+      at fireEvent (node_modules/@testing-library/dom/dist/events.js:12:35)
+      at Function.fireEvent.<computed> [as click] (node_modules/@testing-library/dom/dist/events.js:110:36)
+      at Function.fireEvent.<computed> [as click] (node_modules/@testing-library/react/dist/fire-event.js:15:52)
+      at Object.click (src/contexts/__tests__/ToastProvider.test.tsx:26:13)
+
+PASS src/hooks/__tests__/useUndoRedo.test.ts
+PASS src/context/__tests__/AuthContext.basic.test.tsx
+PASS src/components/SoccerField.test.tsx
+PASS src/utils/fullBackup.test.ts
+PASS src/hooks/__tests__/useAutoBackup.test.ts
+PASS src/components/AssessmentSlider.test.tsx
+PASS src/hooks/__tests__/usePlayerFieldManager.test.ts
+PASS src/utils/masterRoster.test.ts
+PASS src/contexts/__tests__/ModalProvider.test.tsx
+PASS src/components/LoadGameModal.test.tsx
+  ● Console
+
+    console.log
+      [LoadGameModal] File selected: backup.json 15
+
+      at log (src/components/LoadGameModal.tsx:251:13)
+
+    console.log
+      [LoadGameModal] File read, content length: 15
+
+      at FileReader.log (src/components/LoadGameModal.tsx:260:15)
+
+    console.log
+      [LoadGameModal] Current storage provider: storageManager(localStorage)
+
+      at FileReader.log (src/components/LoadGameModal.tsx:264:17)
+
+    console.log
+      [LoadGameModal] Using localStorage import...
+
+      at FileReader.log (src/components/LoadGameModal.tsx:286:19)
+
+PASS src/utils/exportGames.test.ts
+PASS src/utils/playerAssessments.test.ts
+  ● Console
+
+    console.error
+      Error getting player assessments: Error: fail
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/utils/playerAssessments.test.ts:61:37)
+          at Promise.then.completed (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/testWorker.js:106:12)
+
+       9 |   },
+      10 |   error: (...args: unknown[]) => {
+    > 11 |     console.error(...args);
+         |             ^
+      12 |   },
+      13 | };
+      14 |
+
+      at Object.error (src/utils/logger.ts:11:13)
+      at error (src/utils/playerAssessments.ts:12:12)
+      at Object.<anonymous> (src/utils/playerAssessments.test.ts:62:5)
+
+    console.warn
+      Game with ID g not found for saving assessment.
+
+       6 |   },
+       7 |   warn: (...args: unknown[]) => {
+    >  8 |     if (!isProd) console.warn(...args);
+         |                          ^
+       9 |   },
+      10 |   error: (...args: unknown[]) => {
+      11 |     console.error(...args);
+
+      at Object.warn (src/utils/logger.ts:8:26)
+      at warn (src/utils/playerAssessments.ts:25:14)
+      at Object.<anonymous> (src/utils/playerAssessments.test.ts:77:20)
+
+    console.error
+      Error saving player assessment: Error: x
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/utils/playerAssessments.test.ts:82:37)
+          at Promise.then.completed (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/testWorker.js:106:12)
+
+       9 |   },
+      10 |   error: (...args: unknown[]) => {
+    > 11 |     console.error(...args);
+         |             ^
+      12 |   },
+      13 | };
+      14 |
+
+      at Object.error (src/utils/logger.ts:11:13)
+      at error (src/utils/playerAssessments.ts:37:12)
+      at Object.<anonymous> (src/utils/playerAssessments.test.ts:84:5)
+
+    console.warn
+      Assessment for player p not found in game g.
+
+       6 |   },
+       7 |   warn: (...args: unknown[]) => {
+    >  8 |     if (!isProd) console.warn(...args);
+         |                          ^
+       9 |   },
+      10 |   error: (...args: unknown[]) => {
+      11 |     console.error(...args);
+
+      at Object.warn (src/utils/logger.ts:8:26)
+      at warn (src/utils/playerAssessments.ts:49:14)
+      at Object.<anonymous> (src/utils/playerAssessments.test.ts:99:20)
+
+    console.error
+      Error deleting player assessment: Error: e
+          at Object.<anonymous> (/home/villepajala/projects/soccer-pre-game-app/src/utils/playerAssessments.test.ts:104:37)
+          at Promise.then.completed (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/testWorker.js:106:12)
+
+       9 |   },
+      10 |   error: (...args: unknown[]) => {
+    > 11 |     console.error(...args);
+         |             ^
+      12 |   },
+      13 | };
+      14 |
+
+      at Object.error (src/utils/logger.ts:11:13)
+      at error (src/utils/playerAssessments.ts:60:12)
+      at Object.<anonymous> (src/utils/playerAssessments.test.ts:105:5)
+
+PASS src/utils/appStateSchema.test.ts
+PASS src/utils/appSettings.test.ts
+PASS src/hooks/__tests__/useTacticalBoard.test.ts
+PASS src/hooks/__tests__/useWakeLock.test.ts
+  ● Console
+
+    console.error
+      Wake Lock request failed: TypeError, Cannot read properties of undefined (reading 'request')
+
+       9 |   },
+      10 |   error: (...args: unknown[]) => {
+    > 11 |     console.error(...args);
+         |             ^
+      12 |   },
+      13 | };
+      14 |
+
+      at Object.error (src/utils/logger.ts:11:13)
+      at Object.error [as syncWakeLock] (src/hooks/useWakeLock.ts:33:20)
+      at syncWakeLock (src/hooks/__tests__/useWakeLock.test.ts:9:28)
+      at node_modules/@testing-library/react/dist/act-compat.js:48:24
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at Object.<anonymous> (src/hooks/__tests__/useWakeLock.test.ts:8:14)
+
+    console.log
+      Screen Wake Lock is active.
+
+      at Object.log (src/utils/logger.ts:5:26)
+
+    console.log
+      Screen Wake Lock released programmatically.
+
+      at Object.log (src/utils/logger.ts:5:26)
+
+PASS src/utils/roster.test.ts
+  ● Console
+
+    console.error
+      Error parsing roster: SyntaxError: Expected property name or '}' in JSON at position 2 (line 1 column 3)
+          at JSON.parse (<anonymous>)
+          at parse (/home/villepajala/projects/soccer-pre-game-app/src/utils/roster.test.ts:38:17)
+          at Object.getRoster (/home/villepajala/projects/soccer-pre-game-app/src/utils/roster.test.ts:368:20)
+          at Promise.then.completed (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/villepajala/projects/soccer-pre-game-app/node_modules/jest-runner/build/testWorker.js:106:12)
+
+       9 |   },
+      10 |   error: (...args: unknown[]) => {
+    > 11 |     console.error(...args);
+         |             ^
+      12 |   },
+      13 | };
+      14 |
+
+      at Object.error (src/utils/logger.ts:11:13)
+      at error (src/utils/roster.test.ts:40:12)
+      at Object.getRoster (src/utils/roster.test.ts:368:20)
+
+PASS src/utils/transforms/__tests__/transforms.test.ts
+PASS src/utils/migrateSavedGames.test.ts
+PASS src/components/auth/__tests__/AuthGuard.basic.test.tsx
+PASS src/utils/tournaments.test.ts
+PASS src/utils/seasons.test.ts
+PASS src/lib/storage/__tests__/config.test.ts
+PASS src/lib/migration/__tests__/migrationStatus.actual.test.ts
+  ● Console
+
+    console.warn
+      Migration status check warning: CONNECTION_ERROR Network error
+
+      53 |       // 42P01 = table does not exist (expected if migration_status table not created yet)
+      54 |       if (error.code !== 'PGRST116' && error.code !== '42P01') {
+    > 55 |         console.warn('Migration status check warning:', error.code, error.message);
+         |                 ^
+      56 |       }
+      57 |       // Continue with default values
+      58 |     }
+
+      at warn (src/lib/migration/migrationStatus.ts:55:17)
+      at Object.<anonymous> (src/lib/migration/__tests__/migrationStatus.actual.test.ts:165:22)
+
+    console.error
+      Error updating migration status: Update failed { message: 'Update failed' }
+
+      114 |
+      115 |   if (error) {
+    > 116 |     console.error('Error updating migration status:', error.message || 'Unknown error', error);
+          |             ^
+      117 |     // Don't throw if table doesn't exist - migration can continue
+      118 |     if (error.code !== '42P01') {
+      119 |       throw error;
+
+      at error (src/lib/migration/migrationStatus.ts:116:13)
+      at Object.<anonymous> (src/lib/migration/__tests__/migrationStatus.actual.test.ts:220:7)
+
+PASS src/utils/savedGames.test.ts
+PASS src/utils/localStorage.test.ts
+  ● Console
+
+    console.warn
+      [localStorage] Deprecation notice: localStorage support will be removed after the Supabase migration.
+
+       6 |   },
+       7 |   warn: (...args: unknown[]) => {
+    >  8 |     if (!isProd) console.warn(...args);
+         |                          ^
+       9 |   },
+      10 |   error: (...args: unknown[]) => {
+      11 |     console.error(...args);
+
+      at Object.warn (src/utils/logger.ts:8:26)
+      at warn (src/utils/localStorage.ts:6:12)
+      at warnDeprecation (src/utils/localStorage.ts:15:3)
+      at getStorage (src/utils/localStorage.ts:25:19)
+      at Object.<anonymous> (src/utils/localStorage.test.ts:21:31)
+
+PASS src/utils/playerStats.test.ts
+PASS src/utils/masterRosterManager.test.ts
+PASS src/types/__tests__/moduleResolution.test.ts
+PASS src/utils/seasonTournamentExport.test.ts
+PASS src/utils/assessmentStats.test.ts
+PASS src/utils/sendBackupEmail.test.ts
+PASS src/utils/game.test.ts
+PASS src/utils/time.test.ts
+PASS src/utils/bytes.test.ts
+PASS src/components/RosterSettingsModal.test.tsx
+PASS src/hooks/__tests__/useGameSessionReducer.test.ts
+  ● Console
+
+    console.log
+      [gameSessionReducer] action type: ADJUST_SCORE_FOR_EVENT
+
+      at Object.log (src/utils/logger.ts:5:26)
+
+    console.log
+      [gameSessionReducer] action type: ADJUST_SCORE_FOR_EVENT
+
+      at Object.log (src/utils/logger.ts:5:26)
+
+    console.log
+      [gameSessionReducer] action type: RESET_TIMER_ONLY
+
+      at Object.log (src/utils/logger.ts:5:26)
+
+    console.log
+      [gameSessionReducer] action type: RESET_TIMER_AND_GAME_PROGRESS
+
+      at Object.log (src/utils/logger.ts:5:26)
+
+PASS src/i18n.test.ts
+PASS src/components/NewGameSetupModal.test.tsx
+  ● Console
+
+    console.log
+      Add season mutation initiated for: Fall 2024
+
+      at Object.log (src/utils/logger.ts:5:26)
+
+    console.log
+      Add tournament mutation initiated for: National Cup
+
+      at Object.log (src/utils/logger.ts:5:26)
+
+PASS src/components/SeasonTournamentManagementModal.test.tsx
+  ● Console
+
+    console.warn
+      [localStorage] Deprecation notice: localStorage support will be removed after the Supabase migration.
+
+       6 |   },
+       7 |   warn: (...args: unknown[]) => {
+    >  8 |     if (!isProd) console.warn(...args);
+         |                          ^
+       9 |   },
+      10 |   error: (...args: unknown[]) => {
+      11 |     console.error(...args);
+
+      at Object.warn (src/utils/logger.ts:8:26)
+      at warn (src/utils/localStorage.ts:6:12)
+      at warnDeprecation (src/utils/localStorage.ts:15:3)
+      at getStorage (src/utils/localStorage.ts:25:19)
+      at LocalStorageProvider.getSavedGames (src/lib/storage/localStorageProvider.ts:332:48)
+      at getSavedGames (src/lib/storage/storageManager.ts:202:34)
+      at AuthAwareStorageManager.operation [as executeWithFallback] (src/lib/storage/storageManager.ts:32:20)
+      at AuthAwareStorageManager.executeWithFallback [as getSavedGames] (src/lib/storage/storageManager.ts:201:17)
+      at getSavedGames (src/utils/savedGames.ts:47:40)
+      at getSavedGames (src/utils/savedGames.ts:214:28)
+      at getFilteredGames (src/components/SeasonTournamentManagementModal.tsx:76:37)
+
+PASS src/components/auth/__tests__/AuthModal.test.tsx
+  ● Console
+
+    console.error
+      An update to AuthModal inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      32 |           setError(error.message);
+      33 |         } else {
+    > 34 |           setMessage('Signed in successfully!');
+         |           ^
+      35 |           onClose();
+      36 |         }
+      37 |       } else if (mode === 'signup') {
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:16023:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16022:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at dispatchSetState (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at setMessage (src/components/auth/AuthModal.tsx:34:11)
+
+    console.error
+      An update to AuthModal inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      53 |       setError('An unexpected error occurred');
+      54 |     } finally {
+    > 55 |       setLoading(false);
+         |       ^
+      56 |     }
+      57 |   };
+      58 |
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:16023:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16022:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at dispatchSetState (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at setLoading (src/components/auth/AuthModal.tsx:55:7)
+
+PASS src/components/GameSettingsModal.test.tsx
+  ● Console
+
+    console.log
+      [GameSettingsModal] Inline edit for notes saved for game game123.
+
+      at Object.log (src/utils/logger.ts:5:26)
+
+    console.log
+      [GameSettingsModal] Event goal1 updated in game game123.
+
+      at Object.log (src/utils/logger.ts:5:26)
+
+    console.log
+      [GameSettingsModal] Event goal1 removed from game game123.
+
+      at Object.log (src/utils/logger.ts:5:26)
+
+PASS src/components/GameStatsModal.test.tsx
+  ● Console
+
+    console.warn
+      [localStorage] Deprecation notice: localStorage support will be removed after the Supabase migration.
+
+       6 |   },
+       7 |   warn: (...args: unknown[]) => {
+    >  8 |     if (!isProd) console.warn(...args);
+         |                          ^
+       9 |   },
+      10 |   error: (...args: unknown[]) => {
+      11 |     console.error(...args);
+
+      at Object.warn (src/utils/logger.ts:8:26)
+      at warn (src/utils/localStorage.ts:6:12)
+      at warnDeprecation (src/utils/localStorage.ts:15:3)
+      at getStorage (src/utils/localStorage.ts:25:19)
+      at LocalStorageProvider.getAppSettings (src/lib/storage/localStorageProvider.ts:310:46)
+      at getAppSettings (src/lib/storage/storageManager.ts:186:34)
+      at AuthAwareStorageManager.operation [as executeWithFallback] (src/lib/storage/storageManager.ts:32:20)
+      at AuthAwareStorageManager.executeWithFallback [as getAppSettings] (src/lib/storage/storageManager.ts:185:17)
+      at getAppSettings (src/utils/appSettings.ts:40:43)
+      at src/components/PlayerStatsView.tsx:34:19
+      at Object.react-stack-bottom-frame (node_modules/react-dom/cjs/react-dom-client.development.js:23949:20)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at commitHookEffectListMount (node_modules/react-dom/cjs/react-dom-client.development.js:11905:29)
+      at commitHookPassiveMountEffects (node_modules/react-dom/cjs/react-dom-client.development.js:12028:11)
+      at commitPassiveMountOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:13841:13)
+      at recursivelyTraversePassiveMountEffects (node_modules/react-dom/cjs/react-dom-client.development.js:13815:11)
+      at commitPassiveMountOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:13957:11)
+      at recursivelyTraversePassiveMountEffects (node_modules/react-dom/cjs/react-dom-client.development.js:13815:11)
+      at commitPassiveMountOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:13957:11)
+      at recursivelyTraversePassiveMountEffects (node_modules/react-dom/cjs/react-dom-client.development.js:13815:11)
+      at commitPassiveMountOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:13957:11)
+      at recursivelyTraversePassiveMountEffects (node_modules/react-dom/cjs/react-dom-client.development.js:13815:11)
+      at commitPassiveMountOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:13957:11)
+      at recursivelyTraversePassiveMountEffects (node_modules/react-dom/cjs/react-dom-client.development.js:13815:11)
+      at commitPassiveMountOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:13957:11)
+      at recursivelyTraversePassiveMountEffects (node_modules/react-dom/cjs/react-dom-client.development.js:13815:11)
+      at commitPassiveMountOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:13834:11)
+      at recursivelyTraversePassiveMountEffects (node_modules/react-dom/cjs/react-dom-client.development.js:13815:11)
+      at commitPassiveMountOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:13957:11)
+      at recursivelyTraversePassiveMountEffects (node_modules/react-dom/cjs/react-dom-client.development.js:13815:11)
+      at commitPassiveMountOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:13834:11)
+      at recursivelyTraversePassiveMountEffects (node_modules/react-dom/cjs/react-dom-client.development.js:13815:11)
+      at commitPassiveMountOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:13957:11)
+      at recursivelyTraversePassiveMountEffects (node_modules/react-dom/cjs/react-dom-client.development.js:13815:11)
+      at commitPassiveMountOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:13853:11)
+      at flushPassiveEffects (node_modules/react-dom/cjs/react-dom-client.development.js:15737:9)
+      at flushPendingEffects (node_modules/react-dom/cjs/react-dom-client.development.js:15702:14)
+      at flushSpawnedWork (node_modules/react-dom/cjs/react-dom-client.development.js:15668:44)
+      at commitRoot (node_modules/react-dom/cjs/react-dom-client.development.js:15403:9)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14526:15)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:16231:7)
+      at flushSyncWorkAcrossRoots_impl (node_modules/react-dom/cjs/react-dom-client.development.js:16079:21)
+      at processRootScheduleInMicrotask (node_modules/react-dom/cjs/react-dom-client.development.js:16116:7)
+      at node_modules/react-dom/cjs/react-dom-client.development.js:16241:11
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:859:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at Object.eventWrapper (node_modules/@testing-library/react/dist/pure.js:107:28)
+      at fireEvent (node_modules/@testing-library/dom/dist/events.js:12:35)
+      at Function.fireEvent.<computed> [as click] (node_modules/@testing-library/dom/dist/events.js:110:36)
+      at Function.fireEvent.<computed> [as click] (node_modules/@testing-library/react/dist/fire-event.js:15:52)
+      at Object.click (src/components/GameStatsModal.test.tsx:414:15)
+
+FAIL src/context/__tests__/AuthContext.test.tsx
+  ● Console
+
+    console.log
+      Auth state changed: SIGNED_IN new@example.com
+
+      at log (src/context/AuthContext.tsx:43:17)
+
+  ● AuthContext › Error Handling › should handle getSession errors gracefully
+
+    Session error
+
+      301 |       console.error = jest.fn();
+      302 |       
+    > 303 |       mockSupabaseAuth.getSession.mockRejectedValue(new Error('Session error'));
+          |                                                     ^
+      304 |       
+      305 |       await renderWithAuthProvider(<TestComponent />);
+      306 |       
+
+      at Object.<anonymous> (src/context/__tests__/AuthContext.test.tsx:303:53)
+
+  ● AuthContext › Error Handling › should handle getSession errors gracefully
+
+    expect(element).toHaveTextContent()
+
+    Expected element to have text content:
+      false
+    Received:
+      true
+
+    Ignored nodes: comments, script, style
+    [36m<html>[39m
+      [36m<head />[39m
+      [36m<body>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mdata-testid[39m=[32m"test-component"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mdata-testid[39m=[32m"user"[39m
+            [36m>[39m
+              [0mnull[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mdata-testid[39m=[32m"session"[39m
+            [36m>[39m
+              [0mnull[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mdata-testid[39m=[32m"loading"[39m
+            [36m>[39m
+              [0mtrue[0m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mdata-testid[39m=[32m"signup-btn"[39m
+            [36m>[39m
+              [0mSign Up[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mdata-testid[39m=[32m"signin-btn"[39m
+            [36m>[39m
+              [0mSign In[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mdata-testid[39m=[32m"signout-btn"[39m
+            [36m>[39m
+              [0mSign Out[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mdata-testid[39m=[32m"reset-btn"[39m
+            [36m>[39m
+              [0mReset Password[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</body>[39m
+    [36m</html>[39m
+
+      306 |       
+      307 |       await waitFor(() => {
+    > 308 |         expect(screen.getByTestId('loading')).toHaveTextContent('false');
+          |                                               ^
+      309 |       }, { timeout: 3000 });
+      310 |       
+      311 |       expect(screen.getByTestId('user')).toHaveTextContent('null');
+
+      at toHaveTextContent (src/context/__tests__/AuthContext.test.tsx:308:47)
+      at runWithExpensiveErrorDiagnosticsDisabled (node_modules/@testing-library/dom/dist/config.js:47:12)
+      at checkCallback (node_modules/@testing-library/dom/dist/wait-for.js:124:77)
+      at checkRealTimersCallback (node_modules/@testing-library/dom/dist/wait-for.js:118:16)
+      at Timeout.task [as _onTimeout] (node_modules/jsdom/lib/jsdom/browser/Window.js:520:19)
+
+Summary of all failing tests
+FAIL src/context/__tests__/AuthContext.test.tsx
+  ● AuthContext › Error Handling › should handle getSession errors gracefully
+
+    Session error
+
+      301 |       console.error = jest.fn();
+      302 |       
+    > 303 |       mockSupabaseAuth.getSession.mockRejectedValue(new Error('Session error'));
+          |                                                     ^
+      304 |       
+      305 |       await renderWithAuthProvider(<TestComponent />);
+      306 |       
+
+      at Object.<anonymous> (src/context/__tests__/AuthContext.test.tsx:303:53)
+
+  ● AuthContext › Error Handling › should handle getSession errors gracefully
+
+    expect(element).toHaveTextContent()
+
+    Expected element to have text content:
+      false
+    Received:
+      true
+
+    Ignored nodes: comments, script, style
+    [36m<html>[39m
+      [36m<head />[39m
+      [36m<body>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mdata-testid[39m=[32m"test-component"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mdata-testid[39m=[32m"user"[39m
+            [36m>[39m
+              [0mnull[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mdata-testid[39m=[32m"session"[39m
+            [36m>[39m
+              [0mnull[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mdata-testid[39m=[32m"loading"[39m
+            [36m>[39m
+              [0mtrue[0m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mdata-testid[39m=[32m"signup-btn"[39m
+            [36m>[39m
+              [0mSign Up[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mdata-testid[39m=[32m"signin-btn"[39m
+            [36m>[39m
+              [0mSign In[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mdata-testid[39m=[32m"signout-btn"[39m
+            [36m>[39m
+              [0mSign Out[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mdata-testid[39m=[32m"reset-btn"[39m
+            [36m>[39m
+              [0mReset Password[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</body>[39m
+    [36m</html>[39m
+
+      306 |       
+      307 |       await waitFor(() => {
+    > 308 |         expect(screen.getByTestId('loading')).toHaveTextContent('false');
+          |                                               ^
+      309 |       }, { timeout: 3000 });
+      310 |       
+      311 |       expect(screen.getByTestId('user')).toHaveTextContent('null');
+
+      at toHaveTextContent (src/context/__tests__/AuthContext.test.tsx:308:47)
+      at runWithExpensiveErrorDiagnosticsDisabled (node_modules/@testing-library/dom/dist/config.js:47:12)
+      at checkCallback (node_modules/@testing-library/dom/dist/wait-for.js:124:77)
+      at checkRealTimersCallback (node_modules/@testing-library/dom/dist/wait-for.js:118:16)
+      at Timeout.task [as _onTimeout] (node_modules/jsdom/lib/jsdom/browser/Window.js:520:19)
+
+
+Test Suites: 1 failed, 2 skipped, 66 passed, 67 of 69 total
+Tests:       1 failed, 27 skipped, 567 passed, 595 total
+Snapshots:   0 total
+Time:        6.409 s
+Ran all test suites.
