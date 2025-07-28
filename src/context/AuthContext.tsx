@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import { useErrorHandler } from '../hooks/useErrorHandler';
+import logger from '../utils/logger';
 
 interface AuthContextType {
   user: User | null;
@@ -21,14 +21,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const { handleAuthError } = useErrorHandler();
 
   useEffect(() => {
     // Get initial session
     const getInitialSession = async () => {
       const { data: { session }, error } = await supabase.auth.getSession();
       if (error) {
-        handleAuthError(error);
+        logger.error('Error getting session:', error);
       } else {
         setSession(session);
         setUser(session?.user ?? null);
@@ -48,7 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
 
     return () => subscription.unsubscribe();
-  }, [handleAuthError]);
+  }, []);
 
   const signUp = async (email: string, password: string) => {
     try {

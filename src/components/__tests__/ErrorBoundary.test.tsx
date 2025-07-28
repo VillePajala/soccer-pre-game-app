@@ -76,22 +76,31 @@ describe('ErrorBoundary', () => {
     });
 
     it('should reset error state when Try Again is clicked', () => {
+      let shouldThrow = true;
+      const TestComponent = () => {
+        if (shouldThrow) {
+          throw new Error('Test error');
+        }
+        return <div>No error</div>;
+      };
+
       const { rerender } = render(
         <ErrorBoundary>
-          <ThrowError shouldThrow={true} />
+          <TestComponent />
         </ErrorBoundary>
       );
       
       // Error UI should be showing
       expect(screen.getByText('Something went wrong')).toBeInTheDocument();
       
-      // Click Try Again
+      // Click Try Again and stop throwing error
+      shouldThrow = false;
       fireEvent.click(screen.getByText('Try Again'));
       
-      // Rerender with no error
+      // Rerender the same component tree
       rerender(
         <ErrorBoundary>
-          <ThrowError shouldThrow={false} />
+          <TestComponent />
         </ErrorBoundary>
       );
       
