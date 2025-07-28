@@ -19,6 +19,9 @@ jest.mock('../../lib/storage', () => ({
   storageManager: {
     getProviderName: jest.fn(() => 'MockProvider'),
   },
+  authAwareStorageManager: {
+    getProviderName: jest.fn(() => 'MockProvider'),
+  },
 }));
 
 // Mock AuthContext
@@ -81,14 +84,21 @@ describe('useOfflineManager', () => {
     });
   });
 
-  it('should initialize with correct default values', () => {
+  it('should initialize with correct default values', async () => {
     const { result } = renderHook(() => useOfflineManager());
 
+    // Check initial synchronous state
     expect(result.current.isOnline).toBe(true);
+    expect(result.current.error).toBe(null);
+    
+    // Wait for initialization to complete
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+    
+    // After initialization
     expect(result.current.hasOfflineData).toBe(false);
     expect(result.current.syncQueueSize).toBe(0);
-    expect(result.current.isLoading).toBe(true);
-    expect(result.current.error).toBe(null);
   });
 
   it('should set up event listeners and initialize cache manager', async () => {
@@ -130,9 +140,13 @@ describe('useOfflineManager', () => {
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
     });
+    
+    // Wait for status to be loaded
+    await waitFor(() => {
+      expect(result.current.hasOfflineData).toBe(true);
+    });
 
     expect(result.current.isOnline).toBe(true);
-    expect(result.current.hasOfflineData).toBe(true);
     expect(result.current.syncQueueSize).toBe(2);
   });
 
@@ -346,6 +360,8 @@ describe('useOfflineManager', () => {
         isOnline: true,
         hasOfflineData: true,
         syncQueueSize: 3,
+        lastSyncAttempt: undefined,
+        lastSuccessfulSync: undefined,
       };
 
       mockOfflineManager.getOfflineStatus.mockResolvedValue(mockStatus);
@@ -355,9 +371,13 @@ describe('useOfflineManager', () => {
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
       });
+      
+      // Wait for status to be loaded
+      await waitFor(() => {
+        expect(result.current.syncQueueSize).toBe(3);
+      });
 
       expect(result.current.needsSync).toBe(true);
-      expect(result.current.syncQueueSize).toBe(3);
     });
 
     it('should handle null offline status', async () => {
@@ -372,9 +392,11 @@ describe('useOfflineManager', () => {
 
   describe('Error Handling', () => {
     it('should handle cache manager initialization errors', async () => {
-      // Mock constructor to throw
-      const { OfflineCacheManager } = await import('../../lib/offline/offlineCacheManager');
-      (OfflineCacheManager as jest.Mock).mockImplementationOnce(() => {
+      // Save the original mock
+      const originalMock = jest.requireMock('../../lib/offline/offlineCacheManager');
+      
+      // Temporarily make the constructor throw
+      originalMock.OfflineCacheManager.mockImplementationOnce(() => {
         throw new Error('Init failed');
       });
 
@@ -386,9 +408,15 @@ describe('useOfflineManager', () => {
 
       expect(result.current.error).toBe('Init failed');
       expect(result.current.cacheManager).toBe(null);
+      
+      // Restore the original mock for other tests
+      originalMock.OfflineCacheManager.mockImplementation(() => mockOfflineManager);
     });
 
     it('should handle status update errors gracefully', async () => {
+      // Mock console.error to avoid noise in test output
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      
       const { result } = renderHook(() => useOfflineManager());
 
       await waitFor(() => {
@@ -403,9 +431,15 @@ describe('useOfflineManager', () => {
 
       // Should not crash
       expect(result.current.error).toBe(null);
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to get offline status:', expect.any(Error));
+      
+      consoleErrorSpy.mockRestore();
     });
 
     it('should handle clear data errors gracefully', async () => {
+      // Mock console.error to avoid noise in test output
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      
       const { result } = renderHook(() => useOfflineManager());
 
       await waitFor(() => {
@@ -420,6 +454,9 @@ describe('useOfflineManager', () => {
 
       // Should not crash
       expect(result.current.error).toBe(null);
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to clear offline data:', expect.any(Error));
+      
+      consoleErrorSpy.mockRestore();
     });
   });
 

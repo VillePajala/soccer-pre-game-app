@@ -1,4 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import React from 'react';
 import { useRoster } from '../useRoster';
 
 jest.mock('@/utils/masterRosterManager', () => ({
@@ -8,8 +10,26 @@ jest.mock('@/utils/masterRosterManager', () => ({
   setGoalieStatus: jest.fn(),
 }));
 
-
 const { addPlayer, updatePlayer } = jest.requireMock('@/utils/masterRosterManager');
+
+// Create wrapper for React Query
+const createWrapper = () => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+  
+  // Prepopulate query data to avoid issues
+  queryClient.setQueryData(['masterRoster'], []);
+  
+  return ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>
+      {children}
+    </QueryClientProvider>
+  );
+};
 
 describe('useRoster', () => {
   beforeEach(() => {
@@ -19,8 +39,13 @@ describe('useRoster', () => {
   test('rollback update on error', async () => {
     const player = { id: 'p1', name: 'One', isGoalie: false, jerseyNumber: '', notes: '', receivedFairPlayCard: false };
     updatePlayer.mockRejectedValue(new Error('fail'));
-    const { result } = renderHook(() =>
-      useRoster({ initialPlayers: [player], selectedPlayerIds: [] })
+    
+    // Use state to maintain stable references
+    let hookArgs = { initialPlayers: [player], selectedPlayerIds: [] as string[] };
+    
+    const { result } = renderHook(
+      () => useRoster(hookArgs),
+      { wrapper: createWrapper() }
     );
 
     await act(async () => {
@@ -34,8 +59,13 @@ describe('useRoster', () => {
   test('adds player on success', async () => {
     const newPlayer = { id: 'p2', name: 'Two', isGoalie: false, jerseyNumber: '', notes: '', receivedFairPlayCard: false };
     addPlayer.mockResolvedValue(newPlayer);
-    const { result } = renderHook(() =>
-      useRoster({ initialPlayers: [], selectedPlayerIds: [] })
+    
+    // Use state to maintain stable references
+    let hookArgs = { initialPlayers: [] as typeof newPlayer[], selectedPlayerIds: [] as string[] };
+    
+    const { result } = renderHook(
+      () => useRoster(hookArgs),
+      { wrapper: createWrapper() }
     );
 
     await act(async () => {

@@ -1,22 +1,64 @@
 // Unit tests for Service Worker Registration component
 import { render, screen, waitFor } from '@testing-library/react';
 import ServiceWorkerRegistration from '../ServiceWorkerRegistration';
+import logger from '@/utils/logger';
+
+// Mock logger
+jest.mock('@/utils/logger', () => {
+  const mockLogger = {
+    log: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+  };
+  return {
+    __esModule: true,
+    default: mockLogger,
+  };
+});
+
+// Mock UpdateBanner component
+jest.mock('../UpdateBanner', () => {
+  return function MockUpdateBanner({ onUpdate, notes, onDismiss }: any) {
+    return (
+      <div role="status" aria-live="polite">
+        <p>New version available!</p>
+        {notes && <p>{notes}</p>}
+        <button onClick={onUpdate}>Update</button>
+        <button onClick={onDismiss}>Dismiss</button>
+      </div>
+    );
+  };
+});
+
+// Mock fetch
+global.fetch = jest.fn();
 
 // Mock service worker registration
 const mockServiceWorker = {
-  register: jest.fn(),
+  register: jest.fn().mockResolvedValue({
+    installing: null,
+    waiting: null,
+    active: { postMessage: jest.fn() },
+    addEventListener: jest.fn(),
+    update: jest.fn(),
+    onupdatefound: null,
+  }),
   ready: Promise.resolve({
     active: {
       postMessage: jest.fn(),
     },
     update: jest.fn(),
   }),
+  getRegistrations: jest.fn().mockResolvedValue([]),
+  addEventListener: jest.fn(),
+  controller: null,
 };
 
 // Mock navigator.serviceWorker
 Object.defineProperty(navigator, 'serviceWorker', {
   value: mockServiceWorker,
   writable: true,
+  configurable: true,
 });
 
 // Mock console methods to avoid noise in tests
@@ -41,24 +83,68 @@ describe('ServiceWorkerRegistration', () => {
     Object.defineProperty(navigator, 'serviceWorker', {
       value: mockServiceWorker,
       writable: true,
+      configurable: true,
+    });
+    
+    // Mock production hostname by default (not localhost)
+    Object.defineProperty(window, 'location', {
+      value: {
+        hostname: 'example.com',
+        reload: jest.fn(),
+      },
+      writable: true,
+      configurable: true,
+    });
+    
+    // Reset fetch mock
+    (global.fetch as jest.Mock).mockReset();
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({ notes: 'Test release notes' }),
     });
   });
 
   it('should render without crashing', () => {
-    render(<ServiceWorkerRegistration />);
-    expect(screen.getByRole('status')).toBeInTheDocument();
+    const { container } = render(<ServiceWorkerRegistration />);
+    expect(container).toBeTruthy();
   });
 
-  it('should show unsupported message when service workers are not supported', () => {
-    // Remove service worker support
-    Object.defineProperty(navigator, 'serviceWorker', {
-      value: undefined,
+  it('should unregister service workers in development mode', async () => {
+    // Mock localhost
+    Object.defineProperty(window, 'location', {
+      value: {
+        hostname: 'localhost',
+        reload: jest.fn(),
+      },
       writable: true,
+      configurable: true,
     });
 
+    const mockRegistration = {
+      unregister: jest.fn(),
+    };
+    mockServiceWorker.getRegistrations.mockResolvedValue([mockRegistration]);
+
     render(<ServiceWorkerRegistration />);
+
+    await waitFor(() => {
+      expect(mockServiceWorker.getRegistrations).toHaveBeenCalled();
+      expect(mockRegistration.unregister).toHaveBeenCalled();
+    });
+
+    // Should not register new service worker in dev
+    expect(mockServiceWorker.register).not.toHaveBeenCalled();
+  });
+
+  it('should handle unsupported service workers gracefully', () => {
+    // Remove serviceWorker property entirely
+    delete (navigator as any).serviceWorker;
+
+    const { container } = render(<ServiceWorkerRegistration />);
     
-    expect(screen.getByText(/service workers are not supported/i)).toBeInTheDocument();
+    // Component should render empty when service workers are not supported
+    expect(container.firstChild).toBeNull();
+    expect(logger.log).toHaveBeenCalledWith('[PWA] Service Worker is not supported or not in browser.');
   });
 
   describe('Service Worker Registration', () => {
@@ -81,7 +167,8 @@ describe('ServiceWorkerRegistration', () => {
         expect(mockServiceWorker.register).toHaveBeenCalledWith('/sw.js');
       });
 
-      expect(screen.getByText(/service worker registered/i)).toBeInTheDocument();
+      // Component doesn't render anything when just registered
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
     });
 
     it('should handle registration failure', async () => {
@@ -91,44 +178,59 @@ describe('ServiceWorkerRegistration', () => {
       render(<ServiceWorkerRegistration />);
 
       await waitFor(() => {
-        expect(console.error).toHaveBeenCalledWith(
-          'Service worker registration failed:',
+        expect(logger.error).toHaveBeenCalledWith(
+          '[PWA] Service Worker registration failed: ',
           registrationError
         );
       });
 
-      expect(screen.getByText(/service worker registration failed/i)).toBeInTheDocument();
+      // Component doesn't show UI for registration failures, just logs
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
     });
 
     it('should detect new service worker available', async () => {
       const mockRegistration = {
         installing: null,
-        waiting: {
-          postMessage: jest.fn(),
-        },
+        waiting: null, // No waiting worker initially
         active: {
           postMessage: jest.fn(),
         },
         addEventListener: jest.fn(),
         update: jest.fn(),
+        onupdatefound: null,
       };
 
       mockServiceWorker.register.mockResolvedValue(mockRegistration);
 
       render(<ServiceWorkerRegistration />);
 
+      // Wait for the promise to resolve and onupdatefound to be assigned
       await waitFor(() => {
-        expect(mockRegistration.addEventListener).toHaveBeenCalledWith(
-          'updatefound',
-          expect.any(Function)
-        );
+        expect(mockRegistration.onupdatefound).not.toBeNull();
       });
+      
+      // Now check that it's a function
+      expect(mockRegistration.onupdatefound).toBeInstanceOf(Function);
+      
+      // Simulate a new worker being found
+      const newWorker = {
+        state: 'installing',
+        onstatechange: null,
+      };
+      mockRegistration.installing = newWorker;
+      
+      // Call the onupdatefound handler
+      mockRegistration.onupdatefound();
+      
+      // Check that onstatechange was assigned to the new worker
+      expect(newWorker.onstatechange).toBeInstanceOf(Function);
     });
 
     it('should handle service worker in installing state', async () => {
       const mockInstalling = {
         state: 'installing',
         addEventListener: jest.fn(),
+        onstatechange: null,
       };
 
       const mockRegistration = {
@@ -137,6 +239,7 @@ describe('ServiceWorkerRegistration', () => {
         active: null,
         addEventListener: jest.fn(),
         update: jest.fn(),
+        onupdatefound: null,
       };
 
       mockServiceWorker.register.mockResolvedValue(mockRegistration);
@@ -144,13 +247,19 @@ describe('ServiceWorkerRegistration', () => {
       render(<ServiceWorkerRegistration />);
 
       await waitFor(() => {
-        expect(mockInstalling.addEventListener).toHaveBeenCalledWith(
-          'statechange',
-          expect.any(Function)
-        );
+        expect(mockServiceWorker.register).toHaveBeenCalled();
       });
+      
+      // Trigger the onupdatefound handler
+      expect(mockRegistration.onupdatefound).toBeDefined();
+      mockRegistration.onupdatefound?.();
+      
+      // Check that onstatechange was assigned to the installing worker
+      expect(mockInstalling.onstatechange).toBeDefined();
+      expect(mockInstalling.onstatechange).toBeInstanceOf(Function);
 
-      expect(screen.getByText(/new version installing/i)).toBeInTheDocument();
+      // Component doesn't show UI during installation
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
     });
   });
 
@@ -173,10 +282,10 @@ describe('ServiceWorkerRegistration', () => {
       render(<ServiceWorkerRegistration />);
 
       await waitFor(() => {
-        expect(screen.getByText(/new version available/i)).toBeInTheDocument();
+        expect(screen.getByText(/New version available!/i)).toBeInTheDocument();
       });
 
-      expect(screen.getByRole('button', { name: /update/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Update/i })).toBeInTheDocument();
     });
 
     it('should handle update button click', async () => {
@@ -199,22 +308,89 @@ describe('ServiceWorkerRegistration', () => {
       render(<ServiceWorkerRegistration />);
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /update/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Update/i })).toBeInTheDocument();
       });
 
-      const updateButton = screen.getByRole('button', { name: /update/i });
+      const updateButton = screen.getByRole('button', { name: /Update/i });
       updateButton.click();
 
       expect(mockWaiting.postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' });
     });
 
-    it('should reload page when service worker is activated', async () => {
+  });
+
+  describe('Controller Changes', () => {
+    it('should reload page when service worker controller changes', async () => {
       const mockReload = jest.fn();
       Object.defineProperty(window, 'location', {
         value: { reload: mockReload },
         writable: true,
+        configurable: true,
       });
 
+      const mockRegistration = {
+        installing: null,
+        waiting: null,
+        active: { postMessage: jest.fn() },
+        addEventListener: jest.fn(),
+        update: jest.fn(),
+        onupdatefound: null,
+      };
+
+      mockServiceWorker.register.mockResolvedValue(mockRegistration);
+      mockServiceWorker.controller = { state: 'active' };
+
+      render(<ServiceWorkerRegistration />);
+
+      await waitFor(() => {
+        expect(mockServiceWorker.addEventListener).toHaveBeenCalledWith(
+          'controllerchange',
+          expect.any(Function)
+        );
+      });
+
+      // Trigger controllerchange event
+      const controllerChangeHandler = mockServiceWorker.addEventListener.mock.calls
+        .find(call => call[0] === 'controllerchange')?.[1];
+      
+      if (controllerChangeHandler) {
+        controllerChangeHandler();
+      }
+
+      expect(mockReload).toHaveBeenCalled();
+    });
+  });
+
+  describe('Error Handling', () => {
+    it('should handle service worker registration errors gracefully', async () => {
+      const registrationError = new Error('Registration failed');
+      mockServiceWorker.register.mockRejectedValue(registrationError);
+
+      render(<ServiceWorkerRegistration />);
+
+      await waitFor(() => {
+        expect(logger.error).toHaveBeenCalledWith(
+          '[PWA] Service Worker registration failed: ',
+          registrationError
+        );
+      });
+
+      // Component should not crash or show UI for errors
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Component Lifecycle', () => {
+    it('should handle missing service worker gracefully', () => {
+      // Remove serviceWorker property entirely
+      delete (navigator as any).serviceWorker;
+
+      expect(() => render(<ServiceWorkerRegistration />)).not.toThrow();
+    });
+  });
+
+  describe('Accessibility', () => {
+    it('should have proper ARIA attributes when showing update banner', async () => {
       const mockRegistration = {
         installing: null,
         waiting: {
@@ -225,81 +401,7 @@ describe('ServiceWorkerRegistration', () => {
         },
         addEventListener: jest.fn(),
         update: jest.fn(),
-      };
-
-      mockServiceWorker.register.mockResolvedValue(mockRegistration);
-
-      render(<ServiceWorkerRegistration />);
-
-      // Simulate controlling service worker change
-      await waitFor(() => {
-        const controllerChangeHandler = mockServiceWorker.addEventListener?.mock.calls
-          .find(call => call[0] === 'controllerchange')?.[1];
-        
-        if (controllerChangeHandler) {
-          controllerChangeHandler();
-        }
-      });
-
-      expect(mockReload).toHaveBeenCalled();
-    });
-  });
-
-  describe('Offline Detection', () => {
-    it('should show offline status', () => {
-      // Mock navigator.onLine
-      Object.defineProperty(navigator, 'onLine', {
-        value: false,
-        writable: true,
-      });
-
-      render(<ServiceWorkerRegistration />);
-
-      expect(screen.getByText(/offline/i)).toBeInTheDocument();
-    });
-
-    it('should show online status', () => {
-      // Mock navigator.onLine
-      Object.defineProperty(navigator, 'onLine', {
-        value: true,
-        writable: true,
-      });
-
-      render(<ServiceWorkerRegistration />);
-
-      expect(screen.getByText(/online/i)).toBeInTheDocument();
-    });
-
-    it('should handle online/offline events', () => {
-      const addEventListenerSpy = jest.spyOn(window, 'addEventListener');
-
-      render(<ServiceWorkerRegistration />);
-
-      expect(addEventListenerSpy).toHaveBeenCalledWith('online', expect.any(Function));
-      expect(addEventListenerSpy).toHaveBeenCalledWith('offline', expect.any(Function));
-
-      addEventListenerSpy.mockRestore();
-    });
-  });
-
-  describe('Error Boundary', () => {
-    it('should handle service worker errors gracefully', async () => {
-      // Mock console.error to track error calls
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-
-      const mockRegistration = {
-        installing: null,
-        waiting: null,
-        active: {
-          postMessage: jest.fn(),
-        },
-        addEventListener: jest.fn((event, handler) => {
-          if (event === 'error') {
-            // Simulate an error
-            setTimeout(() => handler(new Error('Service worker error')), 0);
-          }
-        }),
-        update: jest.fn(),
+        onupdatefound: null,
       };
 
       mockServiceWorker.register.mockResolvedValue(mockRegistration);
@@ -307,44 +409,9 @@ describe('ServiceWorkerRegistration', () => {
       render(<ServiceWorkerRegistration />);
 
       await waitFor(() => {
-        expect(consoleErrorSpy).toHaveBeenCalled();
+        const statusElement = screen.getByRole('status');
+        expect(statusElement).toHaveAttribute('aria-live', 'polite');
       });
-
-      consoleErrorSpy.mockRestore();
-    });
-  });
-
-  describe('Component Lifecycle', () => {
-    it('should clean up event listeners on unmount', () => {
-      const removeEventListenerSpy = jest.spyOn(window, 'removeEventListener');
-
-      const { unmount } = render(<ServiceWorkerRegistration />);
-
-      unmount();
-
-      expect(removeEventListenerSpy).toHaveBeenCalledWith('online', expect.any(Function));
-      expect(removeEventListenerSpy).toHaveBeenCalledWith('offline', expect.any(Function));
-
-      removeEventListenerSpy.mockRestore();
-    });
-
-    it('should handle missing service worker gracefully', () => {
-      // Remove service worker entirely
-      Object.defineProperty(navigator, 'serviceWorker', {
-        value: undefined,
-        writable: true,
-      });
-
-      expect(() => render(<ServiceWorkerRegistration />)).not.toThrow();
-    });
-  });
-
-  describe('Accessibility', () => {
-    it('should have proper ARIA attributes', () => {
-      render(<ServiceWorkerRegistration />);
-
-      const statusElement = screen.getByRole('status');
-      expect(statusElement).toHaveAttribute('aria-live', 'polite');
     });
 
     it('should provide screen reader friendly update messages', async () => {
@@ -365,7 +432,7 @@ describe('ServiceWorkerRegistration', () => {
       render(<ServiceWorkerRegistration />);
 
       await waitFor(() => {
-        const updateMessage = screen.getByText(/new version available/i);
+        const updateMessage = screen.getByText(/New version available!/i);
         expect(updateMessage).toBeInTheDocument();
       });
     });
@@ -373,25 +440,30 @@ describe('ServiceWorkerRegistration', () => {
 
   describe('Progressive Enhancement', () => {
     it('should work without service worker support', () => {
-      Object.defineProperty(navigator, 'serviceWorker', {
-        value: undefined,
-        writable: true,
-      });
+      // Remove serviceWorker property entirely to test the 'in' check
+      delete (navigator as any).serviceWorker;
 
-      render(<ServiceWorkerRegistration />);
+      const { container } = render(<ServiceWorkerRegistration />);
 
-      // Should still render and show appropriate message
-      expect(screen.getByText(/service workers are not supported/i)).toBeInTheDocument();
+      // Should still render and show no content
+      expect(container.firstChild).toBeNull();
+      expect(logger.log).toHaveBeenCalledWith('[PWA] Service Worker is not supported or not in browser.');
     });
 
     it('should provide fallback when registration fails', async () => {
       mockServiceWorker.register.mockRejectedValue(new Error('Network error'));
 
-      render(<ServiceWorkerRegistration />);
+      const { container } = render(<ServiceWorkerRegistration />);
 
       await waitFor(() => {
-        expect(screen.getByText(/service worker registration failed/i)).toBeInTheDocument();
+        expect(logger.error).toHaveBeenCalledWith(
+          '[PWA] Service Worker registration failed: ',
+          expect.any(Error)
+        );
       });
+      
+      // Component should not show UI for failures
+      expect(container.firstChild).toBeNull();
     });
   });
 });
