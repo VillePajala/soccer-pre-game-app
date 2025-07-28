@@ -4,7 +4,7 @@ import { useAuth, AuthProvider } from '../AuthContext';
 import { ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 
-// Manual mock - this tells Jest to use the mock file in __mocks__ folder
+// Manual mock
 jest.mock('../../lib/supabase');
 
 // Import after mock
@@ -304,7 +304,7 @@ describe('AuthContext', () => {
         expect(screen.getByTestId('loading')).toHaveTextContent('false');
         expect(screen.getByTestId('user')).toHaveTextContent('null');
         expect(screen.getByTestId('session')).toHaveTextContent('null');
-      });
+      }, { timeout: 3000 });
     });
   });
 

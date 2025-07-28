@@ -17,7 +17,8 @@ const customJestConfig = {
     '^@supabase/supabase-js$': '<rootDir>/src/__mocks__/@supabase/supabase-js.ts',
     '^@supabase/ssr$': '<rootDir>/src/__mocks__/@supabase/ssr.ts',
     '^next/headers$': '<rootDir>/src/__mocks__/next/headers.ts',
-    '^../lib/supabase$': '<rootDir>/src/__mocks__/supabase.ts',
+    '^../lib/supabase$': '<rootDir>/src/__mocks__/lib/supabase.ts',
+    '^../../lib/supabase$': '<rootDir>/src/__mocks__/lib/supabase.ts',
   },
   testPathIgnorePatterns: [
     '/node_modules/',
