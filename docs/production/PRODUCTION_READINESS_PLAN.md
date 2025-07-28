@@ -107,6 +107,14 @@ This comprehensive plan outlines all steps required to transform MatchDay Coach 
 ## 2. Code Quality & Testing
 
 ### 2.1 Testing Infrastructure
+- [ ] **Fix existing broken tests** 🚨 CRITICAL - Must be done first!
+  - [ ] Audit all current test files for failures
+  - [ ] Fix tests broken by Supabase migration
+  - [ ] Update mock implementations for new storage layer
+  - [ ] Remove obsolete tests for deleted features
+  - [ ] Achieve green baseline (100% tests passing)
+  - [ ] Document test fixing progress
+  
 - [ ] **Expand unit test coverage**
   - [ ] Achieve 80% code coverage minimum
   - [ ] Test all utility functions
@@ -610,9 +618,10 @@ This comprehensive plan outlines all steps required to transform MatchDay Coach 
    - [ ] Begin security audit
 
 2. **Week 1 priorities**
+   - [ ] Fix all broken tests to achieve green baseline 🚨 CRITICAL
    - [ ] Complete CI/CD enhancement (from basic fix to full pipeline)
    - [ ] Complete security assessment
-   - [ ] Begin test coverage expansion
+   - [ ] Begin test coverage expansion (only after tests are fixed)
    - [ ] Start performance profiling
    - [ ] Set up Sentry for error tracking
 
