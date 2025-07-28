@@ -16,6 +16,7 @@ import type { TranslationKey } from '@/i18n-types';
 import { useEventManagement } from '@/hooks/useEventManagement';
 import { useInlineEditing } from '@/hooks/useInlineEditing';
 import { useSeasonTournamentManagement } from '@/hooks/useSeasonTournamentManagement';
+import { formatTime } from '@/utils/time';
 
 export type GameEventType = 'goal' | 'opponentGoal' | 'substitution' | 'periodEnd' | 'gameEnd' | 'fairPlayCard';
 
@@ -784,7 +785,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                 {t('gameSettingsModal.eventLogTitle', 'Event Log')}
               </h3>
               <div className="space-y-2">
-                {eventManagement.sortedEvents.map(event => (
+                {eventManagement.localGameEvents.map(event => (
                   <div 
                     key={event.id}
                     className={`p-3 rounded-md border ${
@@ -847,7 +848,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                     ) : (
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                          <span className="text-slate-300">{eventManagement.formatTime(event.time)}</span>
+                          <span className="text-slate-300">{formatTime(event.time)}</span>
                           <span className="text-slate-100">
                             {getEventDescription(event, availablePlayers, t)}
                           </span>
@@ -874,7 +875,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                     )}
                   </div>
                 ))}
-                {eventManagement.sortedEvents.length === 0 && (
+                {eventManagement.localGameEvents.length === 0 && (
                   <div className="text-slate-400 text-center py-4">
                     {t('gameSettingsModal.noGoalsLogged', 'No goals logged yet.')}
                   </div>

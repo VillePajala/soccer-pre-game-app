@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, within, fireEvent, act } from '@testing-library/react';
+import { render, screen, waitFor, within, fireEvent, act } from '@/__tests__/test-utils';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import GameStatsModal from './GameStatsModal';
@@ -7,8 +7,7 @@ import { Player, Season, Tournament } from '@/types';
 import { GameEvent, SavedGamesCollection, AppState } from '@/types';
 import * as seasonsUtils from '@/utils/seasons';
 import * as tournamentsUtils from '@/utils/tournaments';
-import { I18nextProvider } from 'react-i18next';
-import i18n from '../i18n.test';
+import { useTranslation } from 'react-i18next';
 
 // Mock ResizeObserver for headlessui components
 global.ResizeObserver = class ResizeObserver {
@@ -176,9 +175,7 @@ const getDefaultProps = (): TestProps => ({
 const renderComponent = (props: TestProps) => {
   return render(
     <div style={{ width: 800, height: 600 }}>
-      <I18nextProvider i18n={i18n}>
-        <GameStatsModal {...props} />
-      </I18nextProvider>
+      <GameStatsModal {...props} />
     </div>
   );
 };
@@ -187,8 +184,10 @@ describe('GameStatsModal', () => {
   beforeEach(async () => {
     mockGetSeasons.mockResolvedValue(sampleSeasonsData);
     mockGetTournaments.mockResolvedValue(sampleTournamentsData);
-    await i18n.changeLanguage('fi');
   });
+
+  // Helper to get translation function
+  const { t } = useTranslation();
 
   afterEach(() => {
     jest.clearAllMocks();
@@ -200,9 +199,9 @@ describe('GameStatsModal', () => {
       renderComponent(props);
     });
     
-    expect(screen.getByRole('heading', { name: i18n.t('gameStatsModal.titleCurrentGame', 'Ottelutilastot') })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: t('gameStatsModal.titleCurrentGame', 'Ottelutilastot') })).toBeInTheDocument();
     
-    const gameInfoSection = screen.getByRole('heading', { name: i18n.t('gameStatsModal.gameInfoTitle', 'Game Information') });
+    const gameInfoSection = screen.getByRole('heading', { name: t('gameStatsModal.gameInfoTitle', 'Game Information') });
     expect(gameInfoSection).toBeInTheDocument();
 
     const gameInfoContainer = gameInfoSection.parentElement as HTMLElement;
@@ -230,13 +229,13 @@ describe('GameStatsModal', () => {
     await act(async () => {
       renderComponent(getDefaultProps());
     });
-    expect(screen.getByRole('button', { name: i18n.t('gameStatsModal.tabs.currentGame') })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: t('gameStatsModal.tabs.currentGame') })).toBeInTheDocument();
 
-    const playerStatsSection = screen.getByRole('heading', { name: i18n.t('gameStatsModal.playerStatsTitle') });
+    const playerStatsSection = screen.getByRole('heading', { name: t('gameStatsModal.playerStatsTitle') });
     expect(playerStatsSection).toBeInTheDocument();
     const playerStatsContainer = playerStatsSection.closest('div') as HTMLElement;
 
-    expect(within(playerStatsContainer).getByRole('columnheader', { name: i18n.t('common.player') })).toBeInTheDocument();
+    expect(within(playerStatsContainer).getByRole('columnheader', { name: t('common.player') })).toBeInTheDocument();
     expect(within(playerStatsContainer).getByRole('cell', { name: 'Alice' })).toBeInTheDocument();
     expect(within(playerStatsContainer).getByRole('cell', { name: /Bob/ })).toBeInTheDocument();
     
@@ -255,20 +254,20 @@ describe('GameStatsModal', () => {
       renderComponent(getDefaultProps());
     });
 
-    const totalsRow = screen.getByText(i18n.t('playerStats.totalsRow'));
+    const totalsRow = screen.getByText(t('playerStats.totalsRow'));
     const cells = totalsRow.closest('tr')!.querySelectorAll('td');
     expect(cells[1]).toHaveTextContent('3'); // games played total
     expect(cells[2]).toHaveTextContent('2'); // goals total
     expect(cells[3]).toHaveTextContent('1'); // assists total
-    expect(cells[4]).toHaveTextContent('3'); // total score
-    expect(cells[5]).toHaveTextContent('1.0'); // average points
+    expect(cells[4]).toHaveTextContent('5'); // total score (2 goals * 2 pts + 1 assist * 1 pt = 5)
+    expect(cells[5]).toHaveTextContent('1.7'); // average points (5 total points / 3 games played, displayed as toFixed(1))
   });
 
   test('displays game event log correctly', async () => {
     await act(async () => {
       renderComponent(getDefaultProps());
     });
-    const goalLogSection = await screen.findByRole('heading', { name: i18n.t('gameStatsModal.goalLogTitle', 'Goal Log') });
+    const goalLogSection = await screen.findByRole('heading', { name: t('gameStatsModal.goalLogTitle', 'Goal Log') });
     const goalLogContainer = goalLogSection.parentElement as HTMLElement;
 
     // Check for the first goal (Alice from Bob)
@@ -276,7 +275,7 @@ describe('GameStatsModal', () => {
     expect(firstGoalCard).not.toBeNull();
     if (firstGoalCard) {
       expect(within(firstGoalCard as HTMLElement).getByText('Alice')).toBeInTheDocument();
-      expect(within(firstGoalCard as HTMLElement).getByText(new RegExp(i18n.t('common.assist', 'Assist') + '.*Bob'))).toBeInTheDocument();
+      expect(within(firstGoalCard as HTMLElement).getByText(new RegExp(t('common.assist', 'Assist') + '.*Bob'))).toBeInTheDocument();
     }
 
     // Check for the opponent goal
@@ -292,7 +291,7 @@ describe('GameStatsModal', () => {
     if (thirdGoalCard) {
       expect(within(thirdGoalCard as HTMLElement).getByText('Bob')).toBeInTheDocument();
       // Ensure no assister text is present
-      expect(within(thirdGoalCard as HTMLElement).queryByText(new RegExp(i18n.t('common.assist', 'Assist')))).not.toBeInTheDocument();
+      expect(within(thirdGoalCard as HTMLElement).queryByText(new RegExp(t('common.assist', 'Assist')))).not.toBeInTheDocument();
     }
   });
 
@@ -303,18 +302,18 @@ describe('GameStatsModal', () => {
       renderComponent(mockProps);
     });
 
-    const goalLogSection = await screen.findByRole('heading', { name: i18n.t('gameStatsModal.goalLogTitle', 'Goal Log') });
+    const goalLogSection = await screen.findByRole('heading', { name: t('gameStatsModal.goalLogTitle', 'Goal Log') });
     const goalLogContainer = goalLogSection.parentElement as HTMLElement;
     
     const firstGoalCard = within(goalLogContainer).getByText('02:00').closest('div.p-3');
     expect(firstGoalCard).not.toBeNull();
 
     if (firstGoalCard) {
-      const deleteButton = within(firstGoalCard as HTMLElement).getByRole('button', { name: i18n.t('common.delete', 'Delete') });
+      const deleteButton = within(firstGoalCard as HTMLElement).getByRole('button', { name: t('common.delete', 'Delete') });
       fireEvent.click(deleteButton);
     }
 
-    expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining(i18n.t('gameStatsModal.confirmDeleteEvent')));
+    expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining(t('gameStatsModal.confirmDeleteEvent')));
     expect(mockProps.onDeleteGameEvent).toHaveBeenCalledWith('g1');
   });
 
@@ -325,18 +324,18 @@ describe('GameStatsModal', () => {
       renderComponent(mockProps);
     });
 
-    const goalLogSection = await screen.findByRole('heading', { name: i18n.t('gameStatsModal.goalLogTitle', 'Goal Log') });
+    const goalLogSection = await screen.findByRole('heading', { name: t('gameStatsModal.goalLogTitle', 'Goal Log') });
     const goalLogContainer = goalLogSection.parentElement as HTMLElement;
 
     const firstGoalCard = within(goalLogContainer).getByText('02:00').closest('div.p-3');
     expect(firstGoalCard).not.toBeNull();
 
     if (firstGoalCard) {
-      const deleteButton = within(firstGoalCard as HTMLElement).getByRole('button', { name: i18n.t('common.delete', 'Delete') });
+      const deleteButton = within(firstGoalCard as HTMLElement).getByRole('button', { name: t('common.delete', 'Delete') });
       fireEvent.click(deleteButton);
     }
     
-    expect(window.confirm).toHaveBeenCalledWith(i18n.t('gameStatsModal.confirmDeleteEvent'));
+    expect(window.confirm).toHaveBeenCalledWith(t('gameStatsModal.confirmDeleteEvent'));
     expect(mockProps.onDeleteGameEvent).not.toHaveBeenCalled();
   });
 
@@ -346,19 +345,19 @@ describe('GameStatsModal', () => {
       renderComponent(mockProps);
     });
 
-    const goalLogSection = await screen.findByRole('heading', { name: i18n.t('gameStatsModal.goalLogTitle', 'Goal Log') });
+    const goalLogSection = await screen.findByRole('heading', { name: t('gameStatsModal.goalLogTitle', 'Goal Log') });
     const goalLogContainer = goalLogSection.parentElement as HTMLElement;
 
     const firstGoalCard = within(goalLogContainer).getByText('02:00').closest('div.p-3');
     expect(firstGoalCard).not.toBeNull();
 
     if (firstGoalCard) {
-      const editButton = within(firstGoalCard as HTMLElement).getByRole('button', { name: i18n.t('common.edit', 'Edit') });
+      const editButton = within(firstGoalCard as HTMLElement).getByRole('button', { name: t('common.edit', 'Edit') });
       fireEvent.click(editButton);
 
       // Check that edit mode is entered by looking for save/cancel buttons within the same card
-      expect(await within(firstGoalCard as HTMLElement).findByRole('button', { name: i18n.t('common.save', 'Save Changes') })).toBeInTheDocument();
-      expect(within(firstGoalCard as HTMLElement).getByRole('button', { name: i18n.t('common.cancel', 'Cancel') })).toBeInTheDocument();
+      expect(await within(firstGoalCard as HTMLElement).findByRole('button', { name: t('common.save', 'Save Changes') })).toBeInTheDocument();
+      expect(within(firstGoalCard as HTMLElement).getByRole('button', { name: t('common.cancel', 'Cancel') })).toBeInTheDocument();
     }
     
     // onUpdateGameEvent should NOT be called until save is clicked
@@ -372,20 +371,20 @@ describe('GameStatsModal', () => {
     });
 
     // Initial check (Current Game)
-    expect(screen.getByRole('button', { name: i18n.t('gameStatsModal.tabs.currentGame') })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: t('gameStatsModal.tabs.currentGame') })).toBeInTheDocument();
     
     // Switch to Season tab and check for season-specific elements
-    fireEvent.click(screen.getByRole('button', { name: i18n.t('gameStatsModal.tabs.season') }));
+    fireEvent.click(screen.getByRole('button', { name: t('gameStatsModal.tabs.season') }));
     await waitFor(() => {
       expect(screen.getByRole('combobox')).toBeInTheDocument();
-      expect(screen.getByText(i18n.t('gameStatsModal.filterAllSeasons'))).toBeInTheDocument();
+      expect(screen.getByText(t('gameStatsModal.filterAllSeasons'))).toBeInTheDocument();
     });
 
     // Switch to Tournament tab and check for tournament-specific elements
-    fireEvent.click(screen.getByRole('button', { name: i18n.t('gameStatsModal.tabs.tournament') }));
+    fireEvent.click(screen.getByRole('button', { name: t('gameStatsModal.tabs.tournament') }));
     await waitFor(() => {
       expect(screen.getByRole('combobox')).toBeInTheDocument();
-      expect(screen.getByText(i18n.t('gameStatsModal.filterAllTournaments'))).toBeInTheDocument();
+      expect(screen.getByText(t('gameStatsModal.filterAllTournaments'))).toBeInTheDocument();
     });
   });
 
@@ -398,7 +397,7 @@ describe('GameStatsModal', () => {
     });
 
     // Find the delete button for the first goal
-    const deleteButtons = await screen.findAllByRole('button', { name: i18n.t('common.delete', 'Delete') });
+    const deleteButtons = await screen.findAllByRole('button', { name: t('common.delete', 'Delete') });
     fireEvent.click(deleteButtons[0]);
 
     // Check that onDeleteGameEvent was called with the correct goal ID
@@ -411,10 +410,10 @@ describe('GameStatsModal', () => {
       renderComponent(props);
     });
 
-    fireEvent.click(screen.getByRole('button', { name: i18n.t('gameStatsModal.tabs.player', 'Player') }));
+    fireEvent.click(screen.getByRole('button', { name: t('gameStatsModal.tabs.player', 'Player') }));
 
     const user = userEvent.setup();
-    const input = await screen.findByPlaceholderText('Search players...');
+    const input = await screen.findByPlaceholderText(t('playerStats.searchPlaceholder', 'Search players...'));
     await user.type(input, 'Bob');
     const bobOption = await screen.findByRole('option', { name: 'Bob' });
     await user.click(bobOption);
@@ -428,9 +427,9 @@ describe('GameStatsModal', () => {
       renderComponent(props);
     });
 
-    fireEvent.click(screen.getByRole('button', { name: i18n.t('gameStatsModal.tabs.player', 'Player') }));
+    fireEvent.click(screen.getByRole('button', { name: t('gameStatsModal.tabs.player', 'Player') }));
 
-    const input = await screen.findByPlaceholderText('Search players...');
+    const input = await screen.findByPlaceholderText(t('playerStats.searchPlaceholder', 'Search players...'));
     fireEvent.change(input, { target: { value: 'Cha' } });
     fireEvent.keyDown(input, { key: 'Enter' });
 
