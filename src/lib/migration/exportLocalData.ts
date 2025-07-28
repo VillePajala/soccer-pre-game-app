@@ -38,8 +38,6 @@ export interface ValidationResult {
  */
 export async function exportLocalStorageData(): Promise<LocalDataExport> {
   try {
-    console.log('Starting localStorage data export...');
-
     // Fetch all data from localStorage utilities
     const [players, seasons, tournaments, savedGames, appSettings] = await Promise.all([
       getMasterRoster(),
@@ -48,14 +46,6 @@ export async function exportLocalStorageData(): Promise<LocalDataExport> {
       getSavedGames(),
       getAppSettings(),
     ]);
-
-    console.log('Data fetched:', {
-      players: players.length,
-      seasons: seasons.length,
-      tournaments: tournaments.length,
-      games: Object.keys(savedGames).length,
-      hasSettings: Boolean(appSettings),
-    });
 
     const exportData: LocalDataExport = {
       exportVersion: '1.0.0',
@@ -80,10 +70,8 @@ export async function exportLocalStorageData(): Promise<LocalDataExport> {
     // Validate exported data
     validateExportData(exportData);
 
-    console.log('localStorage export completed successfully');
     return exportData;
   } catch (error) {
-    console.error('Error exporting localStorage data:', error);
     throw new Error(`Failed to export localStorage data: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
@@ -138,8 +126,6 @@ export function validateExportData(exportData: LocalDataExport): void {
       throw new Error(`Invalid game ${gameId}: missing gameId or teamName`);
     }
   });
-
-  console.log('Export data validation passed');
 }
 
 /**
@@ -163,10 +149,7 @@ export async function downloadLocalDataExport(): Promise<void> {
     document.body.removeChild(link);
     
     URL.revokeObjectURL(url);
-    
-    console.log('Export file downloaded successfully');
   } catch (error) {
-    console.error('Error downloading export:', error);
     throw error;
   }
 }
@@ -191,8 +174,7 @@ export async function getLocalDataSummary(): Promise<LocalDataExport['stats']> {
       totalGames: Object.keys(savedGames).length,
       hasSettings: Boolean(appSettings),
     };
-  } catch (error) {
-    console.error('Error getting local data summary:', error);
+  } catch {
     return {
       totalPlayers: 0,
       totalSeasons: 0,

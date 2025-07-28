@@ -53,12 +53,9 @@ export class SupabaseProvider implements IStorageProvider {
   }
 
   async savePlayer(player: Player): Promise<Player> {
-    console.log('[SupabaseProvider] savePlayer called with:', player);
     try {
       const userId = await this.getCurrentUserId();
-      console.log('[SupabaseProvider] Current user ID:', userId);
       const supabasePlayer = toSupabase.player(player, userId);
-      console.log('[SupabaseProvider] Transformed player for Supabase:', supabasePlayer);
 
       let result;
       if (player.id) {
@@ -84,10 +81,8 @@ export class SupabaseProvider implements IStorageProvider {
           .single();
 
         if (error) {
-          console.error('[SupabaseProvider] Error inserting player:', error);
           throw new NetworkError('supabase', 'savePlayer', error);
         }
-        console.log('[SupabaseProvider] Player inserted successfully:', data);
         result = data;
       }
 
@@ -170,11 +165,9 @@ export class SupabaseProvider implements IStorageProvider {
   }
 
   async saveSeason(season: Season): Promise<Season> {
-    console.log('[SupabaseProvider] saveSeason called with:', season);
     try {
       const userId = await this.getCurrentUserId();
       const supabaseSeason = toSupabase.season(season, userId);
-      console.log('[SupabaseProvider] Transformed season for Supabase:', supabaseSeason);
 
       let result;
       if (season.id) {
@@ -284,11 +277,9 @@ export class SupabaseProvider implements IStorageProvider {
   }
 
   async saveTournament(tournament: Tournament): Promise<Tournament> {
-    console.log('[SupabaseProvider] saveTournament called with:', tournament);
     try {
       const userId = await this.getCurrentUserId();
       const supabaseTournament = toSupabase.tournament(tournament, userId);
-      console.log('[SupabaseProvider] Transformed tournament for Supabase:', supabaseTournament);
 
       let result;
       if (tournament.id) {
@@ -402,11 +393,9 @@ export class SupabaseProvider implements IStorageProvider {
   }
 
   async saveAppSettings(settings: AppSettings): Promise<AppSettings> {
-    console.log('[SupabaseProvider] saveAppSettings called with:', settings);
     try {
       const userId = await this.getCurrentUserId();
       const supabaseSettings = toSupabase.appSettings(settings, userId);
-      console.log('[SupabaseProvider] Transformed settings for Supabase:', supabaseSettings);
 
       const { data, error } = await supabase
         .from('app_settings')
@@ -415,7 +404,6 @@ export class SupabaseProvider implements IStorageProvider {
         .single();
 
       if (error) {
-        console.error('[SupabaseProvider] Error saving app settings:', error);
         throw new NetworkError('supabase', 'saveAppSettings', error);
       }
 
@@ -447,16 +435,12 @@ export class SupabaseProvider implements IStorageProvider {
       // Convert array to object format expected by the app
       const gamesCollection: Record<string, unknown> = {};
       
-      console.log(`[SupabaseProvider] Found ${gamesData.length} games for user ${userId}`);
-      
       // For now, just transform the basic game data
       // This ensures the app continues to work even if the complex query fails
       for (const game of gamesData) {
         const transformedGame = fromSupabase.game(game);
         gamesCollection[game.id] = transformedGame;
       }
-      
-      console.log('[SupabaseProvider] Games collection keys:', Object.keys(gamesCollection));
       
       // Try to fetch related data separately for each game
       // This is less efficient but more reliable
@@ -481,13 +465,10 @@ export class SupabaseProvider implements IStorageProvider {
                 assisterId: e.assister_id,
                 entityId: e.entity_id
               }));
-              console.log(`Loaded ${events.length} events from game_events table for game ${game.id}`);
             }
-          } else {
-            console.log(`Game ${game.id} already has ${(currentGame.gameEvents as unknown[]).length} events from game_data`);
           }
-        } catch (err) {
-          console.warn(`Failed to fetch events for game ${game.id}:`, err);
+        } catch {
+          // Silently continue if events can't be fetched for a specific game
         }
       }
       
@@ -501,18 +482,14 @@ export class SupabaseProvider implements IStorageProvider {
   }
 
   async saveSavedGame(gameData: unknown): Promise<unknown> {
-    console.log('[SupabaseProvider] saveSavedGame called with:', gameData);
     try {
       const userId = await this.getCurrentUserId();
       const supabaseGame = toSupabase.game(gameData, userId) as Record<string, unknown> & { id?: string };
-      console.log('[SupabaseProvider] Transformed game for Supabase:', supabaseGame);
-      console.log('[SupabaseProvider] Game has ID:', !!supabaseGame.id);
 
       let result;
       
       // If game has no ID, do an insert (not upsert)
       if (!supabaseGame.id) {
-        console.log('[SupabaseProvider] Inserting new game (no ID)');
         const { data, error } = await supabase
           .from('games')
           .insert(supabaseGame)
@@ -520,13 +497,10 @@ export class SupabaseProvider implements IStorageProvider {
           .single();
           
         if (error) {
-          console.error('[SupabaseProvider] Error inserting game:', error);
-          console.error('[SupabaseProvider] Game data that failed:', JSON.stringify(supabaseGame, null, 2));
           throw new NetworkError('supabase', 'saveSavedGame', error);
         }
         result = data;
       } else {
-        console.log('[SupabaseProvider] Upserting game with ID:', supabaseGame.id);
         const { data, error } = await supabase
           .from('games')
           .upsert(supabaseGame, { onConflict: 'id' })
@@ -534,17 +508,13 @@ export class SupabaseProvider implements IStorageProvider {
           .single();
           
         if (error) {
-          console.error('[SupabaseProvider] Error upserting game:', error);
-          console.error('[SupabaseProvider] Game data that failed:', JSON.stringify(supabaseGame, null, 2));
           throw new NetworkError('supabase', 'saveSavedGame', error);
         }
         result = data;
       }
 
-      console.log('[SupabaseProvider] Game saved successfully:', (result as Record<string, unknown>).id);
       return fromSupabase.game(result);
     } catch (error) {
-      console.error('[SupabaseProvider] saveSavedGame error:', error);
       if (error instanceof AuthenticationError || error instanceof NetworkError) {
         throw error;
       }

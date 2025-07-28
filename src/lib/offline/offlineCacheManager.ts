@@ -43,13 +43,11 @@ export class OfflineCacheManager implements IStorageProvider {
 
   private handleOnline(): void {
     this.isOnlineCache = true;
-    console.log('[OfflineCache] Back online - starting sync');
     this.processSyncQueue();
   }
 
   private handleOffline(): void {
     this.isOnlineCache = false;
-    console.log('[OfflineCache] Gone offline - switching to cache-first mode');
   }
 
   /**
@@ -92,14 +90,13 @@ export class OfflineCacheManager implements IStorageProvider {
         await this.cache.set(cacheKey, players, { ttl: 30 * 60 * 1000 }); // 30 minutes
         return players;
       }
-    } catch (error) {
-      console.warn('[OfflineCache] Failed to fetch players from primary provider:', error);
+    } catch {
+      // Failed to fetch players from primary provider
     }
 
     // Fallback to cache
     const cachedPlayers = await this.cache.get<Player[]>(cacheKey);
     if (cachedPlayers) {
-      console.log('[OfflineCache] Returning cached players');
       return cachedPlayers;
     }
 
@@ -122,8 +119,8 @@ export class OfflineCacheManager implements IStorageProvider {
         
         return savedPlayer;
       }
-    } catch (error) {
-      console.warn('[OfflineCache] Failed to save player to primary provider:', error);
+    } catch {
+      // Failed to save player to primary provider
     }
 
     // Queue for sync
@@ -152,8 +149,8 @@ export class OfflineCacheManager implements IStorageProvider {
         
         return;
       }
-    } catch (error) {
-      console.warn('[OfflineCache] Failed to delete player from primary provider:', error);
+    } catch {
+      // Failed to delete player from primary provider
     }
 
     // Queue for sync
@@ -182,8 +179,8 @@ export class OfflineCacheManager implements IStorageProvider {
         
         return updatedPlayer;
       }
-    } catch (error) {
-      console.warn('[OfflineCache] Failed to update player in primary provider:', error);
+    } catch {
+      // Failed to update player in primary provider
     }
 
     // Queue for sync
@@ -274,13 +271,12 @@ export class OfflineCacheManager implements IStorageProvider {
         await this.cache.set(cacheKey, data, { ttl: 30 * 60 * 1000 });
         return data;
       }
-    } catch (error) {
-      console.warn(`[OfflineCache] Failed to fetch ${key} from primary provider:`, error);
+    } catch {
+      // Failed to fetch from primary provider
     }
 
     const cachedData = await this.cache.get<T>(cacheKey);
     if (cachedData) {
-      console.log(`[OfflineCache] Returning cached ${key}`);
       return cachedData;
     }
 
@@ -294,8 +290,8 @@ export class OfflineCacheManager implements IStorageProvider {
         // Update cache would go here
         return savedItem;
       }
-    } catch (error) {
-      console.warn(`[OfflineCache] Failed to save ${key} to primary provider:`, error);
+    } catch {
+      // Failed to save to primary provider
     }
 
     await this.queueForSync('create', key as SyncQueueItem['table'], item);
@@ -308,8 +304,8 @@ export class OfflineCacheManager implements IStorageProvider {
         await deleteFn();
         return;
       }
-    } catch (error) {
-      console.warn(`[OfflineCache] Failed to delete ${key} from primary provider:`, error);
+    } catch {
+      // Failed to delete from primary provider
     }
 
     await this.queueForSync('delete', key as SyncQueueItem['table'], { id });
@@ -320,8 +316,8 @@ export class OfflineCacheManager implements IStorageProvider {
       if (this.isOnlineCache) {
         return await updateFn(id, updates);
       }
-    } catch (error) {
-      console.warn(`[OfflineCache] Failed to update ${key} in primary provider:`, error);
+    } catch {
+      // Failed to update in primary provider
     }
 
     await this.queueForSync('update', key as SyncQueueItem['table'], { id, ...updates });
@@ -346,7 +342,6 @@ export class OfflineCacheManager implements IStorageProvider {
     };
 
     await syncCache.set(queueItem.id, queueItem);
-    console.log(`[OfflineCache] Queued ${operation} operation for ${table}`);
   }
 
   /**
@@ -355,7 +350,6 @@ export class OfflineCacheManager implements IStorageProvider {
   private async processSyncQueue(): Promise<void> {
     try {
       const queueKeys = await syncCache.getAllKeys();
-      console.log(`[OfflineCache] Processing ${queueKeys.length} queued operations`);
 
       for (const key of queueKeys) {
         const queueItem = await syncCache.get<SyncQueueItem>(key);
@@ -364,31 +358,29 @@ export class OfflineCacheManager implements IStorageProvider {
         try {
           await this.processSyncItem(queueItem);
           await syncCache.delete(key);
-          console.log(`[OfflineCache] Successfully synced ${queueItem.operation} ${queueItem.table}`);
         } catch (error) {
           queueItem.retryCount++;
           queueItem.lastError = error instanceof Error ? error.message : 'Unknown error';
           
           if (queueItem.retryCount >= 3) {
-            console.error(`[OfflineCache] Failed to sync after 3 attempts:`, queueItem);
             await syncCache.delete(key);
           } else {
             await syncCache.set(key, queueItem);
           }
         }
       }
-    } catch (error) {
-      console.error('[OfflineCache] Error processing sync queue:', error);
+    } catch {
+      // Error processing sync queue
     }
   }
 
   /**
    * Process individual sync queue item
    */
-  private async processSyncItem(item: SyncQueueItem): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private async processSyncItem(_item: SyncQueueItem): Promise<void> {
     // This would implement the actual sync logic based on operation type
     // For now, just a placeholder
-    console.log(`[OfflineCache] Would sync: ${item.operation} ${item.table}`, item.data);
   }
 
   /**

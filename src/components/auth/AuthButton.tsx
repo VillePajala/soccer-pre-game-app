@@ -33,11 +33,9 @@ export function AuthButton({ className = '', iconSize = 'w-5 h-5' }: AuthButtonP
   }, [showUserMenu]);
 
   const handleAuthClick = () => {
-    console.log('[AuthButton] Clicked, user:', user);
     if (user) {
       setShowUserMenu(!showUserMenu);
     } else {
-      console.log('[AuthButton] Opening auth modal');
       setShowAuthModal(true);
     }
   };

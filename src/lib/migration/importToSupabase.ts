@@ -49,8 +49,6 @@ export async function importDataToSupabase(
   };
 
   try {
-    console.log('Starting Supabase data import for user:', userId);
-
     // Update migration status to started
     await updateMigrationStatus(userId, {
       migrationStarted: true,
@@ -92,7 +90,6 @@ export async function importDataToSupabase(
       } catch (error) {
         const errorMsg = `Failed to import player ${player.name}: ${error instanceof Error ? error.message : 'Unknown error'}`;
         result.errors.push(errorMsg);
-        console.error(errorMsg);
       }
     }
 
@@ -123,7 +120,6 @@ export async function importDataToSupabase(
       } catch (error) {
         const errorMsg = `Failed to import season ${season.name}: ${error instanceof Error ? error.message : 'Unknown error'}`;
         result.errors.push(errorMsg);
-        console.error(errorMsg);
       }
     }
 
@@ -154,7 +150,6 @@ export async function importDataToSupabase(
       } catch (error) {
         const errorMsg = `Failed to import tournament ${tournament.name}: ${error instanceof Error ? error.message : 'Unknown error'}`;
         result.errors.push(errorMsg);
-        console.error(errorMsg);
       }
     }
 
@@ -186,7 +181,6 @@ export async function importDataToSupabase(
       } catch (error) {
         const errorMsg = `Failed to import game ${gameId}: ${error instanceof Error ? error.message : 'Unknown error'}`;
         result.errors.push(errorMsg);
-        console.error(errorMsg);
       }
     }
 
@@ -214,7 +208,6 @@ export async function importDataToSupabase(
       } catch (error) {
         const errorMsg = `Failed to import app settings: ${error instanceof Error ? error.message : 'Unknown error'}`;
         result.errors.push(errorMsg);
-        console.error(errorMsg);
       }
     }
 
@@ -236,7 +229,6 @@ export async function importDataToSupabase(
       errors: result.errors,
     });
 
-    console.log('Import completed:', result);
     return result;
 
   } catch (error) {
@@ -249,7 +241,6 @@ export async function importDataToSupabase(
       errorMessage: errorMsg,
     });
 
-    console.error('Import failed:', error);
     return result;
   }
 }
@@ -336,8 +327,6 @@ async function importAppSettings(settings: any, userId: string): Promise<void> {
  */
 export async function rollbackMigration(userId: string): Promise<void> {
   try {
-    console.log('Rolling back migration for user:', userId);
-
     // Delete in reverse order to respect foreign key constraints
     const tables = ['games', 'app_settings', 'tournaments', 'seasons', 'players'];
     
@@ -348,7 +337,6 @@ export async function rollbackMigration(userId: string): Promise<void> {
         .eq('user_id', userId);
 
       if (error) {
-        console.error(`Error deleting from ${table}:`, error);
         throw error;
       }
     }
@@ -360,10 +348,7 @@ export async function rollbackMigration(userId: string): Promise<void> {
       migrationProgress: 0,
       errorMessage: null,
     });
-
-    console.log('Migration rollback completed');
   } catch (error) {
-    console.error('Rollback failed:', error);
     throw error;
   }
 }

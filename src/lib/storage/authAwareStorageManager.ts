@@ -25,13 +25,6 @@ export class AuthAwareStorageManager extends StorageManager {
   updateAuthState(isAuthenticated: boolean, userId: string | null = null): void {
     const previousAuth = this.authState.isAuthenticated;
     this.authState = { isAuthenticated, userId };
-    
-    console.log('[AuthAwareStorageManager] Auth state updated:', {
-      isAuthenticated,
-      userId,
-      previousAuth,
-      willReconfigure: previousAuth !== isAuthenticated
-    });
 
     // Only reconfigure if auth state actually changed
     if (previousAuth !== isAuthenticated) {
@@ -70,12 +63,6 @@ export class AuthAwareStorageManager extends StorageManager {
       // Keep fallback enabled when using Supabase
       fallbackToLocalStorage: recommendedProvider === 'supabase' ? baseConfig.fallbackToLocalStorage : false,
     };
-    
-    console.log('[AuthAwareStorageManager] Reconfiguring storage:', {
-      recommendedProvider,
-      currentAuth: this.authState,
-      newConfig
-    });
 
     this.setConfig(newConfig);
   }

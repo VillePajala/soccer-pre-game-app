@@ -20,13 +20,10 @@ const API_ROUTES = [
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing enhanced service worker...');
-  
   event.waitUntil(
     Promise.all([
       // Cache static assets
       caches.open(STATIC_CACHE).then((cache) => {
-        console.log('[SW] Caching static assets');
         return cache.addAll(STATIC_ASSETS);
       }),
       // Skip waiting to activate immediately
@@ -37,8 +34,6 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activating enhanced service worker...');
-  
   event.waitUntil(
     Promise.all([
       // Clean up old caches
@@ -51,7 +46,6 @@ self.addEventListener('activate', (event) => {
                      cacheName !== CACHE_NAME;
             })
             .map((cacheName) => {
-              console.log('[SW] Deleting old cache:', cacheName);
               return caches.delete(cacheName);
             })
         );
@@ -86,8 +80,6 @@ self.addEventListener('fetch', (event) => {
 
 // Background sync for offline operations
 self.addEventListener('sync', (event) => {
-  console.log('[SW] Background sync triggered:', event.tag);
-  
   if (event.tag === 'data-sync') {
     event.waitUntil(syncOfflineData());
   }
@@ -95,7 +87,6 @@ self.addEventListener('sync', (event) => {
 
 // Push notifications (for future use)
 self.addEventListener('push', () => {
-  console.log('[SW] Push notification received');
   // Handle push notifications
 });
 
@@ -124,11 +115,9 @@ async function cacheFirst(request, cacheName) {
     const cachedResponse = await cache.match(request);
     
     if (cachedResponse) {
-      console.log('[SW] Cache hit:', request.url);
       return cachedResponse;
     }
     
-    console.log('[SW] Cache miss, fetching:', request.url);
     const networkResponse = await fetch(request);
     
     if (networkResponse.ok) {
@@ -138,14 +127,12 @@ async function cacheFirst(request, cacheName) {
     
     return networkResponse;
   } catch (error) {
-    console.error('[SW] Cache first strategy failed:', error);
     throw error;
   }
 }
 
 async function networkFirst(request, cacheName) {
   try {
-    console.log('[SW] Network first:', request.url);
     const networkResponse = await fetch(request);
     
     if (networkResponse.ok) {
@@ -156,13 +143,10 @@ async function networkFirst(request, cacheName) {
     
     return networkResponse;
   } catch (error) {
-    console.warn('[SW] Network failed, trying cache:', error.message);
-    
     const cache = await caches.open(cacheName);
     const cachedResponse = await cache.match(request);
     
     if (cachedResponse) {
-      console.log('[SW] Cache hit after network failure:', request.url);
       return cachedResponse;
     }
     
@@ -210,7 +194,6 @@ function createOfflineResponse() {
 
 async function syncOfflineData() {
   try {
-    console.log('[SW] Syncing offline data...');
     // This would integrate with the IndexedDB sync queue
     // For now, just a placeholder
     
@@ -222,7 +205,6 @@ async function syncOfflineData() {
     
     return Promise.resolve();
   } catch (error) {
-    console.error('[SW] Sync failed:', error);
     throw error;
   }
 }
@@ -233,23 +215,21 @@ self.addEventListener('message', (event) => {
   
   switch (type) {
     case 'SKIP_WAITING':
-      console.log('[SW] Received SKIP_WAITING message');
       self.skipWaiting();
       break;
       
     case 'SYNC_DATA':
-      console.log('[SW] Manual sync requested');
       syncOfflineData();
       break;
       
     case 'CLEAR_CACHE':
-      console.log('[SW] Cache clear requested');
       caches.keys().then(cacheNames => {
         return Promise.all(cacheNames.map(cacheName => caches.delete(cacheName)));
       });
       break;
       
     default:
-      console.log('[SW] Unknown message type:', type);
+      // Unknown message type
+      break;
   }
 });

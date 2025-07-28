@@ -14,12 +14,6 @@ export function useAuthStorage() {
 
   useEffect(() => {
     // Always sync auth state, even during loading
-    console.log('[useAuthStorage] Auth state sync:', { 
-      userEmail: user?.email, 
-      userId: user?.id, 
-      isAuthenticated: !!user,
-      loading 
-    });
     
     // Get the base manager (might be wrapped in offline cache)
     let manager = authAwareStorageManager;
@@ -32,16 +26,8 @@ export function useAuthStorage() {
     
     // Update auth state if it's an AuthAwareStorageManager
     if (manager instanceof AuthAwareStorageManager) {
-      const currentAuthState = manager.getAuthState();
-      console.log('[useAuthStorage] Current auth state in manager:', currentAuthState);
-      console.log('[useAuthStorage] Updating auth state to:', { isAuthenticated: !!user, userId: user?.id || null });
-      
       // Force update even if loading
       manager.updateAuthState(!!user, user?.id || null);
-      
-      // Log the new state
-      const newAuthState = manager.getAuthState();
-      console.log('[useAuthStorage] New auth state in manager:', newAuthState);
     }
     
     // Also update offline cache manager with user ID if applicable
