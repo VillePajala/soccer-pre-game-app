@@ -357,16 +357,21 @@ export class SessionManager {
     if (!this.deviceFingerprint) return;
 
     try {
-      // Get user's known devices from app_settings or a dedicated table
-      const { data: settings } = await supabase
+      // Get user's settings from app_settings table
+      const { data: settings, error } = await supabase
         .from('app_settings')
-        .select('*')
+        .select('settings')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle(); // Use maybeSingle instead of single to handle no records
 
-      // In a full implementation, we'd have a dedicated devices table
-      // For now, we'll use a simple check
-      const knownDevices = settings?.known_devices || [];
+      if (error) {
+        logger.error('Error querying app_settings:', error);
+        return;
+      }
+
+      // Extract known devices from the settings JSONB column
+      const settingsJson = settings?.settings || {};
+      const knownDevices = settingsJson.known_devices || [];
       const isKnownDevice = knownDevices.includes(this.deviceFingerprint);
 
       if (!isKnownDevice) {
@@ -378,13 +383,18 @@ export class SessionManager {
           action: 'verify'
         });
 
-        // Add device to known devices
+        // Add device to known devices in the settings JSONB column
         const updatedDevices = [...knownDevices, this.deviceFingerprint];
+        const updatedSettings = {
+          ...settingsJson,
+          known_devices: updatedDevices
+        };
+
         await supabase
           .from('app_settings')
           .upsert({
             user_id: user.id,
-            known_devices: updatedDevices
+            settings: updatedSettings
           });
       }
     } catch (error) {
