@@ -163,4 +163,4 @@ const GameInfoBar: React.FC<GameInfoBarProps> = ({
   );
 };
 
-export default GameInfoBar; 
+export default React.memo(GameInfoBar); 

@@ -76,4 +76,4 @@ const SparklineChart: React.FC<SparklineChartProps> = ({ data, goalsLabel, assis
   );
 };
 
-export default SparklineChart; 
+export default React.memo(SparklineChart); 

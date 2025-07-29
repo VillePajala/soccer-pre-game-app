@@ -24,4 +24,4 @@ const RatingBar: React.FC<RatingBarProps> = ({ value, max = 10 }) => {
   );
 };
 
-export default RatingBar;
+export default React.memo(RatingBar);

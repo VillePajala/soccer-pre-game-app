@@ -57,4 +57,4 @@ const MetricAreaChart: React.FC<MetricAreaChartProps> = ({ data, label }) => {
   );
 };
 
-export default MetricAreaChart;
+export default React.memo(MetricAreaChart);

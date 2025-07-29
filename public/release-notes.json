@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "feat: implement lazy loading for modal components to improve performance"
+  "notes": "perf: remove date-fns dependency and use native Date API"
 }

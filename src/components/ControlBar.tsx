@@ -381,4 +381,4 @@ const ControlBar: React.FC<ControlBarProps> = ({
   );
 };
 
-export default ControlBar;
+export default React.memo(ControlBar);

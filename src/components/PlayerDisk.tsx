@@ -172,4 +172,4 @@ const PlayerDisk: React.FC<PlayerDiskProps> = ({
   );
 };
 
-export default PlayerDisk;
+export default React.memo(PlayerDisk);

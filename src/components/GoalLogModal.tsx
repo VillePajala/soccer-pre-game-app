@@ -166,4 +166,4 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
   );
 };
 
-export default GoalLogModal;
+export default React.memo(GoalLogModal);
