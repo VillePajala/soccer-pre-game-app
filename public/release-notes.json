@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "style: enhance StartScreen tagline with background and padding"
+  "notes": "feat: add email confirmation page and enhance authentication flow"
 }
