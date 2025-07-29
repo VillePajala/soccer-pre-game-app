@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaEdit, FaTrashAlt } from 'react-icons/fa';
 import { HiPlusCircle } from 'react-icons/hi2';
@@ -16,6 +16,7 @@ import type { TranslationKey } from '@/i18n-types';
 import { useEventManagement } from '@/hooks/useEventManagement';
 import { useInlineEditing } from '@/hooks/useInlineEditing';
 import { useSeasonTournamentManagement } from '@/hooks/useSeasonTournamentManagement';
+import { useModalStability } from '@/hooks/useModalStability';
 import { formatTime } from '@/utils/time';
 
 export type GameEventType = 'goal' | 'opponentGoal' | 'substitution' | 'periodEnd' | 'gameEnd' | 'fairPlayCard';
@@ -158,6 +159,18 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
 }) => {
   // logger.log('[GameSettingsModal Render] Props received:', { seasonId, tournamentId, currentGameId });
   const { t } = useTranslation();
+
+  // Refs for modal stability
+  const teamInputRef = useRef<HTMLInputElement>(null);
+  const opponentInputRef = useRef<HTMLInputElement>(null);
+
+  // Use modal stability hook for better focus management
+  const { getStableInputProps } = useModalStability({
+    isOpen,
+    primaryInputRef: teamInputRef,
+    delayMs: 200,
+    preventRepeatedFocus: true,
+  });
 
   // Use custom hooks for complex state management
   const eventManagement = useEventManagement({
@@ -333,6 +346,9 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
               teamPlaceholder={t('gameSettingsModal.teamNamePlaceholder', 'Enter team name')}
               opponentLabel={t('gameSettingsModal.opponentName', 'Opponent Name') + ' *'}
               opponentPlaceholder={t('gameSettingsModal.opponentNamePlaceholder', 'Enter opponent name')}
+              teamInputRef={teamInputRef}
+              opponentInputRef={opponentInputRef}
+              stableInputProps={getStableInputProps()}
             />
           </div>
 

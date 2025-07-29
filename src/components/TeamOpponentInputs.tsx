@@ -15,6 +15,10 @@ export interface TeamOpponentInputsProps {
   opponentInputRef?: React.Ref<HTMLInputElement>;
   onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>;
   disabled?: boolean;
+  stableInputProps?: {
+    onFocus?: React.FocusEventHandler<HTMLInputElement>;
+    onMouseDown?: React.MouseEventHandler<HTMLInputElement>;
+  };
 }
 
 const TeamOpponentInputs: React.FC<TeamOpponentInputsProps> = ({
@@ -30,6 +34,7 @@ const TeamOpponentInputs: React.FC<TeamOpponentInputsProps> = ({
   opponentInputRef,
   onKeyDown,
   disabled,
+  stableInputProps,
 }) => {
   return (
     <>
@@ -47,6 +52,7 @@ const TeamOpponentInputs: React.FC<TeamOpponentInputsProps> = ({
           className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
           onKeyDown={onKeyDown}
           disabled={disabled}
+          {...stableInputProps}
         />
       </div>
       <div className="mb-4">
@@ -63,6 +69,7 @@ const TeamOpponentInputs: React.FC<TeamOpponentInputsProps> = ({
           className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
           onKeyDown={onKeyDown}
           disabled={disabled}
+          {...stableInputProps}
         />
       </div>
     </>
