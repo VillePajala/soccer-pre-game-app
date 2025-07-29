@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { PasswordStrengthMeter } from './PasswordStrengthMeter';
 import { validatePassword } from '../../lib/security/passwordValidation';
@@ -20,6 +20,35 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
   const [message, setMessage] = useState<string | null>(null);
 
   const { signIn, signUp, resetPassword } = useAuth();
+
+  // Handle viewport height changes for mobile keyboard
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // Set CSS custom property for viewport height
+    const setVH = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+
+    // Set initial vh
+    setVH();
+
+    // Update vh on resize (keyboard show/hide)
+    const handleResize = () => {
+      setVH();
+    };
+
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+
+    // Clean up
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+      document.documentElement.style.removeProperty('--vh');
+    };
+  }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,11 +126,26 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
     resetForm();
   };
 
+  // Handle input focus to ensure visibility on mobile
+  const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    // Small delay to allow keyboard to appear
+    setTimeout(() => {
+      e.target.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center',
+        inline: 'nearest'
+      });
+    }, 300);
+  };
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-[100] p-4 pt-8 pb-4 overflow-y-auto"
+      style={{ height: 'calc(var(--vh, 1vh) * 100)' }}
+    >
+      <div className="bg-white rounded-lg p-6 w-full max-w-md my-auto min-h-fit shadow-2xl">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">
             {mode === 'signin' && 'Sign In'}
@@ -127,6 +171,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onFocus={handleInputFocus}
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter your email"
@@ -143,6 +188,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
                 id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onFocus={handleInputFocus}
                 required
                 minLength={mode === 'signup' ? 8 : 6}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"

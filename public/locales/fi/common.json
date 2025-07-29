@@ -671,5 +671,12 @@
     "signOut": "Kirjaudu ulos",
     "userMenu": "Käyttäjävalikko",
     "loginSuccess": "Kirjautuminen onnistui!"
+  },
+  "sidebarCategories": {
+    "gameManagement": "Pelin hallinta",
+    "setupConfiguration": "Asetukset ja kokoonpano",
+    "analysisTools": "Analyysi ja työkalut",
+    "resources": "Resurssit",
+    "settings": "Asetukset"
   }
 }
