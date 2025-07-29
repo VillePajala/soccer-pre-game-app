@@ -300,6 +300,12 @@ export class SessionManager {
    * Generate device fingerprint
    */
   private initializeDeviceFingerprint(): void {
+    // Skip if not in browser environment
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+      this.deviceFingerprint = 'server-side-fallback';
+      return;
+    }
+    
     // Check if fingerprint already exists
     let fingerprint = localStorage.getItem(SESSION_CONFIG.DEVICE_FINGERPRINT_KEY);
     
@@ -336,7 +342,9 @@ export class SessionManager {
         timestamp: Date.now()
       }));
       
-      localStorage.setItem(SESSION_CONFIG.DEVICE_FINGERPRINT_KEY, fingerprint);
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(SESSION_CONFIG.DEVICE_FINGERPRINT_KEY, fingerprint);
+      }
     }
     
     this.deviceFingerprint = fingerprint;
@@ -406,6 +414,7 @@ export class SessionManager {
    */
   private async recordSessionActivity(): Promise<void> {
     if (!this.currentUser || !this.deviceFingerprint) return;
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
 
     const activity: SessionActivity = {
       lastActivity: Date.now(),
@@ -423,6 +432,7 @@ export class SessionManager {
    */
   private updateSessionActivity(timestamp: number): void {
     if (!this.currentUser) return;
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
 
     const activity = this.getSessionActivity();
     if (activity) {
@@ -436,6 +446,7 @@ export class SessionManager {
    */
   private getSessionActivity(): SessionActivity | null {
     if (!this.currentUser) return null;
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') return null;
 
     try {
       const stored = localStorage.getItem(`session_activity_${this.currentUser.id}`);
@@ -450,6 +461,7 @@ export class SessionManager {
    */
   private clearSessionActivity(): void {
     if (!this.currentUser) return;
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
     localStorage.removeItem(`session_activity_${this.currentUser.id}`);
   }
 
@@ -457,6 +469,11 @@ export class SessionManager {
    * Setup visibility change handler to track user activity
    */
   private setupVisibilityChangeHandler(): void {
+    // Skip if not in browser environment
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return;
+    }
+    
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {
         this.recordActivity();
@@ -475,6 +492,11 @@ export class SessionManager {
    * Setup storage event handler for cross-tab session management
    */
   private setupStorageEventHandler(): void {
+    // Skip if not in browser environment
+    if (typeof window === 'undefined') {
+      return;
+    }
+    
     window.addEventListener('storage', (event) => {
       if (event.key && event.key.startsWith('session_activity_')) {
         // Another tab updated session activity
