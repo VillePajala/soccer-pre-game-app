@@ -30,6 +30,7 @@ import {
     // HiOutlineXCircle, // REMOVE unused
     // HiOutlineRectangleGroup, // REMOVE unused
     HiOutlineTrophy,
+    HiOutlineArrowRightOnRectangle, // For Sign Out
 } from 'react-icons/hi2'; // Using hi2 for Heroicons v2 Outline
 // REMOVE FaClock, FaUsers, FaCog (FaFutbol remains)
 import { FaFutbol } from 'react-icons/fa';
@@ -69,6 +70,7 @@ interface ControlBarProps {
   onToggleInstructionsModal: () => void;
   onOpenSettingsModal: () => void;
   onOpenPlayerAssessmentModal: () => void;
+  onSignOut?: () => void;
 }
 
 const ControlBar: React.FC<ControlBarProps> = ({
@@ -100,6 +102,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   onToggleInstructionsModal,
   onOpenSettingsModal,
   onOpenPlayerAssessmentModal,
+  onSignOut,
 }) => {
   const { t } = useTranslation(); // Standard hook
   logger.log('[ControlBar Render] Received highlightRosterButton prop:', highlightRosterButton); // <<< Log prop value
@@ -367,6 +370,24 @@ const ControlBar: React.FC<ControlBarProps> = ({
                          <HiOutlineCog6Tooth className={menuIconSize} /> {t('controlBar.appSettings', 'App Settings')}
                        </button>
                      </div>
+
+                     {/* Group 6: Account (if authenticated) */}
+                     {onSignOut && (
+                       <>
+                         <hr className="border-slate-600/40 my-1 mx-2" />
+                         <div className="py-0.5">
+                           <button 
+                             onClick={wrapHandler(() => {
+                               onSignOut();
+                               setIsSettingsMenuOpen(false);
+                             })} 
+                             className="w-full flex items-center px-3 py-1.5 text-sm text-red-300 hover:bg-red-600/20"
+                           >
+                             <HiOutlineArrowRightOnRectangle className={`${menuIconSize} rotate-180`} /> {t('auth.signOut')}
+                           </button>
+                         </div>
+                       </>
+                     )}
 
                      </nav>
                    </div>{/* End Main Menu View */}
