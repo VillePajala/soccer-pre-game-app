@@ -47,6 +47,23 @@ const nextConfig: NextConfig = {
               "form-action 'self'",
               "frame-ancestors 'none'"
             ].join('; ')
+          },
+          // CORS and additional security headers
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=(), usb=()'
+          },
+          {
+            key: 'Cross-Origin-Embedder-Policy',
+            value: 'unsafe-none'
+          },
+          {
+            key: 'Cross-Origin-Opener-Policy',
+            value: 'same-origin'
+          },
+          {
+            key: 'Cross-Origin-Resource-Policy',
+            value: 'same-origin'
           }
         ]
       }
