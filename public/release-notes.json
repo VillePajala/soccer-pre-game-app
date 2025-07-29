@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "perf: remove date-fns dependency and use native Date API"
+  "notes": "fix: resolve all failing unit tests and achieve green test suite"
 }
