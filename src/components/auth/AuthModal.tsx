@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { PasswordStrengthMeter } from './PasswordStrengthMeter';
+import { validatePassword } from '../../lib/security/passwordValidation';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -25,26 +27,53 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
     setError(null);
     setMessage(null);
 
+    // Client-side password validation for signup
+    if (mode === 'signup') {
+      const passwordValidation = validatePassword(password);
+      if (!passwordValidation.isValid) {
+        setError(passwordValidation.error || 'Password does not meet requirements');
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
       if (mode === 'signin') {
-        const { error } = await signIn(email, password);
+        const { error, rateLimited, retryAfter, progressiveDelay } = await signIn(email, password);
         if (error) {
-          setError(error.message);
+          if (rateLimited) {
+            setError(`Too many attempts. Please try again in ${retryAfter} seconds.`);
+          } else {
+            setError(error.message);
+          }
         } else {
           setMessage('Signed in successfully!');
           onClose();
         }
+        
+        // Show progressive delay if present
+        if (progressiveDelay && progressiveDelay > 0) {
+          setMessage(`Please wait ${Math.ceil(progressiveDelay / 1000)} seconds before next attempt.`);
+        }
       } else if (mode === 'signup') {
-        const { error } = await signUp(email, password);
+        const { error, rateLimited, retryAfter } = await signUp(email, password);
         if (error) {
-          setError(error.message);
+          if (rateLimited) {
+            setError(`Too many signup attempts. Please try again in ${retryAfter} seconds.`);
+          } else {
+            setError(error.message);
+          }
         } else {
           setMessage('Check your email for verification link!');
         }
       } else if (mode === 'reset') {
-        const { error } = await resetPassword(email);
+        const { error, rateLimited, retryAfter } = await resetPassword(email);
         if (error) {
-          setError(error.message);
+          if (rateLimited) {
+            setError(`Too many reset attempts. Please try again in ${retryAfter} seconds.`);
+          } else {
+            setError(error.message);
+          }
         } else {
           setMessage('Password reset link sent to your email!');
         }
@@ -115,10 +144,19 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={6}
+                minLength={mode === 'signup' ? 8 : 6}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter your password"
+                placeholder={mode === 'signup' ? 'At least 8 characters with a number or symbol' : 'Enter your password'}
               />
+              
+              {/* Show password strength meter for signup */}
+              {mode === 'signup' && password && (
+                <PasswordStrengthMeter 
+                  password={password}
+                  showDetails={true}
+                  className="mt-2"
+                />
+              )}
             </div>
           )}
 
