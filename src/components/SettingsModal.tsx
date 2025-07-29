@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatBytes } from '@/utils/bytes';
 import packageJson from '../../package.json';
+import { HiOutlineArrowRightOnRectangle } from 'react-icons/hi2';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -22,6 +23,7 @@ interface SettingsModalProps {
   onBackupIntervalChange: (hours: number) => void;
   onBackupEmailChange: (email: string) => void;
   onSendBackup: () => void;
+  onSignOut?: () => void;
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -41,6 +43,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   onBackupIntervalChange,
   onBackupEmailChange,
   onSendBackup,
+  onSignOut,
 }) => {
   const { t } = useTranslation();
   const [teamName, setTeamName] = useState(defaultTeamName);
@@ -229,6 +232,26 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 </p>
               </div>
             </div>
+            {onSignOut && (
+              <div className="pt-2 border-t border-slate-700/40 space-y-2">
+                <h3 className="text-lg font-semibold text-slate-200">
+                  {t('settingsModal.accountTitle', 'Account')}
+                </h3>
+                <p className="text-sm text-slate-400">
+                  {t('settingsModal.signOutDescription', 'Sign out of your account and return to the login screen.')}
+                </p>
+                <button
+                  onClick={() => {
+                    onSignOut();
+                    onClose();
+                  }}
+                  className="w-full px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg border border-slate-600 hover:border-slate-500 transition-colors flex items-center justify-center gap-2"
+                >
+                  <HiOutlineArrowRightOnRectangle className="w-4 h-4 rotate-180" />
+                  {t('auth.signOut')}
+                </button>
+              </div>
+            )}
             <div className="pt-2 border-t border-slate-700/40 space-y-2">
               <h3 className="text-lg font-semibold text-red-300">
                 {t('settingsModal.dangerZoneTitle', 'Danger Zone')}

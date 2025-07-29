@@ -592,6 +592,8 @@
     "storageUsageLabel": "Storage Usage",
     "storageUsageDetails": "{{used}} of {{quota}} used",
     "storageUsageUnavailable": "Storage usage information unavailable.",
+    "accountTitle": "Account",
+    "signOutDescription": "Sign out of your account and return to the login screen.",
     "dangerZoneTitle": "Danger Zone",
     "confirmResetLabel": "Type RESET to confirm",
     "backupTitle": "Automatic Backup",
