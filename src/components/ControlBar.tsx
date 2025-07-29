@@ -37,6 +37,7 @@ import { FaFutbol } from 'react-icons/fa';
 
 // Import translation hook
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/context/AuthContext';
 // Removed - AuthButton now in TopBar: import { AuthButton } from '@/components/auth/AuthButton';
 
 // Define props for ControlBar
@@ -104,6 +105,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   onSignOut,
 }) => {
   const { t } = useTranslation(); // Standard hook
+  const { user, signOut: authSignOut } = useAuth();
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -471,16 +473,23 @@ const ControlBar: React.FC<ControlBarProps> = ({
           </div>
 
           {/* Group 6: Account */}
-          {onSignOut && (
-            <div className="mt-auto pt-4 border-t border-slate-700/50">
-              <button 
+          {(user || onSignOut) && (
+            <div className="mt-auto pt-4 border-t border-slate-700/50 space-y-1">
+              <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                {t('sidebarCategories.account', 'Account')}
+              </h4>
+              <button
                 onClick={() => {
-                  onSignOut();
+                  if (onSignOut) {
+                    onSignOut();
+                  } else {
+                    authSignOut();
+                  }
                   setIsSidePanelOpen(false);
-                }} 
+                }}
                 className="w-full flex items-center px-3 py-2.5 text-sm text-red-300 hover:bg-red-600/20 rounded-lg transition-colors"
               >
-                <HiOutlineArrowRightOnRectangle className={`${menuIconSize} rotate-180`} /> 
+                <HiOutlineArrowRightOnRectangle className={`${menuIconSize} rotate-180`} />
                 {t('auth.signOut', 'Sign Out')}
               </button>
             </div>
