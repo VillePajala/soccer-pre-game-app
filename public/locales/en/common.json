@@ -464,17 +464,15 @@
     "noNotes": "No notes yet. Click to add."
   },
   "startScreen": {
-    "tagline": "Elevate Your Game",
+    "resumeGame": "Resume Last Game",
     "startNewGame": "Start New Game",
     "loadGame": "Load Game",
-    "resumeGame": "Resume Last Game",
-    "languageLabel": "Language",
-    "languageEnglish": "English",
-    "languageFinnish": "Finnish",
     "createSeasonTournament": "Create Season/Tournament",
     "viewStats": "View Stats",
-    "backupNow": "Backup Now",
-    "signInRequired": "Sign in to access all coaching features and save your data."
+    "tagline": "Elevate Your Game",
+    "languageLabel": "Language",
+    "languageEnglish": "English",
+    "languageFinnish": "Finnish"
   },
   "seasonTournamentModal": {
     "confirmDelete": "Are you sure you want to delete {{name}}?",

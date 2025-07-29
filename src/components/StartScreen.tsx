@@ -79,10 +79,10 @@ const StartScreen: React.FC<StartScreenProps> = ({
     'relative flex flex-col items-center justify-center min-h-screen bg-slate-950 text-slate-100 font-display overflow-hidden py-8 sm:py-16 md:py-24 px-4';
 
   const taglineStyle =
-    'text-lg sm:text-xl text-slate-300 mb-4 sm:mb-6 text-center max-w-sm drop-shadow-lg italic';
+    'text-lg sm:text-xl text-slate-300 mb-8 sm:mb-12 text-center max-w-sm drop-shadow-lg italic';
 
   const titleStyle =
-    'text-3xl sm:text-4xl md:text-5xl font-bold text-yellow-400 tracking-wide drop-shadow-lg mb-4 sm:mb-6 md:mb-8 text-center';
+    'text-5xl sm:text-6xl md:text-7xl font-bold text-yellow-400 tracking-wide drop-shadow-lg mb-2 text-center';
 
 
   return (
@@ -102,46 +102,16 @@ const StartScreen: React.FC<StartScreenProps> = ({
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-20 blur-2xl pointer-events-none"
       />
 
-      <div className="relative z-10 flex flex-col items-center space-y-3 sm:space-y-4 md:space-y-5 w-full max-w-sm sm:max-w-md">
+      <div className="relative z-10 flex flex-col items-center w-full max-w-sm sm:max-w-md">
         <h1 className={titleStyle}>
           <span className="block">MatchDay</span>
           <span className="block">Coach</span>
         </h1>
         <p className={taglineStyle}>{t('startScreen.tagline', 'Elevate Your Game')}</p>
-        <div className="flex flex-col items-center mb-2">
-          <span className="text-xs sm:text-sm font-medium text-slate-300 mb-1">
-            {t('startScreen.languageLabel', 'Language')}
-          </span>
-          <div className="flex space-x-2">
-            <button
-              aria-label={t('startScreen.languageEnglish', 'English')}
-              onClick={() => setLanguage('en')}
-              className={`w-8 sm:w-10 h-6 sm:h-8 rounded-md border text-sm sm:text-xl flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${language === 'en' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-700 border-slate-600 text-white hover:bg-slate-600'}`}
-            >
-              <span role="img" aria-hidden="true">
-                🇬🇧
-              </span>
-            </button>
-            <button
-              aria-label={t('startScreen.languageFinnish', 'Finnish')}
-              onClick={() => setLanguage('fi')}
-              className={`w-8 sm:w-10 h-6 sm:h-8 rounded-md border text-sm sm:text-xl flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${language === 'fi' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-700 border-slate-600 text-white hover:bg-slate-600'}`}
-            >
-              <span role="img" aria-hidden="true">
-                🇫🇮
-              </span>
-            </button>
-          </div>
-        </div>
         
         {/* Show different content based on auth state */}
         {!isAuthenticated ? (
-          <div className="flex flex-col items-center space-y-4">
-            <div className="text-center max-w-md mb-4">
-              <p className="text-slate-300 text-sm sm:text-base mb-2">
-                {t('startScreen.signInRequired', 'Sign in to access all coaching features and save your data.')}
-              </p>
-            </div>
+          <div className="flex flex-col items-center text-center">
             <button 
               className={buttonStyle} 
               onClick={() => setShowAuthModal(true)}
@@ -199,6 +169,23 @@ const StartScreen: React.FC<StartScreenProps> = ({
           onClose={() => setShowAuthModal(false)}
         />
       )}
+      
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center space-x-2">
+        <button
+          aria-label={t('startScreen.languageEnglish', 'English')}
+          onClick={() => setLanguage('en')}
+          className={`w-10 h-8 rounded-md border text-sm font-bold flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${language === 'en' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-700 border-slate-600 text-white hover:bg-slate-600'}`}
+        >
+          EN
+        </button>
+        <button
+          aria-label={t('startScreen.languageFinnish', 'Finnish')}
+          onClick={() => setLanguage('fi')}
+          className={`w-10 h-8 rounded-md border text-sm font-bold flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${language === 'fi' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-700 border-slate-600 text-white hover:bg-slate-600'}`}
+        >
+          FI
+        </button>
+      </div>
     </div>
   );
 };

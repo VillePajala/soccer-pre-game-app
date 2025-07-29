@@ -380,14 +380,12 @@
     "tagline": "Vie pelisi uudelle tasolle",
     "startNewGame": "Aloita uusi ottelu",
     "loadGame": "Lataa peli",
-    "resumeGame": "Jatka edellistä peliä",
+    "resumeGame": "Jatka viimeisintä peliä",
     "languageLabel": "Kieli",
     "languageEnglish": "Englanti",
     "languageFinnish": "Suomi",
     "createSeasonTournament": "Luo kausi/turnaus",
-    "viewStats": "Näytä tilastot",
-    "backupNow": "Varmuuskopioi nyt",
-    "signInRequired": "Kirjaudu sisään käyttääksesi kaikkia valmentajan työkaluja ja tallentaaksesi tietosi."
+    "viewStats": "Tarkastele tilastoja"
   },
   "seasonTournamentModal": {
     "confirmDelete": "Haluatko varmasti poistaa {{name}}?",
