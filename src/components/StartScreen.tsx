@@ -18,7 +18,6 @@ interface StartScreenProps {
   onResumeGame?: () => void;
   onCreateSeason: () => void;
   onViewStats: () => void;
-  onExplore: () => void;
   canResume?: boolean;
   isAuthenticated?: boolean;
 }
@@ -29,7 +28,6 @@ const StartScreen: React.FC<StartScreenProps> = ({
   onResumeGame,
   onCreateSeason,
   onViewStats,
-  onExplore,
   canResume = false,
   isAuthenticated = false,
 }) => {
@@ -136,57 +134,54 @@ const StartScreen: React.FC<StartScreenProps> = ({
           </div>
         </div>
         
-        {/* Show different buttons based on auth state */}
-        <div className="flex flex-col items-center space-y-3 sm:space-y-4 w-full max-h-[60vh] sm:max-h-none overflow-y-auto">
-          {!isAuthenticated ? (
-            <>
-              <button 
-                className={buttonStyle} 
-                onClick={() => setShowAuthModal(true)}
-              >
-                <span className="flex items-center justify-center gap-2">
-                  <HiOutlineArrowRightOnRectangle className="w-4 sm:w-5 h-4 sm:h-5" />
-                  {t('auth.signIn')}
-                </span>
+        {/* Show different content based on auth state */}
+        {!isAuthenticated ? (
+          <div className="flex flex-col items-center space-y-4">
+            <div className="text-center max-w-md mb-4">
+              <p className="text-slate-300 text-sm sm:text-base mb-2">
+                {t('startScreen.signInRequired', 'Sign in to access all coaching features and save your data.')}
+              </p>
+            </div>
+            <button 
+              className={buttonStyle} 
+              onClick={() => setShowAuthModal(true)}
+            >
+              <span className="flex items-center justify-center gap-2">
+                <HiOutlineArrowRightOnRectangle className="w-4 sm:w-5 h-4 sm:h-5" />
+                {t('auth.signIn')}
+              </span>
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center space-y-3 sm:space-y-4 w-full max-h-[60vh] sm:max-h-none overflow-y-auto">
+            {canResume && onResumeGame ? (
+              <button className={buttonStyle} onClick={onResumeGame}>
+                {t('startScreen.resumeGame', 'Resume Last Game')}
               </button>
-              <button className={buttonStyle} onClick={onExplore}>
-                {t('startScreen.explore', 'Just Explore')}
-              </button>
-            </>
-          ) : (
-            <>
-              {canResume && onResumeGame ? (
-                <button className={buttonStyle} onClick={onResumeGame}>
-                  {t('startScreen.resumeGame', 'Resume Last Game')}
-                </button>
-              ) : null}
-              <button className={buttonStyle} onClick={onStartNewGame}>
-                {t('startScreen.startNewGame', 'Start New Game')}
-              </button>
-              <button className={buttonStyle} onClick={onLoadGame}>
-                {t('startScreen.loadGame', 'Load Game')}
-              </button>
-              <button className={buttonStyle} onClick={onCreateSeason}>
-                {t('startScreen.createSeasonTournament', 'Create Season/Tournament')}
-              </button>
-              <button className={buttonStyle} onClick={onViewStats}>
-                {t('startScreen.viewStats', 'View Stats')}
-              </button>
-              <button className={buttonStyle} onClick={onExplore}>
-                {t('startScreen.explore', 'Just Explore')}
-              </button>
-              <button 
-                className={`${buttonStyle} bg-red-600 hover:bg-red-700`} 
-                onClick={signOut}
-              >
-                <span className="flex items-center justify-center gap-2">
-                  <HiOutlineArrowRightOnRectangle className="w-4 sm:w-5 h-4 sm:h-5 rotate-180" />
-                  {t('auth.signOut')}
-                </span>
-              </button>
-            </>
-          )}
-        </div>
+            ) : null}
+            <button className={buttonStyle} onClick={onStartNewGame}>
+              {t('startScreen.startNewGame', 'Start New Game')}
+            </button>
+            <button className={buttonStyle} onClick={onLoadGame}>
+              {t('startScreen.loadGame', 'Load Game')}
+            </button>
+            <button className={buttonStyle} onClick={onCreateSeason}>
+              {t('startScreen.createSeasonTournament', 'Create Season/Tournament')}
+            </button>
+            <button className={buttonStyle} onClick={onViewStats}>
+              {t('startScreen.viewStats', 'View Stats')}
+            </button>
+            <button 
+              className={`${buttonStyle} bg-red-600 hover:bg-red-700`} 
+              onClick={signOut}
+            >
+              <span className="flex items-center justify-center gap-2">
+                <HiOutlineArrowRightOnRectangle className="w-4 sm:w-5 h-4 sm:h-5 rotate-180" />
+                {t('auth.signOut')}
+              </span>
+            </button>
+          </div>
+        )}
       </div>
       
       {/* Success toast notification - positioned in top area */}

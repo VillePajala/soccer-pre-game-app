@@ -387,7 +387,7 @@
     "createSeasonTournament": "Luo kausi/turnaus",
     "viewStats": "Näytä tilastot",
     "backupNow": "Varmuuskopioi nyt",
-    "explore": "Tutki sovellusta"
+    "signInRequired": "Kirjaudu sisään käyttääksesi kaikkia valmentajan työkaluja ja tallentaaksesi tietosi."
   },
   "seasonTournamentModal": {
     "confirmDelete": "Haluatko varmasti poistaa {{name}}?",

@@ -50,11 +50,6 @@ export default function Home() {
     setInitialAction(action);
     setScreen('home');
   };
-  
-  const handleExplore = () => {
-    // Just switch to home screen without any initial action
-    setScreen('home');
-  };
 
   return (
     <ModalProvider>
@@ -66,7 +61,6 @@ export default function Home() {
           canResume={canResume}
           onCreateSeason={() => handleAction('season')}
           onViewStats={() => handleAction('stats')}
-          onExplore={handleExplore}
           isAuthenticated={!!user}
         />
       ) : (

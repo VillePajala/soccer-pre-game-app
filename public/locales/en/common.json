@@ -474,7 +474,7 @@
     "createSeasonTournament": "Create Season/Tournament",
     "viewStats": "View Stats",
     "backupNow": "Backup Now",
-    "explore": "Just Explore"
+    "signInRequired": "Sign in to access all coaching features and save your data."
   },
   "seasonTournamentModal": {
     "confirmDelete": "Are you sure you want to delete {{name}}?",
