@@ -4,11 +4,15 @@ import { useAuth, AuthProvider } from '../AuthContext';
 import { ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 
-// Manual mock
+// Manual mocks
 jest.mock('../../lib/supabase');
+jest.mock('../../lib/security/rateLimiter');
+jest.mock('../../lib/security/sessionManager');
+jest.mock('../../utils/logger');
 
-// Import after mock
+// Import after mocks
 import { supabase } from '../../lib/supabase';
+import { SecureAuthService } from '../../lib/security/rateLimiter';
 
 // Test component to access auth context
 const TestComponent = ({ testId = 'test-component' }: { testId?: string }) => {
@@ -62,6 +66,12 @@ describe('AuthContext', () => {
     signOut: jest.Mock;
     resetPasswordForEmail: jest.Mock;
   };
+  
+  const mockSecureAuthService = SecureAuthService as {
+    signUp: jest.Mock;
+    signIn: jest.Mock;
+    resetPassword: jest.Mock;
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -90,6 +100,11 @@ describe('AuthContext', () => {
     mockSupabaseAuth.signOut.mockResolvedValue({ error: null });
     
     mockSupabaseAuth.resetPasswordForEmail.mockResolvedValue({ error: null });
+    
+    // Mock SecureAuthService - default to success
+    mockSecureAuthService.signUp.mockResolvedValue({ success: true });
+    mockSecureAuthService.signIn.mockResolvedValue({ success: true });
+    mockSecureAuthService.resetPassword.mockResolvedValue({ success: true });
   });
 
   describe('Initialization', () => {
