@@ -77,7 +77,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
     'relative flex flex-col items-center justify-center min-h-screen bg-slate-950 text-slate-100 font-display overflow-hidden py-8 sm:py-16 md:py-24 px-4';
 
   const taglineStyle =
-    'text-lg sm:text-xl text-slate-300 mb-8 sm:mb-12 text-center max-w-sm drop-shadow-lg italic';
+    'text-lg sm:text-xl text-slate-300 mb-8 sm:mb-12 text-center max-w-sm drop-shadow-lg bg-slate-800/50 px-4 py-1 rounded-full';
 
   const titleStyle =
     'text-5xl sm:text-6xl md:text-7xl font-bold text-yellow-400 tracking-wide drop-shadow-lg mb-2 text-center';
