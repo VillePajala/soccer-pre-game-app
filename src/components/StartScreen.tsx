@@ -35,6 +35,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
   const { signOut } = useAuth();
   const [language, setLanguage] = useState<string>(i18n.language);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
   const [showLoginSuccess, setShowLoginSuccess] = useState(false);
 
   useEffect(() => {
@@ -111,14 +112,29 @@ const StartScreen: React.FC<StartScreenProps> = ({
         
         {/* Show different content based on auth state */}
         {!isAuthenticated ? (
-          <div className="flex flex-col items-center text-center">
+          <div className="flex flex-col items-center text-center space-y-3">
             <button 
               className={buttonStyle} 
-              onClick={() => setShowAuthModal(true)}
+              onClick={() => {
+                setAuthModalMode('signin');
+                setShowAuthModal(true);
+              }}
             >
               <span className="flex items-center justify-center gap-2">
                 <HiOutlineArrowRightOnRectangle className="w-4 sm:w-5 h-4 sm:h-5" />
                 {t('auth.signIn')}
+              </span>
+            </button>
+            <button 
+              className={`${buttonStyle} bg-green-600 hover:bg-green-700`} 
+              onClick={() => {
+                setAuthModalMode('signup');
+                setShowAuthModal(true);
+              }}
+            >
+              <span className="flex items-center justify-center gap-2">
+                <HiOutlineArrowRightOnRectangle className="w-4 sm:w-5 h-4 sm:h-5" />
+                {t('auth.signUp')}
               </span>
             </button>
           </div>
@@ -167,6 +183,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
         <AuthModal
           isOpen={showAuthModal}
           onClose={() => setShowAuthModal(false)}
+          defaultMode={authModalMode}
         />
       )}
       

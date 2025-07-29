@@ -9,6 +9,7 @@ function ConfirmPageContent() {
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     const confirmEmail = async () => {
@@ -33,8 +34,13 @@ function ConfirmPageContent() {
         if (confirmError) {
           setError(`Email confirmation failed: ${confirmError.message}`);
         } else {
-          // Success! Redirect to home page
-          router.push('/');
+          // Success! Show success state first, then redirect
+          setSuccess(true);
+          setLoading(false);
+          setTimeout(() => {
+            router.push('/?verified=true');
+          }, 2000);
+          return;
         }
       } catch {
         setError('An unexpected error occurred during email confirmation');
@@ -53,6 +59,23 @@ function ConfirmPageContent() {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400 mx-auto mb-4"></div>
           <h1 className="text-xl font-semibold">Confirming your email...</h1>
           <p className="text-slate-400 mt-2">Please wait while we verify your account.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (success) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <div className="text-green-400 text-6xl mb-4">✓</div>
+          <h1 className="text-xl font-semibold mb-4">Email Verified Successfully!</h1>
+          <p className="text-slate-400 mb-6">
+            Your email has been confirmed. You can now sign in to your account.
+          </p>
+          <div className="text-sm text-slate-500">
+            Redirecting you to the app in a moment...
+          </div>
         </div>
       </div>
     );
