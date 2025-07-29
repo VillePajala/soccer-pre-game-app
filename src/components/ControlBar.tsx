@@ -131,6 +131,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   // Handle touch/swipe gestures
   const handleTouchStart = (e: React.TouchEvent) => {
     if (!isSidePanelOpen) return;
+    e.preventDefault();
     setIsDragging(true);
     const touch = e.touches[0];
     const startX = touch.clientX;
@@ -140,11 +141,14 @@ const ControlBar: React.FC<ControlBarProps> = ({
       const touch = e.touches[0];
       const currentX = touch.clientX;
       const diff = currentX - startX;
-      
+
       // Only allow left swipe (negative diff) to close
       if (diff < 0) {
         setDragOffset(Math.max(diff, -320)); // 320px is panel width
       }
+
+      // Prevent page scroll while swiping
+      e.preventDefault();
     };
     
     const handleTouchEnd = () => {
@@ -160,7 +164,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
       document.removeEventListener('touchend', handleTouchEnd);
     };
     
-    document.addEventListener('touchmove', handleTouchMove, { passive: true });
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
     document.addEventListener('touchend', handleTouchEnd);
   };
 
