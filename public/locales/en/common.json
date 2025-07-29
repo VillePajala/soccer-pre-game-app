@@ -690,6 +690,7 @@
     "setupConfiguration": "Setup & Configuration",
     "analysisTools": "Analysis & Tools",
     "resources": "Resources",
-    "settings": "Settings"
+    "settings": "Settings",
+    "account": "Account"
   }
 }
