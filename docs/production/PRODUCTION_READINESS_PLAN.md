@@ -287,6 +287,7 @@ This comprehensive plan outlines all steps required to transform MatchDay Coach 
   - [ ] Implement cache versioning
   - [ ] Add cache size management
   - [ ] Optimize offline data access
+  - [ ] Finalize IndexedDB fallback and automatic sync to Supabase when connection is restored
 
 ### Performance Targets
 - [ ] Lighthouse score: 90+ on all metrics
