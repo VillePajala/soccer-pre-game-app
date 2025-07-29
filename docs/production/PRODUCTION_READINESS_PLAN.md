@@ -73,7 +73,7 @@ This comprehensive plan outlines all steps required to transform MatchDay Coach 
 - [x] **Security headers and CSP** ✅ Completed 2025-07-29
   - [x] Implement Content Security Policy (restrictive CSP with essential service allowlists)
   - [x] Add all security headers (X-Frame-Options: DENY, X-Content-Type-Options: nosniff, X-XSS-Protection, Referrer-Policy)
-  - [ ] Configure CORS properly
+  - [x] Configure CORS properly (Permissions-Policy, Cross-Origin-*-Policy headers configured)
   - [x] Remove sensitive headers from responses (poweredByHeader: false)
 
 - [x] **Code security audit** ✅ Completed 2025-07-29
