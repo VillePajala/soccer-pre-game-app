@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "refactor: extract custom hooks from GameSettingsModal (Phase 1)"
+  "notes": "security: mark input validation and sanitization as completed"
 }
