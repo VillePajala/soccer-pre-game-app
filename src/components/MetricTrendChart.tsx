@@ -32,4 +32,4 @@ const MetricTrendChart: React.FC<MetricTrendChartProps> = ({ data }) => {
   );
 };
 
-export default MetricTrendChart;
+export default React.memo(MetricTrendChart);

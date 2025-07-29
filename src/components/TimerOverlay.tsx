@@ -370,4 +370,4 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
   );
 };
 
-export default TimerOverlay; 
+export default React.memo(TimerOverlay); 

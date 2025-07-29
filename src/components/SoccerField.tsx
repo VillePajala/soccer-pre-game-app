@@ -1123,4 +1123,4 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
   );
 };
 
-export default SoccerField; 
+export default React.memo(SoccerField); 

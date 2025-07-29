@@ -92,4 +92,4 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, onPlayerDragStartFromBar
   );
 };
 
-export default PlayerBar; 
+export default React.memo(PlayerBar); 
