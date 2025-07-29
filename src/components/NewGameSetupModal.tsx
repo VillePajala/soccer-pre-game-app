@@ -14,6 +14,7 @@ import PlayerSelectionSection from './PlayerSelectionSection';
 import TeamOpponentInputs from './TeamOpponentInputs';
 import { AGE_GROUPS, LEVELS } from '@/config/gameOptions';
 import type { TranslationKey } from '@/i18n-types';
+import { useModalStability } from '@/hooks/useModalStability';
 
 interface NewGameSetupModalProps {
   isOpen: boolean;
@@ -70,6 +71,14 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   const homeTeamInputRef = useRef<HTMLInputElement>(null);
   const opponentInputRef = useRef<HTMLInputElement>(null);
 
+  // Use modal stability hook for better focus management
+  const { getStableInputProps } = useModalStability({
+    isOpen,
+    primaryInputRef: homeTeamInputRef,
+    delayMs: 200,
+    preventRepeatedFocus: true,
+  });
+
   // State for seasons and tournaments
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
@@ -121,10 +130,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
       setError(null); 
       setIsLoading(true);
 
-      // Focus on the first input field (home team name)
-      // This should ideally happen after initial data load or if not loading
-      // For now, keeping original simple focus logic, can be refined if race conditions occur.
-      setTimeout(() => homeTeamInputRef.current?.focus(), 100); 
+      // Focus management is now handled by useModalStability hook 
 
       const fetchData = async () => {
       try {
@@ -488,6 +494,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
               opponentInputRef={opponentInputRef}
               onKeyDown={handleKeyDown}
               disabled={isLoading}
+              stableInputProps={getStableInputProps()}
             />
           </div>
 
