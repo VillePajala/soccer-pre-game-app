@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "docs: add realistic security assessment for soccer coaching app"
+  "notes": "feat: implement lazy loading for modal components to improve performance"
 }

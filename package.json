@@ -22,7 +22,6 @@
     "@tanstack/react-query": "^5.80.10",
     "@types/tinycolor2": "^1.4.6",
     "@vercel/analytics": "^1.5.0",
-    "date-fns": "^4.1.0",
     "i18next": "^24.2.3",
     "idb-keyval": "^6.2.2",
     "next": "^15.3.5",

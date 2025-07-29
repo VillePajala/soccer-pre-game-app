@@ -8,8 +8,23 @@ import { AppState } from '@/types';
 import { calculatePlayerStats, PlayerStats as PlayerStatsData } from '@/utils/playerStats';
 import { calculatePlayerAssessmentAverages, getPlayerAssessmentTrends, getPlayerAssessmentNotes } from '@/utils/assessmentStats';
 import { getAppSettings, updateAppSettings } from '@/utils/appSettings';
-import { format } from 'date-fns';
-import { fi, enUS } from 'date-fns/locale';
+// Lightweight date formatting function to replace date-fns
+const formatGameDate = (dateString: string, language: string): string => {
+  const date = new Date(dateString);
+  if (language === 'fi') {
+    return date.toLocaleDateString('fi-FI', { 
+      day: 'numeric', 
+      month: 'numeric', 
+      year: 'numeric' 
+    });
+  } else {
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  }
+};
 import SparklineChart from './SparklineChart';
 import RatingBar from './RatingBar';
 import MetricTrendChart from './MetricTrendChart';
@@ -279,7 +294,7 @@ const PlayerStatsView: React.FC<PlayerStatsViewProps> = ({ player, savedGames, o
                   <div className="flex items-center pl-2">
                     <div>
                       <p className="font-semibold drop-shadow-lg">{t('playerStats.vs', 'vs')} {game.opponentName}</p>
-                      <p className="text-xs text-slate-400">{format(new Date(game.date), i18n.language === 'fi' ? 'd.M.yyyy' : 'PP', { locale: i18n.language === 'fi' ? fi : enUS })}</p>
+                      <p className="text-xs text-slate-400">{formatGameDate(game.date, i18n.language)}</p>
                     </div>
                   </div>
                   <div className="flex items-center">

@@ -38,8 +38,7 @@ const heavyDependencies = [
   'next',
   'i18next',
   '@vercel/analytics',
-  'tinycolor2',
-  'date-fns'
+  'tinycolor2'
 ];
 
 console.log('🏋️ Potentially Heavy Dependencies:');
@@ -112,9 +111,9 @@ const recommendations = [
     priority: 'HIGH', 
     items: [
       'Tree shake unused Supabase functions',
-      'Use date-fns with only needed functions (not entire library)',
       'Consider replacing tinycolor2 with lighter alternative',
-      'Remove unused i18next features if any'
+      'Remove unused i18next features if any',
+      'Optimize recharts imports (use specific chart components only)'
     ]
   },
   {
