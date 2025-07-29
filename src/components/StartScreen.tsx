@@ -120,9 +120,12 @@ const StartScreen: React.FC<StartScreenProps> = ({
                 setShowAuthModal(true);
               }}
             >
-              <span className="flex items-center justify-center gap-2">
-                <HiOutlineArrowRightOnRectangle className="w-4 sm:w-5 h-4 sm:h-5" />
-                {t('auth.signIn')}
+              <span className="flex items-center justify-center w-full">
+                <span className="w-6 text-left">
+                  <HiOutlineArrowRightOnRectangle className="w-4 sm:w-5 h-4 sm:h-5" />
+                </span>
+                <span className="flex-1 text-center">{t('auth.signIn')}</span>
+                <span className="w-6" />
               </span>
             </button>
             <button 
@@ -132,9 +135,12 @@ const StartScreen: React.FC<StartScreenProps> = ({
                 setShowAuthModal(true);
               }}
             >
-              <span className="flex items-center justify-center gap-2">
-                <HiOutlineArrowRightOnRectangle className="w-4 sm:w-5 h-4 sm:h-5" />
-                {t('auth.signUp')}
+              <span className="flex items-center justify-center w-full">
+                <span className="w-6 text-left">
+                  <HiOutlineArrowRightOnRectangle className="w-4 sm:w-5 h-4 sm:h-5" />
+                </span>
+                <span className="flex-1 text-center">{t('auth.signUp')}</span>
+                <span className="w-6" />
               </span>
             </button>
           </div>
@@ -161,9 +167,12 @@ const StartScreen: React.FC<StartScreenProps> = ({
               className={`${buttonStyle} bg-red-600 hover:bg-red-700`} 
               onClick={signOut}
             >
-              <span className="flex items-center justify-center gap-2">
-                <HiOutlineArrowRightOnRectangle className="w-4 sm:w-5 h-4 sm:h-5 rotate-180" />
-                {t('auth.signOut')}
+              <span className="flex items-center justify-center w-full">
+                <span className="w-6 text-left">
+                  <HiOutlineArrowRightOnRectangle className="w-4 sm:w-5 h-4 sm:h-5 rotate-180" />
+                </span>
+                <span className="flex-1 text-center">{t('auth.signOut')}</span>
+                <span className="w-6" />
               </span>
             </button>
           </div>

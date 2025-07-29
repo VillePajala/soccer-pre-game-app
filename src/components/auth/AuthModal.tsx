@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { PasswordStrengthMeter } from './PasswordStrengthMeter';
 import { validatePassword } from '../../lib/security/passwordValidation';
+import { HiOutlineArrowRightOnRectangle } from 'react-icons/hi2';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -221,9 +222,19 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
           >
-            {loading ? 'Processing...' : mode === 'signin' ? 'Sign In' : mode === 'signup' ? 'Sign Up' : 'Send Reset Link'}
+            {loading ? 'Processing...' : (
+              <span className="flex items-center justify-center w-full">
+                <span className="w-6 text-left">
+                  <HiOutlineArrowRightOnRectangle className="w-5 h-5" />
+                </span>
+                <span className="flex-1 text-center">
+                  {mode === 'signin' ? 'Sign In' : mode === 'signup' ? 'Sign Up' : 'Send Reset Link'}
+                </span>
+                <span className="w-6" />
+              </span>
+            )}
           </button>
         </form>
 
