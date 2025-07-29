@@ -151,11 +151,11 @@ describe('AuthModal', () => {
       const submitButton = screen.getByRole('button', { name: 'Sign Up' });
       
       await user.type(emailInput, 'test@example.com');
-      await user.type(passwordInput, 'password123');
+      await user.type(passwordInput, 'SecurePass8!');
       await user.click(submitButton);
       
       await waitFor(() => {
-        expect(mockAuth.signUp).toHaveBeenCalledWith('test@example.com', 'password123');
+        expect(mockAuth.signUp).toHaveBeenCalledWith('test@example.com', 'SecurePass8!');
         expect(screen.getByText('Check your email for verification link!')).toBeInTheDocument();
       });
     });
@@ -175,7 +175,7 @@ describe('AuthModal', () => {
       const submitButton = screen.getByRole('button', { name: 'Sign Up' });
       
       await user.type(emailInput, 'test@example.com');
-      await user.type(passwordInput, 'password123');
+      await user.type(passwordInput, 'SecurePass8!');
       await user.click(submitButton);
       
       await waitFor(() => {
