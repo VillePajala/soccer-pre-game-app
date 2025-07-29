@@ -257,8 +257,9 @@ This comprehensive plan outlines all steps required to transform MatchDay Coach 
   - [ ] Implement efficient state management
 
 - [ ] **Asset optimization**
-  - [ ] Tree-shake date-fns imports (use specific functions only)
+  - [x] Tree-shake date-fns imports (replaced with lightweight native Date API - removed entire 147KB library)
   - [ ] Replace tinycolor2 with lighter alternative
+  - [ ] Optimize recharts imports (use specific chart components only)
   - [ ] Implement image optimization pipeline
   - [ ] Add WebP support with fallbacks
   - [ ] Implement responsive images
