@@ -18,6 +18,7 @@ This comprehensive plan outlines all steps required to transform MatchDay Coach 
 6. [User Experience Polish](#6-user-experience-polish)
 7. [Play Store Deployment](#7-play-store-deployment)
 8. [Post-Launch Operations](#8-post-launch-operations)
+9. [LocalStorage Deprecation](#9-localstorage-deprecation)
 
 ---
 
@@ -665,10 +666,38 @@ After implementing substantial changes (security features, performance optimizat
   - [ ] Push notification campaigns
   - [ ] Email drip campaigns
   - [ ] Seasonal content
-  - [ ] Loyalty rewards
+ - [ ] Loyalty rewards
   - [ ] Community building
 
 ---
+
+## 9. LocalStorage Deprecation
+
+The app still persists the in-game timer state in browser `localStorage`. This
+was originally implemented to ensure continuity if the page reloads during a
+match. With Supabase and IndexedDB now available, we can move this volatile
+state out of `localStorage` entirely and remove the fallback code.
+
+### 9.1 Timer State Replacement
+- [ ] **Create timer_states table in Supabase**
+  - Schema already defined in the database reference
+  - Ensure row level security policies allow only the owning user
+- [ ] **Update timer logic**
+  - Persist live timer progress to the new table via the storage manager
+  - Use IndexedDB caching when offline and sync once a connection is restored
+- [ ] **Migrate existing localStorage entry**
+  - Detect `soccerTimerState` and write the data to Supabase on first load
+  - Remove the key after successful migration
+
+### 9.2 Remove localStorage Fallbacks
+- [ ] **Disable localStorage driver by default**
+  - Set `NEXT_PUBLIC_DISABLE_FALLBACK=true` in production builds
+- [ ] **Delete remaining localStorage utilities**
+  - Remove `localStorage.ts` and related helpers after verifying zero usage
+- [ ] **Cleanup tests and documentation**
+  - Update all tests to use the storage abstraction
+  - Remove references to localStorage in guides
+
 
 ## Timeline and Milestones
 
@@ -759,5 +788,5 @@ After implementing substantial changes (security features, performance optimizat
 ---
 
 **Document Status**: Living document - Version 1.0
-**Last Updated**: 2025-07-27
+**Last Updated**: 2025-07-30
 **Next Review**: Weekly during implementation
