@@ -10,6 +10,7 @@ import {
 } from '@/utils/appSettings';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { HiOutlineArrowRightOnRectangle, HiCheck } from 'react-icons/hi2';
+import { useAuth } from '@/context/AuthContext';
 
 interface StartScreenProps {
   onStartNewGame: () => void;
@@ -31,6 +32,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
   isAuthenticated = false,
 }) => {
   const { t } = useTranslation();
+  const { signOut } = useAuth();
   const [language, setLanguage] = useState<string>(i18n.language);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showLoginSuccess, setShowLoginSuccess] = useState(false);
@@ -138,6 +140,15 @@ const StartScreen: React.FC<StartScreenProps> = ({
             </button>
             <button className={buttonStyle} onClick={onViewStats}>
               {t('startScreen.viewStats', 'View Stats')}
+            </button>
+            <button 
+              className={`${buttonStyle} bg-red-600 hover:bg-red-700`} 
+              onClick={signOut}
+            >
+              <span className="flex items-center justify-center gap-2">
+                <HiOutlineArrowRightOnRectangle className="w-4 sm:w-5 h-4 sm:h-5 rotate-180" />
+                {t('auth.signOut')}
+              </span>
             </button>
           </div>
         )}

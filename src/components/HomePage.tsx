@@ -1800,6 +1800,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           onToggleInstructionsModal={handleToggleInstructionsModal}
           onOpenSettingsModal={handleOpenSettingsModal}
           onOpenPlayerAssessmentModal={openPlayerAssessmentModal}
+          onSignOut={signOut}
         />
       </div>
 
