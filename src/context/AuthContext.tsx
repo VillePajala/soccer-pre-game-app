@@ -98,10 +98,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // If rate limiting passed, proceed with actual Supabase signup
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/confirm`,
+        },
       });
+      
+      // Log for debugging
+      console.log('Supabase signup response:', { data, error });
+      console.log('Email redirect URL:', `${window.location.origin}/auth/confirm`);
       
       return { error };
     } catch (error) {
@@ -198,7 +205,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
       }
 
-      // If rate limiting passed, proceed with actual Supabase password reset
+      // If rate limiting passed, proceed with actual Supabase password reset  
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/auth/reset-password`,
       });

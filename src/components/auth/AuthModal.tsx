@@ -93,7 +93,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
             setError(error.message);
           }
         } else {
-          setMessage('Check your email for verification link!');
+          setMessage('Check your email for verification link! If you don\'t see it, check your spam folder and make sure the email address is correct.');
         }
       } else if (mode === 'reset') {
         const { error, rateLimited, retryAfter } = await resetPassword(email);
@@ -145,16 +145,16 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
       className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-[100] p-4 pt-8 pb-4 overflow-y-auto"
       style={{ height: 'calc(var(--vh, 1vh) * 100)' }}
     >
-      <div className="bg-white rounded-lg p-6 w-full max-w-md my-auto min-h-fit shadow-2xl">
+      <div className="bg-slate-800 rounded-lg p-6 w-full max-w-md my-auto min-h-fit shadow-2xl border border-slate-600">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">
+          <h2 className="text-xl font-bold text-slate-100">
             {mode === 'signin' && 'Sign In'}
             {mode === 'signup' && 'Sign Up'}
             {mode === 'reset' && 'Reset Password'}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
+            className="text-slate-400 hover:text-slate-200 text-xl leading-none"
             type="button"
           >
             ✕
@@ -163,7 +163,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="email" className="block text-sm font-medium text-slate-200 mb-1">
               Email
             </label>
             <input
@@ -173,14 +173,14 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
               onChange={(e) => setEmail(e.target.value)}
               onFocus={handleInputFocus}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               placeholder="Enter your email"
             />
           </div>
 
           {mode !== 'reset' && (
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="password" className="block text-sm font-medium text-slate-200 mb-1">
                 Password
               </label>
               <input
@@ -191,7 +191,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
                 onFocus={handleInputFocus}
                 required
                 minLength={mode === 'signup' ? 8 : 6}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 placeholder={mode === 'signup' ? 'At least 8 characters with a number or symbol' : 'Enter your password'}
               />
               
@@ -207,13 +207,13 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
           )}
 
           {error && (
-            <div className="text-red-600 text-sm bg-red-50 p-3 rounded-md">
+            <div className="text-red-300 text-sm bg-red-900/30 border border-red-700/50 p-3 rounded-md">
               {error}
             </div>
           )}
 
           {message && (
-            <div className="text-green-600 text-sm bg-green-50 p-3 rounded-md">
+            <div className="text-green-300 text-sm bg-green-900/30 border border-green-700/50 p-3 rounded-md">
               {message}
             </div>
           )}
@@ -221,13 +221,13 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? 'Processing...' : mode === 'signin' ? 'Sign In' : mode === 'signup' ? 'Sign Up' : 'Send Reset Link'}
           </button>
         </form>
 
-        <div className="mt-4 text-center text-sm text-gray-600 space-y-2">
+        <div className="mt-4 text-center text-sm text-slate-400 space-y-2">
           {mode === 'signin' && (
             <>
               <p>
@@ -235,7 +235,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
                 <button
                   type="button"
                   onClick={() => switchMode('signup')}
-                  className="text-blue-600 hover:underline"
+                  className="text-indigo-400 hover:text-indigo-300 hover:underline"
                 >
                   Sign up
                 </button>
@@ -244,7 +244,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
                 <button
                   type="button"
                   onClick={() => switchMode('reset')}
-                  className="text-blue-600 hover:underline"
+                  className="text-indigo-400 hover:text-indigo-300 hover:underline"
                 >
                   Forgot password?
                 </button>
@@ -258,7 +258,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
               <button
                 type="button"
                 onClick={() => switchMode('signin')}
-                className="text-blue-600 hover:underline"
+                className="text-indigo-400 hover:text-indigo-300 hover:underline"
               >
                 Sign in
               </button>
@@ -271,7 +271,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
               <button
                 type="button"
                 onClick={() => switchMode('signin')}
-                className="text-blue-600 hover:underline"
+                className="text-indigo-400 hover:text-indigo-300 hover:underline"
               >
                 Sign in
               </button>
