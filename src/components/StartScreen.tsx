@@ -100,6 +100,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
         alt=""
         width={320}
         height={320}
+        priority
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-20 blur-2xl pointer-events-none"
       />
 
