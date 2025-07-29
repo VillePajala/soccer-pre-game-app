@@ -38,10 +38,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Get initial session
     const getInitialSession = async () => {
       try {
+        logger.info('Getting initial session...');
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
           logger.error('Error getting session:', error);
         } else {
+          logger.info('Initial session:', session ? 'Found session' : 'No session', session?.user?.email);
           setSession(session);
           setUser(session?.user ?? null);
           if (session) {
@@ -144,12 +146,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
+      logger.info('Starting sign out process...');
+      
       // Cleanup session manager
       sessionManager.cleanup();
       
+      // Sign out from Supabase
       const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        logger.error('Supabase sign out error:', error);
+      } else {
+        logger.info('Supabase sign out successful');
+      }
+      
+      // Force clear local state
+      setSession(null);
+      setUser(null);
+      setLoading(false);
+      
+      // Clear any auth-related localStorage items (for development)
+      if (typeof window !== 'undefined') {
+        // Clear Supabase auth storage
+        const keys = Object.keys(localStorage);
+        keys.forEach(key => {
+          if (key.startsWith('sb-') || key.includes('supabase') || key.includes('auth')) {
+            logger.info('Clearing localStorage key:', key);
+            localStorage.removeItem(key);
+          }
+        });
+      }
+      
+      logger.info('Sign out process completed');
       return { error };
     } catch (error) {
+      logger.error('Sign out error:', error);
       return { error: error as AuthError };
     }
   };
