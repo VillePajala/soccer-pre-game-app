@@ -77,23 +77,6 @@ const extractErrorMessage = (error: unknown): string => {
   return 'Unknown error occurred';
 };
 
-// Check if error is retryable (network, temporary issues)
-const isRetryableError = (error: unknown, type?: ErrorType): boolean => {
-  if (type === 'network') return true;
-  if (type === 'authentication') return false;
-  if (type === 'validation') return false;
-  if (type === 'permission') return false;
-  
-  if (error instanceof Error) {
-    const message = error.message.toLowerCase();
-    return message.includes('network') || 
-           message.includes('timeout') || 
-           message.includes('fetch') ||
-           message.includes('connection');
-  }
-  
-  return false;
-};
 
 export function useErrorHandler(): UseErrorHandlerReturn {
   const { t } = useTranslation();
@@ -108,8 +91,6 @@ export function useErrorHandler(): UseErrorHandlerReturn {
       title,
       showToUser = true,
       logError = true,
-      retryAction,
-      duration,
     } = options;
 
     // Always log errors (respects production environment in logger)
@@ -128,16 +109,9 @@ export function useErrorHandler(): UseErrorHandlerReturn {
       const fallbackMessage = getDefaultErrorMessage(type, t);
       const displayMessage = errorMessage || fallbackMessage;
       
-      showToast({
-        type: 'error',
-        title: title || t(`errors.${type}Title`, 'Error'),
-        message: displayMessage,
-        duration: duration || 5000,
-        action: isRetryableError(error, type) && retryAction ? {
-          label: t('common.tryAgain', 'Try Again'),
-          onClick: retryAction,
-        } : undefined,
-      });
+      const toastTitle = title || t(`errors.${type}Title`, 'Error');
+      const toastMessage = `${toastTitle}: ${displayMessage}`;
+      showToast(toastMessage, 'error');
     }
 
     // TODO: Send to monitoring service in production

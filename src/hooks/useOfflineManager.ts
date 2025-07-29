@@ -18,7 +18,7 @@ interface OfflineManagerState {
  */
 export function useOfflineManager() {
   const { user } = useAuth();
-  const { handleStorageError, handleNetworkError } = useErrorHandler();
+  const { } = useErrorHandler();
   const [state, setState] = useState<OfflineManagerState>({
     isOnline: navigator.onLine,
     offlineStatus: null,
@@ -50,7 +50,6 @@ export function useOfflineManager() {
         isLoading: false,
       }));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   // Update offline status

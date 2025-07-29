@@ -25,6 +25,12 @@ interface DbSeason {
   period_count: number;
   period_duration: number;
   game_dates?: string[];
+  archived?: boolean;
+  default_roster_ids?: string[];
+  notes?: string;
+  color?: string;
+  badge?: string;
+  age_group?: string;
   user_id: string;
   created_at?: string;
   updated_at?: string;
@@ -33,11 +39,22 @@ interface DbSeason {
 interface DbTournament {
   id: string;
   name: string;
+  season_id?: string;
   location?: string;
   start_date?: string;
   end_date?: string;
   format?: string;
   matches?: unknown[];
+  period_count: number;
+  period_duration: number;
+  game_dates?: string[];
+  archived?: boolean;
+  default_roster_ids?: string[];
+  notes?: string;
+  color?: string;
+  badge?: string;
+  level?: string;
+  age_group?: string;
   user_id: string;
   created_at?: string;
   updated_at?: string;
@@ -45,6 +62,14 @@ interface DbTournament {
 
 interface DbAppSettings {
   id: string;
+  language?: string;
+  default_team_name?: string;
+  auto_backup_enabled?: boolean;
+  auto_backup_interval_hours?: number;
+  last_backup_time?: string;
+  backup_email?: string;
+  current_game_id?: string;
+  settings?: Record<string, unknown>;
   timer_settings?: Record<string, unknown>;
   ui_preferences?: Record<string, unknown>;
   game_defaults?: Record<string, unknown>;
@@ -59,6 +84,17 @@ interface DbGame {
   game_data: Record<string, unknown>;
   team_name?: string;
   opponent_name?: string;
+  game_date?: string;
+  home_score?: number;
+  away_score?: number;
+  home_or_away?: string;
+  game_notes?: string;
+  number_of_periods?: number;
+  period_duration_minutes?: number;
+  current_period?: number;
+  game_status?: string;
+  game_location?: string;
+  game_time?: string;
   start_time?: string;
   end_time?: string;
   is_played: boolean;
@@ -262,7 +298,7 @@ export const fromSupabase = {
     id: dbPlayer.id,
     name: dbPlayer.name,
     nickname: dbPlayer.nickname,
-    jerseyNumber: dbPlayer.jersey_number,
+    jerseyNumber: dbPlayer.jersey_number ? String(dbPlayer.jersey_number) : undefined,
     notes: dbPlayer.notes,
     isGoalie: dbPlayer.is_goalie,
     receivedFairPlayCard: dbPlayer.received_fair_play_card
@@ -278,7 +314,7 @@ export const fromSupabase = {
     endDate: dbSeason.end_date,
     gameDates: dbSeason.game_dates,
     archived: dbSeason.archived,
-    defaultRosterId: dbSeason.default_roster_ids,
+    defaultRosterId: dbSeason.default_roster_ids?.[0], // Take first element if array
     notes: dbSeason.notes,
     color: dbSeason.color,
     badge: dbSeason.badge,
@@ -296,7 +332,7 @@ export const fromSupabase = {
     endDate: dbTournament.end_date,
     gameDates: dbTournament.game_dates,
     archived: dbTournament.archived,
-    defaultRosterId: dbTournament.default_roster_ids,
+    defaultRosterId: dbTournament.default_roster_ids?.[0], // Take first element if array
     notes: dbTournament.notes,
     color: dbTournament.color,
     badge: dbTournament.badge,
@@ -313,9 +349,9 @@ export const fromSupabase = {
     lastBackupTime: dbSettings.last_backup_time,
     backupEmail: dbSettings.backup_email,
     // Get currentGameId from JSONB settings if not in current_game_id
-    currentGameId: dbSettings.current_game_id || dbSettings.settings?.currentGameId || null,
-    hasSeenAppGuide: dbSettings.settings?.hasSeenAppGuide,
-    useDemandCorrection: dbSettings.settings?.useDemandCorrection
+    currentGameId: dbSettings.current_game_id || (typeof dbSettings.settings?.currentGameId === 'string' ? dbSettings.settings.currentGameId : null),
+    hasSeenAppGuide: typeof dbSettings.settings?.hasSeenAppGuide === 'boolean' ? dbSettings.settings.hasSeenAppGuide : undefined,
+    useDemandCorrection: typeof dbSettings.settings?.useDemandCorrection === 'boolean' ? dbSettings.settings.useDemandCorrection : undefined
   }),
 
   game: (dbGame: DbGame) => {

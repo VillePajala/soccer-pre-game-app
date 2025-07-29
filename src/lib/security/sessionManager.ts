@@ -84,7 +84,7 @@ export class SessionManager {
       }
 
       // Listen for auth state changes
-      supabase.auth.onAuthStateChange(async (event, session) => {
+      supabase.auth.onAuthStateChange(async (event: string, session: Session | null) => {
         logger.info('Auth state changed:', event);
         
         switch (event) {
@@ -185,10 +185,6 @@ export class SessionManager {
    */
   private startActivityTracking(): void {
     this.clearAllTimers();
-    
-    const now = Date.now();
-    const timeoutTime = now + SESSION_CONFIG.INACTIVITY_TIMEOUT;
-    const warningTime = now + (SESSION_CONFIG.INACTIVITY_TIMEOUT - SESSION_CONFIG.WARNING_TIME);
 
     // Set warning timer
     this.warningTimer = setTimeout(() => {
@@ -324,7 +320,7 @@ export class SessionManager {
             ctx.fillText('Device fingerprint', 2, 2);
             canvasFingerprint = canvas.toDataURL();
           }
-        } catch (error) {
+        } catch {
           // Canvas not available in test environment
           canvasFingerprint = 'test-environment-fallback';
         }

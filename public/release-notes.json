@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix: resolve all failing unit tests and achieve green test suite"
+  "notes": "docs: update testing guide to reflect completed authentication testing steps"
 }

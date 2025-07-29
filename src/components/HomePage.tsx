@@ -527,7 +527,6 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     handleTeamNameChange,
     handleOpponentNameChange,
     handleGameDateChange,
-    handleGameNotesChange,
     handleGameLocationChange,
     handleGameTimeChange,
     handleSetNumberOfPeriods,
@@ -1972,7 +1971,6 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           onGameDateChange={handleGameDateChange}
           onGameLocationChange={handleGameLocationChange}
           onGameTimeChange={handleGameTimeChange}
-          onGameNotesChange={handleGameNotesChange}
           onAgeGroupChange={handleSetAgeGroup}
           onTournamentLevelChange={handleSetTournamentLevel}
           onUpdateGameEvent={handleUpdateGameEvent}

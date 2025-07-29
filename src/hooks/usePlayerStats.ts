@@ -157,9 +157,9 @@ export function usePlayerStats({
         }
       }
       
-      if (event.type === 'fairPlayCard' && event.playerId && statsMap[event.playerId]) {
-        statsMap[event.playerId].fpAwards = (statsMap[event.playerId].fpAwards || 0) + 1;
-        statsMap[event.playerId].totalScore += 1;
+      if (event.type === 'fairPlayCard' && event.entityId && statsMap[event.entityId]) {
+        statsMap[event.entityId].fpAwards = (statsMap[event.entityId].fpAwards || 0) + 1;
+        statsMap[event.entityId].totalScore += 1;
       }
     });
 

@@ -5,7 +5,7 @@ import { ToastProvider } from '@/contexts/ToastProvider';
 
 // Mock i18n for tests
 const mockI18n = {
-  t: (key: string, options?: any) => {
+  t: (key: string) => {
     const translations: { [key: string]: string } = {
       'common.dateFormat': 'dd.MM.yyyy',
       'common.timeFormat': 'HH:mm',

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { sessionManager, type SessionWarningEvent } from '../../lib/security/sessionManager';
 import { useAuth } from '../../context/AuthContext';
 import logger from '../../utils/logger';
@@ -19,7 +19,7 @@ export function SessionWarning({ onSessionExtended, onSessionExpired }: SessionW
   const [isVisible, setIsVisible] = useState(false);
   const { user, signOut } = useAuth();
 
-  const handleSessionExpired = async () => {
+  const handleSessionExpired = useCallback(async () => {
     setIsVisible(false);
     setWarning(null);
     onSessionExpired?.();
@@ -29,7 +29,7 @@ export function SessionWarning({ onSessionExtended, onSessionExpired }: SessionW
     } catch (error) {
       logger.error('Error signing out after session expiry:', error);
     }
-  };
+  }, [signOut, onSessionExpired]);
 
   useEffect(() => {
     if (!user) return;

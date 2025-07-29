@@ -21,7 +21,7 @@ interface UseEventManagementReturn {
   setEditGoalScorerId: React.Dispatch<React.SetStateAction<string>>;
   editGoalAssisterId: string | undefined;
   setEditGoalAssisterId: React.Dispatch<React.SetStateAction<string | undefined>>;
-  goalTimeInputRef: React.RefObject<HTMLInputElement>;
+  goalTimeInputRef: React.RefObject<HTMLInputElement | null>;
   
   // Processing state
   isProcessing: boolean;
