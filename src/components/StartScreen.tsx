@@ -8,9 +8,9 @@ import {
   updateAppSettings,
   getAppSettings,
 } from '@/utils/appSettings';
-import { exportFullBackup } from '@/utils/fullBackup';
-import { sendBackupEmail } from '@/utils/sendBackupEmail';
-import logger from '@/utils/logger';
+import { AuthModal } from '@/components/auth/AuthModal';
+import { HiOutlineArrowRightOnRectangle, HiCheck } from 'react-icons/hi2';
+import { useAuth } from '@/context/AuthContext';
 
 interface StartScreenProps {
   onStartNewGame: () => void;
@@ -20,6 +20,7 @@ interface StartScreenProps {
   onViewStats: () => void;
   onExplore: () => void;
   canResume?: boolean;
+  isAuthenticated?: boolean;
 }
 
 const StartScreen: React.FC<StartScreenProps> = ({
@@ -30,9 +31,13 @@ const StartScreen: React.FC<StartScreenProps> = ({
   onViewStats,
   onExplore,
   canResume = false,
+  isAuthenticated = false,
 }) => {
   const { t } = useTranslation();
+  const { signOut } = useAuth();
   const [language, setLanguage] = useState<string>(i18n.language);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showLoginSuccess, setShowLoginSuccess] = useState(false);
 
   useEffect(() => {
     getAppSettings().then((settings) => {
@@ -51,41 +56,36 @@ const StartScreen: React.FC<StartScreenProps> = ({
     }
   }, [language]);
 
+  // Show success message when user logs in
+  useEffect(() => {
+    if (isAuthenticated && showAuthModal) {
+      setShowAuthModal(false);
+      setShowLoginSuccess(true);
+    }
+  }, [isAuthenticated, showAuthModal]);
+
+  // Auto-hide success message after 3 seconds
+  useEffect(() => {
+    if (showLoginSuccess) {
+      const timer = setTimeout(() => {
+        setShowLoginSuccess(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showLoginSuccess]);
+
   const buttonStyle =
-    'w-64 px-4 py-2 rounded-md text-lg font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500';
+    'w-64 sm:w-64 md:w-56 px-3 sm:px-4 py-2 sm:py-2 rounded-md text-base sm:text-lg font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500';
 
   const containerStyle =
-    'relative flex flex-col items-center justify-center min-h-screen bg-slate-950 text-slate-100 font-display overflow-hidden py-24';
+    'relative flex flex-col items-center justify-center min-h-screen bg-slate-950 text-slate-100 font-display overflow-hidden py-8 sm:py-16 md:py-24 px-4';
 
   const taglineStyle =
-    'text-xl text-slate-300 mb-6 text-center max-w-sm drop-shadow-lg italic';
+    'text-lg sm:text-xl text-slate-300 mb-4 sm:mb-6 text-center max-w-sm drop-shadow-lg italic';
 
   const titleStyle =
-    'text-5xl font-bold text-yellow-400 tracking-wide drop-shadow-lg mb-8 text-center';
+    'text-3xl sm:text-4xl md:text-5xl font-bold text-yellow-400 tracking-wide drop-shadow-lg mb-4 sm:mb-6 md:mb-8 text-center';
 
-  const handleBackupNow = async () => {
-    try {
-      const settings = await getAppSettings();
-      const json = await exportFullBackup();
-      if (settings.backupEmail) {
-        const confirmSend = window.confirm(
-          t('settingsModal.sendBackupPrompt', 'Send backup via email?'),
-        );
-        if (confirmSend) {
-          await sendBackupEmail(json, settings.backupEmail);
-          alert(t('settingsModal.sendBackupSuccess', 'Backup sent successfully.'));
-        }
-      }
-      const iso = new Date().toISOString();
-      updateAppSettings({ lastBackupTime: iso }).catch(() => {});
-    } catch (err) {
-      logger.error('Failed to send backup', err);
-      const message = err instanceof Error ? err.message : String(err);
-      alert(
-        `${t('settingsModal.sendBackupError', 'Failed to send backup.')}: ${message}`,
-      );
-    }
-  };
 
   return (
     <div className={containerStyle}>
@@ -104,21 +104,21 @@ const StartScreen: React.FC<StartScreenProps> = ({
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-20 blur-2xl pointer-events-none"
       />
 
-      <div className="relative z-10 flex flex-col items-center space-y-5">
+      <div className="relative z-10 flex flex-col items-center space-y-3 sm:space-y-4 md:space-y-5 w-full max-w-sm sm:max-w-md">
         <h1 className={titleStyle}>
           <span className="block">MatchDay</span>
           <span className="block">Coach</span>
         </h1>
         <p className={taglineStyle}>{t('startScreen.tagline', 'Elevate Your Game')}</p>
-        <div className="flex flex-col items-center">
-          <span className="text-sm font-medium text-slate-300 mb-1">
+        <div className="flex flex-col items-center mb-2">
+          <span className="text-xs sm:text-sm font-medium text-slate-300 mb-1">
             {t('startScreen.languageLabel', 'Language')}
           </span>
           <div className="flex space-x-2">
             <button
               aria-label={t('startScreen.languageEnglish', 'English')}
               onClick={() => setLanguage('en')}
-              className={`w-10 h-8 rounded-md border text-xl flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${language === 'en' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-700 border-slate-600 text-white hover:bg-slate-600'}`}
+              className={`w-8 sm:w-10 h-6 sm:h-8 rounded-md border text-sm sm:text-xl flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${language === 'en' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-700 border-slate-600 text-white hover:bg-slate-600'}`}
             >
               <span role="img" aria-hidden="true">
                 🇬🇧
@@ -127,7 +127,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
             <button
               aria-label={t('startScreen.languageFinnish', 'Finnish')}
               onClick={() => setLanguage('fi')}
-              className={`w-10 h-8 rounded-md border text-xl flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${language === 'fi' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-700 border-slate-600 text-white hover:bg-slate-600'}`}
+              className={`w-8 sm:w-10 h-6 sm:h-8 rounded-md border text-sm sm:text-xl flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${language === 'fi' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-700 border-slate-600 text-white hover:bg-slate-600'}`}
             >
               <span role="img" aria-hidden="true">
                 🇫🇮
@@ -135,30 +135,75 @@ const StartScreen: React.FC<StartScreenProps> = ({
             </button>
           </div>
         </div>
-        {canResume && onResumeGame ? (
-          <button className={buttonStyle} onClick={onResumeGame}>
-            {t('startScreen.resumeGame', 'Resume Last Game')}
-          </button>
-        ) : null}
-        <button className={buttonStyle} onClick={onStartNewGame}>
-          {t('startScreen.startNewGame', 'Start New Game')}
-        </button>
-        <button className={buttonStyle} onClick={onLoadGame}>
-          {t('startScreen.loadGame', 'Load Game')}
-        </button>
-        <button className={buttonStyle} onClick={onCreateSeason}>
-          {t('startScreen.createSeasonTournament', 'Create Season/Tournament')}
-        </button>
-        <button className={buttonStyle} onClick={onViewStats}>
-          {t('startScreen.viewStats', 'View Stats')}
-        </button>
-        <button className={buttonStyle} onClick={handleBackupNow}>
-          {t('startScreen.backupNow', 'Backup Now')}
-        </button>
-        <button className={buttonStyle} onClick={onExplore}>
-          {t('startScreen.explore', 'Just Explore')}
-        </button>
+        
+        {/* Show different buttons based on auth state */}
+        <div className="flex flex-col items-center space-y-3 sm:space-y-4 w-full max-h-[60vh] sm:max-h-none overflow-y-auto">
+          {!isAuthenticated ? (
+            <>
+              <button 
+                className={buttonStyle} 
+                onClick={() => setShowAuthModal(true)}
+              >
+                <span className="flex items-center justify-center gap-2">
+                  <HiOutlineArrowRightOnRectangle className="w-4 sm:w-5 h-4 sm:h-5" />
+                  {t('auth.signIn')}
+                </span>
+              </button>
+              <button className={buttonStyle} onClick={onExplore}>
+                {t('startScreen.explore', 'Just Explore')}
+              </button>
+            </>
+          ) : (
+            <>
+              {canResume && onResumeGame ? (
+                <button className={buttonStyle} onClick={onResumeGame}>
+                  {t('startScreen.resumeGame', 'Resume Last Game')}
+                </button>
+              ) : null}
+              <button className={buttonStyle} onClick={onStartNewGame}>
+                {t('startScreen.startNewGame', 'Start New Game')}
+              </button>
+              <button className={buttonStyle} onClick={onLoadGame}>
+                {t('startScreen.loadGame', 'Load Game')}
+              </button>
+              <button className={buttonStyle} onClick={onCreateSeason}>
+                {t('startScreen.createSeasonTournament', 'Create Season/Tournament')}
+              </button>
+              <button className={buttonStyle} onClick={onViewStats}>
+                {t('startScreen.viewStats', 'View Stats')}
+              </button>
+              <button className={buttonStyle} onClick={onExplore}>
+                {t('startScreen.explore', 'Just Explore')}
+              </button>
+              <button 
+                className={`${buttonStyle} bg-red-600 hover:bg-red-700`} 
+                onClick={signOut}
+              >
+                <span className="flex items-center justify-center gap-2">
+                  <HiOutlineArrowRightOnRectangle className="w-4 sm:w-5 h-4 sm:h-5 rotate-180" />
+                  {t('auth.signOut')}
+                </span>
+              </button>
+            </>
+          )}
+        </div>
       </div>
+      
+      {/* Success toast notification - positioned in top area */}
+      {showLoginSuccess && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 flex items-center gap-2 bg-green-600/90 backdrop-blur-sm border border-green-500/70 text-green-100 px-6 py-3 rounded-lg shadow-lg animate-fade-in">
+          <HiCheck className="w-5 h-5" />
+          <span className="font-medium">{t('auth.loginSuccess')}</span>
+        </div>
+      )}
+      
+      {/* Auth modal */}
+      {showAuthModal && (
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+        />
+      )}
     </div>
   );
 };

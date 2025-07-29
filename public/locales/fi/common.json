@@ -665,5 +665,11 @@
     "restoreKeyError": "Kohteen {{key}} palautus epäonnistui. Tuonti peruttiin.",
     "restoreSuccess": "Varmuuskopio palautettu. Sovellus latautuu uudelleen...",
     "restoreError": "Virhe varmuuskopion tuonnissa: {{error}}"
+  },
+  "auth": {
+    "signIn": "Kirjaudu sisään",
+    "signOut": "Kirjaudu ulos",
+    "userMenu": "Käyttäjävalikko",
+    "loginSuccess": "Kirjautuminen onnistui!"
   }
 }

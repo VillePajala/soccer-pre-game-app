@@ -674,5 +674,11 @@
     "restoreKeyError": "Failed to restore item {{key}}. Import canceled.",
     "restoreSuccess": "Backup restored. Reloading app...",
     "restoreError": "Error importing backup: {{error}}"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "userMenu": "User Menu",
+    "loginSuccess": "Successfully logged in!"
   }
 }

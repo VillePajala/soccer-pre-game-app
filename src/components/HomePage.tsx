@@ -6,6 +6,7 @@ import PlayerBar from '@/components/PlayerBar';
 import ControlBar from '@/components/ControlBar';
 import TimerOverlay from '@/components/TimerOverlay';
 import GoalLogModal from '@/components/GoalLogModal';
+import TopBar from '@/components/TopBar';
 // Lazy load heavy modals for better performance
 const GameStatsModal = React.lazy(() => import('@/components/GameStatsModal'));
 const GameSettingsModal = React.lazy(() => import('@/components/GameSettingsModal'));
@@ -1682,6 +1683,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
   return (
     <main className="flex flex-col h-screen bg-slate-900 text-slate-50 overflow-hidden">
+      <TopBar />
       {/* Top Section: Player Bar, Game Info */}
       <div className={barStyle}>
         <PlayerBar

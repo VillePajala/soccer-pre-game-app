@@ -9,7 +9,6 @@ import I18nInitializer from "@/components/I18nInitializer";
 import { Analytics } from "@vercel/analytics/react";
 import { manifestConfig } from "@/config/manifest.config.js";
 import { AuthProvider } from "@/context/AuthContext";
-import TopBar from "@/components/TopBar";
 import AuthStorageSync from "@/components/AuthStorageSync";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { SessionWarning } from "@/components/auth/SessionWarning";
@@ -61,7 +60,6 @@ export default function RootLayout({
               <AuthProvider>
                 <AuthStorageSync />
                 <SessionWarning />
-                <TopBar />
                 <ClientWrapper>{children}</ClientWrapper>
               </AuthProvider>
             </QueryProvider>
