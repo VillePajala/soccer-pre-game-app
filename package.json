@@ -10,6 +10,7 @@
     "test": "jest",
     "test:unit": "jest",
     "generate:i18n-types": "node scripts/generate-i18n-types.mjs",
+    "analyze": "ANALYZE=true npm run build",
     "security:scan": "snyk test",
     "security:monitor": "snyk monitor",
     "security:wizard": "snyk wizard"
@@ -35,6 +36,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@next/bundle-analyzer": "^15.4.4",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
