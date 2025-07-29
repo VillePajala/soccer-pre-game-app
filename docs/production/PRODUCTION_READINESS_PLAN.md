@@ -70,11 +70,11 @@ This comprehensive plan outlines all steps required to transform MatchDay Coach 
   - [x] Add SQL injection prevention (Supabase parameterized queries used throughout)
   - [x] Validate file uploads (JSON file validation via FileReader with error handling)
 
-- [ ] **Security headers and CSP**
-  - [ ] Implement Content Security Policy
-  - [ ] Add all security headers (X-Frame-Options, X-Content-Type-Options, etc.)
+- [x] **Security headers and CSP** ✅ Completed 2025-07-29
+  - [x] Implement Content Security Policy (restrictive CSP with essential service allowlists)
+  - [x] Add all security headers (X-Frame-Options: DENY, X-Content-Type-Options: nosniff, X-XSS-Protection, Referrer-Policy)
   - [ ] Configure CORS properly
-  - [ ] Remove sensitive headers from responses
+  - [x] Remove sensitive headers from responses (poweredByHeader: false)
 
 - [x] **Code security audit** ✅ Completed 2025-07-29
   - [x] Run npm audit and fix all vulnerabilities (0 vulnerabilities found)
