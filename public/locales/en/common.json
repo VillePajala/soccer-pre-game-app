@@ -680,5 +680,12 @@
     "signOut": "Sign Out",
     "userMenu": "User Menu",
     "loginSuccess": "Successfully logged in!"
+  },
+  "sidebarCategories": {
+    "gameManagement": "Game Management",
+    "setupConfiguration": "Setup & Configuration",
+    "analysisTools": "Analysis & Tools",
+    "resources": "Resources",
+    "settings": "Settings"
   }
 }

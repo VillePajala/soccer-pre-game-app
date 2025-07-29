@@ -134,7 +134,6 @@ interface HomePageProps {
 }
 
 function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
-  logger.log('--- page.tsx RENDER ---');
   const { t } = useTranslation(); // Get translation function
   const { signOut } = useAuth();
   // Removed - now handled by useGameDataManager: 
@@ -179,9 +178,6 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   const [gameSessionState, dispatchGameSession] = useReducer(gameSessionReducer, initialGameSessionData);
 
 
-  useEffect(() => {
-    logger.log('[gameSessionState CHANGED]', gameSessionState);
-  }, [gameSessionState]);
 
   // --- History Management ---
   const {
@@ -899,7 +895,6 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
   // Helper function to load game state from game data
   const loadGameStateFromData = (gameData: AppState | null, isInitialDefaultLoad = false) => {
-    logger.log('[LOAD GAME STATE] Called with gameData:', gameData, 'isInitialDefaultLoad:', isInitialDefaultLoad);
 
     if (gameData) {
       // gameData is AppState, map its fields directly to GameSessionState partial payload
@@ -996,23 +991,18 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       availablePlayers: masterRosterQueryResultData || availablePlayers,
     };
     resetHistory(newHistoryState);
-    logger.log('[LOAD GAME STATE] Finished dispatching. Reducer will update gameSessionState.');
   };
 
   // --- Effect to load game state when currentGameId changes or savedGames updates ---
   useEffect(() => {
-    logger.log('[EFFECT game load] currentGameId or savedGames changed:', { currentGameId });
     if (!initialLoadComplete) {
-      logger.log('[EFFECT game load] Initial load not complete, skipping game state application.');
       return; 
     }
 
     let gameToLoad: AppState | null = null; // Ensure this is AppState
     if (currentGameId && currentGameId !== DEFAULT_GAME_ID && savedGames[currentGameId]) {
-      logger.log(`[EFFECT game load] Found game data for ${currentGameId}`);
       gameToLoad = savedGames[currentGameId] as AppState; // Cast to AppState
     } else {
-      logger.log('[EFFECT game load] No specific game to load or ID is default. Applying default game state.');
     }
     loadGameStateFromData(gameToLoad); 
 
@@ -1024,7 +1014,6 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     // Only auto-save if loaded AND we have a proper game ID (not the default unsaved one)
     const autoSave = async () => {
     if (initialLoadComplete && currentGameId && currentGameId !== DEFAULT_GAME_ID) {
-      logger.log(`Auto-saving state for game ID: ${currentGameId}`);
       try {
         // 1. Create the current game state snapshot (excluding history and volatile timer states)
         const currentSnapshot: AppState = {
@@ -1098,15 +1087,12 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
   // **** ADDED: Effect to prompt for setup if default game ID is loaded ****
   useEffect(() => {
-    logger.log('[Modal Trigger Effect] Running. initialLoadComplete:', initialLoadComplete, 'hasSkipped:', hasSkippedInitialSetup);
     // Only run the check *after* initial load is fully complete and setup hasn't been skipped
     if (initialLoadComplete && !hasSkippedInitialSetup) {
       // Check currentGameId *inside* the effect body
       if (currentGameId === DEFAULT_GAME_ID) {
-        logger.log('Default game ID loaded, prompting for setup...');
       setIsNewGameSetupModalOpen(true);
       } else {
-        logger.log('Not prompting: Specific game loaded.');
     }
     }
   // Depend only on load completion and skip status - removed setIsNewGameSetupModalOpen from deps
@@ -1290,7 +1276,6 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
   // --- Roster Management Handlers ---
   const openRosterModal = () => {
-    logger.log('[openRosterModal] Called. Setting highlightRosterButton to false.'); // Log modal open
     setIsRosterModalOpen(true);
     setHighlightRosterButton(false); // <<< Remove highlight when modal is opened
   };
@@ -1526,7 +1511,6 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       setNewGameDemandFactor(1);
 
       // <<< Trigger the roster button highlight >>>
-      logger.log('[handleStartNewGameWithSetup] Setting highlightRosterButton to true.'); // Log highlight trigger
       setHighlightRosterButton(true);
 
   }, [
@@ -1635,15 +1619,9 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   // Render null or a loading indicator until state is loaded
   // Note: Console log added before the check itself
  
-  // Final console log before returning the main JSX
-  logger.log('[Home Render] highlightRosterButton:', highlightRosterButton); // Log state on render
-
   // ATTEMPTING TO EXPLICITLY REMOVE THE CONDITIONAL HOOK
   // The useEffect for highlightRosterButton that was here (around lines 2977-2992)
   // should be removed as it's called conditionally and its correct version is at the top level.
-
-  // Log gameEvents before PlayerBar is rendered
-  logger.log('[page.tsx] About to render PlayerBar, gameEvents for PlayerBar:', JSON.stringify(gameSessionState.gameEvents));
 
 
   const handleOpenPlayerStats = (playerId: string) => {
