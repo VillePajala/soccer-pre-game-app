@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "feat: refactor ConfirmPage to include loading state with Suspense"
+  "notes": "feat: enhance StartScreen and AuthModal with improved button layouts and icons"
 }
