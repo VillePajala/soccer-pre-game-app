@@ -36,7 +36,7 @@ export function transformPlayerFromSupabase(supabasePlayer: SupabasePlayer): Pla
     id: supabasePlayer.id!,
     name: supabasePlayer.name,
     nickname: supabasePlayer.nickname || undefined,
-    jerseyNumber: supabasePlayer.jersey_number || undefined,
+    jerseyNumber: supabasePlayer.jersey_number ? String(supabasePlayer.jersey_number) : undefined,
     notes: supabasePlayer.notes || undefined,
     isGoalie: supabasePlayer.is_goalie,
     receivedFairPlayCard: supabasePlayer.received_fair_play_card

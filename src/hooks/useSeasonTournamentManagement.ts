@@ -41,8 +41,8 @@ interface UseSeasonTournamentManagementReturn {
   error: string | null;
   
   // Refs
-  newSeasonInputRef: React.RefObject<HTMLInputElement>;
-  newTournamentInputRef: React.RefObject<HTMLInputElement>;
+  newSeasonInputRef: React.RefObject<HTMLInputElement | null>;
+  newTournamentInputRef: React.RefObject<HTMLInputElement | null>;
   
   // Handlers
   handleShowCreateSeason: () => void;
@@ -65,7 +65,7 @@ export function useSeasonTournamentManagement({
   addTournamentMutation,
   t,
 }: UseSeasonTournamentManagementProps): UseSeasonTournamentManagementReturn {
-  const { handleValidationError, handleStorageError } = useErrorHandler();
+  const { handleStorageError } = useErrorHandler();
   
   // State for seasons and tournaments
   const [seasons, setSeasons] = useState<Season[]>([]);

@@ -24,13 +24,13 @@ interface UseInlineEditingReturn {
   setInlineEditValue: React.Dispatch<React.SetStateAction<string>>;
   
   // Refs
-  teamInputRef: React.RefObject<HTMLInputElement>;
-  opponentInputRef: React.RefObject<HTMLInputElement>;
-  dateInputRef: React.RefObject<HTMLInputElement>;
-  locationInputRef: React.RefObject<HTMLInputElement>;
-  timeInputRef: React.RefObject<HTMLInputElement>;
-  durationInputRef: React.RefObject<HTMLInputElement>;
-  notesTextareaRef: React.RefObject<HTMLTextAreaElement>;
+  teamInputRef: React.RefObject<HTMLInputElement | null>;
+  opponentInputRef: React.RefObject<HTMLInputElement | null>;
+  dateInputRef: React.RefObject<HTMLInputElement | null>;
+  locationInputRef: React.RefObject<HTMLInputElement | null>;
+  timeInputRef: React.RefObject<HTMLInputElement | null>;
+  durationInputRef: React.RefObject<HTMLInputElement | null>;
+  notesTextareaRef: React.RefObject<HTMLTextAreaElement | null>;
   
   // Processing state
   isProcessing: boolean;

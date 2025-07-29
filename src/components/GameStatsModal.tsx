@@ -203,7 +203,7 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
     onDeleteGameEvent,
     setLocalGameEvents,
     formatTime,
-    t,
+    t: (key: string, fallback?: string) => t(key, fallback || key),
   });
 
   const overallTeamStats = useOverallTeamStats({

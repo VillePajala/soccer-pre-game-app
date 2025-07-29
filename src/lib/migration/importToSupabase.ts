@@ -4,6 +4,7 @@ import { updateMigrationStatus } from './migrationStatus';
 import type { LocalDataExport } from './exportLocalData';
 import { toSupabase } from '../../utils/transforms';
 import type { Player, Season, Tournament } from '../../types';
+import type { AppSettings } from '../../utils/appSettings';
 
 export interface ImportProgress {
   stage: 'players' | 'seasons' | 'tournaments' | 'games' | 'settings' | 'complete';
@@ -164,7 +165,7 @@ export async function importDataToSupabase(
 
     for (const [gameId, game] of gameEntries) {
       try {
-        await importGame(game, userId);
+        await importGame(game as unknown as Record<string, unknown>, userId);
         result.imported.games++;
         completedItems++;
         
@@ -194,7 +195,7 @@ export async function importDataToSupabase(
       });
 
       try {
-        await importAppSettings(data.appSettings, userId);
+        await importAppSettings(data.appSettings as unknown as Record<string, unknown>, userId);
         result.imported.settings = true;
         completedItems++;
         
@@ -309,7 +310,7 @@ async function importGame(game: Record<string, unknown>, userId: string): Promis
  * Import app settings to Supabase
  */
 async function importAppSettings(settings: Record<string, unknown>, userId: string): Promise<void> {
-  const supabaseSettings = toSupabase.appSettings(settings, userId);
+  const supabaseSettings = toSupabase.appSettings(settings as unknown as AppSettings, userId);
   
   const { error } = await supabase
     .from('app_settings')

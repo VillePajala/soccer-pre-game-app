@@ -165,7 +165,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
     currentGameId,
     onUpdateGameEvent,
     onDeleteGameEvent,
-    t,
+    t: (key: string, fallback?: string) => t(key, fallback || key),
   });
 
   const inlineEditing = useInlineEditing({
@@ -177,19 +177,19 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
     gameTime,
     periodDurationMinutes,
     gameNotes,
-    updateGameDetailsMutation,
-    t,
+    updateGameDetailsMutation: updateGameDetailsMutation as unknown as UseMutationResult<unknown, Error, Record<string, unknown>, unknown>,
+    t: (key: string, fallback?: string) => t(key, fallback || key),
   });
 
   const seasonTournament = useSeasonTournamentManagement({
     isOpen,
-    seasonId,
-    tournamentId,
+    seasonId: seasonId || undefined,
+    tournamentId: tournamentId || undefined,
     onSeasonIdChange,
     onTournamentIdChange,
-    addSeasonMutation,
-    addTournamentMutation,
-    t,
+    addSeasonMutation: addSeasonMutation as unknown as UseMutationResult<Season, Error, { name: string }, unknown>,
+    addTournamentMutation: addTournamentMutation as unknown as UseMutationResult<Tournament, Error, { name: string }, unknown>,
+    t: (key: string, fallback?: string) => t(key, fallback || key),
   });
 
   // State for game time
@@ -262,8 +262,8 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
     if (currentGameId) {
       updateGameDetailsMutation.mutate({ gameId: currentGameId, updates: { seasonId: newSeasonId, tournamentId: undefined } });
     }
-    setShowNewSeasonInput(false);
-    setNewSeasonName('');
+    seasonTournament.setShowNewSeasonInput(false);
+    seasonTournament.setNewSeasonName('');
   };
 
   const handleTournamentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -274,8 +274,8 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
     if (currentGameId) {
       updateGameDetailsMutation.mutate({ gameId: currentGameId, updates: { tournamentId: newTournamentId, seasonId: undefined } });
     }
-    setShowNewTournamentInput(false);
-    setNewTournamentName('');
+    seasonTournament.setShowNewTournamentInput(false);
+    seasonTournament.setNewTournamentName('');
   };
 
 
@@ -894,7 +894,13 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                     ref={inlineEditing.notesTextareaRef}
                     value={inlineEditing.inlineEditValue}
                     onChange={(e) => inlineEditing.setInlineEditValue(e.target.value)}
-                    onKeyDown={inlineEditing.handleInlineEditKeyDown}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && e.ctrlKey) {
+                        inlineEditing.handleConfirmInlineEdit();
+                      } else if (e.key === 'Escape') {
+                        inlineEditing.handleCancelInlineEdit();
+                      }
+                    }}
                     className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm h-32 resize-none"
                     placeholder={t('gameSettingsModal.notesPlaceholder', 'Write notes...')}
                     disabled={inlineEditing.isProcessing}
