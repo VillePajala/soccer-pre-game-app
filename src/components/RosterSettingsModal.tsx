@@ -66,6 +66,7 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
   const [actionsMenuPlayerId, setActionsMenuPlayerId] = useState<string | null>(null);
   const actionsMenuRef = useRef<HTMLDivElement>(null); // Ref for click outside
   const playerRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const editingNameInputRef = useRef<HTMLInputElement>(null);
 
   // Close editing mode when modal closes or players change
   useEffect(() => {
@@ -233,6 +234,15 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
     }
   }, [isEditingTeamName]);
 
+  // Focus first edit input when editing a player starts
+  useEffect(() => {
+    if (editingPlayerId && editingNameInputRef.current) {
+      setTimeout(() => {
+        editingNameInputRef.current?.focus();
+      }, 100); // Small delay to ensure DOM is ready
+    }
+  }, [editingPlayerId]);
+
   // Update team name state when prop changes
   useEffect(() => {
     setEditedTeamName(teamName);
@@ -345,6 +355,7 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                 value={searchText}
                 onChange={handleSearchChange}
                 className={inputBaseStyle}
+                tabIndex={editingPlayerId || isAddingPlayer ? -1 : 0}
               />
             </div>
             {/* Form to Add New Player (appears here when isAddingPlayer is true) */}
@@ -352,7 +363,7 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
               <div className={`${cardStyle} mx-4 space-y-3`}>
                 <h3 className="text-lg font-semibold text-slate-200">{t('rosterSettingsModal.addPlayerButton', 'Add Player')}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <input type="text" name="name" placeholder={t('rosterSettingsModal.playerNamePlaceholder', 'Player Name')} value={newPlayerData.name} onChange={handleNewPlayerInputChange} className={inputBaseStyle} autoFocus />
+                  <input type="text" name="name" placeholder={t('rosterSettingsModal.playerNamePlaceholder', 'Player Name')} value={newPlayerData.name} onChange={handleNewPlayerInputChange} className={inputBaseStyle} autoFocus={isAddingPlayer && !editingPlayerId} />
                   <input type="text" name="nickname" placeholder={t('rosterSettingsModal.nicknamePlaceholder', 'Nickname (Optional)')} value={newPlayerData.nickname} onChange={handleNewPlayerInputChange} className={inputBaseStyle} />
                 </div>
                 <input type="text" name="jerseyNumber" placeholder={t('rosterSettingsModal.jerseyHeader', '#')} value={newPlayerData.jerseyNumber} onChange={handleNewPlayerInputChange} className={`${inputBaseStyle} w-24 text-center`} maxLength={3} />
@@ -388,7 +399,7 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           <div>
                             <label htmlFor={`name-${player.id}`} className={labelStyle}>{t('rosterSettingsModal.nameHeader', 'Name')}</label>
-                            <input id={`name-${player.id}`} type="text" name="name" value={editPlayerData.name} onChange={handleEditInputChange} className={inputBaseStyle} />
+                            <input id={`name-${player.id}`} type="text" name="name" value={editPlayerData.name} onChange={handleEditInputChange} className={inputBaseStyle} ref={editingNameInputRef} />
                           </div>
                           <div>
                             <label htmlFor={`nickname-${player.id}`} className={labelStyle}>{t('rosterSettingsModal.nicknamePlaceholder', 'Nickname')}</label>
