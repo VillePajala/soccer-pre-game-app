@@ -363,7 +363,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
         ref={sidePanelRef}
         onTouchStart={handleTouchStart}
         onMouseDown={handleMouseDown}
-        className={`fixed top-0 left-0 h-full w-80 bg-slate-800/98 backdrop-blur-sm shadow-xl z-50 border-r border-slate-600/50 transform ${
+        className={`fixed top-0 left-0 h-full w-80 flex flex-col bg-slate-800/98 backdrop-blur-sm shadow-xl z-50 border-r border-slate-600/50 transform ${
           isDragging ? '' : 'transition-transform duration-300 ease-in-out'
         } ${
           isSidePanelOpen ? 'translate-x-0' : '-translate-x-full'
@@ -387,7 +387,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
         </div>
         
         {/* Side Panel Content */}
-        <nav className="flex flex-col p-4 space-y-1 overflow-y-auto h-full">
+        <nav className="flex flex-col p-4 space-y-1 overflow-y-auto flex-1">
           {/* Group 1: Game Management */}
           <div className="mb-4">
             <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">{t('sidebarCategories.gameManagement', 'Game Management')}</h4>
