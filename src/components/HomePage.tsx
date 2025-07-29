@@ -6,7 +6,6 @@ import PlayerBar from '@/components/PlayerBar';
 import ControlBar from '@/components/ControlBar';
 import TimerOverlay from '@/components/TimerOverlay';
 import GoalLogModal from '@/components/GoalLogModal';
-import TopBar from '@/components/TopBar';
 // Lazy load heavy modals for better performance
 const GameStatsModal = React.lazy(() => import('@/components/GameStatsModal'));
 const GameSettingsModal = React.lazy(() => import('@/components/GameSettingsModal'));
@@ -23,6 +22,7 @@ import usePlayerFieldManager from '@/hooks/usePlayerFieldManager';
 import useGameEventsManager from '@/hooks/useGameEventsManager';
 import useAppSettingsManager from '@/hooks/useAppSettingsManager';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/context/AuthContext';
 import { useGameState, UseGameStateReturn } from '@/hooks/useGameState';
 import GameInfoBar from '@/components/GameInfoBar';
 import { useGameTimer } from '@/hooks/useGameTimer';
@@ -136,6 +136,7 @@ interface HomePageProps {
 function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   logger.log('--- page.tsx RENDER ---');
   const { t } = useTranslation(); // Get translation function
+  const { signOut } = useAuth();
   // Removed - now handled by useGameDataManager: 
   // const queryClient = useQueryClient(); // Get query client instance
 
@@ -1683,7 +1684,6 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
   return (
     <main className="flex flex-col h-screen bg-slate-900 text-slate-50 overflow-hidden">
-      <TopBar />
       {/* Top Section: Player Bar, Game Info */}
       <div className={barStyle}>
         <PlayerBar
@@ -2016,6 +2016,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           onBackupIntervalChange={handleBackupIntervalChange}
           onBackupEmailChange={handleBackupEmailChange}
           onSendBackup={handleCreateAndSendBackup}
+          onSignOut={signOut}
         />
       </React.Suspense>
 
