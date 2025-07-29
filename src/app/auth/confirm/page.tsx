@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase';
 
 export default function ConfirmPage() {
   const router = useRouter();
@@ -12,7 +12,6 @@ export default function ConfirmPage() {
 
   useEffect(() => {
     const confirmEmail = async () => {
-      const supabase = createClient();
       
       try {
         // Get token_hash and type from URL parameters
