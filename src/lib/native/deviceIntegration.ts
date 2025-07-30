@@ -20,11 +20,11 @@ interface VendorDocument extends Document {
   msExitFullscreen?: () => Promise<void> | void;
 }
 
-interface VendorNavigator extends Navigator {
+type VendorNavigator = Omit<Navigator, 'wakeLock'> & {
   wakeLock?: {
     request: (type: 'screen') => Promise<WakeLockSentinel>;
   };
-}
+};
 
 
 interface DeviceCapabilities {
