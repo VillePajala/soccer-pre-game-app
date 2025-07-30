@@ -60,12 +60,18 @@ This comprehensive plan outlines all steps required to transform MatchDay Coach 
   - [ ] ~~Add request signing for API calls~~ *(Supabase handles auth properly)*
   - [ ] ~~Implement replay attack prevention~~ *(Not a realistic threat for this app)*
 
-- [ ] **Data retention and privacy** *(Some GDPR items worth considering post-launch)*
+- [ ] **Data retention and privacy** *(Essential for app store compliance)*
   - [ ] ~~Implement data retention policies~~ *(Coaches want to keep historical data)*
-  - [ ] Add GDPR compliance features *(Post-launch if expanding to EU)*
-    - [ ] Data export functionality *(Already have backup/export)*
-    - [ ] Right to be forgotten (account deletion) *(Can add if needed)*
-    - [ ] Privacy policy acceptance tracking *(Post-launch)*
+  - [x] **User Data Control & Account Deletion** *(Required for app store policies)*
+    - [ ] Implement selective data deletion (delete individual games, players, seasons)
+    - [ ] Add complete data export functionality (enhanced beyond current backup)
+    - [ ] **Account deletion with data cleanup** *(PRIORITY: Required for Google Play)*
+      - [ ] Create database function to delete all user data across tables
+      - [ ] Implement UI for account deletion with confirmation flow
+      - [ ] Add grace period (7-30 days) for account recovery
+      - [ ] Ensure proper foreign key cascade handling
+      - [ ] Test deletion completeness and data isolation
+    - [ ] Privacy policy acceptance tracking *(Required for app store)*
   - [ ] ~~Implement audit logging for data access~~ *(Overkill for coaching app)*
 
 ### 1.3 Application Security
@@ -559,7 +565,21 @@ After implementing substantial changes (security features, performance optimizat
   - [ ] Font size adjustment
   - [ ] Color blind friendly palettes
 
-### 6.3 Localization
+### 6.3 User Data Management & Privacy
+- [ ] **Account management UI** *(Required for app store compliance)*
+  - [ ] Enhanced settings page with data management section
+  - [ ] Clear data usage explanation
+  - [ ] Export all data functionality (JSON/CSV)
+  - [ ] Selective data deletion options (games, players, seasons)
+  - [ ] **Account deletion flow** *(PRIORITY: Google Play requirement)*
+    - [ ] Multi-step confirmation process
+    - [ ] Clear explanation of consequences
+    - [ ] Grace period option (7-30 days)
+    - [ ] Immediate vs delayed deletion choice
+    - [ ] Email confirmation for account deletion
+    - [ ] Recovery mechanism during grace period
+
+### 6.4 Localization
 - [ ] **Additional languages**
   - [ ] Spanish
   - [ ] German
