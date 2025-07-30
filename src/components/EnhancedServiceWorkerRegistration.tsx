@@ -44,6 +44,14 @@ export default function EnhancedServiceWorkerRegistration() {
     }
   }, []);
 
+  const requestManualSync = useCallback(() => {
+    if (registration && 'serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ 
+        type: 'SYNC_REQUEST' 
+      });
+    }
+  }, [registration]);
+
   // Register manual sync when connection status changes
   useEffect(() => {
     if (connectionStatus.isOnline && registration) {
@@ -134,14 +142,6 @@ export default function EnhancedServiceWorkerRegistration() {
       });
     }
   };
-
-  const requestManualSync = useCallback(() => {
-    if (registration && 'serviceWorker' in navigator && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.controller.postMessage({ 
-        type: 'SYNC_REQUEST' 
-      });
-    }
-  }, [registration]);
 
   const getCacheStatus = async () => {
     if (registration && 'serviceWorker' in navigator && navigator.serviceWorker.controller) {
