@@ -41,9 +41,9 @@ const InstallPrompt: React.FC = () => {
     const lastPromptTime = localStorage.getItem("installPromptDismissed");
     if (
       lastPromptTime &&
-      Date.now() - Number(lastPromptTime) < 24 * 60 * 60 * 1000
+      Date.now() - Number(lastPromptTime) < 7 * 24 * 60 * 60 * 1000
     ) {
-      return; // Don't show prompt if dismissed in the last 24 hours
+      return; // Don't show prompt if dismissed in the last 7 days
     }
 
     // If not installed and not recently dismissed, check if we have a prompt event
@@ -61,7 +61,6 @@ const InstallPrompt: React.FC = () => {
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-    window.addEventListener("focus", checkInstallationStatus); // Re-check on focus
 
     // Initial check
     checkInstallationStatus();
@@ -71,7 +70,6 @@ const InstallPrompt: React.FC = () => {
         "beforeinstallprompt",
         handleBeforeInstallPrompt,
       );
-      window.removeEventListener("focus", checkInstallationStatus);
     };
   }, [installPrompt, checkInstallationStatus]); // Rerun effect if installPrompt changes
 
