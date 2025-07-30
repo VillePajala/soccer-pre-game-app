@@ -17,7 +17,23 @@ function ResetPasswordForm() {
 
   useEffect(() => {
     const checkSession = async () => {
-      // Supabase sends the recovery token in the URL hash fragment
+      // First check if we have a recovery session from the callback
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session?.user) {
+        // Check if this is a recovery session
+        // recovery_sent_at might not always be available, so we check multiple conditions
+        const isRecoverySession = session.user.recovery_sent_at || 
+                                 session.user.app_metadata?.recovery_token ||
+                                 session.user.aud === 'authenticated';
+        
+        if (isRecoverySession) {
+          setIsValidToken(true);
+          return;
+        }
+      }
+      
+      // Fallback: Check for hash fragment (legacy flow)
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const accessToken = hashParams.get('access_token');
       const type = hashParams.get('type');
@@ -38,13 +54,7 @@ function ResetPasswordForm() {
           setIsValidToken(false);
         }
       } else {
-        // Check if we already have a recovery session
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user?.recovery_sent_at) {
-          setIsValidToken(true);
-        } else {
-          setError('Invalid or expired reset link. Please request a new password reset.');
-        }
+        setError('Invalid or expired reset link. Please request a new password reset.');
       }
     };
 
