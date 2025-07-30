@@ -10,6 +10,22 @@ interface ShareData {
   files?: File[];
 }
 
+interface VendorFullscreenElement extends Element {
+  webkitRequestFullscreen?: () => Promise<void> | void;
+  msRequestFullscreen?: () => Promise<void> | void;
+}
+
+interface VendorDocument extends Document {
+  webkitExitFullscreen?: () => Promise<void> | void;
+  msExitFullscreen?: () => Promise<void> | void;
+}
+
+interface VendorNavigator extends Navigator {
+  wakeLock?: {
+    request: (type: 'screen') => Promise<WakeLockSentinel>;
+  };
+}
+
 
 interface DeviceCapabilities {
   webShare: boolean;
@@ -137,14 +153,14 @@ export class DeviceIntegration {
     try {
       if (!this.capabilities.fullscreen) return false;
 
-      const targetElement = element || document.documentElement;
+      const targetElement = (element || document.documentElement) as VendorFullscreenElement;
       
       if (targetElement.requestFullscreen) {
         await targetElement.requestFullscreen();
-      } else if ((targetElement as unknown as Record<string, unknown>).webkitRequestFullscreen) {
-        await (targetElement as unknown as Record<string, unknown>).webkitRequestFullscreen();
-      } else if ((targetElement as unknown as Record<string, unknown>).msRequestFullscreen) {
-        await (targetElement as unknown as Record<string, unknown>).msRequestFullscreen();
+      } else if (targetElement.webkitRequestFullscreen) {
+        await targetElement.webkitRequestFullscreen();
+      } else if (targetElement.msRequestFullscreen) {
+        await targetElement.msRequestFullscreen();
       }
       
       console.log('[Device] Entered fullscreen mode');
@@ -162,12 +178,14 @@ export class DeviceIntegration {
     try {
       if (!this.capabilities.fullscreen) return false;
 
-      if (document.exitFullscreen) {
-        await document.exitFullscreen();
-      } else if ((document as unknown as Record<string, unknown>).webkitExitFullscreen) {
-        await (document as unknown as Record<string, unknown>).webkitExitFullscreen();
-      } else if ((document as unknown as Record<string, unknown>).msExitFullscreen) {
-        await (document as unknown as Record<string, unknown>).msExitFullscreen();
+      const doc = document as VendorDocument;
+
+      if (doc.exitFullscreen) {
+        await doc.exitFullscreen();
+      } else if (doc.webkitExitFullscreen) {
+        await doc.webkitExitFullscreen();
+      } else if (doc.msExitFullscreen) {
+        await doc.msExitFullscreen();
       }
       
       console.log('[Device] Exited fullscreen mode');
@@ -185,14 +203,16 @@ export class DeviceIntegration {
     try {
       if (!this.capabilities.wakeLock) return null;
 
-      const wakeLock = await (navigator as unknown as Record<string, unknown>).wakeLock.request('screen');
-      console.log('[Device] Wake lock acquired');
-      
-      wakeLock.addEventListener('release', () => {
-        console.log('[Device] Wake lock released');
-      });
-      
-      return wakeLock;
+      const wakeLock = await (navigator as VendorNavigator).wakeLock?.request('screen');
+      if (wakeLock) {
+        console.log('[Device] Wake lock acquired');
+
+        wakeLock.addEventListener('release', () => {
+          console.log('[Device] Wake lock released');
+        });
+      }
+
+      return wakeLock ?? null;
     } catch (error) {
       console.error('[Device] Failed to acquire wake lock:', error);
       return null;
