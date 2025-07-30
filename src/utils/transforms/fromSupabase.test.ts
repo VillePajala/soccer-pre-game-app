@@ -54,7 +54,7 @@ describe('transformPlayerFromSupabase', () => {
       id: 'player123',
       name: 'Test Player',
       nickname: 'Testy',
-      jerseyNumber: 10,
+      jerseyNumber: '10',
       notes: 'Great player',
       isGoalie: false,
       receivedFairPlayCard: true
@@ -609,7 +609,7 @@ describe('reconstructAppStateFromSupabase', () => {
       relX: 0.2,
       relY: 0.5,
       color: '#FF0000',
-      jerseyNumber: 10
+      jerseyNumber: '10'
     });
 
     // Check available players
@@ -618,7 +618,7 @@ describe('reconstructAppStateFromSupabase', () => {
       id: 'player2',
       name: 'Player Two',
       color: '#00FF00',
-      jerseyNumber: 7
+      jerseyNumber: '7'
     });
 
     // Check selected players

@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { formatBytes } from '@/utils/bytes';
 import packageJson from '../../package.json';
-import { HiOutlineArrowRightOnRectangle } from 'react-icons/hi2';
+import { HiOutlineArrowRightOnRectangle, HiOutlineDocumentArrowDown, HiOutlineDocumentArrowUp } from 'react-icons/hi2';
+import { exportFullBackup, importFullBackup } from '@/utils/fullBackup';
+import { importBackupToSupabase } from '@/utils/supabaseBackupImport';
+import { authAwareStorageManager as storageManager } from '@/lib/storage';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -15,14 +17,6 @@ interface SettingsModalProps {
   onDefaultTeamNameChange: (name: string) => void;
   onResetGuide: () => void;
   onHardResetApp: () => void;
-  autoBackupEnabled: boolean;
-  backupIntervalHours: number;
-  lastBackupTime?: string | null;
-  backupEmail: string;
-  onAutoBackupEnabledChange: (enabled: boolean) => void;
-  onBackupIntervalChange: (hours: number) => void;
-  onBackupEmailChange: (email: string) => void;
-  onSendBackup: () => void;
   onSignOut?: () => void;
 }
 
@@ -35,40 +29,73 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   onDefaultTeamNameChange,
   onResetGuide,
   onHardResetApp,
-  autoBackupEnabled,
-  backupIntervalHours,
-  lastBackupTime,
-  backupEmail,
-  onAutoBackupEnabledChange,
-  onBackupIntervalChange,
-  onBackupEmailChange,
-  onSendBackup,
   onSignOut,
 }) => {
   const { t } = useTranslation();
   const [teamName, setTeamName] = useState(defaultTeamName);
   const [resetConfirm, setResetConfirm] = useState('');
-  const [storageEstimate, setStorageEstimate] = useState<{ usage: number; quota: number } | null>(null);
-  const MAX_LOCAL_STORAGE = 5 * 1024 * 1024; // 5 MB assumption for localStorage
+  const restoreFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setTeamName(defaultTeamName);
   }, [defaultTeamName]);
 
-  useEffect(() => {
-    if (isOpen) {
-      if (navigator.storage?.estimate) {
-        navigator.storage
-          .estimate()
-          .then(res =>
-            setStorageEstimate({ usage: res.usage || 0, quota: MAX_LOCAL_STORAGE })
-          )
-          .catch(() => setStorageEstimate(null));
-      } else {
-        setStorageEstimate(null);
-      }
+  // Manual backup/restore handlers
+  const handleManualBackup = () => {
+    exportFullBackup();
+  };
+
+  const handleManualRestore = () => {
+    // Clear the file input value to ensure onChange fires even for same file
+    if (restoreFileInputRef.current) {
+      restoreFileInputRef.current.value = '';
     }
-  }, [isOpen, MAX_LOCAL_STORAGE]);
+    restoreFileInputRef.current?.click();
+  };
+  
+  const handleRestoreFileSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const jsonContent = e.target?.result as string;
+      if (jsonContent) {
+        // Check if we're using Supabase
+        const providerName = storageManager.getProviderName?.() || 'localStorage';
+        
+        if (providerName === 'supabase') {
+          try {
+            // Use the new Supabase-aware import
+            const result = await importBackupToSupabase(jsonContent);
+            if (result.success) {
+              alert(result.message);
+              // Reload to refresh all data (same as localStorage import)
+              setTimeout(() => {
+                window.location.reload();
+              }, 500);
+            } else {
+              alert(t('settingsModal.importError', { defaultValue: 'Import failed: ' }) + result.message);
+            }
+          } catch (error) {
+            alert(t('settingsModal.importError', { defaultValue: 'Import failed: ' }) + (error instanceof Error ? error.message : 'Unknown error'));
+          }
+        } else {
+          // Use the old localStorage import for backwards compatibility
+          importFullBackup(jsonContent);
+        }
+      } else {
+        alert(t('settingsModal.importReadError', 'Error reading file content.'));
+      }
+    };
+    reader.onerror = () => {
+      alert(t('settingsModal.importReadError', 'Error reading file content.'));
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  };
 
   if (!isOpen) return null;
 
@@ -124,55 +151,40 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
             <div className="pt-2 border-t border-slate-700/40 space-y-2">
               <h3 className="text-lg font-semibold text-slate-200">
-                {t('settingsModal.backupTitle', 'Automatic Backup')}
+                {t('settingsModal.manualBackupTitle', 'Manual Backup & Restore')}
               </h3>
-              <label className="inline-flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={autoBackupEnabled}
-                  onChange={(e) => onAutoBackupEnabledChange(e.target.checked)}
-                  className="form-checkbox h-5 w-5 text-indigo-600 bg-slate-600 border-slate-500 rounded focus:ring-indigo-500"
-                />
-                <span className="text-sm text-slate-300">
-                  {t('settingsModal.autoBackupLabel', 'Enable Automatic Backup')}
-                </span>
-              </label>
-              <div>
-                <label htmlFor="backup-interval" className={labelStyle}>{t('settingsModal.backupIntervalLabel', 'Backup Interval (hours)')}</label>
-                <input
-                  id="backup-interval"
-                  type="number"
-                  min={1}
-                  value={backupIntervalHours}
-                  onChange={(e) => onBackupIntervalChange(Number(e.target.value))}
-                  className={inputStyle}
-                />
-              </div>
-              <div>
-                <label htmlFor="backup-email" className={labelStyle}>{t('settingsModal.backupEmailLabel', 'Backup Email')}</label>
-                <input
-                  id="backup-email"
-                  type="email"
-                  value={backupEmail}
-                  onChange={(e) => onBackupEmailChange(e.target.value)}
-                  className={inputStyle}
-                />
-              </div>
-              <button
-                onClick={onSendBackup}
-                className={primaryButtonStyle}
-                disabled={!backupEmail}
-              >
-                {t('settingsModal.sendBackupButton', 'Create & Send Backup')}
-              </button>
               <p className="text-sm text-slate-300">
-                {t(
-                  'settingsModal.sendBackupDescription',
-                  'A backup file will download and your email app will open. Attach the file before sending.'
-                )}
+                {t('settingsModal.manualBackupDescription', 'Create a backup file to save on your device or restore data from a backup file.')}
               </p>
-              <p className="text-sm text-slate-300">
-                {t('settingsModal.lastBackupLabel', 'Last Backup')}: {lastBackupTime ? new Date(lastBackupTime).toLocaleString() : t('settingsModal.never', 'Never')}
+              
+              {/* Hidden file input for restore */}
+              <input
+                type="file"
+                ref={restoreFileInputRef}
+                onChange={handleRestoreFileSelected}
+                accept=".json"
+                style={{ display: "none" }}
+                data-testid="restore-backup-input"
+              />
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  onClick={handleManualBackup}
+                  className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-lg font-medium shadow-lg shadow-indigo-500/25 transition-all duration-200 hover:scale-105"
+                >
+                  <HiOutlineDocumentArrowDown className="h-5 w-5" />
+                  {t('settingsModal.createBackupButton', 'Create Backup')}
+                </button>
+                <button
+                  onClick={handleManualRestore}
+                  className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white rounded-lg font-medium shadow-lg shadow-slate-500/25 transition-all duration-200 hover:scale-105"
+                >
+                  <HiOutlineDocumentArrowUp className="h-5 w-5" />
+                  {t('settingsModal.restoreBackupButton', 'Restore Backup')}
+                </button>
+              </div>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                {t('settingsModal.backupNote', 'Backup files contain all your games, teams, seasons, tournaments, and settings. Keep them safe!')}
               </p>
             </div>
             <div className="pt-2 border-t border-slate-700/40 space-y-2">
@@ -182,28 +194,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               <p className="text-sm text-slate-300">
                 {t('settingsModal.appVersion', 'App Version')}: {packageJson.version}
               </p>
-              <div className="space-y-1">
-                <label className={labelStyle}>{t('settingsModal.storageUsageLabel', 'Storage Usage')}</label>
-                  <p className="text-sm text-slate-300">
-                    {storageEstimate
-                      ? t('settingsModal.storageUsageDetails', {
-                          used: formatBytes(storageEstimate.usage),
-                          quota: formatBytes(MAX_LOCAL_STORAGE),
-                        })
-                      : t(
-                          'settingsModal.storageUsageUnavailable',
-                          'Storage usage information unavailable.'
-                        )}
-                  </p>
-                {storageEstimate && (
-                  <div className="w-full bg-slate-700 rounded-md h-2 overflow-hidden">
-                    <div
-                      className="bg-indigo-500 h-2"
-                      style={{ width: `${Math.min(100, (storageEstimate.usage / MAX_LOCAL_STORAGE) * 100)}%` }}
-                    />
-                  </div>
-                )}
-              </div>
               <div className="space-y-1">
                 <a
                   href="https://github.com/VillePajala/soccer-pre-game-app"

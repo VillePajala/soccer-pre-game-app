@@ -47,7 +47,6 @@ import {
   getHasSeenAppGuide,
   saveHasSeenAppGuide,
   getLastHomeTeamName as utilGetLastHomeTeamName,
-  getAppSettings,
 } from '@/utils/appSettings';
 // Removed - now handled by useGameDataManager:
 // import { deleteSeason as utilDeleteSeason, updateSeason as utilUpdateSeason, addSeason as utilAddSeason } from '@/utils/seasons';
@@ -601,23 +600,11 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   const {
     appLanguage,
     defaultTeamNameSetting,
-    autoBackupEnabled,
-    backupIntervalHours,
-    lastBackupTime,
-    backupEmail,
     setDefaultTeamNameSetting,
-    setAutoBackupEnabled,
-    setBackupIntervalHours,
-    setLastBackupTime,
-    setBackupEmail,
     handleShowAppGuide,
     handleHardResetApp,
-    handleCreateAndSendBackup,
     handleLanguageChange,
     handleDefaultTeamNameChange,
-    handleAutoBackupEnabledChange,
-    handleBackupIntervalChange,
-    handleBackupEmailChange,
   } = useAppSettingsManager({
     setIsSettingsModalOpen,
     setIsInstructionsModalOpen,
@@ -633,21 +620,9 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       
       // Load last home team name
       utilGetLastHomeTeamName().then((name) => setDefaultTeamNameSetting(name));
-      
-      // Load app settings
-      getAppSettings().then((s) => {
-        setAutoBackupEnabled(s.autoBackupEnabled ?? false);
-        setBackupIntervalHours(s.autoBackupIntervalHours ?? 24);
-        setLastBackupTime(s.lastBackupTime ?? null);
-        setBackupEmail(s.backupEmail ?? '');
-      });
     }
   }, [
-    setDefaultTeamNameSetting,
-    setAutoBackupEnabled,
-    setBackupIntervalHours,
-    setLastBackupTime,
-    setBackupEmail
+    setDefaultTeamNameSetting
   ]);
 
   // --- Export Wrapper Functions ---
@@ -1343,12 +1318,6 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     setIsGameSettingsModalOpen(false); // Corrected State Setter
   };
   const handleOpenSettingsModal = () => {
-    getAppSettings().then((s) => {
-      setAutoBackupEnabled(s.autoBackupEnabled ?? false);
-      setBackupIntervalHours(s.autoBackupIntervalHours ?? 24);
-      setLastBackupTime(s.lastBackupTime ?? null);
-      setBackupEmail(s.backupEmail ?? '');
-    });
     setIsSettingsModalOpen(true);
   };
   const handleCloseSettingsModal = () => {
@@ -2026,14 +1995,6 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           onDefaultTeamNameChange={handleDefaultTeamNameChange}
           onResetGuide={handleShowAppGuide}
           onHardResetApp={handleHardResetApp}
-          autoBackupEnabled={autoBackupEnabled}
-          backupIntervalHours={backupIntervalHours}
-          lastBackupTime={lastBackupTime || undefined}
-          backupEmail={backupEmail}
-          onAutoBackupEnabledChange={handleAutoBackupEnabledChange}
-          onBackupIntervalChange={handleBackupIntervalChange}
-          onBackupEmailChange={handleBackupEmailChange}
-          onSendBackup={handleCreateAndSendBackup}
           onSignOut={signOut}
         />
       </React.Suspense>
