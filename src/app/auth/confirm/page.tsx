@@ -15,32 +15,49 @@ function ConfirmPageContent() {
     const confirmEmail = async () => {
       
       try {
-        // Get token_hash and type from URL parameters
-        const token_hash = searchParams.get('token_hash');
-        const type = searchParams.get('type');
-
-        if (!token_hash || !type) {
-          setError('Missing confirmation parameters');
-          setLoading(false);
-          return;
-        }
-
-        // Verify the email with Supabase
-        const { error: confirmError } = await supabase.auth.verifyOtp({
-          token_hash,
-          type: type as 'signup' | 'recovery' | 'email_change' | 'phone_change',
-        });
-
-        if (confirmError) {
-          setError(`Email confirmation failed: ${confirmError.message}`);
+        // Check for code parameter first (newer method)
+        const code = searchParams.get('code');
+        if (code) {
+          // Exchange code for session
+          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          if (exchangeError) {
+            setError(`Email confirmation failed: ${exchangeError.message}`);
+          } else {
+            setSuccess(true);
+            setLoading(false);
+            setTimeout(() => {
+              router.push('/?verified=true');
+            }, 2000);
+            return;
+          }
         } else {
-          // Success! Show success state first, then redirect
-          setSuccess(true);
-          setLoading(false);
-          setTimeout(() => {
-            router.push('/?verified=true');
-          }, 2000);
-          return;
+          // Fall back to token_hash method (older method)
+          const token_hash = searchParams.get('token_hash');
+          const type = searchParams.get('type');
+
+          if (!token_hash || !type) {
+            setError('Missing confirmation parameters');
+            setLoading(false);
+            return;
+          }
+
+          // Verify the email with Supabase
+          const { error: confirmError } = await supabase.auth.verifyOtp({
+            token_hash,
+            type: type as 'signup' | 'recovery' | 'email_change' | 'phone_change',
+          });
+
+          if (confirmError) {
+            setError(`Email confirmation failed: ${confirmError.message}`);
+          } else {
+            // Success! Show success state first, then redirect
+            setSuccess(true);
+            setLoading(false);
+            setTimeout(() => {
+              router.push('/?verified=true');
+            }, 2000);
+            return;
+          }
         }
       } catch {
         setError('An unexpected error occurred during email confirmation');
