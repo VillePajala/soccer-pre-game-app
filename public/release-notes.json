@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "feat: Refactor LoadGameModal and SettingsModal to centralize backup and restore functionality, enhancing user experience and code maintainability"
+  "notes": "feat: Add debug and simple import test pages to enhance file import functionality and user experience"
 }

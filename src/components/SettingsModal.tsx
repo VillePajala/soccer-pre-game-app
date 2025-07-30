@@ -1,12 +1,9 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import packageJson from '../../package.json';
-import { HiOutlineArrowRightOnRectangle, HiOutlineDocumentArrowDown, HiOutlineDocumentArrowUp } from 'react-icons/hi2';
-import { exportFullBackup, importFullBackup } from '@/utils/fullBackup';
-import { importBackupToSupabase } from '@/utils/supabaseBackupImport';
-import { authAwareStorageManager as storageManager } from '@/lib/storage';
+import { HiOutlineArrowRightOnRectangle } from 'react-icons/hi2';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -34,68 +31,11 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   const { t } = useTranslation();
   const [teamName, setTeamName] = useState(defaultTeamName);
   const [resetConfirm, setResetConfirm] = useState('');
-  const restoreFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setTeamName(defaultTeamName);
   }, [defaultTeamName]);
 
-  // Manual backup/restore handlers
-  const handleManualBackup = () => {
-    exportFullBackup();
-  };
-
-  const handleManualRestore = () => {
-    // Clear the file input value to ensure onChange fires even for same file
-    if (restoreFileInputRef.current) {
-      restoreFileInputRef.current.value = '';
-    }
-    restoreFileInputRef.current?.click();
-  };
-  
-  const handleRestoreFileSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) {
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const jsonContent = e.target?.result as string;
-      if (jsonContent) {
-        // Check if we're using Supabase
-        const providerName = storageManager.getProviderName?.() || 'localStorage';
-        
-        if (providerName === 'supabase') {
-          try {
-            // Use the new Supabase-aware import
-            const result = await importBackupToSupabase(jsonContent);
-            if (result.success) {
-              alert(result.message);
-              // Reload to refresh all data (same as localStorage import)
-              setTimeout(() => {
-                window.location.reload();
-              }, 500);
-            } else {
-              alert(t('settingsModal.importError', { defaultValue: 'Import failed: ' }) + result.message);
-            }
-          } catch (error) {
-            alert(t('settingsModal.importError', { defaultValue: 'Import failed: ' }) + (error instanceof Error ? error.message : 'Unknown error'));
-          }
-        } else {
-          // Use the old localStorage import for backwards compatibility
-          importFullBackup(jsonContent);
-        }
-      } else {
-        alert(t('settingsModal.importReadError', 'Error reading file content.'));
-      }
-    };
-    reader.onerror = () => {
-      alert(t('settingsModal.importReadError', 'Error reading file content.'));
-    };
-    reader.readAsText(file);
-    event.target.value = '';
-  };
 
   if (!isOpen) return null;
 
@@ -148,44 +88,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 onBlur={() => onDefaultTeamNameChange(teamName)}
                 className={inputStyle}
               />
-            </div>
-            <div className="pt-2 border-t border-slate-700/40 space-y-2">
-              <h3 className="text-lg font-semibold text-slate-200">
-                {t('settingsModal.manualBackupTitle', 'Manual Backup & Restore')}
-              </h3>
-              <p className="text-sm text-slate-300">
-                {t('settingsModal.manualBackupDescription', 'Create a backup file to save on your device or restore data from a backup file.')}
-              </p>
-              
-              {/* Hidden file input for restore */}
-              <input
-                type="file"
-                ref={restoreFileInputRef}
-                onChange={handleRestoreFileSelected}
-                accept=".json"
-                style={{ display: "none" }}
-                data-testid="restore-backup-input"
-              />
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <button
-                  onClick={handleManualBackup}
-                  className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-lg font-medium shadow-lg shadow-indigo-500/25 transition-all duration-200 hover:scale-105"
-                >
-                  <HiOutlineDocumentArrowDown className="h-5 w-5" />
-                  {t('settingsModal.createBackupButton', 'Create Backup')}
-                </button>
-                <button
-                  onClick={handleManualRestore}
-                  className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white rounded-lg font-medium shadow-lg shadow-slate-500/25 transition-all duration-200 hover:scale-105"
-                >
-                  <HiOutlineDocumentArrowUp className="h-5 w-5" />
-                  {t('settingsModal.restoreBackupButton', 'Restore Backup')}
-                </button>
-              </div>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                {t('settingsModal.backupNote', 'Backup files contain all your games, teams, seasons, tournaments, and settings. Keep them safe!')}
-              </p>
             </div>
             <div className="pt-2 border-t border-slate-700/40 space-y-2">
               <h3 className="text-lg font-semibold text-slate-200">

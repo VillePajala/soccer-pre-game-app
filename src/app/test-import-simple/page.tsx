@@ -115,7 +115,7 @@ export default function TestImportSimplePage() {
             <li>2. The app will validate the file structure</li>
             <li>3. Check if you get a success or error message</li>
             <li>4. If this works, the issue is with the actual import logic</li>
-            <li>5. If this doesn't work, there's a basic file handling issue</li>
+            <li>5. If this doesn&apos;t work, there&apos;s a basic file handling issue</li>
           </ol>
         </div>
       </div>
