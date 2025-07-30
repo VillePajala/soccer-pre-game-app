@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix: update sign-up confirmation to handle both codes and token_hash"
+  "notes": "fix: Add comprehensive logging and timeout for mobile game loading issues"
 }

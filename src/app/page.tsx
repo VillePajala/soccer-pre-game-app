@@ -20,69 +20,74 @@ function VerificationToast({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     const handlePasswordReset = async () => {
-      // Debug: Log URL info
-      if (typeof window !== 'undefined') {
-        console.log('Page loaded - URL info:', {
-          href: window.location.href,
-          hash: window.location.hash,
-          search: window.location.search,
-          pathname: window.location.pathname
-        });
-        
-        // Check for password reset code parameter (PKCE flow)
-        const code = searchParams.get('code');
-        
-        if (code) {
-          console.log('Password reset code detected, attempting direct exchange...');
-          try {
-            const { error } = await supabase.auth.exchangeCodeForSession(code);
-            if (error) {
-              console.error('PKCE code exchange error:', error);
-              // Clean up URL and show error
-              window.history.replaceState({}, '', window.location.pathname);
-              router.push('/password-reset-help');
-              return;
-            } else {
-              console.log('PKCE code exchange successful, redirecting to reset page...');
-              // Clean up URL and redirect to reset page
-              window.history.replaceState({}, '', window.location.pathname);
-              router.push('/auth/reset-password');
-              return;
-            }
-          } catch (err) {
-            console.error('PKCE exchange failed:', err);
+      // Only log URL info once on mount, not on every render
+      console.log('Page loaded - URL info:', {
+        href: window.location.href,
+        hash: window.location.hash,
+        search: window.location.search,
+        pathname: window.location.pathname
+      });
+      
+      // Check for password reset code parameter (PKCE flow)
+      const code = searchParams.get('code');
+      
+      if (code) {
+        console.log('Password reset code detected, attempting direct exchange...');
+        try {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) {
+            console.error('PKCE code exchange error:', error);
+            // Clean up URL and show error
             window.history.replaceState({}, '', window.location.pathname);
             router.push('/password-reset-help');
             return;
-          }
-        }
-        
-        // Don't interfere with direct navigation to reset-password page
-        if (window.location.pathname === '/auth/reset-password') {
-          return;
-        }
-        
-        // Check for password reset in hash fragment (legacy flow)
-        if (window.location.hash) {
-          const hashParams = new URLSearchParams(window.location.hash.substring(1));
-          const accessToken = hashParams.get('access_token');
-          const hashType = hashParams.get('type');
-          
-          console.log('Hash params found:', { accessToken: accessToken?.substring(0, 20) + '...', type: hashType });
-          
-          if (hashType === 'recovery' && accessToken) {
-            console.log('Password reset detected! Redirecting to reset page...');
-            // Preserve the hash fragment in the redirect
-            router.push(`/auth/reset-password${window.location.hash}`);
+          } else {
+            console.log('PKCE code exchange successful, redirecting to reset page...');
+            // Clean up URL and redirect to reset page
+            window.history.replaceState({}, '', window.location.pathname);
+            router.push('/auth/reset-password');
             return;
           }
+        } catch (err) {
+          console.error('PKCE exchange failed:', err);
+          window.history.replaceState({}, '', window.location.pathname);
+          router.push('/password-reset-help');
+          return;
+        }
+      }
+      
+      // Don't interfere with direct navigation to reset-password page
+      if (window.location.pathname === '/auth/reset-password') {
+        return;
+      }
+      
+      // Check for password reset in hash fragment (legacy flow)
+      if (window.location.hash) {
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        const hashType = hashParams.get('type');
+        
+        console.log('Hash params found:', { accessToken: accessToken?.substring(0, 20) + '...', type: hashType });
+        
+        if (hashType === 'recovery' && accessToken) {
+          console.log('Password reset detected! Redirecting to reset page...');
+          // Preserve the hash fragment in the redirect
+          router.push(`/auth/reset-password${window.location.hash}`);
+          return;
         }
       }
     };
 
-    handlePasswordReset();
+    // Only run password reset logic if there are relevant params
+    const code = searchParams.get('code');
+    const verified = searchParams.get('verified');
+    const hasHashParams = window.location.hash.includes('type=recovery');
+    
+    if (code || hasHashParams) {
+      handlePasswordReset();
+    }
 
-    if (searchParams.get('verified') === 'true') {
+    if (verified === 'true') {
       setShow(true);
       // Clean up the URL parameter
       router.replace('/', undefined);

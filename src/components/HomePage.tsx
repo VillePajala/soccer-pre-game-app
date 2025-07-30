@@ -272,13 +272,10 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   const isSeasonsQueryError = !!gameDataError;
   const isTournamentsQueryError = !!gameDataError;
   const isAllSavedGamesQueryError = !!gameDataError;
-  const isCurrentGameIdSettingQueryError = !!gameDataError;
-
   const masterRosterQueryErrorData = gameDataError;
   const seasonsQueryErrorData = gameDataError;
   const tournamentsQueryErrorData = gameDataError;
   const allSavedGamesQueryErrorData = gameDataError;
-  const currentGameIdSettingQueryErrorData = gameDataError;
 
   // --- Core Game State (Managed by Hook) ---
   const {
@@ -750,143 +747,133 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   // Note: We don't want setPlayersOnField in deps if it causes loops.
   // saveStateToHistory is also a dependency as it's used inside.
   
+  // One-time migration effect - only runs once
   useEffect(() => {
-    const loadInitialAppData = async () => {
-      logger.log('[EFFECT init] Coordinating initial application data from TanStack Query...');
-      if (initialLoadComplete) {
-        logger.log('[EFFECT init] Initial load already complete. Skipping.');
-        return;
-      }
-      // This useEffect now primarily ensures that dependent state updates happen
-      // after the core data (masterRoster, seasons, tournaments, savedGames, currentGameIdSetting)
-      // has been fetched by their respective useQuery hooks.
-
-      // Simple migration for old data keys (if any) - Run once
+    const runMigration = async () => {
       try {
         const oldRosterJson = getLocalStorageItem('availablePlayers');
         if (oldRosterJson) {
-          logger.log('[EFFECT init] Migrating old roster data...');
+          logger.log('[EFFECT migration] Migrating old roster data...');
           setLocalStorageItem(MASTER_ROSTER_KEY, oldRosterJson);
           removeLocalStorageItem('availablePlayers');
-          // Consider invalidating and refetching masterRoster query here if migration happens
-          // queryClient.invalidateQueries(queryKeys.masterRoster);
         }
-        const oldSeasonsJson = getLocalStorageItem('soccerSeasonsList'); // Another old key
-      if (oldSeasonsJson) {
-          logger.log('[EFFECT init] Migrating old seasons data...');
-          setLocalStorageItem(SEASONS_LIST_KEY, oldSeasonsJson); // New key
-          // queryClient.invalidateQueries(queryKeys.seasons);
-      }
-    } catch (migrationError) {
-        logger.error('[EFFECT init] Error during data migration:', migrationError);
-      }
-
-      // Master Roster, Seasons, Tournaments are handled by their own useEffects reacting to useQuery.
-
-      // 4. Update local savedGames state from useQuery for allSavedGames
-      if (isAllSavedGamesQueryLoading) {
-        logger.log('[EFFECT init] All saved games are loading via TanStack Query...');
-        console.log('[HomePage] Setting isLoadingGamesList to true');
-        setIsLoadingGamesList(true);
-      }
-      if (allSavedGamesQueryResultData) {
-        console.log('[HomePage] Received saved games data:', Object.keys(allSavedGamesQueryResultData).length, 'games');
-        setSavedGames(allSavedGamesQueryResultData || {});
-        setIsLoadingGamesList(false);
-      }
-      if (isAllSavedGamesQueryError) {
-        logger.error('[EFFECT init] Error loading all saved games via TanStack Query:', allSavedGamesQueryErrorData);
-        console.error('[HomePage] Error loading games:', allSavedGamesQueryErrorData);
-        setLoadGamesListError(t('loadGameModal.errors.listLoadFailed', 'Failed to load saved games list.'));
-      setSavedGames({});
-        setIsLoadingGamesList(false);
-      }
-      
-      // 5. Determine and set current game ID and related state from useQuery data
-      if (isCurrentGameIdSettingQueryLoading || isAllSavedGamesQueryLoading) { 
-        logger.log('[EFFECT init] Waiting for current game ID setting and/or saved games list to load...');
-      } else {
-        const lastGameIdSetting = currentGameIdSettingQueryResultData;
-        const currentSavedGames = allSavedGamesQueryResultData || {}; 
-
-        if (lastGameIdSetting && lastGameIdSetting !== DEFAULT_GAME_ID && currentSavedGames[lastGameIdSetting]) {
-          logger.log(`[EFFECT init] Restoring last saved game: ${lastGameIdSetting} from TanStack Query data.`);
-          setCurrentGameId(lastGameIdSetting);
-          setHasSkippedInitialSetup(true);
-        } else {
-          if (lastGameIdSetting && lastGameIdSetting !== DEFAULT_GAME_ID) {
-            logger.warn(`[EFFECT init] Last game ID ${lastGameIdSetting} not found in saved games (from TanStack Query). Loading default.`);
-          }
-        setCurrentGameId(DEFAULT_GAME_ID);
-      }
-    }
-    
-      // Determine overall initial load completion
-      if (!isMasterRosterQueryLoading && !areSeasonsQueryLoading && !areTournamentsQueryLoading && !isAllSavedGamesQueryLoading && !isCurrentGameIdSettingQueryLoading) {
-        // --- TIMER RESTORATION LOGIC ---
-        try {
-          const savedTimerStateJSON = getLocalStorageItem(TIMER_STATE_KEY);
-          const lastGameId = currentGameIdSettingQueryResultData;
-          
-          if (savedTimerStateJSON) {
-            const savedTimerState: TimerState = JSON.parse(savedTimerStateJSON);
-            if (savedTimerState && savedTimerState.gameId === lastGameId) {
-              logger.log('[EFFECT init] Found a saved timer state for the current game. Restoring...');
-              const elapsedOfflineSeconds = (Date.now() - savedTimerState.timestamp) / 1000;
-              const correctedElapsedSeconds = Math.round(savedTimerState.timeElapsedInSeconds + elapsedOfflineSeconds);
-              
-              dispatchGameSession({ type: 'SET_TIMER_ELAPSED', payload: correctedElapsedSeconds });
-              dispatchGameSession({ type: 'SET_TIMER_RUNNING', payload: true });
-            } else {
-              removeLocalStorageItem(TIMER_STATE_KEY);
-            }
-          }
-        } catch (error) {
-          logger.error('[EFFECT init] Error restoring timer state:', error);
-          removeLocalStorageItem(TIMER_STATE_KEY);
+        const oldSeasonsJson = getLocalStorageItem('soccerSeasonsList');
+        if (oldSeasonsJson) {
+          logger.log('[EFFECT migration] Migrating old seasons data...');
+          setLocalStorageItem(SEASONS_LIST_KEY, oldSeasonsJson);
         }
-        // --- END TIMER RESTORATION LOGIC ---
-
-        const seenGuide = await getHasSeenAppGuide();
-        if (!seenGuide) {
-          setIsInstructionsModalOpen(true);
-        }
-
-        // This is now the single source of truth for loading completion.
-        setInitialLoadComplete(true);
-        logger.log('[EFFECT init] Initial application data coordination complete.');
+      } catch (migrationError) {
+        logger.error('[EFFECT migration] Error during data migration:', migrationError);
       }
     };
+    runMigration();
+  }, []); // Run only once
 
-    loadInitialAppData();
+  // Handle saved games loading state
+  useEffect(() => {
+    if (isAllSavedGamesQueryLoading) {
+      logger.log('[EFFECT savedGames] Setting games list loading to true');
+      console.log('[HomePage] Setting isLoadingGamesList to true');
+      setIsLoadingGamesList(true);
+    }
+  }, [isAllSavedGamesQueryLoading]);
+
+  // Handle saved games data updates
+  useEffect(() => {
+    if (allSavedGamesQueryResultData) {
+      console.log('[HomePage] Received saved games data:', Object.keys(allSavedGamesQueryResultData).length, 'games');
+      setSavedGames(allSavedGamesQueryResultData || {});
+      setIsLoadingGamesList(false);
+    }
+  }, [allSavedGamesQueryResultData]);
+
+  // Handle saved games errors
+  useEffect(() => {
+    if (isAllSavedGamesQueryError) {
+      logger.error('[EFFECT savedGames] Error loading saved games:', allSavedGamesQueryErrorData);
+      console.error('[HomePage] Error loading games:', allSavedGamesQueryErrorData);
+      setLoadGamesListError(t('loadGameModal.errors.listLoadFailed', 'Failed to load saved games list.'));
+      setSavedGames({});
+      setIsLoadingGamesList(false);
+    }
+  }, [isAllSavedGamesQueryError, allSavedGamesQueryErrorData, t]);
+
+  // Main initialization effect - runs once when all loading states become false
+  useEffect(() => {
+    const initializeApp = async () => {
+      if (initialLoadComplete) {
+        return;
+      }
+
+      // Wait for all queries to complete
+      const allQueriesComplete = !isMasterRosterQueryLoading && 
+                                !areSeasonsQueryLoading && 
+                                !areTournamentsQueryLoading && 
+                                !isAllSavedGamesQueryLoading && 
+                                !isCurrentGameIdSettingQueryLoading;
+
+      if (!allQueriesComplete) {
+        return;
+      }
+
+      logger.log('[EFFECT init] All queries complete, initializing app...');
+
+      // Set current game ID based on saved settings
+      const lastGameIdSetting = currentGameIdSettingQueryResultData;
+      const currentSavedGames = allSavedGamesQueryResultData || {};
+
+      if (lastGameIdSetting && lastGameIdSetting !== DEFAULT_GAME_ID && currentSavedGames[lastGameIdSetting]) {
+        logger.log(`[EFFECT init] Restoring last saved game: ${lastGameIdSetting}`);
+        setCurrentGameId(lastGameIdSetting);
+        setHasSkippedInitialSetup(true);
+      } else {
+        if (lastGameIdSetting && lastGameIdSetting !== DEFAULT_GAME_ID) {
+          logger.warn(`[EFFECT init] Last game ID ${lastGameIdSetting} not found in saved games. Loading default.`);
+        }
+        setCurrentGameId(DEFAULT_GAME_ID);
+      }
+
+      // Timer restoration logic
+      try {
+        const savedTimerStateJSON = getLocalStorageItem(TIMER_STATE_KEY);
+        if (savedTimerStateJSON) {
+          const savedTimerState: TimerState = JSON.parse(savedTimerStateJSON);
+          if (savedTimerState && savedTimerState.gameId === lastGameIdSetting) {
+            logger.log('[EFFECT init] Found a saved timer state for the current game. Restoring...');
+            const elapsedOfflineSeconds = (Date.now() - savedTimerState.timestamp) / 1000;
+            const correctedElapsedSeconds = Math.round(savedTimerState.timeElapsedInSeconds + elapsedOfflineSeconds);
+            
+            dispatchGameSession({ type: 'SET_TIMER_ELAPSED', payload: correctedElapsedSeconds });
+            dispatchGameSession({ type: 'SET_TIMER_RUNNING', payload: true });
+          } else {
+            removeLocalStorageItem(TIMER_STATE_KEY);
+          }
+        }
+      } catch (error) {
+        logger.error('[EFFECT init] Error restoring timer state:', error);
+        removeLocalStorageItem(TIMER_STATE_KEY);
+      }
+
+      // Check if user has seen app guide
+      const seenGuide = await getHasSeenAppGuide();
+      if (!seenGuide) {
+        setIsInstructionsModalOpen(true);
+      }
+
+      setInitialLoadComplete(true);
+      logger.log('[EFFECT init] Initial application data coordination complete.');
+    };
+
+    initializeApp();
   }, [
-    masterRosterQueryResultData,
     isMasterRosterQueryLoading,
-    isMasterRosterQueryError,
-    masterRosterQueryErrorData,
-    seasonsQueryResultData,
     areSeasonsQueryLoading,
-    isSeasonsQueryError,
-    seasonsQueryErrorData,
-    tournamentsQueryResultData,
     areTournamentsQueryLoading,
-    isTournamentsQueryError,
-    tournamentsQueryErrorData,
-    allSavedGamesQueryResultData,
     isAllSavedGamesQueryLoading,
-    isAllSavedGamesQueryError,
-    allSavedGamesQueryErrorData,
-    currentGameIdSettingQueryResultData,
     isCurrentGameIdSettingQueryLoading,
-    isCurrentGameIdSettingQueryError,
-    currentGameIdSettingQueryErrorData,
-    setSavedGames,
-    setIsLoadingGamesList,
-    setLoadGamesListError,
-    setCurrentGameId,
-    setHasSkippedInitialSetup,
-    t,
-    initialLoadComplete
+    initialLoadComplete,
+    allSavedGamesQueryResultData,
+    currentGameIdSettingQueryResultData
   ]);
 
   // Add a timeout for mobile loading issues
