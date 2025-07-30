@@ -93,6 +93,37 @@ export const saveGame = async (gameId: string, gameData: unknown): Promise<AppSt
 };
 
 /**
+ * Gets the most recent game ID from saved games
+ * This is useful for the resume functionality
+ * @returns Promise resolving to the most recent game ID, or null if no games exist
+ */
+export const getMostRecentGameId = async (): Promise<string | null> => {
+  try {
+    const allGames = await getSavedGames();
+    const gameIds = Object.keys(allGames);
+    
+    if (gameIds.length === 0) {
+      return null;
+    }
+    
+    // Sort games by date and time to find the most recent
+    const sortedGames = gameIds
+      .map(id => ({ id, game: allGames[id] }))
+      .filter(({ game }) => game && game.gameDate) // Ensure game and date exist
+      .sort((a, b) => {
+        const dateA = new Date(a.game.gameDate + ' ' + (a.game.gameTime || '00:00'));
+        const dateB = new Date(b.game.gameDate + ' ' + (b.game.gameTime || '00:00'));
+        return dateB.getTime() - dateA.getTime();
+      });
+    
+    return sortedGames.length > 0 ? sortedGames[0].id : null;
+  } catch (error) {
+    logger.error('Error getting most recent game ID:', error);
+    return null;
+  }
+};
+
+/**
  * Gets a single game by ID
  * @param gameId - ID of the game to retrieve
  * @returns Promise resolving to the game data, or null if not found

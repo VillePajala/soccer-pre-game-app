@@ -5,7 +5,7 @@ import HomePage from '@/components/HomePage';
 import StartScreen from '@/components/StartScreen';
 import { useState, useEffect, Suspense } from 'react';
 import { getCurrentGameIdSetting } from '@/utils/appSettings';
-import { getSavedGames } from '@/utils/savedGames';
+import { getSavedGames, getMostRecentGameId } from '@/utils/savedGames';
 import { useAuthStorage } from '@/hooks/useAuthStorage';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -149,12 +149,25 @@ export default function Home() {
   useEffect(() => {
     const checkResume = async () => {
       try {
+        // First try to get the saved current game ID
         const lastId = await getCurrentGameIdSetting();
-        if (!lastId) return;
         const games = await getSavedGames();
-        if (games[lastId]) {
+        
+        // Check if the saved game ID exists in the games collection
+        if (lastId && games[lastId]) {
           setCanResume(true);
+          return;
         }
+        
+        // If not, try to find the most recent game
+        const mostRecentId = await getMostRecentGameId();
+        if (mostRecentId) {
+          setCanResume(true);
+          return;
+        }
+        
+        // No games available to resume
+        setCanResume(false);
       } catch {
         setCanResume(false);
       }

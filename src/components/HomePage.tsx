@@ -424,6 +424,10 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       case 'loadGame':
         setIsLoadGameModalOpen(true);
         break;
+      case 'resumeGame':
+        // Resume game is handled by the initialization effect
+        // which automatically loads the most recent game
+        break;
       case 'season':
         setIsSeasonTournamentModalOpen(true);
         break;
@@ -827,10 +831,33 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         setCurrentGameId(lastGameIdSetting);
         setHasSkippedInitialSetup(true);
       } else {
-        if (lastGameIdSetting && lastGameIdSetting !== DEFAULT_GAME_ID) {
-          logger.warn(`[EFFECT init] Last game ID ${lastGameIdSetting} not found in saved games. Loading default.`);
+        // If the saved game ID doesn't exist, try to find the most recent game
+        const gameIds = Object.keys(currentSavedGames);
+        if (gameIds.length > 0) {
+          // Sort games by date to find the most recent
+          const sortedGames = gameIds
+            .map(id => ({ id, game: currentSavedGames[id] }))
+            .filter(({ game }) => game && game.gameDate)
+            .sort((a, b) => {
+              const dateA = new Date(a.game.gameDate + ' ' + (a.game.gameTime || '00:00'));
+              const dateB = new Date(b.game.gameDate + ' ' + (b.game.gameTime || '00:00'));
+              return dateB.getTime() - dateA.getTime();
+            });
+          
+          if (sortedGames.length > 0) {
+            const mostRecentId = sortedGames[0].id;
+            logger.log(`[EFFECT init] Found most recent game to restore: ${mostRecentId}`);
+            setCurrentGameId(mostRecentId);
+            setHasSkippedInitialSetup(true);
+          } else {
+            setCurrentGameId(DEFAULT_GAME_ID);
+          }
+        } else {
+          if (lastGameIdSetting && lastGameIdSetting !== DEFAULT_GAME_ID) {
+            logger.warn(`[EFFECT init] Last game ID ${lastGameIdSetting} not found in saved games. Loading default.`);
+          }
+          setCurrentGameId(DEFAULT_GAME_ID);
         }
-        setCurrentGameId(DEFAULT_GAME_ID);
       }
 
       // Timer restoration logic
@@ -1060,10 +1087,18 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         };
 
         // 2. Save the game snapshot using utility
-          await utilSaveGame(currentGameId, currentSnapshot as AppState); // Cast to AppState for the util
+        const savedResult = await utilSaveGame(currentGameId, currentSnapshot as AppState); // Cast to AppState for the util
         
-        // 3. Save App Settings (only the current game ID) using utility
+        // 3. Update currentGameId if it changed (important for Supabase UUID sync)
+        const newGameId = (savedResult as AppState & { id?: string }).id;
+        if (newGameId && newGameId !== currentGameId) {
+          logger.log(`Game ID changed from ${currentGameId} to ${newGameId} during save`);
+          setCurrentGameId(newGameId);
+          await utilSaveCurrentGameIdSetting(newGameId);
+        } else {
+          // Save App Settings (only the current game ID) using utility
           await utilSaveCurrentGameIdSetting(currentGameId);
+        }
 
       } catch (error) {
         logger.error("Failed to auto-save state to localStorage:", error);
@@ -1491,8 +1526,9 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         setSavedGames(updatedSavedGamesCollection);
 
         // Save the actual game ID to settings
+        // This is critical for resume functionality
         await utilSaveCurrentGameIdSetting(actualGameId);
-        logger.log(`Saved new game ${actualGameId} and settings via utility functions.`);
+        logger.log(`Saved new game ${actualGameId} and updated currentGameId in settings.`);
 
       } catch (error) {
          logger.error("Error explicitly saving new game state:", error);

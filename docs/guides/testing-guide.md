@@ -34,13 +34,13 @@
 - [x] Verify user session persists on page refresh
 
 ### 1.4 Password Reset Flow
-- [ ] Click "Forgot Password" link
-- [ ] Enter your email
-- [ ] Submit the form
-- [ ] Check email for reset link
-- [ ] Click the reset link
-- [ ] Enter new password
-- [ ] Verify you can log in with new password
+- [x] Click "Forgot Password" link
+- [x] Enter your email
+- [x] Submit the form
+- [x] Check email for reset link
+- [x] Click the reset link
+- [x] Enter new password
+- [x] Verify you can log in with new password
 
 ---
 
