@@ -3,7 +3,7 @@
 import ModalProvider from '@/contexts/ModalProvider';
 import HomePage from '@/components/HomePage';
 import StartScreen from '@/components/StartScreen';
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { getCurrentGameIdSetting } from '@/utils/appSettings';
 import { getSavedGames } from '@/utils/savedGames';
 import { useAuthStorage } from '@/hooks/useAuthStorage';
@@ -17,24 +17,6 @@ function VerificationToast({ onClose }: { onClose: () => void }) {
   const searchParams = useSearchParams();
   const [show, setShow] = useState(false);
 
-  const handlePasswordResetCode = useCallback(async (code: string) => {
-    try {
-      console.log('Exchanging password reset code for session...');
-      const { error } = await supabase.auth.exchangeCodeForSession(code);
-      
-      if (error) {
-        console.error('Code exchange error:', error);
-        // Clean up URL but don't redirect
-        router.replace('/', undefined);
-      } else {
-        console.log('Code exchange successful! Redirecting to reset page...');
-        router.push('/auth/reset-password');
-      }
-    } catch (err) {
-      console.error('Unexpected error during code exchange:', err);
-      router.replace('/', undefined);
-    }
-  }, [router]);
 
   useEffect(() => {
     // Debug: Log URL info
@@ -61,12 +43,12 @@ function VerificationToast({ onClose }: { onClose: () => void }) {
         }
       }
       
-      // Check for password reset code parameter
+      // Check for password reset code parameter (problematic due to PKCE)
       const code = searchParams.get('code');
       if (code) {
-        console.log('Password reset code detected:', code.substring(0, 10) + '...');
-        // Exchange the code for a session, then redirect to reset page
-        handlePasswordResetCode(code);
+        console.log('Password reset code detected but PKCE not supported. Cleaning up URL.');
+        // Clean up the URL immediately to prevent infinite loops
+        router.replace('/', undefined);
         return;
       }
       
@@ -91,7 +73,7 @@ function VerificationToast({ onClose }: { onClose: () => void }) {
         onClose();
       }, 5000);
     }
-  }, [searchParams, router, onClose, handlePasswordResetCode]);
+  }, [searchParams, router, onClose]);
 
   if (!show) return null;
 
