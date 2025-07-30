@@ -3,9 +3,19 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
+interface DebugResult {
+  success?: boolean;
+  error?: string;
+  data?: unknown;
+  sentTo?: string;
+  redirectTo?: string;
+  currentOrigin?: string;
+  code?: string;
+}
+
 export default function DebugPasswordReset() {
   const [email, setEmail] = useState('');
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<DebugResult | null>(null);
   const [loading, setLoading] = useState(false);
 
   const sendResetEmail = async () => {
@@ -24,10 +34,10 @@ export default function DebugPasswordReset() {
         redirectTo: `${window.location.origin}/auth/callback`,
         currentOrigin: window.location.origin
       });
-    } catch (err: any) {
+    } catch (err) {
       setResult({ 
         success: false, 
-        error: err.message,
+        error: err instanceof Error ? err.message : 'Unknown error',
         currentOrigin: window.location.origin
       });
     }
@@ -52,10 +62,10 @@ export default function DebugPasswordReset() {
         data,
         code: code.substring(0, 10) + '...'
       });
-    } catch (err: any) {
+    } catch (err) {
       setResult({ 
         success: false, 
-        error: err.message 
+        error: err instanceof Error ? err.message : 'Unknown error'
       });
     }
     setLoading(false);
