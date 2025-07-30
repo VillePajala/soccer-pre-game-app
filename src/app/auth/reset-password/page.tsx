@@ -28,30 +28,7 @@ function ResetPasswordForm() {
         });
       }
       
-      // First check for PKCE code exchange
-      const code = searchParams.get('code');
-      if (code) {
-        console.log('PKCE code found, attempting exchange...');
-        try {
-          const { error } = await supabase.auth.exchangeCodeForSession(code);
-          if (error) {
-            console.error('PKCE code exchange error:', error);
-            setError('Invalid or expired reset link. Please request a new password reset.');
-          } else {
-            console.log('PKCE code exchange successful');
-            setIsValidToken(true);
-            // Clean up URL after successful exchange
-            window.history.replaceState({}, '', window.location.pathname);
-          }
-          return;
-        } catch (err) {
-          console.error('PKCE exchange failed:', err);
-          setError('Invalid or expired reset link. Please request a new password reset.');
-          return;
-        }
-      }
-      
-      // Check if we already have a recovery session
+      // Check if we already have a recovery session (should be set by main page after PKCE exchange)
       const { data: { session } } = await supabase.auth.getSession();
       
       console.log('Current session:', { 

@@ -9,6 +9,7 @@ import { getSavedGames } from '@/utils/savedGames';
 import { useAuthStorage } from '@/hooks/useAuthStorage';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 
 // Component to handle verification toast that uses search params
 function VerificationToast({ onClose }: { onClose: () => void }) {
@@ -29,12 +30,30 @@ function VerificationToast({ onClose }: { onClose: () => void }) {
       
       // Check for password reset code parameter (PKCE flow)
       const code = searchParams.get('code');
-      const type = searchParams.get('type') || searchParams.get('type');
       
-      if (code && type === 'recovery') {
-        console.log('Password reset code detected, redirecting to reset page...');
-        router.push('/auth/reset-password');
-        return;
+      if (code) {
+        console.log('Password reset code detected, attempting direct exchange...');
+        try {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) {
+            console.error('PKCE code exchange error:', error);
+            // Clean up URL and show error
+            window.history.replaceState({}, '', window.location.pathname);
+            router.push('/password-reset-help');
+            return;
+          } else {
+            console.log('PKCE code exchange successful, redirecting to reset page...');
+            // Clean up URL and redirect to reset page
+            window.history.replaceState({}, '', window.location.pathname);
+            router.push('/auth/reset-password');
+            return;
+          }
+        } catch (err) {
+          console.error('PKCE exchange failed:', err);
+          window.history.replaceState({}, '', window.location.pathname);
+          router.push('/password-reset-help');
+          return;
+        }
       }
       
       // Check for password reset in hash fragment (legacy flow)
