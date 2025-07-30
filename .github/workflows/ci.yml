@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, develop, supabase-migration]
+    branches: [master, develop, supabase-migration]
   pull_request:
     types: [opened, synchronize, reopened]
 
