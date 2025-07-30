@@ -9,12 +9,32 @@ import { getSavedGames } from '@/utils/savedGames';
 import { useAuthStorage } from '@/hooks/useAuthStorage';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 
 // Component to handle verification toast that uses search params
 function VerificationToast({ onClose }: { onClose: () => void }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [show, setShow] = useState(false);
+
+  const handlePasswordResetCode = async (code: string) => {
+    try {
+      console.log('Exchanging password reset code for session...');
+      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      
+      if (error) {
+        console.error('Code exchange error:', error);
+        // Clean up URL but don't redirect
+        router.replace('/', undefined);
+      } else {
+        console.log('Code exchange successful! Redirecting to reset page...');
+        router.push('/auth/reset-password');
+      }
+    } catch (err) {
+      console.error('Unexpected error during code exchange:', err);
+      router.replace('/', undefined);
+    }
+  };
 
   useEffect(() => {
     // Debug: Log URL info
@@ -39,6 +59,15 @@ function VerificationToast({ onClose }: { onClose: () => void }) {
           router.push('/auth/reset-password');
           return;
         }
+      }
+      
+      // Check for password reset code parameter
+      const code = searchParams.get('code');
+      if (code) {
+        console.log('Password reset code detected:', code.substring(0, 10) + '...');
+        // Exchange the code for a session, then redirect to reset page
+        handlePasswordResetCode(code);
+        return;
       }
       
       // Check for password reset in query params (fallback)
