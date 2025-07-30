@@ -120,7 +120,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
           config = templates.playerUpdate('John Doe', 'substitution');
           break;
         case 'gameComplete':
-          config = templates.gameComplete('Team A', 'Team B', '3-2');
+          config = templates.gameComplete('Test Team', '3-2');
           break;
       }
 
