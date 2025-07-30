@@ -28,7 +28,7 @@ function ResetPasswordForm() {
         });
       }
       
-      // Check if we already have a recovery session (should be set by main page after PKCE exchange)
+      // Check if we already have a recovery session
       const { data: { session } } = await supabase.auth.getSession();
       
       console.log('Current session:', { 
@@ -43,28 +43,32 @@ function ResetPasswordForm() {
         return;
       }
       
-      // Fallback: Check for hash fragment (legacy flow)
+      // Check for OTP in hash fragment
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const accessToken = hashParams.get('access_token');
+      const token = hashParams.get('token');
       const type = hashParams.get('type');
+      const email = hashParams.get('email');
 
-      if (type === 'recovery' && accessToken) {
-        console.log('Hash fragment recovery token found');
-        setIsValidToken(true);
+      if (type === 'recovery' && token && email) {
+        console.log('OTP token found, attempting verification:', { token, email });
         
-        // Set the session with the recovery token
-        const { error } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: hashParams.get('refresh_token') || '',
+        // Try to verify the OTP
+        const { data, error } = await supabase.auth.verifyOtp({
+          token: token,
+          type: 'recovery',
+          email: decodeURIComponent(email),
         });
         
         if (error) {
-          console.error('Error setting session:', error);
-          setError('Invalid or expired reset link. Please request a new password reset.');
+          console.error('OTP verification error:', error);
+          setError('Invalid or expired reset code. Please request a new password reset.');
           setIsValidToken(false);
+        } else {
+          console.log('OTP verification successful');
+          setIsValidToken(true);
         }
       } else {
-        setError('Invalid or expired reset link. Please request a new password reset.');
+        setError('Invalid reset link. Please request a new password reset.');
       }
     };
 

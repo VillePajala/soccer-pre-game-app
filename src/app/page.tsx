@@ -57,6 +57,11 @@ function VerificationToast({ onClose }: { onClose: () => void }) {
           }
         }
         
+        // Don't interfere with direct navigation to reset-password page
+        if (window.location.pathname === '/auth/reset-password') {
+          return;
+        }
+        
         // Check for password reset in hash fragment (legacy flow)
         if (window.location.hash) {
           const hashParams = new URLSearchParams(window.location.hash.substring(1));
