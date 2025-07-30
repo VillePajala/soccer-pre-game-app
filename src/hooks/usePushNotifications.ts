@@ -98,6 +98,49 @@ export function usePushNotifications(): UsePushNotificationsReturn {
     }
   }, []);
 
+  // Send test notification
+  const sendTestNotification = useCallback(async (
+    type: 'gameReminder' | 'syncComplete' | 'syncFailed' | 'playerUpdate' | 'gameComplete'
+  ): Promise<boolean> => {
+    try {
+      const templates = pushNotificationManager.getNotificationTemplates();
+      let config;
+
+      switch (type) {
+        case 'gameReminder':
+          config = templates.gameReminder('Test Team', '3:00 PM');
+          break;
+        case 'syncComplete':
+          config = templates.syncComplete(5);
+          break;
+        case 'syncFailed':
+          config = templates.syncFailed('Network error');
+          break;
+        case 'playerUpdate':
+          config = templates.playerUpdate('John Doe', 'substitution');
+          break;
+        case 'gameComplete':
+          config = templates.gameComplete('Team A', 'Team B', '3-2');
+          break;
+      }
+
+      const success = await pushNotificationManager.sendLocalNotification(config);
+      
+      if (!success) {
+        setState(prev => ({ ...prev, error: 'Failed to send test notification' }));
+      }
+      
+      return success;
+    } catch (error) {
+      console.error('[Push Hook] Failed to send test notification:', error);
+      setState(prev => ({
+        ...prev,
+        error: error instanceof Error ? error.message : 'Failed to send test notification'
+      }));
+      return false;
+    }
+  }, []);
+
   // Subscribe to push notifications
   const subscribe = useCallback(async (): Promise<boolean> => {
     try {
@@ -163,48 +206,6 @@ export function usePushNotifications(): UsePushNotificationsReturn {
     }
   }, []);
 
-  // Send test notification
-  const sendTestNotification = useCallback(async (
-    type: 'gameReminder' | 'syncComplete' | 'syncFailed' | 'playerUpdate' | 'gameComplete'
-  ): Promise<boolean> => {
-    try {
-      const templates = pushNotificationManager.getNotificationTemplates();
-      let config;
-
-      switch (type) {
-        case 'gameReminder':
-          config = templates.gameReminder('Test Team', '3:00 PM');
-          break;
-        case 'syncComplete':
-          config = templates.syncComplete(5);
-          break;
-        case 'syncFailed':
-          config = templates.syncFailed('Network connection lost');
-          break;
-        case 'playerUpdate':
-          config = templates.playerUpdate('John Doe', 'scored a goal');
-          break;
-        case 'gameComplete':
-          config = templates.gameComplete('Test Team', '3-2');
-          break;
-        default:
-          config = templates.syncComplete(1);
-      }
-
-      const success = await pushNotificationManager.sendLocalNotification(config);
-      
-      if (success) {
-        console.log(`[Push Hook] Test notification sent: ${type}`);
-      } else {
-        console.warn(`[Push Hook] Failed to send test notification: ${type}`);
-      }
-
-      return success;
-    } catch (error) {
-      console.error('[Push Hook] Failed to send test notification:', error);
-      return false;
-    }
-  }, []);
 
   // Clear error state
   const clearError = useCallback(() => {
