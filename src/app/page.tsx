@@ -3,7 +3,7 @@
 import ModalProvider from '@/contexts/ModalProvider';
 import HomePage from '@/components/HomePage';
 import StartScreen from '@/components/StartScreen';
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { getCurrentGameIdSetting } from '@/utils/appSettings';
 import { getSavedGames } from '@/utils/savedGames';
 import { useAuthStorage } from '@/hooks/useAuthStorage';
@@ -17,7 +17,7 @@ function VerificationToast({ onClose }: { onClose: () => void }) {
   const searchParams = useSearchParams();
   const [show, setShow] = useState(false);
 
-  const handlePasswordResetCode = async (code: string) => {
+  const handlePasswordResetCode = useCallback(async (code: string) => {
     try {
       console.log('Exchanging password reset code for session...');
       const { error } = await supabase.auth.exchangeCodeForSession(code);
@@ -34,7 +34,7 @@ function VerificationToast({ onClose }: { onClose: () => void }) {
       console.error('Unexpected error during code exchange:', err);
       router.replace('/', undefined);
     }
-  };
+  }, [router]);
 
   useEffect(() => {
     // Debug: Log URL info
@@ -91,7 +91,7 @@ function VerificationToast({ onClose }: { onClose: () => void }) {
         onClose();
       }, 5000);
     }
-  }, [searchParams, router, onClose]);
+  }, [searchParams, router, onClose, handlePasswordResetCode]);
 
   if (!show) return null;
 

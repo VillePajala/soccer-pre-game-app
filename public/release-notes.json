@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "feat: add check-site-url page to verify Supabase configuration"
+  "notes": "fix: update sign-up confirmation to handle both codes and token_hash"
 }
