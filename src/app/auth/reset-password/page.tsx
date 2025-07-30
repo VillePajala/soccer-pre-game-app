@@ -53,7 +53,7 @@ function ResetPasswordForm() {
         console.log('OTP token found, attempting verification:', { token, email });
         
         // Try to verify the OTP
-        const { data, error } = await supabase.auth.verifyOtp({
+        const { error } = await supabase.auth.verifyOtp({
           token: token,
           type: 'recovery',
           email: decodeURIComponent(email),
