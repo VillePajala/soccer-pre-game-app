@@ -18,6 +18,12 @@ interface ServiceWorkerSyncHook {
   clearSyncQueue: () => Promise<void>;
 }
 
+interface ServiceWorkerRegistrationWithSync extends ServiceWorkerRegistration {
+  sync: {
+    register: (tag: string) => Promise<void>;
+  };
+}
+
 export function useServiceWorkerSync(
   storageManager?: OfflineFirstStorageManager
 ): ServiceWorkerSyncHook {
@@ -55,8 +61,8 @@ export function useServiceWorkerSync(
       } else {
         // Register for background sync when offline
         if ('serviceWorker' in navigator && 'SyncManager' in window) {
-          const registration = await navigator.serviceWorker.ready;
-          await (registration as any).sync.register('supabase-sync');
+          const registration = (await navigator.serviceWorker.ready) as ServiceWorkerRegistrationWithSync;
+          await registration.sync.register('supabase-sync');
           console.log('[SW-Hook] Background sync registered');
         }
       }
