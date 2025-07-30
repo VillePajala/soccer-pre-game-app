@@ -10,13 +10,13 @@ export default function PasswordResetHelp() {
       <div className="bg-blue-900 p-6 rounded-lg mb-6">
         <h2 className="text-xl mb-4 text-blue-300">📧 Having trouble with password reset?</h2>
         <p className="text-blue-100 mb-4">
-          Due to security requirements, password reset links work best when you're signed out.
+          Due to security requirements, password reset links work best when you&apos;re signed out.
         </p>
         
         <div className="bg-blue-800 p-4 rounded mb-4">
           <h3 className="font-semibold mb-2">Try this workaround:</h3>
           <ol className="list-decimal list-inside space-y-2 text-blue-100">
-            <li>Sign out of your account (if you're signed in)</li>
+            <li>Sign out of your account (if you&apos;re signed in)</li>
             <li>Click the password reset link in your email again</li>
             <li>The password reset form should appear</li>
           </ol>
@@ -26,11 +26,11 @@ export default function PasswordResetHelp() {
       <div className="bg-yellow-900 p-6 rounded-lg mb-6">
         <h2 className="text-xl mb-4 text-yellow-300">⚠️ Alternative Method</h2>
         <p className="text-yellow-100 mb-4">
-          If the email link doesn't work, you can also:
+          If the email link doesn&apos;t work, you can also:
         </p>
         <ol className="list-decimal list-inside space-y-2 text-yellow-100">
           <li>Go to the sign-in page</li>
-          <li>Click "Forgot Password?"</li>
+          <li>Click &quot;Forgot Password?&quot;</li>
           <li>Enter your email address</li>
           <li>Check for a new password reset email</li>
         </ol>

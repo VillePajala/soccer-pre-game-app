@@ -9,7 +9,6 @@ import { getSavedGames } from '@/utils/savedGames';
 import { useAuthStorage } from '@/hooks/useAuthStorage';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
 
 // Component to handle verification toast that uses search params
 function VerificationToast({ onClose }: { onClose: () => void }) {
