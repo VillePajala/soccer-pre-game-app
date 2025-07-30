@@ -35,6 +35,11 @@ export interface IStorageProvider {
   exportAllData(): Promise<unknown>;
   importAllData(data: unknown): Promise<void>;
 
+  // Timer state (optional - only implemented by providers that support it)
+  getTimerState?(gameId: string): Promise<import('../../types').TimerState | null>;
+  saveTimerState?(timerState: import('../../types').TimerState): Promise<import('../../types').TimerState>;
+  deleteTimerState?(gameId: string): Promise<void>;
+
   // Provider info
   getProviderName(): string;
   isOnline(): Promise<boolean>;
@@ -42,8 +47,9 @@ export interface IStorageProvider {
 
 // Storage configuration
 export interface StorageConfig {
-  provider: 'localStorage' | 'supabase';
+  provider: 'localStorage' | 'supabase' | 'indexedDB';
   fallbackToLocalStorage: boolean;
+  enableOfflineMode?: boolean;
 }
 
 // Error types
