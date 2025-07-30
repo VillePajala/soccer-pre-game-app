@@ -17,6 +17,14 @@ function VerificationToast({ onClose }: { onClose: () => void }) {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
+    // Check for password reset code first
+    const code = searchParams.get('code');
+    if (code) {
+      // Redirect to auth callback to handle the password reset
+      router.replace(`/auth/callback?code=${code}`);
+      return;
+    }
+
     if (searchParams.get('verified') === 'true') {
       setShow(true);
       // Clean up the URL parameter

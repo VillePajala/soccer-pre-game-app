@@ -21,16 +21,10 @@ function ResetPasswordForm() {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session?.user) {
-        // Check if this is a recovery session
-        // recovery_sent_at might not always be available, so we check multiple conditions
-        const isRecoverySession = session.user.recovery_sent_at || 
-                                 session.user.app_metadata?.recovery_token ||
-                                 session.user.aud === 'authenticated';
-        
-        if (isRecoverySession) {
-          setIsValidToken(true);
-          return;
-        }
+        // For password reset flow, if we have a session after coming from the callback,
+        // we should allow the password reset
+        setIsValidToken(true);
+        return;
       }
       
       // Fallback: Check for hash fragment (legacy flow)

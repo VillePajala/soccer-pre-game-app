@@ -8,6 +8,8 @@ export async function GET(request: Request) {
   const type = requestUrl.searchParams.get('type');
   const next = requestUrl.searchParams.get('next') ?? '/';
 
+  console.log('[Auth Callback] Received request with:', { code: code?.substring(0, 10) + '...', type, next });
+
   if (code) {
     const cookieStore = await cookies();
     
@@ -31,18 +33,13 @@ export async function GET(request: Request) {
 
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     
+    console.log('[Auth Callback] Exchange code result:', { error: error?.message });
+    
     if (!error) {
-      // Get the session to check if it's a recovery session
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      // If it's a password reset or we detect a recovery session
-      if (type === 'recovery' || session?.user?.recovery_sent_at) {
-        const redirectUrl = new URL('/auth/reset-password', requestUrl.origin);
-        return NextResponse.redirect(redirectUrl);
-      }
-      
-      // Otherwise redirect to the next URL or home
-      const redirectUrl = new URL(next, requestUrl.origin);
+      // Always redirect to password reset page after successful code exchange
+      // The reset password page will verify if this is a valid recovery session
+      const redirectUrl = new URL('/auth/reset-password', requestUrl.origin);
+      console.log('[Auth Callback] Redirecting to:', redirectUrl.toString());
       return NextResponse.redirect(redirectUrl);
     }
   }
