@@ -21,7 +21,18 @@ function VerificationToast({ onClose }: { onClose: () => void }) {
     const code = searchParams.get('code');
     if (code) {
       // Redirect to auth callback to handle the password reset
-      router.replace(`/auth/callback?code=${code}`);
+      router.push(`/auth/callback?code=${code}`);
+      return;
+    }
+
+    // Check for auth errors
+    const error = searchParams.get('error');
+    const errorDescription = searchParams.get('error_description');
+    if (error === 'auth_callback_error') {
+      console.error('Auth callback error:', errorDescription);
+      // You might want to show an error toast here
+      // For now, just clean up the URL
+      router.replace('/', undefined);
       return;
     }
 

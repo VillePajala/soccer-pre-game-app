@@ -31,21 +31,35 @@ export async function GET(request: Request) {
       }
     );
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    
-    console.log('[Auth Callback] Exchange code result:', { error: error?.message });
-    
-    if (!error) {
-      // Always redirect to password reset page after successful code exchange
-      // The reset password page will verify if this is a valid recovery session
+    try {
+      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      
+      if (error) {
+        console.error('[Auth Callback] Exchange code error:', error);
+        const redirectUrl = new URL('/', requestUrl.origin);
+        redirectUrl.searchParams.set('error', 'auth_callback_error');
+        redirectUrl.searchParams.set('error_description', error.message);
+        return NextResponse.redirect(redirectUrl);
+      }
+      
+      // Success - redirect to password reset page
       const redirectUrl = new URL('/auth/reset-password', requestUrl.origin);
-      console.log('[Auth Callback] Redirecting to:', redirectUrl.toString());
+      console.log('[Auth Callback] Success! Redirecting to:', redirectUrl.toString());
+      return NextResponse.redirect(redirectUrl);
+      
+    } catch (err) {
+      console.error('[Auth Callback] Unexpected error:', err);
+      const redirectUrl = new URL('/', requestUrl.origin);
+      redirectUrl.searchParams.set('error', 'auth_callback_error');
+      redirectUrl.searchParams.set('error_description', 'unexpected_error');
       return NextResponse.redirect(redirectUrl);
     }
   }
 
-  // If there's an error or no code, redirect to home with error
+  // No code provided
+  console.log('[Auth Callback] No code provided in URL');
   const redirectUrl = new URL('/', requestUrl.origin);
   redirectUrl.searchParams.set('error', 'auth_callback_error');
+  redirectUrl.searchParams.set('error_description', 'no_code');
   return NextResponse.redirect(redirectUrl);
 }
