@@ -27,7 +27,7 @@ export default function EnhancedInstallPrompt({ className = '' }: EnhancedInstal
     // Check if app is already installed/running in standalone mode
     const checkStandalone = () => {
       const standalone = window.matchMedia('(display-mode: standalone)').matches ||
-                        (window.navigator as unknown as Record<string, unknown>).standalone ||
+                        Boolean((window.navigator as unknown as Record<string, unknown>).standalone) ||
                         document.referrer.includes('android-app://');
       setIsStandalone(standalone);
     };
