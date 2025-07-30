@@ -48,8 +48,9 @@ function ConfirmPageContent() {
           const type = searchParams.get('type');
 
           if (!token_hash || !type) {
-            console.log('Missing confirmation parameters');
-            setError('Missing confirmation parameters');
+            console.log('Missing confirmation parameters - token_hash:', !!token_hash, 'type:', !!type);
+            console.log('Available search params:', Array.from(searchParams.entries()));
+            setError('Missing confirmation parameters. Please check that you clicked the link from your email correctly, or try signing up again.');
             setLoading(false);
             return;
           }
