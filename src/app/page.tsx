@@ -67,7 +67,8 @@ function VerificationToast({ onClose }: { onClose: () => void }) {
           
           if (hashType === 'recovery' && accessToken) {
             console.log('Password reset detected! Redirecting to reset page...');
-            router.push('/auth/reset-password');
+            // Preserve the hash fragment in the redirect
+            router.push(`/auth/reset-password${window.location.hash}`);
             return;
           }
         }
