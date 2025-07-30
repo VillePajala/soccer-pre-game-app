@@ -47,7 +47,7 @@ function VerificationToast({ onClose }: { onClose: () => void }) {
       if (code) {
         console.log('Password reset code detected but PKCE not supported. Cleaning up URL.');
         // Clean up the URL immediately to prevent infinite loops
-        router.replace('/', undefined);
+        window.history.replaceState({}, '', window.location.pathname);
         return;
       }
       
