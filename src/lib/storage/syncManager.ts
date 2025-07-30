@@ -1,6 +1,10 @@
 import type { IndexedDBProvider, SyncQueueItem } from './indexedDBProvider';
 import type { IStorageProvider } from './types';
-import { StorageError, NetworkError } from './types';
+// StorageError will be used for future error handling
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { StorageError } from './types';
+import type { Player, Season, Tournament } from '../../types';
+import type { AppSettings } from '../../utils/appSettings';
 
 export type ConflictResolutionStrategy = 'last-write-wins' | 'merge' | 'user-choice';
 
@@ -136,7 +140,7 @@ export class SyncManager {
                 total: pendingItems.length
               });
             }
-          } catch (error) {
+          } catch {
             result.failedItems++;
             result.errors.push(error as Error);
             
@@ -202,22 +206,22 @@ export class SyncManager {
   /**
    * Sync a create operation
    */
-  private async syncCreateOperation(item: SyncQueueItem, options: SyncOptions): Promise<void> {
+  private async syncCreateOperation(item: SyncQueueItem): Promise<void> {
     switch (item.table) {
       case 'players':
-        await this.supabase.savePlayer(item.data as any);
+        await this.supabase.savePlayer(item.data as Player);
         break;
       case 'seasons':
-        await this.supabase.saveSeason(item.data as any);
+        await this.supabase.saveSeason(item.data as Season);
         break;
       case 'tournaments':
-        await this.supabase.saveTournament(item.data as any);
+        await this.supabase.saveTournament(item.data as Tournament);
         break;
       case 'saved_games':
         await this.supabase.saveSavedGame(item.data);
         break;
       case 'app_settings':
-        await this.supabase.saveAppSettings(item.data as any);
+        await this.supabase.saveAppSettings(item.data as AppSettings);
         break;
       default:
         throw new Error(`Unsupported table for create: ${item.table}`);
@@ -228,7 +232,7 @@ export class SyncManager {
    * Sync an update operation
    */
   private async syncUpdateOperation(item: SyncQueueItem, options: SyncOptions): Promise<void> {
-    const data = item.data as any;
+    const data = item.data as Player;
     
     if (!data.id) {
       throw new Error('Update operation requires data with id field');
@@ -265,7 +269,7 @@ export class SyncManager {
    * Sync a delete operation
    */
   private async syncDeleteOperation(item: SyncQueueItem): Promise<void> {
-    const data = item.data as any;
+    const data = item.data as Player;
     
     if (!data.id) {
       throw new Error('Delete operation requires data with id field');
@@ -296,7 +300,7 @@ export class SyncManager {
     // For now, we'll implement a simple timestamp-based conflict detection
     // In a real implementation, this would compare actual data
     try {
-      const data = item.data as any;
+      const data = item.data as Player;
       
       // If the item has a lastModified timestamp, we can compare it
       if (data.lastModified && typeof data.lastModified === 'number') {
@@ -306,7 +310,7 @@ export class SyncManager {
       }
       
       return false;
-    } catch (error) {
+    } catch {
       // If we can't check for conflicts, assume no conflict
       return false;
     }

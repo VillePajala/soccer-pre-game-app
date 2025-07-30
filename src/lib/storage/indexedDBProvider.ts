@@ -325,7 +325,7 @@ export class IndexedDBProvider implements IStorageProvider {
       throw new Error('Invalid import data');
     }
 
-    const importData = data as any;
+    const importData = data as Record<string, unknown>;
 
     // Import each data type
     if (importData.players && Array.isArray(importData.players)) {

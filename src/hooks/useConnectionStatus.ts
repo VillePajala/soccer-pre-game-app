@@ -43,7 +43,7 @@ export const useConnectionStatus = () => {
 
       clearTimeout(timeoutId);
       return response.ok || response.status === 401; // 401 is fine, means auth is working
-    } catch (error) {
+    } catch {
       // Network error, timeout, or abort
       return false;
     }

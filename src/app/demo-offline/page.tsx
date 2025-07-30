@@ -16,7 +16,7 @@ export default function OfflineDemo() {
   const connectionStatus = useConnectionStatus();
   const [players, setPlayers] = useState<Player[]>([]);
   const [timerState, setTimerState] = useState<TimerState | null>(null);
-  const [syncStats, setSyncStats] = useState<any>(null);
+  const [syncStats, setSyncStats] = useState<Record<string, unknown> | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -246,7 +246,7 @@ export default function OfflineDemo() {
               <div className="text-center">
                 <div className="text-2xl mb-1">🔄</div>
                 <div className="text-blue-600">
-                  {syncStats?.pendingCount || 0}
+                  {(syncStats as { pendingCount?: number })?.pendingCount || 0}
                 </div>
                 <div className="text-xs text-gray-500">Pending Sync</div>
               </div>
@@ -323,7 +323,7 @@ export default function OfflineDemo() {
                   <p className="text-gray-500 italic">No players yet. Add some to test offline functionality!</p>
                 ) : (
                   <div className="space-y-2">
-                    {players.map((player, index) => (
+                    {players.map((player) => (
                       <div key={player.id} className="bg-white p-3 rounded border">
                         <div className="font-medium">#{player.jerseyNumber} {player.name}</div>
                         <div className="text-sm text-gray-600">{player.isGoalie ? 'Goalkeeper' : 'Field Player'}</div>
@@ -372,12 +372,12 @@ export default function OfflineDemo() {
             <h3 className="text-lg font-semibold text-blue-800 mb-2">🧪 How to Test Offline Functionality</h3>
             <ol className="list-decimal list-inside space-y-2 text-blue-700">
               <li>Add some players while online (they sync to Supabase automatically)</li>
-              <li>Open browser DevTools → Network tab → Check "Offline" to simulate being offline</li>
+              <li>Open browser DevTools → Network tab → Check &quot;Offline&quot; to simulate being offline</li>
               <li>Add/delete players while offline (they save to IndexedDB and queue for sync)</li>
               <li>Save/load timer state (always uses IndexedDB for real-time data)</li>
               <li>Go back online and watch automatic sync happen in the activity log</li>
-              <li>Export data to see what's stored in IndexedDB</li>
-              <li>Try "Force Sync" to manually trigger synchronization</li>
+              <li>Export data to see what&apos;s stored in IndexedDB</li>
+              <li>Try &quot;Force Sync&quot; to manually trigger synchronization</li>
             </ol>
           </div>
         </div>

@@ -1,0 +1,269 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+
+interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: string[];
+  readonly userChoice: Promise<{
+    outcome: 'accepted' | 'dismissed';
+    platform: string;
+  }>;
+  prompt(): Promise<void>;
+}
+
+interface EnhancedInstallPromptProps {
+  className?: string;
+}
+
+export default function EnhancedInstallPrompt({ className = '' }: EnhancedInstallPromptProps) {
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [showPrompt, setShowPrompt] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
+  const [installCount, setInstallCount] = useState(0);
+  const [lastPromptDismissed, setLastPromptDismissed] = useState<number | null>(null);
+
+  useEffect(() => {
+    // Check if app is already installed/running in standalone mode
+    const checkStandalone = () => {
+      const standalone = window.matchMedia('(display-mode: standalone)').matches ||
+                        (window.navigator as Record<string, unknown>).standalone ||
+                        document.referrer.includes('android-app://');
+      setIsStandalone(standalone);
+    };
+
+    checkStandalone();
+
+    // Load install stats from localStorage
+    const savedInstallCount = localStorage.getItem('install-prompt-count');
+    const savedLastDismissed = localStorage.getItem('install-prompt-last-dismissed');
+    
+    if (savedInstallCount) {
+      setInstallCount(parseInt(savedInstallCount, 10));
+    }
+    
+    if (savedLastDismissed) {
+      setLastPromptDismissed(parseInt(savedLastDismissed, 10));
+    }
+
+    // Listen for beforeinstallprompt event
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      console.log('[Install] beforeinstallprompt event captured');
+      
+      const promptEvent = e as BeforeInstallPromptEvent;
+      setDeferredPrompt(promptEvent);
+      
+      // Show prompt based on smart logic
+      const shouldShow = shouldShowInstallPrompt();
+      setShowPrompt(shouldShow);
+      
+      if (shouldShow) {
+        console.log('[Install] Showing install prompt');
+      }
+    };
+
+    // Listen for app installed event
+    const handleAppInstalled = () => {
+      console.log('[Install] App was installed');
+      setIsInstalled(true);
+      setShowPrompt(false);
+      setDeferredPrompt(null);
+      
+      // Track successful installation
+      const newCount = installCount + 1;
+      setInstallCount(newCount);
+      localStorage.setItem('install-prompt-count', newCount.toString());
+    };
+
+    // Smart logic to determine if we should show install prompt
+    const shouldShowInstallPrompt = (): boolean => {
+      // Don't show if already standalone
+      if (isStandalone) return false;
+      
+      // Don't show if dismissed recently (within 7 days)
+      if (lastPromptDismissed) {
+        const daysSinceDismissed = (Date.now() - lastPromptDismissed) / (1000 * 60 * 60 * 24);
+        if (daysSinceDismissed < 7) {
+          console.log('[Install] Prompt dismissed recently, waiting...');
+          return false;
+        }
+      }
+      
+      // Don't show if prompted too many times (max 3)
+      if (installCount >= 3) {
+        console.log('[Install] Max prompt count reached');
+        return false;
+      }
+      
+      // Check if user has used the app enough (basic engagement check)
+      const appUsageCount = localStorage.getItem('app-usage-count') || '0';
+      const usageCount = parseInt(appUsageCount, 10);
+      
+      // Show after user has used the app at least 3 times
+      return usageCount >= 3;
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, [installCount, lastPromptDismissed, isStandalone]);
+
+  // Track app usage for engagement-based prompting
+  useEffect(() => {
+    const incrementUsage = () => {
+      const currentCount = localStorage.getItem('app-usage-count') || '0';
+      const newCount = parseInt(currentCount, 10) + 1;
+      localStorage.setItem('app-usage-count', newCount.toString());
+    };
+
+    // Increment usage count on mount (page visit)
+    incrementUsage();
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) {
+      console.warn('[Install] No deferred prompt available');
+      return;
+    }
+
+    try {
+      // Show the install prompt
+      await deferredPrompt.prompt();
+      
+      // Wait for user choice
+      const choiceResult = await deferredPrompt.userChoice;
+      console.log('[Install] User choice:', choiceResult.outcome);
+      
+      if (choiceResult.outcome === 'accepted') {
+        console.log('[Install] User accepted the install prompt');
+        setIsInstalled(true);
+      } else {
+        console.log('[Install] User dismissed the install prompt');
+        handleDismiss();
+      }
+      
+      // Clean up
+      setDeferredPrompt(null);
+      setShowPrompt(false);
+      
+    } catch (error) {
+      console.error('[Install] Error during installation:', error);
+    }
+  };
+
+  const handleDismiss = () => {
+    const now = Date.now();
+    setLastPromptDismissed(now);
+    localStorage.setItem('install-prompt-last-dismissed', now.toString());
+    
+    const newCount = installCount + 1;
+    setInstallCount(newCount);
+    localStorage.setItem('install-prompt-count', newCount.toString());
+    
+    setShowPrompt(false);
+    console.log('[Install] Install prompt dismissed');
+  };
+
+  const handleNeverShow = () => {
+    // Set count to max to prevent future prompts
+    setInstallCount(999);
+    localStorage.setItem('install-prompt-count', '999');
+    setShowPrompt(false);
+    console.log('[Install] Install prompt disabled permanently');
+  };
+
+  // Don't render anything if conditions aren't met
+  if (!showPrompt || !deferredPrompt || isStandalone || isInstalled) {
+    return null;
+  }
+
+  return (
+    <div className={`fixed bottom-4 left-4 right-4 z-50 md:left-auto md:right-4 md:max-w-sm ${className}`}>
+      <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-4 animate-slide-up">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+              <span className="text-2xl">⚽</span>
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900">Install MatchDay Coach</h3>
+              <p className="text-sm text-gray-600">Get the full app experience</p>
+            </div>
+          </div>
+          <button
+            onClick={handleDismiss}
+            className="text-gray-400 hover:text-gray-600 text-lg leading-none"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Features */}
+        <div className="mb-4">
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            <div className="flex items-center gap-2 text-gray-700">
+              <span className="text-green-500">⚡</span>
+              <span>Faster loading</span>
+            </div>
+            <div className="flex items-center gap-2 text-gray-700">
+              <span className="text-blue-500">📱</span>
+              <span>Works offline</span>
+            </div>
+            <div className="flex items-center gap-2 text-gray-700">
+              <span className="text-purple-500">🔔</span>
+              <span>Push notifications</span>
+            </div>
+            <div className="flex items-center gap-2 text-gray-700">
+              <span className="text-orange-500">🚀</span>
+              <span>App shortcuts</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-2">
+          <button
+            onClick={handleInstallClick}
+            className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+          >
+            Install App
+          </button>
+          <button
+            onClick={handleNeverShow}
+            className="px-3 py-2 text-gray-500 hover:text-gray-700 text-sm transition-colors"
+          >
+            Don&apos;t ask again
+          </button>
+        </div>
+
+        {/* Privacy Note */}
+        <p className="text-xs text-gray-500 mt-2 text-center">
+          Installing adds a shortcut to your home screen. No personal data is collected during installation.
+        </p>
+      </div>
+
+      <style jsx>{`
+        @keyframes slide-up {
+          from {
+            transform: translateY(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+        
+        .animate-slide-up {
+          animation: slide-up 0.3s ease-out;
+        }
+      `}</style>
+    </div>
+  );
+}

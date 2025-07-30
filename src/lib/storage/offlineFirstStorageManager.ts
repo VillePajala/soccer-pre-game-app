@@ -1,5 +1,7 @@
 // Offline-first storage manager with IndexedDB and sync capabilities
 import type { IStorageProvider, StorageConfig } from './types';
+// These error types will be used for future error handling
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { StorageError, NetworkError, AuthenticationError } from './types';
 import { LocalStorageProvider } from './localStorageProvider';
 import { SupabaseProvider } from './supabaseProvider';
@@ -79,7 +81,7 @@ export class OfflineFirstStorageManager implements IStorageProvider {
         } else {
           console.warn(`⚠️ Sync completed with errors: ${result.failedItems} failed`);
         }
-      } catch (error) {
+      } catch {
         console.error('❌ Sync failed after reconnection:', error);
       }
     }
@@ -130,7 +132,7 @@ export class OfflineFirstStorageManager implements IStorageProvider {
     if (this.shouldSyncToSupabase()) {
       try {
         await this.supabaseProvider.savePlayer(player);
-      } catch (error) {
+      } catch {
         console.warn('Failed to sync player to Supabase, queuing for later:', error);
         await this.syncManager.queueOperation('create', 'players', player);
       }
@@ -150,7 +152,7 @@ export class OfflineFirstStorageManager implements IStorageProvider {
     if (this.shouldSyncToSupabase()) {
       try {
         await this.supabaseProvider.deletePlayer(playerId);
-      } catch (error) {
+      } catch {
         console.warn('Failed to delete player from Supabase, queuing for later:', error);
         await this.syncManager.queueOperation('delete', 'players', { id: playerId });
       }
@@ -167,7 +169,7 @@ export class OfflineFirstStorageManager implements IStorageProvider {
     if (this.shouldSyncToSupabase()) {
       try {
         await this.supabaseProvider.updatePlayer(playerId, updates);
-      } catch (error) {
+      } catch {
         console.warn('Failed to update player in Supabase, queuing for later:', error);
         await this.syncManager.queueOperation('update', 'players', updatedPlayer);
       }
@@ -189,7 +191,7 @@ export class OfflineFirstStorageManager implements IStorageProvider {
     if (this.shouldSyncToSupabase()) {
       try {
         await this.supabaseProvider.saveSeason(season);
-      } catch (error) {
+      } catch {
         await this.syncManager.queueOperation('create', 'seasons', season);
       }
     } else {
@@ -205,7 +207,7 @@ export class OfflineFirstStorageManager implements IStorageProvider {
     if (this.shouldSyncToSupabase()) {
       try {
         await this.supabaseProvider.deleteSeason(seasonId);
-      } catch (error) {
+      } catch {
         await this.syncManager.queueOperation('delete', 'seasons', { id: seasonId });
       }
     } else {
@@ -219,7 +221,7 @@ export class OfflineFirstStorageManager implements IStorageProvider {
     if (this.shouldSyncToSupabase()) {
       try {
         await this.supabaseProvider.updateSeason(seasonId, updates);
-      } catch (error) {
+      } catch {
         await this.syncManager.queueOperation('update', 'seasons', updatedSeason);
       }
     } else {
@@ -240,7 +242,7 @@ export class OfflineFirstStorageManager implements IStorageProvider {
     if (this.shouldSyncToSupabase()) {
       try {
         await this.supabaseProvider.saveTournament(tournament);
-      } catch (error) {
+      } catch {
         await this.syncManager.queueOperation('create', 'tournaments', tournament);
       }
     } else {
@@ -256,7 +258,7 @@ export class OfflineFirstStorageManager implements IStorageProvider {
     if (this.shouldSyncToSupabase()) {
       try {
         await this.supabaseProvider.deleteTournament(tournamentId);
-      } catch (error) {
+      } catch {
         await this.syncManager.queueOperation('delete', 'tournaments', { id: tournamentId });
       }
     } else {
@@ -270,7 +272,7 @@ export class OfflineFirstStorageManager implements IStorageProvider {
     if (this.shouldSyncToSupabase()) {
       try {
         await this.supabaseProvider.updateTournament(tournamentId, updates);
-      } catch (error) {
+      } catch {
         await this.syncManager.queueOperation('update', 'tournaments', updatedTournament);
       }
     } else {
@@ -291,7 +293,7 @@ export class OfflineFirstStorageManager implements IStorageProvider {
     if (this.shouldSyncToSupabase()) {
       try {
         await this.supabaseProvider.saveAppSettings(settings);
-      } catch (error) {
+      } catch {
         await this.syncManager.queueOperation('create', 'app_settings', settings);
       }
     } else {
@@ -312,7 +314,7 @@ export class OfflineFirstStorageManager implements IStorageProvider {
     if (this.shouldSyncToSupabase()) {
       try {
         await this.supabaseProvider.saveSavedGame(gameData);
-      } catch (error) {
+      } catch {
         await this.syncManager.queueOperation('create', 'saved_games', gameData);
       }
     } else {
@@ -328,7 +330,7 @@ export class OfflineFirstStorageManager implements IStorageProvider {
     if (this.shouldSyncToSupabase()) {
       try {
         await this.supabaseProvider.deleteSavedGame(gameId);
-      } catch (error) {
+      } catch {
         await this.syncManager.queueOperation('delete', 'saved_games', { id: gameId });
       }
     } else {
