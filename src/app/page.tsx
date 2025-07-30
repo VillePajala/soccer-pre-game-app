@@ -42,24 +42,6 @@ function VerificationToast({ onClose }: { onClose: () => void }) {
         }
       }
       
-      // Check for password reset code parameter (problematic due to PKCE)
-      const code = searchParams.get('code');
-      if (code) {
-        console.log('Password reset code detected but PKCE not supported. Cleaning up URL.');
-        // Clean up the URL immediately to prevent infinite loops
-        window.history.replaceState({}, '', window.location.pathname);
-        return;
-      }
-      
-      // Check for password reset in query params (fallback)
-      const accessToken = searchParams.get('access_token');
-      const type = searchParams.get('type');
-      
-      if (type === 'recovery' && accessToken) {
-        console.log('Password reset in query params detected! Redirecting to reset page...');
-        router.push('/auth/reset-password');
-        return;
-      }
     }
 
     if (searchParams.get('verified') === 'true') {
