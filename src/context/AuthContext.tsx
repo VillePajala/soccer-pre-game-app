@@ -101,14 +101,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/confirm`,
-        },
       });
       
       // Log for debugging
       console.log('Supabase signup response:', { data, error });
-      console.log('Email redirect URL:', `${window.location.origin}/auth/confirm`);
       
       return { error };
     } catch (error) {

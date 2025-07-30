@@ -17,38 +17,6 @@ function VerificationToast({ onClose }: { onClose: () => void }) {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    // Check for password reset in hash fragment (Supabase default behavior)
-    if (typeof window !== 'undefined' && window.location.hash) {
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const accessToken = hashParams.get('access_token');
-      const type = hashParams.get('type');
-      
-      if (type === 'recovery' && accessToken) {
-        // We have a password reset token, redirect to reset password page
-        router.push('/auth/reset-password');
-        return;
-      }
-    }
-
-    // Check for password reset code in query params
-    const code = searchParams.get('code');
-    if (code) {
-      // Redirect to auth callback to handle the password reset
-      router.push(`/auth/callback?code=${code}`);
-      return;
-    }
-
-    // Check for auth errors
-    const error = searchParams.get('error');
-    const errorDescription = searchParams.get('error_description');
-    if (error === 'auth_callback_error') {
-      console.error('Auth callback error:', errorDescription);
-      // You might want to show an error toast here
-      // For now, just clean up the URL
-      router.replace('/', undefined);
-      return;
-    }
-
     if (searchParams.get('verified') === 'true') {
       setShow(true);
       // Clean up the URL parameter
