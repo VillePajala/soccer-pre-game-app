@@ -24,6 +24,7 @@ interface SyncNotification {
     timestamp: number;
     operations?: number;
   };
+  timestamp: number;
 }
 
 export default function EnhancedServiceWorkerRegistration() {
