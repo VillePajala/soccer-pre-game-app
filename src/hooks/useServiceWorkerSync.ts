@@ -30,6 +30,54 @@ export function useServiceWorkerSync(
     'serviceWorker' in navigator && 
     !!navigator.serviceWorker.controller;
 
+  // Request manual sync
+  const requestSync = useCallback(async (): Promise<void> => {
+    if (!storageManager || syncInProgressRef.current) {
+      return;
+    }
+
+    try {
+      syncInProgressRef.current = true;
+      
+      // Try direct sync first (if online)
+      if (connectionStatus.isOnline) {
+        console.log('[SW-Hook] Starting direct sync...');
+        await storageManager.forceSyncToSupabase();
+        lastSyncTimeRef.current = Date.now();
+        
+        // Notify service worker of successful sync
+        if (isServiceWorkerReady && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({
+            type: 'SYNC_COMPLETED',
+            data: { success: true, timestamp: Date.now() }
+          });
+        }
+      } else {
+        // Register for background sync when offline
+        if ('serviceWorker' in navigator && 'SyncManager' in window) {
+          const registration = await navigator.serviceWorker.ready;
+          await (registration as any).sync.register('supabase-sync');
+          console.log('[SW-Hook] Background sync registered');
+        }
+      }
+    } catch (error) {
+      console.error('[SW-Hook] Sync failed:', error);
+      
+      // Notify service worker of failed sync
+      if (isServiceWorkerReady && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'SYNC_FAILED',
+          data: { 
+            error: error instanceof Error ? error.message : 'Unknown error',
+            timestamp: Date.now() 
+          }
+        });
+      }
+    } finally {
+      syncInProgressRef.current = false;
+    }
+  }, [storageManager, connectionStatus.isOnline, isServiceWorkerReady]);
+
   // Auto-sync when coming back online
   useEffect(() => {
     if (connectionStatus.isOnline && !syncInProgressRef.current && storageManager) {
@@ -74,53 +122,6 @@ export function useServiceWorkerSync(
     };
   }, [isServiceWorkerReady]);
 
-  // Request manual sync
-  const requestSync = useCallback(async (): Promise<void> => {
-    if (!storageManager || syncInProgressRef.current) {
-      return;
-    }
-
-    try {
-      syncInProgressRef.current = true;
-      
-      // Try direct sync first (if online)
-      if (connectionStatus.isOnline) {
-        console.log('[SW-Hook] Starting direct sync...');
-        await storageManager.forceSyncToSupabase();
-        lastSyncTimeRef.current = Date.now();
-        
-        // Notify service worker of successful sync
-        if (isServiceWorkerReady && navigator.serviceWorker.controller) {
-          navigator.serviceWorker.controller.postMessage({
-            type: 'SYNC_COMPLETED',
-            data: { success: true, timestamp: Date.now() }
-          });
-        }
-      } else {
-        // Queue for background sync
-        console.log('[SW-Hook] Offline - queuing for background sync...');
-        if (isServiceWorkerReady && navigator.serviceWorker.controller) {
-          navigator.serviceWorker.controller.postMessage({
-            type: 'SYNC_REQUEST'
-          });
-        }
-      }
-    } catch (error) {
-      console.error('[SW-Hook] Sync failed:', error);
-      
-      // Notify service worker of failed sync
-      if (isServiceWorkerReady && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({
-          type: 'SYNC_FAILED',
-          data: { error: error instanceof Error ? error.message : 'Unknown error', timestamp: Date.now() }
-        });
-      }
-      
-      throw error;
-    } finally {
-      syncInProgressRef.current = false;
-    }
-  }, [storageManager, connectionStatus.isOnline, isServiceWorkerReady]);
 
   // Get sync statistics
   const getSyncStats = useCallback(async (): Promise<SyncStats> => {
