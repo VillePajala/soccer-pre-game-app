@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix: Enhance password reset handling with improved logging and conditional execution"
+  "notes": "fix: Improve confirmation page error handling with detailed logging and user guidance"
 }

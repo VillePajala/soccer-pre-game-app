@@ -23,7 +23,7 @@ function ConfirmPageContent() {
       });
       
       try {
-        // First check for code parameter (newer method)
+        // First check for code parameter in search params (newer method)
         const code = searchParams.get('code');
         if (code) {
           console.log('Sign-up code detected:', code.substring(0, 10) + '...');
@@ -41,42 +41,72 @@ function ConfirmPageContent() {
             }, 2000);
             return;
           }
-        } else {
-          console.log('No code parameter, checking for token_hash...');
-          // Fall back to token_hash method (older method)
-          const token_hash = searchParams.get('token_hash');
-          const type = searchParams.get('type');
+        }
+        
+        // Check for parameters in URL hash (Supabase sometimes sends them this way)
+        let token_hash = searchParams.get('token_hash');
+        let type = searchParams.get('type');
+        
+        if (!token_hash && window.location.hash) {
+          console.log('No search params found, checking hash parameters...');
+          const hashParams = new URLSearchParams(window.location.hash.substring(1));
+          token_hash = hashParams.get('token') || hashParams.get('token_hash');
+          type = hashParams.get('type');
+          console.log('Hash params found:', { token_hash: !!token_hash, type });
+        }
 
-          if (!token_hash || !type) {
-            console.log('Missing confirmation parameters - token_hash:', !!token_hash, 'type:', !!type);
-            console.log('Available search params:', Array.from(searchParams.entries()));
-            setError('Missing confirmation parameters. Please check that you clicked the link from your email correctly, or try signing up again.');
-            setLoading(false);
-            return;
-          }
+        if (!token_hash || !type) {
+          console.log('Missing confirmation parameters - token_hash:', !!token_hash, 'type:', !!type);
+          console.log('Available search params:', Array.from(searchParams.entries()));
+          console.log('URL hash:', window.location.hash);
+          setError('Missing confirmation parameters. Please check that you clicked the link from your email correctly, or try signing up again.');
+          setLoading(false);
+          return;
+        }
 
-          console.log('Using token_hash method for confirmation');
-          // Verify the email with Supabase
-          const { error: confirmError } = await supabase.auth.verifyOtp({
-            token_hash,
-            type: type as 'signup' | 'recovery' | 'email_change' | 'phone_change',
-          });
-
-          if (confirmError) {
-            console.error('Token verification error:', confirmError);
-            setError(`Email confirmation failed: ${confirmError.message}`);
-          } else {
-            console.log('Token verification successful!');
-            // Success! Show success state first, then redirect
-            setSuccess(true);
-            setLoading(false);
-            setTimeout(() => {
-              router.push('/?verified=true');
-            }, 2000);
-            return;
+        console.log('Using token method for confirmation - token:', token_hash, 'type:', type);
+        
+        // Try different verification methods based on what we have
+        let confirmError = null;
+        
+        // First try verifyOtp with token_hash
+        const verifyResult = await supabase.auth.verifyOtp({
+          token_hash: token_hash,
+          type: type as 'signup' | 'recovery' | 'email_change' | 'phone_change',
+        });
+        
+        confirmError = verifyResult.error;
+        
+        // If that fails and we have an email parameter, try with email + token
+        if (confirmError && window.location.hash) {
+          const hashParams = new URLSearchParams(window.location.hash.substring(1));
+          const email = hashParams.get('email');
+          if (email && token_hash) {
+            console.log('First attempt failed, trying with email:', email);
+            const emailVerifyResult = await supabase.auth.verifyOtp({
+              email: decodeURIComponent(email),
+              token: token_hash,
+              type: type as 'signup' | 'recovery' | 'email_change' | 'phone_change',
+            });
+            confirmError = emailVerifyResult.error;
           }
         }
-      } catch {
+
+        if (confirmError) {
+          console.error('Token verification error:', confirmError);
+          setError(`Email confirmation failed: ${confirmError.message}`);
+        } else {
+          console.log('Token verification successful!');
+          // Success! Show success state first, then redirect
+          setSuccess(true);
+          setLoading(false);
+          setTimeout(() => {
+            router.push('/?verified=true');
+          }, 2000);
+          return;
+        }
+      } catch (err) {
+        console.error('Unexpected error during confirmation:', err);
         setError('An unexpected error occurred during email confirmation');
       } finally {
         setLoading(false);

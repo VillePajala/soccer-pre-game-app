@@ -96,9 +96,34 @@ export default function CheckSiteUrl() {
           </div>
           <div>
             <h3 className="font-semibold text-green-200">Redirect URLs (one per line):</h3>
-            <pre className="bg-gray-800 px-3 py-2 rounded block mt-1 text-sm">https://prosoccercoach.vercel.app/**{'\n'}https://*-ville-pajalas-projects.vercel.app/**{'\n'}http://localhost:3000/**</pre>
+            <pre className="bg-gray-800 px-3 py-2 rounded block mt-1 text-sm">https://prosoccercoach.vercel.app/**{'\n'}https://*-ville-pajalas-projects.vercel.app/**{'\n'}http://localhost:3000/**{'\n'}https://prosoccercoach.vercel.app/auth/confirm</pre>
+            <p className="text-sm text-green-200 mt-2">⚠️ Make sure to include <code>/auth/confirm</code> explicitly!</p>
           </div>
         </div>
+      </div>
+
+      <div className="bg-red-900 p-6 rounded-lg mb-6">
+        <h2 className="text-xl mb-4 text-red-300">🔧 Fix Email Confirmation Issue</h2>
+        <p className="text-red-200 mb-4">If you&apos;re seeing &quot;Missing confirmation parameters&quot; error:</p>
+        <ol className="list-decimal list-inside space-y-3 text-red-100">
+          <li>
+            <strong>Check Email Templates in Supabase:</strong>
+            <br />
+            Go to Authentication → Email Templates → Confirm signup
+            <br />
+            <span className="text-sm">The template should use: <code className="bg-gray-800 px-2 py-1 rounded">{"{{ .ConfirmationURL }}"}</code></span>
+          </li>
+          <li>
+            <strong>Verify the confirmation URL format:</strong>
+            <br />
+            <span className="text-sm">It should be: <code className="bg-gray-800 px-2 py-1 rounded">{authSettings?.currentUrl}/auth/confirm?token_hash={"{{ .TokenHash }}"}&type=signup</code></span>
+          </li>
+          <li>
+            <strong>Enable &quot;Secure email change&quot; in Auth settings</strong>
+            <br />
+            <span className="text-sm">This ensures proper token generation</span>
+          </li>
+        </ol>
       </div>
 
       <div className="bg-yellow-900 p-6 rounded-lg">
