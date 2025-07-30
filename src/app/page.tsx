@@ -27,15 +27,25 @@ function VerificationToast({ onClose }: { onClose: () => void }) {
         pathname: window.location.pathname
       });
       
-      // Check for password reset in hash fragment
+      // Check for password reset code parameter (PKCE flow)
+      const code = searchParams.get('code');
+      const type = searchParams.get('type') || searchParams.get('type');
+      
+      if (code && type === 'recovery') {
+        console.log('Password reset code detected, redirecting to reset page...');
+        router.push('/auth/reset-password');
+        return;
+      }
+      
+      // Check for password reset in hash fragment (legacy flow)
       if (window.location.hash) {
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const accessToken = hashParams.get('access_token');
-        const type = hashParams.get('type');
+        const hashType = hashParams.get('type');
         
-        console.log('Hash params found:', { accessToken: accessToken?.substring(0, 20) + '...', type });
+        console.log('Hash params found:', { accessToken: accessToken?.substring(0, 20) + '...', type: hashType });
         
-        if (type === 'recovery' && accessToken) {
+        if (hashType === 'recovery' && accessToken) {
           console.log('Password reset detected! Redirecting to reset page...');
           router.push('/auth/reset-password');
           return;

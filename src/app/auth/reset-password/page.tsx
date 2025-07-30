@@ -13,7 +13,7 @@ function ResetPasswordForm() {
   const [success, setSuccess] = useState(false);
   const [isValidToken, setIsValidToken] = useState(false);
   const router = useRouter();
-  useSearchParams(); // Required for Suspense boundary
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     const checkSession = async () => {
@@ -28,7 +28,30 @@ function ResetPasswordForm() {
         });
       }
       
-      // First check if we have a recovery session from the callback
+      // First check for PKCE code exchange
+      const code = searchParams.get('code');
+      if (code) {
+        console.log('PKCE code found, attempting exchange...');
+        try {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) {
+            console.error('PKCE code exchange error:', error);
+            setError('Invalid or expired reset link. Please request a new password reset.');
+          } else {
+            console.log('PKCE code exchange successful');
+            setIsValidToken(true);
+            // Clean up URL after successful exchange
+            window.history.replaceState({}, '', window.location.pathname);
+          }
+          return;
+        } catch (err) {
+          console.error('PKCE exchange failed:', err);
+          setError('Invalid or expired reset link. Please request a new password reset.');
+          return;
+        }
+      }
+      
+      // Check if we already have a recovery session
       const { data: { session } } = await supabase.auth.getSession();
       
       console.log('Current session:', { 
@@ -38,8 +61,6 @@ function ResetPasswordForm() {
       });
       
       if (session?.user) {
-        // For password reset flow, if we have a session after coming from the callback,
-        // we should allow the password reset
         console.log('Valid session found, allowing password reset');
         setIsValidToken(true);
         return;
@@ -51,7 +72,7 @@ function ResetPasswordForm() {
       const type = hashParams.get('type');
 
       if (type === 'recovery' && accessToken) {
-        // We have a valid recovery token
+        console.log('Hash fragment recovery token found');
         setIsValidToken(true);
         
         // Set the session with the recovery token
@@ -71,7 +92,7 @@ function ResetPasswordForm() {
     };
 
     checkSession();
-  }, []);
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
