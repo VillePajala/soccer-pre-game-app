@@ -692,32 +692,264 @@ After implementing substantial changes (security features, performance optimizat
 
 ---
 
-## 9. LocalStorage Deprecation
+## 9. Offline-First Architecture & LocalStorage Deprecation
 
-The app still persists the in-game timer state in browser `localStorage`. This
-was originally implemented to ensure continuity if the page reloads during a
-match. With Supabase and IndexedDB now available, we can move this volatile
-state out of `localStorage` entirely and remove the fallback code.
+The app currently uses browser `localStorage` for timer state persistence and has basic PWA capabilities, but lacks a comprehensive offline-first architecture. This section outlines implementing a complete offline solution using IndexedDB with automatic Supabase synchronization, while completely removing localStorage dependencies.
 
-### 9.1 Timer State Replacement
+**GOAL**: Transform the app into a fully offline-capable PWA that works seamlessly whether online or offline, with automatic data synchronization and no localStorage dependencies.
+
+### 9.1 IndexedDB Infrastructure Setup
+
+#### Phase 1: IndexedDB Database Schema
+- [ ] **Create IndexedDB wrapper service** (`src/lib/storage/indexedDBProvider.ts`)
+  ```typescript
+  interface IndexedDBSchema {
+    players: Player[];
+    seasons: Season[];
+    tournaments: Tournament[];
+    saved_games: AppState[];
+    timer_states: TimerState[];
+    sync_queue: SyncQueueItem[];
+    app_settings: AppSettings;
+  }
+  ```
+
+- [ ] **Implement IndexedDB operations**
+  - [ ] Database initialization with version management
+  - [ ] CRUD operations for all data types
+  - [ ] Transaction management for data consistency
+  - [ ] Error handling and fallback strategies
+  - [ ] Data migration between schema versions
+
+- [ ] **Create sync queue system**
+  ```typescript
+  interface SyncQueueItem {
+    id: string;
+    operation: 'create' | 'update' | 'delete';
+    table: string;
+    data: unknown;
+    timestamp: number;
+    retryCount: number;
+    status: 'pending' | 'syncing' | 'failed' | 'completed';
+  }
+  ```
+
+#### Phase 2: Connection Detection & Sync Manager
+- [ ] **Implement connection monitoring**
+  - [ ] Create `useConnectionStatus` hook using `navigator.onLine`
+  - [ ] Add event listeners for online/offline events
+  - [ ] Implement connection quality detection (ping Supabase)
+  - [ ] Handle intermittent connectivity scenarios
+
+- [ ] **Build synchronization engine**
+  - [ ] Automatic sync when connection is restored
+  - [ ] Conflict resolution strategies (last-write-wins, merge, user choice)
+  - [ ] Retry logic with exponential backoff
+  - [ ] Batch sync operations for efficiency
+  - [ ] Progress indicators for sync operations
+
+### 9.2 Storage Layer Integration
+
+#### Phase 3: Enhance Storage Manager
+- [ ] **Extend StorageManager with IndexedDB support**
+  ```typescript
+  class StorageManager {
+    private indexedDB: IndexedDBProvider;
+    private syncManager: SyncManager;
+    
+    async saveData(table: string, data: unknown): Promise<void> {
+      // Save to IndexedDB immediately
+      await this.indexedDB.save(table, data);
+      
+      if (this.isOnline()) {
+        // Sync to Supabase
+        await this.syncToSupabase(table, data);
+      } else {
+        // Queue for later sync
+        await this.syncManager.queueOperation('create', table, data);
+      }
+    }
+  }
+  ```
+
+- [ ] **Implement offline-first operations**
+  - [ ] All reads prioritize IndexedDB (instant response)
+  - [ ] All writes go to IndexedDB first, then sync to Supabase
+  - [ ] Implement optimistic updates for better UX
+  - [ ] Add loading states for sync operations
+
+#### Phase 4: Timer State Migration
 - [ ] **Create timer_states table in Supabase**
-  - Schema already defined in the database reference
-  - Ensure row level security policies allow only the owning user
-- [ ] **Update timer logic**
-  - Persist live timer progress to the new table via the storage manager
-  - Use IndexedDB caching when offline and sync once a connection is restored
-- [ ] **Migrate existing localStorage entry**
-  - Detect `soccerTimerState` and write the data to Supabase on first load
-  - Remove the key after successful migration
+  ```sql
+  CREATE TABLE timer_states (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    game_id TEXT NOT NULL,
+    time_elapsed_seconds INTEGER NOT NULL,
+    timestamp BIGINT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+  );
+  ```
 
-### 9.2 Remove localStorage Fallbacks
-- [ ] **Disable localStorage driver by default**
-  - Set `NEXT_PUBLIC_DISABLE_FALLBACK=true` in production builds
-- [ ] **Delete remaining localStorage utilities**
-  - Remove `localStorage.ts` and related helpers after verifying zero usage
-- [ ] **Cleanup tests and documentation**
-  - Update all tests to use the storage abstraction
-  - Remove references to localStorage in guides
+- [ ] **Update useGameTimer hook**
+  - [ ] Replace localStorage calls with StorageManager calls
+  - [ ] Implement timer state persistence to IndexedDB + Supabase
+  - [ ] Add offline detection for timer sync
+  - [ ] Handle timer state conflicts (multiple devices)
+
+- [ ] **Migrate existing localStorage timer data**
+  - [ ] Create migration utility to detect `soccerTimerState`
+  - [ ] Convert localStorage data to new schema
+  - [ ] Save to IndexedDB and queue for Supabase sync
+  - [ ] Remove localStorage key after successful migration
+
+### 9.3 Service Worker Enhancement
+
+#### Phase 5: Advanced Service Worker Implementation
+- [ ] **Enhance existing service worker** (`public/sw.js`)
+  ```javascript
+  // Background sync for offline operations
+  self.addEventListener('sync', event => {
+    if (event.tag === 'supabase-sync') {
+      event.waitUntil(syncPendingOperations());
+    }
+  });
+  
+  // Handle failed network requests
+  self.addEventListener('fetch', event => {
+    if (isSupabaseRequest(event.request)) {
+      event.respondWith(handleSupabaseRequest(event.request));
+    }
+  });
+  ```
+
+- [ ] **Implement intelligent caching strategies**
+  - [ ] Cache-first for static assets
+  - [ ] Network-first for API calls with IndexedDB fallback
+  - [ ] Stale-while-revalidate for user data
+  - [ ] Cache versioning and invalidation
+
+- [ ] **Add background sync capabilities**
+  - [ ] Register background sync events
+  - [ ] Implement sync retry logic in service worker
+  - [ ] Handle sync conflicts and error scenarios
+  - [ ] Provide sync status to main thread
+
+#### Phase 6: User Experience Integration
+- [ ] **Create offline indicators**
+  - [ ] Connection status indicator in UI
+  - [ ] Sync progress indicators
+  - [ ] Offline mode banner/notification
+  - [ ] Data freshness indicators
+
+- [ ] **Implement offline-first UI patterns**
+  - [ ] Optimistic updates with rollback capability
+  - [ ] Skeleton loading states for cached data
+  - [ ] Clear indication of synced vs pending data
+  - [ ] Conflict resolution UI for user decisions
+
+### 9.4 LocalStorage Complete Removal
+
+#### Phase 7: Remove LocalStorage Dependencies
+- [ ] **Audit current localStorage usage**
+  ```bash
+  # Find all localStorage references
+  grep -r "localStorage\|getItem\|setItem" src/
+  grep -r "TIMER_STATE_KEY" src/
+  ```
+
+- [ ] **Replace remaining localStorage calls**
+  - [ ] Update any remaining direct localStorage usage
+  - [ ] Ensure all data flows through StorageManager
+  - [ ] Remove localStorage utility functions
+  - [ ] Update import statements
+
+- [ ] **Disable localStorage fallback**
+  - [ ] Set `NEXT_PUBLIC_DISABLE_FALLBACK=true` in production
+  - [ ] Remove localStorage provider from storage configuration
+  - [ ] Update storage manager initialization
+
+- [ ] **Clean up codebase**
+  - [ ] Delete `src/utils/localStorage.ts`
+  - [ ] Remove localStorage-related constants
+  - [ ] Update tests to use storage abstraction
+  - [ ] Remove localStorage references from documentation
+
+### 9.5 Testing & Validation
+
+#### Phase 8: Comprehensive Testing
+- [ ] **Unit tests for offline functionality**
+  - [ ] IndexedDB operations testing
+  - [ ] Sync queue functionality
+  - [ ] Connection status detection
+  - [ ] Conflict resolution algorithms
+
+- [ ] **Integration tests**
+  - [ ] Online → offline → online scenarios
+  - [ ] Data consistency across state transitions
+  - [ ] Timer continuity during connection changes
+  - [ ] Multi-tab synchronization
+
+- [ ] **E2E offline testing**
+  - [ ] Simulate network conditions (slow 3G, offline, intermittent)
+  - [ ] Test complete user flows in offline mode
+  - [ ] Validate data persistence and sync after reconnection
+  - [ ] Test error recovery scenarios
+
+#### Phase 9: Performance Optimization
+- [ ] **IndexedDB performance tuning**
+  - [ ] Optimize query patterns and indexing
+  - [ ] Implement data pagination for large datasets
+  - [ ] Add cache size management
+  - [ ] Monitor memory usage patterns
+
+- [ ] **Sync performance optimization**
+  - [ ] Implement batch sync operations
+  - [ ] Add incremental sync for large datasets
+  - [ ] Optimize conflict detection algorithms
+  - [ ] Implement sync scheduling for off-peak times
+
+### 9.6 Migration Strategy
+
+#### Phase 10: Production Rollout
+- [ ] **Feature flag implementation**
+  - [ ] Add `ENABLE_OFFLINE_MODE` feature flag
+  - [ ] Gradual rollout to percentage of users
+  - [ ] Monitor error rates and performance metrics
+  - [ ] Rollback capability if issues arise
+
+- [ ] **Data migration for existing users**
+  - [ ] Detect localStorage data on app startup
+  - [ ] Migrate to IndexedDB with user notification
+  - [ ] Validate migration success
+  - [ ] Clean up localStorage after confirmation
+
+- [ ] **User communication**
+  - [ ] In-app notification about offline capabilities
+  - [ ] Updated help documentation
+  - [ ] Migration progress indicators
+  - [ ] Error messages for migration failures
+
+### Success Criteria
+- [ ] **Functionality**: App works fully offline with automatic sync
+- [ ] **Performance**: No degradation in online performance
+- [ ] **Reliability**: Data consistency maintained across all scenarios
+- [ ] **User Experience**: Seamless offline/online transitions
+- [ ] **Code Quality**: Zero localStorage dependencies in production build
+
+### Implementation Timeline
+- **Phase 1-2** (Week 1): IndexedDB infrastructure and sync manager
+- **Phase 3-4** (Week 2): Storage layer integration and timer migration  
+- **Phase 5-6** (Week 3): Service worker enhancement and UX integration
+- **Phase 7-8** (Week 4): LocalStorage removal and testing
+- **Phase 9-10** (Week 5): Optimization and production rollout
+
+### Risk Mitigation
+- **Data Loss Prevention**: Comprehensive backup before migration
+- **Performance Monitoring**: Track IndexedDB operation times
+- **Fallback Strategy**: Ability to rollback to localStorage if needed
+- **User Support**: Clear documentation and error messages
 
 
 ## Timeline and Milestones
