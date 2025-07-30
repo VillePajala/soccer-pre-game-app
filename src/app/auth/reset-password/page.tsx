@@ -17,12 +17,30 @@ function ResetPasswordForm() {
 
   useEffect(() => {
     const checkSession = async () => {
+      console.log('Reset password page - checking session and tokens...');
+      
+      // Debug: Log URL info
+      if (typeof window !== 'undefined') {
+        console.log('Reset page URL info:', {
+          href: window.location.href,
+          hash: window.location.hash,
+          search: window.location.search
+        });
+      }
+      
       // First check if we have a recovery session from the callback
       const { data: { session } } = await supabase.auth.getSession();
+      
+      console.log('Current session:', { 
+        hasSession: !!session, 
+        userId: session?.user?.id,
+        recoveryTime: session?.user?.recovery_sent_at 
+      });
       
       if (session?.user) {
         // For password reset flow, if we have a session after coming from the callback,
         // we should allow the password reset
+        console.log('Valid session found, allowing password reset');
         setIsValidToken(true);
         return;
       }

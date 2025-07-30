@@ -17,6 +17,41 @@ function VerificationToast({ onClose }: { onClose: () => void }) {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
+    // Debug: Log URL info
+    if (typeof window !== 'undefined') {
+      console.log('Page loaded - URL info:', {
+        href: window.location.href,
+        hash: window.location.hash,
+        search: window.location.search,
+        pathname: window.location.pathname
+      });
+      
+      // Check for password reset in hash fragment
+      if (window.location.hash) {
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        const type = hashParams.get('type');
+        
+        console.log('Hash params found:', { accessToken: accessToken?.substring(0, 20) + '...', type });
+        
+        if (type === 'recovery' && accessToken) {
+          console.log('Password reset detected! Redirecting to reset page...');
+          router.push('/auth/reset-password');
+          return;
+        }
+      }
+      
+      // Check for password reset in query params (fallback)
+      const accessToken = searchParams.get('access_token');
+      const type = searchParams.get('type');
+      
+      if (type === 'recovery' && accessToken) {
+        console.log('Password reset in query params detected! Redirecting to reset page...');
+        router.push('/auth/reset-password');
+        return;
+      }
+    }
+
     if (searchParams.get('verified') === 'true') {
       setShow(true);
       // Clean up the URL parameter
