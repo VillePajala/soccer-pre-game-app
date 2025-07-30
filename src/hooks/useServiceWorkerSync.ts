@@ -23,7 +23,7 @@ export function useServiceWorkerSync(
 ): ServiceWorkerSyncHook {
   const connectionStatus = useConnectionStatus();
   const syncInProgressRef = useRef(false);
-  const lastSyncTimeRef = useRef<number>();
+  const lastSyncTimeRef = useRef<number | undefined>(undefined);
 
   // Check if service worker is ready
   const isServiceWorkerReady = typeof window !== 'undefined' && 
