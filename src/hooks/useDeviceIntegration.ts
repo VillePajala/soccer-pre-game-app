@@ -83,8 +83,8 @@ export function useDeviceIntegration(): UseDeviceIntegrationReturn {
     const handleFullscreenChange = () => {
       const isFullscreen = !!(
         document.fullscreenElement ||
-        (document as Record<string, unknown>).webkitFullscreenElement ||
-        (document as Record<string, unknown>).msFullscreenElement
+        (document as unknown as Record<string, unknown>).webkitFullscreenElement ||
+        (document as unknown as Record<string, unknown>).msFullscreenElement
       );
       
       setState(prev => ({ ...prev, isFullscreen }));

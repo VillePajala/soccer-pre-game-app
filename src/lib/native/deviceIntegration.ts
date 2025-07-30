@@ -141,10 +141,10 @@ export class DeviceIntegration {
       
       if (targetElement.requestFullscreen) {
         await targetElement.requestFullscreen();
-      } else if ((targetElement as Record<string, unknown>).webkitRequestFullscreen) {
-        await (targetElement as Record<string, unknown>).webkitRequestFullscreen();
-      } else if ((targetElement as Record<string, unknown>).msRequestFullscreen) {
-        await (targetElement as Record<string, unknown>).msRequestFullscreen();
+      } else if ((targetElement as unknown as Record<string, unknown>).webkitRequestFullscreen) {
+        await (targetElement as unknown as Record<string, unknown>).webkitRequestFullscreen();
+      } else if ((targetElement as unknown as Record<string, unknown>).msRequestFullscreen) {
+        await (targetElement as unknown as Record<string, unknown>).msRequestFullscreen();
       }
       
       console.log('[Device] Entered fullscreen mode');
@@ -164,10 +164,10 @@ export class DeviceIntegration {
 
       if (document.exitFullscreen) {
         await document.exitFullscreen();
-      } else if ((document as Record<string, unknown>).webkitExitFullscreen) {
-        await (document as Record<string, unknown>).webkitExitFullscreen();
-      } else if ((document as Record<string, unknown>).msExitFullscreen) {
-        await (document as Record<string, unknown>).msExitFullscreen();
+      } else if ((document as unknown as Record<string, unknown>).webkitExitFullscreen) {
+        await (document as unknown as Record<string, unknown>).webkitExitFullscreen();
+      } else if ((document as unknown as Record<string, unknown>).msExitFullscreen) {
+        await (document as unknown as Record<string, unknown>).msExitFullscreen();
       }
       
       console.log('[Device] Exited fullscreen mode');
@@ -185,7 +185,7 @@ export class DeviceIntegration {
     try {
       if (!this.capabilities.wakeLock) return null;
 
-      const wakeLock = await (navigator as Record<string, unknown>).wakeLock.request('screen');
+      const wakeLock = await (navigator as unknown as Record<string, unknown>).wakeLock.request('screen');
       console.log('[Device] Wake lock acquired');
       
       wakeLock.addEventListener('release', () => {
