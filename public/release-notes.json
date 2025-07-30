@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "feat: enhance RosterSettingsModal with input focus management and layout improvements"
+  "notes": "feat: implement authentication callback and enhance reset password flow"
 }
