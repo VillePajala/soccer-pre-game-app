@@ -11,6 +11,7 @@ interface DebugResult {
   redirectTo?: string;
   currentOrigin?: string;
   code?: string;
+  note?: string;
 }
 
 export default function DebugPasswordReset() {
@@ -21,17 +22,15 @@ export default function DebugPasswordReset() {
   const sendResetEmail = async () => {
     setLoading(true);
     try {
-      // Try with explicit redirectTo using current origin
-      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      });
+      // Send reset email without explicit redirectTo to use Supabase defaults
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email);
       
       setResult({ 
         success: !error, 
         error: error?.message,
         data,
         sentTo: email,
-        redirectTo: `${window.location.origin}/auth/callback`,
+        note: 'Email will redirect to the Site URL configured in Supabase',
         currentOrigin: window.location.origin
       });
     } catch (err) {

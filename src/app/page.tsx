@@ -17,7 +17,20 @@ function VerificationToast({ onClose }: { onClose: () => void }) {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    // Check for password reset code first
+    // Check for password reset in hash fragment (Supabase default behavior)
+    if (typeof window !== 'undefined' && window.location.hash) {
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = hashParams.get('access_token');
+      const type = hashParams.get('type');
+      
+      if (type === 'recovery' && accessToken) {
+        // We have a password reset token, redirect to reset password page
+        router.push('/auth/reset-password');
+        return;
+      }
+    }
+
+    // Check for password reset code in query params
     const code = searchParams.get('code');
     if (code) {
       // Redirect to auth callback to handle the password reset
