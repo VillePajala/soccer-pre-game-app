@@ -206,7 +206,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // If rate limiting passed, proceed with actual Supabase password reset  
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      });
       return { error };
     } catch (error) {
       return { error: error as AuthError };
