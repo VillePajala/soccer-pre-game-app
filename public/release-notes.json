@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "feat: Enhance resume game functionality with improved logging and user authentication checks"
+  "notes": "feat: Refactor LoadGameModal and SettingsModal to centralize backup and restore functionality, enhancing user experience and code maintainability"
 }

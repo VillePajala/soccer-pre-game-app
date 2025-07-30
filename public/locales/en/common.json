@@ -692,5 +692,12 @@
     "resources": "Resources",
     "settings": "Settings",
     "account": "Account"
+  },
+  "importing": "Importing...",
+  "close": "Close",
+  "settings": {
+    "importBackup": "Import Backup",
+    "importBackupDescription": "Import your backup file to restore your data. This supports both old localStorage backups and new Supabase exports.",
+    "selectBackupFile": "Select Backup File"
   }
 }

@@ -683,5 +683,12 @@
     "resources": "Resurssit",
     "settings": "Asetukset",
     "account": "Tili"
+  },
+  "importing": "Tuodaan...",
+  "close": "Sulje",
+  "settings": {
+    "importBackup": "Tuo varmuuskopio",
+    "importBackupDescription": "Tuo varmuuskopiotiedosto palauttaaksesi tietosi. Tukee sekä vanhoja localStorage-varmuuskopioita että uusia Supabase-vientejä.",
+    "selectBackupFile": "Valitse varmuuskopiotiedosto"
   }
 }
