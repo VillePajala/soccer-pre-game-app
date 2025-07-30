@@ -16,22 +16,22 @@
 - [x] Verify you see the authentication button in the UI
 
 ### 1.2 Sign Up Flow
-- [ ] Click on the Auth/Sign In button
-- [ ] Switch to "Sign Up" mode
-- [ ] Enter a new email and password
-- [ ] Submit the form
-- [ ] Check email for verification link (if email verification is enabled)
-- [ ] Verify no errors in console
-- [ ] Check Supabase dashboard to confirm user was created
+- [x] Click on the Auth/Sign In button
+- [x] Switch to "Sign Up" mode
+- [x] Enter a new email and password
+- [x] Submit the form
+- [x] Check email for verification link (if email verification is enabled)
+- [x] Verify no errors in console
+- [x] Check Supabase dashboard to confirm user was created
 
 ### 1.3 Sign In Flow
-- [ ] Sign out if already logged in
-- [ ] Click Auth/Sign In button
-- [ ] Enter your credentials
-- [ ] Submit the form
-- [ ] Verify successful login (UI should update)
-- [ ] Check console for "Auth state changed" log
-- [ ] Verify user session persists on page refresh
+- [x] Sign out if already logged in
+- [x] Click Auth/Sign In button
+- [x] Enter your credentials
+- [x] Submit the form
+- [x] Verify successful login (UI should update)
+- [x] Check console for "Auth state changed" log
+- [x] Verify user session persists on page refresh
 
 ### 1.4 Password Reset Flow
 - [ ] Click "Forgot Password" link
