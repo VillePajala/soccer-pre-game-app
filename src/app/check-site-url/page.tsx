@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 
 interface AuthSettings {
@@ -74,12 +75,12 @@ export default function CheckSiteUrl() {
             </a>
           </li>
           <li>
-            <strong>Find "Site URL"</strong>
+            <strong>Find &quot;Site URL&quot;</strong>
             <br />
             <span className="text-sm text-blue-200">This should be your main production URL</span>
           </li>
           <li>
-            <strong>Find "Redirect URLs"</strong>
+            <strong>Find &quot;Redirect URLs&quot;</strong>
             <br />
             <span className="text-sm text-blue-200">This should include all allowed domains</span>
           </li>
@@ -95,9 +96,7 @@ export default function CheckSiteUrl() {
           </div>
           <div>
             <h3 className="font-semibold text-green-200">Redirect URLs (one per line):</h3>
-            <pre className="bg-gray-800 px-3 py-2 rounded block mt-1 text-sm">https://prosoccercoach.vercel.app/**
-https://*-ville-pajalas-projects.vercel.app/**
-http://localhost:3000/**</pre>
+            <pre className="bg-gray-800 px-3 py-2 rounded block mt-1 text-sm">https://prosoccercoach.vercel.app/**{'\n'}https://*-ville-pajalas-projects.vercel.app/**{'\n'}http://localhost:3000/**</pre>
           </div>
         </div>
       </div>
@@ -123,24 +122,24 @@ http://localhost:3000/**</pre>
       <div className="bg-gray-800 p-6 rounded-lg mt-6">
         <h2 className="text-xl mb-4">Quick Links</h2>
         <div className="space-y-2">
-          <a 
+          <Link 
             href="/debug-password-reset" 
             className="text-blue-400 hover:underline block"
           >
             → Test Password Reset
-          </a>
-          <a 
+          </Link>
+          <Link 
             href="/test-signup" 
             className="text-blue-400 hover:underline block"
           >
             → Test Sign Up
-          </a>
-          <a 
+          </Link>
+          <Link 
             href="/" 
             className="text-blue-400 hover:underline block"
           >
             → Back to App
-          </a>
+          </Link>
         </div>
       </div>
     </div>

@@ -3,10 +3,21 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 
+interface SignupResult {
+  success?: boolean;
+  error?: string;
+  details?: {
+    message?: string;
+    redirectUrl?: string;
+    rateLimited?: boolean;
+    retryAfter?: number;
+  };
+}
+
 export default function TestSignup() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [result, setResult] = useState<{ success?: boolean; error?: string; details?: unknown } | null>(null);
+  const [result, setResult] = useState<SignupResult | null>(null);
   const [loading, setLoading] = useState(false);
   const { signUp } = useAuth();
 
