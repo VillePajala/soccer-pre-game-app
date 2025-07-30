@@ -148,32 +148,52 @@ export default function Home() {
 
   useEffect(() => {
     const checkResume = async () => {
+      // Wait a bit for auth to stabilize
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       try {
+        console.log('[StartScreen] Checking for resumable game...');
+        console.log('[StartScreen] User authenticated:', !!user);
+        
         // First try to get the saved current game ID
         const lastId = await getCurrentGameIdSetting();
+        console.log('[StartScreen] Current game ID from settings:', lastId);
+        
         const games = await getSavedGames();
+        console.log('[StartScreen] Number of saved games:', Object.keys(games).length);
+        console.log('[StartScreen] Game IDs:', Object.keys(games));
         
         // Check if the saved game ID exists in the games collection
         if (lastId && games[lastId]) {
+          console.log('[StartScreen] Found game with saved ID, enabling resume');
           setCanResume(true);
           return;
         }
         
         // If not, try to find the most recent game
         const mostRecentId = await getMostRecentGameId();
+        console.log('[StartScreen] Most recent game ID:', mostRecentId);
+        
         if (mostRecentId) {
+          console.log('[StartScreen] Found recent game, enabling resume');
           setCanResume(true);
           return;
         }
         
         // No games available to resume
+        console.log('[StartScreen] No games available to resume');
         setCanResume(false);
-      } catch {
+      } catch (error) {
+        console.error('[StartScreen] Error checking resume:', error);
         setCanResume(false);
       }
     };
-    checkResume();
-  }, []);
+    
+    // Only check for resume if user is authenticated when using Supabase
+    if (user || !user) { // Always check, but log the state
+      checkResume();
+    }
+  }, [user]); // Add user as dependency
 
   const handleAction = (
     action: 'newGame' | 'loadGame' | 'resumeGame' | 'season' | 'stats'
@@ -182,6 +202,8 @@ export default function Home() {
     setScreen('home');
   };
 
+  console.log('[Home] Rendering with canResume:', canResume, 'screen:', screen, 'user:', !!user);
+  
   return (
     <ModalProvider>
       {screen === 'start' ? (

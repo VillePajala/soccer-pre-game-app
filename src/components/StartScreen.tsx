@@ -146,11 +146,14 @@ const StartScreen: React.FC<StartScreenProps> = ({
           </div>
         ) : (
           <div className="flex flex-col items-center space-y-3 sm:space-y-4 w-full max-h-[60vh] sm:max-h-none overflow-y-auto">
-            {canResume && onResumeGame ? (
-              <button className={buttonStyle} onClick={onResumeGame}>
-                {t('startScreen.resumeGame', 'Resume Last Game')}
-              </button>
-            ) : null}
+            {(() => {
+              console.log('[StartScreen] Render: canResume =', canResume, 'onResumeGame =', !!onResumeGame);
+              return canResume && onResumeGame ? (
+                <button className={buttonStyle} onClick={onResumeGame}>
+                  {t('startScreen.resumeGame', 'Resume Last Game')}
+                </button>
+              ) : null;
+            })()}
             <button className={buttonStyle} onClick={onStartNewGame}>
               {t('startScreen.startNewGame', 'Start New Game')}
             </button>
