@@ -786,14 +786,17 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       // 4. Update local savedGames state from useQuery for allSavedGames
       if (isAllSavedGamesQueryLoading) {
         logger.log('[EFFECT init] All saved games are loading via TanStack Query...');
+        console.log('[HomePage] Setting isLoadingGamesList to true');
         setIsLoadingGamesList(true);
       }
       if (allSavedGamesQueryResultData) {
+        console.log('[HomePage] Received saved games data:', Object.keys(allSavedGamesQueryResultData).length, 'games');
         setSavedGames(allSavedGamesQueryResultData || {});
         setIsLoadingGamesList(false);
       }
       if (isAllSavedGamesQueryError) {
         logger.error('[EFFECT init] Error loading all saved games via TanStack Query:', allSavedGamesQueryErrorData);
+        console.error('[HomePage] Error loading games:', allSavedGamesQueryErrorData);
         setLoadGamesListError(t('loadGameModal.errors.listLoadFailed', 'Failed to load saved games list.'));
       setSavedGames({});
         setIsLoadingGamesList(false);
@@ -885,6 +888,19 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     t,
     initialLoadComplete
   ]);
+
+  // Add a timeout for mobile loading issues
+  useEffect(() => {
+    if (isLoadingGamesList) {
+      const timeout = setTimeout(() => {
+        console.error('[HomePage] Loading games timeout - forcing completion');
+        setIsLoadingGamesList(false);
+        setLoadGamesListError('Loading timed out. Please try again.');
+      }, 15000); // 15 second timeout
+
+      return () => clearTimeout(timeout);
+    }
+  }, [isLoadingGamesList]);
 
   // --- NEW: Robust Visibility Change Handling ---
   // --- Wake Lock Effect ---
