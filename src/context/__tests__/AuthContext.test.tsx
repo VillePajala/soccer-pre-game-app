@@ -67,7 +67,7 @@ describe('AuthContext', () => {
     resetPasswordForEmail: jest.Mock;
   };
   
-  const mockSecureAuthService = SecureAuthService as {
+  const mockSecureAuthService = SecureAuthService as unknown as {
     signUp: jest.Mock;
     signIn: jest.Mock;
     resetPassword: jest.Mock;

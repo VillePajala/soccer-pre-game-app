@@ -7,7 +7,7 @@ const mockAuthHelpers = {
   isAnonymous: jest.fn(() => true),
   isAuthenticated: jest.fn(() => false),
   loading: false,
-  user: null,
+  user: null as any,
   getUserId: jest.fn(() => null),
   getUserEmail: jest.fn(() => null),
   isEmailVerified: jest.fn(() => false),
@@ -19,7 +19,7 @@ jest.mock('../../../hooks/useAuthHelpers', () => ({
 
 // Mock AuthModal to avoid complex auth context dependencies
 jest.mock('../AuthModal', () => ({
-  AuthModal: ({ isOpen }: { isOpen: boolean; onClose: () => void }) => (
+  AuthModal: ({ isOpen }: { isOpen: boolean; onClose?: () => void }) => (
     isOpen ? <div data-testid="auth-modal">Auth Modal</div> : null
   ),
 }));

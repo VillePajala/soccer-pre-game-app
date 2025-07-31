@@ -22,7 +22,10 @@ afterEach(() => {
 describe('logger utility', () => {
   describe('in development environment', () => {
     beforeEach(() => {
-      process.env.NODE_ENV = 'development';
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: 'development',
+        configurable: true
+      });
     });
 
     it('should log messages to console', () => {
@@ -58,12 +61,18 @@ describe('logger utility', () => {
       originalEnv = process.env.NODE_ENV;
       // Clear module cache to force re-evaluation
       jest.resetModules();
-      process.env.NODE_ENV = 'production';
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: 'production',
+        configurable: true
+      });
       jest.clearAllMocks();
     });
     
     afterEach(() => {
-      process.env.NODE_ENV = originalEnv;
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: originalEnv,
+        configurable: true
+      });
       jest.resetModules();
     });
 

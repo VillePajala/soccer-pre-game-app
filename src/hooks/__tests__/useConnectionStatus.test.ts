@@ -7,6 +7,7 @@ global.fetch = jest.fn();
 // Mock navigator.onLine
 Object.defineProperty(navigator, 'onLine', {
   writable: true,
+  configurable: true,
   value: true
 });
 
@@ -17,7 +18,11 @@ process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-key';
 describe('useConnectionStatus', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    navigator.onLine = true;
+    Object.defineProperty(navigator, 'onLine', {
+      value: true,
+      writable: true,
+      configurable: true
+    });
     
     // Mock successful fetch by default
     (global.fetch as jest.Mock).mockResolvedValue({
@@ -126,7 +131,11 @@ describe('useConnectionStatus', () => {
   });
 
   it('should initialize with offline status when navigator is offline', async () => {
-    navigator.onLine = false;
+    Object.defineProperty(navigator, 'onLine', {
+      value: false,
+      writable: true,
+      configurable: true
+    });
     const { result } = renderHook(() => useConnectionStatus());
 
     expect(result.current.isOnline).toBe(false);
@@ -134,7 +143,11 @@ describe('useConnectionStatus', () => {
   });
 
   it('should initialize with online status when navigator is online', async () => {
-    navigator.onLine = true;
+    Object.defineProperty(navigator, 'onLine', {
+      value: true,
+      writable: true,
+      configurable: true
+    });
     const { result } = renderHook(() => useConnectionStatus());
 
     expect(result.current.isOnline).toBe(true);
@@ -156,7 +169,11 @@ describe('useConnectionStatus', () => {
   });
 
   it('should handle missing environment variables', async () => {
-    delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const originalUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    Object.defineProperty(process.env, 'NEXT_PUBLIC_SUPABASE_URL', {
+      value: undefined,
+      configurable: true
+    });
 
     const { result } = renderHook(() => useConnectionStatus());
 
@@ -165,11 +182,18 @@ describe('useConnectionStatus', () => {
     });
 
     // Restore for other tests
-    process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
+    Object.defineProperty(process.env, 'NEXT_PUBLIC_SUPABASE_URL', {
+      value: originalUrl,
+      configurable: true
+    });
   });
 
   it('should handle offline navigator state', async () => {
-    navigator.onLine = false;
+    Object.defineProperty(navigator, 'onLine', {
+      value: false,
+      writable: true,
+      configurable: true
+    });
 
     const { result } = renderHook(() => useConnectionStatus());
 

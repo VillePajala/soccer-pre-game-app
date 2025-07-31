@@ -48,8 +48,9 @@ describe('useModalManager', () => {
     (getAppSettings as jest.MockedFunction<typeof getAppSettings>).mockResolvedValue({
       autoBackupEnabled: true,
       autoBackupIntervalHours: 6,
-      lastBackupTime: null,
+      lastBackupTime: undefined,
       backupEmail: 'test@example.com',
+      currentGameId: '',
     });
     const { result } = renderHook(() => useModalManager(), { wrapper });
 

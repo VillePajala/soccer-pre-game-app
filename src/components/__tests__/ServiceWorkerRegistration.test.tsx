@@ -51,7 +51,7 @@ const mockServiceWorker = {
   }),
   getRegistrations: jest.fn().mockResolvedValue([]),
   addEventListener: jest.fn(),
-  controller: null,
+  controller: null as ServiceWorker | null,
 };
 
 // Mock navigator.serviceWorker
@@ -190,15 +190,15 @@ describe('ServiceWorkerRegistration', () => {
 
     it('should detect new service worker available', async () => {
       const mockRegistration = {
-        installing: null,
-        waiting: null, // No waiting worker initially
+        installing: null as ServiceWorker | null,
+        waiting: null as ServiceWorker | null, // No waiting worker initially
         active: {
           postMessage: jest.fn(),
-        },
+        } as unknown as ServiceWorker,
         addEventListener: jest.fn(),
         update: jest.fn(),
-        onupdatefound: null,
-      };
+        onupdatefound: null as (() => void) | null,
+      } as unknown as ServiceWorkerRegistration;
 
       mockServiceWorker.register.mockResolvedValue(mockRegistration);
 
@@ -214,13 +214,13 @@ describe('ServiceWorkerRegistration', () => {
       
       // Simulate a new worker being found
       const newWorker = {
-        state: 'installing',
+        state: 'installing' as ServiceWorkerState,
         onstatechange: null,
-      };
-      mockRegistration.installing = newWorker;
+      } as ServiceWorker;
+      (mockRegistration as any).installing = newWorker;
       
       // Call the onupdatefound handler
-      mockRegistration.onupdatefound();
+      (mockRegistration.onupdatefound as any)?.();
       
       // Check that onstatechange was assigned to the new worker
       expect(newWorker.onstatechange).toBeInstanceOf(Function);
@@ -252,7 +252,7 @@ describe('ServiceWorkerRegistration', () => {
       
       // Trigger the onupdatefound handler
       expect(mockRegistration.onupdatefound).toBeDefined();
-      mockRegistration.onupdatefound?.();
+      (mockRegistration.onupdatefound as any)?.();
       
       // Check that onstatechange was assigned to the installing worker
       expect(mockInstalling.onstatechange).toBeDefined();
@@ -338,7 +338,7 @@ describe('ServiceWorkerRegistration', () => {
       };
 
       mockServiceWorker.register.mockResolvedValue(mockRegistration);
-      mockServiceWorker.controller = { state: 'active' };
+      mockServiceWorker.controller = { state: 'active' } as unknown as ServiceWorker;
 
       render(<ServiceWorkerRegistration />);
 

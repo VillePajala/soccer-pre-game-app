@@ -85,7 +85,10 @@ describe('OfflineFirstStorageManager', () => {
     mockIndexedDB.getProviderName.mockReturnValue('indexedDB');
     mockSupabase.isOnline.mockResolvedValue(true);
 
-    navigator.onLine = true;
+    Object.defineProperty(navigator, 'onLine', {
+      value: true,
+      configurable: true
+    });
     storageManager = new OfflineFirstStorageManager({
       enableOfflineMode: true,
       syncOnReconnect: true
@@ -104,7 +107,10 @@ describe('OfflineFirstStorageManager', () => {
     });
 
     it('should return false when navigator is offline', async () => {
-      navigator.onLine = false;
+      Object.defineProperty(navigator, 'onLine', {
+        value: false,
+        configurable: true
+      });
       const storageManagerOffline = new OfflineFirstStorageManager();
       
       const isOnline = await storageManagerOffline.isOnline();
@@ -187,7 +193,10 @@ describe('OfflineFirstStorageManager', () => {
     };
 
     beforeEach(() => {
-      navigator.onLine = false;
+      Object.defineProperty(navigator, 'onLine', {
+        value: false,
+        configurable: true
+      });
       storageManager = new OfflineFirstStorageManager({
         enableOfflineMode: true
       });

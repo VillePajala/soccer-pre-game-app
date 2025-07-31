@@ -105,7 +105,10 @@ describe('Storage Configuration', () => {
 
   describe('validateSupabaseConfig', () => {
     beforeEach(() => {
-      process.env.NODE_ENV = 'development';
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: 'development',
+        configurable: true
+      });
     });
 
     it('should not throw when Supabase is disabled', () => {
@@ -114,7 +117,10 @@ describe('Storage Configuration', () => {
     });
 
     it('should not throw in test environment', () => {
-      process.env.NODE_ENV = 'test';
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: 'test',
+        configurable: true
+      });
       process.env.NEXT_PUBLIC_ENABLE_SUPABASE = 'true';
       expect(() => validateSupabaseConfig()).not.toThrow();
     });
@@ -161,7 +167,10 @@ describe('Storage Configuration', () => {
       process.env.NEXT_PUBLIC_ENABLE_SUPABASE = 'false';
       process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-key';
-      process.env.NODE_ENV = 'development';
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: 'development',
+        configurable: true
+      });
 
       const info = getConfigInfo();
 

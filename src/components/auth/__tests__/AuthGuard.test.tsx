@@ -4,8 +4,8 @@ import { AuthGuard } from '../AuthGuard';
 
 // Mock the AuthContext
 const mockAuth = {
-  user: null,
-  session: null,
+  user: null as any,
+  session: null as any,
   loading: false,
   signUp: jest.fn(),
   signIn: jest.fn(),
@@ -21,8 +21,12 @@ jest.mock('@/context/AuthContext', () => ({
 jest.mock('@/hooks/useAuthHelpers', () => ({
   useAuthHelpers: () => ({
     isAnonymous: () => mockAuth.user === null,
+    isAuthenticated: () => mockAuth.user !== null,
     loading: mockAuth.loading,
     user: mockAuth.user,
+    getUserId: () => (mockAuth.user as any)?.id || null,
+    getUserEmail: () => (mockAuth.user as any)?.email || null,
+    isEmailVerified: () => false,
   }),
 }));
 
