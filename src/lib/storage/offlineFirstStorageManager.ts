@@ -99,7 +99,10 @@ export class OfflineFirstStorageManager implements IStorageProvider {
    * Determine if we should sync to Supabase
    */
   private shouldSyncToSupabase(): boolean {
-    return this.isOnlineState && this.config.enableOfflineMode;
+    // In offline-first mode, only sync when online
+    // Check navigator.onLine for real-time status
+    const isOnline = typeof window !== 'undefined' ? navigator.onLine : this.isOnlineState;
+    return isOnline;
   }
 
   // IStorageProvider implementation

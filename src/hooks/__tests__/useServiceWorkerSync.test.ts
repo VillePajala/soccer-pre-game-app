@@ -32,6 +32,12 @@ Object.defineProperty(window.navigator, 'serviceWorker', {
   configurable: true
 });
 
+// Mock SyncManager
+Object.defineProperty(window, 'SyncManager', {
+  value: function SyncManager() {},
+  configurable: true
+});
+
 describe('useServiceWorkerSync', () => {
   let mockStorageManager: jest.Mocked<OfflineFirstStorageManager>;
 

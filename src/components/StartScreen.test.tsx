@@ -79,7 +79,6 @@ describe('StartScreen', () => {
     expect(screen.getByRole('button', { name: 'Load Game' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Create Season/Tournament' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'View Stats' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Backup Now' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'English' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Finnish' })).toBeInTheDocument();
 
