@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Player, Season, Tournament } from '@/types';
+import { normalizeRosterIds } from '@/utils/idUtils';
 import { HiPlusCircle } from 'react-icons/hi';
 import logger from '@/utils/logger';
 import { getSeasons as utilGetSeasons } from '@/utils/seasons';
@@ -215,7 +216,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
         setLocalNumPeriods((s.periodCount as 1 | 2) || 2);
         setLocalPeriodDurationString(s.periodDuration ? String(s.periodDuration) : '10');
         if (s.defaultRoster && s.defaultRoster.length > 0) {
-          setSelectedPlayerIds(s.defaultRoster);
+          setSelectedPlayerIds(normalizeRosterIds(s.defaultRoster));
         }
       }
     }
@@ -243,7 +244,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
         setLocalNumPeriods((t.periodCount as 1 | 2) || 2);
         setLocalPeriodDurationString(t.periodDuration ? String(t.periodDuration) : '10');
         if (t.defaultRoster && t.defaultRoster.length > 0) {
-          setSelectedPlayerIds(t.defaultRoster);
+          setSelectedPlayerIds(normalizeRosterIds(t.defaultRoster));
         }
       }
     }

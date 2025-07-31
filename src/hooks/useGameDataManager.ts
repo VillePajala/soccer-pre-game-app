@@ -324,7 +324,7 @@ export const useGameDataManager = ({
       logger.error(`[useGameDataManager] Error deleting game ${gameId}:`, error);
       throw error;
     }
-  }, [savedGames, setSavedGames, currentGameId, setCurrentGameId, queryClient]);
+  }, [setSavedGames, currentGameId, setCurrentGameId, queryClient]);
 
   // --- Export Handlers ---
   const handleExportOneJson = useCallback((gameId: string, seasons: Season[] = [], tournaments: Tournament[] = []) => {
