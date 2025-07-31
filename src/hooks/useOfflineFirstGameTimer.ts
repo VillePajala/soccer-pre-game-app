@@ -122,6 +122,51 @@ export const useOfflineFirstGameTimer = ({
     }
   }, [currentGameId]);
 
+  // --- Restore/migrate timer state when the game ID changes ---
+  const previousGameIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    const restoreOrMigrateTimer = async () => {
+      if (!currentGameId) {
+        previousGameIdRef.current = currentGameId;
+        return;
+      }
+
+      try {
+        // If the game ID changed, attempt to move existing timer state
+        if (previousGameIdRef.current && previousGameIdRef.current !== currentGameId) {
+          const prevId = previousGameIdRef.current;
+          const prevState = await getOfflineStorage().getTimerState(prevId);
+          if (prevState) {
+            const newState = { ...prevState, gameId: currentGameId };
+            await getOfflineStorage().saveTimerState(newState);
+            await getOfflineStorage().deleteTimerState(prevId);
+            dispatch({
+              type: 'RESTORE_TIMER_STATE',
+              payload: { savedTime: prevState.timeElapsedInSeconds, timestamp: prevState.timestamp }
+            });
+            previousGameIdRef.current = currentGameId;
+            return;
+          }
+        }
+
+        // Load timer state for the current game ID
+        const savedState = await loadTimerState();
+        if (savedState) {
+          dispatch({
+            type: 'RESTORE_TIMER_STATE',
+            payload: { savedTime: savedState.timeElapsedInSeconds, timestamp: savedState.timestamp }
+          });
+        }
+      } catch (error) {
+        console.error('Failed to restore timer state:', error);
+      }
+
+      previousGameIdRef.current = currentGameId;
+    };
+
+    restoreOrMigrateTimer();
+  }, [currentGameId, loadTimerState, dispatch]);
+
   // Timer interval effect
   useEffect(() => {
     syncWakeLock(state.isTimerRunning);
