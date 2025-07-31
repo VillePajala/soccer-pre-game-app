@@ -248,7 +248,7 @@ describe('transformGameToSupabase', () => {
       ageGroup: 'U15',
       demandFactor: 1.2,
       lastSubConfirmationTimeSeconds: 900,
-      tacticalBallPosition: { x: 0.5, y: 0.5 },
+      tacticalBallPosition: { relX: 0.5, relY: 0.5 },
       playersOnField: [],
       availablePlayers: [],
       selectedPlayerIds: [],
@@ -657,8 +657,8 @@ describe('transformTacticalDiscsToSupabase', () => {
 describe('transformDrawingsToSupabase', () => {
   it('should transform field drawings', () => {
     const drawings: Point[][] = [
-      [{ x: 0.1, y: 0.1 }, { x: 0.2, y: 0.2 }],
-      [{ x: 0.3, y: 0.3 }, { x: 0.4, y: 0.4 }, { x: 0.5, y: 0.5 }]
+      [{ relX: 0.1, relY: 0.1 }, { relX: 0.2, relY: 0.2 }],
+      [{ relX: 0.3, relY: 0.3 }, { relX: 0.4, relY: 0.4 }, { relX: 0.5, relY: 0.5 }]
     ];
 
     const result = transformDrawingsToSupabase('game123', drawings, 'field');
@@ -672,7 +672,7 @@ describe('transformDrawingsToSupabase', () => {
 
   it('should transform tactical drawings', () => {
     const drawings: Point[][] = [
-      [{ x: 0.6, y: 0.6 }, { x: 0.7, y: 0.7 }]
+      [{ relX: 0.6, relY: 0.6 }, { relX: 0.7, relY: 0.7 }]
     ];
 
     const result = transformDrawingsToSupabase('game123', drawings, 'tactical');

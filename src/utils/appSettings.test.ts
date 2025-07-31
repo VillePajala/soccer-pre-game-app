@@ -140,7 +140,7 @@ describe('App Settings Utilities', () => {
         backupEmail: 'test@example.com',
         useDemandCorrection: true
       };
-      mockStorageManager.saveAppSettings.mockResolvedValue(undefined);
+      mockStorageManager.saveAppSettings.mockResolvedValue({} as AppSettings);
       
       await saveAppSettings(settings);
       
@@ -175,7 +175,7 @@ describe('App Settings Utilities', () => {
         lastHomeTeamName: ''
       };
       mockStorageManager.getAppSettings.mockResolvedValue(existingSettings);
-      mockStorageManager.saveAppSettings.mockResolvedValue(undefined);
+      mockStorageManager.saveAppSettings.mockResolvedValue({} as AppSettings);
       
       const updates = {
         language: 'fi',
@@ -248,7 +248,7 @@ describe('App Settings Utilities', () => {
         lastHomeTeamName: ''
       };
       mockStorageManager.getAppSettings.mockResolvedValue(existingSettings);
-      mockStorageManager.saveAppSettings.mockResolvedValue(undefined);
+      mockStorageManager.saveAppSettings.mockResolvedValue({} as AppSettings);
       
       await saveCurrentGameIdSetting('game123');
       
@@ -271,7 +271,7 @@ describe('App Settings Utilities', () => {
         lastHomeTeamName: ''
       };
       mockStorageManager.getAppSettings.mockResolvedValue(existingSettings);
-      mockStorageManager.saveAppSettings.mockResolvedValue(undefined);
+      mockStorageManager.saveAppSettings.mockResolvedValue({} as AppSettings);
       
       await saveCurrentGameIdSetting(null);
       
@@ -320,7 +320,7 @@ describe('App Settings Utilities', () => {
         currentGameId: null,
         language: 'en'
       });
-      mockStorageManager.saveAppSettings.mockResolvedValue(undefined);
+      mockStorageManager.saveAppSettings.mockResolvedValue({} as AppSettings);
       
       const result = await saveLastHomeTeamName('FC Barcelona');
       
@@ -347,7 +347,7 @@ describe('App Settings Utilities', () => {
 
   describe('resetAppSettings', () => {
     it('should save default settings', async () => {
-      mockStorageManager.saveAppSettings.mockResolvedValue(undefined);
+      mockStorageManager.saveAppSettings.mockResolvedValue({} as AppSettings);
       
       await resetAppSettings();
       

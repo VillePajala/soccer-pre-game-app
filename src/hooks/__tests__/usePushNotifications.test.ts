@@ -399,8 +399,8 @@ describe('usePushNotifications', () => {
 
       for (const type of types) {
         await act(async () => {
-          const result = await result.current.sendTestNotification(type);
-          expect(result).toBe(true);
+          const notificationResult = await result.current.sendTestNotification(type);
+          expect(notificationResult).toBe(true);
         });
       }
 

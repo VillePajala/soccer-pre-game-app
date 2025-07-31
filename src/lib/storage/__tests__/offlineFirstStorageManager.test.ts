@@ -117,9 +117,8 @@ describe('OfflineFirstStorageManager', () => {
     const mockPlayer: Player = {
       id: 'player-1',
       name: 'Test Player',
-      jerseyNumber: 10,
-      position: 'Forward',
-      isGoalkeeper: false
+      jerseyNumber: '10',
+      isGoalie: false
     };
 
     it('should get players from IndexedDB', async () => {
@@ -182,9 +181,8 @@ describe('OfflineFirstStorageManager', () => {
     const mockPlayer: Player = {
       id: 'player-1',
       name: 'Test Player',
-      jerseyNumber: 10,
-      position: 'Forward',
-      isGoalkeeper: false
+      jerseyNumber: '10',
+      isGoalie: false
     };
 
     beforeEach(() => {

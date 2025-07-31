@@ -225,7 +225,7 @@ describe('validateGameEvent', () => {
     id: 'event123',
     type: 'goal',
     time: 1234567890,
-    playerId: 'player123',
+    scorerId: 'player123',
     period: 1
   };
 
@@ -262,6 +262,8 @@ describe('validatePlayerAssessment', () => {
     overall: 7,
     minutesPlayed: 45,
     createdBy: 'user123',
+    notes: '',
+    createdAt: Date.now(),
     sliders: {
       intensity: 8,
       courage: 7,
@@ -336,8 +338,8 @@ describe('validateAppState', () => {
     showSavedNotification: false,
     lastSavedGame: null,
     language: 'en' as const,
-    seasonId: null,
-    tournamentId: null,
+    seasonId: '',
+    tournamentId: '',
     lastAssessmentCreatedAt: null,
     rosterLastModifiedAt: null,
     selectedPositions: null,

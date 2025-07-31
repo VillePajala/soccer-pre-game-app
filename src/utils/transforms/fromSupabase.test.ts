@@ -522,7 +522,7 @@ describe('reconstructAppStateFromSupabase', () => {
         id: 'draw1',
         game_id: 'game123',
         drawing_type: 'game',
-        drawing_data: [[{ x: 0.1, y: 0.1 }, { x: 0.2, y: 0.2 }]],
+        drawing_data: [[{ relX: 0.1, relY: 0.1 }, { relX: 0.2, relY: 0.2 }]],
         created_at: '2024-01-01T00:00:00Z'
       }
     ],
@@ -531,7 +531,7 @@ describe('reconstructAppStateFromSupabase', () => {
         id: 'draw2',
         game_id: 'game123',
         drawing_type: 'tactical',
-        drawing_data: [[{ x: 0.3, y: 0.3 }, { x: 0.4, y: 0.4 }]],
+        drawing_data: [[{ relX: 0.3, relY: 0.3 }, { relX: 0.4, relY: 0.4 }]],
         created_at: '2024-01-01T00:00:00Z'
       }
     ],

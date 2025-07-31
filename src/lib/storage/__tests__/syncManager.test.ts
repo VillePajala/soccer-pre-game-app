@@ -113,9 +113,8 @@ describe('SyncManager', () => {
       const mockPlayer: Player = {
         id: 'player-1',
         name: 'Test Player',
-        jerseyNumber: 10,
-        position: 'Forward',
-        isGoalkeeper: false
+        jerseyNumber: '10',
+        isGoalie: false
       };
 
       const syncItem = {
@@ -144,7 +143,7 @@ describe('SyncManager', () => {
       const mockPlayer: Player = {
         id: 'player-1',
         name: 'Updated Player',
-        jerseyNumber: 11,
+        jerseyNumber: '11',
         position: 'Midfielder',
         isGoalkeeper: false
       };

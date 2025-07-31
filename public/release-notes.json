@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix: Improve type safety in test files by using explicit type assertions"
+  "notes": "fix: Update error handling messages in useErrorHandler tests for clarity"
 }
