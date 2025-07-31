@@ -64,8 +64,8 @@ export async function savePWASettings(updates: Partial<PWASettings>): Promise<vo
     const updatedSettings: AppSettings = {
       ...currentSettings,
       ...updates,
-      // Ensure currentGameId is properly typed
-      currentGameId: updates.currentGameId ?? currentSettings?.currentGameId ?? null,
+      // Ensure currentGameId is properly typed from existing settings
+      currentGameId: currentSettings?.currentGameId ?? null,
     };
     
     await getStorageManager().saveAppSettings(updatedSettings);
