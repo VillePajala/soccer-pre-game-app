@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, waitFor, act } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import userEvent from '@testing-library/user-event';
 import EnhancedServiceWorkerRegistration from '../EnhancedServiceWorkerRegistration';
 import { useConnectionStatus } from '@/hooks/useConnectionStatus';
@@ -18,13 +19,13 @@ const mockServiceWorkerRegistration = {
   sync: {
     register: jest.fn().mockResolvedValue(undefined)
   }
-};
+} as unknown as ServiceWorkerRegistration;
 
 const mockServiceWorker = {
   postMessage: jest.fn(),
   addEventListener: jest.fn(),
   state: 'installed'
-};
+} as unknown as ServiceWorker;
 
 // Mock MessageChannel
 global.MessageChannel = jest.fn().mockImplementation(() => ({

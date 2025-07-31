@@ -2,8 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import SoccerField from './SoccerField';
-import { Player } from '@/types';
-import { Point, Opponent } from '@/types';
+import { Player, Point, Opponent, TacticalDisc } from '@/types';
 
 // Mock ResizeObserver
 global.ResizeObserver = class ResizeObserver {
@@ -26,16 +25,23 @@ jest.mock('../components/SoccerField', () => {
       onPlayerDrop?: (playerId: string, relX: number, relY: number) => void;
       onPlayerMove?: (playerId: string, relX: number, relY: number) => void;
       onPlayerMoveEnd?: () => void;
-      onDrawingStart: (playerId: string, relX: number, relY: number) => void;
-      onDrawingAddPoint: (playerId: string, relX: number, relY: number) => void;
-      onDrawingEnd: (playerId: string, relX: number, relY: number) => void;
+      onDrawingStart: (point: Point) => void;
+      onDrawingAddPoint: (point: Point) => void;
+      onDrawingEnd: () => void;
       onPlayerRemove: (playerId: string) => void;
       onOpponentMove: (opponentId: string, relX: number, relY: number) => void;
       onOpponentMoveEnd: (opponentId: string) => void;
       onOpponentRemove: (opponentId: string) => void;
-      draggingPlayerFromBarInfo: { playerId: string; relX: number; relY: number } | null;
-      onPlayerDropViaTouch: (playerId: string, relX: number, relY: number) => void;
-      onPlayerDragCancelViaTouch: (playerId: string) => void;
+      draggingPlayerFromBarInfo: Player | null;
+      onPlayerDropViaTouch: (relX: number, relY: number) => void;
+      onPlayerDragCancelViaTouch: () => void;
+      isTacticsBoardView: boolean;
+      tacticalDiscs: TacticalDisc[];
+      onTacticalDiscMove: (discId: string, relX: number, relY: number) => void;
+      onTacticalDiscRemove: (discId: string) => void;
+      onToggleTacticalDiscType: (discId: string) => void;
+      tacticalBallPosition: Point | null;
+      onTacticalBallMove: (position: Point) => void;
     }) => {
       // Render a simplified version that maintains the same external API
       return (
@@ -127,6 +133,13 @@ describe('SoccerField', () => {
     onPlayerDropViaTouch: jest.fn(),
     onPlayerDragCancelViaTouch: jest.fn(),
     timeElapsedInSeconds: 300,
+    isTacticsBoardView: false,
+    tacticalDiscs: [],
+    onTacticalDiscMove: jest.fn(),
+    onTacticalDiscRemove: jest.fn(),
+    onToggleTacticalDiscType: jest.fn(),
+    tacticalBallPosition: null,
+    onTacticalBallMove: jest.fn(),
   };
 
   beforeEach(() => {

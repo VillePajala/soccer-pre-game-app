@@ -46,7 +46,6 @@ describe('StartScreen', () => {
       onResumeGame: jest.fn(),
       onCreateSeason: jest.fn(),
       onViewStats: jest.fn(),
-      onExplore: jest.fn(),
     };
 
     render(
@@ -57,7 +56,6 @@ describe('StartScreen', () => {
         canResume
         onCreateSeason={handlers.onCreateSeason}
         onViewStats={handlers.onViewStats}
-        onExplore={handlers.onExplore}
       />
     );
 

@@ -85,7 +85,6 @@ const mockOnOpponentNameChange = jest.fn();
 const mockOnGameDateChange = jest.fn();
 const mockOnGameLocationChange = jest.fn();
 const mockOnGameTimeChange = jest.fn();
-const mockOnGameNotesChange = jest.fn();
 const mockOnUpdateGameEvent = jest.fn();
 const mockOnDeleteGameEvent = jest.fn();
 const mockOnNumPeriodsChange = jest.fn();
@@ -144,7 +143,6 @@ const defaultProps: GameSettingsModalProps = {
   onGameDateChange: mockOnGameDateChange,
   onGameLocationChange: mockOnGameLocationChange,
   onGameTimeChange: mockOnGameTimeChange,
-  onGameNotesChange: mockOnGameNotesChange,
   onUpdateGameEvent: mockOnUpdateGameEvent,
   onDeleteGameEvent: mockOnDeleteGameEvent,
   onNumPeriodsChange: mockOnNumPeriodsChange,

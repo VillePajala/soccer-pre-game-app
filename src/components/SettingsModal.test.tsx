@@ -26,14 +26,6 @@ const defaultProps = {
   onDefaultTeamNameChange: jest.fn(),
   onResetGuide: jest.fn(),
   onHardResetApp: jest.fn(),
-  autoBackupEnabled: true,
-  backupIntervalHours: 24,
-  lastBackupTime: '2024-01-01T00:00:00.000Z',
-  backupEmail: '',
-  onAutoBackupEnabledChange: jest.fn(),
-  onBackupIntervalChange: jest.fn(),
-  onBackupEmailChange: jest.fn(),
-  onSendBackup: jest.fn(),
 };
 
 describe('<SettingsModal />', () => {
@@ -93,22 +85,6 @@ describe('<SettingsModal />', () => {
     expect(defaultProps.onResetGuide).toHaveBeenCalled();
   });
 
-  test('backup controls trigger callbacks', () => {
-    const { rerender } = render(<SettingsModal {...defaultProps} />);
-    const checkbox = screen.getByLabelText('Enable Automatic Backup');
-    fireEvent.click(checkbox);
-    expect(defaultProps.onAutoBackupEnabledChange).toHaveBeenCalledWith(false);
-
-    const intervalInput = screen.getByLabelText('Backup Interval (hours)');
-    fireEvent.change(intervalInput, { target: { value: '12' } });
-    expect(defaultProps.onBackupIntervalChange).toHaveBeenCalledWith(12);
-
-    const emailInput = screen.getByLabelText('Backup Email');
-    fireEvent.change(emailInput, { target: { value: 'a@test.com' } });
-    expect(defaultProps.onBackupEmailChange).toHaveBeenCalledWith('a@test.com');
-
-    rerender(<SettingsModal {...defaultProps} backupEmail="a@test.com" />);
-  });
 
   test('does not auto focus team name input on open', () => {
     render(<SettingsModal {...defaultProps} />);
