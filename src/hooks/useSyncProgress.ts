@@ -42,10 +42,16 @@ export const useSyncProgress = () => {
       const failedCount = operations.filter(op => op.status === 'failed').length;
       const isActive = operations.some(op => op.status === 'syncing' || op.status === 'pending');
       
+      // Calculate overall progress
+      const totalOps = operations.length;
+      const progressSum = operations.reduce((sum, op) => sum + op.progress, 0);
+      const overallProgress = totalOps > 0 ? progressSum / totalOps : 0;
+      
       return {
         ...prev,
         operations,
         isActive,
+        overallProgress,
         pendingCount,
         failedCount,
       };
@@ -91,10 +97,16 @@ export const useSyncProgress = () => {
       const failedCount = operations.filter(op => op.status === 'failed').length;
       const isActive = operations.some(op => op.status === 'syncing' || op.status === 'pending');
       
+      // Calculate overall progress
+      const totalOps = operations.length;
+      const progressSum = operations.reduce((sum, op) => sum + op.progress, 0);
+      const overallProgress = totalOps > 0 ? progressSum / totalOps : 0;
+      
       return {
         ...prev,
         operations,
         isActive,
+        overallProgress,
         pendingCount,
         failedCount,
       };
@@ -108,10 +120,16 @@ export const useSyncProgress = () => {
       const failedCount = operations.filter(op => op.status === 'failed').length;
       const isActive = operations.some(op => op.status === 'syncing' || op.status === 'pending');
       
+      // Calculate overall progress
+      const totalOps = operations.length;
+      const progressSum = operations.reduce((sum, op) => sum + op.progress, 0);
+      const overallProgress = totalOps > 0 ? progressSum / totalOps : 0;
+      
       return {
         ...prev,
         operations,
         isActive,
+        overallProgress,
         pendingCount,
         failedCount,
       };
@@ -130,10 +148,16 @@ export const useSyncProgress = () => {
       const failedCount = operations.filter(op => op.status === 'failed').length;
       const isActive = operations.some(op => op.status === 'syncing' || op.status === 'pending');
       
+      // Calculate overall progress
+      const totalOps = operations.length;
+      const progressSum = operations.reduce((sum, op) => sum + op.progress, 0);
+      const overallProgress = totalOps > 0 ? progressSum / totalOps : 0;
+      
       return {
         ...prev,
         operations,
         isActive,
+        overallProgress,
         pendingCount,
         failedCount,
       };
