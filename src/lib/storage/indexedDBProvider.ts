@@ -280,7 +280,7 @@ export class IndexedDBProvider implements IStorageProvider {
     const gamesRecord: Record<string, AppState> = {};
     
     games.forEach(game => {
-      if ('gameId' in game && game.gameId) {
+      if ('gameId' in game && game.gameId && typeof game.gameId === 'string') {
         gamesRecord[game.gameId] = game;
       }
     });
