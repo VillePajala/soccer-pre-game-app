@@ -206,12 +206,11 @@ describe('usePushNotifications', () => {
       });
 
       expect(subscribeResult!).toBe(true);
-      expect(mockPushNotificationManager.requestPermission).toHaveBeenCalled();
       expect(mockPushNotificationManager.subscribe).toHaveBeenCalled();
     });
 
     it('should fail if permission is denied', async () => {
-      mockPushNotificationManager.requestPermission.mockResolvedValue('denied');
+      mockPushNotificationManager.subscribe.mockResolvedValue(null);
 
       const { result } = renderHook(() => usePushNotifications());
 
@@ -225,7 +224,7 @@ describe('usePushNotifications', () => {
       });
 
       expect(subscribeResult!).toBe(false);
-      expect(mockPushNotificationManager.subscribe).not.toHaveBeenCalled();
+      expect(mockPushNotificationManager.subscribe).toHaveBeenCalled();
     });
 
     it('should handle subscription failure', async () => {

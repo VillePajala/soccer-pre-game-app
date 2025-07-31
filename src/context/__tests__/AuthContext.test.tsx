@@ -256,7 +256,8 @@ describe('AuthContext', () => {
       await waitFor(() => {
         expect(mockSecureAuthService.signIn).toHaveBeenCalledWith(
           'test@example.com',
-          'password123'
+          'password123',
+          undefined
         );
       });
     });

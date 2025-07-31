@@ -67,6 +67,7 @@ describe('StartScreen', () => {
           onLoadGame={handlers.onLoadGame}
           onResumeGame={handlers.onResumeGame}
           canResume
+          isAuthenticated
           onCreateSeason={handlers.onCreateSeason}
           onViewStats={handlers.onViewStats}
         />

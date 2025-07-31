@@ -15,11 +15,19 @@ const mockServiceWorkerController = {
   postMessage: jest.fn()
 };
 
+const mockServiceWorkerRegistration = {
+  sync: {
+    register: jest.fn().mockResolvedValue(undefined)
+  },
+  update: jest.fn().mockResolvedValue(undefined)
+};
+
 Object.defineProperty(window.navigator, 'serviceWorker', {
   value: {
     controller: mockServiceWorkerController,
     addEventListener: jest.fn(),
-    removeEventListener: jest.fn()
+    removeEventListener: jest.fn(),
+    ready: Promise.resolve(mockServiceWorkerRegistration)
   },
   configurable: true
 });
