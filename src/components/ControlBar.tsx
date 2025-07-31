@@ -31,6 +31,7 @@ import {
     HiOutlineTrophy,
     HiOutlineArrowRightOnRectangle, // For Sign Out
     HiBars3, // Hamburger menu icon
+    HiOutlineArrowPath, // For refresh/update
 } from 'react-icons/hi2'; // Using hi2 for Heroicons v2 Outline
 // REMOVE FaClock, FaUsers, FaCog (FaFutbol remains)
 import { FaFutbol } from 'react-icons/fa';
@@ -38,6 +39,7 @@ import { FaFutbol } from 'react-icons/fa';
 // Import translation hook
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/context/AuthContext';
+import { useManualUpdates } from '@/hooks/useManualUpdates';
 // Removed - AuthButton now in TopBar: import { AuthButton } from '@/components/auth/AuthButton';
 
 // Define props for ControlBar
@@ -106,10 +108,12 @@ const ControlBar: React.FC<ControlBarProps> = ({
 }) => {
   const { t } = useTranslation(); // Standard hook
   const { user, signOut: authSignOut } = useAuth();
+  const { isChecking, checkForUpdates, forceUpdate, showUpdateOption, lastCheckResult, setLastCheckResult } = useManualUpdates();
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const sidePanelRef = useRef<HTMLDivElement>(null);
+  const touchStartRef = useRef<{ x: number; time: number } | null>(null);
   
   // --- RE-ADD BUTTON STYLES --- 
   // Consistent Button Styles - Adjusted active state
@@ -128,44 +132,46 @@ const ControlBar: React.FC<ControlBarProps> = ({
     setDragOffset(0); // Reset drag offset when toggling
   };
 
-  // Handle touch/swipe gestures
+  // Handle touch/swipe gestures - improved implementation to avoid passive listener warnings
   const handleTouchStart = (e: React.TouchEvent) => {
     if (!isSidePanelOpen) return;
-    e.preventDefault();
-    setIsDragging(true);
+    
     const touch = e.touches[0];
-    const startX = touch.clientX;
-    
-    const handleTouchMove = (e: TouchEvent) => {
-      if (!isDragging) return;
-      const touch = e.touches[0];
-      const currentX = touch.clientX;
-      const diff = currentX - startX;
-
-      // Only allow left swipe (negative diff) to close
-      if (diff < 0) {
-        setDragOffset(Math.max(diff, -320)); // 320px is panel width
-      }
-
-      // Prevent page scroll while swiping
-      e.preventDefault();
+    touchStartRef.current = {
+      x: touch.clientX,
+      time: Date.now()
     };
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isSidePanelOpen || !isDragging || !touchStartRef.current) return;
     
-    const handleTouchEnd = () => {
-      setIsDragging(false);
-      
-      // Close panel if dragged more than 30% of width
-      if (dragOffset < -96) { // 30% of 320px
-        setIsSidePanelOpen(false);
+    const touch = e.touches[0];
+    const diff = touch.clientX - touchStartRef.current.x;
+    
+    // Only allow left swipe (negative diff) to close
+    if (diff < 0) {
+      setDragOffset(Math.max(diff, -320)); // 320px is panel width
+      // Prevent scrolling when user is clearly trying to swipe the panel
+      if (Math.abs(diff) > 10) {
+        e.preventDefault();
       }
-      
-      setDragOffset(0);
-      document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleTouchEnd);
-    };
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isDragging || !touchStartRef.current) return;
     
-    document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    document.addEventListener('touchend', handleTouchEnd);
+    setIsDragging(false);
+    
+    // Close panel if dragged more than 30% of width
+    if (dragOffset < -96) { // 30% of 320px
+      setIsSidePanelOpen(false);
+    }
+    
+    setDragOffset(0);
+    touchStartRef.current = null;
   };
 
   // Handle mouse drag for desktop testing
@@ -362,6 +368,8 @@ const ControlBar: React.FC<ControlBarProps> = ({
       <div 
         ref={sidePanelRef}
         onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
         onMouseDown={handleMouseDown}
         className={`fixed top-0 left-0 h-full w-80 flex flex-col bg-slate-800/98 backdrop-blur-sm shadow-xl z-50 border-r border-slate-600/50 transform ${
           isDragging ? '' : 'transition-transform duration-300 ease-in-out'
@@ -473,8 +481,37 @@ const ControlBar: React.FC<ControlBarProps> = ({
               <button onClick={wrapHandler(onOpenSettingsModal)} className="w-full flex items-center px-3 py-2.5 text-sm text-slate-100 hover:bg-slate-700/75 rounded-lg transition-colors">
                 <HiOutlineCog6Tooth className={menuIconSize} /> {t('controlBar.appSettings', 'App Settings')}
               </button>
+              {/* PWA Update Options */}
+              {showUpdateOption && (
+                <>
+                  <button 
+                    onClick={() => {
+                      checkForUpdates();
+                      setIsSidePanelOpen(false);
+                    }} 
+                    disabled={isChecking}
+                    className="w-full flex items-center px-3 py-2.5 text-sm text-slate-100 hover:bg-slate-700/75 rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    <HiOutlineArrowPath className={`${menuIconSize} ${isChecking ? 'animate-spin' : ''}`} /> 
+                    {isChecking ? t('controlBar.checkingUpdates', 'Checking...') : t('controlBar.checkForUpdates', 'Check for Updates')}
+                  </button>
+                  {lastCheckResult?.updateAvailable && (
+                    <button 
+                      onClick={() => {
+                        forceUpdate();
+                        setIsSidePanelOpen(false);
+                      }} 
+                      className="w-full flex items-center px-3 py-2.5 text-sm text-green-400 hover:bg-green-900/25 rounded-lg transition-colors font-medium"
+                    >
+                      <HiOutlineArrowPath className={menuIconSize} /> 
+                      {t('controlBar.refreshApp', 'Refresh App')}
+                    </button>
+                  )}
+                </>
+              )}
             </div>
           </div>
+
 
           {/* Group 6: Account */}
           {(user || onSignOut) && (

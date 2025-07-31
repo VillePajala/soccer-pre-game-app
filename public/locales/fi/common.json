@@ -40,6 +40,9 @@
   "controlBar.manageSeasonsAndTournaments": "Hallinnoi kausia ja turnauksia",
   "controlBar.assessPlayers": "Arvioi pelaajat",
   "controlBar.appSettings": "Asetukset",
+  "controlBar.checkForUpdates": "Tarkista päivitykset",
+  "controlBar.checkingUpdates": "Tarkistetaan...",
+  "controlBar.refreshApp": "Päivitä sovellus",
   "controlBar.coachingMaterials": "Valmennusmateriaalit",
   "controlBar.exportData": "Vie tiedot",
   "controlBar.toggleLanguage": "Vaihda kieli",
@@ -652,6 +655,15 @@
     "message": "Sovelluksesta on saatavilla uusi versio.",
     "reloadButton": "Päivitä",
     "dismissButton": "Sulje"
+  },
+  "updateCheck": {
+    "updateAvailable": "Päivitys saatavilla! Klikkaa 'Päivitä sovellus' saadaksesi uusimman version.",
+    "upToDate": "Sovellus on ajan tasalla!",
+    "checkFailed": "Päivityksen tarkistus epäonnistui",
+    "checkError": "Päivityksen tarkistus epäonnistui. Yritä uudelleen.",
+    "confirmRefresh": "Tämä päivittää sovelluksen uusimpaan versioon. Jatka?",
+    "refreshFailed": "Sovelluksen päivitys epäonnistui. Yritä uudelleen.",
+    "noServiceWorker": "(Service worker ei aktiivinen)"
   },
   "installPrompt": {
     "message": "Asenna Coaching Companion saadaksesi nopeamman ja offline-toimivan kokemuksen!",

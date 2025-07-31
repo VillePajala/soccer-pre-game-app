@@ -41,6 +41,9 @@
   "controlBar.manageSeasonsAndTournaments": "Manage Seasons & Tournaments",
   "controlBar.assessPlayers": "Assess Players",
   "controlBar.appSettings": "App Settings",
+  "controlBar.checkForUpdates": "Check for Updates",
+  "controlBar.checkingUpdates": "Checking...",
+  "controlBar.refreshApp": "Refresh App",
   "controlBar.coachingMaterials": "Coaching Materials",
   "controlBar.exportData": "Export Data",
   "controlBar.toggleLanguage": "Change Language",
@@ -661,6 +664,15 @@
     "message": "A new version of the app is available.",
     "reloadButton": "Reload",
     "dismissButton": "Dismiss"
+  },
+  "updateCheck": {
+    "updateAvailable": "Update available! Click 'Refresh App' to get the latest version.",
+    "upToDate": "App is up to date!",
+    "checkFailed": "Update check failed",
+    "checkError": "Failed to check for updates. Please try again.",
+    "confirmRefresh": "This will refresh the app to get the latest version. Continue?",
+    "refreshFailed": "Failed to refresh app. Please try again.",
+    "noServiceWorker": "(Service worker not active)"
   },
   "installPrompt": {
     "message": "Install Coaching Companion for a faster, offline experience!",
