@@ -334,30 +334,33 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
           return (
             <li
               key={gameId}
-              className="relative mb-4 last:mb-0"
+              className={`relative mb-4 last:mb-0 ${openMenuId === gameId ? 'z-10' : ''}`}
               data-testid={`game-item-${gameId}`}
             >
               {/* Premium Game Card */}
-              <div className={`relative overflow-hidden rounded-xl bg-gradient-to-br from-slate-700 via-slate-750 to-slate-800 border border-slate-600/50 shadow-2xl transition-all duration-300 hover:shadow-3xl hover:scale-[1.02] hover:border-slate-500/70 ${
+              <div className={`relative rounded-xl bg-gradient-to-br from-slate-700 via-slate-750 to-slate-800 border border-slate-600/50 shadow-2xl transition-all duration-300 hover:shadow-3xl hover:scale-[1.02] hover:border-slate-500/70 ${
                 isCurrent ? 'ring-2 ring-yellow-400/60 shadow-yellow-400/20 border-yellow-400/30' : ''
               }`}>
                 
-                {/* Card Header with Result Stripe */}
-                <div className={`absolute top-0 inset-x-0 h-1.5 ${getResultColor()}`} />
+                {/* Inner container for clipped background effects */}
+                <div className="absolute inset-0 overflow-hidden rounded-xl">
+                  {/* Card Header with Result Stripe */}
+                  <div className={`absolute top-0 inset-x-0 h-1.5 ${getResultColor()}`} />
+                  
+                  {/* Background Texture and Gradients */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/15 via-transparent to-purple-600/15 opacity-60" />
+                  <div className="absolute inset-0 bg-noise-texture opacity-30" />
+                  
+                  {/* Enhanced contrast overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 via-transparent to-slate-700/10" />
+                  
+                  {/* Current Game Glow Effect */}
+                  {isCurrent && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/10 via-transparent to-yellow-400/10 animate-pulse" />
+                  )}
+                </div>
                 
-                {/* Background Texture and Gradients */}
-                <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/15 via-transparent to-purple-600/15 opacity-60" />
-                <div className="absolute inset-0 bg-noise-texture opacity-30" />
-                
-                {/* Enhanced contrast overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 via-transparent to-slate-700/10" />
-                
-                {/* Current Game Glow Effect */}
-                {isCurrent && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/10 via-transparent to-yellow-400/10 animate-pulse" />
-                )}
-                
-                {/* Main Card Content */}
+                {/* Main Card Content (sits on top of the clipped background) */}
                 <button
                   type="button"
                   onClick={() => toggleExpanded(gameId)}
@@ -614,7 +617,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60] font-display">
-      <div className="bg-slate-800 flex flex-col h-full w-full bg-noise-texture relative overflow-hidden">
+      <div className="bg-slate-800 flex flex-col h-full w-full bg-noise-texture relative">
         <div className="absolute inset-0 bg-gradient-to-b from-sky-400/10 via-transparent to-transparent pointer-events-none" />
         <div className="absolute inset-0 bg-indigo-600/10 mix-blend-soft-light pointer-events-none" />
         <div className="flex justify-center items-center pt-10 pb-4 px-6 backdrop-blur-sm bg-slate-900/20 border-b border-slate-700/20 flex-shrink-0">
