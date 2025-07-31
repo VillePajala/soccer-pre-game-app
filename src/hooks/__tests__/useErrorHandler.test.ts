@@ -24,13 +24,7 @@ describe('useErrorHandler', () => {
       
       result.current.handleError(new Error('Test error'));
       
-      expect(mockShowToast).toHaveBeenCalledWith({
-        type: 'error',
-        title: 'Error',
-        message: 'Test error',
-        duration: 5000,
-        action: undefined,
-      });
+      expect(mockShowToast).toHaveBeenCalledWith('Error: Test error', 'error');
     });
 
     it('should handle string errors', () => {
@@ -38,13 +32,7 @@ describe('useErrorHandler', () => {
       
       result.current.handleError('String error message');
       
-      expect(mockShowToast).toHaveBeenCalledWith({
-        type: 'error',
-        title: 'Error',
-        message: 'String error message',
-        duration: 5000,
-        action: undefined,
-      });
+      expect(mockShowToast).toHaveBeenCalledWith('Error: String error message', 'error');
     });
 
     it('should handle errors with custom options', () => {
@@ -58,16 +46,7 @@ describe('useErrorHandler', () => {
         retryAction,
       });
       
-      expect(mockShowToast).toHaveBeenCalledWith({
-        type: 'error',
-        title: 'Connection Failed',
-        message: 'Network error',
-        duration: 3000,
-        action: {
-          label: 'Try Again',
-          onClick: retryAction,
-        },
-      });
+      expect(mockShowToast).toHaveBeenCalledWith('Connection Failed: Network error', 'error');
     });
 
     it('should not show toast when showToUser is false', () => {
@@ -86,13 +65,7 @@ describe('useErrorHandler', () => {
       
       result.current.handleError(errorObj);
       
-      expect(mockShowToast).toHaveBeenCalledWith({
-        type: 'error',
-        title: 'Error',
-        message: 'Object error message',
-        duration: 5000,
-        action: undefined,
-      });
+      expect(mockShowToast).toHaveBeenCalledWith('Error: Object error message', 'error');
     });
 
     it('should handle validation errors with multiple messages', () => {
@@ -101,13 +74,7 @@ describe('useErrorHandler', () => {
       
       result.current.handleError(errorObj);
       
-      expect(mockShowToast).toHaveBeenCalledWith({
-        type: 'error',
-        title: 'Error',
-        message: 'Field 1 is required, Field 2 is invalid',
-        duration: 5000,
-        action: undefined,
-      });
+      expect(mockShowToast).toHaveBeenCalledWith('Error: Field 1 is required, Field 2 is invalid', 'error');
     });
   });
 
@@ -118,16 +85,7 @@ describe('useErrorHandler', () => {
       
       result.current.handleNetworkError(new Error('Connection failed'), retryAction);
       
-      expect(mockShowToast).toHaveBeenCalledWith({
-        type: 'error',
-        title: 'Connection Error',
-        message: 'Connection failed',
-        duration: 5000,
-        action: {
-          label: 'Try Again',
-          onClick: retryAction,
-        },
-      });
+      expect(mockShowToast).toHaveBeenCalledWith('Connection Error: Connection failed', 'error');
     });
 
     it('should handle validation errors with field name', () => {
@@ -135,13 +93,7 @@ describe('useErrorHandler', () => {
       
       result.current.handleValidationError(new Error('Invalid input'), 'Email');
       
-      expect(mockShowToast).toHaveBeenCalledWith({
-        type: 'error',
-        title: 'Validation Error: Email',
-        message: 'Invalid input',
-        duration: 3000,
-        action: undefined,
-      });
+      expect(mockShowToast).toHaveBeenCalledWith('Validation Error: Email: Invalid input', 'error');
     });
 
     it('should handle storage errors with operation name', () => {
@@ -149,13 +101,7 @@ describe('useErrorHandler', () => {
       
       result.current.handleStorageError(new Error('Save failed'), 'save player data');
       
-      expect(mockShowToast).toHaveBeenCalledWith({
-        type: 'error',
-        title: 'Failed to save player data',
-        message: 'Save failed',
-        duration: 5000,
-        action: undefined,
-      });
+      expect(mockShowToast).toHaveBeenCalledWith('Failed to save player data: Save failed', 'error');
     });
 
     it('should handle authentication errors with longer duration', () => {
@@ -163,13 +109,7 @@ describe('useErrorHandler', () => {
       
       result.current.handleAuthError(new Error('Token expired'));
       
-      expect(mockShowToast).toHaveBeenCalledWith({
-        type: 'error',
-        title: 'Authentication Error',
-        message: 'Token expired',
-        duration: 7000,
-        action: undefined,
-      });
+      expect(mockShowToast).toHaveBeenCalledWith('Authentication Error: Token expired', 'error');
     });
   });
 
@@ -183,16 +123,7 @@ describe('useErrorHandler', () => {
         retryAction,
       });
       
-      expect(mockShowToast).toHaveBeenCalledWith({
-        type: 'error',
-        title: 'Error',
-        message: 'Network timeout',
-        duration: 5000,
-        action: {
-          label: 'Try Again',
-          onClick: retryAction,
-        },
-      });
+      expect(mockShowToast).toHaveBeenCalledWith('Error: Network timeout', 'error');
     });
 
     it('should not show retry for non-retryable errors', () => {
@@ -204,13 +135,7 @@ describe('useErrorHandler', () => {
         retryAction,
       });
       
-      expect(mockShowToast).toHaveBeenCalledWith({
-        type: 'error',
-        title: 'Error',
-        message: 'Validation failed',
-        duration: 5000,
-        action: undefined,
-      });
+      expect(mockShowToast).toHaveBeenCalledWith('Error: Validation failed', 'error');
     });
   });
 
@@ -220,13 +145,7 @@ describe('useErrorHandler', () => {
       
       result.current.handleError(null);
       
-      expect(mockShowToast).toHaveBeenCalledWith({
-        type: 'error',
-        title: 'Error',
-        message: 'Unknown error occurred',
-        duration: 5000,
-        action: undefined,
-      });
+      expect(mockShowToast).toHaveBeenCalledWith('Error: Unknown error occurred', 'error');
     });
 
     it('should use type-specific fallback messages', () => {
@@ -234,13 +153,7 @@ describe('useErrorHandler', () => {
       
       result.current.handleError('', { type: 'network' });
       
-      expect(mockShowToast).toHaveBeenCalledWith({
-        type: 'error',
-        title: 'Error',
-        message: 'Network error. Please check your connection and try again.',
-        duration: 5000,
-        action: undefined,
-      });
+      expect(mockShowToast).toHaveBeenCalledWith('Error: Network error. Please check your connection and try again.', 'error');
     });
   });
 });

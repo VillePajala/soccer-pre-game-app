@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix: Improve error handling and type checks in storage management"
+  "notes": "fix: Improve type safety in test files by using explicit type assertions"
 }

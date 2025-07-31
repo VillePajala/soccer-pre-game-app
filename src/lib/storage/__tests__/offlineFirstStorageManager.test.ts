@@ -85,10 +85,8 @@ describe('OfflineFirstStorageManager', () => {
     mockIndexedDB.getProviderName.mockReturnValue('indexedDB');
     mockSupabase.isOnline.mockResolvedValue(true);
 
-    Object.defineProperty(navigator, 'onLine', {
-      value: true,
-      configurable: true
-    });
+    // Mock navigator.onLine
+    jest.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
     storageManager = new OfflineFirstStorageManager({
       enableOfflineMode: true,
       syncOnReconnect: true
@@ -107,10 +105,7 @@ describe('OfflineFirstStorageManager', () => {
     });
 
     it('should return false when navigator is offline', async () => {
-      Object.defineProperty(navigator, 'onLine', {
-        value: false,
-        configurable: true
-      });
+      jest.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
       const storageManagerOffline = new OfflineFirstStorageManager();
       
       const isOnline = await storageManagerOffline.isOnline();
@@ -193,10 +188,7 @@ describe('OfflineFirstStorageManager', () => {
     };
 
     beforeEach(() => {
-      Object.defineProperty(navigator, 'onLine', {
-        value: false,
-        configurable: true
-      });
+      jest.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
       storageManager = new OfflineFirstStorageManager({
         enableOfflineMode: true
       });
