@@ -12,17 +12,17 @@ export interface ConnectionStatus {
  */
 export const useConnectionStatus = () => {
   const [status, setStatus] = useState<ConnectionStatus>({
-    isOnline: navigator.onLine,
+    isOnline: typeof window !== 'undefined' ? navigator.onLine : false,
     isSupabaseReachable: false,
     lastChecked: Date.now(),
-    connectionQuality: navigator.onLine ? 'good' : 'offline'
+    connectionQuality: typeof window !== 'undefined' ? (navigator.onLine ? 'good' : 'offline') : 'offline'
   });
 
   /**
    * Test Supabase connectivity by making a lightweight request
    */
   const checkSupabaseConnection = useCallback(async (): Promise<boolean> => {
-    if (!navigator.onLine) return false;
+    if (typeof window === 'undefined' || !navigator.onLine) return false;
 
     try {
       // Create a simple fetch to Supabase REST API health check
@@ -53,7 +53,7 @@ export const useConnectionStatus = () => {
    * Determine connection quality based on response time
    */
   const testConnectionQuality = useCallback(async (): Promise<'good' | 'poor' | 'offline'> => {
-    if (!navigator.onLine) return 'offline';
+    if (typeof window === 'undefined' || !navigator.onLine) return 'offline';
 
     const startTime = Date.now();
     const isReachable = await checkSupabaseConnection();
@@ -68,7 +68,7 @@ export const useConnectionStatus = () => {
    * Update connection status
    */
   const updateStatus = useCallback(async () => {
-    const isOnline = navigator.onLine;
+    const isOnline = typeof window !== 'undefined' ? navigator.onLine : false;
     const isSupabaseReachable = isOnline ? await checkSupabaseConnection() : false;
     const connectionQuality = await testConnectionQuality();
 
@@ -89,6 +89,9 @@ export const useConnectionStatus = () => {
 
   // Set up event listeners for online/offline events
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return;
+
     const handleOnline = () => {
       setStatus(prev => ({ ...prev, isOnline: true }));
       // Check Supabase connection when coming back online
@@ -112,7 +115,7 @@ export const useConnectionStatus = () => {
 
     // Periodic connection check every 30 seconds when online
     const intervalId = setInterval(() => {
-      if (navigator.onLine) {
+      if (typeof window !== 'undefined' && navigator.onLine) {
         updateStatus();
       }
     }, 30000);

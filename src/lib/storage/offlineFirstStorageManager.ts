@@ -30,7 +30,7 @@ export class OfflineFirstStorageManager implements IStorageProvider {
   private indexedDB: IndexedDBProvider;
   private syncManager: SyncManager;
   private config: OfflineFirstConfig;
-  private isOnlineState: boolean = navigator.onLine;
+  private isOnlineState: boolean = typeof window !== 'undefined' ? navigator.onLine : false;
 
   constructor(config: Partial<OfflineFirstConfig> = {}) {
     this.config = {

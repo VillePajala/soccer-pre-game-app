@@ -7,10 +7,12 @@ interface OfflineIndicatorProps {
 }
 
 export function OfflineIndicator({ className = '' }: OfflineIndicatorProps) {
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isOnline, setIsOnline] = useState(typeof window !== 'undefined' ? navigator.onLine : true);
   const [showOfflineMessage, setShowOfflineMessage] = useState(false);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     const handleOnline = () => {
       setIsOnline(true);
       setShowOfflineMessage(false);
