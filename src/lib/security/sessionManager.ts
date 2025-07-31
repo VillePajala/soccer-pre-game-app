@@ -12,6 +12,13 @@
 import { supabase } from '../supabase';
 import type { Session, User } from '@supabase/supabase-js';
 import logger from '../../utils/logger';
+import { 
+  getDeviceFingerprint, 
+  saveDeviceFingerprint,
+  getSessionActivity,
+  saveSessionActivity,
+  removeSessionActivity
+} from '@/utils/sessionSettings';
 
 // Session configuration
 const SESSION_CONFIG = {
@@ -60,7 +67,7 @@ export class SessionManager {
   private isInitialized = false;
 
   constructor() {
-    this.initializeDeviceFingerprint();
+    // Async initialization will happen in initialize()
     this.setupVisibilityChangeHandler();
     this.setupStorageEventHandler();
   }
@@ -70,6 +77,9 @@ export class SessionManager {
    */
   async initialize(): Promise<void> {
     if (this.isInitialized) return;
+    
+    // Initialize device fingerprint
+    await this.initializeDeviceFingerprint();
 
     try {
       // Get current session
@@ -295,15 +305,15 @@ export class SessionManager {
   /**
    * Generate device fingerprint
    */
-  private initializeDeviceFingerprint(): void {
+  private async initializeDeviceFingerprint(): Promise<void> {
     // Skip if not in browser environment
-    if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+    if (typeof window === 'undefined') {
       this.deviceFingerprint = 'server-side-fallback';
       return;
     }
     
     // Check if fingerprint already exists
-    let fingerprint = localStorage.getItem(SESSION_CONFIG.DEVICE_FINGERPRINT_KEY);
+    let fingerprint = await getDeviceFingerprint();
     
     if (!fingerprint) {
       // Generate new fingerprint based on device characteristics
@@ -338,9 +348,7 @@ export class SessionManager {
         timestamp: Date.now()
       }));
       
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem(SESSION_CONFIG.DEVICE_FINGERPRINT_KEY, fingerprint);
-      }
+      await saveDeviceFingerprint(fingerprint);
     }
     
     this.deviceFingerprint = fingerprint;
@@ -416,47 +424,48 @@ export class SessionManager {
   }
 
   /**
-   * Record session activity in localStorage
+   * Record session activity in IndexedDB
    */
   private async recordSessionActivity(): Promise<void> {
     if (!this.currentUser || !this.deviceFingerprint) return;
-    if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
+    if (typeof window === 'undefined') return;
 
+    const currentActivity = await this.getSessionActivity();
     const activity: SessionActivity = {
       lastActivity: Date.now(),
       sessionStart: Date.now(),
-      totalSessions: this.getSessionActivity()?.totalSessions || 0 + 1,
+      totalSessions: (currentActivity?.totalSessions || 0) + 1,
       deviceFingerprint: this.deviceFingerprint,
       userAgent: navigator.userAgent
     };
 
-    localStorage.setItem(`session_activity_${this.currentUser.id}`, JSON.stringify(activity));
+    await saveSessionActivity(this.currentUser.id, activity);
   }
 
   /**
    * Update session activity timestamp
    */
-  private updateSessionActivity(timestamp: number): void {
+  private async updateSessionActivity(timestamp: number): Promise<void> {
     if (!this.currentUser) return;
-    if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
+    if (typeof window === 'undefined') return;
 
-    const activity = this.getSessionActivity();
+    const activity = await this.getSessionActivity();
     if (activity) {
       activity.lastActivity = timestamp;
-      localStorage.setItem(`session_activity_${this.currentUser.id}`, JSON.stringify(activity));
+      await saveSessionActivity(this.currentUser.id, activity);
     }
   }
 
   /**
    * Get session activity from storage
    */
-  private getSessionActivity(): SessionActivity | null {
+  private async getSessionActivity(): Promise<SessionActivity | null> {
     if (!this.currentUser) return null;
-    if (typeof window === 'undefined' || typeof localStorage === 'undefined') return null;
+    if (typeof window === 'undefined') return null;
 
     try {
-      const stored = localStorage.getItem(`session_activity_${this.currentUser.id}`);
-      return stored ? JSON.parse(stored) : null;
+      const activity = await getSessionActivity(this.currentUser.id);
+      return activity as SessionActivity | null;
     } catch {
       return null;
     }
@@ -465,10 +474,10 @@ export class SessionManager {
   /**
    * Clear session activity from storage
    */
-  private clearSessionActivity(): void {
+  private async clearSessionActivity(): Promise<void> {
     if (!this.currentUser) return;
-    if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
-    localStorage.removeItem(`session_activity_${this.currentUser.id}`);
+    if (typeof window === 'undefined') return;
+    await removeSessionActivity(this.currentUser.id);
   }
 
   /**
