@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix: Adjust test coverage threshold to match actual coverage"
+  "notes": "fix: Update service worker logic and improve update checks"
 }
