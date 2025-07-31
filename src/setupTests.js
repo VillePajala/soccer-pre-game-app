@@ -1,5 +1,25 @@
 import '@testing-library/jest-dom';
 
+// Suppress console errors during tests unless explicitly enabled
+const originalConsoleError = console.error;
+const originalConsoleWarn = console.warn;
+
+beforeAll(() => {
+  // Only suppress console output in CI mode to reduce noise
+  if (process.env.CI === 'true') {
+    console.error = jest.fn();
+    console.warn = jest.fn();
+  }
+});
+
+afterAll(() => {
+  // Restore original console methods
+  if (process.env.CI === 'true') {
+    console.error = originalConsoleError;
+    console.warn = originalConsoleWarn;
+  }
+});
+
 // Mock window.location if needed by tests
 const originalLocation = window.location;
 
