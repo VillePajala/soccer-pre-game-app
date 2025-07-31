@@ -144,8 +144,7 @@ describe('SyncManager', () => {
         id: 'player-1',
         name: 'Updated Player',
         jerseyNumber: '11',
-        position: 'Midfielder',
-        isGoalkeeper: false
+        isGoalie: false
       };
 
       const syncItem = {
