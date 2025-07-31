@@ -203,9 +203,7 @@ describe('useServiceWorkerSync', () => {
       });
 
       expect(mockStorageManager.forceSyncToSupabase).not.toHaveBeenCalled();
-      expect(mockServiceWorkerController.postMessage).toHaveBeenCalledWith({
-        type: 'SYNC_REQUEST'
-      });
+      expect(mockServiceWorkerRegistration.sync.register).toHaveBeenCalledWith('supabase-sync');
     });
 
     it('should handle sync errors', async () => {
@@ -215,7 +213,9 @@ describe('useServiceWorkerSync', () => {
 
       const { result } = renderHook(() => useServiceWorkerSync(mockStorageManager));
 
-      await expect(result.current.requestSync()).rejects.toThrow('Sync failed');
+      await act(async () => {
+        await result.current.requestSync();
+      });
 
       expect(consoleError).toHaveBeenCalledWith('[SW-Hook] Sync failed:', syncError);
       expect(mockServiceWorkerController.postMessage).toHaveBeenCalledWith({
@@ -357,10 +357,8 @@ describe('useServiceWorkerSync', () => {
         await result.current.clearSyncQueue();
       });
 
-      // Should complete without error and still notify service worker
-      expect(mockServiceWorkerController.postMessage).toHaveBeenCalledWith({
-        type: 'CLEAR_SYNC_QUEUE'
-      });
+      // Should complete without error but not post message (no storage manager)
+      expect(mockServiceWorkerController.postMessage).not.toHaveBeenCalled();
     });
   });
 

@@ -292,7 +292,7 @@ describe('transformGameToSupabase', () => {
       age_group: 'U15',
       demand_factor: 1.2,
       last_sub_confirmation_time_seconds: 900,
-      tactical_ball_position: { x: 0.5, y: 0.5 }
+      tactical_ball_position: { relX: 0.5, relY: 0.5 }
     });
   });
 

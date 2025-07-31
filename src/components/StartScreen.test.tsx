@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { AuthProvider } from '@/context/AuthContext';
 
 jest.mock('@/i18n', () => ({
   __esModule: true,
@@ -29,6 +30,17 @@ jest.mock('@/utils/sendBackupEmail', () => ({
   sendBackupEmail: jest.fn().mockResolvedValue(undefined),
 }));
 
+jest.mock('@/lib/supabase', () => ({
+  __esModule: true,
+  default: {
+    auth: {
+      getUser: jest.fn().mockResolvedValue({ data: { user: null }, error: null }),
+      onAuthStateChange: jest.fn().mockReturnValue({ data: { subscription: { unsubscribe: jest.fn() } } }),
+      signInAnonymously: jest.fn().mockResolvedValue({ data: { user: null }, error: null }),
+    }
+  }
+}));
+
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, fallback?: string) => fallback || key,
@@ -49,14 +61,16 @@ describe('StartScreen', () => {
     };
 
     render(
-      <StartScreen
-        onStartNewGame={handlers.onStartNewGame}
-        onLoadGame={handlers.onLoadGame}
-        onResumeGame={handlers.onResumeGame}
-        canResume
-        onCreateSeason={handlers.onCreateSeason}
-        onViewStats={handlers.onViewStats}
-      />
+      <AuthProvider>
+        <StartScreen
+          onStartNewGame={handlers.onStartNewGame}
+          onLoadGame={handlers.onLoadGame}
+          onResumeGame={handlers.onResumeGame}
+          canResume
+          onCreateSeason={handlers.onCreateSeason}
+          onViewStats={handlers.onViewStats}
+        />
+      </AuthProvider>
     );
 
     expect(screen.getByRole('button', { name: 'Resume Last Game' })).toBeInTheDocument();

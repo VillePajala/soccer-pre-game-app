@@ -648,8 +648,8 @@ describe('reconstructAppStateFromSupabase', () => {
     expect(result.assessments.player1.overall).toBe(8);
 
     // Check drawings
-    expect(result.drawings).toEqual([[{ x: 0.1, y: 0.1 }, { x: 0.2, y: 0.2 }]]);
-    expect(result.tacticalDrawings).toEqual([[{ x: 0.3, y: 0.3 }, { x: 0.4, y: 0.4 }]]);
+    expect(result.drawings).toEqual([[{ relX: 0.1, relY: 0.1 }, { relX: 0.2, relY: 0.2 }]]);
+    expect(result.tacticalDrawings).toEqual([[{ relX: 0.3, relY: 0.3 }, { relX: 0.4, relY: 0.4 }]]);
 
     // Check tactical discs
     expect(result.tacticalDiscs).toHaveLength(1);
