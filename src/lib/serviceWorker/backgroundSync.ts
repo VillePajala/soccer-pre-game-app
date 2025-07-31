@@ -120,7 +120,12 @@ export class BackgroundSyncHandler {
     lastSyncTime?: number;
   }> {
     try {
-      return await this.syncManager.getSyncStats();
+      const stats = await this.syncManager.getSyncStats();
+      return {
+        pendingCount: stats.pendingCount,
+        failedCount: stats.failedCount,
+        lastSyncTime: stats.lastSyncTime ?? undefined
+      };
     } catch (error) {
       console.error('[BG-Sync] Failed to get sync stats:', error);
       return { pendingCount: 0, failedCount: 0 };
