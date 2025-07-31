@@ -448,6 +448,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   // <<< ADD State to hold player IDs for the next new game >>>
   const [playerIdsForNewGame, setPlayerIdsForNewGame] = useState<string[] | null>(null);
   const [newGameDemandFactor, setNewGameDemandFactor] = useState(1);
+  const [isCreatingNewGame, setIsCreatingNewGame] = useState<boolean>(false);
   // <<< ADD State for the roster prompt toast >>>
   // const [showRosterPrompt, setShowRosterPrompt] = useState<boolean>(false);
 
@@ -977,6 +978,11 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
   // --- Auto-save state using offline-first storage ---
   useEffect(() => {
+    // Skip auto-save during new game creation to prevent overwriting the new game
+    if (isCreatingNewGame) {
+      return;
+    }
+    
     // Only auto-save if loaded AND we have a proper game ID (not the default unsaved one)
     const autoSave = async () => {
     if (initialLoadComplete && currentGameId && currentGameId !== DEFAULT_GAME_ID) {
@@ -1046,7 +1052,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     };
     autoSave();
     // Dependencies: Include all state variables that are part of the saved snapshot
-  }, [initialLoadComplete, currentGameId,
+  }, [initialLoadComplete, currentGameId, isCreatingNewGame,
       playersOnField, opponents, drawings, availablePlayers, masterRosterQueryResultData,
       // showPlayerNames, // REMOVED - Covered by gameSessionState
       // Local states that are part of the snapshot but not yet in gameSessionState:
@@ -1364,6 +1370,9 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     tournamentLevel: string,
     isPlayed: boolean
   ) => {
+      // Prevent auto-save during new game creation
+      setIsCreatingNewGame(true);
+      
       // ADD LOGGING HERE:
       logger.log('[handleStartNewGameWithSetup] Received Params:', { 
         initialSelectedPlayerIds,
@@ -1482,6 +1491,9 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       // <<< Trigger the roster button highlight >>>
       setHighlightRosterButton(true);
 
+      // Re-enable auto-save after new game creation is complete
+      setIsCreatingNewGame(false);
+
   }, [
     // Keep necessary dependencies
     savedGames,
@@ -1491,6 +1503,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     setCurrentGameId,
     setIsNewGameSetupModalOpen,
     setHighlightRosterButton,
+    setIsCreatingNewGame,
   ]);
 
   // ** REVERT handleCancelNewGameSetup TO ORIGINAL **
@@ -1508,9 +1521,12 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     setHasSkippedInitialSetup(true); // Still mark as skipped if needed elsewhere
     setIsNewGameSetupModalOpen(false); // ADDED: Explicitly close the modal
     setNewGameDemandFactor(1);
+    
+    // Re-enable auto-save if it was disabled for new game creation
+    setIsCreatingNewGame(false);
 
   // REMOVED initialState from dependencies
-  }, [setIsNewGameSetupModalOpen]); // Added setter function to dependencies
+  }, [setIsNewGameSetupModalOpen, setIsCreatingNewGame]); // Added setter function to dependencies
 
   // --- Start New Game Handler (Uses Quick Save) ---
   const handleStartNewGame = useCallback(() => {

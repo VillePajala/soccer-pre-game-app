@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix: Resolve final TypeScript errors in PWA and session settings"
+  "notes": "remove: Export Data item from hamburger menu"
 }
