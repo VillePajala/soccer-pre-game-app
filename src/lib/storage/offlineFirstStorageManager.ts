@@ -81,7 +81,7 @@ export class OfflineFirstStorageManager implements IStorageProvider {
         } else {
           console.warn(`⚠️ Sync completed with errors: ${result.failedItems} failed`);
         }
-      } catch {
+      } catch (error) {
         console.error('❌ Sync failed after reconnection:', error);
       }
     }
@@ -132,7 +132,7 @@ export class OfflineFirstStorageManager implements IStorageProvider {
     if (this.shouldSyncToSupabase()) {
       try {
         await this.supabaseProvider.savePlayer(player);
-      } catch {
+      } catch (error) {
         console.warn('Failed to sync player to Supabase, queuing for later:', error);
         await this.syncManager.queueOperation('create', 'players', player);
       }
@@ -152,7 +152,7 @@ export class OfflineFirstStorageManager implements IStorageProvider {
     if (this.shouldSyncToSupabase()) {
       try {
         await this.supabaseProvider.deletePlayer(playerId);
-      } catch {
+      } catch (error) {
         console.warn('Failed to delete player from Supabase, queuing for later:', error);
         await this.syncManager.queueOperation('delete', 'players', { id: playerId });
       }
@@ -169,7 +169,7 @@ export class OfflineFirstStorageManager implements IStorageProvider {
     if (this.shouldSyncToSupabase()) {
       try {
         await this.supabaseProvider.updatePlayer(playerId, updates);
-      } catch {
+      } catch (error) {
         console.warn('Failed to update player in Supabase, queuing for later:', error);
         await this.syncManager.queueOperation('update', 'players', updatedPlayer);
       }

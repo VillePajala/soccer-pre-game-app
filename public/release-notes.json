@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "feat: Add offline-first demo and verification scripts to showcase functionality and ensure implementation integrity"
+  "notes": "fix: Add string type check for gameId in indexedDBProvider"
 }

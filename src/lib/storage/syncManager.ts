@@ -140,7 +140,7 @@ export class SyncManager {
                 total: pendingItems.length
               });
             }
-          } catch {
+          } catch (error) {
             result.failedItems++;
             result.errors.push(error as Error);
             
@@ -183,7 +183,7 @@ export class SyncManager {
     try {
       switch (item.operation) {
         case 'create':
-          await this.syncCreateOperation(item, options);
+          await this.syncCreateOperation(item);
           break;
         case 'update':
           await this.syncUpdateOperation(item, options);
@@ -232,12 +232,6 @@ export class SyncManager {
    * Sync an update operation
    */
   private async syncUpdateOperation(item: SyncQueueItem, options: SyncOptions): Promise<void> {
-    const data = item.data as Player;
-    
-    if (!data.id) {
-      throw new Error('Update operation requires data with id field');
-    }
-
     // Check for conflicts by comparing with remote data
     const hasConflict = await this.checkForConflicts(item);
     
@@ -248,18 +242,35 @@ export class SyncManager {
     }
 
     switch (item.table) {
-      case 'players':
+      case 'players': {
+        const data = item.data as Player;
+        if (!data.id) {
+          throw new Error('Update operation requires data with id field');
+        }
         await this.supabase.updatePlayer(data.id, data);
         break;
-      case 'seasons':
+      }
+      case 'seasons': {
+        const data = item.data as Season;
+        if (!data.id) {
+          throw new Error('Update operation requires data with id field');
+        }
         await this.supabase.updateSeason(data.id, data);
         break;
-      case 'tournaments':
+      }
+      case 'tournaments': {
+        const data = item.data as Tournament;
+        if (!data.id) {
+          throw new Error('Update operation requires data with id field');
+        }
         await this.supabase.updateTournament(data.id, data);
         break;
-      case 'app_settings':
+      }
+      case 'app_settings': {
+        const data = item.data as AppSettings;
         await this.supabase.saveAppSettings(data);
         break;
+      }
       default:
         throw new Error(`Unsupported table for update: ${item.table}`);
     }
@@ -300,7 +311,7 @@ export class SyncManager {
     // For now, we'll implement a simple timestamp-based conflict detection
     // In a real implementation, this would compare actual data
     try {
-      const data = item.data as Player;
+      const data = item.data as Record<string, unknown>;
       
       // If the item has a lastModified timestamp, we can compare it
       if (data.lastModified && typeof data.lastModified === 'number') {

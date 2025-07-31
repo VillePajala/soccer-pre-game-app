@@ -353,7 +353,7 @@ export class IndexedDBProvider implements IStorageProvider {
     }
 
     if (importData.app_settings) {
-      await this.saveAppSettings(importData.app_settings);
+      await this.saveAppSettings(importData.app_settings as AppSettings);
     }
   }
 
