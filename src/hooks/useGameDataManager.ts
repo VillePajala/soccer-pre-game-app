@@ -291,25 +291,31 @@ export const useGameDataManager = ({
       const deletedGameId = await utilDeleteGame(gameId);
 
       if (deletedGameId) {
-        const updatedSavedGames = { ...savedGames };
-        delete updatedSavedGames[gameId];
-        setSavedGames(updatedSavedGames);
-        logger.log(`[useGameDataManager] Game ${gameId} deleted from state and persistence.`);
-
-        if (currentGameId === gameId) {
-          const latestId = getLatestGameId(updatedSavedGames);
-          if (latestId) {
-            logger.log(`[useGameDataManager] Deleted active game. Loading latest game ${latestId}.`);
-            setCurrentGameId(latestId);
-            await utilSaveCurrentGameIdSetting(latestId);
-          } else {
-            logger.log('[useGameDataManager] No other saved games found. Resetting to default state.');
-            setCurrentGameId(DEFAULT_GAME_ID);
-            await utilSaveCurrentGameIdSetting(DEFAULT_GAME_ID);
+        setSavedGames(prevSavedGames => {
+          const updatedSavedGames = { ...prevSavedGames };
+          delete updatedSavedGames[gameId];
+          
+          // The logic to handle switching to a new game if the current one was deleted
+          // needs to use the "updatedSavedGames" from this scope.
+          if (currentGameId === gameId) {
+            const latestId = getLatestGameId(updatedSavedGames);
+            if (latestId) {
+              logger.log(`[useGameDataManager] Deleted active game. Loading latest game ${latestId}.`);
+              setCurrentGameId(latestId);
+              utilSaveCurrentGameIdSetting(latestId);
+            } else {
+              logger.log('[useGameDataManager] No other saved games found. Resetting to default state.');
+              setCurrentGameId(DEFAULT_GAME_ID);
+              utilSaveCurrentGameIdSetting(DEFAULT_GAME_ID);
+            }
           }
-        }
+          
+          return updatedSavedGames;
+        });
 
-        // Invalidate queries to refresh UI
+        logger.log(`[useGameDataManager] Game ${gameId} deletion processed.`);
+
+        // Invalidate queries to refresh UI from the source of truth
         queryClient.invalidateQueries({ queryKey: queryKeys.savedGames });
       } else {
         logger.warn(`[useGameDataManager] utilDeleteGame returned null for gameId: ${gameId}. Game might not have been found or ID was invalid.`);
