@@ -28,14 +28,32 @@ const customJestConfig = {
   collectCoverageFrom: [
     'src/**/*.{js,jsx,ts,tsx}',
     '!src/**/*.d.ts',
-    '!src/**/*.stories.{js,jsx,ts,tsx}'
+    '!src/**/*.stories.{js,jsx,ts,tsx}',
+    // Exclude debug/test/verification pages from coverage
+    '!src/app/debug*/**',
+    '!src/app/test*/**',
+    '!src/app/check*/**',
+    '!src/app/verify*/**',
+    '!src/app/fix*/**',
+    '!src/app/diagnose*/**',
+    '!src/app/cleanup*/**',
+    '!src/app/analyze*/**',
+    '!src/app/import-backup/**',
+    '!src/app/reset-supabase/**',
+    '!src/app/refresh-games-cache/**',
+    '!src/app/storage-diagnostic/**',
+    '!src/app/env-check/**',
+    '!src/app/simple-test/**',
+    '!src/app/storage-config/**',
+    '!src/app/auth-debug/**',
+    '!src/app/password-reset-help/**'
   ],
   coverageThreshold: {
     global: {
-      branches: 30,
-      functions: 38,
-      lines: 38,
-      statements: 38,
+      branches: 40,
+      functions: 40,
+      lines: 40,
+      statements: 40,
     },
   },
   // Add transform for ts-jest if needed, but next/jest should handle it
