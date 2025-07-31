@@ -204,10 +204,10 @@ describe('AuthContext', () => {
       });
       
       await waitFor(() => {
-        expect(mockSupabaseAuth.signUp).toHaveBeenCalledWith({
-          email: 'test@example.com',
-          password: 'password123',
-        });
+        expect(mockSecureAuthService.signUp).toHaveBeenCalledWith(
+          'test@example.com',
+          'password123'
+        );
       });
     });
 
@@ -254,10 +254,10 @@ describe('AuthContext', () => {
       });
       
       await waitFor(() => {
-        expect(mockSupabaseAuth.signInWithPassword).toHaveBeenCalledWith({
-          email: 'test@example.com',
-          password: 'password123',
-        });
+        expect(mockSecureAuthService.signIn).toHaveBeenCalledWith(
+          'test@example.com',
+          'password123'
+        );
       });
     });
 
@@ -289,11 +289,8 @@ describe('AuthContext', () => {
       });
       
       await waitFor(() => {
-        expect(mockSupabaseAuth.resetPasswordForEmail).toHaveBeenCalledWith(
-          'test@example.com',
-          expect.objectContaining({
-            redirectTo: expect.stringContaining('/auth/reset-password'),
-          })
+        expect(mockSecureAuthService.resetPassword).toHaveBeenCalledWith(
+          'test@example.com'
         );
       });
     });
