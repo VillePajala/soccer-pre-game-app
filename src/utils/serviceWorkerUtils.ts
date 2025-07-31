@@ -125,7 +125,7 @@ export const checkForUpdates = async (): Promise<UpdateCheckResult> => {
     // Try to detect updates by comparing timestamps or checking network
     logger.log('[SW Utils] No installing/waiting workers found, checking for network updates...');
     
-    // Additional check: try to fetch the service worker file and compare
+    // Additional check: try to fetch the service worker file and compare timestamps
     try {
       const swResponse = await fetch('/sw.js', { 
         cache: 'no-cache',
@@ -140,25 +140,33 @@ export const checkForUpdates = async (): Promise<UpdateCheckResult> => {
           const serverTimestamp = timestampMatch[1];
           logger.log(`[SW Utils] Server SW timestamp: ${serverTimestamp}`);
           
-          // Try to get current SW timestamp
-          const currentSW = registration.active;
-          if (currentSW) {
-            // We can't directly compare timestamps from the active worker,
-            // but we can try to force an update by unregistering and re-registering
-            logger.log('[SW Utils] Timestamps available, forcing re-registration check');
-            
-            // Wait a bit more and check one final time
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            await registration.update();
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            if (registration.waiting) {
-              return {
-                updateAvailable: true,
-                currentVersion,
-                newVersion: 'Latest'
-              };
+          // Force a more aggressive update check with longer timeout
+          logger.log('[SW Utils] Forcing aggressive update check...');
+          
+          // Unregister and re-register to force fresh check
+          await registration.unregister();
+          const newRegistration = await navigator.serviceWorker.register('/sw.js');
+          
+          // Wait for the new registration to install
+          await new Promise(resolve => {
+            if (newRegistration.installing) {
+              newRegistration.installing.addEventListener('statechange', function() {
+                if (this.state === 'installed') {
+                  resolve(undefined);
+                }
+              });
+            } else {
+              resolve(undefined);
             }
+          });
+          
+          // Check if we now have a waiting worker
+          if (newRegistration.waiting) {
+            return {
+              updateAvailable: true,
+              currentVersion,
+              newVersion: 'Latest'
+            };
           }
         }
       }

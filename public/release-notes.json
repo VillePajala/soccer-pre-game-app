@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "refactor: Enhance SoccerField rendering with improved textures and lighting"
+  "notes": "fix: Adjust test coverage threshold to match actual coverage"
 }

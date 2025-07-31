@@ -12,19 +12,7 @@ if (self.location.hostname === 'localhost' || self.location.hostname === '127.0.
   return; // Exit early for development
 }
 
-// Listen for the install event
-self.addEventListener('install', (event) => {
-  console.log('[SW] Service worker installing...');
-  // Do NOT call self.skipWaiting() here.
-  // We want to wait for the user to click the update button.
-});
-
-// Listen for the activate event
-self.addEventListener('activate', (event) => {
-  console.log('[SW] Service worker activating...');
-  // Take control of all open clients immediately
-  event.waitUntil(clients.claim());
-});
+// Primary install and activate handlers are defined below with caching logic
 
 // Listen for messages from the client
 self.addEventListener('message', (event) => {
@@ -148,4 +136,4 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
-// Build Timestamp: 2025-07-31T13:45:59.847Z
+// Build Timestamp: 2025-07-31T14:07:38.965Z
