@@ -56,10 +56,15 @@ export class SupabaseProvider implements IStorageProvider {
   async savePlayer(player: Player): Promise<Player> {
     try {
       const userId = await this.getCurrentUserId();
-      const supabasePlayer = toSupabase.player(player, userId);
+      
+      // For players with local IDs (e.g., player_123_abc), treat as new
+      const isLocalId = player.id && player.id.startsWith('player_');
+      const playerForSupabase = isLocalId ? { ...player, id: '' } : player;
+      
+      const supabasePlayer = toSupabase.player(playerForSupabase, userId);
 
       let result;
-      if (player.id) {
+      if (playerForSupabase.id && !isLocalId) {
         // Update existing player
         const { data, error } = await supabase
           .from('players')
@@ -168,10 +173,15 @@ export class SupabaseProvider implements IStorageProvider {
   async saveSeason(season: Season): Promise<Season> {
     try {
       const userId = await this.getCurrentUserId();
-      const supabaseSeason = toSupabase.season(season, userId);
+      
+      // For seasons with local IDs (e.g., season_123_abc), treat as new
+      const isLocalId = season.id && season.id.startsWith('season_');
+      const seasonForSupabase = isLocalId ? { ...season, id: '' } : season;
+      
+      const supabaseSeason = toSupabase.season(seasonForSupabase, userId);
 
       let result;
-      if (season.id) {
+      if (seasonForSupabase.id && !isLocalId) {
         // Update existing season
         const { data, error } = await supabase
           .from('seasons')
@@ -280,10 +290,24 @@ export class SupabaseProvider implements IStorageProvider {
   async saveTournament(tournament: Tournament): Promise<Tournament> {
     try {
       const userId = await this.getCurrentUserId();
-      const supabaseTournament = toSupabase.tournament(tournament, userId);
+      
+      // For tournaments with local IDs (e.g., tournament_123_abc), treat as new
+      const isLocalId = tournament.id && tournament.id.startsWith('tournament_');
+      const tournamentForSupabase = isLocalId ? { ...tournament, id: '' } : tournament;
+      
+      const supabaseTournament = toSupabase.tournament(tournamentForSupabase, userId);
+
+      // Debug: Log what we're trying to save (remove in production)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[SupabaseProvider] Tournament save data:', {
+          tournament: tournament.name,
+          isLocalId,
+          hasId: Boolean(tournamentForSupabase.id)
+        });
+      }
 
       let result;
-      if (tournament.id) {
+      if (tournamentForSupabase.id && !isLocalId) {
         // Update existing tournament
         const { data, error } = await supabase
           .from('tournaments')
@@ -306,6 +330,13 @@ export class SupabaseProvider implements IStorageProvider {
           .single();
 
         if (error) {
+          console.error('[SupabaseProvider] Tournament save error:', {
+            error,
+            supabaseTournament,
+            errorDetails: error.details,
+            errorMessage: error.message,
+            errorCode: error.code
+          });
           throw new NetworkError('supabase', 'saveTournament', error);
         }
         result = data;
@@ -344,6 +375,13 @@ export class SupabaseProvider implements IStorageProvider {
     try {
       const userId = await this.getCurrentUserId();
       const supabaseUpdates = toSupabase.tournamentUpdate(updates, userId);
+
+      // Debug: Log what we're trying to update
+      console.log('[SupabaseProvider] Tournament update data:', {
+        tournamentId,
+        updates,
+        supabaseUpdates
+      });
 
       const { data, error } = await supabase
         .from('tournaments')

@@ -149,9 +149,10 @@ describe('Data Transformation Utilities', () => {
           end_date: '2024-06-01',
           game_dates: ['2024-03-15', '2024-04-15'],
           archived: false,
-          default_roster_ids: 'roster-1',
+          default_roster_ids: ['roster-1'], // Now correctly converts to array
           notes: 'Great season',
           color: '#007bff',
+          badge: undefined,
           age_group: 'U12'
         });
       });
@@ -190,7 +191,8 @@ describe('Data Transformation Utilities', () => {
           endDate: '2024-06-01',
           gameDates: ['2024-03-15', '2024-04-15'],
           archived: false,
-          defaultRosterId: 'roster-1',
+          defaultRosterId: 'roster-1', // Legacy field for compatibility
+          defaultRoster: ['roster-1'], // New preferred array field
           notes: 'Great season',
           color: '#007bff',
           ageGroup: 'U12'
@@ -231,7 +233,7 @@ describe('Data Transformation Utilities', () => {
           period_duration: 30,
           game_dates: ['2024-07-05', '2024-07-10'],
           archived: false,
-          default_roster_ids: 'roster-2',
+          default_roster_ids: ['roster-2'], // Now correctly converts to array
           notes: 'Annual tournament',
           color: '#28a745',
           badge: undefined,
@@ -275,7 +277,8 @@ describe('Data Transformation Utilities', () => {
           periodDuration: 30,
           gameDates: ['2024-07-05', '2024-07-10'],
           archived: false,
-          defaultRosterId: 'roster-2',
+          defaultRosterId: 'roster-2', // Legacy field for compatibility  
+          defaultRoster: ['roster-2'], // New preferred array field
           notes: 'Annual tournament',
           color: '#28a745',
           ageGroup: 'U14'

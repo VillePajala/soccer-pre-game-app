@@ -193,7 +193,12 @@ export class OfflineFirstStorageManager implements IStorageProvider {
     
     if (this.shouldSyncToSupabase()) {
       try {
-        await this.supabaseProvider.saveSeason(season);
+        // For new seasons (no ID or local ID), send without ID to force INSERT
+        const seasonForSupabase = season.id && !season.id.startsWith('season_') 
+          ? season  // Has Supabase UUID, use as-is
+          : { ...season, id: '' }; // Remove local ID to force INSERT
+        
+        await this.supabaseProvider.saveSeason(seasonForSupabase);
       } catch {
         await this.syncManager.queueOperation('create', 'seasons', season);
       }
@@ -244,7 +249,14 @@ export class OfflineFirstStorageManager implements IStorageProvider {
     
     if (this.shouldSyncToSupabase()) {
       try {
-        await this.supabaseProvider.saveTournament(tournament);
+        // For new tournaments (no ID or local ID), send without ID to force INSERT
+        const tournamentForSupabase = tournament.id && !tournament.id.startsWith('tournament_') 
+          ? tournament  // Has Supabase UUID, use as-is
+          : { ...tournament, id: '' }; // Remove local ID to force INSERT
+        
+        // Debug logging removed - OfflineFirstStorageManager not currently used
+        
+        await this.supabaseProvider.saveTournament(tournamentForSupabase);
       } catch {
         await this.syncManager.queueOperation('create', 'tournaments', tournament);
       }

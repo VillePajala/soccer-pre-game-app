@@ -30,7 +30,9 @@ export interface Season {
   endDate?: string;
   gameDates?: string[];
   archived?: boolean;
+  /** @deprecated Use defaultRoster instead. Legacy field for backward compatibility */
   defaultRosterId?: string;
+  /** Preferred field: Array of player IDs for the season roster */
   defaultRoster?: string[];
   notes?: string;
   color?: string;
@@ -49,7 +51,9 @@ export interface Tournament {
   endDate?: string;
   gameDates?: string[];
   archived?: boolean;
+  /** @deprecated Use defaultRoster instead. Legacy field for backward compatibility */
   defaultRosterId?: string;
+  /** Preferred field: Array of player IDs for the tournament roster */
   defaultRoster?: string[];
   notes?: string;
   color?: string;

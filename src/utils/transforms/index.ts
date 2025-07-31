@@ -148,76 +148,146 @@ export const toSupabase = {
       location: season.location,
       start_date: season.startDate,
       end_date: season.endDate,
-      period_count: season.periodCount,
-      period_duration: season.periodDuration,
+      period_count: season.periodCount || 2,
+      period_duration: season.periodDuration || 45,
       game_dates: season.gameDates,
-      archived: season.archived,
-      default_roster_ids: season.defaultRosterId,
+      archived: season.archived || false,
       notes: season.notes,
       color: season.color,
       badge: season.badge,
       age_group: season.ageGroup
     };
     
+    // Handle roster data - support both defaultRoster (array) and defaultRosterId (legacy string)
+    if (season.defaultRoster && Array.isArray(season.defaultRoster)) {
+      result.default_roster_ids = season.defaultRoster;
+    } else if (season.defaultRosterId) {
+      if (Array.isArray(season.defaultRosterId)) {
+        result.default_roster_ids = season.defaultRosterId;
+      } else {
+        result.default_roster_ids = [season.defaultRosterId];
+      }
+    }
+    
     // Only include id if it exists and is not empty
     if (season.id && season.id !== '') {
       result.id = season.id;
     }
     
-    return result;
+    // Remove undefined values to avoid sending null/undefined to database
+    return Object.fromEntries(
+      Object.entries(result).filter(([, v]) => v !== undefined)
+    );
   },
 
-  seasonUpdate: (updates: Partial<Season>, userId: string) => ({
-    ...updates,
-    user_id: userId,
-    ...(updates.startDate !== undefined && { start_date: updates.startDate }),
-    ...(updates.endDate !== undefined && { end_date: updates.endDate }),
-    ...(updates.periodCount !== undefined && { period_count: updates.periodCount }),
-    ...(updates.periodDuration !== undefined && { period_duration: updates.periodDuration }),
-    ...(updates.gameDates !== undefined && { game_dates: updates.gameDates }),
-    ...(updates.defaultRosterId !== undefined && { default_roster_ids: updates.defaultRosterId }),
-    ...(updates.ageGroup !== undefined && { age_group: updates.ageGroup })
-  }),
+  seasonUpdate: (updates: Partial<Season>, userId: string) => {
+    const result: Record<string, unknown> = {
+      user_id: userId
+    };
+    
+    // Map all possible update fields
+    if (updates.name !== undefined) result.name = updates.name;
+    if (updates.location !== undefined) result.location = updates.location;
+    if (updates.startDate !== undefined) result.start_date = updates.startDate;
+    if (updates.endDate !== undefined) result.end_date = updates.endDate;
+    if (updates.periodCount !== undefined) result.period_count = updates.periodCount;
+    if (updates.periodDuration !== undefined) result.period_duration = updates.periodDuration;
+    if (updates.gameDates !== undefined) result.game_dates = updates.gameDates;
+    if (updates.archived !== undefined) result.archived = updates.archived;
+    if (updates.notes !== undefined) result.notes = updates.notes;
+    if (updates.color !== undefined) result.color = updates.color;
+    if (updates.badge !== undefined) result.badge = updates.badge;
+    if (updates.ageGroup !== undefined) result.age_group = updates.ageGroup;
+    
+    // Handle roster updates - support both formats
+    if (updates.defaultRoster !== undefined) {
+      result.default_roster_ids = updates.defaultRoster;
+    } else if (updates.defaultRosterId !== undefined) {
+      if (Array.isArray(updates.defaultRosterId)) {
+        result.default_roster_ids = updates.defaultRosterId;
+      } else {
+        result.default_roster_ids = [updates.defaultRosterId];
+      }
+    }
+    
+    return result;
+  },
 
   tournament: (tournament: Tournament, userId: string) => {
     const result: Record<string, unknown> = {
       user_id: userId,
       name: tournament.name,
+      season_id: tournament.seasonId || null,
       location: tournament.location,
+      period_count: tournament.periodCount || 2,
+      period_duration: tournament.periodDuration || 45,
       start_date: tournament.startDate,
       end_date: tournament.endDate,
-      period_count: tournament.periodCount,
-      period_duration: tournament.periodDuration,
       game_dates: tournament.gameDates,
-      archived: tournament.archived,
-      default_roster_ids: tournament.defaultRosterId,
+      archived: tournament.archived || false,
       notes: tournament.notes,
       color: tournament.color,
       badge: tournament.badge,
       level: tournament.level,
-      age_group: tournament.ageGroup,
-      season_id: tournament.seasonId || null
+      age_group: tournament.ageGroup
     };
+    
+    // Handle roster data - support both defaultRoster (array) and defaultRosterId (legacy string)
+    if (tournament.defaultRoster && Array.isArray(tournament.defaultRoster)) {
+      result.default_roster_ids = tournament.defaultRoster;
+    } else if (tournament.defaultRosterId) {
+      if (Array.isArray(tournament.defaultRosterId)) {
+        result.default_roster_ids = tournament.defaultRosterId;
+      } else {
+        result.default_roster_ids = [tournament.defaultRosterId];
+      }
+    }
     
     // Only include id if it exists and is not empty
     if (tournament.id && tournament.id !== '') {
       result.id = tournament.id;
     }
     
-    return result;
+    // Remove undefined values to avoid sending null/undefined to database
+    return Object.fromEntries(
+      Object.entries(result).filter(([, v]) => v !== undefined)
+    );
   },
 
-  tournamentUpdate: (updates: Partial<Tournament>, userId: string) => ({
-    ...updates,
-    user_id: userId,
-    ...(updates.startDate !== undefined && { start_date: updates.startDate }),
-    ...(updates.endDate !== undefined && { end_date: updates.endDate }),
-    ...(updates.periodCount !== undefined && { period_count: updates.periodCount }),
-    ...(updates.periodDuration !== undefined && { period_duration: updates.periodDuration }),
-    ...(updates.gameDates !== undefined && { game_dates: updates.gameDates }),
-    ...(updates.defaultRosterId !== undefined && { default_roster_ids: updates.defaultRosterId }),
-    ...(updates.ageGroup !== undefined && { age_group: updates.ageGroup })
-  }),
+  tournamentUpdate: (updates: Partial<Tournament>, userId: string) => {
+    const result: Record<string, unknown> = {
+      user_id: userId
+    };
+    
+    // Map all possible update fields
+    if (updates.name !== undefined) result.name = updates.name;
+    if (updates.seasonId !== undefined) result.season_id = updates.seasonId;
+    if (updates.location !== undefined) result.location = updates.location;
+    if (updates.periodCount !== undefined) result.period_count = updates.periodCount;
+    if (updates.periodDuration !== undefined) result.period_duration = updates.periodDuration;
+    if (updates.startDate !== undefined) result.start_date = updates.startDate;
+    if (updates.endDate !== undefined) result.end_date = updates.endDate;
+    if (updates.gameDates !== undefined) result.game_dates = updates.gameDates;
+    if (updates.archived !== undefined) result.archived = updates.archived;
+    if (updates.notes !== undefined) result.notes = updates.notes;
+    if (updates.color !== undefined) result.color = updates.color;
+    if (updates.badge !== undefined) result.badge = updates.badge;
+    if (updates.level !== undefined) result.level = updates.level;
+    if (updates.ageGroup !== undefined) result.age_group = updates.ageGroup;
+    
+    // Handle roster updates - support both formats
+    if (updates.defaultRoster !== undefined) {
+      result.default_roster_ids = updates.defaultRoster;
+    } else if (updates.defaultRosterId !== undefined) {
+      if (Array.isArray(updates.defaultRosterId)) {
+        result.default_roster_ids = updates.defaultRosterId;
+      } else {
+        result.default_roster_ids = [updates.defaultRosterId];
+      }
+    }
+    
+    return result;
+  },
 
   appSettings: (settings: AppSettings, userId: string) => {
     const result: Record<string, unknown> = {
@@ -308,25 +378,40 @@ export const fromSupabase = {
     const result: Partial<Season> = {
       id: dbSeason.id,
       name: dbSeason.name,
-      periodCount: dbSeason.period_count,
-      periodDuration: dbSeason.period_duration,
-      archived: dbSeason.archived || false
+      location: dbSeason.location,
+      startDate: dbSeason.start_date,
+      endDate: dbSeason.end_date,
+      periodCount: dbSeason.period_count || 2,
+      periodDuration: dbSeason.period_duration || 45,
+      gameDates: dbSeason.game_dates,
+      archived: dbSeason.archived || false,
+      notes: dbSeason.notes,
+      color: dbSeason.color,
+      badge: dbSeason.badge,
+      ageGroup: dbSeason.age_group
     };
-
-    // Only include optional fields if they have values
-    if (dbSeason.location) result.location = dbSeason.location;
-    if (dbSeason.start_date) result.startDate = dbSeason.start_date;
-    if (dbSeason.end_date) result.endDate = dbSeason.end_date;
-    if (dbSeason.game_dates) result.gameDates = dbSeason.game_dates;
-    if (dbSeason.notes) result.notes = dbSeason.notes;
-    if (dbSeason.color) result.color = dbSeason.color;
-    if (dbSeason.badge) result.badge = dbSeason.badge;
-    if (dbSeason.age_group) result.ageGroup = dbSeason.age_group;
     
+    // Defensive roster handling - support multiple formats and avoid crashes
     if (dbSeason.default_roster_ids) {
-      result.defaultRosterId = Array.isArray(dbSeason.default_roster_ids) 
-        ? dbSeason.default_roster_ids[0] 
-        : dbSeason.default_roster_ids;
+      try {
+        if (Array.isArray(dbSeason.default_roster_ids)) {
+          // Modern format: array of player IDs
+          result.defaultRoster = dbSeason.default_roster_ids;
+          // Legacy support: set first ID as defaultRosterId
+          if (dbSeason.default_roster_ids.length > 0) {
+            result.defaultRosterId = dbSeason.default_roster_ids[0];
+          }
+        } else if (typeof dbSeason.default_roster_ids === 'string') {
+          // Legacy format: single ID
+          result.defaultRoster = [dbSeason.default_roster_ids];
+          result.defaultRosterId = dbSeason.default_roster_ids;
+        }
+      } catch (error) {
+        // If roster parsing fails, log and continue without roster
+        console.warn('[Transform] Failed to parse season roster:', error);
+        result.defaultRoster = [];
+        result.defaultRosterId = undefined;
+      }
     }
 
     return result as Season;
@@ -336,27 +421,42 @@ export const fromSupabase = {
     const result: Partial<Tournament> = {
       id: dbTournament.id,
       name: dbTournament.name,
-      periodCount: dbTournament.period_count,
-      periodDuration: dbTournament.period_duration,
-      archived: dbTournament.archived || false
+      seasonId: dbTournament.season_id,
+      location: dbTournament.location,
+      periodCount: dbTournament.period_count || 2,
+      periodDuration: dbTournament.period_duration || 45,
+      startDate: dbTournament.start_date,
+      endDate: dbTournament.end_date,
+      gameDates: dbTournament.game_dates,
+      archived: dbTournament.archived || false,
+      notes: dbTournament.notes,
+      color: dbTournament.color,
+      badge: dbTournament.badge,
+      level: dbTournament.level,
+      ageGroup: dbTournament.age_group
     };
 
-    // Only include optional fields if they have values
-    if (dbTournament.season_id) result.seasonId = dbTournament.season_id;
-    if (dbTournament.location) result.location = dbTournament.location;
-    if (dbTournament.start_date) result.startDate = dbTournament.start_date;
-    if (dbTournament.end_date) result.endDate = dbTournament.end_date;
-    if (dbTournament.game_dates) result.gameDates = dbTournament.game_dates;
-    if (dbTournament.notes) result.notes = dbTournament.notes;
-    if (dbTournament.color) result.color = dbTournament.color;
-    if (dbTournament.badge) result.badge = dbTournament.badge;
-    if (dbTournament.level) result.level = dbTournament.level;
-    if (dbTournament.age_group) result.ageGroup = dbTournament.age_group;
-    
+    // Defensive roster handling - support multiple formats and avoid crashes
     if (dbTournament.default_roster_ids) {
-      result.defaultRosterId = Array.isArray(dbTournament.default_roster_ids) 
-        ? dbTournament.default_roster_ids[0] 
-        : dbTournament.default_roster_ids;
+      try {
+        if (Array.isArray(dbTournament.default_roster_ids)) {
+          // Modern format: array of player IDs
+          result.defaultRoster = dbTournament.default_roster_ids;
+          // Legacy support: set first ID as defaultRosterId
+          if (dbTournament.default_roster_ids.length > 0) {
+            result.defaultRosterId = dbTournament.default_roster_ids[0];
+          }
+        } else if (typeof dbTournament.default_roster_ids === 'string') {
+          // Legacy format: single ID
+          result.defaultRoster = [dbTournament.default_roster_ids];
+          result.defaultRosterId = dbTournament.default_roster_ids;
+        }
+      } catch (error) {
+        // If roster parsing fails, log and continue without roster
+        console.warn('[Transform] Failed to parse tournament roster:', error);
+        result.defaultRoster = [];
+        result.defaultRosterId = undefined;
+      }
     }
 
     return result as Tournament;

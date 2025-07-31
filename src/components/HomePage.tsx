@@ -28,6 +28,7 @@ import GameInfoBar from '@/components/GameInfoBar';
 import { useOfflineFirstGameTimer } from '@/hooks/useOfflineFirstGameTimer';
 import useAutoBackup from '@/hooks/useAutoBackup';
 import { useMigrationTrigger } from '@/hooks/useMigrationTrigger';
+import { useRosterMigration } from '@/hooks/useRosterMigration';
 // Import the new game session reducer and related types
 import {
   gameSessionReducer,
@@ -377,6 +378,9 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   
   // Migration trigger
   const { MigrationModalComponent } = useMigrationTrigger();
+  
+  // Roster data migration - runs automatically when needed
+  useRosterMigration();
 
   const {
     isGameSettingsModalOpen,
