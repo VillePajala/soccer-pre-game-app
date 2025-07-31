@@ -3,6 +3,9 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AuthModal } from '../AuthModal';
 
+// Mock scrollIntoView (not available in jsdom)
+Element.prototype.scrollIntoView = jest.fn();
+
 // Mock the AuthContext
 const mockAuth = {
   user: null,
@@ -156,7 +159,7 @@ describe('AuthModal', () => {
       
       await waitFor(() => {
         expect(mockAuth.signUp).toHaveBeenCalledWith('test@example.com', 'SecurePass8!');
-        expect(screen.getByText('Check your email for verification link!')).toBeInTheDocument();
+        expect(screen.getByText(/Check your email for verification link!/)).toBeInTheDocument();
       });
     });
 

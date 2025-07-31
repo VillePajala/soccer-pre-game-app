@@ -47,14 +47,19 @@ Object.defineProperty(global, 'window', {
   writable: true
 });
 
-// Mock Notification API
-Object.defineProperty(window.Notification, 'permission', {
-  value: 'default',
+// Mock Notification constructor and static properties
+const mockNotificationConstructor = jest.fn().mockImplementation(() => mockNotification);
+mockNotificationConstructor.permission = 'default';
+mockNotificationConstructor.requestPermission = jest.fn().mockResolvedValue('granted');
+
+Object.defineProperty(global, 'Notification', {
+  value: mockNotificationConstructor,
   writable: true
 });
 
-Object.defineProperty(window.Notification, 'requestPermission', {
-  value: jest.fn().mockResolvedValue('granted'),
+// Also mock for window (some tests check window.Notification)
+Object.defineProperty(window, 'Notification', {
+  value: mockNotificationConstructor,
   writable: true
 });
 
@@ -76,7 +81,8 @@ describe('PushNotificationManager', () => {
     pushManager = new PushNotificationManager('test-vapid-key');
     
     // Reset mocked values
-    (window.Notification.permission as any) = 'default';
+    mockNotificationConstructor.permission = 'default';
+    (mockNotificationConstructor.requestPermission as jest.Mock).mockResolvedValue('granted');
     mockServiceWorkerRegistration.pushManager.getSubscription.mockResolvedValue(null);
     mockServiceWorkerRegistration.pushManager.subscribe.mockResolvedValue(mockPushSubscription);
     mockPushSubscription.unsubscribe.mockResolvedValue(true);
@@ -122,26 +128,26 @@ describe('PushNotificationManager', () => {
 
   describe('requestPermission', () => {
     it('should request and return granted permission', async () => {
-      window.Notification.requestPermission = jest.fn().mockResolvedValue('granted');
+      (mockNotificationConstructor.requestPermission as jest.Mock).mockResolvedValue('granted');
       
       const permission = await pushManager.requestPermission();
       expect(permission).toBe('granted');
-      expect(window.Notification.requestPermission).toHaveBeenCalled();
+      expect(mockNotificationConstructor.requestPermission).toHaveBeenCalled();
     });
 
     it('should return denied permission', async () => {
-      window.Notification.requestPermission = jest.fn().mockResolvedValue('denied');
+      (mockNotificationConstructor.requestPermission as jest.Mock).mockResolvedValue('denied');
       
       const permission = await pushManager.requestPermission();
       expect(permission).toBe('denied');
     });
 
     it('should return current permission if already granted', async () => {
-      (window.Notification.permission as any) = 'granted';
+      mockNotificationConstructor.permission = 'granted';
       
       const permission = await pushManager.requestPermission();
       expect(permission).toBe('granted');
-      expect(window.Notification.requestPermission).not.toHaveBeenCalled();
+      expect(mockNotificationConstructor.requestPermission).not.toHaveBeenCalled();
     });
 
     it('should handle missing Notification API', async () => {
@@ -161,7 +167,7 @@ describe('PushNotificationManager', () => {
     });
 
     it('should successfully subscribe to push notifications', async () => {
-      window.Notification.requestPermission = jest.fn().mockResolvedValue('granted');
+      (mockNotificationConstructor.requestPermission as jest.Mock).mockResolvedValue('granted');
       
       const subscription = await pushManager.subscribe();
       
@@ -183,7 +189,7 @@ describe('PushNotificationManager', () => {
     });
 
     it('should fail if permission is denied', async () => {
-      window.Notification.requestPermission = jest.fn().mockResolvedValue('denied');
+      (mockNotificationConstructor.requestPermission as jest.Mock).mockResolvedValue('denied');
       
       const subscription = await pushManager.subscribe();
       
@@ -192,7 +198,7 @@ describe('PushNotificationManager', () => {
     });
 
     it('should handle subscription errors', async () => {
-      window.Notification.requestPermission = jest.fn().mockResolvedValue('granted');
+      (mockNotificationConstructor.requestPermission as jest.Mock).mockResolvedValue('granted');
       mockServiceWorkerRegistration.pushManager.subscribe.mockRejectedValue(new Error('Subscription failed'));
       
       const subscription = await pushManager.subscribe();
@@ -284,7 +290,7 @@ describe('PushNotificationManager', () => {
   describe('isAvailable', () => {
     it('should return availability status', async () => {
       mockServiceWorkerRegistration.pushManager.getSubscription.mockResolvedValue(mockPushSubscription);
-      (window.Notification.permission as any) = 'granted';
+      mockNotificationConstructor.permission = 'granted';
       
       await pushManager.initialize();
       const availability = await pushManager.isAvailable();
@@ -316,7 +322,7 @@ describe('PushNotificationManager', () => {
 
   describe('sendLocalNotification', () => {
     it('should send local notification with granted permission', async () => {
-      (window.Notification.permission as any) = 'granted';
+      mockNotificationConstructor.permission = 'granted';
       
       const config = {
         title: 'Test Notification',
@@ -327,7 +333,7 @@ describe('PushNotificationManager', () => {
       const result = await pushManager.sendLocalNotification(config);
       
       expect(result).toBe(true);
-      expect(window.Notification).toHaveBeenCalledWith('Test Notification', {
+      expect(mockNotificationConstructor).toHaveBeenCalledWith('Test Notification', {
         body: 'This is a test',
         icon: '/test-icon.png',
         badge: '/icon-192.png',
@@ -339,7 +345,7 @@ describe('PushNotificationManager', () => {
     });
 
     it('should fail with denied permission', async () => {
-      window.Notification.requestPermission = jest.fn().mockResolvedValue('denied');
+      (mockNotificationConstructor.requestPermission as jest.Mock).mockResolvedValue('denied');
       
       const config = {
         title: 'Test Notification',
@@ -349,13 +355,19 @@ describe('PushNotificationManager', () => {
       const result = await pushManager.sendLocalNotification(config);
       
       expect(result).toBe(false);
-      expect(window.Notification).not.toHaveBeenCalled();
+      expect(mockNotificationConstructor).not.toHaveBeenCalled();
     });
 
     it('should handle notification errors', async () => {
-      (window.Notification.permission as any) = 'granted';
-      window.Notification = jest.fn().mockImplementation(() => {
+      const errorMock = jest.fn().mockImplementation(() => {
         throw new Error('Notification failed');
+      });
+      errorMock.permission = 'granted';
+      errorMock.requestPermission = jest.fn().mockResolvedValue('granted');
+      
+      Object.defineProperty(global, 'Notification', {
+        value: errorMock,
+        writable: true
       });
       
       const config = {

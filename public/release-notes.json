@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix: Add string type check for gameId in indexedDBProvider"
+  "notes": "fix: Improve error handling and type checks in storage management"
 }

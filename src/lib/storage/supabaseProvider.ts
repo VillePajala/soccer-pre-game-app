@@ -5,6 +5,7 @@ import type { Player, Season, Tournament } from '../../types';
 import type { AppSettings } from '../../utils/appSettings';
 import { supabase } from '../supabase';
 import { toSupabase, fromSupabase } from '../../utils/transforms';
+import type { DbSeason, DbTournament, DbPlayer, DbAppSettings, DbGame } from '../../utils/transforms';
 
 export class SupabaseProvider implements IStorageProvider {
   
@@ -43,7 +44,7 @@ export class SupabaseProvider implements IStorageProvider {
         throw new NetworkError('supabase', 'getPlayers', error);
       }
 
-      return data.map(fromSupabase.player);
+      return data.map((player: DbPlayer) => fromSupabase.player(player));
     } catch (error) {
       if (error instanceof AuthenticationError || error instanceof NetworkError) {
         throw error;
@@ -86,7 +87,7 @@ export class SupabaseProvider implements IStorageProvider {
         result = data;
       }
 
-      return fromSupabase.player(result);
+      return fromSupabase.player(result as DbPlayer);
     } catch (error) {
       if (error instanceof AuthenticationError || error instanceof NetworkError) {
         throw error;
@@ -132,7 +133,7 @@ export class SupabaseProvider implements IStorageProvider {
         throw new NetworkError('supabase', 'updatePlayer', error);
       }
 
-      return fromSupabase.player(data);
+      return fromSupabase.player(data as DbPlayer);
     } catch (error) {
       if (error instanceof AuthenticationError || error instanceof NetworkError) {
         throw error;
@@ -155,7 +156,7 @@ export class SupabaseProvider implements IStorageProvider {
         throw new NetworkError('supabase', 'getSeasons', error);
       }
 
-      return data.map(fromSupabase.season);
+      return data.map((season: DbSeason) => fromSupabase.season(season));
     } catch (error) {
       if (error instanceof AuthenticationError || error instanceof NetworkError) {
         throw error;
@@ -198,7 +199,7 @@ export class SupabaseProvider implements IStorageProvider {
         result = data;
       }
 
-      return fromSupabase.season(result);
+      return fromSupabase.season(result as DbSeason);
     } catch (error) {
       if (error instanceof AuthenticationError || error instanceof NetworkError) {
         throw error;
@@ -244,7 +245,7 @@ export class SupabaseProvider implements IStorageProvider {
         throw new NetworkError('supabase', 'updateSeason', error);
       }
 
-      return fromSupabase.season(data);
+      return fromSupabase.season(data as DbSeason);
     } catch (error) {
       if (error instanceof AuthenticationError || error instanceof NetworkError) {
         throw error;
@@ -267,7 +268,7 @@ export class SupabaseProvider implements IStorageProvider {
         throw new NetworkError('supabase', 'getTournaments', error);
       }
 
-      return data.map(fromSupabase.tournament);
+      return data.map((tournament: DbTournament) => fromSupabase.tournament(tournament));
     } catch (error) {
       if (error instanceof AuthenticationError || error instanceof NetworkError) {
         throw error;
@@ -310,7 +311,7 @@ export class SupabaseProvider implements IStorageProvider {
         result = data;
       }
 
-      return fromSupabase.tournament(result);
+      return fromSupabase.tournament(result as DbTournament);
     } catch (error) {
       if (error instanceof AuthenticationError || error instanceof NetworkError) {
         throw error;
@@ -356,7 +357,7 @@ export class SupabaseProvider implements IStorageProvider {
         throw new NetworkError('supabase', 'updateTournament', error);
       }
 
-      return fromSupabase.tournament(data);
+      return fromSupabase.tournament(data as DbTournament);
     } catch (error) {
       if (error instanceof AuthenticationError || error instanceof NetworkError) {
         throw error;
@@ -383,7 +384,7 @@ export class SupabaseProvider implements IStorageProvider {
         throw new NetworkError('supabase', 'getAppSettings', error);
       }
 
-      return fromSupabase.appSettings(data);
+      return fromSupabase.appSettings(data as DbAppSettings);
     } catch (error) {
       if (error instanceof AuthenticationError || error instanceof NetworkError) {
         throw error;
@@ -407,7 +408,7 @@ export class SupabaseProvider implements IStorageProvider {
         throw new NetworkError('supabase', 'saveAppSettings', error);
       }
 
-      return fromSupabase.appSettings(data);
+      return fromSupabase.appSettings(data as DbAppSettings);
     } catch (error) {
       if (error instanceof AuthenticationError || error instanceof NetworkError) {
         throw error;
@@ -438,7 +439,7 @@ export class SupabaseProvider implements IStorageProvider {
       // For now, just transform the basic game data
       // This ensures the app continues to work even if the complex query fails
       for (const game of gamesData) {
-        const transformedGame = fromSupabase.game(game);
+        const transformedGame = fromSupabase.game(game as DbGame);
         gamesCollection[game.id] = transformedGame;
       }
       
@@ -513,7 +514,7 @@ export class SupabaseProvider implements IStorageProvider {
         result = data;
       }
 
-      return fromSupabase.game(result);
+      return fromSupabase.game(result as DbGame);
     } catch (error) {
       if (error instanceof AuthenticationError || error instanceof NetworkError) {
         throw error;

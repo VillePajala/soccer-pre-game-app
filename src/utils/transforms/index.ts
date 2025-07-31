@@ -3,7 +3,7 @@ import type { Player, Season, Tournament } from '../../types';
 import type { AppSettings } from '../appSettings';
 
 // Database record interfaces
-interface DbPlayer {
+export interface DbPlayer {
   id: string;
   name: string;
   nickname?: string;
@@ -16,7 +16,7 @@ interface DbPlayer {
   updated_at?: string;
 }
 
-interface DbSeason {
+export interface DbSeason {
   id: string;
   name: string;
   location?: string;
@@ -36,7 +36,7 @@ interface DbSeason {
   updated_at?: string;
 }
 
-interface DbTournament {
+export interface DbTournament {
   id: string;
   name: string;
   season_id?: string;
@@ -60,7 +60,7 @@ interface DbTournament {
   updated_at?: string;
 }
 
-interface DbAppSettings {
+export interface DbAppSettings {
   id: string;
   language?: string;
   default_team_name?: string;
@@ -79,7 +79,7 @@ interface DbAppSettings {
   updated_at?: string;
 }
 
-interface DbGame {
+export interface DbGame {
   id: string;
   game_data: Record<string, unknown>;
   team_name?: string;
@@ -304,41 +304,63 @@ export const fromSupabase = {
     receivedFairPlayCard: dbPlayer.received_fair_play_card
   }),
 
-  season: (dbSeason: DbSeason) => ({
-    id: dbSeason.id,
-    name: dbSeason.name,
-    location: dbSeason.location,
-    periodCount: dbSeason.period_count,
-    periodDuration: dbSeason.period_duration,
-    startDate: dbSeason.start_date,
-    endDate: dbSeason.end_date,
-    gameDates: dbSeason.game_dates,
-    archived: dbSeason.archived,
-    defaultRosterId: dbSeason.default_roster_ids?.[0], // Take first element if array
-    notes: dbSeason.notes,
-    color: dbSeason.color,
-    badge: dbSeason.badge,
-    ageGroup: dbSeason.age_group
-  }),
+  season: (dbSeason: DbSeason): Season => {
+    const result: Partial<Season> = {
+      id: dbSeason.id,
+      name: dbSeason.name,
+      periodCount: dbSeason.period_count,
+      periodDuration: dbSeason.period_duration,
+      archived: dbSeason.archived || false
+    };
 
-  tournament: (dbTournament: DbTournament) => ({
-    id: dbTournament.id,
-    name: dbTournament.name,
-    seasonId: dbTournament.season_id,
-    location: dbTournament.location,
-    periodCount: dbTournament.period_count,
-    periodDuration: dbTournament.period_duration,
-    startDate: dbTournament.start_date,
-    endDate: dbTournament.end_date,
-    gameDates: dbTournament.game_dates,
-    archived: dbTournament.archived,
-    defaultRosterId: dbTournament.default_roster_ids?.[0], // Take first element if array
-    notes: dbTournament.notes,
-    color: dbTournament.color,
-    badge: dbTournament.badge,
-    level: dbTournament.level,
-    ageGroup: dbTournament.age_group
-  }),
+    // Only include optional fields if they have values
+    if (dbSeason.location) result.location = dbSeason.location;
+    if (dbSeason.start_date) result.startDate = dbSeason.start_date;
+    if (dbSeason.end_date) result.endDate = dbSeason.end_date;
+    if (dbSeason.game_dates) result.gameDates = dbSeason.game_dates;
+    if (dbSeason.notes) result.notes = dbSeason.notes;
+    if (dbSeason.color) result.color = dbSeason.color;
+    if (dbSeason.badge) result.badge = dbSeason.badge;
+    if (dbSeason.age_group) result.ageGroup = dbSeason.age_group;
+    
+    if (dbSeason.default_roster_ids) {
+      result.defaultRosterId = Array.isArray(dbSeason.default_roster_ids) 
+        ? dbSeason.default_roster_ids[0] 
+        : dbSeason.default_roster_ids;
+    }
+
+    return result as Season;
+  },
+
+  tournament: (dbTournament: DbTournament): Tournament => {
+    const result: Partial<Tournament> = {
+      id: dbTournament.id,
+      name: dbTournament.name,
+      periodCount: dbTournament.period_count,
+      periodDuration: dbTournament.period_duration,
+      archived: dbTournament.archived || false
+    };
+
+    // Only include optional fields if they have values
+    if (dbTournament.season_id) result.seasonId = dbTournament.season_id;
+    if (dbTournament.location) result.location = dbTournament.location;
+    if (dbTournament.start_date) result.startDate = dbTournament.start_date;
+    if (dbTournament.end_date) result.endDate = dbTournament.end_date;
+    if (dbTournament.game_dates) result.gameDates = dbTournament.game_dates;
+    if (dbTournament.notes) result.notes = dbTournament.notes;
+    if (dbTournament.color) result.color = dbTournament.color;
+    if (dbTournament.badge) result.badge = dbTournament.badge;
+    if (dbTournament.level) result.level = dbTournament.level;
+    if (dbTournament.age_group) result.ageGroup = dbTournament.age_group;
+    
+    if (dbTournament.default_roster_ids) {
+      result.defaultRosterId = Array.isArray(dbTournament.default_roster_ids) 
+        ? dbTournament.default_roster_ids[0] 
+        : dbTournament.default_roster_ids;
+    }
+
+    return result as Tournament;
+  },
 
   appSettings: (dbSettings: DbAppSettings) => ({
     language: dbSettings.language,
