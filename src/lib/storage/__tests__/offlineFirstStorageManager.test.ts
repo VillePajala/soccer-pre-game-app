@@ -64,27 +64,23 @@ jest.mock('../syncManager', () => ({
   SyncManager: jest.fn().mockImplementation(() => mockSyncManager)
 }));
 
+// Mock navigator at module level
+const mockNavigator = {
+  onLine: true
+};
+
+// Store original navigator
+const originalNavigator = global.navigator;
+
+// Mock navigator globally for this test file
+global.navigator = mockNavigator as any;
+
 describe('OfflineFirstStorageManager', () => {
   let storageManager: OfflineFirstStorageManager;
-  let originalOnLine: boolean;
-
-  beforeAll(() => {
-    // Store and mock navigator.onLine once
-    originalOnLine = navigator.onLine;
-    Object.defineProperty(navigator, 'onLine', {
-      writable: true,
-      configurable: true,
-      value: true
-    });
-  });
 
   afterAll(() => {
-    // Restore original navigator.onLine
-    Object.defineProperty(navigator, 'onLine', {
-      writable: true,
-      configurable: true,
-      value: originalOnLine
-    });
+    // Restore original navigator
+    global.navigator = originalNavigator;
   });
 
   beforeEach(() => {
@@ -106,7 +102,7 @@ describe('OfflineFirstStorageManager', () => {
     mockSupabase.isOnline.mockResolvedValue(true);
 
     // Reset navigator.onLine for each test
-    navigator.onLine = true;
+    mockNavigator.onLine = true;
     
     storageManager = new OfflineFirstStorageManager({
       enableOfflineMode: true,
@@ -126,14 +122,14 @@ describe('OfflineFirstStorageManager', () => {
     });
 
     it('should return false when navigator is offline', async () => {
-      navigator.onLine = false;
+      mockNavigator.onLine = false;
       const storageManagerOffline = new OfflineFirstStorageManager();
       
       const isOnline = await storageManagerOffline.isOnline();
       expect(isOnline).toBe(false);
       
       // Restore for other tests
-      navigator.onLine = true;
+      mockNavigator.onLine = true;
     });
   });
 
