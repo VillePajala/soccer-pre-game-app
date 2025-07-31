@@ -33,7 +33,12 @@ export class SupabaseProvider implements IStorageProvider {
   getAppSettings = jest.fn().mockResolvedValue({});
   saveAppSettings = jest.fn();
   
+  // Saved games operations
+  getSavedGames = jest.fn().mockResolvedValue({});
+  saveSavedGame = jest.fn();
+  deleteSavedGame = jest.fn().mockResolvedValue(undefined);
+  
   // Backup operations
-  exportData = jest.fn().mockResolvedValue({});
-  importData = jest.fn().mockResolvedValue(undefined);
+  exportAllData = jest.fn().mockResolvedValue({});
+  importAllData = jest.fn().mockResolvedValue(undefined);
 }

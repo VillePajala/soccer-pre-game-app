@@ -48,7 +48,10 @@ Object.defineProperty(global, 'window', {
 });
 
 // Mock Notification constructor and static properties
-const mockNotificationConstructor = jest.fn().mockImplementation(() => mockNotification);
+const mockNotificationConstructor = jest.fn().mockImplementation(() => mockNotification) as jest.MockedFunction<new () => Notification> & {
+  permission: NotificationPermission;
+  requestPermission: jest.MockedFunction<() => Promise<NotificationPermission>>;
+};
 mockNotificationConstructor.permission = 'default';
 mockNotificationConstructor.requestPermission = jest.fn().mockResolvedValue('granted');
 
@@ -82,7 +85,7 @@ describe('PushNotificationManager', () => {
     
     // Reset mocked values
     mockNotificationConstructor.permission = 'default';
-    (mockNotificationConstructor.requestPermission as jest.Mock).mockResolvedValue('granted');
+    mockNotificationConstructor.requestPermission.mockResolvedValue('granted');
     mockServiceWorkerRegistration.pushManager.getSubscription.mockResolvedValue(null);
     mockServiceWorkerRegistration.pushManager.subscribe.mockResolvedValue(mockPushSubscription);
     mockPushSubscription.unsubscribe.mockResolvedValue(true);
@@ -128,7 +131,7 @@ describe('PushNotificationManager', () => {
 
   describe('requestPermission', () => {
     it('should request and return granted permission', async () => {
-      (mockNotificationConstructor.requestPermission as jest.Mock).mockResolvedValue('granted');
+      mockNotificationConstructor.requestPermission.mockResolvedValue('granted');
       
       const permission = await pushManager.requestPermission();
       expect(permission).toBe('granted');
@@ -136,7 +139,7 @@ describe('PushNotificationManager', () => {
     });
 
     it('should return denied permission', async () => {
-      (mockNotificationConstructor.requestPermission as jest.Mock).mockResolvedValue('denied');
+      mockNotificationConstructor.requestPermission.mockResolvedValue('denied');
       
       const permission = await pushManager.requestPermission();
       expect(permission).toBe('denied');
@@ -167,7 +170,7 @@ describe('PushNotificationManager', () => {
     });
 
     it('should successfully subscribe to push notifications', async () => {
-      (mockNotificationConstructor.requestPermission as jest.Mock).mockResolvedValue('granted');
+      mockNotificationConstructor.requestPermission.mockResolvedValue('granted');
       
       const subscription = await pushManager.subscribe();
       
@@ -189,7 +192,7 @@ describe('PushNotificationManager', () => {
     });
 
     it('should fail if permission is denied', async () => {
-      (mockNotificationConstructor.requestPermission as jest.Mock).mockResolvedValue('denied');
+      mockNotificationConstructor.requestPermission.mockResolvedValue('denied');
       
       const subscription = await pushManager.subscribe();
       
@@ -198,7 +201,7 @@ describe('PushNotificationManager', () => {
     });
 
     it('should handle subscription errors', async () => {
-      (mockNotificationConstructor.requestPermission as jest.Mock).mockResolvedValue('granted');
+      mockNotificationConstructor.requestPermission.mockResolvedValue('granted');
       mockServiceWorkerRegistration.pushManager.subscribe.mockRejectedValue(new Error('Subscription failed'));
       
       const subscription = await pushManager.subscribe();
@@ -345,7 +348,7 @@ describe('PushNotificationManager', () => {
     });
 
     it('should fail with denied permission', async () => {
-      (mockNotificationConstructor.requestPermission as jest.Mock).mockResolvedValue('denied');
+      mockNotificationConstructor.requestPermission.mockResolvedValue('denied');
       
       const config = {
         title: 'Test Notification',

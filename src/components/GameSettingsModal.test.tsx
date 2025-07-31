@@ -93,6 +93,9 @@ const mockOnSeasonIdChange = jest.fn();
 const mockOnTournamentIdChange = jest.fn();
 const mockOnSetHomeOrAway = jest.fn();
 const mockOnTeamNameChange = jest.fn();
+const mockOnAgeGroupChange = jest.fn();
+const mockOnTournamentLevelChange = jest.fn();
+const mockOnAwardFairPlayCard = jest.fn();
 
 jest.mock('@/utils/seasons', () => ({ getSeasons: jest.fn() }));
 jest.mock('@/utils/tournaments', () => ({ getTournaments: jest.fn() }));
@@ -131,6 +134,8 @@ const defaultProps: GameSettingsModalProps = {
   gameLocation: 'Central Park',
   gameTime: '14:30',
   gameNotes: 'Regular season match',
+  ageGroup: 'u15',
+  tournamentLevel: 'regional',
   gameEvents: [...mockGameEvents], 
   availablePlayers: mockPlayers,
   selectedPlayerIds: ['p1', 'p2'],
@@ -143,6 +148,9 @@ const defaultProps: GameSettingsModalProps = {
   onGameDateChange: mockOnGameDateChange,
   onGameLocationChange: mockOnGameLocationChange,
   onGameTimeChange: mockOnGameTimeChange,
+  onAgeGroupChange: mockOnAgeGroupChange,
+  onTournamentLevelChange: mockOnTournamentLevelChange,
+  onAwardFairPlayCard: mockOnAwardFairPlayCard,
   onUpdateGameEvent: mockOnUpdateGameEvent,
   onDeleteGameEvent: mockOnDeleteGameEvent,
   onNumPeriodsChange: mockOnNumPeriodsChange,
@@ -156,12 +164,13 @@ const defaultProps: GameSettingsModalProps = {
   onSetHomeOrAway: mockOnSetHomeOrAway,
   isPlayed: true,
   onIsPlayedChange: jest.fn(),
+  timeElapsedInSeconds: 300,
   addSeasonMutation: {
     mutate: jest.fn(),
-  } as unknown as UseMutationResult<Season | null, Error, { name: string }, unknown>,
+  } as unknown as UseMutationResult<Season | null, Error, Partial<Season> & { name: string }, unknown>,
   addTournamentMutation: {
     mutate: jest.fn(),
-  } as unknown as UseMutationResult<Tournament | null, Error, { name: string }, unknown>,
+  } as unknown as UseMutationResult<Tournament | null, Error, Partial<Tournament> & { name: string }, unknown>,
   isAddingSeason: false,
   isAddingTournament: false,
   updateGameDetailsMutation: {

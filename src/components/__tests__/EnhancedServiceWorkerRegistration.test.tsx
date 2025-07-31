@@ -10,21 +10,23 @@ jest.mock('@/hooks/useConnectionStatus');
 const mockUseConnectionStatus = useConnectionStatus as jest.MockedFunction<typeof useConnectionStatus>;
 
 // Mock service worker
+const mockAddEventListener = jest.fn();
 const mockServiceWorkerRegistration = {
   waiting: null,
   installing: null,
   active: null,
   update: jest.fn().mockResolvedValue(undefined),
-  addEventListener: jest.fn(),
+  addEventListener: mockAddEventListener,
   sync: {
     register: jest.fn().mockResolvedValue(undefined)
   }
 } as unknown as ServiceWorkerRegistration;
 
+const mockServiceWorkerAddEventListener = jest.fn();
 const mockServiceWorker = {
   postMessage: jest.fn(),
-  addEventListener: jest.fn(),
-  state: 'installed'
+  addEventListener: mockServiceWorkerAddEventListener,
+  state: 'installed' as ServiceWorkerState
 } as unknown as ServiceWorker;
 
 // Mock MessageChannel
@@ -110,15 +112,16 @@ describe('EnhancedServiceWorkerRegistration', () => {
       render(<EnhancedServiceWorkerRegistration />);
 
       // Simulate update found event
-      const updateFoundCallback = mockServiceWorkerRegistration.addEventListener.mock.calls
-        .find(call => call[0] === 'updatefound')?.[1];
+      const updateFoundCallback = mockAddEventListener.mock.calls
+        .find((call: unknown[]) => call[0] === 'updatefound')?.[1];
       
       if (updateFoundCallback) {
         // Simulate new worker with state change
+        const newWorkerAddEventListener = jest.fn();
         const newWorker = {
           ...mockServiceWorker,
-          addEventListener: jest.fn(),
-          state: 'installing'
+          addEventListener: newWorkerAddEventListener,
+          state: 'installing' as ServiceWorkerState
         };
         
         registration.installing = newWorker;
@@ -128,12 +131,16 @@ describe('EnhancedServiceWorkerRegistration', () => {
         });
 
         // Simulate state change to installed
-        const stateChangeCallback = newWorker.addEventListener.mock.calls
-          .find(call => call[0] === 'statechange')?.[1];
+        const stateChangeCallback = newWorkerAddEventListener.mock.calls
+          .find((call: unknown[]) => call[0] === 'statechange')?.[1];
         
         if (stateChangeCallback) {
-          newWorker.state = 'installed';
           // Mock existing controller
+          Object.defineProperty(newWorker, 'state', {
+            value: 'installed' as ServiceWorkerState,
+            writable: true,
+            configurable: true
+          });
           Object.defineProperty(navigator.serviceWorker, 'controller', {
             value: mockServiceWorker,
             configurable: true
@@ -161,8 +168,8 @@ describe('EnhancedServiceWorkerRegistration', () => {
       render(<EnhancedServiceWorkerRegistration />);
 
       // Simulate update available state
-      const updateFoundCallback = mockServiceWorkerRegistration.addEventListener.mock.calls
-        .find(call => call[0] === 'updatefound')?.[1];
+      const updateFoundCallback = mockAddEventListener.mock.calls
+        .find((call: unknown[]) => call[0] === 'updatefound')?.[1];
       
       if (updateFoundCallback) {
         registration.installing = mockServiceWorker;
@@ -170,11 +177,15 @@ describe('EnhancedServiceWorkerRegistration', () => {
           updateFoundCallback();
         });
 
-        const stateChangeCallback = mockServiceWorker.addEventListener.mock.calls
-          .find(call => call[0] === 'statechange')?.[1];
+        const stateChangeCallback = mockServiceWorkerAddEventListener.mock.calls
+          .find((call: unknown[]) => call[0] === 'statechange')?.[1];
         
         if (stateChangeCallback) {
-          mockServiceWorker.state = 'installed';
+          Object.defineProperty(mockServiceWorker, 'state', {
+            value: 'installed' as ServiceWorkerState,
+            writable: true,
+            configurable: true
+          });
           Object.defineProperty(navigator.serviceWorker, 'controller', {
             value: mockServiceWorker,
             configurable: true
@@ -241,9 +252,12 @@ describe('EnhancedServiceWorkerRegistration', () => {
     it('should display sync notifications', async () => {
       render(<EnhancedServiceWorkerRegistration />);
 
+      // Mock navigator.serviceWorker.addEventListener calls
+      const navigatorServiceWorkerAddEventListener = navigator.serviceWorker.addEventListener as jest.Mock;
+      
       // Simulate sync completed message
-      const messageHandler = (navigator.serviceWorker.addEventListener as jest.Mock).mock.calls
-        .find(call => call[0] === 'message')?.[1];
+      const messageHandler = navigatorServiceWorkerAddEventListener.mock.calls
+        .find((call: unknown[]) => call[0] === 'message')?.[1];
 
       if (messageHandler) {
         act(() => {
@@ -265,8 +279,9 @@ describe('EnhancedServiceWorkerRegistration', () => {
     it('should display sync failure notifications', async () => {
       render(<EnhancedServiceWorkerRegistration />);
 
-      const messageHandler = (navigator.serviceWorker.addEventListener as jest.Mock).mock.calls
-        .find(call => call[0] === 'message')?.[1];
+      const navigatorServiceWorkerAddEventListener = navigator.serviceWorker.addEventListener as jest.Mock;
+      const messageHandler = navigatorServiceWorkerAddEventListener.mock.calls
+        .find((call: unknown[]) => call[0] === 'message')?.[1];
 
       if (messageHandler) {
         act(() => {
@@ -289,7 +304,10 @@ describe('EnhancedServiceWorkerRegistration', () => {
   describe('Developer Tools', () => {
     it('should show developer tools in development mode', () => {
       const originalEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = 'development';
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: 'development',
+        configurable: true
+      });
 
       render(<EnhancedServiceWorkerRegistration />);
 
@@ -298,23 +316,35 @@ describe('EnhancedServiceWorkerRegistration', () => {
       expect(screen.getByText('📊 Cache Status')).toBeInTheDocument();
       expect(screen.getByText('🗑️ Clear Caches')).toBeInTheDocument();
 
-      process.env.NODE_ENV = originalEnv;
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: originalEnv,
+        configurable: true
+      });
     });
 
     it('should not show developer tools in production mode', () => {
       const originalEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = 'production';
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: 'production',
+        configurable: true
+      });
 
       render(<EnhancedServiceWorkerRegistration />);
 
       expect(screen.queryByText('SW Dev Tools')).not.toBeInTheDocument();
 
-      process.env.NODE_ENV = originalEnv;
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: originalEnv,
+        configurable: true
+      });
     });
 
     it('should handle manual sync button click', async () => {
       const originalEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = 'development';
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: 'development',
+        configurable: true
+      });
 
       render(<EnhancedServiceWorkerRegistration />);
 
@@ -325,12 +355,18 @@ describe('EnhancedServiceWorkerRegistration', () => {
         type: 'SYNC_REQUEST'
       });
 
-      process.env.NODE_ENV = originalEnv;
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: originalEnv,
+        configurable: true
+      });
     });
 
     it('should handle cache status button click', async () => {
       const originalEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = 'development';
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: 'development',
+        configurable: true
+      });
       const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
 
       render(<EnhancedServiceWorkerRegistration />);
@@ -344,13 +380,19 @@ describe('EnhancedServiceWorkerRegistration', () => {
         expect.any(Array)
       );
 
-      process.env.NODE_ENV = originalEnv;
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: originalEnv,
+        configurable: true
+      });
       consoleSpy.mockRestore();
     });
 
     it('should handle clear caches button click', async () => {
       const originalEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = 'development';
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: 'development',
+        configurable: true
+      });
 
       render(<EnhancedServiceWorkerRegistration />);
 
@@ -362,7 +404,10 @@ describe('EnhancedServiceWorkerRegistration', () => {
         expect.any(Array)
       );
 
-      process.env.NODE_ENV = originalEnv;
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: originalEnv,
+        configurable: true
+      });
     });
   });
 

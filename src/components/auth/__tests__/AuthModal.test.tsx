@@ -90,7 +90,7 @@ describe('AuthModal', () => {
     });
 
     it('should display loading state during sign in', async () => {
-      let resolveSignIn: (value: { error: null }) => void;
+      let resolveSignIn!: (value: { error: null }) => void;
       mockAuth.signIn.mockReturnValue(new Promise<{ error: null }>(resolve => {
         resolveSignIn = resolve;
       }));
