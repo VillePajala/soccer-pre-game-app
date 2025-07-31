@@ -16,8 +16,8 @@ interface BackgroundSyncOptions {
 
 interface SyncResult {
   success: boolean;
-  processed: number;
-  failed: number;
+  syncedItems: number;
+  failedItems: number;
   errors: string[];
 }
 
@@ -66,17 +66,19 @@ export class BackgroundSyncHandler {
       
       return {
         success: result.success,
-        processed: result.processed || 0,
-        failed: result.failed || 0,
-        errors: result.errors || []
+        syncedItems: result.syncedItems || 0,
+        failedItems: result.failedItems || 0,
+        errors: result.errors.map(e =>
+          e instanceof Error ? e.message : String(e)
+        )
       };
     } catch (error) {
       console.error('[BG-Sync] Background sync failed:', error);
       
       return {
         success: false,
-        processed: 0,
-        failed: 1,
+        syncedItems: 0,
+        failedItems: 1,
         errors: [error instanceof Error ? error.message : 'Unknown error']
       };
     }
@@ -100,7 +102,7 @@ export class BackgroundSyncHandler {
       if (operation) {
         await this.syncManager.queueOperation(
           operation.action,
-          operation.table,
+          operation.table as keyof import('../storage/indexedDBProvider').IndexedDBSchema,
           operation.data
         );
       }

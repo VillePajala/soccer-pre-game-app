@@ -3,13 +3,18 @@
  * Handles push notification subscriptions, permissions, and messaging for game alerts and sync notifications
  */
 
+interface NotificationData {
+  url?: string;
+  [key: string]: unknown;
+}
+
 interface NotificationConfig {
   title: string;
   body: string;
   icon?: string;
   badge?: string;
   tag?: string;
-  data?: Record<string, unknown>;
+  data?: NotificationData;
   actions?: NotificationAction[];
   requireInteraction?: boolean;
   silent?: boolean;
