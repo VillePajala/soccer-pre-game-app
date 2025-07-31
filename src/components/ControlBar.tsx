@@ -24,7 +24,6 @@ import {
     HiOutlineArchiveBoxArrowDown, // Use this for Quick Save
     // ADD New Icons
     HiOutlineAdjustmentsHorizontal, // For Game Settings
-    HiOutlineDocumentArrowDown,   // For Export Data
     HiOutlineSquares2X2,       // For Place All Players on Field
     // HiOutlineXCircle, // REMOVE unused
     // HiOutlineRectangleGroup, // REMOVE unused
@@ -440,9 +439,6 @@ const ControlBar: React.FC<ControlBarProps> = ({
               </button>
               <button onClick={wrapHandler(onToggleTrainingResources)} className="w-full flex items-center px-3 py-2.5 text-sm text-slate-100 hover:bg-slate-700/75 rounded-lg transition-colors">
                 <HiOutlineBookOpen className={menuIconSize} /> {t('controlBar.training', 'Training Resources')}
-              </button>
-              <button onClick={wrapHandler(onOpenLoadGameModal)} className="w-full flex items-center px-3 py-2.5 text-sm text-slate-100 hover:bg-slate-700/75 rounded-lg transition-colors">
-                <HiOutlineDocumentArrowDown className={menuIconSize} /> {t('controlBar.exportData', 'Export Data')}
               </button>
             </div>
           </div>

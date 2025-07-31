@@ -1,6 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { 
+  getPWASettings, 
+  incrementInstallPromptCount, 
+  setInstallPromptDismissed,
+  getAppUsageCount,
+  incrementAppUsageCount,
+  setInstallPromptNeverShow 
+} from '@/utils/pwaSettings';
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
@@ -34,17 +42,16 @@ export default function EnhancedInstallPrompt({ className = '' }: EnhancedInstal
 
     checkStandalone();
 
-    // Load install stats from localStorage
-    const savedInstallCount = localStorage.getItem('install-prompt-count');
-    const savedLastDismissed = localStorage.getItem('install-prompt-last-dismissed');
+    // Load install stats from IndexedDB
+    const loadPWASettings = async () => {
+      const settings = await getPWASettings();
+      setInstallCount(settings.installPromptCount);
+      if (settings.installPromptLastDismissed) {
+        setLastPromptDismissed(settings.installPromptLastDismissed);
+      }
+    };
     
-    if (savedInstallCount) {
-      setInstallCount(parseInt(savedInstallCount, 10));
-    }
-    
-    if (savedLastDismissed) {
-      setLastPromptDismissed(parseInt(savedLastDismissed, 10));
-    }
+    loadPWASettings();
 
     // Listen for beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -55,12 +62,13 @@ export default function EnhancedInstallPrompt({ className = '' }: EnhancedInstal
       setDeferredPrompt(promptEvent);
       
       // Show prompt based on smart logic
-      const shouldShow = shouldShowInstallPrompt();
-      setShowPrompt(shouldShow);
-      
-      if (shouldShow) {
-        console.log('[Install] Showing install prompt');
-      }
+      shouldShowInstallPrompt().then(shouldShow => {
+        setShowPrompt(shouldShow);
+        
+        if (shouldShow) {
+          console.log('[Install] Showing install prompt');
+        }
+      });
     };
 
     // Listen for app installed event
@@ -71,13 +79,13 @@ export default function EnhancedInstallPrompt({ className = '' }: EnhancedInstal
       setDeferredPrompt(null);
       
       // Track successful installation
-      const newCount = installCount + 1;
-      setInstallCount(newCount);
-      localStorage.setItem('install-prompt-count', newCount.toString());
+      incrementInstallPromptCount().then(newCount => {
+        setInstallCount(newCount);
+      });
     };
 
     // Smart logic to determine if we should show install prompt
-    const shouldShowInstallPrompt = (): boolean => {
+    const shouldShowInstallPrompt = async (): Promise<boolean> => {
       // Don't show if already standalone
       if (isStandalone) return false;
       
@@ -97,8 +105,7 @@ export default function EnhancedInstallPrompt({ className = '' }: EnhancedInstal
       }
       
       // Check if user has used the app enough (basic engagement check)
-      const appUsageCount = localStorage.getItem('app-usage-count') || '0';
-      const usageCount = parseInt(appUsageCount, 10);
+      const usageCount = await getAppUsageCount();
       
       // Show after user has used the app at least 3 times
       return usageCount >= 3;
@@ -115,10 +122,8 @@ export default function EnhancedInstallPrompt({ className = '' }: EnhancedInstal
 
   // Track app usage for engagement-based prompting
   useEffect(() => {
-    const incrementUsage = () => {
-      const currentCount = localStorage.getItem('app-usage-count') || '0';
-      const newCount = parseInt(currentCount, 10) + 1;
-      localStorage.setItem('app-usage-count', newCount.toString());
+    const incrementUsage = async () => {
+      await incrementAppUsageCount();
     };
 
     // Increment usage count on mount (page visit)
@@ -156,23 +161,22 @@ export default function EnhancedInstallPrompt({ className = '' }: EnhancedInstal
     }
   };
 
-  const handleDismiss = () => {
+  const handleDismiss = async () => {
     const now = Date.now();
     setLastPromptDismissed(now);
-    localStorage.setItem('install-prompt-last-dismissed', now.toString());
+    await setInstallPromptDismissed(now);
     
-    const newCount = installCount + 1;
+    const newCount = await incrementInstallPromptCount();
     setInstallCount(newCount);
-    localStorage.setItem('install-prompt-count', newCount.toString());
     
     setShowPrompt(false);
     console.log('[Install] Install prompt dismissed');
   };
 
-  const handleNeverShow = () => {
+  const handleNeverShow = async () => {
     // Set count to max to prevent future prompts
     setInstallCount(999);
-    localStorage.setItem('install-prompt-count', '999');
+    await setInstallPromptNeverShow();
     setShowPrompt(false);
     console.log('[Install] Install prompt disabled permanently');
   };

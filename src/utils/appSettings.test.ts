@@ -61,7 +61,15 @@ describe('App Settings Utilities', () => {
         autoBackupIntervalHours: 24,
         lastBackupTime: undefined,
         backupEmail: '',
-        useDemandCorrection: false
+        useDemandCorrection: false,
+        // PWA settings
+        installPromptCount: 0,
+        installPromptLastDismissed: null,
+        appUsageCount: 0,
+        installPromptDismissed: null,
+        // Session/Security settings
+        deviceFingerprint: undefined,
+        sessionActivity: {},
       });
     });
 
@@ -74,7 +82,15 @@ describe('App Settings Utilities', () => {
         autoBackupIntervalHours: 48,
         lastBackupTime: '2023-10-01T12:00:00Z',
         backupEmail: 'test@example.com',
-        useDemandCorrection: true
+        useDemandCorrection: true,
+        // PWA settings
+        installPromptCount: 0,
+        installPromptLastDismissed: null,
+        appUsageCount: 0,
+        installPromptDismissed: null,
+        // Session/Security settings
+        deviceFingerprint: undefined,
+        sessionActivity: {},
       };
       mockStorageManager.getAppSettings.mockResolvedValue(storedSettings);
       
@@ -104,7 +120,15 @@ describe('App Settings Utilities', () => {
         autoBackupIntervalHours: 24,
         lastBackupTime: undefined,
         backupEmail: '',
-        useDemandCorrection: false
+        useDemandCorrection: false,
+        // PWA settings
+        installPromptCount: 0,
+        installPromptLastDismissed: null,
+        appUsageCount: 0,
+        installPromptDismissed: null,
+        // Session/Security settings
+        deviceFingerprint: undefined,
+        sessionActivity: {},
       });
     });
 
@@ -122,7 +146,15 @@ describe('App Settings Utilities', () => {
         autoBackupIntervalHours: 24,
         lastBackupTime: undefined,
         backupEmail: '',
-        useDemandCorrection: false
+        useDemandCorrection: false,
+        // PWA settings
+        installPromptCount: 0,
+        installPromptLastDismissed: null,
+        appUsageCount: 0,
+        installPromptDismissed: null,
+        // Session/Security settings
+        deviceFingerprint: undefined,
+        sessionActivity: {},
       });
       expect(mockLogger.error).toHaveBeenCalledWith('Error getting app settings:', expect.any(Error));
     });
@@ -172,7 +204,15 @@ describe('App Settings Utilities', () => {
         lastBackupTime: undefined,
         backupEmail: '',
         useDemandCorrection: false,
-        lastHomeTeamName: ''
+        lastHomeTeamName: '',
+        // PWA settings
+        installPromptCount: 0,
+        installPromptLastDismissed: null,
+        appUsageCount: 0,
+        installPromptDismissed: null,
+        // Session/Security settings
+        deviceFingerprint: undefined,
+        sessionActivity: {},
       };
       mockStorageManager.getAppSettings.mockResolvedValue(existingSettings);
       mockStorageManager.saveAppSettings.mockResolvedValue({} as AppSettings);
@@ -245,7 +285,15 @@ describe('App Settings Utilities', () => {
         lastBackupTime: undefined,
         backupEmail: '',
         useDemandCorrection: false,
-        lastHomeTeamName: ''
+        lastHomeTeamName: '',
+        // PWA settings
+        installPromptCount: 0,
+        installPromptLastDismissed: null,
+        appUsageCount: 0,
+        installPromptDismissed: null,
+        // Session/Security settings
+        deviceFingerprint: undefined,
+        sessionActivity: {},
       };
       mockStorageManager.getAppSettings.mockResolvedValue(existingSettings);
       mockStorageManager.saveAppSettings.mockResolvedValue({} as AppSettings);
@@ -268,7 +316,15 @@ describe('App Settings Utilities', () => {
         lastBackupTime: undefined,
         backupEmail: '',
         useDemandCorrection: false,
-        lastHomeTeamName: ''
+        lastHomeTeamName: '',
+        // PWA settings
+        installPromptCount: 0,
+        installPromptLastDismissed: null,
+        appUsageCount: 0,
+        installPromptDismissed: null,
+        // Session/Security settings
+        deviceFingerprint: undefined,
+        sessionActivity: {},
       };
       mockStorageManager.getAppSettings.mockResolvedValue(existingSettings);
       mockStorageManager.saveAppSettings.mockResolvedValue({} as AppSettings);
@@ -360,7 +416,15 @@ describe('App Settings Utilities', () => {
         autoBackupIntervalHours: 24,
         lastBackupTime: undefined,
         backupEmail: '',
-        useDemandCorrection: false
+        useDemandCorrection: false,
+        // PWA settings
+        installPromptCount: 0,
+        installPromptLastDismissed: null,
+        appUsageCount: 0,
+        installPromptDismissed: null,
+        // Session/Security settings
+        deviceFingerprint: undefined,
+        sessionActivity: {},
       });
     });
 

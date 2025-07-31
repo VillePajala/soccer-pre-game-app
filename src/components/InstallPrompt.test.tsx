@@ -3,6 +3,13 @@ import { render, screen, fireEvent, act } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import "@/i18n";
 import InstallPrompt from "./InstallPrompt";
+import * as pwaSettings from '@/utils/pwaSettings';
+
+// Mock the PWA settings module
+jest.mock('@/utils/pwaSettings', () => ({
+  getPWASettings: jest.fn(),
+  setInstallPromptDismissed: jest.fn(),
+}));
 
 interface TestInstallEvent extends Event {
   prompt: () => Promise<void>;
@@ -29,6 +36,15 @@ describe("InstallPrompt", () => {
         removeListener: jest.fn(),
       }),
     });
+    
+    // Mock PWA settings functions
+    (pwaSettings.getPWASettings as jest.Mock).mockResolvedValue({
+      installPromptCount: 0,
+      installPromptLastDismissed: null,
+      appUsageCount: 0,
+      installPromptDismissed: null,
+    });
+    (pwaSettings.setInstallPromptDismissed as jest.Mock).mockResolvedValue(undefined);
   });
 
   it("shows and handles install prompt", async () => {
@@ -60,6 +76,8 @@ describe("InstallPrompt", () => {
     await act(async () => {
       fireEvent.click(dismissBtn);
     });
-    expect(localStorage.getItem("installPromptDismissed")).not.toBeNull();
+    
+    // Check that setInstallPromptDismissed was called
+    expect(pwaSettings.setInstallPromptDismissed).toHaveBeenCalledWith(expect.any(Number));
   });
 });

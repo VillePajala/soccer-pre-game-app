@@ -3,6 +3,7 @@
 import ModalProvider from '@/contexts/ModalProvider';
 import HomePage from '@/components/HomePage';
 import StartScreen from '@/components/StartScreen';
+import { OfflineBanner } from '@/components/OfflineBanner';
 import { useState, useEffect, Suspense } from 'react';
 import { getCurrentGameIdSetting } from '@/utils/appSettings';
 import { getSavedGames, getMostRecentGameId } from '@/utils/savedGames';
@@ -205,25 +206,30 @@ export default function Home() {
   console.log('[Home] Rendering with canResume:', canResume, 'screen:', screen, 'user:', !!user);
   
   return (
-    <ModalProvider>
-      {screen === 'start' ? (
-        <StartScreen
-          onStartNewGame={() => handleAction('newGame')}
-          onLoadGame={() => handleAction('loadGame')}
-          onResumeGame={() => handleAction('resumeGame')}
-          canResume={canResume}
-          onCreateSeason={() => handleAction('season')}
-          onViewStats={() => handleAction('stats')}
-          isAuthenticated={!!user}
-        />
-      ) : (
-        <HomePage initialAction={initialAction ?? undefined} skipInitialSetup />
-      )}
+    <div className="min-h-screen">
+      {/* Offline Banner - shows at top when offline/poor connection */}
+      <OfflineBanner className="fixed top-0 left-0 right-0 z-30" />
       
-      {/* Email Verification Success Toast - wrapped in Suspense */}
-      <Suspense fallback={null}>
-        <VerificationToast onClose={() => {}} />
-      </Suspense>
-    </ModalProvider>
+      <ModalProvider>
+        {screen === 'start' ? (
+          <StartScreen
+            onStartNewGame={() => handleAction('newGame')}
+            onLoadGame={() => handleAction('loadGame')}
+            onResumeGame={() => handleAction('resumeGame')}
+            canResume={canResume}
+            onCreateSeason={() => handleAction('season')}
+            onViewStats={() => handleAction('stats')}
+            isAuthenticated={!!user}
+          />
+        ) : (
+          <HomePage initialAction={initialAction ?? undefined} skipInitialSetup />
+        )}
+        
+        {/* Email Verification Success Toast - wrapped in Suspense */}
+        <Suspense fallback={null}>
+          <VerificationToast onClose={() => {}} />
+        </Suspense>
+      </ModalProvider>
+    </div>
   );
 }

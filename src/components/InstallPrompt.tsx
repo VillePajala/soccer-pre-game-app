@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import styles from "./InstallPrompt.module.css";
 import logger from "@/utils/logger";
+import { getPWASettings, setInstallPromptDismissed } from '@/utils/pwaSettings';
 
 // Define proper interfaces for better type safety
 interface BeforeInstallPromptEvent extends Event {
@@ -37,19 +38,21 @@ const InstallPrompt: React.FC = () => {
       return;
     }
 
-    // Check localStorage to see if the user dismissed the prompt recently
-    const lastPromptTime = localStorage.getItem("installPromptDismissed");
-    if (
-      lastPromptTime &&
-      Date.now() - Number(lastPromptTime) < 7 * 24 * 60 * 60 * 1000
-    ) {
-      return; // Don't show prompt if dismissed in the last 7 days
-    }
-
-    // If not installed and not recently dismissed, check if we have a prompt event
-    if (installPrompt) {
-      setIsVisible(true);
-    }
+    // Check if the user dismissed the prompt recently
+    getPWASettings().then(settings => {
+      const lastPromptTime = settings.installPromptDismissed;
+      if (
+        lastPromptTime &&
+        Date.now() - lastPromptTime < 7 * 24 * 60 * 60 * 1000
+      ) {
+        return; // Don't show prompt if dismissed in the last 7 days
+      }
+      
+      // If not installed and not recently dismissed, check if we have a prompt event
+      if (installPrompt) {
+        setIsVisible(true);
+      }
+    });
   }, [installPrompt]);
 
   useEffect(() => {
@@ -85,7 +88,7 @@ const InstallPrompt: React.FC = () => {
       } else {
         logger.log("User dismissed the install prompt");
         // Store the time when dismissed to avoid showing it again too soon
-        localStorage.setItem("installPromptDismissed", Date.now().toString());
+        await setInstallPromptDismissed(Date.now());
       }
     } catch (error) {
       logger.error("Error showing install prompt:", error);
@@ -95,8 +98,8 @@ const InstallPrompt: React.FC = () => {
     setIsVisible(false);
   };
 
-  const handleDismiss = () => {
-    localStorage.setItem("installPromptDismissed", Date.now().toString());
+  const handleDismiss = async () => {
+    await setInstallPromptDismissed(Date.now());
     setIsVisible(false);
   };
 

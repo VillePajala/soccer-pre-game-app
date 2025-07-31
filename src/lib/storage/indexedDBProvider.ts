@@ -34,13 +34,24 @@ export class IndexedDBProvider implements IStorageProvider {
   private initPromise: Promise<void> | null = null;
 
   constructor() {
-    this.initPromise = this.initDatabase();
+    // Only initialize IndexedDB in browser environment
+    if (typeof window !== 'undefined' && 'indexedDB' in window) {
+      this.initPromise = this.initDatabase();
+    } else {
+      // Server-side fallback - IndexedDB not available
+      this.initPromise = Promise.resolve();
+    }
   }
 
   /**
    * Initialize IndexedDB database with proper schema
    */
   private async initDatabase(): Promise<void> {
+    // Guard against server-side rendering
+    if (typeof window === 'undefined' || !('indexedDB' in window)) {
+      throw new Error('IndexedDB not available');
+    }
+
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
 

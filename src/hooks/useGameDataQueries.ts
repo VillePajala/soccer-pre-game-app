@@ -41,16 +41,48 @@ export function useGameDataQueries(): GameDataQueriesResult {
 
   const seasons = useQuery<Season[], Error>({
     queryKey: queryKeys.seasons,
-    queryFn: getSeasons,
+    queryFn: async () => {
+      try {
+        return await getSeasons();
+      } catch (error) {
+        console.error('[useGameDataQueries] Season fetch error:', error);
+        // Return empty array instead of failing the entire query
+        return [];
+      }
+    },
     staleTime: 5000, // 5 seconds
     gcTime: 10 * 60 * 1000, // 10 minutes
+    retry: (failureCount, error) => {
+      // Don't retry transform errors
+      if (error.message?.includes('Transform') || error.message?.includes('parse')) {
+        return false;
+      }
+      // Retry network errors up to 2 times
+      return failureCount < 2;
+    },
   });
 
   const tournaments = useQuery<Tournament[], Error>({
     queryKey: queryKeys.tournaments,
-    queryFn: getTournaments,
+    queryFn: async () => {
+      try {
+        return await getTournaments();
+      } catch (error) {
+        console.error('[useGameDataQueries] Tournament fetch error:', error);
+        // Return empty array instead of failing the entire query
+        return [];
+      }
+    },
     staleTime: 5000, // 5 seconds
     gcTime: 10 * 60 * 1000, // 10 minutes
+    retry: (failureCount, error) => {
+      // Don't retry transform errors
+      if (error.message?.includes('Transform') || error.message?.includes('parse')) {
+        return false;
+      }
+      // Retry network errors up to 2 times
+      return failureCount < 2;
+    },
   });
 
   const savedGames = useQuery<SavedGamesCollection | null, Error>({
