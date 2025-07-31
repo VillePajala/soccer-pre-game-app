@@ -6,12 +6,20 @@ import { useConnectionStatus } from '@/hooks/useConnectionStatus';
 import type { Player, TimerState } from '@/types';
 
 export default function OfflineDemo() {
-  const [storageManager] = useState(() => new OfflineFirstStorageManager({
-    enableOfflineMode: true,
-    syncOnReconnect: true,
-    maxRetries: 3,
-    batchSize: 5
-  }));
+  const [storageManager, setStorageManager] = useState<OfflineFirstStorageManager | null>(null);
+  
+  // Initialize storage manager only on client side
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const manager = new OfflineFirstStorageManager({
+        enableOfflineMode: true,
+        syncOnReconnect: true,
+        maxRetries: 3,
+        batchSize: 5
+      });
+      setStorageManager(manager);
+    }
+  }, []);
 
   const connectionStatus = useConnectionStatus();
   const [players, setPlayers] = useState<Player[]>([]);
