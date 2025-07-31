@@ -164,36 +164,60 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
       return; 
     }
 
+    // Define field line constants early so they can be used by all effects
+    const lineMargin = 5; // No DPR scaling
+
     // --- Clear and Draw Background/Field Lines --- 
-    // New color palette for a more natural and subtle look
-    const lightStripeGreen = '#5b995e'; // Made lighter color closer to base
-    const darkStripeGreen = '#508153';  // Made darker color closer to base
-    
-    // 1. Create and draw the base mowing stripes
-    const numStripes = 9;
-    const gradient = context.createLinearGradient(0, 0, W, 0);
+    // Final version: A balanced, rich green with noticeable but not overpowering lighting
+    const baseGreen = '#427B44'; // Deeper hue and darker base
 
-    for (let i = 0; i < numStripes; i++) {
-      const color = (i % 2 === 0) ? lightStripeGreen : darkStripeGreen;
-      gradient.addColorStop(i / numStripes, color);
-      gradient.addColorStop((i + 1) / numStripes, color);
-    }
-
-    context.fillStyle = gradient;
+    // 1. Draw the base solid green color
+    context.fillStyle = baseGreen;
     context.fillRect(0, 0, W, H);
 
-    // 2. Add a subtle noise texture layer
-    const noisePattern = createNoisePattern(context, 100, 100, 0.03); // 3% opacity noise
-    if (noisePattern) {
-        context.fillStyle = noisePattern;
+    // 2. Add organic, low-frequency texture (clouds/mottling)
+    const cloudPattern = createNoisePattern(context, 400, 400, 0.02); // Large, faint pattern
+    if (cloudPattern) {
+        context.fillStyle = cloudPattern;
         context.fillRect(0, 0, W, H);
     }
+
+    // 3. Add high-frequency texture (grass grain)
+    const grainPattern = createNoisePattern(context, 100, 100, 0.03); // Finer grain pattern
+    if (grainPattern) {
+        context.fillStyle = grainPattern;
+        context.fillRect(0, 0, W, H);
+    }
+
+    // 4. Add "Ghost Stripe" mowing pattern for authentic feel
+    context.save();
+    context.globalCompositeOperation = 'soft-light';
+    const numStripes = 9;
+    const stripeWidth = W / numStripes;
+    for (let i = 0; i < numStripes; i++) {
+        context.fillStyle = (i % 2 === 0) ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)';
+        context.fillRect(i * stripeWidth, 0, stripeWidth, H);
+    }
+    context.restore();
     
-    // 3. Add a vignette lighting effect
-    const vignette = context.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.4, W / 2, H / 2, Math.max(W, H));
-    vignette.addColorStop(0, 'rgba(0,0,0,0)');
-    vignette.addColorStop(1, 'rgba(0,0,0,0.2)'); // Darken edges by 20%
-    context.fillStyle = vignette;
+    // 5. Add final, balanced lighting (Lighter Shadows to compensate for darker base)
+    // Part A: A top-to-bottom linear shadow, made lighter
+    const linearShadow = context.createLinearGradient(0, 0, 0, H);
+    linearShadow.addColorStop(0, 'rgba(0, 0, 0, 0.03)');
+    linearShadow.addColorStop(1, 'rgba(0, 0, 0, 0.25)');
+    context.fillStyle = linearShadow;
+    context.fillRect(0, 0, W, H);
+
+    // Part B: A softer hotspot to match
+    const lightSourceX = W / 2;
+    const lightSourceY = H * 0.3;
+    const hotspot = context.createRadialGradient(
+      lightSourceX, lightSourceY, 0,
+      lightSourceX, lightSourceY, H * 0.8
+    );
+    hotspot.addColorStop(0, 'rgba(255, 255, 255, 0.10)');
+    hotspot.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    context.fillStyle = hotspot;
     context.fillRect(0, 0, W, H);
 
     // --- Draw Tactical Mode Border ---
@@ -225,9 +249,11 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
       // --- End Tactical Grid Overlay ---
     }
 
+    context.shadowColor = 'rgba(0, 0, 0, 0.25)';
+    context.shadowBlur = 2;
+    context.shadowOffsetY = 1;
     context.strokeStyle = 'rgba(255, 255, 255, 0.6)';
     context.lineWidth = 2; // No DPR scaling needed here
-    const lineMargin = 5; // No DPR scaling
     const centerRadius = Math.min(W, H) * 0.08; // Use W/H (CSS)
     const penaltyBoxWidth = W * 0.6; // Use W (CSS)
     const penaltyBoxHeight = H * 0.18; // Use H (CSS)
@@ -235,6 +261,13 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     const goalBoxHeight = H * 0.07; // Use H
     const penaltySpotDist = H * 0.12; // Use H
     const cornerRadius = Math.min(W, H) * 0.02; // Use W/H
+
+    // Function to reset shadow for elements that shouldn't have it (like filled spots)
+    const resetShadow = () => {
+      context.shadowColor = 'transparent';
+      context.shadowBlur = 0;
+      context.shadowOffsetY = 0;
+    };
 
     // Outer boundary (using CSS W/H and non-scaled margin)
     context.beginPath();
@@ -295,6 +328,9 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     context.arc(W - lineMargin, H - lineMargin, cornerRadius, Math.PI, Math.PI * 1.5);
     context.stroke();
 
+    // --- Before drawing filled spots, reset the shadow ---
+    resetShadow();
+
     // Draw filled spots
     context.fillStyle = 'rgba(255, 255, 255, 0.8)';
     const spotRadius = 3; // No DPR scaling
@@ -321,6 +357,9 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     
     // Bottom Goal
     context.fillRect((W - goalWidth) / 2, H - lineMargin - goalHeight, goalWidth, goalHeight);
+
+    // --- Reset shadow after all field lines are drawn ---
+    resetShadow();
 
     // --- End Field Lines ---
 
