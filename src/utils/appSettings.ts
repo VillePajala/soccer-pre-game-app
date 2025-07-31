@@ -13,7 +13,18 @@ export interface AppSettings {
   lastBackupTime?: string;
   backupEmail?: string;
   useDemandCorrection?: boolean;
-  // Add other settings as needed
+  // PWA settings
+  installPromptCount?: number;
+  installPromptLastDismissed?: number | null;
+  appUsageCount?: number;
+  installPromptDismissed?: number | null;
+  // Session/Security settings
+  deviceFingerprint?: string;
+  sessionActivity?: {
+    sessionStart: number;
+    lastActivity: number;
+    totalSessions: number;
+  };
 }
 
 /**
@@ -29,6 +40,14 @@ const DEFAULT_APP_SETTINGS: AppSettings = {
   lastBackupTime: undefined,
   backupEmail: '',
   useDemandCorrection: false,
+  // PWA settings defaults
+  installPromptCount: 0,
+  installPromptLastDismissed: null,
+  appUsageCount: 0,
+  installPromptDismissed: null,
+  // Session/Security defaults
+  deviceFingerprint: undefined,
+  sessionActivity: undefined,
 };
 
 /**

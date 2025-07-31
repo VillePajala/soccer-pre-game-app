@@ -3,8 +3,19 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 
+interface TableSchema {
+  sample: unknown;
+  columns: string[];
+  tableInfo?: unknown;
+}
+
+interface SchemaData {
+  tournaments: TableSchema;
+  seasons: TableSchema;
+}
+
 export default function CheckSchemaPage() {
-  const [schema, setSchema] = useState<Record<string, unknown> | null>(null);
+  const [schema, setSchema] = useState<SchemaData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
 

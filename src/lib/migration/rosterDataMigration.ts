@@ -70,7 +70,7 @@ export async function migrateRosterData(): Promise<RosterMigrationResult> {
  * Migrate season roster data
  */
 async function migrateSeasonRosters(userId: string): Promise<{ updated: number; errors: string[] }> {
-  const result = { updated: 0, errors: [] };
+  const result: { updated: number; errors: string[] } = { updated: 0, errors: [] };
 
   // Get all seasons for the user
   const { data: seasons, error: fetchError } = await supabase
@@ -123,7 +123,7 @@ async function migrateSeasonRosters(userId: string): Promise<{ updated: number; 
  * Migrate tournament roster data
  */
 async function migrateTournamentRosters(userId: string): Promise<{ updated: number; errors: string[] }> {
-  const result = { updated: 0, errors: [] };
+  const result: { updated: number; errors: string[] } = { updated: 0, errors: [] };
 
   // Get all tournaments for the user
   const { data: tournaments, error: fetchError } = await supabase
@@ -241,8 +241,8 @@ export async function checkRosterMigrationNeeded(): Promise<boolean> {
       .not('default_roster_ids', 'is', null);
 
     const allRosters = [
-      ...(seasons?.map(s => s.default_roster_ids) || []),
-      ...(tournaments?.map(t => t.default_roster_ids) || [])
+      ...(seasons?.map((s: { default_roster_ids: unknown }) => s.default_roster_ids) || []),
+      ...(tournaments?.map((t: { default_roster_ids: unknown }) => t.default_roster_ids) || [])
     ];
 
     // Check if any roster data needs normalization

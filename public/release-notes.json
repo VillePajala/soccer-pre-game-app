@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "docs: Update Production Readiness Plan - localStorage Removal Complete"
+  "notes": "fix: Resolve test failures in useSyncProgress and InstallPrompt"
 }

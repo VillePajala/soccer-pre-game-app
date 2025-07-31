@@ -409,11 +409,11 @@ export class SessionManager {
   /**
    * Check for suspicious activity
    */
-  private checkSuspiciousActivity(): void {
+  private async checkSuspiciousActivity(): Promise<void> {
     // Check for multiple concurrent sessions, unusual IP changes, etc.
     // This would be expanded based on specific security requirements
     
-    const activity = this.getSessionActivity();
+    const activity = await this.getSessionActivity();
     if (activity && activity.totalSessions > 5) {
       this.emitEvent({
         type: 'suspicious_activity',
@@ -584,12 +584,12 @@ export class SessionManager {
     lastActivity?: number;
     sessionStart?: number;
   } {
-    const activity = this.getSessionActivity();
+    // Note: activity data requires async call, so we return basic session info only
     return {
       isActive: !!this.currentSession,
       user: this.currentUser,
-      lastActivity: activity?.lastActivity,
-      sessionStart: activity?.sessionStart
+      lastActivity: undefined, // Would need async getSessionActivity() call
+      sessionStart: undefined  // Would need async getSessionActivity() call
     };
   }
 

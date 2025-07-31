@@ -1200,7 +1200,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     logger.log(`[handleLoadGame] Attempting to load game: ${gameId}`);
     
     // Clear any existing timer state before loading a new game
-    removeLocalStorageItem(TIMER_STATE_KEY);
+    // (Timer state is now handled by IndexedDB, no manual cleanup needed)
     
     setProcessingGameId(gameId);
     setIsGameLoading(true);
