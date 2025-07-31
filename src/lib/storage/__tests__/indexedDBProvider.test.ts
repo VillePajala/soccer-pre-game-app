@@ -80,9 +80,8 @@ describe('IndexedDBProvider', () => {
     const mockPlayer: Player = {
       id: 'player-1',
       name: 'John Doe',
-      jerseyNumber: 10,
-      position: 'Forward',
-      isGoalkeeper: false
+      jerseyNumber: '10',
+      isGoalie: false
     };
 
     beforeEach(() => {
@@ -148,7 +147,7 @@ describe('IndexedDBProvider', () => {
         return request;
       });
 
-      const updates = { name: 'Jane Doe', jerseyNumber: 11 };
+      const updates = { name: 'Jane Doe', jerseyNumber: '11' };
       const updatedPlayer = await provider.updatePlayer('player-1', updates);
       
       expect(updatedPlayer).toEqual({ ...mockPlayer, ...updates });
@@ -240,7 +239,7 @@ describe('IndexedDBProvider', () => {
   describe('App Settings', () => {
     const mockSettings: AppSettings = {
       currentGameId: 'game-123',
-      defaultTeamName: 'My Team',
+      lastHomeTeamName: 'My Team',
       language: 'en'
     };
 

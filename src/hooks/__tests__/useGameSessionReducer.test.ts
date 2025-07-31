@@ -7,7 +7,7 @@ const baseState: GameSessionState = {
   homeScore: 0,
   awayScore: 0,
   gameNotes: '',
-  homeOrAway: 'home',
+  homeOrAway: 'home' as const,
   numberOfPeriods: 2,
   periodDurationMinutes: 10,
   currentPeriod: 1,
@@ -32,7 +32,7 @@ const baseState: GameSessionState = {
 
 describe('gameSessionReducer', () => {
   test('adjust score for goal event does not go negative', () => {
-    let state = { ...baseState, homeScore: 1, awayScore: 0, homeOrAway: 'home' };
+    let state = { ...baseState, homeScore: 1, awayScore: 0, homeOrAway: 'home' as const };
     state = gameSessionReducer(state, { type: 'ADJUST_SCORE_FOR_EVENT', payload: { eventType: 'goal', action: 'delete' } });
     expect(state.homeScore).toBe(0);
     state = gameSessionReducer(state, { type: 'ADJUST_SCORE_FOR_EVENT', payload: { eventType: 'goal', action: 'delete' } });

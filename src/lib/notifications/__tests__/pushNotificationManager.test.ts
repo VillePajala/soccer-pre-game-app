@@ -48,12 +48,13 @@ Object.defineProperty(global, 'window', {
 });
 
 // Mock Notification constructor and static properties
-const mockNotificationConstructor = jest.fn().mockImplementation(() => mockNotification) as jest.MockedFunction<new () => Notification> & {
-  permission: NotificationPermission;
-  requestPermission: jest.MockedFunction<() => Promise<NotificationPermission>>;
-};
-mockNotificationConstructor.permission = 'default';
-mockNotificationConstructor.requestPermission = jest.fn().mockResolvedValue('granted');
+const mockNotificationConstructor = Object.assign(
+  jest.fn().mockImplementation(() => mockNotification),
+  {
+    permission: 'default' as NotificationPermission,
+    requestPermission: jest.fn().mockResolvedValue('granted' as NotificationPermission)
+  }
+);
 
 Object.defineProperty(global, 'Notification', {
   value: mockNotificationConstructor,
@@ -362,11 +363,15 @@ describe('PushNotificationManager', () => {
     });
 
     it('should handle notification errors', async () => {
-      const errorMock = jest.fn().mockImplementation(() => {
-        throw new Error('Notification failed');
-      });
-      errorMock.permission = 'granted';
-      errorMock.requestPermission = jest.fn().mockResolvedValue('granted');
+      const errorMock = Object.assign(
+        jest.fn().mockImplementation(() => {
+          throw new Error('Notification failed');
+        }),
+        {
+          permission: 'granted' as NotificationPermission,
+          requestPermission: jest.fn().mockResolvedValue('granted' as NotificationPermission)
+        }
+      );
       
       Object.defineProperty(global, 'Notification', {
         value: errorMock,
