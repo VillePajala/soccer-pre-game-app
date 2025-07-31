@@ -109,6 +109,8 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isActive = true;
+
     if (isOpen) {
       // Reinstate form reset logic
       setOpponentName('');
@@ -127,13 +129,11 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
       setLocalHomeOrAway('home');
       // End of reinstated form reset logic
 
-      setError(null); 
+      setError(null);
       setIsLoading(true);
 
-      // Focus management is now handled by useModalStability hook 
-
       const fetchData = async () => {
-      try {
+        try {
           // Use availablePlayers from props instead of fetching
           if (initialPlayerSelection && initialPlayerSelection.length > 0) {
             setSelectedPlayerIds(initialPlayerSelection);
@@ -141,30 +141,56 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
             setSelectedPlayerIds(availablePlayers.map(p => p.id));
           }
 
-          const lastHomeTeam = await utilGetLastHomeTeamName();
-          setHomeTeamName(lastHomeTeam || t('newGameSetupModal.defaultTeamName', 'My Team'));
+          const [lastHomeTeamRes, seasonsRes, tournamentsRes] = await Promise.allSettled([
+            utilGetLastHomeTeamName(),
+            utilGetSeasons(),
+            utilGetTournaments(),
+          ]);
 
-          const seasonsData = await utilGetSeasons();
-          setSeasons(Array.isArray(seasonsData) ? seasonsData : []);
+          if (!isActive) return;
 
-          const tournamentsData = await utilGetTournaments();
-          setTournaments(Array.isArray(tournamentsData) ? tournamentsData : []);
+          if (lastHomeTeamRes.status === 'fulfilled') {
+            setHomeTeamName(lastHomeTeamRes.value || t('newGameSetupModal.defaultTeamName', 'My Team'));
+          } else {
+            logger.error('[NewGameSetupModal] Error fetching last team name:', lastHomeTeamRes.reason);
+            setHomeTeamName(t('newGameSetupModal.defaultTeamName', 'My Team'));
+          }
 
-          // MOVED Focus to run earlier, but can be adjusted if data loading causes issues with it.
-          // setTimeout(() => nameInputRef.current?.focus(), 100); 
+          if (seasonsRes.status === 'fulfilled') {
+            setSeasons(Array.isArray(seasonsRes.value) ? seasonsRes.value : []);
+          } else {
+            logger.error('[NewGameSetupModal] Error fetching seasons:', seasonsRes.reason);
+            setSeasons([]);
+          }
+
+          if (tournamentsRes.status === 'fulfilled') {
+            setTournaments(Array.isArray(tournamentsRes.value) ? tournamentsRes.value : []);
+          } else {
+            logger.error('[NewGameSetupModal] Error fetching tournaments:', tournamentsRes.reason);
+            setTournaments([]);
+          }
         } catch (err) {
-          logger.error("[NewGameSetupModal] Error fetching initial data:", err);
-          setError(t('newGameSetupModal.errors.dataLoadFailed', 'Failed to load initial setup data. Please try again.'));
-          setHomeTeamName(t('newGameSetupModal.defaultTeamName', 'My Team'));
-          setSeasons([]);
-          setTournaments([]);
-          setSelectedPlayerIds(initialPlayerSelection || []); // Reset selection on error
+          if (isActive) {
+            logger.error('[NewGameSetupModal] Unexpected error fetching initial data:', err);
+            setError(t('newGameSetupModal.errors.dataLoadFailed', 'Failed to load initial setup data. Please try again.'));
+            setHomeTeamName(t('newGameSetupModal.defaultTeamName', 'My Team'));
+            setSeasons([]);
+            setTournaments([]);
+            setSelectedPlayerIds(initialPlayerSelection || []);
+          }
         } finally {
-          setIsLoading(false);
+          if (isActive) {
+            setIsLoading(false);
+          }
         }
       };
+
       fetchData();
     }
+
+    return () => {
+      isActive = false;
+    };
   }, [isOpen, initialPlayerSelection, availablePlayers, t]);
 
 
