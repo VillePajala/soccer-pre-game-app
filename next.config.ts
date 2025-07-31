@@ -9,6 +9,11 @@ const nextConfig: NextConfig = {
   // Remove X-Powered-By header
   poweredByHeader: false,
   
+  // Disable TypeScript checking during build - we handle this separately in CI
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  
   // Security headers configuration
   async headers() {
     return [

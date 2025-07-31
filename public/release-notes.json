@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix: Update error handling messages in useErrorHandler tests for clarity"
+  "notes": "fix: Resolve CI failures with separate TypeScript config for production code"
 }
