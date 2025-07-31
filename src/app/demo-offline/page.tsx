@@ -36,6 +36,8 @@ export default function OfflineDemo() {
 
   // Load initial data
   useEffect(() => {
+    if (!storageManager) return;
+    
     const loadData = async () => {
       try {
         const playersData = await storageManager.getPlayers();
@@ -55,6 +57,8 @@ export default function OfflineDemo() {
 
   // Demo functions
   const addPlayer = async () => {
+    if (!storageManager) return;
+    
     setIsLoading(true);
     try {
       const newPlayer: Player = {
@@ -78,6 +82,8 @@ export default function OfflineDemo() {
   };
 
   const deleteLastPlayer = async () => {
+    if (!storageManager) return;
+    
     if (players.length === 0) {
       addLog('⚠️ No players to delete');
       return;
@@ -100,6 +106,8 @@ export default function OfflineDemo() {
   };
 
   const saveTimerState = async () => {
+    if (!storageManager) return;
+    
     setIsLoading(true);
     try {
       const newTimerState: TimerState = {
@@ -118,6 +126,8 @@ export default function OfflineDemo() {
   };
 
   const loadTimerState = async () => {
+    if (!storageManager) return;
+    
     setIsLoading(true);
     try {
       const state = await storageManager.getTimerState('demo-game-123');
@@ -134,6 +144,8 @@ export default function OfflineDemo() {
   };
 
   const forceSync = async () => {
+    if (!storageManager) return;
+    
     setIsLoading(true);
     try {
       addLog('🔄 Starting manual sync...');
@@ -150,6 +162,8 @@ export default function OfflineDemo() {
   };
 
   const exportData = async () => {
+    if (!storageManager) return;
+    
     setIsLoading(true);
     try {
       const data = await storageManager.exportAllData();
@@ -170,6 +184,8 @@ export default function OfflineDemo() {
   };
 
   const clearAllData = async () => {
+    if (!storageManager) return;
+    
     if (!confirm('Are you sure you want to clear all demo data?')) return;
     
     setIsLoading(true);
