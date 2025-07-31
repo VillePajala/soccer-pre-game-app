@@ -25,7 +25,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/context/AuthContext';
 import { useGameState, UseGameStateReturn } from '@/hooks/useGameState';
 import GameInfoBar from '@/components/GameInfoBar';
-import { useGameTimer } from '@/hooks/useGameTimer';
+import { useOfflineFirstGameTimer } from '@/hooks/useOfflineFirstGameTimer';
 import useAutoBackup from '@/hooks/useAutoBackup';
 import { useMigrationTrigger } from '@/hooks/useMigrationTrigger';
 // Import the new game session reducer and related types
@@ -54,7 +54,7 @@ import {
 // Import Player from types directory
 import { Player, Season, Tournament } from '@/types';
 // Import saveMasterRoster utility
-import type { AppState, SavedGamesCollection, TimerState } from "@/types";
+import type { AppState, SavedGamesCollection } from "@/types";
 // Removed - now handled by useGameDataManager: 
 // import { useQueryClient } from '@tanstack/react-query';
 import { useGameDataQueries } from '@/hooks/useGameDataQueries';
@@ -64,19 +64,14 @@ import { useRoster } from '@/hooks/useRoster';
 import { useGameDataManager } from '@/hooks/useGameDataManager';
 import { useGameStateManager } from '@/hooks/useGameStateManager';
 import { useModalContext } from '@/contexts/ModalProvider';
-// Import async localStorage utilities
-import {
-  getLocalStorageItem,
-  setLocalStorageItem,
-  removeLocalStorageItem,
-} from '@/utils/localStorage';
+// Note: localStorage utilities removed - using offline-first storage instead
 // Removed - now handled by useGameDataManager: 
 // import { queryKeys } from '@/config/queryKeys';
 // Also import addSeason and addTournament for the new mutations
 // Removed - now handled by useGameDataManager:
 // import { updateGameDetails as utilUpdateGameDetails } from '@/utils/savedGames';
 import { DEFAULT_GAME_ID } from '@/config/constants';
-import { MASTER_ROSTER_KEY, TIMER_STATE_KEY, SEASONS_LIST_KEY } from "@/config/storageKeys";
+// Storage keys no longer needed - using offline-first storage
 // Partial removal - exportAggregateJson, exportAggregateCsv still needed:
 import { exportAggregateJson, exportAggregateCsv } from '@/utils/exportGames';
 // Removed - now handled by useGameDataManager: exportJson, exportCsv
@@ -369,7 +364,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     reset: handleResetTimer,
     ackSubstitution: handleSubstitutionMade,
     setSubInterval: handleSetSubInterval,
-  } = useGameTimer({ state: gameSessionState, dispatch: dispatchGameSession, currentGameId: currentGameId || '' });
+  } = useOfflineFirstGameTimer({ state: gameSessionState, dispatch: dispatchGameSession, currentGameId: currentGameId || '' });
 
   // ADD State for seasons/tournaments lists
   const [seasons, setSeasons] = useState<Season[]>([]);
@@ -727,26 +722,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   // saveStateToHistory is also a dependency as it's used inside.
   
   // One-time migration effect - only runs once
-  useEffect(() => {
-    const runMigration = async () => {
-      try {
-        const oldRosterJson = getLocalStorageItem('availablePlayers');
-        if (oldRosterJson) {
-          logger.log('[EFFECT migration] Migrating old roster data...');
-          setLocalStorageItem(MASTER_ROSTER_KEY, oldRosterJson);
-          removeLocalStorageItem('availablePlayers');
-        }
-        const oldSeasonsJson = getLocalStorageItem('soccerSeasonsList');
-        if (oldSeasonsJson) {
-          logger.log('[EFFECT migration] Migrating old seasons data...');
-          setLocalStorageItem(SEASONS_LIST_KEY, oldSeasonsJson);
-        }
-      } catch (migrationError) {
-        logger.error('[EFFECT migration] Error during data migration:', migrationError);
-      }
-    };
-    runMigration();
-  }, []); // Run only once
+  // Data migration is now handled by offline-first storage system
 
   // Handle saved games loading state
   useEffect(() => {
@@ -835,26 +811,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         }
       }
 
-      // Timer restoration logic
-      try {
-        const savedTimerStateJSON = getLocalStorageItem(TIMER_STATE_KEY);
-        if (savedTimerStateJSON) {
-          const savedTimerState: TimerState = JSON.parse(savedTimerStateJSON);
-          if (savedTimerState && savedTimerState.gameId === lastGameIdSetting) {
-            logger.log('[EFFECT init] Found a saved timer state for the current game. Restoring...');
-            const elapsedOfflineSeconds = (Date.now() - savedTimerState.timestamp) / 1000;
-            const correctedElapsedSeconds = Math.round(savedTimerState.timeElapsedInSeconds + elapsedOfflineSeconds);
-            
-            dispatchGameSession({ type: 'SET_TIMER_ELAPSED', payload: correctedElapsedSeconds });
-            dispatchGameSession({ type: 'SET_TIMER_RUNNING', payload: true });
-          } else {
-            removeLocalStorageItem(TIMER_STATE_KEY);
-          }
-        }
-      } catch (error) {
-        logger.error('[EFFECT init] Error restoring timer state:', error);
-        removeLocalStorageItem(TIMER_STATE_KEY);
-      }
+      // Timer restoration is now handled by useOfflineFirstGameTimer hook
 
       // Check if user has seen app guide
       const seenGuide = await getHasSeenAppGuide();
@@ -1014,7 +971,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentGameId, savedGames, initialLoadComplete]); // IMPORTANT: initialLoadComplete ensures this runs after master roster is loaded.
 
-  // --- Save state to localStorage ---
+  // --- Auto-save state using offline-first storage ---
   useEffect(() => {
     // Only auto-save if loaded AND we have a proper game ID (not the default unsaved one)
     const autoSave = async () => {
@@ -1076,7 +1033,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         }
 
       } catch (error) {
-        logger.error("Failed to auto-save state to localStorage:", error);
+        logger.error("Failed to auto-save state:", error);
         alert("Error saving game."); // Notify user
       }
     } else if (initialLoadComplete && currentGameId === DEFAULT_GAME_ID) {
