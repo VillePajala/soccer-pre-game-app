@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix: Resolve test failures in useSyncProgress and InstallPrompt"
+  "notes": "fix: Adjust coverage threshold and update AppSettings test expectations"
 }

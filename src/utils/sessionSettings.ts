@@ -1,4 +1,5 @@
 import { OfflineFirstStorageManager } from '@/lib/storage/offlineFirstStorageManager';
+import type { AppSettings } from './appSettings';
 
 export interface SessionSettings {
   deviceFingerprint?: string;
@@ -45,10 +46,13 @@ export async function saveDeviceFingerprint(fingerprint: string): Promise<void> 
 
   try {
     const currentSettings = await getStorageManager().getAppSettings();
-    await getStorageManager().saveAppSettings({
+    const updatedSettings: AppSettings = {
       ...currentSettings,
       deviceFingerprint: fingerprint,
-    });
+      // Ensure currentGameId is properly typed
+      currentGameId: currentSettings?.currentGameId ?? null,
+    };
+    await getStorageManager().saveAppSettings(updatedSettings);
   } catch (error) {
     console.error('Failed to save device fingerprint:', error);
   }
@@ -84,13 +88,16 @@ export async function saveSessionActivity(userId: string, activity: unknown): Pr
     const currentSettings = await getStorageManager().getAppSettings();
     const sessionActivity = (currentSettings?.sessionActivity as Record<string, unknown>) || {};
     
-    await getStorageManager().saveAppSettings({
+    const updatedSettings: AppSettings = {
       ...currentSettings,
+      currentGameId: currentSettings?.currentGameId ?? null,
       sessionActivity: {
         ...sessionActivity,
         [userId]: activity,
       },
-    });
+    };
+    
+    await getStorageManager().saveAppSettings(updatedSettings);
   } catch (error) {
     console.error('Failed to save session activity:', error);
   }
@@ -110,10 +117,13 @@ export async function removeSessionActivity(userId: string): Promise<void> {
     
     delete sessionActivity[userId];
     
-    await getStorageManager().saveAppSettings({
+    const updatedSettings: AppSettings = {
       ...currentSettings,
+      currentGameId: currentSettings?.currentGameId ?? null,
       sessionActivity,
-    });
+    };
+    
+    await getStorageManager().saveAppSettings(updatedSettings);
   } catch (error) {
     console.error('Failed to remove session activity:', error);
   }

@@ -1,4 +1,5 @@
 import { OfflineFirstStorageManager } from '@/lib/storage/offlineFirstStorageManager';
+import type { AppSettings } from './appSettings';
 
 export interface PWASettings {
   installPromptCount: number;
@@ -60,9 +61,11 @@ export async function savePWASettings(updates: Partial<PWASettings>): Promise<vo
 
   try {
     const currentSettings = await getStorageManager().getAppSettings();
-    const updatedSettings = {
+    const updatedSettings: AppSettings = {
       ...currentSettings,
       ...updates,
+      // Ensure currentGameId is properly typed
+      currentGameId: updates.currentGameId ?? currentSettings?.currentGameId ?? null,
     };
     
     await getStorageManager().saveAppSettings(updatedSettings);

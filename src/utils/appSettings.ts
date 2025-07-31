@@ -20,11 +20,7 @@ export interface AppSettings {
   installPromptDismissed?: number | null;
   // Session/Security settings
   deviceFingerprint?: string;
-  sessionActivity?: {
-    sessionStart: number;
-    lastActivity: number;
-    totalSessions: number;
-  };
+  sessionActivity?: Record<string, unknown>;
 }
 
 /**
@@ -47,7 +43,7 @@ const DEFAULT_APP_SETTINGS: AppSettings = {
   installPromptDismissed: null,
   // Session/Security defaults
   deviceFingerprint: undefined,
-  sessionActivity: undefined,
+  sessionActivity: {},
 };
 
 /**

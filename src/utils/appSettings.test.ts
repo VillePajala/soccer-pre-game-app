@@ -69,7 +69,7 @@ describe('App Settings Utilities', () => {
         installPromptDismissed: null,
         // Session/Security settings
         deviceFingerprint: undefined,
-        sessionActivity: undefined,
+        sessionActivity: {},
       });
     });
 
@@ -90,7 +90,7 @@ describe('App Settings Utilities', () => {
         installPromptDismissed: null,
         // Session/Security settings
         deviceFingerprint: undefined,
-        sessionActivity: undefined,
+        sessionActivity: {},
       };
       mockStorageManager.getAppSettings.mockResolvedValue(storedSettings);
       
@@ -128,7 +128,7 @@ describe('App Settings Utilities', () => {
         installPromptDismissed: null,
         // Session/Security settings
         deviceFingerprint: undefined,
-        sessionActivity: undefined,
+        sessionActivity: {},
       });
     });
 
@@ -154,7 +154,7 @@ describe('App Settings Utilities', () => {
         installPromptDismissed: null,
         // Session/Security settings
         deviceFingerprint: undefined,
-        sessionActivity: undefined,
+        sessionActivity: {},
       });
       expect(mockLogger.error).toHaveBeenCalledWith('Error getting app settings:', expect.any(Error));
     });
@@ -212,7 +212,7 @@ describe('App Settings Utilities', () => {
         installPromptDismissed: null,
         // Session/Security settings
         deviceFingerprint: undefined,
-        sessionActivity: undefined,
+        sessionActivity: {},
       };
       mockStorageManager.getAppSettings.mockResolvedValue(existingSettings);
       mockStorageManager.saveAppSettings.mockResolvedValue({} as AppSettings);
@@ -293,7 +293,7 @@ describe('App Settings Utilities', () => {
         installPromptDismissed: null,
         // Session/Security settings
         deviceFingerprint: undefined,
-        sessionActivity: undefined,
+        sessionActivity: {},
       };
       mockStorageManager.getAppSettings.mockResolvedValue(existingSettings);
       mockStorageManager.saveAppSettings.mockResolvedValue({} as AppSettings);
@@ -324,7 +324,7 @@ describe('App Settings Utilities', () => {
         installPromptDismissed: null,
         // Session/Security settings
         deviceFingerprint: undefined,
-        sessionActivity: undefined,
+        sessionActivity: {},
       };
       mockStorageManager.getAppSettings.mockResolvedValue(existingSettings);
       mockStorageManager.saveAppSettings.mockResolvedValue({} as AppSettings);
@@ -424,7 +424,7 @@ describe('App Settings Utilities', () => {
         installPromptDismissed: null,
         // Session/Security settings
         deviceFingerprint: undefined,
-        sessionActivity: undefined,
+        sessionActivity: {},
       });
     });
 
