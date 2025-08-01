@@ -17,7 +17,11 @@ export async function getDeviceFingerprint(): Promise<string | null> {
   try {
     const settings = await storageManager.getAppSettings();
     const fingerprint = settings?.deviceFingerprint ?? null;
-    console.log('Retrieved device fingerprint from storage:', fingerprint ? 'FOUND' : 'NOT_FOUND');
+    console.log('Retrieved device fingerprint from storage:', {
+      found: !!fingerprint,
+      length: fingerprint?.length,
+      ending: fingerprint?.slice(-10)
+    });
     return fingerprint;
   } catch (error) {
     console.error('Failed to get device fingerprint:', error);
@@ -42,7 +46,10 @@ export async function saveDeviceFingerprint(fingerprint: string): Promise<void> 
       currentGameId: currentSettings?.currentGameId ?? null,
     };
     await storageManager.saveAppSettings(updatedSettings);
-    console.log('Successfully saved device fingerprint to storage');
+    console.log('Successfully saved device fingerprint to storage:', {
+      length: fingerprint.length,
+      ending: fingerprint.slice(-10)
+    });
   } catch (error) {
     console.error('Failed to save device fingerprint:', error);
   }

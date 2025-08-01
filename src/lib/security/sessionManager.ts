@@ -366,18 +366,23 @@ export class SessionManager {
    * Check for new device
    */
   private async checkNewDevice(user: User): Promise<void> {
-    if (!this.deviceFingerprint) return;
+    if (!this.deviceFingerprint) {
+      logger.warn('No device fingerprint available for device check');
+      return;
+    }
 
     try {
+      logger.info('Checking device for user:', user.email, 'with fingerprint ending:', this.deviceFingerprint.slice(-10));
+      
       // Get user's settings from app_settings table
-      const { data: settings, error } = await supabase
+      const { data: settings, error: queryError } = await supabase
         .from('app_settings')
         .select('settings')
         .eq('user_id', user.id)
         .maybeSingle(); // Use maybeSingle instead of single to handle no records
 
-      if (error) {
-        logger.error('Error querying app_settings:', error);
+      if (queryError) {
+        logger.error('Error querying app_settings:', queryError);
         return;
       }
 
@@ -386,21 +391,16 @@ export class SessionManager {
       const knownDevices = settingsJson.known_devices || [];
       const isKnownDevice = knownDevices.includes(this.deviceFingerprint);
       
-      logger.info('Device check:', {
+      logger.info('Device check result:', {
         currentFingerprint: this.deviceFingerprint?.slice(-20), // Last 20 chars for privacy
         knownDevicesCount: knownDevices.length,
-        isKnownDevice: isKnownDevice
+        isKnownDevice: isKnownDevice,
+        hasExistingSettings: !!settings
       });
 
       if (!isKnownDevice) {
         logger.warn('New device detected for user:', user.email);
         
-        this.emitEvent({
-          type: 'new_device',
-          message: 'New device detected. If this wasn\'t you, please change your password.',
-          action: 'verify'
-        });
-
         // Add device to known devices in the settings JSONB column
         const updatedDevices = [...knownDevices, this.deviceFingerprint];
         const updatedSettings = {
@@ -408,15 +408,46 @@ export class SessionManager {
           known_devices: updatedDevices
         };
 
-        await supabase
+        logger.info('Saving new device to database. Total devices will be:', updatedDevices.length);
+
+        const { error: upsertError } = await supabase
           .from('app_settings')
           .upsert({
             user_id: user.id,
             settings: updatedSettings
           });
+
+        if (upsertError) {
+          logger.error('Failed to save device to database:', upsertError);
+          
+          // Infrastructure remains active but UI alerts disabled
+          // this.emitEvent({
+          //   type: 'new_device',
+          //   message: 'New device detected. If this wasn\'t you, please change your password.',
+          //   action: 'verify'
+          // });
+        } else {
+          logger.info('Successfully saved new device to database');
+          
+          // Infrastructure remains active but UI alerts disabled
+          // this.emitEvent({
+          //   type: 'new_device',
+          //   message: 'New device detected and registered. If this wasn\'t you, please change your password.',
+          //   action: 'verify'
+          // });
+        }
+      } else {
+        logger.info('Device recognized as known device');
       }
     } catch (error) {
-      logger.error('Error checking device:', error);
+      logger.error('Error in checkNewDevice:', error);
+      
+      // Infrastructure remains active but UI alerts disabled
+      // this.emitEvent({
+      //   type: 'new_device',
+      //   message: 'Unable to verify device. Please ensure this is a trusted device.',
+      //   action: 'verify'
+      // });
     }
   }
 
