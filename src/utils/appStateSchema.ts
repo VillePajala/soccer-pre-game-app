@@ -99,6 +99,7 @@ export const appStateSchema = z.object({
   tacticalDrawings: z.array(z.array(pointSchema)),
   tacticalBallPosition: pointSchema.nullable(),
   isPlayed: z.boolean().optional(),
+  timeElapsedInSeconds: z.number().optional(),
 });
 
 export type AppStateSchema = typeof appStateSchema;

@@ -76,6 +76,8 @@ export interface AppState {
   tacticalDiscs: TacticalDisc[];
   tacticalDrawings: Point[][];
   tacticalBallPosition: Point | null;
+  /** Timer elapsed time in seconds - persisted to maintain state across loads */
+  timeElapsedInSeconds?: number;
 }
 
 export interface SavedGamesCollection {

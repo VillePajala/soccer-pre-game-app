@@ -258,17 +258,22 @@ export const gameSessionReducer = (state: GameSessionState, action: GameSessionA
       }
       return state;
     case 'RESTORE_TIMER_STATE': {
-      if (state.gameStatus === 'inProgress') {
-        const { savedTime, timestamp } = action.payload;
-        const elapsedOfflineSeconds = (Date.now() - timestamp) / 1000;
-        const correctedElapsedSeconds = Math.round(savedTime + elapsedOfflineSeconds);
-        return {
-          ...state,
-          timeElapsedInSeconds: correctedElapsedSeconds,
-          isTimerRunning: true,
-        };
-      }
-      return state;
+      const { savedTime, timestamp } = action.payload;
+      
+      // Calculate elapsed time since the timer was saved
+      const elapsedOfflineSeconds = (Date.now() - timestamp) / 1000;
+      const correctedElapsedSeconds = Math.round(savedTime + elapsedOfflineSeconds);
+      
+      // Determine if we should restore the timer as running
+      // Only restore as running if game was in progress and not at period/game end
+      const shouldRestoreRunning = state.gameStatus === 'inProgress' && 
+        correctedElapsedSeconds < (state.currentPeriod * state.periodDurationMinutes * 60);
+      
+      return {
+        ...state,
+        timeElapsedInSeconds: correctedElapsedSeconds,
+        isTimerRunning: shouldRestoreRunning,
+      };
     }
     case 'SET_SUB_INTERVAL': {
         const newIntervalMinutes = Math.max(1, action.payload);
@@ -374,11 +379,15 @@ export const gameSessionReducer = (state: GameSessionState, action: GameSessionA
       const showPlayerNames = loadedData.showPlayerNames ?? initialGameSessionStatePlaceholder.showPlayerNames;
       const completedIntervalDurations = loadedData.completedIntervalDurations ?? [];
 
-      let timeElapsedAtLoad = 0;
-      if (gameStatus === 'periodEnd' || gameStatus === 'gameEnd') {
-         timeElapsedAtLoad = currentPeriod * periodDurationMinutes * 60;
-      } else {
-         timeElapsedAtLoad = (currentPeriod - 1) * periodDurationMinutes * 60;
+      // Use the saved timeElapsedInSeconds if available, otherwise calculate based on game state
+      let timeElapsedAtLoad = loadedData.timeElapsedInSeconds ?? 0;
+      if (timeElapsedAtLoad === 0 || timeElapsedAtLoad === undefined) {
+        // Fallback calculation if no saved timer state
+        if (gameStatus === 'periodEnd' || gameStatus === 'gameEnd') {
+           timeElapsedAtLoad = currentPeriod * periodDurationMinutes * 60;
+        } else {
+           timeElapsedAtLoad = (currentPeriod - 1) * periodDurationMinutes * 60;
+        }
       }
 
       const stateToBeReturned: GameSessionState = {

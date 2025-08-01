@@ -121,6 +121,7 @@ const initialState: AppState = {
   tacticalDiscs: [],
   tacticalDrawings: [],
   tacticalBallPosition: { relX: 0.5, relY: 0.5 },
+  timeElapsedInSeconds: 0,
 };
 
 interface HomePageProps {
@@ -888,6 +889,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         completedIntervalDurations: gameData.completedIntervalDurations,
         lastSubConfirmationTimeSeconds: gameData.lastSubConfirmationTimeSeconds,
         showPlayerNames: gameData.showPlayerNames,
+        timeElapsedInSeconds: gameData.timeElapsedInSeconds,
       };
       dispatchGameSession({ type: 'LOAD_PERSISTED_GAME_DATA', payload });
     } else {
@@ -1012,6 +1014,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           lastSubConfirmationTimeSeconds: gameSessionState.lastSubConfirmationTimeSeconds,
           showPlayerNames: gameSessionState.showPlayerNames, // from gameSessionState
           selectedPlayerIds: gameSessionState.selectedPlayerIds, // from gameSessionState
+          timeElapsedInSeconds: gameSessionState.timeElapsedInSeconds, // Include timer state
           gameEvents: gameSessionState.gameEvents, // from gameSessionState
           assessments: playerAssessments,
 
@@ -1434,6 +1437,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           completedIntervalDurations: [], // Always reset intervals
           lastSubConfirmationTimeSeconds: 0, // Always reset last sub time
           tacticalBallPosition: { relX: 0.5, relY: 0.5 },
+          timeElapsedInSeconds: 0, // Always start with timer at 0
       };
 
       // Log the constructed state *before* saving

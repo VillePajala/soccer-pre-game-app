@@ -122,36 +122,20 @@ export const useOfflineFirstGameTimer = ({
     }
   }, [currentGameId]);
 
-  // --- Restore/migrate timer state when the game ID changes ---
+  // --- Restore timer state when the game ID changes ---
   const previousGameIdRef = useRef<string | null>(null);
   useEffect(() => {
-    const restoreOrMigrateTimer = async () => {
+    const restoreTimer = async () => {
       if (!currentGameId) {
         previousGameIdRef.current = currentGameId;
         return;
       }
 
       try {
-        // If the game ID changed, attempt to move existing timer state
-        if (previousGameIdRef.current && previousGameIdRef.current !== currentGameId) {
-          const prevId = previousGameIdRef.current;
-          const prevState = await getOfflineStorage().getTimerState(prevId);
-          if (prevState) {
-            const newState = { ...prevState, gameId: currentGameId };
-            await getOfflineStorage().saveTimerState(newState);
-            await getOfflineStorage().deleteTimerState(prevId);
-            dispatch({
-              type: 'RESTORE_TIMER_STATE',
-              payload: { savedTime: prevState.timeElapsedInSeconds, timestamp: prevState.timestamp }
-            });
-            previousGameIdRef.current = currentGameId;
-            return;
-          }
-        }
-
-        // Load timer state for the current game ID
+        // Only restore timer state for the current game
+        // Do NOT migrate timer state between games
         const savedState = await loadTimerState();
-        if (savedState) {
+        if (savedState && savedState.gameId === currentGameId) {
           dispatch({
             type: 'RESTORE_TIMER_STATE',
             payload: { savedTime: savedState.timeElapsedInSeconds, timestamp: savedState.timestamp }
@@ -164,7 +148,7 @@ export const useOfflineFirstGameTimer = ({
       previousGameIdRef.current = currentGameId;
     };
 
-    restoreOrMigrateTimer();
+    restoreTimer();
   }, [currentGameId, loadTimerState, dispatch]);
 
   // Timer interval effect

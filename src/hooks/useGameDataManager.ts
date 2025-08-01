@@ -231,6 +231,7 @@ export const useGameDataManager = ({
           tacticalDiscs: tacticalDiscs,
           tacticalDrawings: tacticalDrawings,
           tacticalBallPosition: tacticalBallPosition,
+          timeElapsedInSeconds: gameSessionState.timeElapsedInSeconds,
         };
 
         // 2. Update the savedGames state and localStorage
