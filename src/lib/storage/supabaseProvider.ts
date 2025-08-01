@@ -529,12 +529,29 @@ export class SupabaseProvider implements IStorageProvider {
   async saveSavedGame(gameData: unknown): Promise<unknown> {
     try {
       const userId = await this.getCurrentUserId();
+      
+      // CRITICAL BUG FIX: Add comprehensive debugging for assist-related saves
+      const gameState = gameData as any;
+      const assistEvents = gameState?.gameEvents?.filter((event: any) => event.assisterId) || [];
+      console.log(`[SUPABASE] Saving game - Events: ${gameState?.gameEvents?.length || 0}, Assist events: ${assistEvents.length}`);
+      if (assistEvents.length > 0) {
+        console.log(`[SUPABASE] Assist events before transformation:`, assistEvents.map((e: any) => ({
+          id: e.id,
+          type: e.type,
+          scorerId: e.scorerId,
+          assisterId: e.assisterId,
+          time: e.time
+        })));
+      }
+      
       const supabaseGame = toSupabase.game(gameData, userId) as Record<string, unknown> & { id?: string };
+      console.log(`[SUPABASE] Game transformed for Supabase - ID: ${supabaseGame.id || 'NEW'}`);
 
       let result;
       
       // If game has no ID, do an insert (not upsert)
       if (!supabaseGame.id) {
+        console.log(`[SUPABASE] Inserting new game...`);
         const { data, error } = await supabase
           .from('games')
           .insert(supabaseGame)
@@ -542,10 +559,13 @@ export class SupabaseProvider implements IStorageProvider {
           .single();
           
         if (error) {
+          console.error(`[SUPABASE] Insert error:`, error);
           throw new NetworkError('supabase', 'saveSavedGame', error);
         }
         result = data;
+        console.log(`[SUPABASE] Game inserted successfully with ID: ${result.id}`);
       } else {
+        console.log(`[SUPABASE] Upserting existing game: ${supabaseGame.id}`);
         const { data, error } = await supabase
           .from('games')
           .upsert(supabaseGame, { onConflict: 'id' })
@@ -553,13 +573,19 @@ export class SupabaseProvider implements IStorageProvider {
           .single();
           
         if (error) {
+          console.error(`[SUPABASE] Upsert error:`, error);
           throw new NetworkError('supabase', 'saveSavedGame', error);
         }
         result = data;
+        console.log(`[SUPABASE] Game upserted successfully`);
       }
 
-      return fromSupabase.game(result as DbGame);
+      console.log(`[SUPABASE] Converting result back to AppState format...`);
+      const convertedResult = fromSupabase.game(result as DbGame);
+      console.log(`[SUPABASE] Save completed successfully`);
+      return convertedResult;
     } catch (error) {
+      console.error(`[SUPABASE] saveSavedGame failed:`, error);
       if (error instanceof AuthenticationError || error instanceof NetworkError) {
         throw error;
       }

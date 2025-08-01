@@ -53,6 +53,12 @@ export const useGameEventsManager = ({
       return;
     }
 
+    // CRITICAL BUG FIX: Validate assister exists if assisterId is provided
+    if (assisterId && !assister) {
+      logger.error(`Assister with ID ${assisterId} not found in roster! Cannot log goal with invalid assist.`);
+      throw new Error(`Assister not found: ${assisterId}. This would cause a database save error.`);
+    }
+
     const newEvent: GameEvent = {
       id: `goal-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       type: 'goal',
@@ -60,6 +66,10 @@ export const useGameEventsManager = ({
       scorerId: scorer.id,
       assisterId: assister?.id,
     };
+
+    // CRITICAL BUG FIX: Add detailed logging for debugging assist issues
+    logger.log(`Creating goal event - Scorer: ${scorer.name} (${scorer.id}), Assister: ${assister ? `${assister.name} (${assister.id})` : 'none'}`);
+    logger.log(`Available players count: ${availablePlayers.length}, Master roster count: ${masterRosterQueryResultData?.length || 0}`);
     
     // Dispatch actions to update game state via reducer with error handling
     try {

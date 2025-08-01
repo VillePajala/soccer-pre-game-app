@@ -1036,6 +1036,21 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     const autoSave = async () => {
     if (initialLoadComplete && currentGameId && currentGameId !== DEFAULT_GAME_ID) {
       try {
+        // CRITICAL BUG FIX: Add comprehensive debugging for assist-related saves
+        const assistEvents = gameSessionState.gameEvents.filter(event => event.assisterId);
+        logger.log(`[AUTO-SAVE] Starting auto-save for game ${currentGameId}`);
+        logger.log(`[AUTO-SAVE] Total events: ${gameSessionState.gameEvents.length}, Events with assists: ${assistEvents.length}`);
+        if (assistEvents.length > 0) {
+          logger.log(`[AUTO-SAVE] Assist events details:`, assistEvents.map(e => ({
+            id: e.id,
+            type: e.type,
+            scorerId: e.scorerId,
+            assisterId: e.assisterId,
+            time: e.time
+          })));
+        }
+        logger.log(`[AUTO-SAVE] Available players count: ${availablePlayers.length}, Master roster count: ${masterRosterQueryResultData?.length || 0}`);
+        
         // 1. Create the current game state snapshot (excluding history and volatile timer states)
         const currentSnapshot: AppState = {
           // Fields from gameSessionState (persisted ones)
@@ -1078,8 +1093,18 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           // They are not part of GameData and should be re-initialized on load by the reducer.
         };
 
+        // CRITICAL BUG FIX: Log snapshot details before save
+        logger.log(`[AUTO-SAVE] Snapshot prepared - Events count: ${currentSnapshot.gameEvents.length}`);
+        logger.log(`[AUTO-SAVE] Snapshot events with assists:`, currentSnapshot.gameEvents.filter(e => e.assisterId).map(e => ({
+          id: e.id,
+          scorerId: e.scorerId,
+          assisterId: e.assisterId
+        })));
+        
         // 2. Save the game snapshot using utility
+        logger.log(`[AUTO-SAVE] Calling utilSaveGame...`);
         const savedResult = await utilSaveGame(currentGameId, currentSnapshot as AppState); // Cast to AppState for the util
+        logger.log(`[AUTO-SAVE] Save completed successfully`);
         
         // 3. Update currentGameId if it changed (important for Supabase UUID sync)
         const newGameId = (savedResult as AppState & { id?: string }).id;
@@ -1093,8 +1118,26 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         }
 
       } catch (error) {
-        logger.error("Failed to auto-save state:", error);
-        alert("Error saving game."); // Notify user
+        logger.error("[AUTO-SAVE] Failed to auto-save state:", error);
+        
+        // CRITICAL BUG FIX: Log detailed error context for debugging
+        logger.error(`[AUTO-SAVE] Error context - Game ID: ${currentGameId}`);
+        logger.error(`[AUTO-SAVE] Error context - Events count: ${gameSessionState.gameEvents.length}`);
+        logger.error(`[AUTO-SAVE] Error context - Assist events:`, gameSessionState.gameEvents.filter(e => e.assisterId));
+        
+        // CRITICAL BUG FIX: Distinguish between different types of save errors
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        
+        if (errorMessage.includes('not found') || errorMessage.includes('FK constraint') || errorMessage.includes('foreign key')) {
+          // Data validation error - not a network issue
+          alert(`Data validation error: ${errorMessage}\n\nThis is likely due to invalid player references. Please check your goal/assist entries.`);
+        } else if (errorMessage.includes('network') || errorMessage.includes('offline') || errorMessage.includes('fetch')) {
+          // Actual network error
+          alert("Network error: Unable to save game. Please check your connection and try again.");
+        } else {
+          // Generic error
+          alert(`Error saving game: ${errorMessage}`);
+        }
       }
     } else if (initialLoadComplete && currentGameId === DEFAULT_GAME_ID) {
       logger.log("Not auto-saving as this is an unsaved game (no ID assigned yet)");

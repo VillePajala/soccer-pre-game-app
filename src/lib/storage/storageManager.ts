@@ -202,6 +202,12 @@ export class StorageManager implements IStorageProvider {
   }
 
   async saveSavedGame(gameData: unknown) {
+    // CRITICAL BUG FIX: Add debugging for assist-related save operations
+    const gameState = gameData as any;
+    const assistEvents = gameState?.gameEvents?.filter((event: any) => event.assisterId) || [];
+    console.log(`[STORAGE_MANAGER] saveSavedGame called - Provider: ${this.currentProvider.constructor.name}`);
+    console.log(`[STORAGE_MANAGER] Events: ${gameState?.gameEvents?.length || 0}, Assist events: ${assistEvents.length}`);
+    
     return this.executeWithFallback(
       () => this.currentProvider.saveSavedGame(gameData),
       'saveSavedGame'

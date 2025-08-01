@@ -303,15 +303,21 @@ export function transformGameOpponentsToSupabase(gameId: string, opponents: Oppo
  * Transform game events from AppState to Supabase format
  */
 export function transformGameEventsToSupabase(gameId: string, events: GameEvent[]): SupabaseGameEvent[] {
-  return events.map(event => ({
-    id: event.id,
-    game_id: gameId,
-    event_type: event.type,
-    time_seconds: event.time,
-    scorer_id: event.scorerId || null,
-    assister_id: event.assisterId || null,
-    entity_id: event.entityId || null
-  }));
+  return events.map(event => {
+    // CRITICAL BUG FIX: Ensure we don't pass invalid player IDs that cause FK constraint violations
+    const scorerId = event.scorerId && event.scorerId !== 'opponent' ? event.scorerId : null;
+    const assisterId = event.assisterId && event.assisterId !== 'opponent' ? event.assisterId : null;
+    
+    return {
+      id: event.id,
+      game_id: gameId,
+      event_type: event.type,
+      time_seconds: event.time,
+      scorer_id: scorerId,
+      assister_id: assisterId,
+      entity_id: event.entityId || null
+    };
+  });
 }
 
 /**
