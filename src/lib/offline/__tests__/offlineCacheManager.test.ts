@@ -370,6 +370,48 @@ describe('OfflineCacheManager', () => {
     });
   });
 
+  describe('Saved Games with Consistent Cache Keys', () => {
+    const testGames = { 'game-1': { id: 'game-1', teamName: 'Test Team' } };
+
+    it('should use consistent cache key for savedGames regardless of auth state', async () => {
+      mockPrimaryProvider.getSavedGames.mockResolvedValue(testGames);
+
+      const result = await offlineManager.getSavedGames();
+
+      expect(mockPrimaryProvider.getSavedGames).toHaveBeenCalled();
+      expect(mockCache.set).toHaveBeenCalledWith(
+        'savedGames',  // Not user-namespaced
+        testGames,
+        { ttl: 30 * 60 * 1000 }
+      );
+      expect(result).toEqual(testGames);
+    });
+
+    it('should use consistent cache key even when user ID is null', async () => {
+      offlineManager.setUserId(null);
+      mockPrimaryProvider.getSavedGames.mockResolvedValue(testGames);
+
+      const result = await offlineManager.getSavedGames();
+
+      expect(mockCache.set).toHaveBeenCalledWith(
+        'savedGames',  // Still not user-namespaced
+        testGames,
+        { ttl: 30 * 60 * 1000 }
+      );
+      expect(result).toEqual(testGames);
+    });
+
+    it('should fallback to cached savedGames with consistent key', async () => {
+      mockPrimaryProvider.getSavedGames.mockRejectedValue(new Error('Network error'));
+      mockCache.get.mockResolvedValue(testGames);
+
+      const result = await offlineManager.getSavedGames();
+
+      expect(mockCache.get).toHaveBeenCalledWith('savedGames');
+      expect(result).toEqual(testGames);
+    });
+  });
+
   describe('Sync Queue Management', () => {
     it('should not queue operations when no user ID', async () => {
       offlineManager.setUserId(null);

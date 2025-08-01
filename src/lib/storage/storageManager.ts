@@ -44,11 +44,11 @@ export class StorageManager implements IStorageProvider {
         console.warn(`Supabase ${operationName} failed, falling back to localStorage:`, error.message);
         
         try {
-          // Use localStorage provider directly without changing currentProvider
-          const fallbackOperation = () => operation.call({ currentProvider: this.localStorage });
-          const result = await fallbackOperation();
+          // Temporarily switch to localStorage for fallback operation
+          this.currentProvider = this.localStorage;
+          const result = await operation();
           
-          // Ensure currentProvider remains consistent
+          // Restore original provider
           this.currentProvider = originalProvider;
           return result;
         } catch (fallbackError) {
