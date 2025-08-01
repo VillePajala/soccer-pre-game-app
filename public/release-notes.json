@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "Fix quick save timer state"
+  "notes": "Enhance game timer functionality by adding timeElapsedInSeconds state management and restoring timer state across game sessions. Update release notes to reflect changes."
 }

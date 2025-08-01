@@ -1,23 +1,10 @@
-import { OfflineFirstStorageManager } from '@/lib/storage/offlineFirstStorageManager';
+import { authAwareStorageManager as storageManager } from '@/lib/storage';
 import type { AppSettings } from './appSettings';
 
 export interface SessionSettings {
   deviceFingerprint?: string;
   sessionActivity?: Record<string, unknown>;
 }
-
-// Create storage manager instance lazily
-let storageManager: OfflineFirstStorageManager | null = null;
-
-const getStorageManager = (): OfflineFirstStorageManager => {
-  if (!storageManager && typeof window !== 'undefined') {
-    storageManager = new OfflineFirstStorageManager({
-      enableOfflineMode: true,
-      syncOnReconnect: false, // Session data doesn't need cloud sync
-    });
-  }
-  return storageManager!;
-};
 
 /**
  * Get device fingerprint from IndexedDB
@@ -28,8 +15,10 @@ export async function getDeviceFingerprint(): Promise<string | null> {
   }
 
   try {
-    const settings = await getStorageManager().getAppSettings();
-    return settings?.deviceFingerprint ?? null;
+    const settings = await storageManager.getAppSettings();
+    const fingerprint = settings?.deviceFingerprint ?? null;
+    console.log('Retrieved device fingerprint from storage:', fingerprint ? 'FOUND' : 'NOT_FOUND');
+    return fingerprint;
   } catch (error) {
     console.error('Failed to get device fingerprint:', error);
     return null;
@@ -45,14 +34,15 @@ export async function saveDeviceFingerprint(fingerprint: string): Promise<void> 
   }
 
   try {
-    const currentSettings = await getStorageManager().getAppSettings();
+    const currentSettings = await storageManager.getAppSettings();
     const updatedSettings: AppSettings = {
       ...currentSettings,
       deviceFingerprint: fingerprint,
       // Ensure currentGameId is properly typed
       currentGameId: currentSettings?.currentGameId ?? null,
     };
-    await getStorageManager().saveAppSettings(updatedSettings);
+    await storageManager.saveAppSettings(updatedSettings);
+    console.log('Successfully saved device fingerprint to storage');
   } catch (error) {
     console.error('Failed to save device fingerprint:', error);
   }
@@ -67,7 +57,7 @@ export async function getSessionActivity(userId: string): Promise<unknown> {
   }
 
   try {
-    const settings = await getStorageManager().getAppSettings();
+    const settings = await storageManager.getAppSettings();
     const sessionActivity = settings?.sessionActivity as Record<string, unknown>;
     return sessionActivity?.[userId] ?? null;
   } catch (error) {
@@ -85,7 +75,7 @@ export async function saveSessionActivity(userId: string, activity: unknown): Pr
   }
 
   try {
-    const currentSettings = await getStorageManager().getAppSettings();
+    const currentSettings = await storageManager.getAppSettings();
     const sessionActivity = (currentSettings?.sessionActivity as Record<string, unknown>) || {};
     
     const updatedSettings: AppSettings = {
@@ -97,7 +87,7 @@ export async function saveSessionActivity(userId: string, activity: unknown): Pr
       },
     };
     
-    await getStorageManager().saveAppSettings(updatedSettings);
+    await storageManager.saveAppSettings(updatedSettings);
   } catch (error) {
     console.error('Failed to save session activity:', error);
   }
@@ -112,7 +102,7 @@ export async function removeSessionActivity(userId: string): Promise<void> {
   }
 
   try {
-    const currentSettings = await getStorageManager().getAppSettings();
+    const currentSettings = await storageManager.getAppSettings();
     const sessionActivity = (currentSettings?.sessionActivity as Record<string, unknown>) || {};
     
     delete sessionActivity[userId];
@@ -123,7 +113,7 @@ export async function removeSessionActivity(userId: string): Promise<void> {
       sessionActivity,
     };
     
-    await getStorageManager().saveAppSettings(updatedSettings);
+    await storageManager.saveAppSettings(updatedSettings);
   } catch (error) {
     console.error('Failed to remove session activity:', error);
   }

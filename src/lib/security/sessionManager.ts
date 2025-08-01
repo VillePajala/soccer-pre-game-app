@@ -315,6 +315,12 @@ export class SessionManager {
     // Check if fingerprint already exists
     let fingerprint = await getDeviceFingerprint();
     
+    if (fingerprint) {
+      logger.info('Found existing device fingerprint');
+    } else {
+      logger.info('No existing fingerprint found, generating new one');
+    }
+    
     if (!fingerprint) {
       // Generate new fingerprint based on device characteristics
       let canvasFingerprint = 'fallback-canvas';
@@ -345,13 +351,15 @@ export class SessionManager {
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         screen: `${screen.width}x${screen.height}x${screen.colorDepth}`,
         canvas: canvasFingerprint.slice(-50), // Last 50 chars of canvas fingerprint
-        timestamp: Date.now()
+        // Removed timestamp to ensure consistent fingerprint for same device
       }));
       
       await saveDeviceFingerprint(fingerprint);
+      logger.info('Generated and saved new device fingerprint');
     }
     
     this.deviceFingerprint = fingerprint;
+    logger.info('Device fingerprint initialized:', fingerprint ? 'SUCCESS' : 'FAILED');
   }
 
   /**
@@ -377,6 +385,12 @@ export class SessionManager {
       const settingsJson = settings?.settings || {};
       const knownDevices = settingsJson.known_devices || [];
       const isKnownDevice = knownDevices.includes(this.deviceFingerprint);
+      
+      logger.info('Device check:', {
+        currentFingerprint: this.deviceFingerprint?.slice(-20), // Last 20 chars for privacy
+        knownDevicesCount: knownDevices.length,
+        isKnownDevice: isKnownDevice
+      });
 
       if (!isKnownDevice) {
         logger.warn('New device detected for user:', user.email);
