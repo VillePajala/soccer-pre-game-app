@@ -59,8 +59,15 @@ export class OfflineCacheManager implements IStorageProvider {
 
   /**
    * Generate cache key with user context
+   * For savedGames, we use a consistent key to avoid data loss during auth transitions
+   * since the storage manager handles provider switching
    */
   private getCacheKey(key: string): string {
+    // For savedGames, use a consistent cache key regardless of auth state
+    // since the underlying storage manager handles provider switching
+    if (key === 'savedGames') {
+      return 'savedGames';
+    }
     return this.userId ? `${this.userId}:${key}` : `anon:${key}`;
   }
 

@@ -171,13 +171,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       setLoading(false);
       
-      // Clear any auth-related localStorage items (for development)
+      // Clear only Supabase auth storage (not all auth-related keys)
       if (typeof window !== 'undefined') {
-        // Clear Supabase auth storage
+        // Clear only specific Supabase auth storage keys to avoid clearing game data
         const keys = Object.keys(localStorage);
         keys.forEach(key => {
-          if (key.startsWith('sb-') || key.includes('supabase') || key.includes('auth')) {
-            logger.info('Clearing localStorage key:', key);
+          if (key.startsWith('sb-') && key.includes('supabase')) {
+            logger.info('Clearing Supabase auth key:', key);
             localStorage.removeItem(key);
           }
         });
