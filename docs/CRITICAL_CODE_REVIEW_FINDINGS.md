@@ -58,13 +58,41 @@ const validatedTime = Math.min(correctedElapsedSeconds, maxTimeForCurrentPeriod)
 ```
 **Status**: ✅ **RESOLVED** - Timer values now properly bounded
 
-### 4. Canvas Drawing Performance Bottleneck (MEDIUM RISK)
+### 5. **FIXED** - Storage Provider Cache Namespace Inconsistency ✅
+**File**: `src/lib/offline/offlineCacheManager.ts:64-69`  
+**Issue**: ~~Cache keys namespaced by user ID caused games to disappear during auth transitions~~  
+**Root Cause**: Cache key changed from `${userId}:savedGames` to `anon:savedGames` on signout  
+**Fix Applied**: Consistent cache key for savedGames regardless of auth state
+```typescript
+// For savedGames, use a consistent cache key regardless of auth state
+// since the underlying storage manager handles provider switching
+if (key === 'savedGames') {
+  return 'savedGames';
+}
+```
+**Status**: ✅ **RESOLVED** - Games remain visible during auth transitions
+
+### 6. **FIXED** - Aggressive Auth Cleanup Data Loss ✅
+**File**: `src/context/AuthContext.tsx:174-184`  
+**Issue**: ~~Sign out process cleared all auth-related localStorage keys including game data~~  
+**Fix Applied**: Limited cleanup to only Supabase-specific keys
+```typescript
+// Clear only specific Supabase auth storage keys to avoid clearing game data
+keys.forEach(key => {
+  if (key.startsWith('sb-') && key.includes('supabase')) {
+    localStorage.removeItem(key);
+  }
+});
+```
+**Status**: ✅ **RESOLVED** - Game data preserved during sign out
+
+### 7. Canvas Drawing Performance Bottleneck (MEDIUM RISK)
 **File**: `src/components/SoccerField.tsx` (Drawing operations)  
 **Issue**: No throttling on drawing operations, potential memory leaks
 **Impact**: App could become unresponsive during intensive drawing
 **Red Flag**: Lag when drawing or moving players on field
 
-### 5. Event Logging Silent Failures (MEDIUM RISK)
+### 8. Event Logging Silent Failures (MEDIUM RISK)
 **File**: `src/hooks/useGameEventsManager.ts:185-194`  
 **Issue**: Fair play card save failures are logged but not shown to user
 ```typescript
@@ -76,19 +104,19 @@ if (!success) {
 **Impact**: User thinks fair play cards are saved when they're not
 **Red Flag**: Fair play cards reset after app restart
 
-## 🟡 HIGH PRIORITY ISSUES (Monitor Closely)
+## 🟡 HIGH PRIORITY ISSUES (Remaining)
 
-### 6. Auto-Save Race Conditions
+### 9. Auto-Save Race Conditions (HIGH PRIORITY)
 **Files**: Multiple auto-save operations across components
 **Issue**: Multiple simultaneous save operations could conflict
 **Red Flag**: "Saving..." indicator stuck or repeated save notifications
 
-### 7. Memory Leaks in Event Listeners
+### 10. Memory Leaks in Event Listeners (HIGH PRIORITY)
 **Files**: Timer hooks and game state management
 **Issue**: Event listeners and intervals may not be properly cleaned up
 **Red Flag**: App becoming slower over time, especially after multiple games
 
-### 8. State Synchronization Edge Cases
+### 11. State Synchronization Edge Cases (HIGH PRIORITY)
 **Files**: Various state management hooks
 **Issue**: Complex state dependencies could cause inconsistencies
 **Red Flag**: UI showing different values than what was entered
