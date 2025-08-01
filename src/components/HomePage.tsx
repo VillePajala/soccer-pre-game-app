@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useReducer, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useReducer, useRef, startTransition } from 'react';
 import SoccerField from '@/components/SoccerField';
 import PlayerBar from '@/components/PlayerBar';
 import ControlBar from '@/components/ControlBar';
@@ -460,6 +460,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   const [loadGamesListError, setLoadGamesListError] = useState<string | null>(null);
   const [isGameLoading, setIsGameLoading] = useState(false); // For loading a specific game
   const [gameLoadError, setGameLoadError] = useState<string | null>(null);
+  const [isStateSynchronizing, setIsStateSynchronizing] = useState(false); // Prevent race conditions during state updates
   // Removed - now handled by useGameDataManager:
   // const [isGameDeleting, setIsGameDeleting] = useState(false); // For deleting a specific game
   // const [gameDeleteError, setGameDeleteError] = useState<string | null>(null);
@@ -863,8 +864,12 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
   // Helper function to load game state from game data
   const loadGameStateFromData = (gameData: AppState | null, isInitialDefaultLoad = false) => {
-
-    if (gameData) {
+    // Set synchronization flag to prevent race conditions with auto-save
+    setIsStateSynchronizing(true);
+    
+    // Use startTransition to batch all state updates together to prevent UI inconsistencies
+    startTransition(() => {
+      if (gameData) {
       // gameData is AppState, map its fields directly to GameSessionState partial payload
       const payload: Partial<GameSessionState> = {
         teamName: gameData.teamName,
@@ -960,6 +965,10 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       availablePlayers: masterRosterQueryResultData || availablePlayers,
     };
     resetHistory(newHistoryState);
+    
+    // Clear synchronization flag after all state updates are complete
+    setIsStateSynchronizing(false);
+    });
   };
 
   // --- Effect to load game state when currentGameId changes or savedGames updates ---
@@ -982,6 +991,11 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   useEffect(() => {
     // Skip auto-save during new game creation to prevent overwriting the new game
     if (isCreatingNewGame) {
+      return;
+    }
+    
+    // Skip auto-save during state synchronization to prevent race conditions
+    if (isStateSynchronizing) {
       return;
     }
     
@@ -1055,7 +1069,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     };
     autoSave();
     // Dependencies: Include all state variables that are part of the saved snapshot
-  }, [initialLoadComplete, currentGameId, isCreatingNewGame,
+  }, [initialLoadComplete, currentGameId, isCreatingNewGame, isStateSynchronizing,
       playersOnField, opponents, drawings, availablePlayers, masterRosterQueryResultData,
       // showPlayerNames, // REMOVED - Covered by gameSessionState
       // Local states that are part of the snapshot but not yet in gameSessionState:

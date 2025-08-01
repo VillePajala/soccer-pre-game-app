@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix: resolve critical memory leaks in timer hooks and rate limiter"
+  "notes": "Fix auto-save race conditions with save queue system"
 }
