@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useReducer, useRef, startTransition } from 'react';
+import React, { useState, useEffect, useCallback, useReducer, useRef, useMemo, startTransition } from 'react';
 import SoccerField from '@/components/SoccerField';
 import PlayerBar from '@/components/PlayerBar';
 import ControlBar from '@/components/ControlBar';
@@ -641,17 +641,37 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   // Use a ref to track the last synced data to prevent loops
   const lastSyncedRosterRef = useRef<string>('');
   
+  // Memoized roster data key for performance optimization
+  const rosterDataKey = useMemo(() => {
+    if (!masterRosterQueryResultData || isMasterRosterQueryLoading) return null;
+    return JSON.stringify(masterRosterQueryResultData.map(p => ({ id: p.id, name: p.name })));
+  }, [masterRosterQueryResultData, isMasterRosterQueryLoading]);
+
+  // Memoized sorted games for performance optimization
+  const sortedGamesByDate = useMemo(() => {
+    const currentSavedGames = allSavedGamesQueryResultData || {};
+    const gameIds = Object.keys(currentSavedGames);
+    
+    if (gameIds.length === 0) return [];
+    
+    return gameIds
+      .map(id => ({ id, game: currentSavedGames[id] }))
+      .filter(({ game }) => game && game.gameDate)
+      .sort((a, b) => {
+        const dateA = new Date(a.game.gameDate + ' ' + (a.game.gameTime || '00:00'));
+        const dateB = new Date(b.game.gameDate + ' ' + (b.game.gameTime || '00:00'));
+        return dateB.getTime() - dateA.getTime();
+      });
+  }, [allSavedGamesQueryResultData]);
+  
   useEffect(() => {
     if (isMasterRosterQueryLoading) {
       logger.log('[TanStack Query] Master Roster is loading...');
     }
-    if (masterRosterQueryResultData && !isMasterRosterQueryLoading) {
-      // Create a unique key for the current data
-      const dataKey = JSON.stringify(masterRosterQueryResultData.map(p => ({ id: p.id, name: p.name })));
-      
+    if (masterRosterQueryResultData && !isMasterRosterQueryLoading && rosterDataKey) {
       // Only update if this is different from what we last synced
-      if (dataKey !== lastSyncedRosterRef.current) {
-        lastSyncedRosterRef.current = dataKey;
+      if (rosterDataKey !== lastSyncedRosterRef.current) {
+        lastSyncedRosterRef.current = rosterDataKey;
         logger.log('[HomePage] Syncing roster from React Query:', masterRosterQueryResultData.length, 'players');
         setAvailablePlayers(masterRosterQueryResultData);
       }
@@ -660,7 +680,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       logger.error('[TanStack Query] Error loading master roster:', masterRosterQueryErrorData);
       setAvailablePlayers([]);
     }
-  }, [masterRosterQueryResultData, isMasterRosterQueryLoading, isMasterRosterQueryError, masterRosterQueryErrorData, setAvailablePlayers]);
+  }, [masterRosterQueryResultData, isMasterRosterQueryLoading, isMasterRosterQueryError, masterRosterQueryErrorData, setAvailablePlayers, rosterDataKey]);
 
   // --- Effect to update seasons from useQuery ---
   useEffect(() => {
@@ -793,26 +813,11 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         setHasSkippedInitialSetup(true);
       } else {
         // If the saved game ID doesn't exist, try to find the most recent game
-        const gameIds = Object.keys(currentSavedGames);
-        if (gameIds.length > 0) {
-          // Sort games by date to find the most recent
-          const sortedGames = gameIds
-            .map(id => ({ id, game: currentSavedGames[id] }))
-            .filter(({ game }) => game && game.gameDate)
-            .sort((a, b) => {
-              const dateA = new Date(a.game.gameDate + ' ' + (a.game.gameTime || '00:00'));
-              const dateB = new Date(b.game.gameDate + ' ' + (b.game.gameTime || '00:00'));
-              return dateB.getTime() - dateA.getTime();
-            });
-          
-          if (sortedGames.length > 0) {
-            const mostRecentId = sortedGames[0].id;
-            logger.log(`[EFFECT init] Found most recent game to restore: ${mostRecentId}`);
-            setCurrentGameId(mostRecentId);
-            setHasSkippedInitialSetup(true);
-          } else {
-            setCurrentGameId(DEFAULT_GAME_ID);
-          }
+        if (sortedGamesByDate.length > 0) {
+          const mostRecentId = sortedGamesByDate[0].id;
+          logger.log(`[EFFECT init] Found most recent game to restore: ${mostRecentId}`);
+          setCurrentGameId(mostRecentId);
+          setHasSkippedInitialSetup(true);
         } else {
           if (lastGameIdSetting && lastGameIdSetting !== DEFAULT_GAME_ID) {
             logger.warn(`[EFFECT init] Last game ID ${lastGameIdSetting} not found in saved games. Loading default.`);
@@ -842,7 +847,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     isCurrentGameIdSettingQueryLoading,
     initialLoadComplete,
     allSavedGamesQueryResultData,
-    currentGameIdSettingQueryResultData
+    currentGameIdSettingQueryResultData,
+    sortedGamesByDate
   ]);
 
   // Add a timeout for mobile loading issues

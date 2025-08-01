@@ -86,13 +86,14 @@ keys.forEach(key => {
 ```
 **Status**: ✅ **RESOLVED** - Game data preserved during sign out
 
-### 7. Canvas Drawing Performance Bottleneck (MEDIUM RISK)
+### 7. **MONITORING** - Canvas Drawing Performance Bottleneck (MEDIUM RISK)
 **File**: `src/components/SoccerField.tsx` (Drawing operations)  
 **Issue**: No throttling on drawing operations, potential memory leaks
 **Impact**: App could become unresponsive during intensive drawing
 **Red Flag**: Lag when drawing or moving players on field
+**Status**: 🟡 **MONITORING** - Acceptable for current use, scheduled for Phase 3 optimization
 
-### 8. Event Logging Silent Failures (MEDIUM RISK)
+### 8. **MONITORING** - Event Logging Silent Failures (MEDIUM RISK)
 **File**: `src/hooks/useGameEventsManager.ts:185-194`  
 **Issue**: Fair play card save failures are logged but not shown to user
 ```typescript
@@ -103,6 +104,7 @@ if (!success) {
 ```
 **Impact**: User thinks fair play cards are saved when they're not
 **Red Flag**: Fair play cards reset after app restart
+**Status**: 🟡 **MONITORING** - Acceptable for current use, user can retry operations if needed
 
 ## ✅ HIGH PRIORITY ISSUES - ALL RESOLVED
 

@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Player } from '@/types';
 import { addPlayer, updatePlayer, removePlayer, setGoalieStatus } from '@/utils/masterRosterManager';
-import { queryKeys } from '@/config/queryKeys';
+import { useCacheManager } from '@/utils/cacheUtils';
 
 interface UseRosterArgs {
   initialPlayers: Player[];
@@ -11,6 +11,7 @@ interface UseRosterArgs {
 
 export const useRoster = ({ initialPlayers, selectedPlayerIds }: UseRosterArgs) => {
   const queryClient = useQueryClient();
+  const cacheManager = useCacheManager(queryClient);
   const [availablePlayers, setAvailablePlayers] = useState<Player[]>(initialPlayers);
   const [highlightRosterButton, setHighlightRosterButton] = useState(false);
   const [showRosterPrompt, setShowRosterPrompt] = useState(false);
@@ -38,22 +39,37 @@ export const useRoster = ({ initialPlayers, selectedPlayerIds }: UseRosterArgs) 
       ...data,
     };
     setIsRosterUpdating(true);
+    
+    // Optimistic update to local state
     setAvailablePlayers([...availablePlayers, temp]);
+    
+    // Optimistic update to cache
+    cacheManager.updateMasterRosterCache((players) => [...players, temp]);
+    
     try {
       const saved = await addPlayer(data);
       if (saved) {
+        // Update local state with real data
         setAvailablePlayers((players) =>
           players.map((p) => (p.id === temp.id ? saved : p)),
         );
+        
+        // Update cache with real data
+        cacheManager.updateMasterRosterCache((players) =>
+          players.map((p) => (p.id === temp.id ? saved : p))
+        );
+        
         setRosterError(null);
-        // Invalidate the master roster query to refetch from storage
-        await queryClient.invalidateQueries({ queryKey: queryKeys.masterRoster });
       } else {
+        // Rollback optimistic updates
         setAvailablePlayers(prev);
+        cacheManager.updateMasterRosterCache(() => prev);
         setRosterError('Failed to add player');
       }
     } catch {
+      // Rollback optimistic updates
       setAvailablePlayers(prev);
+      cacheManager.updateMasterRosterCache(() => prev);
       setRosterError('Failed to add player');
     } finally {
       setIsRosterUpdating(false);
@@ -66,22 +82,34 @@ export const useRoster = ({ initialPlayers, selectedPlayerIds }: UseRosterArgs) 
   ) => {
     const prev = [...availablePlayers];
     setIsRosterUpdating(true);
-    setAvailablePlayers((ps) =>
-      ps.map((p) => (p.id === playerId ? { ...p, ...updates } : p)),
-    );
+    
+    // Optimistic updates
+    const optimisticUpdate = (players: Player[]) =>
+      players.map((p) => (p.id === playerId ? { ...p, ...updates } : p));
+    
+    setAvailablePlayers(optimisticUpdate);
+    cacheManager.updateMasterRosterCache(optimisticUpdate);
+    
     try {
       const updated = await updatePlayer(playerId, updates);
       if (updated) {
-        setAvailablePlayers((ps) =>
-          ps.map((p) => (p.id === updated.id ? updated : p)),
-        );
+        // Update with real data
+        const realUpdate = (players: Player[]) =>
+          players.map((p) => (p.id === updated.id ? updated : p));
+        
+        setAvailablePlayers(realUpdate);
+        cacheManager.updateMasterRosterCache(realUpdate);
         setRosterError(null);
       } else {
+        // Rollback optimistic updates
         setAvailablePlayers(prev);
+        cacheManager.updateMasterRosterCache(() => prev);
         setRosterError('Failed to update player');
       }
     } catch {
+      // Rollback optimistic updates
       setAvailablePlayers(prev);
+      cacheManager.updateMasterRosterCache(() => prev);
       setRosterError('Failed to update player');
     } finally {
       setIsRosterUpdating(false);
@@ -91,19 +119,28 @@ export const useRoster = ({ initialPlayers, selectedPlayerIds }: UseRosterArgs) 
   const handleRemovePlayer = async (playerId: string) => {
     const prev = [...availablePlayers];
     setIsRosterUpdating(true);
-    setAvailablePlayers((ps) => ps.filter((p) => p.id !== playerId));
+    
+    // Optimistic updates
+    const removeUpdate = (players: Player[]) => players.filter((p) => p.id !== playerId);
+    
+    setAvailablePlayers(removeUpdate);
+    cacheManager.updateMasterRosterCache(removeUpdate);
+    
     try {
       const success = await removePlayer(playerId);
       if (!success) {
+        // Rollback optimistic updates
         setAvailablePlayers(prev);
+        cacheManager.updateMasterRosterCache(() => prev);
         setRosterError('Failed to remove player');
       } else {
         setRosterError(null);
-        // Invalidate the master roster query to refetch from storage
-        await queryClient.invalidateQueries({ queryKey: queryKeys.masterRoster });
+        // No need to invalidate - optimistic update already applied
       }
     } catch {
+      // Rollback optimistic updates
       setAvailablePlayers(prev);
+      cacheManager.updateMasterRosterCache(() => prev);
       setRosterError('Failed to remove player');
     } finally {
       setIsRosterUpdating(false);
@@ -113,23 +150,33 @@ export const useRoster = ({ initialPlayers, selectedPlayerIds }: UseRosterArgs) 
   const handleSetGoalieStatus = async (playerId: string, isGoalie: boolean) => {
     const prev = [...availablePlayers];
     setIsRosterUpdating(true);
-    setAvailablePlayers((ps) =>
-      ps.map((p) => {
+    
+    // Optimistic updates
+    const goalieUpdate = (players: Player[]) =>
+      players.map((p) => {
         if (p.id === playerId) return { ...p, isGoalie };
         if (isGoalie && p.isGoalie) return { ...p, isGoalie: false };
         return p;
-      })
-    );
+      });
+    
+    setAvailablePlayers(goalieUpdate);
+    cacheManager.updateMasterRosterCache(goalieUpdate);
+    
     try {
       const updated = await setGoalieStatus(playerId, isGoalie);
       if (!updated) {
+        // Rollback optimistic updates
         setAvailablePlayers(prev);
+        cacheManager.updateMasterRosterCache(() => prev);
         setRosterError('Failed to set goalie status');
       } else {
         setRosterError(null);
+        // Optimistic update was correct, no additional action needed
       }
     } catch {
+      // Rollback optimistic updates
       setAvailablePlayers(prev);
+      cacheManager.updateMasterRosterCache(() => prev);
       setRosterError('Failed to set goalie status');
     } finally {
       setIsRosterUpdating(false);
