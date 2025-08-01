@@ -1,22 +1,21 @@
 {
-    "name": "TEST - Coaching Companion",
-    "short_name": "TEST Coach",
-    "description": "TEST VERSION - Soccer Tactics and Timer App for Coaches",
-    "start_url": "/",
-    "display": "fullscreen",
-    "orientation": "portrait",
-    "background_color": "#111827",
-    "theme_color": "#1e293b",
-    "icons": [
-      {
-        "src": "/pepo-logo.png",
-        "sizes": "192x192",
-        "type": "image/png"
-      },
-      {
-        "src": "/pepo-logo.png",
-        "sizes": "512x512",
-        "type": "image/png"
-      }
-    ]
-  }
+  "name": "MatchDay Coach (Dev)",
+  "short_name": "Dev App",
+  "description": "Soccer Tactics and Timer App for Coaches",
+  "start_url": "/",
+  "display": "fullscreen",
+  "background_color": "#111827",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "/pepo-logo-dev.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/pepo-logo-dev.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
