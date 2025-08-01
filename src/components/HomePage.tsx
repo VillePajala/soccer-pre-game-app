@@ -65,6 +65,9 @@ import { useRoster } from '@/hooks/useRoster';
 import { useGameDataManager } from '@/hooks/useGameDataManager';
 import { useGameStateManager } from '@/hooks/useGameStateManager';
 import { useModalContext } from '@/contexts/ModalProvider';
+// Import skeleton components
+import { GameStatsModalSkeleton, LoadGameModalSkeleton, RosterModalSkeleton, ModalSkeleton } from '@/components/ui/ModalSkeleton';
+import { AppLoadingSkeleton } from '@/components/ui/AppSkeleton';
 // Note: localStorage utilities removed - using offline-first storage instead
 // Removed - now handled by useGameDataManager: 
 // import { queryKeys } from '@/config/queryKeys';
@@ -1648,12 +1651,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   const isLoading = isMasterRosterQueryLoading || areSeasonsQueryLoading || areTournamentsQueryLoading || isAllSavedGamesQueryLoading || isCurrentGameIdSettingQueryLoading;
 
   if (isLoading && !initialLoadComplete) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-slate-900 text-white">
-        {/* You can replace this with a more sophisticated loading spinner component */}
-        <p>Loading Game Data...</p>
-      </div>
-    );
+    return <AppLoadingSkeleton />;
   }
 
   // Define a consistent, premium style for the top and bottom bars
@@ -1787,13 +1785,13 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
       {/* Modals and Overlays */}
       {/* Training Resources Modal */}
-      <React.Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="text-white">Loading...</div></div>}>
+      <React.Suspense fallback={<ModalSkeleton title="Training Resources" />}>
         <TrainingResourcesModal
           isOpen={isTrainingResourcesOpen}
           onClose={handleToggleTrainingResources}
         />
       </React.Suspense>
-      <React.Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="text-white">Loading...</div></div>}>
+      <React.Suspense fallback={<ModalSkeleton title="Instructions" />}>
         <InstructionsModal
           isOpen={isInstructionsModalOpen}
           onClose={handleToggleInstructionsModal}
@@ -1810,7 +1808,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       />
       {/* Game Stats Modal - Restore props for now */}
       {isGameStatsModalOpen && (
-        <React.Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="text-white">Loading...</div></div>}>
+        <React.Suspense fallback={<GameStatsModalSkeleton />}>
           <GameStatsModal
             isOpen={isGameStatsModalOpen}
             onClose={handleToggleGameStatsModal}
@@ -1841,7 +1839,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           />
         </React.Suspense>
       )}
-      <React.Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="text-white">Loading...</div></div>}>
+      <React.Suspense fallback={<LoadGameModalSkeleton />}>
         <LoadGameModal 
           isOpen={isLoadGameModalOpen}
           onClose={handleCloseLoadGameModal}
@@ -1865,7 +1863,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
       {/* Conditionally render the New Game Setup Modal */}
       {isNewGameSetupModalOpen && (
-        <React.Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="text-white">Loading...</div></div>}>
+        <React.Suspense fallback={<ModalSkeleton title="New Game Setup" />}>
           <NewGameSetupModal
             isOpen={isNewGameSetupModalOpen}
             initialPlayerSelection={playerIdsForNewGame} // <<< Pass the state here
@@ -1885,7 +1883,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       )}
 
       {/* Roster Settings Modal */}
-      <React.Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="text-white">Loading...</div></div>}>
+      <React.Suspense fallback={<RosterModalSkeleton />}>
         <RosterSettingsModal
           isOpen={isRosterModalOpen}
           onClose={closeRosterModal}
@@ -1906,7 +1904,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         />
       </React.Suspense>
 
-      <React.Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="text-white">Loading...</div></div>}>
+      <React.Suspense fallback={<ModalSkeleton title="Season & Tournament Management" />}>
         <SeasonTournamentManagementModal
           isOpen={isSeasonTournamentModalOpen}
           onClose={handleCloseSeasonTournamentModal}
@@ -1930,7 +1928,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           onGameClick={handleGameLogClick}
       /> */}
 
-      <React.Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="text-white">Loading...</div></div>}>
+      <React.Suspense fallback={<ModalSkeleton title="Game Settings" />}>
         <GameSettingsModal
           isOpen={isGameSettingsModalOpen}
           onClose={handleCloseGameSettingsModal}
@@ -1980,7 +1978,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         />
       </React.Suspense>
 
-      <React.Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="text-white">Loading...</div></div>}>
+      <React.Suspense fallback={<ModalSkeleton title="Settings" />}>
         <SettingsModal
           isOpen={isSettingsModalOpen}
           onClose={handleCloseSettingsModal}
@@ -1994,7 +1992,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         />
       </React.Suspense>
 
-      <React.Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="text-white">Loading...</div></div>}>
+      <React.Suspense fallback={<ModalSkeleton title="Player Assessment" />}>
         <PlayerAssessmentModal
           isOpen={isPlayerAssessmentModalOpen}
           onClose={closePlayerAssessmentModal}

@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "Fix auto-save race conditions with save queue system"
+  "notes": "Fix state synchronization edge cases in game loading"
 }
