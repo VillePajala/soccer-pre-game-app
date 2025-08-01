@@ -312,21 +312,10 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
           const isLoadActionActive = isGameLoading && isProcessingThisGame;
           const disableActions = isGameLoading || isGameDeleting || isGamesImporting;
 
-          // Get game status
-          const gameStatus = game.gameStatus || 'notStarted';
           const totalPlayers = game.selectedPlayerIds?.length || 0;
           const assessmentsDone = Object.keys(game.assessments || {}).length;
           const assessmentsComplete = totalPlayers > 0 && assessmentsDone >= totalPlayers;
           const isExpanded = expandedIds.has(gameId);
-          const getResultColor = () => {
-            if (game.homeScore > game.awayScore) {
-              return game.homeOrAway === 'home' ? 'bg-green-500' : 'bg-red-500';
-            }
-            if (game.awayScore > game.homeScore) {
-              return game.homeOrAway === 'home' ? 'bg-red-500' : 'bg-green-500';
-            }
-            return 'bg-gray-500';
-          };
 
           return (
             <li
