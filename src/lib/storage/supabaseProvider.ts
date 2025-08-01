@@ -1,4 +1,4 @@
-// Supabase storage provider implementation
+// Supabase storage provider implementation with Phase 4 performance optimizations
 import type { IStorageProvider } from './types';
 import { StorageError, NetworkError, AuthenticationError } from './types';
 import type { Player, Season, Tournament } from '../../types';
@@ -6,6 +6,7 @@ import type { AppSettings } from '../../utils/appSettings';
 import { supabase } from '../supabase';
 import { toSupabase, fromSupabase } from '../../utils/transforms';
 import type { DbSeason, DbTournament, DbPlayer, DbAppSettings, DbGame } from '../../utils/transforms';
+import { compressionManager, FIELD_SELECTIONS } from './compressionUtils';
 
 export class SupabaseProvider implements IStorageProvider {
   
@@ -30,19 +31,18 @@ export class SupabaseProvider implements IStorageProvider {
     return user.id;
   }
 
-  // Player management
+  // Player management with Phase 4 optimizations
   async getPlayers(): Promise<Player[]> {
     try {
-      const userId = await this.getCurrentUserId();
-      const { data, error } = await supabase
-        .from('players')
-        .select('*')
-        .eq('user_id', userId)
-        .order('name');
-
-      if (error) {
-        throw new NetworkError('supabase', 'getPlayers', error);
-      }
+      // Use optimized field selection for better performance
+      const data = await compressionManager.fetchOptimized<DbPlayer>(
+        'players',
+        FIELD_SELECTIONS.playersFull,
+        {
+          orderBy: 'name',
+          ascending: true
+        }
+      );
 
       return data.map((player: DbPlayer) => fromSupabase.player(player));
     } catch (error) {
