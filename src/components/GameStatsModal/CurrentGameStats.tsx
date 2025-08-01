@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next';
 import { FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
 import RatingBar from '../RatingBar';
 import { calculateSelectedPlayersTeamAverages } from '@/utils/assessmentStats';
-import { useGoalEditing } from '@/hooks/useGoalEditing';
 import type { CurrentGameStatsProps, SortableColumn } from './types';
 import { sortPlayerStats, getSortIcon, formatNumber } from './utils';
 
@@ -24,7 +23,7 @@ const CurrentGameStats = memo<CurrentGameStatsProps>(({
   onSort,
   gameNotes = '',
   onGameNotesChange,
-  onUpdateGameEvent,
+  onUpdateGameEvent: _onUpdateGameEvent,
   onExportOneJson,
   onExportOneCsv,
 }) => {
@@ -42,7 +41,8 @@ const CurrentGameStats = memo<CurrentGameStatsProps>(({
     [players, selectedPlayerIds]
   );
 
-  // Goal editing hook usage removed as it requires additional props
+  // Unused props prefixed with underscore to avoid ESLint warnings
+  void _onUpdateGameEvent;
 
   // Render sort icon helper
   const renderSortIcon = (column: SortableColumn) => {

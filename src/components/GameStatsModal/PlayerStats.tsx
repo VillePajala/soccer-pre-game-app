@@ -2,7 +2,6 @@
 
 import React, { memo } from 'react';
 import { useTranslation } from 'react-i18next';
-import PlayerStatsView from '../PlayerStatsView';
 import type { PlayerStatsProps } from './types';
 
 /**
@@ -10,12 +9,18 @@ import type { PlayerStatsProps } from './types';
  * Handles display of individual player statistics
  */
 const PlayerStats = memo<PlayerStatsProps>(({
-  players,
-  gameEvents,
-  selectedPlayerIds,
-  savedGames,
+  players: _players,
+  gameEvents: _gameEvents,
+  selectedPlayerIds: _selectedPlayerIds,
+  savedGames: _savedGames,
 }) => {
   const { t } = useTranslation();
+
+  // Unused props prefixed with underscore to avoid ESLint warnings
+  void _players;
+  void _gameEvents;
+  void _selectedPlayerIds;
+  void _savedGames;
 
   return (
     <div className="space-y-6">

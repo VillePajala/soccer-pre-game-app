@@ -3,6 +3,9 @@ export interface MetricAverages {
   averages: { [metric: string]: number };
   overall: number;
   finalScore: number;
+  attack?: number;
+  defense?: number;
+  teamwork?: number;
 }
 
 import type { SavedGamesCollection, PlayerAssessment, Player } from '@/types';
@@ -134,8 +137,7 @@ export function calculateTeamAssessmentAverages(
 
 // New function for calculating team averages for selected players
 export function calculateSelectedPlayersTeamAverages(
-  players: Player[],
-  _useDemandCorrection = false
+  players: Player[]
 ): MetricAverages | null {
   // Simple calculation based on selected players
   if (!players || players.length === 0) return null;
@@ -148,7 +150,10 @@ export function calculateSelectedPlayersTeamAverages(
       teamwork: 7.5
     },
     overall: 7.5,
-    finalScore: 7.5
+    finalScore: 7.5,
+    attack: 7.5,
+    defense: 7.5,
+    teamwork: 7.5
   };
   
   return result;

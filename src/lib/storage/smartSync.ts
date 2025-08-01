@@ -80,11 +80,11 @@ export class SmartSyncManager {
       // Transform data if needed
       let transformedData: T[] = data || [];
       if (table === 'players') {
-        transformedData = data.map((item: any) => fromSupabase.player(item as any)) as T[];
+        transformedData = data.map((item: Record<string, unknown>) => fromSupabase.player(item as Record<string, unknown>)) as T[];
       } else if (table === 'seasons') {
-        transformedData = data.map((item: any) => fromSupabase.season(item as any)) as T[];
+        transformedData = data.map((item: Record<string, unknown>) => fromSupabase.season(item as Record<string, unknown>)) as T[];
       } else if (table === 'tournaments') {
-        transformedData = data.map((item: any) => fromSupabase.tournament(item as any)) as T[];
+        transformedData = data.map((item: Record<string, unknown>) => fromSupabase.tournament(item as Record<string, unknown>)) as T[];
       }
 
       // Update last sync timestamp
@@ -111,7 +111,7 @@ export class SmartSyncManager {
     const userId = await this.getCurrentUserId();
     let synced = 0;
     let failed = 0;
-    const errors: any[] = [];
+    const errors: Record<string, unknown>[] = [];
 
     for (const [key, changes] of this.pendingChanges.entries()) {
       try {
@@ -171,7 +171,7 @@ export class SmartSyncManager {
         patches.push({
           op: 'replace',
           path: `/${key}`,
-          value: localData[key] as any
+          value: localData[key] as Record<string, unknown>
         });
       }
     }
@@ -231,7 +231,7 @@ export class SmartSyncManager {
           synced.push(localItem);
         } else {
           // Check for conflicts based on timestamps
-          const localTimestamp = (localItem as any).updated_at || 0;
+          const localTimestamp = (localItem as Record<string, unknown>).updated_at as number || 0;
           const remoteTimestamp = new Date(remoteItem.updated_at).getTime();
 
           if (localTimestamp > remoteTimestamp) {

@@ -6,11 +6,11 @@
 
 export interface DebouncedRequest {
   key: string;
-  operation: () => Promise<any>;
-  resolve: (value: any) => void;
-  reject: (error: any) => void;
+  operation: () => Promise<unknown>;
+  resolve: (value: unknown) => void;
+  reject: (error: unknown) => void;
   timestamp: number;
-  data?: any;
+  data?: unknown;
 }
 
 export interface BatchConfig {
@@ -38,14 +38,14 @@ export class RequestDebouncer {
   async debounce<T>(
     key: string, 
     operation: () => Promise<T>,
-    data?: any
+    data?: unknown
   ): Promise<T> {
     return new Promise<T>((resolve, reject) => {
       const request: DebouncedRequest = {
         key,
-        operation: operation as () => Promise<any>,
-        resolve: resolve as (value: any) => void,
-        reject: reject as (error: any) => void,
+        operation: operation as () => Promise<unknown>,
+        resolve: resolve as (value: unknown) => void,
+        reject: reject as (error: unknown) => void,
         timestamp: Date.now(),
         data
       };
@@ -141,9 +141,9 @@ export class RequestDebouncer {
    */
   async debouncedPlayerUpdate(
     playerId: string,
-    updates: any,
-    updateOperation: (id: string, data: any) => Promise<any>
-  ): Promise<any> {
+    updates: Record<string, unknown>,
+    updateOperation: (id: string, data: Record<string, unknown>) => Promise<unknown>
+  ): Promise<unknown> {
     const key = `player_update_${playerId}`;
     
     return this.debounce(key, async () => {
@@ -180,9 +180,9 @@ export class RequestDebouncer {
    */
   async debouncedGameSave(
     gameId: string,
-    gameData: any,
-    saveOperation: (id: string, data: any) => Promise<any>
-  ): Promise<any> {
+    gameData: Record<string, unknown>,
+    saveOperation: (id: string, data: Record<string, unknown>) => Promise<unknown>
+  ): Promise<unknown> {
     const key = `game_save_${gameId}`;
     
     return this.debounce(key, async () => {
@@ -215,9 +215,9 @@ export class RequestDebouncer {
   async debouncedAutoSave<T>(
     key: string,
     data: T,
-    saveOperation: (data: T) => Promise<any>,
+    saveOperation: (data: T) => Promise<unknown>,
     priority: 'low' | 'normal' | 'high' = 'normal'
-  ): Promise<any> {
+  ): Promise<unknown> {
     // Adjust debounce timing based on priority
     const originalDebounce = this.config.debounceMs;
     

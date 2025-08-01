@@ -107,7 +107,7 @@ export class BatchOperationManager {
             .select()
             .then(({ data: result, error }: { data: Record<string, unknown>[] | null; error: Error | null }) => {
               if (error) throw error;
-              results.players = result?.map((p: any) => fromSupabase.player(p as DbPlayer)) || [];
+              results.players = result?.map((p: Record<string, unknown>) => fromSupabase.player(p as DbPlayer)) || [];
               return result;
             })
         );
@@ -167,7 +167,7 @@ export class BatchOperationManager {
             .single()
             .then(({ data: result, error }: { data: Record<string, unknown> | null; error: Error | null }) => {
               if (error) throw error;
-              results.settings = result ? fromSupabase.appSettings(result as any) : {};
+              results.settings = result ? fromSupabase.appSettings(result as Record<string, unknown>) : {};
               return result;
             })
         );

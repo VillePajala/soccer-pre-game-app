@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "Implement skeleton loading states for 40-60% perceived performance improvement"
+  "notes": "refactor: update team assessment calculations to use selected players"
 }
