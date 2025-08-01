@@ -35,13 +35,15 @@ export class EnhancedSupabaseProvider extends SupabaseProvider {
    * Save player with debouncing for rapid successive updates
    */
   async savePlayerDebounced(player: Player): Promise<Record<string, unknown>> {
-    return requestDebouncer.debouncedPlayerUpdate(
+    const result = await requestDebouncer.debouncedPlayerUpdate(
       player.id,
       player as unknown as Record<string, unknown>,
       async (playerId: string, playerData: Record<string, unknown>) => {
-        return this.savePlayer(playerData as unknown as Player) as unknown as Record<string, unknown>;
+        const result = await this.savePlayer(playerData as unknown as Player);
+        return result as unknown as Record<string, unknown>;
       }
     );
+    return result as Record<string, unknown>;
   }
 
   /**
@@ -65,15 +67,17 @@ export class EnhancedSupabaseProvider extends SupabaseProvider {
    * Save game with debouncing for auto-save scenarios
    */
   async saveGameDebounced(gameId: string, gameData: Record<string, unknown>, priority: 'low' | 'normal' | 'high' = 'normal'): Promise<Record<string, unknown>> {
-    return requestDebouncer.debouncedAutoSave(
+    const result = await requestDebouncer.debouncedAutoSave(
       `game_${gameId}`,
       gameData,
-      async (data) => {
+      async (data: Record<string, unknown>) => {
         // Use existing saveSavedGame method from base class
-        return this.saveSavedGame(data);
+        const result = await this.saveSavedGame(data);
+        return result as unknown as Record<string, unknown>;
       },
       priority
     );
+    return result as Record<string, unknown>;
   }
 
   /**

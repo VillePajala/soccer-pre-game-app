@@ -2,6 +2,7 @@ import { supabase } from '../supabase';
 import { NetworkError, AuthenticationError } from './types';
 // Storage optimization imports
 import { fromSupabase } from '../../utils/transforms';
+import type { DbPlayer, DbSeason, DbTournament } from '../../utils/transforms';
 
 /**
  * Smart Synchronization for Supabase
@@ -80,11 +81,11 @@ export class SmartSyncManager {
       // Transform data if needed
       let transformedData: T[] = data || [];
       if (table === 'players') {
-        transformedData = data.map((item: Record<string, unknown>) => fromSupabase.player(item as Record<string, unknown>)) as T[];
+        transformedData = data.map((item: Record<string, unknown>) => fromSupabase.player(item as unknown as DbPlayer)) as T[];
       } else if (table === 'seasons') {
-        transformedData = data.map((item: Record<string, unknown>) => fromSupabase.season(item as Record<string, unknown>)) as T[];
+        transformedData = data.map((item: Record<string, unknown>) => fromSupabase.season(item as unknown as DbSeason)) as T[];
       } else if (table === 'tournaments') {
-        transformedData = data.map((item: Record<string, unknown>) => fromSupabase.tournament(item as Record<string, unknown>)) as T[];
+        transformedData = data.map((item: Record<string, unknown>) => fromSupabase.tournament(item as unknown as DbTournament)) as T[];
       }
 
       // Update last sync timestamp

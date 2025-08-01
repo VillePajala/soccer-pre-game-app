@@ -107,7 +107,7 @@ export class RequestDebouncer {
           if (Array.isArray(request.data)) {
             allItems.push(...request.data);
           } else {
-            allItems.push(request.data);
+            allItems.push(request.data as T);
           }
         }
       }
@@ -153,8 +153,8 @@ export class RequestDebouncer {
       
       // Merge all update data
       const mergedUpdates = requests.reduce((merged, req) => {
-        return { ...merged, ...req.data };
-      }, {});
+        return { ...merged, ...(req.data as Record<string, unknown>) };
+      }, {} as Record<string, unknown>);
 
       try {
         const result = await updateOperation(playerId, mergedUpdates);
@@ -191,7 +191,7 @@ export class RequestDebouncer {
       const latestRequest = requests[requests.length - 1];
       
       try {
-        const result = await saveOperation(gameId, latestRequest.data);
+        const result = await saveOperation(gameId, latestRequest.data as Record<string, unknown>);
         
         // Resolve all requests with the same result
         for (const request of requests) {
@@ -237,7 +237,7 @@ export class RequestDebouncer {
         const requests = this.pendingRequests.get(`autosave_${key}`) || [];
         const latestRequest = requests[requests.length - 1];
         
-        const result = await saveOperation(latestRequest.data);
+        const result = await saveOperation(latestRequest.data as T);
         
         // Resolve all requests
         for (const request of requests) {
