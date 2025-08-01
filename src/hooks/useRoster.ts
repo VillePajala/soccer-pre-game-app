@@ -7,9 +7,10 @@ import { useCacheManager } from '@/utils/cacheUtils';
 interface UseRosterArgs {
   initialPlayers: Player[];
   selectedPlayerIds: string[];
+  onPlayerIdUpdated?: (tempId: string, newId: string) => void;
 }
 
-export const useRoster = ({ initialPlayers, selectedPlayerIds }: UseRosterArgs) => {
+export const useRoster = ({ initialPlayers, selectedPlayerIds, onPlayerIdUpdated }: UseRosterArgs) => {
   const queryClient = useQueryClient();
   const cacheManager = useCacheManager(queryClient);
   const [availablePlayers, setAvailablePlayers] = useState<Player[]>(initialPlayers);
@@ -53,12 +54,16 @@ export const useRoster = ({ initialPlayers, selectedPlayerIds }: UseRosterArgs) 
         setAvailablePlayers((players) =>
           players.map((p) => (p.id === temp.id ? saved : p)),
         );
-        
+
         // Update cache with real data
         cacheManager.updateMasterRosterCache((players) =>
           players.map((p) => (p.id === temp.id ? saved : p))
         );
-        
+
+        if (onPlayerIdUpdated) {
+          onPlayerIdUpdated(temp.id, saved.id);
+        }
+
         setRosterError(null);
       } else {
         // Rollback optimistic updates
