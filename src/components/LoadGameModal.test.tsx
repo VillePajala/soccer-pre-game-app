@@ -166,15 +166,14 @@ describe('LoadGameModal', () => {
     const gameItem = hawksTeam.closest('li')!;
     const expandButton = within(gameItem).getByRole('button', { expanded: false });
     fireEvent.click(expandButton);
-    const optionsButton = within(gameItem).getByTitle('More Options');
-    fireEvent.click(optionsButton);
-
-    const deleteButton = await screen.findByRole('button', { name: 'loadGameModal.deleteMenuItem' });
-      fireEvent.click(deleteButton);
+    
+    // Find the delete button directly (no dropdown menu anymore)
+    const deleteButton = within(gameItem).getByTitle('loadGameModal.deleteMenuItem');
+    fireEvent.click(deleteButton);
     
     expect(window.confirm).toHaveBeenCalled();
-      expect(mockHandlers.onDelete).toHaveBeenCalledWith('game_1659223456_def');
-    });
+    expect(mockHandlers.onDelete).toHaveBeenCalledWith('game_1659223456_def');
+  });
 
   // Backup functionality has been moved to SettingsModal
 });
