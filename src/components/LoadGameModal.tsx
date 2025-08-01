@@ -7,7 +7,6 @@ import { Season, Tournament } from '@/types'; // Corrected import path
 import logger from '@/utils/logger';
 import {
   HiOutlineDocumentArrowDown,
-  HiOutlineEllipsisVertical,
   HiOutlineTrash,
   HiOutlineDocumentText,
   HiOutlineTableCells,
@@ -15,9 +14,7 @@ import {
   HiOutlineMapPin,
   HiOutlineMagnifyingGlass,
   HiOutlineChevronDown,
-  HiOutlineChevronUp,
-  HiCheckCircle,
-  HiXCircle
+  HiOutlineChevronUp
 } from 'react-icons/hi2';
 // REMOVE unused Fa icons and useGameState hook
 // import { FaTimes, FaUpload, FaDownload, FaTrash, FaExclamationTriangle, FaSearch } from 'react-icons/fa';
@@ -295,7 +292,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
             {gameDeleteError}
           </li>
         )}
-        {filteredGameIds.map((gameId) => {
+        {filteredGameIds.map((gameId, index) => {
           const game = savedGames[gameId];
           if (!game) return null;
           const isCurrent = gameId === currentGameId;
@@ -334,16 +331,17 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
           return (
             <li
               key={gameId}
-              className={`relative mb-3 last:mb-0 ${openMenuId === gameId ? 'z-10' : ''}`}
+              className={`relative mb-5 last:mb-0 ${openMenuId === gameId ? 'z-10' : ''}`}
               data-testid={`game-item-${gameId}`}
             >
               {/* Clean Game Card */}
-              <div className={`relative rounded-lg bg-slate-700/60 border border-slate-600/60 shadow-sm transition-all duration-200 hover:bg-slate-700/80 hover:border-slate-500/80 ${
+              <div className={`relative rounded-lg border shadow-lg transition-all duration-200 ${
+                index % 2 === 0 
+                  ? 'bg-slate-700/60 border-slate-600/60 hover:bg-slate-700/80 hover:border-slate-500/80' 
+                  : 'bg-slate-700/40 border-slate-600/40 hover:bg-slate-700/60 hover:border-slate-500/60'
+              } ${
                 isCurrent ? 'ring-2 ring-indigo-500 border-indigo-500' : ''
-              }`}>
-                
-                {/* Result indicator stripe */}
-                <div className={`absolute top-0 inset-x-0 h-1 rounded-t-lg ${getResultColor()}`} />
+              } hover:shadow-xl`}>
                 
                 {/* Main Card Content */}
                 <button
@@ -357,14 +355,69 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
                       {/* Team Names */}
-                      <div className="flex items-center gap-3 mb-3">
-                        <h3 className={`text-lg font-semibold ${isCurrent ? 'text-indigo-400' : 'text-slate-100'}`}>
+                      <div className="flex items-center gap-3 mb-2">
+                        {/* Home Team - Bold if it's your team */}
+                        <h3 className={`text-lg ${
+                          game.homeOrAway === 'home' 
+                            ? `font-semibold ${isCurrent ? 'text-indigo-400' : 'text-slate-100'}` 
+                            : `font-normal ${isCurrent ? 'text-indigo-300' : 'text-slate-300'}`
+                        }`}>
                           {displayHomeTeamName}
                         </h3>
                         <span className="text-slate-400 font-medium">vs</span>
-                        <h3 className={`text-lg font-semibold ${isCurrent ? 'text-indigo-400' : 'text-slate-100'}`}>
+                        {/* Away Team - Bold if it's your team */}
+                        <h3 className={`text-lg ${
+                          game.homeOrAway === 'away' 
+                            ? `font-semibold ${isCurrent ? 'text-indigo-400' : 'text-slate-100'}` 
+                            : `font-normal ${isCurrent ? 'text-indigo-300' : 'text-slate-300'}`
+                        }`}>
                           {displayAwayTeamName}
                         </h3>
+                      </div>
+
+                      {/* Season/Tournament Badge */}
+                      <div className="mb-3">
+                        {contextName && contextType && contextId && (
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleBadgeClick(contextType.toLowerCase() as ('season' | 'tournament'), contextId);
+                              }
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleBadgeClick(contextType.toLowerCase() as ('season' | 'tournament'), contextId);
+                            }}
+                            className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium transition-colors cursor-pointer ${
+                              contextType.toLowerCase() === 'tournament' 
+                                ? 'bg-purple-500/20 text-purple-300 hover:bg-purple-500/30' 
+                                : 'bg-blue-500/20 text-blue-300 hover:bg-blue-500/30'
+                            } ${
+                              filterType === contextType.toLowerCase() && filterId === contextId ? 'ring-2 ring-indigo-500' : ''
+                            }`}
+                            title={t('loadGameModal.filterByTooltip', 'Filter by {{name}}', { replace: { name: contextName } }) ?? `Filter by ${contextName}`}
+                          >
+                            {contextType.toLowerCase() === 'tournament' ? (
+                              <>
+                                <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M10 2L3 7v11c0 .55.45 1 1 1h12c.55 0 1-.45 1-1V7l-7-5zM8 8h4v2H8V8z" clipRule="evenodd" />
+                                </svg>
+                                {contextName}
+                              </>
+                            ) : (
+                              <>
+                                <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                                </svg>
+                                {contextName}
+                              </>
+                            )}
+                          </span>
+                        )}
                       </div>
                       
                       {/* Date and Time Info */}
@@ -391,40 +444,8 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                         )}
                       </div>
                       
-                      {/* Status Badges - Simplified */}
+                      {/* Status Badges - Always Visible */}
                       <div className="flex items-center gap-2 flex-wrap">
-                        {contextName && contextType && contextId && (
-                          <span
-                            role="button"
-                            tabIndex={0}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleBadgeClick(contextType.toLowerCase() as ('season' | 'tournament'), contextId);
-                              }
-                            }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleBadgeClick(contextType.toLowerCase() as ('season' | 'tournament'), contextId);
-                            }}
-                            className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium transition-colors cursor-pointer ${
-                              contextType.toLowerCase() === 'tournament' 
-                                ? 'bg-purple-500/20 text-purple-300 hover:bg-purple-500/30' 
-                                : 'bg-blue-500/20 text-blue-300 hover:bg-blue-500/30'
-                            } ${
-                              filterType === contextType.toLowerCase() && filterId === contextId ? 'ring-2 ring-indigo-500' : ''
-                            }`}
-                            title={t('loadGameModal.filterByTooltip', 'Filter by {{name}}', { replace: { name: contextName } }) ?? `Filter by ${contextName}`}
-                          >
-                            {contextName}
-                          </span>
-                        )}
-                        {gameStatus === 'inProgress' && (
-                          <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-orange-500/20 text-orange-300">
-                            Live
-                          </span>
-                        )}
                         {game.isPlayed === false && (
                           <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-500/20 text-red-300">
                             {t('loadGameModal.unplayedBadge', 'Not Played')}
@@ -436,34 +457,36 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                             {t('loadGameModal.currentlyLoaded', 'Active')}
                           </span>
                         )}
-                        {totalPlayers > 0 && (
-                          <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                            assessmentsComplete 
-                              ? 'bg-green-500/20 text-green-300' 
-                              : 'bg-amber-500/20 text-amber-300'
-                          }`}>
-                            {assessmentsComplete ? (
-                              <>
-                                <HiCheckCircle className="w-3 h-3 mr-1" />
-                                Assessments Done
-                              </>
-                            ) : (
-                              <>
-                                <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                </svg>
-                                Assessments Pending
-                              </>
-                            )}
+                        {totalPlayers > 0 && !assessmentsComplete && (
+                          <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-amber-500/20 text-amber-300">
+                            <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                            </svg>
+                            Assessments Pending
                           </span>
                         )}
                       </div>
                     </div>
                     
-                    {/* Score Display */}
+                    {/* Score Display with Colored Numbers */}
                     <div className="ml-6 flex items-center gap-4">
                       <div className="text-right">
-                        <div className="text-2xl font-bold text-slate-100">
+                        <div className={`text-2xl font-bold ${(() => {
+                          const homeScore = game.homeScore ?? 0;
+                          const awayScore = game.awayScore ?? 0;
+                          const isWin = game.homeOrAway === 'home' ? homeScore > awayScore : awayScore > homeScore;
+                          const isLoss = game.homeOrAway === 'home' ? homeScore < awayScore : awayScore < homeScore;
+                          const isTie = homeScore === awayScore;
+                          
+                          if (isTie) {
+                            return 'text-gray-300';
+                          } else if (isWin) {
+                            return 'text-green-400';
+                          } else if (isLoss) {
+                            return 'text-red-400';
+                          }
+                          return 'text-slate-100';
+                        })()}`}>
                           {game.homeScore ?? 0} - {game.awayScore ?? 0}
                         </div>
                         <div className="text-xs text-slate-400 mt-1">
@@ -483,7 +506,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
 
                 {/* Expanded Details Section */}
                 {isExpanded && (
-                  <div className="border-t border-slate-700/30 bg-slate-900/30">
+                  <div className="border-t border-slate-600/40 bg-slate-700/40">
                     <div className="p-5 space-y-4">
                       
                       {/* Game Notes */}
@@ -512,76 +535,68 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                         </div>
                       )}
                       
-                      {/* Action Buttons */}
-                      <div className="flex justify-between items-center">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); onLoad(gameId); onClose(); }}
-                          className={`inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors ${
-                            isLoadActionActive ? 'opacity-50 cursor-not-allowed' : ''
-                          }`}
-                          disabled={disableActions || isLoadActionActive}
-                        >
-                          {isLoadActionActive ? (
-                            <>
-                              <svg className="animate-spin h-5 w-5 text-white mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                              </svg>
-                              Loading...
-                            </>
-                          ) : (
-                            <>
-                              <HiOutlineDocumentArrowDown className="h-5 w-5 mr-2" />
-                              {t('loadGameModal.loadButton', 'Load Game')}
-                            </>
-                          )}
-                        </button>
-                        
-                        {/* Options Menu */}
-                        <div className="relative">
+                      {/* Action Buttons and Status Badges */}
+                      <div className="flex items-center justify-between">
+                        {/* Left Side: Load Button Only */}
+                        <div className="flex items-center">
                           <button
-                            onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === gameId ? null : gameId); }}
+                            onClick={(e) => { e.stopPropagation(); onLoad(gameId); onClose(); }}
+                            className={`inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors ${
+                              isLoadActionActive ? 'opacity-50 cursor-not-allowed' : ''
+                            }`}
+                            disabled={disableActions || isLoadActionActive}
+                          >
+                            {isLoadActionActive ? (
+                              <>
+                                <svg className="animate-spin h-4 w-4 text-white mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Loading...
+                              </>
+                            ) : (
+                              <>
+                                <HiOutlineDocumentArrowDown className="h-4 w-4 mr-2" />
+                                {t('loadGameModal.loadButton', 'Load Game')}
+                              </>
+                            )}
+                          </button>
+                        </div>
+                        
+                        {/* Right Side: Secondary Action Buttons */}
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onExportOneJson(gameId); }}
                             className={`p-2 text-slate-400 hover:text-slate-300 hover:bg-slate-700/40 rounded-lg transition-colors ${
                               isLoadActionActive ? 'opacity-50 cursor-not-allowed' : ''
                             }`}
                             disabled={disableActions || isLoadActionActive}
-                            title="More Options"
+                            title={t('loadGameModal.exportJsonMenuItem', 'Export as JSON')}
                           >
-                            <HiOutlineEllipsisVertical className="h-5 w-5" />
+                            <HiOutlineDocumentText className="h-4 w-4" />
                           </button>
                           
-                          {openMenuId === gameId && (
-                            <div
-                              ref={menuRef}
-                              data-testid={`game-item-menu-${gameId}`}
-                              className="absolute right-0 z-30 mt-1 w-36 origin-top-right rounded-md bg-slate-800 shadow-lg ring-1 ring-slate-700/50 border border-slate-700/50"
-                            >
-                              <div className="py-1">
-                                <button 
-                                  onClick={(e) => { e.stopPropagation(); onExportOneJson(gameId); setOpenMenuId(null); }} 
-                                  className="group flex w-full items-center px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-700/60 transition-colors"
-                                >
-                                  <HiOutlineDocumentText className="mr-2 h-3 w-3 text-slate-400" />
-                                  Export JSON
-                                </button>
-                                <button 
-                                  onClick={(e) => { e.stopPropagation(); onExportOneCsv(gameId); setOpenMenuId(null); }} 
-                                  className="group flex w-full items-center px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-700/60 transition-colors"
-                                >
-                                  <HiOutlineTableCells className="mr-2 h-3 w-3 text-slate-400" />
-                                  Export CSV
-                                </button>
-                                <div className="border-t border-slate-700/50 my-0.5"></div>
-                                <button 
-                                  onClick={(e) => { e.stopPropagation(); handleDeleteClick(gameId, `${game.teamName || 'Team'} vs ${game.opponentName || 'Opponent'}`); }} 
-                                  className="group flex w-full items-center px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/20 transition-colors"
-                                >
-                                  <HiOutlineTrash className="mr-2 h-3 w-3" />
-                                  Delete
-                                </button>
-                              </div>
-                            </div>
-                          )}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onExportOneCsv(gameId); }}
+                            className={`p-2 text-slate-400 hover:text-slate-300 hover:bg-slate-700/40 rounded-lg transition-colors ${
+                              isLoadActionActive ? 'opacity-50 cursor-not-allowed' : ''
+                            }`}
+                            disabled={disableActions || isLoadActionActive}
+                            title={t('loadGameModal.exportExcelMenuItem', 'Export as CSV')}
+                          >
+                            <HiOutlineTableCells className="h-4 w-4" />
+                          </button>
+                          
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDeleteClick(gameId, `${game.teamName || 'Team'} vs ${game.opponentName || 'Opponent'}`); }}
+                            className={`p-2 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded-lg transition-colors ${
+                              isLoadActionActive ? 'opacity-50 cursor-not-allowed' : ''
+                            }`}
+                            disabled={disableActions || isLoadActionActive}
+                            title={t('loadGameModal.deleteMenuItem', 'Delete Game')}
+                          >
+                            <HiOutlineTrash className="h-4 w-4" />
+                          </button>
                         </div>
                       </div>
                       
