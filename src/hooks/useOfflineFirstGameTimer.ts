@@ -4,6 +4,7 @@ import { GameSessionState, GameSessionAction } from './useGameSessionReducer';
 import { useSyncProgress } from './useSyncProgress';
 import { OfflineFirstStorageManager } from '@/lib/storage/offlineFirstStorageManager';
 import type { TimerState } from '@/types';
+import logger from '@/utils/logger';
 
 interface UseOfflineFirstGameTimerArgs {
   state: GameSessionState;
