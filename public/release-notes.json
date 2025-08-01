@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "docs: update README to include legacy notice and add Supabase CLI version file"
+  "notes": "fix: ensure gameTime is a string before splitting in GameSettingsModal"
 }

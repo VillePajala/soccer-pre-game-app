@@ -322,42 +322,43 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
     if (!isOpen || !seasonId) return;
     const s = seasons.find(se => se.id === seasonId);
     if (!s) return;
+    
+    // Batch all season updates into a single mutation to avoid localStorage conflicts on mobile
+    const batchedUpdates: Partial<AppState> = {};
+    let hasUpdates = false;
+    
     if (s.location !== undefined) {
       onGameLocationChange(s.location || '');
-      if (currentGameId) {
-        updateGameDetailsMutation.mutate({
-          gameId: currentGameId,
-          updates: { gameLocation: s.location || '' },
-        });
-      }
+      batchedUpdates.gameLocation = s.location || '';
+      hasUpdates = true;
     }
     if (s.ageGroup) {
       onAgeGroupChange(s.ageGroup);
-      if (currentGameId) {
-        updateGameDetailsMutation.mutate({ gameId: currentGameId, updates: { ageGroup: s.ageGroup } });
-      }
+      batchedUpdates.ageGroup = s.ageGroup;
+      hasUpdates = true;
     }
     const parsedCount = Number(s.periodCount);
     if (parsedCount === 1 || parsedCount === 2) {
       const count = parsedCount as 1 | 2;
       onNumPeriodsChange(count);
-      if (currentGameId) {
-        updateGameDetailsMutation.mutate({
-          gameId: currentGameId,
-          updates: { numberOfPeriods: count },
-        });
-      }
+      batchedUpdates.numberOfPeriods = count;
+      hasUpdates = true;
     }
     const parsedDuration = Number(s.periodDuration);
     if (Number.isFinite(parsedDuration) && parsedDuration > 0) {
       onPeriodDurationChange(parsedDuration);
-      if (currentGameId) {
-        updateGameDetailsMutation.mutate({
-          gameId: currentGameId,
-          updates: { periodDurationMinutes: parsedDuration },
-        });
-      }
+      batchedUpdates.periodDurationMinutes = parsedDuration;
+      hasUpdates = true;
     }
+    
+    // Apply all updates in a single mutation call to prevent mobile localStorage conflicts
+    if (currentGameId && hasUpdates) {
+      updateGameDetailsMutation.mutate({
+        gameId: currentGameId,
+        updates: batchedUpdates,
+      });
+    }
+    
     if (s.defaultRoster && s.defaultRoster.length > 0) {
       if (selectedPlayerIds.length !== s.defaultRoster.length || !s.defaultRoster.every(id => selectedPlayerIds.includes(id))) {
         onSelectedPlayersChange(s.defaultRoster);
@@ -370,48 +371,48 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
     if (!isOpen || !tournamentId) return;
     const t = tournaments.find(tt => tt.id === tournamentId);
     if (!t) return;
+    
+    // Batch all tournament updates into a single mutation to avoid localStorage conflicts on mobile
+    const batchedUpdates: Partial<AppState> = {};
+    let hasUpdates = false;
+    
     if (t.location !== undefined) {
       onGameLocationChange(t.location || '');
-      if (currentGameId) {
-        updateGameDetailsMutation.mutate({
-          gameId: currentGameId,
-          updates: { gameLocation: t.location || '' },
-        });
-      }
+      batchedUpdates.gameLocation = t.location || '';
+      hasUpdates = true;
     }
     if (t.ageGroup) {
       onAgeGroupChange(t.ageGroup);
-      if (currentGameId) {
-        updateGameDetailsMutation.mutate({ gameId: currentGameId, updates: { ageGroup: t.ageGroup } });
-      }
+      batchedUpdates.ageGroup = t.ageGroup;
+      hasUpdates = true;
     }
     if (t.level) {
       onTournamentLevelChange(t.level);
-      if (currentGameId) {
-        updateGameDetailsMutation.mutate({ gameId: currentGameId, updates: { tournamentLevel: t.level } });
-      }
+      batchedUpdates.tournamentLevel = t.level;
+      hasUpdates = true;
     }
     const parsedCount = Number(t.periodCount);
     if (parsedCount === 1 || parsedCount === 2) {
       const count = parsedCount as 1 | 2;
       onNumPeriodsChange(count);
-      if (currentGameId) {
-        updateGameDetailsMutation.mutate({
-          gameId: currentGameId,
-          updates: { numberOfPeriods: count },
-        });
-      }
+      batchedUpdates.numberOfPeriods = count;
+      hasUpdates = true;
     }
     const parsedDuration = Number(t.periodDuration);
     if (Number.isFinite(parsedDuration) && parsedDuration > 0) {
       onPeriodDurationChange(parsedDuration);
-      if (currentGameId) {
-        updateGameDetailsMutation.mutate({
-          gameId: currentGameId,
-          updates: { periodDurationMinutes: parsedDuration },
-        });
-      }
+      batchedUpdates.periodDurationMinutes = parsedDuration;
+      hasUpdates = true;
     }
+    
+    // Apply all updates in a single mutation call to prevent mobile localStorage conflicts
+    if (currentGameId && hasUpdates) {
+      updateGameDetailsMutation.mutate({
+        gameId: currentGameId,
+        updates: batchedUpdates,
+      });
+    }
+    
     if (t.defaultRoster && t.defaultRoster.length > 0) {
       if (selectedPlayerIds.length !== t.defaultRoster.length || !t.defaultRoster.every(id => selectedPlayerIds.includes(id))) {
         onSelectedPlayersChange(t.defaultRoster);
