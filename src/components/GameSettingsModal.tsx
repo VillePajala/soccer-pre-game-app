@@ -166,8 +166,22 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   // logger.log('[GameSettingsModal Render] Props received:', { seasonId, tournamentId, currentGameId });
   const { t } = useTranslation();
 
+  // Add defensive logging for debugging Vercel preview issues
+  useEffect(() => {
+    if (isOpen) {
+      logger.log('[GameSettingsModal] Modal opened with:', {
+        currentGameId,
+        tournamentId,
+        seasonId,
+        hasUpdateMutation: !!updateGameDetailsMutation,
+        gameEventsLength: gameEvents?.length || 0,
+        availablePlayersLength: availablePlayers?.length || 0,
+      });
+    }
+  }, [isOpen, currentGameId, tournamentId, seasonId, updateGameDetailsMutation, gameEvents, availablePlayers]);
+
   // State for event editing within the modal
-  const [localGameEvents, setLocalGameEvents] = useState<GameEvent[]>(gameEvents);
+  const [localGameEvents, setLocalGameEvents] = useState<GameEvent[]>(gameEvents || []);
   const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
   const [editGoalTime, setEditGoalTime] = useState<string>('');
   const [editGoalScorerId, setEditGoalScorerId] = useState<string>('');
@@ -274,24 +288,28 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
           const loadedSeasonsData = await getSeasons();
           setSeasons(Array.isArray(loadedSeasonsData) ? loadedSeasonsData : []);
       } catch (error) {
-        logger.error('Error loading seasons:', error);
+        logger.error('[GameSettingsModal] Error loading seasons:', error);
         setSeasons([]);
+        // Set error state for user feedback
+        setError(t('gameSettingsModal.errors.loadingSeasonsFailed', 'Failed to load seasons'));
       }
       try {
           const loadedTournamentsData = await getTournaments();
           setTournaments(Array.isArray(loadedTournamentsData) ? loadedTournamentsData : []);
       } catch (error) {
-        logger.error('Error loading tournaments:', error);
+        logger.error('[GameSettingsModal] Error loading tournaments:', error);
         setTournaments([]);
+        // Set error state for user feedback
+        setError(t('gameSettingsModal.errors.loadingTournamentsFailed', 'Failed to load tournaments'));
       }
       };
       fetchModalData();
     }
-  }, [isOpen]);
+  }, [isOpen, t]);
 
   // Effect to update localGameEvents if the prop changes from parent (e.g., undo/redo)
   useEffect(() => {
-    setLocalGameEvents(gameEvents); 
+    setLocalGameEvents(gameEvents || []); 
   }, [gameEvents]);
 
   // Focus goal time input (Keep this)
@@ -320,105 +338,129 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
   // Prefill game settings when selecting a season
   useEffect(() => {
     if (!isOpen || !seasonId) return;
-    const s = seasons.find(se => se.id === seasonId);
-    if (!s) return;
+    
+    // Guard against missing currentGameId which might happen on Vercel preview
+    if (!currentGameId) {
+      logger.warn('[GameSettingsModal] Skipping season prefill - no currentGameId');
+      return;
+    }
+    
+    const season = seasons.find(se => se.id === seasonId);
+    if (!season) return;
     
     // Batch all season updates into a single mutation to avoid localStorage conflicts on mobile
     const batchedUpdates: Partial<AppState> = {};
     let hasUpdates = false;
     
-    if (s.location !== undefined) {
-      onGameLocationChange(s.location || '');
-      batchedUpdates.gameLocation = s.location || '';
+    if (season.location !== undefined) {
+      // Don't call onGameLocationChange here to avoid infinite loop
+      batchedUpdates.gameLocation = season.location || '';
       hasUpdates = true;
     }
-    if (s.ageGroup) {
-      onAgeGroupChange(s.ageGroup);
-      batchedUpdates.ageGroup = s.ageGroup;
+    if (season.ageGroup) {
+      // Don't call onAgeGroupChange here to avoid infinite loop
+      batchedUpdates.ageGroup = season.ageGroup;
       hasUpdates = true;
     }
-    const parsedCount = Number(s.periodCount);
+    const parsedCount = Number(season.periodCount);
     if (parsedCount === 1 || parsedCount === 2) {
       const count = parsedCount as 1 | 2;
-      onNumPeriodsChange(count);
+      // Don't call onNumPeriodsChange here to avoid infinite loop
       batchedUpdates.numberOfPeriods = count;
       hasUpdates = true;
     }
-    const parsedDuration = Number(s.periodDuration);
+    const parsedDuration = Number(season.periodDuration);
     if (Number.isFinite(parsedDuration) && parsedDuration > 0) {
-      onPeriodDurationChange(parsedDuration);
+      // Don't call onPeriodDurationChange here to avoid infinite loop
       batchedUpdates.periodDurationMinutes = parsedDuration;
       hasUpdates = true;
     }
     
     // Apply all updates in a single mutation call to prevent mobile localStorage conflicts
     if (currentGameId && hasUpdates) {
-      updateGameDetailsMutation.mutate({
-        gameId: currentGameId,
-        updates: batchedUpdates,
-      });
+      // Add a small delay to ensure game is fully created on Vercel preview
+      setTimeout(() => {
+        try {
+          updateGameDetailsMutation.mutate({
+            gameId: currentGameId,
+            updates: batchedUpdates,
+          });
+        } catch (error) {
+          logger.error('[GameSettingsModal] Error updating game with season data:', error);
+          setError(t('gameSettingsModal.errors.seasonUpdateFailed', 'Failed to apply season settings'));
+        }
+      }, 100);
     }
     
-    if (s.defaultRoster && s.defaultRoster.length > 0) {
-      if (selectedPlayerIds.length !== s.defaultRoster.length || !s.defaultRoster.every(id => selectedPlayerIds.includes(id))) {
-        onSelectedPlayersChange(s.defaultRoster);
-      }
-    }
-  }, [seasonId, seasons, isOpen, currentGameId, availablePlayers, selectedPlayerIds, onGameLocationChange, onNumPeriodsChange, onPeriodDurationChange, onSelectedPlayersChange, updateGameDetailsMutation, onAgeGroupChange]);
+    // Don't update roster selection here to avoid dependency loop
+    // The mutation will handle updating the game state
+  }, [seasonId, seasons, isOpen, currentGameId, updateGameDetailsMutation, t]);
 
   // Prefill game settings when selecting a tournament
   useEffect(() => {
     if (!isOpen || !tournamentId) return;
-    const t = tournaments.find(tt => tt.id === tournamentId);
-    if (!t) return;
+    
+    // Guard against missing currentGameId which might happen on Vercel preview
+    if (!currentGameId) {
+      logger.warn('[GameSettingsModal] Skipping tournament prefill - no currentGameId');
+      return;
+    }
+    
+    const tournament = tournaments.find(tt => tt.id === tournamentId);
+    if (!tournament) return;
     
     // Batch all tournament updates into a single mutation to avoid localStorage conflicts on mobile
     const batchedUpdates: Partial<AppState> = {};
     let hasUpdates = false;
     
-    if (t.location !== undefined) {
-      onGameLocationChange(t.location || '');
-      batchedUpdates.gameLocation = t.location || '';
+    if (tournament.location !== undefined) {
+      // Don't call onGameLocationChange here to avoid infinite loop
+      batchedUpdates.gameLocation = tournament.location || '';
       hasUpdates = true;
     }
-    if (t.ageGroup) {
-      onAgeGroupChange(t.ageGroup);
-      batchedUpdates.ageGroup = t.ageGroup;
+    if (tournament.ageGroup) {
+      // Don't call onAgeGroupChange here to avoid infinite loop
+      batchedUpdates.ageGroup = tournament.ageGroup;
       hasUpdates = true;
     }
-    if (t.level) {
-      onTournamentLevelChange(t.level);
-      batchedUpdates.tournamentLevel = t.level;
+    if (tournament.level) {
+      // Don't call onTournamentLevelChange here to avoid infinite loop
+      batchedUpdates.tournamentLevel = tournament.level;
       hasUpdates = true;
     }
-    const parsedCount = Number(t.periodCount);
+    const parsedCount = Number(tournament.periodCount);
     if (parsedCount === 1 || parsedCount === 2) {
       const count = parsedCount as 1 | 2;
-      onNumPeriodsChange(count);
+      // Don't call onNumPeriodsChange here to avoid infinite loop
       batchedUpdates.numberOfPeriods = count;
       hasUpdates = true;
     }
-    const parsedDuration = Number(t.periodDuration);
+    const parsedDuration = Number(tournament.periodDuration);
     if (Number.isFinite(parsedDuration) && parsedDuration > 0) {
-      onPeriodDurationChange(parsedDuration);
+      // Don't call onPeriodDurationChange here to avoid infinite loop
       batchedUpdates.periodDurationMinutes = parsedDuration;
       hasUpdates = true;
     }
     
     // Apply all updates in a single mutation call to prevent mobile localStorage conflicts
     if (currentGameId && hasUpdates) {
-      updateGameDetailsMutation.mutate({
-        gameId: currentGameId,
-        updates: batchedUpdates,
-      });
+      // Add a small delay to ensure game is fully created on Vercel preview
+      setTimeout(() => {
+        try {
+          updateGameDetailsMutation.mutate({
+            gameId: currentGameId,
+            updates: batchedUpdates,
+          });
+        } catch (error) {
+          logger.error('[GameSettingsModal] Error updating game with season data:', error);
+          setError(t('gameSettingsModal.errors.seasonUpdateFailed', 'Failed to apply season settings'));
+        }
+      }, 100);
     }
     
-    if (t.defaultRoster && t.defaultRoster.length > 0) {
-      if (selectedPlayerIds.length !== t.defaultRoster.length || !t.defaultRoster.every(id => selectedPlayerIds.includes(id))) {
-        onSelectedPlayersChange(t.defaultRoster);
-      }
-    }
-  }, [tournamentId, tournaments, isOpen, currentGameId, availablePlayers, selectedPlayerIds, onGameLocationChange, onNumPeriodsChange, onPeriodDurationChange, onSelectedPlayersChange, updateGameDetailsMutation, onAgeGroupChange, onTournamentLevelChange]);
+    // Don't update roster selection here to avoid dependency loop
+    // The mutation will handle updating the game state
+  }, [tournamentId, tournaments, isOpen, currentGameId, updateGameDetailsMutation, t]);
 
   // --- Event Handlers ---
 
@@ -815,8 +857,14 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
     }
   };
 
+  // Ensure we're on the client side to avoid hydration issues
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   // Conditional return MUST come AFTER all hook calls
-  if (!isOpen) {
+  if (!isOpen || !isClient) {
     return null;
   }
 

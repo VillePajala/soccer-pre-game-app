@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix: ensure gameTime is a string before splitting in GameSettingsModal"
+  "notes": "fix: batch updates in GameSettingsModal to prevent localStorage conflicts on mobile"
 }
