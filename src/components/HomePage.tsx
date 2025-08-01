@@ -302,9 +302,33 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     // masterRosterKey: MASTER_ROSTER_KEY, // Removed as no longer used by useGameState
   });
 
+  const handlePlayerIdUpdated = useCallback(
+    (oldId: string, newId: string) => {
+      setPlayersOnField(prev => prev.map(p => (p.id === oldId ? { ...p, id: newId } : p)));
+
+      dispatchGameSession({
+        type: 'SET_SELECTED_PLAYER_IDS',
+        payload: gameSessionState.selectedPlayerIds.map(id => (id === oldId ? newId : id)),
+      });
+
+      gameSessionState.gameEvents.forEach(event => {
+        if (event.scorerId === oldId || event.assisterId === oldId) {
+          const updatedEvent = {
+            ...event,
+            scorerId: event.scorerId === oldId ? newId : event.scorerId,
+            assisterId: event.assisterId === oldId ? newId : event.assisterId,
+          };
+          dispatchGameSession({ type: 'UPDATE_GAME_EVENT', payload: updatedEvent });
+        }
+      });
+    },
+    [setPlayersOnField, dispatchGameSession, gameSessionState.selectedPlayerIds, gameSessionState.gameEvents]
+  );
+
   const roster = useRoster({
     initialPlayers: initialState.availablePlayers,
     selectedPlayerIds: gameSessionState.selectedPlayerIds,
+    onPlayerIdUpdated: handlePlayerIdUpdated,
   });
   const {
     availablePlayers,
