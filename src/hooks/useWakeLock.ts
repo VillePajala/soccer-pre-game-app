@@ -1,8 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import logger from '@/utils/logger';
 
+// Extend WakeLockSentinel to include our custom release handler
+interface ExtendedWakeLockSentinel extends WakeLockSentinel {
+  _releaseHandler?: () => void;
+}
+
 export const useWakeLock = () => {
-  const [wakeLock, setWakeLock] = useState<WakeLockSentinel | null>(null);
+  const [wakeLock, setWakeLock] = useState<ExtendedWakeLockSentinel | null>(null);
   const [isSupported, setIsSupported] = useState(false);
 
   useEffect(() => {
@@ -21,7 +26,7 @@ export const useWakeLock = () => {
       // If we need it and don't have it, request it.
       if (wakeLock === null) {
         try {
-          const lock = await navigator.wakeLock.request('screen');
+          const lock = await navigator.wakeLock.request('screen') as ExtendedWakeLockSentinel;
           const handleRelease = () => {
             logger.log('Screen Wake Lock was released by the system.');
             setWakeLock(null);
@@ -29,7 +34,7 @@ export const useWakeLock = () => {
           lock.addEventListener('release', handleRelease);
           
           // Store the handler for cleanup
-          (lock as any)._releaseHandler = handleRelease;
+          lock._releaseHandler = handleRelease;
           
           logger.log('Screen Wake Lock is active.');
           setWakeLock(lock);
@@ -43,8 +48,8 @@ export const useWakeLock = () => {
       // If we don't need it and have it, release it.
       if (wakeLock) {
         // Clean up event listener before releasing
-        if ((wakeLock as any)._releaseHandler) {
-          wakeLock.removeEventListener('release', (wakeLock as any)._releaseHandler);
+        if (wakeLock._releaseHandler) {
+          wakeLock.removeEventListener('release', wakeLock._releaseHandler);
         }
         await wakeLock.release();
         setWakeLock(null);
@@ -73,8 +78,8 @@ export const useWakeLock = () => {
     return () => {
       if (wakeLock) {
         // Clean up event listener before releasing
-        if ((wakeLock as any)._releaseHandler) {
-          wakeLock.removeEventListener('release', (wakeLock as any)._releaseHandler);
+        if (wakeLock._releaseHandler) {
+          wakeLock.removeEventListener('release', wakeLock._releaseHandler);
         }
         wakeLock.release().catch(() => {
           // Ignore errors during cleanup
