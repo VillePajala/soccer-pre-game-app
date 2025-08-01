@@ -343,7 +343,13 @@ export class LocalStorageProvider implements IStorageProvider {
   async saveSavedGame(gameData: unknown): Promise<unknown> {
     try {
       const gameWithId = gameData as { id?: string };
-      const gameId = gameWithId.id || `game_${Date.now()}`;
+      
+      // Validate that we have a game ID for existing games
+      if (!gameWithId.id) {
+        throw new Error('Game ID is required when saving game data');
+      }
+      
+      const gameId = gameWithId.id;
       
       // Get existing saved games
       const savedGamesStr = getLocalStorageItem('savedGames');

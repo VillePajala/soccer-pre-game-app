@@ -264,14 +264,19 @@ export const gameSessionReducer = (state: GameSessionState, action: GameSessionA
       const elapsedOfflineSeconds = (Date.now() - timestamp) / 1000;
       const correctedElapsedSeconds = Math.round(savedTime + elapsedOfflineSeconds);
       
+      // Validate timer bounds - don't exceed current period duration
+      const currentPeriodDuration = state.periodDurationMinutes * 60;
+      const maxTimeForCurrentPeriod = state.currentPeriod * currentPeriodDuration;
+      const validatedTime = Math.min(correctedElapsedSeconds, maxTimeForCurrentPeriod);
+      
       // Determine if we should restore the timer as running
       // Only restore as running if game was in progress and not at period/game end
       const shouldRestoreRunning = state.gameStatus === 'inProgress' && 
-        correctedElapsedSeconds < (state.currentPeriod * state.periodDurationMinutes * 60);
+        validatedTime < maxTimeForCurrentPeriod;
       
       return {
         ...state,
-        timeElapsedInSeconds: correctedElapsedSeconds,
+        timeElapsedInSeconds: validatedTime,
         isTimerRunning: shouldRestoreRunning,
       };
     }

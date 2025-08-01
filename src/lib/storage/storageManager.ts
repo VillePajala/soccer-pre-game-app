@@ -30,6 +30,8 @@ export class StorageManager implements IStorageProvider {
     operation: () => Promise<T>,
     operationName: string
   ): Promise<T> {
+    const originalProvider = this.currentProvider;
+    
     try {
       return await operation();
     } catch (error) {
@@ -41,16 +43,17 @@ export class StorageManager implements IStorageProvider {
       ) {
         console.warn(`Supabase ${operationName} failed, falling back to localStorage:`, error.message);
         
-        // Temporarily switch to localStorage for this operation
-        const originalProvider = this.currentProvider;
-        this.currentProvider = this.localStorage;
-        
         try {
-          const result = await operation();
-          this.currentProvider = originalProvider; // Restore original provider
+          // Use localStorage provider directly without changing currentProvider
+          const fallbackOperation = () => operation.call({ currentProvider: this.localStorage });
+          const result = await fallbackOperation();
+          
+          // Ensure currentProvider remains consistent
+          this.currentProvider = originalProvider;
           return result;
         } catch (fallbackError) {
-          this.currentProvider = originalProvider; // Restore original provider
+          // Ensure currentProvider remains consistent even on fallback failure
+          this.currentProvider = originalProvider;
           throw new StorageError(
             `Both primary and fallback storage failed for ${operationName}`,
             'storageManager',

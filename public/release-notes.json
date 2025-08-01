@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "Refactor LoadGameModal component for improved UI and performance. Simplify game card design, enhance accessibility, and update session management logic to use a unified storage manager. Improve logging for device fingerprint handling in session management."
+  "notes": "Add critical code review findings document for real-world game usage"
 }
