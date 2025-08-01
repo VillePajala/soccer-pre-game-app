@@ -322,6 +322,344 @@ This comprehensive plan outlines all steps required to transform MatchDay Coach 
 
 **Recommendation**: STOP performance optimization unless experiencing actual user complaints about slow loading or lag during game interactions. Time better spent on app store preparation and user features.
 
+## 3.4 Advanced Performance & UX Optimization Plan
+
+**STATUS**: Deferred for post-launch implementation
+**PRIORITY**: Medium (implement after successful app store launch)
+**ESTIMATED EFFORT**: 15-20 development days
+**EXPECTED IMPACT**: 40-70% perceived performance improvement
+
+### Problem Analysis
+
+User feedback indicates noticeable loading delays throughout the app, particularly:
+- **Game creation** shows extended loading periods
+- **Modal opening** experiences significant delays 
+- **Data synchronization** creates perceived slowness
+- **Navigation between screens** lacks responsive feedback
+
+### Root Cause Assessment
+
+#### **A. Component Loading Bottlenecks**
+- **Lazy-loaded modals** (10+ components) cause first-open delays
+- **Complex modals** (`GameStatsModal`, `GameSettingsModal`) have heavy computation loads
+- **React Query cache misses** trigger blocking data fetches
+- **Serial component mounting** instead of parallel loading
+
+#### **B. Data Processing Performance Issues**
+- **On-demand statistics calculations** performed in frontend JavaScript
+- **Game filtering/sorting** computed fresh for every modal open
+- **Multi-layer storage cascades** (Supabase → IndexedDB → localStorage)
+- **Serial data fetching** prevents parallel loading optimization
+
+#### **C. Storage Layer Latency**
+- **Multiple Supabase round trips** for related data (seasons, tournaments, players, games)
+- **Aggressive cache invalidation** causes unnecessary refetches
+- **Large object transfers** with full game state payloads
+- **Network latency multiplication** due to sequential API calls
+
+#### **D. React Query Configuration Gaps**
+- **Missing optimistic updates** force UI to wait for server confirmation
+- **Suboptimal cache strategies** for different data freshness requirements
+- **No background refetching** leaves users waiting for stale data updates
+- **Overly conservative stale-time settings**
+
+### Implementation Plan
+
+#### **Phase 1: Immediate UX Improvements (3-4 days)**
+**Impact**: 40-60% perceived performance improvement
+**Risk**: Low
+
+- [ ] **Skeleton Loading States**
+  ```typescript
+  // Replace blank screens with content placeholders
+  <GameCardSkeleton count={3} />
+  <StatsChartSkeleton />
+  <ModalContentSkeleton />
+  ```
+
+- [ ] **Optimistic Updates**
+  ```typescript
+  // Update UI immediately, rollback on error
+  const updateTournament = (data) => {
+    setTournaments(prev => prev.map(t => 
+      t.id === data.id ? { ...t, ...data } : t
+    ));
+    mutation.mutate(data, { 
+      onError: () => rollbackChanges(data.id) 
+    });
+  };
+  ```
+
+- [ ] **Progressive Loading Indicators**
+  ```typescript
+  // Show progress for multi-step operations
+  <LoadingProgress 
+    steps={['Loading players', 'Calculating stats', 'Rendering charts']}
+    currentStep={currentStep} 
+  />
+  ```
+
+- [ ] **Preload Critical Data**
+  ```typescript
+  // Prefetch likely-needed data before user requests
+  const queryClient = useQueryClient();
+  const handleGameCreate = () => {
+    queryClient.prefetchQuery(['seasons'], fetchSeasons);
+    queryClient.prefetchQuery(['tournaments'], fetchTournaments);
+    setShowNewGameModal(true);
+  };
+  ```
+
+#### **Phase 2: Smart Caching Strategy (4-5 days)**
+**Impact**: 20-30% actual loading time reduction
+**Risk**: Medium
+
+- [ ] **Tiered Cache Configuration**
+  ```typescript
+  // Different strategies for different data types
+  const seasonsQuery = useQuery(['seasons'], fetchSeasons, {
+    staleTime: 5 * 60 * 1000,     // 5 minutes - relatively static
+    cacheTime: 30 * 60 * 1000,   // 30 minutes
+    refetchOnMount: false,
+  });
+
+  const gamesQuery = useQuery(['games'], fetchGames, {
+    staleTime: 30 * 1000,         // 30 seconds - more dynamic
+    refetchOnWindowFocus: true,
+    refetchInterval: 2 * 60 * 1000, // 2 minutes background
+  });
+  ```
+
+- [ ] **Intelligent Cache Invalidation**
+  ```typescript
+  // Selective invalidation instead of blanket clearing
+  const updateGame = (gameData) => {
+    queryClient.setQueryData(['games', gameData.id], gameData);
+    queryClient.invalidateQueries(['games', 'list']); // Only list view
+    // Don't invalidate individual game queries
+  };
+  ```
+
+- [ ] **Background Data Refresh**
+  ```typescript
+  // Update stale data without blocking UI
+  const useBackgroundSync = () => {
+    useQuery(['games'], fetchGames, {
+      refetchInterval: 5 * 60 * 1000, // 5 minutes
+      refetchIntervalInBackground: true,
+      notifyOnChangeProps: ['data'], // Only re-render on data change
+    });
+  };
+  ```
+
+- [ ] **Parallel Data Loading**
+  ```typescript
+  // Load related data simultaneously
+  const useGameCreationData = () => {
+    return useQueries([
+      { queryKey: ['seasons'], queryFn: fetchSeasons },
+      { queryKey: ['tournaments'], queryFn: fetchTournaments },
+      { queryKey: ['players'], queryFn: fetchPlayers },
+    ]);
+  };
+  ```
+
+#### **Phase 3: Component Architecture Optimization (5-6 days)**
+**Impact**: 15-25% overall responsiveness improvement
+**Risk**: Medium-High
+
+- [ ] **Micro-Component Splitting**
+  ```typescript
+  // Split heavy modals into focused components
+  const GameStatsModal = lazy(() => 
+    import('./GameStatsModal/GameStatsModal')
+  );
+  const StatsChartsSection = lazy(() => 
+    import('./GameStatsModal/StatsChartsSection')
+  );
+  const PlayerStatsSection = lazy(() => 
+    import('./GameStatsModal/PlayerStatsSection')
+  );
+  ```
+
+- [ ] **Virtual Scrolling Implementation**
+  ```typescript
+  // Handle large lists efficiently
+  import { FixedSizeList as List } from 'react-window';
+  
+  const GamesList = ({ games }) => (
+    <List
+      height={400}
+      itemCount={games.length}
+      itemSize={120}
+      itemData={games}
+      overscanCount={5} // Prerender 5 items above/below
+    >
+      {GameCard}
+    </List>
+  );
+  ```
+
+- [ ] **Strategic Memoization**
+  ```typescript
+  // Cache expensive calculations
+  const gameStatistics = useMemo(() => 
+    calculateDetailedStats(games, players, timeRange), 
+    [games, players, timeRange]
+  );
+  
+  // Memo heavy rendering components
+  const PlayerStatsChart = memo(({ data, filters }) => (
+    <Chart data={data} options={chartOptions} />
+  ), (prev, next) => 
+    prev.data === next.data && 
+    prev.filters.dateRange === next.filters.dateRange
+  );
+  ```
+
+- [ ] **Code Splitting Optimization**
+  ```typescript
+  // Route-level and feature-level splitting
+  const StatsModule = lazy(() => 
+    import('./modules/stats').then(module => ({
+      default: module.StatsModule
+    }))
+  );
+  ```
+
+#### **Phase 4: Storage Layer Performance (3-4 days)**
+**Impact**: 30-50% data operation speed improvement
+**Risk**: High
+
+- [ ] **Batch Operations**
+  ```typescript
+  // Combine related database operations
+  const saveGameSession = async (gameData) => {
+    const batch = supabase.createBatch();
+    
+    batch.from('games').upsert(gameData.game);
+    batch.from('game_players').upsert(gameData.players);
+    batch.from('game_events').upsert(gameData.events);
+    batch.from('player_assessments').upsert(gameData.assessments);
+    
+    return batch.execute();
+  };
+  ```
+
+- [ ] **Smart Synchronization**
+  ```typescript
+  // Only sync changed data
+  const syncGameData = async (localGame, remoteGame) => {
+    const changes = deepDiff(localGame, remoteGame);
+    if (changes.length === 0) return;
+    
+    const patches = changes.map(change => ({
+      op: change.type,
+      path: change.path,
+      value: change.value
+    }));
+    
+    await supabase.rpc('apply_game_patches', { 
+      game_id: localGame.id, 
+      patches 
+    });
+  };
+  ```
+
+- [ ] **Request Debouncing & Batching**
+  ```typescript
+  // Combine rapid successive requests
+  const debouncedSave = useMemo(
+    () => debounce(async (changes) => {
+      const batched = groupBy(changes, 'entityType');
+      await Promise.all(
+        Object.entries(batched).map(([type, items]) =>
+          supabase.from(type).upsert(items)
+        )
+      );
+    }, 500),
+    []
+  );
+  ```
+
+- [ ] **Compression & Field Selection**
+  ```typescript
+  // Reduce payload sizes
+  const fetchGamesList = async () => {
+    return supabase
+      .from('games')
+      .select('id, team_name, opponent_name, game_date, home_score, away_score, is_played')
+      .order('game_date', { ascending: false });
+  };
+  
+  const fetchFullGame = async (gameId) => {
+    return supabase
+      .from('games')
+      .select('*, game_events(*), player_assessments(*)')
+      .eq('id', gameId)
+      .single();
+  };
+  ```
+
+### Success Metrics
+
+#### **Phase 1 Targets**
+- [ ] Modal open time: < 500ms perceived
+- [ ] Loading state coverage: 100% of async operations
+- [ ] User satisfaction: Eliminate "loading too long" feedback
+
+#### **Phase 2 Targets**
+- [ ] Cache hit rate: > 80% for repeated data access
+- [ ] Background sync: < 100ms impact on UI responsiveness
+- [ ] Data freshness: < 30 seconds for live data, < 5 minutes for static data
+
+#### **Phase 3 Targets**
+- [ ] Component mount time: < 200ms for complex modals
+- [ ] List rendering: Handle 1000+ items smoothly
+- [ ] Memory usage: < 50MB for typical coaching session
+
+#### **Phase 4 Targets**
+- [ ] API request reduction: 50% fewer round trips
+- [ ] Data transfer reduction: 40% smaller payloads
+- [ ] Offline resilience: 100% functionality during network issues
+
+### Risk Mitigation
+
+#### **Low Risk Phases (1-2)**
+- Feature flags for gradual rollout
+- A/B testing for loading state variants
+- Rollback capability for cache configuration changes
+
+#### **High Risk Phases (3-4)**
+- Comprehensive integration testing
+- Performance regression testing
+- Staged deployment with monitoring
+- Immediate rollback procedures
+
+### Implementation Schedule
+
+**Total Timeline**: 15-20 development days across 4-6 weeks
+
+- **Week 1-2**: Phase 1 (UX improvements)
+- **Week 2-3**: Phase 2 (Caching strategy) 
+- **Week 4-5**: Phase 3 (Component optimization)
+- **Week 5-6**: Phase 4 (Storage performance)
+
+### Dependencies
+
+- [ ] Performance monitoring setup (Lighthouse CI, Web Vitals)
+- [ ] User feedback tracking for perceived performance
+- [ ] Load testing infrastructure for validation
+- [ ] Feature flag system for gradual rollout
+
+### Post-Implementation Plan
+
+- [ ] Performance monitoring dashboard
+- [ ] Regular performance audits (monthly)
+- [ ] User experience surveys (quarterly)
+- [ ] Performance budget maintenance
+- [ ] Continuous optimization pipeline
+
 ---
 
 ## ⚠️ CRITICAL DECISION POINT: Testing vs Implementation Strategy
