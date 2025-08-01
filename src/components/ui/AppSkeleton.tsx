@@ -116,10 +116,8 @@ export const SoccerFieldSkeleton: React.FC = () => {
               width={32}
               height={32}
               className={`absolute bg-blue-400 bg-opacity-50`}
-              style={{
-                left: `${10 + (i * 7)}%`,
-                top: `${20 + (i % 3) * 20}%`,
-              }}
+              data-left={`${10 + (i * 7)}%`}
+              data-top={`${20 + (i % 3) * 20}%`}
             />
           ))}
         </div>

@@ -18,6 +18,8 @@ export interface GameEvent {
   scorerId?: string;
   assisterId?: string;
   entityId?: string;
+  playerName?: string;
+  timestamp?: number;
 }
 
 export interface TimerState {

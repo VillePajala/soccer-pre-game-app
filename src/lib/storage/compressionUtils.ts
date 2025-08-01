@@ -95,7 +95,7 @@ export class CompressionManager {
 
       return data || [];
     } catch (error) {
-      throw new NetworkError('supabase', 'fetchOptimized', error);
+      throw new NetworkError('supabase', 'fetchOptimized', error as Error);
     }
   }
 
@@ -146,7 +146,7 @@ export class CompressionManager {
 
       return data;
     } catch (error) {
-      throw new NetworkError('supabase', 'fetchFullGameOptimized', error);
+      throw new NetworkError('supabase', 'fetchFullGameOptimized', error as Error);
     }
   }
 
@@ -188,12 +188,12 @@ export class CompressionManager {
 
       if (error) {
         // Fallback to manual aggregation if view doesn't exist
-        return this.fetchPlayerStatsFallback(options);
+        return this.fetchPlayerStatsFallback();
       }
 
       return data || [];
     } catch (error) {
-      throw new NetworkError('supabase', 'fetchPlayerStatsOptimized', error);
+      throw new NetworkError('supabase', 'fetchPlayerStatsOptimized', error as Error);
     }
   }
 
@@ -247,7 +247,7 @@ export class CompressionManager {
         const compressedData = btoa(String.fromCharCode(...compressedArray));
         
         return {
-          data: compressedData,
+          data: compressedData as unknown as Record<string, unknown>,
           compressed: true,
           originalSize,
           compressedSize: compressedData.length
@@ -278,7 +278,7 @@ export class CompressionManager {
     try {
       if (typeof DecompressionStream !== 'undefined') {
         // Use browser's decompression
-        const compressedArray = Uint8Array.from(atob(payload.data), c => c.charCodeAt(0));
+        const compressedArray = Uint8Array.from(atob(payload.data as unknown as string), c => c.charCodeAt(0));
         
         const stream = new DecompressionStream('gzip');
         const writer = stream.writable.getWriter();
@@ -312,7 +312,7 @@ export class CompressionManager {
       }
 
       // Fallback: Simple decompression
-      return this.simpleDecompress(payload.data);
+      return this.simpleDecompress(payload.data as unknown as string);
     } catch (error) {
       console.error('Decompression failed:', error);
       throw new Error('Failed to decompress payload');
@@ -378,7 +378,7 @@ export class CompressionManager {
         totalEstimate: count || undefined
       };
     } catch (error) {
-      throw new NetworkError('supabase', 'fetchLargeDatasetOptimized', error);
+      throw new NetworkError('supabase', 'fetchLargeDatasetOptimized', error as Error);
     }
   }
 
@@ -387,7 +387,7 @@ export class CompressionManager {
     const compressed = JSON.stringify(data, null, 0);
     
     return {
-      data: compressed,
+      data: JSON.parse(compressed),
       compressed: false, // Not actually compressed, just optimized
       originalSize,
       compressedSize: compressed.length

@@ -344,7 +344,8 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
 
   const teamAssessmentAverages = useMemo(() => {
     if (activeTab !== 'overall') return null;
-    return calculateTeamAssessmentAverages(savedGames);
+    const selectedPlayers = availablePlayers.filter(p => selectedPlayerIds.includes(p.id));
+    return calculateTeamAssessmentAverages(selectedPlayers);
   }, [activeTab, savedGames]);
 
   // ADD calculation for tournament/season statistics

@@ -37,7 +37,10 @@ export class SupabaseProvider implements IStorageProvider {
       // Use optimized field selection for better performance
       const data = await compressionManager.fetchOptimized<DbPlayer>(
         'players',
-        FIELD_SELECTIONS.playersFull,
+        {
+          table: 'players',
+          fields: [...FIELD_SELECTIONS.playersFull.fields] as string[]
+        },
         {
           orderBy: 'name',
           ascending: true

@@ -80,11 +80,11 @@ export class SmartSyncManager {
       // Transform data if needed
       let transformedData: T[] = data || [];
       if (table === 'players') {
-        transformedData = data.map((item: Record<string, unknown>) => fromSupabase.player(item)) as T[];
+        transformedData = data.map((item: any) => fromSupabase.player(item as any)) as T[];
       } else if (table === 'seasons') {
-        transformedData = data.map((item: Record<string, unknown>) => fromSupabase.season(item)) as T[];
+        transformedData = data.map((item: any) => fromSupabase.season(item as any)) as T[];
       } else if (table === 'tournaments') {
-        transformedData = data.map((item: Record<string, unknown>) => fromSupabase.tournament(item)) as T[];
+        transformedData = data.map((item: any) => fromSupabase.tournament(item as any)) as T[];
       }
 
       // Update last sync timestamp
@@ -96,7 +96,7 @@ export class SmartSyncManager {
         nextSyncTime: currentTime,
       };
     } catch (error) {
-      throw new NetworkError('supabase', 'getChangedData', error);
+      throw new NetworkError('supabase', 'getChangedData', error as Error);
     }
   }
 
@@ -111,7 +111,7 @@ export class SmartSyncManager {
     const userId = await this.getCurrentUserId();
     let synced = 0;
     let failed = 0;
-    const errors: Record<string, unknown>[] = [];
+    const errors: any[] = [];
 
     for (const [key, changes] of this.pendingChanges.entries()) {
       try {
@@ -120,7 +120,7 @@ export class SmartSyncManager {
         this.pendingChanges.delete(key); // Remove synced changes
       } catch (error) {
         failed += changes.length;
-        errors.push({ key, error: error.message });
+        errors.push({ key, error: (error as Error).message });
       }
     }
 
@@ -171,7 +171,7 @@ export class SmartSyncManager {
         patches.push({
           op: 'replace',
           path: `/${key}`,
-          value: localData[key]
+          value: localData[key] as any
         });
       }
     }
@@ -231,7 +231,7 @@ export class SmartSyncManager {
           synced.push(localItem);
         } else {
           // Check for conflicts based on timestamps
-          const localTimestamp = (localItem as Record<string, unknown>).updated_at || 0;
+          const localTimestamp = (localItem as any).updated_at || 0;
           const remoteTimestamp = new Date(remoteItem.updated_at).getTime();
 
           if (localTimestamp > remoteTimestamp) {
@@ -251,7 +251,7 @@ export class SmartSyncManager {
 
       return { synced, conflicts };
     } catch (error) {
-      throw new NetworkError('supabase', 'smartSyncWithConflictResolution', error);
+      throw new NetworkError('supabase', 'smartSyncWithConflictResolution', error as Error);
     }
   }
 

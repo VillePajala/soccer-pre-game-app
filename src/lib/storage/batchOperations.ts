@@ -55,7 +55,7 @@ export class BatchOperationManager {
 
       return results;
     } catch (error) {
-      throw new NetworkError('supabase', 'executeBatch', error);
+      throw new NetworkError('supabase', 'executeBatch', error as Error);
     }
   }
 
@@ -85,9 +85,9 @@ export class BatchOperationManager {
             .upsert(gameData, { onConflict: 'id,user_id' })
             .select()
             .single()
-            .then(({ data: result, error }) => {
+            .then(({ data: result, error }: { data: Record<string, unknown> | null; error: Error | null }) => {
               if (error) throw error;
-              results.game = result;
+              results.game = result || {};
               return result;
             })
         );
@@ -96,7 +96,7 @@ export class BatchOperationManager {
       // 2. Batch save players if provided
       if (data.players && data.players.length > 0) {
         const playersData = data.players.map(player => ({
-          ...toSupabase.player(player),
+          ...toSupabase.player(player, userId),
           user_id: userId
         }));
         
@@ -105,9 +105,9 @@ export class BatchOperationManager {
             .from('players')
             .upsert(playersData, { onConflict: 'id,user_id' })
             .select()
-            .then(({ data: result, error }) => {
+            .then(({ data: result, error }: { data: Record<string, unknown>[] | null; error: Error | null }) => {
               if (error) throw error;
-              results.players = result?.map((p: DbPlayer) => fromSupabase.player(p)) || [];
+              results.players = result?.map((p: any) => fromSupabase.player(p as DbPlayer)) || [];
               return result;
             })
         );
@@ -126,7 +126,7 @@ export class BatchOperationManager {
             .from('game_events')
             .upsert(eventsData, { onConflict: 'id,user_id' })
             .select()
-            .then(({ data: result, error }) => {
+            .then(({ data: result, error }: { data: Record<string, unknown>[] | null; error: Error | null }) => {
               if (error) throw error;
               results.events = result || [];
               return result;
@@ -147,7 +147,7 @@ export class BatchOperationManager {
             .from('player_assessments')
             .upsert(assessmentsData, { onConflict: 'id,user_id' })
             .select()
-            .then(({ data: result, error }) => {
+            .then(({ data: result, error }: { data: Record<string, unknown>[] | null; error: Error | null }) => {
               if (error) throw error;
               results.assessments = result || [];
               return result;
@@ -157,10 +157,7 @@ export class BatchOperationManager {
 
       // 5. Save app settings if provided
       if (data.settings) {
-        const settingsData = {
-          ...toSupabase.appSettings(data.settings),
-          user_id: userId
-        };
+        const settingsData = toSupabase.appSettings(data.settings as AppSettings, userId);
         
         operations.push(
           supabase
@@ -168,9 +165,9 @@ export class BatchOperationManager {
             .upsert(settingsData, { onConflict: 'user_id' })
             .select()
             .single()
-            .then(({ data: result, error }) => {
+            .then(({ data: result, error }: { data: Record<string, unknown> | null; error: Error | null }) => {
               if (error) throw error;
-              results.settings = result ? fromSupabase.appSettings(result) : null;
+              results.settings = result ? fromSupabase.appSettings(result as any) : {};
               return result;
             })
         );
@@ -181,7 +178,7 @@ export class BatchOperationManager {
       
       return results;
     } catch (error) {
-      throw new NetworkError('supabase', 'saveGameSession', error);
+      throw new NetworkError('supabase', 'saveGameSession', error as Error);
     }
   }
 
@@ -195,7 +192,7 @@ export class BatchOperationManager {
 
     try {
       const playersData = players.map(player => ({
-        ...toSupabase.player(player),
+        ...toSupabase.player(player, userId),
         user_id: userId
       }));
 
@@ -210,7 +207,7 @@ export class BatchOperationManager {
 
       return data.map((player: DbPlayer) => fromSupabase.player(player));
     } catch (error) {
-      throw new NetworkError('supabase', 'batchUpdatePlayers', error);
+      throw new NetworkError('supabase', 'batchUpdatePlayers', error as Error);
     }
   }
 
@@ -233,7 +230,7 @@ export class BatchOperationManager {
         throw new NetworkError('supabase', 'batchDelete', error);
       }
     } catch (error) {
-      throw new NetworkError('supabase', 'batchDelete', error);
+      throw new NetworkError('supabase', 'batchDelete', error as Error);
     }
   }
 

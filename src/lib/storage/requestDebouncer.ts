@@ -6,11 +6,11 @@
 
 export interface DebouncedRequest {
   key: string;
-  operation: () => Promise<Record<string, unknown>>;
-  resolve: (value: Record<string, unknown>) => void;
-  reject: (error: Record<string, unknown>) => void;
+  operation: () => Promise<any>;
+  resolve: (value: any) => void;
+  reject: (error: any) => void;
   timestamp: number;
-  data?: Record<string, unknown>;
+  data?: any;
 }
 
 export interface BatchConfig {
@@ -38,14 +38,14 @@ export class RequestDebouncer {
   async debounce<T>(
     key: string, 
     operation: () => Promise<T>,
-    data?: Record<string, unknown>
+    data?: any
   ): Promise<T> {
-    return new Promise((resolve, reject) => {
+    return new Promise<T>((resolve, reject) => {
       const request: DebouncedRequest = {
         key,
-        operation,
-        resolve,
-        reject,
+        operation: operation as () => Promise<any>,
+        resolve: resolve as (value: any) => void,
+        reject: reject as (error: any) => void,
         timestamp: Date.now(),
         data
       };
@@ -141,9 +141,9 @@ export class RequestDebouncer {
    */
   async debouncedPlayerUpdate(
     playerId: string,
-    updates: Record<string, unknown>,
-    updateOperation: (id: string, data: Record<string, unknown>) => Promise<Record<string, unknown>>
-  ): Promise<Record<string, unknown>> {
+    updates: any,
+    updateOperation: (id: string, data: any) => Promise<any>
+  ): Promise<any> {
     const key = `player_update_${playerId}`;
     
     return this.debounce(key, async () => {
@@ -180,9 +180,9 @@ export class RequestDebouncer {
    */
   async debouncedGameSave(
     gameId: string,
-    gameData: Record<string, unknown>,
-    saveOperation: (id: string, data: Record<string, unknown>) => Promise<Record<string, unknown>>
-  ): Promise<Record<string, unknown>> {
+    gameData: any,
+    saveOperation: (id: string, data: any) => Promise<any>
+  ): Promise<any> {
     const key = `game_save_${gameId}`;
     
     return this.debounce(key, async () => {
@@ -215,9 +215,9 @@ export class RequestDebouncer {
   async debouncedAutoSave<T>(
     key: string,
     data: T,
-    saveOperation: (data: T) => Promise<Record<string, unknown>>,
+    saveOperation: (data: T) => Promise<any>,
     priority: 'low' | 'normal' | 'high' = 'normal'
-  ): Promise<Record<string, unknown>> {
+  ): Promise<any> {
     // Adjust debounce timing based on priority
     const originalDebounce = this.config.debounceMs;
     

@@ -6,7 +6,7 @@ import { FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
 import RatingBar from '../RatingBar';
 import { calculateTeamAssessmentAverages } from '@/utils/assessmentStats';
 import { useGoalEditing } from '@/hooks/useGoalEditing';
-import type { CurrentGameStatsProps } from './types';
+import type { CurrentGameStatsProps, SortableColumn } from './types';
 import { sortPlayerStats, getSortIcon, formatNumber } from './utils';
 
 /**
@@ -42,11 +42,10 @@ const CurrentGameStats = memo<CurrentGameStatsProps>(({
     [players, selectedPlayerIds]
   );
 
-  // Goal editing hook (currently unused but available for future features)
-  const {} = useGoalEditing(gameEvents, onUpdateGameEvent);
+  // Goal editing hook usage removed as it requires additional props
 
   // Render sort icon helper
-  const renderSortIcon = (column: keyof typeof sortColumn) => {
+  const renderSortIcon = (column: SortableColumn) => {
     const iconType = getSortIcon(column, sortColumn, sortDirection);
     const IconComponent = iconType === 'FaSortUp' ? FaSortUp : 
                          iconType === 'FaSortDown' ? FaSortDown : FaSort;
@@ -56,7 +55,7 @@ const CurrentGameStats = memo<CurrentGameStatsProps>(({
   // Filter events for current game
   const currentGameEvents = useMemo(() =>
     gameEvents.filter(event => 
-      event.type === 'goal' || event.type === 'assist'
+      event.type === 'goal'
     ),
     [gameEvents]
   );
@@ -171,7 +170,7 @@ const CurrentGameStats = memo<CurrentGameStatsProps>(({
             </thead>
             <tbody className="bg-white divide-y divide-slate-200">
               {sortedStats.map((stat, index) => (
-                <tr key={stat.playerId || index} className="hover:bg-slate-50">
+                <tr key={stat.id || index} className="hover:bg-slate-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
                     {stat.name || t('gameStatsModal.unknownPlayer', 'Unknown Player')}
                   </td>

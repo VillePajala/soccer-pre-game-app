@@ -74,12 +74,18 @@ const GameStatsModalNew: React.FC<GameStatsModalProps> = ({
   const [selectedTournamentIdFilter, setSelectedTournamentIdFilter] = useState<string | null>(null);
 
   // Hooks for statistics data
-  const { playerStats } = usePlayerStats({
+  const { stats: playerStats } = usePlayerStats({
     activeTab,
-    currentGameId,
-    selectedSeasonIdFilter,
-    selectedTournamentIdFilter,
+    availablePlayers: players,
+    selectedPlayerIds,
+    localGameEvents: gameEvents,
     savedGames,
+    currentGameId,
+    selectedSeasonIdFilter: selectedSeasonIdFilter || 'all',
+    selectedTournamentIdFilter: selectedTournamentIdFilter || 'all',
+    sortColumn,
+    sortDirection,
+    filterText: '',
   });
 
   // Load seasons and tournaments

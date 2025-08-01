@@ -27,19 +27,19 @@ export class EnhancedSupabaseProvider extends SupabaseProvider {
     try {
       return await batchOperationManager.batchUpdatePlayers(players);
     } catch (error) {
-      throw new NetworkError('supabase', 'batchSavePlayers', error);
+      throw new NetworkError('supabase', 'batchSavePlayers', error as Error);
     }
   }
 
   /**
    * Save player with debouncing for rapid successive updates
    */
-  async savePlayerDebounced(player: Player): Promise<Player> {
+  async savePlayerDebounced(player: Player): Promise<Record<string, unknown>> {
     return requestDebouncer.debouncedPlayerUpdate(
       player.id,
-      player,
-      async (playerId: string, playerData: Player) => {
-        return this.savePlayer(playerData);
+      player as unknown as Record<string, unknown>,
+      async (playerId: string, playerData: Record<string, unknown>) => {
+        return this.savePlayer(playerData as unknown as Player) as unknown as Record<string, unknown>;
       }
     );
   }
@@ -57,7 +57,7 @@ export class EnhancedSupabaseProvider extends SupabaseProvider {
     try {
       return await batchOperationManager.saveGameSession(gameId, data);
     } catch (error) {
-      throw new NetworkError('supabase', 'saveGameSessionBatch', error);
+      throw new NetworkError('supabase', 'saveGameSessionBatch', error as Error);
     }
   }
 
@@ -69,8 +69,8 @@ export class EnhancedSupabaseProvider extends SupabaseProvider {
       `game_${gameId}`,
       gameData,
       async (data) => {
-        // Use existing saveGame method from base class
-        return this.saveGame(data);
+        // Use existing saveSavedGame method from base class
+        return this.saveSavedGame(data);
       },
       priority
     );
@@ -92,7 +92,7 @@ export class EnhancedSupabaseProvider extends SupabaseProvider {
         nextSyncTime: result.nextSyncTime,
       };
     } catch (error) {
-      throw new NetworkError('supabase', 'getChangedPlayers', error);
+      throw new NetworkError('supabase', 'getChangedPlayers', error as Error);
     }
   }
 
@@ -113,7 +113,7 @@ export class EnhancedSupabaseProvider extends SupabaseProvider {
         conflictResolution
       );
     } catch (error) {
-      throw new NetworkError('supabase', 'smartSyncPlayers', error);
+      throw new NetworkError('supabase', 'smartSyncPlayers', error as Error);
     }
   }
 
@@ -124,7 +124,7 @@ export class EnhancedSupabaseProvider extends SupabaseProvider {
     try {
       return await compressionManager.fetchGamesListOptimized();
     } catch (error) {
-      throw new NetworkError('supabase', 'getGamesListOptimized', error);
+      throw new NetworkError('supabase', 'getGamesListOptimized', error as Error);
     }
   }
 
@@ -135,7 +135,7 @@ export class EnhancedSupabaseProvider extends SupabaseProvider {
     try {
       return await compressionManager.fetchFullGameOptimized(gameId);
     } catch (error) {
-      throw new NetworkError('supabase', 'getFullGameOptimized', error);
+      throw new NetworkError('supabase', 'getFullGameOptimized', error as Error);
     }
   }
 
@@ -150,7 +150,7 @@ export class EnhancedSupabaseProvider extends SupabaseProvider {
     try {
       return await compressionManager.fetchPlayerStatsOptimized(options);
     } catch (error) {
-      throw new NetworkError('supabase', 'getPlayerStatsOptimized', error);
+      throw new NetworkError('supabase', 'getPlayerStatsOptimized', error as Error);
     }
   }
 
@@ -174,7 +174,7 @@ export class EnhancedSupabaseProvider extends SupabaseProvider {
     try {
       return await compressionManager.fetchLargeDatasetOptimized<T>(table, fields, options);
     } catch (error) {
-      throw new NetworkError('supabase', 'fetchLargeDataset', error);
+      throw new NetworkError('supabase', 'fetchLargeDataset', error as Error);
     }
   }
 
@@ -204,7 +204,7 @@ export class EnhancedSupabaseProvider extends SupabaseProvider {
     try {
       return await smartSyncManager.syncPendingChanges();
     } catch (error) {
-      throw new NetworkError('supabase', 'syncPendingChanges', error);
+      throw new NetworkError('supabase', 'syncPendingChanges', error as Error);
     }
   }
 
@@ -215,7 +215,7 @@ export class EnhancedSupabaseProvider extends SupabaseProvider {
     try {
       await batchOperationManager.batchDelete(table, ids);
     } catch (error) {
-      throw new NetworkError('supabase', 'batchDelete', error);
+      throw new NetworkError('supabase', 'batchDelete', error as Error);
     }
   }
 
