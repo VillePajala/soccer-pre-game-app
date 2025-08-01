@@ -210,7 +210,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
 
   // Initialize game time state from prop
   useEffect(() => {
-    if (gameTime) {
+    if (gameTime && typeof gameTime === 'string') {
       const [hour, minute] = gameTime.split(':');
       setGameHour(hour || '');
       setGameMinute(minute || '');
