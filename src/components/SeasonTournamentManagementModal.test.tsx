@@ -104,7 +104,13 @@ describe('SeasonTournamentManagementModal', () => {
     const saveButton = screen.getByRole('button', { name: 'Save Season 1' });
     await user.click(saveButton);
 
-    expect(defaultProps.updateSeasonMutation.mutate).toHaveBeenCalledWith({ id: 's1', name: 'Updated Season Name', defaultRoster: ['p1'] });
+    expect(defaultProps.updateSeasonMutation.mutate).toHaveBeenCalledWith(
+      { id: 's1', name: 'Updated Season Name', defaultRoster: ['p1'] },
+      expect.objectContaining({
+        onSuccess: expect.any(Function),
+        onError: expect.any(Function)
+      })
+    );
   });
 
   it('allows editing a tournament', async () => {
@@ -124,7 +130,13 @@ describe('SeasonTournamentManagementModal', () => {
     const saveButton = screen.getByRole('button', { name: 'Save Tournament 1' });
     await user.click(saveButton);
 
-    expect(defaultProps.updateTournamentMutation.mutate).toHaveBeenCalledWith({ id: 't1', name: 'Updated Tournament Name', defaultRoster: ['p1'] });
+    expect(defaultProps.updateTournamentMutation.mutate).toHaveBeenCalledWith(
+      { id: 't1', name: 'Updated Tournament Name', defaultRoster: ['p1'] },
+      expect.objectContaining({
+        onSuccess: expect.any(Function),
+        onError: expect.any(Function)
+      })
+    );
   });
 
   it('allows deleting a season', async () => {

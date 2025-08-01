@@ -139,11 +139,26 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
             const sanitized = sanitizeFields(editingFields);
             const base = { id, name: editingName.trim(), ...sanitized, defaultRoster: editRoster } as Season;
             if (type === 'season') {
-                updateSeasonMutation.mutate(base);
+                updateSeasonMutation.mutate(base, {
+                    onSuccess: () => {
+                        handleCancelEdit();
+                    },
+                    onError: (error) => {
+                        console.error('Failed to update season:', error);
+                        // Keep edit mode open so user can try again
+                    }
+                });
             } else {
-                updateTournamentMutation.mutate(base as Tournament);
+                updateTournamentMutation.mutate(base as Tournament, {
+                    onSuccess: () => {
+                        handleCancelEdit();
+                    },
+                    onError: (error) => {
+                        console.error('Failed to update tournament:', error);
+                        // Keep edit mode open so user can try again
+                    }
+                });
             }
-            handleCancelEdit();
         }
     };
 
@@ -248,8 +263,21 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                         <div key={item.id} className="bg-slate-800/60 p-2 rounded-md">
                             {editingId === item.id ? (
                                 <div className="space-y-2">
-                                    <input type="text" value={editingName} onChange={(e)=>setEditingName(e.target.value)} className="w-full px-2 py-1 bg-slate-700 border border-indigo-500 rounded-md text-white" />
-                                    <input type="text" value={editingFields.location || ''} onChange={(e)=>setEditingFields(f=>({...f,location:e.target.value}))} placeholder={t('seasonTournamentModal.locationLabel')} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white" />
+                                    <input 
+                                        type="text" 
+                                        value={editingName} 
+                                        onChange={(e)=>setEditingName(e.target.value)} 
+                                        disabled={type === 'season' ? updateSeasonMutation.isPending : updateTournamentMutation.isPending}
+                                        className="w-full px-2 py-1 bg-slate-700 border border-indigo-500 rounded-md text-white disabled:opacity-50 disabled:cursor-not-allowed" 
+                                    />
+                                    <input 
+                                        type="text" 
+                                        value={editingFields.location || ''} 
+                                        onChange={(e)=>setEditingFields(f=>({...f,location:e.target.value}))} 
+                                        placeholder={t('seasonTournamentModal.locationLabel')} 
+                                        disabled={type === 'season' ? updateSeasonMutation.isPending : updateTournamentMutation.isPending}
+                                        className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white disabled:opacity-50 disabled:cursor-not-allowed" 
+                                    />
                                     <select value={editingFields.ageGroup || ''} onChange={e=>setEditingFields(f=>({...f,ageGroup:e.target.value}))} className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded-md text-white">
                                         <option value="">{t('common.selectAgeGroup', '-- Select Age Group --')}</option>
                                         {AGE_GROUPS.map(group => (
@@ -278,8 +306,37 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                                     <RosterSelection players={availablePlayers} selectedIds={editRoster} onChange={setEditRoster} />
                                     <label className="text-slate-200 text-sm flex items-center gap-1"><input type="checkbox" checked={editingFields.archived || false} onChange={e=>setEditingFields(f=>({...f,archived:e.target.checked}))} className="form-checkbox h-4 w-4" />{t('seasonTournamentModal.archiveLabel')}</label>
                                     <div className="flex justify-end gap-2">
-                                        <button onClick={() => handleSaveEdit(item.id, type)} className="p-1 text-green-400 hover:text-green-300" aria-label={`Save ${item.name}`}><HiOutlineCheck className="w-5 h-5" /></button>
-                                        <button onClick={handleCancelEdit} className="p-1 text-slate-400 hover:text-slate-200" aria-label="Cancel edit"><HiOutlineX className="w-5 h-5" /></button>
+                                        <button 
+                                            onClick={() => handleSaveEdit(item.id, type)} 
+                                            disabled={type === 'season' ? updateSeasonMutation.isPending : updateTournamentMutation.isPending}
+                                            className={`p-1 transition-colors ${
+                                                (type === 'season' ? updateSeasonMutation.isPending : updateTournamentMutation.isPending) 
+                                                    ? 'text-green-600 cursor-not-allowed' 
+                                                    : 'text-green-400 hover:text-green-300'
+                                            }`} 
+                                            aria-label={`Save ${item.name}`}
+                                        >
+                                            {(type === 'season' ? updateSeasonMutation.isPending : updateTournamentMutation.isPending) ? (
+                                                <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                            ) : (
+                                                <HiOutlineCheck className="w-5 h-5" />
+                                            )}
+                                        </button>
+                                        <button 
+                                            onClick={handleCancelEdit} 
+                                            disabled={type === 'season' ? updateSeasonMutation.isPending : updateTournamentMutation.isPending}
+                                            className={`p-1 transition-colors ${
+                                                (type === 'season' ? updateSeasonMutation.isPending : updateTournamentMutation.isPending) 
+                                                    ? 'text-slate-600 cursor-not-allowed' 
+                                                    : 'text-slate-400 hover:text-slate-200'
+                                            }`} 
+                                            aria-label="Cancel edit"
+                                        >
+                                            <HiOutlineX className="w-5 h-5" />
+                                        </button>
                                     </div>
                                 </div>
                             ) : (
