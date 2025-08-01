@@ -4,7 +4,7 @@ import React, { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
 import RatingBar from '../RatingBar';
-import { calculateTeamAssessmentAverages } from '@/utils/assessmentStats';
+import { calculateSelectedPlayersTeamAverages } from '@/utils/assessmentStats';
 import { useGoalEditing } from '@/hooks/useGoalEditing';
 import type { CurrentGameStatsProps, SortableColumn } from './types';
 import { sortPlayerStats, getSortIcon, formatNumber } from './utils';
@@ -38,7 +38,7 @@ const CurrentGameStats = memo<CurrentGameStatsProps>(({
 
   // Team assessment averages
   const teamAssessmentAverages = useMemo(() => 
-    calculateTeamAssessmentAverages(players.filter(p => selectedPlayerIds.includes(p.id))),
+    calculateSelectedPlayersTeamAverages(players.filter(p => selectedPlayerIds.includes(p.id))),
     [players, selectedPlayerIds]
   );
 
