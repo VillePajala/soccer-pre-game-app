@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useReducer, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useReducer, useRef, useMemo, startTransition } from 'react';
 import SoccerField from '@/components/SoccerField';
 import PlayerBar from '@/components/PlayerBar';
 import ControlBar from '@/components/ControlBar';
@@ -65,6 +65,9 @@ import { useRoster } from '@/hooks/useRoster';
 import { useGameDataManager } from '@/hooks/useGameDataManager';
 import { useGameStateManager } from '@/hooks/useGameStateManager';
 import { useModalContext } from '@/contexts/ModalProvider';
+// Import skeleton components
+import { GameStatsModalSkeleton, LoadGameModalSkeleton, RosterModalSkeleton, ModalSkeleton } from '@/components/ui/ModalSkeleton';
+import { AppLoadingSkeleton } from '@/components/ui/AppSkeleton';
 // Note: localStorage utilities removed - using offline-first storage instead
 // Removed - now handled by useGameDataManager: 
 // import { queryKeys } from '@/config/queryKeys';
@@ -299,9 +302,33 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     // masterRosterKey: MASTER_ROSTER_KEY, // Removed as no longer used by useGameState
   });
 
+  const handlePlayerIdUpdated = useCallback(
+    (oldId: string, newId: string) => {
+      setPlayersOnField(prev => prev.map(p => (p.id === oldId ? { ...p, id: newId } : p)));
+
+      dispatchGameSession({
+        type: 'SET_SELECTED_PLAYER_IDS',
+        payload: gameSessionState.selectedPlayerIds.map(id => (id === oldId ? newId : id)),
+      });
+
+      gameSessionState.gameEvents.forEach(event => {
+        if (event.scorerId === oldId || event.assisterId === oldId) {
+          const updatedEvent = {
+            ...event,
+            scorerId: event.scorerId === oldId ? newId : event.scorerId,
+            assisterId: event.assisterId === oldId ? newId : event.assisterId,
+          };
+          dispatchGameSession({ type: 'UPDATE_GAME_EVENT', payload: updatedEvent });
+        }
+      });
+    },
+    [setPlayersOnField, dispatchGameSession, gameSessionState.selectedPlayerIds, gameSessionState.gameEvents]
+  );
+
   const roster = useRoster({
     initialPlayers: initialState.availablePlayers,
     selectedPlayerIds: gameSessionState.selectedPlayerIds,
+    onPlayerIdUpdated: handlePlayerIdUpdated,
   });
   const {
     availablePlayers,
@@ -460,6 +487,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   const [loadGamesListError, setLoadGamesListError] = useState<string | null>(null);
   const [isGameLoading, setIsGameLoading] = useState(false); // For loading a specific game
   const [gameLoadError, setGameLoadError] = useState<string | null>(null);
+  const [isStateSynchronizing, setIsStateSynchronizing] = useState(false); // Prevent race conditions during state updates
   // Removed - now handled by useGameDataManager:
   // const [isGameDeleting, setIsGameDeleting] = useState(false); // For deleting a specific game
   // const [gameDeleteError, setGameDeleteError] = useState<string | null>(null);
@@ -637,17 +665,37 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   // Use a ref to track the last synced data to prevent loops
   const lastSyncedRosterRef = useRef<string>('');
   
+  // Memoized roster data key for performance optimization
+  const rosterDataKey = useMemo(() => {
+    if (!masterRosterQueryResultData || isMasterRosterQueryLoading) return null;
+    return JSON.stringify(masterRosterQueryResultData.map(p => ({ id: p.id, name: p.name })));
+  }, [masterRosterQueryResultData, isMasterRosterQueryLoading]);
+
+  // Memoized sorted games for performance optimization
+  const sortedGamesByDate = useMemo(() => {
+    const currentSavedGames = allSavedGamesQueryResultData || {};
+    const gameIds = Object.keys(currentSavedGames);
+    
+    if (gameIds.length === 0) return [];
+    
+    return gameIds
+      .map(id => ({ id, game: currentSavedGames[id] }))
+      .filter(({ game }) => game && game.gameDate)
+      .sort((a, b) => {
+        const dateA = new Date(a.game.gameDate + ' ' + (a.game.gameTime || '00:00'));
+        const dateB = new Date(b.game.gameDate + ' ' + (b.game.gameTime || '00:00'));
+        return dateB.getTime() - dateA.getTime();
+      });
+  }, [allSavedGamesQueryResultData]);
+  
   useEffect(() => {
     if (isMasterRosterQueryLoading) {
       logger.log('[TanStack Query] Master Roster is loading...');
     }
-    if (masterRosterQueryResultData && !isMasterRosterQueryLoading) {
-      // Create a unique key for the current data
-      const dataKey = JSON.stringify(masterRosterQueryResultData.map(p => ({ id: p.id, name: p.name })));
-      
+    if (masterRosterQueryResultData && !isMasterRosterQueryLoading && rosterDataKey) {
       // Only update if this is different from what we last synced
-      if (dataKey !== lastSyncedRosterRef.current) {
-        lastSyncedRosterRef.current = dataKey;
+      if (rosterDataKey !== lastSyncedRosterRef.current) {
+        lastSyncedRosterRef.current = rosterDataKey;
         logger.log('[HomePage] Syncing roster from React Query:', masterRosterQueryResultData.length, 'players');
         setAvailablePlayers(masterRosterQueryResultData);
       }
@@ -656,7 +704,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       logger.error('[TanStack Query] Error loading master roster:', masterRosterQueryErrorData);
       setAvailablePlayers([]);
     }
-  }, [masterRosterQueryResultData, isMasterRosterQueryLoading, isMasterRosterQueryError, masterRosterQueryErrorData, setAvailablePlayers]);
+  }, [masterRosterQueryResultData, isMasterRosterQueryLoading, isMasterRosterQueryError, masterRosterQueryErrorData, setAvailablePlayers, rosterDataKey]);
 
   // --- Effect to update seasons from useQuery ---
   useEffect(() => {
@@ -789,26 +837,11 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         setHasSkippedInitialSetup(true);
       } else {
         // If the saved game ID doesn't exist, try to find the most recent game
-        const gameIds = Object.keys(currentSavedGames);
-        if (gameIds.length > 0) {
-          // Sort games by date to find the most recent
-          const sortedGames = gameIds
-            .map(id => ({ id, game: currentSavedGames[id] }))
-            .filter(({ game }) => game && game.gameDate)
-            .sort((a, b) => {
-              const dateA = new Date(a.game.gameDate + ' ' + (a.game.gameTime || '00:00'));
-              const dateB = new Date(b.game.gameDate + ' ' + (b.game.gameTime || '00:00'));
-              return dateB.getTime() - dateA.getTime();
-            });
-          
-          if (sortedGames.length > 0) {
-            const mostRecentId = sortedGames[0].id;
-            logger.log(`[EFFECT init] Found most recent game to restore: ${mostRecentId}`);
-            setCurrentGameId(mostRecentId);
-            setHasSkippedInitialSetup(true);
-          } else {
-            setCurrentGameId(DEFAULT_GAME_ID);
-          }
+        if (sortedGamesByDate.length > 0) {
+          const mostRecentId = sortedGamesByDate[0].id;
+          logger.log(`[EFFECT init] Found most recent game to restore: ${mostRecentId}`);
+          setCurrentGameId(mostRecentId);
+          setHasSkippedInitialSetup(true);
         } else {
           if (lastGameIdSetting && lastGameIdSetting !== DEFAULT_GAME_ID) {
             logger.warn(`[EFFECT init] Last game ID ${lastGameIdSetting} not found in saved games. Loading default.`);
@@ -838,7 +871,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     isCurrentGameIdSettingQueryLoading,
     initialLoadComplete,
     allSavedGamesQueryResultData,
-    currentGameIdSettingQueryResultData
+    currentGameIdSettingQueryResultData,
+    sortedGamesByDate
   ]);
 
   // Add a timeout for mobile loading issues
@@ -863,8 +897,12 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
   // Helper function to load game state from game data
   const loadGameStateFromData = (gameData: AppState | null, isInitialDefaultLoad = false) => {
-
-    if (gameData) {
+    // Set synchronization flag to prevent race conditions with auto-save
+    setIsStateSynchronizing(true);
+    
+    // Use startTransition to batch all state updates together to prevent UI inconsistencies
+    startTransition(() => {
+      if (gameData) {
       // gameData is AppState, map its fields directly to GameSessionState partial payload
       const payload: Partial<GameSessionState> = {
         teamName: gameData.teamName,
@@ -960,6 +998,10 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       availablePlayers: masterRosterQueryResultData || availablePlayers,
     };
     resetHistory(newHistoryState);
+    
+    // Clear synchronization flag after all state updates are complete
+    setIsStateSynchronizing(false);
+    });
   };
 
   // --- Effect to load game state when currentGameId changes or savedGames updates ---
@@ -982,6 +1024,11 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   useEffect(() => {
     // Skip auto-save during new game creation to prevent overwriting the new game
     if (isCreatingNewGame) {
+      return;
+    }
+    
+    // Skip auto-save during state synchronization to prevent race conditions
+    if (isStateSynchronizing) {
       return;
     }
     
@@ -1055,7 +1102,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     };
     autoSave();
     // Dependencies: Include all state variables that are part of the saved snapshot
-  }, [initialLoadComplete, currentGameId, isCreatingNewGame,
+  }, [initialLoadComplete, currentGameId, isCreatingNewGame, isStateSynchronizing,
       playersOnField, opponents, drawings, availablePlayers, masterRosterQueryResultData,
       // showPlayerNames, // REMOVED - Covered by gameSessionState
       // Local states that are part of the snapshot but not yet in gameSessionState:
@@ -1634,12 +1681,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   const isLoading = isMasterRosterQueryLoading || areSeasonsQueryLoading || areTournamentsQueryLoading || isAllSavedGamesQueryLoading || isCurrentGameIdSettingQueryLoading;
 
   if (isLoading && !initialLoadComplete) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-slate-900 text-white">
-        {/* You can replace this with a more sophisticated loading spinner component */}
-        <p>Loading Game Data...</p>
-      </div>
-    );
+    return <AppLoadingSkeleton />;
   }
 
   // Define a consistent, premium style for the top and bottom bars
@@ -1773,13 +1815,13 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
       {/* Modals and Overlays */}
       {/* Training Resources Modal */}
-      <React.Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="text-white">Loading...</div></div>}>
+      <React.Suspense fallback={<ModalSkeleton title="Training Resources" />}>
         <TrainingResourcesModal
           isOpen={isTrainingResourcesOpen}
           onClose={handleToggleTrainingResources}
         />
       </React.Suspense>
-      <React.Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="text-white">Loading...</div></div>}>
+      <React.Suspense fallback={<ModalSkeleton title="Instructions" />}>
         <InstructionsModal
           isOpen={isInstructionsModalOpen}
           onClose={handleToggleInstructionsModal}
@@ -1796,7 +1838,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       />
       {/* Game Stats Modal - Restore props for now */}
       {isGameStatsModalOpen && (
-        <React.Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="text-white">Loading...</div></div>}>
+        <React.Suspense fallback={<GameStatsModalSkeleton />}>
           <GameStatsModal
             isOpen={isGameStatsModalOpen}
             onClose={handleToggleGameStatsModal}
@@ -1827,7 +1869,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           />
         </React.Suspense>
       )}
-      <React.Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="text-white">Loading...</div></div>}>
+      <React.Suspense fallback={<LoadGameModalSkeleton />}>
         <LoadGameModal 
           isOpen={isLoadGameModalOpen}
           onClose={handleCloseLoadGameModal}
@@ -1851,7 +1893,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
       {/* Conditionally render the New Game Setup Modal */}
       {isNewGameSetupModalOpen && (
-        <React.Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="text-white">Loading...</div></div>}>
+        <React.Suspense fallback={<ModalSkeleton title="New Game Setup" />}>
           <NewGameSetupModal
             isOpen={isNewGameSetupModalOpen}
             initialPlayerSelection={playerIdsForNewGame} // <<< Pass the state here
@@ -1871,7 +1913,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       )}
 
       {/* Roster Settings Modal */}
-      <React.Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="text-white">Loading...</div></div>}>
+      <React.Suspense fallback={<RosterModalSkeleton />}>
         <RosterSettingsModal
           isOpen={isRosterModalOpen}
           onClose={closeRosterModal}
@@ -1892,7 +1934,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         />
       </React.Suspense>
 
-      <React.Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="text-white">Loading...</div></div>}>
+      <React.Suspense fallback={<ModalSkeleton title="Season & Tournament Management" />}>
         <SeasonTournamentManagementModal
           isOpen={isSeasonTournamentModalOpen}
           onClose={handleCloseSeasonTournamentModal}
@@ -1916,7 +1958,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           onGameClick={handleGameLogClick}
       /> */}
 
-      <React.Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="text-white">Loading...</div></div>}>
+      <React.Suspense fallback={<ModalSkeleton title="Game Settings" />}>
         <GameSettingsModal
           isOpen={isGameSettingsModalOpen}
           onClose={handleCloseGameSettingsModal}
@@ -1966,7 +2008,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         />
       </React.Suspense>
 
-      <React.Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="text-white">Loading...</div></div>}>
+      <React.Suspense fallback={<ModalSkeleton title="Settings" />}>
         <SettingsModal
           isOpen={isSettingsModalOpen}
           onClose={handleCloseSettingsModal}
@@ -1980,7 +2022,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         />
       </React.Suspense>
 
-      <React.Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="text-white">Loading...</div></div>}>
+      <React.Suspense fallback={<ModalSkeleton title="Player Assessment" />}>
         <PlayerAssessmentModal
           isOpen={isPlayerAssessmentModalOpen}
           onClose={closePlayerAssessmentModal}

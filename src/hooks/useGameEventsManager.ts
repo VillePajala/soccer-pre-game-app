@@ -41,8 +41,12 @@ export const useGameEventsManager = ({
    * Handler to add a goal event
    */
   const handleAddGoalEvent = useCallback((scorerId: string, assisterId?: string) => {
-    const scorer = (masterRosterQueryResultData || availablePlayers).find(p => p.id === scorerId);
-    const assister = assisterId ? (masterRosterQueryResultData || availablePlayers).find(p => p.id === assisterId) : undefined;
+    const rosterSource = masterRosterQueryResultData && masterRosterQueryResultData.length > 0
+      ? masterRosterQueryResultData
+      : availablePlayers;
+
+    const scorer = rosterSource.find(p => p.id === scorerId);
+    const assister = assisterId ? rosterSource.find(p => p.id === assisterId) : undefined;
 
     if (!scorer) {
       logger.error("Scorer not found!");
@@ -57,9 +61,15 @@ export const useGameEventsManager = ({
       assisterId: assister?.id,
     };
     
-    // Dispatch actions to update game state via reducer
-    dispatchGameSession({ type: 'ADD_GAME_EVENT', payload: newEvent });
-    dispatchGameSession({ type: 'ADJUST_SCORE_FOR_EVENT', payload: { eventType: 'goal', action: 'add' } });
+    // Dispatch actions to update game state via reducer with error handling
+    try {
+      dispatchGameSession({ type: 'ADD_GAME_EVENT', payload: newEvent });
+      dispatchGameSession({ type: 'ADJUST_SCORE_FOR_EVENT', payload: { eventType: 'goal', action: 'add' } });
+      logger.log(`Goal event added successfully: ${scorer.name} at ${newEvent.time}s`);
+    } catch (error) {
+      logger.error('Failed to add goal event:', error);
+      throw new Error(`Failed to log goal for ${scorer.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }, [dispatchGameSession, gameSessionState.timeElapsedInSeconds, masterRosterQueryResultData, availablePlayers]);
 
   /**
@@ -74,9 +84,15 @@ export const useGameEventsManager = ({
       scorerId: 'opponent', 
     };
 
-    dispatchGameSession({ type: 'ADD_GAME_EVENT', payload: newEvent });
-    dispatchGameSession({ type: 'ADJUST_SCORE_FOR_EVENT', payload: { eventType: 'opponentGoal', action: 'add' } });
-    setIsGoalLogModalOpen(false);
+    try {
+      dispatchGameSession({ type: 'ADD_GAME_EVENT', payload: newEvent });
+      dispatchGameSession({ type: 'ADJUST_SCORE_FOR_EVENT', payload: { eventType: 'opponentGoal', action: 'add' } });
+      setIsGoalLogModalOpen(false);
+      logger.log(`Opponent goal event added successfully at ${newEvent.time}s`);
+    } catch (error) {
+      logger.error('Failed to add opponent goal event:', error);
+      throw new Error(`Failed to log opponent goal: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }, [dispatchGameSession, setIsGoalLogModalOpen]);
 
   // --- Event Management Handlers ---

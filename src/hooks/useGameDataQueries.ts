@@ -32,13 +32,18 @@ export function useGameDataQueries(): GameDataQueriesResult {
   const emptyTournaments = useMemo<Tournament[]>(() => [], []);
   const emptySavedGames = useMemo<SavedGamesCollection>(() => ({}), []);
 
+  // Tiered Cache Configuration: Different strategies for different data types
+  
+  // Master Roster - Semi-dynamic data (updated when players are added/modified)
   const masterRoster = useQuery<Player[], Error>({
     queryKey: queryKeys.masterRoster,
     queryFn: getMasterRoster,
-    staleTime: 5000, // 5 seconds
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 2 * 60 * 1000, // 2 minutes - semi-static
+    gcTime: 15 * 60 * 1000, // 15 minutes
+    refetchOnMount: false, // Don't refetch if data is fresh
   });
 
+  // Seasons - Relatively static data (rarely changes during a session)
   const seasons = useQuery<Season[], Error>({
     queryKey: queryKeys.seasons,
     queryFn: async () => {
@@ -50,8 +55,10 @@ export function useGameDataQueries(): GameDataQueriesResult {
         return [];
       }
     },
-    staleTime: 5000, // 5 seconds
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes - relatively static
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    refetchOnMount: false,
+    refetchOnWindowFocus: false, // Don't refetch on window focus for static data
     retry: (failureCount, error) => {
       // Don't retry transform errors
       if (error.message?.includes('Transform') || error.message?.includes('parse')) {
@@ -62,6 +69,7 @@ export function useGameDataQueries(): GameDataQueriesResult {
     },
   });
 
+  // Tournaments - Relatively static data (rarely changes during a session)
   const tournaments = useQuery<Tournament[], Error>({
     queryKey: queryKeys.tournaments,
     queryFn: async () => {
@@ -73,8 +81,10 @@ export function useGameDataQueries(): GameDataQueriesResult {
         return [];
       }
     },
-    staleTime: 5000, // 5 seconds
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes - relatively static
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    refetchOnMount: false,
+    refetchOnWindowFocus: false, // Don't refetch on window focus for static data
     retry: (failureCount, error) => {
       // Don't retry transform errors
       if (error.message?.includes('Transform') || error.message?.includes('parse')) {
@@ -85,18 +95,25 @@ export function useGameDataQueries(): GameDataQueriesResult {
     },
   });
 
+  // Saved Games - More dynamic data (updated when games are saved/loaded)
   const savedGames = useQuery<SavedGamesCollection | null, Error>({
     queryKey: queryKeys.savedGames,
     queryFn: getSavedGames,
-    staleTime: 5000, // 5 seconds
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 30 * 1000, // 30 seconds - more dynamic
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: true, // Refetch when user returns to app
+    refetchInterval: 2 * 60 * 1000, // Background refresh every 2 minutes
+    refetchIntervalInBackground: false, // Only when app is active
   });
 
+  // Current Game ID - Very dynamic data (changes frequently during gameplay)
   const currentGameId = useQuery<string | null, Error>({
     queryKey: queryKeys.appSettingsCurrentGameId,
     queryFn: getCurrentGameIdSetting,
-    staleTime: 5000, // 5 seconds
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 10 * 1000, // 10 seconds - very dynamic
+    gcTime: 2 * 60 * 1000, // 2 minutes
+    refetchOnWindowFocus: true,
+    notifyOnChangeProps: ['data'], // Only re-render on data change
   });
 
   const loading =

@@ -227,8 +227,22 @@ export const gameSessionReducer = (state: GameSessionState, action: GameSessionA
       return { ...state, tournamentLevel: action.payload };
     case 'SET_DEMAND_FACTOR':
       return { ...state, demandFactor: action.payload };
-    case 'ADD_GAME_EVENT':
-      return { ...state, gameEvents: [...state.gameEvents, action.payload] };
+    case 'ADD_GAME_EVENT': {
+      // Validate event payload to prevent silent failures
+      const event = action.payload;
+      if (!event || !event.id || !event.type || typeof event.time !== 'number') {
+        console.error('Invalid game event payload:', event);
+        return state; // Don't add invalid events
+      }
+      
+      // Check for duplicate event IDs
+      if (state.gameEvents.some(e => e.id === event.id)) {
+        console.warn('Attempted to add duplicate game event:', event.id);
+        return state;
+      }
+      
+      return { ...state, gameEvents: [...state.gameEvents, event] };
+    }
     case 'UPDATE_GAME_EVENT': {
       const index = state.gameEvents.findIndex(e => e.id === action.payload.id);
       if (index === -1) return state;

@@ -27,12 +27,13 @@ interface AttemptRecord {
 export class RateLimiter {
   private attempts: Map<string, AttemptRecord> = new Map();
   private readonly config: RateLimitConfig;
+  private cleanupInterval: NodeJS.Timeout | null = null;
 
   constructor(config: RateLimitConfig) {
     this.config = config;
     
     // Cleanup old entries periodically
-    setInterval(() => {
+    this.cleanupInterval = setInterval(() => {
       this.cleanup();
     }, this.config.windowMs);
   }
@@ -185,6 +186,17 @@ export class RateLimiter {
       totalKeys: this.attempts.size,
       blockedKeys
     };
+  }
+
+  /**
+   * Destroy the rate limiter and clean up resources
+   */
+  destroy(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
+    }
+    this.attempts.clear();
   }
 }
 

@@ -18,7 +18,7 @@ import { getSeasons as utilGetSeasons } from '@/utils/seasons';
 import { getTournaments as utilGetTournaments } from '@/utils/tournaments';
 import { FaSort, FaSortUp, FaSortDown, FaEdit, FaSave, FaTimes, FaTrashAlt } from 'react-icons/fa';
 import PlayerStatsView from './PlayerStatsView';
-import { calculateTeamAssessmentAverages } from '@/utils/assessmentStats';
+import { calculateSelectedPlayersTeamAverages } from '@/utils/assessmentStats';
 import RatingBar from './RatingBar';
 import { usePlayerStats } from '@/hooks/usePlayerStats';
 import { useOverallTeamStats } from '@/hooks/useOverallTeamStats';
@@ -344,8 +344,9 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
 
   const teamAssessmentAverages = useMemo(() => {
     if (activeTab !== 'overall') return null;
-    return calculateTeamAssessmentAverages(savedGames);
-  }, [activeTab, savedGames]);
+    const selectedPlayers = availablePlayers.filter(p => selectedPlayerIds.includes(p.id));
+    return calculateSelectedPlayersTeamAverages(selectedPlayers);
+  }, [activeTab, availablePlayers, selectedPlayerIds]);
 
   // ADD calculation for tournament/season statistics
   const tournamentSeasonStats = useMemo(() => {

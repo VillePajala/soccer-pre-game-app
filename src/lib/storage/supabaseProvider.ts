@@ -1,11 +1,12 @@
-// Supabase storage provider implementation
+// Supabase storage provider implementation with Phase 4 performance optimizations
 import type { IStorageProvider } from './types';
 import { StorageError, NetworkError, AuthenticationError } from './types';
 import type { Player, Season, Tournament } from '../../types';
 import type { AppSettings } from '../../utils/appSettings';
 import { supabase } from '../supabase';
 import { toSupabase, fromSupabase } from '../../utils/transforms';
-import type { DbSeason, DbTournament, DbPlayer, DbAppSettings, DbGame } from '../../utils/transforms';
+import type { DbSeason, DbTournament, DbPlayer, DbAppSettings, DbGame, SupabaseGameEvent } from '../../utils/transforms';
+import { compressionManager, FIELD_SELECTIONS } from './compressionUtils';
 
 export class SupabaseProvider implements IStorageProvider {
   
@@ -30,19 +31,21 @@ export class SupabaseProvider implements IStorageProvider {
     return user.id;
   }
 
-  // Player management
+  // Player management with Phase 4 optimizations
   async getPlayers(): Promise<Player[]> {
     try {
-      const userId = await this.getCurrentUserId();
-      const { data, error } = await supabase
-        .from('players')
-        .select('*')
-        .eq('user_id', userId)
-        .order('name');
-
-      if (error) {
-        throw new NetworkError('supabase', 'getPlayers', error);
-      }
+      // Use optimized field selection for better performance
+      const data = await compressionManager.fetchOptimized<DbPlayer>(
+        'players',
+        {
+          table: 'players',
+          fields: [...FIELD_SELECTIONS.playersFull.fields] as string[]
+        },
+        {
+          orderBy: 'name',
+          ascending: true
+        }
+      );
 
       return data.map((player: DbPlayer) => fromSupabase.player(player));
     } catch (error) {
@@ -66,9 +69,11 @@ export class SupabaseProvider implements IStorageProvider {
       let result;
       if (playerForSupabase.id && !isLocalId) {
         // Update existing player
+        const { id: _removed, ...updatePayload } = supabasePlayer;
+        void _removed;
         const { data, error } = await supabase
           .from('players')
-          .update(supabasePlayer)
+          .update(updatePayload)
           .eq('id', player.id)
           .eq('user_id', userId)
           .select()
@@ -183,9 +188,11 @@ export class SupabaseProvider implements IStorageProvider {
       let result;
       if (seasonForSupabase.id && !isLocalId) {
         // Update existing season
+        const { id: _removed, ...updatePayload } = supabaseSeason;
+        void _removed;
         const { data, error } = await supabase
           .from('seasons')
-          .update(supabaseSeason)
+          .update(updatePayload)
           .eq('id', season.id)
           .eq('user_id', userId)
           .select()
@@ -297,21 +304,14 @@ export class SupabaseProvider implements IStorageProvider {
       
       const supabaseTournament = toSupabase.tournament(tournamentForSupabase, userId);
 
-      // Debug: Log what we're trying to save (remove in production)
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[SupabaseProvider] Tournament save data:', {
-          tournament: tournament.name,
-          isLocalId,
-          hasId: Boolean(tournamentForSupabase.id)
-        });
-      }
-
       let result;
       if (tournamentForSupabase.id && !isLocalId) {
         // Update existing tournament
+        const { id: _removed, ...updatePayload } = supabaseTournament;
+        void _removed;
         const { data, error } = await supabase
           .from('tournaments')
-          .update(supabaseTournament)
+          .update(updatePayload)
           .eq('id', tournament.id)
           .eq('user_id', userId)
           .select()
@@ -375,13 +375,6 @@ export class SupabaseProvider implements IStorageProvider {
     try {
       const userId = await this.getCurrentUserId();
       const supabaseUpdates = toSupabase.tournamentUpdate(updates, userId);
-
-      // Debug: Log what we're trying to update
-      console.log('[SupabaseProvider] Tournament update data:', {
-        tournamentId,
-        updates,
-        supabaseUpdates
-      });
 
       const { data, error } = await supabase
         .from('tournaments')
@@ -496,14 +489,9 @@ export class SupabaseProvider implements IStorageProvider {
               .eq('game_id', game.id);
             
             if (events && events.length > 0) {
-              currentGame.gameEvents = events.map((e: Record<string, unknown>) => ({
-                id: e.id,
-                type: e.event_type,
-                time: e.time_seconds,
-                scorerId: e.scorer_id,
-                assisterId: e.assister_id,
-                entityId: e.entity_id
-              }));
+              currentGame.gameEvents = events.map(e =>
+                fromSupabase.gameEvent(e as SupabaseGameEvent)
+              );
             }
           }
         } catch {

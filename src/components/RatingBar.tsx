@@ -2,14 +2,19 @@
 
 import React from 'react';
 
-interface RatingBarProps {
-  value: number;
+export interface RatingBarProps {
+  value?: number;
   max?: number;
+  rating?: number;
+  maxRating?: number;
 }
 
-const RatingBar: React.FC<RatingBarProps> = ({ value, max = 10 }) => {
-  const pct = Math.min(Math.max(value, 0), max) / max * 100;
-  const hue = 120 * (value / max); // red to green
+const RatingBar: React.FC<RatingBarProps> = ({ value, max = 10, rating, maxRating }) => {
+  // Support both value/max and rating/maxRating props
+  const actualValue = rating !== undefined ? rating : (value ?? 0);
+  const actualMax = maxRating !== undefined ? maxRating : max;
+  const pct = Math.min(Math.max(actualValue, 0), actualMax) / actualMax * 100;
+  const hue = 120 * (actualValue / actualMax); // red to green
   const color = `hsl(${hue}, 70%, 50%)`;
   return (
     <div className="flex items-center space-x-2 w-full">
@@ -19,7 +24,7 @@ const RatingBar: React.FC<RatingBarProps> = ({ value, max = 10 }) => {
           style={{ width: `${pct}%`, backgroundColor: color }}
         />
       </div>
-      <span className="text-sm text-yellow-400 w-8 text-right">{value.toFixed(1)}</span>
+      <span className="text-sm text-yellow-400 w-8 text-right">{actualValue.toFixed(1)}</span>
     </div>
   );
 };

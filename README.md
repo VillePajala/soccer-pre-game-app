@@ -48,6 +48,7 @@ The app is designed to be an all-in-one digital assistant for game day, from pre
 *   **Vercel Analytics:** Web analytics are enabled to help improve the user experience.
 *   **Settings Modal:** Adjust language, default team name, automatic backup interval, view storage usage, manage authentication, and perform data management operations.
 *   **Enhanced Security:** Session management, rate limiting, and comprehensive security headers for production readiness.
+*   **Performance Optimized:** Advanced caching strategies, component splitting, strategic memoization, and lazy loading for optimal performance.
 
 ## Tech Stack
 
@@ -55,7 +56,7 @@ The app is designed to be an all-in-one digital assistant for game day, from pre
 *   **Language:** [TypeScript 5](https://www.typescriptlang.org/)
 *   **UI Library:** [React 19.0.0](https://reactjs.org/)
 *   **Styling:** [Tailwind CSS 4](https://tailwindcss.com/)
-*   **State Management:** [React Query 5.80.10](https://tanstack.com/query/latest) + Custom Hooks (`useGameSessionReducer`, `useGameState`)
+*   **State Management:** [React Query 5.80.10](https://tanstack.com/query/latest) with intelligent caching + Custom Hooks (`useGameSessionReducer`, `useGameState`)
 *   **Data Persistence:** Multi-layer architecture with [Supabase 2.52.0](https://supabase.com/), localStorage fallback, and [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) for offline-first caching
 *   **Authentication:** [Supabase Auth](https://supabase.com/docs/guides/auth) with session management
 *   **Charts & Visualization:** [Recharts 2.15.4](https://recharts.org/)
