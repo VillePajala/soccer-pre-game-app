@@ -41,8 +41,12 @@ export const useGameEventsManager = ({
    * Handler to add a goal event
    */
   const handleAddGoalEvent = useCallback((scorerId: string, assisterId?: string) => {
-    const scorer = (masterRosterQueryResultData || availablePlayers).find(p => p.id === scorerId);
-    const assister = assisterId ? (masterRosterQueryResultData || availablePlayers).find(p => p.id === assisterId) : undefined;
+    const rosterSource = masterRosterQueryResultData && masterRosterQueryResultData.length > 0
+      ? masterRosterQueryResultData
+      : availablePlayers;
+
+    const scorer = rosterSource.find(p => p.id === scorerId);
+    const assister = assisterId ? rosterSource.find(p => p.id === assisterId) : undefined;
 
     if (!scorer) {
       logger.error("Scorer not found!");
