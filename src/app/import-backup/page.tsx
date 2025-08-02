@@ -27,30 +27,46 @@ export default function ImportBackupPage() {
         storageManager.getSavedGames()
       ]);
 
-      // Delete all players
-      for (const player of players) {
-        await storageManager.deletePlayer(player.id);
-      }
+      // Delete all players in parallel
+      await Promise.all(
+        players.map(player =>
+          storageManager.deletePlayer(player.id).catch(err => {
+            addLog(`Failed to delete player ${player.id}: ${err}`, 'error');
+          })
+        )
+      );
       addLog(`Deleted ${players.length} players`, 'success');
 
-      // Delete all seasons
-      for (const season of seasons) {
-        await storageManager.deleteSeason(season.id);
-      }
+      // Delete all seasons in parallel
+      await Promise.all(
+        seasons.map(season =>
+          storageManager.deleteSeason(season.id).catch(err => {
+            addLog(`Failed to delete season ${season.id}: ${err}`, 'error');
+          })
+        )
+      );
       addLog(`Deleted ${seasons.length} seasons`, 'success');
 
-      // Delete all tournaments
-      for (const tournament of tournaments) {
-        await storageManager.deleteTournament(tournament.id);
-      }
+      // Delete all tournaments in parallel
+      await Promise.all(
+        tournaments.map(tournament =>
+          storageManager.deleteTournament(tournament.id).catch(err => {
+            addLog(`Failed to delete tournament ${tournament.id}: ${err}`, 'error');
+          })
+        )
+      );
       addLog(`Deleted ${tournaments.length} tournaments`, 'success');
 
-      // Delete all games
+      // Delete all games in parallel
       const gamesObj = games as Record<string, unknown>;
       const gameIds = Object.keys(gamesObj);
-      for (const gameId of gameIds) {
-        await storageManager.deleteSavedGame(gameId);
-      }
+      await Promise.all(
+        gameIds.map(gameId =>
+          storageManager.deleteSavedGame(gameId).catch(err => {
+            addLog(`Failed to delete game ${gameId}: ${err}`, 'error');
+          })
+        )
+      );
       addLog(`Deleted ${gameIds.length} games`, 'success');
 
     } catch (error) {
