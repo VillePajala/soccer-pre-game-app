@@ -304,15 +304,6 @@ export class SupabaseProvider implements IStorageProvider {
       
       const supabaseTournament = toSupabase.tournament(tournamentForSupabase, userId);
 
-      // Debug: Log what we're trying to save (remove in production)
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[SupabaseProvider] Tournament save data:', {
-          tournament: tournament.name,
-          isLocalId,
-          hasId: Boolean(tournamentForSupabase.id)
-        });
-      }
-
       let result;
       if (tournamentForSupabase.id && !isLocalId) {
         // Update existing tournament
@@ -384,13 +375,6 @@ export class SupabaseProvider implements IStorageProvider {
     try {
       const userId = await this.getCurrentUserId();
       const supabaseUpdates = toSupabase.tournamentUpdate(updates, userId);
-
-      // Debug: Log what we're trying to update
-      console.log('[SupabaseProvider] Tournament update data:', {
-        tournamentId,
-        updates,
-        supabaseUpdates
-      });
 
       const { data, error } = await supabase
         .from('tournaments')
