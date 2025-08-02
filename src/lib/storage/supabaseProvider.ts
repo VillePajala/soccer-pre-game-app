@@ -69,9 +69,11 @@ export class SupabaseProvider implements IStorageProvider {
       let result;
       if (playerForSupabase.id && !isLocalId) {
         // Update existing player
+        const { id: _removed, ...updatePayload } = supabasePlayer;
+        void _removed;
         const { data, error } = await supabase
           .from('players')
-          .update(supabasePlayer)
+          .update(updatePayload)
           .eq('id', player.id)
           .eq('user_id', userId)
           .select()
@@ -186,9 +188,11 @@ export class SupabaseProvider implements IStorageProvider {
       let result;
       if (seasonForSupabase.id && !isLocalId) {
         // Update existing season
+        const { id: _removed, ...updatePayload } = supabaseSeason;
+        void _removed;
         const { data, error } = await supabase
           .from('seasons')
-          .update(supabaseSeason)
+          .update(updatePayload)
           .eq('id', season.id)
           .eq('user_id', userId)
           .select()
@@ -312,9 +316,11 @@ export class SupabaseProvider implements IStorageProvider {
       let result;
       if (tournamentForSupabase.id && !isLocalId) {
         // Update existing tournament
+        const { id: _removed, ...updatePayload } = supabaseTournament;
+        void _removed;
         const { data, error } = await supabase
           .from('tournaments')
-          .update(supabaseTournament)
+          .update(updatePayload)
           .eq('id', tournament.id)
           .eq('user_id', userId)
           .select()
