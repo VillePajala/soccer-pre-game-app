@@ -87,7 +87,7 @@ export const useGameEventsManager = ({
       alert(`Failed to log goal for ${scorer.name}. Please try again.`);
       // Keep modal open for retry
     }
-  }, [dispatchGameSession, gameSessionState.timeElapsedInSeconds, masterRosterQueryResultData, availablePlayers]);
+  }, [dispatchGameSession, gameSessionState.timeElapsedInSeconds, masterRosterQueryResultData, availablePlayers, setIsGoalLogModalOpen]);
 
   /**
    * Handler to log an opponent goal

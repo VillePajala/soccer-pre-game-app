@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "Add comprehensive debugging for assist-related save failures"
+  "notes": "perf: optimize game save and data loading performance"
 }
