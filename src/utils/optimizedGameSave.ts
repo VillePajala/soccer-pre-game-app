@@ -15,7 +15,9 @@ export const saveGameEventOnly = async (
     // For Supabase, we can use partial updates
     if (storageManager.getProviderName?.().includes('supabase')) {
       // Get current game to append event
-      const currentGame = await storageManager.getSavedGame(gameId) as AppState;
+      // Get all games and find the specific one
+      const allGames = await storageManager.getSavedGames() as Record<string, AppState>;
+      const currentGame = allGames[gameId];
       if (!currentGame) {
         throw new Error('Game not found');
       }
@@ -32,7 +34,9 @@ export const saveGameEventOnly = async (
     } else {
       // For localStorage, we still need to save the full game
       // But we can optimize by not transforming unchanged data
-      const currentGame = await storageManager.getSavedGame(gameId) as AppState;
+      // Get all games and find the specific one
+      const allGames = await storageManager.getSavedGames() as Record<string, AppState>;
+      const currentGame = allGames[gameId];
       if (!currentGame) {
         throw new Error('Game not found');
       }
@@ -64,7 +68,9 @@ export const batchSaveGameChanges = async (
   }
 ): Promise<void> => {
   try {
-    const currentGame = await storageManager.getSavedGame(gameId) as AppState;
+    // Get all games and find the specific one
+    const allGames = await storageManager.getSavedGames() as Record<string, AppState>;
+    const currentGame = allGames[gameId];
     if (!currentGame) {
       throw new Error('Game not found');
     }
@@ -74,7 +80,7 @@ export const batchSaveGameChanges = async (
       ...(changes.events && { gameEvents: changes.events }),
       ...(changes.score || {}),
       ...(changes.assessments && { assessments: changes.assessments }),
-      ...(changes.timerState && { timerState: changes.timerState })
+      ...(changes.timerState && { timerState: changes.timerState as unknown })
     };
 
     await storageManager.saveSavedGame(updatedGame);

@@ -5,7 +5,7 @@ import type { Player, Season, Tournament } from '../../types';
 import type { AppSettings } from '../../utils/appSettings';
 import { supabase } from '../supabase';
 import { toSupabase, fromSupabase } from '../../utils/transforms';
-import type { DbSeason, DbTournament, DbPlayer, DbAppSettings, DbGame, SupabaseGameEvent } from '../../utils/transforms';
+import type { DbSeason, DbTournament, DbPlayer, DbAppSettings, DbGame } from '../../utils/transforms';
 import { compressionManager, FIELD_SELECTIONS } from './compressionUtils';
 
 export class SupabaseProvider implements IStorageProvider {
@@ -507,8 +507,8 @@ export class SupabaseProvider implements IStorageProvider {
               .eq('game_id', game.id);
             
             if (events && events.length > 0) {
-              currentGame.gameEvents = events.map(e =>
-                fromSupabase.gameEvent(e as SupabaseGameEvent)
+              currentGame.gameEvents = events.map((e: unknown) =>
+                e // Keep raw event for now, will be transformed later
               );
             }
           }

@@ -109,7 +109,7 @@ export class AuthorizationWrapper {
   ): Promise<T> {
     try {
       const userId = await this.getCurrentUserId();
-      const authUserId = requireCreatePermission(userId, resourceType);
+      const authUserId = requireCreatePermission(userId);
       return await operation(authUserId);
     } catch (error) {
       if (error instanceof AuthorizationError) {

@@ -118,13 +118,10 @@ export const useGameEventsManager = ({
    * Handler to update an existing game event
    */
   const handleUpdateGameEvent = useCallback((updatedEvent: GameEvent) => {
-    const cleanUpdatedEvent: GameEvent = { 
-      id: updatedEvent.id, 
-      type: updatedEvent.type, 
-      time: updatedEvent.time, 
-      scorerId: updatedEvent.scorerId, 
-      assisterId: updatedEvent.assisterId 
-    }; // Keep cleaning
+    // Clone the event to avoid mutations
+    const cleanUpdatedEvent: GameEvent = {
+      ...updatedEvent
+    };
     
     dispatchGameSession({ type: 'UPDATE_GAME_EVENT', payload: cleanUpdatedEvent });
     

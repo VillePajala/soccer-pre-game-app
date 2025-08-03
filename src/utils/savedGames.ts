@@ -87,14 +87,19 @@ export const saveGame = async (gameId: string, gameData: unknown): Promise<AppSt
     
     // CRITICAL BUG FIX: Add detailed logging for assist debugging
     const gameEvents = (gameWithId as AppState).gameEvents || [];
-    const assistEvents = gameEvents.filter(event => event.assisterId);
+    const assistEvents = gameEvents.filter(event => event.type === 'goal' && event.assisterId);
     if (assistEvents.length > 0) {
-      logger.log(`Saving game with ${assistEvents.length} assist events:`, assistEvents.map(e => ({
-        id: e.id,
-        scorerId: e.scorerId,
-        assisterId: e.assisterId,
-        time: e.time
-      })));
+      logger.log(`Saving game with ${assistEvents.length} assist events:`, assistEvents.map(e => {
+        if (e.type === 'goal') {
+          return {
+            id: e.id,
+            scorerId: e.scorerId,
+            assisterId: e.assisterId,
+            time: e.time
+          };
+        }
+        return { id: e.id, type: e.type, time: e.time };
+      }));
     }
     
     const savedGame = await storageManager.saveSavedGame(gameWithId);
@@ -107,7 +112,7 @@ export const saveGame = async (gameId: string, gameData: unknown): Promise<AppSt
       logger.error('Assist-related save error details:', {
         gameId,
         gameEvents: (gameData as AppState)?.gameEvents?.length || 0,
-        assistEvents: (gameData as AppState)?.gameEvents?.filter(e => e.assisterId).length || 0
+        assistEvents: (gameData as AppState)?.gameEvents?.filter(e => e.type === 'goal' && e.assisterId).length || 0
       });
     }
     

@@ -42,7 +42,7 @@ export class StorageManager implements IStorageProvider {
         this.config.fallbackToLocalStorage &&
         (error instanceof NetworkError || error instanceof AuthenticationError)
       ) {
-        safeConsoleError(error, { operation: operationName, fallback: 'localStorage' });
+        safeConsoleError(error, { operation: operationName, additional: { fallback: 'localStorage' } });
         
         try {
           // Temporarily switch to localStorage for fallback operation
@@ -208,7 +208,7 @@ export class StorageManager implements IStorageProvider {
     const gameEvents = gameState?.gameEvents as Array<Record<string, unknown>> || [];
     const assistEvents = gameEvents.filter((event: Record<string, unknown>) => event.assisterId) || [];
     console.log(`[STORAGE_MANAGER] saveSavedGame called - Provider: ${this.currentProvider.constructor.name}`);
-    console.log(`[STORAGE_MANAGER] Events: ${gameState?.gameEvents?.length || 0}, Assist events: ${assistEvents.length}`);
+    console.log(`[STORAGE_MANAGER] Events: ${gameEvents.length || 0}, Assist events: ${assistEvents.length}`);
     
     return this.executeWithFallback(
       () => this.currentProvider.saveSavedGame(gameData),

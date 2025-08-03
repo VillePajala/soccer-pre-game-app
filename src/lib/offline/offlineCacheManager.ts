@@ -256,7 +256,7 @@ export class OfflineCacheManager implements IStorageProvider {
     const gameEvents = gameState?.gameEvents as Array<Record<string, unknown>> || [];
     const assistEvents = gameEvents.filter((event: Record<string, unknown>) => event.assisterId) || [];
     console.log(`[OFFLINE_CACHE] saveSavedGame called - Primary provider: ${this.primaryProvider.constructor.name}`);
-    console.log(`[OFFLINE_CACHE] Events: ${gameState?.gameEvents?.length || 0}, Assist events: ${assistEvents.length}`);
+    console.log(`[OFFLINE_CACHE] Events: ${gameEvents.length || 0}, Assist events: ${assistEvents.length}`);
     
     return this.saveWithCache('savedGames', gameData, () => this.primaryProvider.saveSavedGame(gameData));
   }
