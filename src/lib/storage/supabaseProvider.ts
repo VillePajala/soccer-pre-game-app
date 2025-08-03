@@ -530,23 +530,18 @@ export class SupabaseProvider implements IStorageProvider {
     try {
       const userId = await this.getCurrentUserId();
       
-      // CRITICAL BUG FIX: Add comprehensive debugging for assist-related saves
-      const gameState = gameData as Record<string, unknown>;
-      const gameEvents = gameState?.gameEvents as Array<Record<string, unknown>> || [];
-      const assistEvents = gameEvents.filter((event: Record<string, unknown>) => event.assisterId) || [];
-      console.log(`[SUPABASE] Saving game - Events: ${gameState?.gameEvents?.length || 0}, Assist events: ${assistEvents.length}`);
-      if (assistEvents.length > 0) {
-        console.log(`[SUPABASE] Assist events before transformation:`, assistEvents.map((e: Record<string, unknown>) => ({
-          id: e.id,
-          type: e.type,
-          scorerId: e.scorerId,
-          assisterId: e.assisterId,
-          time: e.time
-        })));
+      // Only log in development for performance
+      if (process.env.NODE_ENV === 'development') {
+        const gameState = gameData as Record<string, unknown>;
+        const gameEvents = gameState?.gameEvents as Array<Record<string, unknown>> || [];
+        const assistEvents = gameEvents.filter((event: Record<string, unknown>) => event.assisterId) || [];
+        if (assistEvents.length > 0) {
+          console.log(`[SUPABASE] Saving game with ${assistEvents.length} assist events`);
+        }
       }
       
       const supabaseGame = toSupabase.game(gameData, userId) as Record<string, unknown> & { id?: string };
-      console.log(`[SUPABASE] Game transformed for Supabase - ID: ${supabaseGame.id || 'NEW'}`);
+      // Removed verbose logging for performance
 
       let result;
       

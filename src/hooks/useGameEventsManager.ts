@@ -71,9 +71,10 @@ export const useGameEventsManager = ({
       playerName: scorer.name,
     };
 
-    // CRITICAL BUG FIX: Add detailed logging for debugging assist issues
-    logger.log(`Creating goal event - Scorer: ${scorer.name} (${scorer.id}), Assister: ${assister ? `${assister.name} (${assister.id})` : 'none'}`);
-    logger.log(`Available players count: ${availablePlayers.length}, Master roster count: ${masterRosterQueryResultData?.length || 0}`);
+    // Only log in development
+    if (process.env.NODE_ENV === 'development') {
+      logger.log(`Goal: ${scorer.name}${assister ? ` (assist: ${assister.name})` : ''}`);
+    }
     
     // Dispatch actions to update game state via reducer with graceful error handling
     try {
