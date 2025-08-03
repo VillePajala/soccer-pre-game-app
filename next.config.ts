@@ -48,7 +48,7 @@ const nextConfig: NextConfig = {
               "default-src 'self'",
               // Restrict scripts - remove unsafe-eval, minimize unsafe-inline
               "script-src 'self' https://vercel.live https://va.vercel-scripts.com" + 
-              (process.env.NODE_ENV === 'development' ? " 'unsafe-eval' 'unsafe-inline'" : " 'sha256-HASH_PLACEHOLDER'"),
+              (process.env.NODE_ENV === 'development' ? " 'unsafe-eval' 'unsafe-inline'" : " 'unsafe-inline'"),
               // Styles - keep minimal inline for Tailwind
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               // Fonts from Google Fonts and data URIs
@@ -62,9 +62,8 @@ const nextConfig: NextConfig = {
               // Manifest for PWA
               "manifest-src 'self'",
               // No frames, objects, plugins
-              "frame-src 'none'",
+              "frame-src 'self' https://vercel.live",
               "object-src 'none'",
-              "plugin-types application/pdf",
               // Restrict base URI and form actions
               "base-uri 'self'",
               "form-action 'self'",
