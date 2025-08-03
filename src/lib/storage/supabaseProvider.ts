@@ -531,11 +531,12 @@ export class SupabaseProvider implements IStorageProvider {
       const userId = await this.getCurrentUserId();
       
       // CRITICAL BUG FIX: Add comprehensive debugging for assist-related saves
-      const gameState = gameData as any;
-      const assistEvents = gameState?.gameEvents?.filter((event: any) => event.assisterId) || [];
+      const gameState = gameData as Record<string, unknown>;
+      const gameEvents = gameState?.gameEvents as Array<Record<string, unknown>> || [];
+      const assistEvents = gameEvents.filter((event: Record<string, unknown>) => event.assisterId) || [];
       console.log(`[SUPABASE] Saving game - Events: ${gameState?.gameEvents?.length || 0}, Assist events: ${assistEvents.length}`);
       if (assistEvents.length > 0) {
-        console.log(`[SUPABASE] Assist events before transformation:`, assistEvents.map((e: any) => ({
+        console.log(`[SUPABASE] Assist events before transformation:`, assistEvents.map((e: Record<string, unknown>) => ({
           id: e.id,
           type: e.type,
           scorerId: e.scorerId,

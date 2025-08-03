@@ -51,8 +51,7 @@ export function requireOwnership(
  * Validate that user can create a resource
  */
 export function requireCreatePermission(
-  userId: string | null | undefined,
-  resourceType: string = 'resource'
+  userId: string | null | undefined
 ): string {
   const authUserId = requireAuthentication(userId);
   

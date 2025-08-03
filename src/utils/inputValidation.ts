@@ -5,7 +5,7 @@
  * injection attacks, and ensure data integrity across CRUD operations.
  */
 
-import { sanitizeError } from './errorSanitization';
+// import { sanitizeError } from './errorSanitization'; // Available for future use
 
 export class ValidationError extends Error {
   constructor(message: string, public field?: string, public value?: unknown) {
@@ -267,7 +267,7 @@ export function validateAndParseJSON<T>(
   let parsed: unknown;
   try {
     parsed = JSON.parse(value);
-  } catch (error) {
+  } catch {
     throw new ValidationError(`${fieldName} must be valid JSON`, fieldName, value);
   }
 
