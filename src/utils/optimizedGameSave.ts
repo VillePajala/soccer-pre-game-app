@@ -80,7 +80,7 @@ export const batchSaveGameChanges = async (
       ...(changes.events && { gameEvents: changes.events }),
       ...(changes.score || {}),
       ...(changes.assessments && { assessments: changes.assessments }),
-      ...(changes.timerState && { timerState: changes.timerState as unknown })
+      ...(changes.timerState ? { timerState: changes.timerState } : {})
     };
 
     await storageManager.saveSavedGame(updatedGame);
