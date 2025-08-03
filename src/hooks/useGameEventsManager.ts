@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { GameEvent, Player } from '@/types';
+import { GameEvent, GoalEvent, OpponentGoalEvent, Player } from '@/types';
 import { DEFAULT_GAME_ID } from '@/config/constants';
 import { GameSessionState, GameSessionAction } from './useGameSessionReducer';
 import { saveMasterRoster } from '@/utils/masterRoster';
@@ -59,12 +59,13 @@ export const useGameEventsManager = ({
       throw new Error(`Assister not found: ${assisterId}. This would cause a database save error.`);
     }
 
-    const newEvent: GameEvent = {
+    const newEvent: GoalEvent = {
       id: `goal-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       type: 'goal',
       time: gameSessionState.timeElapsedInSeconds, // Use from gameSessionState
       scorerId: scorer.id,
       assisterId: assister?.id,
+      playerName: scorer.name,
     };
 
     // CRITICAL BUG FIX: Add detailed logging for debugging assist issues
@@ -87,7 +88,7 @@ export const useGameEventsManager = ({
    */
   const handleLogOpponentGoal = useCallback((time: number) => {
     logger.log(`Logging opponent goal at time: ${time}`);
-    const newEvent: GameEvent = {
+    const newEvent: OpponentGoalEvent = {
       id: `oppGoal-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       type: 'opponentGoal',
       time: time, // Use provided time

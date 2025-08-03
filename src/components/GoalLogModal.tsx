@@ -46,6 +46,22 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
 
   const handleLogOwnGoalClick = () => {
     if (scorerId) {
+      // Validate that scorer exists in available players
+      const scorer = availablePlayers.find(p => p.id === scorerId);
+      if (!scorer) {
+        alert(t('goalLogModal.scorerNotFound', 'Selected scorer is no longer available'));
+        return;
+      }
+      
+      // Validate that assister exists if selected
+      if (assisterId) {
+        const assister = availablePlayers.find(p => p.id === assisterId);
+        if (!assister) {
+          alert(t('goalLogModal.assisterNotFound', 'Selected assister is no longer available'));
+          return;
+        }
+      }
+      
       onLogGoal(scorerId, assisterId || undefined); // Pass undefined if assisterId is empty
       onClose();
     }

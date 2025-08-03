@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "refactor: update team assessment calculations and clean up unused props"
+  "notes": "Add comprehensive debugging for assist-related save failures"
 }

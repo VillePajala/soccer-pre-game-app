@@ -300,13 +300,35 @@ export function transformGameOpponentsToSupabase(gameId: string, opponents: Oppo
 }
 
 /**
- * Transform game events from AppState to Supabase format
+ * Transform game events from AppState to Supabase format with type-specific handling
  */
 export function transformGameEventsToSupabase(gameId: string, events: GameEvent[]): SupabaseGameEvent[] {
   return events.map(event => {
-    // CRITICAL BUG FIX: Ensure we don't pass invalid player IDs that cause FK constraint violations
-    const scorerId = event.scorerId && event.scorerId !== 'opponent' ? event.scorerId : null;
-    const assisterId = event.assisterId && event.assisterId !== 'opponent' ? event.assisterId : null;
+    let scorerId: string | null = null;
+    let assisterId: string | null = null;
+    let entityId: string | null = null;
+    
+    // Type-specific handling
+    if (event.type === 'goal') {
+      // Goal events must have a valid scorer
+      if (!event.scorerId || event.scorerId.trim().length === 0) {
+        throw new Error(`Goal event ${event.id} missing required scorerId`);
+      }
+      scorerId = event.scorerId;
+      
+      // Validate and transform assisterId if provided
+      if (event.assisterId && event.assisterId.trim().length > 0) {
+        assisterId = event.assisterId;
+      }
+    } else if (event.type === 'opponentGoal') {
+      // Opponent goals don't need player IDs
+      scorerId = null;
+    } else if (event.type === 'substitution' || event.type === 'fairPlayCard') {
+      // These events may have an entityId
+      if (event.entityId && event.entityId.trim().length > 0) {
+        entityId = event.entityId;
+      }
+    }
     
     return {
       id: event.id,
@@ -315,7 +337,7 @@ export function transformGameEventsToSupabase(gameId: string, events: GameEvent[
       time_seconds: event.time,
       scorer_id: scorerId,
       assister_id: assisterId,
-      entity_id: event.entityId || null
+      entity_id: entityId
     };
   });
 }

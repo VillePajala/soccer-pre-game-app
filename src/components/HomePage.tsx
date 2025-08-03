@@ -312,13 +312,16 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       });
 
       gameSessionState.gameEvents.forEach(event => {
-        if (event.scorerId === oldId || event.assisterId === oldId) {
-          const updatedEvent = {
-            ...event,
-            scorerId: event.scorerId === oldId ? newId : event.scorerId,
-            assisterId: event.assisterId === oldId ? newId : event.assisterId,
-          };
-          dispatchGameSession({ type: 'UPDATE_GAME_EVENT', payload: updatedEvent });
+        if (event.type === 'goal') {
+          // Goal events have scorerId (required) and assisterId (optional)
+          if (event.scorerId === oldId || event.assisterId === oldId) {
+            const updatedEvent = {
+              ...event,
+              scorerId: event.scorerId === oldId ? newId : event.scorerId,
+              assisterId: event.assisterId === oldId ? newId : event.assisterId,
+            };
+            dispatchGameSession({ type: 'UPDATE_GAME_EVENT', payload: updatedEvent });
+          }
         }
       });
     },
@@ -1037,17 +1040,22 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     if (initialLoadComplete && currentGameId && currentGameId !== DEFAULT_GAME_ID) {
       try {
         // CRITICAL BUG FIX: Add comprehensive debugging for assist-related saves
-        const assistEvents = gameSessionState.gameEvents.filter(event => event.assisterId);
+        const assistEvents = gameSessionState.gameEvents.filter(event => event.type === 'goal' && event.assisterId);
         logger.log(`[AUTO-SAVE] Starting auto-save for game ${currentGameId}`);
         logger.log(`[AUTO-SAVE] Total events: ${gameSessionState.gameEvents.length}, Events with assists: ${assistEvents.length}`);
         if (assistEvents.length > 0) {
-          logger.log(`[AUTO-SAVE] Assist events details:`, assistEvents.map(e => ({
-            id: e.id,
-            type: e.type,
-            scorerId: e.scorerId,
-            assisterId: e.assisterId,
-            time: e.time
-          })));
+          logger.log(`[AUTO-SAVE] Assist events details:`, assistEvents.map(e => {
+            if (e.type === 'goal') {
+              return {
+                id: e.id,
+                type: e.type,
+                scorerId: e.scorerId,
+                assisterId: e.assisterId,
+                time: e.time
+              };
+            }
+            return { id: e.id, type: e.type, time: e.time };
+          }));
         }
         logger.log(`[AUTO-SAVE] Available players count: ${availablePlayers.length}, Master roster count: ${masterRosterQueryResultData?.length || 0}`);
         
@@ -1095,11 +1103,16 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
         // CRITICAL BUG FIX: Log snapshot details before save
         logger.log(`[AUTO-SAVE] Snapshot prepared - Events count: ${currentSnapshot.gameEvents.length}`);
-        logger.log(`[AUTO-SAVE] Snapshot events with assists:`, currentSnapshot.gameEvents.filter(e => e.assisterId).map(e => ({
-          id: e.id,
-          scorerId: e.scorerId,
-          assisterId: e.assisterId
-        })));
+        logger.log(`[AUTO-SAVE] Snapshot events with assists:`, currentSnapshot.gameEvents.filter(e => e.type === 'goal' && e.assisterId).map(e => {
+          if (e.type === 'goal') {
+            return {
+              id: e.id,
+              scorerId: e.scorerId,
+              assisterId: e.assisterId
+            };
+          }
+          return { id: e.id, type: e.type };
+        }));
         
         // 2. Save the game snapshot using utility
         logger.log(`[AUTO-SAVE] Calling utilSaveGame...`);
@@ -1123,7 +1136,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         // CRITICAL BUG FIX: Log detailed error context for debugging
         logger.error(`[AUTO-SAVE] Error context - Game ID: ${currentGameId}`);
         logger.error(`[AUTO-SAVE] Error context - Events count: ${gameSessionState.gameEvents.length}`);
-        logger.error(`[AUTO-SAVE] Error context - Assist events:`, gameSessionState.gameEvents.filter(e => e.assisterId));
+        logger.error(`[AUTO-SAVE] Error context - Assist events:`, gameSessionState.gameEvents.filter(e => e.type === 'goal' && e.assisterId));
         
         // CRITICAL BUG FIX: Distinguish between different types of save errors
         const errorMessage = error instanceof Error ? error.message : String(error);
