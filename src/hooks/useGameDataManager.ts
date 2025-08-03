@@ -201,18 +201,19 @@ export const useGameDataManager = ({
   });
 
   // --- Save/Load Handlers ---
-  const handleQuickSaveGame = useCallback(async () => {
-    if (!currentGameId || currentGameId === DEFAULT_GAME_ID) {
+  const handleQuickSaveGame = useCallback(async (overrideGameId?: string) => {
+    const gameId = overrideGameId || currentGameId;
+    if (!gameId || gameId === DEFAULT_GAME_ID) {
       logger.warn('[useGameDataManager] Cannot quick save: no valid game ID.');
       return;
     }
 
     // Queue the save operation to prevent race conditions
     saveQueue.queueSave(
-      `quick-save-${currentGameId}`,
+      `quick-save-${gameId}`,
       async () => {
-        logger.log(`[useGameDataManager] Processing queued quick save for game ID: ${currentGameId}`);
-        
+        logger.log(`[useGameDataManager] Processing queued quick save for game ID: ${gameId}`);
+
         // 1. Create the current game state snapshot
         const currentSnapshot: AppState = {
           playersOnField: playersOnField,
@@ -251,28 +252,28 @@ export const useGameDataManager = ({
         };
 
         // 2. Update the savedGames state and localStorage
-        const savedResult = await utilSaveGame(currentGameId, currentSnapshot);
-        
+        const savedResult = await utilSaveGame(gameId, currentSnapshot);
+
         // 3. Update currentGameId if it changed (important for Supabase UUID sync)
         const newGameId = (savedResult as AppState & { id?: string }).id;
-        if (newGameId && newGameId !== currentGameId) {
-          logger.log(`[useGameDataManager] Game ID changed from ${currentGameId} to ${newGameId} during quick save`);
+        if (newGameId && newGameId !== gameId) {
+          logger.log(`[useGameDataManager] Game ID changed from ${gameId} to ${newGameId} during quick save`);
           setCurrentGameId(newGameId);
-          
+
           // Update savedGames with the new ID and remove the old one
           const updatedSavedGames = { ...savedGames };
           updatedSavedGames[newGameId] = { ...currentSnapshot, id: newGameId } as AppState;
-          delete updatedSavedGames[currentGameId];
+          delete updatedSavedGames[gameId];
           setSavedGames(updatedSavedGames);
-          
+
           await utilSaveCurrentGameIdSetting(newGameId);
           logger.log(`[useGameDataManager] Game ${newGameId} quick saved successfully with ID sync.`);
         } else {
           // No ID change, update savedGames normally
-          const updatedSavedGames = { ...savedGames, [currentGameId]: currentSnapshot };
+          const updatedSavedGames = { ...savedGames, [gameId]: currentSnapshot };
           setSavedGames(updatedSavedGames);
-          await utilSaveCurrentGameIdSetting(currentGameId);
-          logger.log(`[useGameDataManager] Game ${currentGameId} quick saved successfully.`);
+          await utilSaveCurrentGameIdSetting(gameId);
+          logger.log(`[useGameDataManager] Game ${gameId} quick saved successfully.`);
         }
       }
     );
