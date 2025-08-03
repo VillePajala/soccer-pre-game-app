@@ -92,14 +92,62 @@ export function transformTournamentFromSupabase(supabaseTournament: SupabaseTour
  * Transform Supabase Game Event back to application format
  */
 export function transformGameEventFromSupabase(supabaseEvent: SupabaseGameEvent): GameEvent {
-  return {
-    id: supabaseEvent.id!,
-    type: supabaseEvent.event_type,
-    time: supabaseEvent.time_seconds,
-    scorerId: supabaseEvent.scorer_id || undefined,
-    assisterId: supabaseEvent.assister_id || undefined,
-    entityId: supabaseEvent.entity_id || undefined
-  };
+  // Handle type-specific transformations
+  switch (supabaseEvent.event_type) {
+    case 'goal':
+      // Goal events must have a scorer
+      if (!supabaseEvent.scorer_id) {
+        throw new Error(`Goal event ${supabaseEvent.id} missing required scorer_id`);
+      }
+      return {
+        id: supabaseEvent.id!,
+        type: 'goal',
+        time: supabaseEvent.time_seconds,
+        scorerId: supabaseEvent.scorer_id,
+        assisterId: supabaseEvent.assister_id || undefined,
+      };
+    
+    case 'opponentGoal':
+      return {
+        id: supabaseEvent.id!,
+        type: 'opponentGoal',
+        time: supabaseEvent.time_seconds,
+        scorerId: supabaseEvent.scorer_id || undefined,
+      };
+    
+    case 'substitution':
+      return {
+        id: supabaseEvent.id!,
+        type: 'substitution',
+        time: supabaseEvent.time_seconds,
+        entityId: supabaseEvent.entity_id || undefined,
+      };
+    
+    case 'periodEnd':
+      return {
+        id: supabaseEvent.id!,
+        type: 'periodEnd',
+        time: supabaseEvent.time_seconds,
+      };
+    
+    case 'gameEnd':
+      return {
+        id: supabaseEvent.id!,
+        type: 'gameEnd',
+        time: supabaseEvent.time_seconds,
+      };
+    
+    case 'fairPlayCard':
+      return {
+        id: supabaseEvent.id!,
+        type: 'fairPlayCard',
+        time: supabaseEvent.time_seconds,
+        entityId: supabaseEvent.entity_id || undefined,
+      };
+    
+    default:
+      throw new Error(`Unknown event type: ${supabaseEvent.event_type}`);
+  }
 }
 
 /**

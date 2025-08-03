@@ -41,22 +41,42 @@ const nextConfig: NextConfig = {
             key: 'Referrer-Policy',
             value: 'strict-origin-when-cross-origin'
           },
-          // Content Security Policy
+          // Enhanced Content Security Policy for production security
           {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com",
+              // Restrict scripts - remove unsafe-eval, minimize unsafe-inline
+              "script-src 'self' https://vercel.live https://va.vercel-scripts.com" + 
+              (process.env.NODE_ENV === 'development' ? " 'unsafe-eval' 'unsafe-inline'" : " 'unsafe-inline'"),
+              // Styles - keep minimal inline for Tailwind
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              // Fonts from Google Fonts and data URIs
               "font-src 'self' https://fonts.gstatic.com data:",
+              // Images from self, data URIs, blobs, and HTTPS
               "img-src 'self' data: blob: https:",
+              // API connections to Supabase and analytics
               "connect-src 'self' https://*.supabase.co https://vercel.live https://vitals.vercel-insights.com",
-              "frame-src 'none'",
+              // Service Worker
+              "worker-src 'self'",
+              // Manifest for PWA
+              "manifest-src 'self'",
+              // No frames, objects, plugins
+              "frame-src 'self' https://vercel.live",
               "object-src 'none'",
+              // Restrict base URI and form actions
               "base-uri 'self'",
               "form-action 'self'",
-              "frame-ancestors 'none'"
+              // Prevent embedding in frames
+              "frame-ancestors 'none'",
+              // Report violations (optional)
+              "report-uri /api/csp-report"
             ].join('; ')
+          },
+          // Strict Transport Security (HSTS)
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=31536000; includeSubDomains; preload'
           },
           // CORS and additional security headers
           {

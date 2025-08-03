@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaEdit, FaTrashAlt } from 'react-icons/fa';
 import { HiPlusCircle } from 'react-icons/hi2';
-import { Season, Tournament, Player } from '@/types';
+import { Season, Tournament, Player, GameEvent } from '@/types';
 import { AppState } from '@/types';
 import { UseMutationResult } from '@tanstack/react-query';
 import { TFunction } from 'i18next';
@@ -18,18 +18,6 @@ import { useInlineEditing } from '@/hooks/useInlineEditing';
 import { useSeasonTournamentManagement } from '@/hooks/useSeasonTournamentManagement';
 import { useModalStability } from '@/hooks/useModalStability';
 import { formatTime } from '@/utils/time';
-
-export type GameEventType = 'goal' | 'opponentGoal' | 'substitution' | 'periodEnd' | 'gameEnd' | 'fairPlayCard';
-
-export interface GameEvent {
-  id: string;
-  type: GameEventType;
-  time: number; // Gametime in seconds
-  period?: number;
-  scorerId?: string;
-  assisterId?: string;
-  entityId?: string;
-}
 
 export interface GameSettingsModalProps {
   isOpen: boolean;

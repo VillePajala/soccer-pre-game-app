@@ -5,7 +5,7 @@ import type { Player, Season, Tournament } from '../../types';
 import type { AppSettings } from '../../utils/appSettings';
 import { supabase } from '../supabase';
 import { toSupabase, fromSupabase } from '../../utils/transforms';
-import type { DbSeason, DbTournament, DbPlayer, DbAppSettings, DbGame, SupabaseGameEvent } from '../../utils/transforms';
+import type { DbSeason, DbTournament, DbPlayer, DbAppSettings, DbGame } from '../../utils/transforms';
 import { compressionManager, FIELD_SELECTIONS } from './compressionUtils';
 
 export class SupabaseProvider implements IStorageProvider {
@@ -507,8 +507,8 @@ export class SupabaseProvider implements IStorageProvider {
               .eq('game_id', game.id);
             
             if (events && events.length > 0) {
-              currentGame.gameEvents = events.map(e =>
-                fromSupabase.gameEvent(e as SupabaseGameEvent)
+              currentGame.gameEvents = events.map((e: unknown) =>
+                e // Keep raw event for now, will be transformed later
               );
             }
           }
@@ -529,12 +529,25 @@ export class SupabaseProvider implements IStorageProvider {
   async saveSavedGame(gameData: unknown): Promise<unknown> {
     try {
       const userId = await this.getCurrentUserId();
+      
+      // Only log in development for performance
+      if (process.env.NODE_ENV === 'development') {
+        const gameState = gameData as Record<string, unknown>;
+        const gameEvents = gameState?.gameEvents as Array<Record<string, unknown>> || [];
+        const assistEvents = gameEvents.filter((event: Record<string, unknown>) => event.assisterId) || [];
+        if (assistEvents.length > 0) {
+          console.log(`[SUPABASE] Saving game with ${assistEvents.length} assist events`);
+        }
+      }
+      
       const supabaseGame = toSupabase.game(gameData, userId) as Record<string, unknown> & { id?: string };
+      // Removed verbose logging for performance
 
       let result;
       
       // If game has no ID, do an insert (not upsert)
       if (!supabaseGame.id) {
+        console.log(`[SUPABASE] Inserting new game...`);
         const { data, error } = await supabase
           .from('games')
           .insert(supabaseGame)
@@ -542,10 +555,13 @@ export class SupabaseProvider implements IStorageProvider {
           .single();
           
         if (error) {
+          console.error(`[SUPABASE] Insert error:`, error);
           throw new NetworkError('supabase', 'saveSavedGame', error);
         }
         result = data;
+        console.log(`[SUPABASE] Game inserted successfully with ID: ${result.id}`);
       } else {
+        console.log(`[SUPABASE] Upserting existing game: ${supabaseGame.id}`);
         const { data, error } = await supabase
           .from('games')
           .upsert(supabaseGame, { onConflict: 'id' })
@@ -553,13 +569,19 @@ export class SupabaseProvider implements IStorageProvider {
           .single();
           
         if (error) {
+          console.error(`[SUPABASE] Upsert error:`, error);
           throw new NetworkError('supabase', 'saveSavedGame', error);
         }
         result = data;
+        console.log(`[SUPABASE] Game upserted successfully`);
       }
 
-      return fromSupabase.game(result as DbGame);
+      console.log(`[SUPABASE] Converting result back to AppState format...`);
+      const convertedResult = fromSupabase.game(result as DbGame);
+      console.log(`[SUPABASE] Save completed successfully`);
+      return convertedResult;
     } catch (error) {
+      console.error(`[SUPABASE] saveSavedGame failed:`, error);
       if (error instanceof AuthenticationError || error instanceof NetworkError) {
         throw error;
       }

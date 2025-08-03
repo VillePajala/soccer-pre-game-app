@@ -17,7 +17,7 @@ export default function ImportBackupPage() {
 
   const clearExistingData = async () => {
     addLog('Clearing existing Supabase data...');
-
+    
     try {
       // Get all existing data
       const [players, seasons, tournaments, games] = await Promise.all([
@@ -27,37 +27,48 @@ export default function ImportBackupPage() {
         storageManager.getSavedGames()
       ]);
 
-      const deleteInBatches = async <T,>(
-        items: T[],
-        deleteFn: (item: T) => Promise<void>,
-        itemLabel: string,
-        batchSize = 5
-      ) => {
-        if (items.length === 0) {
-          addLog(`No ${itemLabel}s to delete`, 'info');
-          return;
-        }
-        addLog(`Deleting ${items.length} ${itemLabel}${items.length !== 1 ? 's' : ''}...`);
-        for (let i = 0; i < items.length; i += batchSize) {
-          const batch = items.slice(i, i + batchSize);
-          await Promise.all(
-            batch.map(item =>
-              deleteFn(item).catch(err => {
-                const id = typeof item === 'string' ? item : (item as { id?: string }).id;
-                addLog(`Failed to delete ${itemLabel} ${id}: ${err}`, 'error');
-              })
-            )
-          );
-        }
-        addLog(`Deleted ${items.length} ${itemLabel}${items.length !== 1 ? 's' : ''}`, 'success');
-      };
+      // Delete all players in parallel
+      await Promise.all(
+        players.map(player =>
+          storageManager.deletePlayer(player.id).catch(err => {
+            addLog(`Failed to delete player ${player.id}: ${err}`, 'error');
+          })
+        )
+      );
+      addLog(`Deleted ${players.length} players`, 'success');
 
-      await deleteInBatches(players, p => storageManager.deletePlayer(p.id), 'player');
-      await deleteInBatches(seasons, s => storageManager.deleteSeason(s.id), 'season');
-      await deleteInBatches(tournaments, t => storageManager.deleteTournament(t.id), 'tournament');
+      // Delete all seasons in parallel
+      await Promise.all(
+        seasons.map(season =>
+          storageManager.deleteSeason(season.id).catch(err => {
+            addLog(`Failed to delete season ${season.id}: ${err}`, 'error');
+          })
+        )
+      );
+      addLog(`Deleted ${seasons.length} seasons`, 'success');
+
+      // Delete all tournaments in parallel
+      await Promise.all(
+        tournaments.map(tournament =>
+          storageManager.deleteTournament(tournament.id).catch(err => {
+            addLog(`Failed to delete tournament ${tournament.id}: ${err}`, 'error');
+          })
+        )
+      );
+      addLog(`Deleted ${tournaments.length} tournaments`, 'success');
+
+      // Delete all games in parallel
       const gamesObj = games as Record<string, unknown>;
       const gameIds = Object.keys(gamesObj);
-      await deleteInBatches(gameIds, id => storageManager.deleteSavedGame(id), 'game');
+      await Promise.all(
+        gameIds.map(gameId =>
+          storageManager.deleteSavedGame(gameId).catch(err => {
+            addLog(`Failed to delete game ${gameId}: ${err}`, 'error');
+          })
+        )
+      );
+      addLog(`Deleted ${gameIds.length} games`, 'success');
+
     } catch (error) {
       addLog(`Error clearing data: ${error}`, 'error');
       throw error;

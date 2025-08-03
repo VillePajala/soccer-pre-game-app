@@ -63,8 +63,13 @@ export function useEventManagement({
   const handleEditGoal = (goal: GameEvent) => {
     setEditingGoalId(goal.id);
     setEditGoalTime(formatTime(goal.time)); // Use MM:SS format for editing time
-    setEditGoalScorerId(goal.scorerId || '');
-    setEditGoalAssisterId(goal.assisterId || undefined);
+    if (goal.type === 'goal') {
+      setEditGoalScorerId(goal.scorerId);
+      setEditGoalAssisterId(goal.assisterId || undefined);
+    } else {
+      setEditGoalScorerId('');
+      setEditGoalAssisterId(undefined);
+    }
   };
 
   const handleCancelEditGoal = () => {
@@ -122,12 +127,22 @@ export function useEventManagement({
         throw new Error('Original goal not found');
       }
 
-      const updatedEvent: GameEvent = {
-        ...originalGoal,
-        time: timeInSeconds,
-        scorerId: updatedScorerId,
-        assisterId: updatedAssisterId,
-      };
+      // Create updated event based on type
+      let updatedEvent: GameEvent;
+      if (originalGoal.type === 'goal') {
+        updatedEvent = {
+          ...originalGoal,
+          time: timeInSeconds,
+          scorerId: updatedScorerId || originalGoal.scorerId, // Ensure scorerId is always present
+          assisterId: updatedAssisterId,
+        };
+      } else {
+        // For non-goal events, just update the time
+        updatedEvent = {
+          ...originalGoal,
+          time: timeInSeconds,
+        };
+      }
 
       // Update local state immediately for UI responsiveness
       setLocalGameEvents(prevEvents => 

@@ -5,6 +5,7 @@ import { LocalStorageProvider } from './localStorageProvider';
 import { SupabaseProvider } from './supabaseProvider';
 import type { Player, Season, Tournament } from '../../types';
 import type { AppSettings } from '../../utils/appSettings';
+import { safeConsoleError } from '../../utils/errorSanitization';
 
 export class StorageManager implements IStorageProvider {
   private localStorage: LocalStorageProvider;
@@ -41,7 +42,7 @@ export class StorageManager implements IStorageProvider {
         this.config.fallbackToLocalStorage &&
         (error instanceof NetworkError || error instanceof AuthenticationError)
       ) {
-        console.warn(`Supabase ${operationName} failed, falling back to localStorage:`, error.message);
+        safeConsoleError(error, { operation: operationName, additional: { fallback: 'localStorage' } });
         
         try {
           // Temporarily switch to localStorage for fallback operation
@@ -202,6 +203,13 @@ export class StorageManager implements IStorageProvider {
   }
 
   async saveSavedGame(gameData: unknown) {
+    // CRITICAL BUG FIX: Add debugging for assist-related save operations
+    const gameState = gameData as Record<string, unknown>;
+    const gameEvents = gameState?.gameEvents as Array<Record<string, unknown>> || [];
+    const assistEvents = gameEvents.filter((event: Record<string, unknown>) => event.assisterId) || [];
+    console.log(`[STORAGE_MANAGER] saveSavedGame called - Provider: ${this.currentProvider.constructor.name}`);
+    console.log(`[STORAGE_MANAGER] Events: ${gameEvents.length || 0}, Assist events: ${assistEvents.length}`);
+    
     return this.executeWithFallback(
       () => this.currentProvider.saveSavedGame(gameData),
       'saveSavedGame'

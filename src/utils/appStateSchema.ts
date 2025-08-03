@@ -24,14 +24,50 @@ export const playerSchema = z.object({
   receivedFairPlayCard: z.boolean().optional(),
 });
 
-export const gameEventSchema = z.object({
+// Discriminated union for game events
+const baseEventSchema = z.object({
   id: z.string(),
-  type: z.enum(['goal', 'opponentGoal', 'substitution', 'periodEnd', 'gameEnd', 'fairPlayCard']),
   time: z.number(),
-  scorerId: z.string().optional(),
+  timestamp: z.number().optional(),
+});
+
+const goalEventSchema = baseEventSchema.extend({
+  type: z.literal('goal'),
+  scorerId: z.string(),
   assisterId: z.string().optional(),
+  playerName: z.string().optional(),
+});
+
+const opponentGoalEventSchema = baseEventSchema.extend({
+  type: z.literal('opponentGoal'),
+});
+
+const substitutionEventSchema = baseEventSchema.extend({
+  type: z.literal('substitution'),
   entityId: z.string().optional(),
 });
+
+const periodEndEventSchema = baseEventSchema.extend({
+  type: z.literal('periodEnd'),
+});
+
+const gameEndEventSchema = baseEventSchema.extend({
+  type: z.literal('gameEnd'),
+});
+
+const fairPlayCardEventSchema = baseEventSchema.extend({
+  type: z.literal('fairPlayCard'),
+  entityId: z.string().optional(),
+});
+
+export const gameEventSchema = z.discriminatedUnion('type', [
+  goalEventSchema,
+  opponentGoalEventSchema,
+  substitutionEventSchema,
+  periodEndEventSchema,
+  gameEndEventSchema,
+  fairPlayCardEventSchema,
+]);
 
 export const intervalLogSchema = z.object({
   period: z.number(),
