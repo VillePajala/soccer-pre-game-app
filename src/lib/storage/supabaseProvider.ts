@@ -109,17 +109,23 @@ export class SupabaseProvider implements IStorageProvider {
   async deletePlayer(playerId: string): Promise<void> {
     try {
       const userId = await this.getCurrentUserId();
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('players')
         .delete()
         .eq('id', playerId)
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .select('id')
+        .maybeSingle();
 
       if (error) {
         throw new NetworkError('supabase', 'deletePlayer', error);
       }
+
+      if (!data) {
+        throw new StorageError('Player not found', 'supabase', 'deletePlayer');
+      }
     } catch (error) {
-      if (error instanceof AuthenticationError || error instanceof NetworkError) {
+      if (error instanceof AuthenticationError || error instanceof NetworkError || error instanceof StorageError) {
         throw error;
       }
       throw new StorageError('Failed to delete player', 'supabase', 'deletePlayer', error as Error);
@@ -228,17 +234,23 @@ export class SupabaseProvider implements IStorageProvider {
   async deleteSeason(seasonId: string): Promise<void> {
     try {
       const userId = await this.getCurrentUserId();
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('seasons')
         .delete()
         .eq('id', seasonId)
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .select('id')
+        .maybeSingle();
 
       if (error) {
         throw new NetworkError('supabase', 'deleteSeason', error);
       }
+
+      if (!data) {
+        throw new StorageError('Season not found', 'supabase', 'deleteSeason');
+      }
     } catch (error) {
-      if (error instanceof AuthenticationError || error instanceof NetworkError) {
+      if (error instanceof AuthenticationError || error instanceof NetworkError || error instanceof StorageError) {
         throw error;
       }
       throw new StorageError('Failed to delete season', 'supabase', 'deleteSeason', error as Error);
@@ -354,17 +366,23 @@ export class SupabaseProvider implements IStorageProvider {
   async deleteTournament(tournamentId: string): Promise<void> {
     try {
       const userId = await this.getCurrentUserId();
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('tournaments')
         .delete()
         .eq('id', tournamentId)
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .select('id')
+        .maybeSingle();
 
       if (error) {
         throw new NetworkError('supabase', 'deleteTournament', error);
       }
+
+      if (!data) {
+        throw new StorageError('Tournament not found', 'supabase', 'deleteTournament');
+      }
     } catch (error) {
-      if (error instanceof AuthenticationError || error instanceof NetworkError) {
+      if (error instanceof AuthenticationError || error instanceof NetworkError || error instanceof StorageError) {
         throw error;
       }
       throw new StorageError('Failed to delete tournament', 'supabase', 'deleteTournament', error as Error);
@@ -552,17 +570,23 @@ export class SupabaseProvider implements IStorageProvider {
   async deleteSavedGame(gameId: string): Promise<void> {
     try {
       const userId = await this.getCurrentUserId();
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('games')
         .delete()
         .eq('id', gameId)
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .select('id')
+        .maybeSingle();
 
       if (error) {
         throw new NetworkError('supabase', 'deleteSavedGame', error);
       }
+
+      if (!data) {
+        throw new StorageError('Saved game not found', 'supabase', 'deleteSavedGame');
+      }
     } catch (error) {
-      if (error instanceof AuthenticationError || error instanceof NetworkError) {
+      if (error instanceof AuthenticationError || error instanceof NetworkError || error instanceof StorageError) {
         throw error;
       }
       throw new StorageError('Failed to delete saved game', 'supabase', 'deleteSavedGame', error as Error);
