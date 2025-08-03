@@ -1601,6 +1601,9 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       // Re-enable auto-save after new game creation is complete
       setIsCreatingNewGame(false);
 
+      // Trigger an initial quick save so the game is persisted immediately
+      handleQuickSaveGame(actualGameId);
+
   }, [
     // Keep necessary dependencies
     savedGames,
@@ -1611,6 +1614,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     setIsNewGameSetupModalOpen,
     setHighlightRosterButton,
     setIsCreatingNewGame,
+    handleQuickSaveGame,
   ]);
 
   // ** REVERT handleCancelNewGameSetup TO ORIGINAL **
