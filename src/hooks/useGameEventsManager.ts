@@ -56,7 +56,10 @@ export const useGameEventsManager = ({
     // CRITICAL BUG FIX: Validate assister exists if assisterId is provided
     if (assisterId && !assister) {
       logger.error(`Assister with ID ${assisterId} not found in roster! Cannot log goal with invalid assist.`);
-      throw new Error(`Assister not found: ${assisterId}. This would cause a database save error.`);
+      const errorMsg = process.env.NODE_ENV === 'production' 
+        ? 'Selected assister is no longer available. Please refresh and try again.'
+        : `Assister not found: ${assisterId}. This would cause a database save error.`;
+      throw new Error(errorMsg);
     }
 
     const newEvent: GoalEvent = {

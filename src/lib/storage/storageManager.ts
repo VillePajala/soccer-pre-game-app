@@ -5,6 +5,7 @@ import { LocalStorageProvider } from './localStorageProvider';
 import { SupabaseProvider } from './supabaseProvider';
 import type { Player, Season, Tournament } from '../../types';
 import type { AppSettings } from '../../utils/appSettings';
+import { sanitizeError, safeConsoleError } from '../../utils/errorSanitization';
 
 export class StorageManager implements IStorageProvider {
   private localStorage: LocalStorageProvider;
@@ -41,7 +42,7 @@ export class StorageManager implements IStorageProvider {
         this.config.fallbackToLocalStorage &&
         (error instanceof NetworkError || error instanceof AuthenticationError)
       ) {
-        console.warn(`Supabase ${operationName} failed, falling back to localStorage:`, error.message);
+        safeConsoleError(error, { operation: operationName, fallback: 'localStorage' });
         
         try {
           // Temporarily switch to localStorage for fallback operation
