@@ -50,6 +50,7 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
       const scorer = availablePlayers.find(p => p.id === scorerId);
       if (!scorer) {
         alert(t('goalLogModal.scorerNotFound', 'Selected scorer is no longer available'));
+        setScorerId(''); // Clear invalid selection
         return;
       }
       
@@ -58,20 +59,34 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
         const assister = availablePlayers.find(p => p.id === assisterId);
         if (!assister) {
           alert(t('goalLogModal.assisterNotFound', 'Selected assister is no longer available'));
+          setAssisterId(''); // Clear invalid selection
           return;
         }
       }
       
-      onLogGoal(scorerId, assisterId || undefined); // Pass undefined if assisterId is empty
-      onClose();
+      // Call the goal logging function - it will handle the modal closing
+      try {
+        onLogGoal(scorerId, assisterId || undefined); // Pass undefined if assisterId is empty
+        // Don't call onClose() here - let the success handler close the modal
+      } catch (error) {
+        console.error('Error logging goal:', error);
+        // Modal stays open for retry
+      }
+    } else {
+      alert(t('goalLogModal.selectScorer', 'Please select a scorer'));
     }
   };
 
   // Handler for the new Opponent Goal button
   const handleLogOpponentGoalClick = () => {
-    onLogOpponentGoal(currentTime); // Call the passed handler with the current time
-    // No need to reset local state as it's not used for opponent goal
-    // onClose(); // The handler in page.tsx already closes the modal
+    try {
+      onLogOpponentGoal(currentTime); // Call the passed handler with the current time
+      // Don't call onClose() here - let the success handler close the modal
+    } catch (error) {
+      console.error('Error logging opponent goal:', error);
+      alert('Failed to log opponent goal. Please try again.');
+      // Modal stays open for retry
+    }
   };
 
   // Reset state when modal closes (or opens)

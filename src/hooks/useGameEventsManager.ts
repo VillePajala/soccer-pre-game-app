@@ -41,25 +41,25 @@ export const useGameEventsManager = ({
    * Handler to add a goal event
    */
   const handleAddGoalEvent = useCallback((scorerId: string, assisterId?: string) => {
-    const rosterSource = masterRosterQueryResultData && masterRosterQueryResultData.length > 0
-      ? masterRosterQueryResultData
-      : availablePlayers;
+    // Use consistent roster source - prioritize availablePlayers for current game state
+    const rosterSource = availablePlayers.length > 0 ? availablePlayers : (masterRosterQueryResultData || []);
 
     const scorer = rosterSource.find(p => p.id === scorerId);
     const assister = assisterId ? rosterSource.find(p => p.id === assisterId) : undefined;
 
     if (!scorer) {
-      logger.error("Scorer not found!");
+      logger.error(`Scorer not found with ID: ${scorerId}`);
+      alert('Selected player is no longer available. Please refresh the player list and try again.');
+      setIsGoalLogModalOpen(false);
       return;
     }
 
-    // CRITICAL BUG FIX: Validate assister exists if assisterId is provided
+    // FIXED: Graceful handling instead of throwing error
     if (assisterId && !assister) {
-      logger.error(`Assister with ID ${assisterId} not found in roster! Cannot log goal with invalid assist.`);
-      const errorMsg = process.env.NODE_ENV === 'production' 
-        ? 'Selected assister is no longer available. Please refresh and try again.'
-        : `Assister not found: ${assisterId}. This would cause a database save error.`;
-      throw new Error(errorMsg);
+      logger.error(`Assister with ID ${assisterId} not found in roster! Logging goal without assist.`);
+      // Show user-friendly message but continue without assist
+      alert('Selected assister is no longer available. Goal will be logged without assist.');
+      assisterId = undefined; // Clear invalid assisterId
     }
 
     const newEvent: GoalEvent = {
@@ -67,7 +67,7 @@ export const useGameEventsManager = ({
       type: 'goal',
       time: gameSessionState.timeElapsedInSeconds, // Use from gameSessionState
       scorerId: scorer.id,
-      assisterId: assister?.id,
+      assisterId: assisterId && assister ? assister.id : undefined, // Use corrected assisterId
       playerName: scorer.name,
     };
 
@@ -75,14 +75,16 @@ export const useGameEventsManager = ({
     logger.log(`Creating goal event - Scorer: ${scorer.name} (${scorer.id}), Assister: ${assister ? `${assister.name} (${assister.id})` : 'none'}`);
     logger.log(`Available players count: ${availablePlayers.length}, Master roster count: ${masterRosterQueryResultData?.length || 0}`);
     
-    // Dispatch actions to update game state via reducer with error handling
+    // Dispatch actions to update game state via reducer with graceful error handling
     try {
       dispatchGameSession({ type: 'ADD_GAME_EVENT', payload: newEvent });
       dispatchGameSession({ type: 'ADJUST_SCORE_FOR_EVENT', payload: { eventType: 'goal', action: 'add' } });
       logger.log(`Goal event added successfully: ${scorer.name} at ${newEvent.time}s`);
+      setIsGoalLogModalOpen(false); // Close modal on success
     } catch (error) {
       logger.error('Failed to add goal event:', error);
-      throw new Error(`Failed to log goal for ${scorer.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      alert(`Failed to log goal for ${scorer.name}. Please try again.`);
+      // Keep modal open for retry
     }
   }, [dispatchGameSession, gameSessionState.timeElapsedInSeconds, masterRosterQueryResultData, availablePlayers]);
 
