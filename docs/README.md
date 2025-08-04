@@ -21,6 +21,18 @@ Welcome to the MatchDay Coach documentation. This directory contains all project
 - **[Claude Code Assistant Guide](ai/CLAUDE.md)** - Instructions for Claude Code when working with this repository
 - **[AI Agents Configuration](ai/AGENTS.md)** - AI agent configurations and setup
 
+## 🚀 Code Quality & Improvements
+
+- **[Code Quality Review](quality/CODE_QUALITY_REVIEW.md)** - Comprehensive codebase assessment and improvement roadmap
+- **[Critical Issues Action Plan](quality/CRITICAL_ISSUES_ACTION_PLAN.md)** - Week 1-2 critical fixes (HomePage refactoring, debug code, memory leaks)
+- **[High Priority Improvements](quality/HIGH_PRIORITY_IMPROVEMENTS.md)** - Month 1 enhancements (state management, performance, testing)
+- **[Quality Enhancements](quality/QUALITY_ENHANCEMENTS.md)** - Month 2-3 refinements (architecture, developer experience, monitoring)
+- **[Long-term Improvements](quality/LONG_TERM_IMPROVEMENTS.md)** - Month 3-6 advanced features (state machines, micro-frontends, security)
+
+### Implementation Guides
+- **[Component Refactoring Guide](quality/guides/COMPONENT_REFACTORING_GUIDE.md)** - Step-by-step HomePage component breakdown
+- **[State Management Migration](quality/guides/STATE_MANAGEMENT_MIGRATION.md)** - Unified Zustand architecture implementation
+
 ## 📚 Guides
 
 - **[Demo Workflow](guides/demo-workflow.md)** - App workflow walkthrough and usage guide
