@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "feat: Complete performance optimization Phase 3 with component lazy loading"
+  "notes": "feat: CRITICAL FIX - Resolve 515KB bundle size issue with 108KB reduction"
 }

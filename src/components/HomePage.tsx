@@ -5,7 +5,8 @@ import SoccerField from '@/components/SoccerField';
 import PlayerBar from '@/components/PlayerBar';
 import ControlBar from '@/components/ControlBar';
 import TimerOverlay from '@/components/TimerOverlay';
-import GoalLogModal from '@/components/GoalLogModal';
+// Lazy load GoalLogModal since it's only used conditionally
+const GoalLogModal = React.lazy(() => import('@/components/GoalLogModal'));
 // Lazy load heavy modals for better performance
 const GameStatsModal = React.lazy(() => import('@/components/GameStatsModal'));
 const GameSettingsModal = React.lazy(() => import('@/components/GameSettingsModal'));
@@ -1878,14 +1879,28 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         />
       </React.Suspense>
       {/* Goal Log Modal */}
-      <GoalLogModal 
-        isOpen={isGoalLogModalOpen}
-        onClose={handleToggleGoalLogModal}
-        onLogGoal={handleAddGoalEvent}
-        onLogOpponentGoal={handleLogOpponentGoal} // ADDED: Pass the handler
-        availablePlayers={playersForCurrentGame} // MODIFIED: Pass players selected for the current game
-        currentTime={gameSessionState.timeElapsedInSeconds}
-      />
+      {isGoalLogModalOpen && (
+        <React.Suspense fallback={
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-slate-800 rounded-lg p-6 w-96 max-w-90vw">
+              <div className="animate-pulse">
+                <div className="h-6 bg-slate-700 rounded mb-4"></div>
+                <div className="h-20 bg-slate-700 rounded mb-4"></div>
+                <div className="h-10 bg-slate-700 rounded"></div>
+              </div>
+            </div>
+          </div>
+        }>
+          <GoalLogModal 
+            isOpen={isGoalLogModalOpen}
+            onClose={handleToggleGoalLogModal}
+            onLogGoal={handleAddGoalEvent}
+            onLogOpponentGoal={handleLogOpponentGoal} // ADDED: Pass the handler
+            availablePlayers={playersForCurrentGame} // MODIFIED: Pass players selected for the current game
+            currentTime={gameSessionState.timeElapsedInSeconds}
+          />
+        </React.Suspense>
+      )}
       {/* Game Stats Modal - Restore props for now */}
       {isGameStatsModalOpen && (
         <React.Suspense fallback={<GameStatsModalSkeleton />}>
