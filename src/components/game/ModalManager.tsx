@@ -116,7 +116,7 @@ interface ExtendedModalManagerProps extends Partial<ModalManagerProps> {
  * This component centralizes modal rendering and management,
  * using React.Suspense for lazy loading and proper error boundaries.
  */
-export function ModalManager({
+export const ModalManager = React.memo<ExtendedModalManagerProps>(({
   // Modal states
   modalStates = {
     isGameStatsModalOpen: false,
@@ -218,7 +218,7 @@ export function ModalManager({
   deleteSeasonMutation,
   updateTournamentMutation,
   deleteTournamentMutation,
-}: ExtendedModalManagerProps) {
+}: ExtendedModalManagerProps) => {
   // Suppress unused variable warnings for handlers not yet fully integrated
   void _onStartNewGame;
   void _onSaveGame;
@@ -483,4 +483,6 @@ export function ModalManager({
       {MigrationModalComponent}
     </>
   );
-}
+});
+
+ModalManager.displayName = 'ModalManager';

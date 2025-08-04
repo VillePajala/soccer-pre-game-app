@@ -78,7 +78,7 @@ interface ExtendedGameViewProps extends Partial<GameViewProps> {
  * This component focuses purely on rendering the game view and
  * delegating interactions to parent handlers.
  */
-export function GameView({
+export const GameView = React.memo<ExtendedGameViewProps>(({
   // UI state
   showLargeTimerOverlay = false,
   isTacticsBoardView = false,
@@ -135,7 +135,7 @@ export function GameView({
   handleToggleGoalLogModal,
   handleLogOpponentGoal,
   handleToggleLargeTimerOverlay,
-}: ExtendedGameViewProps) {
+}: ExtendedGameViewProps) => {
   // Get state from context
   const {
     gameState,
@@ -240,4 +240,6 @@ export function GameView({
       </div>
     </>
   );
-}
+});
+
+GameView.displayName = 'GameView';

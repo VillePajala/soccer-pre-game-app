@@ -54,7 +54,7 @@ interface ExtendedGameControlsProps extends Partial<GameControlsProps> {
  * This component focuses on rendering controls and delegating
  * actions to parent handlers.
  */
-export function GameControls({
+export const GameControls = React.memo<ExtendedGameControlsProps>(({
   // UI state
   showLargeTimerOverlay = false,
   canUndo = false,
@@ -106,7 +106,7 @@ export function GameControls({
   onToggleInstructionsModal,
   onOpenSettingsModal,
   onSignOut,
-}: ExtendedGameControlsProps) {
+}: ExtendedGameControlsProps) => {
   // Get state from context (currently not used but available for future implementation)
   const { gameState: _gameState, timeElapsedInSeconds: _timeElapsedInSeconds, isGameActive: _isGameActive } = useGameStateContext();
   
@@ -171,4 +171,6 @@ export function GameControls({
       />
     </div>
   );
-}
+});
+
+GameControls.displayName = 'GameControls';
