@@ -5,15 +5,10 @@ import { MigratedGameStateProvider, useGameStateContext } from '../MigratedGameS
 import { useGameStore } from '@/stores/gameStore';
 import { startMigration, completeMigration, rollbackMigration } from '@/utils/stateMigration';
 
-// Mock logger - both default and named export
+// Mock logger - default export
 jest.mock('@/utils/logger', () => ({
+  __esModule: true,
   default: {
-    debug: jest.fn(),
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-  },
-  logger: {
     debug: jest.fn(),
     info: jest.fn(),
     warn: jest.fn(),

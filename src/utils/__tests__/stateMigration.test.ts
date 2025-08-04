@@ -48,6 +48,8 @@ Object.defineProperty(window, 'localStorage', {
 describe('State Migration Utilities', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset migration state between tests
+    rollbackMigration();
     mockLocalStorage.getItem.mockReturnValue(null);
   });
 
@@ -412,6 +414,10 @@ describe('State Migration Utilities', () => {
 
     it('should respect legacy fallback disabled', () => {
       startMigration({ enableLegacyFallback: false });
+      
+      // Mock localStorage to return the flags we just set
+      const expectedFlags = { ...defaultMigrationFlags, enableLegacyFallback: false };
+      mockLocalStorage.getItem.mockReturnValue(JSON.stringify(expectedFlags));
       
       // Component should not use legacy even if not migrated
       expect(shouldUseLegacyState('TestComponent')).toBe(false);

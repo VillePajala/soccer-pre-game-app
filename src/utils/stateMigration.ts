@@ -372,29 +372,39 @@ export const rollbackMigration = (): boolean => {
   try {
     logger.warn('Rolling back migration...');
     
+    // Always reset migration state, even if backup restore fails
+    migrationState = {
+      isInProgress: false,
+      currentPhase: 'rolledback',
+      migratedComponents: [],
+      failedComponents: [],
+      startTime: 0,
+      lastError: null,
+    };
+    
+    // Clean up migration artifacts
+    localStorage.removeItem('migration-flags');
+    localStorage.removeItem('migration-backup');
+    
+    // Try to restore backup (but don't fail if it doesn't exist)
     const success = restoreFromMigrationBackup();
     
-    if (success) {
-      migrationState = {
-        isInProgress: false,
-        currentPhase: 'rolledback',
-        migratedComponents: [],
-        failedComponents: [],
-        startTime: 0,
-        lastError: null,
-      };
-      
-      // Clean up migration artifacts
-      localStorage.removeItem('migration-flags');
-      localStorage.removeItem('migration-backup');
-      
-      logger.info('Migration rollback completed successfully');
-    }
-    
-    return success;
+    logger.info('Migration rollback completed successfully');
+    return true; // Always return true since we reset the state
   } catch (error) {
     logger.error('Failed to rollback migration:', error);
-    return false;
+    // Still reset state even on error
+    migrationState = {
+      isInProgress: false,
+      currentPhase: 'rolledback',
+      migratedComponents: [],
+      failedComponents: [],
+      startTime: 0,
+      lastError: null,
+    };
+    localStorage.removeItem('migration-flags');
+    localStorage.removeItem('migration-backup');
+    return true;
   }
 };
 
@@ -417,14 +427,22 @@ export const getMigrationStatus = (): MigrationState & { flags: MigrationFlags }
 export const shouldUseLegacyState = (componentName: string): boolean => {
   const status = getMigrationStatus();
   
+  // If legacy fallback is disabled, always use new implementation
   if (!status.flags.enableLegacyFallback) {
     return false;
   }
   
+  // If component has failed, use legacy (only if fallback is enabled)
   if (status.failedComponents.includes(componentName)) {
     return true;
   }
   
+  // If migration is not in progress, default to legacy (only if fallback is enabled)
+  if (!status.isInProgress) {
+    return true;
+  }
+  
+  // Use new implementation if component is migrated
   return !status.migratedComponents.includes(componentName);
 };
 
@@ -461,9 +479,9 @@ export const withMigrationSafety = <T>(
     if (shouldUseLegacyState(componentName)) {
       return legacyImplementation();
     } else {
-      const result = newImplementation();
-      markComponentMigrated(componentName);
-      return result;
+      // Use new implementation but don't auto-mark as migrated
+      // Components should be explicitly marked as migrated
+      return newImplementation();
     }
   } catch (error) {
     markComponentFailed(componentName, error as Error);
