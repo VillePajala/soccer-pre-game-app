@@ -40,7 +40,7 @@ export default function ServiceWorkerRegistration() {
           setReleaseNotes(data.notes);
         }
       } catch (error) {
-        if (error.name !== 'AbortError') {
+        if (error instanceof Error && error.name !== 'AbortError') {
           logger.error('Failed to fetch release notes', error);
         }
       }
