@@ -480,6 +480,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   const [playerIdsForNewGame, setPlayerIdsForNewGame] = useState<string[] | null>(null);
   const [newGameDemandFactor, setNewGameDemandFactor] = useState(1);
   const [isCreatingNewGame, setIsCreatingNewGame] = useState<boolean>(false);
+  const wasCreatingNewGameRef = useRef(false);
   // <<< ADD State for the roster prompt toast >>>
   // const [showRosterPrompt, setShowRosterPrompt] = useState<boolean>(false);
 
@@ -551,6 +552,13 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     tacticalDrawings,
     tacticalBallPosition,
   });
+
+  useEffect(() => {
+    if (wasCreatingNewGameRef.current && !isCreatingNewGame && currentGameId && currentGameId !== DEFAULT_GAME_ID) {
+      Promise.resolve().then(() => handleQuickSaveGame(currentGameId));
+    }
+    wasCreatingNewGameRef.current = isCreatingNewGame;
+  }, [isCreatingNewGame, currentGameId, handleQuickSaveGame]);
 
   // --- Game State Management (Extracted to useGameStateManager hook) ---
   const {
@@ -1601,9 +1609,6 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       // Re-enable auto-save after new game creation is complete
       setIsCreatingNewGame(false);
 
-      // Trigger an initial quick save so the game is persisted immediately
-      handleQuickSaveGame(actualGameId);
-
   }, [
     // Keep necessary dependencies
     savedGames,
@@ -1614,7 +1619,6 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     setIsNewGameSetupModalOpen,
     setHighlightRosterButton,
     setIsCreatingNewGame,
-    handleQuickSaveGame,
   ]);
 
   // ** REVERT handleCancelNewGameSetup TO ORIGINAL **
