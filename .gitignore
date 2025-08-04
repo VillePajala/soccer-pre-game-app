@@ -17,6 +17,11 @@
 /blob-report
 playwright/.cache/
 
+# Temporary test artifacts (keep root clean)
+/test*.txt
+/test*.json
+/final*.txt
+
 # next.js
 /.next/
 /out/
