@@ -54,20 +54,24 @@ export {
 // Store utilities and helpers
 export const resetAllStores = () => {
   // Reset all stores to their default state
+  // Import dynamically to avoid circular dependencies
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const gameStore = require('./gameStore').useGameStore;
-  const uiStore = require('./uiStore').useUIStore;
   
   gameStore.getState().resetGameSession();
   gameStore.getState().resetField();
   // Note: UIStore resetAll method needs to be implemented
-  // uiStore.getState().resetAll();
   // Note: PersistenceStore intentionally not reset to preserve user data
 };
 
 export const getStoreStates = () => {
   // Get current state from all stores (useful for debugging/export)
+  // Import dynamically to avoid circular dependencies
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const gameStore = require('./gameStore').useGameStore;
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const uiStore = require('./uiStore').useUIStore;
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const persistenceStore = require('./persistenceStore').usePersistenceStore;
   
   return {

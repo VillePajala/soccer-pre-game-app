@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "feat: CRITICAL FIX - Resolve 515KB bundle size issue with 108KB reduction"
+  "notes": "fix: Resolve critical TypeScript strict mode errors in migration components"
 }

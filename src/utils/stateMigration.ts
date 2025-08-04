@@ -122,10 +122,15 @@ export const migrateToGameStore = (legacyState: LegacyAppState): Partial<GameSto
     };
     
     const fieldState: Partial<FieldState> = {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       playersOnField: (legacyState.playersOnField as any[]) || [],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       opponents: (legacyState.opponents as any[]) || [],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       availablePlayers: (legacyState.availablePlayers as any[]) || [],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       drawings: (legacyState.drawings as any[]) || [],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       tacticalDrawings: (legacyState.tacticalDrawings as any[]) || [],
       tacticalDiscs: [],
       tacticalBallPosition: null,
@@ -183,7 +188,9 @@ export const migrateToUIStore = (legacyState: LegacyAppState): Partial<UIStore> 
 export const migrateToPersistenceStore = (legacyState: LegacyAppState): Partial<PersistenceStore> => {
   try {
     return {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       savedGames: (legacyState.savedGames as any) || {} as any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       masterRoster: (legacyState.masterRoster as any[]) || [],
       settings: legacyState.appSettings as AppSettings || {},
     };
@@ -220,6 +227,7 @@ export const validateMigratedState = (
     if (uiStore.modals) {
       const modalKeys = Object.keys(uiStore.modals);
       for (const key of modalKeys) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if (typeof (uiStore.modals as any)[key] !== 'boolean') {
           throw new Error(`Invalid modal state for ${key} in UIStore`);
         }

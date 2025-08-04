@@ -43,6 +43,7 @@ export function MigratedGameStateProvider({
   // Initialize store with provided initial state
   useEffect(() => {
     if (initialState) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       gameStore.loadGameState(initialState as any);
     }
     if (initialGameId) {
@@ -141,6 +142,7 @@ export function MigratedGameStateProvider({
         gameStore.addGameEvent(action.payload as GameEvent);
         break;
       case 'UPDATE_GAME_EVENT':
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         gameStore.updateGameEvent((action.payload as any).id, (action.payload as any).updates);
         break;
       case 'REMOVE_GAME_EVENT':
@@ -206,7 +208,8 @@ export function MigratedGameStateProvider({
     gameStore.setTacticalDrawings(drawings);
   }, [gameStore]);
   
-  const setTacticalDiscs = useCallback((discs: any[]) => {
+  const setTacticalDiscs = useCallback((discs: unknown[]) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     gameStore.setTacticalDiscs(discs as any[]);
   }, [gameStore]);
   
@@ -272,6 +275,7 @@ export function MigratedGameStateProvider({
     setTacticalBallPosition,
     isTacticsBoardView: false, // Will be handled by UI store in future migration
     setIsTacticsBoardView: () => {}, // Placeholder
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any), [
     gameSessionState,
     dispatchGameSession,
