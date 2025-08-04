@@ -3,7 +3,7 @@
  * Only loads the actual Supabase library when authentication is enabled and needed
  */
 
-import type { LightweightSupabaseClient } from '@/types/supabase-types';
+import type { LightweightSupabaseClient, QueryBuilder } from '@/types/supabase-types';
 import logger from '@/utils/logger';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -17,6 +17,46 @@ const hasValidConfig = supabaseUrl &&
                       supabaseUrl.length > 0 &&
                       supabaseAnonKey.length > 0;
 
+// Create a comprehensive mock QueryBuilder that implements all required methods
+const createMockQueryBuilder = (): QueryBuilder => {
+  const notConfiguredError = new Error('Supabase not configured');
+  const mockAsyncResponse = async () => ({ data: null, error: notConfiguredError });
+
+  // Recursive function to create a mock query builder that supports chaining
+  const createChainableBuilder = (): QueryBuilder => {
+    return {
+      // Properties for response chaining
+      /* eslint-disable @typescript-eslint/no-explicit-any */
+      data: null as any,
+      error: notConfiguredError,
+      count: null as any,
+      /* eslint-enable @typescript-eslint/no-explicit-any */
+
+      // Query methods that return builders for chaining
+      /* eslint-disable @typescript-eslint/no-explicit-any */
+      select: (_columns?: string) => createChainableBuilder(),
+      eq: (_column: string, _value: any) => createChainableBuilder(),
+      limit: (_count: number) => createChainableBuilder(),
+      order: (_column: string, _options?: { ascending?: boolean }) => createChainableBuilder(),
+      insert: (_values: any) => createChainableBuilder(),
+      update: (_values: any) => createChainableBuilder(),
+      upsert: (_values: any) => createChainableBuilder(),
+      delete: () => createChainableBuilder(),
+      not: (_column: string, _operator: string, _value: any) => createChainableBuilder(),
+      gte: (_column: string, _value: any) => createChainableBuilder(),
+      gt: (_column: string, _value: any) => createChainableBuilder(),
+      range: (_from: number, _to: number) => createChainableBuilder(),
+      /* eslint-enable @typescript-eslint/no-explicit-any */
+
+      // Terminal methods that return promises
+      single: mockAsyncResponse,
+      maybeSingle: mockAsyncResponse,
+    };
+  };
+
+  return createChainableBuilder();
+};
+
 // Lightweight dummy client that provides the same interface without pulling in Supabase
 const createDummyClient = (): LightweightSupabaseClient => ({
   auth: {
@@ -29,38 +69,12 @@ const createDummyClient = (): LightweightSupabaseClient => ({
     resetPasswordForEmail: async () => ({ data: null, error: new Error('Supabase not configured') }),
     updateUser: async () => ({ data: null, error: new Error('Supabase not configured') }),
     setSession: async () => ({ data: null, error: new Error('Supabase not configured') }),
+    exchangeCodeForSession: async () => ({ data: null, error: new Error('Supabase not configured') }),
+    verifyOtp: async () => ({ data: null, error: new Error('Supabase not configured') }),
+    refreshSession: async () => ({ data: null, error: new Error('Supabase not configured') }),
   },
-  from: () => ({
-    select: () => ({
-      eq: () => ({
-        single: async () => ({ data: null, error: new Error('Supabase not configured') }),
-        limit: () => ({ data: null, error: new Error('Supabase not configured') }),
-        order: () => ({ data: null, error: new Error('Supabase not configured') }),
-      }),
-      limit: () => ({ data: null, error: new Error('Supabase not configured') }),
-      order: () => ({ data: null, error: new Error('Supabase not configured') }),
-    }),
-    insert: () => ({
-      select: () => ({
-        single: async () => ({ data: null, error: new Error('Supabase not configured') })
-      })
-    }),
-    update: () => ({
-      eq: () => ({
-        select: () => ({
-          single: async () => ({ data: null, error: new Error('Supabase not configured') })
-        })
-      })
-    }),
-    delete: () => ({
-      eq: () => ({ data: null, error: new Error('Supabase not configured') })
-    }),
-    upsert: () => ({
-      select: () => ({
-        single: async () => ({ data: null, error: new Error('Supabase not configured') })
-      })
-    }),
-  } as LightweightSupabaseClient)
+  from: () => createMockQueryBuilder(),
+  rpc: async () => ({ data: null, error: new Error('Supabase not configured') }),
 });
 
 // Cache for the lazy-loaded client
@@ -107,7 +121,7 @@ export const getSupabaseClient = async (): Promise<LightweightSupabaseClient> =>
       }
     });
 
-    cachedClient = client as LightweightSupabaseClient;
+    cachedClient = client as unknown as LightweightSupabaseClient;
     logger.log('[Supabase] Client loaded successfully');
     
     return cachedClient;
@@ -134,9 +148,9 @@ export const supabase: LightweightSupabaseClient = new Proxy(createDummyClient()
     if (prop === 'auth') {
       return new Proxy(target.auth, {
         get(authTarget, authProp) {
-          return async (...args: unknown[]) => {
+          return async (...args: any[]) => {
             const client = await getSupabaseClient();
-            const method = client.auth[authProp as keyof typeof client.auth] as (...args: unknown[]) => unknown;
+            const method = client.auth[authProp as keyof typeof client.auth] as (...args: any[]) => unknown;
             return method.apply(client.auth, args);
           };
         }

@@ -36,7 +36,7 @@ function VerificationToast({ onClose }: { onClose: () => void }) {
       if (code) {
         logger.debug('Password reset code detected, attempting direct exchange...');
         try {
-          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          const { error } = await supabase.auth.exchangeCodeForSession({ authCode: code });
           if (error) {
             logger.error('PKCE code exchange error:', error);
             // Clean up URL and show error

@@ -34,18 +34,18 @@ export async function resetAllSupabaseData(): Promise<{
     
     // Count existing data before deletion
     const [gamesCount, tournamentsCount, seasonsCount, playersCount, settingsCount] = await Promise.all([
-      supabase.from('games').select('id', { count: 'exact' }).eq('user_id', user.id),
-      supabase.from('tournaments').select('id', { count: 'exact' }).eq('user_id', user.id),
-      supabase.from('seasons').select('id', { count: 'exact' }).eq('user_id', user.id),
-      supabase.from('players').select('id', { count: 'exact' }).eq('user_id', user.id),
-      supabase.from('app_settings').select('id', { count: 'exact' }).eq('user_id', user.id)
+      supabase.from('games').select('*').eq('user_id', user.id),
+      supabase.from('tournaments').select('*').eq('user_id', user.id),
+      supabase.from('seasons').select('*').eq('user_id', user.id),
+      supabase.from('players').select('*').eq('user_id', user.id),
+      supabase.from('app_settings').select('*').eq('user_id', user.id)
     ]);
     
-    stats.gamesDeleted = gamesCount.count || 0;
-    stats.tournamentsDeleted = tournamentsCount.count || 0;
-    stats.seasonsDeleted = seasonsCount.count || 0;
-    stats.playersDeleted = playersCount.count || 0;
-    stats.settingsDeleted = (settingsCount.count || 0) > 0;
+    stats.gamesDeleted = gamesCount.data?.length || 0;
+    stats.tournamentsDeleted = tournamentsCount.data?.length || 0;
+    stats.seasonsDeleted = seasonsCount.data?.length || 0;
+    stats.playersDeleted = playersCount.data?.length || 0;
+    stats.settingsDeleted = (settingsCount.data?.length || 0) > 0;
     
     // Delete in order to avoid foreign key constraints
     logger.log('[ResetSupabaseData] Deleting games...');

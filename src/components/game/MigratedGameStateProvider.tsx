@@ -255,7 +255,7 @@ export function MigratedGameStateProvider({
     },
     
     // Game status (matching interface) - handle different status formats
-    isGameActive: gameSessionState.gameStatus === 'in_progress' || gameSessionState.gameStatus === 'inProgress',
+    isGameActive: gameSessionState.gameStatus === 'inProgress',
     timeElapsedInSeconds: gameSessionState.timeElapsedInSeconds,
     
     // Legacy field state properties (for backward compatibility)

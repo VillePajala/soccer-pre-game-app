@@ -16,7 +16,7 @@ export class SupabaseProvider implements IStorageProvider {
 
   async isOnline(): Promise<boolean> {
     try {
-      const { error } = await supabase.from('players').select('count').limit(1);
+      const { error } = await supabase.from('players').select('id').limit(1);
       return !error;
     } catch {
       return false;
@@ -426,7 +426,8 @@ export class SupabaseProvider implements IStorageProvider {
         .single();
 
       if (error) {
-        if (error.code === 'PGRST116') {
+        const errorCode = (error as any).code;
+        if (errorCode === 'PGRST116') {
           // No settings found, return null
           return null;
         }

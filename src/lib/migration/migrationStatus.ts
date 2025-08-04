@@ -1,5 +1,5 @@
 // Migration status detection and tracking
-import React from 'react';
+import * as React from 'react';
 import { supabase } from '../supabase';
 import { useAuth } from '../../context/AuthContext';
 
@@ -51,8 +51,9 @@ export async function checkMigrationStatus(userId: string): Promise<MigrationSta
     if (error) {
       // PGRST116 = no rows returned (expected when user hasn't migrated)
       // 42P01 = table does not exist (expected if migration_status table not created yet)
-      if (error.code !== 'PGRST116' && error.code !== '42P01') {
-        console.warn('Migration status check warning:', error.code, error.message);
+      const errorCode = (error as any).code;
+      if (errorCode !== 'PGRST116' && errorCode !== '42P01') {
+        console.warn('Migration status check warning:', errorCode, error.message);
       }
       // Continue with default values
     }
@@ -115,7 +116,8 @@ export async function updateMigrationStatus(
   if (error) {
     console.error('Error updating migration status:', error.message || 'Unknown error', error);
     // Don't throw if table doesn't exist - migration can continue
-    if (error.code !== '42P01') {
+    const errorCode = (error as any).code;
+    if (errorCode !== '42P01') {
       throw error;
     }
   }

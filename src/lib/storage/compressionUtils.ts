@@ -244,7 +244,7 @@ export class CompressionManager {
         }
 
         // Convert to base64 for storage
-        const compressedData = btoa(String.fromCharCode(...compressedArray));
+        const compressedData = btoa(String.fromCharCode(...Array.from(compressedArray)));
         
         return {
           data: compressedData as unknown as Record<string, unknown>,

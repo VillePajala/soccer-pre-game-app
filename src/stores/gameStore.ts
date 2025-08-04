@@ -457,7 +457,7 @@ export const useGameStore = create<GameStore>()(
             gameSession: { 
               ...state.gameSession, 
               gameEvents: state.gameSession.gameEvents.map(event => 
-                event.id === eventId ? { ...event, ...updates } : event
+                event.id === eventId ? { ...event, ...updates } as GameEvent : event
               ) 
             } 
           }),
