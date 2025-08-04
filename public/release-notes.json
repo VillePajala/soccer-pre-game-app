@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "perf: Add React.memo to critical game components for re-render optimization"
+  "notes": "feat: Complete performance optimization Phase 2 with i18next lazy loading"
 }

@@ -3,7 +3,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { HiOutlineUser, HiOutlineArrowRightOnRectangle } from 'react-icons/hi2';
-import { AuthModal } from './AuthModal';
+// Lazy load AuthModal since it's only used conditionally
+const AuthModal = React.lazy(() => import('./AuthModal').then(module => ({
+  default: module.AuthModal
+})));
 import { useTranslation } from 'react-i18next';
 
 interface AuthButtonProps {
@@ -83,10 +86,23 @@ export function AuthButton({ className = '', iconSize = 'w-5 h-5' }: AuthButtonP
 
       {/* Auth modal */}
       {showAuthModal && (
-        <AuthModal
-          isOpen={showAuthModal}
-          onClose={() => setShowAuthModal(false)}
-        />
+        <React.Suspense fallback={
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-slate-800 rounded-lg p-6 w-96 max-w-90vw">
+              <div className="animate-pulse">
+                <div className="h-6 bg-slate-700 rounded mb-4"></div>
+                <div className="h-4 bg-slate-700 rounded mb-2"></div>
+                <div className="h-4 bg-slate-700 rounded mb-4"></div>
+                <div className="h-10 bg-slate-700 rounded"></div>
+              </div>
+            </div>
+          </div>
+        }}>
+          <AuthModal
+            isOpen={showAuthModal}
+            onClose={() => setShowAuthModal(false)}
+          />
+        </React.Suspense>
       )}
     </>
   );
