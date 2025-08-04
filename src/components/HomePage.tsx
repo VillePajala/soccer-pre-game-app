@@ -1599,6 +1599,13 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       setCurrentGameId(actualGameId);
       logger.log(`Set current game ID to: ${actualGameId}. Loading useEffect will sync component state.`);
 
+      try {
+        await handleQuickSaveGame(actualGameId);
+      } catch (error) {
+        logger.error('[handleStartNewGameWithSetup] Quick save failed:', error);
+        throw error;
+      }
+
       // Close the setup modal
       setIsNewGameSetupModalOpen(false);
       setNewGameDemandFactor(1);
@@ -1619,6 +1626,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     setIsNewGameSetupModalOpen,
     setHighlightRosterButton,
     setIsCreatingNewGame,
+    handleQuickSaveGame,
   ]);
 
   // ** REVERT handleCancelNewGameSetup TO ORIGINAL **

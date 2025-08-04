@@ -39,7 +39,7 @@ interface NewGameSetupModalProps {
     ageGroup: string,
     tournamentLevel: string,
     isPlayed: boolean
-  ) => void;
+  ) => Promise<void>;
   onCancel: () => void;
   addSeasonMutation: UseMutationResult<Season | null, Error, Partial<Season> & { name: string }, unknown>;
   addTournamentMutation: UseMutationResult<Tournament | null, Error, Partial<Tournament> & { name: string }, unknown>;
@@ -391,23 +391,27 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
     // --- End Save ---
 
     // Call the onStart callback from props using the modal's internal selectedPlayerIds state
-    onStart(
-      selectedPlayerIds, // MODIFIED: Use the modal's current selection state
-      trimmedHomeTeamName,
-      trimmedOpponentName,
-      gameDate,
-      gameLocation.trim(),
-      gameTime,
-      selectedSeasonId,
-      selectedTournamentId,
-      localNumPeriods,
-      duration, // use validated duration
-      localHomeOrAway, // <<< Step 4a: Pass Home/Away >>>
-      demandFactor,
-      ageGroup,
-      tournamentLevel,
-      isPlayed
-    );
+    try {
+      await onStart(
+        selectedPlayerIds, // MODIFIED: Use the modal's current selection state
+        trimmedHomeTeamName,
+        trimmedOpponentName,
+        gameDate,
+        gameLocation.trim(),
+        gameTime,
+        selectedSeasonId,
+        selectedTournamentId,
+        localNumPeriods,
+        duration, // use validated duration
+        localHomeOrAway, // <<< Step 4a: Pass Home/Away >>>
+        demandFactor,
+        ageGroup,
+        tournamentLevel,
+        isPlayed
+      );
+    } catch (error) {
+      logger.error('[NewGameSetupModal] Failed to start new game:', error);
+    }
 
     // Modal will be closed by parent component after onStart
   };
