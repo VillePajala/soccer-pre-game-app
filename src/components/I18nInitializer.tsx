@@ -6,20 +6,31 @@ import i18n from '../i18n'; // Import the initialized i18n instance
 
 // This component ensures i18n initialization happens on the client
 const I18nInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isI18nInitialized, setIsI18nInitialized] = useState(i18n.isInitialized);
+  const [isI18nInitialized, setIsI18nInitialized] = useState(false);
 
   useEffect(() => {
-    // Check if i18n is already initialized, if not wait for it
-    if (!i18n.isInitialized) {
-      const handleInitialized = () => {
+    // Wait for async i18n initialization to complete
+    const checkInitialization = () => {
+      if (i18n.isInitialized) {
         setIsI18nInitialized(true);
-      };
-      
-      i18n.on('initialized', handleInitialized);
-      return () => {
-        i18n.off('initialized', handleInitialized);
-      };
-    }
+      } else {
+        // Check again in 50ms if not yet initialized
+        setTimeout(checkInitialization, 50);
+      }
+    };
+
+    // Start checking
+    checkInitialization();
+
+    // Also listen for the initialized event in case it fires after we start checking
+    const handleInitialized = () => {
+      setIsI18nInitialized(true);
+    };
+    
+    i18n.on('initialized', handleInitialized);
+    return () => {
+      i18n.off('initialized', handleInitialized);
+    };
   }, []);
 
   if (!isI18nInitialized) {

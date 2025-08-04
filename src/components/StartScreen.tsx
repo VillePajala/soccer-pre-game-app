@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
-import i18n from '@/i18n';
+import i18n, { loadLanguage } from '@/i18n';
 import {
   updateAppSettings,
   getAppSettings,
@@ -11,6 +11,7 @@ import {
 import { AuthModal } from '@/components/auth/AuthModal';
 import { HiOutlineArrowRightOnRectangle, HiCheck } from 'react-icons/hi2';
 import { useAuth } from '@/context/AuthContext';
+import logger from '@/utils/logger';
 
 interface StartScreenProps {
   onStartNewGame: () => void;
@@ -42,7 +43,9 @@ const StartScreen: React.FC<StartScreenProps> = ({
     getAppSettings().then((settings) => {
       if (settings.language && settings.language !== language) {
         setLanguage(settings.language);
-        i18n.changeLanguage(settings.language);
+        loadLanguage(settings.language).catch(error => {
+          logger.warn('[StartScreen] Failed to load language:', error);
+        });
       }
     });
   }, [language]);
@@ -50,8 +53,11 @@ const StartScreen: React.FC<StartScreenProps> = ({
   useEffect(() => {
     // Only update if language actually changed from what's in i18n
     if (language !== i18n.language) {
-      i18n.changeLanguage(language);
-      updateAppSettings({ language }).catch(() => {});
+      loadLanguage(language).then(() => {
+        updateAppSettings({ language }).catch(() => {});
+      }).catch(error => {
+        logger.warn('[StartScreen] Failed to change language:', error);
+      });
     }
   }, [language]);
 
@@ -147,7 +153,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
         ) : (
           <div className="flex flex-col items-center space-y-3 sm:space-y-4 w-full max-h-[60vh] sm:max-h-none overflow-y-auto">
             {(() => {
-              console.log('[StartScreen] Render: canResume =', canResume, 'onResumeGame =', !!onResumeGame);
+              logger.debug('[StartScreen] Render: canResume =', canResume, 'onResumeGame =', !!onResumeGame);
               return canResume && onResumeGame ? (
                 <button className={buttonStyle} onClick={onResumeGame}>
                   {t('startScreen.resumeGame', 'Resume Last Game')}

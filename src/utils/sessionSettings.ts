@@ -1,5 +1,7 @@
 import { authAwareStorageManager as storageManager } from '@/lib/storage';
 import type { AppSettings } from './appSettings';
+import { isRecord } from '@/utils/typeGuards';
+import logger from '@/utils/logger';
 
 export interface SessionSettings {
   deviceFingerprint?: string;
@@ -17,14 +19,14 @@ export async function getDeviceFingerprint(): Promise<string | null> {
   try {
     const settings = await storageManager.getAppSettings();
     const fingerprint = settings?.deviceFingerprint ?? null;
-    console.log('Retrieved device fingerprint from storage:', {
+    logger.debug('Retrieved device fingerprint from storage:', {
       found: !!fingerprint,
       length: fingerprint?.length,
       ending: fingerprint?.slice(-10)
     });
     return fingerprint;
   } catch (error) {
-    console.error('Failed to get device fingerprint:', error);
+    logger.error('Failed to get device fingerprint:', error);
     return null;
   }
 }
@@ -46,12 +48,12 @@ export async function saveDeviceFingerprint(fingerprint: string): Promise<void> 
       currentGameId: currentSettings?.currentGameId ?? null,
     };
     await storageManager.saveAppSettings(updatedSettings);
-    console.log('Successfully saved device fingerprint to storage:', {
+    logger.debug('Successfully saved device fingerprint to storage:', {
       length: fingerprint.length,
       ending: fingerprint.slice(-10)
     });
   } catch (error) {
-    console.error('Failed to save device fingerprint:', error);
+    logger.error('Failed to save device fingerprint:', error);
   }
 }
 
@@ -65,10 +67,15 @@ export async function getSessionActivity(userId: string): Promise<unknown> {
 
   try {
     const settings = await storageManager.getAppSettings();
-    const sessionActivity = settings?.sessionActivity as Record<string, unknown>;
-    return sessionActivity?.[userId] ?? null;
+    const sessionActivity = settings?.sessionActivity;
+    
+    if (!isRecord(sessionActivity)) {
+      return null;
+    }
+    
+    return sessionActivity[userId] ?? null;
   } catch (error) {
-    console.error('Failed to get session activity:', error);
+    logger.error('Failed to get session activity:', error);
     return null;
   }
 }
@@ -83,7 +90,8 @@ export async function saveSessionActivity(userId: string, activity: unknown): Pr
 
   try {
     const currentSettings = await storageManager.getAppSettings();
-    const sessionActivity = (currentSettings?.sessionActivity as Record<string, unknown>) || {};
+    const existingActivity = currentSettings?.sessionActivity;
+    const sessionActivity = isRecord(existingActivity) ? existingActivity : {};
     
     const updatedSettings: AppSettings = {
       ...currentSettings,
@@ -96,7 +104,7 @@ export async function saveSessionActivity(userId: string, activity: unknown): Pr
     
     await storageManager.saveAppSettings(updatedSettings);
   } catch (error) {
-    console.error('Failed to save session activity:', error);
+    logger.error('Failed to save session activity:', error);
   }
 }
 
@@ -110,7 +118,8 @@ export async function removeSessionActivity(userId: string): Promise<void> {
 
   try {
     const currentSettings = await storageManager.getAppSettings();
-    const sessionActivity = (currentSettings?.sessionActivity as Record<string, unknown>) || {};
+    const existingActivity = currentSettings?.sessionActivity;
+    const sessionActivity = isRecord(existingActivity) ? { ...existingActivity } : {};
     
     delete sessionActivity[userId];
     
@@ -122,6 +131,6 @@ export async function removeSessionActivity(userId: string): Promise<void> {
     
     await storageManager.saveAppSettings(updatedSettings);
   } catch (error) {
-    console.error('Failed to remove session activity:', error);
+    logger.error('Failed to remove session activity:', error);
   }
 }

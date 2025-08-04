@@ -1,6 +1,7 @@
 import { QueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/config/queryKeys';
 import type { Player, SavedGamesCollection } from '@/types';
+import logger from '@/utils/logger';
 
 /**
  * Intelligent cache management utilities for selective invalidation and updates
@@ -166,7 +167,7 @@ export class CacheManager {
 
     // Don't wait for these to complete - they refresh in background
     Promise.allSettled(refreshPromises).catch((error) => {
-      console.warn('[CacheManager] Background refresh failed:', error);
+      logger.warn('[CacheManager] Background refresh failed:', error);
     });
   }
 

@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useEffect } from 'react'; // Added useEffect
 import { useTranslation } from 'react-i18next';
 import { Player } from '@/types'; // Import from types instead of page
+import logger from '@/utils/logger';
 
 interface GoalLogModalProps {
   isOpen: boolean;
@@ -69,7 +70,7 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
         onLogGoal(scorerId, assisterId || undefined); // Pass undefined if assisterId is empty
         // Don't call onClose() here - let the success handler close the modal
       } catch (error) {
-        console.error('Error logging goal:', error);
+        logger.error('Error logging goal:', error);
         // Modal stays open for retry
       }
     } else {
@@ -83,7 +84,7 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
       onLogOpponentGoal(currentTime); // Call the passed handler with the current time
       // Don't call onClose() here - let the success handler close the modal
     } catch (error) {
-      console.error('Error logging opponent goal:', error);
+      logger.error('Error logging opponent goal:', error);
       alert('Failed to log opponent goal. Please try again.');
       // Modal stays open for retry
     }

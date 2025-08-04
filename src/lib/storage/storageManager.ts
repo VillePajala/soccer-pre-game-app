@@ -6,6 +6,7 @@ import { SupabaseProvider } from './supabaseProvider';
 import type { Player, Season, Tournament } from '../../types';
 import type { AppSettings } from '../../utils/appSettings';
 import { safeConsoleError } from '../../utils/errorSanitization';
+import logger from '../../utils/logger';
 
 export class StorageManager implements IStorageProvider {
   private localStorage: LocalStorageProvider;
@@ -207,8 +208,8 @@ export class StorageManager implements IStorageProvider {
     const gameState = gameData as Record<string, unknown>;
     const gameEvents = gameState?.gameEvents as Array<Record<string, unknown>> || [];
     const assistEvents = gameEvents.filter((event: Record<string, unknown>) => event.assisterId) || [];
-    console.log(`[STORAGE_MANAGER] saveSavedGame called - Provider: ${this.currentProvider.constructor.name}`);
-    console.log(`[STORAGE_MANAGER] Events: ${gameEvents.length || 0}, Assist events: ${assistEvents.length}`);
+    logger.debug(`[STORAGE_MANAGER] saveSavedGame called - Provider: ${this.currentProvider.constructor.name}`);
+    logger.debug(`[STORAGE_MANAGER] Events: ${gameEvents.length || 0}, Assist events: ${assistEvents.length}`);
     
     return this.executeWithFallback(
       () => this.currentProvider.saveSavedGame(gameData),

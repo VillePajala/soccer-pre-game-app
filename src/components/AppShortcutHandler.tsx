@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import logger from '@/utils/logger';
 
 interface AppShortcutHandlerProps {
   onNewGame: () => void;
@@ -23,7 +24,7 @@ export default function AppShortcutHandler({
     const action = searchParams.get('action');
     
     if (action) {
-      console.log('[App Shortcuts] Handling action:', action);
+      logger.debug('[App Shortcuts] Handling action:', action);
       
       // Handle the shortcut action
       switch (action) {
@@ -40,7 +41,7 @@ export default function AppShortcutHandler({
           onManageRoster();
           break;
         default:
-          console.warn('[App Shortcuts] Unknown action:', action);
+          logger.warn('[App Shortcuts] Unknown action:', action);
       }
       
       // Clean up the URL parameter after handling

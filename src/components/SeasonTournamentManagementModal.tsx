@@ -8,6 +8,7 @@ import { HiPlusCircle, HiOutlinePencil, HiOutlineTrash, HiOutlineCheck, HiOutlin
 import { UseMutationResult } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import RosterSelection from './RosterSelection';
+import logger from '@/utils/logger';
 
 interface SeasonTournamentManagementModalProps {
     isOpen: boolean;
@@ -144,7 +145,7 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                         handleCancelEdit();
                     },
                     onError: (error) => {
-                        console.error('Failed to update season:', error);
+                        logger.error('Failed to update season:', error);
                         // Keep edit mode open so user can try again
                     }
                 });
@@ -154,7 +155,7 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                         handleCancelEdit();
                     },
                     onError: (error) => {
-                        console.error('Failed to update tournament:', error);
+                        logger.error('Failed to update tournament:', error);
                         // Keep edit mode open so user can try again
                     }
                 });

@@ -5,7 +5,8 @@ import SoccerField from '@/components/SoccerField';
 import PlayerBar from '@/components/PlayerBar';
 import ControlBar from '@/components/ControlBar';
 import TimerOverlay from '@/components/TimerOverlay';
-import GoalLogModal from '@/components/GoalLogModal';
+// Lazy load GoalLogModal since it's only used conditionally
+const GoalLogModal = React.lazy(() => import('@/components/GoalLogModal'));
 // Lazy load heavy modals for better performance
 const GameStatsModal = React.lazy(() => import('@/components/GameStatsModal'));
 const GameSettingsModal = React.lazy(() => import('@/components/GameSettingsModal'));
@@ -76,8 +77,7 @@ import { AppLoadingSkeleton } from '@/components/ui/AppSkeleton';
 // import { updateGameDetails as utilUpdateGameDetails } from '@/utils/savedGames';
 import { DEFAULT_GAME_ID } from '@/config/constants';
 // Storage keys no longer needed - using offline-first storage
-// Partial removal - exportAggregateJson, exportAggregateCsv still needed:
-import { exportAggregateJson, exportAggregateCsv } from '@/utils/exportGames';
+// Removed static import of export utilities - now using dynamic imports for better bundle splitting
 // Removed - now handled by useGameDataManager: exportJson, exportCsv
 // Removed - now handled by useGameDataManager:
 // import { useToast } from '@/contexts/ToastProvider';
@@ -793,7 +793,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   useEffect(() => {
     if (isAllSavedGamesQueryLoading) {
       logger.log('[EFFECT savedGames] Setting games list loading to true');
-      console.log('[HomePage] Setting isLoadingGamesList to true');
+      logger.debug('[HomePage] Setting isLoadingGamesList to true');
       setIsLoadingGamesList(true);
     }
   }, [isAllSavedGamesQueryLoading]);
@@ -801,7 +801,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   // Handle saved games data updates
   useEffect(() => {
     if (allSavedGamesQueryResultData) {
-      console.log('[HomePage] Received saved games data:', Object.keys(allSavedGamesQueryResultData).length, 'games');
+      logger.debug('[HomePage] Received saved games data:', Object.keys(allSavedGamesQueryResultData).length, 'games');
       setSavedGames(allSavedGamesQueryResultData || {});
       setIsLoadingGamesList(false);
     }
@@ -811,7 +811,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   useEffect(() => {
     if (isAllSavedGamesQueryError) {
       logger.error('[EFFECT savedGames] Error loading saved games:', allSavedGamesQueryErrorData);
-      console.error('[HomePage] Error loading games:', allSavedGamesQueryErrorData);
+      logger.error('[HomePage] Error loading games:', allSavedGamesQueryErrorData);
       setLoadGamesListError(t('loadGameModal.errors.listLoadFailed', 'Failed to load saved games list.'));
       setSavedGames({});
       setIsLoadingGamesList(false);
@@ -890,7 +890,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   useEffect(() => {
     if (isLoadingGamesList) {
       const timeout = setTimeout(() => {
-        console.error('[HomePage] Loading games timeout - forcing completion');
+        logger.error('[HomePage] Loading games timeout - forcing completion');
         setIsLoadingGamesList(false);
         setLoadGamesListError('Loading timed out. Please try again.');
       }, 15000); // 15 second timeout
@@ -1446,7 +1446,13 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       }
       return acc;
     }, {} as SavedGamesCollection);
-    exportAggregateJson(gamesData, aggregateStats);
+    // Dynamic import for better bundle splitting
+    import('@/utils/exportGames').then(({ exportAggregateJson }) => {
+      exportAggregateJson(gamesData, aggregateStats);
+    }).catch(error => {
+      logger.error('Failed to load export utilities:', error);
+      alert(t('export.error', 'Export failed. Please try again.'));
+    });
   }, [savedGames, t]);
 
   const handleExportAggregateCsv = useCallback((gameIds: string[], aggregateStats: import('@/types').PlayerStatRow[]) => {
@@ -1461,7 +1467,13 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       }
       return acc;
     }, {} as SavedGamesCollection);
-    exportAggregateCsv(gamesData, aggregateStats);
+    // Dynamic import for better bundle splitting
+    import('@/utils/exportGames').then(({ exportAggregateCsv }) => {
+      exportAggregateCsv(gamesData, aggregateStats);
+    }).catch(error => {
+      logger.error('Failed to load export utilities:', error);
+      alert(t('export.error', 'Export failed. Please try again.'));
+    });
   }, [savedGames, t]);
 
   // --- END AGGREGATE EXPORT HANDLERS ---
@@ -1867,14 +1879,28 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         />
       </React.Suspense>
       {/* Goal Log Modal */}
-      <GoalLogModal 
-        isOpen={isGoalLogModalOpen}
-        onClose={handleToggleGoalLogModal}
-        onLogGoal={handleAddGoalEvent}
-        onLogOpponentGoal={handleLogOpponentGoal} // ADDED: Pass the handler
-        availablePlayers={playersForCurrentGame} // MODIFIED: Pass players selected for the current game
-        currentTime={gameSessionState.timeElapsedInSeconds}
-      />
+      {isGoalLogModalOpen && (
+        <React.Suspense fallback={
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-slate-800 rounded-lg p-6 w-96 max-w-90vw">
+              <div className="animate-pulse">
+                <div className="h-6 bg-slate-700 rounded mb-4"></div>
+                <div className="h-20 bg-slate-700 rounded mb-4"></div>
+                <div className="h-10 bg-slate-700 rounded"></div>
+              </div>
+            </div>
+          </div>
+        }>
+          <GoalLogModal 
+            isOpen={isGoalLogModalOpen}
+            onClose={handleToggleGoalLogModal}
+            onLogGoal={handleAddGoalEvent}
+            onLogOpponentGoal={handleLogOpponentGoal} // ADDED: Pass the handler
+            availablePlayers={playersForCurrentGame} // MODIFIED: Pass players selected for the current game
+            currentTime={gameSessionState.timeElapsedInSeconds}
+          />
+        </React.Suspense>
+      )}
       {/* Game Stats Modal - Restore props for now */}
       {isGameStatsModalOpen && (
         <React.Suspense fallback={<GameStatsModalSkeleton />}>

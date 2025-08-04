@@ -17,7 +17,8 @@ import { GameEvent, SavedGamesCollection } from '@/types';
 import { getSeasons as utilGetSeasons } from '@/utils/seasons';
 import { getTournaments as utilGetTournaments } from '@/utils/tournaments';
 import { FaSort, FaSortUp, FaSortDown, FaEdit, FaSave, FaTimes, FaTrashAlt } from 'react-icons/fa';
-import PlayerStatsView from './PlayerStatsView';
+// Lazy load PlayerStatsView since it contains heavy Recharts dependencies
+const PlayerStatsView = React.lazy(() => import('./PlayerStatsView'));
 import { calculateSelectedPlayersTeamAverages } from '@/utils/assessmentStats';
 import RatingBar from './RatingBar';
 import { usePlayerStats } from '@/hooks/usePlayerStats';
@@ -785,13 +786,26 @@ const GameStatsModal: React.FC<GameStatsModalProps> = ({
                     </div>
                   </Combobox>
                 </div>
-                <PlayerStatsView
-                  player={selectedPlayer}
-                  savedGames={savedGames}
-                  onGameClick={onGameClick}
-                  seasons={seasons}
-                  tournaments={tournaments}
-                />
+                <React.Suspense fallback={
+                  <div className="p-6 bg-slate-800/40 rounded-lg">
+                    <div className="animate-pulse">
+                      <div className="h-6 bg-slate-700 rounded mb-4"></div>
+                      <div className="h-32 bg-slate-700 rounded mb-4"></div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="h-20 bg-slate-700 rounded"></div>
+                        <div className="h-20 bg-slate-700 rounded"></div>
+                      </div>
+                    </div>
+                  </div>
+                }>
+                  <PlayerStatsView
+                    player={selectedPlayer}
+                    savedGames={savedGames}
+                    onGameClick={onGameClick}
+                    seasons={seasons}
+                    tournaments={tournaments}
+                  />
+                </React.Suspense>
               </div>
             </div>
           ) : (

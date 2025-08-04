@@ -1,0 +1,143 @@
+# Cursor Rules for Soccer Pre-Game App
+
+## Commit Message Guidelines
+
+When creating git commits, follow these strict conventions:
+
+### Commit Message Format
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+### Type Categories (Required)
+- `feat`: New feature for the user
+- `fix`: Bug fix for the user
+- `docs`: Changes to documentation
+- `style`: Formatting, missing semicolons, etc (no code change)
+- `refactor`: Refactoring production code
+- `test`: Adding missing tests, refactoring tests
+- `chore`: Updating build tasks, package manager configs, etc
+- `perf`: Performance improvements
+- `ci`: Changes to CI configuration files and scripts
+- `build`: Changes to build system or external dependencies
+- `revert`: Reverts a previous commit
+
+### Scope Guidelines (Optional but Recommended)
+- `homepage`: Changes to HomePage component or main app orchestration
+- `components`: UI component changes
+- `hooks`: Custom hooks modifications
+- `utils`: Utility function changes
+- `types`: TypeScript type definitions
+- `storage`: LocalStorage or data persistence
+- `i18n`: Internationalization changes
+- `pwa`: Progressive Web App features
+- `game`: Core game logic and state management
+- `roster`: Player management functionality
+- `stats`: Statistics and analytics
+- `modal`: Modal components and management
+- `field`: Soccer field and tactical board
+- `timer`: Game timing functionality
+- `settings`: App configuration and settings
+
+### Subject Line Rules
+- Use imperative mood ("Add feature" not "Added feature")
+- Keep under 50 characters
+- Don't end with a period
+- Capitalize first letter
+- Be specific and descriptive
+
+### Body Guidelines (Optional)
+- Wrap at 72 characters
+- Explain what and why, not how
+- Use bullet points for multiple changes
+- Reference issues/PRs when relevant
+
+### Footer Guidelines (Optional)
+- Reference breaking changes: `BREAKING CHANGE: <description>`
+- Reference closed issues: `Closes #123, #456`
+- Co-authored commits: `Co-authored-by: Name <email>`
+
+### Examples of Good Commit Messages
+
+```
+feat(roster): add player assessment modal with rating system
+
+- Implement PlayerAssessmentModal component with 5-star ratings
+- Add assessment data persistence to localStorage
+- Include assessment history tracking
+- Update roster modal to show assessment indicators
+
+Closes #45
+```
+
+```
+fix(timer): resolve timer synchronization issues during period transitions
+
+The timer was not properly pausing when transitioning between periods,
+causing time calculations to be incorrect. Fixed by ensuring timer state
+is properly managed during game status changes.
+
+Fixes #123
+```
+
+```
+refactor(homepage): extract components from 2,081-line monolith
+
+- Create GameStateProvider for centralized state management
+- Extract GameView component for visual interface
+- Extract GameControls component for control bar
+- Extract ModalManager for modal coordination
+- Reduce HomePage to 350-line orchestrator
+
+This improves maintainability and follows separation of concerns.
+Part of Issue #1 from production readiness plan.
+```
+
+```
+chore(deps): update React to v19 and Next.js to v15
+
+- Update React from 18.3.1 to 19.0.0
+- Update Next.js from 14.2.5 to 15.0.0
+- Update related dependencies for compatibility
+- Run tests to ensure no breaking changes
+```
+
+### Anti-Patterns to Avoid
+
+❌ Bad examples:
+- `fix stuff`
+- `update file`
+- `changes`
+- `wip`
+- `fixed bug in homepage component that was causing issues`
+
+### Special Commit Types
+
+For this project, also use these when appropriate:
+- `migrate`: Database/storage migration changes
+- `security`: Security-related fixes or improvements
+- `i18n`: Internationalization updates
+- `a11y`: Accessibility improvements
+
+### Production Deployment Guidelines
+
+For commits going to master/production:
+- Always include comprehensive testing information
+- Reference the production readiness checklist items
+- Include performance impact assessment if applicable
+- Mention any required environment variable changes
+
+### Claude Code Integration
+
+When Claude Code creates commits, always include:
+```
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+This helps track AI-assisted development for project history and debugging.

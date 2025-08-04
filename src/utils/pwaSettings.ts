@@ -1,5 +1,6 @@
 import { OfflineFirstStorageManager } from '@/lib/storage/offlineFirstStorageManager';
 import type { AppSettings } from './appSettings';
+import logger from '@/utils/logger';
 
 export interface PWASettings {
   installPromptCount: number;
@@ -46,7 +47,7 @@ export async function getPWASettings(): Promise<PWASettings> {
       installPromptDismissed: settings?.installPromptDismissed ?? DEFAULT_PWA_SETTINGS.installPromptDismissed,
     };
   } catch (error) {
-    console.error('Failed to get PWA settings:', error);
+    logger.error('Failed to get PWA settings:', error);
     return DEFAULT_PWA_SETTINGS;
   }
 }
@@ -70,7 +71,7 @@ export async function savePWASettings(updates: Partial<PWASettings>): Promise<vo
     
     await getStorageManager().saveAppSettings(updatedSettings);
   } catch (error) {
-    console.error('Failed to save PWA settings:', error);
+    logger.error('Failed to save PWA settings:', error);
   }
 }
 

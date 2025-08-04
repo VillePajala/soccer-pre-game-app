@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import i18n from '../i18n';
+import i18n, { loadLanguage } from '../i18n';
 import {
   saveHasSeenAppGuide,
   resetAppSettings as utilResetAppSettings,
@@ -38,8 +38,11 @@ export const useAppSettingsManager = ({
   useEffect(() => {
     // Only update if language actually changed
     if (i18n.language !== appLanguage) {
-      i18n.changeLanguage(appLanguage);
-      utilUpdateAppSettings({ language: appLanguage }).catch(() => {});
+      loadLanguage(appLanguage).then(() => {
+        utilUpdateAppSettings({ language: appLanguage }).catch(() => {});
+      }).catch(error => {
+        logger.warn('[useAppSettingsManager] Failed to change language:', error);
+      });
     }
   }, [appLanguage]);
 

@@ -1,4 +1,8 @@
-import { authAwareStorageManager as storageManager } from '@/lib/storage';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// Removed unused import: import { authAwareStorageManager as storageManager } from '@/lib/storage';
+import { getTypedSavedGames, getTypedMasterRoster, saveTypedGame } from '@/utils/typedStorageHelpers';
+import { isAppState } from '@/utils/typeGuards';
+// Removed unused import: import { isPlayer } from '@/utils/typeGuards';
 import logger from '@/utils/logger';
 import type { Player } from '@/types';
 
@@ -18,7 +22,7 @@ export async function fixGameEventPlayerIds(): Promise<{
     logger.log('[FixGameEventPlayerIds] Starting player ID fix process...');
     
     // Get current players from the roster
-    const currentPlayers = await storageManager.getPlayers();
+    const currentPlayers = await getTypedMasterRoster();
     if (!currentPlayers || currentPlayers.length === 0) {
       return {
         success: false,
@@ -33,7 +37,7 @@ export async function fixGameEventPlayerIds(): Promise<{
     });
     
     // Get all saved games
-    const savedGames = await storageManager.getSavedGames() as Record<string, unknown>;
+    const savedGames = await getTypedSavedGames();
     if (!savedGames || Object.keys(savedGames).length === 0) {
       return {
         success: false,
@@ -46,22 +50,25 @@ export async function fixGameEventPlayerIds(): Promise<{
     
     // Process each game
     for (const [gameId, game] of Object.entries(savedGames)) {
-      if (!game || typeof game !== 'object') continue;
+      if (!isAppState(game)) {
+        logger.warn(`[FixGameEventPlayerIds] Invalid game data for ${gameId}, skipping`);
+        continue;
+      }
       
-      const gameData = { ...game } as Record<string, unknown>;
+      const gameData = { ...game };
       let gameModified = false;
       
       // Fix player IDs in game events
       if (gameData.gameEvents && Array.isArray(gameData.gameEvents)) {
-        const updatedEvents = (gameData.gameEvents as Array<Record<string, unknown>>).map(event => {
+        const updatedEvents = gameData.gameEvents.map((event: any) => {
           let eventModified = false;
           const updatedEvent = { ...event };
           
           // Fix scorerId
           if (event.scorerId && typeof event.scorerId === 'string') {
             // Try to find the player in availablePlayers to get their name
-            const availablePlayers = gameData.availablePlayers as Array<Record<string, unknown>> || [];
-            const scorer = availablePlayers.find(p => p.id === event.scorerId);
+            const availablePlayers = gameData.availablePlayers || [];
+            const scorer = availablePlayers.find((p: any) => p.id === event.scorerId);
             
             if (scorer && scorer.name && typeof scorer.name === 'string') {
               const currentId = playerNameToIdMap[scorer.name];
@@ -76,9 +83,8 @@ export async function fixGameEventPlayerIds(): Promise<{
           // Fix assisterId
           if (event.assisterId && typeof event.assisterId === 'string') {
             // Try to find the player in availablePlayers to get their name
-            const availablePlayers = gameData.availablePlayers as Array<Record<string, unknown>> || [];
-            const assister = availablePlayers.find(p => p.id === event.assisterId);
-            
+            const availablePlayers = gameData.availablePlayers || [];
+            const assister = availablePlayers.find((p: any) => p.id === event.assisterId);            
             if (assister && assister.name && typeof assister.name === 'string') {
               const currentId = playerNameToIdMap[assister.name];
               if (currentId && currentId !== event.assisterId) {
@@ -98,15 +104,14 @@ export async function fixGameEventPlayerIds(): Promise<{
         });
         
         if (gameModified) {
-          gameData.gameEvents = updatedEvents;
-        }
+          gameData.gameEvents = updatedEvents as any;        }
       }
       
       // Fix selectedPlayerIds
       if (gameData.selectedPlayerIds && Array.isArray(gameData.selectedPlayerIds)) {
-        const availablePlayers = gameData.availablePlayers as Array<Record<string, unknown>> || [];
-        const updatedSelectedIds = (gameData.selectedPlayerIds as string[]).map(oldId => {
-          const player = availablePlayers.find(p => p.id === oldId);
+        const availablePlayers = gameData.availablePlayers || [];
+        const updatedSelectedIds = gameData.selectedPlayerIds.map(oldId => {
+          const player = availablePlayers.find((p: any) => p.id === oldId);
           if (player && player.name && typeof player.name === 'string') {
             const currentId = playerNameToIdMap[player.name];
             if (currentId && currentId !== oldId) {
@@ -124,7 +129,7 @@ export async function fixGameEventPlayerIds(): Promise<{
       
       // Fix availablePlayers
       if (gameData.availablePlayers && Array.isArray(gameData.availablePlayers)) {
-        gameData.availablePlayers = (gameData.availablePlayers as Array<Record<string, unknown>>).map(player => {
+        gameData.availablePlayers = gameData.availablePlayers.map((player: any) => {
           if (player.name && typeof player.name === 'string') {
             const currentId = playerNameToIdMap[player.name];
             if (currentId && currentId !== player.id) {
@@ -138,7 +143,7 @@ export async function fixGameEventPlayerIds(): Promise<{
       
       // Fix playersOnField
       if (gameData.playersOnField && Array.isArray(gameData.playersOnField)) {
-        gameData.playersOnField = (gameData.playersOnField as Array<Record<string, unknown>>).map(player => {
+        gameData.playersOnField = gameData.playersOnField.map((player: any) => {
           if (player.name && typeof player.name === 'string') {
             const currentId = playerNameToIdMap[player.name];
             if (currentId && currentId !== player.id) {
@@ -152,9 +157,13 @@ export async function fixGameEventPlayerIds(): Promise<{
       
       // Save the updated game if it was modified
       if (gameModified) {
-        await storageManager.saveSavedGame(gameData);
-        gamesFixed++;
-        logger.log(`[FixGameEventPlayerIds] Fixed game ${gameId}`);
+        const success = await saveTypedGame(gameData);
+        if (success) {
+          gamesFixed++;
+          logger.log(`[FixGameEventPlayerIds] Fixed game ${gameId}`);
+        } else {
+          logger.error(`[FixGameEventPlayerIds] Failed to save fixed game ${gameId}`);
+        }
       }
     }
     

@@ -71,7 +71,9 @@ describe('EnhancedServiceWorkerRegistration', () => {
 
   describe('Service Worker Registration', () => {
     it('should register enhanced service worker on mount', async () => {
-      render(<EnhancedServiceWorkerRegistration />);
+      await act(async () => {
+        render(<EnhancedServiceWorkerRegistration />);
+      });
 
       await waitFor(() => {
         expect(navigator.serviceWorker.register).toHaveBeenCalledWith('/sw-enhanced.js', {
@@ -85,7 +87,9 @@ describe('EnhancedServiceWorkerRegistration', () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
       (navigator.serviceWorker.register as jest.Mock).mockRejectedValue(new Error('Registration failed'));
 
-      render(<EnhancedServiceWorkerRegistration />);
+      await act(async () => {
+        render(<EnhancedServiceWorkerRegistration />);
+      });
 
       await waitFor(() => {
         expect(consoleSpy).toHaveBeenCalledWith(
@@ -109,7 +113,9 @@ describe('EnhancedServiceWorkerRegistration', () => {
       };
       (navigator.serviceWorker.register as jest.Mock).mockResolvedValue(registration);
 
-      render(<EnhancedServiceWorkerRegistration />);
+      await act(async () => {
+        render(<EnhancedServiceWorkerRegistration />);
+      });
 
       // Simulate update found event
       const updateFoundCallback = mockAddEventListener.mock.calls

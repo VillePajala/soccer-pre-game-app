@@ -21,7 +21,7 @@ import {
   updateTournamentLegacy as utilUpdateTournamentLegacy, 
   addTournament as utilAddTournament 
 } from '@/utils/tournaments';
-import { exportJson, exportCsv } from '@/utils/exportGames';
+// Removed static import - using dynamic imports for better bundle splitting: exportJson, exportCsv
 import { queryKeys } from '@/config/queryKeys';
 import { DEFAULT_GAME_ID } from '@/config/constants';
 import logger from '@/utils/logger';
@@ -347,8 +347,13 @@ export const useGameDataManager = ({
   const handleExportOneJson = useCallback((gameId: string, seasons: Season[] = [], tournaments: Tournament[] = []) => {
     const gameData = savedGames[gameId];
     if (gameData) {
-      exportJson(gameId, gameData, seasons, tournaments);
-      logger.log(`[useGameDataManager] Exported game ${gameId} as JSON`);
+      // Dynamic import for better bundle splitting
+      import('@/utils/exportGames').then(({ exportJson }) => {
+        exportJson(gameId, gameData, seasons, tournaments);
+        logger.log(`[useGameDataManager] Exported game ${gameId} as JSON`);
+      }).catch(error => {
+        logger.error(`[useGameDataManager] Failed to load export utilities for JSON export:`, error);
+      });
     } else {
       logger.error(`[useGameDataManager] Game ${gameId} not found for JSON export`);
     }
@@ -357,8 +362,13 @@ export const useGameDataManager = ({
   const handleExportOneCsv = useCallback((gameId: string, players: Player[], seasons: Season[] = [], tournaments: Tournament[] = []) => {
     const gameData = savedGames[gameId];
     if (gameData) {
-      exportCsv(gameId, gameData, players, seasons, tournaments);
-      logger.log(`[useGameDataManager] Exported game ${gameId} as CSV`);
+      // Dynamic import for better bundle splitting
+      import('@/utils/exportGames').then(({ exportCsv }) => {
+        exportCsv(gameId, gameData, players, seasons, tournaments);
+        logger.log(`[useGameDataManager] Exported game ${gameId} as CSV`);
+      }).catch(error => {
+        logger.error(`[useGameDataManager] Failed to load export utilities for CSV export:`, error);
+      });
     } else {
       logger.error(`[useGameDataManager] Game ${gameId} not found for CSV export`);
     }

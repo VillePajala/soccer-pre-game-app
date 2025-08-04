@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import { authAwareStorageManager as storageManager } from '@/lib/storage';
 import { useAuth } from '@/context/AuthContext';
+import logger from '@/utils/logger';
 
 export default function ImportBackupPage() {
   const { user } = useAuth();
@@ -265,8 +266,8 @@ export default function ImportBackupPage() {
         }
       } catch (error) {
         addLog(`Failed to import game ${gameId}: ${error}`, 'error');
-        console.error('Game import error:', error);
-        console.error('Game data that failed:', game);
+        logger.error('Game import error:', error);
+        logger.error('Game data that failed:', game);
       }
     }
     addLog(`Imported ${stats.games}/${gameIds.length} games`, 'success');
