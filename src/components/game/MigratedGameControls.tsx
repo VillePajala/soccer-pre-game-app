@@ -7,7 +7,7 @@ import {
   useGameSession 
 } from '@/stores/gameStore';
 import { 
-  useGameView
+  useGameView,\n  useUIStore
 } from '@/stores/uiStore';
 import type { ExtendedGameControlsProps } from './GameControls.migration';
 
@@ -71,7 +71,7 @@ export const MigratedGameControls = React.memo<ExtendedGameControlsProps>(({
   const gameSession = useGameSession();
   // const { timeElapsed, isRunning } = useGameTimer(); // TODO: Use when needed
   const gameStore = useGameStore();
-  // const uiStore = useUIStore(); // TODO: Use when implementing UI state
+  const uiStore = useUIStore();
   // const modals = useModalState(); // TODO: Use when implementing modal state
   const gameView = useGameView();
   // const { isEnabled: isTacticsBoardEnabled } = useTacticsBoard(); // TODO: Use when implementing tactics board state

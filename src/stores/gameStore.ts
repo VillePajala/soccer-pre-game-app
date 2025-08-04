@@ -16,9 +16,11 @@ import type {
   Opponent, 
   GameEvent, 
   Point, 
-  TacticalDisc,
-  GameStatus 
+  TacticalDisc
 } from '@/types';
+
+// Game status type - define locally since not exported from types
+type GameStatus = 'not_started' | 'in_progress' | 'period_end' | 'game_end';
 
 // Game session state (replaces GameSessionReducer useState calls)
 export interface GameSessionState {

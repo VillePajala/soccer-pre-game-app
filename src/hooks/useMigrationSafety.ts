@@ -16,7 +16,7 @@ import {
   type MigrationState,
   type MigrationFlags
 } from '@/utils/stateMigration';
-import { logger } from '@/utils/logger';
+import logger from '@/utils/logger';
 
 /**
  * Hook for managing component-level migration safety

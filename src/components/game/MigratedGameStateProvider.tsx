@@ -2,14 +2,14 @@
 
 import React, { createContext, useContext, useEffect, useCallback, useMemo } from 'react';
 import { GameStateContextType } from '@/types/gameComponents';
-import { Player, AppState, Point, Opponent } from '@/types';
+import { Player, AppState, Point, Opponent, GameEvent } from '@/types';
 import { 
   useGameStore, 
   useGameSession, 
   useFieldState,
   useGameTimer,
   useGameScore,
-  // type GameSessionState as ZustandGameSessionState // TODO: Remove if not needed 
+  type GameSessionState,\n  type FieldState 
 } from '@/stores/gameStore';
 import { DEFAULT_GAME_ID } from '@/config/constants';
 import logger from '@/utils/logger';
@@ -89,37 +89,37 @@ export function MigratedGameStateProvider({
     
     switch (action.type) {
       case 'SET_TEAM_NAME':
-        gameStore.setTeamName(action.payload);
+        gameStore.setTeamName(action.payload as string);
         break;
       case 'SET_OPPONENT_NAME':
-        gameStore.setOpponentName(action.payload);
+        gameStore.setOpponentName(action.payload as string);
         break;
       case 'SET_GAME_DATE':
-        gameStore.setGameDate(action.payload);
+        gameStore.setGameDate(action.payload as string);
         break;
       case 'SET_HOME_SCORE':
-        setHomeScore(action.payload);
+        setHomeScore(action.payload as number);
         break;
       case 'SET_AWAY_SCORE':
-        setAwayScore(action.payload);
+        setAwayScore(action.payload as number);
         break;
       case 'SET_GAME_NOTES':
-        gameStore.setGameNotes(action.payload);
+        gameStore.setGameNotes(action.payload as string);
         break;
       case 'SET_HOME_OR_AWAY':
-        gameStore.setHomeOrAway(action.payload);
+        gameStore.setHomeOrAway(action.payload as 'home' | 'away');
         break;
       case 'SET_NUMBER_OF_PERIODS':
-        gameStore.setNumberOfPeriods(action.payload);
+        gameStore.setNumberOfPeriods(action.payload as number);
         break;
       case 'SET_PERIOD_DURATION':
-        gameStore.setPeriodDuration(action.payload);
+        gameStore.setPeriodDuration(action.payload as number);
         break;
       case 'SET_GAME_STATUS':
         gameStore.setGameStatus(action.payload);
         break;
       case 'SET_CURRENT_PERIOD':
-        setCurrentPeriod(action.payload);
+        setCurrentPeriod(action.payload as number);
         break;
       case 'START_TIMER':
         setTimerRunning(true);
@@ -128,52 +128,52 @@ export function MigratedGameStateProvider({
         setTimerRunning(false);
         break;
       case 'SET_TIME_ELAPSED':
-        setTimeElapsed(action.payload);
+        setTimeElapsed(action.payload as number);
         break;
       case 'RESET_TIMER':
         gameStore.resetTimer();
         break;
       case 'SET_SELECTED_PLAYER_IDS':
-        gameStore.setSelectedPlayerIds(action.payload);
+        gameStore.setSelectedPlayerIds(action.payload as string[]);
         break;
       case 'ADD_GAME_EVENT':
-        gameStore.addGameEvent(action.payload);
+        gameStore.addGameEvent(action.payload as GameEvent);
         break;
       case 'UPDATE_GAME_EVENT':
-        gameStore.updateGameEvent(action.payload.id, action.payload.updates);
+        gameStore.updateGameEvent((action.payload as any).id, (action.payload as any).updates);
         break;
       case 'REMOVE_GAME_EVENT':
-        gameStore.removeGameEvent(action.payload);
+        gameStore.removeGameEvent(action.payload as string);
         break;
       case 'SET_SEASON_ID':
-        gameStore.setSeasonId(action.payload);
+        gameStore.setSeasonId(action.payload as string);
         break;
       case 'SET_TOURNAMENT_ID':
-        gameStore.setTournamentId(action.payload);
+        gameStore.setTournamentId(action.payload as string);
         break;
       case 'SET_AGE_GROUP':
-        gameStore.setAgeGroup(action.payload);
+        gameStore.setAgeGroup(action.payload as string);
         break;
       case 'SET_TOURNAMENT_LEVEL':
-        gameStore.setTournamentLevel(action.payload);
+        gameStore.setTournamentLevel(action.payload as string);
         break;
       case 'SET_GAME_LOCATION':
-        gameStore.setGameLocation(action.payload);
+        gameStore.setGameLocation(action.payload as string);
         break;
       case 'SET_GAME_TIME':
-        gameStore.setGameTime(action.payload);
+        gameStore.setGameTime(action.payload as string);
         break;
       case 'SET_DEMAND_FACTOR':
-        gameStore.setDemandFactor(action.payload);
+        gameStore.setDemandFactor(action.payload as number);
         break;
       case 'SET_SUB_INTERVAL':
-        gameStore.setSubInterval(action.payload);
+        gameStore.setSubInterval(action.payload as number);
         break;
       case 'SET_SHOW_PLAYER_NAMES':
-        gameStore.setShowPlayerNames(action.payload);
+        gameStore.setShowPlayerNames(action.payload as boolean);
         break;
       case 'LOAD_STATE_FROM_HISTORY':
-        gameStore.loadGameState(action.payload);
+        gameStore.loadGameState(action.payload as Partial<GameSessionState & FieldState>);
         break;
       case 'RESET_TO_INITIAL_STATE':
         gameStore.resetGameSession();

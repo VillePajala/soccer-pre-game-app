@@ -9,7 +9,7 @@
 import type { GameStore, GameSessionState, FieldState } from '@/stores/gameStore';
 import type { UIStore, ModalState, ViewState } from '@/stores/uiStore';
 import type { PersistenceStore, AppSettings } from '@/stores/persistenceStore';
-import { logger } from './logger';
+import logger from './logger';
 
 // Migration feature flags
 export interface MigrationFlags {

@@ -21,7 +21,7 @@ import type {
 } from '@/types';
 import { getTypedSavedGames, saveTypedGame, getTypedMasterRoster } from '@/utils/typedStorageHelpers';
 import { authAwareStorageManager as storageManager } from '@/lib/storage';
-import { logger } from '@/utils/logger';
+import logger from '@/utils/logger';
 
 // App settings interface
 export interface AppSettings {
