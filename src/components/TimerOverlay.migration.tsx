@@ -50,7 +50,20 @@ const TimerOverlay: React.FC<TimerOverlayProps> = (props) => {
   }
   
   if (shouldUseLegacy) {
-    return <LegacyTimerOverlay {...props} />;
+    // Convert number[] to IntervalLog[] for legacy component if needed
+    const legacyProps = {
+      ...props,
+      completedIntervalDurations: Array.isArray(props.completedIntervalDurations) && 
+        props.completedIntervalDurations.length > 0 && 
+        typeof props.completedIntervalDurations[0] === 'number'
+        ? (props.completedIntervalDurations as number[]).map((duration, index) => ({
+            period: index + 1,
+            duration,
+            timestamp: Date.now() - (duration * 1000)
+          }))
+        : props.completedIntervalDurations as IntervalLog[]
+    };
+    return <LegacyTimerOverlay {...legacyProps} />;
   }
   
   return <MigratedTimerOverlay {...props} />;

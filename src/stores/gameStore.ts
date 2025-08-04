@@ -453,6 +453,7 @@ export const useGameStore = create<GameStore>()(
         
         updateGameEvent: (eventId, updates) => set(
           (state) => ({ 
+            ...state,
             gameSession: { 
               ...state.gameSession, 
               gameEvents: state.gameSession.gameEvents.map(event => 
