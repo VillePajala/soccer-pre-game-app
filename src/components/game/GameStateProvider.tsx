@@ -59,7 +59,7 @@ const createInitialGameSessionState = (): GameSessionState => ({
   completedIntervalDurations: [],
   lastSubConfirmationTimeSeconds: 0,
   nextSubDueTimeSeconds: 0,
-  subAlertLevel: 'none' as 'none' | 'low' | 'medium' | 'high',
+  subAlertLevel: 'none' as 'none' | 'warning' | 'due',
 });
 
 interface GameStateProviderProps {
@@ -125,7 +125,7 @@ export function GameStateProvider({
       } else if (key === 'opponentName') {
         dispatchGameSession({ type: 'SET_OPPONENT_NAME', payload: value as string });
       } else if (key === 'gameStatus') {
-        dispatchGameSession({ type: 'SET_GAME_STATUS', payload: value as string });
+        dispatchGameSession({ type: 'SET_GAME_STATUS', payload: value as 'notStarted' | 'inProgress' | 'periodEnd' | 'gameEnd' });
       }
       // Add more specific action dispatches as needed
     });

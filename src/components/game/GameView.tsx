@@ -7,6 +7,7 @@ import GameInfoBar from '@/components/GameInfoBar';
 import TimerOverlay from '@/components/TimerOverlay';
 import { GameViewProps } from '@/types/gameComponents';
 import { useGameStateContext } from './GameStateProvider';
+import { Point, TacticalDisc, Opponent } from '@/types';
 
 interface ExtendedGameViewProps extends Partial<GameViewProps> {
   // UI state
@@ -86,7 +87,8 @@ export function GameView({
   // Timer and game state
   timeElapsedInSeconds = 0,
   isTimerRunning = false,
-  subAlertLevel: _subAlertLevel = 0,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  subAlertLevel = 0,
   lastSubConfirmationTimeSeconds = 0,
   
   // Tactical board state
@@ -105,7 +107,8 @@ export function GameView({
   handleTeamNameChange,
   handleOpponentNameChange,
   handlePlayerMove,
-  handlePlayerMoveEnd: _handlePlayerMoveEnd,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  handlePlayerMoveEnd,
   handlePlayerRemove,
   handleOpponentMove,
   handleOpponentMoveEnd,
@@ -180,7 +183,7 @@ export function GameView({
         {showLargeTimerOverlay && (
           <TimerOverlay
             timeElapsedInSeconds={timeElapsedInSeconds}
-            subAlertLevel={'none' as 'none' | 'low' | 'medium' | 'high'}
+            subAlertLevel={'none' as 'none' | 'warning' | 'due'}
             onSubstitutionMade={handleSubstitutionMade || (() => {})}
             completedIntervalDurations={gameState.completedIntervalDurations || []}
             subIntervalMinutes={gameState.subIntervalMinutes}
@@ -209,13 +212,13 @@ export function GameView({
         {/* Soccer Field */}
         <SoccerField
           players={playersOnField}
-          opponents={opponents as Player[]}
-          drawings={(isTacticsBoardView ? tacticalDrawings : drawings) as unknown[]}
-          onPlayerMove={handlePlayerMove ? (_playerId: string, _relX: number, _relY: number) => handlePlayerMove(_playerId, { relX: _relX, relY: _relY }) : ((_playerId: string, _relX: number, _relY: number) => {})}
+          opponents={opponents as Opponent[]}
+          drawings={(isTacticsBoardView ? tacticalDrawings : drawings) as Point[][]}
+          onPlayerMove={handlePlayerMove ? (playerId: string, relX: number, relY: number) => handlePlayerMove(playerId, { relX, relY }) : (() => {})}
           onPlayerMoveEnd={() => {}}
-          onPlayerRemove={handlePlayerRemove || ((_playerId: string) => {})}
-          onOpponentMove={handleOpponentMove ? (_opponentId: string, _relX: number, _relY: number) => handleOpponentMove(_opponentId, { relX: _relX, relY: _relY }) : ((_opponentId: string, _relX: number, _relY: number) => {})}
-          onOpponentMoveEnd={handleOpponentMoveEnd ? (_opponentId: string) => handleOpponentMoveEnd(_opponentId, { relX: 0, relY: 0 }) : ((_opponentId: string) => {})}
+          onPlayerRemove={handlePlayerRemove || (() => {})}
+          onOpponentMove={handleOpponentMove ? (opponentId: string, relX: number, relY: number) => handleOpponentMove(opponentId, { relX, relY }) : (() => {})}
+          onOpponentMoveEnd={handleOpponentMoveEnd ? (opponentId: string) => handleOpponentMoveEnd(opponentId, { relX: 0, relY: 0 }) : (() => {})}
           onOpponentRemove={handleOpponentRemove || (() => {})}
           onPlayerDrop={handleDropOnField || (() => {})}
           showPlayerNames={gameState.showPlayerNames}
@@ -227,11 +230,11 @@ export function GameView({
           onPlayerDragCancelViaTouch={handlePlayerDragCancelViaTouch || (() => {})}
           timeElapsedInSeconds={timeElapsedInSeconds}
           isTacticsBoardView={isTacticsBoardView}
-          tacticalDiscs={(tacticalDiscs as unknown[]) || []}
+          tacticalDiscs={(tacticalDiscs as TacticalDisc[]) || []}
           onTacticalDiscMove={handleTacticalDiscMove || (() => {})}
           onTacticalDiscRemove={handleTacticalDiscRemove || (() => {})}
           onToggleTacticalDiscType={handleToggleTacticalDiscType || (() => {})}
-          tacticalBallPosition={(tacticalBallPosition as unknown) || null}
+          tacticalBallPosition={(tacticalBallPosition as Point) || null}
           onTacticalBallMove={handleTacticalBallMove || (() => {})}
         />
       </div>

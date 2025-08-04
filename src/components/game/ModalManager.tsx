@@ -4,6 +4,7 @@ import React from 'react';
 import GoalLogModal from '@/components/GoalLogModal';
 import { ModalManagerProps } from '@/types/gameComponents';
 import { useGameStateContext } from './GameStateProvider';
+import { Player, GameEvent } from '@/types';
 
 // Lazy load heavy modals for better performance
 const GameStatsModal = React.lazy(() => import('@/components/GameStatsModal'));
@@ -281,7 +282,7 @@ export function ModalManager({
             availablePlayers={players}
             gameEvents={gameData.gameEvents}
             gameNotes={gameData.gameNotes}
-            onUpdateGameEvent={handleUpdateGameEvent ? (updatedEvent: any) => handleUpdateGameEvent(updatedEvent.id, updatedEvent) : undefined}
+            onUpdateGameEvent={handleUpdateGameEvent ? (updatedEvent: GameEvent) => handleUpdateGameEvent(updatedEvent.id, updatedEvent) : undefined}
             selectedPlayerIds={gameData.selectedPlayerIds}
             savedGames={savedGames}
             currentGameId={modalData?.processingGameId || null}
@@ -290,7 +291,7 @@ export function ModalManager({
             onExportOneCsv={handleExportOneCsvWrapper}
             onExportAggregateJson={handleExportAggregateJson}
             onExportAggregateCsv={handleExportAggregateCsv}
-            initialSelectedPlayerId={(selectedPlayerForStats as any)?.id}
+            initialSelectedPlayerId={(selectedPlayerForStats as Record<string, unknown>)?.id as string | undefined}
             onGameClick={handleGameLogClick}
           />
         </React.Suspense>
@@ -302,10 +303,10 @@ export function ModalManager({
           isOpen={modalStates.isLoadGameModalOpen}
           onClose={handleCloseLoadGameModal || (() => onCloseModal?.('isLoadGameModalOpen'))}
           savedGames={savedGames} 
-          onLoad={onLoadGame || ((gameId: string) => {})}
-          onDelete={onDeleteGame || ((gameId: string) => {})}
-          onExportOneJson={handleExportOneJsonWrapper || ((gameId: string) => {})}
-          onExportOneCsv={handleExportOneCsvWrapper || ((gameId: string) => {})}
+          onLoad={onLoadGame || (() => {})}
+          onDelete={onDeleteGame || (() => {})}
+          onExportOneJson={handleExportOneJsonWrapper || (() => {})}
+          onExportOneCsv={handleExportOneCsvWrapper || (() => {})}
           currentGameId={modalData?.processingGameId || undefined}
           isLoadingGamesList={modalData?.isLoadingGamesList}
           loadGamesListError={modalData?.loadGamesListError}
@@ -323,29 +324,13 @@ export function ModalManager({
             initialPlayerSelection={playerIdsForNewGame || null}
             availablePlayers={players}
             demandFactor={newGameDemandFactor}
-            onDemandFactorChange={setNewGameDemandFactor || ((factor: number) => {})}
-            onStart={handleStartNewGameWithSetup ? handleStartNewGameWithSetup as unknown as typeof handleStartNewGameWithSetup : (async (
-              _initialSelectedPlayerIds: string[],
-              _homeTeamName: string,
-              _opponentName: string, 
-              _gameDate: string, 
-              _gameLocation: string, 
-              _gameTime: string,
-              _seasonId: string | null,
-              _tournamentId: string | null,
-              _numPeriods: 1 | 2,
-              _periodDuration: number,
-              _homeOrAway: 'home' | 'away',
-              _demandFactor: number,
-              _ageGroup: string,
-              _tournamentLevel: string,
-              _isPlayed: boolean
-            ): Promise<void> => {})}
+            onDemandFactorChange={setNewGameDemandFactor || (() => {})}
+            onStart={handleStartNewGameWithSetup as (...args: unknown[]) => Promise<void> || (async (): Promise<void> => {})}
             onCancel={handleCancelNewGameSetup || (() => {})}
-            addSeasonMutation={addSeasonMutation as any}
-            addTournamentMutation={addTournamentMutation as any}
-            isAddingSeason={(addSeasonMutation as any)?.isPending}
-            isAddingTournament={(addTournamentMutation as any)?.isPending}
+            addSeasonMutation={addSeasonMutation as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+            addTournamentMutation={addTournamentMutation as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+            isAddingSeason={(addSeasonMutation as Record<string, unknown>)?.isPending as boolean}
+            isAddingTournament={(addTournamentMutation as Record<string, unknown>)?.isPending as boolean}
           />
         </React.Suspense>
       )}
@@ -356,18 +341,18 @@ export function ModalManager({
           isOpen={modalStates.isRosterModalOpen}
           onClose={closeRosterModal || (() => onCloseModal?.('isRosterModalOpen'))}
           availablePlayers={players}
-          onRenamePlayer={handleRenamePlayerForModal ? (playerId: string, playerData: { name: string; nickname: string }) => handleRenamePlayerForModal(playerId, playerData.name) : ((playerId: string, playerData: { name: string; nickname: string }) => {})}
-          onSetJerseyNumber={handleSetJerseyNumberForModal || ((playerId: string, number: string) => {})}
-          onSetPlayerNotes={handleSetPlayerNotesForModal || ((playerId: string, notes: string) => {})}
-          onRemovePlayer={handleRemovePlayerForModal || ((playerId: string) => {})} 
-          onAddPlayer={handleAddPlayerForModal || ((playerData: { name: string; jerseyNumber: string; notes: string; nickname: string }) => {})}
+          onRenamePlayer={handleRenamePlayerForModal ? (playerId: string, playerData: { name: string; nickname: string }) => handleRenamePlayerForModal(playerId, playerData.name) : (() => {})}
+          onSetJerseyNumber={handleSetJerseyNumberForModal || (() => {})}
+          onSetPlayerNotes={handleSetPlayerNotesForModal || (() => {})}
+          onRemovePlayer={handleRemovePlayerForModal || (() => {})} 
+          onAddPlayer={handleAddPlayerForModal || (() => {})}
           selectedPlayerIds={gameData.selectedPlayerIds}
-          onTogglePlayerSelection={handleTogglePlayerSelection || ((playerId: string) => {})}
+          onTogglePlayerSelection={handleTogglePlayerSelection || (() => {})}
           teamName={gameData.teamName}
-          onTeamNameChange={handleTeamNameChange || ((newName: string) => {})}
+          onTeamNameChange={handleTeamNameChange || (() => {})}
           isRosterUpdating={isRosterUpdating}
           rosterError={rosterError}
-          onOpenPlayerStats={handleOpenPlayerStats || ((playerId: string) => {})}
+          onOpenPlayerStats={handleOpenPlayerStats || (() => {})}
         />
       </React.Suspense>
 
@@ -379,12 +364,12 @@ export function ModalManager({
           seasons={seasons}
           tournaments={tournaments}
           availablePlayers={players}
-          addSeasonMutation={addSeasonMutation as any}
-          addTournamentMutation={addTournamentMutation as any}
-          updateSeasonMutation={updateSeasonMutation as any}
-          deleteSeasonMutation={deleteSeasonMutation as any}
-          updateTournamentMutation={updateTournamentMutation as any}
-          deleteTournamentMutation={deleteTournamentMutation as any}
+          addSeasonMutation={addSeasonMutation as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+          addTournamentMutation={addTournamentMutation as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+          updateSeasonMutation={updateSeasonMutation as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+          deleteSeasonMutation={deleteSeasonMutation as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+          updateTournamentMutation={updateTournamentMutation as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+          deleteTournamentMutation={deleteTournamentMutation as any} // eslint-disable-line @typescript-eslint/no-explicit-any
         />
       </React.Suspense>
       
@@ -409,33 +394,33 @@ export function ModalManager({
           numPeriods={gameData.numberOfPeriods}
           periodDurationMinutes={gameData.periodDurationMinutes}
           demandFactor={gameData.demandFactor}
-          onTeamNameChange={handleTeamNameChange || ((name: string) => {})}
-          onOpponentNameChange={handleOpponentNameChange || ((name: string) => {})}
-          onGameDateChange={handleGameDateChange || ((date: string) => {})}
-          onGameLocationChange={handleGameLocationChange || ((location: string) => {})}
-          onGameTimeChange={handleGameTimeChange || ((time: string) => {})}
-          onAgeGroupChange={handleSetAgeGroup || ((ageGroup: string) => {})}
-          onTournamentLevelChange={handleSetTournamentLevel || ((level: string) => {})}
-          onUpdateGameEvent={handleUpdateGameEvent ? (updatedEvent: any) => handleUpdateGameEvent(updatedEvent.id, updatedEvent) : ((updatedEvent: any) => {})}
-          onAwardFairPlayCard={handleAwardFairPlayCard ? (playerId: string | null, timeInSeconds: number) => handleAwardFairPlayCard(playerId || '') : ((playerId: string | null, timeInSeconds: number) => {})}
+          onTeamNameChange={handleTeamNameChange || (() => {})}
+          onOpponentNameChange={handleOpponentNameChange || (() => {})}
+          onGameDateChange={handleGameDateChange || (() => {})}
+          onGameLocationChange={handleGameLocationChange || (() => {})}
+          onGameTimeChange={handleGameTimeChange || (() => {})}
+          onAgeGroupChange={handleSetAgeGroup || (() => {})}
+          onTournamentLevelChange={handleSetTournamentLevel || (() => {})}
+          onUpdateGameEvent={handleUpdateGameEvent ? (updatedEvent: GameEvent) => handleUpdateGameEvent(updatedEvent.id, updatedEvent) : (() => {})}
+          onAwardFairPlayCard={handleAwardFairPlayCard ? (playerId: string | null) => handleAwardFairPlayCard(playerId || '') : (() => {})}
           onDeleteGameEvent={handleDeleteGameEvent}
-          onNumPeriodsChange={handleSetNumberOfPeriods || ((periods: number) => {})}
-          onPeriodDurationChange={handleSetPeriodDuration || ((duration: number) => {})}
-          onDemandFactorChange={handleSetDemandFactor || ((factor: number) => {})}
+          onNumPeriodsChange={handleSetNumberOfPeriods || (() => {})}
+          onPeriodDurationChange={handleSetPeriodDuration || (() => {})}
+          onDemandFactorChange={handleSetDemandFactor || (() => {})}
           seasonId={gameData.seasonId}
           tournamentId={gameData.tournamentId}
-          onSeasonIdChange={handleSetSeasonId ? (seasonId: string | undefined) => handleSetSeasonId(seasonId || '') : ((seasonId: string | undefined) => {})}
-          onTournamentIdChange={handleSetTournamentId ? (tournamentId: string | undefined) => handleSetTournamentId(tournamentId || '') : ((tournamentId: string | undefined) => {})}
+          onSeasonIdChange={handleSetSeasonId ? (seasonId: string | undefined) => handleSetSeasonId(seasonId || '') : (() => {})}
+          onTournamentIdChange={handleSetTournamentId ? (tournamentId: string | undefined) => handleSetTournamentId(tournamentId || '') : (() => {})}
           homeOrAway={gameData.homeOrAway}
-          onSetHomeOrAway={handleSetHomeOrAway || ((homeOrAway: 'home' | 'away') => {})}
+          onSetHomeOrAway={handleSetHomeOrAway || (() => {})}
           isPlayed={false}
-          onIsPlayedChange={handleSetIsPlayed || ((isPlayed: boolean) => {})}
-          addSeasonMutation={addSeasonMutation as any}
-          addTournamentMutation={addTournamentMutation as any}
-          isAddingSeason={(addSeasonMutation as any)?.isPending}
-          isAddingTournament={(addTournamentMutation as any)?.isPending}
+          onIsPlayedChange={handleSetIsPlayed || (() => {})}
+          addSeasonMutation={addSeasonMutation as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+          addTournamentMutation={addTournamentMutation as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+          isAddingSeason={(addSeasonMutation as Record<string, unknown>)?.isPending as boolean}
+          isAddingTournament={(addTournamentMutation as Record<string, unknown>)?.isPending as boolean}
           timeElapsedInSeconds={timeElapsedInSeconds}
-          updateGameDetailsMutation={updateGameDetailsMutation as any}
+          updateGameDetailsMutation={updateGameDetailsMutation as any} // eslint-disable-line @typescript-eslint/no-explicit-any
         />
       </React.Suspense>
 
@@ -445,9 +430,9 @@ export function ModalManager({
           isOpen={modalStates.isSettingsModalOpen}
           onClose={handleCloseSettingsModal || (() => onCloseModal?.('isSettingsModalOpen'))}
           language={modalData?.appLanguage || appLanguage}
-          onLanguageChange={handleLanguageChange || ((language: string) => {})}
+          onLanguageChange={handleLanguageChange || (() => {})}
           defaultTeamName={modalData?.defaultTeamNameSetting || defaultTeamNameSetting}
-          onDefaultTeamNameChange={handleDefaultTeamNameChange || ((name: string) => {})}
+          onDefaultTeamNameChange={handleDefaultTeamNameChange || (() => {})}
           onResetGuide={handleShowAppGuide || (() => {})}
           onHardResetApp={handleHardResetApp || (() => {})}
           onSignOut={signOut}
@@ -461,8 +446,8 @@ export function ModalManager({
           onClose={closePlayerAssessmentModal || (() => onCloseModal?.('isPlayerAssessmentModalOpen'))}
           selectedPlayerIds={gameData.selectedPlayerIds}
           availablePlayers={players}
-          assessments={playerAssessments as any}
-          onSave={handleSavePlayerAssessment || ((playerId: string, assessment: any) => {})}
+          assessments={playerAssessments as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+          onSave={handleSavePlayerAssessment || (() => {})}
           onDelete={handleDeletePlayerAssessment}
         />
       </React.Suspense>
