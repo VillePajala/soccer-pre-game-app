@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix: add missing dependency to useCallback hook"
+  "notes": "refactor: simplify new game saving"
 }
