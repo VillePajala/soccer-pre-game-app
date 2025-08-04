@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useReducer, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useReducer, useRef, useMemo, startTransition } from 'react';
 import SoccerField from '@/components/SoccerField';
 import PlayerBar from '@/components/PlayerBar';
 import ControlBar from '@/components/ControlBar';
@@ -65,6 +65,9 @@ import { useRoster } from '@/hooks/useRoster';
 import { useGameDataManager } from '@/hooks/useGameDataManager';
 import { useGameStateManager } from '@/hooks/useGameStateManager';
 import { useModalContext } from '@/contexts/ModalProvider';
+// Import skeleton components
+import { GameStatsModalSkeleton, LoadGameModalSkeleton, RosterModalSkeleton, ModalSkeleton } from '@/components/ui/ModalSkeleton';
+import { AppLoadingSkeleton } from '@/components/ui/AppSkeleton';
 // Note: localStorage utilities removed - using offline-first storage instead
 // Removed - now handled by useGameDataManager: 
 // import { queryKeys } from '@/config/queryKeys';
@@ -299,9 +302,36 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     // masterRosterKey: MASTER_ROSTER_KEY, // Removed as no longer used by useGameState
   });
 
+  const handlePlayerIdUpdated = useCallback(
+    (oldId: string, newId: string) => {
+      setPlayersOnField(prev => prev.map(p => (p.id === oldId ? { ...p, id: newId } : p)));
+
+      dispatchGameSession({
+        type: 'SET_SELECTED_PLAYER_IDS',
+        payload: gameSessionState.selectedPlayerIds.map(id => (id === oldId ? newId : id)),
+      });
+
+      gameSessionState.gameEvents.forEach(event => {
+        if (event.type === 'goal') {
+          // Goal events have scorerId (required) and assisterId (optional)
+          if (event.scorerId === oldId || event.assisterId === oldId) {
+            const updatedEvent = {
+              ...event,
+              scorerId: event.scorerId === oldId ? newId : event.scorerId,
+              assisterId: event.assisterId === oldId ? newId : event.assisterId,
+            };
+            dispatchGameSession({ type: 'UPDATE_GAME_EVENT', payload: updatedEvent });
+          }
+        }
+      });
+    },
+    [setPlayersOnField, dispatchGameSession, gameSessionState.selectedPlayerIds, gameSessionState.gameEvents]
+  );
+
   const roster = useRoster({
     initialPlayers: initialState.availablePlayers,
     selectedPlayerIds: gameSessionState.selectedPlayerIds,
+    onPlayerIdUpdated: handlePlayerIdUpdated,
   });
   const {
     availablePlayers,
@@ -450,6 +480,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   const [playerIdsForNewGame, setPlayerIdsForNewGame] = useState<string[] | null>(null);
   const [newGameDemandFactor, setNewGameDemandFactor] = useState(1);
   const [isCreatingNewGame, setIsCreatingNewGame] = useState<boolean>(false);
+  const wasCreatingNewGameRef = useRef(false);
   // <<< ADD State for the roster prompt toast >>>
   // const [showRosterPrompt, setShowRosterPrompt] = useState<boolean>(false);
 
@@ -460,6 +491,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   const [loadGamesListError, setLoadGamesListError] = useState<string | null>(null);
   const [isGameLoading, setIsGameLoading] = useState(false); // For loading a specific game
   const [gameLoadError, setGameLoadError] = useState<string | null>(null);
+  const [isStateSynchronizing, setIsStateSynchronizing] = useState(false); // Prevent race conditions during state updates
   // Removed - now handled by useGameDataManager:
   // const [isGameDeleting, setIsGameDeleting] = useState(false); // For deleting a specific game
   // const [gameDeleteError, setGameDeleteError] = useState<string | null>(null);
@@ -520,6 +552,13 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     tacticalDrawings,
     tacticalBallPosition,
   });
+
+  useEffect(() => {
+    if (wasCreatingNewGameRef.current && !isCreatingNewGame && currentGameId && currentGameId !== DEFAULT_GAME_ID) {
+      Promise.resolve().then(() => handleQuickSaveGame(currentGameId));
+    }
+    wasCreatingNewGameRef.current = isCreatingNewGame;
+  }, [isCreatingNewGame, currentGameId, handleQuickSaveGame]);
 
   // --- Game State Management (Extracted to useGameStateManager hook) ---
   const {
@@ -637,17 +676,37 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   // Use a ref to track the last synced data to prevent loops
   const lastSyncedRosterRef = useRef<string>('');
   
+  // Memoized roster data key for performance optimization
+  const rosterDataKey = useMemo(() => {
+    if (!masterRosterQueryResultData || isMasterRosterQueryLoading) return null;
+    return JSON.stringify(masterRosterQueryResultData.map(p => ({ id: p.id, name: p.name })));
+  }, [masterRosterQueryResultData, isMasterRosterQueryLoading]);
+
+  // Memoized sorted games for performance optimization
+  const sortedGamesByDate = useMemo(() => {
+    const currentSavedGames = allSavedGamesQueryResultData || {};
+    const gameIds = Object.keys(currentSavedGames);
+    
+    if (gameIds.length === 0) return [];
+    
+    return gameIds
+      .map(id => ({ id, game: currentSavedGames[id] }))
+      .filter(({ game }) => game && game.gameDate)
+      .sort((a, b) => {
+        const dateA = new Date(a.game.gameDate + ' ' + (a.game.gameTime || '00:00'));
+        const dateB = new Date(b.game.gameDate + ' ' + (b.game.gameTime || '00:00'));
+        return dateB.getTime() - dateA.getTime();
+      });
+  }, [allSavedGamesQueryResultData]);
+  
   useEffect(() => {
     if (isMasterRosterQueryLoading) {
       logger.log('[TanStack Query] Master Roster is loading...');
     }
-    if (masterRosterQueryResultData && !isMasterRosterQueryLoading) {
-      // Create a unique key for the current data
-      const dataKey = JSON.stringify(masterRosterQueryResultData.map(p => ({ id: p.id, name: p.name })));
-      
+    if (masterRosterQueryResultData && !isMasterRosterQueryLoading && rosterDataKey) {
       // Only update if this is different from what we last synced
-      if (dataKey !== lastSyncedRosterRef.current) {
-        lastSyncedRosterRef.current = dataKey;
+      if (rosterDataKey !== lastSyncedRosterRef.current) {
+        lastSyncedRosterRef.current = rosterDataKey;
         logger.log('[HomePage] Syncing roster from React Query:', masterRosterQueryResultData.length, 'players');
         setAvailablePlayers(masterRosterQueryResultData);
       }
@@ -656,7 +715,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       logger.error('[TanStack Query] Error loading master roster:', masterRosterQueryErrorData);
       setAvailablePlayers([]);
     }
-  }, [masterRosterQueryResultData, isMasterRosterQueryLoading, isMasterRosterQueryError, masterRosterQueryErrorData, setAvailablePlayers]);
+  }, [masterRosterQueryResultData, isMasterRosterQueryLoading, isMasterRosterQueryError, masterRosterQueryErrorData, setAvailablePlayers, rosterDataKey]);
 
   // --- Effect to update seasons from useQuery ---
   useEffect(() => {
@@ -789,26 +848,11 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         setHasSkippedInitialSetup(true);
       } else {
         // If the saved game ID doesn't exist, try to find the most recent game
-        const gameIds = Object.keys(currentSavedGames);
-        if (gameIds.length > 0) {
-          // Sort games by date to find the most recent
-          const sortedGames = gameIds
-            .map(id => ({ id, game: currentSavedGames[id] }))
-            .filter(({ game }) => game && game.gameDate)
-            .sort((a, b) => {
-              const dateA = new Date(a.game.gameDate + ' ' + (a.game.gameTime || '00:00'));
-              const dateB = new Date(b.game.gameDate + ' ' + (b.game.gameTime || '00:00'));
-              return dateB.getTime() - dateA.getTime();
-            });
-          
-          if (sortedGames.length > 0) {
-            const mostRecentId = sortedGames[0].id;
-            logger.log(`[EFFECT init] Found most recent game to restore: ${mostRecentId}`);
-            setCurrentGameId(mostRecentId);
-            setHasSkippedInitialSetup(true);
-          } else {
-            setCurrentGameId(DEFAULT_GAME_ID);
-          }
+        if (sortedGamesByDate.length > 0) {
+          const mostRecentId = sortedGamesByDate[0].id;
+          logger.log(`[EFFECT init] Found most recent game to restore: ${mostRecentId}`);
+          setCurrentGameId(mostRecentId);
+          setHasSkippedInitialSetup(true);
         } else {
           if (lastGameIdSetting && lastGameIdSetting !== DEFAULT_GAME_ID) {
             logger.warn(`[EFFECT init] Last game ID ${lastGameIdSetting} not found in saved games. Loading default.`);
@@ -838,7 +882,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     isCurrentGameIdSettingQueryLoading,
     initialLoadComplete,
     allSavedGamesQueryResultData,
-    currentGameIdSettingQueryResultData
+    currentGameIdSettingQueryResultData,
+    sortedGamesByDate
   ]);
 
   // Add a timeout for mobile loading issues
@@ -863,8 +908,12 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
   // Helper function to load game state from game data
   const loadGameStateFromData = (gameData: AppState | null, isInitialDefaultLoad = false) => {
-
-    if (gameData) {
+    // Set synchronization flag to prevent race conditions with auto-save
+    setIsStateSynchronizing(true);
+    
+    // Use startTransition to batch all state updates together to prevent UI inconsistencies
+    startTransition(() => {
+      if (gameData) {
       // gameData is AppState, map its fields directly to GameSessionState partial payload
       const payload: Partial<GameSessionState> = {
         teamName: gameData.teamName,
@@ -960,6 +1009,10 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       availablePlayers: masterRosterQueryResultData || availablePlayers,
     };
     resetHistory(newHistoryState);
+    
+    // Clear synchronization flag after all state updates are complete
+    setIsStateSynchronizing(false);
+    });
   };
 
   // --- Effect to load game state when currentGameId changes or savedGames updates ---
@@ -985,10 +1038,35 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       return;
     }
     
+    // Skip auto-save during state synchronization to prevent race conditions
+    if (isStateSynchronizing) {
+      return;
+    }
+    
     // Only auto-save if loaded AND we have a proper game ID (not the default unsaved one)
     const autoSave = async () => {
     if (initialLoadComplete && currentGameId && currentGameId !== DEFAULT_GAME_ID) {
       try {
+        // CRITICAL BUG FIX: Add comprehensive debugging for assist-related saves
+        const assistEvents = gameSessionState.gameEvents.filter(event => event.type === 'goal' && event.assisterId);
+        logger.log(`[AUTO-SAVE] Starting auto-save for game ${currentGameId}`);
+        logger.log(`[AUTO-SAVE] Total events: ${gameSessionState.gameEvents.length}, Events with assists: ${assistEvents.length}`);
+        if (assistEvents.length > 0) {
+          logger.log(`[AUTO-SAVE] Assist events details:`, assistEvents.map(e => {
+            if (e.type === 'goal') {
+              return {
+                id: e.id,
+                type: e.type,
+                scorerId: e.scorerId,
+                assisterId: e.assisterId,
+                time: e.time
+              };
+            }
+            return { id: e.id, type: e.type, time: e.time };
+          }));
+        }
+        logger.log(`[AUTO-SAVE] Available players count: ${availablePlayers.length}, Master roster count: ${masterRosterQueryResultData?.length || 0}`);
+        
         // 1. Create the current game state snapshot (excluding history and volatile timer states)
         const currentSnapshot: AppState = {
           // Fields from gameSessionState (persisted ones)
@@ -1031,8 +1109,23 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           // They are not part of GameData and should be re-initialized on load by the reducer.
         };
 
+        // CRITICAL BUG FIX: Log snapshot details before save
+        logger.log(`[AUTO-SAVE] Snapshot prepared - Events count: ${currentSnapshot.gameEvents.length}`);
+        logger.log(`[AUTO-SAVE] Snapshot events with assists:`, currentSnapshot.gameEvents.filter(e => e.type === 'goal' && e.assisterId).map(e => {
+          if (e.type === 'goal') {
+            return {
+              id: e.id,
+              scorerId: e.scorerId,
+              assisterId: e.assisterId
+            };
+          }
+          return { id: e.id, type: e.type };
+        }));
+        
         // 2. Save the game snapshot using utility
+        logger.log(`[AUTO-SAVE] Calling utilSaveGame...`);
         const savedResult = await utilSaveGame(currentGameId, currentSnapshot as AppState); // Cast to AppState for the util
+        logger.log(`[AUTO-SAVE] Save completed successfully`);
         
         // 3. Update currentGameId if it changed (important for Supabase UUID sync)
         const newGameId = (savedResult as AppState & { id?: string }).id;
@@ -1046,8 +1139,26 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         }
 
       } catch (error) {
-        logger.error("Failed to auto-save state:", error);
-        alert("Error saving game."); // Notify user
+        logger.error("[AUTO-SAVE] Failed to auto-save state:", error);
+        
+        // CRITICAL BUG FIX: Log detailed error context for debugging
+        logger.error(`[AUTO-SAVE] Error context - Game ID: ${currentGameId}`);
+        logger.error(`[AUTO-SAVE] Error context - Events count: ${gameSessionState.gameEvents.length}`);
+        logger.error(`[AUTO-SAVE] Error context - Assist events:`, gameSessionState.gameEvents.filter(e => e.type === 'goal' && e.assisterId));
+        
+        // CRITICAL BUG FIX: Distinguish between different types of save errors
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        
+        if (errorMessage.includes('not found') || errorMessage.includes('FK constraint') || errorMessage.includes('foreign key')) {
+          // Data validation error - not a network issue
+          alert(`Data validation error: ${errorMessage}\n\nThis is likely due to invalid player references. Please check your goal/assist entries.`);
+        } else if (errorMessage.includes('network') || errorMessage.includes('offline') || errorMessage.includes('fetch')) {
+          // Actual network error
+          alert("Network error: Unable to save game. Please check your connection and try again.");
+        } else {
+          // Generic error
+          alert(`Error saving game: ${errorMessage}`);
+        }
       }
     } else if (initialLoadComplete && currentGameId === DEFAULT_GAME_ID) {
       logger.log("Not auto-saving as this is an unsaved game (no ID assigned yet)");
@@ -1055,7 +1166,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     };
     autoSave();
     // Dependencies: Include all state variables that are part of the saved snapshot
-  }, [initialLoadComplete, currentGameId, isCreatingNewGame,
+  }, [initialLoadComplete, currentGameId, isCreatingNewGame, isStateSynchronizing,
       playersOnField, opponents, drawings, availablePlayers, masterRosterQueryResultData,
       // showPlayerNames, // REMOVED - Covered by gameSessionState
       // Local states that are part of the snapshot but not yet in gameSessionState:
@@ -1451,42 +1562,17 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       // 2. Auto-generate temporary ID
       const tempGameId = `game_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-      // 3. Save the new game state and get the actual ID from Supabase
-      let actualGameId = tempGameId;
-      try {
-        // Save to storage (Supabase will generate a new UUID if using Supabase provider)
-        const savedGameResult = await utilSaveGame(tempGameId, newGameState);
-        
-        // Get the actual ID from the saved result (Supabase may have generated a new UUID)
-        actualGameId = (savedGameResult as AppState & { id?: string }).id || tempGameId;
-        logger.log(`Game saved with actual ID: ${actualGameId} (temp was: ${tempGameId})`);
-        
-        // Update local state with the actual ID
-        const updatedSavedGamesCollection = {
-          ...savedGames,
-          [actualGameId]: savedGameResult
-        };
-        setSavedGames(updatedSavedGamesCollection);
-
-        // Save the actual game ID to settings
-        // This is critical for resume functionality
-        await utilSaveCurrentGameIdSetting(actualGameId);
-        logger.log(`Saved new game ${actualGameId} and updated currentGameId in settings.`);
-
-      } catch (error) {
-         logger.error("Error explicitly saving new game state:", error);
-         // Fall back to temp ID if save failed
-         actualGameId = tempGameId;
-      }
-
-      // 4. Reset History with the new state
+      // 3. Reset History with the new state
       resetHistory(newGameState);
 
       setIsPlayed(isPlayed);
 
-      // 5. Set the current game ID - This will trigger the loading useEffect
-      setCurrentGameId(actualGameId);
-      logger.log(`Set current game ID to: ${actualGameId}. Loading useEffect will sync component state.`);
+      try {
+        await handleQuickSaveGame(tempGameId, newGameState);
+      } catch (error) {
+        logger.error('[handleStartNewGameWithSetup] Quick save failed:', error);
+        throw error;
+      }
 
       // Close the setup modal
       setIsNewGameSetupModalOpen(false);
@@ -1500,14 +1586,14 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
   }, [
     // Keep necessary dependencies
-    savedGames,
     availablePlayers,
-    setSavedGames,
     resetHistory,
-    setCurrentGameId,
     setIsNewGameSetupModalOpen,
+    setNewGameDemandFactor,
     setHighlightRosterButton,
     setIsCreatingNewGame,
+    setIsPlayed,
+    handleQuickSaveGame,
   ]);
 
   // ** REVERT handleCancelNewGameSetup TO ORIGINAL **
@@ -1634,12 +1720,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   const isLoading = isMasterRosterQueryLoading || areSeasonsQueryLoading || areTournamentsQueryLoading || isAllSavedGamesQueryLoading || isCurrentGameIdSettingQueryLoading;
 
   if (isLoading && !initialLoadComplete) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-slate-900 text-white">
-        {/* You can replace this with a more sophisticated loading spinner component */}
-        <p>Loading Game Data...</p>
-      </div>
-    );
+    return <AppLoadingSkeleton />;
   }
 
   // Define a consistent, premium style for the top and bottom bars
@@ -1773,13 +1854,13 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
       {/* Modals and Overlays */}
       {/* Training Resources Modal */}
-      <React.Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="text-white">Loading...</div></div>}>
+      <React.Suspense fallback={<ModalSkeleton title="Training Resources" />}>
         <TrainingResourcesModal
           isOpen={isTrainingResourcesOpen}
           onClose={handleToggleTrainingResources}
         />
       </React.Suspense>
-      <React.Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="text-white">Loading...</div></div>}>
+      <React.Suspense fallback={<ModalSkeleton title="Instructions" />}>
         <InstructionsModal
           isOpen={isInstructionsModalOpen}
           onClose={handleToggleInstructionsModal}
@@ -1796,7 +1877,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       />
       {/* Game Stats Modal - Restore props for now */}
       {isGameStatsModalOpen && (
-        <React.Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="text-white">Loading...</div></div>}>
+        <React.Suspense fallback={<GameStatsModalSkeleton />}>
           <GameStatsModal
             isOpen={isGameStatsModalOpen}
             onClose={handleToggleGameStatsModal}
@@ -1827,7 +1908,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           />
         </React.Suspense>
       )}
-      <React.Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="text-white">Loading...</div></div>}>
+      <React.Suspense fallback={<LoadGameModalSkeleton />}>
         <LoadGameModal 
           isOpen={isLoadGameModalOpen}
           onClose={handleCloseLoadGameModal}
@@ -1851,7 +1932,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
       {/* Conditionally render the New Game Setup Modal */}
       {isNewGameSetupModalOpen && (
-        <React.Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="text-white">Loading...</div></div>}>
+        <React.Suspense fallback={<ModalSkeleton title="New Game Setup" />}>
           <NewGameSetupModal
             isOpen={isNewGameSetupModalOpen}
             initialPlayerSelection={playerIdsForNewGame} // <<< Pass the state here
@@ -1871,7 +1952,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       )}
 
       {/* Roster Settings Modal */}
-      <React.Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="text-white">Loading...</div></div>}>
+      <React.Suspense fallback={<RosterModalSkeleton />}>
         <RosterSettingsModal
           isOpen={isRosterModalOpen}
           onClose={closeRosterModal}
@@ -1892,7 +1973,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         />
       </React.Suspense>
 
-      <React.Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="text-white">Loading...</div></div>}>
+      <React.Suspense fallback={<ModalSkeleton title="Season & Tournament Management" />}>
         <SeasonTournamentManagementModal
           isOpen={isSeasonTournamentModalOpen}
           onClose={handleCloseSeasonTournamentModal}
@@ -1916,7 +1997,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           onGameClick={handleGameLogClick}
       /> */}
 
-      <React.Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="text-white">Loading...</div></div>}>
+      <React.Suspense fallback={<ModalSkeleton title="Game Settings" />}>
         <GameSettingsModal
           isOpen={isGameSettingsModalOpen}
           onClose={handleCloseGameSettingsModal}
@@ -1966,7 +2047,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         />
       </React.Suspense>
 
-      <React.Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="text-white">Loading...</div></div>}>
+      <React.Suspense fallback={<ModalSkeleton title="Settings" />}>
         <SettingsModal
           isOpen={isSettingsModalOpen}
           onClose={handleCloseSettingsModal}
@@ -1980,7 +2061,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         />
       </React.Suspense>
 
-      <React.Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="text-white">Loading...</div></div>}>
+      <React.Suspense fallback={<ModalSkeleton title="Player Assessment" />}>
         <PlayerAssessmentModal
           isOpen={isPlayerAssessmentModalOpen}
           onClose={closePlayerAssessmentModal}

@@ -1,5 +1,6 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSaveQueue } from './useSaveQueue';
 // import { useTranslation } from 'react-i18next'; // Removed unused import
 import { 
   saveGame as utilSaveGame, 
@@ -72,6 +73,13 @@ export const useGameDataManager = ({
 }: UseGameDataManagerProps) => {
   const queryClient = useQueryClient();
   // const { t } = useTranslation(); // Removed unused import
+  
+  // Initialize save queue to prevent race conditions in auto-save operations
+  const saveQueue = useSaveQueue({
+    debounceMs: 300, // Slightly shorter debounce for responsive auto-save
+    maxRetries: 2,   // Fewer retries for save operations to avoid delays
+    maxQueueSize: 5  // Smaller queue for save operations
+  });
 
   // --- Season Mutations ---
   const addSeasonMutation = useMutation<
@@ -193,12 +201,24 @@ export const useGameDataManager = ({
   });
 
   // --- Save/Load Handlers ---
-  const handleQuickSaveGame = useCallback(async () => {
-    if (currentGameId && currentGameId !== DEFAULT_GAME_ID) {
-      logger.log(`[useGameDataManager] Quick saving game with ID: ${currentGameId}`);
-      try {
+  const handleQuickSaveGame = useCallback(async (
+    overrideGameId?: string,
+    overrideSnapshot?: AppState
+  ) => {
+    const gameId = overrideGameId || currentGameId;
+    if (!gameId || gameId === DEFAULT_GAME_ID) {
+      logger.warn('[useGameDataManager] Cannot quick save: no valid game ID.');
+      return;
+    }
+
+    // Queue the save operation to prevent race conditions
+    saveQueue.queueSave(
+      `quick-save-${gameId}`,
+      async () => {
+        logger.log(`[useGameDataManager] Processing queued quick save for game ID: ${gameId}`);
+
         // 1. Create the current game state snapshot
-        const currentSnapshot: AppState = {
+        const snapshot: AppState = overrideSnapshot ?? {
           playersOnField: playersOnField,
           opponents: opponents,
           drawings: drawings,
@@ -235,36 +255,31 @@ export const useGameDataManager = ({
         };
 
         // 2. Update the savedGames state and localStorage
-        const savedResult = await utilSaveGame(currentGameId, currentSnapshot);
-        
+        const savedResult = await utilSaveGame(gameId, snapshot);
+
         // 3. Update currentGameId if it changed (important for Supabase UUID sync)
         const newGameId = (savedResult as AppState & { id?: string }).id;
-        if (newGameId && newGameId !== currentGameId) {
-          logger.log(`[useGameDataManager] Game ID changed from ${currentGameId} to ${newGameId} during quick save`);
+        if (newGameId && newGameId !== gameId) {
+          logger.log(`[useGameDataManager] Game ID changed from ${gameId} to ${newGameId} during quick save`);
           setCurrentGameId(newGameId);
-          
+
           // Update savedGames with the new ID and remove the old one
           const updatedSavedGames = { ...savedGames };
-          updatedSavedGames[newGameId] = { ...currentSnapshot, id: newGameId } as AppState;
-          delete updatedSavedGames[currentGameId];
+          updatedSavedGames[newGameId] = { ...snapshot, id: newGameId } as AppState;
+          delete updatedSavedGames[gameId];
           setSavedGames(updatedSavedGames);
-          
+
           await utilSaveCurrentGameIdSetting(newGameId);
           logger.log(`[useGameDataManager] Game ${newGameId} quick saved successfully with ID sync.`);
         } else {
           // No ID change, update savedGames normally
-          const updatedSavedGames = { ...savedGames, [currentGameId]: currentSnapshot };
+          const updatedSavedGames = { ...savedGames, [gameId]: snapshot };
           setSavedGames(updatedSavedGames);
-          await utilSaveCurrentGameIdSetting(currentGameId);
-          logger.log(`[useGameDataManager] Game ${currentGameId} quick saved successfully.`);
+          await utilSaveCurrentGameIdSetting(gameId);
+          logger.log(`[useGameDataManager] Game ${gameId} quick saved successfully.`);
         }
-      } catch (error) {
-        logger.error('[useGameDataManager] Error during quick save:', error);
-        throw error;
       }
-    } else {
-      logger.warn('[useGameDataManager] Cannot quick save: no valid game ID.');
-    }
+    );
   }, [
     currentGameId,
     savedGames,
@@ -278,6 +293,7 @@ export const useGameDataManager = ({
     tacticalDiscs,
     tacticalDrawings,
     tacticalBallPosition,
+    saveQueue,
   ]);
 
   const handleDeleteGame = useCallback(async (gameId: string) => {
@@ -348,6 +364,13 @@ export const useGameDataManager = ({
     }
   }, [savedGames]);
 
+  // Cleanup save queue on unmount
+  useEffect(() => {
+    return () => {
+      saveQueue.cleanup();
+    };
+  }, [saveQueue]);
+
   return {
     // Mutations
     mutations: {
@@ -367,6 +390,9 @@ export const useGameDataManager = ({
       handleExportOneJson,
       handleExportOneCsv,
     },
+    
+    // Save queue status for monitoring save operations
+    saveStatus: saveQueue.status,
   };
 };
 

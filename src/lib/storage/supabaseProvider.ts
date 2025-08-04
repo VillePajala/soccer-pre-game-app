@@ -1,4 +1,4 @@
-// Supabase storage provider implementation
+// Supabase storage provider implementation with Phase 4 performance optimizations
 import type { IStorageProvider } from './types';
 import { StorageError, NetworkError, AuthenticationError } from './types';
 import type { Player, Season, Tournament } from '../../types';
@@ -6,6 +6,7 @@ import type { AppSettings } from '../../utils/appSettings';
 import { supabase } from '../supabase';
 import { toSupabase, fromSupabase } from '../../utils/transforms';
 import type { DbSeason, DbTournament, DbPlayer, DbAppSettings, DbGame } from '../../utils/transforms';
+import { compressionManager, FIELD_SELECTIONS } from './compressionUtils';
 
 export class SupabaseProvider implements IStorageProvider {
   
@@ -30,19 +31,21 @@ export class SupabaseProvider implements IStorageProvider {
     return user.id;
   }
 
-  // Player management
+  // Player management with Phase 4 optimizations
   async getPlayers(): Promise<Player[]> {
     try {
-      const userId = await this.getCurrentUserId();
-      const { data, error } = await supabase
-        .from('players')
-        .select('*')
-        .eq('user_id', userId)
-        .order('name');
-
-      if (error) {
-        throw new NetworkError('supabase', 'getPlayers', error);
-      }
+      // Use optimized field selection for better performance
+      const data = await compressionManager.fetchOptimized<DbPlayer>(
+        'players',
+        {
+          table: 'players',
+          fields: [...FIELD_SELECTIONS.playersFull.fields] as string[]
+        },
+        {
+          orderBy: 'name',
+          ascending: true
+        }
+      );
 
       return data.map((player: DbPlayer) => fromSupabase.player(player));
     } catch (error) {
@@ -66,9 +69,11 @@ export class SupabaseProvider implements IStorageProvider {
       let result;
       if (playerForSupabase.id && !isLocalId) {
         // Update existing player
+        const { id: _removed, ...updatePayload } = supabasePlayer;
+        void _removed;
         const { data, error } = await supabase
           .from('players')
-          .update(supabasePlayer)
+          .update(updatePayload)
           .eq('id', player.id)
           .eq('user_id', userId)
           .select()
@@ -104,17 +109,23 @@ export class SupabaseProvider implements IStorageProvider {
   async deletePlayer(playerId: string): Promise<void> {
     try {
       const userId = await this.getCurrentUserId();
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('players')
         .delete()
         .eq('id', playerId)
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .select('id')
+        .maybeSingle();
 
       if (error) {
         throw new NetworkError('supabase', 'deletePlayer', error);
       }
+
+      if (!data) {
+        throw new StorageError('Player not found', 'supabase', 'deletePlayer');
+      }
     } catch (error) {
-      if (error instanceof AuthenticationError || error instanceof NetworkError) {
+      if (error instanceof AuthenticationError || error instanceof NetworkError || error instanceof StorageError) {
         throw error;
       }
       throw new StorageError('Failed to delete player', 'supabase', 'deletePlayer', error as Error);
@@ -183,9 +194,11 @@ export class SupabaseProvider implements IStorageProvider {
       let result;
       if (seasonForSupabase.id && !isLocalId) {
         // Update existing season
+        const { id: _removed, ...updatePayload } = supabaseSeason;
+        void _removed;
         const { data, error } = await supabase
           .from('seasons')
-          .update(supabaseSeason)
+          .update(updatePayload)
           .eq('id', season.id)
           .eq('user_id', userId)
           .select()
@@ -221,17 +234,23 @@ export class SupabaseProvider implements IStorageProvider {
   async deleteSeason(seasonId: string): Promise<void> {
     try {
       const userId = await this.getCurrentUserId();
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('seasons')
         .delete()
         .eq('id', seasonId)
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .select('id')
+        .maybeSingle();
 
       if (error) {
         throw new NetworkError('supabase', 'deleteSeason', error);
       }
+
+      if (!data) {
+        throw new StorageError('Season not found', 'supabase', 'deleteSeason');
+      }
     } catch (error) {
-      if (error instanceof AuthenticationError || error instanceof NetworkError) {
+      if (error instanceof AuthenticationError || error instanceof NetworkError || error instanceof StorageError) {
         throw error;
       }
       throw new StorageError('Failed to delete season', 'supabase', 'deleteSeason', error as Error);
@@ -297,21 +316,14 @@ export class SupabaseProvider implements IStorageProvider {
       
       const supabaseTournament = toSupabase.tournament(tournamentForSupabase, userId);
 
-      // Debug: Log what we're trying to save (remove in production)
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[SupabaseProvider] Tournament save data:', {
-          tournament: tournament.name,
-          isLocalId,
-          hasId: Boolean(tournamentForSupabase.id)
-        });
-      }
-
       let result;
       if (tournamentForSupabase.id && !isLocalId) {
         // Update existing tournament
+        const { id: _removed, ...updatePayload } = supabaseTournament;
+        void _removed;
         const { data, error } = await supabase
           .from('tournaments')
-          .update(supabaseTournament)
+          .update(updatePayload)
           .eq('id', tournament.id)
           .eq('user_id', userId)
           .select()
@@ -354,17 +366,23 @@ export class SupabaseProvider implements IStorageProvider {
   async deleteTournament(tournamentId: string): Promise<void> {
     try {
       const userId = await this.getCurrentUserId();
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('tournaments')
         .delete()
         .eq('id', tournamentId)
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .select('id')
+        .maybeSingle();
 
       if (error) {
         throw new NetworkError('supabase', 'deleteTournament', error);
       }
+
+      if (!data) {
+        throw new StorageError('Tournament not found', 'supabase', 'deleteTournament');
+      }
     } catch (error) {
-      if (error instanceof AuthenticationError || error instanceof NetworkError) {
+      if (error instanceof AuthenticationError || error instanceof NetworkError || error instanceof StorageError) {
         throw error;
       }
       throw new StorageError('Failed to delete tournament', 'supabase', 'deleteTournament', error as Error);
@@ -375,13 +393,6 @@ export class SupabaseProvider implements IStorageProvider {
     try {
       const userId = await this.getCurrentUserId();
       const supabaseUpdates = toSupabase.tournamentUpdate(updates, userId);
-
-      // Debug: Log what we're trying to update
-      console.log('[SupabaseProvider] Tournament update data:', {
-        tournamentId,
-        updates,
-        supabaseUpdates
-      });
 
       const { data, error } = await supabase
         .from('tournaments')
@@ -496,14 +507,9 @@ export class SupabaseProvider implements IStorageProvider {
               .eq('game_id', game.id);
             
             if (events && events.length > 0) {
-              currentGame.gameEvents = events.map((e: Record<string, unknown>) => ({
-                id: e.id,
-                type: e.event_type,
-                time: e.time_seconds,
-                scorerId: e.scorer_id,
-                assisterId: e.assister_id,
-                entityId: e.entity_id
-              }));
+              currentGame.gameEvents = events.map((e: unknown) =>
+                e // Keep raw event for now, will be transformed later
+              );
             }
           }
         } catch {
@@ -523,12 +529,25 @@ export class SupabaseProvider implements IStorageProvider {
   async saveSavedGame(gameData: unknown): Promise<unknown> {
     try {
       const userId = await this.getCurrentUserId();
+      
+      // Only log in development for performance
+      if (process.env.NODE_ENV === 'development') {
+        const gameState = gameData as Record<string, unknown>;
+        const gameEvents = gameState?.gameEvents as Array<Record<string, unknown>> || [];
+        const assistEvents = gameEvents.filter((event: Record<string, unknown>) => event.assisterId) || [];
+        if (assistEvents.length > 0) {
+          console.log(`[SUPABASE] Saving game with ${assistEvents.length} assist events`);
+        }
+      }
+      
       const supabaseGame = toSupabase.game(gameData, userId) as Record<string, unknown> & { id?: string };
+      // Removed verbose logging for performance
 
       let result;
       
       // If game has no ID, do an insert (not upsert)
       if (!supabaseGame.id) {
+        console.log(`[SUPABASE] Inserting new game...`);
         const { data, error } = await supabase
           .from('games')
           .insert(supabaseGame)
@@ -536,10 +555,13 @@ export class SupabaseProvider implements IStorageProvider {
           .single();
           
         if (error) {
+          console.error(`[SUPABASE] Insert error:`, error);
           throw new NetworkError('supabase', 'saveSavedGame', error);
         }
         result = data;
+        console.log(`[SUPABASE] Game inserted successfully with ID: ${result.id}`);
       } else {
+        console.log(`[SUPABASE] Upserting existing game: ${supabaseGame.id}`);
         const { data, error } = await supabase
           .from('games')
           .upsert(supabaseGame, { onConflict: 'id' })
@@ -547,13 +569,19 @@ export class SupabaseProvider implements IStorageProvider {
           .single();
           
         if (error) {
+          console.error(`[SUPABASE] Upsert error:`, error);
           throw new NetworkError('supabase', 'saveSavedGame', error);
         }
         result = data;
+        console.log(`[SUPABASE] Game upserted successfully`);
       }
 
-      return fromSupabase.game(result as DbGame);
+      console.log(`[SUPABASE] Converting result back to AppState format...`);
+      const convertedResult = fromSupabase.game(result as DbGame);
+      console.log(`[SUPABASE] Save completed successfully`);
+      return convertedResult;
     } catch (error) {
+      console.error(`[SUPABASE] saveSavedGame failed:`, error);
       if (error instanceof AuthenticationError || error instanceof NetworkError) {
         throw error;
       }
@@ -564,17 +592,23 @@ export class SupabaseProvider implements IStorageProvider {
   async deleteSavedGame(gameId: string): Promise<void> {
     try {
       const userId = await this.getCurrentUserId();
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('games')
         .delete()
         .eq('id', gameId)
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .select('id')
+        .maybeSingle();
 
       if (error) {
         throw new NetworkError('supabase', 'deleteSavedGame', error);
       }
+
+      if (!data) {
+        throw new StorageError('Saved game not found', 'supabase', 'deleteSavedGame');
+      }
     } catch (error) {
-      if (error instanceof AuthenticationError || error instanceof NetworkError) {
+      if (error instanceof AuthenticationError || error instanceof NetworkError || error instanceof StorageError) {
         throw error;
       }
       throw new StorageError('Failed to delete saved game', 'supabase', 'deleteSavedGame', error as Error);

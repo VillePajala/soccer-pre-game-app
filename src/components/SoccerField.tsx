@@ -122,6 +122,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
   const [activeTouchId, setActiveTouchId] = useState<number | null>(null);
   const [lastTapInfo, setLastTapInfo] = useState<{ time: number; x: number; y: number; targetId: string | null; targetType: 'player' | 'opponent' | 'tactical' | 'ball' | null } | null>(null);
   const [ballImage, setBallImage] = useState<HTMLImageElement | null>(null);
+  const drawingFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
     const img = new Image();
@@ -129,12 +130,28 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     img.onload = () => setBallImage(img);
   }, []);
 
-  // --- Drawing Logic ---
+  // Cleanup animation frame on unmount
+  useEffect(() => {
+    return () => {
+      if (drawingFrameRef.current) {
+        cancelAnimationFrame(drawingFrameRef.current);
+      }
+    };
+  }, []);
+
+  // --- Drawing Logic with Performance Optimization ---
   const draw = useCallback(() => { 
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const context = canvas.getContext('2d');
-    if (!context) return;
+    
+    // Performance optimization: Use requestAnimationFrame for smooth rendering
+    if (drawingFrameRef.current) {
+      cancelAnimationFrame(drawingFrameRef.current);
+    }
+    
+    drawingFrameRef.current = requestAnimationFrame(() => {
+      const context = canvas.getContext('2d');
+      if (!context) return;
 
     // --- High-DPI Scaling --- 
     const dpr = window.devicePixelRatio || 1;
@@ -612,6 +629,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
 
     // --- Restore context --- 
     context.restore();
+    }); // Close requestAnimationFrame callback
   }, [players, opponents, drawings, showPlayerNames, isTacticsBoardView, tacticalDiscs, tacticalBallPosition, ballImage]); // Remove gameEvents dependency
 
   // Add the new ResizeObserver effect

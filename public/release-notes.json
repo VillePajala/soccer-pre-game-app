@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix: resolve critical timer race condition and Game Settings duplication bugs"
+  "notes": "refactor: simplify new game saving"
 }

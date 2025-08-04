@@ -29,8 +29,15 @@ export function useGoalEditing({
   const handleStartEditGoal = (goal: GameEvent) => {
     setEditingGoalId(goal.id);
     setEditGoalTime(formatTime(goal.time));
-    setEditGoalScorerId(goal.scorerId ?? '');
-    setEditGoalAssisterId(goal.assisterId ?? '');
+    
+    // Type guard to check if it's a goal event
+    if (goal.type === 'goal') {
+      setEditGoalScorerId(goal.scorerId ?? '');
+      setEditGoalAssisterId(goal.assisterId ?? '');
+    } else {
+      setEditGoalScorerId('');
+      setEditGoalAssisterId('');
+    }
   };
 
   const handleCancelEditGoal = () => { 
@@ -72,12 +79,21 @@ export function useGoalEditing({
       return; 
     }
 
-    const updatedEvent: GameEvent = { 
-      ...originalGoal, 
-      time: timeInSeconds, 
-      scorerId: updatedScorerId, 
-      assisterId: updatedAssisterId 
-    };
+    // Create updated goal based on type
+    let updatedEvent: GameEvent;
+    if (originalGoal.type === 'goal') {
+      updatedEvent = { 
+        ...originalGoal, 
+        time: timeInSeconds, 
+        scorerId: updatedScorerId, 
+        assisterId: updatedAssisterId 
+      };
+    } else {
+      updatedEvent = { 
+        ...originalGoal, 
+        time: timeInSeconds
+      };
+    }
 
     if (typeof onUpdateGameEvent === 'function') {
       onUpdateGameEvent(updatedEvent);

@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { GameEvent, Player } from '@/types';
+import { GameEvent, GoalEvent, OpponentGoalEvent, Player } from '@/types';
 import { DEFAULT_GAME_ID } from '@/config/constants';
 import { GameSessionState, GameSessionAction } from './useGameSessionReducer';
 import { saveMasterRoster } from '@/utils/masterRoster';
@@ -41,42 +41,75 @@ export const useGameEventsManager = ({
    * Handler to add a goal event
    */
   const handleAddGoalEvent = useCallback((scorerId: string, assisterId?: string) => {
-    const scorer = (masterRosterQueryResultData || availablePlayers).find(p => p.id === scorerId);
-    const assister = assisterId ? (masterRosterQueryResultData || availablePlayers).find(p => p.id === assisterId) : undefined;
+    // Use consistent roster source - prioritize availablePlayers for current game state
+    const rosterSource = availablePlayers.length > 0 ? availablePlayers : (masterRosterQueryResultData || []);
+
+    const scorer = rosterSource.find(p => p.id === scorerId);
+    const assister = assisterId ? rosterSource.find(p => p.id === assisterId) : undefined;
 
     if (!scorer) {
-      logger.error("Scorer not found!");
+      logger.error(`Scorer not found with ID: ${scorerId}`);
+      alert('Selected player is no longer available. Please refresh the player list and try again.');
+      setIsGoalLogModalOpen(false);
       return;
     }
 
-    const newEvent: GameEvent = {
+    // FIXED: Graceful handling instead of throwing error
+    if (assisterId && !assister) {
+      logger.error(`Assister with ID ${assisterId} not found in roster! Logging goal without assist.`);
+      // Show user-friendly message but continue without assist
+      alert('Selected assister is no longer available. Goal will be logged without assist.');
+      assisterId = undefined; // Clear invalid assisterId
+    }
+
+    const newEvent: GoalEvent = {
       id: `goal-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       type: 'goal',
       time: gameSessionState.timeElapsedInSeconds, // Use from gameSessionState
       scorerId: scorer.id,
-      assisterId: assister?.id,
+      assisterId: assisterId && assister ? assister.id : undefined, // Use corrected assisterId
+      playerName: scorer.name,
     };
+
+    // Only log in development
+    if (process.env.NODE_ENV === 'development') {
+      logger.log(`Goal: ${scorer.name}${assister ? ` (assist: ${assister.name})` : ''}`);
+    }
     
-    // Dispatch actions to update game state via reducer
-    dispatchGameSession({ type: 'ADD_GAME_EVENT', payload: newEvent });
-    dispatchGameSession({ type: 'ADJUST_SCORE_FOR_EVENT', payload: { eventType: 'goal', action: 'add' } });
-  }, [dispatchGameSession, gameSessionState.timeElapsedInSeconds, masterRosterQueryResultData, availablePlayers]);
+    // Dispatch actions to update game state via reducer with graceful error handling
+    try {
+      dispatchGameSession({ type: 'ADD_GAME_EVENT', payload: newEvent });
+      dispatchGameSession({ type: 'ADJUST_SCORE_FOR_EVENT', payload: { eventType: 'goal', action: 'add' } });
+      logger.log(`Goal event added successfully: ${scorer.name} at ${newEvent.time}s`);
+      setIsGoalLogModalOpen(false); // Close modal on success
+    } catch (error) {
+      logger.error('Failed to add goal event:', error);
+      alert(`Failed to log goal for ${scorer.name}. Please try again.`);
+      // Keep modal open for retry
+    }
+  }, [dispatchGameSession, gameSessionState.timeElapsedInSeconds, masterRosterQueryResultData, availablePlayers, setIsGoalLogModalOpen]);
 
   /**
    * Handler to log an opponent goal
    */
   const handleLogOpponentGoal = useCallback((time: number) => {
     logger.log(`Logging opponent goal at time: ${time}`);
-    const newEvent: GameEvent = {
+    const newEvent: OpponentGoalEvent = {
       id: `oppGoal-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       type: 'opponentGoal',
       time: time, // Use provided time
       scorerId: 'opponent', 
     };
 
-    dispatchGameSession({ type: 'ADD_GAME_EVENT', payload: newEvent });
-    dispatchGameSession({ type: 'ADJUST_SCORE_FOR_EVENT', payload: { eventType: 'opponentGoal', action: 'add' } });
-    setIsGoalLogModalOpen(false);
+    try {
+      dispatchGameSession({ type: 'ADD_GAME_EVENT', payload: newEvent });
+      dispatchGameSession({ type: 'ADJUST_SCORE_FOR_EVENT', payload: { eventType: 'opponentGoal', action: 'add' } });
+      setIsGoalLogModalOpen(false);
+      logger.log(`Opponent goal event added successfully at ${newEvent.time}s`);
+    } catch (error) {
+      logger.error('Failed to add opponent goal event:', error);
+      throw new Error(`Failed to log opponent goal: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }, [dispatchGameSession, setIsGoalLogModalOpen]);
 
   // --- Event Management Handlers ---
@@ -85,13 +118,10 @@ export const useGameEventsManager = ({
    * Handler to update an existing game event
    */
   const handleUpdateGameEvent = useCallback((updatedEvent: GameEvent) => {
-    const cleanUpdatedEvent: GameEvent = { 
-      id: updatedEvent.id, 
-      type: updatedEvent.type, 
-      time: updatedEvent.time, 
-      scorerId: updatedEvent.scorerId, 
-      assisterId: updatedEvent.assisterId 
-    }; // Keep cleaning
+    // Clone the event to avoid mutations
+    const cleanUpdatedEvent: GameEvent = {
+      ...updatedEvent
+    };
     
     dispatchGameSession({ type: 'UPDATE_GAME_EVENT', payload: cleanUpdatedEvent });
     

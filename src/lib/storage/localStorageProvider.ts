@@ -2,6 +2,7 @@
 import type { IStorageProvider } from './types';
 import { StorageError } from './types';
 import type { Player, Season, Tournament } from '../../types';
+import { validatePlayerData } from '../../utils/inputValidation';
 // AppSettings interface defined inline to avoid circular dependency
 interface AppSettings {
   currentGameId: string | null;
@@ -55,27 +56,30 @@ export class LocalStorageProvider implements IStorageProvider {
 
   async savePlayer(player: Player): Promise<Player> {
     try {
+      // Validate player data before saving
+      const validatedPlayer = validatePlayerData(player);
+      
       const currentPlayers = await this.getPlayers();
       
       // If player has ID, it's an update, otherwise it's a new player
-      if (player.id) {
+      if (validatedPlayer.id) {
         const playerIndex = currentPlayers.findIndex(p => p.id === player.id);
         if (playerIndex === -1) {
           throw new Error('Player not found for update');
         }
         
         // Update the player
-        const updatedPlayer = { ...currentPlayers[playerIndex], ...player };
+        const updatedPlayer = { ...currentPlayers[playerIndex], ...validatedPlayer };
         currentPlayers[playerIndex] = updatedPlayer;
         await this.savePlayers(currentPlayers);
         return updatedPlayer;
       } else {
         // Create new player with unique ID
         const newPlayer: Player = {
-          ...player,
+          ...validatedPlayer,
           id: `player_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-          isGoalie: player.isGoalie || false,
-          receivedFairPlayCard: player.receivedFairPlayCard || false,
+          isGoalie: validatedPlayer.isGoalie || false,
+          receivedFairPlayCard: validatedPlayer.receivedFairPlayCard || false,
         };
         
         const updatedPlayers = [...currentPlayers, newPlayer];

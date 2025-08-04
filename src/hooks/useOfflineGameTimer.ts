@@ -80,12 +80,12 @@ export const useOfflineGameTimer = ({
 
     const startInterval = () => {
       if (intervalRef.current) return;
-      intervalRef.current = setInterval(async () => {
+      intervalRef.current = setInterval(() => {
         const s = stateRef.current;
         const periodEnd = s.currentPeriod * s.periodDurationMinutes * 60;
         const nextTime = Math.round(s.timeElapsedInSeconds) + 1;
 
-        // Save timer state to IndexedDB
+        // Save timer state to IndexedDB asynchronously without blocking the interval
         if (currentGameId) {
           const timerState: TimerState = {
             gameId: currentGameId,
@@ -93,24 +93,20 @@ export const useOfflineGameTimer = ({
             timestamp: Date.now(),
           };
           
-          try {
-            await storageManager.saveTimerState(timerState);
-          } catch (error) {
+          storageManager.saveTimerState(timerState).catch((error) => {
             console.warn('Failed to save timer state:', error);
-          }
+          });
         }
 
         if (nextTime >= periodEnd) {
           clearInterval(intervalRef.current!);
           intervalRef.current = null;
           
-          // Remove timer state when period/game ends
+          // Remove timer state when period/game ends (async without blocking)
           if (currentGameId) {
-            try {
-              await storageManager.deleteTimerState(currentGameId);
-            } catch (error) {
+            storageManager.deleteTimerState(currentGameId).catch((error) => {
               console.warn('Failed to delete timer state on period end:', error);
-            }
+            });
           }
           
           if (s.currentPeriod === s.numberOfPeriods) {

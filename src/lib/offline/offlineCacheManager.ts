@@ -251,6 +251,13 @@ export class OfflineCacheManager implements IStorageProvider {
   }
 
   async saveSavedGame(gameData: unknown): Promise<unknown> {
+    // CRITICAL BUG FIX: Add debugging for assist-related save operations
+    const gameState = gameData as Record<string, unknown>;
+    const gameEvents = gameState?.gameEvents as Array<Record<string, unknown>> || [];
+    const assistEvents = gameEvents.filter((event: Record<string, unknown>) => event.assisterId) || [];
+    console.log(`[OFFLINE_CACHE] saveSavedGame called - Primary provider: ${this.primaryProvider.constructor.name}`);
+    console.log(`[OFFLINE_CACHE] Events: ${gameEvents.length || 0}, Assist events: ${assistEvents.length}`);
+    
     return this.saveWithCache('savedGames', gameData, () => this.primaryProvider.saveSavedGame(gameData));
   }
 

@@ -507,11 +507,11 @@ async function clearCaches() {
 // Check Supabase connectivity
 async function checkSupabaseConnectivity() {
   try {
-    const supabaseUrl = 'https://xtwqgpdpvhztkbmktqsb.supabase.co'; // Replace with env var in production
+    const supabaseUrl = '{{NEXT_PUBLIC_SUPABASE_URL}}'; // Injected at build time
     const response = await fetch(`${supabaseUrl}/rest/v1/`, {
       method: 'HEAD',
       headers: {
-        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0d3FncGRwdmh6dGtibWt0cXNiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjA3OTgyNjEsImV4cCI6MjAzNjM3NDI2MX0.cUJAA6Ls-JQQzCAr0VQrMUUvlNxvTJUUBaDVjGYXOAo' // Replace with env var
+        'apikey': '{{NEXT_PUBLIC_SUPABASE_ANON_KEY}}' // Injected at build time
       }
     });
     return response.ok || response.status === 401;
@@ -571,8 +571,8 @@ async function processSyncOperation(operation) {
     method,
     headers: {
       'Content-Type': 'application/json',
-      'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0d3FncGRwdmh6dGtibWt0cXNiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjA3OTgyNjEsImV4cCI6MjAzNjM3NDI2MX0.cUJAA6Ls-JQQzCAr0VQrMUUvlNxvTJUUBaDVjGYXOAo',
-      'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0d3FncGRwdmh6dGtibWt0cXNiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjA3OTgyNjEsImV4cCI6MjAzNjM3NDI2MX0.cUJAA6Ls-JQQzCAr0VQrMUUvlNxvTJUUBaDVjGYXOAo'
+      'apikey': '{{NEXT_PUBLIC_SUPABASE_ANON_KEY}}', // Injected at build time
+      'Authorization': 'Bearer {{NEXT_PUBLIC_SUPABASE_ANON_KEY}}' // Injected at build time
     },
     body
   });

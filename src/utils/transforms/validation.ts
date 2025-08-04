@@ -208,7 +208,7 @@ export function validateAppState(appState: AppState): void {
 }
 
 /**
- * Validate GameEvent data
+ * Validate GameEvent data with type-specific validation
  */
 export function validateGameEvent(event: GameEvent): void {
   if (!event.id || typeof event.id !== 'string') {
@@ -221,6 +221,26 @@ export function validateGameEvent(event: GameEvent): void {
   
   if (typeof event.time !== 'number' || event.time < 0) {
     throw new ValidationError('GameEvent time must be a non-negative number', 'time', event.time);
+  }
+  
+  // Type-specific validation
+  if (event.type === 'goal') {
+    // For goal events, scorerId is required and must be a non-empty string
+    if (!event.scorerId || typeof event.scorerId !== 'string' || event.scorerId.trim().length === 0) {
+      throw new ValidationError('Goal events must have a valid scorer ID', 'scorerId', event.scorerId);
+    }
+    
+    // If assisterId is provided, it must be a valid string
+    if (event.assisterId !== undefined && (typeof event.assisterId !== 'string' || event.assisterId.trim().length === 0)) {
+      throw new ValidationError('If provided, assister ID must be a valid string', 'assisterId', event.assisterId);
+    }
+  }
+  
+  if (event.type === 'fairPlayCard' || event.type === 'substitution') {
+    // These events should have an entityId if tracking a specific player
+    if (event.entityId !== undefined && (typeof event.entityId !== 'string' || event.entityId.trim().length === 0)) {
+      throw new ValidationError('If provided, entity ID must be a valid string', 'entityId', event.entityId);
+    }
   }
 }
 
