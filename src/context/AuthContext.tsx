@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session, AuthError } from '@supabase/supabase-js';
+import type { User, Session, AuthError } from '@/types/supabase-types';
 import { supabase } from '../lib/supabase';
 import { sessionManager } from '../lib/security/sessionManager';
 import { SecureAuthService } from '../lib/security/rateLimiter';

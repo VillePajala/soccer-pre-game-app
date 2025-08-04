@@ -10,7 +10,7 @@
  */
 
 import { supabase } from '../supabase';
-import type { Session, User } from '@supabase/supabase-js';
+import type { Session, User } from '@/types/supabase-types';
 import logger from '../../utils/logger';
 import { 
   getDeviceFingerprint, 
