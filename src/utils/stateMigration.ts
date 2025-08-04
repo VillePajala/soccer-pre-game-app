@@ -1,0 +1,472 @@
+/**
+ * State Migration Utilities - Safe migration from distributed useState to centralized stores
+ * 
+ * This module provides utilities to safely migrate from the legacy useState-based
+ * state management to the new Zustand store architecture while maintaining
+ * data integrity and providing rollback capabilities.
+ */
+
+import type { AppState } from '@/types';
+import type { GameStore, GameSessionState, FieldState } from '@/stores/gameStore';
+import type { UIStore, ModalState, ViewState } from '@/stores/uiStore';
+import type { PersistenceStore, AppSettings, UserData } from '@/stores/persistenceStore';
+import { logger } from './logger';
+
+// Migration feature flags
+export interface MigrationFlags {
+  enableGameStoreMigration: boolean;
+  enableUIStoreMigration: boolean;
+  enablePersistenceStoreMigration: boolean;
+  enableLegacyFallback: boolean;
+  enableMigrationLogging: boolean;
+}
+
+// Default migration flags (conservative approach)
+export const defaultMigrationFlags: MigrationFlags = {
+  enableGameStoreMigration: false,
+  enableUIStoreMigration: false,
+  enablePersistenceStoreMigration: false,
+  enableLegacyFallback: true,
+  enableMigrationLogging: true,
+};
+
+// Migration state tracking
+export interface MigrationState {
+  isInProgress: boolean;
+  currentPhase: string;
+  migratedComponents: string[];
+  failedComponents: string[];
+  startTime: number;
+  lastError: string | null;
+}
+
+// Global migration state
+let migrationState: MigrationState = {
+  isInProgress: false,
+  currentPhase: 'none',
+  migratedComponents: [],
+  failedComponents: [],
+  startTime: 0,
+  lastError: null,
+};
+
+// Migration error types
+export class MigrationError extends Error {
+  constructor(
+    message: string,
+    public component: string,
+    public phase: string,
+    public originalError?: Error
+  ) {
+    super(message);
+    this.name = 'MigrationError';
+  }
+}
+
+/**
+ * Legacy state structure (what we're migrating FROM)
+ */
+export interface LegacyAppState {
+  // Game session state (distributed across components)
+  gameId?: string | null;
+  teamName?: string;
+  opponentName?: string;
+  timeElapsedInSeconds?: number;
+  isTimerRunning?: boolean;
+  currentPeriod?: number;
+  homeScore?: number;
+  awayScore?: number;
+  gameDate?: string;
+  gameLocation?: string;
+  gameStatus?: string;
+  
+  // Field state (distributed across components)
+  playersOnField?: any[];
+  opponents?: any[];
+  availablePlayers?: any[];
+  drawings?: any[];
+  tacticalDrawings?: any[];
+  
+  // UI state (distributed across components)
+  showSaveGameModal?: boolean;
+  showLoadGameModal?: boolean;
+  showGameStatsModal?: boolean;
+  isTacticsBoardView?: boolean;
+  isDrawingMode?: boolean;
+  showPlayerNames?: boolean;
+  selectedPlayerIds?: string[];
+  
+  // Settings and persistence (localStorage direct access)
+  savedGames?: any;
+  masterRoster?: any[];
+  appSettings?: any;
+}
+
+/**
+ * Convert legacy AppState to new GameStore state
+ */
+export const migrateToGameStore = (legacyState: LegacyAppState): Partial<GameStore> => {
+  try {
+    const gameSession: Partial<GameSessionState> = {
+      gameId: legacyState.gameId || null,
+      teamName: legacyState.teamName || '',
+      opponentName: legacyState.opponentName || '',
+      timeElapsedInSeconds: legacyState.timeElapsedInSeconds || 0,
+      isTimerRunning: legacyState.isTimerRunning || false,
+      currentPeriod: legacyState.currentPeriod || 1,
+      homeScore: legacyState.homeScore || 0,
+      awayScore: legacyState.awayScore || 0,
+      gameDate: legacyState.gameDate || new Date().toISOString().split('T')[0],
+      gameLocation: legacyState.gameLocation || '',
+      gameStatus: (legacyState.gameStatus as any) || 'not_started',
+      selectedPlayerIds: legacyState.selectedPlayerIds || [],
+    };
+    
+    const fieldState: Partial<FieldState> = {
+      playersOnField: legacyState.playersOnField || [],
+      opponents: legacyState.opponents || [],
+      availablePlayers: legacyState.availablePlayers || [],
+      drawings: legacyState.drawings || [],
+      tacticalDrawings: legacyState.tacticalDrawings || [],
+      tacticalDiscs: [],
+      tacticalBallPosition: null,
+    };
+    
+    return {
+      gameSession: gameSession as GameSessionState,
+      field: fieldState as FieldState,
+    };
+  } catch (error) {
+    throw new MigrationError(
+      'Failed to migrate to GameStore',
+      'GameStore',
+      'conversion',
+      error as Error
+    );
+  }
+};
+
+/**
+ * Convert legacy UI state to new UIStore state
+ */
+export const migrateToUIStore = (legacyState: LegacyAppState): Partial<UIStore> => {
+  try {
+    const modals: Partial<ModalState> = {
+      saveGameModal: legacyState.showSaveGameModal || false,
+      loadGameModal: legacyState.showLoadGameModal || false,
+      gameStatsModal: legacyState.showGameStatsModal || false,
+    };
+    
+    const view: Partial<ViewState> = {
+      isTacticsBoardView: legacyState.isTacticsBoardView || false,
+      isDrawingMode: legacyState.isDrawingMode || false,
+      showPlayerNames: legacyState.showPlayerNames !== undefined ? legacyState.showPlayerNames : true,
+      selectedPlayerIds: legacyState.selectedPlayerIds || [],
+    };
+    
+    return {
+      modals: modals as ModalState,
+      view: view as ViewState,
+    };
+  } catch (error) {
+    throw new MigrationError(
+      'Failed to migrate to UIStore',
+      'UIStore',
+      'conversion',
+      error as Error
+    );
+  }
+};
+
+/**
+ * Convert legacy persistence data to new PersistenceStore state
+ */
+export const migrateToPersistenceStore = (legacyState: LegacyAppState): Partial<PersistenceStore> => {
+  try {
+    return {
+      savedGames: legacyState.savedGames || {},
+      masterRoster: legacyState.masterRoster || [],
+      settings: legacyState.appSettings as AppSettings || {},
+    };
+  } catch (error) {
+    throw new MigrationError(
+      'Failed to migrate to PersistenceStore',
+      'PersistenceStore',
+      'conversion',
+      error as Error
+    );
+  }
+};
+
+/**
+ * Validate migrated state integrity
+ */
+export const validateMigratedState = (
+  gameStore: Partial<GameStore>,
+  uiStore: Partial<UIStore>,
+  persistenceStore: Partial<PersistenceStore>
+): boolean => {
+  try {
+    // Validate GameStore
+    if (gameStore.gameSession) {
+      if (typeof gameStore.gameSession.timeElapsedInSeconds !== 'number') {
+        throw new Error('Invalid timeElapsedInSeconds in GameStore');
+      }
+      if (typeof gameStore.gameSession.currentPeriod !== 'number') {
+        throw new Error('Invalid currentPeriod in GameStore');
+      }
+    }
+    
+    // Validate UIStore
+    if (uiStore.modals) {
+      const modalKeys = Object.keys(uiStore.modals);
+      for (const key of modalKeys) {
+        if (typeof (uiStore.modals as any)[key] !== 'boolean') {
+          throw new Error(`Invalid modal state for ${key} in UIStore`);
+        }
+      }
+    }
+    
+    // Validate PersistenceStore
+    if (persistenceStore.masterRoster && !Array.isArray(persistenceStore.masterRoster)) {
+      throw new Error('Invalid masterRoster in PersistenceStore');
+    }
+    
+    return true;
+  } catch (error) {
+    logger.error('State validation failed:', error);
+    return false;
+  }
+};
+
+/**
+ * Create a backup of current state before migration
+ */
+export const createMigrationBackup = (): string => {
+  try {
+    const backup = {
+      timestamp: Date.now(),
+      version: '1.0.0',
+      localStorage: { ...localStorage },
+      url: window.location.href,
+      userAgent: navigator.userAgent,
+    };
+    
+    const backupString = JSON.stringify(backup);
+    localStorage.setItem('migration-backup', backupString);
+    
+    logger.info('Migration backup created successfully');
+    return backupString;
+  } catch (error) {
+    logger.error('Failed to create migration backup:', error);
+    throw new MigrationError(
+      'Failed to create migration backup',
+      'backup',
+      'creation',
+      error as Error
+    );
+  }
+};
+
+/**
+ * Restore from migration backup
+ */
+export const restoreFromMigrationBackup = (): boolean => {
+  try {
+    const backupString = localStorage.getItem('migration-backup');
+    if (!backupString) {
+      throw new Error('No migration backup found');
+    }
+    
+    const backup = JSON.parse(backupString);
+    
+    // Clear current localStorage
+    localStorage.clear();
+    
+    // Restore from backup
+    Object.entries(backup.localStorage).forEach(([key, value]) => {
+      localStorage.setItem(key, value as string);
+    });
+    
+    logger.info('Migration backup restored successfully');
+    return true;
+  } catch (error) {
+    logger.error('Failed to restore migration backup:', error);
+    return false;
+  }
+};
+
+/**
+ * Start migration process with safety measures
+ */
+export const startMigration = (flags: Partial<MigrationFlags> = {}): boolean => {
+  try {
+    const migrationFlags = { ...defaultMigrationFlags, ...flags };
+    
+    if (migrationState.isInProgress) {
+      throw new Error('Migration already in progress');
+    }
+    
+    // Create backup before starting
+    createMigrationBackup();
+    
+    // Initialize migration state
+    migrationState = {
+      isInProgress: true,
+      currentPhase: 'initialization',
+      migratedComponents: [],
+      failedComponents: [],
+      startTime: Date.now(),
+      lastError: null,
+    };
+    
+    // Store migration flags
+    localStorage.setItem('migration-flags', JSON.stringify(migrationFlags));
+    
+    if (migrationFlags.enableMigrationLogging) {
+      logger.info('Migration started with flags:', migrationFlags);
+    }
+    
+    return true;
+  } catch (error) {
+    logger.error('Failed to start migration:', error);
+    migrationState.lastError = error instanceof Error ? error.message : 'Unknown error';
+    return false;
+  }
+};
+
+/**
+ * Complete migration process
+ */
+export const completeMigration = (): boolean => {
+  try {
+    if (!migrationState.isInProgress) {
+      throw new Error('No migration in progress');
+    }
+    
+    const duration = Date.now() - migrationState.startTime;
+    
+    migrationState.isInProgress = false;
+    migrationState.currentPhase = 'completed';
+    
+    logger.info('Migration completed successfully', {
+      duration,
+      migratedComponents: migrationState.migratedComponents,
+      failedComponents: migrationState.failedComponents,
+    });
+    
+    // Clean up migration flags
+    localStorage.removeItem('migration-flags');
+    
+    return true;
+  } catch (error) {
+    logger.error('Failed to complete migration:', error);
+    return false;
+  }
+};
+
+/**
+ * Rollback migration
+ */
+export const rollbackMigration = (): boolean => {
+  try {
+    logger.warn('Rolling back migration...');
+    
+    const success = restoreFromMigrationBackup();
+    
+    if (success) {
+      migrationState = {
+        isInProgress: false,
+        currentPhase: 'rolledback',
+        migratedComponents: [],
+        failedComponents: [],
+        startTime: 0,
+        lastError: null,
+      };
+      
+      // Clean up migration artifacts
+      localStorage.removeItem('migration-flags');
+      localStorage.removeItem('migration-backup');
+      
+      logger.info('Migration rollback completed successfully');
+    }
+    
+    return success;
+  } catch (error) {
+    logger.error('Failed to rollback migration:', error);
+    return false;
+  }
+};
+
+/**
+ * Get current migration status
+ */
+export const getMigrationStatus = (): MigrationState & { flags: MigrationFlags } => {
+  const flagsString = localStorage.getItem('migration-flags');
+  const flags = flagsString ? JSON.parse(flagsString) : defaultMigrationFlags;
+  
+  return {
+    ...migrationState,
+    flags,
+  };
+};
+
+/**
+ * Check if component should use legacy state or new store
+ */
+export const shouldUseLegacyState = (componentName: string): boolean => {
+  const status = getMigrationStatus();
+  
+  if (!status.flags.enableLegacyFallback) {
+    return false;
+  }
+  
+  if (status.failedComponents.includes(componentName)) {
+    return true;
+  }
+  
+  return !status.migratedComponents.includes(componentName);
+};
+
+/**
+ * Mark component as successfully migrated
+ */
+export const markComponentMigrated = (componentName: string): void => {
+  if (!migrationState.migratedComponents.includes(componentName)) {
+    migrationState.migratedComponents.push(componentName);
+    logger.info(`Component ${componentName} migrated successfully`);
+  }
+};
+
+/**
+ * Mark component migration as failed
+ */
+export const markComponentFailed = (componentName: string, error: Error): void => {
+  if (!migrationState.failedComponents.includes(componentName)) {
+    migrationState.failedComponents.push(componentName);
+    migrationState.lastError = error.message;
+    logger.error(`Component ${componentName} migration failed:`, error);
+  }
+};
+
+/**
+ * Safe migration wrapper for components
+ */
+export const withMigrationSafety = <T>(
+  componentName: string,
+  legacyImplementation: () => T,
+  newImplementation: () => T
+): T => {
+  try {
+    if (shouldUseLegacyState(componentName)) {
+      return legacyImplementation();
+    } else {
+      const result = newImplementation();
+      markComponentMigrated(componentName);
+      return result;
+    }
+  } catch (error) {
+    markComponentFailed(componentName, error as Error);
+    return legacyImplementation();
+  }
+};
