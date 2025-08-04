@@ -92,7 +92,10 @@ export default function ServiceWorkerRegistration() {
     // Cleanup function
     return () => {
       controller.abort();
-      navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
+      // Check if removeEventListener exists (not available in all environments/tests)
+      if (navigator.serviceWorker && typeof navigator.serviceWorker.removeEventListener === 'function') {
+        navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
+      }
     };
   }, []);
 
