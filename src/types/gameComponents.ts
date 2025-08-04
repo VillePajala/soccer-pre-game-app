@@ -5,7 +5,7 @@
  * components in the HomePage refactoring effort.
  */
 
-import { Player, Season, Tournament, GameEvent, AppState } from './index';
+import { Player, Season, Tournament, AppState } from './index';
 import { GameSessionState } from '@/hooks/useGameSessionReducer';
 import { SavedGamesCollection } from './index';
 
@@ -16,7 +16,7 @@ import { SavedGamesCollection } from './index';
 export interface GameStateContextType {
   // Core game session state
   gameState: GameSessionState;
-  dispatch: React.Dispatch<any>; // GameSessionAction from useGameSessionReducer
+  dispatch: React.Dispatch<unknown>; // GameSessionAction from useGameSessionReducer
   
   // Players state
   availablePlayers: Player[];
@@ -173,8 +173,8 @@ export interface ModalManagerProps {
   onStartNewGame: (config: NewGameConfig) => void;
   onSaveGame: () => void;
   onUpdateGameSettings: (settings: Partial<GameSessionState>) => void;
-  onPlayerAction: (action: string, playerId: string, data?: any) => void;
-  onSeasonTournamentAction: (action: string, type: 'season' | 'tournament', data: any) => void;
+  onPlayerAction: (action: string, playerId: string, data?: unknown) => void;
+  onSeasonTournamentAction: (action: string, type: 'season' | 'tournament', data: unknown) => void;
 }
 
 export interface NewGameConfig {
@@ -210,7 +210,7 @@ export interface DataSyncManagerProps {
   
   // Backup handlers
   onBackupCreate: () => Promise<void>;
-  onBackupRestore: (backupData: any) => Promise<void>;
+  onBackupRestore: (backupData: unknown) => Promise<void>;
 }
 
 // ============================================================================

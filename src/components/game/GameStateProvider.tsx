@@ -191,7 +191,7 @@ export function GameStateProvider({
   } as GameStateContextType & {
     // Extended properties not in the interface
     opponents: Player[];
-    drawings: any[];
+    drawings: unknown[];
     selectedPlayerIds: string[];
     startGame: () => void;
     pauseGame: () => void;
@@ -203,7 +203,7 @@ export function GameStateProvider({
     currentGameId: string | null;
     setPlayersOnField: (players: Player[]) => void;
     setOpponents: (opponents: Player[]) => void;
-    setDrawings: (drawings: any[]) => void;
+    setDrawings: (drawings: unknown[]) => void;
     setSelectedPlayerIds: (ids: string[]) => void;
   };
   
@@ -217,7 +217,7 @@ export function GameStateProvider({
 // Custom hook to use the game state context
 export function useGameStateContext(): GameStateContextType & {
   opponents: Player[];
-  drawings: any[];
+  drawings: unknown[];
   selectedPlayerIds: string[];
   startGame: () => void;
   pauseGame: () => void;
@@ -229,14 +229,30 @@ export function useGameStateContext(): GameStateContextType & {
   currentGameId: string | null;
   setPlayersOnField: (players: Player[]) => void;
   setOpponents: (opponents: Player[]) => void;
-  setDrawings: (drawings: any[]) => void;
+  setDrawings: (drawings: unknown[]) => void;
   setSelectedPlayerIds: (ids: string[]) => void;
 } {
   const context = useContext(GameStateContext);
   if (!context) {
     throw new Error('useGameStateContext must be used within a GameStateProvider');
   }
-  return context as any;
+  return context as GameStateContextType & {
+    opponents: Player[];
+    drawings: unknown[];
+    selectedPlayerIds: string[];
+    startGame: () => void;
+    pauseGame: () => void;
+    endGame: () => void;
+    setIsLoading: (loading: boolean) => void;
+    setError: (error: string | null) => void;
+    setTimeElapsedInSeconds: (seconds: number) => void;
+    setCurrentGameId: (id: string | null) => void;
+    currentGameId: string | null;
+    setPlayersOnField: (players: Player[]) => void;
+    setOpponents: (opponents: Player[]) => void;
+    setDrawings: (drawings: unknown[]) => void;
+    setSelectedPlayerIds: (ids: string[]) => void;
+  };
 }
 
 // Export the context for direct access if needed

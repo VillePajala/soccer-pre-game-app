@@ -6,9 +6,10 @@
  */
 
 export { GameStateProvider, useGameStateContext } from './GameStateProvider';
+export { GameView } from './GameView';
+export { GameControls } from './GameControls';  
+export { ModalManager } from './ModalManager';
+export { HomePage } from './HomePage';
 
 // TODO: Export other components as they are created
-// export { GameView } from './GameView';
-// export { GameControls } from './GameControls';
-// export { ModalManager } from './ModalManager';
 // export { DataSyncManager } from './DataSyncManager';
