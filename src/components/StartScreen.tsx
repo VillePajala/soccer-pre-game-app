@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
-import i18n from '@/i18n';
+import i18n, { loadLanguage } from '@/i18n';
 import {
   updateAppSettings,
   getAppSettings,
@@ -43,7 +43,9 @@ const StartScreen: React.FC<StartScreenProps> = ({
     getAppSettings().then((settings) => {
       if (settings.language && settings.language !== language) {
         setLanguage(settings.language);
-        i18n.changeLanguage(settings.language);
+        loadLanguage(settings.language).catch(error => {
+          logger.warn('[StartScreen] Failed to load language:', error);
+        });
       }
     });
   }, [language]);
@@ -51,8 +53,11 @@ const StartScreen: React.FC<StartScreenProps> = ({
   useEffect(() => {
     // Only update if language actually changed from what's in i18n
     if (language !== i18n.language) {
-      i18n.changeLanguage(language);
-      updateAppSettings({ language }).catch(() => {});
+      loadLanguage(language).then(() => {
+        updateAppSettings({ language }).catch(() => {});
+      }).catch(error => {
+        logger.warn('[StartScreen] Failed to change language:', error);
+      });
     }
   }, [language]);
 

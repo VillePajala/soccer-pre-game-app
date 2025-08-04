@@ -76,8 +76,7 @@ import { AppLoadingSkeleton } from '@/components/ui/AppSkeleton';
 // import { updateGameDetails as utilUpdateGameDetails } from '@/utils/savedGames';
 import { DEFAULT_GAME_ID } from '@/config/constants';
 // Storage keys no longer needed - using offline-first storage
-// Partial removal - exportAggregateJson, exportAggregateCsv still needed:
-import { exportAggregateJson, exportAggregateCsv } from '@/utils/exportGames';
+// Removed static import of export utilities - now using dynamic imports for better bundle splitting
 // Removed - now handled by useGameDataManager: exportJson, exportCsv
 // Removed - now handled by useGameDataManager:
 // import { useToast } from '@/contexts/ToastProvider';
@@ -1446,7 +1445,13 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       }
       return acc;
     }, {} as SavedGamesCollection);
-    exportAggregateJson(gamesData, aggregateStats);
+    // Dynamic import for better bundle splitting
+    import('@/utils/exportGames').then(({ exportAggregateJson }) => {
+      exportAggregateJson(gamesData, aggregateStats);
+    }).catch(error => {
+      logger.error('Failed to load export utilities:', error);
+      alert(t('export.error', 'Export failed. Please try again.'));
+    });
   }, [savedGames, t]);
 
   const handleExportAggregateCsv = useCallback((gameIds: string[], aggregateStats: import('@/types').PlayerStatRow[]) => {
@@ -1461,7 +1466,13 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       }
       return acc;
     }, {} as SavedGamesCollection);
-    exportAggregateCsv(gamesData, aggregateStats);
+    // Dynamic import for better bundle splitting
+    import('@/utils/exportGames').then(({ exportAggregateCsv }) => {
+      exportAggregateCsv(gamesData, aggregateStats);
+    }).catch(error => {
+      logger.error('Failed to load export utilities:', error);
+      alert(t('export.error', 'Export failed. Please try again.'));
+    });
   }, [savedGames, t]);
 
   // --- END AGGREGATE EXPORT HANDLERS ---

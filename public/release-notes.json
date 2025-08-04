@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "refactor(modal): improve player ID handling and state management"
+  "notes": "perf: Add React.memo to critical game components for re-render optimization"
 }
