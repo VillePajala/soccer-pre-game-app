@@ -60,7 +60,7 @@ const createDummyClient = (): LightweightSupabaseClient => ({
         single: async () => ({ data: null, error: new Error('Supabase not configured') })
       })
     }),
-  } as any)
+  } as LightweightSupabaseClient)
 });
 
 // Cache for the lazy-loaded client
@@ -134,9 +134,9 @@ export const supabase: LightweightSupabaseClient = new Proxy(createDummyClient()
     if (prop === 'auth') {
       return new Proxy(target.auth, {
         get(authTarget, authProp) {
-          return async (...args: any[]) => {
+          return async (...args: unknown[]) => {
             const client = await getSupabaseClient();
-            const method = client.auth[authProp as keyof typeof client.auth] as any;
+            const method = client.auth[authProp as keyof typeof client.auth] as (...args: unknown[]) => unknown;
             return method.apply(client.auth, args);
           };
         }
@@ -145,7 +145,7 @@ export const supabase: LightweightSupabaseClient = new Proxy(createDummyClient()
 
     // For database methods, return async wrappers
     if (prop === 'from') {
-      return (...args: any[]) => {
+      return (...args: unknown[]) => {
         // Start loading the client in background
         getSupabaseClient().catch(console.error);
         

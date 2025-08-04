@@ -3,6 +3,8 @@
  * This prevents the 515KB bundle size issue while maintaining type safety
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 // Core auth types that don't require the full Supabase bundle
 export interface LightweightUser {
   id: string;

@@ -32,18 +32,20 @@ export function AuthStatusIndicator() {
           Sign In
         </button>
         
-        <React.Suspense fallback={
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-slate-800 rounded-lg p-6 w-96 max-w-90vw">
-              <div className="animate-pulse">
-                <div className="h-6 bg-slate-700 rounded mb-4"></div>
-                <div className="h-4 bg-slate-700 rounded mb-2"></div>
-                <div className="h-4 bg-slate-700 rounded mb-4"></div>
-                <div className="h-10 bg-slate-700 rounded"></div>
+        <React.Suspense 
+          fallback={
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-slate-800 rounded-lg p-6 w-96 max-w-90vw">
+                <div className="animate-pulse">
+                  <div className="h-6 bg-slate-700 rounded mb-4"></div>
+                  <div className="h-4 bg-slate-700 rounded mb-2"></div>
+                  <div className="h-4 bg-slate-700 rounded mb-4"></div>
+                  <div className="h-10 bg-slate-700 rounded"></div>
+                </div>
               </div>
             </div>
-          </div>
-        }}>
+          }
+        >
           <AuthModal
             isOpen={showAuthModal}
             onClose={() => setShowAuthModal(false)}
