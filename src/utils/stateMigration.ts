@@ -117,16 +117,16 @@ export const migrateToGameStore = (legacyState: LegacyAppState): Partial<GameSto
       awayScore: legacyState.awayScore || 0,
       gameDate: legacyState.gameDate || new Date().toISOString().split('T')[0],
       gameLocation: legacyState.gameLocation || '',
-      gameStatus: (legacyState.gameStatus as string) || 'not_started',
+      gameStatus: (legacyState.gameStatus as 'not_started' | 'in_progress' | 'period_end' | 'game_end') || 'not_started',
       selectedPlayerIds: legacyState.selectedPlayerIds || [],
     };
     
     const fieldState: Partial<FieldState> = {
-      playersOnField: legacyState.playersOnField || [],
-      opponents: legacyState.opponents || [],
-      availablePlayers: legacyState.availablePlayers || [],
-      drawings: legacyState.drawings || [],
-      tacticalDrawings: legacyState.tacticalDrawings || [],
+      playersOnField: (legacyState.playersOnField as any[]) || [],
+      opponents: (legacyState.opponents as any[]) || [],
+      availablePlayers: (legacyState.availablePlayers as any[]) || [],
+      drawings: (legacyState.drawings as any[]) || [],
+      tacticalDrawings: (legacyState.tacticalDrawings as any[]) || [],
       tacticalDiscs: [],
       tacticalBallPosition: null,
     };
@@ -183,8 +183,8 @@ export const migrateToUIStore = (legacyState: LegacyAppState): Partial<UIStore> 
 export const migrateToPersistenceStore = (legacyState: LegacyAppState): Partial<PersistenceStore> => {
   try {
     return {
-      savedGames: legacyState.savedGames || {},
-      masterRoster: legacyState.masterRoster || [],
+      savedGames: (legacyState.savedGames as any) || {} as any,
+      masterRoster: (legacyState.masterRoster as any[]) || [],
       settings: legacyState.appSettings as AppSettings || {},
     };
   } catch (error) {
@@ -220,7 +220,7 @@ export const validateMigratedState = (
     if (uiStore.modals) {
       const modalKeys = Object.keys(uiStore.modals);
       for (const key of modalKeys) {
-        if (typeof (uiStore.modals as Record<string, unknown>)[key] !== 'boolean') {
+        if (typeof (uiStore.modals as any)[key] !== 'boolean') {
           throw new Error(`Invalid modal state for ${key} in UIStore`);
         }
       }

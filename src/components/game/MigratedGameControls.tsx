@@ -7,7 +7,8 @@ import {
   useGameSession 
 } from '@/stores/gameStore';
 import { 
-  useGameView,\n  useUIStore
+  useGameView,
+  useUIStore
 } from '@/stores/uiStore';
 import type { ExtendedGameControlsProps } from './GameControls.migration';
 
@@ -308,7 +309,7 @@ export const MigratedGameControls = React.memo<ExtendedGameControlsProps>(({
         onPlaceAllPlayers={handlePlaceAllPlayers}
         
         // Timer overlay
-        showLargeTimerOverlay={displayShowLargeTimerOverlay}
+        showLargeTimerOverlay={displayShowLargeTimerOverlay || false}
         onToggleLargeTimerOverlay={handleToggleLargeTimerOverlay}
         
         // Modal controls
@@ -327,11 +328,11 @@ export const MigratedGameControls = React.memo<ExtendedGameControlsProps>(({
         onQuickSave={handleQuickSave}
         
         // State indicators
-        isGameLoaded={displayIsGameLoaded}
-        highlightRosterButton={displayHighlightRosterButton}
+        isGameLoaded={displayIsGameLoaded || false}
+        highlightRosterButton={displayHighlightRosterButton || false}
         
         // Tactics board
-        isTacticsBoardView={displayIsTacticsBoardView}
+        isTacticsBoardView={displayIsTacticsBoardView || false}
         onToggleTacticsBoard={handleToggleTacticsBoard}
         onAddHomeDisc={handleAddHomeDisc}
         onAddOpponentDisc={handleAddOpponentDisc}

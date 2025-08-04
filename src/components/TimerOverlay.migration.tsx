@@ -4,13 +4,14 @@ import React from 'react';
 import LegacyTimerOverlay from './TimerOverlay';
 import { MigratedTimerOverlay } from './MigratedTimerOverlay';
 import { useMigrationSafety } from '@/hooks/useMigrationSafety';
+import type { IntervalLog } from '@/types/game';
 
 // Re-export the props interface
 export interface TimerOverlayProps {
   timeElapsedInSeconds: number;
   subAlertLevel: 'none' | 'warning' | 'due';
   onSubstitutionMade: () => void;
-  completedIntervalDurations: number[];
+  completedIntervalDurations: number[] | IntervalLog[];
   subIntervalMinutes: number;
   onSetSubInterval: (minutes: number) => void;
   isTimerRunning: boolean;

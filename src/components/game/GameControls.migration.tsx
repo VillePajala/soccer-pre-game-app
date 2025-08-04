@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import LegacyGameControls from './GameControls';
+import { GameControls as LegacyGameControls } from './GameControls';
 import { MigratedGameControls } from './MigratedGameControls';
 import { useMigrationSafety } from '@/hooks/useMigrationSafety';
 import { GameControlsProps } from '@/types/gameComponents';

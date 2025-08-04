@@ -9,7 +9,8 @@ import {
   useFieldState,
   useGameTimer,
   useGameScore,
-  type GameSessionState,\n  type FieldState 
+  type GameSessionState,
+  type FieldState 
 } from '@/stores/gameStore';
 import { DEFAULT_GAME_ID } from '@/config/constants';
 import logger from '@/utils/logger';
@@ -42,7 +43,7 @@ export function MigratedGameStateProvider({
   // Initialize store with provided initial state
   useEffect(() => {
     if (initialState) {
-      gameStore.loadGameState(initialState);
+      gameStore.loadGameState(initialState as any);
     }
     if (initialGameId) {
       gameStore.setGameId(initialGameId);
@@ -116,7 +117,7 @@ export function MigratedGameStateProvider({
         gameStore.setPeriodDuration(action.payload as number);
         break;
       case 'SET_GAME_STATUS':
-        gameStore.setGameStatus(action.payload);
+        gameStore.setGameStatus(action.payload as 'not_started' | 'in_progress' | 'period_end' | 'game_end');
         break;
       case 'SET_CURRENT_PERIOD':
         setCurrentPeriod(action.payload as number);
@@ -205,8 +206,8 @@ export function MigratedGameStateProvider({
     gameStore.setTacticalDrawings(drawings);
   }, [gameStore]);
   
-  const setTacticalDiscs = useCallback((discs: unknown[]) => {
-    gameStore.setTacticalDiscs(discs);
+  const setTacticalDiscs = useCallback((discs: any[]) => {
+    gameStore.setTacticalDiscs(discs as any[]);
   }, [gameStore]);
   
   const setTacticalBallPosition = useCallback((position: Point | null) => {
@@ -215,35 +216,67 @@ export function MigratedGameStateProvider({
   
   // Create context value matching legacy interface
   const contextValue: GameStateContextType = useMemo(() => ({
-    // Game session state
+    // Core game session state (matching interface)
+    gameState: gameSessionState,
+    dispatch: dispatchGameSession,
+    
+    // Players state (matching interface)
+    availablePlayers: fieldState.availablePlayers,
+    playersOnField: fieldState.playersOnField,
+    
+    // Data loading states (matching interface)
+    isLoading: false, // TODO: Connect to actual loading state
+    error: null, // TODO: Connect to actual error state
+    
+    // State update functions (matching interface)
+    updateGameState: (update: Partial<GameSessionState>) => {
+      // Map partial updates to individual actions
+      Object.entries(update).forEach(([key, value]) => {
+        switch (key) {
+          case 'teamName':
+            gameStore.setTeamName(value as string);
+            break;
+          case 'opponentName':
+            gameStore.setOpponentName(value as string);
+            break;
+          // Add more mappings as needed
+        }
+      });
+    },
+    updatePlayers: (players: Player[]) => {
+      gameStore.setAvailablePlayers(players);
+    },
+    resetGame: () => {
+      gameStore.resetGameSession();
+      gameStore.resetField();
+    },
+    
+    // Game status (matching interface)
+    isGameActive: gameSessionState.gameStatus === 'in_progress',
+    timeElapsedInSeconds: gameSessionState.timeElapsedInSeconds,
+    
+    // Legacy field state properties (for backward compatibility)
     gameSessionState,
     dispatchGameSession,
-    
-    // Field state from Zustand
-    playersOnField: fieldState.playersOnField,
     setPlayersOnField,
     opponents: fieldState.opponents,
     setOpponents,
     drawings: fieldState.drawings,
     setDrawings,
-    availablePlayers: fieldState.availablePlayers,
     setAvailablePlayers,
-    
-    // Tactical state
     tacticalDrawings: fieldState.tacticalDrawings,
     setTacticalDrawings,
     tacticalDiscs: fieldState.tacticalDiscs,
     setTacticalDiscs,
     tacticalBallPosition: fieldState.tacticalBallPosition,
     setTacticalBallPosition,
-    
-    // Additional properties to match interface
     isTacticsBoardView: false, // Will be handled by UI store in future migration
     setIsTacticsBoardView: () => {}, // Placeholder
-  }), [
+  } as any), [
     gameSessionState,
     dispatchGameSession,
     fieldState,
+    gameStore,
     setPlayersOnField,
     setOpponents,
     setDrawings,

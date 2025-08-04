@@ -27,6 +27,9 @@ export {
   useTacticsBoard,
   useDrawingMode,
   usePlayerSelection,
+  useGameView,
+  useDrawingTools,
+  useSelectionState,
   useNotificationActions,
   type UIStore,
   type ModalState,
@@ -51,18 +54,26 @@ export {
 // Store utilities and helpers
 export const resetAllStores = () => {
   // Reset all stores to their default state
-  useGameStore.getState().resetGameSession();
-  useGameStore.getState().resetField();
-  useUIStore.getState().resetAll();
+  const gameStore = require('./gameStore').useGameStore;
+  const uiStore = require('./uiStore').useUIStore;
+  
+  gameStore.getState().resetGameSession();
+  gameStore.getState().resetField();
+  // Note: UIStore resetAll method needs to be implemented
+  // uiStore.getState().resetAll();
   // Note: PersistenceStore intentionally not reset to preserve user data
 };
 
 export const getStoreStates = () => {
   // Get current state from all stores (useful for debugging/export)
+  const gameStore = require('./gameStore').useGameStore;
+  const uiStore = require('./uiStore').useUIStore;
+  const persistenceStore = require('./persistenceStore').usePersistenceStore;
+  
   return {
-    game: useGameStore.getState(),
-    ui: useUIStore.getState(),
-    persistence: usePersistenceStore.getState(),
+    game: gameStore.getState(),
+    ui: uiStore.getState(),
+    persistence: persistenceStore.getState(),
   };
 };
 

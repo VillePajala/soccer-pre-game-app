@@ -232,7 +232,8 @@ export const usePersistenceStore = create<PersistenceStore>()(
           set({ isSaving: true, lastError: null }, false, 'saveGame:start');
           
           try {
-            const success = await saveTypedGame(gameId, gameState);
+            const gameStateWithId = { ...gameState, gameId };
+            const success = await saveTypedGame(gameStateWithId);
             
             if (success) {
               // Update local state
@@ -297,7 +298,8 @@ export const usePersistenceStore = create<PersistenceStore>()(
           set({ isSaving: true, lastError: null }, false, 'deleteGame:start');
           
           try {
-            const success = await storageManager.deleteGame(gameId);
+            await storageManager.deleteSavedGame(gameId);
+            const success = true;
             
             if (success) {
               const savedGames = await getTypedSavedGames();
@@ -352,7 +354,11 @@ export const usePersistenceStore = create<PersistenceStore>()(
           set({ isSaving: true, lastError: null }, false, 'saveMasterRoster:start');
           
           try {
-            const success = await storageManager.saveMasterRoster(players);
+            // Save each player individually as the interface doesn't support batch roster saving
+            for (const player of players) {
+              await storageManager.savePlayer(player);
+            }
+            const success = true;
             
             if (success) {
               set({ 
@@ -615,7 +621,23 @@ export const usePersistenceStore = create<PersistenceStore>()(
         // Utility actions
         clearAllData: async () => {
           try {
-            await storageManager.clearAllData();
+            // Clear data by removing individual items (no clearAllData method in interface)
+            const savedGames = await getTypedSavedGames();
+            for (const gameId of Object.keys(savedGames)) {
+              await storageManager.deleteSavedGame(gameId);
+            }
+            const players = await storageManager.getPlayers();
+            for (const player of players) {
+              await storageManager.deletePlayer(player.id);
+            }
+            const seasons = await storageManager.getSeasons();
+            for (const season of seasons) {
+              await storageManager.deleteSeason(season.id);
+            }
+            const tournaments = await storageManager.getTournaments();
+            for (const tournament of tournaments) {
+              await storageManager.deleteTournament(tournament.id);
+            }
             set({
               savedGames: {},
               masterRoster: [],
