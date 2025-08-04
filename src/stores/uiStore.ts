@@ -597,6 +597,55 @@ export const usePlayerSelection = () => {
   };
 };
 
+// Game view selector hook
+export const useGameView = () => {
+  const isTacticsBoardView = useUIStore((state) => state.view.isTacticsBoardView);
+  const isDrawingMode = useUIStore((state) => state.view.isDrawingMode);
+  const isPlayerSelectionMode = useUIStore((state) => state.view.isPlayerSelectionMode);
+  const isFieldEditMode = useUIStore((state) => state.view.isFieldEditMode);
+  const showPlayerNames = useUIStore((state) => state.view.showPlayerNames);
+  const showPlayerNumbers = useUIStore((state) => state.view.showPlayerNumbers);
+  const showOpponents = useUIStore((state) => state.view.showOpponents);
+  const showTacticalElements = useUIStore((state) => state.view.showTacticalElements);
+  
+  return {
+    isTacticsBoardView,
+    isDrawingMode,
+    isPlayerSelectionMode,
+    isFieldEditMode,
+    showPlayerNames,
+    showPlayerNumbers,
+    showOpponents,
+    showTacticalElements,
+  };
+};
+
+// Drawing tool selector hook
+export const useDrawingTools = () => {
+  const selectedDrawingTool = useUIStore((state) => state.view.selectedDrawingTool);
+  const drawingColor = useUIStore((state) => state.view.drawingColor);
+  const drawingThickness = useUIStore((state) => state.view.drawingThickness);
+  
+  return {
+    selectedDrawingTool,
+    drawingColor,
+    drawingThickness,
+  };
+};
+
+// Selection state hook
+export const useSelectionState = () => {
+  const selectedPlayerIds = useUIStore((state) => state.view.selectedPlayerIds);
+  const selectedOpponentIds = useUIStore((state) => state.view.selectedOpponentIds);
+  const selectedTacticalElements = useUIStore((state) => state.view.selectedTacticalElements);
+  
+  return {
+    selectedPlayerIds,
+    selectedOpponentIds,
+    selectedTacticalElements,
+  };
+};
+
 // Notification helper hook
 export const useNotificationActions = () => {
   const addNotification = useUIStore((state) => state.addNotification);
