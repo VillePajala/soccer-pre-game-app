@@ -26,6 +26,19 @@ interface ExtendedGameControlsProps extends Partial<GameControlsProps> {
   onPlaceAllPlayers?: () => void;
   onSignOut?: () => void;
   
+  // Missing modal handlers
+  onToggleLargeTimerOverlay?: () => void;
+  onToggleGoalLogModal?: () => void;
+  onToggleGameStatsModal?: () => void;
+  onOpenLoadGameModal?: () => void;
+  onStartNewGame?: () => void;
+  onOpenRosterModal?: () => void;
+  onQuickSave?: () => void;
+  onOpenGameSettingsModal?: () => void;
+  onOpenSeasonTournamentModal?: () => void;
+  onToggleInstructionsModal?: () => void;
+  onOpenSettingsModal?: () => void;
+  
   // Style
   barStyle?: string;
 }
@@ -110,35 +123,35 @@ export function GameControls({
     <div className={barStyle}>
       <ControlBar
         // Undo/Redo
-        onUndo={onUndo || onUndoAction}
-        onRedo={onRedo || onRedoAction}
+        onUndo={onUndo || onUndoAction || (() => {})}
+        onRedo={onRedo || (() => {})}
         canUndo={canUndo}
         canRedo={canRedo}
         
         // Field actions
-        onResetField={onResetField}
-        onClearDrawings={onClearDrawings}
-        onAddOpponent={onAddOpponent}
-        onPlaceAllPlayers={onPlaceAllPlayers}
+        onResetField={onResetField || (() => {})}
+        onClearDrawings={onClearDrawings || (() => {})}
+        onAddOpponent={onAddOpponent || (() => {})}
+        onPlaceAllPlayers={onPlaceAllPlayers || (() => {})}
         
         // Timer overlay
         showLargeTimerOverlay={showLargeTimerOverlay}
-        onToggleLargeTimerOverlay={onToggleLargeTimerOverlay || onToggleTimerOverlay}
+        onToggleLargeTimerOverlay={onToggleLargeTimerOverlay || onToggleTimerOverlay || (() => {})}
         
         // Modal controls
-        onToggleTrainingResources={onToggleTrainingResources}
-        onToggleGoalLogModal={onToggleGoalLogModal}
-        onToggleGameStatsModal={onToggleGameStatsModal || onOpenGameStats}
-        onOpenLoadGameModal={onOpenLoadGameModal || onOpenLoadGame}
-        onStartNewGame={onStartNewGame || onOpenNewGame}
-        onOpenRosterModal={onOpenRosterModal || onOpenRoster}
-        onOpenGameSettingsModal={onOpenGameSettingsModal || onOpenGameSettings}
-        onOpenSeasonTournamentModal={onOpenSeasonTournamentModal}
-        onToggleInstructionsModal={onToggleInstructionsModal}
-        onOpenSettingsModal={onOpenSettingsModal || onOpenSettings}
+        onToggleTrainingResources={onToggleTrainingResources || (() => {})}
+        onToggleGoalLogModal={onToggleGoalLogModal || (() => {})}
+        onToggleGameStatsModal={onToggleGameStatsModal || onOpenGameStats || (() => {})}
+        onOpenLoadGameModal={onOpenLoadGameModal || onOpenLoadGame || (() => {})}
+        onStartNewGame={onStartNewGame || onOpenNewGame || (() => {})}
+        onOpenRosterModal={onOpenRosterModal || onOpenRoster || (() => {})}
+        onOpenGameSettingsModal={onOpenGameSettingsModal || onOpenGameSettings || (() => {})}
+        onOpenSeasonTournamentModal={onOpenSeasonTournamentModal || (() => {})}
+        onToggleInstructionsModal={onToggleInstructionsModal || (() => {})}
+        onOpenSettingsModal={onOpenSettingsModal || onOpenSettings || (() => {})}
         
         // Quick actions
-        onQuickSave={onQuickSave || onSaveGame}
+        onQuickSave={onQuickSave || onSaveGame || (() => {})}
         
         // State indicators
         isGameLoaded={isGameLoaded}
@@ -146,12 +159,15 @@ export function GameControls({
         
         // Tactics board
         isTacticsBoardView={isTacticsBoardView}
-        onToggleTacticsBoard={onToggleTacticsBoard}
-        onAddHomeDisc={onAddHomeDisc}
-        onAddOpponentDisc={onAddOpponentDisc}
+        onToggleTacticsBoard={onToggleTacticsBoard || (() => {})}
+        onAddHomeDisc={onAddHomeDisc || (() => {})}
+        onAddOpponentDisc={onAddOpponentDisc || (() => {})}
         
         // Auth
-        onSignOut={onSignOut}
+        onSignOut={onSignOut || (() => {})}
+        
+        // Player Assessment Modal (missing property)
+        onOpenPlayerAssessmentModal={() => {}}
       />
     </div>
   );

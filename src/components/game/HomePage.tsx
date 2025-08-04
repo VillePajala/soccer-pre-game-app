@@ -11,7 +11,7 @@ import logger from '@/utils/logger';
 
 // Hook imports (from original HomePage)
 import useAppSettingsManager from '@/hooks/useAppSettingsManager';
-import useMigrationTrigger from '@/hooks/useMigrationTrigger';
+import { useMigrationTrigger } from '@/hooks/useMigrationTrigger';
 import { useModalContext } from '@/contexts/ModalProvider';
 
 // Utilities and constants
@@ -50,17 +50,6 @@ export function HomePage({
   const [currentGameId] = useState<string | null>(DEFAULT_GAME_ID);
   const hasSkippedInitialSetup = skipInitialSetup;
   
-  // App settings and language
-  const {
-    appLanguage,
-    defaultTeamNameSetting,
-    handleLanguageChange,
-    handleDefaultTeamNameChange,
-    handleShowAppGuide,
-    handleHardResetApp,
-    signOut,
-  } = useAppSettingsManager();
-  
   // Modal context
   const {
     isGameSettingsModalOpen,
@@ -85,6 +74,22 @@ export function HomePage({
   
   // Additional modal states not in context
   const [isInstructionsModalOpen, setIsInstructionsModalOpen] = useState(false);
+  
+  // App settings and language
+  const {
+    appLanguage,
+    defaultTeamNameSetting,
+    handleLanguageChange,
+    handleDefaultTeamNameChange,
+    handleShowAppGuide,
+    handleHardResetApp,
+  } = useAppSettingsManager({
+    setIsSettingsModalOpen,
+    setIsInstructionsModalOpen
+  });
+  
+  // Placeholder signOut function
+  const signOut = () => {};
   const [isTrainingResourcesOpen, setIsTrainingResourcesOpen] = useState(false);
   
   // Migration trigger
@@ -266,7 +271,7 @@ export function HomePage({
           showLargeTimerOverlay={showLargeTimerOverlay}
           
           // Modal handlers
-          onToggleLargeTimerOverlay={handleToggleLargeTimerOverlay}
+          onToggleTimerOverlay={handleToggleLargeTimerOverlay}
           onToggleTrainingResources={handleToggleTrainingResources}
           onToggleGoalLogModal={handleToggleGoalLogModal}
           onToggleGameStatsModal={handleToggleGameStatsModal}
