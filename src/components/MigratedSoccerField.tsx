@@ -7,9 +7,9 @@ import {
   useGameTimer,
   useFieldState 
 } from '@/stores/gameStore';
-import { useUIStore, useGameView } from '@/stores/uiStore';
-import { Player, Point, Opponent, TacticalDisc } from '@/types';
-import tinycolor from 'tinycolor2';
+import { useGameView } from '@/stores/uiStore';
+import { Player, Point, Opponent } from '@/types';
+// import tinycolor from 'tinycolor2'; // TODO: Remove if not needed
 import logger from '@/utils/logger';
 import type { SoccerFieldProps } from './SoccerField.migration';
 
@@ -29,7 +29,7 @@ export const MigratedSoccerField: React.FC<SoccerFieldProps> = ({
   tacticalBallPosition: propTacticalBallPosition,
   
   // Props that are still used for compatibility
-  onPlayerDrop,
+  onPlayerDrop: _onPlayerDrop,
   onPlayerMove,
   onPlayerMoveEnd,
   onDrawingStart,
@@ -39,20 +39,20 @@ export const MigratedSoccerField: React.FC<SoccerFieldProps> = ({
   onOpponentMove,
   onOpponentMoveEnd,
   onOpponentRemove,
-  draggingPlayerFromBarInfo,
-  onPlayerDropViaTouch,
-  onPlayerDragCancelViaTouch,
-  onTacticalDiscMove,
-  onTacticalDiscRemove,
-  onToggleTacticalDiscType,
-  onTacticalBallMove,
+  draggingPlayerFromBarInfo: _draggingPlayerFromBarInfo,
+  onPlayerDropViaTouch: _onPlayerDropViaTouch,
+  onPlayerDragCancelViaTouch: _onPlayerDragCancelViaTouch,
+  onTacticalDiscMove: _onTacticalDiscMove,
+  onTacticalDiscRemove: _onTacticalDiscRemove,
+  onToggleTacticalDiscType: _onToggleTacticalDiscType,
+  onTacticalBallMove: _onTacticalBallMove,
 }) => {
   // Get values from Zustand stores
   const gameSession = useGameSession();
   const { timeElapsed } = useGameTimer();
   const field = useFieldState();
   const gameStore = useGameStore();
-  const uiStore = useUIStore();
+  // const uiStore = useUIStore(); // TODO: Use when implementing UI state
   const gameView = useGameView();
   
   // Use store values instead of props where available
@@ -71,25 +71,25 @@ export const MigratedSoccerField: React.FC<SoccerFieldProps> = ({
   const [draggingPlayerId, setDraggingPlayerId] = useState<string | null>(null);
   const [isDraggingOpponent, setIsDraggingOpponent] = useState<boolean>(false);
   const [draggingOpponentId, setDraggingOpponentId] = useState<string | null>(null);
-  const [isDraggingTacticalDisc, setIsDraggingTacticalDisc] = useState<boolean>(false);
-  const [draggingTacticalDiscId, setDraggingTacticalDiscId] = useState<string | null>(null);
-  const [isDraggingBall, setIsDraggingBall] = useState<boolean>(false);
+  // const [isDraggingTacticalDisc, setIsDraggingTacticalDisc] = useState<boolean>(false);
+  // const [draggingTacticalDiscId, setDraggingTacticalDiscId] = useState<string | null>(null);
+  // const [isDraggingBall, setIsDraggingBall] = useState<boolean>(false);
   const [isDrawing, setIsDrawing] = useState<boolean>(false);
-  const [activeTouchId, setActiveTouchId] = useState<number | null>(null);
-  const [lastTapInfo, setLastTapInfo] = useState<{ 
-    time: number; 
-    x: number; 
-    y: number; 
-    targetId: string | null; 
-    targetType: 'player' | 'opponent' | 'tactical' | 'ball' | null 
-  } | null>(null);
+  // const [activeTouchId, setActiveTouchId] = useState<number | null>(null);
+  // const [lastTapInfo, setLastTapInfo] = useState<{ 
+  //   time: number; 
+  //   x: number; 
+  //   y: number; 
+  //   targetId: string | null; 
+  //   targetType: 'player' | 'opponent' | 'tactical' | 'ball' | null 
+  // } | null>(null);
   const [ballImage, setBallImage] = useState<HTMLImageElement | null>(null);
   const drawingFrameRef = useRef<number | null>(null);
 
   // Constants
   const PLAYER_RADIUS = 20;
-  const DOUBLE_TAP_TIME_THRESHOLD = 300;
-  const DOUBLE_TAP_POS_THRESHOLD = 15;
+  // const DOUBLE_TAP_TIME_THRESHOLD = 300;
+  // const DOUBLE_TAP_POS_THRESHOLD = 15;
 
   // Load ball image
   useEffect(() => {
@@ -100,9 +100,10 @@ export const MigratedSoccerField: React.FC<SoccerFieldProps> = ({
 
   // Cleanup animation frame on unmount
   useEffect(() => {
+    const currentFrame = drawingFrameRef.current;
     return () => {
-      if (drawingFrameRef.current) {
-        cancelAnimationFrame(drawingFrameRef.current);
+      if (currentFrame) {
+        cancelAnimationFrame(currentFrame);
       }
     };
   }, []);
@@ -146,12 +147,12 @@ export const MigratedSoccerField: React.FC<SoccerFieldProps> = ({
   };
 
   // Enhanced player movement handlers with store integration
-  const handlePlayerDropWithStore = useCallback((playerId: string, relX: number, relY: number) => {
-    // Update store
-    gameStore.movePlayer(playerId, { relX, relY });
-    // Also call parent handler for compatibility
-    onPlayerDrop(playerId, relX, relY);
-  }, [gameStore, onPlayerDrop]);
+  // const handlePlayerDropWithStore = useCallback((playerId: string, relX: number, relY: number) => {
+  //   // Update store
+  //   gameStore.movePlayer(playerId, { relX, relY });
+  //   // Also call parent handler for compatibility
+  //   onPlayerDrop(playerId, relX, relY);
+  // }, [gameStore, onPlayerDrop]);
 
   const handlePlayerMoveWithStore = useCallback((playerId: string, relX: number, relY: number) => {
     // Update store
@@ -183,26 +184,26 @@ export const MigratedSoccerField: React.FC<SoccerFieldProps> = ({
   }, [gameStore, onOpponentRemove]);
 
   // Enhanced tactical handlers with store integration
-  const handleTacticalDiscMoveWithStore = useCallback((discId: string, relX: number, relY: number) => {
-    // Update store
-    gameStore.moveTacticalDisc(discId, { relX, relY });
-    // Also call parent handler for compatibility
-    onTacticalDiscMove(discId, relX, relY);
-  }, [gameStore, onTacticalDiscMove]);
+  // const handleTacticalDiscMoveWithStore = useCallback((discId: string, relX: number, relY: number) => {
+  //   // Update store
+  //   gameStore.moveTacticalDisc(discId, { relX, relY });
+  //   // Also call parent handler for compatibility
+  //   onTacticalDiscMove(discId, relX, relY);
+  // }, [gameStore, onTacticalDiscMove]);
 
-  const handleTacticalDiscRemoveWithStore = useCallback((discId: string) => {
-    // Update store
-    gameStore.removeTacticalDisc(discId);
-    // Also call parent handler for compatibility
-    onTacticalDiscRemove(discId);
-  }, [gameStore, onTacticalDiscRemove]);
+  // const handleTacticalDiscRemoveWithStore = useCallback((discId: string) => {
+  //   // Update store
+  //   gameStore.removeTacticalDisc(discId);
+  //   // Also call parent handler for compatibility
+  //   onTacticalDiscRemove(discId);
+  // }, [gameStore, onTacticalDiscRemove]);
 
-  const handleTacticalBallMoveWithStore = useCallback((position: Point) => {
-    // Update store
-    gameStore.setTacticalBallPosition(position);
-    // Also call parent handler for compatibility
-    onTacticalBallMove(position);
-  }, [gameStore, onTacticalBallMove]);
+  // const handleTacticalBallMoveWithStore = useCallback((position: Point) => {
+  //   // Update store
+  //   gameStore.setTacticalBallPosition(position);
+  //   // Also call parent handler for compatibility
+  //   onTacticalBallMove(position);
+  // }, [gameStore, onTacticalBallMove]);
 
   // Enhanced drawing handlers with store integration
   const handleDrawingStartWithStore = useCallback((point: Point) => {
@@ -282,33 +283,33 @@ export const MigratedSoccerField: React.FC<SoccerFieldProps> = ({
     return dx * dx + dy * dy <= opponentRadiusSq;
   }, []);
 
-  const isPointInTacticalDisc = useCallback((eventClientX: number, eventClientY: number, disc: TacticalDisc): boolean => {
-    const canvas = canvasRef.current;
-    if (!canvas) return false;
-    const rect = canvas.getBoundingClientRect();
-    const absDiscX = disc.relX * rect.width;
-    const absDiscY = disc.relY * rect.height;
-    const absEventX = eventClientX - rect.left;
-    const absEventY = eventClientY - rect.top;
-    const dx = absEventX - absDiscX;
-    const dy = absEventY - absDiscY;
-    return dx * dx + dy * dy <= PLAYER_RADIUS * PLAYER_RADIUS;
-  }, []);
+  // const isPointInTacticalDisc = useCallback((eventClientX: number, eventClientY: number, disc: TacticalDisc): boolean => {
+  //   const canvas = canvasRef.current;
+  //   if (!canvas) return false;
+  //   const rect = canvas.getBoundingClientRect();
+  //   const absDiscX = disc.relX * rect.width;
+  //   const absDiscY = disc.relY * rect.height;
+  //   const absEventX = eventClientX - rect.left;
+  //   const absEventY = eventClientY - rect.top;
+  //   const dx = absEventX - absDiscX;
+  //   const dy = absEventY - absDiscY;
+  //   return dx * dx + dy * dy <= PLAYER_RADIUS * PLAYER_RADIUS;
+  // }, []);
 
-  const isPointInBall = useCallback((eventClientX: number, eventClientY: number): boolean => {
-    if (!displayTacticalBallPosition) return false;
-    const canvas = canvasRef.current;
-    if (!canvas) return false;
-    const rect = canvas.getBoundingClientRect();
-    const ballRadius = PLAYER_RADIUS;
-    const absBallX = displayTacticalBallPosition.relX * rect.width;
-    const absBallY = displayTacticalBallPosition.relY * rect.height;
-    const absEventX = eventClientX - rect.left;
-    const absEventY = eventClientY - rect.top;
-    const dx = absEventX - absBallX;
-    const dy = absEventY - absBallY;
-    return dx * dx + dy * dy <= ballRadius * ballRadius;
-  }, [displayTacticalBallPosition]);
+  // const isPointInBall = useCallback((eventClientX: number, eventClientY: number): boolean => {
+  //   if (!displayTacticalBallPosition) return false;
+  //   const canvas = canvasRef.current;
+  //   if (!canvas) return false;
+  //   const rect = canvas.getBoundingClientRect();
+  //   const ballRadius = PLAYER_RADIUS;
+  //   const absBallX = displayTacticalBallPosition.relX * rect.width;
+  //   const absBallY = displayTacticalBallPosition.relY * rect.height;
+  //   const absEventX = eventClientX - rect.left;
+  //   const absEventY = eventClientY - rect.top;
+  //   const dx = absEventX - absBallX;
+  //   const dy = absEventY - absBallY;
+  //   return dx * dx + dy * dy <= ballRadius * ballRadius;
+  // }, [displayTacticalBallPosition]);
 
   // Drawing logic - simplified version focusing on core functionality
   const draw = useCallback(() => {
@@ -318,7 +319,7 @@ export const MigratedSoccerField: React.FC<SoccerFieldProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const rect = canvas.getBoundingClientRect();
+    // const rect = canvas.getBoundingClientRect(); // TODO: Remove if not needed
     const canvasWidth = canvas.width;
     const canvasHeight = canvas.height;
 

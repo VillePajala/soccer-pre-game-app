@@ -11,7 +11,7 @@ import {
   useGameTimer,
   useGameScore 
 } from '@/stores/gameStore';
-import { useUIStore } from '@/stores/uiStore';
+// import { useUIStore } from '@/stores/uiStore'; // TODO: Use when implementing UI state
 import type { TimerOverlayProps } from './TimerOverlay.migration';
 
 /**
@@ -20,29 +20,29 @@ import type { TimerOverlayProps } from './TimerOverlay.migration';
  */
 export const MigratedTimerOverlay: React.FC<TimerOverlayProps> = ({
   // Props that will be overridden by store values
-  timeElapsedInSeconds: propTimeElapsed,
-  isTimerRunning: propIsTimerRunning,
-  teamName: propTeamName,
-  opponentName: propOpponentName,
-  homeScore: propHomeScore,
-  awayScore: propAwayScore,
-  currentPeriod: propCurrentPeriod,
-  gameStatus: propGameStatus,
+  timeElapsedInSeconds: _propTimeElapsed,
+  isTimerRunning: _propIsTimerRunning,
+  teamName: _propTeamName,
+  opponentName: _propOpponentName,
+  homeScore: _propHomeScore,
+  awayScore: _propAwayScore,
+  currentPeriod: _propCurrentPeriod,
+  gameStatus: _propGameStatus,
   
   // Props that are still used from parent
   subAlertLevel,
   onSubstitutionMade,
-  completedIntervalDurations,
-  subIntervalMinutes,
-  onSetSubInterval,
+  completedIntervalDurations: _completedIntervalDurations,
+  subIntervalMinutes: _subIntervalMinutes,
+  onSetSubInterval: _onSetSubInterval,
   onStartPauseTimer,
   onResetTimer,
   onToggleGoalLogModal = () => { logger.warn('onToggleGoalLogModal handler not provided'); },
   onRecordOpponentGoal = () => { logger.warn('onRecordOpponentGoal handler not provided'); },
   homeOrAway,
   numberOfPeriods = 2,
-  periodDurationMinutes = 10,
-  lastSubTime = null,
+  periodDurationMinutes: _periodDurationMinutes = 10,
+  lastSubTime: _lastSubTime = null,
   onOpponentNameChange = () => { logger.warn('onOpponentNameChange handler not provided'); },
   onClose,
   isLoaded,
@@ -51,15 +51,15 @@ export const MigratedTimerOverlay: React.FC<TimerOverlayProps> = ({
   
   // Get values from Zustand stores
   const gameSession = useGameSession();
-  const { timeElapsed, isRunning, currentPeriod } = useGameTimer();
-  const { homeScore, awayScore, incrementHomeScore, incrementAwayScore } = useGameScore();
+  const { timeElapsed, isRunning } = useGameTimer();
+  const { incrementHomeScore, incrementAwayScore } = useGameScore();
   const gameStore = useGameStore();
   
   // Use store values instead of props where available
   const displayTimeElapsed = timeElapsed;
   const displayIsTimerRunning = isRunning;
-  const displayTeamName = gameSession.teamName || propTeamName;
-  const displayOpponentName = gameSession.opponentName || propOpponentName;
+  const displayTeamName = gameSession.teamName;
+  const displayOpponentName = gameSession.opponentName;
   const displayHomeScore = gameSession.homeScore;
   const displayAwayScore = gameSession.awayScore;
   const displayCurrentPeriod = gameSession.currentPeriod;

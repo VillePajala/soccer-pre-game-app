@@ -200,7 +200,7 @@ const defaultFieldState: FieldState = {
 export const useGameStore = create<GameStore>()(
   devtools(
     persist(
-      (set, get) => ({
+      (set) => ({
         // Initial state
         gameSession: defaultGameSession,
         field: defaultFieldState,

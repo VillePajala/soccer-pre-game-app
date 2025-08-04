@@ -8,7 +8,7 @@ import {
   useFieldState 
 } from '@/stores/gameStore';
 import { useUIStore, useSelectionState } from '@/stores/uiStore';
-import type { Player, GameEvent } from '@/types';
+import type { Player } from '@/types';
 import Image from 'next/image';
 import type { PlayerBarProps } from './PlayerBar.migration';
 

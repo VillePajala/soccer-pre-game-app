@@ -10,7 +10,7 @@ export interface TimerOverlayProps {
   timeElapsedInSeconds: number;
   subAlertLevel: 'none' | 'warning' | 'due';
   onSubstitutionMade: () => void;
-  completedIntervalDurations: any[];
+  completedIntervalDurations: number[];
   subIntervalMinutes: number;
   onSetSubInterval: (minutes: number) => void;
   isTimerRunning: boolean;

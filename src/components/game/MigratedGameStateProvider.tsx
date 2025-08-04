@@ -2,14 +2,14 @@
 
 import React, { createContext, useContext, useEffect, useCallback, useMemo } from 'react';
 import { GameStateContextType } from '@/types/gameComponents';
-import { Player, AppState, GameEvent, Point, Opponent } from '@/types';
+import { Player, AppState, Point, Opponent } from '@/types';
 import { 
   useGameStore, 
   useGameSession, 
   useFieldState,
   useGameTimer,
   useGameScore,
-  type GameSessionState as ZustandGameSessionState 
+  // type GameSessionState as ZustandGameSessionState // TODO: Remove if not needed 
 } from '@/stores/gameStore';
 import { DEFAULT_GAME_ID } from '@/config/constants';
 import logger from '@/utils/logger';
@@ -47,6 +47,7 @@ export function MigratedGameStateProvider({
     if (initialGameId) {
       gameStore.setGameId(initialGameId);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run on mount
   
   // Adapt Zustand state to match legacy GameSessionState interface
@@ -83,7 +84,7 @@ export function MigratedGameStateProvider({
   }), [gameSession]);
   
   // Create dispatch function that maps legacy actions to Zustand actions
-  const dispatchGameSession = useCallback((action: any) => {
+  const dispatchGameSession = useCallback((action: { type: string; payload?: unknown }) => {
     logger.debug('[MigratedGameStateProvider] Dispatch action:', action);
     
     switch (action.type) {
@@ -204,7 +205,7 @@ export function MigratedGameStateProvider({
     gameStore.setTacticalDrawings(drawings);
   }, [gameStore]);
   
-  const setTacticalDiscs = useCallback((discs: any[]) => {
+  const setTacticalDiscs = useCallback((discs: unknown[]) => {
     gameStore.setTacticalDiscs(discs);
   }, [gameStore]);
   

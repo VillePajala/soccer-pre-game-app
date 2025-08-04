@@ -6,10 +6,9 @@
  * data integrity and providing rollback capabilities.
  */
 
-import type { AppState } from '@/types';
 import type { GameStore, GameSessionState, FieldState } from '@/stores/gameStore';
 import type { UIStore, ModalState, ViewState } from '@/stores/uiStore';
-import type { PersistenceStore, AppSettings, UserData } from '@/stores/persistenceStore';
+import type { PersistenceStore, AppSettings } from '@/stores/persistenceStore';
 import { logger } from './logger';
 
 // Migration feature flags
@@ -81,11 +80,11 @@ export interface LegacyAppState {
   gameStatus?: string;
   
   // Field state (distributed across components)
-  playersOnField?: any[];
-  opponents?: any[];
-  availablePlayers?: any[];
-  drawings?: any[];
-  tacticalDrawings?: any[];
+  playersOnField?: unknown[];
+  opponents?: unknown[];
+  availablePlayers?: unknown[];
+  drawings?: unknown[];
+  tacticalDrawings?: unknown[];
   
   // UI state (distributed across components)
   showSaveGameModal?: boolean;
@@ -97,9 +96,9 @@ export interface LegacyAppState {
   selectedPlayerIds?: string[];
   
   // Settings and persistence (localStorage direct access)
-  savedGames?: any;
-  masterRoster?: any[];
-  appSettings?: any;
+  savedGames?: unknown;
+  masterRoster?: unknown[];
+  appSettings?: unknown;
 }
 
 /**
@@ -118,7 +117,7 @@ export const migrateToGameStore = (legacyState: LegacyAppState): Partial<GameSto
       awayScore: legacyState.awayScore || 0,
       gameDate: legacyState.gameDate || new Date().toISOString().split('T')[0],
       gameLocation: legacyState.gameLocation || '',
-      gameStatus: (legacyState.gameStatus as any) || 'not_started',
+      gameStatus: (legacyState.gameStatus as string) || 'not_started',
       selectedPlayerIds: legacyState.selectedPlayerIds || [],
     };
     
@@ -221,7 +220,7 @@ export const validateMigratedState = (
     if (uiStore.modals) {
       const modalKeys = Object.keys(uiStore.modals);
       for (const key of modalKeys) {
-        if (typeof (uiStore.modals as any)[key] !== 'boolean') {
+        if (typeof (uiStore.modals as Record<string, unknown>)[key] !== 'boolean') {
           throw new Error(`Invalid modal state for ${key} in UIStore`);
         }
       }
@@ -387,7 +386,7 @@ export const rollbackMigration = (): boolean => {
     localStorage.removeItem('migration-backup');
     
     // Try to restore backup (but don't fail if it doesn't exist)
-    const success = restoreFromMigrationBackup();
+    restoreFromMigrationBackup();
     
     logger.info('Migration rollback completed successfully');
     return true; // Always return true since we reset the state

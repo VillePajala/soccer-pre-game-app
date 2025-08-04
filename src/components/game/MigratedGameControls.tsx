@@ -4,14 +4,10 @@ import React from 'react';
 import ControlBar from '@/components/ControlBar';
 import { 
   useGameStore, 
-  useGameSession, 
-  useGameTimer 
+  useGameSession 
 } from '@/stores/gameStore';
 import { 
-  useUIStore, 
-  useModalState, 
-  useGameView,
-  useTacticsBoard 
+  useGameView
 } from '@/stores/uiStore';
 import type { ExtendedGameControlsProps } from './GameControls.migration';
 
@@ -53,10 +49,10 @@ export const MigratedGameControls = React.memo<ExtendedGameControlsProps>(({
   onOpenSettingsModal,
   
   // Timer handlers (from base GameControlsProps)
-  onStartGame,
-  onPauseGame,
-  onEndGame,
-  onResetTimer,
+  onStartGame: _onStartGame,
+  onPauseGame: _onPauseGame,
+  onEndGame: _onEndGame,
+  onResetTimer: _onResetTimer,
   onToggleTimerOverlay,
   onOpenGameSettings,
   onOpenGameStats,
@@ -73,12 +69,12 @@ export const MigratedGameControls = React.memo<ExtendedGameControlsProps>(({
 }) => {
   // Get values from Zustand stores
   const gameSession = useGameSession();
-  const { timeElapsed, isRunning } = useGameTimer();
+  // const { timeElapsed, isRunning } = useGameTimer(); // TODO: Use when needed
   const gameStore = useGameStore();
-  const uiStore = useUIStore();
-  const modals = useModalState();
+  // const uiStore = useUIStore(); // TODO: Use when implementing UI state
+  // const modals = useModalState(); // TODO: Use when implementing modal state
   const gameView = useGameView();
-  const { isEnabled: isTacticsBoardEnabled } = useTacticsBoard();
+  // const { isEnabled: isTacticsBoardEnabled } = useTacticsBoard(); // TODO: Use when implementing tactics board state
   
   // Use store values instead of props where available
   const displayCanUndo = gameSession.gameEvents?.length > 0 || propCanUndo || false;

@@ -171,7 +171,8 @@ export const useMigrationEffect = (
     if (shouldRun) {
       return effect();
     }
-  }, [shouldUseLegacy, runOnLegacy, runOnNew, ...deps]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shouldUseLegacy, runOnLegacy, runOnNew, effect, ...deps]);
 };
 
 /**
