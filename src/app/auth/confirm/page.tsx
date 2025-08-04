@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import logger from '@/utils/logger';
 
 function ConfirmPageContent() {
   const router = useRouter();
@@ -13,10 +14,10 @@ function ConfirmPageContent() {
 
   useEffect(() => {
     const confirmEmail = async () => {
-      console.log('Confirm page - checking for confirmation parameters...');
+      logger.debug('Confirm page - checking for confirmation parameters...');
       
       // Debug: Log URL info
-      console.log('Confirm page URL info:', {
+      logger.debug('Confirm page URL info:', {
         href: window.location.href,
         hash: window.location.hash,
         search: window.location.search
@@ -26,14 +27,14 @@ function ConfirmPageContent() {
         // First check for code parameter in search params (newer method)
         const code = searchParams.get('code');
         if (code) {
-          console.log('Sign-up code detected:', code.substring(0, 10) + '...');
+          logger.debug('Sign-up code detected:', code.substring(0, 10) + '...');
           // Exchange code for session
           const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
           if (exchangeError) {
-            console.error('Sign-up code exchange error:', exchangeError);
+            logger.error('Sign-up code exchange error:', exchangeError);
             setError(`Email confirmation failed: ${exchangeError.message}`);
           } else {
-            console.log('Sign-up code exchange successful!');
+            logger.debug('Sign-up code exchange successful!');
             setSuccess(true);
             setLoading(false);
             setTimeout(() => {
@@ -48,23 +49,23 @@ function ConfirmPageContent() {
         let type = searchParams.get('type');
         
         if (!token_hash && window.location.hash) {
-          console.log('No search params found, checking hash parameters...');
+          logger.debug('No search params found, checking hash parameters...');
           const hashParams = new URLSearchParams(window.location.hash.substring(1));
           token_hash = hashParams.get('token') || hashParams.get('token_hash');
           type = hashParams.get('type');
-          console.log('Hash params found:', { token_hash: !!token_hash, type });
+          logger.debug('Hash params found:', { token_hash: !!token_hash, type });
         }
 
         if (!token_hash || !type) {
-          console.log('Missing confirmation parameters - token_hash:', !!token_hash, 'type:', !!type);
-          console.log('Available search params:', Array.from(searchParams.entries()));
-          console.log('URL hash:', window.location.hash);
+          logger.debug('Missing confirmation parameters - token_hash:', !!token_hash, 'type:', !!type);
+          logger.debug('Available search params:', Array.from(searchParams.entries()));
+          logger.debug('URL hash:', window.location.hash);
           setError('Missing confirmation parameters. Please check that you clicked the link from your email correctly, or try signing up again.');
           setLoading(false);
           return;
         }
 
-        console.log('Using token method for confirmation - token:', token_hash, 'type:', type);
+        logger.debug('Using token method for confirmation - token:', token_hash, 'type:', type);
         
         // Try different verification methods based on what we have
         let confirmError = null;
@@ -82,7 +83,7 @@ function ConfirmPageContent() {
           const hashParams = new URLSearchParams(window.location.hash.substring(1));
           const email = hashParams.get('email');
           if (email && token_hash) {
-            console.log('First attempt failed, trying with email:', email);
+            logger.debug('First attempt failed, trying with email:', email);
             const emailVerifyResult = await supabase.auth.verifyOtp({
               email: decodeURIComponent(email),
               token: token_hash,
@@ -93,10 +94,10 @@ function ConfirmPageContent() {
         }
 
         if (confirmError) {
-          console.error('Token verification error:', confirmError);
+          logger.error('Token verification error:', confirmError);
           setError(`Email confirmation failed: ${confirmError.message}`);
         } else {
-          console.log('Token verification successful!');
+          logger.debug('Token verification successful!');
           // Success! Show success state first, then redirect
           setSuccess(true);
           setLoading(false);
@@ -106,7 +107,7 @@ function ConfirmPageContent() {
           return;
         }
       } catch (err) {
-        console.error('Unexpected error during confirmation:', err);
+        logger.error('Unexpected error during confirmation:', err);
         setError('An unexpected error occurred during email confirmation');
       } finally {
         setLoading(false);

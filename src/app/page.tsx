@@ -11,6 +11,7 @@ import { useAuthStorage } from '@/hooks/useAuthStorage';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import logger from '@/utils/logger';
 
 // Component to handle verification toast that uses search params
 function VerificationToast({ onClose }: { onClose: () => void }) {
@@ -22,7 +23,7 @@ function VerificationToast({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     const handlePasswordReset = async () => {
       // Only log URL info once on mount, not on every render
-      console.log('Page loaded - URL info:', {
+      logger.debug('Page loaded - URL info:', {
         href: window.location.href,
         hash: window.location.hash,
         search: window.location.search,
@@ -33,24 +34,24 @@ function VerificationToast({ onClose }: { onClose: () => void }) {
       const code = searchParams.get('code');
       
       if (code) {
-        console.log('Password reset code detected, attempting direct exchange...');
+        logger.debug('Password reset code detected, attempting direct exchange...');
         try {
           const { error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) {
-            console.error('PKCE code exchange error:', error);
+            logger.error('PKCE code exchange error:', error);
             // Clean up URL and show error
             window.history.replaceState({}, '', window.location.pathname);
             router.push('/password-reset-help');
             return;
           } else {
-            console.log('PKCE code exchange successful, redirecting to reset page...');
+            logger.debug('PKCE code exchange successful, redirecting to reset page...');
             // Clean up URL and redirect to reset page
             window.history.replaceState({}, '', window.location.pathname);
             router.push('/auth/reset-password');
             return;
           }
         } catch (err) {
-          console.error('PKCE exchange failed:', err);
+          logger.error('PKCE exchange failed:', err);
           window.history.replaceState({}, '', window.location.pathname);
           router.push('/password-reset-help');
           return;
@@ -68,10 +69,10 @@ function VerificationToast({ onClose }: { onClose: () => void }) {
         const accessToken = hashParams.get('access_token');
         const hashType = hashParams.get('type');
         
-        console.log('Hash params found:', { accessToken: accessToken?.substring(0, 20) + '...', type: hashType });
+        logger.debug('Hash params found:', { accessToken: accessToken?.substring(0, 20) + '...', type: hashType });
         
         if (hashType === 'recovery' && accessToken) {
-          console.log('Password reset detected! Redirecting to reset page...');
+          logger.debug('Password reset detected! Redirecting to reset page...');
           // Preserve the hash fragment in the redirect
           router.push(`/auth/reset-password${window.location.hash}`);
           return;
@@ -153,39 +154,39 @@ export default function Home() {
       await new Promise(resolve => setTimeout(resolve, 100));
       
       try {
-        console.log('[StartScreen] Checking for resumable game...');
-        console.log('[StartScreen] User authenticated:', !!user);
+        logger.debug('[StartScreen] Checking for resumable game...');
+        logger.debug('[StartScreen] User authenticated:', !!user);
         
         // First try to get the saved current game ID
         const lastId = await getCurrentGameIdSetting();
-        console.log('[StartScreen] Current game ID from settings:', lastId);
+        logger.debug('[StartScreen] Current game ID from settings:', lastId);
         
         const games = await getSavedGames();
-        console.log('[StartScreen] Number of saved games:', Object.keys(games).length);
-        console.log('[StartScreen] Game IDs:', Object.keys(games));
+        logger.debug('[StartScreen] Number of saved games:', Object.keys(games).length);
+        logger.debug('[StartScreen] Game IDs:', Object.keys(games));
         
         // Check if the saved game ID exists in the games collection
         if (lastId && games[lastId]) {
-          console.log('[StartScreen] Found game with saved ID, enabling resume');
+          logger.debug('[StartScreen] Found game with saved ID, enabling resume');
           setCanResume(true);
           return;
         }
         
         // If not, try to find the most recent game
         const mostRecentId = await getMostRecentGameId();
-        console.log('[StartScreen] Most recent game ID:', mostRecentId);
+        logger.debug('[StartScreen] Most recent game ID:', mostRecentId);
         
         if (mostRecentId) {
-          console.log('[StartScreen] Found recent game, enabling resume');
+          logger.debug('[StartScreen] Found recent game, enabling resume');
           setCanResume(true);
           return;
         }
         
         // No games available to resume
-        console.log('[StartScreen] No games available to resume');
+        logger.debug('[StartScreen] No games available to resume');
         setCanResume(false);
       } catch (error) {
-        console.error('[StartScreen] Error checking resume:', error);
+        logger.error('[StartScreen] Error checking resume:', error);
         setCanResume(false);
       }
     };
@@ -203,7 +204,7 @@ export default function Home() {
     setScreen('home');
   };
 
-  console.log('[Home] Rendering with canResume:', canResume, 'screen:', screen, 'user:', !!user);
+  logger.debug('[Home] Rendering with canResume:', canResume, 'screen:', screen, 'user:', !!user);
   
   return (
     <div className="min-h-screen">

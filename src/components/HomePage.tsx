@@ -793,7 +793,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   useEffect(() => {
     if (isAllSavedGamesQueryLoading) {
       logger.log('[EFFECT savedGames] Setting games list loading to true');
-      console.log('[HomePage] Setting isLoadingGamesList to true');
+      logger.debug('[HomePage] Setting isLoadingGamesList to true');
       setIsLoadingGamesList(true);
     }
   }, [isAllSavedGamesQueryLoading]);
@@ -801,7 +801,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   // Handle saved games data updates
   useEffect(() => {
     if (allSavedGamesQueryResultData) {
-      console.log('[HomePage] Received saved games data:', Object.keys(allSavedGamesQueryResultData).length, 'games');
+      logger.debug('[HomePage] Received saved games data:', Object.keys(allSavedGamesQueryResultData).length, 'games');
       setSavedGames(allSavedGamesQueryResultData || {});
       setIsLoadingGamesList(false);
     }
@@ -811,7 +811,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   useEffect(() => {
     if (isAllSavedGamesQueryError) {
       logger.error('[EFFECT savedGames] Error loading saved games:', allSavedGamesQueryErrorData);
-      console.error('[HomePage] Error loading games:', allSavedGamesQueryErrorData);
+      logger.error('[HomePage] Error loading games:', allSavedGamesQueryErrorData);
       setLoadGamesListError(t('loadGameModal.errors.listLoadFailed', 'Failed to load saved games list.'));
       setSavedGames({});
       setIsLoadingGamesList(false);
@@ -890,7 +890,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   useEffect(() => {
     if (isLoadingGamesList) {
       const timeout = setTimeout(() => {
-        console.error('[HomePage] Loading games timeout - forcing completion');
+        logger.error('[HomePage] Loading games timeout - forcing completion');
         setIsLoadingGamesList(false);
         setLoadGamesListError('Loading timed out. Please try again.');
       }, 15000); // 15 second timeout

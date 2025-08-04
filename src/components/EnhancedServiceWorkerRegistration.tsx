@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useConnectionStatus } from '@/hooks/useConnectionStatus';
+import logger from '@/utils/logger';
 
 interface ServiceWorkerState extends ServiceWorkerRegistration {
   waiting: ServiceWorker | null;
@@ -87,9 +88,9 @@ export default function EnhancedServiceWorkerRegistration() {
         }
       });
 
-      console.log('[SW] Enhanced service worker registered successfully');
+      logger.debug('[SW] Enhanced service worker registered successfully');
     } catch (error) {
-      console.error('[SW] Enhanced service worker registration failed:', error);
+      logger.error('[SW] Enhanced service worker registration failed:', error);
       setUpdateInfo(prev => ({
         ...prev,
         hasError: true,
@@ -123,7 +124,7 @@ export default function EnhancedServiceWorkerRegistration() {
             break;
             
           case 'CACHE_STATUS_RESPONSE':
-            console.log('[SW] Cache status:', data);
+            logger.debug('[SW] Cache status:', data);
             break;
         }
       });
@@ -169,7 +170,7 @@ export default function EnhancedServiceWorkerRegistration() {
       
       channel.port1.onmessage = function(event) {
         if (event.data.type === 'CACHE_CLEARED') {
-          console.log('[SW] All caches cleared');
+          logger.debug('[SW] All caches cleared');
         }
       };
       
@@ -275,7 +276,7 @@ export default function EnhancedServiceWorkerRegistration() {
               🔄 Manual Sync
             </button>
             <button 
-              onClick={() => getCacheStatus().then(console.log)}
+              onClick={() => getCacheStatus().then(data => logger.debug('[SW] Cache status:', data))}
               className="block w-full text-left hover:text-blue-300"
             >
               📊 Cache Status

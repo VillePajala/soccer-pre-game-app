@@ -9,6 +9,7 @@ import {
   incrementAppUsageCount,
   setInstallPromptNeverShow 
 } from '@/utils/pwaSettings';
+import logger from '@/utils/logger';
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
@@ -56,7 +57,7 @@ export default function EnhancedInstallPrompt({ className = '' }: EnhancedInstal
     // Listen for beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
-      console.log('[Install] beforeinstallprompt event captured');
+      logger.debug('[Install] beforeinstallprompt event captured');
       
       const promptEvent = e as BeforeInstallPromptEvent;
       setDeferredPrompt(promptEvent);
@@ -66,14 +67,14 @@ export default function EnhancedInstallPrompt({ className = '' }: EnhancedInstal
         setShowPrompt(shouldShow);
         
         if (shouldShow) {
-          console.log('[Install] Showing install prompt');
+          logger.debug('[Install] Showing install prompt');
         }
       });
     };
 
     // Listen for app installed event
     const handleAppInstalled = () => {
-      console.log('[Install] App was installed');
+      logger.debug('[Install] App was installed');
       setIsInstalled(true);
       setShowPrompt(false);
       setDeferredPrompt(null);
@@ -93,14 +94,14 @@ export default function EnhancedInstallPrompt({ className = '' }: EnhancedInstal
       if (lastPromptDismissed) {
         const daysSinceDismissed = (Date.now() - lastPromptDismissed) / (1000 * 60 * 60 * 24);
         if (daysSinceDismissed < 7) {
-          console.log('[Install] Prompt dismissed recently, waiting...');
+          logger.debug('[Install] Prompt dismissed recently, waiting...');
           return false;
         }
       }
       
       // Don't show if prompted too many times (max 3)
       if (installCount >= 3) {
-        console.log('[Install] Max prompt count reached');
+        logger.debug('[Install] Max prompt count reached');
         return false;
       }
       
@@ -132,7 +133,7 @@ export default function EnhancedInstallPrompt({ className = '' }: EnhancedInstal
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) {
-      console.warn('[Install] No deferred prompt available');
+      logger.warn('[Install] No deferred prompt available');
       return;
     }
 
@@ -142,13 +143,13 @@ export default function EnhancedInstallPrompt({ className = '' }: EnhancedInstal
       
       // Wait for user choice
       const choiceResult = await deferredPrompt.userChoice;
-      console.log('[Install] User choice:', choiceResult.outcome);
+      logger.debug('[Install] User choice:', choiceResult.outcome);
       
       if (choiceResult.outcome === 'accepted') {
-        console.log('[Install] User accepted the install prompt');
+        logger.debug('[Install] User accepted the install prompt');
         setIsInstalled(true);
       } else {
-        console.log('[Install] User dismissed the install prompt');
+        logger.debug('[Install] User dismissed the install prompt');
         handleDismiss();
       }
       
@@ -157,7 +158,7 @@ export default function EnhancedInstallPrompt({ className = '' }: EnhancedInstal
       setShowPrompt(false);
       
     } catch (error) {
-      console.error('[Install] Error during installation:', error);
+      logger.error('[Install] Error during installation:', error);
     }
   };
 
@@ -170,7 +171,7 @@ export default function EnhancedInstallPrompt({ className = '' }: EnhancedInstal
     setInstallCount(newCount);
     
     setShowPrompt(false);
-    console.log('[Install] Install prompt dismissed');
+    logger.debug('[Install] Install prompt dismissed');
   };
 
   const handleNeverShow = async () => {
@@ -178,7 +179,7 @@ export default function EnhancedInstallPrompt({ className = '' }: EnhancedInstal
     setInstallCount(999);
     await setInstallPromptNeverShow();
     setShowPrompt(false);
-    console.log('[Install] Install prompt disabled permanently');
+    logger.debug('[Install] Install prompt disabled permanently');
   };
 
   // Don't render anything if conditions aren't met

@@ -5,7 +5,7 @@ import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { sessionManager } from '../lib/security/sessionManager';
 import { SecureAuthService } from '../lib/security/rateLimiter';
-import logger from '../utils/logger';
+import logger from '@/utils/logger';
 
 interface AuthContextType {
   user: User | null;
@@ -107,7 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       
       // Log for debugging
-      console.log('Supabase signup response:', { data, error });
+      logger.debug('Supabase signup response:', { data, error });
       
       return { error };
     } catch (error) {

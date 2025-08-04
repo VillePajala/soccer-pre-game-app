@@ -251,7 +251,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
   // Main content: List of saved games or loading/error message
   let mainContent;
   if (isLoadingGamesList) {
-    console.log('[LoadGameModal] Games list is loading...');
+    logger.debug('[LoadGameModal] Games list is loading...');
     mainContent = (
       <div className="flex flex-col items-center justify-center h-full text-slate-400 py-10">
         <svg className="animate-spin h-8 w-8 text-indigo-400 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
