@@ -49,10 +49,10 @@ export const MigratedGameControls = React.memo<ExtendedGameControlsProps>(({
   onOpenSettingsModal,
   
   // Timer handlers (from base GameControlsProps)
-  onStartGame: _onStartGame,
-  onPauseGame: _onPauseGame,
-  onEndGame: _onEndGame,
-  onResetTimer: _onResetTimer,
+  onStartGame: _onStartGame, // eslint-disable-line @typescript-eslint/no-unused-vars
+  onPauseGame: _onPauseGame, // eslint-disable-line @typescript-eslint/no-unused-vars
+  onEndGame: _onEndGame, // eslint-disable-line @typescript-eslint/no-unused-vars
+  onResetTimer: _onResetTimer, // eslint-disable-line @typescript-eslint/no-unused-vars
   onToggleTimerOverlay,
   onOpenGameSettings,
   onOpenGameStats,

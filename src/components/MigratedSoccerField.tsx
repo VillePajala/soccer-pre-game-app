@@ -29,7 +29,7 @@ export const MigratedSoccerField: React.FC<SoccerFieldProps> = ({
   tacticalBallPosition: propTacticalBallPosition,
   
   // Props that are still used for compatibility
-  onPlayerDrop: _onPlayerDrop,
+  onPlayerDrop: _onPlayerDrop, // eslint-disable-line @typescript-eslint/no-unused-vars
   onPlayerMove,
   onPlayerMoveEnd,
   onDrawingStart,
@@ -39,13 +39,13 @@ export const MigratedSoccerField: React.FC<SoccerFieldProps> = ({
   onOpponentMove,
   onOpponentMoveEnd,
   onOpponentRemove,
-  draggingPlayerFromBarInfo: _draggingPlayerFromBarInfo,
-  onPlayerDropViaTouch: _onPlayerDropViaTouch,
-  onPlayerDragCancelViaTouch: _onPlayerDragCancelViaTouch,
-  onTacticalDiscMove: _onTacticalDiscMove,
-  onTacticalDiscRemove: _onTacticalDiscRemove,
-  onToggleTacticalDiscType: _onToggleTacticalDiscType,
-  onTacticalBallMove: _onTacticalBallMove,
+  draggingPlayerFromBarInfo: _draggingPlayerFromBarInfo, // eslint-disable-line @typescript-eslint/no-unused-vars
+  onPlayerDropViaTouch: _onPlayerDropViaTouch, // eslint-disable-line @typescript-eslint/no-unused-vars
+  onPlayerDragCancelViaTouch: _onPlayerDragCancelViaTouch, // eslint-disable-line @typescript-eslint/no-unused-vars
+  onTacticalDiscMove: _onTacticalDiscMove, // eslint-disable-line @typescript-eslint/no-unused-vars
+  onTacticalDiscRemove: _onTacticalDiscRemove, // eslint-disable-line @typescript-eslint/no-unused-vars
+  onToggleTacticalDiscType: _onToggleTacticalDiscType, // eslint-disable-line @typescript-eslint/no-unused-vars
+  onTacticalBallMove: _onTacticalBallMove, // eslint-disable-line @typescript-eslint/no-unused-vars
 }) => {
   // Get values from Zustand stores
   const gameSession = useGameSession();
