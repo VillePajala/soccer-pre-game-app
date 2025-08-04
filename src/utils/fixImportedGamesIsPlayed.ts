@@ -1,4 +1,6 @@
-import { authAwareStorageManager as storageManager } from '@/lib/storage';
+// Removed unused import: import { authAwareStorageManager as storageManager } from '@/lib/storage';
+import { getTypedSavedGames, saveTypedGame } from '@/utils/typedStorageHelpers';
+import { isAppState } from '@/utils/typeGuards';
 import logger from '@/utils/logger';
 
 /**
@@ -17,7 +19,7 @@ export async function fixImportedGamesIsPlayed(): Promise<{
     logger.log('[FixImportedGamesIsPlayed] Starting fix process...');
     
     // Get all saved games
-    const savedGames = await storageManager.getSavedGames() as Record<string, unknown>;
+    const savedGames = await getTypedSavedGames();
     if (!savedGames || Object.keys(savedGames).length === 0) {
       return {
         success: false,
@@ -30,20 +32,25 @@ export async function fixImportedGamesIsPlayed(): Promise<{
     
     // Process each game
     for (const [gameId, game] of Object.entries(savedGames)) {
-      if (!game || typeof game !== 'object') continue;
-      
-      const gameData = game as Record<string, unknown>;
+      if (!isAppState(game)) {
+        logger.warn(`[FixImportedGamesIsPlayed] Invalid game data for ${gameId}, skipping`);
+        continue;
+      }
       
       // Check if isPlayed is missing or undefined
-      if (gameData.isPlayed === undefined || gameData.isPlayed === null) {
-        // Set isPlayed to true
-        gameData.isPlayed = true;
+      if (game.isPlayed === undefined || game.isPlayed === null) {
+        // Create updated game with isPlayed set to true
+        const updatedGame = { ...game, isPlayed: true };
         
         // Save the updated game
         try {
-          await storageManager.saveSavedGame(gameData);
-          gamesFixed++;
-          logger.log(`[FixImportedGamesIsPlayed] Fixed game ${gameId} - set isPlayed to true`);
+          const success = await saveTypedGame(updatedGame);
+          if (success) {
+            gamesFixed++;
+            logger.log(`[FixImportedGamesIsPlayed] Fixed game ${gameId} - set isPlayed to true`);
+          } else {
+            logger.error(`[FixImportedGamesIsPlayed] Failed to save fixed game ${gameId}`);
+          }
         } catch (error) {
           logger.error(`[FixImportedGamesIsPlayed] Failed to fix game ${gameId}:`, error);
         }

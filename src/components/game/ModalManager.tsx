@@ -291,7 +291,14 @@ export function ModalManager({
             onExportOneCsv={handleExportOneCsvWrapper}
             onExportAggregateJson={handleExportAggregateJson}
             onExportAggregateCsv={handleExportAggregateCsv}
-            initialSelectedPlayerId={(selectedPlayerForStats as Record<string, unknown>)?.id as string | undefined}
+            initialSelectedPlayerId={
+              selectedPlayerForStats && 
+              typeof selectedPlayerForStats === 'object' && 
+              'id' in selectedPlayerForStats && 
+              typeof (selectedPlayerForStats as Record<string, unknown>).id === 'string' 
+                ? (selectedPlayerForStats as Record<string, unknown>).id 
+                : undefined
+            }
             onGameClick={handleGameLogClick}
           />
         </React.Suspense>
@@ -327,10 +334,24 @@ export function ModalManager({
             onDemandFactorChange={setNewGameDemandFactor || (() => {})}
             onStart={handleStartNewGameWithSetup as (...args: unknown[]) => Promise<void> || (async (): Promise<void> => {})}
             onCancel={handleCancelNewGameSetup || (() => {})}
-            addSeasonMutation={addSeasonMutation as any} // eslint-disable-line @typescript-eslint/no-explicit-any
-            addTournamentMutation={addTournamentMutation as any} // eslint-disable-line @typescript-eslint/no-explicit-any
-            isAddingSeason={(addSeasonMutation as Record<string, unknown>)?.isPending as boolean}
-            isAddingTournament={(addTournamentMutation as Record<string, unknown>)?.isPending as boolean}
+            addSeasonMutation={addSeasonMutation}
+            addTournamentMutation={addTournamentMutation}
+            isAddingSeason={
+              addSeasonMutation && 
+              typeof addSeasonMutation === 'object' && 
+              'isPending' in addSeasonMutation && 
+              typeof (addSeasonMutation as Record<string, unknown>).isPending === 'boolean' 
+                ? (addSeasonMutation as Record<string, unknown>).isPending 
+                : false
+            }
+            isAddingTournament={
+              addTournamentMutation && 
+              typeof addTournamentMutation === 'object' && 
+              'isPending' in addTournamentMutation && 
+              typeof (addTournamentMutation as Record<string, unknown>).isPending === 'boolean' 
+                ? (addTournamentMutation as Record<string, unknown>).isPending 
+                : false
+            }
           />
         </React.Suspense>
       )}
@@ -364,12 +385,12 @@ export function ModalManager({
           seasons={seasons}
           tournaments={tournaments}
           availablePlayers={players}
-          addSeasonMutation={addSeasonMutation as any} // eslint-disable-line @typescript-eslint/no-explicit-any
-          addTournamentMutation={addTournamentMutation as any} // eslint-disable-line @typescript-eslint/no-explicit-any
-          updateSeasonMutation={updateSeasonMutation as any} // eslint-disable-line @typescript-eslint/no-explicit-any
-          deleteSeasonMutation={deleteSeasonMutation as any} // eslint-disable-line @typescript-eslint/no-explicit-any
-          updateTournamentMutation={updateTournamentMutation as any} // eslint-disable-line @typescript-eslint/no-explicit-any
-          deleteTournamentMutation={deleteTournamentMutation as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+          addSeasonMutation={addSeasonMutation}
+          addTournamentMutation={addTournamentMutation}
+          updateSeasonMutation={updateSeasonMutation}
+          deleteSeasonMutation={deleteSeasonMutation}
+          updateTournamentMutation={updateTournamentMutation}
+          deleteTournamentMutation={deleteTournamentMutation}
         />
       </React.Suspense>
       
@@ -415,12 +436,26 @@ export function ModalManager({
           onSetHomeOrAway={handleSetHomeOrAway || (() => {})}
           isPlayed={false}
           onIsPlayedChange={handleSetIsPlayed || (() => {})}
-          addSeasonMutation={addSeasonMutation as any} // eslint-disable-line @typescript-eslint/no-explicit-any
-          addTournamentMutation={addTournamentMutation as any} // eslint-disable-line @typescript-eslint/no-explicit-any
-          isAddingSeason={(addSeasonMutation as Record<string, unknown>)?.isPending as boolean}
-          isAddingTournament={(addTournamentMutation as Record<string, unknown>)?.isPending as boolean}
+          addSeasonMutation={addSeasonMutation}
+          addTournamentMutation={addTournamentMutation}
+          isAddingSeason={
+            addSeasonMutation && 
+            typeof addSeasonMutation === 'object' && 
+            'isPending' in addSeasonMutation && 
+            typeof (addSeasonMutation as Record<string, unknown>).isPending === 'boolean' 
+              ? (addSeasonMutation as Record<string, unknown>).isPending 
+              : false
+          }
+          isAddingTournament={
+            addTournamentMutation && 
+            typeof addTournamentMutation === 'object' && 
+            'isPending' in addTournamentMutation && 
+            typeof (addTournamentMutation as Record<string, unknown>).isPending === 'boolean' 
+              ? (addTournamentMutation as Record<string, unknown>).isPending 
+              : false
+          }
           timeElapsedInSeconds={timeElapsedInSeconds}
-          updateGameDetailsMutation={updateGameDetailsMutation as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+          updateGameDetailsMutation={updateGameDetailsMutation}
         />
       </React.Suspense>
 
@@ -446,7 +481,7 @@ export function ModalManager({
           onClose={closePlayerAssessmentModal || (() => onCloseModal?.('isPlayerAssessmentModalOpen'))}
           selectedPlayerIds={gameData.selectedPlayerIds}
           availablePlayers={players}
-          assessments={playerAssessments as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+          assessments={playerAssessments}
           onSave={handleSavePlayerAssessment || (() => {})}
           onDelete={handleDeletePlayerAssessment}
         />

@@ -1,5 +1,6 @@
 import { authAwareStorageManager as storageManager } from '@/lib/storage';
 import type { AppSettings } from './appSettings';
+import { isRecord } from '@/utils/typeGuards';
 import logger from '@/utils/logger';
 
 export interface SessionSettings {
@@ -66,8 +67,13 @@ export async function getSessionActivity(userId: string): Promise<unknown> {
 
   try {
     const settings = await storageManager.getAppSettings();
-    const sessionActivity = settings?.sessionActivity as Record<string, unknown>;
-    return sessionActivity?.[userId] ?? null;
+    const sessionActivity = settings?.sessionActivity;
+    
+    if (!isRecord(sessionActivity)) {
+      return null;
+    }
+    
+    return sessionActivity[userId] ?? null;
   } catch (error) {
     logger.error('Failed to get session activity:', error);
     return null;
@@ -84,7 +90,8 @@ export async function saveSessionActivity(userId: string, activity: unknown): Pr
 
   try {
     const currentSettings = await storageManager.getAppSettings();
-    const sessionActivity = (currentSettings?.sessionActivity as Record<string, unknown>) || {};
+    const existingActivity = currentSettings?.sessionActivity;
+    const sessionActivity = isRecord(existingActivity) ? existingActivity : {};
     
     const updatedSettings: AppSettings = {
       ...currentSettings,
@@ -111,7 +118,8 @@ export async function removeSessionActivity(userId: string): Promise<void> {
 
   try {
     const currentSettings = await storageManager.getAppSettings();
-    const sessionActivity = (currentSettings?.sessionActivity as Record<string, unknown>) || {};
+    const existingActivity = currentSettings?.sessionActivity;
+    const sessionActivity = isRecord(existingActivity) ? { ...existingActivity } : {};
     
     delete sessionActivity[userId];
     

@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "refactor: Enhance GameControls and GameStateProvider with default handlers and state management improvements"
+  "notes": "test(utils): add comprehensive tests for utility functions"
 }
