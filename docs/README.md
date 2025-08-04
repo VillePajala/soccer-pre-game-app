@@ -16,11 +16,27 @@ Welcome to the MatchDay Coach documentation. This directory contains all project
 - **[Storage Migration](architecture/storage-migration.md)** - Supabase migration guide and localStorage deprecation
 - **[Security Enhancements](architecture/security.md)** - Data security and protection plans
 
+## 🤖 AI & Automation
+
+- **[Claude Code Assistant Guide](ai/CLAUDE.md)** - Instructions for Claude Code when working with this repository
+- **[AI Agents Configuration](ai/AGENTS.md)** - AI agent configurations and setup
+
 ## 📚 Guides
 
 - **[Demo Workflow](guides/demo-workflow.md)** - App workflow walkthrough and usage guide
 - **[Testing Guide](guides/testing-guide.md)** - Manual testing procedures for Supabase integration
 - **[Onboarding Plan](guides/onboarding.md)** - User onboarding tour implementation plan
+- **[Add Players Guide](guides/add-players.md)** - Guide for adding players to the roster
+
+## 🧪 Testing
+
+- **[Manual Testing Guide](testing/MANUAL_TESTING_GUIDE.md)** - Comprehensive manual testing procedures
+
+## 🔐 Security
+
+- **[MatchDay Coach Privacy Policy](security/MatchDay_Coach_Privacy_Policy.md)** - Privacy policy and data handling
+- **[RLS Audit Report](security/RLS_AUDIT_REPORT.md)** - Row Level Security audit findings
+- **[Security Advisories](security/SECURITY_ADVISORIES.md)** - Security vulnerabilities and advisories
 
 ## 🎯 Showcase
 
