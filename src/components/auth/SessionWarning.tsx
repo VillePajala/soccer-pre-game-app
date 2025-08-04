@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { sessionManager, type SessionWarningEvent } from '../../lib/security/sessionManager';
 import { useAuth } from '../../context/AuthContext';
 import logger from '../../utils/logger';
@@ -18,6 +18,10 @@ export function SessionWarning({ onSessionExtended, onSessionExpired }: SessionW
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const { user, signOut } = useAuth();
+  
+  // Store timer IDs for cleanup
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const cleanupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleSessionExpired = useCallback(async () => {
     setIsVisible(false);
@@ -54,17 +58,39 @@ export function SessionWarning({ onSessionExtended, onSessionExpired }: SessionW
       }
     });
 
-    return unsubscribe;
+    return () => {
+      // Cleanup timers and unsubscribe
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+        countdownIntervalRef.current = null;
+      }
+      if (cleanupTimeoutRef.current) {
+        clearTimeout(cleanupTimeoutRef.current);
+        cleanupTimeoutRef.current = null;
+      }
+      unsubscribe();
+    };
   }, [user, handleSessionExpired]);
 
   const startCountdown = (remainingTime: number) => {
+    // Clear any existing timers
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+    }
+    if (cleanupTimeoutRef.current) {
+      clearTimeout(cleanupTimeoutRef.current);
+    }
+    
     let remaining = remainingTime;
     
-    const countdownInterval = setInterval(() => {
+    countdownIntervalRef.current = setInterval(() => {
       remaining -= 1000;
       
       if (remaining <= 0) {
-        clearInterval(countdownInterval);
+        if (countdownIntervalRef.current) {
+          clearInterval(countdownIntervalRef.current);
+          countdownIntervalRef.current = null;
+        }
         setTimeRemaining(0);
         return;
       }
@@ -73,8 +99,11 @@ export function SessionWarning({ onSessionExtended, onSessionExpired }: SessionW
     }, 1000);
 
     // Cleanup interval after countdown
-    setTimeout(() => {
-      clearInterval(countdownInterval);
+    cleanupTimeoutRef.current = setTimeout(() => {
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+        countdownIntervalRef.current = null;
+      }
     }, remainingTime);
   };
 

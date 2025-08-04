@@ -10,6 +10,8 @@ export default function ServiceWorkerRegistration() {
   const [releaseNotes, setReleaseNotes] = useState<string | null>(null);
 
   useEffect(() => {
+    const controller = new AbortController();
+    
     if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
       logger.log('[PWA] Service Worker is not supported or not in browser.');
       return;
@@ -29,13 +31,18 @@ export default function ServiceWorkerRegistration() {
 
     const fetchReleaseNotes = async () => {
       try {
-        const res = await fetch('/release-notes.json', { cache: 'no-store' });
+        const res = await fetch('/release-notes.json', { 
+          cache: 'no-store',
+          signal: controller.signal 
+        });
         if (res.ok) {
           const data = await res.json();
           setReleaseNotes(data.notes);
         }
       } catch (error) {
-        logger.error('Failed to fetch release notes', error);
+        if (error.name !== 'AbortError') {
+          logger.error('Failed to fetch release notes', error);
+        }
       }
     };
 
@@ -74,12 +81,19 @@ export default function ServiceWorkerRegistration() {
 
     // Listen for controller changes
     let refreshing = false;
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
+    const handleControllerChange = () => {
       if (refreshing) return;
       refreshing = true;
       window.location.reload();
-    });
+    };
+    
+    navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
 
+    // Cleanup function
+    return () => {
+      controller.abort();
+      navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
+    };
   }, []);
 
   const handleUpdate = () => {
