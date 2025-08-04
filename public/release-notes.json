@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "docs: Update CRITICAL_ISSUES_ACTION_PLAN.md with completion status for memory leak fixes"
+  "notes": "docs: Update release notes with completion status for memory leak fixes and update build timestamp in service worker"
 }

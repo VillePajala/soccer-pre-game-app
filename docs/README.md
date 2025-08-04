@@ -12,6 +12,7 @@ Welcome to the MatchDay Coach documentation. This directory contains all project
 
 ## 🏗️ Architecture & Technical
 
+- **[HomePage Refactoring Plan](architecture/HOMEPAGE_REFACTORING_PLAN.md)** - ⚡ **ACTIVE**: Complete refactoring plan for the 2,081-line HomePage component
 - **[Component Refactoring](architecture/component-refactoring.md)** - Plans for refactoring large components
 - **[Storage Migration](architecture/storage-migration.md)** - Supabase migration guide and localStorage deprecation
 - **[Security Enhancements](architecture/security.md)** - Data security and protection plans

@@ -8,13 +8,16 @@ This action plan addresses critical issues that pose immediate risks to maintain
 **Priority**: 🚨 CRITICAL  
 **Estimated Effort**: 40-60 hours
 
-## Issue 1: Monolithic HomePage Component (2,081 lines)
+## Issue 1: Monolithic HomePage Component (2,081 lines) 🚧 **IN PROGRESS**
 
 ### Problem Assessment
 - **File**: `src/components/HomePage.tsx`
 - **Size**: 2,081 lines (target: <300 lines per component)
 - **Impact**: Extremely difficult to maintain, test, and debug
 - **Risk**: High probability of introducing bugs during modifications
+
+### **📋 DETAILED REFACTORING PLAN**
+**See**: [HomePage Refactoring Plan](../architecture/HOMEPAGE_REFACTORING_PLAN.md) for complete implementation details, component architecture, and progress tracking.
 
 ### Detailed Steps
 
