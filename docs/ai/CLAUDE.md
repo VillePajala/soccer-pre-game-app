@@ -120,6 +120,10 @@ The app includes install prompts, update notifications, and works offline. The s
 - Unit tests cover utilities and components and are co-located with source files using the `.test.tsx` suffix
 - The Jest configuration excludes Playwright specs located in the `/tests/` directory
 
+## Pull Request Guidelines
+
+When creating pull requests, use the [pull request template](../../.github/pull_request_template.md) located in `.github/pull_request_template.md`. This ensures consistent PR structure and includes important testing checklist items.
+
 ## Production Readiness Plan
 
 This project follows a comprehensive production readiness plan for app store deployment. For complete details on security, testing, performance, and deployment requirements, see:

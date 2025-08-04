@@ -13,8 +13,9 @@ This repository uses Node.js 20, Next.js 15 and React 19 with TypeScript. Follow
 - Use two space indentation and semicolons like the existing code.
 
 ## Pull Requests
+- Use the [pull request template](../../.github/pull_request_template.md) when creating PRs
 - The PR description should summarize the changes and mention the results of `npm run lint` and `npm test`.
 - Include references to relevant documentation or code lines when explaining changes.
 
 For more context on project architecture and commands see `CLAUDE.md` and `README.md`.
-Consult `MANUAL_TESTING.md` for a checklist of key workflows to verify after updates.
+Consult the [Manual Testing Guide](../testing/MANUAL_TESTING_GUIDE.md) for a checklist of key workflows to verify after updates.
