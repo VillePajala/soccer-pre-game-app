@@ -3,19 +3,22 @@
  */
 
 import { fixGameEventPlayerIds } from './fixGameEventPlayerIds';
-import { authAwareStorageManager as storageManager } from '@/lib/storage';
+import { getTypedSavedGames, getTypedMasterRoster, saveTypedGame } from './typedStorageHelpers';
 import logger from '@/utils/logger';
-import type { Player } from '@/types';
+import type { Player, AppState } from '@/types';
 
-jest.mock('@/lib/storage');
+jest.mock('./typedStorageHelpers');
 jest.mock('@/utils/logger');
 
 describe('fixGameEventPlayerIds', () => {
-  const mockStorageManager = storageManager as jest.Mocked<typeof storageManager>;
+  const mockGetTypedSavedGames = getTypedSavedGames as jest.MockedFunction<typeof getTypedSavedGames>;
+  const mockGetTypedMasterRoster = getTypedMasterRoster as jest.MockedFunction<typeof getTypedMasterRoster>;
+  const mockSaveTypedGame = saveTypedGame as jest.MockedFunction<typeof saveTypedGame>;
   const mockLogger = logger as jest.Mocked<typeof logger>;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockSaveTypedGame.mockResolvedValue(true);
   });
 
   const mockCurrentPlayers: Player[] = [
@@ -24,40 +27,64 @@ describe('fixGameEventPlayerIds', () => {
     { id: 'new-player-3', name: 'Player Three' } as Player
   ];
 
+  const createMockAppState = (teamName: string, opponentName: string, overrides: Partial<AppState> = {}): AppState => ({
+    playersOnField: [],
+    opponents: [],
+    drawings: [],
+    availablePlayers: [],
+    showPlayerNames: true,
+    teamName,
+    gameEvents: [],
+    opponentName,
+    gameDate: '2024-01-01',
+    homeScore: 0,
+    awayScore: 0,
+    gameNotes: '',
+    homeOrAway: 'home',
+    numberOfPeriods: 2,
+    periodDurationMinutes: 45,
+    currentPeriod: 1,
+    gameStatus: 'notStarted',
+    isPlayed: true,
+    selectedPlayerIds: [],
+    seasonId: 'season1',
+    tournamentId: 'tournament1',
+    tacticalDiscs: [],
+    tacticalDrawings: [],
+    tacticalBallPosition: null,
+    ...overrides
+  });
+
   const mockSavedGames = {
-    'game1': {
-      teamName: 'Team A',
-      opponentName: 'Team B',
+    'game1': createMockAppState('Team A', 'Team B', {
       gameEvents: [
-        { id: 'event1', type: 'goal', scorerId: 'old-player-1', assisterId: 'old-player-2' },
-        { id: 'event2', type: 'goal', scorerId: 'old-player-2', assisterId: null },
-        { id: 'event3', type: 'opponentGoal', time: 300 }
+        { id: 'event1', type: 'goal', scorerId: 'old-player-1', assisterId: 'old-player-2', time: 100 } as any,
+        { id: 'event2', type: 'goal', scorerId: 'old-player-2', assisterId: null, time: 200 } as any,
+        { id: 'event3', type: 'opponentGoal', time: 300 } as any
       ],
       selectedPlayerIds: ['old-player-1', 'old-player-2'],
       availablePlayers: [
-        { id: 'old-player-1', name: 'Player One' },
-        { id: 'old-player-2', name: 'Player Two' },
-        { id: 'old-player-3', name: 'Player Three' }
+        { id: 'old-player-1', name: 'Player One' } as Player,
+        { id: 'old-player-2', name: 'Player Two' } as Player,
+        { id: 'old-player-3', name: 'Player Three' } as Player
       ],
       playersOnField: [
-        { id: 'old-player-1', name: 'Player One', relX: 0.2, relY: 0.3 },
-        { id: 'old-player-2', name: 'Player Two', relX: 0.8, relY: 0.7 }
+        { id: 'old-player-1', name: 'Player One', relX: 0.2, relY: 0.3 } as Player,
+        { id: 'old-player-2', name: 'Player Two', relX: 0.8, relY: 0.7 } as Player
       ]
-    },
-    'game2': {
-      teamName: 'Team C',
-      opponentName: 'Team D',
+    }),
+    'game2': createMockAppState('Team C', 'Team D', {
       gameEvents: [],
       selectedPlayerIds: [],
       availablePlayers: [],
       playersOnField: []
-    }
+    })
   };
 
   it('should successfully fix player IDs in game events and player lists', async () => {
-    mockStorageManager.getPlayers.mockResolvedValue(mockCurrentPlayers);
-    mockStorageManager.getSavedGames.mockResolvedValue(mockSavedGames);
-    mockStorageManager.saveSavedGame.mockResolvedValue({});
+    mockGetTypedMasterRoster.mockResolvedValue(mockCurrentPlayers);
+    mockGetTypedSavedGames.mockResolvedValue(mockSavedGames);
+    mockSaveTypedGame.mockResolvedValue(true);
 
     const result = await fixGameEventPlayerIds();
 
@@ -71,8 +98,8 @@ describe('fixGameEventPlayerIds', () => {
     });
 
     // Verify that saveSavedGame was called with updated data
-    expect(mockStorageManager.saveSavedGame).toHaveBeenCalledTimes(1);
-    const savedGameData = mockStorageManager.saveSavedGame.mock.calls[0][0];
+    expect(mockSaveTypedGame).toHaveBeenCalledTimes(1);
+    const savedGameData = mockSaveTypedGame.mock.calls[0][0];
     
     // Check that game events have updated player IDs
     expect(savedGameData.gameEvents[0].scorerId).toBe('new-player-1');
@@ -93,7 +120,7 @@ describe('fixGameEventPlayerIds', () => {
   });
 
   it('should return error when no players found in roster', async () => {
-    mockStorageManager.getPlayers.mockResolvedValue([]);
+    mockGetTypedMasterRoster.mockResolvedValue([]);
 
     const result = await fixGameEventPlayerIds();
 
@@ -102,12 +129,12 @@ describe('fixGameEventPlayerIds', () => {
       message: 'No players found in roster'
     });
 
-    expect(mockStorageManager.getSavedGames).not.toHaveBeenCalled();
+    expect(mockGetTypedSavedGames).not.toHaveBeenCalled();
   });
 
   it('should return error when no saved games found', async () => {
-    mockStorageManager.getPlayers.mockResolvedValue(mockCurrentPlayers);
-    mockStorageManager.getSavedGames.mockResolvedValue({});
+    mockGetTypedMasterRoster.mockResolvedValue(mockCurrentPlayers);
+    mockGetTypedSavedGames.mockResolvedValue({});
 
     const result = await fixGameEventPlayerIds();
 
@@ -118,7 +145,7 @@ describe('fixGameEventPlayerIds', () => {
   });
 
   it('should handle null players from storage', async () => {
-    mockStorageManager.getPlayers.mockResolvedValue(null);
+    mockGetTypedMasterRoster.mockResolvedValue([]);
 
     const result = await fixGameEventPlayerIds();
 
@@ -129,8 +156,8 @@ describe('fixGameEventPlayerIds', () => {
   });
 
   it('should handle null saved games from storage', async () => {
-    mockStorageManager.getPlayers.mockResolvedValue(mockCurrentPlayers);
-    mockStorageManager.getSavedGames.mockResolvedValue(null);
+    mockGetTypedMasterRoster.mockResolvedValue(mockCurrentPlayers);
+    mockGetTypedSavedGames.mockResolvedValue({});
 
     const result = await fixGameEventPlayerIds();
 
@@ -142,36 +169,33 @@ describe('fixGameEventPlayerIds', () => {
 
   it('should skip invalid game entries', async () => {
     const gamesWithInvalid = {
-      'valid-game': mockSavedGames.game1,
-      'null-game': null,
-      'string-game': 'invalid',
-      'empty-game': {}
+      'valid-game': mockSavedGames.game1
+      // Invalid entries are filtered out by getTypedSavedGames
     };
 
-    mockStorageManager.getPlayers.mockResolvedValue(mockCurrentPlayers);
-    mockStorageManager.getSavedGames.mockResolvedValue(gamesWithInvalid);
-    mockStorageManager.saveSavedGame.mockResolvedValue({});
+    mockGetTypedMasterRoster.mockResolvedValue(mockCurrentPlayers);
+    mockGetTypedSavedGames.mockResolvedValue(gamesWithInvalid);
+    mockSaveTypedGame.mockResolvedValue(true);
 
     const result = await fixGameEventPlayerIds();
 
     expect(result.success).toBe(true);
-    expect(mockStorageManager.saveSavedGame).toHaveBeenCalledTimes(1);
+    expect(mockSaveTypedGame).toHaveBeenCalledTimes(1);
   });
 
   it('should handle games without game events', async () => {
     const gameWithoutEvents = {
-      'game1': {
-        teamName: 'Team A',
-        opponentName: 'Team B',
+      'game1': createMockAppState('Team A', 'Team B', {
         selectedPlayerIds: ['old-player-1'],
-        availablePlayers: [{ id: 'old-player-1', name: 'Player One' }],
-        playersOnField: []
-      }
+        availablePlayers: [{ id: 'old-player-1', name: 'Player One' } as Player],
+        playersOnField: [],
+        gameEvents: []
+      })
     };
 
-    mockStorageManager.getPlayers.mockResolvedValue(mockCurrentPlayers);
-    mockStorageManager.getSavedGames.mockResolvedValue(gameWithoutEvents);
-    mockStorageManager.saveSavedGame.mockResolvedValue({});
+    mockGetTypedMasterRoster.mockResolvedValue(mockCurrentPlayers);
+    mockGetTypedSavedGames.mockResolvedValue(gameWithoutEvents);
+    mockSaveTypedGame.mockResolvedValue(true);
 
     const result = await fixGameEventPlayerIds();
 
@@ -187,19 +211,19 @@ describe('fixGameEventPlayerIds', () => {
 
   it('should handle events with no matching player in availablePlayers', async () => {
     const gameWithUnmatchedPlayers = {
-      'game1': {
+      'game1': createMockAppState('Team A', 'Team B', {
         gameEvents: [
-          { id: 'event1', type: 'goal', scorerId: 'unknown-player', assisterId: 'old-player-1' }
+          { id: 'event1', type: 'goal', scorerId: 'unknown-player', assisterId: 'old-player-1', time: 100 } as any
         ],
         availablePlayers: [
-          { id: 'old-player-1', name: 'Player One' }
+          { id: 'old-player-1', name: 'Player One' } as Player
         ]
-      }
+      })
     };
 
-    mockStorageManager.getPlayers.mockResolvedValue(mockCurrentPlayers);
-    mockStorageManager.getSavedGames.mockResolvedValue(gameWithUnmatchedPlayers);
-    mockStorageManager.saveSavedGame.mockResolvedValue({});
+    mockGetTypedMasterRoster.mockResolvedValue(mockCurrentPlayers);
+    mockGetTypedSavedGames.mockResolvedValue(gameWithUnmatchedPlayers);
+    mockSaveTypedGame.mockResolvedValue(true);
 
     const result = await fixGameEventPlayerIds();
 
@@ -212,27 +236,27 @@ describe('fixGameEventPlayerIds', () => {
       }
     });
 
-    const savedGameData = mockStorageManager.saveSavedGame.mock.calls[0][0];
+    const savedGameData = mockSaveTypedGame.mock.calls[0][0];
     expect(savedGameData.gameEvents[0].scorerId).toBe('unknown-player'); // unchanged
     expect(savedGameData.gameEvents[0].assisterId).toBe('new-player-1'); // updated
   });
 
   it('should handle players with names not in current roster', async () => {
     const gameWithUnknownPlayer = {
-      'game1': {
+      'game1': createMockAppState('Team A', 'Team B', {
         gameEvents: [
-          { id: 'event1', type: 'goal', scorerId: 'old-player-unknown', assisterId: 'old-player-1' }
+          { id: 'event1', type: 'goal', scorerId: 'old-player-unknown', assisterId: 'old-player-1' } as any
         ],
         availablePlayers: [
-          { id: 'old-player-unknown', name: 'Unknown Player' },
-          { id: 'old-player-1', name: 'Player One' }
+          { id: 'old-player-unknown', name: 'Unknown Player' } as Player,
+          { id: 'old-player-1', name: 'Player One' } as Player
         ]
-      }
+      })
     };
 
-    mockStorageManager.getPlayers.mockResolvedValue(mockCurrentPlayers);
-    mockStorageManager.getSavedGames.mockResolvedValue(gameWithUnknownPlayer);
-    mockStorageManager.saveSavedGame.mockResolvedValue({});
+    mockGetTypedMasterRoster.mockResolvedValue(mockCurrentPlayers);
+    mockGetTypedSavedGames.mockResolvedValue(gameWithUnknownPlayer);
+    mockSaveTypedGame.mockResolvedValue(true);
 
     const result = await fixGameEventPlayerIds();
 
@@ -245,31 +269,31 @@ describe('fixGameEventPlayerIds', () => {
       }
     });
 
-    const savedGameData = mockStorageManager.saveSavedGame.mock.calls[0][0];
+    const savedGameData = mockSaveTypedGame.mock.calls[0][0];
     expect(savedGameData.gameEvents[0].scorerId).toBe('old-player-unknown'); // unchanged
     expect(savedGameData.gameEvents[0].assisterId).toBe('new-player-1'); // updated
   });
 
   it('should handle games with already correct player IDs', async () => {
     const gameWithCorrectIds = {
-      'game1': {
+      'game1': createMockAppState('Team A', 'Team B', {
         gameEvents: [
-          { id: 'event1', type: 'goal', scorerId: 'new-player-1', assisterId: 'new-player-2' }
+          { id: 'event1', type: 'goal', scorerId: 'new-player-1', assisterId: 'new-player-2' } as any
         ],
         selectedPlayerIds: ['new-player-1', 'new-player-2'],
         availablePlayers: [
-          { id: 'new-player-1', name: 'Player One' },
-          { id: 'new-player-2', name: 'Player Two' }
+          { id: 'new-player-1', name: 'Player One' } as Player,
+          { id: 'new-player-2', name: 'Player Two' } as Player
         ],
         playersOnField: [
-          { id: 'new-player-1', name: 'Player One' }
+          { id: 'new-player-1', name: 'Player One' } as Player
         ]
-      }
+      })
     };
 
-    mockStorageManager.getPlayers.mockResolvedValue(mockCurrentPlayers);
-    mockStorageManager.getSavedGames.mockResolvedValue(gameWithCorrectIds);
-    mockStorageManager.saveSavedGame.mockResolvedValue({});
+    mockGetTypedMasterRoster.mockResolvedValue(mockCurrentPlayers);
+    mockGetTypedSavedGames.mockResolvedValue(gameWithCorrectIds);
+    mockSaveTypedGame.mockResolvedValue(true);
 
     const result = await fixGameEventPlayerIds();
 
@@ -282,22 +306,22 @@ describe('fixGameEventPlayerIds', () => {
       }
     });
 
-    expect(mockStorageManager.saveSavedGame).not.toHaveBeenCalled();
+    expect(mockSaveTypedGame).not.toHaveBeenCalled();
   });
 
   it('should handle missing or invalid game data fields', async () => {
     const gameWithMissingFields = {
-      'game1': {
-        gameEvents: null,
-        selectedPlayerIds: undefined,
-        availablePlayers: 'invalid',
+      'game1': createMockAppState('Team A', 'Team B', {
+        gameEvents: null as any,
+        selectedPlayerIds: undefined as any,
+        availablePlayers: 'invalid' as any,
         playersOnField: []
-      }
+      })
     };
 
-    mockStorageManager.getPlayers.mockResolvedValue(mockCurrentPlayers);
-    mockStorageManager.getSavedGames.mockResolvedValue(gameWithMissingFields);
-    mockStorageManager.saveSavedGame.mockResolvedValue({});
+    mockGetTypedMasterRoster.mockResolvedValue(mockCurrentPlayers);
+    mockGetTypedSavedGames.mockResolvedValue(gameWithMissingFields);
+    mockSaveTypedGame.mockResolvedValue(true);
 
     const result = await fixGameEventPlayerIds();
 
@@ -313,20 +337,20 @@ describe('fixGameEventPlayerIds', () => {
 
   it('should handle events with null or invalid player IDs', async () => {
     const gameWithInvalidIds = {
-      'game1': {
+      'game1': createMockAppState('Team A', 'Team B', {
         gameEvents: [
-          { id: 'event1', type: 'goal', scorerId: null, assisterId: 123 },
-          { id: 'event2', type: 'goal', scorerId: 'old-player-1', assisterId: '' }
+          { id: 'event1', type: 'goal', scorerId: null, assisterId: 123 } as any,
+          { id: 'event2', type: 'goal', scorerId: 'old-player-1', assisterId: '' } as any
         ],
         availablePlayers: [
-          { id: 'old-player-1', name: 'Player One' }
+          { id: 'old-player-1', name: 'Player One' } as Player
         ]
-      }
+      })
     };
 
-    mockStorageManager.getPlayers.mockResolvedValue(mockCurrentPlayers);
-    mockStorageManager.getSavedGames.mockResolvedValue(gameWithInvalidIds);
-    mockStorageManager.saveSavedGame.mockResolvedValue({});
+    mockGetTypedMasterRoster.mockResolvedValue(mockCurrentPlayers);
+    mockGetTypedSavedGames.mockResolvedValue(gameWithInvalidIds);
+    mockSaveTypedGame.mockResolvedValue(true);
 
     const result = await fixGameEventPlayerIds();
 
@@ -341,7 +365,7 @@ describe('fixGameEventPlayerIds', () => {
   });
 
   it('should handle storage errors gracefully', async () => {
-    mockStorageManager.getPlayers.mockRejectedValue(new Error('Storage error'));
+    mockGetTypedMasterRoster.mockRejectedValue(new Error('Storage error'));
 
     const result = await fixGameEventPlayerIds();
 
@@ -357,7 +381,7 @@ describe('fixGameEventPlayerIds', () => {
   });
 
   it('should handle non-Error exceptions', async () => {
-    mockStorageManager.getPlayers.mockImplementation(() => {
+    mockGetTypedMasterRoster.mockImplementation(() => {
       throw 'String error';
     });
 
@@ -375,9 +399,9 @@ describe('fixGameEventPlayerIds', () => {
   });
 
   it('should handle save game errors', async () => {
-    mockStorageManager.getPlayers.mockResolvedValue(mockCurrentPlayers);
-    mockStorageManager.getSavedGames.mockResolvedValue(mockSavedGames);
-    mockStorageManager.saveSavedGame.mockRejectedValue(new Error('Save failed'));
+    mockGetTypedMasterRoster.mockResolvedValue(mockCurrentPlayers);
+    mockGetTypedSavedGames.mockResolvedValue(mockSavedGames);
+    mockSaveTypedGame.mockRejectedValue(new Error('Save failed'));
 
     const result = await fixGameEventPlayerIds();
 
@@ -388,9 +412,9 @@ describe('fixGameEventPlayerIds', () => {
   });
 
   it('should log progress information', async () => {
-    mockStorageManager.getPlayers.mockResolvedValue(mockCurrentPlayers);
-    mockStorageManager.getSavedGames.mockResolvedValue(mockSavedGames);
-    mockStorageManager.saveSavedGame.mockResolvedValue({});
+    mockGetTypedMasterRoster.mockResolvedValue(mockCurrentPlayers);
+    mockGetTypedSavedGames.mockResolvedValue(mockSavedGames);
+    mockSaveTypedGame.mockResolvedValue(true);
 
     await fixGameEventPlayerIds();
 
@@ -403,27 +427,27 @@ describe('fixGameEventPlayerIds', () => {
 
   it('should handle complex player mapping scenarios', async () => {
     const complexGame = {
-      'game1': {
+      'game1': createMockAppState('Team A', 'Team B', {
         gameEvents: [
-          { id: 'event1', type: 'goal', scorerId: 'old-player-1', assisterId: 'old-player-2' },
-          { id: 'event2', type: 'goal', scorerId: 'old-player-3', assisterId: 'old-player-1' }
+          { id: 'event1', type: 'goal', scorerId: 'old-player-1', assisterId: 'old-player-2' } as any,
+          { id: 'event2', type: 'goal', scorerId: 'old-player-3', assisterId: 'old-player-1' } as any
         ],
         selectedPlayerIds: ['old-player-1', 'old-player-2', 'old-player-3'],
         availablePlayers: [
-          { id: 'old-player-1', name: 'Player One' },
-          { id: 'old-player-2', name: 'Player Two' },
-          { id: 'old-player-3', name: 'Player Three' }
+          { id: 'old-player-1', name: 'Player One' } as Player,
+          { id: 'old-player-2', name: 'Player Two' } as Player,
+          { id: 'old-player-3', name: 'Player Three' } as Player
         ],
         playersOnField: [
-          { id: 'old-player-1', name: 'Player One', relX: 0.1, relY: 0.2 },
-          { id: 'old-player-3', name: 'Player Three', relX: 0.9, relY: 0.8 }
+          { id: 'old-player-1', name: 'Player One', relX: 0.1, relY: 0.2 } as Player,
+          { id: 'old-player-3', name: 'Player Three', relX: 0.9, relY: 0.8 } as Player
         ]
-      }
+      })
     };
 
-    mockStorageManager.getPlayers.mockResolvedValue(mockCurrentPlayers);
-    mockStorageManager.getSavedGames.mockResolvedValue(complexGame);
-    mockStorageManager.saveSavedGame.mockResolvedValue({});
+    mockGetTypedMasterRoster.mockResolvedValue(mockCurrentPlayers);
+    mockGetTypedSavedGames.mockResolvedValue(complexGame);
+    mockSaveTypedGame.mockResolvedValue(true);
 
     const result = await fixGameEventPlayerIds();
 
@@ -436,7 +460,7 @@ describe('fixGameEventPlayerIds', () => {
       }
     });
 
-    const savedGameData = mockStorageManager.saveSavedGame.mock.calls[0][0];
+    const savedGameData = mockSaveTypedGame.mock.calls[0][0];
     
     // All events should be fixed
     expect(savedGameData.gameEvents[0].scorerId).toBe('new-player-1');
