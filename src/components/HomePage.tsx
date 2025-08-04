@@ -1562,45 +1562,13 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       // 2. Auto-generate temporary ID
       const tempGameId = `game_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-      // 3. Save the new game state and get the actual ID from Supabase
-      let actualGameId = tempGameId;
-      try {
-        // Save to storage (Supabase will generate a new UUID if using Supabase provider)
-        const savedGameResult = await utilSaveGame(tempGameId, newGameState);
-        
-        // Get the actual ID from the saved result (Supabase may have generated a new UUID)
-        actualGameId = (savedGameResult as AppState & { id?: string }).id || tempGameId;
-        logger.log(`Game saved with actual ID: ${actualGameId} (temp was: ${tempGameId})`);
-        
-        // Update local state with the actual ID
-        const updatedSavedGamesCollection = {
-          ...savedGames,
-          [actualGameId]: savedGameResult
-        };
-        setSavedGames(updatedSavedGamesCollection);
-
-        // Save the actual game ID to settings
-        // This is critical for resume functionality
-        await utilSaveCurrentGameIdSetting(actualGameId);
-        logger.log(`Saved new game ${actualGameId} and updated currentGameId in settings.`);
-
-      } catch (error) {
-         logger.error("Error explicitly saving new game state:", error);
-         // Fall back to temp ID if save failed
-         actualGameId = tempGameId;
-      }
-
-      // 4. Reset History with the new state
+      // 3. Reset History with the new state
       resetHistory(newGameState);
 
       setIsPlayed(isPlayed);
 
-      // 5. Set the current game ID - This will trigger the loading useEffect
-      setCurrentGameId(actualGameId);
-      logger.log(`Set current game ID to: ${actualGameId}. Loading useEffect will sync component state.`);
-
       try {
-        await handleQuickSaveGame(actualGameId);
+        await handleQuickSaveGame(tempGameId, newGameState);
       } catch (error) {
         logger.error('[handleStartNewGameWithSetup] Quick save failed:', error);
         throw error;
@@ -1618,14 +1586,13 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
   }, [
     // Keep necessary dependencies
-    savedGames,
     availablePlayers,
-    setSavedGames,
     resetHistory,
-    setCurrentGameId,
     setIsNewGameSetupModalOpen,
+    setNewGameDemandFactor,
     setHighlightRosterButton,
     setIsCreatingNewGame,
+    setIsPlayed,
     handleQuickSaveGame,
   ]);
 
