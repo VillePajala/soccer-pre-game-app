@@ -296,7 +296,7 @@ export function ModalManager({
               typeof selectedPlayerForStats === 'object' && 
               'id' in selectedPlayerForStats && 
               typeof (selectedPlayerForStats as Record<string, unknown>).id === 'string' 
-                ? (selectedPlayerForStats as Record<string, unknown>).id 
+                ? (selectedPlayerForStats as Record<string, unknown>).id as string
                 : undefined
             }
             onGameClick={handleGameLogClick}
@@ -334,24 +334,20 @@ export function ModalManager({
             onDemandFactorChange={setNewGameDemandFactor || (() => {})}
             onStart={handleStartNewGameWithSetup as (...args: unknown[]) => Promise<void> || (async (): Promise<void> => {})}
             onCancel={handleCancelNewGameSetup || (() => {})}
-            addSeasonMutation={addSeasonMutation}
-            addTournamentMutation={addTournamentMutation}
-            isAddingSeason={
+            addSeasonMutation={addSeasonMutation as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+            addTournamentMutation={addTournamentMutation as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+            isAddingSeason={Boolean(
               addSeasonMutation && 
               typeof addSeasonMutation === 'object' && 
               'isPending' in addSeasonMutation && 
-              typeof (addSeasonMutation as Record<string, unknown>).isPending === 'boolean' 
-                ? (addSeasonMutation as Record<string, unknown>).isPending 
-                : false
-            }
-            isAddingTournament={
+              (addSeasonMutation as Record<string, unknown>).isPending
+            )}
+            isAddingTournament={Boolean(
               addTournamentMutation && 
               typeof addTournamentMutation === 'object' && 
               'isPending' in addTournamentMutation && 
-              typeof (addTournamentMutation as Record<string, unknown>).isPending === 'boolean' 
-                ? (addTournamentMutation as Record<string, unknown>).isPending 
-                : false
-            }
+              (addTournamentMutation as Record<string, unknown>).isPending
+            )}
           />
         </React.Suspense>
       )}
@@ -385,12 +381,12 @@ export function ModalManager({
           seasons={seasons}
           tournaments={tournaments}
           availablePlayers={players}
-          addSeasonMutation={addSeasonMutation}
-          addTournamentMutation={addTournamentMutation}
-          updateSeasonMutation={updateSeasonMutation}
-          deleteSeasonMutation={deleteSeasonMutation}
-          updateTournamentMutation={updateTournamentMutation}
-          deleteTournamentMutation={deleteTournamentMutation}
+          addSeasonMutation={addSeasonMutation as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+          addTournamentMutation={addTournamentMutation as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+          updateSeasonMutation={updateSeasonMutation as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+          deleteSeasonMutation={deleteSeasonMutation as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+          updateTournamentMutation={updateTournamentMutation as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+          deleteTournamentMutation={deleteTournamentMutation as any} // eslint-disable-line @typescript-eslint/no-explicit-any
         />
       </React.Suspense>
       
@@ -436,26 +432,22 @@ export function ModalManager({
           onSetHomeOrAway={handleSetHomeOrAway || (() => {})}
           isPlayed={false}
           onIsPlayedChange={handleSetIsPlayed || (() => {})}
-          addSeasonMutation={addSeasonMutation}
-          addTournamentMutation={addTournamentMutation}
-          isAddingSeason={
+          addSeasonMutation={addSeasonMutation as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+          addTournamentMutation={addTournamentMutation as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+          isAddingSeason={Boolean(
             addSeasonMutation && 
             typeof addSeasonMutation === 'object' && 
             'isPending' in addSeasonMutation && 
-            typeof (addSeasonMutation as Record<string, unknown>).isPending === 'boolean' 
-              ? (addSeasonMutation as Record<string, unknown>).isPending 
-              : false
-          }
-          isAddingTournament={
+            (addSeasonMutation as Record<string, unknown>).isPending
+          )}
+          isAddingTournament={Boolean(
             addTournamentMutation && 
             typeof addTournamentMutation === 'object' && 
             'isPending' in addTournamentMutation && 
-            typeof (addTournamentMutation as Record<string, unknown>).isPending === 'boolean' 
-              ? (addTournamentMutation as Record<string, unknown>).isPending 
-              : false
-          }
+            (addTournamentMutation as Record<string, unknown>).isPending
+          )}
           timeElapsedInSeconds={timeElapsedInSeconds}
-          updateGameDetailsMutation={updateGameDetailsMutation}
+          updateGameDetailsMutation={updateGameDetailsMutation as any} // eslint-disable-line @typescript-eslint/no-explicit-any
         />
       </React.Suspense>
 
@@ -481,7 +473,7 @@ export function ModalManager({
           onClose={closePlayerAssessmentModal || (() => onCloseModal?.('isPlayerAssessmentModalOpen'))}
           selectedPlayerIds={gameData.selectedPlayerIds}
           availablePlayers={players}
-          assessments={playerAssessments}
+          assessments={playerAssessments as any} // eslint-disable-line @typescript-eslint/no-explicit-any
           onSave={handleSavePlayerAssessment || (() => {})}
           onDelete={handleDeletePlayerAssessment}
         />

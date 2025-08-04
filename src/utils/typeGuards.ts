@@ -47,7 +47,7 @@ export function isAppState(obj: unknown): obj is AppState {
     (state.numberOfPeriods === 1 || state.numberOfPeriods === 2) &&
     typeof state.periodDurationMinutes === 'number' &&
     typeof state.currentPeriod === 'number' &&
-    ['notStarted', 'inProgress', 'periodEnd', 'gameEnd'].includes(state.gameStatus) &&
+    typeof state.gameStatus === 'string' && ['notStarted', 'inProgress', 'periodEnd', 'gameEnd'].includes(state.gameStatus) &&
     typeof state.seasonId === 'string' &&
     typeof state.tournamentId === 'string'
   );
@@ -97,7 +97,7 @@ export function isGameEvent(obj: unknown): obj is GameEvent {
   return (
     typeof event.id === 'string' &&
     typeof event.time === 'number' &&
-    ['goal', 'opponentGoal', 'substitution', 'periodEnd', 'gameEnd', 'fairPlayCard'].includes(event.type)
+    typeof event.type === 'string' && ['goal', 'opponentGoal', 'substitution', 'periodEnd', 'gameEnd', 'fairPlayCard'].includes(event.type)
   );
 }
 

@@ -51,7 +51,7 @@ export async function getTypedSavedGames(): Promise<SavedGamesCollection> {
  */
 export async function getTypedMasterRoster(): Promise<Player[]> {
   try {
-    const roster = await storageManager.getMasterRoster();
+    const roster = await storageManager.getPlayers();
     
     if (!Array.isArray(roster)) {
       logger.warn('Invalid roster data structure, returning empty array');

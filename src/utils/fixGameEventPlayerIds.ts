@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Removed unused import: import { authAwareStorageManager as storageManager } from '@/lib/storage';
 import { getTypedSavedGames, getTypedMasterRoster, saveTypedGame } from '@/utils/typedStorageHelpers';
 import { isAppState } from '@/utils/typeGuards';
@@ -59,15 +60,15 @@ export async function fixGameEventPlayerIds(): Promise<{
       
       // Fix player IDs in game events
       if (gameData.gameEvents && Array.isArray(gameData.gameEvents)) {
-        const updatedEvents = (gameData.gameEvents as Array<Record<string, unknown>>).map(event => {
+        const updatedEvents = gameData.gameEvents.map((event: any) => {
           let eventModified = false;
           const updatedEvent = { ...event };
           
           // Fix scorerId
           if (event.scorerId && typeof event.scorerId === 'string') {
             // Try to find the player in availablePlayers to get their name
-            const availablePlayers = gameData.availablePlayers as Array<Record<string, unknown>> || [];
-            const scorer = availablePlayers.find(p => p.id === event.scorerId);
+            const availablePlayers = gameData.availablePlayers || [];
+            const scorer = availablePlayers.find((p: any) => p.id === event.scorerId);
             
             if (scorer && scorer.name && typeof scorer.name === 'string') {
               const currentId = playerNameToIdMap[scorer.name];
@@ -82,9 +83,8 @@ export async function fixGameEventPlayerIds(): Promise<{
           // Fix assisterId
           if (event.assisterId && typeof event.assisterId === 'string') {
             // Try to find the player in availablePlayers to get their name
-            const availablePlayers = gameData.availablePlayers as Array<Record<string, unknown>> || [];
-            const assister = availablePlayers.find(p => p.id === event.assisterId);
-            
+            const availablePlayers = gameData.availablePlayers || [];
+            const assister = availablePlayers.find((p: any) => p.id === event.assisterId);            
             if (assister && assister.name && typeof assister.name === 'string') {
               const currentId = playerNameToIdMap[assister.name];
               if (currentId && currentId !== event.assisterId) {
@@ -104,15 +104,14 @@ export async function fixGameEventPlayerIds(): Promise<{
         });
         
         if (gameModified) {
-          gameData.gameEvents = updatedEvents;
-        }
+          gameData.gameEvents = updatedEvents as any;        }
       }
       
       // Fix selectedPlayerIds
       if (gameData.selectedPlayerIds && Array.isArray(gameData.selectedPlayerIds)) {
-        const availablePlayers = gameData.availablePlayers as Array<Record<string, unknown>> || [];
-        const updatedSelectedIds = (gameData.selectedPlayerIds as string[]).map(oldId => {
-          const player = availablePlayers.find(p => p.id === oldId);
+        const availablePlayers = gameData.availablePlayers || [];
+        const updatedSelectedIds = gameData.selectedPlayerIds.map(oldId => {
+          const player = availablePlayers.find((p: any) => p.id === oldId);
           if (player && player.name && typeof player.name === 'string') {
             const currentId = playerNameToIdMap[player.name];
             if (currentId && currentId !== oldId) {
@@ -130,7 +129,7 @@ export async function fixGameEventPlayerIds(): Promise<{
       
       // Fix availablePlayers
       if (gameData.availablePlayers && Array.isArray(gameData.availablePlayers)) {
-        gameData.availablePlayers = (gameData.availablePlayers as Array<Record<string, unknown>>).map(player => {
+        gameData.availablePlayers = gameData.availablePlayers.map((player: any) => {
           if (player.name && typeof player.name === 'string') {
             const currentId = playerNameToIdMap[player.name];
             if (currentId && currentId !== player.id) {
@@ -144,7 +143,7 @@ export async function fixGameEventPlayerIds(): Promise<{
       
       // Fix playersOnField
       if (gameData.playersOnField && Array.isArray(gameData.playersOnField)) {
-        gameData.playersOnField = (gameData.playersOnField as Array<Record<string, unknown>>).map(player => {
+        gameData.playersOnField = gameData.playersOnField.map((player: any) => {
           if (player.name && typeof player.name === 'string') {
             const currentId = playerNameToIdMap[player.name];
             if (currentId && currentId !== player.id) {

@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "test(utils): add comprehensive tests for utility functions"
+  "notes": "refactor(modal): improve player ID handling and state management"
 }
