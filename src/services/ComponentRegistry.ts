@@ -35,6 +35,9 @@ interface LoadingComponentProps {
 
 class ComponentRegistry {
   private registry = new Map<string, ComponentRegistryEntry>();
+  private loadingPromises = new Map<string, Promise<void>>();
+  private maxCacheSize = 50; // Prevent memory leaks
+  private accessCount = new Map<string, number>();
 
   /**
    * Register a component with lazy loading
@@ -45,32 +48,51 @@ class ComponentRegistry {
       loading: false,
       preloaded: false,
     });
+    this.accessCount.set(name, 0);
     logger.debug(`[ComponentRegistry] Registered component '${name}'`);
   }
 
   /**
    * Preload a component (useful for critical components)
+   * Enhanced with deduplication and caching optimization
    */
   async preload(name: string): Promise<void> {
     const entry = this.registry.get(name);
     if (!entry || entry.preloaded || entry.component) return;
 
-    entry.loading = true;
-    try {
-      const module = await entry.loader();
-      entry.component = module.default;
-      entry.preloaded = true;
-      entry.loading = false;
-      logger.debug(`[ComponentRegistry] Preloaded component '${name}'`);
-    } catch (error) {
-      entry.error = error as Error;
-      entry.loading = false;
-      logger.error(`[ComponentRegistry] Failed to preload component '${name}':`, error);
+    // 🔄 DEDUPLICATION: Prevent multiple simultaneous loads of same component
+    if (this.loadingPromises.has(name)) {
+      await this.loadingPromises.get(name);
+      return;
     }
+
+    entry.loading = true;
+    
+    const loadingPromise = (async () => {
+      try {
+        const module = await entry.loader();
+        entry.component = module.default;
+        entry.preloaded = true;
+        entry.loading = false;
+        this.incrementAccessCount(name);
+        this.cleanupCache();
+        logger.debug(`[ComponentRegistry] Preloaded component '${name}'`);
+      } catch (error) {
+        entry.error = error as Error;
+        entry.loading = false;
+        logger.error(`[ComponentRegistry] Failed to preload component '${name}':`, error);
+      } finally {
+        this.loadingPromises.delete(name);
+      }
+    })();
+
+    this.loadingPromises.set(name, loadingPromise);
+    await loadingPromise;
   }
 
   /**
    * Get a component wrapper with error handling and suspense
+   * Enhanced with intelligent caching and access tracking
    */
   getComponent<T = any>(name: string): ComponentType<T> | null {
     const entry = this.registry.get(name);
@@ -78,6 +100,9 @@ class ComponentRegistry {
       logger.warn(`[ComponentRegistry] Component '${name}' not registered`);
       return null;
     }
+
+    // Track component access for cache optimization
+    this.incrementAccessCount(name);
 
     // Return cached component if available
     if (entry.component) {
@@ -162,6 +187,71 @@ class ComponentRegistry {
    */
   clear(): void {
     this.registry.clear();
+    this.loadingPromises.clear();
+    this.accessCount.clear();
+  }
+
+  /**
+   * 🧠 INTELLIGENT CACHING: Track component access for optimization
+   */
+  private incrementAccessCount(name: string): void {
+    const current = this.accessCount.get(name) || 0;
+    this.accessCount.set(name, current + 1);
+  }
+
+  /**
+   * 🧠 INTELLIGENT CACHING: Clean up least-used components to prevent memory leaks
+   */
+  private cleanupCache(): void {
+    if (this.registry.size <= this.maxCacheSize) return;
+
+    // Find least accessed components
+    const sortedByAccess = Array.from(this.accessCount.entries())
+      .sort((a, b) => a[1] - b[1])
+      .slice(0, Math.floor(this.maxCacheSize * 0.2)); // Remove 20% of least used
+
+    for (const [name] of sortedByAccess) {
+      const entry = this.registry.get(name);
+      if (entry && entry.component && !entry.loading) {
+        // Clear cached component but keep registration
+        entry.component = undefined;
+        entry.preloaded = false;
+        logger.debug(`[ComponentRegistry] Evicted least-used component '${name}' from cache`);
+      }
+    }
+  }
+
+  /**
+   * 🧠 INTELLIGENT CACHING: Get cache efficiency metrics
+   */
+  getCacheMetrics(): {
+    totalComponents: number;
+    cachedComponents: number;
+    cacheHitRate: number;
+    topUsedComponents: Array<{ name: string; accessCount: number }>;
+  } {
+    let cachedCount = 0;
+    let totalAccess = 0;
+
+    for (const entry of this.registry.values()) {
+      if (entry.component) cachedCount++;
+    }
+
+    for (const count of this.accessCount.values()) {
+      totalAccess += count;
+    }
+
+    const topUsed = Array.from(this.accessCount.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([name, accessCount]) => ({ name, accessCount }));
+
+    return {
+      totalComponents: this.registry.size,
+      cachedComponents: cachedCount,
+      cacheHitRate: cachedCount / this.registry.size,
+      topUsedComponents: topUsed,
+    };
   }
 }
 
@@ -196,13 +286,14 @@ const LoadingFallback: React.FC<LoadingComponentProps> = ({
     );
   }
 
-  // 🔧 MODAL LOADING FIX: Return invisible element to prevent flash during component loading
-  // This prevents the "Loading Modal..." text from showing up as visible UI elements
+  // 🎯 SOPHISTICATED LOADING: Invisible fallback with minimal DOM impact
+  // Completely invisible to prevent any visual flickering
   return React.createElement(
     'div',
     { 
-      className: 'sr-only', // Screen reader only - visually hidden but accessible
-      'aria-live': 'polite'
+      className: 'sr-only', // Screen reader only - completely invisible
+      'aria-live': 'polite',
+      style: { display: 'none' } // Extra assurance of invisibility
     },
     React.createElement(
       'span',
@@ -265,4 +356,99 @@ export const registerModalComponents = (): void => {
   componentRegistry.register('PlayerAssessmentModal', () => import('@/components/PlayerAssessmentModal'));
   
   logger.debug('[ComponentRegistry] Registered all modal components');
+};
+
+/**
+ * 🧠 SMART PRELOADING: Intelligent modal component preloading
+ * 
+ * This system preloads components based on usage patterns and user context
+ * to eliminate loading delays that could cause flickering.
+ */
+export const SmartPreloader = {
+  /**
+   * Critical components that should be preloaded immediately after app start
+   */
+  CRITICAL_COMPONENTS: [
+    'NewGameSetupModal',    // First interaction in workflow
+    'LoadGameModal',        // Common first action
+    'InstructionsModal'     // Help/guidance modal
+  ],
+
+  /**
+   * Game-context components - preload when game session is active
+   */
+  GAME_CONTEXT_COMPONENTS: [
+    'GoalLogModal',         // Primary game interaction
+    'GameStatsModal',       // Common during/after game
+    'RosterSettingsModal',  // Team management during game
+    'PlayerAssessmentModal' // Player evaluation during game
+  ],
+
+  /**
+   * Settings/management components - preload on user interaction patterns
+   */
+  MANAGEMENT_COMPONENTS: [
+    'SettingsModal',
+    'GameSettingsModal',
+    'TrainingResourcesModal',
+    'SeasonTournamentManagementModal'
+  ],
+
+  /**
+   * Preload critical components immediately
+   */
+  async preloadCriticalComponents(): Promise<void> {
+    logger.debug('[SmartPreloader] Preloading critical components...');
+    await componentRegistry.preloadAll(this.CRITICAL_COMPONENTS);
+    logger.debug('[SmartPreloader] Critical components preloaded');
+  },
+
+  /**
+   * Preload game-context components when game session starts
+   */
+  async preloadGameComponents(): Promise<void> {
+    logger.debug('[SmartPreloader] Preloading game context components...');
+    await componentRegistry.preloadAll(this.GAME_CONTEXT_COMPONENTS);
+    logger.debug('[SmartPreloader] Game context components preloaded');
+  },
+
+  /**
+   * Preload management components on user interaction hints
+   */
+  async preloadManagementComponents(): Promise<void> {
+    logger.debug('[SmartPreloader] Preloading management components...');
+    await componentRegistry.preloadAll(this.MANAGEMENT_COMPONENTS);
+    logger.debug('[SmartPreloader] Management components preloaded');
+  },
+
+  /**
+   * Preload all components - for optimal performance in production
+   */
+  async preloadAllComponents(): Promise<void> {
+    logger.debug('[SmartPreloader] Preloading all components...');
+    const allComponents = [
+      ...this.CRITICAL_COMPONENTS,
+      ...this.GAME_CONTEXT_COMPONENTS,
+      ...this.MANAGEMENT_COMPONENTS
+    ];
+    await componentRegistry.preloadAll(allComponents);
+    logger.debug('[SmartPreloader] All components preloaded');
+  },
+
+  /**
+   * Intelligent preloading based on user context
+   */
+  async preloadByContext(context: 'startup' | 'game-active' | 'management'): Promise<void> {
+    switch (context) {
+      case 'startup':
+        await this.preloadCriticalComponents();
+        break;
+      case 'game-active':
+        await this.preloadGameComponents();
+        break;
+      case 'management':
+        await this.preloadManagementComponents();
+        break;
+    }
+  }
 };
