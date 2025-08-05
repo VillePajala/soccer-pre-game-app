@@ -154,6 +154,13 @@ export interface PersistenceStore {
   repairCorruptedData: () => Promise<boolean>;
   clearCorruptedSessions: () => void;
   
+  // Unified localStorage API (Phase 3)
+  getStorageItem: <T = any>(key: string, defaultValue?: T) => Promise<T | null>;
+  setStorageItem: <T = any>(key: string, value: T) => Promise<boolean>;
+  removeStorageItem: (key: string) => Promise<boolean>;
+  hasStorageItem: (key: string) => Promise<boolean>;
+  getStorageKeys: () => Promise<string[]>;
+  
   // Utility actions
   clearAllData: () => Promise<boolean>;
   getStorageUsage: () => { used: number; available: number; percentage: number };
@@ -618,6 +625,121 @@ export const usePersistenceStore = create<PersistenceStore>()(
           'clearCorruptedSessions'
         ),
         
+        // Unified localStorage API (Phase 3)
+        getStorageItem: async <T = any>(key: string, defaultValue?: T): Promise<T | null> => {
+          try {
+            // First try to get from the storage manager (preferred)
+            try {
+              const result = await storageManager.getGenericData(key);
+              if (result !== null) {
+                return result as T;
+              }
+            } catch (storageManagerError) {
+              logger.debug('[PersistenceStore] Storage manager failed, falling back to localStorage:', storageManagerError);
+            }
+            
+            // Fallback to direct localStorage access
+            const item = localStorage.getItem(key);
+            if (item === null) {
+              return defaultValue ?? null;
+            }
+            
+            try {
+              const parsed = JSON.parse(item) as T;
+              return parsed;
+            } catch (parseError) {
+              // Return as string if JSON parsing fails
+              return item as unknown as T;
+            }
+          } catch (error) {
+            logger.error(`[PersistenceStore] Error getting storage item '${key}':`, error);
+            return defaultValue ?? null;
+          }
+        },
+        
+        setStorageItem: async <T = any>(key: string, value: T): Promise<boolean> => {
+          try {
+            get().setLoading(true);
+            
+            // First try to save with the storage manager (preferred)
+            try {
+              await storageManager.setGenericData(key, value);
+              logger.debug(`[PersistenceStore] Saved '${key}' via storage manager`);
+              return true;
+            } catch (storageManagerError) {
+              logger.debug('[PersistenceStore] Storage manager failed, falling back to localStorage:', storageManagerError);
+            }
+            
+            // Fallback to direct localStorage access
+            const serialized = typeof value === 'string' ? value : JSON.stringify(value);
+            localStorage.setItem(key, serialized);
+            logger.debug(`[PersistenceStore] Saved '${key}' via localStorage fallback`);
+            return true;
+          } catch (error) {
+            logger.error(`[PersistenceStore] Error setting storage item '${key}':`, error);
+            get().setError(`Failed to save ${key}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            return false;
+          } finally {
+            get().setLoading(false);
+          }
+        },
+        
+        removeStorageItem: async (key: string): Promise<boolean> => {
+          try {
+            // First try to remove from the storage manager (preferred)
+            try {
+              await storageManager.deleteGenericData(key);
+              logger.debug(`[PersistenceStore] Removed '${key}' via storage manager`);
+              return true;
+            } catch (storageManagerError) {
+              logger.debug('[PersistenceStore] Storage manager failed, falling back to localStorage:', storageManagerError);
+            }
+            
+            // Fallback to direct localStorage access
+            localStorage.removeItem(key);
+            logger.debug(`[PersistenceStore] Removed '${key}' via localStorage fallback`);
+            return true;
+          } catch (error) {
+            logger.error(`[PersistenceStore] Error removing storage item '${key}':`, error);
+            return false;
+          }
+        },
+        
+        hasStorageItem: async (key: string): Promise<boolean> => {
+          try {
+            // Check storage manager first
+            try {
+              const result = await storageManager.getGenericData(key);
+              return result !== null;
+            } catch (storageManagerError) {
+              logger.debug('[PersistenceStore] Storage manager failed, checking localStorage:', storageManagerError);
+            }
+            
+            // Fallback to direct localStorage check
+            return localStorage.getItem(key) !== null;
+          } catch (error) {
+            logger.error(`[PersistenceStore] Error checking storage item '${key}':`, error);
+            return false;
+          }
+        },
+        
+        getStorageKeys: async (): Promise<string[]> => {
+          try {
+            // For now, return localStorage keys as the storage manager doesn't expose a keys method
+            const keys: string[] = [];
+            for (let i = 0; i < localStorage.length; i++) {
+              const key = localStorage.key(i);
+              if (key) {
+                keys.push(key);
+              }
+            }
+            return keys;
+          } catch (error) {
+            logger.error('[PersistenceStore] Error getting storage keys:', error);
+            return [];
+          }
+        },
+        
         // Utility actions
         clearAllData: async () => {
           try {
@@ -697,6 +819,38 @@ export const useSavedGames = () => usePersistenceStore((state) => state.savedGam
 export const useMasterRoster = () => usePersistenceStore((state) => state.masterRoster);
 export const useAppSettings = () => usePersistenceStore((state) => state.settings);
 export const useUserData = () => usePersistenceStore((state) => state.userData);
+export const usePersistenceActions = () => usePersistenceStore((state) => ({
+  // Storage API
+  getStorageItem: state.getStorageItem,
+  setStorageItem: state.setStorageItem,
+  removeStorageItem: state.removeStorageItem,
+  hasStorageItem: state.hasStorageItem,
+  getStorageKeys: state.getStorageKeys,
+  
+  // Game actions
+  saveGame: state.saveGame,
+  loadGame: state.loadGame,
+  deleteGame: state.deleteGame,
+  
+  // Roster actions
+  saveMasterRoster: state.saveMasterRoster,
+  loadMasterRoster: state.loadMasterRoster,
+  addPlayerToRoster: state.addPlayerToRoster,
+  updatePlayerInRoster: state.updatePlayerInRoster,
+  removePlayerFromRoster: state.removePlayerFromRoster,
+  
+  // Settings actions
+  updateSettings: state.updateSettings,
+  resetSettings: state.resetSettings,
+  
+  // User data actions
+  updateUserData: state.updateUserData,
+  clearUserData: state.clearUserData,
+  
+  // Utility actions
+  clearAllData: state.clearAllData,
+  getStorageUsage: state.getStorageUsage,
+}));
 export const useDataIntegrity = () => usePersistenceStore((state) => state.dataIntegrity);
 
 // Loading state hooks

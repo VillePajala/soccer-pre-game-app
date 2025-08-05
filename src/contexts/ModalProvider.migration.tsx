@@ -67,6 +67,7 @@ function MigratedModalProvider({ children }: { children: React.ReactNode }) {
       };
     };
 
+    return {
       // Map Zustand state to legacy interface names
       isGameSettingsModalOpen: uiStore.modals.gameSettingsModal,
       setIsGameSettingsModalOpen: createSetter('gameSettingsModal'),

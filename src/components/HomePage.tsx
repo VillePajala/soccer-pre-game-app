@@ -635,7 +635,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     masterRosterQueryResultData,
     currentGameId,
     saveStateToHistory,
-    goalLogModal.open,
+    setIsGoalLogModalOpen: (open: boolean) => open ? goalLogModal.open() : goalLogModal.close()
   });
 
   // --- App Settings Manager ---

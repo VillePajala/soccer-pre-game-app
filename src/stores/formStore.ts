@@ -124,8 +124,8 @@ interface FormStoreState {
   setFormErrors: (formId: string, errors: Record<string, string | null>) => void;
   
   // Persistence
-  persistForm: (formId: string) => void;
-  restoreForm: (formId: string) => void;
+  persistForm: (formId: string) => Promise<void>;
+  restoreForm: (formId: string) => Promise<void>;
   
   // Utilities
   getFormValues: (formId: string) => Record<string, FieldValue>;
@@ -535,7 +535,7 @@ export const useFormStore = create<FormStoreState>()(
         // Persistence
         // ========================================================================
 
-        persistForm: (formId: string) => {
+        persistForm: async (formId: string) => {
           const form = get().forms[formId];
           if (!form || !form.schema.persistence?.enabled) return;
 
@@ -547,29 +547,79 @@ export const useFormStore = create<FormStoreState>()(
             Object.entries(values).filter(([fieldName]) => !excludeFields.includes(fieldName))
           );
 
+          const formData = {
+            values: persistedValues,
+            timestamp: Date.now(),
+            formId,
+          };
+
           try {
-            localStorage.setItem(`form_${key}`, JSON.stringify({
-              values: persistedValues,
-              timestamp: Date.now(),
-              formId,
-            }));
-            logger.debug(`[FormStore] Persisted form '${formId}' to localStorage`);
+            // Import the persistence store dynamically to avoid circular dependencies
+            const { usePersistenceStore } = await import('@/stores/persistenceStore');
+            const store = usePersistenceStore.getState();
+            
+            // Try to use the unified storage API first
+            try {
+              const success = await store.setStorageItem(`form_${key}`, formData);
+              if (success) {
+                logger.debug(`[FormStore] Persisted form '${formId}' via unified storage API`);
+                return;
+              }
+            } catch (storeError) {
+              logger.debug(`[FormStore] Unified storage API failed for '${formId}', using localStorage fallback:`, storeError);
+            }
+            
+            // Fallback to direct localStorage access
+            localStorage.setItem(`form_${key}`, JSON.stringify(formData));
+            logger.debug(`[FormStore] Persisted form '${formId}' to localStorage fallback`);
           } catch (error) {
             logger.error(`[FormStore] Failed to persist form '${formId}':`, error);
           }
         },
 
-        restoreForm: (formId: string) => {
+        restoreForm: async (formId: string) => {
           const form = get().forms[formId];
           if (!form || !form.schema.persistence?.enabled) return;
 
           const { key } = form.schema.persistence;
 
           try {
-            const stored = localStorage.getItem(`form_${key}`);
-            if (!stored) return;
+            let storedData = null;
+            
+            // Import the persistence store dynamically to avoid circular dependencies
+            try {
+              const { usePersistenceStore } = await import('@/stores/persistenceStore');
+              const store = usePersistenceStore.getState();
+              
+              // Try to use the unified storage API first
+              try {
+                storedData = await store.getStorageItem<{
+                  values: Record<string, FieldValue>;
+                  timestamp: number;
+                  formId: string;
+                }>(`form_${key}`);
+                if (storedData) {
+                  logger.debug(`[FormStore] Retrieved form '${formId}' via unified storage API`);
+                }
+              } catch (storeError) {
+                logger.debug(`[FormStore] Unified storage API failed for '${formId}', using localStorage fallback:`, storeError);
+              }
+            } catch (importError) {
+              logger.debug(`[FormStore] Failed to import persistence store for '${formId}', using localStorage fallback:`, importError);
+            }
+            
+            // Fallback to direct localStorage access if needed
+            if (!storedData) {
+              const stored = localStorage.getItem(`form_${key}`);
+              if (stored) {
+                storedData = JSON.parse(stored);
+                logger.debug(`[FormStore] Retrieved form '${formId}' via localStorage fallback`);
+              }
+            }
+            
+            if (!storedData) return;
 
-            const { values, timestamp, formId: storedFormId } = JSON.parse(stored);
+            const { values, timestamp, formId: storedFormId } = storedData;
             
             // Verify form ID matches
             if (storedFormId !== formId) {
@@ -586,7 +636,7 @@ export const useFormStore = create<FormStoreState>()(
 
             // Restore values
             get().setFieldValues(formId, values);
-            logger.debug(`[FormStore] Restored form '${formId}' from localStorage`);
+            logger.debug(`[FormStore] Restored form '${formId}' successfully`);
           } catch (error) {
             logger.error(`[FormStore] Failed to restore form '${formId}':`, error);
           }
