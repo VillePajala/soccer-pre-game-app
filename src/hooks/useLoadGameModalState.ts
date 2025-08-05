@@ -1,21 +1,12 @@
 /**
- * Load Game Modal State Hook - Zustand Integration
+ * 🔧 CUTOVER: Pure Zustand LoadGameModal Hook
  * 
- * This hook provides a Zustand-based alternative to the React Context modal state
- * for the LoadGameModal. It maintains the same interface as the Context-based
- * approach but uses centralized Zustand state management.
- * 
- * Migration Strategy:
- * - Replace Context-based modal state with Zustand store state
- * - Maintain identical API for seamless integration
- * - Add migration safety with automatic rollback
- * - Provide performance benefits through optimized selectors
+ * Simplified modal state hook that uses ONLY Zustand - no migration complexity.
+ * This replaces the complex dual-system approach with clean, direct Zustand usage.
  */
 
 import { useCallback } from 'react';
 import { useUIStore } from '@/stores/uiStore';
-import { useMigrationSafety } from '@/hooks/useMigrationSafety';
-import { useModalContext } from '@/contexts/ModalProvider.migration';
 import logger from '@/utils/logger';
 
 export interface LoadGameModalState {
@@ -26,157 +17,76 @@ export interface LoadGameModalState {
 }
 
 /**
- * Hook for managing LoadGameModal state with Zustand
- * Provides automatic fallback to Context-based state management
+ * Pure Zustand hook for LoadGameModal state
+ * Simple, direct, no migration complexity
  */
 export function useLoadGameModalState(): LoadGameModalState {
-  const { shouldUseLegacy } = useMigrationSafety('LoadGameModal');
+  // Direct Zustand selectors - no migration logic
+  const isOpen = useUIStore((state) => state.modals.loadGameModal);
+  const openModal = useUIStore((state) => state.openModal);
+  const closeModal = useUIStore((state) => state.closeModal);
   
-  // 🔧 PERFORMANCE FIX: Separate selectors to avoid object creation
-  const zustandIsOpen = useUIStore((state) => state.modals.loadGameModal);
-  const zustandOpenModal = useUIStore((state) => state.openModal);
-  const zustandCloseModal = useUIStore((state) => state.closeModal);
-  
-  // Context-based fallback
-  const contextModalState = useModalContext();
-  
-  // Zustand actions
-  const zustandOpen = useCallback(() => {
+  // Simple actions
+  const open = useCallback(() => {
     logger.debug('[LoadGameModal] Opening via Zustand');
-    zustandOpenModal('loadGameModal');
-  }, [zustandOpenModal]);
+    openModal('loadGameModal');
+  }, [openModal]);
   
-  const zustandClose = useCallback(() => {
+  const close = useCallback(() => {
     logger.debug('[LoadGameModal] Closing via Zustand');
-    zustandCloseModal('loadGameModal');
-  }, [zustandCloseModal]);
+    closeModal('loadGameModal');
+  }, [closeModal]);
   
-  const zustandToggle = useCallback(() => {
-    if (zustandIsOpen) {
-      zustandClose();
+  const toggle = useCallback(() => {
+    if (isOpen) {
+      close();
     } else {
-      zustandOpen();
+      open();
     }
-  }, [zustandIsOpen, zustandOpen, zustandClose]);
-  
-  // Context actions
-  const contextOpen = useCallback(() => {
-    logger.debug('[LoadGameModal] Opening via Context');
-    contextModalState.setIsLoadGameModalOpen(true);
-  }, [contextModalState]);
-  
-  const contextClose = useCallback(() => {
-    logger.debug('[LoadGameModal] Closing via Context');
-    contextModalState.setIsLoadGameModalOpen(false);
-  }, [contextModalState]);
-  
-  const contextToggle = useCallback(() => {
-    if (contextModalState.isLoadGameModalOpen) {
-      contextClose();
-    } else {
-      contextOpen();
-    }
-  }, [contextModalState.isLoadGameModalOpen, contextOpen, contextClose]);
-  
-  // Return appropriate implementation based on migration status
-  if (shouldUseLegacy) {
-    return {
-      isOpen: contextModalState.isLoadGameModalOpen,
-      open: contextOpen,
-      close: contextClose,
-      toggle: contextToggle,
-    };
-  }
+  }, [isOpen, open, close]);
   
   return {
-    isOpen: zustandIsOpen,
-    open: zustandOpen,
-    close: zustandClose,
-    toggle: zustandToggle,
+    isOpen,
+    open,
+    close,
+    toggle,
   };
 }
 
 /**
- * Legacy hook for backward compatibility
- * @deprecated Use useLoadGameModalState instead
- */
-export function useLoadGameModal() {
-  return useLoadGameModalState();
-}
-
-/**
- * Hook that provides both modal state and common handlers
- * Extends the basic modal state with utility functions
+ * Extended hook with handler utilities
+ * Maintains API compatibility with existing code
  */
 export function useLoadGameModalWithHandlers() {
   const modalState = useLoadGameModalState();
   
-  // Create combined handlers that include common modal operations
-  const openModal = useCallback(() => {
-    logger.info('[LoadGameModal] Opening modal');
-    modalState.open();
-  }, [modalState]);
-  
-  const closeModal = useCallback(() => {
+  const handleClose = useCallback(() => {
     logger.info('[LoadGameModal] Closing modal');
     modalState.close();
   }, [modalState]);
   
-  const handleClose = useCallback(() => {
-    // Add any cleanup logic here if needed
-    // For LoadGame modal, we might want to clear any loading states
-    closeModal();
-  }, [closeModal]);
-  
   const handleOpen = useCallback(() => {
-    // Add any setup logic here if needed
-    // For LoadGame modal, we might want to refresh games list
-    openModal();
-  }, [openModal]);
+    logger.info('[LoadGameModal] Opening modal');
+    modalState.open();
+  }, [modalState]);
   
   const handleToggle = useCallback(() => {
-    if (modalState.isOpen) {
-      handleClose();
-    } else {
-      handleOpen();
-    }
-  }, [modalState.isOpen, handleOpen, handleClose]);
+    modalState.toggle();
+  }, [modalState]);
   
   return {
     ...modalState,
     handleOpen,
     handleClose,
     handleToggle,
-    // Alias for common naming patterns
+    // Legacy aliases for compatibility
     onOpen: handleOpen,
     onClose: handleClose,
     onToggle: handleToggle,
-    // Legacy naming for load-game-specific handlers
     openLoadGameModal: handleOpen,
     closeLoadGameModal: handleClose,
   };
 }
 
-/**
- * Performance-optimized selector hook
- * Only re-renders when the specific modal state changes
- */
-export function useLoadGameModalSelector() {
-  const { shouldUseLegacy } = useMigrationSafety('LoadGameModal');
-  
-  // Always call hooks in the same order
-  const contextState = useModalContext();
-  const zustandIsOpen = useUIStore((state) => state.modals.loadGameModal);
-  
-  if (shouldUseLegacy) {
-    return {
-      isOpen: contextState.isLoadGameModalOpen,
-      migrationStatus: 'legacy' as const,
-    };
-  }
-  
-  return {
-    isOpen: zustandIsOpen,
-    migrationStatus: 'zustand' as const,
-  };
-}
+// Legacy compatibility
+export const useLoadGameModal = useLoadGameModalState;

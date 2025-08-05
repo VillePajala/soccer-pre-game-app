@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "feat(migration): complete dependency injection system with ComponentRegistry and UtilityRegistry"
+  "notes": "fix: Disable migration polling to prevent modal flickering"
 }

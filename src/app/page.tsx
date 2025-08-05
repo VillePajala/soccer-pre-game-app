@@ -1,6 +1,8 @@
 'use client';
 
-import ModalProvider from '@/contexts/ModalProvider.migration';
+// 🔧 CUTOVER: Temporarily use the original ModalProvider while we transition to pure Zustand
+// This will be removed completely once all components use pure Zustand
+import ModalProvider from '@/contexts/ModalProvider';
 import HomePage from '@/components/HomePage';
 import StartScreen from '@/components/StartScreen';
 import { OfflineBanner } from '@/components/OfflineBanner';
