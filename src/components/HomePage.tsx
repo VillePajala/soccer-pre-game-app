@@ -71,6 +71,11 @@ import { useGameStatsModalWithHandlers } from '@/hooks/useGameStatsModalState';
 import { useRosterSettingsModalWithHandlers } from '@/hooks/useRosterSettingsModalState';
 import { useLoadGameModalWithHandlers } from '@/hooks/useLoadGameModalState';
 import { useNewGameSetupModalWithHandlers } from '@/hooks/useNewGameSetupModalState';
+import { useSeasonTournamentModalWithHandlers } from '@/hooks/useSeasonTournamentModalState';
+import { useTrainingResourcesModalWithHandlers } from '@/hooks/useTrainingResourcesModalState';
+import { useGoalLogModalWithHandlers } from '@/hooks/useGoalLogModalState';
+import { useSettingsModalWithHandlers } from '@/hooks/useSettingsModalState';
+import { usePlayerAssessmentModalWithHandlers } from '@/hooks/usePlayerAssessmentModalState';
 // Import skeleton components
 import { GameStatsModalSkeleton, LoadGameModalSkeleton, RosterModalSkeleton, ModalSkeleton } from '@/components/ui/ModalSkeleton';
 import { AppLoadingSkeleton } from '@/components/ui/AppSkeleton';
@@ -424,19 +429,14 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   const rosterSettingsModal = useRosterSettingsModalWithHandlers();
   const loadGameModal = useLoadGameModalWithHandlers();
   const newGameSetupModal = useNewGameSetupModalWithHandlers();
+  const seasonTournamentModal = useSeasonTournamentModalWithHandlers();
+  const trainingResourcesModal = useTrainingResourcesModalWithHandlers();
+  const goalLogModal = useGoalLogModalWithHandlers();
+  const settingsModal = useSettingsModalWithHandlers();
+  const playerAssessmentModal = usePlayerAssessmentModalWithHandlers();
   
-  const {
-    isSeasonTournamentModalOpen,
-    setIsSeasonTournamentModalOpen,
-    isTrainingResourcesOpen,
-    setIsTrainingResourcesOpen,
-    isGoalLogModalOpen,
-    setIsGoalLogModalOpen,
-    isSettingsModalOpen,
-    setIsSettingsModalOpen,
-    isPlayerAssessmentModalOpen,
-    setIsPlayerAssessmentModalOpen,
-  } = useModalContext();
+  // All modal states now migrated to Zustand!
+  // const {} = useModalContext(); // No longer needed - all modals migrated!
   // Removed - now handled by useGameDataManager:
   // const { showToast } = useToast();
   // const [isPlayerStatsModalOpen, setIsPlayerStatsModalOpen] = useState(false);
@@ -460,7 +460,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         // which automatically loads the most recent game
         break;
       case 'season':
-        setIsSeasonTournamentModalOpen(true);
+        seasonTournamentModal.open();
         break;
       case 'stats':
         gameStatsModal.open();
@@ -472,7 +472,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     initialAction,
     newGameSetupModal,
     loadGameModal,
-    setIsSeasonTournamentModalOpen,
+    seasonTournamentModal,
     gameStatsModal
   ]);
   
@@ -635,7 +635,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     masterRosterQueryResultData,
     currentGameId,
     saveStateToHistory,
-    setIsGoalLogModalOpen,
+    goalLogModal.open,
   });
 
   // --- App Settings Manager ---
@@ -648,7 +648,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     handleLanguageChange,
     handleDefaultTeamNameChange,
   } = useAppSettingsManager({
-    setIsSettingsModalOpen,
+    setIsSettingsModalOpen: settingsModal.open,
     setIsInstructionsModalOpen,
   });
 
@@ -1239,7 +1239,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
   // Handler to open/close the goal log modal
   const handleToggleGoalLogModal = () => {
-    setIsGoalLogModalOpen(!isGoalLogModalOpen);
+    goalLogModal.toggle();
   };
 
 
@@ -1283,7 +1283,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
   // Training Resources Modal
   const handleToggleTrainingResources = () => {
-    setIsTrainingResourcesOpen(!isTrainingResourcesOpen);
+    trainingResourcesModal.toggle();
   };
 
   const handleToggleInstructionsModal = () => {
@@ -1309,11 +1309,11 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   };
 
   const handleOpenSeasonTournamentModal = () => {
-    setIsSeasonTournamentModalOpen(true);
+    seasonTournamentModal.open();
   };
 
   const handleCloseSeasonTournamentModal = () => {
-    setIsSeasonTournamentModalOpen(false);
+    seasonTournamentModal.close();
   };
 
 
@@ -1376,8 +1376,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     setHighlightRosterButton(false); // <<< Remove highlight when modal is opened
   }, [rosterSettingsModal, setHighlightRosterButton]);
 
-  const openPlayerAssessmentModal = () => setIsPlayerAssessmentModalOpen(true);
-  const closePlayerAssessmentModal = () => setIsPlayerAssessmentModalOpen(false);
+  const openPlayerAssessmentModal = () => playerAssessmentModal.open();
+  const closePlayerAssessmentModal = () => playerAssessmentModal.close();
 
   // ... (other code in Home component) ...
 
@@ -1397,10 +1397,10 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   const handleOpenGameSettingsModal = gameSettingsModal.handleOpen;
   const handleCloseGameSettingsModal = gameSettingsModal.handleClose;
   const handleOpenSettingsModal = () => {
-    setIsSettingsModalOpen(true);
+    settingsModal.open();
   };
   const handleCloseSettingsModal = () => {
-    setIsSettingsModalOpen(false);
+    settingsModal.close();
   };
 
   // --- Placeholder Handlers for GameSettingsModal (will be implemented properly later) ---
@@ -1866,8 +1866,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       {/* Training Resources Modal */}
       <React.Suspense fallback={<ModalSkeleton title="Training Resources" />}>
         <TrainingResourcesModal
-          isOpen={isTrainingResourcesOpen}
-          onClose={handleToggleTrainingResources}
+          isOpen={trainingResourcesModal.isOpen}
+          onClose={trainingResourcesModal.handleClose}
         />
       </React.Suspense>
       <React.Suspense fallback={<ModalSkeleton title="Instructions" />}>
@@ -1877,7 +1877,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         />
       </React.Suspense>
       {/* Goal Log Modal */}
-      {isGoalLogModalOpen && (
+      {goalLogModal.isOpen && (
         <React.Suspense fallback={
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-slate-800 rounded-lg p-6 w-96 max-w-90vw">
@@ -1890,8 +1890,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           </div>
         }>
           <GoalLogModal 
-            isOpen={isGoalLogModalOpen}
-            onClose={handleToggleGoalLogModal}
+            isOpen={goalLogModal.isOpen}
+            onClose={goalLogModal.handleClose}
             onLogGoal={handleAddGoalEvent}
             onLogOpponentGoal={handleLogOpponentGoal} // ADDED: Pass the handler
             availablePlayers={playersForCurrentGame} // MODIFIED: Pass players selected for the current game
@@ -1999,8 +1999,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
       <React.Suspense fallback={<ModalSkeleton title="Season & Tournament Management" />}>
         <SeasonTournamentManagementModal
-          isOpen={isSeasonTournamentModalOpen}
-          onClose={handleCloseSeasonTournamentModal}
+          isOpen={seasonTournamentModal.isOpen}
+          onClose={seasonTournamentModal.handleClose}
           seasons={seasons}
           tournaments={tournaments}
           availablePlayers={availablePlayers}
@@ -2073,8 +2073,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
       <React.Suspense fallback={<ModalSkeleton title="Settings" />}>
         <SettingsModal
-          isOpen={isSettingsModalOpen}
-          onClose={handleCloseSettingsModal}
+          isOpen={settingsModal.isOpen}
+          onClose={settingsModal.handleClose}
           language={appLanguage}
           onLanguageChange={handleLanguageChange}
           defaultTeamName={defaultTeamNameSetting}
@@ -2087,8 +2087,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
       <React.Suspense fallback={<ModalSkeleton title="Player Assessment" />}>
         <PlayerAssessmentModal
-          isOpen={isPlayerAssessmentModalOpen}
-          onClose={closePlayerAssessmentModal}
+          isOpen={playerAssessmentModal.isOpen}
+          onClose={playerAssessmentModal.handleClose}
           selectedPlayerIds={gameSessionState.selectedPlayerIds}
           availablePlayers={availablePlayers}
           assessments={playerAssessments}
