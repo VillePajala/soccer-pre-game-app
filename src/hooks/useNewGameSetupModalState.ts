@@ -60,19 +60,20 @@ export function useNewGameSetupModalState(): NewGameSetupModalState {
 export function useNewGameSetupModalWithHandlers() {
   const modalState = useNewGameSetupModalState();
   
+  // 🔥 FLICKERING FIX: Depend on stable functions, not modalState object
   const handleClose = useCallback(() => {
     logger.info('[NewGameSetupModal] Closing modal');
     modalState.close();
-  }, [modalState]);
+  }, [modalState.close]);
   
   const handleOpen = useCallback(() => {
     logger.info('[NewGameSetupModal] Opening modal');
     modalState.open();
-  }, [modalState]);
+  }, [modalState.open]);
   
   const handleToggle = useCallback(() => {
     modalState.toggle();
-  }, [modalState]);
+  }, [modalState.toggle]);
   
   return {
     ...modalState,

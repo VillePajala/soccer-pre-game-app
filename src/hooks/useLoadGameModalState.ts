@@ -60,19 +60,20 @@ export function useLoadGameModalState(): LoadGameModalState {
 export function useLoadGameModalWithHandlers() {
   const modalState = useLoadGameModalState();
   
+  // 🔥 FLICKERING FIX: Depend on stable functions, not modalState object
   const handleClose = useCallback(() => {
     logger.info('[LoadGameModal] Closing modal');
     modalState.close();
-  }, [modalState]);
+  }, [modalState.close]);
   
   const handleOpen = useCallback(() => {
     logger.info('[LoadGameModal] Opening modal');
     modalState.open();
-  }, [modalState]);
+  }, [modalState.open]);
   
   const handleToggle = useCallback(() => {
     modalState.toggle();
-  }, [modalState]);
+  }, [modalState.toggle]);
   
   return {
     ...modalState,

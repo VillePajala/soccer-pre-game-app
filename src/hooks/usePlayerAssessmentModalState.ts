@@ -42,19 +42,20 @@ export function usePlayerAssessmentModalState(): PlayerAssessmentModalState {
 export function usePlayerAssessmentModalWithHandlers() {
   const modalState = usePlayerAssessmentModalState();
   
+  // 🔥 FLICKERING FIX: Depend on stable functions, not modalState object
   const handleClose = useCallback(() => {
     logger.info('[PlayerAssessmentModal] Closing modal');
     modalState.close();
-  }, [modalState]);
+  }, [modalState.close]);
   
   const handleOpen = useCallback(() => {
     logger.info('[PlayerAssessmentModal] Opening modal');
     modalState.open();
-  }, [modalState]);
+  }, [modalState.open]);
   
   const handleToggle = useCallback(() => {
     modalState.toggle();
-  }, [modalState]);
+  }, [modalState.toggle]);
   
   return {
     ...modalState,

@@ -42,19 +42,20 @@ export function useGoalLogModalState(): GoalLogModalState {
 export function useGoalLogModalWithHandlers() {
   const modalState = useGoalLogModalState();
   
+  // 🔥 FLICKERING FIX: Depend on stable functions, not modalState object
   const handleClose = useCallback(() => {
     logger.info('[GoalLogModal] Closing modal');
     modalState.close();
-  }, [modalState]);
+  }, [modalState.close]);
   
   const handleOpen = useCallback(() => {
     logger.info('[GoalLogModal] Opening modal');
     modalState.open();
-  }, [modalState]);
+  }, [modalState.open]);
   
   const handleToggle = useCallback(() => {
     modalState.toggle();
-  }, [modalState]);
+  }, [modalState.toggle]);
   
   return {
     ...modalState,

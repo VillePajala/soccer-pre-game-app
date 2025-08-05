@@ -42,19 +42,20 @@ export function useGameSettingsModalState(): GameSettingsModalState {
 export function useGameSettingsModalWithHandlers() {
   const modalState = useGameSettingsModalState();
   
+  // 🔥 FLICKERING FIX: Depend on stable functions, not modalState object
   const handleClose = useCallback(() => {
     logger.info('[GameSettingsModal] Closing modal');
     modalState.close();
-  }, [modalState]);
+  }, [modalState.close]);
   
   const handleOpen = useCallback(() => {
     logger.info('[GameSettingsModal] Opening modal');
     modalState.open();
-  }, [modalState]);
+  }, [modalState.open]);
   
   const handleToggle = useCallback(() => {
     modalState.toggle();
-  }, [modalState]);
+  }, [modalState.toggle]);
   
   return {
     ...modalState,
