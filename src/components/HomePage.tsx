@@ -66,6 +66,7 @@ import { useRoster } from '@/hooks/useRoster';
 import { useGameDataManager } from '@/hooks/useGameDataManager';
 import { useGameStateManager } from '@/hooks/useGameStateManager';
 import { useModalContext } from '@/contexts/ModalProvider.migration';
+import { useGameSettingsModalWithHandlers } from '@/hooks/useGameSettingsModalState';
 // Import skeleton components
 import { GameStatsModalSkeleton, LoadGameModalSkeleton, RosterModalSkeleton, ModalSkeleton } from '@/components/ui/ModalSkeleton';
 import { AppLoadingSkeleton } from '@/components/ui/AppSkeleton';
@@ -413,9 +414,10 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   // Roster data migration - runs automatically when needed
   useRosterMigration();
 
+  // Use Zustand-based GameSettingsModal state
+  const gameSettingsModal = useGameSettingsModalWithHandlers();
+  
   const {
-    isGameSettingsModalOpen,
-    setIsGameSettingsModalOpen,
     isLoadGameModalOpen,
     setIsLoadGameModalOpen,
     isRosterModalOpen,
@@ -1391,13 +1393,9 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   // --- Quick Save Handler - MOVED TO useGameDataManager hook ---
   // The handleQuickSaveGame function is now provided by useGameDataManager
 
-  // --- NEW: Handlers for Game Settings Modal --- 
-  const handleOpenGameSettingsModal = () => {
-      setIsGameSettingsModalOpen(true); // Corrected State Setter
-  };
-  const handleCloseGameSettingsModal = () => {
-    setIsGameSettingsModalOpen(false); // Corrected State Setter
-  };
+  // --- Game Settings Modal Handlers (Now using Zustand) --- 
+  const handleOpenGameSettingsModal = gameSettingsModal.handleOpen;
+  const handleCloseGameSettingsModal = gameSettingsModal.handleClose;
   const handleOpenSettingsModal = () => {
     setIsSettingsModalOpen(true);
   };
@@ -2025,7 +2023,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
       <React.Suspense fallback={<ModalSkeleton title="Game Settings" />}>
         <GameSettingsModal
-          isOpen={isGameSettingsModalOpen}
+          isOpen={gameSettingsModal.isOpen}
           onClose={handleCloseGameSettingsModal}
           currentGameId={currentGameId}
           teamName={gameSessionState.teamName}

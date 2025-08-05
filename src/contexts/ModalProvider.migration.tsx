@@ -53,51 +53,52 @@ const UnifiedModalContext = createContext<ModalContextValue | undefined>(undefin
 function MigratedModalProvider({ children }: { children: React.ReactNode }) {
   const uiStore = useUIStore();
   
-  // Create setter functions that map to Zustand actions
-  const createSetter = (modalName: keyof ModalState) => {
-    return (value: boolean | ((prev: boolean) => boolean)) => {
-      const newValue = typeof value === 'function' ? value(uiStore.modals[modalName]) : value;
-      if (newValue) {
-        uiStore.openModal(modalName);
-      } else {
-        uiStore.closeModal(modalName);
-      }
-    };
-  };
-
   // Create context value that matches legacy interface
-  const contextValue: ModalContextValue = useMemo(() => ({
-    // Map Zustand state to legacy interface names
-    isGameSettingsModalOpen: uiStore.modals.gameSettingsModal,
-    setIsGameSettingsModalOpen: createSetter('gameSettingsModal'),
-    
-    isLoadGameModalOpen: uiStore.modals.loadGameModal,
-    setIsLoadGameModalOpen: createSetter('loadGameModal'),
-    
-    isRosterModalOpen: uiStore.modals.rosterSettingsModal,
-    setIsRosterModalOpen: createSetter('rosterSettingsModal'),
-    
-    isSeasonTournamentModalOpen: uiStore.modals.seasonTournamentModal,
-    setIsSeasonTournamentModalOpen: createSetter('seasonTournamentModal'),
-    
-    isTrainingResourcesOpen: uiStore.modals.trainingResourcesModal,
-    setIsTrainingResourcesOpen: createSetter('trainingResourcesModal'),
-    
-    isGoalLogModalOpen: uiStore.modals.goalLogModal,
-    setIsGoalLogModalOpen: createSetter('goalLogModal'),
-    
-    isGameStatsModalOpen: uiStore.modals.gameStatsModal,
-    setIsGameStatsModalOpen: createSetter('gameStatsModal'),
-    
-    isNewGameSetupModalOpen: uiStore.modals.newGameSetupModal,
-    setIsNewGameSetupModalOpen: createSetter('newGameSetupModal'),
-    
-    isSettingsModalOpen: uiStore.modals.settingsModal,
-    setIsSettingsModalOpen: createSetter('settingsModal'),
-    
-    isPlayerAssessmentModalOpen: uiStore.modals.playerAssessmentModal,
-    setIsPlayerAssessmentModalOpen: createSetter('playerAssessmentModal'),
-  }), [uiStore, createSetter]);
+  const contextValue: ModalContextValue = useMemo(() => {
+    // Create setter functions that map to Zustand actions
+    const createSetter = (modalName: keyof ModalState) => {
+      return (value: boolean | ((prev: boolean) => boolean)) => {
+        const newValue = typeof value === 'function' ? value(uiStore.modals[modalName]) : value;
+        if (newValue) {
+          uiStore.openModal(modalName);
+        } else {
+          uiStore.closeModal(modalName);
+        }
+      };
+    };
+
+      // Map Zustand state to legacy interface names
+      isGameSettingsModalOpen: uiStore.modals.gameSettingsModal,
+      setIsGameSettingsModalOpen: createSetter('gameSettingsModal'),
+      
+      isLoadGameModalOpen: uiStore.modals.loadGameModal,
+      setIsLoadGameModalOpen: createSetter('loadGameModal'),
+      
+      isRosterModalOpen: uiStore.modals.rosterSettingsModal,
+      setIsRosterModalOpen: createSetter('rosterSettingsModal'),
+      
+      isSeasonTournamentModalOpen: uiStore.modals.seasonTournamentModal,
+      setIsSeasonTournamentModalOpen: createSetter('seasonTournamentModal'),
+      
+      isTrainingResourcesOpen: uiStore.modals.trainingResourcesModal,
+      setIsTrainingResourcesOpen: createSetter('trainingResourcesModal'),
+      
+      isGoalLogModalOpen: uiStore.modals.goalLogModal,
+      setIsGoalLogModalOpen: createSetter('goalLogModal'),
+      
+      isGameStatsModalOpen: uiStore.modals.gameStatsModal,
+      setIsGameStatsModalOpen: createSetter('gameStatsModal'),
+      
+      isNewGameSetupModalOpen: uiStore.modals.newGameSetupModal,
+      setIsNewGameSetupModalOpen: createSetter('newGameSetupModal'),
+      
+      isSettingsModalOpen: uiStore.modals.settingsModal,
+      setIsSettingsModalOpen: createSetter('settingsModal'),
+      
+      isPlayerAssessmentModalOpen: uiStore.modals.playerAssessmentModal,
+      setIsPlayerAssessmentModalOpen: createSetter('playerAssessmentModal'),
+    };
+  }, [uiStore]);
   
   return (
     <UnifiedModalContext.Provider value={contextValue}>
