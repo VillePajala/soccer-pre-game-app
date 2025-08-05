@@ -1,8 +1,6 @@
 'use client';
 
-// 🔧 CUTOVER: Temporarily use the original ModalProvider while we transition to pure Zustand
-// This will be removed completely once all components use pure Zustand
-import ModalProvider from '@/contexts/ModalProvider';
+// 🔧 CUTOVER COMPLETE: No ModalProvider needed - pure Zustand modal state management
 import HomePage from '@/components/HomePage';
 import StartScreen from '@/components/StartScreen';
 import { OfflineBanner } from '@/components/OfflineBanner';
@@ -213,26 +211,24 @@ export default function Home() {
       {/* Offline Banner - shows at top when offline/poor connection */}
       <OfflineBanner className="fixed top-0 left-0 right-0 z-30" />
       
-      <ModalProvider>
-        {screen === 'start' ? (
-          <StartScreen
-            onStartNewGame={() => handleAction('newGame')}
-            onLoadGame={() => handleAction('loadGame')}
-            onResumeGame={() => handleAction('resumeGame')}
-            canResume={canResume}
-            onCreateSeason={() => handleAction('season')}
-            onViewStats={() => handleAction('stats')}
-            isAuthenticated={!!user}
-          />
-        ) : (
-          <HomePage initialAction={initialAction ?? undefined} skipInitialSetup />
-        )}
-        
-        {/* Email Verification Success Toast - wrapped in Suspense */}
-        <Suspense fallback={null}>
-          <VerificationToast onClose={() => {}} />
-        </Suspense>
-      </ModalProvider>
+      {screen === 'start' ? (
+        <StartScreen
+          onStartNewGame={() => handleAction('newGame')}
+          onLoadGame={() => handleAction('loadGame')}
+          onResumeGame={() => handleAction('resumeGame')}
+          canResume={canResume}
+          onCreateSeason={() => handleAction('season')}
+          onViewStats={() => handleAction('stats')}
+          isAuthenticated={!!user}
+        />
+      ) : (
+        <HomePage initialAction={initialAction ?? undefined} skipInitialSetup />
+      )}
+      
+      {/* Email Verification Success Toast - wrapped in Suspense */}
+      <Suspense fallback={null}>
+        <VerificationToast onClose={() => {}} />
+      </Suspense>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+/**\n * \ud83d\udccb DEPRECATED - Context-based Modal Manager\n * \n * This file uses the old Context-based modal state management system.\n * It has been replaced by pure Zustand modal hooks in the main application.\n * \n * \u26a0\ufe0f WARNING: This file is no longer used and imports missing migration files.\n * It will cause compilation errors if imported.\n * \n * \ud83d\udd27 REPLACEMENT: Use individual modal hooks like:\n * - useNewGameSetupModalState()\n * - useLoadGameModalState() \n * - useGameSettingsModalState()\n * - etc.\n */\n\nimport { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useModalContext } from '@/contexts/ModalProvider.migration';
 import { saveHasSeenAppGuide, getAppSettings, updateAppSettings } from '@/utils/appSettings';

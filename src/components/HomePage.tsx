@@ -36,8 +36,7 @@ import { useGameState, UseGameStateReturn } from '@/hooks/useGameState';
 import GameInfoBar from '@/components/GameInfoBar';
 import { useOfflineFirstGameTimer } from '@/hooks/useOfflineFirstGameTimer';
 import useAutoBackup from '@/hooks/useAutoBackup';
-import { useMigrationTrigger } from '@/hooks/useMigrationTrigger';
-import { useRosterMigration } from '@/hooks/useRosterMigration';
+// 🔧 CUTOVER COMPLETE: Migration hooks no longer needed
 // Import the new game session reducer and related types
 import {
   gameSessionReducer,
@@ -94,7 +93,7 @@ import { AppLoadingSkeleton } from '@/components/ui/AppSkeleton';
 // Removed - now handled by useGameDataManager:
 // import { updateGameDetails as utilUpdateGameDetails } from '@/utils/savedGames';
 import { DEFAULT_GAME_ID } from '@/config/constants';
-import MigrationErrorBoundary from '@/components/MigrationErrorBoundary';
+// 🔧 CUTOVER COMPLETE: Migration error boundary no longer needed
 // Storage keys no longer needed - using offline-first storage
 // Removed static import of export utilities - now using dynamic imports for better bundle splitting
 // Removed - now handled by useGameDataManager: exportJson, exportCsv
@@ -426,11 +425,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
   useAutoBackup();
   
-  // Migration trigger
-  const { MigrationModalComponent } = useMigrationTrigger();
-  
-  // Roster data migration - runs automatically when needed
-  useRosterMigration();
+  // 🔧 CUTOVER COMPLETE: No migration components needed
 
   // Use Zustand-based modal states
   const gameSettingsModal = useGameSettingsModalWithHandlers();
@@ -2120,16 +2115,10 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         </React.Suspense>
       )}
       
-      {/* Migration Modal */}
-      {MigrationModalComponent}
+      {/* 🔧 CUTOVER COMPLETE: No migration modal needed */}
     </main>
   );
 }
-// Wrapped HomePage with error boundary for comprehensive migration safety
-const HomePageWithErrorBoundary: React.FC = () => (
-  <MigrationErrorBoundary componentName="HomePage">
-    <HomePage />
-  </MigrationErrorBoundary>
-);
+// 🔧 CUTOVER COMPLETE: No migration error boundary needed - exporting HomePage directly
 
-export default HomePageWithErrorBoundary;
+export default HomePage;

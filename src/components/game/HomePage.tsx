@@ -1,4 +1,4 @@
-'use client';
+/**\n * \ud83d\udccb DEPRECATED - Legacy Game HomePage Component\n * \n * This component uses the old Context-based modal state management system.\n * It has been replaced by the main HomePage component with pure Zustand state.\n * \n * \u26a0\ufe0f WARNING: This file is no longer used and imports missing migration files.\n * It will cause compilation errors if imported.\n * \n * \ud83d\udd27 REPLACEMENT: Use /src/components/HomePage.tsx instead\n */\n\n'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { AppLoadingSkeleton } from '@/components/ui/AppSkeleton';
