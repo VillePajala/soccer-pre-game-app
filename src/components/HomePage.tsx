@@ -67,6 +67,7 @@ import { useGameDataManager } from '@/hooks/useGameDataManager';
 import { useGameStateManager } from '@/hooks/useGameStateManager';
 import { useModalContext } from '@/contexts/ModalProvider.migration';
 import { useGameSettingsModalWithHandlers } from '@/hooks/useGameSettingsModalState';
+import { useGameStatsModalWithHandlers } from '@/hooks/useGameStatsModalState';
 // Import skeleton components
 import { GameStatsModalSkeleton, LoadGameModalSkeleton, RosterModalSkeleton, ModalSkeleton } from '@/components/ui/ModalSkeleton';
 import { AppLoadingSkeleton } from '@/components/ui/AppSkeleton';
@@ -414,8 +415,9 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   // Roster data migration - runs automatically when needed
   useRosterMigration();
 
-  // Use Zustand-based GameSettingsModal state
+  // Use Zustand-based modal states
   const gameSettingsModal = useGameSettingsModalWithHandlers();
+  const gameStatsModal = useGameStatsModalWithHandlers();
   
   const {
     isLoadGameModalOpen,
@@ -428,8 +430,6 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     setIsTrainingResourcesOpen,
     isGoalLogModalOpen,
     setIsGoalLogModalOpen,
-    isGameStatsModalOpen,
-    setIsGameStatsModalOpen,
     isNewGameSetupModalOpen,
     setIsNewGameSetupModalOpen,
     isSettingsModalOpen,
@@ -463,7 +463,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         setIsSeasonTournamentModalOpen(true);
         break;
       case 'stats':
-        setIsGameStatsModalOpen(true);
+        gameStatsModal.open();
         break;
       default:
         break;
@@ -473,7 +473,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     setIsNewGameSetupModalOpen,
     setIsLoadGameModalOpen,
     setIsSeasonTournamentModalOpen,
-    setIsGameStatsModalOpen
+    gameStatsModal
   ]);
   
   // --- Modal States handled via context ---
@@ -1260,15 +1260,15 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   //   setIsNewGameSetupModalOpen(false);
   // }, []);
 
-  // Handler to open/close the stats modal
-  const handleToggleGameStatsModal = () => {
+  // Handler to open/close the stats modal (Now using Zustand)
+  const handleToggleGameStatsModal = useCallback(() => {
     // If the modal is currently open, we are about to close it.
-    if (isGameStatsModalOpen) {
+    if (gameStatsModal.isOpen) {
       // Clear the selected player so it doesn't open to the same player next time.
       setSelectedPlayerForStats(null);
     }
-    setIsGameStatsModalOpen(!isGameStatsModalOpen);
-  };
+    gameStatsModal.toggle();
+  }, [gameStatsModal, setSelectedPlayerForStats]);
 
   // Placeholder handlers for updating game info (will be passed to modal)
   // const handleHomeScoreChange = (newScore: number) => {
@@ -1713,7 +1713,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     const player = availablePlayers.find(p => p.id === playerId);
     if (player) {
       setSelectedPlayerForStats(player);
-      setIsGameStatsModalOpen(true);
+      gameStatsModal.open();
       setIsRosterModalOpen(false); // Close the roster modal
     }
   };
@@ -1899,11 +1899,11 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           />
         </React.Suspense>
       )}
-      {/* Game Stats Modal - Restore props for now */}
-      {isGameStatsModalOpen && (
+      {/* Game Stats Modal - Now using Zustand state */}
+      {gameStatsModal.isOpen && (
         <React.Suspense fallback={<GameStatsModalSkeleton />}>
           <GameStatsModal
-            isOpen={isGameStatsModalOpen}
+            isOpen={gameStatsModal.isOpen}
             onClose={handleToggleGameStatsModal}
             teamName={gameSessionState.teamName}
             opponentName={gameSessionState.opponentName}
