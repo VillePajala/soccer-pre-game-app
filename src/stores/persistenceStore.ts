@@ -22,6 +22,7 @@ import type {
 import { getTypedSavedGames, saveTypedGame, getTypedMasterRoster } from '@/utils/typedStorageHelpers';
 import { authAwareStorageManager as storageManager } from '@/lib/storage';
 import logger from '@/utils/logger';
+import { storageServiceProvider } from '@/services/StorageServiceProvider';
 
 // App settings interface
 export interface AppSettings {
@@ -965,3 +966,16 @@ export const useLoadingStates = () => {
     lastError,
   };
 };
+
+// 🔧 DEPENDENCY INJECTION FIX: Register storage service to eliminate circular dependencies
+// This allows FormStore to access PersistenceStore methods without direct imports
+const store = usePersistenceStore.getState();
+storageServiceProvider.registerStorageService({
+  getStorageItem: store.getStorageItem,
+  setStorageItem: store.setStorageItem,
+  removeStorageItem: store.removeStorageItem,
+  hasStorageItem: store.hasStorageItem,
+  getStorageKeys: store.getStorageKeys,
+});
+
+logger.debug('[PersistenceStore] Registered storage service with dependency injection provider');

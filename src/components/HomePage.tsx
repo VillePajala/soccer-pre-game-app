@@ -5,19 +5,27 @@ import SoccerField from '@/components/SoccerField';
 import PlayerBar from '@/components/PlayerBar';
 import ControlBar from '@/components/ControlBar';
 import TimerOverlay from '@/components/TimerOverlay';
-// Lazy load GoalLogModal since it's only used conditionally
-const GoalLogModal = React.lazy(() => import('@/components/GoalLogModal'));
-// Lazy load heavy modals for better performance
-const GameStatsModal = React.lazy(() => import('@/components/GameStatsModal'));
-const GameSettingsModal = React.lazy(() => import('@/components/GameSettingsModal'));
-const TrainingResourcesModal = React.lazy(() => import('@/components/TrainingResourcesModal'));
-const LoadGameModal = React.lazy(() => import('@/components/LoadGameModal'));
-const NewGameSetupModal = React.lazy(() => import('@/components/NewGameSetupModal'));
-const RosterSettingsModal = React.lazy(() => import('@/components/RosterSettingsModal'));
-const SettingsModal = React.lazy(() => import('@/components/SettingsModal'));
-const SeasonTournamentManagementModal = React.lazy(() => import('@/components/SeasonTournamentManagementModal'));
-const InstructionsModal = React.lazy(() => import('@/components/InstructionsModal'));
-const PlayerAssessmentModal = React.lazy(() => import('@/components/PlayerAssessmentModal'));
+// 🔧 DEPENDENCY INJECTION FIX: Use component registry instead of React.lazy
+import { componentRegistry, registerModalComponents } from '@/services/ComponentRegistry';
+// 🔧 DEPENDENCY INJECTION FIX: Use utility registry instead of dynamic imports
+import { utilityRegistry, registerExportUtilities, executeExportFunction } from '@/services/UtilityRegistry';
+
+// Register components and utilities on first import
+registerModalComponents();
+registerExportUtilities();
+
+// Get managed components with error handling and suspense
+const GoalLogModal = componentRegistry.getComponent('GoalLogModal');
+const GameStatsModal = componentRegistry.getComponent('GameStatsModal');
+const GameSettingsModal = componentRegistry.getComponent('GameSettingsModal');
+const TrainingResourcesModal = componentRegistry.getComponent('TrainingResourcesModal');
+const LoadGameModal = componentRegistry.getComponent('LoadGameModal');
+const NewGameSetupModal = componentRegistry.getComponent('NewGameSetupModal');  
+const RosterSettingsModal = componentRegistry.getComponent('RosterSettingsModal');
+const SettingsModal = componentRegistry.getComponent('SettingsModal');
+const SeasonTournamentManagementModal = componentRegistry.getComponent('SeasonTournamentManagementModal');
+const InstructionsModal = componentRegistry.getComponent('InstructionsModal');
+const PlayerAssessmentModal = componentRegistry.getComponent('PlayerAssessmentModal');
 import usePlayerRosterManager from '@/hooks/usePlayerRosterManager';
 import usePlayerFieldManager from '@/hooks/usePlayerFieldManager';
 import useGameEventsManager from '@/hooks/useGameEventsManager';
@@ -1433,7 +1441,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   //   return 'Unknown Filter'; // Fallback
   // };
   
-  const handleExportAggregateJson = useCallback((gameIds: string[], aggregateStats: import('@/types').PlayerStatRow[]) => {
+  const handleExportAggregateJson = useCallback(async (gameIds: string[], aggregateStats: import('@/types').PlayerStatRow[]) => {
     if (gameIds.length === 0) {
       alert(t('export.noGamesInSelection', 'No games match the current filter.'));
       return;
@@ -1445,16 +1453,15 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       }
       return acc;
     }, {} as SavedGamesCollection);
-    // Dynamic import for better bundle splitting
-    import('@/utils/exportGames').then(({ exportAggregateJson }) => {
-      exportAggregateJson(gamesData, aggregateStats);
-    }).catch(error => {
-      logger.error('Failed to load export utilities:', error);
+    
+    // 🔧 DEPENDENCY INJECTION FIX: Use utility registry instead of dynamic import
+    const success = await executeExportFunction('exportAggregateJson', gamesData, aggregateStats);
+    if (!success) {
       alert(t('export.error', 'Export failed. Please try again.'));
-    });
+    }
   }, [savedGames, t]);
 
-  const handleExportAggregateCsv = useCallback((gameIds: string[], aggregateStats: import('@/types').PlayerStatRow[]) => {
+  const handleExportAggregateCsv = useCallback(async (gameIds: string[], aggregateStats: import('@/types').PlayerStatRow[]) => {
     if (gameIds.length === 0) {
       alert(t('export.noGamesInSelection', 'No games match the current filter.'));
       return;
@@ -1466,13 +1473,12 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       }
       return acc;
     }, {} as SavedGamesCollection);
-    // Dynamic import for better bundle splitting
-    import('@/utils/exportGames').then(({ exportAggregateCsv }) => {
-      exportAggregateCsv(gamesData, aggregateStats);
-    }).catch(error => {
-      logger.error('Failed to load export utilities:', error);
+    
+    // 🔧 DEPENDENCY INJECTION FIX: Use utility registry instead of dynamic import
+    const success = await executeExportFunction('exportAggregateCsv', gamesData, aggregateStats);
+    if (!success) {
       alert(t('export.error', 'Export failed. Please try again.'));
-    });
+    }
   }, [savedGames, t]);
 
   // --- END AGGREGATE EXPORT HANDLERS ---
@@ -1865,20 +1871,24 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
       {/* Modals and Overlays */}
       {/* Training Resources Modal */}
-      <React.Suspense fallback={<ModalSkeleton title="Training Resources" />}>
-        <TrainingResourcesModal
-          isOpen={trainingResourcesModal.isOpen}
-          onClose={trainingResourcesModal.handleClose}
-        />
-      </React.Suspense>
-      <React.Suspense fallback={<ModalSkeleton title="Instructions" />}>
-        <InstructionsModal
-          isOpen={isInstructionsModalOpen}
-          onClose={handleToggleInstructionsModal}
-        />
-      </React.Suspense>
+      {TrainingResourcesModal && (
+        <React.Suspense fallback={<ModalSkeleton title="Training Resources" />}>
+          <TrainingResourcesModal
+            isOpen={trainingResourcesModal.isOpen}
+            onClose={trainingResourcesModal.handleClose}
+          />
+        </React.Suspense>
+      )}
+      {InstructionsModal && (
+        <React.Suspense fallback={<ModalSkeleton title="Instructions" />}>
+          <InstructionsModal
+            isOpen={isInstructionsModalOpen}
+            onClose={handleToggleInstructionsModal}
+          />
+        </React.Suspense>
+      )}
       {/* Goal Log Modal */}
-      {goalLogModal.isOpen && (
+      {goalLogModal.isOpen && GoalLogModal && (
         <React.Suspense fallback={
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-slate-800 rounded-lg p-6 w-96 max-w-90vw">
@@ -1901,7 +1911,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         </React.Suspense>
       )}
       {/* Game Stats Modal - Now using Zustand state */}
-      {gameStatsModal.isOpen && (
+      {gameStatsModal.isOpen && GameStatsModal && (
         <React.Suspense fallback={<GameStatsModalSkeleton />}>
           <GameStatsModal
             isOpen={gameStatsModal.isOpen}
@@ -1933,30 +1943,32 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           />
         </React.Suspense>
       )}
-      <React.Suspense fallback={<LoadGameModalSkeleton />}>
-        <LoadGameModal 
-          isOpen={loadGameModal.isOpen}
-          onClose={loadGameModal.handleClose}
-          savedGames={savedGames} 
-          onLoad={handleLoadGame}
-          onDelete={handleDeleteGame}
-          onExportOneJson={handleExportOneJsonWrapper}
-          onExportOneCsv={handleExportOneCsvWrapper}
-          currentGameId={currentGameId || undefined} // Convert null to undefined
-          // Pass loading and error state props for LoadGameModal
-          isLoadingGamesList={isLoadingGamesList}
-          loadGamesListError={loadGamesListError}
-          isGameLoading={isGameLoading}
-          gameLoadError={gameLoadError}
-          // Removed - now handled by useGameDataManager:
-          // isGameDeleting={isGameDeleting}
-          // gameDeleteError={gameDeleteError}
-          processingGameId={processingGameId}
-        />
-      </React.Suspense>
+      {LoadGameModal && (
+        <React.Suspense fallback={<LoadGameModalSkeleton />}>
+          <LoadGameModal 
+            isOpen={loadGameModal.isOpen}
+            onClose={loadGameModal.handleClose}
+            savedGames={savedGames} 
+            onLoad={handleLoadGame}
+            onDelete={handleDeleteGame}
+            onExportOneJson={handleExportOneJsonWrapper}
+            onExportOneCsv={handleExportOneCsvWrapper}
+            currentGameId={currentGameId || undefined} // Convert null to undefined
+            // Pass loading and error state props for LoadGameModal
+            isLoadingGamesList={isLoadingGamesList}
+            loadGamesListError={loadGamesListError}
+            isGameLoading={isGameLoading}
+            gameLoadError={gameLoadError}
+            // Removed - now handled by useGameDataManager:
+            // isGameDeleting={isGameDeleting}
+            // gameDeleteError={gameDeleteError}
+            processingGameId={processingGameId}
+          />
+        </React.Suspense>
+      )}
 
       {/* Conditionally render the New Game Setup Modal */}
-      {newGameSetupModal.isOpen && (
+      {newGameSetupModal.isOpen && NewGameSetupModal && (
         <React.Suspense fallback={<ModalSkeleton title="New Game Setup" />}>
           <NewGameSetupModal
             isOpen={newGameSetupModal.isOpen}
@@ -1977,8 +1989,9 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       )}
 
       {/* Roster Settings Modal */}
-      <React.Suspense fallback={<RosterModalSkeleton />}>
-        <RosterSettingsModal
+      {RosterSettingsModal && (
+        <React.Suspense fallback={<RosterModalSkeleton />}>
+          <RosterSettingsModal
           isOpen={rosterSettingsModal.isOpen}
           onClose={rosterSettingsModal.handleClose}
           availablePlayers={availablePlayers} // Use availablePlayers from useGameState
@@ -1997,22 +2010,25 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           onOpenPlayerStats={handleOpenPlayerStats}
         />
       </React.Suspense>
+      )}
 
-      <React.Suspense fallback={<ModalSkeleton title="Season & Tournament Management" />}>
-        <SeasonTournamentManagementModal
-          isOpen={seasonTournamentModal.isOpen}
-          onClose={seasonTournamentModal.handleClose}
-          seasons={seasons}
-          tournaments={tournaments}
-          availablePlayers={availablePlayers}
-          addSeasonMutation={addSeasonMutation}
-          addTournamentMutation={addTournamentMutation}
-          updateSeasonMutation={updateSeasonMutation}
-          deleteSeasonMutation={deleteSeasonMutation}
-          updateTournamentMutation={updateTournamentMutation}
-          deleteTournamentMutation={deleteTournamentMutation}
-        />
-      </React.Suspense>
+      {SeasonTournamentManagementModal && (
+        <React.Suspense fallback={<ModalSkeleton title="Season & Tournament Management" />}>
+          <SeasonTournamentManagementModal
+            isOpen={seasonTournamentModal.isOpen}
+            onClose={seasonTournamentModal.handleClose}
+            seasons={seasons}
+            tournaments={tournaments}
+            availablePlayers={availablePlayers}
+            addSeasonMutation={addSeasonMutation}
+            addTournamentMutation={addTournamentMutation}
+            updateSeasonMutation={updateSeasonMutation}
+            deleteSeasonMutation={deleteSeasonMutation}
+            updateTournamentMutation={updateTournamentMutation}
+            deleteTournamentMutation={deleteTournamentMutation}
+          />
+        </React.Suspense>
+      )}
       
       {/* <PlayerStatsModal 
           isOpen={isPlayerStatsModalOpen} 
@@ -2022,81 +2038,87 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           onGameClick={handleGameLogClick}
       /> */}
 
-      <React.Suspense fallback={<ModalSkeleton title="Game Settings" />}>
-        <GameSettingsModal
-          isOpen={gameSettingsModal.isOpen}
-          onClose={handleCloseGameSettingsModal}
-          currentGameId={currentGameId}
-          teamName={gameSessionState.teamName}
-          opponentName={gameSessionState.opponentName}
-          gameDate={gameSessionState.gameDate}
-          gameLocation={gameSessionState.gameLocation}
-          gameTime={gameSessionState.gameTime}
-          gameNotes={gameSessionState.gameNotes}
-          ageGroup={gameSessionState.ageGroup}
-          tournamentLevel={gameSessionState.tournamentLevel}
-          gameEvents={gameSessionState.gameEvents}
-          availablePlayers={availablePlayers}
-          selectedPlayerIds={gameSessionState.selectedPlayerIds}
-          onSelectedPlayersChange={handleUpdateSelectedPlayers}
-          numPeriods={gameSessionState.numberOfPeriods}
-          periodDurationMinutes={gameSessionState.periodDurationMinutes}
-          demandFactor={gameSessionState.demandFactor}
-          onTeamNameChange={handleTeamNameChange}
-          onOpponentNameChange={handleOpponentNameChange}
-          onGameDateChange={handleGameDateChange}
-          onGameLocationChange={handleGameLocationChange}
-          onGameTimeChange={handleGameTimeChange}
-          onAgeGroupChange={handleSetAgeGroup}
-          onTournamentLevelChange={handleSetTournamentLevel}
-          onUpdateGameEvent={handleUpdateGameEvent}
-          onAwardFairPlayCard={handleAwardFairPlayCard}
-          onDeleteGameEvent={handleDeleteGameEvent}
-          onNumPeriodsChange={handleSetNumberOfPeriods}
-          onPeriodDurationChange={handleSetPeriodDuration}
-          onDemandFactorChange={handleSetDemandFactor}
-          seasonId={gameSessionState.seasonId}
-          tournamentId={gameSessionState.tournamentId}
-          onSeasonIdChange={handleSetSeasonId}
-          onTournamentIdChange={handleSetTournamentId}
-          homeOrAway={gameSessionState.homeOrAway}
-          onSetHomeOrAway={handleSetHomeOrAway}
-          isPlayed={isPlayed}
-          onIsPlayedChange={handleSetIsPlayed}
-          addSeasonMutation={addSeasonMutation}
-          addTournamentMutation={addTournamentMutation}
-          isAddingSeason={addSeasonMutation.isPending}
-          isAddingTournament={addTournamentMutation.isPending}
-          timeElapsedInSeconds={timeElapsedInSeconds}
-          updateGameDetailsMutation={updateGameDetailsMutation}
-        />
-      </React.Suspense>
+      {GameSettingsModal && (
+        <React.Suspense fallback={<ModalSkeleton title="Game Settings" />}>
+          <GameSettingsModal
+            isOpen={gameSettingsModal.isOpen}
+            onClose={handleCloseGameSettingsModal}
+            currentGameId={currentGameId}
+            teamName={gameSessionState.teamName}
+            opponentName={gameSessionState.opponentName}
+            gameDate={gameSessionState.gameDate}
+            gameLocation={gameSessionState.gameLocation}
+            gameTime={gameSessionState.gameTime}
+            gameNotes={gameSessionState.gameNotes}
+            ageGroup={gameSessionState.ageGroup}
+            tournamentLevel={gameSessionState.tournamentLevel}
+            gameEvents={gameSessionState.gameEvents}
+            availablePlayers={availablePlayers}
+            selectedPlayerIds={gameSessionState.selectedPlayerIds}
+            onSelectedPlayersChange={handleUpdateSelectedPlayers}
+            numPeriods={gameSessionState.numberOfPeriods}
+            periodDurationMinutes={gameSessionState.periodDurationMinutes}
+            demandFactor={gameSessionState.demandFactor}
+            onTeamNameChange={handleTeamNameChange}
+            onOpponentNameChange={handleOpponentNameChange}
+            onGameDateChange={handleGameDateChange}
+            onGameLocationChange={handleGameLocationChange}
+            onGameTimeChange={handleGameTimeChange}
+            onAgeGroupChange={handleSetAgeGroup}
+            onTournamentLevelChange={handleSetTournamentLevel}
+            onUpdateGameEvent={handleUpdateGameEvent}
+            onAwardFairPlayCard={handleAwardFairPlayCard}
+            onDeleteGameEvent={handleDeleteGameEvent}
+            onNumPeriodsChange={handleSetNumberOfPeriods}
+            onPeriodDurationChange={handleSetPeriodDuration}
+            onDemandFactorChange={handleSetDemandFactor}
+            seasonId={gameSessionState.seasonId}
+            tournamentId={gameSessionState.tournamentId}
+            onSeasonIdChange={handleSetSeasonId}
+            onTournamentIdChange={handleSetTournamentId}
+            homeOrAway={gameSessionState.homeOrAway}
+            onSetHomeOrAway={handleSetHomeOrAway}
+            isPlayed={isPlayed}
+            onIsPlayedChange={handleSetIsPlayed}
+            addSeasonMutation={addSeasonMutation}
+            addTournamentMutation={addTournamentMutation}
+            isAddingSeason={addSeasonMutation.isPending}
+            isAddingTournament={addTournamentMutation.isPending}
+            timeElapsedInSeconds={timeElapsedInSeconds}
+            updateGameDetailsMutation={updateGameDetailsMutation}
+          />
+        </React.Suspense>
+      )}
 
-      <React.Suspense fallback={<ModalSkeleton title="Settings" />}>
-        <SettingsModal
-          isOpen={settingsModal.isOpen}
-          onClose={settingsModal.handleClose}
-          language={appLanguage}
-          onLanguageChange={handleLanguageChange}
-          defaultTeamName={defaultTeamNameSetting}
-          onDefaultTeamNameChange={handleDefaultTeamNameChange}
-          onResetGuide={handleShowAppGuide}
-          onHardResetApp={handleHardResetApp}
-          onSignOut={signOut}
-        />
-      </React.Suspense>
+      {SettingsModal && (
+        <React.Suspense fallback={<ModalSkeleton title="Settings" />}>
+          <SettingsModal
+            isOpen={settingsModal.isOpen}
+            onClose={settingsModal.handleClose}
+            language={appLanguage}
+            onLanguageChange={handleLanguageChange}
+            defaultTeamName={defaultTeamNameSetting}
+            onDefaultTeamNameChange={handleDefaultTeamNameChange}
+            onResetGuide={handleShowAppGuide}
+            onHardResetApp={handleHardResetApp}
+            onSignOut={signOut}
+          />
+        </React.Suspense>
+      )}
 
-      <React.Suspense fallback={<ModalSkeleton title="Player Assessment" />}>
-        <PlayerAssessmentModal
-          isOpen={playerAssessmentModal.isOpen}
-          onClose={playerAssessmentModal.handleClose}
-          selectedPlayerIds={gameSessionState.selectedPlayerIds}
-          availablePlayers={availablePlayers}
-          assessments={playerAssessments}
-          onSave={handleSavePlayerAssessment}
-          onDelete={handleDeletePlayerAssessment}
-        />
-      </React.Suspense>
+      {PlayerAssessmentModal && (
+        <React.Suspense fallback={<ModalSkeleton title="Player Assessment" />}>
+          <PlayerAssessmentModal
+            isOpen={playerAssessmentModal.isOpen}
+            onClose={playerAssessmentModal.handleClose}
+            selectedPlayerIds={gameSessionState.selectedPlayerIds}
+            availablePlayers={availablePlayers}
+            assessments={playerAssessments}
+            onSave={handleSavePlayerAssessment}
+            onDelete={handleDeletePlayerAssessment}
+          />
+        </React.Suspense>
+      )}
       
       {/* Migration Modal */}
       {MigrationModalComponent}

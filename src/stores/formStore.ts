@@ -17,6 +17,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector, devtools } from 'zustand/middleware';
 import logger from '@/utils/logger';
+import { getStorageServiceAsync } from '@/services/StorageServiceProvider';
 
 // ============================================================================
 // Types and Interfaces
@@ -613,19 +614,18 @@ export const useFormStore = create<FormStoreState>()(
           };
 
           try {
-            // Import the persistence store dynamically to avoid circular dependencies
-            const { usePersistenceStore } = await import('@/stores/persistenceStore');
-            const store = usePersistenceStore.getState();
-            
-            // Try to use the unified storage API first
-            try {
-              const success = await store.setStorageItem(`form_${key}`, formData);
-              if (success) {
-                logger.debug(`[FormStore] Persisted form '${formId}' via unified storage API`);
-                return;
+            // 🔧 DEPENDENCY INJECTION FIX: Use service provider instead of dynamic import
+            const storageService = await getStorageServiceAsync();
+            if (storageService) {
+              try {
+                const success = await storageService.setStorageItem(`form_${key}`, formData);
+                if (success) {
+                  logger.debug(`[FormStore] Persisted form '${formId}' via storage service`);
+                  return;
+                }
+              } catch (serviceError) {
+                logger.debug(`[FormStore] Storage service failed for '${formId}', using localStorage fallback:`, serviceError);
               }
-            } catch (storeError) {
-              logger.debug(`[FormStore] Unified storage API failed for '${formId}', using localStorage fallback:`, storeError);
             }
             
             // Fallback to direct localStorage access
@@ -645,26 +645,21 @@ export const useFormStore = create<FormStoreState>()(
           try {
             let storedData = null;
             
-            // Import the persistence store dynamically to avoid circular dependencies
-            try {
-              const { usePersistenceStore } = await import('@/stores/persistenceStore');
-              const store = usePersistenceStore.getState();
-              
-              // Try to use the unified storage API first
+            // 🔧 DEPENDENCY INJECTION FIX: Use service provider instead of dynamic import
+            const storageService = await getStorageServiceAsync();
+            if (storageService) {
               try {
-                storedData = await store.getStorageItem<{
+                storedData = await storageService.getStorageItem<{
                   values: Record<string, FieldValue>;
                   timestamp: number;
                   formId: string;
                 }>(`form_${key}`);
                 if (storedData) {
-                  logger.debug(`[FormStore] Retrieved form '${formId}' via unified storage API`);
+                  logger.debug(`[FormStore] Retrieved form '${formId}' via storage service`);
                 }
-              } catch (storeError) {
-                logger.debug(`[FormStore] Unified storage API failed for '${formId}', using localStorage fallback:`, storeError);
+              } catch (serviceError) {
+                logger.debug(`[FormStore] Storage service failed for '${formId}', using localStorage fallback:`, serviceError);
               }
-            } catch (importError) {
-              logger.debug(`[FormStore] Failed to import persistence store for '${formId}', using localStorage fallback:`, importError);
             }
             
             // Fallback to direct localStorage access if needed
