@@ -55,9 +55,10 @@ export const useMigrationSafety = (componentName: string) => {
     };
     
     // Check for updates periodically during migration
-    // 🔧 PERFORMANCE FIX: Disable frequent polling to prevent UI flicker
-    const interval = migrationStatus.isInProgress && process.env.NODE_ENV === 'development' ? 
-      setInterval(updateStatus, 5000) : null; // Reduced from 1000ms to 5000ms
+    // 🔧 FLICKER FIX: Temporarily disable polling to prevent modal flickering
+    const interval = null; // Disabled polling to fix modal flicker
+    // const interval = migrationStatus.isInProgress && process.env.NODE_ENV === 'development' ? 
+    //   setInterval(updateStatus, 5000) : null; // Reduced from 1000ms to 5000ms
     
     return () => {
       if (interval) {
