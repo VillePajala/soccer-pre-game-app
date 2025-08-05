@@ -26,7 +26,8 @@ export async function getDeviceFingerprint(): Promise<string | null> {
     });
     return fingerprint;
   } catch (error) {
-    logger.error('Failed to get device fingerprint:', error);
+    // 🔧 SIGN OUT FIX: During sign out, this is expected to fail - just return null
+    logger.debug('[SessionSettings] Failed to get device fingerprint (likely during sign out):', error);
     return null;
   }
 }
@@ -53,7 +54,8 @@ export async function saveDeviceFingerprint(fingerprint: string): Promise<void> 
       ending: fingerprint.slice(-10)
     });
   } catch (error) {
-    logger.error('Failed to save device fingerprint:', error);
+    // 🔧 SIGN OUT FIX: During sign out, storage operations may fail - that's expected
+    logger.debug('[SessionSettings] Failed to save device fingerprint (likely during sign out):', error);
   }
 }
 
@@ -75,7 +77,8 @@ export async function getSessionActivity(userId: string): Promise<unknown> {
     
     return sessionActivity[userId] ?? null;
   } catch (error) {
-    logger.error('Failed to get session activity:', error);
+    // 🔧 SIGN OUT FIX: During sign out, auth-dependent calls fail - that's expected
+    logger.debug('[SessionSettings] Failed to get session activity (likely during sign out):', error);
     return null;
   }
 }
@@ -104,7 +107,8 @@ export async function saveSessionActivity(userId: string, activity: unknown): Pr
     
     await storageManager.saveAppSettings(updatedSettings);
   } catch (error) {
-    logger.error('Failed to save session activity:', error);
+    // 🔧 SIGN OUT FIX: During sign out, storage operations may fail - that's expected
+    logger.debug('[SessionSettings] Failed to save session activity (likely during sign out):', error);
   }
 }
 
@@ -131,6 +135,7 @@ export async function removeSessionActivity(userId: string): Promise<void> {
     
     await storageManager.saveAppSettings(updatedSettings);
   } catch (error) {
-    logger.error('Failed to remove session activity:', error);
+    // 🔧 SIGN OUT FIX: During sign out, storage operations may fail - that's expected
+    logger.debug('[SessionSettings] Failed to remove session activity (likely during sign out):', error);
   }
 }

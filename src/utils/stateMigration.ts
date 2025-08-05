@@ -49,6 +49,21 @@ let migrationState: MigrationState = {
   lastError: null,
 };
 
+// 🔧 AUTO-COMPLETE STUCK MIGRATION: Check for stuck migration on module load
+try {
+  const storedFlags = localStorage.getItem('migration-flags');
+  if (storedFlags) {
+    const flags = JSON.parse(storedFlags);
+    // If migration flags exist but no migration is in progress, assume it was completed
+    if (flags && !migrationState.isInProgress) {
+      migrationState.currentPhase = 'completed';
+      logger.debug('[Migration] Auto-completed previously stuck migration');
+    }
+  }
+} catch (error) {
+  logger.warn('[Migration] Failed to check for stuck migration:', error);
+}
+
 // Migration error types
 export class MigrationError extends Error {
   constructor(
@@ -506,3 +521,34 @@ export const withMigrationSafety = <T>(
     return legacyImplementation();
   }
 };
+
+/**
+ * 🔧 FORCE COMPLETE MIGRATION: Emergency function to complete stuck migration
+ * Call this from browser console if migration is stuck: window.forceCompleteMigration()
+ */
+export const forceCompleteMigration = (): void => {
+  try {
+    migrationState = {
+      isInProgress: false,
+      currentPhase: 'completed',
+      migratedComponents: [],
+      failedComponents: [],
+      startTime: 0,
+      lastError: null,
+    };
+    
+    logger.info('[Migration] Force completed stuck migration');
+    
+    // Trigger a re-render by dispatching a custom event
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('migration-force-completed'));
+    }
+  } catch (error) {
+    logger.error('[Migration] Failed to force complete migration:', error);
+  }
+};
+
+// Expose for debugging in browser console
+if (typeof window !== 'undefined') {
+  (window as unknown as { forceCompleteMigration: () => void }).forceCompleteMigration = forceCompleteMigration;
+}

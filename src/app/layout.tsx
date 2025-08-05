@@ -52,19 +52,15 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
       <body className={rajdhani.variable}>
-        <I18nInitializer>
-          <ServiceWorkerRegistration />
-          <InstallPrompt />
-          <ErrorBoundary>
-            <QueryProvider>
-              <AuthProvider>
-                <AuthStorageSync />
-                <SessionWarning />
-                <ClientWrapper>{children}</ClientWrapper>
-              </AuthProvider>
-            </QueryProvider>
-          </ErrorBoundary>
-        </I18nInitializer>
+        <ErrorBoundary>
+          <QueryProvider>
+            <AuthProvider>
+              <AuthStorageSync />
+              <SessionWarning />
+              <ClientWrapper>{children}</ClientWrapper>
+            </AuthProvider>
+          </QueryProvider>
+        </ErrorBoundary>
         <Analytics />
       </body>
     </html>

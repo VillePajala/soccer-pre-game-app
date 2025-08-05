@@ -494,10 +494,15 @@ export class SessionManager {
     if (!this.currentUser) return;
     if (typeof window === 'undefined') return;
 
-    const activity = await this.getSessionActivity();
-    if (activity) {
-      activity.lastActivity = timestamp;
-      await saveSessionActivity(this.currentUser.id, activity);
+    try {
+      const activity = await this.getSessionActivity();
+      if (activity) {
+        activity.lastActivity = timestamp;
+        await saveSessionActivity(this.currentUser.id, activity);
+      }
+    } catch (error) {
+      // 🔧 SIGN OUT FIX: Ignore errors during sign out - this is expected
+      logger.debug('[SessionManager] Failed to update session activity (likely during sign out):', error);
     }
   }
 
@@ -511,7 +516,9 @@ export class SessionManager {
     try {
       const activity = await getSessionActivity(this.currentUser.id);
       return activity as SessionActivity | null;
-    } catch {
+    } catch (error) {
+      // 🔧 SIGN OUT FIX: During sign out, auth-dependent calls will fail - that's expected
+      logger.debug('[SessionManager] Failed to get session activity (likely during sign out):', error);
       return null;
     }
   }

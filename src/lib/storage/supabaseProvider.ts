@@ -24,11 +24,28 @@ export class SupabaseProvider implements IStorageProvider {
   }
 
   private async getCurrentUserId(): Promise<string> {
-    const { data: { user }, error } = await supabase.auth.getUser();
-    if (error || !user) {
-      throw new AuthenticationError('supabase', 'getCurrentUserId', error || new Error('No user'));
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) {
+        throw new AuthenticationError('supabase', 'getCurrentUserId', error || new Error('No user'));
+      }
+      return user.id;
+    } catch (error) {
+      // During sign out, auth calls might fail - that's expected
+      if (error instanceof AuthenticationError) {
+        throw error;
+      }
+      throw new AuthenticationError('supabase', 'getCurrentUserId', error as Error);
     }
-    return user.id;
+  }
+
+  private async isAuthenticated(): Promise<boolean> {
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      return !error && !!user;
+    } catch {
+      return false;
+    }
   }
 
   // Player management with Phase 4 optimizations
@@ -418,6 +435,11 @@ export class SupabaseProvider implements IStorageProvider {
   // App settings (simplified implementation for now)
   async getAppSettings(): Promise<AppSettings | null> {
     try {
+      // 🔧 SIGN OUT FIX: Check authentication before trying to get user data
+      if (!(await this.isAuthenticated())) {
+        return null; // Return null instead of throwing error during sign out
+      }
+      
       const userId = await this.getCurrentUserId();
       const { data, error } = await supabase
         .from('app_settings')
