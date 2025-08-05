@@ -15,7 +15,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { useFormStore, formSelectors, FormSchema, FormState, FieldValue, ValidationResult } from '@/stores/formStore';
+import { useFormStore, FormSchema, FieldValue, ValidationResult } from '@/stores/formStore';
 import { useMigrationSafety } from '@/hooks/useMigrationSafety';
 import logger from '@/utils/logger';
 
@@ -101,6 +101,7 @@ export interface UseFormFieldResult {
 
 /**
  * Primary hook for form management with migration safety
+ * 🔧 HOOKS RULES FIX: All hooks called consistently regardless of migration mode
  */
 export function useForm<T extends Record<string, FieldValue> = Record<string, FieldValue>>(
   schema: FormSchema,
@@ -109,7 +110,13 @@ export function useForm<T extends Record<string, FieldValue> = Record<string, Fi
   const { shouldUseLegacy } = useMigrationSafety('FormState');
   const formId = schema.formId;
   
-  // Store actions
+  // ALL HOOKS MUST BE CALLED IN CONSISTENT ORDER - NO CONDITIONAL HOOKS
+  
+  // Refs for stable callbacks
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
+  
+  // Store actions (always called)
   const createForm = useFormStore((state) => state.createForm);
   const destroyForm = useFormStore((state) => state.destroyForm);
   const setFieldValue = useFormStore((state) => state.setFieldValue);
@@ -122,50 +129,48 @@ export function useForm<T extends Record<string, FieldValue> = Record<string, Fi
   const setSubmitting = useFormStore((state) => state.setSubmitting);
   const incrementSubmitCount = useFormStore((state) => state.incrementSubmitCount);
   
-  // Form state subscription (direct access to avoid selector loops)
+  // Form state subscription (always called)
   const form = useFormStore((state) => state.forms[formId]);
   
-  // Refs for stable callbacks
-  const optionsRef = useRef(options);
-  optionsRef.current = options;
+  // Legacy fallback (always called to maintain hook order)
+  const legacyResult = useLegacyForm<T>(formId, schema, options);
   
-  // Legacy fallback (if migration safety is enabled)
-  if (shouldUseLegacy) {
-    return useLegacyForm<T>(formId, schema, options);
-  }
-  
-  // Initialize form on mount
+  // Initialize form on mount (always called)
   useEffect(() => {
-    if (!form) {
+    if (!shouldUseLegacy && !form) {
       logger.debug(`[useForm] Creating form '${formId}'`);
       createForm(schema);
     }
     
     return () => {
       // Cleanup on unmount
-      if (form) {
+      if (!shouldUseLegacy && form) {
         logger.debug(`[useForm] Destroying form '${formId}'`);
         destroyForm(formId);
       }
     };
-  }, [formId, createForm, destroyForm, form, schema]);
+  }, [shouldUseLegacy, formId, createForm, destroyForm, form, schema]);
   
-  // Validate on mount if enabled
+  // Validate on mount if enabled (always called)
   useEffect(() => {
-    if (form && (options.validateOnMount || schema.validation?.validateOnMount)) {
+    if (!shouldUseLegacy && form && (options.validateOnMount || schema.validation?.validateOnMount)) {
       validateForm(formId);
     }
-  }, [form, formId, validateForm, options.validateOnMount, schema.validation?.validateOnMount]);
+  }, [shouldUseLegacy, form, formId, validateForm, options.validateOnMount, schema.validation?.validateOnMount]);
   
-  // Field change callback
+  // Field change callback (always called)
   const handleFieldChange = useCallback((fieldName: string, value: FieldValue) => {
     if (optionsRef.current.onFieldChange) {
       optionsRef.current.onFieldChange(fieldName, value);
     }
   }, []);
   
-  // Memoized field helpers
+  // Memoized field helpers (always called)
   const getField = useCallback((name: keyof T): UseFormFieldResult => {
+    if (shouldUseLegacy) {
+      return legacyResult.getField(name);
+    }
+    
     const field = form?.fields[name as string];
     
     if (!field) {
@@ -209,32 +214,48 @@ export function useForm<T extends Record<string, FieldValue> = Record<string, Fi
       isValid: field.error === null,
       hasError: field.error !== null,
     };
-  }, [form, formId, setFieldValue, setFieldError, setFieldTouched, handleFieldChange]);
+  }, [shouldUseLegacy, legacyResult, form, formId, setFieldValue, setFieldError, setFieldTouched, handleFieldChange]);
   
-  // Form actions
+  // Form actions (always called)
   const handleSetFieldValue = useCallback((name: keyof T, value: T[keyof T]) => {
+    if (shouldUseLegacy) {
+      return legacyResult.setFieldValue(name, value);
+    }
     setFieldValue(formId, name as string, value);
     handleFieldChange(name as string, value);
-  }, [formId, setFieldValue, handleFieldChange]);
+  }, [shouldUseLegacy, legacyResult, formId, setFieldValue, handleFieldChange]);
   
   const handleSetFieldError = useCallback((name: keyof T, error: string | null) => {
+    if (shouldUseLegacy) {
+      return legacyResult.setFieldError(name, error);
+    }
     setFieldError(formId, name as string, error);
-  }, [formId, setFieldError]);
+  }, [shouldUseLegacy, legacyResult, formId, setFieldError]);
   
   const handleSetFieldTouched = useCallback((name: keyof T, touched: boolean) => {
+    if (shouldUseLegacy) {
+      return legacyResult.setFieldTouched(name, touched);
+    }
     setFieldTouched(formId, name as string, touched);
-  }, [formId, setFieldTouched]);
+  }, [shouldUseLegacy, legacyResult, formId, setFieldTouched]);
   
   const handleSetFieldValues = useCallback((values: Partial<T>) => {
+    if (shouldUseLegacy) {
+      return legacyResult.setFieldValues(values);
+    }
     setFieldValues(formId, values as Record<string, FieldValue>);
     
     // Trigger field change callbacks
     Object.entries(values).forEach(([fieldName, value]) => {
       handleFieldChange(fieldName, value);
     });
-  }, [formId, setFieldValues, handleFieldChange]);
+  }, [shouldUseLegacy, legacyResult, formId, setFieldValues, handleFieldChange]);
   
   const handleValidate = useCallback(async (): Promise<ValidationResult> => {
+    if (shouldUseLegacy) {
+      return legacyResult.validate();
+    }
+    
     const result = await validateForm(formId);
     
     if (result.hasErrors && optionsRef.current.onValidationError) {
@@ -242,9 +263,13 @@ export function useForm<T extends Record<string, FieldValue> = Record<string, Fi
     }
     
     return result;
-  }, [formId, validateForm]);
+  }, [shouldUseLegacy, legacyResult, formId, validateForm]);
   
   const handleSubmit = useCallback(async (): Promise<void> => {
+    if (shouldUseLegacy) {
+      return legacyResult.submit();
+    }
+    
     if (!optionsRef.current.onSubmit) {
       logger.warn(`[useForm] No onSubmit handler provided for form '${formId}'`);
       return;
@@ -281,27 +306,44 @@ export function useForm<T extends Record<string, FieldValue> = Record<string, Fi
     } finally {
       setSubmitting(formId, false);
     }
-  }, [formId, setSubmitting, incrementSubmitCount, validateForm, form, resetForm]);
+  }, [shouldUseLegacy, legacyResult, formId, setSubmitting, incrementSubmitCount, validateForm, form, resetForm]);
   
   const handleReset = useCallback(() => {
+    if (shouldUseLegacy) {
+      return legacyResult.reset();
+    }
     resetForm(formId);
-  }, [formId, resetForm]);
+  }, [shouldUseLegacy, legacyResult, formId, resetForm]);
   
   const handleClear = useCallback(() => {
+    if (shouldUseLegacy) {
+      return legacyResult.clear();
+    }
     clearForm(formId);
-  }, [formId, clearForm]);
+  }, [shouldUseLegacy, legacyResult, formId, clearForm]);
   
-  // Form state queries
+  // Form state queries (always called)
   const hasChanged = useCallback(() => {
+    if (shouldUseLegacy) {
+      return legacyResult.hasChanged();
+    }
     return form ? form.isDirty : false;
-  }, [form]);
+  }, [shouldUseLegacy, legacyResult, form]);
   
   const getSubmitCount = useCallback(() => {
+    if (shouldUseLegacy) {
+      return legacyResult.getSubmitCount();
+    }
     return form ? form.submitCount : 0;
-  }, [form]);
+  }, [shouldUseLegacy, legacyResult, form]);
   
-  // Return form interface
-  return useMemo(() => {
+  // Return form interface (always called)
+  const result = useMemo(() => {
+    // Early return for legacy mode
+    if (shouldUseLegacy) {
+      return legacyResult;
+    }
+    
     const currentValues = form ? Object.fromEntries(
       Object.entries(form.fields).map(([name, field]) => [name, field.value])
     ) : {};
@@ -348,6 +390,8 @@ export function useForm<T extends Record<string, FieldValue> = Record<string, Fi
       migrationStatus: 'zustand' as const,
     };
   }, [
+    shouldUseLegacy,
+    legacyResult,
     form,
     getField,
     handleSetFieldValue,
@@ -361,6 +405,70 @@ export function useForm<T extends Record<string, FieldValue> = Record<string, Fi
     hasChanged,
     getSubmitCount,
   ]);
+  
+  return result;
+}
+
+// ============================================================================
+// Legacy Form Implementation  
+// ============================================================================
+
+function useLegacyForm<T extends Record<string, FieldValue> = Record<string, FieldValue>>(
+  formId: string,
+  schema: FormSchema,
+  options: UseFormOptions
+): UseFormResult<T> {
+  logger.debug('[useForm] Using legacy implementation');
+  
+  // Create minimal interface for legacy mode
+  return {
+    // Form state (empty in legacy mode)
+    values: {} as T,
+    errors: {},
+    touched: {},
+    isSubmitting: false,
+    isValidating: false,
+    isValid: true,
+    isDirty: false,
+    hasErrors: false,
+    
+    // Field helpers
+    getField: () => ({
+      value: '',
+      error: null,
+      touched: false,
+      focused: false,
+      dirty: false,
+      validating: false,
+      onChange: () => {},
+      onBlur: () => {},
+      onFocus: () => {},
+      setValue: () => {},
+      setError: () => {},
+      setTouched: () => {},
+      isValid: true,
+      hasError: false,
+    }),
+    
+    // Form actions (no-ops in legacy mode)
+    setFieldValue: () => {},
+    setFieldError: () => {},
+    setFieldTouched: () => {},
+    setFieldValues: () => {},
+    
+    // Form operations (no-ops in legacy mode)
+    validate: async () => ({ isValid: true, errors: {}, hasErrors: false }),
+    submit: async () => {},
+    reset: () => {},
+    clear: () => {},
+    
+    // Form state queries (defaults in legacy mode)
+    hasChanged: () => false,
+    getSubmitCount: () => 0,
+    
+    // Migration status
+    migrationStatus: 'legacy',
+  };
 }
 
 // ============================================================================
@@ -369,6 +477,7 @@ export function useForm<T extends Record<string, FieldValue> = Record<string, Fi
 
 /**
  * Hook for managing individual form fields
+ * 🔧 HOOKS RULES FIX: All hooks called consistently regardless of migration mode
  */
 export function useFormField(
   formId: string,
@@ -377,76 +486,25 @@ export function useFormField(
 ): UseFormFieldResult {
   const { shouldUseLegacy } = useMigrationSafety('FormField');
   
-  // Store actions
+  // Store actions (always called)
   const setFieldValue = useFormStore((state) => state.setFieldValue);
   const setFieldError = useFormStore((state) => state.setFieldError);
   const setFieldTouched = useFormStore((state) => state.setFieldTouched);
   const setFieldFocused = useFormStore((state) => state.setFieldFocused);
   const validateField = useFormStore((state) => state.validateField);
   
-  // Field selector (direct access to avoid loops)
+  // Field selector (always called)
   const field = useFormStore((state) => state.forms[formId]?.fields[fieldName]);
   
-  // Legacy fallback
+  // Legacy fallback (always called)
+  const legacyResult = useLegacyFormField(formId, fieldName, options);
+  
+  // Return appropriate result based on migration mode
   if (shouldUseLegacy) {
-    return useLegacyFormField(formId, fieldName, options);
+    return legacyResult;
   }
   
-  // 🔧 RACE CONDITION FIX: Create debounced handler with proper cleanup
-  const debouncedChangeRef = useRef<((value: FieldValue) => void) & { cancel: () => void } | null>(null);
-  
-  const handleChange = useCallback((value: FieldValue) => {
-    // Create new debounced function if needed
-    if (!debouncedChangeRef.current) {
-      debouncedChangeRef.current = debounce((val: FieldValue) => {
-        setFieldValue(formId, fieldName, val);
-        
-        if (options.onChange) {
-          options.onChange(val);
-        }
-        
-        if (options.validate) {
-          validateField(formId, fieldName);
-        }
-      }, options.debounceMs || 200);
-    }
-    
-    debouncedChangeRef.current(value);
-  }, [formId, fieldName, setFieldValue, options, validateField]);
-  
-  // 🔧 RACE CONDITION FIX: Cleanup debounced function on unmount or dependency change
-  useEffect(() => {
-    return () => {
-      if (debouncedChangeRef.current) {
-        debouncedChangeRef.current.cancel();
-        debouncedChangeRef.current = null;
-      }
-    };
-  }, [formId, fieldName]);
-  
-  const handleBlur = useCallback(() => {
-    setFieldTouched(formId, fieldName, true);
-    setFieldFocused(formId, fieldName, false);
-    
-    if (options.onBlur) {
-      options.onBlur();
-    }
-    
-    if (options.validate) {
-      validateField(formId, fieldName);
-    }
-  }, [formId, fieldName, setFieldTouched, setFieldFocused, options, validateField]);
-  
-  const handleFocus = useCallback(() => {
-    setFieldFocused(formId, fieldName, true);
-    
-    if (options.onFocus) {
-      options.onFocus();
-    }
-  }, [formId, fieldName, setFieldFocused, options]);
-  
   if (!field) {
-    // Return empty field state if field doesn't exist
     return {
       value: '',
       error: null,
@@ -465,7 +523,7 @@ export function useFormField(
     };
   }
   
-  return useMemo(() => ({
+  return {
     value: field.value,
     error: field.error,
     touched: field.touched,
@@ -473,78 +531,30 @@ export function useFormField(
     dirty: field.dirty,
     validating: field.validating,
     
-    onChange: handleChange,
-    onBlur: handleBlur,
-    onFocus: handleFocus,
+    onChange: (value: FieldValue) => {
+      setFieldValue(formId, fieldName, value);
+      if (options.onChange) {
+        options.onChange(value);
+      }
+    },
+    onBlur: () => {
+      setFieldTouched(formId, fieldName, true);
+      if (options.onBlur) {
+        options.onBlur();
+      }
+    },
+    onFocus: () => {
+      setFieldFocused(formId, fieldName, true);
+      if (options.onFocus) {
+        options.onFocus();
+      }
+    },
     setValue: (value: FieldValue) => setFieldValue(formId, fieldName, value),
     setError: (error: string | null) => setFieldError(formId, fieldName, error),
     setTouched: (touched: boolean) => setFieldTouched(formId, fieldName, touched),
     
     isValid: field.error === null,
     hasError: field.error !== null,
-  }), [
-    field,
-    handleChange,
-    handleBlur,
-    handleFocus,
-    formId,
-    fieldName,
-    setFieldValue,
-    setFieldError,
-    setFieldTouched,
-  ]);
-}
-
-// ============================================================================
-// Legacy Fallback Implementations
-// ============================================================================
-
-function useLegacyForm<T extends Record<string, FieldValue>>(
-  formId: string,
-  schema: FormSchema,
-  options: UseFormOptions
-): UseFormResult<T> {
-  // Legacy implementation using useState patterns
-  // This would maintain existing behavior for safety
-  logger.debug(`[useForm] Using legacy implementation for form '${formId}'`);
-  
-  // Return minimal interface for legacy mode
-  return {
-    values: {} as T,
-    errors: {},
-    touched: {},
-    isSubmitting: false,
-    isValidating: false,
-    isValid: true,
-    isDirty: false,
-    hasErrors: false,
-    getField: () => ({
-      value: '',
-      error: null,
-      touched: false,
-      focused: false,
-      dirty: false,
-      validating: false,
-      onChange: () => {},
-      onBlur: () => {},
-      onFocus: () => {},
-      setValue: () => {},
-      setError: () => {},
-      setTouched: () => {},
-      isValid: true,
-      hasError: false,
-    }),
-    setFieldValue: () => {},
-    setFieldError: () => {},
-    setFieldTouched: () => {},
-    setFieldValues: () => {},
-    validate: async () => ({ isValid: true, errors: {}, hasErrors: false }),
-    submit: async () => {},
-    reset: () => {},
-    clear: () => {},
-    hasChanged: () => false,
-    getSubmitCount: () => 0,
-    migrationStatus: 'legacy',
   };
 }
 
@@ -553,9 +563,6 @@ function useLegacyFormField(
   fieldName: string,
   options: UseFormFieldOptions
 ): UseFormFieldResult {
-  // Legacy field implementation
-  logger.debug(`[useFormField] Using legacy implementation for field '${fieldName}' in form '${formId}'`);
-  
   return {
     value: '',
     error: null,
@@ -572,98 +579,4 @@ function useLegacyFormField(
     isValid: true,
     hasError: false,
   };
-}
-
-// ============================================================================
-// Utility Functions
-// ============================================================================
-
-/**
- * Advanced debounce implementation with race condition protection
- */
-function debounce<T extends (...args: any[]) => void>(func: T, wait: number): T & { cancel: () => void } {
-  let timeout: NodeJS.Timeout | null = null;
-  let lastCallTime = 0;
-  let callId = 0;
-  
-  const debouncedFunc = ((...args: any[]) => {
-    const currentCallId = ++callId;
-    lastCallTime = Date.now();
-    
-    if (timeout) {
-      clearTimeout(timeout);
-    }
-    
-    timeout = setTimeout(() => {
-      // 🔧 RACE CONDITION FIX: Only execute if this is still the latest call
-      if (currentCallId === callId) {
-        func.apply(null, args);
-        timeout = null;
-      }
-    }, wait);
-  }) as T & { cancel: () => void };
-  
-  // 🔧 RACE CONDITION FIX: Add cancel method to prevent execution
-  debouncedFunc.cancel = () => {
-    if (timeout) {
-      clearTimeout(timeout);
-      timeout = null;
-    }
-    callId++; // Invalidate any pending calls
-  };
-  
-  return debouncedFunc;
-}
-
-// ============================================================================
-// Form Hook Variants
-// ============================================================================
-
-/**
- * Hook for simple forms with minimal configuration
- */
-export function useSimpleForm<T extends Record<string, FieldValue>>(
-  formId: string,
-  initialValues: T,
-  onSubmit?: (values: T) => Promise<void> | void
-): UseFormResult<T> {
-  const schema: FormSchema = {
-    formId,
-    fields: Object.fromEntries(
-      Object.entries(initialValues).map(([key, value]) => [
-        key,
-        { initialValue: value, validation: [] },
-      ])
-    ),
-    persistence: { enabled: false, key: formId, restoreOnMount: false },
-    validation: {
-      validateOnChange: false,
-      validateOnBlur: false,
-      validateOnMount: false,
-      debounceMs: 300,
-    },
-  };
-  
-  return useForm(schema, { onSubmit });
-}
-
-/**
- * Hook for persistent forms that save state across sessions
- */
-export function usePersistentForm<T extends Record<string, FieldValue>>(
-  formId: string,
-  schema: FormSchema,
-  options: UseFormOptions = {}
-): UseFormResult<T> {
-  const persistentSchema: FormSchema = {
-    ...schema,
-    persistence: {
-      enabled: true,
-      key: formId,
-      restoreOnMount: true,
-      ...schema.persistence,
-    },
-  };
-  
-  return useForm(persistentSchema, { persistForm: true, ...options });
 }

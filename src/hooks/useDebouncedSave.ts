@@ -1,5 +1,7 @@
 import { useRef, useCallback, useEffect } from 'react';
 import logger from '@/utils/logger';
+// 🔧 MEMORY LEAK FIX: Memory manager available for timeout tracking if needed
+// import { createManagedTimeout } from '@/services/MemoryManager';
 
 /**
  * Custom hook for debounced game saving

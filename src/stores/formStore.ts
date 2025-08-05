@@ -18,6 +18,12 @@ import { create } from 'zustand';
 import { subscribeWithSelector, devtools } from 'zustand/middleware';
 import logger from '@/utils/logger';
 import { getStorageServiceAsync } from '@/services/StorageServiceProvider';
+// 🔧 ATOMIC TRANSACTION FIX: Import transaction manager for form persistence
+import { createAsyncOperation, transactionManager } from '@/services/TransactionManager';
+// 🔧 RUNTIME VALIDATION FIX: Import runtime validator for form data validation
+import { typeGuards, validateStorageJSON, validateExternalData } from '@/services/RuntimeValidator';
+// 🔧 MEMORY LEAK FIX: Import memory manager for cleanup interval management
+import { createManagedInterval } from '@/services/MemoryManager';
 
 // ============================================================================
 // Types and Interfaces
@@ -316,8 +322,8 @@ export const useFormStore = create<FormStoreState>()(
             logger.debug(`[FormStore] Destroyed form '${formId}'`);
 
             // 🔧 RACE CONDITION FIX: Clean up validation tracking
-            const { [formId]: removed, ...remainingForms } = state.forms;
-            const { [formId]: removedTracking, ...remainingTracking } = state.validationTracking;
+            const { [formId]: _removed, ...remainingForms } = state.forms;
+            const { [formId]: _removedTracking, ...remainingTracking } = state.validationTracking;
             
             return { 
               ...state, 
@@ -595,6 +601,7 @@ export const useFormStore = create<FormStoreState>()(
         // Persistence
         // ========================================================================
 
+        // 🔧 ATOMIC TRANSACTION FIX: Refactored persistForm to use atomic transactions
         persistForm: async (formId: string) => {
           const form = get().forms[formId];
           if (!form || !form.schema.persistence?.enabled) return;
@@ -613,26 +620,50 @@ export const useFormStore = create<FormStoreState>()(
             formId,
           };
 
-          try {
-            // 🔧 DEPENDENCY INJECTION FIX: Use service provider instead of dynamic import
-            const storageService = await getStorageServiceAsync();
-            if (storageService) {
-              try {
-                const success = await storageService.setStorageItem(`form_${key}`, formData);
-                if (success) {
-                  logger.debug(`[FormStore] Persisted form '${formId}' via storage service`);
-                  return;
+          // Create atomic transaction operations
+          const operations = [
+            createAsyncOperation(
+              'persistViaStorageService',
+              `Persist form '${formId}' via storage service`,
+              async () => {
+                const storageService = await getStorageServiceAsync();
+                if (storageService) {
+                  const success = await storageService.setStorageItem(`form_${key}`, formData);
+                  if (success) {
+                    logger.debug(`[FormStore] Persisted form '${formId}' via storage service`);
+                    return true;
+                  }
                 }
-              } catch (serviceError) {
-                logger.debug(`[FormStore] Storage service failed for '${formId}', using localStorage fallback:`, serviceError);
+                return false; // Service not available or failed
               }
-            }
-            
-            // Fallback to direct localStorage access
-            localStorage.setItem(`form_${key}`, JSON.stringify(formData));
-            logger.debug(`[FormStore] Persisted form '${formId}' to localStorage fallback`);
-          } catch (error) {
-            logger.error(`[FormStore] Failed to persist form '${formId}':`, error);
+            ),
+            createAsyncOperation(
+              'persistViaLocalStorage',
+              `Persist form '${formId}' via localStorage fallback`,
+              async () => {
+                localStorage.setItem(`form_${key}`, JSON.stringify(formData));
+                logger.debug(`[FormStore] Persisted form '${formId}' to localStorage fallback`);
+                return true;
+              }
+            )
+          ];
+
+          // Execute atomic transaction with fallback success criteria
+          const result = await transactionManager.executeTransaction(operations, {
+            timeout: 5000, // 5 seconds
+            rollbackOnFailure: false, // Don't rollback - partial success is acceptable
+          });
+
+          // Check if at least one persistence method succeeded
+          const storageServiceSuccess = result.results?.[0] === true;
+          const localStorageSuccess = result.results?.[1] === true;
+          const hasAnySuccess = storageServiceSuccess || localStorageSuccess;
+
+          if (hasAnySuccess) {
+            const method = storageServiceSuccess ? 'storage service' : 'localStorage fallback';
+            logger.debug(`[FormStore] Form '${formId}' persisted successfully via atomic transaction using ${method}`);
+          } else {
+            logger.error(`[FormStore] Atomic persistForm transaction failed for '${formId}':`, result.error);
           }
         },
 
@@ -666,14 +697,41 @@ export const useFormStore = create<FormStoreState>()(
             if (!storedData) {
               const stored = localStorage.getItem(`form_${key}`);
               if (stored) {
-                storedData = JSON.parse(stored);
-                logger.debug(`[FormStore] Retrieved form '${formId}' via localStorage fallback`);
+                // 🔧 RUNTIME VALIDATION FIX: Validate JSON parsing and form data
+                const validationResult = validateStorageJSON(`form_${key}`, typeGuards.isFormData);
+                
+                if (validationResult.isValid && validationResult.data) {
+                  storedData = validationResult.data;
+                  logger.debug(`[FormStore] Retrieved and validated form '${formId}' via localStorage fallback`);
+                } else {
+                  logger.warn(`[FormStore] Invalid form data in localStorage for '${formId}':`, validationResult.errors);
+                  // Try to use sanitized data if available
+                  if (validationResult.sanitized) {
+                    storedData = validationResult.sanitized;
+                    logger.debug(`[FormStore] Using sanitized form data for '${formId}'`);
+                  } else {
+                    return; // Skip restore if data is completely invalid
+                  }
+                }
               }
             }
             
             if (!storedData) return;
 
+            // 🔧 RUNTIME VALIDATION FIX: Validate stored data structure
+            const dataValidation = validateExternalData(storedData, typeGuards.isFormData, `stored form data for ${formId}`);
+            if (!dataValidation.isValid) {
+              logger.warn(`[FormStore] Invalid stored data structure for '${formId}':`, dataValidation.errors);
+              return;
+            }
+
             const { values, timestamp, formId: storedFormId } = storedData;
+            
+            // 🔧 RUNTIME VALIDATION FIX: Enhanced validation with type checking
+            if (!typeGuards.isString(storedFormId) || !typeGuards.isNumber(timestamp) || !typeGuards.isObject(values)) {
+              logger.warn(`[FormStore] Invalid data types in stored form '${formId}'`);
+              return;
+            }
             
             // Verify form ID matches
             if (storedFormId !== formId) {
@@ -688,9 +746,22 @@ export const useFormStore = create<FormStoreState>()(
               return;
             }
 
-            // Restore values
-            get().setFieldValues(formId, values);
-            logger.debug(`[FormStore] Restored form '${formId}' successfully`);
+            // 🔧 RUNTIME VALIDATION FIX: Validate field values before restoring
+            try {
+              const validatedValues: Record<string, FieldValue> = {};
+              Object.entries(values).forEach(([fieldName, value]) => {
+                // Basic validation - ensure field names are strings and values are valid
+                if (typeGuards.isString(fieldName) && value !== undefined) {
+                  validatedValues[fieldName] = value as FieldValue;
+                }
+              });
+              
+              // Restore validated values
+              get().setFieldValues(formId, validatedValues);
+              logger.debug(`[FormStore] Restored form '${formId}' successfully with ${Object.keys(validatedValues).length} validated fields`);
+            } catch (restoreError) {
+              logger.error(`[FormStore] Error restoring form values for '${formId}':`, restoreError);
+            }
           } catch (error) {
             logger.error(`[FormStore] Failed to restore form '${formId}':`, error);
           }
@@ -833,9 +904,9 @@ export const formSelectors = {
   },
 };
 
-// Cleanup interval (runs every 30 minutes)
+// 🔧 MEMORY LEAK FIX: Managed cleanup interval to prevent memory leaks
 if (typeof window !== 'undefined') {
-  setInterval(() => {
+  createManagedInterval(() => {
     useFormStore.getState().cleanup();
-  }, 30 * 60 * 1000);
+  }, 30 * 60 * 1000, 'FormStore-cleanup');
 }

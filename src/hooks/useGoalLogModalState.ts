@@ -32,16 +32,10 @@ export interface GoalLogModalState {
 export function useGoalLogModalState(): GoalLogModalState {
   const { shouldUseLegacy } = useMigrationSafety('GoalLogModal');
   
-  // 🔧 PERFORMANCE FIX: Single store subscription instead of 3 separate ones
-  const { isOpen: zustandIsOpen, openModal: zustandOpenModal, closeModal: zustandCloseModal } = useUIStore(
-    (state) => ({
-      isOpen: state.modals.goalLogModal,
-      openModal: state.openModal,
-      closeModal: state.closeModal,
-    }),
-    // 🔧 PERFORMANCE: Use shallow comparison to prevent unnecessary re-renders
-    (prev, curr) => prev.isOpen === curr.isOpen
-  );
+  // 🔧 PERFORMANCE FIX: Separate selectors to avoid object creation
+  const zustandIsOpen = useUIStore((state) => state.modals.goalLogModal);
+  const zustandOpenModal = useUIStore((state) => state.openModal);
+  const zustandCloseModal = useUIStore((state) => state.closeModal);
   
   // Context-based fallback
   const contextModalState = useModalContext();

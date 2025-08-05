@@ -144,10 +144,39 @@ export const supabase: LightweightSupabaseClient = new Proxy(createDummyClient()
       return cachedClient[prop as keyof LightweightSupabaseClient];
     }
 
-    // For auth methods, return async wrappers that load client first
+    // For auth methods, return a special proxy that handles both sync and async methods
     if (prop === 'auth') {
       return new Proxy(target.auth, {
         get(authTarget, authProp) {
+          // Special handling for onAuthStateChange which needs to work synchronously
+          if (authProp === 'onAuthStateChange') {
+            // If client is cached, use it directly
+            if (cachedClient) {
+              return cachedClient.auth.onAuthStateChange.bind(cachedClient.auth);
+            }
+            
+            // Return a function that returns a subscription immediately
+            // but triggers the real subscription once client loads
+            return (callback: any) => {
+              // Return dummy subscription immediately
+              const dummySubscription = { data: { subscription: { unsubscribe: () => {} } } };
+              
+              // Load the real client and set up real subscription
+              getSupabaseClient().then(client => {
+                const result = client.auth.onAuthStateChange(callback);
+                // Replace the unsubscribe function with the real one
+                if (result?.data?.subscription) {
+                  dummySubscription.data.subscription.unsubscribe = result.data.subscription.unsubscribe;
+                }
+              }).catch(error => {
+                logger.error('[Supabase] Failed to set up auth state change listener:', error);
+              });
+              
+              return dummySubscription;
+            };
+          }
+          
+          // For other auth methods, return async wrappers
           return async (...args: any[]) => {
             const client = await getSupabaseClient();
             const method = client.auth[authProp as keyof typeof client.auth] as (...args: any[]) => unknown;

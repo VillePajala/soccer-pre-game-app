@@ -127,8 +127,9 @@ function LegacyContextForwarder({ children }: { children: React.ReactNode }) {
 export function ModalProviderMigrationWrapper({ children }: { children: React.ReactNode }) {
   const { shouldUseLegacy, withSafety } = useMigrationSafety('ModalProvider');
   
-  return withSafety(() => {
-    if (shouldUseLegacy) {
+  return withSafety(
+    // Legacy implementation
+    () => {
       logger.debug('[ModalProvider] Using legacy Context-based provider');
       return (
         <LegacyModalProvider>
@@ -137,11 +138,13 @@ export function ModalProviderMigrationWrapper({ children }: { children: React.Re
           </LegacyContextForwarder>
         </LegacyModalProvider>
       );
+    },
+    // New implementation  
+    () => {
+      logger.debug('[ModalProvider] Using migrated Zustand-based provider');
+      return <MigratedModalProvider>{children}</MigratedModalProvider>;
     }
-    
-    logger.debug('[ModalProvider] Using migrated Zustand-based provider');
-    return <MigratedModalProvider>{children}</MigratedModalProvider>;
-  });
+  );
 }
 
 /**

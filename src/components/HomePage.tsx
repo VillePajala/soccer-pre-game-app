@@ -8,7 +8,7 @@ import TimerOverlay from '@/components/TimerOverlay';
 // 🔧 DEPENDENCY INJECTION FIX: Use component registry instead of React.lazy
 import { componentRegistry, registerModalComponents } from '@/services/ComponentRegistry';
 // 🔧 DEPENDENCY INJECTION FIX: Use utility registry instead of dynamic imports
-import { utilityRegistry, registerExportUtilities, executeExportFunction } from '@/services/UtilityRegistry';
+import { /* utilityRegistry, */ registerExportUtilities, executeExportFunction } from '@/services/UtilityRegistry';
 
 // Register components and utilities on first import
 registerModalComponents();
@@ -73,7 +73,7 @@ import { useTacticalBoard } from '@/hooks/useTacticalBoard';
 import { useRoster } from '@/hooks/useRoster';
 import { useGameDataManager } from '@/hooks/useGameDataManager';
 import { useGameStateManager } from '@/hooks/useGameStateManager';
-import { useModalContext } from '@/contexts/ModalProvider.migration';
+// import { useModalContext } from '@/contexts/ModalProvider.migration';
 import { useGameSettingsModalWithHandlers } from '@/hooks/useGameSettingsModalState';
 import { useGameStatsModalWithHandlers } from '@/hooks/useGameStatsModalState';
 import { useRosterSettingsModalWithHandlers } from '@/hooks/useRosterSettingsModalState';

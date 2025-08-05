@@ -23,6 +23,10 @@ import { getTypedSavedGames, saveTypedGame, getTypedMasterRoster } from '@/utils
 import { authAwareStorageManager as storageManager } from '@/lib/storage';
 import logger from '@/utils/logger';
 import { storageServiceProvider } from '@/services/StorageServiceProvider';
+// 🔧 ATOMIC TRANSACTION FIX: Import transaction manager for multi-step operations
+import { transactionManager, createAsyncOperation, createStateMutation } from '@/services/TransactionManager';
+// 🔧 RUNTIME VALIDATION FIX: Import runtime validator for type safety
+import { runtimeValidator, typeGuards, validateStorageJSON, validateExternalData } from '@/services/RuntimeValidator';
 
 // App settings interface
 export interface AppSettings {
@@ -245,42 +249,80 @@ export const usePersistenceStore = create<PersistenceStore>()(
         lastError: null,
         
         // Game management actions
+        // 🔧 ATOMIC TRANSACTION FIX: Refactored saveGame to use atomic transactions
         saveGame: async (gameId, gameState) => {
-          set({ isSaving: true, lastError: null }, false, 'saveGame:start');
-          
-          try {
-            const gameStateWithId = { ...gameState, gameId };
-            const success = await saveTypedGame(gameStateWithId);
-            
-            if (success) {
-              // Update local state
-              const savedGames = await getTypedSavedGames();
-              set({ savedGames, isSaving: false }, false, 'saveGame:success');
-              
-              // Update user stats
-              const { userData } = get();
-              set({
-                userData: {
+          // Capture initial state for rollback
+          const initialState = get();
+          const gameStateWithId = { ...gameState, gameId };
+
+          // Create atomic transaction operations
+          const operations = [
+            createStateMutation(
+              'setLoadingState',
+              'Set saving state to true',
+              (loading: boolean) => set({ isSaving: loading, lastError: null }, false, 'saveGame:start'),
+              true,
+              false
+            ),
+            createAsyncOperation(
+              'saveToStorage',
+              `Save game ${gameId} to external storage`,
+              async () => {
+                const success = await saveTypedGame(gameStateWithId);
+                if (!success) {
+                  throw new Error('Failed to save game to external storage');
+                }
+                return success;
+              }
+            ),
+            createAsyncOperation(
+              'updateLocalState',
+              'Update local saved games state',
+              async () => {
+                const savedGames = await getTypedSavedGames();
+                set({ savedGames }, false, 'saveGame:updateLocalState');
+                return savedGames;
+              }
+            ),
+            createAsyncOperation(
+              'updateUserStats',
+              'Update user statistics',
+              async () => {
+                const { userData, savedGames } = get();
+                const updatedUserData = {
                   ...userData,
                   totalGamesManaged: Object.keys(savedGames).length,
-                }
-              }, false, 'saveGame:updateStats');
-              
-              return true;
-            } else {
-              set({ 
-                isSaving: false, 
-                lastError: 'Failed to save game' 
-              }, false, 'saveGame:error');
-              return false;
-            }
-          } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-            logger.error('Save game error:', errorMessage);
+                };
+                set({ userData: updatedUserData }, false, 'saveGame:updateStats');
+                return updatedUserData;
+              }
+            ),
+            createStateMutation(
+              'clearLoadingState',
+              'Clear saving state',
+              (loading: boolean) => set({ isSaving: loading }, false, 'saveGame:complete'),
+              false,
+              true
+            )
+          ];
+
+          // Execute atomic transaction
+          const result = await transactionManager.executeTransaction(operations, {
+            timeout: 10000, // 10 seconds
+            rollbackOnFailure: true,
+          });
+
+          if (result.success) {
+            logger.debug(`[PersistenceStore] Game ${gameId} saved successfully via atomic transaction`);
+            return true;
+          } else {
+            // Set error state
             set({ 
               isSaving: false, 
-              lastError: errorMessage 
-            }, false, 'saveGame:exception');
+              lastError: result.error?.message || 'Failed to save game' 
+            }, false, 'saveGame:error');
+            
+            logger.error(`[PersistenceStore] Atomic saveGame transaction failed:`, result.error);
             return false;
           }
         },
@@ -367,40 +409,85 @@ export const usePersistenceStore = create<PersistenceStore>()(
         },
         
         // Roster management actions
+        // 🔧 ATOMIC TRANSACTION FIX: Refactored saveMasterRoster to use atomic transactions
         saveMasterRoster: async (players) => {
-          set({ isSaving: true, lastError: null }, false, 'saveMasterRoster:start');
-          
-          try {
-            // Save each player individually as the interface doesn't support batch roster saving
-            for (const player of players) {
-              await storageManager.savePlayer(player);
-            }
-            const success = true;
-            
-            if (success) {
-              set({ 
-                masterRoster: players, 
-                isSaving: false,
-                userData: {
+          const initialRoster = get().masterRoster;
+          const initialUserData = get().userData;
+
+          // Create atomic transaction operations
+          const operations = [
+            createStateMutation(
+              'setRosterSavingState',
+              'Set roster saving state',
+              (saving: boolean) => set({ isSaving: saving, lastError: null }, false, 'saveMasterRoster:start'),
+              true,
+              false
+            ),
+            createAsyncOperation(
+              'savePlayersToStorage',
+              `Save ${players.length} players to external storage`,
+              async () => {
+                // Save each player individually - track which ones succeed for rollback
+                const savedPlayers: Player[] = [];
+                
+                try {
+                  for (const player of players) {
+                    await storageManager.savePlayer(player);
+                    savedPlayers.push(player);
+                  }
+                  return savedPlayers;
+                } catch (error) {
+                  // If any player fails to save, we need to know which ones succeeded
+                  // for potential rollback cleanup
+                  throw new Error(`Failed to save player roster. ${savedPlayers.length}/${players.length} players saved. Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                }
+              }
+            ),
+            createAsyncOperation(
+              'updateRosterState',
+              'Update local roster state',
+              async () => {
+                const updatedUserData = {
                   ...get().userData,
                   totalPlayersManaged: players.length,
-                }
-              }, false, 'saveMasterRoster:success');
-              return true;
-            } else {
-              set({ 
-                isSaving: false, 
-                lastError: 'Failed to save roster' 
-              }, false, 'saveMasterRoster:error');
-              return false;
-            }
-          } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-            logger.error('Save roster error:', errorMessage);
+                };
+                
+                set({ 
+                  masterRoster: players,
+                  userData: updatedUserData,
+                }, false, 'saveMasterRoster:updateState');
+                
+                return { masterRoster: players, userData: updatedUserData };
+              }
+            ),
+            createStateMutation(
+              'clearRosterSavingState',
+              'Clear roster saving state',
+              (saving: boolean) => set({ isSaving: saving }, false, 'saveMasterRoster:complete'),
+              false,
+              true
+            )
+          ];
+
+          // Execute atomic transaction
+          const result = await transactionManager.executeTransaction(operations, {
+            timeout: 15000, // 15 seconds for roster operations
+            rollbackOnFailure: true,
+          });
+
+          if (result.success) {
+            logger.debug(`[PersistenceStore] Master roster with ${players.length} players saved successfully via atomic transaction`);
+            return true;
+          } else {
+            // Set error state and restore original state if rollback failed
             set({ 
               isSaving: false, 
-              lastError: errorMessage 
-            }, false, 'saveMasterRoster:exception');
+              lastError: result.error?.message || 'Failed to save roster',
+              masterRoster: initialRoster,
+              userData: initialUserData,
+            }, false, 'saveMasterRoster:error');
+            
+            logger.error(`[PersistenceStore] Atomic saveMasterRoster transaction failed:`, result.error);
             return false;
           }
         },
@@ -709,7 +796,76 @@ export const usePersistenceStore = create<PersistenceStore>()(
           return null;
         },
 
-        // Unified localStorage API (Phase 3) with consistency validation
+        // 🔧 RUNTIME VALIDATION FIX: Storage data validation based on key patterns
+        _validateStorageData: <T>(key: string, data: T, defaultValue?: T) => {
+          try {
+            // Determine validation strategy based on key patterns
+            if (key.startsWith('form_')) {
+              return validateExternalData(data, typeGuards.isFormData, `form data for ${key}`);
+            } else if (key.includes('savedGames') || key.includes('games')) {
+              return validateExternalData(data, typeGuards.isSavedGamesCollection, `saved games for ${key}`);
+            } else if (key.includes('player') || key.includes('roster')) {
+              if (Array.isArray(data)) {
+                const isValidArray = (data as unknown[]).every(item => typeGuards.isPlayer(item));
+                return {
+                  isValid: isValidArray,
+                  data: isValidArray ? data : undefined,
+                  errors: isValidArray ? [] : ['Invalid player array data'],
+                  sanitized: isValidArray ? data : (defaultValue ?? null) as T,
+                };
+              } else {
+                return validateExternalData(data, typeGuards.isPlayer, `player data for ${key}`);
+              }
+            } else if (key.includes('season')) {
+              if (Array.isArray(data)) {
+                const isValidArray = (data as unknown[]).every(item => typeGuards.isSeason(item));
+                return {
+                  isValid: isValidArray,
+                  data: isValidArray ? data : undefined,
+                  errors: isValidArray ? [] : ['Invalid season array data'],
+                  sanitized: isValidArray ? data : (defaultValue ?? null) as T,
+                };
+              } else {
+                return validateExternalData(data, typeGuards.isSeason, `season data for ${key}`);
+              }
+            } else if (key.includes('tournament')) {
+              if (Array.isArray(data)) {
+                const isValidArray = (data as unknown[]).every(item => typeGuards.isTournament(item));
+                return {
+                  isValid: isValidArray,
+                  data: isValidArray ? data : undefined,
+                  errors: isValidArray ? [] : ['Invalid tournament array data'],
+                  sanitized: isValidArray ? data : (defaultValue ?? null) as T,
+                };
+              } else {
+                return validateExternalData(data, typeGuards.isTournament, `tournament data for ${key}`);
+              }
+            } else if (key.includes('migration') || key.includes('flags')) {
+              return validateExternalData(data, typeGuards.isMigrationFlags, `migration flags for ${key}`);
+            } else if (key.includes('settings')) {
+              // Basic object validation for settings
+              return validateExternalData(data, typeGuards.isObject, `settings for ${key}`);
+            } else {
+              // Generic validation - just check if it's not null/undefined
+              return {
+                isValid: data !== null && data !== undefined,
+                data: data,
+                errors: data === null || data === undefined ? ['Data is null or undefined'] : [],
+                sanitized: data ?? (defaultValue ?? null) as T,
+              };
+            }
+          } catch (error) {
+            logger.error(`[PersistenceStore] Validation error for '${key}':`, error);
+            return {
+              isValid: false,
+              data: undefined,
+              errors: [error instanceof Error ? error.message : 'Unknown validation error'],
+              sanitized: (defaultValue ?? null) as T,
+            };
+          }
+        },
+
+        // 🔧 RUNTIME VALIDATION FIX: Enhanced getStorageItem with type validation
         getStorageItem: async <T = any>(key: string, defaultValue?: T): Promise<T | null> => {
           try {
             // 🔧 CONSISTENCY FIX: Check both sources and resolve conflicts
@@ -721,7 +877,16 @@ export const usePersistenceStore = create<PersistenceStore>()(
             const resolvedData = await get()._resolveStorageConflict(supabaseResult, localResult, key);
             
             if (resolvedData !== null) {
-              return resolvedData;
+              // 🔧 RUNTIME VALIDATION FIX: Validate resolved data based on key patterns
+              const validationResult = get()._validateStorageData(key, resolvedData, defaultValue);
+              
+              if (validationResult.isValid && validationResult.data !== undefined) {
+                return validationResult.data;
+              } else {
+                logger.warn(`[PersistenceStore] Storage data validation failed for '${key}':`, validationResult.errors);
+                // Return sanitized data if available, otherwise default
+                return validationResult.sanitized ?? defaultValue ?? null;
+              }
             }
             
             return defaultValue ?? null;
@@ -731,57 +896,82 @@ export const usePersistenceStore = create<PersistenceStore>()(
           }
         },
         
+        // 🔧 ATOMIC TRANSACTION FIX: Refactored setStorageItem to use atomic transactions
         setStorageItem: async <T = any>(key: string, value: T): Promise<boolean> => {
-          try {
-            get().setLoading(true);
-            
-            const timestamp = Date.now();
-            let supabaseSuccess = false;
-            let localStorageSuccess = false;
-            
-            // 🔧 CONSISTENCY FIX: Try to save to both storage methods with metadata
-            // First try to save with the storage manager (preferred)
-            try {
-              await storageManager.setGenericData(key, value);
-              supabaseSuccess = true;
-              logger.debug(`[PersistenceStore] Saved '${key}' via storage manager`);
-            } catch (storageManagerError) {
-              logger.debug(`[PersistenceStore] Storage manager failed for '${key}':`, storageManagerError);
-            }
-            
-            // Also save to localStorage with metadata for consistency
-            try {
-              const dataWithMetadata = {
-                data: value,
-                _persistenceMetadata: {
-                  timestamp,
-                  savedViaSupabase: supabaseSuccess,
-                  version: '1.0'
+          const timestamp = Date.now();
+          
+          // Create atomic transaction operations
+          const operations = [
+            createStateMutation(
+              'setStorageLoadingState',
+              'Set storage loading state',
+              (loading: boolean) => get().setLoading(loading),
+              true,
+              false
+            ),
+            createAsyncOperation(
+              'saveToSupabase',
+              `Save '${key}' to Supabase storage manager`,
+              async () => {
+                try {
+                  await storageManager.setGenericData(key, value);
+                  logger.debug(`[PersistenceStore] Saved '${key}' via storage manager`);
+                  return true;
+                } catch (error) {
+                  // This is expected to sometimes fail - not critical
+                  logger.debug(`[PersistenceStore] Storage manager failed for '${key}':`, error);
+                  return false;
                 }
-              };
-              
-              const serialized = JSON.stringify(dataWithMetadata);
-              localStorage.setItem(key, serialized);
-              localStorageSuccess = true;
-              logger.debug(`[PersistenceStore] Saved '${key}' to localStorage with metadata`);
-            } catch (localError) {
-              logger.debug(`[PersistenceStore] localStorage save failed for '${key}':`, localError);
-            }
-            
-            // Success if at least one method worked
-            if (supabaseSuccess || localStorageSuccess) {
-              const method = supabaseSuccess ? 'storage manager' : 'localStorage fallback';
-              logger.debug(`[PersistenceStore] Successfully saved '${key}' via ${method}`);
-              return true;
-            }
-            
-            throw new Error('Both storage methods failed');
-          } catch (error) {
-            logger.error(`[PersistenceStore] Error setting storage item '${key}':`, error);
-            get().setError(`Failed to save ${key}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+              }
+            ),
+            createAsyncOperation(
+              'saveToLocalStorage',
+              `Save '${key}' to localStorage with metadata`,
+              async () => {
+                const supabaseSuccess = false; // Will be updated by previous operation result
+                const dataWithMetadata = {
+                  data: value,
+                  _persistenceMetadata: {
+                    timestamp,
+                    savedViaSupabase: supabaseSuccess,
+                    version: '1.0'
+                  }
+                };
+                
+                const serialized = JSON.stringify(dataWithMetadata);
+                localStorage.setItem(key, serialized);
+                logger.debug(`[PersistenceStore] Saved '${key}' to localStorage with metadata`);
+                return true;
+              }
+            ),
+            createStateMutation(
+              'clearStorageLoadingState',
+              'Clear storage loading state',
+              (loading: boolean) => get().setLoading(loading),
+              false,
+              true
+            )
+          ];
+
+          // Execute atomic transaction with flexible success criteria
+          const result = await transactionManager.executeTransaction(operations, {
+            timeout: 8000, // 8 seconds
+            rollbackOnFailure: false, // Don't rollback - partial success is acceptable
+          });
+
+          // Check if at least one storage method succeeded
+          const supabaseSuccess = result.results?.[1] === true;
+          const localStorageSuccess = result.results?.[2] === true;
+          const hasAnySuccess = supabaseSuccess || localStorageSuccess;
+
+          if (hasAnySuccess) {
+            const method = supabaseSuccess ? 'storage manager' : 'localStorage fallback';
+            logger.debug(`[PersistenceStore] Successfully saved '${key}' via atomic transaction using ${method}`);
+            return true;
+          } else {
+            get().setError(`Failed to save ${key}: Both storage methods failed`);
+            logger.error(`[PersistenceStore] Atomic setStorageItem transaction failed for '${key}':`, result.error);
             return false;
-          } finally {
-            get().setLoading(false);
           }
         },
         

@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix(migration): resolve critical form validation race conditions and add comprehensive error boundaries"
+  "notes": "feat(migration): complete dependency injection system with ComponentRegistry and UtilityRegistry"
 }
