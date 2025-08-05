@@ -244,7 +244,7 @@ export class CompressionManager {
         }
 
         // Convert to base64 for storage
-        const compressedData = btoa(String.fromCharCode(...Array.from(compressedArray)));
+        const compressedData = btoa(String.fromCharCode.apply(null, Array.from(compressedArray)));
         
         return {
           data: compressedData as unknown as Record<string, unknown>,
@@ -278,7 +278,11 @@ export class CompressionManager {
     try {
       if (typeof DecompressionStream !== 'undefined') {
         // Use browser's decompression
-        const compressedArray = Uint8Array.from(atob(payload.data as unknown as string), c => c.charCodeAt(0));
+        const compressedString = atob(payload.data as unknown as string);
+        const compressedArray = new Uint8Array(compressedString.length);
+        for (let i = 0; i < compressedString.length; i++) {
+          compressedArray[i] = compressedString.charCodeAt(i);
+        }
         
         const stream = new DecompressionStream('gzip');
         const writer = stream.writable.getWriter();

@@ -50,8 +50,26 @@ export class RLSSecurityTester {
         app_metadata: {},
         user_metadata: {},
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
+        updated_at: new Date().toISOString(),
+        phone: null,
+        email_change_confirm_status: null,
+        phone_confirmed_at: null,
+        confirmation_sent_at: null,
+        recovery_sent_at: null,
+        email_change_sent_at: null,
+        new_email: null,
+        invited_at: null,
+        action_link: null,
+        email_change_token_new: null,
+        email_change_token_current: null,
+        phone_change: null,
+        phone_change_token: null,
+        phone_change_sent_at: null,
+        confirmed_at: null,
+        email_change_confirm_status_current: null,
+        banned_until: null,
+        last_sign_in_at: null
+      } as any
     });
     
     if (error) {

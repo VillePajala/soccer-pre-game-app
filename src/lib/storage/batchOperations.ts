@@ -74,7 +74,7 @@ export class BatchOperationManager {
 
     try {
       // Prepare all operations with user_id
-      const operations: Promise<Record<string, unknown>>[] = [];
+      const operations: Promise<Record<string, unknown> | null>[] = [];
 
       // 1. Save game data if provided
       if (data.game) {
@@ -85,10 +85,10 @@ export class BatchOperationManager {
             .upsert(gameData, { onConflict: 'id,user_id' })
             .select()
             .single()
-            .then(({ data: result, error }: { data: Record<string, unknown> | null; error: Error | null }) => {
+            .then(({ data: result, error }: { data: Record<string, unknown> | null; error: any }) => {
               if (error) throw error;
               results.game = result || {};
-              return result;
+              return result || {};
             })
         );
       }
@@ -105,10 +105,10 @@ export class BatchOperationManager {
             .from('players')
             .upsert(playersData, { onConflict: 'id,user_id' })
             .select()
-            .then(({ data: result, error }: { data: Record<string, unknown>[] | null; error: Error | null }) => {
+            .then(({ data: result, error }: { data: Record<string, unknown>[] | null; error: any }) => {
               if (error) throw error;
               results.players = result?.map((p: Record<string, unknown>) => fromSupabase.player(p as unknown as DbPlayer)) || [];
-              return result;
+              return result || [];
             })
         );
       }
@@ -126,10 +126,10 @@ export class BatchOperationManager {
             .from('game_events')
             .upsert(eventsData, { onConflict: 'id,user_id' })
             .select()
-            .then(({ data: result, error }: { data: Record<string, unknown>[] | null; error: Error | null }) => {
+            .then(({ data: result, error }: { data: Record<string, unknown>[] | null; error: any }) => {
               if (error) throw error;
               results.events = result || [];
-              return result;
+              return result || [];
             })
         );
       }
@@ -147,10 +147,10 @@ export class BatchOperationManager {
             .from('player_assessments')
             .upsert(assessmentsData, { onConflict: 'id,user_id' })
             .select()
-            .then(({ data: result, error }: { data: Record<string, unknown>[] | null; error: Error | null }) => {
+            .then(({ data: result, error }: { data: Record<string, unknown>[] | null; error: any }) => {
               if (error) throw error;
               results.assessments = result || [];
-              return result;
+              return result || [];
             })
         );
       }
@@ -165,10 +165,10 @@ export class BatchOperationManager {
             .upsert(settingsData, { onConflict: 'user_id' })
             .select()
             .single()
-            .then(({ data: result, error }: { data: Record<string, unknown> | null; error: Error | null }) => {
+            .then(({ data: result, error }: { data: Record<string, unknown> | null; error: any }) => {
               if (error) throw error;
               results.settings = result ? fromSupabase.appSettings(result as unknown as DbAppSettings) : {};
-              return result;
+              return result || {};
             })
         );
       }

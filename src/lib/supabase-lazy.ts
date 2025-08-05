@@ -159,12 +159,12 @@ export const supabase: LightweightSupabaseClient = new Proxy(createDummyClient()
 
     // For database methods, return async wrappers
     if (prop === 'from') {
-      return (...args: unknown[]) => {
+      return (tableName: string) => {
         // Start loading the client in background
         getSupabaseClient().catch(console.error);
         
         // Return the dummy implementation immediately
-        return target.from(...args);
+        return target.from(tableName);
       };
     }
 
