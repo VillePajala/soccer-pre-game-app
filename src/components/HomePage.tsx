@@ -10,12 +10,22 @@ import { componentRegistry, registerModalComponents } from '@/services/Component
 // 🔧 DEPENDENCY INJECTION FIX: Use utility registry instead of dynamic imports
 import { /* utilityRegistry, */ registerExportUtilities, executeExportFunction } from '@/services/UtilityRegistry';
 
-// Register components and utilities on first import (but don't load them yet)
+// Register components and utilities on first import
 registerModalComponents();
 registerExportUtilities();
 
-// 🔧 MODAL LOADING FIX: Get components lazily only when needed, not at module load
-const getModalComponent = (name: string) => componentRegistry.getComponent(name);
+// Get managed components with error handling and suspense
+const GoalLogModal = componentRegistry.getComponent('GoalLogModal');
+const GameStatsModal = componentRegistry.getComponent('GameStatsModal');
+const GameSettingsModal = componentRegistry.getComponent('GameSettingsModal');
+const TrainingResourcesModal = componentRegistry.getComponent('TrainingResourcesModal');
+const LoadGameModal = componentRegistry.getComponent('LoadGameModal');
+const NewGameSetupModal = componentRegistry.getComponent('NewGameSetupModal');  
+const RosterSettingsModal = componentRegistry.getComponent('RosterSettingsModal');
+const SettingsModal = componentRegistry.getComponent('SettingsModal');
+const SeasonTournamentManagementModal = componentRegistry.getComponent('SeasonTournamentManagementModal');
+const InstructionsModal = componentRegistry.getComponent('InstructionsModal');
+const PlayerAssessmentModal = componentRegistry.getComponent('PlayerAssessmentModal');
 import usePlayerRosterManager from '@/hooks/usePlayerRosterManager';
 import usePlayerFieldManager from '@/hooks/usePlayerFieldManager';
 import useGameEventsManager from '@/hooks/useGameEventsManager';
@@ -1869,17 +1879,14 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           />
         </React.Suspense>
       )}
-      {isInstructionsModalOpen && (() => {
-        const InstructionsModal = getModalComponent('InstructionsModal');
-        return InstructionsModal && (
-          <React.Suspense fallback={<ModalSkeleton title="Instructions" />}>
-            <InstructionsModal
-              isOpen={isInstructionsModalOpen}
-              onClose={handleToggleInstructionsModal}
-            />
-          </React.Suspense>
-        );
-      })()}
+      {InstructionsModal && (
+        <React.Suspense fallback={<ModalSkeleton title="Instructions" />}>
+          <InstructionsModal
+            isOpen={isInstructionsModalOpen}
+            onClose={handleToggleInstructionsModal}
+          />
+        </React.Suspense>
+      )}
       {/* Goal Log Modal */}
       {goalLogModal.isOpen && GoalLogModal && (
         <React.Suspense fallback={
@@ -2099,22 +2106,19 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         </React.Suspense>
       )}
 
-      {playerAssessmentModal.isOpen && (() => {
-        const PlayerAssessmentModal = getModalComponent('PlayerAssessmentModal');
-        return PlayerAssessmentModal && (
-          <React.Suspense fallback={<ModalSkeleton title="Player Assessment" />}>
-            <PlayerAssessmentModal
-              isOpen={playerAssessmentModal.isOpen}
-              onClose={playerAssessmentModal.handleClose}
-              selectedPlayerIds={gameSessionState.selectedPlayerIds}
-              availablePlayers={availablePlayers}
-              assessments={playerAssessments}
-              onSave={handleSavePlayerAssessment}
-              onDelete={handleDeletePlayerAssessment}
-            />
-          </React.Suspense>
-        );
-      })()}
+      {PlayerAssessmentModal && (
+        <React.Suspense fallback={<ModalSkeleton title="Player Assessment" />}>
+          <PlayerAssessmentModal
+            isOpen={playerAssessmentModal.isOpen}
+            onClose={playerAssessmentModal.handleClose}
+            selectedPlayerIds={gameSessionState.selectedPlayerIds}
+            availablePlayers={availablePlayers}
+            assessments={playerAssessments}
+            onSave={handleSavePlayerAssessment}
+            onDelete={handleDeletePlayerAssessment}
+          />
+        </React.Suspense>
+      )}
       
       {/* Migration Modal */}
       {MigrationModalComponent}

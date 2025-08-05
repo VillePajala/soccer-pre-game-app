@@ -196,12 +196,17 @@ const LoadingFallback: React.FC<LoadingComponentProps> = ({
     );
   }
 
+  // 🔧 MODAL LOADING FIX: Return invisible element to prevent flash during component loading
+  // This prevents the "Loading Modal..." text from showing up as visible UI elements
   return React.createElement(
     'div',
-    { className: 'p-4 bg-slate-100 rounded-lg animate-pulse' },
+    { 
+      className: 'sr-only', // Screen reader only - visually hidden but accessible
+      'aria-live': 'polite'
+    },
     React.createElement(
-      'div',
-      { className: 'text-slate-600 text-sm' },
+      'span',
+      null,
       `Loading ${componentName}...`
     )
   );
