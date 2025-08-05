@@ -68,6 +68,9 @@ import { useGameStateManager } from '@/hooks/useGameStateManager';
 import { useModalContext } from '@/contexts/ModalProvider.migration';
 import { useGameSettingsModalWithHandlers } from '@/hooks/useGameSettingsModalState';
 import { useGameStatsModalWithHandlers } from '@/hooks/useGameStatsModalState';
+import { useRosterSettingsModalWithHandlers } from '@/hooks/useRosterSettingsModalState';
+import { useLoadGameModalWithHandlers } from '@/hooks/useLoadGameModalState';
+import { useNewGameSetupModalWithHandlers } from '@/hooks/useNewGameSetupModalState';
 // Import skeleton components
 import { GameStatsModalSkeleton, LoadGameModalSkeleton, RosterModalSkeleton, ModalSkeleton } from '@/components/ui/ModalSkeleton';
 import { AppLoadingSkeleton } from '@/components/ui/AppSkeleton';
@@ -418,20 +421,17 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   // Use Zustand-based modal states
   const gameSettingsModal = useGameSettingsModalWithHandlers();
   const gameStatsModal = useGameStatsModalWithHandlers();
+  const rosterSettingsModal = useRosterSettingsModalWithHandlers();
+  const loadGameModal = useLoadGameModalWithHandlers();
+  const newGameSetupModal = useNewGameSetupModalWithHandlers();
   
   const {
-    isLoadGameModalOpen,
-    setIsLoadGameModalOpen,
-    isRosterModalOpen,
-    setIsRosterModalOpen,
     isSeasonTournamentModalOpen,
     setIsSeasonTournamentModalOpen,
     isTrainingResourcesOpen,
     setIsTrainingResourcesOpen,
     isGoalLogModalOpen,
     setIsGoalLogModalOpen,
-    isNewGameSetupModalOpen,
-    setIsNewGameSetupModalOpen,
     isSettingsModalOpen,
     setIsSettingsModalOpen,
     isPlayerAssessmentModalOpen,
@@ -450,10 +450,10 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     if (!initialAction) return;
     switch (initialAction) {
       case 'newGame':
-        setIsNewGameSetupModalOpen(true);
+        newGameSetupModal.open();
         break;
       case 'loadGame':
-        setIsLoadGameModalOpen(true);
+        loadGameModal.open();
         break;
       case 'resumeGame':
         // Resume game is handled by the initialization effect
@@ -470,8 +470,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     }
   }, [
     initialAction,
-    setIsNewGameSetupModalOpen,
-    setIsLoadGameModalOpen,
+    newGameSetupModal,
+    loadGameModal,
     setIsSeasonTournamentModalOpen,
     gameStatsModal
   ]);
@@ -1187,12 +1187,12 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     if (initialLoadComplete && !hasSkippedInitialSetup) {
       // Check currentGameId *inside* the effect body
       if (currentGameId === DEFAULT_GAME_ID) {
-      setIsNewGameSetupModalOpen(true);
+      newGameSetupModal.open();
       } else {
     }
     }
   // Depend only on load completion and skip status - removed setIsNewGameSetupModalOpen from deps
-  }, [initialLoadComplete, hasSkippedInitialSetup, currentGameId, setIsNewGameSetupModalOpen]);
+  }, [initialLoadComplete, hasSkippedInitialSetup, currentGameId, newGameSetupModal]);
 
   // --- Player Management Handlers moved to usePlayerFieldManager ---
 
@@ -1301,11 +1301,11 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
   const handleOpenLoadGameModal = () => {
     logger.log("Opening Load Game Modal...");
-    setIsLoadGameModalOpen(true);
+    loadGameModal.open();
   };
 
   const handleCloseLoadGameModal = () => {
-    setIsLoadGameModalOpen(false);
+    loadGameModal.close();
   };
 
   const handleOpenSeasonTournamentModal = () => {
@@ -1370,18 +1370,18 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   // --- INDIVIDUAL GAME EXPORT HANDLERS - MOVED TO useGameDataManager hook ---
   // The handleExportOneJson and handleExportOneCsv functions are now provided by useGameDataManager
 
-  // --- Roster Management Handlers ---
-  const openRosterModal = () => {
-    setIsRosterModalOpen(true);
+  // --- Roster Management Handlers (Now using Zustand) ---
+  const openRosterModal = useCallback(() => {
+    rosterSettingsModal.open();
     setHighlightRosterButton(false); // <<< Remove highlight when modal is opened
-  };
+  }, [rosterSettingsModal, setHighlightRosterButton]);
 
   const openPlayerAssessmentModal = () => setIsPlayerAssessmentModalOpen(true);
   const closePlayerAssessmentModal = () => setIsPlayerAssessmentModalOpen(false);
 
   // ... (other code in Home component) ...
 
-  const closeRosterModal = () => setIsRosterModalOpen(false);
+  const closeRosterModal = rosterSettingsModal.handleClose;
 
   // --- END Roster Management Handlers ---
 
@@ -1585,7 +1585,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       }
 
       // Close the setup modal
-      setIsNewGameSetupModalOpen(false);
+      newGameSetupModal.close();
       setNewGameDemandFactor(1);
 
       // <<< Trigger the roster button highlight >>>
@@ -1598,7 +1598,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     // Keep necessary dependencies
     availablePlayers,
     resetHistory,
-    setIsNewGameSetupModalOpen,
+    newGameSetupModal,
     setNewGameDemandFactor,
     setHighlightRosterButton,
     setIsCreatingNewGame,
@@ -1619,14 +1619,14 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     // );
 
     setHasSkippedInitialSetup(true); // Still mark as skipped if needed elsewhere
-    setIsNewGameSetupModalOpen(false); // ADDED: Explicitly close the modal
+    newGameSetupModal.close(); // ADDED: Explicitly close the modal
     setNewGameDemandFactor(1);
     
     // Re-enable auto-save if it was disabled for new game creation
     setIsCreatingNewGame(false);
 
   // REMOVED initialState from dependencies
-  }, [setIsNewGameSetupModalOpen, setIsCreatingNewGame]); // Added setter function to dependencies
+  }, [newGameSetupModal, setIsCreatingNewGame]); // Added setter function to dependencies
 
   // --- Start New Game Handler (Uses Quick Save) ---
   const handleStartNewGame = useCallback(() => {
@@ -1649,7 +1649,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         // User chose OK (Save) -> Call Quick Save, then open setup modal.
         logger.log("User chose to Quick Save before starting new game.");
         handleQuickSaveGame(); // Call quick save directly
-        setIsNewGameSetupModalOpen(true); // Open setup modal immediately after
+        newGameSetupModal.open(); // Open setup modal immediately after
         // No need to return here; flow continues after quick save
       } else {
         // User chose Cancel (Discard) -> Proceed to next confirmation
@@ -1659,7 +1659,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           logger.log("Start new game confirmed after discarding, opening setup modal...");
           // <<< SET default player selection (all players) >>>
           setPlayerIdsForNewGame(availablePlayers.map(p => p.id));
-          setIsNewGameSetupModalOpen(true); // Open the setup modal
+          newGameSetupModal.open(); // Open the setup modal
         } 
         // If user cancels this second confirmation, do nothing.
         // Exit the function after handling the discard path.
@@ -1671,7 +1671,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
          logger.log("Start new game confirmed (no prior game to save), opening setup modal...");
          // <<< SET default player selection (all players) >>>
          setPlayerIdsForNewGame(availablePlayers.map(p => p.id));
-         setIsNewGameSetupModalOpen(true); // Open the setup modal
+         newGameSetupModal.open(); // Open the setup modal
        }
        // If user cancels this confirmation, do nothing.
        // Exit the function after handling the no-game-loaded path.
@@ -1681,9 +1681,9 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     // because the other paths explicitly return earlier.
     // <<< SET player selection based on current game BEFORE opening modal >>>
        setPlayerIdsForNewGame(gameSessionState.selectedPlayerIds);  // Use the current selection
-    setIsNewGameSetupModalOpen(true); // Open setup modal (moved here for save & continue path)
+    newGameSetupModal.open(); // Open setup modal (moved here for save & continue path)
 
-  }, [t, currentGameId, savedGames, handleQuickSaveGame, setIsNewGameSetupModalOpen,
+  }, [t, currentGameId, savedGames, handleQuickSaveGame, newGameSetupModal,
       // <<< ADD dependencies >>>
       availablePlayers, gameSessionState.selectedPlayerIds, setPlayerIdsForNewGame
      ]); 
@@ -1714,7 +1714,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     if (player) {
       setSelectedPlayerForStats(player);
       gameStatsModal.open();
-      setIsRosterModalOpen(false); // Close the roster modal
+      rosterSettingsModal.close(); // Close the roster modal
     }
   };
 
@@ -1934,8 +1934,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       )}
       <React.Suspense fallback={<LoadGameModalSkeleton />}>
         <LoadGameModal 
-          isOpen={isLoadGameModalOpen}
-          onClose={handleCloseLoadGameModal}
+          isOpen={loadGameModal.isOpen}
+          onClose={loadGameModal.handleClose}
           savedGames={savedGames} 
           onLoad={handleLoadGame}
           onDelete={handleDeleteGame}
@@ -1955,16 +1955,16 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       </React.Suspense>
 
       {/* Conditionally render the New Game Setup Modal */}
-      {isNewGameSetupModalOpen && (
+      {newGameSetupModal.isOpen && (
         <React.Suspense fallback={<ModalSkeleton title="New Game Setup" />}>
           <NewGameSetupModal
-            isOpen={isNewGameSetupModalOpen}
+            isOpen={newGameSetupModal.isOpen}
             initialPlayerSelection={playerIdsForNewGame} // <<< Pass the state here
             availablePlayers={availablePlayers} // Pass the players from state
             demandFactor={newGameDemandFactor}
             onDemandFactorChange={setNewGameDemandFactor}
             onStart={handleStartNewGameWithSetup} // CORRECTED Handler
-            onCancel={handleCancelNewGameSetup} 
+            onCancel={newGameSetupModal.handleClose} 
             // Pass the new mutation functions
             addSeasonMutation={addSeasonMutation}
             addTournamentMutation={addTournamentMutation}
@@ -1978,8 +1978,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       {/* Roster Settings Modal */}
       <React.Suspense fallback={<RosterModalSkeleton />}>
         <RosterSettingsModal
-          isOpen={isRosterModalOpen}
-          onClose={closeRosterModal}
+          isOpen={rosterSettingsModal.isOpen}
+          onClose={rosterSettingsModal.handleClose}
           availablePlayers={availablePlayers} // Use availablePlayers from useGameState
           onRenamePlayer={handleRenamePlayerForModal}
           onSetJerseyNumber={handleSetJerseyNumberForModal}
