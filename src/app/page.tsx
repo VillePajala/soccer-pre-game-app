@@ -1,6 +1,6 @@
 'use client';
 
-import ModalProvider from '@/contexts/ModalProvider';
+import ModalProvider from '@/contexts/ModalProvider.migration';
 import HomePage from '@/components/HomePage';
 import StartScreen from '@/components/StartScreen';
 import { OfflineBanner } from '@/components/OfflineBanner';

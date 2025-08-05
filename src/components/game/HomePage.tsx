@@ -12,7 +12,7 @@ import logger from '@/utils/logger';
 // Hook imports (from original HomePage)
 import useAppSettingsManager from '@/hooks/useAppSettingsManager';
 import { useMigrationTrigger } from '@/hooks/useMigrationTrigger';
-import { useModalContext } from '@/contexts/ModalProvider';
+import { useModalContext } from '@/contexts/ModalProvider.migration';
 
 // Utilities and constants
 import { DEFAULT_GAME_ID } from '@/config/constants';

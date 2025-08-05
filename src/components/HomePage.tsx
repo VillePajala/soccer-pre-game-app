@@ -65,7 +65,7 @@ import { useTacticalBoard } from '@/hooks/useTacticalBoard';
 import { useRoster } from '@/hooks/useRoster';
 import { useGameDataManager } from '@/hooks/useGameDataManager';
 import { useGameStateManager } from '@/hooks/useGameStateManager';
-import { useModalContext } from '@/contexts/ModalProvider';
+import { useModalContext } from '@/contexts/ModalProvider.migration';
 // Import skeleton components
 import { GameStatsModalSkeleton, LoadGameModalSkeleton, RosterModalSkeleton, ModalSkeleton } from '@/components/ui/ModalSkeleton';
 import { AppLoadingSkeleton } from '@/components/ui/AppSkeleton';

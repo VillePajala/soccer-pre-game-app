@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useModalContext } from '@/contexts/ModalProvider';
+import { useModalContext } from '@/contexts/ModalProvider.migration';
 import { saveHasSeenAppGuide, getAppSettings, updateAppSettings } from '@/utils/appSettings';
 import { exportFullBackup } from '@/utils/fullBackup';
 import { sendBackupEmail } from '@/utils/sendBackupEmail';

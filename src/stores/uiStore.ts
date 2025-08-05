@@ -16,26 +16,31 @@ import { devtools } from 'zustand/middleware';
 // Modal state interface - covers all app modals
 export interface ModalState {
   // Game management modals
-  saveGameModal: boolean;
+  gameSettingsModal: boolean;
+  newGameSetupModal: boolean;
   loadGameModal: boolean;
+  saveGameModal: boolean;
   gameStatsModal: boolean;
   goalLogModal: boolean;
   
   // Player management modals
-  addPlayerModal: boolean;
-  playerDetailsModal: boolean;
-  substitutePlayerModal: boolean;
+  rosterSettingsModal: boolean;
+  playerAssessmentModal: boolean;
   
-  // Settings and configuration modals
+  // Competition modals
+  seasonTournamentModal: boolean;
+  
+  // Settings and help modals
   settingsModal: boolean;
-  languageModal: boolean;
-  aboutModal: boolean;
-  helpModal: boolean;
+  instructionsModal: boolean;
+  trainingResourcesModal: boolean;
   
   // Authentication modals
   authModal: boolean;
-  profileModal: boolean;
-  accountModal: boolean;
+  migrationModal: boolean;
+  
+  // System modals
+  syncProgressModal: boolean;
 }
 
 // View state interface - covers app view modes
@@ -134,20 +139,21 @@ export interface UIStore {
 
 // Default state values
 const defaultModalState: ModalState = {
-  saveGameModal: false,
+  gameSettingsModal: false,
+  newGameSetupModal: false,
   loadGameModal: false,
+  saveGameModal: false,
   gameStatsModal: false,
   goalLogModal: false,
-  addPlayerModal: false,
-  playerDetailsModal: false,
-  substitutePlayerModal: false,
+  rosterSettingsModal: false,
+  playerAssessmentModal: false,
+  seasonTournamentModal: false,
   settingsModal: false,
-  languageModal: false,
-  aboutModal: false,
-  helpModal: false,
+  instructionsModal: false,
+  trainingResourcesModal: false,
   authModal: false,
-  profileModal: false,
-  accountModal: false,
+  migrationModal: false,
+  syncProgressModal: false,
 };
 
 const defaultViewState: ViewState = {
