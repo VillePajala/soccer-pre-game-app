@@ -12,6 +12,7 @@
 
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+import type { Point } from '@/types';
 
 // Modal state interface - covers all app modals
 export interface ModalState {
@@ -62,6 +63,19 @@ export interface ViewState {
   drawingColor: string;
   drawingThickness: number;
   
+  // Drawing interaction states
+  isDrawing: boolean;
+  currentDrawingPoints: Point[];
+  
+  // Dragging states
+  isDraggingPlayer: boolean;
+  draggingPlayerId: string | null;
+  isDraggingOpponent: boolean;
+  draggingOpponentId: string | null;
+  isDraggingTacticalDisc: boolean;
+  draggingTacticalDiscId: string | null;
+  isDraggingBall: boolean;
+  
   // Selection states
   selectedPlayerIds: string[];
   selectedOpponentIds: string[];
@@ -110,6 +124,22 @@ export interface UIStore {
   setDrawingTool: (tool: ViewState['selectedDrawingTool']) => void;
   setDrawingColor: (color: string) => void;
   setDrawingThickness: (thickness: number) => void;
+  
+  // Drawing interaction actions
+  startDrawing: (point: Point) => void;
+  addDrawingPoint: (point: Point) => void;
+  endDrawing: () => void;
+  clearCurrentDrawing: () => void;
+  
+  // Dragging actions
+  startDraggingPlayer: (playerId: string) => void;
+  endDraggingPlayer: () => void;
+  startDraggingOpponent: (opponentId: string) => void;
+  endDraggingOpponent: () => void;
+  startDraggingTacticalDisc: (discId: string) => void;
+  endDraggingTacticalDisc: () => void;
+  startDraggingBall: () => void;
+  endDraggingBall: () => void;
   
   // Selection actions
   setSelectedPlayerIds: (ids: string[]) => void;
@@ -168,6 +198,15 @@ const defaultViewState: ViewState = {
   selectedDrawingTool: null,
   drawingColor: '#000000',
   drawingThickness: 2,
+  isDrawing: false,
+  currentDrawingPoints: [],
+  isDraggingPlayer: false,
+  draggingPlayerId: null,
+  isDraggingOpponent: false,
+  draggingOpponentId: null,
+  isDraggingTacticalDisc: false,
+  draggingTacticalDiscId: null,
+  isDraggingBall: false,
   selectedPlayerIds: [],
   selectedOpponentIds: [],
   selectedTacticalElements: [],
@@ -326,6 +365,148 @@ export const useUIStore = create<UIStore>()(
         }),
         false,
         'setDrawingThickness'
+      ),
+      
+      // Drawing interaction actions
+      startDrawing: (point) => set(
+        (state) => ({ 
+          view: { 
+            ...state.view, 
+            isDrawing: true,
+            currentDrawingPoints: [point]
+          } 
+        }),
+        false,
+        'startDrawing'
+      ),
+      
+      addDrawingPoint: (point) => set(
+        (state) => ({ 
+          view: { 
+            ...state.view, 
+            currentDrawingPoints: [...state.view.currentDrawingPoints, point]
+          } 
+        }),
+        false,
+        'addDrawingPoint'
+      ),
+      
+      endDrawing: () => set(
+        (state) => ({ 
+          view: { 
+            ...state.view, 
+            isDrawing: false,
+            currentDrawingPoints: []
+          } 
+        }),
+        false,
+        'endDrawing'
+      ),
+      
+      clearCurrentDrawing: () => set(
+        (state) => ({ 
+          view: { 
+            ...state.view, 
+            currentDrawingPoints: []
+          } 
+        }),
+        false,
+        'clearCurrentDrawing'
+      ),
+      
+      // Dragging actions
+      startDraggingPlayer: (playerId) => set(
+        (state) => ({ 
+          view: { 
+            ...state.view, 
+            isDraggingPlayer: true,
+            draggingPlayerId: playerId
+          } 
+        }),
+        false,
+        'startDraggingPlayer'
+      ),
+      
+      endDraggingPlayer: () => set(
+        (state) => ({ 
+          view: { 
+            ...state.view, 
+            isDraggingPlayer: false,
+            draggingPlayerId: null
+          } 
+        }),
+        false,
+        'endDraggingPlayer'
+      ),
+      
+      startDraggingOpponent: (opponentId) => set(
+        (state) => ({ 
+          view: { 
+            ...state.view, 
+            isDraggingOpponent: true,
+            draggingOpponentId: opponentId
+          } 
+        }),
+        false,
+        'startDraggingOpponent'
+      ),
+      
+      endDraggingOpponent: () => set(
+        (state) => ({ 
+          view: { 
+            ...state.view, 
+            isDraggingOpponent: false,
+            draggingOpponentId: null
+          } 
+        }),
+        false,
+        'endDraggingOpponent'
+      ),
+      
+      startDraggingTacticalDisc: (discId) => set(
+        (state) => ({ 
+          view: { 
+            ...state.view, 
+            isDraggingTacticalDisc: true,
+            draggingTacticalDiscId: discId
+          } 
+        }),
+        false,
+        'startDraggingTacticalDisc'
+      ),
+      
+      endDraggingTacticalDisc: () => set(
+        (state) => ({ 
+          view: { 
+            ...state.view, 
+            isDraggingTacticalDisc: false,
+            draggingTacticalDiscId: null
+          } 
+        }),
+        false,
+        'endDraggingTacticalDisc'
+      ),
+      
+      startDraggingBall: () => set(
+        (state) => ({ 
+          view: { 
+            ...state.view, 
+            isDraggingBall: true
+          } 
+        }),
+        false,
+        'startDraggingBall'
+      ),
+      
+      endDraggingBall: () => set(
+        (state) => ({ 
+          view: { 
+            ...state.view, 
+            isDraggingBall: false
+          } 
+        }),
+        false,
+        'endDraggingBall'
       ),
       
       // Selection actions
@@ -614,6 +795,12 @@ export const useGameView = () => {
   const showOpponents = useUIStore((state) => state.view.showOpponents);
   const showTacticalElements = useUIStore((state) => state.view.showTacticalElements);
   
+  const setShowPlayerNames = useUIStore((state) => state.setShowPlayerNames);
+  const setShowPlayerNumbers = useUIStore((state) => state.setShowPlayerNumbers);
+  const setShowOpponents = useUIStore((state) => state.setShowOpponents);
+  const setShowTacticalElements = useUIStore((state) => state.setShowTacticalElements);
+  const setTacticsBoardView = useUIStore((state) => state.setTacticsBoardView);
+  
   return {
     isTacticsBoardView,
     isDrawingMode,
@@ -623,6 +810,11 @@ export const useGameView = () => {
     showPlayerNumbers,
     showOpponents,
     showTacticalElements,
+    setShowPlayerNames,
+    setShowPlayerNumbers,
+    setShowOpponents,
+    setShowTacticalElements,
+    setTacticsBoardView,
   };
 };
 
@@ -649,6 +841,67 @@ export const useSelectionState = () => {
     selectedPlayerIds,
     selectedOpponentIds,
     selectedTacticalElements,
+  };
+};
+
+// Drawing interaction hooks
+export const useDrawingInteraction = () => {
+  const isDrawing = useUIStore((state) => state.view.isDrawing);
+  const currentPoints = useUIStore((state) => state.view.currentDrawingPoints);
+  const startDrawing = useUIStore((state) => state.startDrawing);
+  const addDrawingPoint = useUIStore((state) => state.addDrawingPoint);
+  const endDrawing = useUIStore((state) => state.endDrawing);
+  const clearCurrentDrawing = useUIStore((state) => state.clearCurrentDrawing);
+  
+  return {
+    isDrawing,
+    currentPoints,
+    startDrawing,
+    addDrawingPoint,
+    endDrawing,
+    clearCurrentDrawing,
+  };
+};
+
+// Dragging state hooks
+export const useDraggingState = () => {
+  const view = useUIStore((state) => state.view);
+  const startDraggingPlayer = useUIStore((state) => state.startDraggingPlayer);
+  const endDraggingPlayer = useUIStore((state) => state.endDraggingPlayer);
+  const startDraggingOpponent = useUIStore((state) => state.startDraggingOpponent);
+  const endDraggingOpponent = useUIStore((state) => state.endDraggingOpponent);
+  const startDraggingTacticalDisc = useUIStore((state) => state.startDraggingTacticalDisc);
+  const endDraggingTacticalDisc = useUIStore((state) => state.endDraggingTacticalDisc);
+  const startDraggingBall = useUIStore((state) => state.startDraggingBall);
+  const endDraggingBall = useUIStore((state) => state.endDraggingBall);
+  
+  return {
+    // Player dragging
+    isDraggingPlayer: view.isDraggingPlayer,
+    draggingPlayerId: view.draggingPlayerId,
+    startDraggingPlayer,
+    endDraggingPlayer,
+    
+    // Opponent dragging
+    isDraggingOpponent: view.isDraggingOpponent,
+    draggingOpponentId: view.draggingOpponentId,
+    startDraggingOpponent,
+    endDraggingOpponent,
+    
+    // Tactical disc dragging
+    isDraggingTacticalDisc: view.isDraggingTacticalDisc,
+    draggingTacticalDiscId: view.draggingTacticalDiscId,
+    startDraggingTacticalDisc,
+    endDraggingTacticalDisc,
+    
+    // Ball dragging
+    isDraggingBall: view.isDraggingBall,
+    startDraggingBall,
+    endDraggingBall,
+    
+    // Helper to check if anything is being dragged
+    isAnyDragging: view.isDraggingPlayer || view.isDraggingOpponent || 
+                   view.isDraggingTacticalDisc || view.isDraggingBall,
   };
 };
 
