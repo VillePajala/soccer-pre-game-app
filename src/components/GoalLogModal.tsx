@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect } from 'react'; // Added useEffect
 import { useTranslation } from 'react-i18next';
 import { Player } from '@/types'; // Import from types instead of page
 import logger from '@/utils/logger';
+import MigrationErrorBoundary from './MigrationErrorBoundary';
 
 interface GoalLogModalProps {
   isOpen: boolean;
@@ -198,4 +199,11 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
   );
 };
 
-export default React.memo(GoalLogModal);
+// Wrapped component with error boundary
+const GoalLogModalWithErrorBoundary: React.FC<GoalLogModalProps> = (props) => (
+  <MigrationErrorBoundary componentName="GoalLogModal">
+    <GoalLogModal {...props} />
+  </MigrationErrorBoundary>
+);
+
+export default React.memo(GoalLogModalWithErrorBoundary);

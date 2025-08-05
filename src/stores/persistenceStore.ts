@@ -161,6 +161,15 @@ export interface PersistenceStore {
   hasStorageItem: (key: string) => Promise<boolean>;
   getStorageKeys: () => Promise<string[]>;
   
+  // 🔧 NEW: Storage consistency validation methods (private)
+  _getFromStorageManager: <T>(key: string) => Promise<{ data: T | null; timestamp?: number; error?: Error }>;
+  _getFromLocalStorage: <T>(key: string) => Promise<{ data: T | null; timestamp?: number; error?: Error }>;
+  _resolveStorageConflict: <T>(
+    supabaseResult: { data: T | null; timestamp?: number; error?: Error },
+    localResult: { data: T | null; timestamp?: number; error?: Error },
+    key: string
+  ) => Promise<T | null>;
+  
   // Utility actions
   clearAllData: () => Promise<boolean>;
   getStorageUsage: () => { used: number; available: number; percentage: number };
@@ -625,32 +634,96 @@ export const usePersistenceStore = create<PersistenceStore>()(
           'clearCorruptedSessions'
         ),
         
-        // Unified localStorage API (Phase 3)
-        getStorageItem: async <T = any>(key: string, defaultValue?: T): Promise<T | null> => {
+        // 🔧 STORAGE CONSISTENCY VALIDATION: Private helper methods
+        _getFromStorageManager: async <T>(key: string): Promise<{ data: T | null; timestamp?: number; error?: Error }> => {
           try {
-            // First try to get from the storage manager (preferred)
-            try {
-              const result = await storageManager.getGenericData(key);
-              if (result !== null) {
-                return result as T;
-              }
-            } catch (storageManagerError) {
-              logger.debug('[PersistenceStore] Storage manager failed, falling back to localStorage:', storageManagerError);
-            }
-            
-            // Fallback to direct localStorage access
+            const result = await storageManager.getGenericData(key);
+            return { data: result as T, timestamp: Date.now() };
+          } catch (error) {
+            return { data: null, error: error as Error };
+          }
+        },
+
+        _getFromLocalStorage: async <T>(key: string): Promise<{ data: T | null; timestamp?: number; error?: Error }> => {
+          try {
             const item = localStorage.getItem(key);
             if (item === null) {
-              return defaultValue ?? null;
+              return { data: null };
             }
             
-            try {
-              const parsed = JSON.parse(item) as T;
-              return parsed;
-            } catch (parseError) {
-              // Return as string if JSON parsing fails
-              return item as unknown as T;
+            const parsed = JSON.parse(item);
+            // Check if data has timestamp metadata
+            if (parsed && typeof parsed === 'object' && '_persistenceMetadata' in parsed) {
+              return { 
+                data: parsed.data as T, 
+                timestamp: parsed._persistenceMetadata.timestamp 
+              };
             }
+            
+            return { data: parsed as T };
+          } catch (error) {
+            // Try returning as string if JSON parsing fails
+            const item = localStorage.getItem(key);
+            if (item !== null) {
+              return { data: item as unknown as T };
+            }
+            return { data: null, error: error as Error };
+          }
+        },
+
+        _resolveStorageConflict: async <T>(
+          supabaseResult: { data: T | null; timestamp?: number; error?: Error },
+          localResult: { data: T | null; timestamp?: number; error?: Error },
+          key: string
+        ): Promise<T | null> => {
+          // If both failed, return null
+          if (supabaseResult.error && localResult.error) {
+            logger.error(`[PersistenceStore] Both storage methods failed for '${key}'`);
+            return null;
+          }
+          
+          // If only one source has data, use it
+          if (supabaseResult.data && !localResult.data) {
+            logger.debug(`[PersistenceStore] Using Supabase data for '${key}' (localStorage empty)`);
+            return supabaseResult.data;
+          }
+          if (localResult.data && !supabaseResult.data) {
+            logger.debug(`[PersistenceStore] Using localStorage data for '${key}' (Supabase empty)`);
+            return localResult.data;
+          }
+          
+          // If both have data, check timestamps
+          if (supabaseResult.data && localResult.data) {
+            if (supabaseResult.timestamp && localResult.timestamp) {
+              const winner = supabaseResult.timestamp > localResult.timestamp ? 'supabase' : 'localStorage';
+              logger.debug(`[PersistenceStore] Resolving conflict for '${key}': using ${winner} (newer timestamp)`);
+              return winner === 'supabase' ? supabaseResult.data : localResult.data;
+            }
+            
+            // No timestamps, prefer Supabase as authoritative source
+            logger.debug(`[PersistenceStore] No timestamps for '${key}', preferring Supabase as authoritative`);
+            return supabaseResult.data;
+          }
+          
+          return null;
+        },
+
+        // Unified localStorage API (Phase 3) with consistency validation
+        getStorageItem: async <T = any>(key: string, defaultValue?: T): Promise<T | null> => {
+          try {
+            // 🔧 CONSISTENCY FIX: Check both sources and resolve conflicts
+            const [supabaseResult, localResult] = await Promise.all([
+              get()._getFromStorageManager<T>(key),
+              get()._getFromLocalStorage<T>(key)
+            ]);
+            
+            const resolvedData = await get()._resolveStorageConflict(supabaseResult, localResult, key);
+            
+            if (resolvedData !== null) {
+              return resolvedData;
+            }
+            
+            return defaultValue ?? null;
           } catch (error) {
             logger.error(`[PersistenceStore] Error getting storage item '${key}':`, error);
             return defaultValue ?? null;
@@ -661,20 +734,47 @@ export const usePersistenceStore = create<PersistenceStore>()(
           try {
             get().setLoading(true);
             
+            const timestamp = Date.now();
+            let supabaseSuccess = false;
+            let localStorageSuccess = false;
+            
+            // 🔧 CONSISTENCY FIX: Try to save to both storage methods with metadata
             // First try to save with the storage manager (preferred)
             try {
               await storageManager.setGenericData(key, value);
+              supabaseSuccess = true;
               logger.debug(`[PersistenceStore] Saved '${key}' via storage manager`);
-              return true;
             } catch (storageManagerError) {
-              logger.debug('[PersistenceStore] Storage manager failed, falling back to localStorage:', storageManagerError);
+              logger.debug(`[PersistenceStore] Storage manager failed for '${key}':`, storageManagerError);
             }
             
-            // Fallback to direct localStorage access
-            const serialized = typeof value === 'string' ? value : JSON.stringify(value);
-            localStorage.setItem(key, serialized);
-            logger.debug(`[PersistenceStore] Saved '${key}' via localStorage fallback`);
-            return true;
+            // Also save to localStorage with metadata for consistency
+            try {
+              const dataWithMetadata = {
+                data: value,
+                _persistenceMetadata: {
+                  timestamp,
+                  savedViaSupabase: supabaseSuccess,
+                  version: '1.0'
+                }
+              };
+              
+              const serialized = JSON.stringify(dataWithMetadata);
+              localStorage.setItem(key, serialized);
+              localStorageSuccess = true;
+              logger.debug(`[PersistenceStore] Saved '${key}' to localStorage with metadata`);
+            } catch (localError) {
+              logger.debug(`[PersistenceStore] localStorage save failed for '${key}':`, localError);
+            }
+            
+            // Success if at least one method worked
+            if (supabaseSuccess || localStorageSuccess) {
+              const method = supabaseSuccess ? 'storage manager' : 'localStorage fallback';
+              logger.debug(`[PersistenceStore] Successfully saved '${key}' via ${method}`);
+              return true;
+            }
+            
+            throw new Error('Both storage methods failed');
           } catch (error) {
             logger.error(`[PersistenceStore] Error setting storage item '${key}':`, error);
             get().setError(`Failed to save ${key}: ${error instanceof Error ? error.message : 'Unknown error'}`);

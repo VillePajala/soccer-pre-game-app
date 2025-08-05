@@ -9,6 +9,7 @@ import { UseMutationResult } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import RosterSelection from './RosterSelection';
 import logger from '@/utils/logger';
+import MigrationErrorBoundary from './MigrationErrorBoundary';
 
 interface SeasonTournamentManagementModalProps {
     isOpen: boolean;
@@ -398,4 +399,11 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
   );
 };
 
-export default SeasonTournamentManagementModal; 
+// Wrapped component with error boundary
+const SeasonTournamentManagementModalWithErrorBoundary: React.FC<SeasonTournamentManagementModalProps> = (props) => (
+  <MigrationErrorBoundary componentName="SeasonTournamentManagementModal">
+    <SeasonTournamentManagementModal {...props} />
+  </MigrationErrorBoundary>
+);
+
+export default SeasonTournamentManagementModalWithErrorBoundary; 

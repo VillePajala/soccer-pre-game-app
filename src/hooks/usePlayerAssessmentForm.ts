@@ -47,6 +47,9 @@ export interface PlayerAssessmentFormValues {
     expanded: boolean;
     isValid: boolean;
     hasChanged: boolean;
+    isSaving?: boolean;      // 🔧 NEW: Track saving state per player
+    lastSavedAt?: number;    // 🔧 NEW: Track last save time per player
+    saveError?: string;      // 🔧 NEW: Track save errors per player
   }>;
   
   // Progress tracking
@@ -326,6 +329,15 @@ export function usePlayerAssessmentForm(
   // Auto-save timeout refs
   const autoSaveTimeouts = useMemo(() => new Map<string, NodeJS.Timeout>(), []);
   
+  // 🔧 RACE CONDITION FIX: Operation coordination to prevent conflicts
+  const operationTracking = useMemo(() => new Map<string, {
+    isSaving: boolean;
+    isValidating: boolean;
+    lastSaveTime: number;
+    lastValidationTime: number;
+    pendingOperations: Set<'save' | 'validate'>;
+  }>(), []);
+  
   // ============================================================================
   // Player Assessment Management
   // ============================================================================
@@ -441,56 +453,139 @@ export function usePlayerAssessmentForm(
   // ============================================================================
   
   const scheduleAutoSave = useCallback((playerId: string, assessment: any) => {
-    // Clear existing timeout
+    // 🔧 RACE CONDITION PROTECTION: Check if save is already in progress
+    const currentAssessments = form.values.assessments;
+    if (currentAssessments[playerId]?.isSaving) {
+      logger.debug('[PlayerAssessmentForm] Skip auto-save - already saving:', playerId);
+      return;
+    }
+    
+    // 🔧 OPERATION COORDINATION: Check for validation conflicts
+    const tracking = operationTracking.get(playerId);
+    if (tracking?.isValidating) {
+      logger.debug('[PlayerAssessmentForm] Defer auto-save - validation in progress:', playerId);
+      // Queue the save for after validation completes
+      tracking.pendingOperations.add('save');
+      return;
+    }
+    
+    // Clear existing timeout and cleanup
     const existingTimeout = autoSaveTimeouts.get(playerId);
     if (existingTimeout) {
       clearTimeout(existingTimeout);
+      autoSaveTimeouts.delete(playerId);
     }
     
-    // Schedule new auto-save
+    // Schedule new auto-save with protection
     const delay = options.autoSaveDelay ?? DEFAULT_AUTO_SAVE_DELAY;
     const timeout = setTimeout(async () => {
-      if (assessment.isValid && assessment.hasChanged && options.onSave) {
+      try {
+        // 🔧 OPERATION COORDINATION: Mark save as starting
+        const currentTime = Date.now();
+        const existingTracking = operationTracking.get(playerId);
+        operationTracking.set(playerId, {
+          isSaving: true,
+          isValidating: existingTracking?.isValidating || false,
+          lastSaveTime: currentTime,
+          lastValidationTime: existingTracking?.lastValidationTime || 0,
+          pendingOperations: new Set(),
+        });
+        
+        // Double-check conditions before save (data may have changed)
+        const latestForm = form.getFormValues?.() || form.values;
+        const latestAssessment = latestForm.assessments[playerId];
+        
+        if (!latestAssessment?.isValid || !latestAssessment?.hasChanged || !options.onSave) {
+          logger.debug('[PlayerAssessmentForm] Skip auto-save - conditions not met:', playerId);
+          return;
+        }
+        
+        // 🔧 RACE CONDITION PROTECTION: Set saving flag before starting
+        form.setFieldValue('assessments', {
+          ...latestForm.assessments,
+          [playerId]: {
+            ...latestAssessment,
+            isSaving: true,
+          },
+        });
+        
+        // Set global auto-saving flag
         form.setFieldValue('isAutoSaving', true);
-        try {
-          await options.onSave(playerId, {
-            overall: assessment.overall,
-            sliders: assessment.sliders,
-            notes: assessment.notes,
-          });
-          
-          // Mark as saved
-          const currentSavedIds = form.values.savedIds;
-          if (!currentSavedIds.includes(playerId)) {
-            form.setFieldValues({
-              savedIds: [...currentSavedIds, playerId],
-              completedCount: currentSavedIds.length + 1,
+        
+        // Perform save with latest data
+        await options.onSave(playerId, {
+          overall: latestAssessment.overall,
+          sliders: latestAssessment.sliders,
+          notes: latestAssessment.notes,
+        });
+        
+        // 🔧 ATOMIC UPDATE: Update all related state in single operation
+        const currentSavedIds = latestForm.savedIds;
+        const isNewSave = !currentSavedIds.includes(playerId);
+        
+        form.setFieldValues({
+          // Update saved IDs if needed
+          ...(isNewSave ? {
+            savedIds: [...currentSavedIds, playerId],
+            completedCount: currentSavedIds.length + 1,
+          } : {}),
+          lastSavedAt: Date.now(),
+          // Update assessment state
+          assessments: {
+            ...latestForm.assessments,
+            [playerId]: {
+              ...latestAssessment,
+              hasChanged: false,
+              isSaving: false,
               lastSavedAt: Date.now(),
-            });
-          }
-          
-          // Reset hasChanged flag
-          const currentAssessments = form.values.assessments;
+            },
+          },
+        });
+        
+        logger.debug('[PlayerAssessmentForm] Auto-saved assessment successfully:', playerId);
+      } catch (error) {
+        logger.error('[PlayerAssessmentForm] Auto-save failed:', playerId, error);
+        
+        // 🔧 ERROR RECOVERY: Reset saving state on failure
+        const currentAssessments = form.values.assessments;
+        if (currentAssessments[playerId]) {
           form.setFieldValue('assessments', {
             ...currentAssessments,
             [playerId]: {
               ...currentAssessments[playerId],
-              hasChanged: false,
+              isSaving: false,
+              saveError: error instanceof Error ? error.message : 'Save failed',
             },
           });
-          
-          logger.debug('[PlayerAssessmentForm] Auto-saved assessment:', playerId);
-        } catch (error) {
-          logger.error('[PlayerAssessmentForm] Auto-save failed:', playerId, error);
-        } finally {
-          form.setFieldValue('isAutoSaving', false);
         }
+      } finally {
+        // 🔧 OPERATION COORDINATION: Clean up operation tracking
+        const tracking = operationTracking.get(playerId);
+        if (tracking) {
+          tracking.isSaving = false;
+          
+          // Process any pending operations
+          if (tracking.pendingOperations.has('validate')) {
+            logger.debug('[PlayerAssessmentForm] Processing pending validation:', playerId);
+            tracking.pendingOperations.delete('validate');
+            // Trigger validation if needed
+            form.validate?.();
+          }
+          
+          // Clean up tracking if no operations pending
+          if (tracking.pendingOperations.size === 0 && !tracking.isValidating) {
+            operationTracking.delete(playerId);
+          }
+        }
+        
+        // Always cleanup
+        form.setFieldValue('isAutoSaving', false);
+        autoSaveTimeouts.delete(playerId);
       }
-      autoSaveTimeouts.delete(playerId);
     }, delay);
     
     autoSaveTimeouts.set(playerId, timeout);
-  }, [form, options, autoSaveTimeouts]);
+  }, [form, options, autoSaveTimeouts, operationTracking]);
   
   // ============================================================================
   // Assessment Operations
@@ -764,11 +859,41 @@ export function usePlayerAssessmentForm(
   
   useEffect(() => {
     return () => {
-      // Clear all auto-save timeouts on unmount
+      // 🔧 COMPREHENSIVE CLEANUP: Clear all auto-save timeouts and reset saving states
       autoSaveTimeouts.forEach(timeout => clearTimeout(timeout));
       autoSaveTimeouts.clear();
+      
+      // 🔧 OPERATION COORDINATION: Clear all operation tracking
+      operationTracking.clear();
+      
+      // Reset any pending saving states to prevent stale state updates
+      const currentAssessments = form.values.assessments;
+      const hasAnySaving = Object.values(currentAssessments).some(assessment => assessment.isSaving);
+      
+      if (hasAnySaving) {
+        const resetAssessments = { ...currentAssessments };
+        Object.keys(resetAssessments).forEach(playerId => {
+          if (resetAssessments[playerId].isSaving) {
+            resetAssessments[playerId] = {
+              ...resetAssessments[playerId],
+              isSaving: false,
+            };
+          }
+        });
+        
+        // Only update if needed and component is still mounted
+        try {
+          form.setFieldValues({
+            assessments: resetAssessments,
+            isAutoSaving: false,
+          });
+        } catch (error) {
+          // Component may be unmounted, ignore errors
+          logger.debug('[PlayerAssessmentForm] Cleanup after unmount, ignoring state update error');
+        }
+      }
     };
-  }, [autoSaveTimeouts]);
+  }, [autoSaveTimeouts, form]);
   
   // ============================================================================
   // Return Interface

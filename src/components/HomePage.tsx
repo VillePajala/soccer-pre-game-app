@@ -86,6 +86,7 @@ import { AppLoadingSkeleton } from '@/components/ui/AppSkeleton';
 // Removed - now handled by useGameDataManager:
 // import { updateGameDetails as utilUpdateGameDetails } from '@/utils/savedGames';
 import { DEFAULT_GAME_ID } from '@/config/constants';
+import MigrationErrorBoundary from '@/components/MigrationErrorBoundary';
 // Storage keys no longer needed - using offline-first storage
 // Removed static import of export utilities - now using dynamic imports for better bundle splitting
 // Removed - now handled by useGameDataManager: exportJson, exportCsv
@@ -2102,4 +2103,11 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     </main>
   );
 }
-export default HomePage;
+// Wrapped HomePage with error boundary for comprehensive migration safety
+const HomePageWithErrorBoundary: React.FC = () => (
+  <MigrationErrorBoundary componentName="HomePage">
+    <HomePage />
+  </MigrationErrorBoundary>
+);
+
+export default HomePageWithErrorBoundary;

@@ -98,6 +98,12 @@ interface FormStoreState {
   // Form instances
   forms: Record<string, FormState>;
   
+  // 🔧 RACE CONDITION FIX: Track validation requests to prevent concurrent validation
+  validationTracking: Record<string, {
+    fieldValidations: Record<string, { requestId: number; timestamp: number }>;
+    formValidationId: number;
+  }>;
+  
   // Form lifecycle
   createForm: (schema: FormSchema) => void;
   destroyForm: (formId: string) => void;
@@ -216,6 +222,7 @@ export const useFormStore = create<FormStoreState>()(
     subscribeWithSelector(
       (set, get) => ({
         forms: {},
+        validationTracking: {},
 
         // ========================================================================
         // Form Lifecycle Management
@@ -245,6 +252,12 @@ export const useFormStore = create<FormStoreState>()(
               };
             });
 
+            // 🔧 RACE CONDITION FIX: Initialize validation tracking for the form
+            const validationTracking = {
+              fieldValidations: {} as Record<string, { requestId: number; timestamp: number }>,
+              formValidationId: 0,
+            };
+
             // Create form state
             const formState: FormState = {
               formId,
@@ -267,6 +280,10 @@ export const useFormStore = create<FormStoreState>()(
               forms: {
                 ...state.forms,
                 [formId]: formState,
+              },
+              validationTracking: {
+                ...state.validationTracking,
+                [formId]: validationTracking,
               },
             };
           });
@@ -297,8 +314,15 @@ export const useFormStore = create<FormStoreState>()(
 
             logger.debug(`[FormStore] Destroyed form '${formId}'`);
 
+            // 🔧 RACE CONDITION FIX: Clean up validation tracking
             const { [formId]: removed, ...remainingForms } = state.forms;
-            return { ...state, forms: remainingForms };
+            const { [formId]: removedTracking, ...remainingTracking } = state.validationTracking;
+            
+            return { 
+              ...state, 
+              forms: remainingForms,
+              validationTracking: remainingTracking,
+            };
           });
         },
 
@@ -397,9 +421,29 @@ export const useFormStore = create<FormStoreState>()(
 
         validateField: async (formId: string, fieldName: string): Promise<ValidationResult> => {
           const form = get().forms[formId];
-          if (!form || !form.fields[fieldName]) {
+          const tracking = get().validationTracking[formId];
+          
+          if (!form || !form.fields[fieldName] || !tracking) {
             return { isValid: false, errors: {}, hasErrors: false };
           }
+
+          // 🔧 RACE CONDITION FIX: Generate unique request ID and track validation
+          const requestId = Date.now() + Math.random();
+          const timestamp = Date.now();
+          
+          set((state) => ({
+            ...state,
+            validationTracking: {
+              ...state.validationTracking,
+              [formId]: {
+                ...state.validationTracking[formId],
+                fieldValidations: {
+                  ...state.validationTracking[formId].fieldValidations,
+                  [fieldName]: { requestId, timestamp },
+                },
+              },
+            },
+          }));
 
           const field = form.fields[fieldName];
           const fieldSchema = form.schema.fields[fieldName];
@@ -413,12 +457,27 @@ export const useFormStore = create<FormStoreState>()(
           // Run validation rules
           if (fieldSchema.validation) {
             for (const rule of fieldSchema.validation) {
+              // 🔧 RACE CONDITION FIX: Check if this validation is still the latest
+              const currentTracking = get().validationTracking[formId]?.fieldValidations[fieldName];
+              if (!currentTracking || currentTracking.requestId !== requestId) {
+                // This validation was superseded, abort
+                logger.debug(`[FormStore] Validation for '${fieldName}' superseded, aborting`);
+                return { isValid: false, errors: {}, hasErrors: false };
+              }
+              
               const isValid = await validateFieldRule(field.value, rule, formValues);
               if (!isValid) {
                 error = rule.message;
                 break;
               }
             }
+          }
+
+          // 🔧 RACE CONDITION FIX: Final check before updating state
+          const finalTracking = get().validationTracking[formId]?.fieldValidations[fieldName];
+          if (!finalTracking || finalTracking.requestId !== requestId) {
+            logger.debug(`[FormStore] Validation for '${fieldName}' superseded at completion, discarding result`);
+            return { isValid: false, errors: {}, hasErrors: false };
           }
 
           // Update field error state

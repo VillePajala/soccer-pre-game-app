@@ -392,21 +392,37 @@ export function useFormField(
     return useLegacyFormField(formId, fieldName, options);
   }
   
-  // Field actions with debouncing
-  const handleChange = useCallback(
-    debounce((value: FieldValue) => {
-      setFieldValue(formId, fieldName, value);
-      
-      if (options.onChange) {
-        options.onChange(value);
+  // 🔧 RACE CONDITION FIX: Create debounced handler with proper cleanup
+  const debouncedChangeRef = useRef<((value: FieldValue) => void) & { cancel: () => void } | null>(null);
+  
+  const handleChange = useCallback((value: FieldValue) => {
+    // Create new debounced function if needed
+    if (!debouncedChangeRef.current) {
+      debouncedChangeRef.current = debounce((val: FieldValue) => {
+        setFieldValue(formId, fieldName, val);
+        
+        if (options.onChange) {
+          options.onChange(val);
+        }
+        
+        if (options.validate) {
+          validateField(formId, fieldName);
+        }
+      }, options.debounceMs || 200);
+    }
+    
+    debouncedChangeRef.current(value);
+  }, [formId, fieldName, setFieldValue, options, validateField]);
+  
+  // 🔧 RACE CONDITION FIX: Cleanup debounced function on unmount or dependency change
+  useEffect(() => {
+    return () => {
+      if (debouncedChangeRef.current) {
+        debouncedChangeRef.current.cancel();
+        debouncedChangeRef.current = null;
       }
-      
-      if (options.validate) {
-        validateField(formId, fieldName);
-      }
-    }, options.debounceMs || 200),
-    [formId, fieldName, setFieldValue, options, validateField]
-  );
+    };
+  }, [formId, fieldName]);
   
   const handleBlur = useCallback(() => {
     setFieldTouched(formId, fieldName, true);
@@ -563,15 +579,40 @@ function useLegacyFormField(
 // ============================================================================
 
 /**
- * Simple debounce implementation for field changes
+ * Advanced debounce implementation with race condition protection
  */
-function debounce<T extends (...args: any[]) => void>(func: T, wait: number): T {
-  let timeout: NodeJS.Timeout;
+function debounce<T extends (...args: any[]) => void>(func: T, wait: number): T & { cancel: () => void } {
+  let timeout: NodeJS.Timeout | null = null;
+  let lastCallTime = 0;
+  let callId = 0;
   
-  return ((...args: any[]) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func.apply(null, args), wait);
-  }) as T;
+  const debouncedFunc = ((...args: any[]) => {
+    const currentCallId = ++callId;
+    lastCallTime = Date.now();
+    
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+    
+    timeout = setTimeout(() => {
+      // 🔧 RACE CONDITION FIX: Only execute if this is still the latest call
+      if (currentCallId === callId) {
+        func.apply(null, args);
+        timeout = null;
+      }
+    }, wait);
+  }) as T & { cancel: () => void };
+  
+  // 🔧 RACE CONDITION FIX: Add cancel method to prevent execution
+  debouncedFunc.cancel = () => {
+    if (timeout) {
+      clearTimeout(timeout);
+      timeout = null;
+    }
+    callId++; // Invalidate any pending calls
+  };
+  
+  return debouncedFunc;
 }
 
 // ============================================================================

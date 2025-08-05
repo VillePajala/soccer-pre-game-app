@@ -32,10 +32,16 @@ export interface NewGameSetupModalState {
 export function useNewGameSetupModalState(): NewGameSetupModalState {
   const { shouldUseLegacy } = useMigrationSafety('NewGameSetupModal');
   
-  // Zustand-based implementation
-  const zustandIsOpen = useUIStore((state) => state.modals.newGameSetupModal);
-  const zustandOpenModal = useUIStore((state) => state.openModal);
-  const zustandCloseModal = useUIStore((state) => state.closeModal);
+  // 🔧 PERFORMANCE FIX: Single store subscription instead of 3 separate ones
+  const { isOpen: zustandIsOpen, openModal: zustandOpenModal, closeModal: zustandCloseModal } = useUIStore(
+    (state) => ({
+      isOpen: state.modals.newGameSetupModal,
+      openModal: state.openModal,
+      closeModal: state.closeModal,
+    }),
+    // 🔧 PERFORMANCE: Use shallow comparison to prevent unnecessary re-renders
+    (prev, curr) => prev.isOpen === curr.isOpen
+  );
   
   // Context-based fallback
   const contextModalState = useModalContext();

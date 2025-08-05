@@ -1,10 +1,5 @@
 import React from 'react';
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { usePlayerAssessmentForm, PlayerAssessmentFormOptions, convertAssessmentsToFormValues, validatePlayerAssessment, calcul
-
-```typescript
-import React from 'react';
-import { renderHook, act, waitFor } from '@testing-library/react';
 import { usePlayerAssessmentForm, PlayerAssessmentFormOptions, convertAssessmentsToFormValues, validatePlayerAssessment, calculateCompletionPercentage } from '../usePlayerAssessmentForm';
 import { useMigrationSafety } from '../useMigrationSafety';
 import type { PlayerAssessment } from '@/types/playerAssessment';
@@ -767,4 +762,3 @@ describe('Utility Functions', () => {
     });
   });
 });
-```

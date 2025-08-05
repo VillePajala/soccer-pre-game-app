@@ -20,13 +20,13 @@ export interface MigrationFlags {
   enableMigrationLogging: boolean;
 }
 
-// Default migration flags (conservative approach)
+// Default migration flags (enable new stores while keeping safety net)
 export const defaultMigrationFlags: MigrationFlags = {
-  enableGameStoreMigration: false,
-  enableUIStoreMigration: false,
-  enablePersistenceStoreMigration: false,
-  enableLegacyFallback: true,
-  enableMigrationLogging: true,
+  enableGameStoreMigration: true,  // ✅ Enable new game store
+  enableUIStoreMigration: true,    // ✅ Enable new UI store (modals, views)
+  enablePersistenceStoreMigration: true, // ✅ Enable unified persistence
+  enableLegacyFallback: true,      // ✅ Keep safety net for rollback
+  enableMigrationLogging: true,    // ✅ Keep logging for monitoring
 };
 
 // Migration state tracking
@@ -444,13 +444,24 @@ export const shouldUseLegacyState = (componentName: string): boolean => {
     return true;
   }
   
-  // If migration is not in progress, default to legacy (only if fallback is enabled)
-  if (!status.isInProgress) {
-    return true;
+  // 🔧 FIXED: Check specific migration flags instead of generic isInProgress
+  // UI components (modals, forms) should use new stores if UI migration is enabled
+  if (componentName.includes('Modal') || componentName.includes('Form')) {
+    return !status.flags.enableUIStoreMigration;
   }
   
-  // Use new implementation if component is migrated
-  return !status.migratedComponents.includes(componentName);
+  // Game components should use new stores if game migration is enabled
+  if (componentName.includes('Game') || componentName.includes('Field') || componentName.includes('Player')) {
+    return !status.flags.enableGameStoreMigration;
+  }
+  
+  // Persistence components should use new stores if persistence migration is enabled
+  if (componentName.includes('Storage') || componentName.includes('Persistence') || componentName.includes('Roster')) {
+    return !status.flags.enablePersistenceStoreMigration;
+  }
+  
+  // For other components, use new implementation by default (migration-first approach)
+  return false;
 };
 
 /**
