@@ -1866,7 +1866,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
       {/* Modals and Overlays */}
       {/* Training Resources Modal */}
-      {TrainingResourcesModal && (
+      {trainingResourcesModal.isOpen && TrainingResourcesModal && (
         <React.Suspense fallback={<ModalSkeleton title="Training Resources" />}>
           <TrainingResourcesModal
             isOpen={trainingResourcesModal.isOpen}
@@ -1874,7 +1874,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           />
         </React.Suspense>
       )}
-      {InstructionsModal && (
+      {isInstructionsModalOpen && InstructionsModal && (
         <React.Suspense fallback={<ModalSkeleton title="Instructions" />}>
           <InstructionsModal
             isOpen={isInstructionsModalOpen}
@@ -1938,7 +1938,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           />
         </React.Suspense>
       )}
-      {LoadGameModal && (
+      {loadGameModal.isOpen && LoadGameModal && (
         <React.Suspense fallback={<LoadGameModalSkeleton />}>
           <LoadGameModal 
             isOpen={loadGameModal.isOpen}
@@ -1984,7 +1984,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       )}
 
       {/* Roster Settings Modal */}
-      {RosterSettingsModal && (
+      {rosterSettingsModal.isOpen && RosterSettingsModal && (
         <React.Suspense fallback={<RosterModalSkeleton />}>
           <RosterSettingsModal
           isOpen={rosterSettingsModal.isOpen}
@@ -2007,7 +2007,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       </React.Suspense>
       )}
 
-      {SeasonTournamentManagementModal && (
+      {seasonTournamentModal.isOpen && SeasonTournamentManagementModal && (
         <React.Suspense fallback={<ModalSkeleton title="Season & Tournament Management" />}>
           <SeasonTournamentManagementModal
             isOpen={seasonTournamentModal.isOpen}
@@ -2033,7 +2033,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           onGameClick={handleGameLogClick}
       /> */}
 
-      {GameSettingsModal && (
+      {gameSettingsModal.isOpen && GameSettingsModal && (
         <React.Suspense fallback={<ModalSkeleton title="Game Settings" />}>
           <GameSettingsModal
             isOpen={gameSettingsModal.isOpen}
@@ -2085,7 +2085,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         </React.Suspense>
       )}
 
-      {SettingsModal && (
+      {settingsModal.isOpen && SettingsModal && (
         <React.Suspense fallback={<ModalSkeleton title="Settings" />}>
           <SettingsModal
             isOpen={settingsModal.isOpen}
@@ -2101,7 +2101,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         </React.Suspense>
       )}
 
-      {PlayerAssessmentModal && (
+      {playerAssessmentModal.isOpen && PlayerAssessmentModal && (
         <React.Suspense fallback={<ModalSkeleton title="Player Assessment" />}>
           <PlayerAssessmentModal
             isOpen={playerAssessmentModal.isOpen}
