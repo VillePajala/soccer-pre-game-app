@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix: Resolve final migration-related TypeScript errors"
+  "notes": "feat(migration): Complete all Phase 1 polish items"
 }

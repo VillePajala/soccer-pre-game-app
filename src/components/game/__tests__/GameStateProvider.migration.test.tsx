@@ -26,6 +26,21 @@ jest.mock('../GameStateProvider', () => ({
   GameStateProvider: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="legacy-provider">{children}</div>
   ),
+  useGameStateContext: jest.fn(() => ({
+    gameSessionState: {
+      teamName: 'Mock Team',
+      opponentName: 'Mock Opponent',
+      homeScore: 0,
+      awayScore: 0,
+      isTimerRunning: false,
+      gameEvents: [],
+    },
+    playersOnField: [],
+    opponents: [],
+    dispatchGameSession: jest.fn(),
+    setPlayersOnField: jest.fn(),
+    setOpponents: jest.fn(),
+  })),
 }));
 
 import { useMigrationSafety } from '@/hooks/useMigrationSafety';

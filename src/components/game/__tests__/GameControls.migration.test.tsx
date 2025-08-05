@@ -10,11 +10,11 @@ jest.mock('@/hooks/useMigrationSafety', () => ({
   useMigrationSafety: jest.fn(),
 }));
 
-jest.mock('../GameControls', () => {
-  return function MockLegacyGameControls(props: any) {
+jest.mock('../GameControls', () => ({
+  GameControls: function MockLegacyGameControls(props: any) {
     return <div data-testid="legacy-game-controls">Legacy GameControls</div>;
-  };
-});
+  },
+}));
 
 jest.mock('@/components/ControlBar', () => {
   return function MockControlBar({

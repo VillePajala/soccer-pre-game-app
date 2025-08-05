@@ -3,13 +3,24 @@
  * 
  * Extracted components from the HomePage refactoring effort.
  * Each component focuses on a specific responsibility.
+ * 
+ * Migration wrappers are exported as default to use Zustand state management
+ * with fallback to legacy React state when needed.
  */
 
-export { GameStateProvider, useGameStateContext } from './GameStateProvider';
+// Migration wrappers (default exports for seamless migration)
+export { GameStateProvider, useGameStateContext } from './GameStateProvider.migration';
+export { GameControls } from './GameControls.migration';
+
+// Other game components
 export { GameView } from './GameView';
-export { GameControls } from './GameControls';  
 export { ModalManager } from './ModalManager';
 export { HomePage } from './HomePage';
 
-// TODO: Export other components as they are created
-// export { DataSyncManager } from './DataSyncManager';
+// Legacy components (available for direct import if needed)
+export { GameStateProvider as LegacyGameStateProvider } from './GameStateProvider';
+export { GameControls as LegacyGameControls } from './GameControls';
+
+// Migrated components (available for direct import if needed)
+export { MigratedGameStateProvider } from './MigratedGameStateProvider';
+export { MigratedGameControls } from './MigratedGameControls';
