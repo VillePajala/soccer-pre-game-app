@@ -49,19 +49,21 @@ let migrationState: MigrationState = {
   lastError: null,
 };
 
-// 🔧 AUTO-COMPLETE STUCK MIGRATION: Check for stuck migration on module load
-try {
-  const storedFlags = localStorage.getItem('migration-flags');
-  if (storedFlags) {
-    const flags = JSON.parse(storedFlags);
-    // If migration flags exist but no migration is in progress, assume it was completed
-    if (flags && !migrationState.isInProgress) {
-      migrationState.currentPhase = 'completed';
-      logger.debug('[Migration] Auto-completed previously stuck migration');
+// 🔧 AUTO-COMPLETE STUCK MIGRATION: Check for stuck migration on module load (client-side only)
+if (typeof window !== 'undefined') {
+  try {
+    const storedFlags = localStorage.getItem('migration-flags');
+    if (storedFlags) {
+      const flags = JSON.parse(storedFlags);
+      // If migration flags exist but no migration is in progress, assume it was completed
+      if (flags && !migrationState.isInProgress) {
+        migrationState.currentPhase = 'completed';
+        logger.debug('[Migration] Auto-completed previously stuck migration');
+      }
     }
+  } catch (error) {
+    logger.warn('[Migration] Failed to check for stuck migration:', error);
   }
-} catch (error) {
-  logger.warn('[Migration] Failed to check for stuck migration:', error);
 }
 
 // Migration error types
