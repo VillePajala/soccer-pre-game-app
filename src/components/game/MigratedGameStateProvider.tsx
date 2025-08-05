@@ -12,6 +12,7 @@ import {
   type GameSessionState,
   type FieldState 
 } from '@/stores/gameStore';
+import { useLoadingStates } from '@/stores/persistenceStore';
 import { DEFAULT_GAME_ID } from '@/config/constants';
 import logger from '@/utils/logger';
 
@@ -39,6 +40,7 @@ export function MigratedGameStateProvider({
   const fieldState = useFieldState();
   const { setTimeElapsed, setTimerRunning, setCurrentPeriod } = useGameTimer();
   const { setHomeScore, setAwayScore } = useGameScore();
+  const { isLoading, lastError } = useLoadingStates();
   
   // Initialize store with provided initial state
   useEffect(() => {
@@ -228,8 +230,8 @@ export function MigratedGameStateProvider({
     playersOnField: fieldState.playersOnField,
     
     // Data loading states (matching interface)
-    isLoading: false, // TODO: Connect to actual loading state
-    error: null, // TODO: Connect to actual error state
+    isLoading, // Connected to persistence store loading state
+    error: lastError,
     
     // State update functions (matching interface)
     updateGameState: (update: Partial<GameSessionState>) => {
@@ -288,6 +290,8 @@ export function MigratedGameStateProvider({
     setTacticalDrawings,
     setTacticalDiscs,
     setTacticalBallPosition,
+    isLoading,
+    lastError,
   ]);
   
   return (

@@ -210,7 +210,9 @@ export function GameStateProvider({
       setPlayersOnField,
       setOpponents, 
       setDrawings,
-      setSelectedPlayerIds: () => {}, // Placeholder for now
+      setSelectedPlayerIds: (ids: string[]) => {
+        dispatch({ type: 'SET_SELECTED_PLAYER_IDS', payload: ids });
+      },
     } as GameStateContextType & Record<string, unknown>}>
       {children}
     </GameStateContext.Provider>

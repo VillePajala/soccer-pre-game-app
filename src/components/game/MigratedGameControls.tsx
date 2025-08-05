@@ -79,7 +79,7 @@ export const MigratedGameControls = React.memo<ExtendedGameControlsProps>(({
   
   // Use store values instead of props where available
   const displayCanUndo = gameSession.gameEvents?.length > 0 || propCanUndo || false;
-  const displayCanRedo = propCanRedo || false; // TODO: Implement redo history in store
+  const displayCanRedo = propCanRedo || false; // NOTE: Redo history will be implemented in Phase 2
   const displayIsTacticsBoardView = gameView.isTacticsBoardView !== undefined ? gameView.isTacticsBoardView : propIsTacticsBoardView;
   const displayIsGameLoaded = gameSession.gameId !== null || propIsGameLoaded;
   const displayHighlightRosterButton = propHighlightRosterButton || false; // TODO: Implement in store if needed
@@ -99,7 +99,8 @@ export const MigratedGameControls = React.memo<ExtendedGameControlsProps>(({
   };
   
   const handleRedo = () => {
-    // TODO: Implement redo functionality in store
+    // NOTE: Redo functionality requires history tracking which will be implemented in Phase 2
+    // For now, we pass through to the legacy handler if provided
     if (onRedo || onRedoAction) {
       (onRedo || onRedoAction)?.();
     }
