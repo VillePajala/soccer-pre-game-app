@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix: Disable migration polling to prevent modal flickering"
+  "notes": "refactor(migration): remove legacy migration components and tests"
 }

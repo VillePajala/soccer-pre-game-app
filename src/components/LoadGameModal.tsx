@@ -529,7 +529,16 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                         {/* Left Side: Load Button Only */}
                         <div className="flex items-center">
                           <button
-                            onClick={(e) => { e.stopPropagation(); onLoad(gameId); onClose(); }}
+                            onClick={async (e) => { 
+                              e.stopPropagation(); 
+                              try {
+                                await onLoad(gameId);
+                                onClose();
+                              } catch (error) {
+                                logger.error('[LoadGameModal] Failed to load game:', error);
+                                // Keep modal open on error so user can see what happened
+                              }
+                            }}
                             className={`inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors ${
                               isLoadActionActive ? 'opacity-50 cursor-not-allowed' : ''
                             }`}

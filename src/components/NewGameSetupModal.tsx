@@ -411,9 +411,10 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
       );
     } catch (error) {
       logger.error('[NewGameSetupModal] Failed to start new game:', error);
+      throw error; // Re-throw to let parent handle the error and modal state
     }
 
-    // Modal will be closed by parent component after onStart
+    // Modal will be closed by parent component after successful onStart
   };
 
   const handleKeyDown = (event: React.KeyboardEvent) => {

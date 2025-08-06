@@ -85,7 +85,10 @@ export class SessionManager {
       // Get current session
       const { data: { session }, error } = await supabase.auth.getSession();
       if (error) {
-        logger.error('Failed to get initial session:', error);
+        logger.error('Failed to get initial session:', {
+          message: error.message,
+          status: error.status
+        });
         return;
       }
 
@@ -371,6 +374,13 @@ export class SessionManager {
       return;
     }
 
+    // Check if we have a valid session - avoid device tracking during logout
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      logger.warn('No active session during device check - skipping device tracking');
+      return;
+    }
+
     try {
       logger.info('Checking device for user:', user.email, 'with fingerprint ending:', this.deviceFingerprint.slice(-10));
       
@@ -410,6 +420,13 @@ export class SessionManager {
 
         logger.info('Saving new device to database. Total devices will be:', updatedDevices.length);
 
+        // Check if we have a valid session before attempting to save
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        if (!currentSession) {
+          logger.warn('No active session during device save - user may be logging out');
+          return;
+        }
+
         const { error: upsertError } = await supabase
           .from('app_settings')
           .upsert({
@@ -418,7 +435,14 @@ export class SessionManager {
           });
 
         if (upsertError) {
-          logger.error('Failed to save device to database:', upsertError);
+          logger.error('Failed to save device to database:', {
+            message: upsertError.message,
+            code: upsertError.code,
+            details: upsertError.details,
+            hint: upsertError.hint,
+            user_id: user.id,
+            settings_size: JSON.stringify(updatedSettings).length
+          });
           
           // Infrastructure remains active but UI alerts disabled
           // this.emitEvent({
@@ -440,7 +464,10 @@ export class SessionManager {
         logger.info('Device recognized as known device');
       }
     } catch (error) {
-      logger.error('Error in checkNewDevice:', error);
+      logger.error('Error in checkNewDevice:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
       
       // Infrastructure remains active but UI alerts disabled
       // this.emitEvent({
