@@ -3,7 +3,7 @@ import { renderHook, act } from '@testing-library/react';
 import { 
   useGameStatsModalState,
   useGameStatsModalWithHandlers,
-  useGameStatsModalSelector 
+  useGameStatsModal 
 } from '../useGameStatsModalState';
 import { useUIStore } from '@/stores/uiStore';
 // import { useModalContext } from '@/contexts/{}';

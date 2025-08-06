@@ -5,6 +5,11 @@ import { useUIStore } from '@/stores/uiStore';
 import type { Point } from '@/types';
 
 // Mock dependencies
+jest.mock('@/utils/logger');
+jest.mock('@/stores/uiStore');
+
+describe('useViewMode', () => {
+  beforeEach(() => {
     // Reset UI store state
     useUIStore.getState().resetAll();
   });

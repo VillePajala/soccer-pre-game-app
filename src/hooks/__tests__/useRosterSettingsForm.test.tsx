@@ -3,7 +3,9 @@ import { renderHook, act } from '@testing-library/react';
 import { useRosterSettingsForm, RosterSettingsFormOptions, convertPropsToFormValues, validateJerseyNumberUniqueness, filterPlayersBySearch } from '../useRosterSettingsForm';
 
 // Mock dependencies
-  });
+jest.mock('@/utils/logger');
+
+describe('useRosterSettingsForm', () => {
 
   describe('Basic Form Operations', () => {
     it('should initialize with default values', () => {

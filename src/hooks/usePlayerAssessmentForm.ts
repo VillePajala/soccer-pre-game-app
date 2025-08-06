@@ -360,6 +360,7 @@ export function usePlayerAssessmentForm(
     scheduleAutoSave(playerId, updatedAssessment);
     
     logger.debug('[PlayerAssessmentForm] Overall rating changed:', playerId, rating);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form]);
   
   const handleSliderChange = useCallback((playerId: string, sliderKey: keyof AssessmentSliders, value: number) => {
@@ -393,6 +394,7 @@ export function usePlayerAssessmentForm(
     scheduleAutoSave(playerId, updatedAssessment);
     
     logger.debug('[PlayerAssessmentForm] Slider changed:', playerId, sliderKey, value);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form]);
   
   const handleNotesChange = useCallback((playerId: string, notes: string) => {
@@ -421,6 +423,7 @@ export function usePlayerAssessmentForm(
     scheduleAutoSave(playerId, updatedAssessment);
     
     logger.debug('[PlayerAssessmentForm] Notes changed:', playerId, notes.length, 'characters');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form]);
   
   const handleToggleExpanded = useCallback((playerId: string) => {

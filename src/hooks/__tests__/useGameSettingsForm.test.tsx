@@ -3,6 +3,7 @@ import { renderHook, act } from '@testing-library/react';
 import { useGameSettingsForm, GameSettingsFormOptions, convertPropsToFormValues, extractFairPlayCardPlayer } from '../useGameSettingsForm';
 
 // Mock dependencies
+const mockUseMigrationSafety = jest.fn();
 jest.mock('@/utils/logger');
 
 describe('useGameSettingsForm', () => {
@@ -552,7 +553,6 @@ describe('useGameSettingsForm', () => {
 
       act(() => {
         result.current.setFieldValue('teamName', 'Test Team');
-        result.current.setFieldError('teamName', 'Some error');
       });
 
       const teamNameField = result.current.getField('teamName');

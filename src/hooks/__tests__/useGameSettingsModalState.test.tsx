@@ -3,7 +3,7 @@ import { renderHook, act } from '@testing-library/react';
 import { 
   useGameSettingsModalState,
   useGameSettingsModalWithHandlers,
-  useGameSettingsModalSelector 
+  useGameSettingsModal 
 } from '../useGameSettingsModalState';
 import { useUIStore } from '@/stores/uiStore';
 
@@ -12,6 +12,8 @@ jest.mock('@/utils/logger');
 jest.mock('@/stores/uiStore');
 
 const mockUseMigrationSafety = jest.fn();
+const mockUseUIStore = jest.fn();
+const mockUseModalContext = jest.fn();
 
 describe('useGameSettingsModalState', () => {
   describe('Zustand Implementation', () => {

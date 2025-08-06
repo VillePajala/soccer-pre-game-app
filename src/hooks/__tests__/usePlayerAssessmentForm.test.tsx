@@ -4,6 +4,11 @@ import { usePlayerAssessmentForm, PlayerAssessmentFormOptions, convertAssessment
 import type { PlayerAssessment } from '@/types/playerAssessment';
 
 // Mock dependencies
+jest.mock('@/utils/logger');
+
+describe('usePlayerAssessmentForm', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
   });
 
   afterEach(() => {

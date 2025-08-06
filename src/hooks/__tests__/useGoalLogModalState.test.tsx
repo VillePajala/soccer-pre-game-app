@@ -3,7 +3,7 @@ import { renderHook, act } from '@testing-library/react';
 import { 
   useGoalLogModalState,
   useGoalLogModalWithHandlers,
-  useGoalLogModalSelector 
+  useGoalLogModal 
 } from '../useGoalLogModalState';
 import { useUIStore } from '@/stores/uiStore';
 

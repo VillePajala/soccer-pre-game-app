@@ -1,10 +1,11 @@
 import React from 'react';
 import { renderHook, act } from '@testing-library/react';
-import { useForm, useFormField, useSimpleForm } from '../useForm';
+import { useForm, useFormField } from '../useForm';
 import { FormSchema } from '@/stores/formStore';
 import { validationRules } from '@/utils/formValidation';
 
 // Mock dependencies
+const mockUseMigrationSafety = jest.fn();
 jest.mock('@/utils/logger');
 
 describe('useForm Hook Tests', () => {
@@ -312,7 +313,7 @@ describe('useForm Hook Tests', () => {
     });
 
     it('should track submission state', async () => {
-      const onSubmit = jest.fn(() => new Promise(resolve => setTimeout(resolve, 100)));
+      const onSubmit = jest.fn(() => new Promise<void>(resolve => setTimeout(resolve, 100)));
       const { result } = renderHook(() => 
         useForm(submissionSchema, { onSubmit })
       );
