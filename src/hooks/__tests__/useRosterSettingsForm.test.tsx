@@ -5,6 +5,13 @@ import { useRosterSettingsForm, RosterSettingsFormOptions, convertPropsToFormVal
 // Mock dependencies
 jest.mock('@/utils/logger');
 
+// Mock data for testing
+const mockPlayers = [
+  { id: '1', name: 'John Doe', nickname: 'Johnny', jerseyNumber: '10', notes: 'Fast player' },
+  { id: '2', name: 'Bob Wilson', nickname: 'Bobby', jerseyNumber: '5', notes: 'Good defender' },
+  { id: '3', name: 'Alice Smith', nickname: '', jerseyNumber: '7', notes: '' },
+];
+
 describe('useRosterSettingsForm', () => {
 
   describe('Basic Form Operations', () => {

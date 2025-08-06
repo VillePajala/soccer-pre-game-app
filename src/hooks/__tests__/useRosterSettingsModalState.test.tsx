@@ -14,7 +14,9 @@ jest.mock('@/stores/uiStore');
 
 const mockUseMigrationSafety = jest.fn();
 const mockUseModalContext = jest.fn();
-const mockUseUIStore = jest.fn();
+
+// Cast the mocked function
+const mockUseUIStore = useUIStore as jest.MockedFunction<typeof useUIStore>;
 
 describe('useRosterSettingsModalState', () => {
   describe('Zustand Implementation', () => {
@@ -48,12 +50,15 @@ describe('useRosterSettingsModalState', () => {
         setIsPlayerAssessmentModalOpen: jest.fn(),
       });
 
+      const mockOpenModal = jest.fn();
+      const mockCloseModal = jest.fn();
       const mockStore = {
         modals: { rosterSettingsModal: false },
-        openModal: jest.fn(),
-        closeModal: jest.fn(),
+        openModal: mockOpenModal,
+        closeModal: mockCloseModal,
       };
 
+      // Mock implementation that properly handles selector pattern
       mockUseUIStore.mockImplementation((selector: any) => {
         if (typeof selector === 'function') {
           return selector(mockStore);

@@ -80,7 +80,7 @@ const createSampleGames = (): SavedGamesCollection => ({
 describe('LoadGameModal', () => {
   const mockHandlers = {
     onClose: jest.fn(),
-    onLoad: jest.fn(),
+    onLoad: jest.fn().mockResolvedValue(undefined),
     onDelete: jest.fn(),
     onExportOneJson: jest.fn(),
     onExportOneCsv: jest.fn(),
@@ -154,7 +154,10 @@ describe('LoadGameModal', () => {
     fireEvent.click(expandButton);
     const loadButton = within(gameItem).getByRole('button', { name: /loadGameModal.loadButton/i });
 
-    fireEvent.click(loadButton);
+    await act(async () => {
+      fireEvent.click(loadButton);
+    });
+    
     expect(mockHandlers.onLoad).toHaveBeenCalledWith('game_1659123456_abc');
     expect(mockHandlers.onClose).toHaveBeenCalled();
   });

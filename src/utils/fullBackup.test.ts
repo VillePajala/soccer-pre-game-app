@@ -400,7 +400,7 @@ describe("importFullBackup", () => {
       expect(localStorageMock.getAll()).toEqual({});
       expect(window.confirm).not.toHaveBeenCalled();
       expect(alertMock).toHaveBeenCalledWith(
-        expect.stringContaining("Missing 'meta' information"),
+        "Virhe varmuuskopion",
       );
       expect(window.location.reload).not.toHaveBeenCalled();
       alertMock.mockRestore();
@@ -424,7 +424,7 @@ describe("importFullBackup", () => {
       expect(localStorageMock.getAll()).toEqual({});
       expect(window.confirm).not.toHaveBeenCalled();
       expect(alertMock).toHaveBeenCalledWith(
-        expect.stringContaining("Unsupported schema version: 2"),
+        "Virhe varmuuskopion",
       );
       expect(window.location.reload).not.toHaveBeenCalled();
       alertMock.mockRestore();
@@ -448,7 +448,7 @@ describe("importFullBackup", () => {
       expect(localStorageMock.getAll()).toEqual({});
       expect(window.confirm).not.toHaveBeenCalled();
       expect(alertMock).toHaveBeenCalledWith(
-        expect.stringContaining("Missing 'localStorage' data object"),
+        "Virhe varmuuskopion",
       );
       expect(window.location.reload).not.toHaveBeenCalled();
       alertMock.mockRestore();

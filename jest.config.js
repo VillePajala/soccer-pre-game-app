@@ -13,12 +13,15 @@ const customJestConfig = {
   
   testEnvironment: 'jest-environment-jsdom',
   moduleNameMapper: {
+    '^@/i18n$': '<rootDir>/src/__mocks__/i18n.ts',
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@supabase/supabase-js$': '<rootDir>/src/__mocks__/@supabase/supabase-js.ts',
     '^@supabase/ssr$': '<rootDir>/src/__mocks__/@supabase/ssr.ts',
     '^next/headers$': '<rootDir>/src/__mocks__/next/headers.ts',
     '^../lib/supabase$': '<rootDir>/src/__mocks__/lib/supabase.ts',
     '^../../lib/supabase$': '<rootDir>/src/__mocks__/lib/supabase.ts',
+    '^i18next$': '<rootDir>/src/__mocks__/i18n.ts',
+    '^react-i18next$': '<rootDir>/src/__mocks__/react-i18next.ts',
   },
   testPathIgnorePatterns: [
     '/node_modules/',
