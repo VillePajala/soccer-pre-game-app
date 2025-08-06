@@ -362,9 +362,9 @@ export class SupabaseProvider implements IStorageProvider {
           console.error('[SupabaseProvider] Tournament save error:', {
             error,
             supabaseTournament,
-            errorDetails: (error as any).details,
+            errorDetails: (error as { details?: string }).details,
             errorMessage: error.message,
-            errorCode: (error as any).code
+            errorCode: (error as { code?: string }).code
           });
           throw new NetworkError('supabase', 'saveTournament', error);
         }
@@ -448,7 +448,7 @@ export class SupabaseProvider implements IStorageProvider {
         .single();
 
       if (error) {
-        const errorCode = (error as any).code;
+        const errorCode = (error as { code?: string }).code;
         if (errorCode === 'PGRST116') {
           // No settings found, return null
           return null;

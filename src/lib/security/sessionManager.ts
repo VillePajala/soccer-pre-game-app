@@ -437,9 +437,9 @@ export class SessionManager {
         if (upsertError) {
           logger.error('Failed to save device to database:', {
             message: upsertError.message,
-            code: (upsertError as any).code,
-            details: (upsertError as any).details,
-            hint: (upsertError as any).hint,
+            code: (upsertError as { code?: string }).code,
+            details: (upsertError as { details?: string }).details,
+            hint: (upsertError as { hint?: string }).hint,
             user_id: user.id,
             settings_size: JSON.stringify(updatedSettings).length
           });

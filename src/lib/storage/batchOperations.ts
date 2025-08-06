@@ -85,7 +85,7 @@ export class BatchOperationManager {
             .upsert(gameData)
             .select()
             .single()
-            .then(({ data: result, error }: { data: Record<string, unknown> | null; error: any }) => {
+            .then(({ data: result, error }: { data: Record<string, unknown> | null; error: { message: string; code?: string } | null }) => {
               if (error) throw error;
               results.game = result || {};
               return result || {};
@@ -165,7 +165,7 @@ export class BatchOperationManager {
             .upsert(settingsData)
             .select()
             .single()
-            .then(({ data: result, error }: { data: Record<string, unknown> | null; error: any }) => {
+            .then(({ data: result, error }: { data: Record<string, unknown> | null; error: { message: string; code?: string } | null }) => {
               if (error) throw error;
               results.settings = result ? fromSupabase.appSettings(result as unknown as DbAppSettings) : {};
               return result || {};

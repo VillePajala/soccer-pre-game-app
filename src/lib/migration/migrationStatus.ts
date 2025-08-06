@@ -51,7 +51,7 @@ export async function checkMigrationStatus(userId: string): Promise<MigrationSta
     if (error) {
       // PGRST116 = no rows returned (expected when user hasn't migrated)
       // 42P01 = table does not exist (expected if migration_status table not created yet)
-      const errorCode = (error as any).code;
+          const errorCode = (error as { code?: string }).code;
       if (errorCode !== 'PGRST116' && errorCode !== '42P01') {
         console.warn('Migration status check warning:', errorCode, error.message);
       }
@@ -116,7 +116,7 @@ export async function updateMigrationStatus(
   if (error) {
     console.error('Error updating migration status:', error.message || 'Unknown error', error);
     // Don't throw if table doesn't exist - migration can continue
-    const errorCode = (error as any).code;
+        const errorCode = (error as { code?: string }).code;
     if (errorCode !== '42P01') {
       throw error;
     }

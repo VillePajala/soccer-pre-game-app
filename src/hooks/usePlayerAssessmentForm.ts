@@ -830,7 +830,12 @@ export function usePlayerAssessmentForm(
     const result: Record<string, PlayerAssessment> = {};
     
     Object.entries(assessments).forEach(([playerId, assessment]) => {
-      const typedAssessment = assessment as any;
+      const typedAssessment = assessment as {
+        overall: number;
+        sliders: AssessmentSliders;
+        notes: string;
+        isValid: boolean;
+      };
       if (typedAssessment.isValid) {
         result[playerId] = {
           overall: typedAssessment.overall,
@@ -861,7 +866,10 @@ export function usePlayerAssessmentForm(
       
       // Reset any pending saving states to prevent stale state updates
       const currentAssessments = form.values.assessments;
-      const hasAnySaving = Object.values(currentAssessments).some(assessment => (assessment as any).isSaving);
+      const hasAnySaving = Object.values(currentAssessments).some(assessment => {
+        const typedAssessment = assessment as { isSaving?: boolean };
+        return typedAssessment.isSaving;
+      });
       
       if (hasAnySaving) {
         const resetAssessments = { ...currentAssessments };
