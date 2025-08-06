@@ -14,6 +14,7 @@ const customJestConfig = {
   testEnvironment: 'jest-environment-jsdom',
   moduleNameMapper: {
     '^@/i18n$': '<rootDir>/src/__mocks__/i18n.ts',
+    '^@/utils/logger$': '<rootDir>/src/utils/__mocks__/logger.ts',
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@supabase/supabase-js$': '<rootDir>/src/__mocks__/@supabase/supabase-js.ts',
     '^@supabase/ssr$': '<rootDir>/src/__mocks__/@supabase/ssr.ts',
