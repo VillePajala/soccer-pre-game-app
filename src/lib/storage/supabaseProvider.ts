@@ -362,9 +362,9 @@ export class SupabaseProvider implements IStorageProvider {
           console.error('[SupabaseProvider] Tournament save error:', {
             error,
             supabaseTournament,
-            errorDetails: error.details,
+            errorDetails: (error as any).details,
             errorMessage: error.message,
-            errorCode: error.code
+            errorCode: (error as any).code
           });
           throw new NetworkError('supabase', 'saveTournament', error);
         }
@@ -472,7 +472,7 @@ export class SupabaseProvider implements IStorageProvider {
 
       const { data, error } = await supabase
         .from('app_settings')
-        .upsert(supabaseSettings, { onConflict: 'user_id' })
+        .upsert(supabaseSettings)
         .select()
         .single();
 
@@ -587,7 +587,7 @@ export class SupabaseProvider implements IStorageProvider {
         console.log(`[SUPABASE] Upserting existing game: ${supabaseGame.id}`);
         const { data, error } = await supabase
           .from('games')
-          .upsert(supabaseGame, { onConflict: 'id' })
+          .upsert(supabaseGame)
           .select()
           .single();
           

@@ -477,10 +477,11 @@ export function createConditionalValidator(
         if (rule.type === 'async' && rule.validator) {
           isValid = await rule.validator(value, formValues);
         } else if (rule.validator) {
-          isValid = rule.validator(value, formValues);
+          const result = rule.validator(value, formValues);
+          isValid = result instanceof Promise ? await result : result;
         } else {
           // Handle built-in rule types
-          isValid = await validateBuiltInRule(value, rule, formValues);
+          isValid = await validateBuiltInRule(value, rule);
         }
         
         if (!isValid) {

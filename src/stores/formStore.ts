@@ -815,11 +815,11 @@ export const useFormStore = create<FormStoreState>()(
             return { ...state, forms: cleanedForms };
           });
         },
-      }),
-      {
-        name: 'form-store',
-      }
-    )
+      })
+    ),
+    {
+      name: 'form-store',
+    }
   )
 );
 

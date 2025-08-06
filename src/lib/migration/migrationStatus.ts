@@ -111,7 +111,7 @@ export async function updateMigrationStatus(
 
   const { error } = await supabase
     .from('migration_status')
-    .upsert(supabaseUpdates, { onConflict: 'user_id' });
+    .upsert(supabaseUpdates);
 
   if (error) {
     console.error('Error updating migration status:', error.message || 'Unknown error', error);

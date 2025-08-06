@@ -346,7 +346,7 @@ export class CompressionManager {
     try {
       let query = supabase
         .from(table)
-        .select(fields.join(', '), { count: 'estimated' })
+        .select(fields.join(', '))
         .eq('user_id', userId);
 
       // Apply filters
