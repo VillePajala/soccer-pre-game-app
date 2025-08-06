@@ -206,9 +206,9 @@ describe('Migration Status (Actual Implementation)', () => {
           user_id: mockUserId,
           migration_started: true,
           migration_progress: 50,
-          last_migration_attempt: '2024-01-01T12:00:00Z'
-        }),
-        { onConflict: 'user_id' }
+          last_migration_attempt: '2024-01-01T12:00:00Z',
+          updated_at: expect.any(String)
+        })
       );
     });
 

@@ -34,25 +34,24 @@ describe('resetAllSupabaseData', () => {
   });
 
   it('should successfully reset all data when user is authenticated', async () => {
-    // Mock count queries
-    const mockCounts = {
-      games: { count: 5 },
-      tournaments: { count: 2 },
-      seasons: { count: 3 },
-      players: { count: 10 },
-      app_settings: { count: 1 }
+    // Mock data queries - the actual implementation uses select('*').eq().length to count
+    const mockData = {
+      games: Array.from({ length: 5 }, (_, i) => ({ id: `game${i}`, user_id: 'user123' })),
+      tournaments: Array.from({ length: 2 }, (_, i) => ({ id: `tournament${i}`, user_id: 'user123' })),
+      seasons: Array.from({ length: 3 }, (_, i) => ({ id: `season${i}`, user_id: 'user123' })),
+      players: Array.from({ length: 10 }, (_, i) => ({ id: `player${i}`, user_id: 'user123' })),
+      app_settings: Array.from({ length: 1 }, (_, i) => ({ id: `setting${i}`, user_id: 'user123' }))
     };
 
     mockSupabase.from = jest.fn().mockImplementation((table) => {
       const chain = {
         select: jest.fn().mockReturnThis(),
         delete: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockImplementation(() => {
+        eq: jest.fn().mockImplementation((column: string, value: string) => {
           if (chain.select.mock.calls.length > 0) {
-            // This is a count query
+            // This is a select query for counting
             return Promise.resolve({
-              count: mockCounts[table as keyof typeof mockCounts]?.count || 0,
-              data: null,
+              data: mockData[table as keyof typeof mockData] || [],
               error: null
             });
           } else {

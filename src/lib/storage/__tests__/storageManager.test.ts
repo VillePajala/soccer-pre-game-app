@@ -132,7 +132,7 @@ describe('StorageManager', () => {
       expect(result[0].name).toBe('Test Player');
     });
 
-    it('should fallback to localStorage when supabase fails with AuthenticationError', async () => {
+    it('should return empty array for getPlayers when supabase fails with AuthenticationError (sign out handling)', async () => {
       const mockError = new AuthenticationError('supabase', 'getPlayers');
       mockSupabaseProvider.getPlayers.mockRejectedValue(mockError);
       mockLocalProvider.getPlayers.mockResolvedValue([]);
@@ -140,7 +140,8 @@ describe('StorageManager', () => {
       const result = await storageManager.getPlayers();
       
       expect(mockSupabaseProvider.getPlayers).toHaveBeenCalled();
-      expect(mockLocalProvider.getPlayers).toHaveBeenCalled();
+      // During sign out, localStorage fallback is NOT called - it returns defaults immediately
+      expect(mockLocalProvider.getPlayers).not.toHaveBeenCalled();
       expect(result).toEqual([]);
     });
 

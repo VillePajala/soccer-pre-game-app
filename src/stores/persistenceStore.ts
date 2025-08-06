@@ -24,9 +24,9 @@ import { authAwareStorageManager as storageManager } from '@/lib/storage';
 import logger from '@/utils/logger';
 import { storageServiceProvider } from '@/services/StorageServiceProvider';
 // 🔧 ATOMIC TRANSACTION FIX: Import transaction manager for multi-step operations
-import { transactionManager, createAsyncOperation, createStateMutation } from '@/services/TransactionManager';
+import { transactionManager, createAsyncOperation, createStateMutation, TransactionOperation } from '@/services/TransactionManager';
 // 🔧 RUNTIME VALIDATION FIX: Import runtime validator for type safety
-import { typeGuards, validateExternalData } from '@/services/RuntimeValidator';
+import { typeGuards, validateExternalData, ValidationResult } from '@/services/RuntimeValidator';
 
 // App settings interface
 export interface AppSettings {
@@ -174,6 +174,7 @@ export interface PersistenceStore {
     localResult: { data: T | null; timestamp?: number; error?: Error },
     key: string
   ) => Promise<T | null>;
+  _validateStorageData: <T>(key: string, data: T, defaultValue?: T) => ValidationResult<T>;
   
   // Utility actions
   clearAllData: () => Promise<boolean>;
@@ -801,9 +802,9 @@ export const usePersistenceStore = create<PersistenceStore>()(
           try {
             // Determine validation strategy based on key patterns
             if (key.startsWith('form_')) {
-              return validateExternalData(data, typeGuards.isFormData, `form data for ${key}`);
+              return validateExternalData(data, typeGuards.isFormData, `form data for ${key}`) as ValidationResult<T>;
             } else if (key.includes('savedGames') || key.includes('games')) {
-              return validateExternalData(data, typeGuards.isSavedGamesCollection, `saved games for ${key}`);
+              return validateExternalData(data, typeGuards.isSavedGamesCollection, `saved games for ${key}`) as ValidationResult<T>;
             } else if (key.includes('player') || key.includes('roster')) {
               if (Array.isArray(data)) {
                 const isValidArray = (data as unknown[]).every(item => typeGuards.isPlayer(item));
@@ -812,9 +813,9 @@ export const usePersistenceStore = create<PersistenceStore>()(
                   data: isValidArray ? data : undefined,
                   errors: isValidArray ? [] : ['Invalid player array data'],
                   sanitized: isValidArray ? data : (defaultValue ?? null) as T,
-                };
+                } as ValidationResult<T>;
               } else {
-                return validateExternalData(data, typeGuards.isPlayer, `player data for ${key}`);
+                return validateExternalData(data, typeGuards.isPlayer, `player data for ${key}`) as ValidationResult<T>;
               }
             } else if (key.includes('season')) {
               if (Array.isArray(data)) {
@@ -824,9 +825,9 @@ export const usePersistenceStore = create<PersistenceStore>()(
                   data: isValidArray ? data : undefined,
                   errors: isValidArray ? [] : ['Invalid season array data'],
                   sanitized: isValidArray ? data : (defaultValue ?? null) as T,
-                };
+                } as ValidationResult<T>;
               } else {
-                return validateExternalData(data, typeGuards.isSeason, `season data for ${key}`);
+                return validateExternalData(data, typeGuards.isSeason, `season data for ${key}`) as ValidationResult<T>;
               }
             } else if (key.includes('tournament')) {
               if (Array.isArray(data)) {
@@ -836,15 +837,15 @@ export const usePersistenceStore = create<PersistenceStore>()(
                   data: isValidArray ? data : undefined,
                   errors: isValidArray ? [] : ['Invalid tournament array data'],
                   sanitized: isValidArray ? data : (defaultValue ?? null) as T,
-                };
+                } as ValidationResult<T>;
               } else {
-                return validateExternalData(data, typeGuards.isTournament, `tournament data for ${key}`);
+                return validateExternalData(data, typeGuards.isTournament, `tournament data for ${key}`) as ValidationResult<T>;
               }
             } else if (key.includes('migration') || key.includes('flags')) {
-              return validateExternalData(data, typeGuards.isMigrationFlags, `migration flags for ${key}`);
+              return validateExternalData(data, typeGuards.isMigrationFlags, `migration flags for ${key}`) as ValidationResult<T>;
             } else if (key.includes('settings')) {
               // Basic object validation for settings
-              return validateExternalData(data, typeGuards.isObject, `settings for ${key}`);
+              return validateExternalData(data, typeGuards.isObject, `settings for ${key}`) as ValidationResult<T>;
             } else {
               // Generic validation - just check if it's not null/undefined
               return {
@@ -852,7 +853,7 @@ export const usePersistenceStore = create<PersistenceStore>()(
                 data: data,
                 errors: data === null || data === undefined ? ['Data is null or undefined'] : [],
                 sanitized: data ?? (defaultValue ?? null) as T,
-              };
+              } as ValidationResult<T>;
             }
           } catch (error) {
             logger.error(`[PersistenceStore] Validation error for '${key}':`, error);
@@ -861,7 +862,7 @@ export const usePersistenceStore = create<PersistenceStore>()(
               data: undefined,
               errors: [error instanceof Error ? error.message : 'Unknown validation error'],
               sanitized: (defaultValue ?? null) as T,
-            };
+            } as ValidationResult<T>;
           }
         },
 

@@ -3,7 +3,9 @@ import { renderHook, act } from '@testing-library/react';
 import { useGameSettingsForm, GameSettingsFormOptions, convertPropsToFormValues, extractFairPlayCardPlayer } from '../useGameSettingsForm';
 
 // Mock dependencies
-  });
+jest.mock('@/utils/logger');
+
+describe('useGameSettingsForm', () => {
 
   describe('Basic Form Operations', () => {
     it('should initialize with default values', () => {

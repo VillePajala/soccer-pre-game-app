@@ -3,7 +3,9 @@ import { renderHook, act } from '@testing-library/react';
 import { useNewGameSetupForm, NewGameSetupFormOptions, convertPropsToFormValues, normalizeRosterIds } from '../useNewGameSetupForm';
 
 // Mock dependencies
-  });
+jest.mock('@/utils/logger');
+
+describe('useNewGameSetupForm', () => {
 
   describe('Basic Form Operations', () => {
     it('should initialize with default values', () => {

@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "refactor(migration): remove onConflict option from upsert calls"
+  "notes": "refactor(services): improve component and memory management"
 }
