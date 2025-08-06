@@ -414,9 +414,9 @@ export function useForm<T extends Record<string, FieldValue> = Record<string, Fi
 // ============================================================================
 
 function useLegacyForm<T extends Record<string, FieldValue> = Record<string, FieldValue>>(
-  //   formId: string,
-  //   schema: FormSchema,
-  //   options: UseFormOptions
+  _formId: string,
+  _schema: FormSchema,
+  _options: UseFormOptions
 ): UseFormResult<T> {
   logger.debug('[useForm] Using legacy implementation');
   
@@ -559,9 +559,9 @@ export function useFormField(
 }
 
 function useLegacyFormField(
-  //   formId: string,
-  //   fieldName: string,
-  //   options: UseFormFieldOptions
+  _formId: string,
+  _fieldName: string,
+  _options: UseFormFieldOptions
 ): UseFormFieldResult {
   return {
     value: '',

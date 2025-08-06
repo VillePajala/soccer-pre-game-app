@@ -14,7 +14,7 @@
  */
 
 import { useMemo, useCallback } from 'react';
-import { useForm } from '@/hooks/useForm';
+import { useForm, UseFormResult } from '@/hooks/useForm';
 import { FormSchema } from '@/stores/formStore';
 import { validationRules } from '@/utils/formValidation';
 // Removed useMigrationSafety - now using pure Zustand implementation
@@ -423,12 +423,12 @@ export function useNewGameSetupForm(
   const schema = useMemo(() => createNewGameSetupSchema(options), [options]);
   
   // Use modern FormStore implementation with Zustand
-  const form = useForm<NewGameSetupFormValues>(schema, {
-    onSubmit: options.onSubmit,
-    onFieldChange: options.onFieldChange,
+  const form = useForm(schema, {
+    onSubmit: options.onSubmit as ((values: Record<string, unknown>) => void | Promise<void>) | undefined,
+    onFieldChange: options.onFieldChange as ((fieldName: string, value: unknown) => void) | undefined,
     persistForm: options.persistForm,
     validateOnMount: false,
-  });
+  }) as unknown as UseFormResult<NewGameSetupFormValues>;
   
   // ============================================================================
   // Specialized Field Handlers
@@ -697,7 +697,7 @@ export function useNewGameSetupForm(
     // Form actions
     setFieldValue: form.setFieldValue,
     setFieldValues: form.setFieldValues,
-    validateForm: form.validate,
+    validateForm: async () => { await form.validate(); },
     submitForm: form.submit,
     resetForm: form.reset,
     clearForm: form.clear,

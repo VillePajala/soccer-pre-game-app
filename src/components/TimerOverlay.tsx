@@ -8,7 +8,7 @@ import { formatTime } from '@/utils/time';
 import logger from '@/utils/logger';
 
 
-interface TimerOverlayProps {
+export interface TimerOverlayProps {
   timeElapsedInSeconds: number;
   subAlertLevel: 'none' | 'warning' | 'due';
   onSubstitutionMade: () => void;

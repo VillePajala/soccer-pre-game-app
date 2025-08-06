@@ -14,7 +14,7 @@
  */
 
 import { useMemo, useCallback, useEffect } from 'react';
-import { useForm } from '@/hooks/useForm';
+import { useForm, UseFormResult } from '@/hooks/useForm';
 import { FormSchema } from '@/stores/formStore';
 import { validationRules as _validationRules } from '@/utils/formValidation';
 import { useMigrationSafety } from '@/hooks/useMigrationSafety';
@@ -338,16 +338,16 @@ export function useRosterSettingsForm(
   
   // Legacy fallback
   if (shouldUseLegacy) {
-    return useLegacyRosterSettingsForm(options);
+    return _useLegacyRosterSettingsForm(options);
   }
   
   // Use FormStore with schema
-  const form = useForm<RosterSettingsFormValues>(schema, {
-    onSubmit: options.onSubmit,
-    onFieldChange: options.onFieldChange,
+  const form = useForm(schema, {
+    onSubmit: options.onSubmit as ((values: Record<string, unknown>) => void | Promise<void>) | undefined,
+    onFieldChange: options.onFieldChange as ((fieldName: string, value: unknown) => void) | undefined,
     persistForm: options.persistForm,
     validateOnMount: false,
-  });
+  }) as unknown as UseFormResult<RosterSettingsFormValues>;
   
   // ============================================================================
   // Team Management Handlers
@@ -601,7 +601,7 @@ export function useRosterSettingsForm(
     const isSelected = currentSelection.includes(playerId);
     
     const newSelection = isSelected
-      ? currentSelection.filter(id => id !== playerId)
+      ? currentSelection.filter((id: string) => id !== playerId)
       : [...currentSelection, playerId];
     
     form.setFieldValue('selectedPlayerIds', newSelection);
@@ -653,7 +653,7 @@ export function useRosterSettingsForm(
     const currentSelection = form.values.selectedPlayerIds;
     if (currentSelection.includes(playerId)) {
       form.setFieldValue('selectedPlayerIds', 
-        currentSelection.filter(id => id !== playerId)
+        currentSelection.filter((id: string) => id !== playerId)
       );
     }
     
@@ -732,7 +732,7 @@ export function useRosterSettingsForm(
     // Form actions
     setFieldValue: form.setFieldValue,
     setFieldValues: form.setFieldValues,
-    validateForm: form.validate,
+    validateForm: async () => { await form.validate(); },
     submitForm: form.submit,
     resetForm: form.reset,
     clearForm: form.clear,

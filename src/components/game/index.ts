@@ -9,13 +9,13 @@
  */
 
 // Migration wrappers (default exports for seamless migration)
-export { GameStateProvider, useGameStateContext } from './GameStateProvider.migration';
-export { GameControls } from './GameControls.migration';
+export { GameStateProvider, useGameStateContext } from './GameStateProvider';
+export { GameControls } from './GameControls';
 
 // Other game components
 export { GameView } from './GameView';
 export { ModalManager } from './ModalManager';
-export { HomePage } from './HomePage';
+export { default as HomePage } from '../HomePage';
 
 // Legacy components (available for direct import if needed)
 export { GameStateProvider as LegacyGameStateProvider } from './GameStateProvider';

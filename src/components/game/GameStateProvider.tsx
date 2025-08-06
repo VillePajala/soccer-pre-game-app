@@ -211,7 +211,7 @@ export function GameStateProvider({
       setOpponents, 
       setDrawings,
       setSelectedPlayerIds: (ids: string[]) => {
-        dispatch({ type: 'SET_SELECTED_PLAYER_IDS', payload: ids });
+        dispatchGameSession({ type: 'SET_SELECTED_PLAYER_IDS', payload: ids });
       },
     } as GameStateContextType & Record<string, unknown>}>
       {children}

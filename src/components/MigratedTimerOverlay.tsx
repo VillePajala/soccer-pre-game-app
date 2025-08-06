@@ -12,7 +12,7 @@ import {
   useGameScore 
 } from '@/stores/gameStore';
 // import { useUIStore } from '@/stores/uiStore'; // TODO: Use when implementing UI state
-import type { TimerOverlayProps } from './TimerOverlay.migration';
+import type { TimerOverlayProps } from './TimerOverlay';
 
 /**
  * Migrated TimerOverlay component that uses Zustand stores

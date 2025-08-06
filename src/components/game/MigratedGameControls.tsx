@@ -10,7 +10,7 @@ import {
   useGameView,
   useUIStore
 } from '@/stores/uiStore';
-import type { ExtendedGameControlsProps } from './GameControls.migration';
+import type { ExtendedGameControlsProps } from './GameControls';
 
 /**
  * Migrated GameControls component that uses Zustand stores
@@ -225,7 +225,7 @@ export const MigratedGameControls = React.memo<ExtendedGameControlsProps>(({
   };
   
   const handleOpenRosterModal = () => {
-    uiStore.openModal('addPlayerModal');
+    uiStore.openModal('rosterSettingsModal');
     if (onOpenRosterModal || onOpenRoster) {
       (onOpenRosterModal || onOpenRoster)?.();
     }
@@ -246,7 +246,7 @@ export const MigratedGameControls = React.memo<ExtendedGameControlsProps>(({
   };
   
   const handleToggleInstructionsModal = () => {
-    uiStore.toggleModal('helpModal');
+    uiStore.toggleModal('instructionsModal');
     if (onToggleInstructionsModal) {
       onToggleInstructionsModal();
     }
@@ -342,7 +342,7 @@ export const MigratedGameControls = React.memo<ExtendedGameControlsProps>(({
         onSignOut={onSignOut || (() => {})}
         
         // Player Assessment Modal
-        onOpenPlayerAssessmentModal={() => uiStore.openModal('playerDetailsModal')}
+        onOpenPlayerAssessmentModal={() => uiStore.openModal('playerAssessmentModal')}
       />
     </div>
   );

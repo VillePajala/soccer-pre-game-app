@@ -11,7 +11,7 @@ import { useGameView } from '@/stores/uiStore';
 import { Player, Point, Opponent } from '@/types';
 // import tinycolor from 'tinycolor2'; // TODO: Remove if not needed
 import logger from '@/utils/logger';
-import type { SoccerFieldProps } from './SoccerField.migration';
+import type { SoccerFieldProps } from './SoccerField';
 
 /**
  * Migrated SoccerField component that uses Zustand stores

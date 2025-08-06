@@ -9,7 +9,7 @@ import type { GameEvent } from '@/types'; // Correctly import GameEvent type
 // import Image from 'next/image'; 
 
 // Define props for PlayerBar
-interface PlayerBarProps {
+export interface PlayerBarProps {
   players: Player[];
   onPlayerDragStartFromBar?: (player: Player) => void;
   selectedPlayerIdFromBar?: string | null; 

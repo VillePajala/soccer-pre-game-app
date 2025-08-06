@@ -5,7 +5,7 @@ import ControlBar from '@/components/ControlBar';
 import { GameControlsProps } from '@/types/gameComponents';
 import { useGameStateContext } from './GameStateProvider';
 
-interface ExtendedGameControlsProps extends Partial<GameControlsProps> {
+export interface ExtendedGameControlsProps extends Partial<GameControlsProps> {
   // Additional control state from HomePage
   canUndo?: boolean;
   canRedo?: boolean;

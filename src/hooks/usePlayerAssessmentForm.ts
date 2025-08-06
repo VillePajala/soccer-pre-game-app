@@ -14,7 +14,7 @@
  */
 
 import { useMemo, useCallback, useEffect } from 'react';
-import { useForm } from '@/hooks/useForm';
+import { useForm, UseFormResult } from '@/hooks/useForm';
 import { FormSchema } from '@/stores/formStore';
 import { validationRules as _validationRules } from '@/utils/formValidation';
 import type { PlayerAssessment } from '@/types/playerAssessment';
@@ -311,12 +311,12 @@ export function usePlayerAssessmentForm(
   const schema = useMemo(() => createPlayerAssessmentSchema(options), [options]);
   
   // Use FormStore with schema
-  const form = useForm<PlayerAssessmentFormValues>(schema, {
-    onSubmit: options.onSubmit,
-    onFieldChange: options.onFieldChange,
+  const form = useForm(schema, {
+    onSubmit: options.onSubmit as ((values: Record<string, unknown>) => void | Promise<void>) | undefined,
+    onFieldChange: options.onFieldChange as ((fieldName: string, value: unknown) => void) | undefined,
     persistForm: options.persistForm,
     validateOnMount: false,
-  });
+  }) as unknown as UseFormResult<PlayerAssessmentFormValues>;
   
   // Auto-save timeout refs
   const autoSaveTimeouts = useMemo(() => new Map<string, NodeJS.Timeout>(), []);
@@ -360,7 +360,7 @@ export function usePlayerAssessmentForm(
     scheduleAutoSave(playerId, updatedAssessment);
     
     logger.debug('[PlayerAssessmentForm] Overall rating changed:', playerId, rating);
-  }, [form, scheduleAutoSave]);
+  }, [form]);
   
   const handleSliderChange = useCallback((playerId: string, sliderKey: keyof AssessmentSliders, value: number) => {
     const currentAssessments = form.values.assessments;
@@ -393,7 +393,7 @@ export function usePlayerAssessmentForm(
     scheduleAutoSave(playerId, updatedAssessment);
     
     logger.debug('[PlayerAssessmentForm] Slider changed:', playerId, sliderKey, value);
-  }, [form, scheduleAutoSave]);
+  }, [form]);
   
   const handleNotesChange = useCallback((playerId: string, notes: string) => {
     const currentAssessments = form.values.assessments;
@@ -421,7 +421,7 @@ export function usePlayerAssessmentForm(
     scheduleAutoSave(playerId, updatedAssessment);
     
     logger.debug('[PlayerAssessmentForm] Notes changed:', playerId, notes.length, 'characters');
-  }, [form, scheduleAutoSave]);
+  }, [form]);
   
   const handleToggleExpanded = useCallback((playerId: string) => {
     const currentAssessments = form.values.assessments;
@@ -484,7 +484,7 @@ export function usePlayerAssessmentForm(
         });
         
         // Double-check conditions before save (data may have changed)
-        const latestForm = form.getFormValues?.() || form.values;
+        const latestForm = form.values;
         const latestAssessment = latestForm.assessments[playerId];
         
         if (!latestAssessment?.isValid || !latestAssessment?.hasChanged || !options.onSave) {
@@ -633,7 +633,7 @@ export function usePlayerAssessmentForm(
       
       // Remove from saved IDs
       const currentSavedIds = form.values.savedIds;
-      const newSavedIds = currentSavedIds.filter(id => id !== playerId);
+      const newSavedIds = currentSavedIds.filter((id: string) => id !== playerId);
       
       form.setFieldValues({
         savedIds: newSavedIds,
@@ -830,11 +830,12 @@ export function usePlayerAssessmentForm(
     const result: Record<string, PlayerAssessment> = {};
     
     Object.entries(assessments).forEach(([playerId, assessment]) => {
-      if (assessment.isValid) {
+      const typedAssessment = assessment as any;
+      if (typedAssessment.isValid) {
         result[playerId] = {
-          overall: assessment.overall,
-          sliders: assessment.sliders,
-          notes: assessment.notes,
+          overall: typedAssessment.overall,
+          sliders: typedAssessment.sliders,
+          notes: typedAssessment.notes,
           minutesPlayed: 0, // This would be calculated elsewhere
           createdAt: Date.now(),
           createdBy: 'current-user', // This would come from auth context
@@ -860,7 +861,7 @@ export function usePlayerAssessmentForm(
       
       // Reset any pending saving states to prevent stale state updates
       const currentAssessments = form.values.assessments;
-      const hasAnySaving = Object.values(currentAssessments).some(assessment => assessment.isSaving);
+      const hasAnySaving = Object.values(currentAssessments).some(assessment => (assessment as any).isSaving);
       
       if (hasAnySaving) {
         const resetAssessments = { ...currentAssessments };
@@ -905,7 +906,7 @@ export function usePlayerAssessmentForm(
     // Form actions
     setFieldValue: form.setFieldValue,
     setFieldValues: form.setFieldValues,
-    validateForm: form.validate,
+    validateForm: async () => { await form.validate(); },
     submitForm: form.submit,
     resetForm: form.reset,
     clearForm: form.clear,

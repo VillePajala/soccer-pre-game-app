@@ -7,7 +7,7 @@ import tinycolor from 'tinycolor2';
 import logger from '@/utils/logger';
 
 // Define props for SoccerField
-interface SoccerFieldProps {
+export interface SoccerFieldProps {
   players: Player[];
   opponents: Opponent[];
   drawings: Point[][];

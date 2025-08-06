@@ -10,7 +10,7 @@ import {
 import { useUIStore, useSelectionState } from '@/stores/uiStore';
 import type { Player } from '@/types';
 import Image from 'next/image';
-import type { PlayerBarProps } from './PlayerBar.migration';
+import type { PlayerBarProps } from './PlayerBar';
 
 /**
  * Migrated PlayerBar component that uses Zustand stores

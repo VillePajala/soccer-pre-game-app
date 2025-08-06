@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useGameSession, useGameScore, useGameStore } from '@/stores/gameStore';
-import type { GameInfoBarProps } from './GameInfoBar.migration';
+import type { GameInfoBarProps } from './GameInfoBar';
 
 /**
  * Migrated GameInfoBar component that uses Zustand stores
