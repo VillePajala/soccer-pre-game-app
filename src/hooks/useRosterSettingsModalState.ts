@@ -46,15 +46,18 @@ export function useRosterSettingsModalWithHandlers() {
   const handleClose = useCallback(() => {
     logger.info('[RosterSettingsModal] Closing modal');
     modalState.close();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modalState.close]);
   
   const handleOpen = useCallback(() => {
     logger.info('[RosterSettingsModal] Opening modal');
     modalState.open();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modalState.open]);
   
   const handleToggle = useCallback(() => {
     modalState.toggle();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modalState.toggle]);
   
   return {

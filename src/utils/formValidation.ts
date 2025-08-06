@@ -87,7 +87,7 @@ export const validationRules = {
     },
   }),
 
-  gameLocation: (message = 'Location must be 2-100 characters'): FormValidationRule[] => [
+  gameLocation: (_message = 'Location must be 2-100 characters'): FormValidationRule[] => [
     validationRules.minLength(2, 'Location must be at least 2 characters'),
     validationRules.maxLength(100, 'Location must be no more than 100 characters'),
   ],

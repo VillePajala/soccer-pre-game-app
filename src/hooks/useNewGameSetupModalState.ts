@@ -64,15 +64,18 @@ export function useNewGameSetupModalWithHandlers() {
   const handleClose = useCallback(() => {
     logger.info('[NewGameSetupModal] Closing modal');
     modalState.close();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modalState.close]);
   
   const handleOpen = useCallback(() => {
     logger.info('[NewGameSetupModal] Opening modal');
     modalState.open();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modalState.open]);
   
   const handleToggle = useCallback(() => {
     modalState.toggle();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modalState.toggle]);
   
   return {

@@ -14,7 +14,7 @@
  */
 
 import logger from '@/utils/logger';
-import type { Player, Season, Tournament, AppState, SavedGamesCollection } from '@/types';
+import type { Player, Season, Tournament, SavedGamesCollection } from '@/types';
 
 // Validation result types
 export interface ValidationResult<T = any> {

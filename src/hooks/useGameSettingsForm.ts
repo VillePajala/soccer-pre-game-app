@@ -17,7 +17,7 @@ import { useMemo, useCallback } from 'react';
 import { useForm } from '@/hooks/useForm';
 import { FormSchema } from '@/stores/formStore';
 import { validationRules } from '@/utils/formValidation';
-import { useMigrationSafety } from '@/hooks/useMigrationSafety';
+// Removed useMigrationSafety - now using pure Zustand implementation
 import logger from '@/utils/logger';
 
 // ============================================================================
@@ -368,17 +368,10 @@ function createGameSettingsSchema(options: GameSettingsFormOptions = {}): FormSc
 export function useGameSettingsForm(
   options: GameSettingsFormOptions = {}
 ): UseGameSettingsFormResult {
-  const { shouldUseLegacy } = useMigrationSafety('GameSettingsForm');
-  
   // Create form schema
   const schema = useMemo(() => createGameSettingsSchema(options), [options]);
   
-  // Legacy fallback
-  if (shouldUseLegacy) {
-    return useLegacyGameSettingsForm(options);
-  }
-  
-  // Use FormStore with schema
+  // Use modern FormStore implementation with Zustand
   const form = useForm<GameSettingsFormValues>(schema, {
     onSubmit: options.onSubmit,
     onFieldChange: options.onFieldChange,
@@ -519,7 +512,7 @@ export function useGameSettingsForm(
       logger.error('[GameSettingsForm] Failed to create season:', error);
       form.setFieldError('newSeasonName', 'Failed to create season');
     }
-  }, [form, options.onSeasonCreate]);
+  }, [form, options]);
   
   const handleCreateTournament = useCallback(async () => {
     if (!options.onTournamentCreate) {
@@ -549,7 +542,7 @@ export function useGameSettingsForm(
       logger.error('[GameSettingsForm] Failed to create tournament:', error);
       form.setFieldError('newTournamentName', 'Failed to create tournament');
     }
-  }, [form, options.onTournamentCreate]);
+  }, [form, options]);
   
   // ============================================================================
   // Form State Queries
@@ -622,77 +615,7 @@ export function useGameSettingsForm(
   };
 }
 
-// ============================================================================
-// Legacy Fallback Implementation
-// ============================================================================
-
-function useLegacyGameSettingsForm(
-  options: GameSettingsFormOptions
-): UseGameSettingsFormResult {
-  logger.debug('[GameSettingsForm] Using legacy implementation');
-  
-  // Create a minimal interface for legacy mode
-  // This would integrate with existing useState patterns
-  return {
-    // Form state (empty in legacy mode)
-    values: {} as GameSettingsFormValues,
-    errors: {},
-    touched: {},
-    isSubmitting: false,
-    isValidating: false,
-    isValid: true,
-    isDirty: false,
-    hasErrors: false,
-    
-    // Form actions (no-ops in legacy mode)
-    setFieldValue: () => {},
-    setFieldValues: () => {},
-    validateForm: async () => {},
-    submitForm: async () => {},
-    resetForm: () => {},
-    clearForm: () => {},
-    
-    // Field helpers (empty in legacy mode)
-    getField: () => ({
-      value: '',
-      error: null,
-      touched: false,
-      onChange: () => {},
-      onBlur: () => {},
-    }),
-    
-    // Specialized handlers (no-ops in legacy mode)
-    handleTeamNameChange: () => {},
-    handleOpponentNameChange: () => {},
-    handleGameDateChange: () => {},
-    handleGameTimeChange: () => {},
-    handleGameLocationChange: () => {},
-    handleLinkTypeChange: () => {},
-    handleSeasonChange: () => {},
-    handleTournamentChange: () => {},
-    handleAgeGroupChange: () => {},
-    handleTournamentLevelChange: () => {},
-    handleHomeOrAwayChange: () => {},
-    handleNumPeriodsChange: () => {},
-    handlePeriodDurationChange: () => {},
-    handleDemandFactorChange: () => {},
-    handleIsPlayedChange: () => {},
-    handleSelectedPlayersChange: () => {},
-    handleFairPlayCardChange: () => {},
-    handleGameNotesChange: () => {},
-    
-    // Dynamic creation (no-ops in legacy mode)
-    handleCreateSeason: async () => {},
-    handleCreateTournament: async () => {},
-    
-    // Form state queries (defaults in legacy mode)
-    hasFormChanged: () => false,
-    getFormData: () => ({} as GameSettingsFormValues),
-    
-    // Migration status
-    migrationStatus: 'legacy',
-  };
-}
+// Legacy implementation removed - now using pure Zustand implementation
 
 // ============================================================================
 // Utility Functions

@@ -379,8 +379,8 @@ class MemoryManager {
   } {
     return {
       timers: Array.from(this.timers.values()),
-      listeners: Array.from(this.listeners.values()).map(({ element, listener, ...rest }) => rest),
-      subscriptions: Array.from(this.subscriptions.values()).map(({ unsubscribe, ...rest }) => rest),
+      listeners: Array.from(this.listeners.values()).map(({ element: _element, listener: _listener, ...rest }) => rest),
+      subscriptions: Array.from(this.subscriptions.values()).map(({ unsubscribe: _unsubscribe, ...rest }) => rest),
     };
   }
 

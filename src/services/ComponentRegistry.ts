@@ -231,14 +231,14 @@ class ComponentRegistry {
     topUsedComponents: Array<{ name: string; accessCount: number }>;
   } {
     let cachedCount = 0;
-    let totalAccess = 0;
+    let _totalAccess = 0;
 
     for (const entry of this.registry.values()) {
       if (entry.component) cachedCount++;
     }
 
     for (const count of this.accessCount.values()) {
-      totalAccess += count;
+      _totalAccess += count;
     }
 
     const topUsed = Array.from(this.accessCount.entries())

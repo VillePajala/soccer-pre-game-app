@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "refactor(migration): update release notes and clean up code"
+  "notes": "fix: Complete state management migration with CI compliance"
 }

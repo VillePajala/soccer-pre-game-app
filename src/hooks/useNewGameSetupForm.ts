@@ -13,11 +13,11 @@
  * - Provide backward compatibility during transition
  */
 
-import { useMemo, useCallback, useEffect } from 'react';
+import { useMemo, useCallback } from 'react';
 import { useForm } from '@/hooks/useForm';
 import { FormSchema } from '@/stores/formStore';
 import { validationRules } from '@/utils/formValidation';
-import { useMigrationSafety } from '@/hooks/useMigrationSafety';
+// Removed useMigrationSafety - now using pure Zustand implementation
 import { AGE_GROUPS, LEVELS } from '@/config/gameOptions';
 import logger from '@/utils/logger';
 
@@ -419,17 +419,10 @@ function createNewGameSetupSchema(options: NewGameSetupFormOptions = {}): FormSc
 export function useNewGameSetupForm(
   options: NewGameSetupFormOptions = {}
 ): UseNewGameSetupFormResult {
-  const { shouldUseLegacy } = useMigrationSafety('NewGameSetupForm');
-  
   // Create form schema
   const schema = useMemo(() => createNewGameSetupSchema(options), [options]);
   
-  // Legacy fallback
-  if (shouldUseLegacy) {
-    return useLegacyNewGameSetupForm(options);
-  }
-  
-  // Use FormStore with schema
+  // Use modern FormStore implementation with Zustand
   const form = useForm<NewGameSetupFormValues>(schema, {
     onSubmit: options.onSubmit,
     onFieldChange: options.onFieldChange,
@@ -745,111 +738,4 @@ export function useNewGameSetupForm(
   };
 }
 
-// ============================================================================
-// Legacy Fallback Implementation
-// ============================================================================
-
-function useLegacyNewGameSetupForm(
-  options: NewGameSetupFormOptions
-): UseNewGameSetupFormResult {
-  logger.debug('[NewGameSetupForm] Using legacy implementation');
-  
-  // Create a minimal interface for legacy mode
-  // This would integrate with existing useState patterns
-  return {
-    // Form state (empty in legacy mode)
-    values: {} as NewGameSetupFormValues,
-    errors: {},
-    touched: {},
-    isSubmitting: false,
-    isValidating: false,
-    isValid: true,
-    isDirty: false,
-    hasErrors: false,
-    
-    // Form actions (no-ops in legacy mode)
-    setFieldValue: () => {},
-    setFieldValues: () => {},
-    validateForm: async () => {},
-    submitForm: async () => {},
-    resetForm: () => {},
-    clearForm: () => {},
-    
-    // Field helpers (empty in legacy mode)
-    getField: () => ({
-      value: '',
-      error: null,
-      touched: false,
-      onChange: () => {},
-      onBlur: () => {},
-    }),
-    
-    // Specialized handlers (no-ops in legacy mode)
-    handleTeamNameChange: () => {},
-    handleOpponentNameChange: () => {},
-    handleGameDateChange: () => {},
-    handleGameTimeChange: () => {},
-    handleGameLocationChange: () => {},
-    handleSeasonChange: () => {},
-    handleTournamentChange: () => {},
-    handleAgeGroupChange: () => {},
-    handleTournamentLevelChange: () => {},
-    handleHomeOrAwayChange: () => {},
-    handleNumPeriodsChange: () => {},
-    handlePeriodDurationChange: () => {},
-    handleDemandFactorChange: () => {},
-    handleIsPlayedChange: () => {},
-    handleSelectedPlayersChange: () => {},
-    handleGameHourChange: () => {},
-    handleGameMinuteChange: () => {},
-    
-    // Dynamic creation (no-ops in legacy mode)
-    handleCreateSeason: async () => {},
-    handleCreateTournament: async () => {},
-    
-    // Form state queries (defaults in legacy mode)
-    hasFormChanged: () => false,
-    getFormData: () => ({} as NewGameSetupFormValues),
-    getGameTime: () => '',
-    
-    // Migration status
-    migrationStatus: 'legacy',
-  };
-}
-
-// ============================================================================
-// Utility Functions
-// ============================================================================
-
-/**
- * Convert current NewGameSetupModal props to form values
- */
-export function convertPropsToFormValues(props: any): Partial<NewGameSetupFormValues> {
-  return {
-    teamName: props.teamName || '',
-    opponentName: props.opponentName || '',
-    gameDate: props.gameDate || '',
-    gameTime: props.gameTime || '',
-    gameLocation: props.gameLocation || '',
-    seasonId: props.seasonId || null,
-    tournamentId: props.tournamentId || null,
-    ageGroup: props.ageGroup || '',
-    tournamentLevel: props.tournamentLevel || '',
-    homeOrAway: props.homeOrAway || 'home',
-    numPeriods: props.numPeriods || 2,
-    periodDurationMinutes: props.periodDurationMinutes || 10,
-    demandFactor: props.demandFactor || 1.0,
-    isPlayed: props.isPlayed !== undefined ? props.isPlayed : true,
-    selectedPlayerIds: props.selectedPlayerIds || [],
-    gameHour: props.gameHour || '',
-    gameMinute: props.gameMinute || '',
-  };
-}
-
-/**
- * Normalize roster IDs from season/tournament data
- */
-export function normalizeRosterIds(roster: string[] | undefined): string[] {
-  if (!Array.isArray(roster)) return [];
-  return roster.filter(id => typeof id === 'string' && id.length > 0);
-}
+// Legacy implementation removed - now using pure Zustand implementation
