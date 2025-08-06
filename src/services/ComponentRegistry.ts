@@ -304,11 +304,16 @@ const LoadingFallback: React.FC<LoadingComponentProps> = ({
 };
 
 // Error boundary wrapper for components
+interface ErrorBoundaryWrapperProps {
+  componentName: string;
+  children?: ReactNode;
+}
+
 class ErrorBoundaryWrapper extends React.Component<
-  { children: ReactNode; componentName: string },
+  ErrorBoundaryWrapperProps,
   { hasError: boolean; error?: Error }
 > {
-  constructor(props: { children: ReactNode; componentName: string }) {
+  constructor(props: ErrorBoundaryWrapperProps) {
     super(props);
     this.state = { hasError: false };
   }
