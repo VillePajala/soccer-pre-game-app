@@ -6,10 +6,15 @@ import {
   useGoalLogModalSelector 
 } from '../useGoalLogModalState';
 import { useUIStore } from '@/stores/uiStore';
-// import { useModalContext } from '@/contexts/{}';
 
 // Mock dependencies
+jest.mock('@/utils/logger');
+jest.mock('@/stores/uiStore');
 
+const mockUseMigrationSafety = jest.fn();
+const mockUseModalContext = jest.fn();
+
+describe('useGoalLogModalState', () => {
   describe('Zustand Implementation', () => {
     beforeEach(() => {
       mockUseMigrationSafety.mockReturnValue({

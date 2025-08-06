@@ -5,8 +5,9 @@ import { FormSchema } from '@/stores/formStore';
 import { validationRules } from '@/utils/formValidation';
 
 // Mock dependencies
-  });
+jest.mock('@/utils/logger');
 
+describe('useForm Hook Tests', () => {
   describe('Basic Form Operations', () => {
     const testSchema: FormSchema = {
       formId: 'testForm',

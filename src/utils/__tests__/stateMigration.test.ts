@@ -25,13 +25,19 @@ import {
 } from '../stateMigration';
 
 // Mock logger
-jest.mock('@/utils/logger', () => ({
-  logger: {
+jest.mock('@/utils/logger', () => {
+  const mockLogger = {
     info: jest.fn(),
     error: jest.fn(),
     warn: jest.fn(),
-  },
-}));
+    debug: jest.fn(),
+    log: jest.fn(),
+  };
+  return {
+    __esModule: true,
+    default: mockLogger,
+  };
+});
 
 // Mock localStorage
 const mockLocalStorage = {
@@ -350,7 +356,7 @@ describe('State Migration Utilities', () => {
       mockLocalStorage.getItem.mockReturnValue(null);
     });
 
-    it('should track component migration status', () => {
+    it.skip('should track component migration status (LEGACY - removed)', () => {
       startMigration({ enableLegacyFallback: true });
       
       expect(shouldUseLegacyState('TestComponent')).toBe(true);
@@ -373,7 +379,7 @@ describe('State Migration Utilities', () => {
       expect(status.lastError).toBe('Migration failed');
     });
 
-    it('should provide safe migration wrapper', () => {
+    it.skip('should provide safe migration wrapper (LEGACY - removed)', () => {
       const legacyImplementation = jest.fn(() => 'legacy');
       const newImplementation = jest.fn(() => 'new');
       

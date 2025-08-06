@@ -17,10 +17,19 @@ jest.mock('@/lib/storage', () => ({
 }));
 
 // Mock logger
-jest.mock('@/utils/logger', () => ({
-  debug: jest.fn(),
-  error: jest.fn(),
-}));
+jest.mock('@/utils/logger', () => {
+  const mockLogger = {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    log: jest.fn(),
+  };
+  return {
+    __esModule: true,
+    default: mockLogger,
+  };
+});
 
 const mockedStorageManager = authAwareStorageManager as jest.Mocked<typeof authAwareStorageManager>;
 const mockedLogger = logger as jest.Mocked<typeof logger>;
@@ -60,7 +69,7 @@ describe('sessionSettings', () => {
       const result = await getDeviceFingerprint();
       
       expect(result).toBeNull();
-      expect(mockedLogger.error).toHaveBeenCalledWith('Failed to get device fingerprint:', error);
+      expect(mockedLogger.debug).toHaveBeenCalledWith('[SessionSettings] Failed to get device fingerprint (likely during sign out):', error);
     });
   });
 
@@ -86,7 +95,7 @@ describe('sessionSettings', () => {
 
       await saveDeviceFingerprint('test-fingerprint');
       
-      expect(mockedLogger.error).toHaveBeenCalledWith('Failed to save device fingerprint:', error);
+      expect(mockedLogger.debug).toHaveBeenCalledWith('[SessionSettings] Failed to save device fingerprint (likely during sign out):', error);
     });
   });
 
@@ -121,7 +130,7 @@ describe('sessionSettings', () => {
       const result = await getSessionActivity('user-123');
       
       expect(result).toBeNull();
-      expect(mockedLogger.error).toHaveBeenCalledWith('Failed to get session activity:', error);
+      expect(mockedLogger.debug).toHaveBeenCalledWith('[SessionSettings] Failed to get session activity (likely during sign out):', error);
     });
   });
 
@@ -149,7 +158,7 @@ describe('sessionSettings', () => {
 
       await saveSessionActivity('user-123', { test: true });
       
-      expect(mockedLogger.error).toHaveBeenCalledWith('Failed to save session activity:', error);
+      expect(mockedLogger.debug).toHaveBeenCalledWith('[SessionSettings] Failed to save session activity (likely during sign out):', error);
     });
   });
 
@@ -183,7 +192,7 @@ describe('sessionSettings', () => {
 
       await removeSessionActivity('user-123');
       
-      expect(mockedLogger.error).toHaveBeenCalledWith('Failed to remove session activity:', error);
+      expect(mockedLogger.debug).toHaveBeenCalledWith('[SessionSettings] Failed to remove session activity (likely during sign out):', error);
     });
   });
 });
