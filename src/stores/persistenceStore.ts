@@ -307,7 +307,7 @@ export const usePersistenceStore = create<PersistenceStore>()(
           ];
 
           // Execute atomic transaction
-          const result = await transactionManager.executeTransaction(operations, {
+          const result = await transactionManager.executeTransaction(operations as TransactionOperation<unknown>[], {
             timeout: 10000, // 10 seconds
             rollbackOnFailure: true,
           });
@@ -470,7 +470,7 @@ export const usePersistenceStore = create<PersistenceStore>()(
           ];
 
           // Execute atomic transaction
-          const result = await transactionManager.executeTransaction(operations, {
+          const result = await transactionManager.executeTransaction(operations as TransactionOperation<unknown>[], {
             timeout: 15000, // 15 seconds for roster operations
             rollbackOnFailure: true,
           });
@@ -725,7 +725,7 @@ export const usePersistenceStore = create<PersistenceStore>()(
         // 🔧 STORAGE CONSISTENCY VALIDATION: Private helper methods
         _getFromStorageManager: async <T>(key: string): Promise<{ data: T | null; timestamp?: number; error?: Error }> => {
           try {
-            const result = await storageManager.getGenericData(key);
+            const result = await (storageManager as any).getGenericData(key);
             return { data: result as T, timestamp: Date.now() };
           } catch (error) {
             return { data: null, error: error as Error };
@@ -914,7 +914,7 @@ export const usePersistenceStore = create<PersistenceStore>()(
               `Save '${key}' to Supabase storage manager`,
               async () => {
                 try {
-                  await storageManager.setGenericData(key, value);
+                  await (storageManager as any).setGenericData(key, value);
                   logger.debug(`[PersistenceStore] Saved '${key}' via storage manager`);
                   return true;
                 } catch (error) {
@@ -954,7 +954,7 @@ export const usePersistenceStore = create<PersistenceStore>()(
           ];
 
           // Execute atomic transaction with flexible success criteria
-          const result = await transactionManager.executeTransaction(operations, {
+          const result = await transactionManager.executeTransaction(operations as TransactionOperation<unknown>[], {
             timeout: 8000, // 8 seconds
             rollbackOnFailure: false, // Don't rollback - partial success is acceptable
           });
@@ -979,7 +979,7 @@ export const usePersistenceStore = create<PersistenceStore>()(
           try {
             // First try to remove from the storage manager (preferred)
             try {
-              await storageManager.deleteGenericData(key);
+              await (storageManager as any).deleteGenericData(key);
               logger.debug(`[PersistenceStore] Removed '${key}' via storage manager`);
               return true;
             } catch (storageManagerError) {
@@ -1000,7 +1000,7 @@ export const usePersistenceStore = create<PersistenceStore>()(
           try {
             // Check storage manager first
             try {
-              const result = await storageManager.getGenericData(key);
+              const result = await (storageManager as any).getGenericData(key);
               return result !== null;
             } catch (storageManagerError) {
               logger.debug('[PersistenceStore] Storage manager failed, checking localStorage:', storageManagerError);

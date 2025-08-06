@@ -414,10 +414,10 @@ class MemoryManager {
       ),
       oldListeners: Array.from(this.listeners.values())
         .filter(listener => now - listener.created > thresholds.listener)
-        .map(({ _element, _listener, ...rest }) => rest),
+        .map(({ element, listener, ...rest }) => rest),
       staleSubscriptions: Array.from(this.subscriptions.values())
         .filter(subscription => now - subscription.created > thresholds.subscription)
-        .map(({ _unsubscribe, ...rest }) => rest),
+        .map(({ unsubscribe, ...rest }) => rest),
     };
   }
 }

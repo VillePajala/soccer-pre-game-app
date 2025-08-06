@@ -124,8 +124,10 @@ class ComponentRegistry {
         },
         React.createElement(
           ErrorBoundaryWrapper,
-          { componentName: name },
-          React.createElement(LazyComponent, props)
+          { 
+            componentName: name,
+            children: React.createElement(LazyComponent, props)
+          }
         )
       );
     };

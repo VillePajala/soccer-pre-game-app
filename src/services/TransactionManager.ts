@@ -100,7 +100,7 @@ class TransactionManager {
 
       return {
         success: true,
-        results,
+        results: results as T[],
         completedOperations: context.completedOperationIds,
       };
 
