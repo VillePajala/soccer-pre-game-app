@@ -1,30 +1,10 @@
 import React from 'react';
 import { renderHook, act } from '@testing-library/react';
 import { useViewMode, isPointInBounds, getDistance, canInteract } from '../useViewMode';
-import { useMigrationSafety } from '../useMigrationSafety';
 import { useUIStore } from '@/stores/uiStore';
 import type { Point } from '@/types';
 
 // Mock dependencies
-jest.mock('../useMigrationSafety', () => ({
-  useMigrationSafety: jest.fn(),
-}));
-
-jest.mock('@/utils/logger', () => ({
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-}));
-
-const mockUseMigrationSafety = useMigrationSafety as jest.MockedFunction<typeof useMigrationSafety>;
-
-describe('useViewMode Hook', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    mockUseMigrationSafety.mockReturnValue({
-      shouldUseLegacy: false,
-    });
     // Reset UI store state
     useUIStore.getState().resetAll();
   });

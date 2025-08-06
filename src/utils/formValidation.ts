@@ -499,7 +499,7 @@ export function createConditionalValidator(
 async function validateBuiltInRule(
   value: FieldValue,
   rule: FormValidationRule,
-  formValues: Record<string, FieldValue>
+  // _formValues: Record<string, FieldValue>
 ): Promise<boolean> {
   switch (rule.type) {
     case 'required':

@@ -3,9 +3,10 @@ import { Rajdhani } from 'next/font/google';
 import "./globals.css";
 import ClientWrapper from "@/components/ClientWrapper";
 import QueryProvider from './QueryProvider';
-import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
-import InstallPrompt from "@/components/InstallPrompt";
-import I18nInitializer from "@/components/I18nInitializer";
+// Removed unused imports:
+// import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
+// import InstallPrompt from "@/components/InstallPrompt";
+// import I18nInitializer from "@/components/I18nInitializer";
 import { Analytics } from "@vercel/analytics/react";
 import { manifestConfig } from "@/config/manifest.config.js";
 import { AuthProvider } from "@/context/AuthContext";

@@ -125,9 +125,13 @@ class UtilityRegistry {
   async executeUtilityFunction<T = any>(
     utilityName: string, 
     functionName: string, 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ...args: any[]
   ): Promise<T | null> {
     try {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const func = await this.getUtilityFunction<(...args: any[]) => T>(utilityName, functionName);
       if (!func) {
         return null;
@@ -198,6 +202,8 @@ export const registerExportUtilities = (): void => {
 // Helper function to execute export functions with fallback
 export const executeExportFunction = async (
   functionName: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ...args: any[]
 ): Promise<boolean> => {
   try {

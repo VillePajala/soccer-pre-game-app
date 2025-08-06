@@ -12,7 +12,9 @@ import logger from '@/utils/logger';
 interface Props {
   children: ReactNode;
   componentName: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   fallbackComponent?: React.ComponentType<any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   fallbackProps?: any;
   onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
 }
@@ -148,7 +150,8 @@ export class MigrationErrorBoundary extends Component<Props, State> {
   }
 
   render() {
-    const { hasError, error, shouldUseLegacy, retryCount } = this.state;
+    const { hasError, error, retryCount } = this.state;
+    // const { shouldUseLegacy } = this.state; // Removed unused variable
     const { children, componentName, fallbackComponent: FallbackComponent, fallbackProps } = this.props;
 
     // If we have an error and a fallback component, render it

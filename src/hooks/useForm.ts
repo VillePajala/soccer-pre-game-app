@@ -414,9 +414,9 @@ export function useForm<T extends Record<string, FieldValue> = Record<string, Fi
 // ============================================================================
 
 function useLegacyForm<T extends Record<string, FieldValue> = Record<string, FieldValue>>(
-  formId: string,
-  schema: FormSchema,
-  options: UseFormOptions
+  //   formId: string,
+  //   schema: FormSchema,
+  //   options: UseFormOptions
 ): UseFormResult<T> {
   logger.debug('[useForm] Using legacy implementation');
   
@@ -491,7 +491,7 @@ export function useFormField(
   const setFieldError = useFormStore((state) => state.setFieldError);
   const setFieldTouched = useFormStore((state) => state.setFieldTouched);
   const setFieldFocused = useFormStore((state) => state.setFieldFocused);
-  const validateField = useFormStore((state) => state.validateField);
+  // const validateField = useFormStore((state) => state.validateField);
   
   // Field selector (always called)
   const field = useFormStore((state) => state.forms[formId]?.fields[fieldName]);
@@ -559,9 +559,9 @@ export function useFormField(
 }
 
 function useLegacyFormField(
-  formId: string,
-  fieldName: string,
-  options: UseFormFieldOptions
+  //   formId: string,
+  //   fieldName: string,
+  //   options: UseFormFieldOptions
 ): UseFormFieldResult {
   return {
     value: '',

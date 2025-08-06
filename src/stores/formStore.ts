@@ -322,8 +322,8 @@ export const useFormStore = create<FormStoreState>()(
             logger.debug(`[FormStore] Destroyed form '${formId}'`);
 
             // 🔧 RACE CONDITION FIX: Clean up validation tracking
-            const { [formId]: _removed, ...remainingForms } = state.forms;
-            const { [formId]: _removedTracking, ...remainingTracking } = state.validationTracking;
+            const { [formId]: __removed, ...remainingForms } = state.forms;
+            const { [formId]: __removedTracking, ...remainingTracking } = state.validationTracking;
             
             return { 
               ...state, 

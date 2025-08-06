@@ -34,9 +34,9 @@ export interface ValidationOptions {
 
 // Type guard helper types
 type TypeGuard<T> = (value: unknown) => value is T;
-type ValidationSchema<T> = {
-  [K in keyof T]: TypeGuard<T[K]> | ValidationSchema<T[K]>;
-};
+// type ValidationSchema<T> = {
+//   [K in keyof T]: TypeGuard<T[K]> | ValidationSchema<T[K]>;
+// };
 
 class RuntimeValidator {
   /**
@@ -47,7 +47,8 @@ class RuntimeValidator {
     typeGuard: TypeGuard<T>,
     options: ValidationOptions = {}
   ): ValidationResult<T> {
-    const { strict = false, sanitize = false, logErrors = true, throwOnError = false } = options;
+    // const { // strict = false, sanitize = false, logErrors = true, throwOnError = false } = options;
+    const { sanitize = false, logErrors = true, throwOnError = false } = options;
     const errors: string[] = [];
 
     try {

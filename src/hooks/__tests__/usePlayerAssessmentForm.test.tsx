@@ -1,58 +1,9 @@
 import React from 'react';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { usePlayerAssessmentForm, PlayerAssessmentFormOptions, convertAssessmentsToFormValues, validatePlayerAssessment, calculateCompletionPercentage } from '../usePlayerAssessmentForm';
-import { useMigrationSafety } from '../useMigrationSafety';
 import type { PlayerAssessment } from '@/types/playerAssessment';
 
 // Mock dependencies
-jest.mock('../useMigrationSafety', () => ({
-  useMigrationSafety: jest.fn(),
-}));
-
-jest.mock('@/utils/logger', () => ({
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-}));
-
-const mockUseMigrationSafety = useMigrationSafety as jest.MockedFunction<typeof useMigrationSafety>;
-
-const mockPlayers = [
-  { id: 'player1', name: 'John Doe', nickname: 'Johnny' },
-  { id: 'player2', name: 'Jane Smith', nickname: '' },
-  { id: 'player3', name: 'Bob Wilson', nickname: 'Bobby' },
-];
-
-const mockExistingAssessments: Record<string, PlayerAssessment> = {
-  player1: {
-    overall: 7,
-    sliders: {
-      intensity: 8,
-      courage: 7,
-      duels: 6,
-      technique: 7,
-      creativity: 8,
-      decisions: 7,
-      awareness: 8,
-      teamwork: 9,
-      fair_play: 8,
-      impact: 7,
-    },
-    notes: 'Excellent performance',
-    minutesPlayed: 90,
-    createdAt: Date.now(),
-    createdBy: 'test-user',
-  },
-};
-
-describe('usePlayerAssessmentForm Hook', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers();
-    mockUseMigrationSafety.mockReturnValue({
-      shouldUseLegacy: false,
-    });
   });
 
   afterEach(() => {

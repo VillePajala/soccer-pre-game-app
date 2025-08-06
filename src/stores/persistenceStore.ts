@@ -26,7 +26,7 @@ import { storageServiceProvider } from '@/services/StorageServiceProvider';
 // 🔧 ATOMIC TRANSACTION FIX: Import transaction manager for multi-step operations
 import { transactionManager, createAsyncOperation, createStateMutation } from '@/services/TransactionManager';
 // 🔧 RUNTIME VALIDATION FIX: Import runtime validator for type safety
-import { runtimeValidator, typeGuards, validateStorageJSON, validateExternalData } from '@/services/RuntimeValidator';
+import { typeGuards, validateExternalData } from '@/services/RuntimeValidator';
 
 // App settings interface
 export interface AppSettings {
@@ -252,7 +252,7 @@ export const usePersistenceStore = create<PersistenceStore>()(
         // 🔧 ATOMIC TRANSACTION FIX: Refactored saveGame to use atomic transactions
         saveGame: async (gameId, gameState) => {
           // Capture initial state for rollback
-          const initialState = get();
+          // const initialState = get();
           const gameStateWithId = { ...gameState, gameId };
 
           // Create atomic transaction operations

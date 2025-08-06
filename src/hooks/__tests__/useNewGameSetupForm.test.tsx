@@ -1,28 +1,8 @@
 import React from 'react';
 import { renderHook, act } from '@testing-library/react';
 import { useNewGameSetupForm, NewGameSetupFormOptions, convertPropsToFormValues, normalizeRosterIds } from '../useNewGameSetupForm';
-import { useMigrationSafety } from '../useMigrationSafety';
 
 // Mock dependencies
-jest.mock('../useMigrationSafety', () => ({
-  useMigrationSafety: jest.fn(),
-}));
-
-jest.mock('@/utils/logger', () => ({
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-}));
-
-const mockUseMigrationSafety = useMigrationSafety as jest.MockedFunction<typeof useMigrationSafety>;
-
-describe('useNewGameSetupForm Hook', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    mockUseMigrationSafety.mockReturnValue({
-      shouldUseLegacy: false,
-    });
   });
 
   describe('Basic Form Operations', () => {

@@ -1,34 +1,8 @@
 import React from 'react';
 import { renderHook, act } from '@testing-library/react';
 import { useRosterSettingsForm, RosterSettingsFormOptions, convertPropsToFormValues, validateJerseyNumberUniqueness, filterPlayersBySearch } from '../useRosterSettingsForm';
-import { useMigrationSafety } from '../useMigrationSafety';
 
 // Mock dependencies
-jest.mock('../useMigrationSafety', () => ({
-  useMigrationSafety: jest.fn(),
-}));
-
-jest.mock('@/utils/logger', () => ({
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-}));
-
-const mockUseMigrationSafety = useMigrationSafety as jest.MockedFunction<typeof useMigrationSafety>;
-
-const mockPlayers = [
-  { id: 'player1', name: 'John Doe', nickname: 'Johnny', jerseyNumber: '10', notes: 'Captain' },
-  { id: 'player2', name: 'Jane Smith', nickname: '', jerseyNumber: '7', notes: '' },
-  { id: 'player3', name: 'Bob Wilson', nickname: 'Bobby', jerseyNumber: '', notes: 'Goalkeeper' },
-];
-
-describe('useRosterSettingsForm Hook', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    mockUseMigrationSafety.mockReturnValue({
-      shouldUseLegacy: false,
-    });
   });
 
   describe('Basic Form Operations', () => {

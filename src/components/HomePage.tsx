@@ -78,8 +78,8 @@ import { useTrainingResourcesModalWithHandlers } from '@/hooks/useTrainingResour
 import { useGoalLogModalWithHandlers } from '@/hooks/useGoalLogModalState';
 import { useSettingsModalWithHandlers } from '@/hooks/useSettingsModalState';
 import { usePlayerAssessmentModalWithHandlers } from '@/hooks/usePlayerAssessmentModalState';
-// Import skeleton components
-import { GameStatsModalSkeleton, LoadGameModalSkeleton, RosterModalSkeleton, ModalSkeleton } from '@/components/ui/ModalSkeleton';
+// Import skeleton components - removed unused skeletons
+// import { GameStatsModalSkeleton, LoadGameModalSkeleton, RosterModalSkeleton, ModalSkeleton } from '@/components/ui/ModalSkeleton';
 import { AppLoadingSkeleton } from '@/components/ui/AppSkeleton';
 // Note: localStorage utilities removed - using offline-first storage instead
 // Removed - now handled by useGameDataManager: 
@@ -1311,9 +1311,9 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     seasonTournamentModal.open();
   };
 
-  const handleCloseSeasonTournamentModal = () => {
-    seasonTournamentModal.close();
-  };
+  // const handleCloseSeasonTournamentModal = () => {
+  //   seasonTournamentModal.close();
+  // };
 
 
   // Function to handle loading a selected game
@@ -1376,11 +1376,11 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   }, [rosterSettingsModal, setHighlightRosterButton]);
 
   const openPlayerAssessmentModal = () => playerAssessmentModal.open();
-  const closePlayerAssessmentModal = () => playerAssessmentModal.close();
+  // const closePlayerAssessmentModal = () => playerAssessmentModal.close();
 
   // ... (other code in Home component) ...
 
-  const closeRosterModal = rosterSettingsModal.handleClose;
+  // const closeRosterModal = rosterSettingsModal.handleClose;
 
   // --- END Roster Management Handlers ---
 
@@ -1398,9 +1398,9 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   const handleOpenSettingsModal = () => {
     settingsModal.open();
   };
-  const handleCloseSettingsModal = () => {
-    settingsModal.close();
-  };
+  // const handleCloseSettingsModal = () => {
+  //   settingsModal.close();
+  // };
 
   // --- Placeholder Handlers for GameSettingsModal (will be implemented properly later) ---
 
@@ -1604,26 +1604,26 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   ]);
 
   // ** REVERT handleCancelNewGameSetup TO ORIGINAL **
-  const handleCancelNewGameSetup = useCallback(() => {
-    logger.log("New game setup skipped/cancelled.");
-    // REMOVED call to handleStartNewGameWithSetup
-    // // Initialize with default values similar to handleStartNewGameWithSetup
-    // const defaultOpponent = ''; // Empty opponent name
-    // ... (rest of default value setup removed)
-    // // Call the main setup function with defaults
-    // handleStartNewGameWithSetup(
-    //     ...
-    // );
+  // const handleCancelNewGameSetup = useCallback(() => {
+  //   logger.log("New game setup skipped/cancelled.");
+  //   // REMOVED call to handleStartNewGameWithSetup
+  //   // // Initialize with default values similar to handleStartNewGameWithSetup
+  //   // const defaultOpponent = ''; // Empty opponent name
+  //   // ... (rest of default value setup removed)
+  //   // // Call the main setup function with defaults
+  //   // handleStartNewGameWithSetup(
+  //   //     ...
+  //   // );
 
-    setHasSkippedInitialSetup(true); // Still mark as skipped if needed elsewhere
-    newGameSetupModal.close(); // ADDED: Explicitly close the modal
-    setNewGameDemandFactor(1);
+  //   setHasSkippedInitialSetup(true); // Still mark as skipped if needed elsewhere
+  //   newGameSetupModal.close(); // ADDED: Explicitly close the modal
+  //   setNewGameDemandFactor(1);
     
-    // Re-enable auto-save if it was disabled for new game creation
-    setIsCreatingNewGame(false);
+  //   // Re-enable auto-save if it was disabled for new game creation
+  //   setIsCreatingNewGame(false);
 
-  // REMOVED initialState from dependencies
-  }, [newGameSetupModal, setIsCreatingNewGame]); // Added setter function to dependencies
+  // // REMOVED initialState from dependencies
+  // }, [newGameSetupModal, setIsCreatingNewGame]); // Added setter function to dependencies
 
   // --- Start New Game Handler (Uses Quick Save) ---
   const handleStartNewGame = useCallback(() => {

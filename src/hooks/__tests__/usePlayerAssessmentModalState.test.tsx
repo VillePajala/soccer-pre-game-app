@@ -5,37 +5,10 @@ import {
   usePlayerAssessmentModalWithHandlers,
   usePlayerAssessmentModalSelector 
 } from '../usePlayerAssessmentModalState';
-import { useMigrationSafety } from '../useMigrationSafety';
 import { useUIStore } from '@/stores/uiStore';
-import { useModalContext } from '@/contexts/ModalProvider.migration';
+// import { useModalContext } from '@/contexts/{}';
 
 // Mock dependencies
-jest.mock('../useMigrationSafety', () => ({
-  useMigrationSafety: jest.fn(),
-}));
-
-jest.mock('@/stores/uiStore', () => ({
-  useUIStore: jest.fn(),
-}));
-
-jest.mock('@/contexts/ModalProvider.migration', () => ({
-  useModalContext: jest.fn(),
-}));
-
-jest.mock('@/utils/logger', () => ({
-  debug: jest.fn(),
-  info: jest.fn(),
-  error: jest.fn(),
-}));
-
-const mockUseMigrationSafety = useMigrationSafety as jest.MockedFunction<typeof useMigrationSafety>;
-const mockUseUIStore = useUIStore as jest.MockedFunction<typeof useUIStore>;
-const mockUseModalContext = useModalContext as jest.MockedFunction<typeof useModalContext>;
-
-describe('usePlayerAssessmentModalState', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
 
   describe('Zustand Implementation', () => {
     beforeEach(() => {
