@@ -16,8 +16,7 @@
 import { useMemo, useCallback, useEffect } from 'react';
 import { useForm } from '@/hooks/useForm';
 import { FormSchema } from '@/stores/formStore';
-import { validationRules } from '@/utils/formValidation';
-import { useMigrationSafety } from '@/hooks/useMigrationSafety';
+import { validationRules as _validationRules } from '@/utils/formValidation';
 import type { PlayerAssessment } from '@/types/playerAssessment';
 import logger from '@/utils/logger';
 
@@ -308,15 +307,8 @@ function createPlayerAssessmentSchema(options: PlayerAssessmentFormOptions = {})
 export function usePlayerAssessmentForm(
   options: PlayerAssessmentFormOptions = {}
 ): UsePlayerAssessmentFormResult {
-  const { shouldUseLegacy } = useMigrationSafety('PlayerAssessmentForm');
-  
   // Create form schema
   const schema = useMemo(() => createPlayerAssessmentSchema(options), [options]);
-  
-  // Legacy fallback
-  if (shouldUseLegacy) {
-    return useLegacyPlayerAssessmentForm(options);
-  }
   
   // Use FormStore with schema
   const form = useForm<PlayerAssessmentFormValues>(schema, {
@@ -368,7 +360,7 @@ export function usePlayerAssessmentForm(
     scheduleAutoSave(playerId, updatedAssessment);
     
     logger.debug('[PlayerAssessmentForm] Overall rating changed:', playerId, rating);
-  }, [form]);
+  }, [form, scheduleAutoSave]);
   
   const handleSliderChange = useCallback((playerId: string, sliderKey: keyof AssessmentSliders, value: number) => {
     const currentAssessments = form.values.assessments;
@@ -401,7 +393,7 @@ export function usePlayerAssessmentForm(
     scheduleAutoSave(playerId, updatedAssessment);
     
     logger.debug('[PlayerAssessmentForm] Slider changed:', playerId, sliderKey, value);
-  }, [form]);
+  }, [form, scheduleAutoSave]);
   
   const handleNotesChange = useCallback((playerId: string, notes: string) => {
     const currentAssessments = form.values.assessments;
@@ -429,7 +421,7 @@ export function usePlayerAssessmentForm(
     scheduleAutoSave(playerId, updatedAssessment);
     
     logger.debug('[PlayerAssessmentForm] Notes changed:', playerId, notes.length, 'characters');
-  }, [form]);
+  }, [form, scheduleAutoSave]);
   
   const handleToggleExpanded = useCallback((playerId: string) => {
     const currentAssessments = form.values.assessments;
@@ -452,7 +444,7 @@ export function usePlayerAssessmentForm(
   // Auto-save Implementation
   // ============================================================================
   
-  const scheduleAutoSave = useCallback((playerId: string, assessment: any) => {
+  const scheduleAutoSave = useCallback((playerId: string, _assessment: any) => {
     // 🔧 RACE CONDITION PROTECTION: Check if save is already in progress
     const currentAssessments = form.values.assessments;
     if (currentAssessments[playerId]?.isSaving) {
@@ -631,7 +623,7 @@ export function usePlayerAssessmentForm(
     } finally {
       form.setFieldValue('isAutoSaving', false);
     }
-  }, [form, options.onSave]);
+  }, [form, options]);
   
   const handleDeleteAssessment = useCallback(async (playerId: string) => {
     if (!options.onDelete) return;
@@ -667,7 +659,7 @@ export function usePlayerAssessmentForm(
       logger.error('[PlayerAssessmentForm] Delete failed:', playerId, error);
       throw error;
     }
-  }, [form, options.onDelete]);
+  }, [form, options]);
   
   const handleResetAssessment = useCallback((playerId: string) => {
     const currentAssessments = form.values.assessments;
@@ -789,7 +781,7 @@ export function usePlayerAssessmentForm(
     } finally {
       form.setFieldValue('isAutoSaving', false);
     }
-  }, [form, options.onSave]);
+  }, [form, options]);
   
   const handleExpandAll = useCallback(() => {
     const currentAssessments = form.values.assessments;
@@ -887,13 +879,13 @@ export function usePlayerAssessmentForm(
             assessments: resetAssessments,
             isAutoSaving: false,
           });
-        } catch (error) {
+        } catch {
           // Component may be unmounted, ignore errors
           logger.debug('[PlayerAssessmentForm] Cleanup after unmount, ignoring state update error');
         }
       }
     };
-  }, [autoSaveTimeouts, form]);
+  }, [autoSaveTimeouts, form, operationTracking]);
   
   // ============================================================================
   // Return Interface
@@ -963,8 +955,8 @@ export function usePlayerAssessmentForm(
 // Legacy Fallback Implementation
 // ============================================================================
 
-function useLegacyPlayerAssessmentForm(
-  options: PlayerAssessmentFormOptions
+function _useLegacyPlayerAssessmentForm(
+  _options: PlayerAssessmentFormOptions
 ): UsePlayerAssessmentFormResult {
   logger.debug('[PlayerAssessmentForm] Using legacy implementation');
   

@@ -12,8 +12,8 @@ export const MigratedGameInfoBar: React.FC<GameInfoBarProps> = ({
   // Props that will be overridden by store values
   teamName: propTeamName,
   opponentName: propOpponentName,
-  homeScore: _propHomeScore, // eslint-disable-line @typescript-eslint/no-unused-vars
-  awayScore: _propAwayScore, // eslint-disable-line @typescript-eslint/no-unused-vars
+  homeScore: _propHomeScore,
+  awayScore: _propAwayScore,
   
   // Props that are still used
   onTeamNameChange,

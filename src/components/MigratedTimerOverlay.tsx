@@ -20,29 +20,29 @@ import type { TimerOverlayProps } from './TimerOverlay.migration';
  */
 export const MigratedTimerOverlay: React.FC<TimerOverlayProps> = ({
   // Props that will be overridden by store values
-  timeElapsedInSeconds: _propTimeElapsed, // eslint-disable-line @typescript-eslint/no-unused-vars
-  isTimerRunning: _propIsTimerRunning, // eslint-disable-line @typescript-eslint/no-unused-vars
-  teamName: _propTeamName, // eslint-disable-line @typescript-eslint/no-unused-vars
-  opponentName: _propOpponentName, // eslint-disable-line @typescript-eslint/no-unused-vars
-  homeScore: _propHomeScore, // eslint-disable-line @typescript-eslint/no-unused-vars
-  awayScore: _propAwayScore, // eslint-disable-line @typescript-eslint/no-unused-vars
-  currentPeriod: _propCurrentPeriod, // eslint-disable-line @typescript-eslint/no-unused-vars
-  gameStatus: _propGameStatus, // eslint-disable-line @typescript-eslint/no-unused-vars
+  timeElapsedInSeconds: _propTimeElapsed,
+  isTimerRunning: _propIsTimerRunning,
+  teamName: _propTeamName,
+  opponentName: _propOpponentName,
+  homeScore: _propHomeScore,
+  awayScore: _propAwayScore,
+  currentPeriod: _propCurrentPeriod,
+  gameStatus: _propGameStatus,
   
   // Props that are still used from parent
   subAlertLevel,
   onSubstitutionMade,
-  completedIntervalDurations: _completedIntervalDurations, // eslint-disable-line @typescript-eslint/no-unused-vars
-  subIntervalMinutes: _subIntervalMinutes, // eslint-disable-line @typescript-eslint/no-unused-vars
-  onSetSubInterval: _onSetSubInterval, // eslint-disable-line @typescript-eslint/no-unused-vars
+  completedIntervalDurations: _completedIntervalDurations,
+  subIntervalMinutes: _subIntervalMinutes,
+  onSetSubInterval: _onSetSubInterval,
   onStartPauseTimer,
   onResetTimer,
   onToggleGoalLogModal = () => { logger.warn('onToggleGoalLogModal handler not provided'); },
   onRecordOpponentGoal = () => { logger.warn('onRecordOpponentGoal handler not provided'); },
   homeOrAway,
   numberOfPeriods = 2,
-  periodDurationMinutes: _periodDurationMinutes = 10, // eslint-disable-line @typescript-eslint/no-unused-vars
-  lastSubTime: _lastSubTime = null, // eslint-disable-line @typescript-eslint/no-unused-vars
+  periodDurationMinutes: _periodDurationMinutes = 10,
+  lastSubTime: _lastSubTime = null,
   onOpponentNameChange = () => { logger.warn('onOpponentNameChange handler not provided'); },
   onClose,
   isLoaded,

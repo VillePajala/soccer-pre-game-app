@@ -16,7 +16,7 @@
 import { useMemo, useCallback, useEffect } from 'react';
 import { useForm } from '@/hooks/useForm';
 import { FormSchema } from '@/stores/formStore';
-import { validationRules } from '@/utils/formValidation';
+import { validationRules as _validationRules } from '@/utils/formValidation';
 import { useMigrationSafety } from '@/hooks/useMigrationSafety';
 import logger from '@/utils/logger';
 
@@ -386,7 +386,7 @@ export function useRosterSettingsForm(
       });
     }
     logger.debug('[RosterSettingsForm] Saved team name:', trimmedName);
-  }, [form, options.onTeamNameChange]);
+  }, [form, options]);
   
   const handleCancelTeamNameEdit = useCallback(() => {
     form.setFieldValues({
@@ -590,7 +590,7 @@ export function useRosterSettingsForm(
     });
     
     logger.debug('[RosterSettingsForm] Added new player:', trimmedName);
-  }, [form, options.onAddPlayer]);
+  }, [form, options]);
   
   // ============================================================================
   // Player Selection Handlers
@@ -612,7 +612,7 @@ export function useRosterSettingsForm(
     }
     
     logger.debug('[RosterSettingsForm] Toggled player selection:', playerId, !isSelected);
-  }, [form, options.onTogglePlayerSelection]);
+  }, [form, options]);
   
   const handleSelectAllPlayers = useCallback(() => {
     if (!options.availablePlayers) return;
@@ -658,14 +658,14 @@ export function useRosterSettingsForm(
     }
     
     logger.debug('[RosterSettingsForm] Removed player:', playerId);
-  }, [form, options.onRemovePlayer]);
+  }, [form, options]);
   
   const handleOpenPlayerStats = useCallback((playerId: string) => {
     if (options.onOpenPlayerStats) {
       options.onOpenPlayerStats(playerId);
     }
     logger.debug('[RosterSettingsForm] Opened player stats:', playerId);
-  }, [options.onOpenPlayerStats]);
+  }, [options]);
   
   // ============================================================================
   // Form State Queries
@@ -790,8 +790,8 @@ export function useRosterSettingsForm(
 // Legacy Fallback Implementation
 // ============================================================================
 
-function useLegacyRosterSettingsForm(
-  options: RosterSettingsFormOptions
+function _useLegacyRosterSettingsForm(
+  _options: RosterSettingsFormOptions
 ): UseRosterSettingsFormResult {
   logger.debug('[RosterSettingsForm] Using legacy implementation');
   

@@ -35,7 +35,6 @@ interface TransactionContext {
   id: string;
   operations: TransactionOperation[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   results: any[];
   completedOperationIds: string[];
   startTime: number;

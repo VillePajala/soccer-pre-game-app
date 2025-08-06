@@ -553,7 +553,7 @@ export function useNewGameSetupForm(
     if (options.onDemandFactorChange) {
       options.onDemandFactorChange(factor);
     }
-  }, [form, options.onDemandFactorChange]);
+  }, [form, options]);
   
   const handleIsPlayedChange = useCallback((isPlayed: boolean) => {
     form.setFieldValue('isPlayed', isPlayed);
@@ -620,7 +620,7 @@ export function useNewGameSetupForm(
       logger.error('[NewGameSetupForm] Failed to create season:', error);
       form.setFieldError('newSeasonName', 'Failed to create season');
     }
-  }, [form, options.onSeasonCreate]);
+  }, [form, options]);
   
   const handleCreateTournament = useCallback(async () => {
     if (!options.onTournamentCreate) {
@@ -649,7 +649,7 @@ export function useNewGameSetupForm(
       logger.error('[NewGameSetupForm] Failed to create tournament:', error);
       form.setFieldError('newTournamentName', 'Failed to create tournament');
     }
-  }, [form, options.onTournamentCreate]);
+  }, [form, options]);
   
   // ============================================================================
   // Form State Queries

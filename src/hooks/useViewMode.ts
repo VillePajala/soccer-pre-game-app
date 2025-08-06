@@ -136,7 +136,7 @@ export function useViewMode(): UseViewModeResult {
   
   // Get all the specialized hooks
   const gameView = useGameView();
-  const tacticsBoard = useTacticsBoard();
+  const _tacticsBoard = useTacticsBoard();
   const drawingMode = useDrawingMode();
   const drawingInteraction = useDrawingInteraction();
   const draggingState = useDraggingState();
@@ -419,7 +419,7 @@ function useLegacyViewMode(): UseViewModeResult {
 /**
  * Check if a point is within drawing bounds
  */
-export function isPointInBounds(point: Point, width: number, height: number): boolean {
+export function isPointInBounds(point: Point, _width: number, _height: number): boolean {
   return point.relX >= 0 && point.relX <= 1 && point.relY >= 0 && point.relY <= 1;
 }
 
