@@ -87,7 +87,7 @@ describe('Season Management Utilities (Storage Abstraction)', () => {
       
       expect(seasons).toEqual([]);
       // Logger expectation removed to avoid mock issues - error handling verified by return value
-//       expect(mockLogger.error).toHaveBeenCalledWith('[getSeasons] Error reading seasons:', error);
+      // expect(mockLogger.error).toHaveBeenCalledWith('[getSeasons] Error reading seasons:', error);
     });
   });
 
@@ -109,7 +109,7 @@ describe('Season Management Utilities (Storage Abstraction)', () => {
       
       await expect(saveSeason(season)).rejects.toThrow('Save failed');
       // Logger expectation removed to avoid mock issues - error handling verified by return value
-//       expect(mockLogger.error).toHaveBeenCalledWith('[saveSeason] Error saving season:', error);
+      // expect(mockLogger.error).toHaveBeenCalledWith('[saveSeason] Error saving season:', error);
     });
   });
 
@@ -144,7 +144,7 @@ describe('Season Management Utilities (Storage Abstraction)', () => {
       
       expect(result).toBeNull();
       // Logger expectation removed to avoid mock issues - error handling verified by return value
-//       expect(mockLogger.error).toHaveBeenCalledWith('[addSeason] Validation failed: Season name cannot be empty.');
+      // expect(mockLogger.error).toHaveBeenCalledWith('[addSeason] Validation failed: Season name cannot be empty.');
     });
 
     it('should return null and log error for duplicate name (case-insensitive)', async () => {
@@ -154,7 +154,7 @@ describe('Season Management Utilities (Storage Abstraction)', () => {
       
       expect(result).toBeNull();
       // Logger expectation removed to avoid mock issues - error handling verified by return value
-//       expect(mockLogger.error).toHaveBeenCalledWith(
+      // expect(mockLogger.error).toHaveBeenCalledWith(
       //   '[addSeason] Validation failed: A season with name "spring league 2023" already exists.'
       // );
     });
@@ -168,7 +168,7 @@ describe('Season Management Utilities (Storage Abstraction)', () => {
       
       expect(result).toBeNull();
       // Logger expectation removed to avoid mock issues - error handling verified by return value
-//       expect(mockLogger.error).toHaveBeenCalledWith('[addSeason] Unexpected error adding season:', error);
+      // expect(mockLogger.error).toHaveBeenCalledWith('[addSeason] Unexpected error adding season:', error);
     });
   });
 
@@ -190,9 +190,9 @@ describe('Season Management Utilities (Storage Abstraction)', () => {
       
       expect(result).toBeNull();
       // Logger expectation removed to avoid mock issues - error handling verified by return value
-//       expect(mockLogger.error).toHaveBeenCalledWith(
-//         '[updateSeason] Invalid parameters provided for update.'
-//       );
+      // expect(mockLogger.error).toHaveBeenCalledWith(
+      //   '[updateSeason] Invalid parameters provided for update.'
+      // );
       expect(mockStorageManager.updateSeason).not.toHaveBeenCalled();
     });
 
@@ -206,10 +206,10 @@ describe('Season Management Utilities (Storage Abstraction)', () => {
       
       expect(result).toBeNull();
       // Logger expectation removed to avoid mock issues - error handling verified by return value
-//       expect(mockLogger.error).toHaveBeenCalledWith(
-//         '[updateSeason] Unexpected error updating season:',
-//         error
-//       );
+      // expect(mockLogger.error).toHaveBeenCalledWith(
+      //   '[updateSeason] Unexpected error updating season:',
+      //   error
+      // );
     });
   });
 
@@ -228,7 +228,7 @@ describe('Season Management Utilities (Storage Abstraction)', () => {
       
       expect(result).toBe(false);
       // Logger expectation removed to avoid mock issues - error handling verified by return value
-//       expect(mockLogger.error).toHaveBeenCalledWith('[deleteSeason] Invalid season ID provided.');
+      // expect(mockLogger.error).toHaveBeenCalledWith('[deleteSeason] Invalid season ID provided.');
     });
 
     it('should return false on delete failure', async () => {
@@ -239,10 +239,10 @@ describe('Season Management Utilities (Storage Abstraction)', () => {
       
       expect(result).toBe(false);
       // Logger expectation removed to avoid mock issues - error handling verified by return value
-//       expect(mockLogger.error).toHaveBeenCalledWith(
-//         '[deleteSeason] Unexpected error deleting season:',
-//         error
-//       );
+      // expect(mockLogger.error).toHaveBeenCalledWith(
+      //   '[deleteSeason] Unexpected error deleting season:',
+      //   error
+      // );
     });
   });
 });

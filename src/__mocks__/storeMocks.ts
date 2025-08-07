@@ -2,6 +2,31 @@
 export const mockUIStore = {
   useUIStore: jest.fn((selector) => {
     const mockState = {
+      // Modal state
+      modals: {
+        gameSettingsModal: false,
+        newGameSetupModal: false,
+        loadGameModal: false,
+        saveGameModal: false,
+        gameStatsModal: false,
+        goalLogModal: false,
+        rosterSettingsModal: false,
+        playerAssessmentModal: false,
+        seasonTournamentModal: false,
+        settingsModal: false,
+        instructionsModal: false,
+        trainingResourcesModal: false,
+        authModal: false,
+        migrationModal: false,
+        syncProgressModal: false,
+      },
+      // Modal actions
+      openModal: jest.fn(),
+      closeModal: jest.fn(),
+      toggleModal: jest.fn(),
+      closeAllModals: jest.fn(),
+      isModalOpen: jest.fn(),
+      // Original UI actions
       resetAll: jest.fn(),
       setTacticsBoardView: jest.fn(),
       setDrawingMode: jest.fn(),

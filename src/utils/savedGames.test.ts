@@ -660,9 +660,9 @@ describe('Saved Games Utilities', () => {
         .rejects.toThrow();
       // Logger expectation removed to avoid mock issues - error handling verified by return value
       // expect(mockLogger.error).toHaveBeenCalledWith(
-        'Error importing games from JSON:',
-        expect.any(Error)
-      );
+      //   'Error importing games from JSON:',
+      //   expect.any(Error)
+      // );
     });
 
     it('should throw error on import failure', async () => {
