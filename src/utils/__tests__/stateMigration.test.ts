@@ -357,12 +357,39 @@ describe('State Migration Utilities', () => {
     });
 
     it('should track component migration status (LEGACY - removed)', () => {
-      startMigration({ enableLegacyFallback: true });
+      // This test validates the new flag-based migration behavior
+      // Clean state first
+      rollbackMigration();
       
-      expect(shouldUseLegacyState('TestComponent')).toBe(true);
+      // Test 1: Without migration and with fallback disabled, should use new
+      mockLocalStorage.getItem.mockReturnValue(JSON.stringify({ enableLegacyFallback: false }));
+      expect(shouldUseLegacyState('TestComponent')).toBe(false);
       
-      markComponentMigrated('TestComponent');
+      // Test 2: Start migration with UI migration disabled and legacy fallback enabled
+      // The startMigration will also set isInProgress to true but rollback after clears it
+      rollbackMigration(); // Clear any previous migration state
+      mockLocalStorage.getItem.mockReturnValue(JSON.stringify({ 
+        enableUIStoreMigration: false, 
+        enableLegacyFallback: true,
+        enableGameStoreMigration: true,
+        enablePersistenceStoreMigration: true,
+        enableMigrationLogging: true
+      }));
       
+      // With UI migration disabled and fallback enabled, Modal should use legacy
+      expect(shouldUseLegacyState('TestModal')).toBe(true);
+      
+      // Test 3: With UI migration enabled, Modal should use new
+      mockLocalStorage.getItem.mockReturnValue(JSON.stringify({ 
+        enableUIStoreMigration: true, 
+        enableLegacyFallback: true,
+        enableGameStoreMigration: true,
+        enablePersistenceStoreMigration: true,
+        enableMigrationLogging: true
+      }));
+      expect(shouldUseLegacyState('TestModal')).toBe(false);
+      
+      // Test 4: Generic component (not Modal/Game/etc) always uses new by default
       expect(shouldUseLegacyState('TestComponent')).toBe(false);
     });
 
@@ -383,23 +410,48 @@ describe('State Migration Utilities', () => {
       const legacyImplementation = jest.fn(() => 'legacy');
       const newImplementation = jest.fn(() => 'new');
       
-      startMigration({ enableLegacyFallback: true });
+      // Clean state first
+      rollbackMigration();
       
-      // First call should use legacy (component not migrated yet)
+      // Test 1: With legacy fallback disabled, should use new
+      mockLocalStorage.getItem.mockReturnValue(JSON.stringify({ enableLegacyFallback: false }));
+      
       const result1 = withMigrationSafety('TestComponent', legacyImplementation, newImplementation);
       
-      expect(result1).toBe('legacy');
+      expect(result1).toBe('new');
+      expect(newImplementation).toHaveBeenCalled();
+      expect(legacyImplementation).not.toHaveBeenCalled();
+      
+      // Reset mocks
+      legacyImplementation.mockClear();
+      newImplementation.mockClear();
+      
+      // Test 2: With UI migration disabled and fallback enabled, Modal should use legacy
+      mockLocalStorage.getItem.mockReturnValue(JSON.stringify({ 
+        enableUIStoreMigration: false, 
+        enableLegacyFallback: true 
+      }));
+      
+      const result2 = withMigrationSafety('TestModal', legacyImplementation, newImplementation);
+      
+      expect(result2).toBe('legacy');
       expect(legacyImplementation).toHaveBeenCalled();
       expect(newImplementation).not.toHaveBeenCalled();
       
-      // Mark as migrated
-      markComponentMigrated('TestComponent');
+      // Reset mocks and test 3: With UI migration enabled, Modal should use new
+      legacyImplementation.mockClear();
+      newImplementation.mockClear();
       
-      // Second call should use new implementation
-      const result2 = withMigrationSafety('TestComponent', legacyImplementation, newImplementation);
+      mockLocalStorage.getItem.mockReturnValue(JSON.stringify({ 
+        enableUIStoreMigration: true, 
+        enableLegacyFallback: true 
+      }));
       
-      expect(result2).toBe('new');
+      const result3 = withMigrationSafety('TestModal', legacyImplementation, newImplementation);
+      
+      expect(result3).toBe('new');
       expect(newImplementation).toHaveBeenCalled();
+      expect(legacyImplementation).not.toHaveBeenCalled();
     });
 
     it('should fallback to legacy on new implementation failure', () => {
