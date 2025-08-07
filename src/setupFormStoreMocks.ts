@@ -267,9 +267,13 @@ const wrappedActions = {
   }),
 };
 
-// Mock the useFormStore hook with proper reactivity
-const mockUseFormStore = jest.fn((selector: any) => {
-  const currentState = { ...mockFormStoreState, ...wrappedActions };
+// Create a React-Testing-Library compatible mock that triggers re-renders
+let mockStoreState = { ...mockFormStoreState };
+
+// Mock the useFormStore hook with React state simulation
+const mockUseFormStore = jest.fn().mockImplementation((selector: any) => {
+  // Simulate React state by returning current state snapshot
+  const currentState = { ...mockStoreState, ...wrappedActions };
   
   if (typeof selector === 'function') {
     return selector(currentState);
@@ -277,8 +281,30 @@ const mockUseFormStore = jest.fn((selector: any) => {
   return currentState;
 });
 
+// Update wrapped actions to modify the reactive state
+Object.keys(wrappedActions).forEach(actionName => {
+  const originalAction = wrappedActions[actionName as keyof typeof wrappedActions];
+  if (jest.isMockFunction(originalAction)) {
+    wrappedActions[actionName as keyof typeof wrappedActions] = jest.fn((...args: any[]) => {
+      // Call original logic
+      const result = (mockFormStoreActions as any)[actionName](...args);
+      // Update reactive state
+      mockStoreState = { ...mockFormStoreState };
+      // Force mock to return new state on next call
+      mockUseFormStore.mockImplementation((selector: any) => {
+        const currentState = { ...mockStoreState, ...wrappedActions };
+        if (typeof selector === 'function') {
+          return selector(currentState);
+        }
+        return currentState;
+      });
+      return result;
+    });
+  }
+});
+
 // Add getState method for compatibility
-mockUseFormStore.getState = jest.fn(() => ({ ...mockFormStoreState, ...wrappedActions }));
+mockUseFormStore.getState = jest.fn(() => ({ ...mockStoreState, ...wrappedActions }));
 
 // Set up the mock
 jest.mock('@/stores/formStore', () => ({

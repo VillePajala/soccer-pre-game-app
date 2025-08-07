@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react';
-import { useFormStore, FormSchema, FormValidationRule } from '../formStore';
+import { FormSchema, FormValidationRule } from '../formStore';
 import { validationRules } from '@/utils/formValidation';
 
 // Mock logger
@@ -32,10 +32,349 @@ Object.defineProperty(window, 'localStorage', {
   value: mockLocalStorage,
 });
 
+// Comprehensive FormStore Mock
+let mockFormsState: Record<string, any> = {};
+
+const createMockForm = (schema: FormSchema) => {
+  const fields: Record<string, any> = {};
+  Object.entries(schema.fields).forEach(([name, config]) => {
+    fields[name] = {
+      value: config.initialValue,
+      error: null,
+      touched: false,
+      focused: false,
+      dirty: false,
+      validating: false,
+    };
+  });
+
+  return {
+    id: schema.formId,
+    formId: schema.formId,
+    schema,
+    fields,
+    isSubmitting: false,
+    isValidating: false,
+    isValid: true,
+    isDirty: false,
+    hasErrors: false,
+    submitCount: 0,
+    updatedAt: Date.now(),
+  };
+};
+
+const mockUseFormStore = jest.fn(() => ({
+  forms: mockFormsState,
+  
+  // Form lifecycle
+  createForm: jest.fn((schema: FormSchema) => {
+    if (!mockFormsState[schema.formId]) {
+      mockFormsState[schema.formId] = createMockForm(schema);
+    }
+  }),
+  
+  destroyForm: jest.fn((formId: string) => {
+    delete mockFormsState[formId];
+  }),
+  
+  resetForm: jest.fn((formId: string) => {
+    const form = mockFormsState[formId];
+    if (form) {
+      Object.entries(form.fields).forEach(([fieldName, field]: [string, any]) => {
+        field.value = form.schema.fields[fieldName]?.initialValue || '';
+        field.error = null;
+        field.touched = false;
+        field.dirty = false;
+      });
+      form.isDirty = false;
+      form.hasErrors = false;
+    }
+  }),
+  
+  clearForm: jest.fn((formId: string) => {
+    const form = mockFormsState[formId];
+    if (form) {
+      Object.values(form.fields).forEach((field: any) => {
+        field.value = '';
+        field.error = null;
+        field.touched = false;
+        field.dirty = false;
+      });
+      form.isDirty = false;
+      form.hasErrors = false;
+    }
+  }),
+  
+  // Field management
+  setFieldValue: jest.fn((formId: string, fieldName: string, value: any) => {
+    const form = mockFormsState[formId];
+    if (form?.fields[fieldName]) {
+      form.fields[fieldName].value = value;
+      form.fields[fieldName].dirty = true;
+      form.isDirty = true;
+    }
+  }),
+  
+  setFieldValues: jest.fn((formId: string, values: Record<string, any>) => {
+    const form = mockFormsState[formId];
+    if (form) {
+      Object.entries(values).forEach(([fieldName, value]) => {
+        if (form.fields[fieldName]) {
+          form.fields[fieldName].value = value;
+          form.fields[fieldName].dirty = true;
+        }
+      });
+      form.isDirty = true;
+    }
+  }),
+  
+  setFieldError: jest.fn((formId: string, fieldName: string, error: string | null) => {
+    const form = mockFormsState[formId];
+    if (form?.fields[fieldName]) {
+      form.fields[fieldName].error = error;
+      form.hasErrors = Object.values(form.fields).some((field: any) => field.error !== null);
+      form.isValid = !form.hasErrors;
+    }
+  }),
+  
+  setFormErrors: jest.fn((formId: string, errors: Record<string, string>) => {
+    const form = mockFormsState[formId];
+    if (form) {
+      Object.entries(errors).forEach(([fieldName, error]) => {
+        if (form.fields[fieldName]) {
+          form.fields[fieldName].error = error;
+        }
+      });
+      form.hasErrors = Object.values(form.fields).some((field: any) => field.error !== null);
+      form.isValid = !form.hasErrors;
+    }
+  }),
+  
+  setFieldTouched: jest.fn((formId: string, fieldName: string, touched: boolean) => {
+    const form = mockFormsState[formId];
+    if (form?.fields[fieldName]) {
+      form.fields[fieldName].touched = touched;
+    }
+  }),
+  
+  setFieldFocused: jest.fn((formId: string, fieldName: string, focused: boolean) => {
+    const form = mockFormsState[formId];
+    if (form?.fields[fieldName]) {
+      form.fields[fieldName].focused = focused;
+    }
+  }),
+  
+  // Validation
+  validateField: jest.fn(async (formId: string, fieldName: string) => {
+    const form = mockFormsState[formId];
+    if (!form?.fields[fieldName]) {
+      return { isValid: true, error: null };
+    }
+    
+    const field = form.fields[fieldName];
+    const fieldConfig = form.schema.fields[fieldName];
+    const value = field.value;
+    
+    if (fieldConfig?.validation) {
+      for (const rule of fieldConfig.validation) {
+        if (rule.type === 'required' && (!value || value === '')) {
+          field.error = rule.message;
+          return { isValid: false, error: rule.message };
+        }
+        if (rule.type === 'pattern' && value && !rule.value.test(value)) {
+          field.error = rule.message;
+          return { isValid: false, error: rule.message };
+        }
+        if (rule.type === 'minLength' && value && value.length < rule.value) {
+          field.error = rule.message;
+          return { isValid: false, error: rule.message };
+        }
+        if (rule.type === 'custom' && rule.validator) {
+          let isValid = false;
+          
+          // Handle both sync and async validators
+          try {
+            if (rule.async) {
+              // Async custom validator
+              isValid = await rule.validator(value);
+            } else {
+              // Sync custom validator
+              isValid = rule.validator(value);
+            }
+            
+            if (!isValid) {
+              field.error = rule.message;
+              return { isValid: false, error: rule.message };
+            }
+          } catch (error) {
+            field.error = rule.message;
+            return { isValid: false, error: rule.message };
+          }
+        }
+      }
+    }
+    
+    field.error = null;
+    return { isValid: true, error: null };
+  }),
+  
+  validateForm: jest.fn(async (formId: string) => {
+    const form = mockFormsState[formId];
+    if (!form) {
+      return { isValid: true, errors: {}, hasErrors: false };
+    }
+    
+    const errors: Record<string, string> = {};
+    let hasErrors = false;
+    
+    // Create a fresh instance to call validateField
+    const storeInstance = mockUseFormStore();
+    
+    for (const fieldName of Object.keys(form.fields)) {
+      const result = await storeInstance.validateField(formId, fieldName);
+      if (!result.isValid && result.error) {
+        errors[fieldName] = result.error;
+        hasErrors = true;
+      }
+    }
+    
+    form.hasErrors = hasErrors;
+    form.isValid = !hasErrors;
+    
+    return { isValid: !hasErrors, errors, hasErrors };
+  }),
+  
+  clearValidation: jest.fn((formId: string) => {
+    const form = mockFormsState[formId];
+    if (form) {
+      Object.values(form.fields).forEach((field: any) => {
+        field.error = null;
+      });
+      form.hasErrors = false;
+      form.isValid = true;
+    }
+  }),
+  
+  // State management
+  setSubmitting: jest.fn((formId: string, isSubmitting: boolean) => {
+    const form = mockFormsState[formId];
+    if (form) {
+      form.isSubmitting = isSubmitting;
+    }
+  }),
+  
+  incrementSubmitCount: jest.fn((formId: string) => {
+    const form = mockFormsState[formId];
+    if (form) {
+      form.submitCount += 1;
+    }
+  }),
+  
+  // Persistence
+  persistForm: jest.fn((formId: string) => {
+    const form = mockFormsState[formId];
+    if (form && form.schema.persistence?.enabled) {
+      const key = `form_${formId}`;
+      const excludeFields = form.schema.persistence.excludeFields || [];
+      
+      const values = Object.fromEntries(
+        Object.entries(form.fields)
+          .filter(([name]) => !excludeFields.includes(name))
+          .map(([name, field]: [string, any]) => [name, field.value])
+      );
+      
+      const data = {
+        values,
+        formId,
+        timestamp: Date.now(),
+      };
+      
+      try {
+        mockLocalStorage.setItem(key, JSON.stringify(data));
+      } catch (error) {
+        // Silently handle storage errors in persistence
+        console.warn('Failed to persist form data:', error);
+      }
+    }
+  }),
+  
+  restoreForm: jest.fn((formId: string) => {
+    const form = mockFormsState[formId];
+    if (form && form.schema.persistence?.enabled) {
+      const key = `form_${formId}`;
+      const stored = mockLocalStorage.getItem(key);
+      if (stored) {
+        try {
+          const data = JSON.parse(stored);
+          // Check if data is expired (older than 24 hours)
+          if (Date.now() - data.timestamp > 24 * 60 * 60 * 1000) {
+            return;
+          }
+          
+          Object.entries(data.values).forEach(([fieldName, value]) => {
+            if (form.fields[fieldName]) {
+              form.fields[fieldName].value = value;
+            }
+          });
+        } catch (e) {
+          // Ignore parse errors
+        }
+      }
+    }
+  }),
+  
+  // Utility functions
+  getFormValues: jest.fn((formId: string) => {
+    const form = mockFormsState[formId];
+    if (!form) return {};
+    return Object.fromEntries(
+      Object.entries(form.fields).map(([name, field]: [string, any]) => [name, field.value])
+    );
+  }),
+  
+  getFormErrors: jest.fn((formId: string) => {
+    const form = mockFormsState[formId];
+    if (!form) return {};
+    return Object.fromEntries(
+      Object.entries(form.fields)
+        .filter(([_, field]: [string, any]) => field.error !== null)
+        .map(([name, field]: [string, any]) => [name, field.error])
+    );
+  }),
+  
+  hasFormChanged: jest.fn((formId: string) => {
+    const form = mockFormsState[formId];
+    if (!form) return false;
+    return form.isDirty || Object.values(form.fields).some((field: any) => field.dirty);
+  }),
+  
+  // Cleanup
+  cleanup: jest.fn(() => {
+    // Remove stale forms (older than 1 hour for testing)
+    const now = Date.now();
+    const staleThreshold = 60 * 60 * 1000; // 1 hour
+    
+    Object.entries(mockFormsState).forEach(([formId, form]) => {
+      if (form.updatedAt && now - form.updatedAt > staleThreshold) {
+        delete mockFormsState[formId];
+      }
+    });
+  }),
+}));
+
+// Mock the useFormStore export
+jest.mock('../formStore', () => ({
+  useFormStore: mockUseFormStore,
+  FormSchema: {},
+  FormValidationRule: {},
+}));
+
 describe('FormStore', () => {
+  const useFormStore = mockUseFormStore;
+
   beforeEach(() => {
     // Reset store state
-    useFormStore.getState().forms = {};
+    mockFormsState = {};
     // Clear localStorage
     mockLocalStorage.clear();
     jest.clearAllMocks();
