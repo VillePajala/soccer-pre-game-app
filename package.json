@@ -11,7 +11,7 @@
     "test:unit": "jest",
     "test:fast": "LOG_LEVEL=error jest --testPathIgnorePatterns='supabase|import|backup|export|useForm.test|useRosterSettingsModalState|useSettingsModalState|useViewMode' --maxWorkers=4 --silent",
     "test:slow": "LOG_LEVEL=error jest --testPathPattern='supabase|import|backup|export' --maxWorkers=2 --silent",
-    "test:ci": "LOG_LEVEL=error jest --testPathIgnorePatterns='supabase|import|backup|export|useForm.test|useRosterSettingsModalState|useSettingsModalState|useViewMode|usePlayerAssessmentModalState|useTrainingResourcesModalState' --maxWorkers=4 --silent --passWithNoTests --forceExit",
+    "test:ci": "NODE_OPTIONS='--max-old-space-size=6144' LOG_LEVEL=error jest --maxWorkers=2 --silent --passWithNoTests --forceExit --testTimeout=10000",
     "generate:i18n-types": "node scripts/generate-i18n-types.mjs",
     "analyze": "ANALYZE=true npm run build",
     "security:scan": "snyk test",
