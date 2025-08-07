@@ -3,16 +3,27 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { AuthProvider } from '@/context/AuthContext';
 
-jest.mock('@/i18n', () => ({
-  __esModule: true,
-  default: {
-    language: 'en',
-    changeLanguage: jest.fn(),
-    isInitialized: true,
-    on: jest.fn(),
-    off: jest.fn(),
-  },
-}));
+jest.mock('@/i18n', () => {
+  const mockChangeLanguage = jest.fn();
+  const mockLoadLanguage = jest.fn().mockImplementation(async (lang: string) => {
+    mockChangeLanguage(lang);
+  });
+  
+  return {
+    __esModule: true,
+    default: {
+      language: 'en',
+      changeLanguage: mockChangeLanguage,
+      isInitialized: true,
+      on: jest.fn(),
+      off: jest.fn(),
+      hasResourceBundle: jest.fn().mockReturnValue(true),
+      addResourceBundle: jest.fn(),
+    },
+    loadLanguage: mockLoadLanguage,
+    mockChangeLanguage, // Export for test access
+  };
+});
 
 jest.mock('@/utils/appSettings', () => ({
   __esModule: true,
@@ -47,7 +58,7 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 
-import i18n from '@/i18n';
+import * as i18nModule from '@/i18n';
 import StartScreen from './StartScreen';
 
 describe('StartScreen', () => {
@@ -89,6 +100,6 @@ describe('StartScreen', () => {
     expect(handlers.onResumeGame).toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole('button', { name: 'Finnish' }));
-    expect(i18n.changeLanguage).toHaveBeenCalledWith('fi');
+    expect((i18nModule as any).mockChangeLanguage).toHaveBeenCalledWith('fi');
   });
 });
