@@ -36,6 +36,16 @@ const mockMigrationSafety = {
 
 // Global beforeEach to reset mocks
 beforeEach(() => {
+  // Clear wrapped actions
+  wrappedStoreActions.openModal.mockClear();
+  wrappedStoreActions.closeModal.mockClear();
+  wrappedStoreActions.toggleModal.mockClear();
+  wrappedStoreActions.isModalOpen.mockClear();
+  wrappedStoreActions.setModalData.mockClear();
+  wrappedStoreActions.getModalData.mockClear();
+  wrappedStoreActions.clearModalData.mockClear();
+  
+  // Clear original mock actions
   mockUIStore.openModal.mockClear();
   mockUIStore.closeModal.mockClear();
   mockUIStore.toggleModal.mockClear();
@@ -44,18 +54,63 @@ beforeEach(() => {
   mockUIStore.getModalData.mockClear();
   mockUIStore.clearModalData.mockClear();
   
-  // Reset modal state
-  mockUIStore.modals = {};
-  mockUIStore.isModalOpen.mockReturnValue(false);
+  // Reset modal state to closed
+  mockUIStore.modals = {
+    loadGameModal: false,
+    gameSettingsModal: false,
+    rosterSettingsModal: false,
+    gameStatsModal: false,
+    seasonTournamentModal: false,
+    trainingResourcesModal: false,
+    goalLogModal: false,
+    newGameSetupModal: false,
+    settingsModal: false,
+    playerAssessmentModal: false,
+  };
+  
+  // Reset listeners
+  storeListeners = [];
 });
+
+// Create a reactive mock store implementation  
+let storeListeners: (() => void)[] = [];
+const notifyStoreListeners = () => {
+  storeListeners.forEach(listener => listener());
+};
+
+// Wrap store actions to notify listeners
+const wrappedStoreActions = {
+  openModal: jest.fn((modalName: string) => {
+    mockUIStore.modals[modalName as keyof typeof mockUIStore.modals] = true;
+    notifyStoreListeners();
+  }),
+  closeModal: jest.fn((modalName: string) => {
+    mockUIStore.modals[modalName as keyof typeof mockUIStore.modals] = false;
+    notifyStoreListeners();
+  }),
+  toggleModal: jest.fn((modalName: string) => {
+    const current = mockUIStore.modals[modalName as keyof typeof mockUIStore.modals];
+    mockUIStore.modals[modalName as keyof typeof mockUIStore.modals] = !current;
+    notifyStoreListeners();
+  }),
+  isModalOpen: jest.fn((modalName: string) => {
+    return mockUIStore.modals[modalName as keyof typeof mockUIStore.modals] || false;
+  }),
+  setModalData: jest.fn(),
+  getModalData: jest.fn(() => ({})),
+  clearModalData: jest.fn(),
+};
+
+// Create the reactive UIStore mock
+const mockUIStoreWithActions = { ...mockUIStore, ...wrappedStoreActions };
 
 // Set up global mocks
 jest.mock('@/stores/uiStore', () => ({
   useUIStore: jest.fn((selector: any) => {
     if (typeof selector === 'function') {
-      return selector(mockUIStore);
+      return selector(mockUIStoreWithActions);
     }
-    return mockUIStore;
+    return mockUIStoreWithActions;
   }),
 }));
 
