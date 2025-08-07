@@ -1,5 +1,4 @@
 // src/utils/fullBackup.test.ts
-import "@/i18n";
 import { importFullBackup, exportFullBackup } from "./fullBackup";
 import {
   SAVED_GAMES_KEY,
@@ -8,6 +7,24 @@ import {
   TOURNAMENTS_LIST_KEY,
   MASTER_ROSTER_KEY,
 } from "@/config/storageKeys"; // Using path alias from jest.config.js
+
+// Mock i18next
+jest.mock("i18next", () => ({
+  __esModule: true,
+  default: {
+    t: jest.fn((key: string, options?: any) => {
+      const translations: Record<string, string> = {
+        "fullBackup.confirmRestore": "Haluatko varmasti palauttaa varmuuskopion?",
+        "fullBackup.restoreSuccess": "Varmuuskopio palautettu. Sovellus latautuu uudelleen...",
+        "fullBackup.restoreKeyError": `Kohteen ${options?.key || ""} palautus epäonnistui`,
+        "fullBackup.restoreError": `Virhe varmuuskopion ${options?.error || ""}`,
+        "fullBackup.exportSuccess": "Varmuuskopio vietiin onnistuneesti.",
+        "fullBackup.exportError": "Varmuuskopion vienti epäonnistui.",
+      };
+      return translations[key] || key;
+    }),
+  },
+}))
 
 // Mock localStorage globally for all tests in this file
 const localStorageMock = (() => {
