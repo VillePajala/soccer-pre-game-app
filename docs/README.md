@@ -34,6 +34,13 @@ Welcome to the MatchDay Coach documentation. This directory contains all project
 - **[Component Refactoring Guide](quality/guides/COMPONENT_REFACTORING_GUIDE.md)** - Step-by-step HomePage component breakdown
 - **[State Management Migration](quality/guides/STATE_MANAGEMENT_MIGRATION.md)** - Unified Zustand architecture implementation
 
+## 🔧 Technical Debt
+
+- **[Technical Debt Overview](technical-debt/README.md)** - Technical debt management and tracking
+- **[Code Review Findings - January 2025](technical-debt/code-review-findings-2025-01.md)** - ⚠️ **NEW**: 21 identified issues (3 critical, 7 high priority)
+- **[Debt Backlog](technical-debt/debt-backlog.md)** - Current technical debt tracking and prioritization
+- **[Resolution History](technical-debt/resolution-history.md)** - Resolved issues and lessons learned
+
 ## 📚 Guides
 
 - **[Demo Workflow](guides/demo-workflow.md)** - App workflow walkthrough and usage guide
