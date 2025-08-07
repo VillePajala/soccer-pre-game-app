@@ -35,7 +35,7 @@ describe('useStateSynchronization', () => {
     expect(operation2).toHaveBeenCalledTimes(1);
   });
 
-  it.skip('should handle synchronous operations', async () => {
+  it('should handle synchronous operations', async () => {
     const { result } = renderHook(() => useStateSynchronization());
     const executionOrder: number[] = [];
 
@@ -69,7 +69,7 @@ describe('useStateSynchronization', () => {
     expect(executionOrder).toEqual([1, 2]);
   });
 
-  it.skip('should handle operation errors correctly', async () => {
+  it('should handle operation errors correctly', async () => {
     const { result } = renderHook(() => useStateSynchronization());
     const executionOrder: number[] = [];
 
@@ -107,7 +107,7 @@ describe('useStateSynchronization', () => {
     expect(executionOrder).toEqual([1, 2]); // Both should have executed in order
   });
 
-  it.skip('should clear synchronization state', async () => {
+  it('should clear synchronization state', async () => {
     const { result } = renderHook(() => useStateSynchronization());
 
     // Start an operation
@@ -146,7 +146,7 @@ describe('useStateSynchronization', () => {
     expect(result2!).toBe('fast');
   });
 
-  it.skip('should wait for synchronization to complete', async () => {
+  it('should wait for synchronization to complete', async () => {
     const { result } = renderHook(() => useStateSynchronization());
     let operationCompleted = false;
 

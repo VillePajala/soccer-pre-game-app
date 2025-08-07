@@ -881,7 +881,7 @@ describe('FormStore', () => {
       }
     });
 
-    it.skip('should restore form data from localStorage', () => {
+    it('should restore form data from localStorage', () => {
       // Pre-populate localStorage
       const storedData = {
         values: { username: 'restoreduser' },

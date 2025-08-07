@@ -48,8 +48,40 @@ jest.mock('@/utils/logger', () => ({
   },
 }));
 
-jest.mock('@/services/TransactionManager');
-jest.mock('@/services/StorageServiceProvider');
+// Provide working mocks for transaction and DI systems used by the store
+jest.mock('@/services/TransactionManager', () => {
+  const executeTransaction = jest.fn(async (operations: any[]) => {
+    const results: any[] = [];
+    for (const op of operations) {
+      if (typeof op === 'function') {
+        results.push(await op());
+      } else if (op && typeof op.execute === 'function') {
+        results.push(await op.execute());
+      } else if (op && typeof op.fn === 'function') {
+        results.push(await op.fn());
+      } else {
+        results.push(undefined);
+      }
+    }
+    return { success: true, results };
+  });
+  return {
+    __esModule: true,
+    transactionManager: { executeTransaction },
+    createAsyncOperation: (_id: string, _desc: string, fn: any) => fn,
+    createStateMutation: (_id: string, _desc: string, fn: any, arg: any) => () => fn(arg),
+  };
+});
+
+jest.mock('@/services/StorageServiceProvider', () => ({
+  __esModule: true,
+  storageServiceProvider: {
+    registerStorageService: jest.fn(),
+    isAvailable: jest.fn(() => true),
+  },
+  getStorageService: jest.fn(() => null),
+  getStorageServiceAsync: jest.fn(async () => null),
+}));
 
 // Import mocked functions
 import { getTypedSavedGames, saveTypedGame, getTypedMasterRoster } from '@/utils/typedStorageHelpers';
@@ -64,7 +96,7 @@ const mockStorageManager = authAwareStorageManager as jest.Mocked<typeof authAwa
 // This test needs refactoring to properly mock the TransactionManager and storage providers
 // The test is valuable for preventing data loss regressions but currently has mock setup issues
 // Priority: High - Schedule for next sprint to fix properly
-describe.skip('PersistenceStore', () => {
+describe('PersistenceStore', () => {
   const mockGameState: AppState = {
       gameId: 'game-1',
       teamName: 'Arsenal FC',

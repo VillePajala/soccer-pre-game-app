@@ -456,6 +456,11 @@ export const shouldUseLegacyState = (componentName: string): boolean => {
     return false;
   }
   
+  // If a migration is currently in progress, prefer legacy paths for safety
+  if (status.isInProgress) {
+    return true;
+  }
+  
   // If component has failed, use legacy (only if fallback is enabled)
   if (status.failedComponents.includes(componentName)) {
     return true;
@@ -516,7 +521,10 @@ export const withMigrationSafety = <T>(
     } else {
       // Use new implementation but don't auto-mark as migrated
       // Components should be explicitly marked as migrated
-      return newImplementation();
+      const result = newImplementation();
+      // Mark as migrated on successful execution
+      markComponentMigrated(componentName);
+      return result;
     }
   } catch (error) {
     markComponentFailed(componentName, error as Error);

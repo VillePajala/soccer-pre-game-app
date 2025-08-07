@@ -356,7 +356,7 @@ describe('State Migration Utilities', () => {
       mockLocalStorage.getItem.mockReturnValue(null);
     });
 
-    it.skip('should track component migration status (LEGACY - removed)', () => {
+    it('should track component migration status (LEGACY - removed)', () => {
       startMigration({ enableLegacyFallback: true });
       
       expect(shouldUseLegacyState('TestComponent')).toBe(true);
@@ -379,7 +379,7 @@ describe('State Migration Utilities', () => {
       expect(status.lastError).toBe('Migration failed');
     });
 
-    it.skip('should provide safe migration wrapper (LEGACY - removed)', () => {
+    it('should provide safe migration wrapper (LEGACY - removed)', () => {
       const legacyImplementation = jest.fn(() => 'legacy');
       const newImplementation = jest.fn(() => 'new');
       
