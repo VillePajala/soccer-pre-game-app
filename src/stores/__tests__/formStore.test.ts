@@ -168,7 +168,7 @@ const mockUseFormStore = jest.fn(() => ({
   validateField: jest.fn(async (formId: string, fieldName: string) => {
     const form = mockFormsState[formId];
     if (!form?.fields[fieldName]) {
-      return { isValid: true, error: null };
+      return { isValid: true, error: null, errors: {} };
     }
     
     const field = form.fields[fieldName];
@@ -179,22 +179,34 @@ const mockUseFormStore = jest.fn(() => ({
       for (const rule of fieldConfig.validation) {
         if (rule.type === 'required' && (!value || value === '')) {
           field.error = rule.message;
-          return { isValid: false, error: rule.message };
+          return { 
+            isValid: false, 
+            error: rule.message, 
+            errors: { [fieldName]: rule.message } 
+          };
         }
         if (rule.type === 'pattern' && value && !rule.value.test(value)) {
           field.error = rule.message;
-          return { isValid: false, error: rule.message };
+          return { 
+            isValid: false, 
+            error: rule.message, 
+            errors: { [fieldName]: rule.message } 
+          };
         }
         if (rule.type === 'minLength' && value && value.length < rule.value) {
           field.error = rule.message;
-          return { isValid: false, error: rule.message };
+          return { 
+            isValid: false, 
+            error: rule.message, 
+            errors: { [fieldName]: rule.message } 
+          };
         }
-        if (rule.type === 'custom' && rule.validator) {
+        if ((rule.type === 'custom' || rule.type === 'async') && rule.validator) {
           let isValid = false;
           
           // Handle both sync and async validators
           try {
-            if (rule.async) {
+            if (rule.type === 'async' || rule.async) {
               // Async custom validator
               isValid = await rule.validator(value);
             } else {
@@ -204,18 +216,26 @@ const mockUseFormStore = jest.fn(() => ({
             
             if (!isValid) {
               field.error = rule.message;
-              return { isValid: false, error: rule.message };
+              return { 
+                isValid: false, 
+                error: rule.message, 
+                errors: { [fieldName]: rule.message } 
+              };
             }
           } catch (error) {
             field.error = rule.message;
-            return { isValid: false, error: rule.message };
+            return { 
+              isValid: false, 
+              error: rule.message, 
+              errors: { [fieldName]: rule.message } 
+            };
           }
         }
       }
     }
     
     field.error = null;
-    return { isValid: true, error: null };
+    return { isValid: true, error: null, errors: {} };
   }),
   
   validateForm: jest.fn(async (formId: string) => {
