@@ -14,7 +14,7 @@ import logger from '@/utils/logger';
 jest.mock('@/utils/logger');
 
 describe('localStorage utilities', () => {
-  const mockLogger = logger as jest.Mocked<typeof logger>;
+  const mockLogger = jest.mocked(logger);
   
   // Store original localStorage
   const originalLocalStorage = global.localStorage;

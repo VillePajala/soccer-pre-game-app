@@ -6,9 +6,4 @@ const mockLogger = {
   log: jest.fn(),
 };
 
-// Reset the mocks before each test
-beforeEach(() => {
-  jest.clearAllMocks();
-});
-
 export default mockLogger;
