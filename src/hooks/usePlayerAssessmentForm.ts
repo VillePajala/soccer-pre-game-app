@@ -869,6 +869,10 @@ export function usePlayerAssessmentForm(
       
       // Reset any pending saving states to prevent stale state updates
       const currentAssessments = form.values.assessments;
+      if (!currentAssessments) {
+        return; // Early return if assessments is null/undefined
+      }
+      
       const hasAnySaving = Object.values(currentAssessments).some(assessment => {
         const typedAssessment = assessment as { isSaving?: boolean };
         return typedAssessment.isSaving;
