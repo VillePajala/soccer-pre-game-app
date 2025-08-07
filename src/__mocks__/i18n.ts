@@ -37,6 +37,12 @@ const i18nMock = {
   addResourceBundle: jest.fn(),
 };
 
+export const loadLanguage = jest.fn().mockImplementation(async (lang: string) => {
+  // Update the language property and call changeLanguage
+  i18nMock.language = lang;
+  return i18nMock.changeLanguage(lang);
+});
+
 export const initReactI18next = {
   type: '3rdParty',
   init: jest.fn(),

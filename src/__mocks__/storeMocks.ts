@@ -1,0 +1,91 @@
+// Common mock patterns for stores
+export const mockUIStore = {
+  useUIStore: jest.fn((selector) => {
+    const mockState = {
+      resetAll: jest.fn(),
+      setTacticsBoardView: jest.fn(),
+      setDrawingMode: jest.fn(),
+      setPlayerSelectionMode: jest.fn(),
+      setFieldEditMode: jest.fn(),
+      addSelectedPlayerId: jest.fn(),
+      removeSelectedPlayerId: jest.fn(),
+      clearSelectedPlayers: jest.fn(),
+      addSelectedOpponentId: jest.fn(),
+      removeSelectedOpponentId: jest.fn(),
+      clearSelectedOpponents: jest.fn(),
+      resetView: jest.fn(),
+    };
+    return selector ? selector(mockState) : mockState;
+  }),
+  useGameView: jest.fn(() => ({
+    isTacticsBoardView: false,
+    isDrawingMode: false,
+    isPlayerSelectionMode: false,
+    isFieldEditMode: false,
+    showPlayerNames: true,
+    showPlayerNumbers: false,
+    showOpponents: true,
+    showTacticalElements: true,
+  })),
+  useDrawingMode: jest.fn(() => ({
+    tool: null,
+    color: '#000000',
+    thickness: 2,
+  })),
+  useDrawingInteraction: jest.fn(() => ({
+    isDrawing: false,
+    currentPoints: [],
+    startDrawing: jest.fn(),
+    addDrawingPoint: jest.fn(),
+    endDrawing: jest.fn(),
+    clearCurrentDrawing: jest.fn(),
+  })),
+  useDraggingState: jest.fn(() => ({
+    isDraggingPlayer: false,
+    draggingPlayerId: null,
+    isDraggingOpponent: false,
+    draggingOpponentId: null,
+    isDraggingTacticalDisc: false,
+    draggingTacticalDiscId: null,
+    isDraggingBall: false,
+    isAnyDragging: false,
+    startDraggingPlayer: jest.fn(),
+    endDraggingPlayer: jest.fn(),
+    startDraggingOpponent: jest.fn(),
+    endDraggingOpponent: jest.fn(),
+    startDraggingTacticalDisc: jest.fn(),
+    endDraggingTacticalDisc: jest.fn(),
+    startDraggingBall: jest.fn(),
+    endDraggingBall: jest.fn(),
+  })),
+  useSelectionState: jest.fn(() => ({
+    selectedPlayerIds: [],
+    selectedOpponentIds: [],
+    selectedTacticalElements: [],
+    selectPlayer: jest.fn(),
+    deselectPlayer: jest.fn(),
+    clearPlayerSelection: jest.fn(),
+    selectOpponent: jest.fn(),
+    deselectOpponent: jest.fn(),
+  })),
+  useTacticsBoard: jest.fn(() => ({
+    resetView: jest.fn(),
+  })),
+};
+
+export const mockFormStore = {
+  useFormStore: jest.fn(() => ({
+    forms: {},
+    createForm: jest.fn(),
+    destroyForm: jest.fn(),
+    setFieldValue: jest.fn(),
+    setFieldError: jest.fn(),
+    setFieldTouched: jest.fn(),
+    resetForm: jest.fn(),
+    clearForm: jest.fn(),
+    validateField: jest.fn().mockResolvedValue({ isValid: true, errors: {} }),
+    validateForm: jest.fn().mockResolvedValue({ isValid: true, errors: {} }),
+    getFormValues: jest.fn().mockReturnValue({}),
+    getFormErrors: jest.fn().mockReturnValue({}),
+  })),
+};

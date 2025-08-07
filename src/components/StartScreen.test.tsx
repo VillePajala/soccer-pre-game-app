@@ -1,29 +1,25 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { AuthProvider } from '@/context/AuthContext';
 
-jest.mock('@/i18n', () => {
-  const mockChangeLanguage = jest.fn();
-  const mockLoadLanguage = jest.fn().mockImplementation(async (lang: string) => {
-    mockChangeLanguage(lang);
-  });
-  
-  return {
-    __esModule: true,
-    default: {
-      language: 'en',
-      changeLanguage: mockChangeLanguage,
-      isInitialized: true,
-      on: jest.fn(),
-      off: jest.fn(),
-      hasResourceBundle: jest.fn().mockReturnValue(true),
-      addResourceBundle: jest.fn(),
-    },
-    loadLanguage: mockLoadLanguage,
-    mockChangeLanguage, // Export for test access
-  };
-});
+// Mock i18n module with specific functions for this test
+const mockLoadLanguage = jest.fn();
+const mockChangeLanguage = jest.fn();
+
+jest.mock('@/i18n', () => ({
+  __esModule: true,
+  default: {
+    language: 'en',
+    get changeLanguage() { return mockChangeLanguage; },
+    isInitialized: true,
+    on: jest.fn(),
+    off: jest.fn(),
+    hasResourceBundle: jest.fn().mockReturnValue(true),
+    addResourceBundle: jest.fn(),
+  },
+  get loadLanguage() { return mockLoadLanguage; },
+}));
 
 jest.mock('@/utils/appSettings', () => ({
   __esModule: true,
@@ -58,11 +54,18 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 
-import * as i18nModule from '@/i18n';
+import i18n from '@/i18n';
 import StartScreen from './StartScreen';
 
 describe('StartScreen', () => {
-  it('renders all action buttons', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockLoadLanguage.mockImplementation(async (lang: string) => {
+      mockChangeLanguage(lang);
+    });
+  });
+  
+  it('renders all action buttons', async () => {
     const handlers = {
       onStartNewGame: jest.fn(),
       onLoadGame: jest.fn(),
@@ -100,6 +103,10 @@ describe('StartScreen', () => {
     expect(handlers.onResumeGame).toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole('button', { name: 'Finnish' }));
-    expect((i18nModule as any).mockChangeLanguage).toHaveBeenCalledWith('fi');
+    
+    // Wait for the useEffect to trigger and then check if loadLanguage was called
+    await waitFor(() => {
+      expect(mockLoadLanguage).toHaveBeenCalledWith('fi');
+    });
   });
 });

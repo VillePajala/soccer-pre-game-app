@@ -1,0 +1,12 @@
+
+> test-pro-soccer-coach@0.1.0 test
+> jest 2
+
+No tests found, exiting with code 1
+Run with `--passWithNoTests` to exit with code 0
+In /home/villepajala/projects/soccer-pre-game-app
+  534 files checked.
+  testMatch: **/__tests__/**/*.[jt]s?(x), **/?(*.)+(spec|test).[tj]s?(x) - 123 matches
+  testPathIgnorePatterns: /node_modules/, /.next/, /node_modules/, /.next/, /home/villepajala/projects/soccer-pre-game-app/tests/ - 433 matches
+  testRegex:  - 0 matches
+Pattern: 2 - 0 matches
