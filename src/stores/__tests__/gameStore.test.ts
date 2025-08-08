@@ -39,7 +39,7 @@ describe('GameStore', () => {
       expect(result.current.currentPeriod).toBe(1);
       expect(result.current.homeScore).toBe(0);
       expect(result.current.awayScore).toBe(0);
-      expect(result.current.gameStatus).toBe('not_started');
+      expect(result.current.gameStatus).toBe('notStarted');
     });
 
     it('should update team information correctly', () => {
@@ -332,7 +332,7 @@ describe('GameStore', () => {
         result.current.setCurrentPeriod(2);
         result.current.setHomeScore(2);
         result.current.setAwayScore(1);
-        result.current.setGameStatus('in_progress');
+        result.current.setGameStatus('inProgress');
       });
       
       const gameSession = result.current.gameSession;
@@ -342,7 +342,7 @@ describe('GameStore', () => {
       expect(gameSession.currentPeriod).toBe(2);
       expect(gameSession.homeScore).toBe(2);
       expect(gameSession.awayScore).toBe(1);
-      expect(gameSession.gameStatus).toBe('in_progress');
+      expect(gameSession.gameStatus).toBe('inProgress');
     });
   });
 

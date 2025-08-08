@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@/__tests__/test-utils';
 import '@testing-library/jest-dom';
 import GoalLogModal from './GoalLogModal';
 import { Player } from '@/types';
@@ -44,7 +44,7 @@ describe('GoalLogModal', () => {
     const onLogOpponentGoal = jest.fn();
     renderModal({ onLogOpponentGoal });
 
-    // Use the i18n key since translations aren't working in test
+    // The i18n in tests returns the key, not the translation
     fireEvent.click(screen.getByText('goalLogModal.logOpponentGoalButtonShort'));
     expect(onLogOpponentGoal).toHaveBeenCalledWith(30);
   });
