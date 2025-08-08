@@ -445,8 +445,10 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   const [showLargeTimerOverlay, setShowLargeTimerOverlay] = useState<boolean>(false); // State for overlay visibility
   const [isInstructionsModalOpen, setIsInstructionsModalOpen] = useState<boolean>(false);
 
+  const hasHandledInitialActionRef = useRef(false);
   useEffect(() => {
-    if (!initialAction) return;
+    if (!initialAction || hasHandledInitialActionRef.current) return;
+    hasHandledInitialActionRef.current = true;
     switch (initialAction) {
       case 'newGame':
         newGameSetupModal.open();
