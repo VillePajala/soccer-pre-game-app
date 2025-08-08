@@ -94,6 +94,9 @@ import { DEFAULT_GAME_ID } from '@/config/constants';
 // Removed - now handled by useGameDataManager: exportJson, exportCsv
 import { useToast } from '@/contexts/ToastProvider';
 import logger from '@/utils/logger';
+// Prefetch helpers for reference data
+import { getSeasons as utilGetSeasons } from '@/utils/seasons';
+import { getTournaments as utilGetTournaments } from '@/utils/tournaments';
 
 
 // Placeholder data - Initialize new fields
@@ -371,6 +374,9 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   const [savedGames, setSavedGames] = useState<SavedGamesCollection>({});
   const [currentGameId, setCurrentGameId] = useState<string | null>(DEFAULT_GAME_ID);
   const [isPlayed, setIsPlayed] = useState<boolean>(true);
+  // Cache seasons/tournaments for modals to avoid re-fetch cost on first open
+  const [prefetchedSeasons, setPrefetchedSeasons] = useState<Season[] | null>(null);
+  const [prefetchedTournaments, setPrefetchedTournaments] = useState<Tournament[] | null>(null);
   
   // This ref needs to be declared after currentGameId
   const gameIdRef = useRef(currentGameId);
@@ -869,11 +875,17 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
       // Timer restoration is now handled by useOfflineFirstGameTimer hook
 
-      // Check if user has seen app guide
-      const seenGuide = await getHasSeenAppGuide();
-      if (!seenGuide) {
-        setIsInstructionsModalOpen(true);
-      }
+      // Check if user has seen app guide (defer to next tick to avoid blocking UI)
+      setTimeout(async () => {
+        try {
+          const seenGuide = await getHasSeenAppGuide();
+          if (!seenGuide) {
+            setIsInstructionsModalOpen(true);
+          }
+        } catch (e) {
+          logger.warn('[HomePage] Failed to check app guide flag:', e);
+        }
+      }, 0);
 
       setInitialLoadComplete(true);
       logger.debug('[EFFECT init] Initial application data coordination complete.');
@@ -891,6 +903,26 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     currentGameIdSettingQueryResultData,
     sortedGamesByDate
   ]);
+
+  // Prefetch seasons/tournaments once after initial render to warm caches for modals
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [s, t] = await Promise.all([
+          utilGetSeasons().catch(() => []),
+          utilGetTournaments().catch(() => []),
+        ]);
+        if (!cancelled) {
+          setPrefetchedSeasons(Array.isArray(s) ? s : []);
+          setPrefetchedTournaments(Array.isArray(t) ? t : []);
+        }
+      } catch {
+        // ignore
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   // Add a timeout for mobile loading issues
   useEffect(() => {
