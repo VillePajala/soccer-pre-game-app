@@ -5,7 +5,6 @@ import {
   useGameStatsModalWithHandlers,
   useGameStatsModal 
 } from '../useGameStatsModalState';
-import { useUIStore } from '@/stores/uiStore';
 // import { useModalContext } from '@/contexts/{}';
 
 // Mock dependencies

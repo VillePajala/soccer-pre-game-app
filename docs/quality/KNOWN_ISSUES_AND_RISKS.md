@@ -10,23 +10,23 @@ Scope: Functional bugs, inconsistencies, risks, and edge cases identified during
 
 ## 1) Functional and logic bugs (high priority)
 
-- [ ] Always-true auth condition runs resume check regardless of auth state
-  - File: `src/app/page.tsx`
+- [x] Always-true auth condition runs resume check regardless of auth state
+  - File: `src/app/page.tsx` (fixed: tightened condition and removed always-true branch)
   - Ref (for context): lines 194–198 where `if (user || !user)` is used
-- [ ] Pause sets gameStatus to notStarted in provider (should pause, not reset status)
-  - File: `src/components/game/GameStateProvider.tsx`
+- [x] Pause sets gameStatus to notStarted in provider (should pause, not reset status)
+  - File: `src/components/game/GameStateProvider.tsx` (fixed: dispatch `PAUSE_TIMER` and keep status consistent)
   - Ref: lines 157–162 in `pauseGame`
-- [ ] Duplicate modal open when starting new game (race/flicker risk)
-  - File: `src/components/HomePage.tsx`
+- [x] Duplicate modal open when starting new game (race/flicker risk)
+  - File: `src/components/HomePage.tsx` (fixed: await quick save and open modal once)
   - Ref: lines 1646–1682; `newGameSetupModal.open()` invoked twice in the save-&-continue path
-- [ ] New games default to isPlayed=true (should default false)
-  - File: `src/utils/savedGames.ts`
+- [x] New games default to isPlayed=true (should default false)
+  - File: `src/utils/savedGames.ts` (fixed: default `isPlayed` to false in `createGame`)
   - Ref: around lines 221–236 (`isPlayed` fallback)
 
 ## 2) Persistence/storage contradictions (architecture)
 
-- [ ] Docs claim “localStorage-free”, but legacy timer hook still uses localStorage
-  - File: `src/hooks/useGameTimer.ts`
+- [x] Docs claim “localStorage-free”, but legacy timer hook still uses localStorage
+  - File: `src/hooks/useGameTimer.ts` (fixed: delegate to `useOfflineFirstGameTimer` to persist via IndexedDB)
 - [ ] Zustand `persist` stores large app slices in localStorage (risk of quota, SSR access)
   - File: `src/stores/persistenceStore.ts`
 - [ ] Documentation contradicts implementation (claims 100% removal of localStorage)
@@ -34,14 +34,14 @@ Scope: Functional bugs, inconsistencies, risks, and edge cases identified during
 
 ## 3) Auth/session bugs
 
-- [ ] Sign-out cleanup misses Supabase keys due to extra substring filter
-  - File: `src/context/AuthContext.tsx`
-  - Ref: lines ~174–183; currently checks `key.startsWith('sb-') && key.includes('supabase')`
+- [x] Sign-out cleanup misses Supabase keys due to extra substring filter
+  - File: `src/context/AuthContext.tsx` (fixed: remove all keys starting with `sb-`)
+  - Ref: lines ~174–183; previously checked `key.startsWith('sb-') && key.includes('supabase')`
 
 ## 4) Types and API mismatches
 
-- [ ] `updateGameDetails` omits non-existent `events` instead of `gameEvents`
-  - File: `src/utils/savedGames.ts`
+- [x] `updateGameDetails` omits non-existent `events` instead of `gameEvents`
+  - File: `src/utils/savedGames.ts` (fixed: omit `'gameEvents'`)
   - Ref: lines ~331–336
 - [ ] Game status enums inconsistent (`not_started` vs `notStarted`)
   - File: `src/stores/gameStore.ts`

@@ -173,10 +173,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // Clear only Supabase auth storage (not all auth-related keys)
       if (typeof window !== 'undefined') {
-        // Clear only specific Supabase auth storage keys to avoid clearing game data
+        // Clear Supabase auth keys without accidentally removing app data
         const keys = Object.keys(localStorage);
         keys.forEach(key => {
-          if (key.startsWith('sb-') && key.includes('supabase')) {
+          if (key.startsWith('sb-')) {
             logger.info('Clearing Supabase auth key:', key);
             localStorage.removeItem(key);
           }

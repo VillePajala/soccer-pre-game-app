@@ -218,7 +218,7 @@ export const createGame = async (gameData: Partial<AppState>): Promise<{ gameId:
       periodDurationMinutes: gameData.periodDurationMinutes || 10,
       currentPeriod: gameData.currentPeriod || 1,
       gameStatus: gameData.gameStatus || 'notStarted',
-      isPlayed: gameData.isPlayed === undefined ? true : gameData.isPlayed,
+      isPlayed: gameData.isPlayed === undefined ? false : gameData.isPlayed,
       selectedPlayerIds: gameData.selectedPlayerIds || [],
       assessments: gameData.assessments || {},
       seasonId: gameData.seasonId || '',
@@ -330,7 +330,7 @@ export const getLatestGameId = (games: SavedGamesCollection): string | null => {
  */
 export const updateGameDetails = async (
   gameId: string,
-  updateData: Partial<Omit<AppState, 'id' | 'events'>>
+  updateData: Partial<Omit<AppState, 'id' | 'gameEvents'>>
 ): Promise<AppState | null> => {
   try {
     const game = await getGame(gameId);

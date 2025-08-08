@@ -156,10 +156,11 @@ export function GameStateProvider({
   // Pause game function  
   const pauseGame = useCallback(() => {
     logger.debug('[GameStateProvider] Pausing game');
-    // Use a valid status - will be implemented properly later
-    updateGameState({ gameStatus: 'notStarted' });
+    // Maintain current status; reduce to paused by toggling running flag
+    // Delegate to reducer semantics rather than resetting status
+    dispatchGameSession({ type: 'PAUSE_TIMER' } as any);
     setIsGameActive(false);
-  }, [updateGameState]);
+  }, []);
   
   // End game function
   const endGame = useCallback(() => {

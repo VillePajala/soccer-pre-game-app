@@ -1033,152 +1033,92 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   }, [currentGameId, savedGames, initialLoadComplete]); // IMPORTANT: initialLoadComplete ensures this runs after master roster is loaded.
 
   // --- Auto-save state using offline-first storage ---
-  useEffect(() => {
-    // Skip auto-save during new game creation to prevent overwriting the new game
-    if (isCreatingNewGame) {
-      return;
+  const autosaveTimeoutRef = useRef<number | null>(null);
+  const pendingAutosaveRef = useRef<Promise<void> | null>(null);
+
+  const scheduleAutosave = useCallback((fn: () => Promise<void>) => {
+    // Debounce 750ms and ensure only one save runs at a time
+    if (autosaveTimeoutRef.current) {
+      window.clearTimeout(autosaveTimeoutRef.current);
+      autosaveTimeoutRef.current = null;
     }
-    
-    // Skip auto-save during state synchronization to prevent race conditions
-    if (isStateSynchronizing) {
-      return;
-    }
-    
-    // Only auto-save if loaded AND we have a proper game ID (not the default unsaved one)
-    const autoSave = async () => {
-    if (initialLoadComplete && currentGameId && currentGameId !== DEFAULT_GAME_ID) {
-      try {
-        // CRITICAL BUG FIX: Add comprehensive debugging for assist-related saves
-        const assistEvents = gameSessionState.gameEvents.filter(event => event.type === 'goal' && event.assisterId);
-        logger.log(`[AUTO-SAVE] Starting auto-save for game ${currentGameId}`);
-        logger.log(`[AUTO-SAVE] Total events: ${gameSessionState.gameEvents.length}, Events with assists: ${assistEvents.length}`);
-        if (assistEvents.length > 0) {
-          logger.log(`[AUTO-SAVE] Assist events details:`, assistEvents.map(e => {
-            if (e.type === 'goal') {
-              return {
-                id: e.id,
-                type: e.type,
-                scorerId: e.scorerId,
-                assisterId: e.assisterId,
-                time: e.time
-              };
-            }
-            return { id: e.id, type: e.type, time: e.time };
-          }));
-        }
-        logger.log(`[AUTO-SAVE] Available players count: ${availablePlayers.length}, Master roster count: ${masterRosterQueryResultData?.length || 0}`);
-        
-        // 1. Create the current game state snapshot (excluding history and volatile timer states)
-        const currentSnapshot: AppState = {
-          // Fields from gameSessionState (persisted ones)
-          teamName: gameSessionState.teamName,
-          opponentName: gameSessionState.opponentName,
-          gameDate: gameSessionState.gameDate,
-          homeScore: gameSessionState.homeScore,
-          awayScore: gameSessionState.awayScore,
-          gameNotes: gameSessionState.gameNotes,
-          homeOrAway: gameSessionState.homeOrAway,
-          isPlayed,
-          numberOfPeriods: gameSessionState.numberOfPeriods,
-          periodDurationMinutes: gameSessionState.periodDurationMinutes,
-          currentPeriod: gameSessionState.currentPeriod, // Persisted
-          gameStatus: gameSessionState.gameStatus, // Persisted
-          seasonId: gameSessionState.seasonId, // USE gameSessionState
-          tournamentId: gameSessionState.tournamentId, // USE gameSessionState
-          gameLocation: gameSessionState.gameLocation,
-          gameTime: gameSessionState.gameTime,
-          demandFactor: gameSessionState.demandFactor,
-          subIntervalMinutes: gameSessionState.subIntervalMinutes,
-          completedIntervalDurations: gameSessionState.completedIntervalDurations,
-          lastSubConfirmationTimeSeconds: gameSessionState.lastSubConfirmationTimeSeconds,
-          showPlayerNames: gameSessionState.showPlayerNames, // from gameSessionState
-          selectedPlayerIds: gameSessionState.selectedPlayerIds, // from gameSessionState
-          timeElapsedInSeconds: gameSessionState.timeElapsedInSeconds, // Include timer state
-          gameEvents: gameSessionState.gameEvents, // from gameSessionState
-          assessments: playerAssessments,
-
-          // Other states
-          playersOnField,
-          opponents,
-          drawings,
-          tacticalDiscs,
-          tacticalDrawings,
-          tacticalBallPosition,
-          availablePlayers: masterRosterQueryResultData || availablePlayers, // Master roster snapshot
-          
-          // Volatile timer states are intentionally EXCLUDED from the snapshot to be saved.
-          // They are not part of GameData and should be re-initialized on load by the reducer.
-        };
-
-        // CRITICAL BUG FIX: Log snapshot details before save
-        logger.log(`[AUTO-SAVE] Snapshot prepared - Events count: ${currentSnapshot.gameEvents.length}`);
-        logger.log(`[AUTO-SAVE] Snapshot events with assists:`, currentSnapshot.gameEvents.filter(e => e.type === 'goal' && e.assisterId).map(e => {
-          if (e.type === 'goal') {
-            return {
-              id: e.id,
-              scorerId: e.scorerId,
-              assisterId: e.assisterId
-            };
-          }
-          return { id: e.id, type: e.type };
-        }));
-        
-        // 2. Save the game snapshot using utility
-        logger.log(`[AUTO-SAVE] Calling utilSaveGame...`);
-        const savedResult = await utilSaveGame(currentGameId, currentSnapshot as AppState); // Cast to AppState for the util
-        logger.log(`[AUTO-SAVE] Save completed successfully`);
-        
-        // 3. Update currentGameId if it changed (important for Supabase UUID sync)
-        const newGameId = (savedResult as AppState & { id?: string }).id;
-        if (newGameId && newGameId !== currentGameId) {
-          logger.log(`Game ID changed from ${currentGameId} to ${newGameId} during save`);
-          setCurrentGameId(newGameId);
-          await utilSaveCurrentGameIdSetting(newGameId);
-        } else {
-          // Save App Settings (only the current game ID) using utility
-          await utilSaveCurrentGameIdSetting(currentGameId);
-        }
-
-      } catch (error) {
-        logger.error("[AUTO-SAVE] Failed to auto-save state:", error);
-        
-        // CRITICAL BUG FIX: Log detailed error context for debugging
-        logger.error(`[AUTO-SAVE] Error context - Game ID: ${currentGameId}`);
-        logger.error(`[AUTO-SAVE] Error context - Events count: ${gameSessionState.gameEvents.length}`);
-        logger.error(`[AUTO-SAVE] Error context - Assist events:`, gameSessionState.gameEvents.filter(e => e.type === 'goal' && e.assisterId));
-        
-        // CRITICAL BUG FIX: Distinguish between different types of save errors
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        
-        if (errorMessage.includes('not found') || errorMessage.includes('FK constraint') || errorMessage.includes('foreign key')) {
-          // Data validation error - not a network issue
-          alert(`Data validation error: ${errorMessage}\n\nThis is likely due to invalid player references. Please check your goal/assist entries.`);
-        } else if (errorMessage.includes('network') || errorMessage.includes('offline') || errorMessage.includes('fetch')) {
-          // Actual network error
-          alert("Network error: Unable to save game. Please check your connection and try again.");
-        } else {
-          // Generic error
-          alert(`Error saving game: ${errorMessage}`);
-        }
+    autosaveTimeoutRef.current = window.setTimeout(async () => {
+      if (pendingAutosaveRef.current) {
+        // wait for the in-flight save, then run again
+        try { await pendingAutosaveRef.current; } catch { /* ignore */ }
       }
-    } else if (initialLoadComplete && currentGameId === DEFAULT_GAME_ID) {
-      logger.log("Not auto-saving as this is an unsaved game (no ID assigned yet)");
+      const p = fn();
+      pendingAutosaveRef.current = p;
+      try { await p; } finally { pendingAutosaveRef.current = null; }
+    }, 750);
+  }, []);
+
+  useEffect(() => {
+    // Skip autosave during new game creation or synchronization
+    if (isCreatingNewGame || isStateSynchronizing) return;
+
+    if (initialLoadComplete && currentGameId && currentGameId !== DEFAULT_GAME_ID) {
+      scheduleAutosave(async () => {
+        try {
+          const assistEvents = gameSessionState.gameEvents.filter(event => event.type === 'goal' && (event as any).assisterId);
+          logger.log(`[AUTO-SAVE] Starting auto-save for game ${currentGameId}`);
+          if (assistEvents.length > 0) {
+            logger.log(`[AUTO-SAVE] Assist events details:`, assistEvents.map(e => ({ id: e.id, type: e.type })));
+          }
+          const currentSnapshot: AppState = {
+            teamName: gameSessionState.teamName,
+            opponentName: gameSessionState.opponentName,
+            gameDate: gameSessionState.gameDate,
+            homeScore: gameSessionState.homeScore,
+            awayScore: gameSessionState.awayScore,
+            gameNotes: gameSessionState.gameNotes,
+            homeOrAway: gameSessionState.homeOrAway,
+            isPlayed,
+            numberOfPeriods: gameSessionState.numberOfPeriods,
+            periodDurationMinutes: gameSessionState.periodDurationMinutes,
+            currentPeriod: gameSessionState.currentPeriod,
+            gameStatus: gameSessionState.gameStatus,
+            seasonId: gameSessionState.seasonId,
+            tournamentId: gameSessionState.tournamentId,
+            gameLocation: gameSessionState.gameLocation,
+            gameTime: gameSessionState.gameTime,
+            demandFactor: gameSessionState.demandFactor,
+            subIntervalMinutes: gameSessionState.subIntervalMinutes,
+            completedIntervalDurations: gameSessionState.completedIntervalDurations,
+            lastSubConfirmationTimeSeconds: gameSessionState.lastSubConfirmationTimeSeconds,
+            showPlayerNames: gameSessionState.showPlayerNames,
+            selectedPlayerIds: gameSessionState.selectedPlayerIds,
+            timeElapsedInSeconds: gameSessionState.timeElapsedInSeconds,
+            gameEvents: gameSessionState.gameEvents,
+            assessments: playerAssessments,
+            playersOnField,
+            opponents,
+            drawings,
+            tacticalDiscs,
+            tacticalDrawings,
+            tacticalBallPosition,
+            availablePlayers: masterRosterQueryResultData || availablePlayers,
+          };
+
+          const savedResult = await utilSaveGame(currentGameId, currentSnapshot as AppState);
+          const newGameId = (savedResult as AppState & { id?: string }).id;
+          if (newGameId && newGameId !== currentGameId) {
+            setCurrentGameId(newGameId);
+            await utilSaveCurrentGameIdSetting(newGameId);
+          } else {
+            await utilSaveCurrentGameIdSetting(currentGameId);
+          }
+        } catch (error) {
+          logger.error('[AUTO-SAVE] Failed to auto-save state:', error);
+        }
+      });
     }
-    };
-    autoSave();
-    // Dependencies: Include all state variables that are part of the saved snapshot
-  }, [initialLoadComplete, currentGameId, isCreatingNewGame, isStateSynchronizing,
-      playersOnField, opponents, drawings, availablePlayers, masterRosterQueryResultData,
-      // showPlayerNames, // REMOVED - Covered by gameSessionState
-      // Local states that are part of the snapshot but not yet in gameSessionState:
-      // gameEvents, // REMOVE - Now from gameSessionState
-      gameSessionState,
-      playerAssessments,
-      tacticalDiscs,
-      tacticalDrawings,
-      tacticalBallPosition,
-      isPlayed,
-    ]);
+  }, [
+    initialLoadComplete, currentGameId, isCreatingNewGame, isStateSynchronizing,
+    playersOnField, opponents, drawings, availablePlayers, masterRosterQueryResultData,
+    gameSessionState, playerAssessments, tacticalDiscs, tacticalDrawings, tacticalBallPosition, isPlayed,
+    scheduleAutosave,
+  ]);
 
   // **** ADDED: Effect to prompt for setup if default game ID is loaded ****
   useEffect(() => {
@@ -1626,7 +1566,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   // }, [newGameSetupModal, setIsCreatingNewGame]); // Added setter function to dependencies
 
   // --- Start New Game Handler (Uses Quick Save) ---
-  const handleStartNewGame = useCallback(() => {
+  const handleStartNewGame = useCallback(async () => {
     // Check if the current game is potentially unsaved (not the default ID and not null)
     if (currentGameId && currentGameId !== DEFAULT_GAME_ID) {
       // Prompt to save first
@@ -1645,9 +1585,15 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       if (saveConfirmation) {
         // User chose OK (Save) -> Call Quick Save, then open setup modal.
         logger.log("User chose to Quick Save before starting new game.");
-        handleQuickSaveGame(); // Call quick save directly
-        newGameSetupModal.open(); // Open setup modal immediately after
-        // No need to return here; flow continues after quick save
+        try {
+          await handleQuickSaveGame();
+        } catch (e) {
+          logger.error('Quick save failed before new game setup:', e);
+        }
+        // Open setup modal once after save completes
+        newGameSetupModal.open();
+        // Note: do not open modal again below
+        return;
       } else {
         // User chose Cancel (Discard) -> Proceed to next confirmation
         logger.log("Discarding current game changes to start new game.");

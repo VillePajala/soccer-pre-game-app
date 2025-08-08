@@ -152,50 +152,31 @@ export default function Home() {
     const checkResume = async () => {
       // Wait a bit for auth to stabilize
       await new Promise(resolve => setTimeout(resolve, 100));
-      
       try {
         logger.debug('[StartScreen] Checking for resumable game...');
         logger.debug('[StartScreen] User authenticated:', !!user);
-        
-        // First try to get the saved current game ID
         const lastId = await getCurrentGameIdSetting();
-        logger.debug('[StartScreen] Current game ID from settings:', lastId);
-        
         const games = await getSavedGames();
-        logger.debug('[StartScreen] Number of saved games:', Object.keys(games).length);
-        logger.debug('[StartScreen] Game IDs:', Object.keys(games));
-        
-        // Check if the saved game ID exists in the games collection
         if (lastId && games[lastId]) {
-          logger.debug('[StartScreen] Found game with saved ID, enabling resume');
           setCanResume(true);
           return;
         }
-        
-        // If not, try to find the most recent game
         const mostRecentId = await getMostRecentGameId();
-        logger.debug('[StartScreen] Most recent game ID:', mostRecentId);
-        
         if (mostRecentId) {
-          logger.debug('[StartScreen] Found recent game, enabling resume');
           setCanResume(true);
           return;
         }
-        
-        // No games available to resume
-        logger.debug('[StartScreen] No games available to resume');
         setCanResume(false);
       } catch (error) {
         logger.error('[StartScreen] Error checking resume:', error);
         setCanResume(false);
       }
     };
-    
-    // Only check for resume if user is authenticated when using Supabase
-    if (user || !user) { // Always check, but log the state
+    // Only run when auth state is settled; allow resume for both anon and authed but avoid redundant runs
+    if (user === null || !!user) {
       checkResume();
     }
-  }, [user]); // Add user as dependency
+  }, [user]);
 
   const handleAction = (
     action: 'newGame' | 'loadGame' | 'resumeGame' | 'season' | 'stats'
