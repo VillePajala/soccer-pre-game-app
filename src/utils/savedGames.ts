@@ -277,12 +277,11 @@ export const getFilteredGames = async (filters: {
     
     const filtered = gameEntries.filter(([, game]) => {
       const gameData = game as AppState;
-      // If filters.seasonId is provided (not null/undefined), game must match.
-      // If filters.seasonId is null/undefined, this part of the condition is true (don't filter by season).
-      const seasonMatch = filters.seasonId === undefined || filters.seasonId === null || gameData.seasonId === filters.seasonId;
-      // If filters.tournamentId is provided (not null/undefined), game must match.
-      // This correctly handles filtering for tournamentId: '' (empty string).
-      const tournamentMatch = filters.tournamentId === undefined || filters.tournamentId === null || gameData.tournamentId === filters.tournamentId;
+      // Treat empty strings as no filter
+      const seasonFilter = (filters.seasonId ?? undefined) === '' ? undefined : filters.seasonId ?? undefined;
+      const tournamentFilter = (filters.tournamentId ?? undefined) === '' ? undefined : filters.tournamentId ?? undefined;
+      const seasonMatch = seasonFilter === undefined || gameData.seasonId === seasonFilter;
+      const tournamentMatch = tournamentFilter === undefined || gameData.tournamentId === tournamentFilter;
       return seasonMatch && tournamentMatch;
     }).map(([id, game]) => [id, game as AppState] as [string, AppState]); // Ensure correct tuple type
     return filtered;

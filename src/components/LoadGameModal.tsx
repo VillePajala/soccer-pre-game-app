@@ -23,6 +23,7 @@ import {
 // Import new utility functions
 import { getSeasons as utilGetSeasons } from '@/utils/seasons';
 import { getTournaments as utilGetTournaments } from '@/utils/tournaments';
+import { useToast } from '@/contexts/ToastProvider';
 
 export interface LoadGameModalProps {
   isOpen: boolean;
@@ -66,13 +67,23 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
   processingGameId = null,
 }) => {
   const { t, i18n } = useTranslation();
+  const { showToast } = useToast();
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [searchText, setSearchText] = useState<string>('');
   const [filterType, setFilterType] = useState<'season' | 'tournament' | null>(null);
   const [filterId, setFilterId] = useState<string | null>(null);
   const [showUnplayedOnly, setShowUnplayedOnly] = useState<boolean>(false);
+  const [page, setPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
   const menuRef = useRef<HTMLDivElement>(null);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  // Toast important errors non-blockingly
+  useEffect(() => {
+    if (loadGamesListError) {
+      showToast(loadGamesListError, 'error');
+    }
+  }, [loadGamesListError, showToast]);
+
 
   // State for seasons and tournaments
   const [seasons, setSeasons] = useState<Season[]>([]);
@@ -102,16 +113,35 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
   }, [isOpen]);
 
   // Filter logic updated to only use searchText
+  const lightweightList = useMemo(() => {
+    // Build a lightweight list for filtering/sorting
+    return Object.keys(savedGames)
+      .filter(id => id !== DEFAULT_GAME_ID)
+      .map(id => {
+        const g = savedGames[id];
+        return {
+          id,
+          teamName: (g?.teamName || '').toLowerCase(),
+          opponentName: (g?.opponentName || '').toLowerCase(),
+          gameDate: g?.gameDate || '',
+          gameTime: g?.gameTime || '',
+          seasonId: g?.seasonId || '',
+          tournamentId: g?.tournamentId || '',
+          isPlayed: g?.isPlayed,
+        };
+      });
+  }, [savedGames]);
+
   const filteredGameIds = useMemo(() => {
-    const initialIds = Object.keys(savedGames).filter(id => id !== DEFAULT_GAME_ID);
+    const initialIds = lightweightList.map(x => x.id);
     
-    const filteredBySearch = initialIds.filter(id => { 
-      const gameData = savedGames[id];
+    const filteredBySearch = initialIds.filter(id => {
+      const gameData = lightweightList.find(x => x.id === id);
       if (!gameData) return false;
       if (!searchText) return true;
       const lowerSearchText = searchText.toLowerCase();
-      const teamName = (gameData.teamName || '').toLowerCase();
-      const opponentName = (gameData.opponentName || '').toLowerCase();
+      const teamName = gameData.teamName;
+      const opponentName = gameData.opponentName;
       const gameDate = (gameData.gameDate || '').toLowerCase();
       const seasonName = seasons.find(s => s.id === gameData.seasonId)?.name.toLowerCase() || '';
       const tournamentName = tournaments.find(tourn => tourn.id === gameData.tournamentId)?.name.toLowerCase() || '';
@@ -126,7 +156,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
 
     const filteredByBadge = filteredBySearch.filter(id => {
       if (!filterType || !filterId) return true;
-      const gameData = savedGames[id];
+      const gameData = lightweightList.find(x => x.id === id);
       if (!gameData) return false;
 
       let match = false;
@@ -142,14 +172,14 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
 
     const filteredByPlayed = filteredByBadge.filter(id => {
       if (!showUnplayedOnly) return true;
-      const gameData = savedGames[id];
+      const gameData = lightweightList.find(x => x.id === id);
       if (!gameData) return false;
       return gameData.isPlayed === false;
     });
 
     const sortedIds = filteredByPlayed.sort((a, b) => {
-      const gameA = savedGames[a];
-      const gameB = savedGames[b];
+      const gameA = lightweightList.find(x => x.id === a)!;
+      const gameB = lightweightList.find(x => x.id === b)!;
 
       const aDateStr = `${gameA.gameDate || ''} ${gameA.gameTime || ''}`.trim();
       const bDateStr = `${gameB.gameDate || ''} ${gameB.gameTime || ''}`.trim();
@@ -171,7 +201,17 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
       return 0;
     });
     return sortedIds;
-  }, [savedGames, searchText, seasons, tournaments, filterType, filterId, showUnplayedOnly]);
+  }, [lightweightList, searchText, seasons, tournaments, filterType, filterId, showUnplayedOnly]);
+
+  // Pagination
+  const totalItems = filteredGameIds.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const paginatedIds = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredGameIds.slice(start, start + pageSize);
+  }, [filteredGameIds, currentPage, pageSize]);
+  useEffect(() => { setPage(1); }, [searchText, filterType, filterId, showUnplayedOnly, pageSize]);
 
   const handleDeleteClick = (gameId: string, gameName: string) => {
     // Use a confirmation dialog
@@ -284,7 +324,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
             {gameDeleteError}
           </li>
         )}
-        {filteredGameIds.map((gameId, index) => {
+        {paginatedIds.map((gameId, index) => {
           const game = savedGames[gameId];
           if (!game) return null;
           const isCurrent = gameId === currentGameId;
@@ -639,6 +679,19 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
           {mainContent}
         </div>
         <div className="p-4 border-t border-slate-700/20 backdrop-blur-sm bg-slate-900/20 flex-shrink-0">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="text-slate-300 text-sm">
+              {t('pagination.showing', 'Showing')} {(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, totalItems)} {t('pagination.of', 'of')} {totalItems}
+            </div>
+            <div className="flex items-center gap-2">
+              <button disabled={currentPage === 1} onClick={() => setPage(p => Math.max(1, p - 1))} className="px-2 py-1 rounded bg-slate-700 text-slate-200 disabled:opacity-50">{t('pagination.prev', 'Prev')}</button>
+              <span className="text-slate-300 text-sm">{currentPage}/{totalPages}</span>
+              <button disabled={currentPage === totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))} className="px-2 py-1 rounded bg-slate-700 text-slate-200 disabled:opacity-50">{t('pagination.next', 'Next')}</button>
+              <select value={pageSize} onChange={(e) => setPageSize(Number(e.target.value))} className="ml-2 bg-slate-700 text-slate-200 rounded px-2 py-1 text-sm">
+                {[10, 20, 50].map(sz => <option key={sz} value={sz}>{sz}/page</option>)}
+              </select>
+            </div>
+          </div>
           <button onClick={onClose} className="w-full px-4 py-2 rounded-md font-semibold text-slate-200 bg-slate-700 hover:bg-slate-600 transition-colors">
             {t('common.close', 'Close')}
           </button>

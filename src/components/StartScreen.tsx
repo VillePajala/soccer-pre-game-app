@@ -40,26 +40,25 @@ const StartScreen: React.FC<StartScreenProps> = ({
   const [showLoginSuccess, setShowLoginSuccess] = useState(false);
 
   useEffect(() => {
-    getAppSettings().then((settings) => {
-      if (settings.language && settings.language !== language) {
-        setLanguage(settings.language);
-        loadLanguage(settings.language).catch(error => {
-          logger.warn('[StartScreen] Failed to load language:', error);
-        });
+    let cancelled = false;
+    const initAndSyncLanguage = async () => {
+      try {
+        const settings = await getAppSettings();
+        const desired = settings.language || language;
+        if (!cancelled && desired !== i18n.language) {
+          await loadLanguage(desired);
+          if (!cancelled) {
+            setLanguage(desired);
+            await updateAppSettings({ language: desired }).catch(() => {});
+          }
+        }
+      } catch (error) {
+        logger.warn('[StartScreen] Language init/sync failed:', error);
       }
-    });
-  }, [language]);
-
-  useEffect(() => {
-    // Only update if language actually changed from what's in i18n
-    if (language !== i18n.language) {
-      loadLanguage(language)
-        .then(() => updateAppSettings({ language }).catch(() => {}))
-        .catch(error => {
-          logger.warn('[StartScreen] Failed to change language:', error);
-        });
-    }
-  }, [language]);
+    };
+    initAndSyncLanguage();
+    return () => { cancelled = true; };
+  }, []);
 
   // Show success message when user logs in
   useEffect(() => {

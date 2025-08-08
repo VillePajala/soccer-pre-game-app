@@ -27,8 +27,8 @@ Scope: Functional bugs, inconsistencies, risks, and edge cases identified during
 
 - [x] Docs claim “localStorage-free”, but legacy timer hook still uses localStorage
   - File: `src/hooks/useGameTimer.ts` (fixed: delegate to `useOfflineFirstGameTimer` to persist via IndexedDB)
-- [ ] Zustand `persist` stores large app slices in localStorage (risk of quota, SSR access)
-  - File: `src/stores/persistenceStore.ts`
+ - [x] Zustand `persist` stores large app slices in localStorage (risk of quota, SSR access)
+  - File: `src/stores/persistenceStore.ts` (fixed: whitelist ultra-light slices only; rely on IndexedDB for heavy data)
  - [x] Documentation contradicts implementation (claims 100% removal of localStorage)
   - File: `docs/production/PRODUCTION_READINESS_PLAN.md` (Section 9) (fixed: clarified IndexedDB is source of truth; localStorage minimized with SSR guards)
 
@@ -78,8 +78,8 @@ Scope: Functional bugs, inconsistencies, risks, and edge cases identified during
   - File: `src/utils/savedGames.ts` (fixed: now uses `eventId`)
 - [x] “Most recent game” sorting can produce `Invalid Date` and misorder
   - Files: `src/utils/savedGames.ts`, `src/components/HomePage.tsx`, `src/components/LoadGameModal.tsx` (fixed: robust parse with fallback and guards)
-- [ ] Persisting large `savedGames` blobs in localStorage may exceed quota
-  - File: `src/stores/persistenceStore.ts` (improved: stop persisting `savedGames` in Zustand partialize; keep in IndexedDB)
+ - [x] Persisting large `savedGames` blobs in localStorage may exceed quota
+  - File: `src/stores/persistenceStore.ts` (fixed: no `savedGames` slice persisted; IndexedDB only)
  - [x] Inconsistent defaults (period 10 vs 45; sub interval/demand vary)
   - Files: provider, reducer, HomePage, store settings (fixed: unified to 2 periods, 10 min per period, 5 min sub interval)
 - [x] CSP may block Supabase or i18n domains if they change
@@ -90,8 +90,8 @@ Scope: Functional bugs, inconsistencies, risks, and edge cases identified during
   - File: `src/components/game/GameStateProvider.tsx` (fixed: extended `GameStateContextType` to include exported fields)
 - [ ] Autosave not debounced; can thrash storage/network
   - File: `src/components/HomePage.tsx` (fixed: debounced with a simple queue)
-- [ ] Load/init effects complex; double-initialization risks
-  - File: `src/components/HomePage.tsx`
+ - [~] Load/init effects complex; double-initialization risks
+  - File: `src/components/HomePage.tsx` (partially simplified: single main init effect guarded by combined loading condition)
  - [x] Timer overlay disables Start when `!isLoaded` even if state is otherwise ready
   - File: `src/components/TimerOverlay.tsx` (fixed: Start disabled only when `gameStatus === 'gameEnd'`)
  - [x] Roster duplicate checks not locale/diacritics aware
@@ -104,16 +104,23 @@ Scope: Functional bugs, inconsistencies, risks, and edge cases identified during
 ## 8) Extended edge cases and risks (tracked for follow-up)
 
 - [ ] `GameControls` duplicate pathways (props vs stores) can drift
-- [ ] StartScreen language effects run twice; risk of flicker
+  - Monitoring: legacy `GameControls` marked as legacy; prefer `MigratedGameControls`
+- [x] StartScreen language effects run twice; risk of flicker
+  - File: `src/components/StartScreen.tsx` (fixed: consolidated into single init/sync effect)
 - [ ] `getLatestGameId` relies on ID timestamp pattern; UUIDs break sort
+- [ ] Period-end timer cleanup swallows storage errors
 - [ ] Timer state cleanup on period end swallows storage errors
 - [ ] `VerificationToast` `router.replace('/')` could loop if params reappear
-- [ ] `getFilteredGames` treats empty string as real filter value
-- [ ] No pagination for saved games list; perf risk with many games
+  - Monitoring: rare; no repro; consider idempotent flag if observed
+ - [x] `getFilteredGames` treats empty string as real filter value
+  - File: `src/utils/savedGames.ts` (fixed: empty string treated as no filter)
+ - [x] No pagination for saved games list; perf risk with many games
+  - File: `src/components/LoadGameModal.tsx` (fixed: added client-side pagination and page size selector)
 - [ ] Undo/redo uses JSON.stringify snapshot compare (perf risk)
 - [ ] Drawing mode separation fragile; risk of losing lines when toggling
 - [ ] IndexedDB schema versioning fixed at 1; no migrations implemented
 - [ ] Error handling often logs without user feedback (besides alert in one path)
+  - Monitoring: continuing to replace with toasts in low-traffic paths
 - [ ] Persisting `availablePlayers` snapshot increases save payloads
 - [ ] Auto-sync of field players from roster mid-game may change UI unexpectedly
 - [ ] Date/time sorting depends on locale/timezone; non-24h strings risky

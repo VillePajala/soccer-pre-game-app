@@ -1012,14 +1012,9 @@ export const usePersistenceStore = create<PersistenceStore>()(
       {
         name: 'persistence-storage', // localStorage key
         partialize: (state) => ({
-          // Persist only lightweight, essential slices to reduce localStorage quota usage
-          // Heavy blobs like full savedGames are managed via typed storage helpers/IndexedDB
-          // and reloaded on demand.
-          masterRoster: state.masterRoster,
-          seasons: state.seasons,
-          tournaments: state.tournaments,
+          // Persist ultra-light slices only; keep heavy data in IndexedDB/Supabase
           settings: state.settings,
-          userData: state.userData,
+          userData: { ...state.userData, isAuthenticated: undefined as unknown as never },
           dataIntegrity: state.dataIntegrity,
         }),
       }
