@@ -391,7 +391,6 @@ export class OfflineCacheManager implements IStorageProvider {
   /**
    * Process individual sync queue item
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private async processSyncItem(_item: SyncQueueItem): Promise<void> {
     // This would implement the actual sync logic based on operation type
     // For now, just a placeholder

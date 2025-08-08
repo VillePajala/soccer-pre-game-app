@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useToast } from '@/contexts/ToastProvider';
 import { Player, Season, Tournament } from '@/types';
 import { normalizeRosterIds } from '@/utils/idUtils';
 import { HiPlusCircle } from 'react-icons/hi';
@@ -61,6 +62,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   isAddingTournament,
 }) => {
   const { t } = useTranslation();
+  const { showToast } = useToast();
   const [homeTeamName, setHomeTeamName] = useState('');
   const [opponentName, setOpponentName] = useState('');
   const [gameDate, setGameDate] = useState(new Date().toISOString().split('T')[0]);
@@ -267,7 +269,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   const handleAddNewSeason = async () => {
     const trimmedName = newSeasonName.trim();
     if (!trimmedName) {
-      alert(t('newGameSetupModal.newSeasonNameRequired', 'Please enter a name for the new season.'));
+      showToast(t('newGameSetupModal.newSeasonNameRequired', 'Please enter a name for the new season.'), 'error');
       newSeasonInputRef.current?.focus();
       return;
     }
@@ -307,7 +309,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   const handleAddNewTournament = async () => {
     const trimmedName = newTournamentName.trim();
     if (!trimmedName) {
-      alert(t('newGameSetupModal.newTournamentNameRequired', 'Please enter a name for the new tournament.'));
+      showToast(t('newGameSetupModal.newTournamentNameRequired', 'Please enter a name for the new tournament.'), 'error');
       newTournamentInputRef.current?.focus();
       return;
     }
@@ -341,31 +343,31 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
     const trimmedOpponentName = opponentName.trim();
 
     if (!trimmedHomeTeamName) {
-      alert(t('newGameSetupModal.homeTeamNameRequired', 'Home Team Name is required.') || 'Home Team Name is required.');
+      showToast(t('newGameSetupModal.homeTeamNameRequired', 'Home Team Name is required.') || 'Home Team Name is required.', 'error');
       homeTeamInputRef.current?.focus();
       return;
     }
 
     if (!trimmedOpponentName) {
-      alert(t('newGameSetupModal.opponentNameRequired', 'Opponent Name is required.') || 'Opponent Name is required.');
+      showToast(t('newGameSetupModal.opponentNameRequired', 'Opponent Name is required.') || 'Opponent Name is required.', 'error');
       opponentInputRef.current?.focus();
       return;
     }
     
     // Handle case where user is trying to submit while create input is open but empty
     if (showNewSeasonInput && !newSeasonName.trim()) {
-        alert(t('newGameSetupModal.newSeasonNameRequired', 'Please enter a name for the new season or select an existing one.'));
+        showToast(t('newGameSetupModal.newSeasonNameRequired', 'Please enter a name for the new season or select an existing one.'), 'error');
         newSeasonInputRef.current?.focus();
         return;
     }
     if (showNewTournamentInput && !newTournamentName.trim()) {
-        alert(t('newGameSetupModal.newTournamentNameRequired', 'Please enter a name for the new tournament or select an existing one.'));
+        showToast(t('newGameSetupModal.newTournamentNameRequired', 'Please enter a name for the new tournament or select an existing one.'), 'error');
         newTournamentInputRef.current?.focus();
         return;
     }
 
     if (selectedPlayerIds.length === 0) {
-        alert(t('newGameSetupModal.noPlayersSelected', 'Please select at least one player.') || 'Please select at least one player.');
+        showToast(t('newGameSetupModal.noPlayersSelected', 'Please select at least one player.') || 'Please select at least one player.', 'error');
         return;
     }
 
@@ -377,7 +379,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
     // Validate period duration
     const duration = parseInt(localPeriodDurationString, 10);
     if (isNaN(duration) || duration <= 0) {
-        alert(t('newGameSetupModal.invalidPeriodDuration', 'Period duration must be a positive number.') || 'Period duration must be a positive number.');
+        showToast(t('newGameSetupModal.invalidPeriodDuration', 'Period duration must be a positive number.') || 'Period duration must be a positive number.', 'error');
         return;
     }
     
@@ -411,9 +413,10 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
       );
     } catch (error) {
       logger.error('[NewGameSetupModal] Failed to start new game:', error);
+      throw error; // Re-throw to let parent handle the error and modal state
     }
 
-    // Modal will be closed by parent component after onStart
+    // Modal will be closed by parent component after successful onStart
   };
 
   const handleKeyDown = (event: React.KeyboardEvent) => {

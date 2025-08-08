@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { checkForUpdates, forceAppUpdate, isInstalledPWA, UpdateCheckResult } from '@/utils/serviceWorkerUtils';
 import logger from '@/utils/logger';
+import { useToast } from '@/contexts/ToastProvider';
 
 interface UseManualUpdatesReturn {
   isChecking: boolean;
@@ -17,6 +18,7 @@ interface UseManualUpdatesReturn {
  */
 export const useManualUpdates = (): UseManualUpdatesReturn => {
   const { t } = useTranslation();
+  const { showToast } = useToast();
   const [isChecking, setIsChecking] = useState(false);
   const [lastCheckResult, setLastCheckResult] = useState<UpdateCheckResult | null>(null);
 
@@ -43,12 +45,12 @@ export const useManualUpdates = (): UseManualUpdatesReturn => {
       if (result.updateAvailable) {
         // Show success message
         const message = t('updateCheck.updateAvailable', 'Update available! Click "Refresh App" to get the latest version.');
-        alert(message);
+        showToast(message, 'info');
       } else if (result.error && result.error !== 'No service worker registered' && result.error !== 'Service Worker not supported') {
         // Show error message only for actual errors, not for expected cases like no SW in dev
         logger.warn('[Manual Updates] Update check error:', result.error);
         const message = t('updateCheck.checkFailed', `Update check failed: ${result.error}`);
-        alert(message);
+        showToast(message, 'error');
       } else {
         // Show up-to-date message for: no updates available, no SW registered, or SW not supported
         const versionInfo = result.currentVersion ? ` (v${result.currentVersion})` : '';
@@ -62,13 +64,13 @@ export const useManualUpdates = (): UseManualUpdatesReturn => {
           message = t('updateCheck.upToDate', 'App is up to date!') + versionInfo;
         }
         
-        alert(message);
+        showToast(message, 'success');
         logger.log('[Manual Updates] App is up to date');
       }
     } catch (error) {
       logger.error('[Manual Updates] Update check exception:', error);
       const message = t('updateCheck.checkError', 'Failed to check for updates. Please try again.');
-      alert(message);
+      showToast(message, 'error');
       setLastCheckResult({
         updateAvailable: false,
         error: error instanceof Error ? error.message : 'Unknown error'
@@ -76,7 +78,7 @@ export const useManualUpdates = (): UseManualUpdatesReturn => {
     } finally {
       setIsChecking(false);
     }
-  }, [isChecking, t]);
+  }, [isChecking, t, showToast]);
 
   const handleForceUpdate = useCallback(async () => {
     logger.log('[Manual Updates] User initiated force update');
@@ -91,9 +93,9 @@ export const useManualUpdates = (): UseManualUpdatesReturn => {
     } catch (error) {
       logger.error('[Manual Updates] Force update failed:', error);
       const errorMessage = t('updateCheck.refreshFailed', 'Failed to refresh app. Please try again.');
-      alert(errorMessage);
+      showToast(errorMessage, 'error');
     }
-  }, [t]);
+  }, [t, showToast]);
 
   return {
     isChecking,

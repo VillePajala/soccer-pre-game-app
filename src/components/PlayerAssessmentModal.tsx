@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import type { Player, PlayerAssessment } from '@/types';
 import PlayerAssessmentCard from './PlayerAssessmentCard';
 import ProgressBar from './ProgressBar';
+import MigrationErrorBoundary from './MigrationErrorBoundary';
 
 interface PlayerAssessmentModalProps {
   isOpen: boolean;
@@ -104,4 +105,11 @@ const PlayerAssessmentModal: React.FC<PlayerAssessmentModalProps> = ({
   );
 };
 
-export default PlayerAssessmentModal;
+// Wrapped component with error boundary
+const PlayerAssessmentModalWithErrorBoundary: React.FC<PlayerAssessmentModalProps> = (props) => (
+  <MigrationErrorBoundary componentName="PlayerAssessmentModal">
+    <PlayerAssessmentModal {...props} />
+  </MigrationErrorBoundary>
+);
+
+export default PlayerAssessmentModalWithErrorBoundary;

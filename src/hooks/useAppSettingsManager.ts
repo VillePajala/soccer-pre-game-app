@@ -10,6 +10,7 @@ import {
 import { exportFullBackup } from '@/utils/fullBackup';
 import { sendBackupEmail } from '@/utils/sendBackupEmail';
 import logger from '@/utils/logger';
+import { useToast } from '@/contexts/ToastProvider';
 
 interface UseAppSettingsManagerProps {
   setIsSettingsModalOpen: (open: boolean) => void;
@@ -25,6 +26,7 @@ export const useAppSettingsManager = ({
   setIsInstructionsModalOpen,
 }: UseAppSettingsManagerProps) => {
   const { t } = useTranslation();
+  const { showToast } = useToast();
 
   // --- Settings State ---
   const [appLanguage, setAppLanguage] = useState<string>(i18n.language);
@@ -62,10 +64,10 @@ export const useAppSettingsManager = ({
         window.location.reload();
       } catch (error) {
         logger.error("Error during hard reset:", error);
-        alert("Failed to reset application data.");
+        showToast(t('settingsModal.resetFailed', 'Failed to reset application data.'), 'error');
       }
     }
-  }, [t]);
+  }, [t, showToast]);
 
   // --- Backup Handlers ---
   const handleCreateAndSendBackup = useCallback(async () => {
@@ -77,7 +79,7 @@ export const useAppSettingsManager = ({
         );
         if (confirmSend) {
           await sendBackupEmail(json, backupEmail);
-          alert(t('settingsModal.sendBackupSuccess', 'Backup sent successfully.'));
+          showToast(t('settingsModal.sendBackupSuccess', 'Backup sent successfully.'), 'success');
         }
       } else {
         // Download backup if no email is set
@@ -93,9 +95,9 @@ export const useAppSettingsManager = ({
       }
     } catch (error) {
       logger.error("Error creating backup:", error);
-      alert(t('settingsModal.backupError', 'Failed to create backup.'));
+      showToast(t('settingsModal.backupError', 'Failed to create backup.'), 'error');
     }
-  }, [backupEmail, t]);
+  }, [backupEmail, t, showToast]);
 
   // --- Settings Change Handlers ---
   const handleLanguageChange = useCallback((lang: string) => {

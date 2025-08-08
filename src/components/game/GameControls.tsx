@@ -5,7 +5,7 @@ import ControlBar from '@/components/ControlBar';
 import { GameControlsProps } from '@/types/gameComponents';
 import { useGameStateContext } from './GameStateProvider';
 
-interface ExtendedGameControlsProps extends Partial<GameControlsProps> {
+export interface ExtendedGameControlsProps extends Partial<GameControlsProps> {
   // Additional control state from HomePage
   canUndo?: boolean;
   canRedo?: boolean;
@@ -54,7 +54,8 @@ interface ExtendedGameControlsProps extends Partial<GameControlsProps> {
  * This component focuses on rendering controls and delegating
  * actions to parent handlers.
  */
-export const GameControls = React.memo<ExtendedGameControlsProps>(({
+// NOTE: Legacy UI pathway. Prefer MigratedGameControls tied to stores for new usage.
+export const GameControls = React.memo<ExtendedGameControlsProps>(({ 
   // UI state
   showLargeTimerOverlay = false,
   canUndo = false,

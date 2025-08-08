@@ -182,7 +182,7 @@ export const useOfflineFirstGameTimer = ({
           // Clean up timer state when period/game ends
           if (currentGameId && typeof window !== 'undefined') {
             getOfflineStorage().deleteTimerState(currentGameId).catch((error) => {
-              console.error('Failed to delete timer state on period end:', error);
+              logger.warn('[useOfflineFirstGameTimer] Period-end timer cleanup failed (non-blocking):', error);
             });
           }
           

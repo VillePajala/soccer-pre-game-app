@@ -11,7 +11,16 @@ const nextConfig: NextConfig = {
   
   // Disable TypeScript checking during build - we handle this separately in CI
   typescript: {
-    ignoreBuildErrors: true,
+    // Keep strict in CI; allow local dev to proceed
+    ignoreBuildErrors: process.env.CI ? false : true,
+  },
+  
+  // During migration, treat ESLint warnings as warnings, not build errors
+  eslint: {
+    // Only run ESLint on pages and src directories during build
+    dirs: ['pages', 'src'],
+    // Don't fail builds in local dev, but enforce in CI
+    ignoreDuringBuilds: process.env.CI ? false : true,
   },
   
   // Security headers configuration
@@ -32,10 +41,7 @@ const nextConfig: NextConfig = {
             value: 'nosniff'
           },
           // Enable XSS filtering
-          {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block'
-          },
+          // Note: X-XSS-Protection is deprecated; modern browsers ignore it
           // Referrer policy
           {
             key: 'Referrer-Policy',
@@ -55,8 +61,8 @@ const nextConfig: NextConfig = {
               "font-src 'self' https://fonts.gstatic.com data:",
               // Images from self, data URIs, blobs, and HTTPS
               "img-src 'self' data: blob: https:",
-              // API connections to Supabase and analytics
-              "connect-src 'self' https://*.supabase.co https://vercel.live https://vitals.vercel-insights.com",
+              // API connections to Supabase, analytics, and i18n
+              "connect-src 'self' https://*.supabase.co https://vercel.live https://vitals.vercel-insights.com https://i18next.com https://*.i18napi.com",
               // Service Worker
               "worker-src 'self'",
               // Manifest for PWA
@@ -83,13 +89,10 @@ const nextConfig: NextConfig = {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=(), usb=()'
           },
-          {
-            key: 'Cross-Origin-Embedder-Policy',
-            value: 'unsafe-none'
-          },
+          // Relax COEP only if required; otherwise omit to avoid cross-origin issues
           {
             key: 'Cross-Origin-Opener-Policy',
-            value: 'same-origin'
+            value: 'same-origin-allow-popups'
           },
           {
             key: 'Cross-Origin-Resource-Policy',

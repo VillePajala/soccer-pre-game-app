@@ -1,5 +1,4 @@
 // src/utils/fullBackup.test.ts
-import "@/i18n";
 import { importFullBackup, exportFullBackup } from "./fullBackup";
 import {
   SAVED_GAMES_KEY,
@@ -8,6 +7,24 @@ import {
   TOURNAMENTS_LIST_KEY,
   MASTER_ROSTER_KEY,
 } from "@/config/storageKeys"; // Using path alias from jest.config.js
+
+// Mock i18next
+jest.mock("i18next", () => ({
+  __esModule: true,
+  default: {
+    t: jest.fn((key: string, options?: any) => {
+      const translations: Record<string, string> = {
+        "fullBackup.confirmRestore": "Haluatko varmasti palauttaa varmuuskopion?",
+        "fullBackup.restoreSuccess": "Varmuuskopio palautettu. Sovellus latautuu uudelleen...",
+        "fullBackup.restoreKeyError": `Kohteen ${options?.key || ""} palautus epäonnistui`,
+        "fullBackup.restoreError": `Virhe varmuuskopion ${options?.error || ""}`,
+        "fullBackup.exportSuccess": "Varmuuskopio vietiin onnistuneesti.",
+        "fullBackup.exportError": "Varmuuskopion vienti epäonnistui.",
+      };
+      return translations[key] || key;
+    }),
+  },
+}))
 
 // Mock localStorage globally for all tests in this file
 const localStorageMock = (() => {
@@ -400,7 +417,7 @@ describe("importFullBackup", () => {
       expect(localStorageMock.getAll()).toEqual({});
       expect(window.confirm).not.toHaveBeenCalled();
       expect(alertMock).toHaveBeenCalledWith(
-        expect.stringContaining("Missing 'meta' information"),
+        "Virhe varmuuskopion Invalid format: Missing 'meta' information.",
       );
       expect(window.location.reload).not.toHaveBeenCalled();
       alertMock.mockRestore();
@@ -424,7 +441,7 @@ describe("importFullBackup", () => {
       expect(localStorageMock.getAll()).toEqual({});
       expect(window.confirm).not.toHaveBeenCalled();
       expect(alertMock).toHaveBeenCalledWith(
-        expect.stringContaining("Unsupported schema version: 2"),
+        "Virhe varmuuskopion Unsupported schema version: 2. This tool supports schema version 1.",
       );
       expect(window.location.reload).not.toHaveBeenCalled();
       alertMock.mockRestore();
@@ -448,7 +465,7 @@ describe("importFullBackup", () => {
       expect(localStorageMock.getAll()).toEqual({});
       expect(window.confirm).not.toHaveBeenCalled();
       expect(alertMock).toHaveBeenCalledWith(
-        expect.stringContaining("Missing 'localStorage' data object"),
+        "Virhe varmuuskopion Invalid format: Missing 'localStorage' data object.",
       );
       expect(window.location.reload).not.toHaveBeenCalled();
       alertMock.mockRestore();

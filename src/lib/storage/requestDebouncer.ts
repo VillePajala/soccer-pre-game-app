@@ -2,6 +2,12 @@
  * Request Debouncing & Batching for Storage Operations
  * Implements Phase 4 Storage Layer Performance optimization
  * Combines rapid successive requests to reduce server load and improve performance
+ * 
+ * 🔧 RACE CONDITION FIXES:
+ * - Prevents config mutation race conditions
+ * - Adds proper cleanup and error handling
+ * - Fixes promise resolution order issues
+ * - Implements safe timer management
  */
 
 export interface DebouncedRequest {
@@ -23,6 +29,9 @@ export class RequestDebouncer {
   private pendingRequests: Map<string, DebouncedRequest[]> = new Map();
   private timers: Map<string, NodeJS.Timeout> = new Map();
   private config: BatchConfig;
+  
+  // 🔧 RACE CONDITION FIX: Track executing operations to prevent conflicts
+  private executingKeys: Set<string> = new Set();
 
   constructor(config: BatchConfig = {
     debounceMs: 500,
@@ -58,10 +67,8 @@ export class RequestDebouncer {
       const requests = this.pendingRequests.get(key)!;
       requests.push(request);
 
-      // Clear existing timer
-      if (this.timers.has(key)) {
-        clearTimeout(this.timers.get(key)!);
-      }
+      // 🔧 RACE CONDITION FIX: Safely clear existing timer
+      this.clearTimer(key);
 
       // Check if we should execute immediately (batch is full)
       if (requests.length >= this.config.maxBatchSize) {
@@ -211,6 +218,7 @@ export class RequestDebouncer {
 
   /**
    * Smart debouncing for auto-save operations
+   * 🔧 RACE CONDITION FIX: Uses per-operation timing instead of mutating shared config
    */
   async debouncedAutoSave<T>(
     key: string,
@@ -218,77 +226,98 @@ export class RequestDebouncer {
     saveOperation: (data: T) => Promise<unknown>,
     priority: 'low' | 'normal' | 'high' = 'normal'
   ): Promise<unknown> {
-    // Adjust debounce timing based on priority
-    const originalDebounce = this.config.debounceMs;
+    // 🔧 RACE CONDITION FIX: Calculate timing without mutating config
+    const debounceMs = this.getDebounceTime(priority);
+    const autoSaveKey = `autosave_${key}`;
     
-    switch (priority) {
-      case 'high':
-        this.config.debounceMs = 100; // Fast save for critical data
-        break;
-      case 'low':
-        this.config.debounceMs = 1000; // Slower save for non-critical data
-        break;
-      default:
-        this.config.debounceMs = 500; // Normal timing
-    }
+    return new Promise<unknown>((resolve, reject) => {
+      const request: DebouncedRequest = {
+        key: autoSaveKey,
+        operation: async () => {
+          const requests = this.pendingRequests.get(autoSaveKey) || [];
+          const latestRequest = requests[requests.length - 1];
+          return await saveOperation(latestRequest.data as T);
+        },
+        resolve,
+        reject,
+        timestamp: Date.now(),
+        data
+      };
 
-    try {
-      return await this.debounce(`autosave_${key}`, async () => {
-        const requests = this.pendingRequests.get(`autosave_${key}`) || [];
-        const latestRequest = requests[requests.length - 1];
-        
-        const result = await saveOperation(latestRequest.data as T);
-        
-        // Resolve all requests
-        for (const request of requests) {
-          request.resolve(result);
-        }
-        
-        return result;
-      }, data);
-    } finally {
-      // Restore original debounce timing
-      this.config.debounceMs = originalDebounce;
+      // Add to pending requests
+      if (!this.pendingRequests.has(autoSaveKey)) {
+        this.pendingRequests.set(autoSaveKey, []);
+      }
+      
+      const requests = this.pendingRequests.get(autoSaveKey)!;
+      requests.push(request);
+
+      // Clear existing timer
+      this.clearTimer(autoSaveKey);
+
+      // Set priority-based timer
+      const timer = setTimeout(() => {
+        this.executeRequests(autoSaveKey);
+      }, debounceMs);
+      
+      this.timers.set(autoSaveKey, timer);
+    });
+  }
+
+  // 🔧 HELPER: Get debounce time based on priority without config mutation
+  private getDebounceTime(priority: 'low' | 'normal' | 'high'): number {
+    switch (priority) {
+      case 'high': return 100;  // Fast save for critical data
+      case 'low': return 1000;  // Slower save for non-critical data
+      default: return 500;      // Normal timing
     }
   }
 
   private async executeRequests(key: string): Promise<void> {
+    // 🔧 RACE CONDITION FIX: Prevent concurrent execution of the same key
+    if (this.executingKeys.has(key)) {
+      return;
+    }
+    
     const requests = this.pendingRequests.get(key);
     if (!requests || requests.length === 0) return;
 
-    // Clear timer and pending requests
-    if (this.timers.has(key)) {
-      clearTimeout(this.timers.get(key)!);
-      this.timers.delete(key);
-    }
+    // Mark as executing and clear timer/pending requests
+    this.executingKeys.add(key);
+    this.clearTimer(key);
     this.pendingRequests.delete(key);
 
-    // For single operation requests, execute the last one
-    if (requests.length === 1 || key.includes('_update_') || key.includes('_save_')) {
-      const lastRequest = requests[requests.length - 1];
-      try {
-        const result = await lastRequest.operation();
-        
-        // Resolve all requests with the same result
-        for (const request of requests) {
-          request.resolve(result);
-        }
-      } catch (error) {
-        // Reject all requests
-        for (const request of requests) {
-          request.reject(error);
-        }
-      }
-    } else {
-      // For batch operations, execute each operation
-      for (const request of requests) {
+    try {
+      // For single operation requests, execute the last one
+      if (requests.length === 1 || key.includes('_update_') || key.includes('_save_')) {
+        const lastRequest = requests[requests.length - 1];
         try {
-          const result = await request.operation();
-          request.resolve(result);
+          const result = await lastRequest.operation();
+          
+          // Resolve all requests with the same result
+          for (const request of requests) {
+            request.resolve(result);
+          }
         } catch (error) {
-          request.reject(error);
+          // Reject all requests
+          for (const request of requests) {
+            request.reject(error);
+          }
+        }
+      } else {
+        // For batch operations, execute each operation
+        for (const request of requests) {
+          try {
+            const result = await request.operation();
+            request.resolve(result);
+          } catch (error) {
+            request.reject(error);
+          }
         }
       }
+    } finally {
+      // 🔧 RACE CONDITION FIX: Always clean up execution tracking
+      this.executingKeys.delete(key);
     }
   }
 
@@ -300,8 +329,18 @@ export class RequestDebouncer {
     await Promise.all(keys.map(key => this.executeRequests(key)));
   }
 
+  // 🔧 HELPER: Safe timer clearing
+  private clearTimer(key: string): void {
+    const timer = this.timers.get(key);
+    if (timer) {
+      clearTimeout(timer);
+      this.timers.delete(key);
+    }
+  }
+
   /**
    * Clear all pending requests
+   * 🔧 RACE CONDITION FIX: Clear execution tracking too
    */
   clear(): void {
     // Clear all timers
@@ -311,6 +350,7 @@ export class RequestDebouncer {
     
     this.timers.clear();
     this.pendingRequests.clear();
+    this.executingKeys.clear(); // 🔧 Clear execution tracking
   }
 
   /**

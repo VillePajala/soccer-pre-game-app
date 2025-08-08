@@ -4,20 +4,23 @@ import React, { useState, useEffect, useCallback, useReducer, useRef, useMemo, s
 import SoccerField from '@/components/SoccerField';
 import PlayerBar from '@/components/PlayerBar';
 import ControlBar from '@/components/ControlBar';
-import TimerOverlay from '@/components/TimerOverlay';
-// Lazy load GoalLogModal since it's only used conditionally
-const GoalLogModal = React.lazy(() => import('@/components/GoalLogModal'));
-// Lazy load heavy modals for better performance
-const GameStatsModal = React.lazy(() => import('@/components/GameStatsModal'));
-const GameSettingsModal = React.lazy(() => import('@/components/GameSettingsModal'));
-const TrainingResourcesModal = React.lazy(() => import('@/components/TrainingResourcesModal'));
-const LoadGameModal = React.lazy(() => import('@/components/LoadGameModal'));
-const NewGameSetupModal = React.lazy(() => import('@/components/NewGameSetupModal'));
-const RosterSettingsModal = React.lazy(() => import('@/components/RosterSettingsModal'));
-const SettingsModal = React.lazy(() => import('@/components/SettingsModal'));
-const SeasonTournamentManagementModal = React.lazy(() => import('@/components/SeasonTournamentManagementModal'));
-const InstructionsModal = React.lazy(() => import('@/components/InstructionsModal'));
-const PlayerAssessmentModal = React.lazy(() => import('@/components/PlayerAssessmentModal'));
+import TimerOverlay from '@/components/MigratedTimerOverlay';
+// 🔥 FLICKERING FIX: Use direct imports instead of lazy loading to eliminate loading delays
+import GoalLogModal from '@/components/GoalLogModal';
+import GameStatsModal from '@/components/GameStatsModal';
+import GameSettingsModal from '@/components/GameSettingsModal';
+import TrainingResourcesModal from '@/components/TrainingResourcesModal';
+import LoadGameModal from '@/components/LoadGameModal';
+import NewGameSetupModal from '@/components/NewGameSetupModal';
+import RosterSettingsModal from '@/components/RosterSettingsModal';
+import SettingsModal from '@/components/SettingsModal';
+import SeasonTournamentManagementModal from '@/components/SeasonTournamentManagementModal';
+import InstructionsModal from '@/components/InstructionsModal';
+import PlayerAssessmentModal from '@/components/PlayerAssessmentModal';
+
+// Utility registry for export functions
+import { registerExportUtilities, executeExportFunction } from '@/services/UtilityRegistry';
+registerExportUtilities();
 import usePlayerRosterManager from '@/hooks/usePlayerRosterManager';
 import usePlayerFieldManager from '@/hooks/usePlayerFieldManager';
 import useGameEventsManager from '@/hooks/useGameEventsManager';
@@ -28,8 +31,7 @@ import { useGameState, UseGameStateReturn } from '@/hooks/useGameState';
 import GameInfoBar from '@/components/GameInfoBar';
 import { useOfflineFirstGameTimer } from '@/hooks/useOfflineFirstGameTimer';
 import useAutoBackup from '@/hooks/useAutoBackup';
-import { useMigrationTrigger } from '@/hooks/useMigrationTrigger';
-import { useRosterMigration } from '@/hooks/useRosterMigration';
+// 🔧 CUTOVER COMPLETE: Migration hooks no longer needed
 // Import the new game session reducer and related types
 import {
   gameSessionReducer,
@@ -65,9 +67,19 @@ import { useTacticalBoard } from '@/hooks/useTacticalBoard';
 import { useRoster } from '@/hooks/useRoster';
 import { useGameDataManager } from '@/hooks/useGameDataManager';
 import { useGameStateManager } from '@/hooks/useGameStateManager';
-import { useModalContext } from '@/contexts/ModalProvider';
-// Import skeleton components
-import { GameStatsModalSkeleton, LoadGameModalSkeleton, RosterModalSkeleton, ModalSkeleton } from '@/components/ui/ModalSkeleton';
+// import { useModalContext } from '@/contexts/ModalProvider.migration';
+import { useGameSettingsModalWithHandlers } from '@/hooks/useGameSettingsModalState';
+import { useGameStatsModalWithHandlers } from '@/hooks/useGameStatsModalState';
+import { useRosterSettingsModalWithHandlers } from '@/hooks/useRosterSettingsModalState';
+import { useLoadGameModalWithHandlers } from '@/hooks/useLoadGameModalState';
+import { useNewGameSetupModalWithHandlers } from '@/hooks/useNewGameSetupModalState';
+import { useSeasonTournamentModalWithHandlers } from '@/hooks/useSeasonTournamentModalState';
+import { useTrainingResourcesModalWithHandlers } from '@/hooks/useTrainingResourcesModalState';
+import { useGoalLogModalWithHandlers } from '@/hooks/useGoalLogModalState';
+import { useSettingsModalWithHandlers } from '@/hooks/useSettingsModalState';
+import { usePlayerAssessmentModalWithHandlers } from '@/hooks/usePlayerAssessmentModalState';
+// Import skeleton components - removed unused skeletons
+// import { GameStatsModalSkeleton, LoadGameModalSkeleton, RosterModalSkeleton, ModalSkeleton } from '@/components/ui/ModalSkeleton';
 import { AppLoadingSkeleton } from '@/components/ui/AppSkeleton';
 // Note: localStorage utilities removed - using offline-first storage instead
 // Removed - now handled by useGameDataManager: 
@@ -76,12 +88,15 @@ import { AppLoadingSkeleton } from '@/components/ui/AppSkeleton';
 // Removed - now handled by useGameDataManager:
 // import { updateGameDetails as utilUpdateGameDetails } from '@/utils/savedGames';
 import { DEFAULT_GAME_ID } from '@/config/constants';
+// 🔧 CUTOVER COMPLETE: Migration error boundary no longer needed
 // Storage keys no longer needed - using offline-first storage
 // Removed static import of export utilities - now using dynamic imports for better bundle splitting
 // Removed - now handled by useGameDataManager: exportJson, exportCsv
-// Removed - now handled by useGameDataManager:
-// import { useToast } from '@/contexts/ToastProvider';
+import { useToast } from '@/contexts/ToastProvider';
 import logger from '@/utils/logger';
+// Prefetch helpers for reference data
+import { getSeasons as utilGetSeasons } from '@/utils/seasons';
+import { getTournaments as utilGetTournaments } from '@/utils/tournaments';
 
 
 // Placeholder data - Initialize new fields
@@ -359,6 +374,9 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   const [savedGames, setSavedGames] = useState<SavedGamesCollection>({});
   const [currentGameId, setCurrentGameId] = useState<string | null>(DEFAULT_GAME_ID);
   const [isPlayed, setIsPlayed] = useState<boolean>(true);
+  // Cache seasons/tournaments for modals to avoid re-fetch cost on first open
+  const [_prefetchedSeasons, setPrefetchedSeasons] = useState<Season[] | null>(null);
+  const [_prefetchedTournaments, setPrefetchedTournaments] = useState<Tournament[] | null>(null);
   
   // This ref needs to be declared after currentGameId
   const gameIdRef = useRef(currentGameId);
@@ -406,35 +424,24 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   const [hasSkippedInitialSetup, setHasSkippedInitialSetup] = useState<boolean>(skipInitialSetup);
 
   useAutoBackup();
+  const { showToast } = useToast();
   
-  // Migration trigger
-  const { MigrationModalComponent } = useMigrationTrigger();
-  
-  // Roster data migration - runs automatically when needed
-  useRosterMigration();
+  // 🔧 CUTOVER COMPLETE: No migration components needed
 
-  const {
-    isGameSettingsModalOpen,
-    setIsGameSettingsModalOpen,
-    isLoadGameModalOpen,
-    setIsLoadGameModalOpen,
-    isRosterModalOpen,
-    setIsRosterModalOpen,
-    isSeasonTournamentModalOpen,
-    setIsSeasonTournamentModalOpen,
-    isTrainingResourcesOpen,
-    setIsTrainingResourcesOpen,
-    isGoalLogModalOpen,
-    setIsGoalLogModalOpen,
-    isGameStatsModalOpen,
-    setIsGameStatsModalOpen,
-    isNewGameSetupModalOpen,
-    setIsNewGameSetupModalOpen,
-    isSettingsModalOpen,
-    setIsSettingsModalOpen,
-    isPlayerAssessmentModalOpen,
-    setIsPlayerAssessmentModalOpen,
-  } = useModalContext();
+  // Use Zustand-based modal states
+  const gameSettingsModal = useGameSettingsModalWithHandlers();
+  const gameStatsModal = useGameStatsModalWithHandlers();
+  const rosterSettingsModal = useRosterSettingsModalWithHandlers();
+  const loadGameModal = useLoadGameModalWithHandlers();
+  const newGameSetupModal = useNewGameSetupModalWithHandlers();
+  const seasonTournamentModal = useSeasonTournamentModalWithHandlers();
+  const trainingResourcesModal = useTrainingResourcesModalWithHandlers();
+  const goalLogModal = useGoalLogModalWithHandlers();
+  const settingsModal = useSettingsModalWithHandlers();
+  const playerAssessmentModal = usePlayerAssessmentModalWithHandlers();
+  
+  // All modal states now migrated to Zustand!
+  // const {} = useModalContext(); // No longer needed - all modals migrated!
   // Removed - now handled by useGameDataManager:
   // const { showToast } = useToast();
   // const [isPlayerStatsModalOpen, setIsPlayerStatsModalOpen] = useState(false);
@@ -444,34 +451,36 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   const [showLargeTimerOverlay, setShowLargeTimerOverlay] = useState<boolean>(false); // State for overlay visibility
   const [isInstructionsModalOpen, setIsInstructionsModalOpen] = useState<boolean>(false);
 
+  const hasHandledInitialActionRef = useRef(false);
   useEffect(() => {
-    if (!initialAction) return;
+    if (!initialAction || hasHandledInitialActionRef.current) return;
+    hasHandledInitialActionRef.current = true;
     switch (initialAction) {
       case 'newGame':
-        setIsNewGameSetupModalOpen(true);
+        newGameSetupModal.open();
         break;
       case 'loadGame':
-        setIsLoadGameModalOpen(true);
+        loadGameModal.open();
         break;
       case 'resumeGame':
         // Resume game is handled by the initialization effect
         // which automatically loads the most recent game
         break;
       case 'season':
-        setIsSeasonTournamentModalOpen(true);
+        seasonTournamentModal.open();
         break;
       case 'stats':
-        setIsGameStatsModalOpen(true);
+        gameStatsModal.open();
         break;
       default:
         break;
     }
   }, [
     initialAction,
-    setIsNewGameSetupModalOpen,
-    setIsLoadGameModalOpen,
-    setIsSeasonTournamentModalOpen,
-    setIsGameStatsModalOpen
+    newGameSetupModal,
+    loadGameModal,
+    seasonTournamentModal,
+    gameStatsModal
   ]);
   
   // --- Modal States handled via context ---
@@ -633,7 +642,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     masterRosterQueryResultData,
     currentGameId,
     saveStateToHistory,
-    setIsGoalLogModalOpen,
+    setIsGoalLogModalOpen: (open: boolean) => open ? goalLogModal.open() : goalLogModal.close()
   });
 
   // --- App Settings Manager ---
@@ -646,7 +655,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     handleLanguageChange,
     handleDefaultTeamNameChange,
   } = useAppSettingsManager({
-    setIsSettingsModalOpen,
+    setIsSettingsModalOpen: settingsModal.open,
     setIsInstructionsModalOpen,
   });
 
@@ -691,23 +700,27 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     
     return gameIds
       .map(id => ({ id, game: currentSavedGames[id] }))
-      .filter(({ game }) => game && game.gameDate)
+      .filter(({ game }) => game && typeof game.gameDate === 'string' && game.gameDate.trim().length > 0)
       .sort((a, b) => {
-        const dateA = new Date(a.game.gameDate + ' ' + (a.game.gameTime || '00:00'));
-        const dateB = new Date(b.game.gameDate + ' ' + (b.game.gameTime || '00:00'));
-        return dateB.getTime() - dateA.getTime();
+        const aDateStr = `${a.game.gameDate} ${a.game.gameTime || '00:00'}`.trim();
+        const bDateStr = `${b.game.gameDate} ${b.game.gameTime || '00:00'}`.trim();
+        const dateA = Number.isFinite(Date.parse(aDateStr)) ? new Date(aDateStr) : new Date(a.game.gameDate);
+        const dateB = Number.isFinite(Date.parse(bDateStr)) ? new Date(bDateStr) : new Date(b.game.gameDate);
+        const aTime = Number.isFinite(dateA.getTime()) ? dateA.getTime() : 0;
+        const bTime = Number.isFinite(dateB.getTime()) ? dateB.getTime() : 0;
+        return bTime - aTime;
       });
   }, [allSavedGamesQueryResultData]);
   
   useEffect(() => {
     if (isMasterRosterQueryLoading) {
-      logger.log('[TanStack Query] Master Roster is loading...');
+      logger.debug('[TanStack Query] Master Roster is loading...');
     }
     if (masterRosterQueryResultData && !isMasterRosterQueryLoading && rosterDataKey) {
       // Only update if this is different from what we last synced
       if (rosterDataKey !== lastSyncedRosterRef.current) {
         lastSyncedRosterRef.current = rosterDataKey;
-        logger.log('[HomePage] Syncing roster from React Query:', masterRosterQueryResultData.length, 'players');
+        logger.debug('[HomePage] Syncing roster from React Query:', masterRosterQueryResultData.length, 'players');
         setAvailablePlayers(masterRosterQueryResultData);
       }
     }
@@ -720,7 +733,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   // --- Effect to update seasons from useQuery ---
   useEffect(() => {
     if (areSeasonsQueryLoading) {
-      logger.log('[TanStack Query] Seasons are loading...');
+      logger.debug('[TanStack Query] Seasons are loading...');
     }
     if (seasonsQueryResultData) {
       setSeasons(Array.isArray(seasonsQueryResultData) ? seasonsQueryResultData : []);
@@ -734,7 +747,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   // --- Effect to update tournaments from useQuery ---
   useEffect(() => {
     if (areTournamentsQueryLoading) {
-      logger.log('[TanStack Query] Tournaments are loading...');
+      logger.debug('[TanStack Query] Tournaments are loading...');
     }
     if (tournamentsQueryResultData) {
       setTournaments(Array.isArray(tournamentsQueryResultData) ? tournamentsQueryResultData : []);
@@ -792,8 +805,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   // Handle saved games loading state
   useEffect(() => {
     if (isAllSavedGamesQueryLoading) {
-      logger.log('[EFFECT savedGames] Setting games list loading to true');
-      logger.debug('[HomePage] Setting isLoadingGamesList to true');
+      logger.debug('[EFFECT savedGames] Setting games list loading to true');
       setIsLoadingGamesList(true);
     }
   }, [isAllSavedGamesQueryLoading]);
@@ -836,21 +848,21 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         return;
       }
 
-      logger.log('[EFFECT init] All queries complete, initializing app...');
+      logger.debug('[EFFECT init] All queries complete, initializing app...');
 
       // Set current game ID based on saved settings
       const lastGameIdSetting = currentGameIdSettingQueryResultData;
       const currentSavedGames = allSavedGamesQueryResultData || {};
 
       if (lastGameIdSetting && lastGameIdSetting !== DEFAULT_GAME_ID && currentSavedGames[lastGameIdSetting]) {
-        logger.log(`[EFFECT init] Restoring last saved game: ${lastGameIdSetting}`);
+        logger.debug(`[EFFECT init] Restoring last saved game: ${lastGameIdSetting}`);
         setCurrentGameId(lastGameIdSetting);
         setHasSkippedInitialSetup(true);
       } else {
         // If the saved game ID doesn't exist, try to find the most recent game
         if (sortedGamesByDate.length > 0) {
           const mostRecentId = sortedGamesByDate[0].id;
-          logger.log(`[EFFECT init] Found most recent game to restore: ${mostRecentId}`);
+          logger.debug(`[EFFECT init] Found most recent game to restore: ${mostRecentId}`);
           setCurrentGameId(mostRecentId);
           setHasSkippedInitialSetup(true);
         } else {
@@ -863,14 +875,20 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
       // Timer restoration is now handled by useOfflineFirstGameTimer hook
 
-      // Check if user has seen app guide
-      const seenGuide = await getHasSeenAppGuide();
-      if (!seenGuide) {
-        setIsInstructionsModalOpen(true);
-      }
+      // Check if user has seen app guide (defer to next tick to avoid blocking UI)
+      setTimeout(async () => {
+        try {
+          const seenGuide = await getHasSeenAppGuide();
+          if (!seenGuide) {
+            setIsInstructionsModalOpen(true);
+          }
+        } catch (e) {
+          logger.warn('[HomePage] Failed to check app guide flag:', e);
+        }
+      }, 0);
 
       setInitialLoadComplete(true);
-      logger.log('[EFFECT init] Initial application data coordination complete.');
+      logger.debug('[EFFECT init] Initial application data coordination complete.');
     };
 
     initializeApp();
@@ -885,6 +903,26 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     currentGameIdSettingQueryResultData,
     sortedGamesByDate
   ]);
+
+  // Prefetch seasons/tournaments once after initial render to warm caches for modals
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [s, t] = await Promise.all([
+          utilGetSeasons().catch(() => []),
+          utilGetTournaments().catch(() => []),
+        ]);
+        if (!cancelled) {
+          setPrefetchedSeasons(Array.isArray(s) ? s : []);
+          setPrefetchedTournaments(Array.isArray(t) ? t : []);
+        }
+      } catch {
+        // ignore
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   // Add a timeout for mobile loading issues
   useEffect(() => {
@@ -1032,165 +1070,101 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   }, [currentGameId, savedGames, initialLoadComplete]); // IMPORTANT: initialLoadComplete ensures this runs after master roster is loaded.
 
   // --- Auto-save state using offline-first storage ---
-  useEffect(() => {
-    // Skip auto-save during new game creation to prevent overwriting the new game
-    if (isCreatingNewGame) {
-      return;
+  const autosaveTimeoutRef = useRef<number | null>(null);
+  const pendingAutosaveRef = useRef<Promise<void> | null>(null);
+
+  const scheduleAutosave = useCallback((fn: () => Promise<void>) => {
+    // Debounce 750ms and ensure only one save runs at a time
+    if (autosaveTimeoutRef.current) {
+      window.clearTimeout(autosaveTimeoutRef.current);
+      autosaveTimeoutRef.current = null;
     }
-    
-    // Skip auto-save during state synchronization to prevent race conditions
-    if (isStateSynchronizing) {
-      return;
-    }
-    
-    // Only auto-save if loaded AND we have a proper game ID (not the default unsaved one)
-    const autoSave = async () => {
-    if (initialLoadComplete && currentGameId && currentGameId !== DEFAULT_GAME_ID) {
-      try {
-        // CRITICAL BUG FIX: Add comprehensive debugging for assist-related saves
-        const assistEvents = gameSessionState.gameEvents.filter(event => event.type === 'goal' && event.assisterId);
-        logger.log(`[AUTO-SAVE] Starting auto-save for game ${currentGameId}`);
-        logger.log(`[AUTO-SAVE] Total events: ${gameSessionState.gameEvents.length}, Events with assists: ${assistEvents.length}`);
-        if (assistEvents.length > 0) {
-          logger.log(`[AUTO-SAVE] Assist events details:`, assistEvents.map(e => {
-            if (e.type === 'goal') {
-              return {
-                id: e.id,
-                type: e.type,
-                scorerId: e.scorerId,
-                assisterId: e.assisterId,
-                time: e.time
-              };
-            }
-            return { id: e.id, type: e.type, time: e.time };
-          }));
-        }
-        logger.log(`[AUTO-SAVE] Available players count: ${availablePlayers.length}, Master roster count: ${masterRosterQueryResultData?.length || 0}`);
-        
-        // 1. Create the current game state snapshot (excluding history and volatile timer states)
-        const currentSnapshot: AppState = {
-          // Fields from gameSessionState (persisted ones)
-          teamName: gameSessionState.teamName,
-          opponentName: gameSessionState.opponentName,
-          gameDate: gameSessionState.gameDate,
-          homeScore: gameSessionState.homeScore,
-          awayScore: gameSessionState.awayScore,
-          gameNotes: gameSessionState.gameNotes,
-          homeOrAway: gameSessionState.homeOrAway,
-          isPlayed,
-          numberOfPeriods: gameSessionState.numberOfPeriods,
-          periodDurationMinutes: gameSessionState.periodDurationMinutes,
-          currentPeriod: gameSessionState.currentPeriod, // Persisted
-          gameStatus: gameSessionState.gameStatus, // Persisted
-          seasonId: gameSessionState.seasonId, // USE gameSessionState
-          tournamentId: gameSessionState.tournamentId, // USE gameSessionState
-          gameLocation: gameSessionState.gameLocation,
-          gameTime: gameSessionState.gameTime,
-          demandFactor: gameSessionState.demandFactor,
-          subIntervalMinutes: gameSessionState.subIntervalMinutes,
-          completedIntervalDurations: gameSessionState.completedIntervalDurations,
-          lastSubConfirmationTimeSeconds: gameSessionState.lastSubConfirmationTimeSeconds,
-          showPlayerNames: gameSessionState.showPlayerNames, // from gameSessionState
-          selectedPlayerIds: gameSessionState.selectedPlayerIds, // from gameSessionState
-          timeElapsedInSeconds: gameSessionState.timeElapsedInSeconds, // Include timer state
-          gameEvents: gameSessionState.gameEvents, // from gameSessionState
-          assessments: playerAssessments,
-
-          // Other states
-          playersOnField,
-          opponents,
-          drawings,
-          tacticalDiscs,
-          tacticalDrawings,
-          tacticalBallPosition,
-          availablePlayers: masterRosterQueryResultData || availablePlayers, // Master roster snapshot
-          
-          // Volatile timer states are intentionally EXCLUDED from the snapshot to be saved.
-          // They are not part of GameData and should be re-initialized on load by the reducer.
-        };
-
-        // CRITICAL BUG FIX: Log snapshot details before save
-        logger.log(`[AUTO-SAVE] Snapshot prepared - Events count: ${currentSnapshot.gameEvents.length}`);
-        logger.log(`[AUTO-SAVE] Snapshot events with assists:`, currentSnapshot.gameEvents.filter(e => e.type === 'goal' && e.assisterId).map(e => {
-          if (e.type === 'goal') {
-            return {
-              id: e.id,
-              scorerId: e.scorerId,
-              assisterId: e.assisterId
-            };
-          }
-          return { id: e.id, type: e.type };
-        }));
-        
-        // 2. Save the game snapshot using utility
-        logger.log(`[AUTO-SAVE] Calling utilSaveGame...`);
-        const savedResult = await utilSaveGame(currentGameId, currentSnapshot as AppState); // Cast to AppState for the util
-        logger.log(`[AUTO-SAVE] Save completed successfully`);
-        
-        // 3. Update currentGameId if it changed (important for Supabase UUID sync)
-        const newGameId = (savedResult as AppState & { id?: string }).id;
-        if (newGameId && newGameId !== currentGameId) {
-          logger.log(`Game ID changed from ${currentGameId} to ${newGameId} during save`);
-          setCurrentGameId(newGameId);
-          await utilSaveCurrentGameIdSetting(newGameId);
-        } else {
-          // Save App Settings (only the current game ID) using utility
-          await utilSaveCurrentGameIdSetting(currentGameId);
-        }
-
-      } catch (error) {
-        logger.error("[AUTO-SAVE] Failed to auto-save state:", error);
-        
-        // CRITICAL BUG FIX: Log detailed error context for debugging
-        logger.error(`[AUTO-SAVE] Error context - Game ID: ${currentGameId}`);
-        logger.error(`[AUTO-SAVE] Error context - Events count: ${gameSessionState.gameEvents.length}`);
-        logger.error(`[AUTO-SAVE] Error context - Assist events:`, gameSessionState.gameEvents.filter(e => e.type === 'goal' && e.assisterId));
-        
-        // CRITICAL BUG FIX: Distinguish between different types of save errors
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        
-        if (errorMessage.includes('not found') || errorMessage.includes('FK constraint') || errorMessage.includes('foreign key')) {
-          // Data validation error - not a network issue
-          alert(`Data validation error: ${errorMessage}\n\nThis is likely due to invalid player references. Please check your goal/assist entries.`);
-        } else if (errorMessage.includes('network') || errorMessage.includes('offline') || errorMessage.includes('fetch')) {
-          // Actual network error
-          alert("Network error: Unable to save game. Please check your connection and try again.");
-        } else {
-          // Generic error
-          alert(`Error saving game: ${errorMessage}`);
-        }
+    autosaveTimeoutRef.current = window.setTimeout(async () => {
+      if (pendingAutosaveRef.current) {
+        // wait for the in-flight save, then run again
+        try { await pendingAutosaveRef.current; } catch { /* ignore */ }
       }
-    } else if (initialLoadComplete && currentGameId === DEFAULT_GAME_ID) {
-      logger.log("Not auto-saving as this is an unsaved game (no ID assigned yet)");
+      const p = fn();
+      pendingAutosaveRef.current = p;
+      try { await p; } finally { pendingAutosaveRef.current = null; }
+    }, 750);
+  }, []);
+
+  useEffect(() => {
+    // Skip autosave during new game creation or synchronization
+    if (isCreatingNewGame || isStateSynchronizing) return;
+
+    if (initialLoadComplete && currentGameId && currentGameId !== DEFAULT_GAME_ID) {
+      scheduleAutosave(async () => {
+        try {
+          const assistEvents = gameSessionState.gameEvents.filter(event => event.type === 'goal' && (event as any).assisterId);
+          logger.log(`[AUTO-SAVE] Starting auto-save for game ${currentGameId}`);
+          if (assistEvents.length > 0) {
+            logger.log(`[AUTO-SAVE] Assist events details:`, assistEvents.map(e => ({ id: e.id, type: e.type })));
+          }
+          const currentSnapshot: AppState = {
+            teamName: gameSessionState.teamName,
+            opponentName: gameSessionState.opponentName,
+            gameDate: gameSessionState.gameDate,
+            homeScore: gameSessionState.homeScore,
+            awayScore: gameSessionState.awayScore,
+            gameNotes: gameSessionState.gameNotes,
+            homeOrAway: gameSessionState.homeOrAway,
+            isPlayed,
+            numberOfPeriods: gameSessionState.numberOfPeriods,
+            periodDurationMinutes: gameSessionState.periodDurationMinutes,
+            currentPeriod: gameSessionState.currentPeriod,
+            gameStatus: gameSessionState.gameStatus,
+            seasonId: gameSessionState.seasonId,
+            tournamentId: gameSessionState.tournamentId,
+            gameLocation: gameSessionState.gameLocation,
+            gameTime: gameSessionState.gameTime,
+            demandFactor: gameSessionState.demandFactor,
+            subIntervalMinutes: gameSessionState.subIntervalMinutes,
+            completedIntervalDurations: gameSessionState.completedIntervalDurations,
+            lastSubConfirmationTimeSeconds: gameSessionState.lastSubConfirmationTimeSeconds,
+            showPlayerNames: gameSessionState.showPlayerNames,
+            selectedPlayerIds: gameSessionState.selectedPlayerIds,
+            timeElapsedInSeconds: gameSessionState.timeElapsedInSeconds,
+            gameEvents: gameSessionState.gameEvents,
+            assessments: playerAssessments,
+            playersOnField,
+            opponents,
+            drawings,
+            tacticalDiscs,
+            tacticalDrawings,
+            tacticalBallPosition,
+            availablePlayers: masterRosterQueryResultData || availablePlayers,
+          };
+
+          const savedResult = await utilSaveGame(currentGameId, currentSnapshot as AppState);
+          const newGameId = (savedResult as AppState & { id?: string }).id;
+          if (newGameId && newGameId !== currentGameId) {
+            setCurrentGameId(newGameId);
+            await utilSaveCurrentGameIdSetting(newGameId);
+          } else {
+            await utilSaveCurrentGameIdSetting(currentGameId);
+          }
+        } catch (error) {
+          logger.error('[AUTO-SAVE] Failed to auto-save state:', error);
+        }
+      });
     }
-    };
-    autoSave();
-    // Dependencies: Include all state variables that are part of the saved snapshot
-  }, [initialLoadComplete, currentGameId, isCreatingNewGame, isStateSynchronizing,
-      playersOnField, opponents, drawings, availablePlayers, masterRosterQueryResultData,
-      // showPlayerNames, // REMOVED - Covered by gameSessionState
-      // Local states that are part of the snapshot but not yet in gameSessionState:
-      // gameEvents, // REMOVE - Now from gameSessionState
-      gameSessionState,
-      playerAssessments,
-      tacticalDiscs,
-      tacticalDrawings,
-      tacticalBallPosition,
-      isPlayed,
-    ]);
+  }, [
+    initialLoadComplete, currentGameId, isCreatingNewGame, isStateSynchronizing,
+    playersOnField, opponents, drawings, availablePlayers, masterRosterQueryResultData,
+    gameSessionState, playerAssessments, tacticalDiscs, tacticalDrawings, tacticalBallPosition, isPlayed,
+    scheduleAutosave,
+  ]);
 
   // **** ADDED: Effect to prompt for setup if default game ID is loaded ****
   useEffect(() => {
-    // Only run the check *after* initial load is fully complete and setup hasn't been skipped
-    if (initialLoadComplete && !hasSkippedInitialSetup) {
-      // Check currentGameId *inside* the effect body
-      if (currentGameId === DEFAULT_GAME_ID) {
-      setIsNewGameSetupModalOpen(true);
-      } else {
+    // Guard: ensure we only prompt after initial load completes and not when skipping
+    if (!initialLoadComplete || hasSkippedInitialSetup) return;
+    if (currentGameId === DEFAULT_GAME_ID) {
+      newGameSetupModal.open();
     }
-    }
-  // Depend only on load completion and skip status - removed setIsNewGameSetupModalOpen from deps
-  }, [initialLoadComplete, hasSkippedInitialSetup, currentGameId, setIsNewGameSetupModalOpen]);
+  }, [initialLoadComplete, hasSkippedInitialSetup, currentGameId, newGameSetupModal]);
 
   // --- Player Management Handlers moved to usePlayerFieldManager ---
 
@@ -1237,7 +1211,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
   // Handler to open/close the goal log modal
   const handleToggleGoalLogModal = () => {
-    setIsGoalLogModalOpen(!isGoalLogModalOpen);
+    goalLogModal.toggle();
   };
 
 
@@ -1258,15 +1232,15 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   //   setIsNewGameSetupModalOpen(false);
   // }, []);
 
-  // Handler to open/close the stats modal
-  const handleToggleGameStatsModal = () => {
+  // Handler to open/close the stats modal (Now using Zustand)
+  const handleToggleGameStatsModal = useCallback(() => {
     // If the modal is currently open, we are about to close it.
-    if (isGameStatsModalOpen) {
+    if (gameStatsModal.isOpen) {
       // Clear the selected player so it doesn't open to the same player next time.
       setSelectedPlayerForStats(null);
     }
-    setIsGameStatsModalOpen(!isGameStatsModalOpen);
-  };
+    gameStatsModal.toggle();
+  }, [gameStatsModal, setSelectedPlayerForStats]);
 
   // Placeholder handlers for updating game info (will be passed to modal)
   // const handleHomeScoreChange = (newScore: number) => {
@@ -1281,7 +1255,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
   // Training Resources Modal
   const handleToggleTrainingResources = () => {
-    setIsTrainingResourcesOpen(!isTrainingResourcesOpen);
+    trainingResourcesModal.toggle();
   };
 
   const handleToggleInstructionsModal = () => {
@@ -1299,20 +1273,20 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
   const handleOpenLoadGameModal = () => {
     logger.log("Opening Load Game Modal...");
-    setIsLoadGameModalOpen(true);
+    loadGameModal.open();
   };
 
   const handleCloseLoadGameModal = () => {
-    setIsLoadGameModalOpen(false);
+    loadGameModal.close();
   };
 
   const handleOpenSeasonTournamentModal = () => {
-    setIsSeasonTournamentModalOpen(true);
+    seasonTournamentModal.open();
   };
 
-  const handleCloseSeasonTournamentModal = () => {
-    setIsSeasonTournamentModalOpen(false);
-  };
+  // const handleCloseSeasonTournamentModal = () => {
+  //   seasonTournamentModal.close();
+  // };
 
 
   // Function to handle loading a selected game
@@ -1335,10 +1309,10 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
         // Update current game ID and save settings
         setCurrentGameId(gameId);
-        await utilSaveCurrentGameIdSetting(gameId);
-
-        logger.log(`Game ${gameId} load dispatched to reducer.`);
+        // Close modal immediately for snappier UX; persist setting asynchronously
         handleCloseLoadGameModal();
+        logger.log(`Game ${gameId} load dispatched to reducer. Persisting currentGameId setting...`);
+        await utilSaveCurrentGameIdSetting(gameId);
 
       } catch(error) {
           logger.error("Error processing game load:", error);
@@ -1368,18 +1342,18 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   // --- INDIVIDUAL GAME EXPORT HANDLERS - MOVED TO useGameDataManager hook ---
   // The handleExportOneJson and handleExportOneCsv functions are now provided by useGameDataManager
 
-  // --- Roster Management Handlers ---
-  const openRosterModal = () => {
-    setIsRosterModalOpen(true);
+  // --- Roster Management Handlers (Now using Zustand) ---
+  const openRosterModal = useCallback(() => {
+    rosterSettingsModal.open();
     setHighlightRosterButton(false); // <<< Remove highlight when modal is opened
-  };
+  }, [rosterSettingsModal, setHighlightRosterButton]);
 
-  const openPlayerAssessmentModal = () => setIsPlayerAssessmentModalOpen(true);
-  const closePlayerAssessmentModal = () => setIsPlayerAssessmentModalOpen(false);
+  const openPlayerAssessmentModal = () => playerAssessmentModal.open();
+  // const closePlayerAssessmentModal = () => playerAssessmentModal.close();
 
   // ... (other code in Home component) ...
 
-  const closeRosterModal = () => setIsRosterModalOpen(false);
+  // const closeRosterModal = rosterSettingsModal.handleClose;
 
   // --- END Roster Management Handlers ---
 
@@ -1391,19 +1365,15 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   // --- Quick Save Handler - MOVED TO useGameDataManager hook ---
   // The handleQuickSaveGame function is now provided by useGameDataManager
 
-  // --- NEW: Handlers for Game Settings Modal --- 
-  const handleOpenGameSettingsModal = () => {
-      setIsGameSettingsModalOpen(true); // Corrected State Setter
-  };
-  const handleCloseGameSettingsModal = () => {
-    setIsGameSettingsModalOpen(false); // Corrected State Setter
-  };
+  // --- Game Settings Modal Handlers (Now using Zustand) --- 
+  const handleOpenGameSettingsModal = gameSettingsModal.handleOpen;
+  const handleCloseGameSettingsModal = gameSettingsModal.handleClose;
   const handleOpenSettingsModal = () => {
-    setIsSettingsModalOpen(true);
+    settingsModal.open();
   };
-  const handleCloseSettingsModal = () => {
-    setIsSettingsModalOpen(false);
-  };
+  // const handleCloseSettingsModal = () => {
+  //   settingsModal.close();
+  // };
 
   // --- Placeholder Handlers for GameSettingsModal (will be implemented properly later) ---
 
@@ -1434,9 +1404,9 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   //   return 'Unknown Filter'; // Fallback
   // };
   
-  const handleExportAggregateJson = useCallback((gameIds: string[], aggregateStats: import('@/types').PlayerStatRow[]) => {
+  const handleExportAggregateJson = useCallback(async (gameIds: string[], aggregateStats: import('@/types').PlayerStatRow[]) => {
     if (gameIds.length === 0) {
-      alert(t('export.noGamesInSelection', 'No games match the current filter.'));
+      showToast(t('export.noGamesInSelection', 'No games match the current filter.'), 'info');
       return;
     }
     const gamesData = gameIds.reduce((acc, id) => {
@@ -1446,18 +1416,17 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       }
       return acc;
     }, {} as SavedGamesCollection);
-    // Dynamic import for better bundle splitting
-    import('@/utils/exportGames').then(({ exportAggregateJson }) => {
-      exportAggregateJson(gamesData, aggregateStats);
-    }).catch(error => {
-      logger.error('Failed to load export utilities:', error);
-      alert(t('export.error', 'Export failed. Please try again.'));
-    });
-  }, [savedGames, t]);
+    
+    // 🔧 DEPENDENCY INJECTION FIX: Use utility registry instead of dynamic import
+    const success = await executeExportFunction('exportAggregateJson', gamesData, aggregateStats);
+    if (!success) {
+      showToast(t('export.error', 'Export failed. Please try again.'), 'error');
+    }
+  }, [savedGames, t, showToast]);
 
-  const handleExportAggregateCsv = useCallback((gameIds: string[], aggregateStats: import('@/types').PlayerStatRow[]) => {
+  const handleExportAggregateCsv = useCallback(async (gameIds: string[], aggregateStats: import('@/types').PlayerStatRow[]) => {
     if (gameIds.length === 0) {
-      alert(t('export.noGamesInSelection', 'No games match the current filter.'));
+      showToast(t('export.noGamesInSelection', 'No games match the current filter.'), 'info');
       return;
     }
     const gamesData = gameIds.reduce((acc, id) => {
@@ -1467,14 +1436,13 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       }
       return acc;
     }, {} as SavedGamesCollection);
-    // Dynamic import for better bundle splitting
-    import('@/utils/exportGames').then(({ exportAggregateCsv }) => {
-      exportAggregateCsv(gamesData, aggregateStats);
-    }).catch(error => {
-      logger.error('Failed to load export utilities:', error);
-      alert(t('export.error', 'Export failed. Please try again.'));
-    });
-  }, [savedGames, t]);
+    
+    // 🔧 DEPENDENCY INJECTION FIX: Use utility registry instead of dynamic import
+    const success = await executeExportFunction('exportAggregateCsv', gamesData, aggregateStats);
+    if (!success) {
+      showToast(t('export.error', 'Export failed. Please try again.'), 'error');
+    }
+  }, [savedGames, t, showToast]);
 
   // --- END AGGREGATE EXPORT HANDLERS ---
 
@@ -1587,7 +1555,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       }
 
       // Close the setup modal
-      setIsNewGameSetupModalOpen(false);
+      newGameSetupModal.close();
       setNewGameDemandFactor(1);
 
       // <<< Trigger the roster button highlight >>>
@@ -1600,7 +1568,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     // Keep necessary dependencies
     availablePlayers,
     resetHistory,
-    setIsNewGameSetupModalOpen,
+    newGameSetupModal,
     setNewGameDemandFactor,
     setHighlightRosterButton,
     setIsCreatingNewGame,
@@ -1609,29 +1577,29 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   ]);
 
   // ** REVERT handleCancelNewGameSetup TO ORIGINAL **
-  const handleCancelNewGameSetup = useCallback(() => {
-    logger.log("New game setup skipped/cancelled.");
-    // REMOVED call to handleStartNewGameWithSetup
-    // // Initialize with default values similar to handleStartNewGameWithSetup
-    // const defaultOpponent = ''; // Empty opponent name
-    // ... (rest of default value setup removed)
-    // // Call the main setup function with defaults
-    // handleStartNewGameWithSetup(
-    //     ...
-    // );
+  // const handleCancelNewGameSetup = useCallback(() => {
+  //   logger.log("New game setup skipped/cancelled.");
+  //   // REMOVED call to handleStartNewGameWithSetup
+  //   // // Initialize with default values similar to handleStartNewGameWithSetup
+  //   // const defaultOpponent = ''; // Empty opponent name
+  //   // ... (rest of default value setup removed)
+  //   // // Call the main setup function with defaults
+  //   // handleStartNewGameWithSetup(
+  //   //     ...
+  //   // );
 
-    setHasSkippedInitialSetup(true); // Still mark as skipped if needed elsewhere
-    setIsNewGameSetupModalOpen(false); // ADDED: Explicitly close the modal
-    setNewGameDemandFactor(1);
+  //   setHasSkippedInitialSetup(true); // Still mark as skipped if needed elsewhere
+  //   newGameSetupModal.close(); // ADDED: Explicitly close the modal
+  //   setNewGameDemandFactor(1);
     
-    // Re-enable auto-save if it was disabled for new game creation
-    setIsCreatingNewGame(false);
+  //   // Re-enable auto-save if it was disabled for new game creation
+  //   setIsCreatingNewGame(false);
 
-  // REMOVED initialState from dependencies
-  }, [setIsNewGameSetupModalOpen, setIsCreatingNewGame]); // Added setter function to dependencies
+  // // REMOVED initialState from dependencies
+  // }, [newGameSetupModal, setIsCreatingNewGame]); // Added setter function to dependencies
 
   // --- Start New Game Handler (Uses Quick Save) ---
-  const handleStartNewGame = useCallback(() => {
+  const handleStartNewGame = useCallback(async () => {
     // Check if the current game is potentially unsaved (not the default ID and not null)
     if (currentGameId && currentGameId !== DEFAULT_GAME_ID) {
       // Prompt to save first
@@ -1641,18 +1609,21 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
                              : `ID: ${currentGameId}`;
                              
       const saveConfirmation = window.confirm(
-        t('controlBar.saveBeforeNewPrompt', 
-          `Save changes to the current game "${gameIdentifier}" before starting a new one?`, 
-          { gameName: gameIdentifier }
-        ) + "\n\n[OK = Save & Continue] [Cancel = Discard & Continue]"
+        t('controlBar.saveBeforeNewPrompt', `Save changes to the current game "${gameIdentifier}" before starting a new one?`, { gameName: gameIdentifier })
       );
 
       if (saveConfirmation) {
         // User chose OK (Save) -> Call Quick Save, then open setup modal.
         logger.log("User chose to Quick Save before starting new game.");
-        handleQuickSaveGame(); // Call quick save directly
-        setIsNewGameSetupModalOpen(true); // Open setup modal immediately after
-        // No need to return here; flow continues after quick save
+        try {
+          await handleQuickSaveGame();
+        } catch (e) {
+          logger.error('Quick save failed before new game setup:', e);
+        }
+        // Open setup modal once after save completes
+        newGameSetupModal.open();
+        // Note: do not open modal again below
+        return;
       } else {
         // User chose Cancel (Discard) -> Proceed to next confirmation
         logger.log("Discarding current game changes to start new game.");
@@ -1661,7 +1632,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           logger.log("Start new game confirmed after discarding, opening setup modal...");
           // <<< SET default player selection (all players) >>>
           setPlayerIdsForNewGame(availablePlayers.map(p => p.id));
-          setIsNewGameSetupModalOpen(true); // Open the setup modal
+          newGameSetupModal.open(); // Open the setup modal
         } 
         // If user cancels this second confirmation, do nothing.
         // Exit the function after handling the discard path.
@@ -1673,7 +1644,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
          logger.log("Start new game confirmed (no prior game to save), opening setup modal...");
          // <<< SET default player selection (all players) >>>
          setPlayerIdsForNewGame(availablePlayers.map(p => p.id));
-         setIsNewGameSetupModalOpen(true); // Open the setup modal
+         newGameSetupModal.open(); // Open the setup modal
        }
        // If user cancels this confirmation, do nothing.
        // Exit the function after handling the no-game-loaded path.
@@ -1683,9 +1654,9 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     // because the other paths explicitly return earlier.
     // <<< SET player selection based on current game BEFORE opening modal >>>
        setPlayerIdsForNewGame(gameSessionState.selectedPlayerIds);  // Use the current selection
-    setIsNewGameSetupModalOpen(true); // Open setup modal (moved here for save & continue path)
+    newGameSetupModal.open(); // Open setup modal (moved here for save & continue path)
 
-  }, [t, currentGameId, savedGames, handleQuickSaveGame, setIsNewGameSetupModalOpen,
+  }, [t, currentGameId, savedGames, handleQuickSaveGame, newGameSetupModal,
       // <<< ADD dependencies >>>
       availablePlayers, gameSessionState.selectedPlayerIds, setPlayerIdsForNewGame
      ]); 
@@ -1715,8 +1686,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     const player = availablePlayers.find(p => p.id === playerId);
     if (player) {
       setSelectedPlayerForStats(player);
-      setIsGameStatsModalOpen(true);
-      setIsRosterModalOpen(false); // Close the roster modal
+      gameStatsModal.open();
+      rosterSettingsModal.close(); // Close the roster modal
     }
   };
 
@@ -1866,78 +1837,64 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
       {/* Modals and Overlays */}
       {/* Training Resources Modal */}
-      <React.Suspense fallback={<ModalSkeleton title="Training Resources" />}>
+      {trainingResourcesModal.isOpen && (
         <TrainingResourcesModal
-          isOpen={isTrainingResourcesOpen}
-          onClose={handleToggleTrainingResources}
+          isOpen={trainingResourcesModal.isOpen}
+          onClose={trainingResourcesModal.handleClose}
         />
-      </React.Suspense>
-      <React.Suspense fallback={<ModalSkeleton title="Instructions" />}>
+      )}
+      {isInstructionsModalOpen && (
         <InstructionsModal
           isOpen={isInstructionsModalOpen}
           onClose={handleToggleInstructionsModal}
         />
-      </React.Suspense>
+      )}
       {/* Goal Log Modal */}
-      {isGoalLogModalOpen && (
-        <React.Suspense fallback={
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-slate-800 rounded-lg p-6 w-96 max-w-90vw">
-              <div className="animate-pulse">
-                <div className="h-6 bg-slate-700 rounded mb-4"></div>
-                <div className="h-20 bg-slate-700 rounded mb-4"></div>
-                <div className="h-10 bg-slate-700 rounded"></div>
-              </div>
-            </div>
-          </div>
-        }>
-          <GoalLogModal 
-            isOpen={isGoalLogModalOpen}
-            onClose={handleToggleGoalLogModal}
-            onLogGoal={handleAddGoalEvent}
-            onLogOpponentGoal={handleLogOpponentGoal} // ADDED: Pass the handler
-            availablePlayers={playersForCurrentGame} // MODIFIED: Pass players selected for the current game
-            currentTime={gameSessionState.timeElapsedInSeconds}
-          />
-        </React.Suspense>
+      {goalLogModal.isOpen && (
+        <GoalLogModal 
+          isOpen={goalLogModal.isOpen}
+          onClose={goalLogModal.handleClose}
+          onLogGoal={handleAddGoalEvent}
+          onLogOpponentGoal={handleLogOpponentGoal} // ADDED: Pass the handler
+          availablePlayers={playersForCurrentGame} // MODIFIED: Pass players selected for the current game
+          currentTime={gameSessionState.timeElapsedInSeconds}
+        />
       )}
-      {/* Game Stats Modal - Restore props for now */}
-      {isGameStatsModalOpen && (
-        <React.Suspense fallback={<GameStatsModalSkeleton />}>
-          <GameStatsModal
-            isOpen={isGameStatsModalOpen}
-            onClose={handleToggleGameStatsModal}
-            teamName={gameSessionState.teamName}
-            opponentName={gameSessionState.opponentName}
-            gameDate={gameSessionState.gameDate}
-            homeScore={gameSessionState.homeScore}
-            awayScore={gameSessionState.awayScore}
-            homeOrAway={gameSessionState.homeOrAway}
-            gameLocation={gameSessionState.gameLocation}
-            gameTime={gameSessionState.gameTime}
-            numPeriods={gameSessionState.numberOfPeriods}
-            periodDurationMinutes={gameSessionState.periodDurationMinutes}
-            availablePlayers={availablePlayers}
-            gameEvents={gameSessionState.gameEvents}
-            gameNotes={gameSessionState.gameNotes}
-            onUpdateGameEvent={handleUpdateGameEvent}
-            selectedPlayerIds={gameSessionState.selectedPlayerIds}
-            savedGames={savedGames}
-            currentGameId={currentGameId}
-            onDeleteGameEvent={handleDeleteGameEvent}
-            onExportOneJson={handleExportOneJsonWrapper}
-            onExportOneCsv={handleExportOneCsvWrapper}
-            onExportAggregateJson={handleExportAggregateJson}
-            onExportAggregateCsv={handleExportAggregateCsv}
-            initialSelectedPlayerId={selectedPlayerForStats?.id}
-            onGameClick={handleGameLogClick}
-          />
-        </React.Suspense>
+      {/* Game Stats Modal - Now using Zustand state */}
+      {gameStatsModal.isOpen && (
+        <GameStatsModal
+          isOpen={gameStatsModal.isOpen}
+          onClose={handleToggleGameStatsModal}
+          teamName={gameSessionState.teamName}
+          opponentName={gameSessionState.opponentName}
+          gameDate={gameSessionState.gameDate}
+          homeScore={gameSessionState.homeScore}
+          awayScore={gameSessionState.awayScore}
+          homeOrAway={gameSessionState.homeOrAway}
+          gameLocation={gameSessionState.gameLocation}
+          gameTime={gameSessionState.gameTime}
+          numPeriods={gameSessionState.numberOfPeriods}
+          periodDurationMinutes={gameSessionState.periodDurationMinutes}
+          availablePlayers={availablePlayers}
+          gameEvents={gameSessionState.gameEvents}
+          gameNotes={gameSessionState.gameNotes}
+          onUpdateGameEvent={handleUpdateGameEvent}
+          selectedPlayerIds={gameSessionState.selectedPlayerIds}
+          savedGames={savedGames}
+          currentGameId={currentGameId}
+          onDeleteGameEvent={handleDeleteGameEvent}
+          onExportOneJson={handleExportOneJsonWrapper}
+          onExportOneCsv={handleExportOneCsvWrapper}
+          onExportAggregateJson={handleExportAggregateJson}
+          onExportAggregateCsv={handleExportAggregateCsv}
+          initialSelectedPlayerId={selectedPlayerForStats?.id}
+          onGameClick={handleGameLogClick}
+        />
       )}
-      <React.Suspense fallback={<LoadGameModalSkeleton />}>
+      {loadGameModal.isOpen && (
         <LoadGameModal 
-          isOpen={isLoadGameModalOpen}
-          onClose={handleCloseLoadGameModal}
+          isOpen={loadGameModal.isOpen}
+          onClose={loadGameModal.handleClose}
           savedGames={savedGames} 
           onLoad={handleLoadGame}
           onDelete={handleDeleteGame}
@@ -1954,55 +1911,53 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           // gameDeleteError={gameDeleteError}
           processingGameId={processingGameId}
         />
-      </React.Suspense>
+      )}
 
       {/* Conditionally render the New Game Setup Modal */}
-      {isNewGameSetupModalOpen && (
-        <React.Suspense fallback={<ModalSkeleton title="New Game Setup" />}>
-          <NewGameSetupModal
-            isOpen={isNewGameSetupModalOpen}
-            initialPlayerSelection={playerIdsForNewGame} // <<< Pass the state here
-            availablePlayers={availablePlayers} // Pass the players from state
-            demandFactor={newGameDemandFactor}
-            onDemandFactorChange={setNewGameDemandFactor}
-            onStart={handleStartNewGameWithSetup} // CORRECTED Handler
-            onCancel={handleCancelNewGameSetup} 
-            // Pass the new mutation functions
-            addSeasonMutation={addSeasonMutation}
-            addTournamentMutation={addTournamentMutation}
-            // Pass loading states from mutations
-            isAddingSeason={addSeasonMutation.isPending}
-            isAddingTournament={addTournamentMutation.isPending}
-          />
-        </React.Suspense>
+      {newGameSetupModal.isOpen && (
+        <NewGameSetupModal
+          isOpen={newGameSetupModal.isOpen}
+          initialPlayerSelection={playerIdsForNewGame} // <<< Pass the state here
+          availablePlayers={availablePlayers} // Pass the players from state
+          demandFactor={newGameDemandFactor}
+          onDemandFactorChange={setNewGameDemandFactor}
+          onStart={handleStartNewGameWithSetup} // CORRECTED Handler
+          onCancel={newGameSetupModal.handleClose} 
+          // Pass the new mutation functions
+          addSeasonMutation={addSeasonMutation}
+          addTournamentMutation={addTournamentMutation}
+          // Pass loading states from mutations
+          isAddingSeason={addSeasonMutation.isPending}
+          isAddingTournament={addTournamentMutation.isPending}
+        />
       )}
 
       {/* Roster Settings Modal */}
-      <React.Suspense fallback={<RosterModalSkeleton />}>
+      {rosterSettingsModal.isOpen && (
         <RosterSettingsModal
-          isOpen={isRosterModalOpen}
-          onClose={closeRosterModal}
-          availablePlayers={availablePlayers} // Use availablePlayers from useGameState
-          onRenamePlayer={handleRenamePlayerForModal}
-          onSetJerseyNumber={handleSetJerseyNumberForModal}
-          onSetPlayerNotes={handleSetPlayerNotesForModal}
-          onRemovePlayer={handleRemovePlayerForModal} 
-          onAddPlayer={handleAddPlayerForModal}
-             selectedPlayerIds={gameSessionState.selectedPlayerIds}
-          onTogglePlayerSelection={handleTogglePlayerSelection}
-          teamName={gameSessionState.teamName}
-          onTeamNameChange={handleTeamNameChange}
-          // Pass loading and error states
-          isRosterUpdating={isRosterUpdating}
-          rosterError={rosterError}
-          onOpenPlayerStats={handleOpenPlayerStats}
-        />
-      </React.Suspense>
+        isOpen={rosterSettingsModal.isOpen}
+        onClose={rosterSettingsModal.handleClose}
+        availablePlayers={availablePlayers} // Use availablePlayers from useGameState
+        onRenamePlayer={handleRenamePlayerForModal}
+        onSetJerseyNumber={handleSetJerseyNumberForModal}
+        onSetPlayerNotes={handleSetPlayerNotesForModal}
+        onRemovePlayer={handleRemovePlayerForModal} 
+        onAddPlayer={handleAddPlayerForModal}
+           selectedPlayerIds={gameSessionState.selectedPlayerIds}
+        onTogglePlayerSelection={handleTogglePlayerSelection}
+        teamName={gameSessionState.teamName}
+        onTeamNameChange={handleTeamNameChange}
+        // Pass loading and error states
+        isRosterUpdating={isRosterUpdating}
+        rosterError={rosterError}
+        onOpenPlayerStats={handleOpenPlayerStats}
+      />
+      )}
 
-      <React.Suspense fallback={<ModalSkeleton title="Season & Tournament Management" />}>
+      {seasonTournamentModal.isOpen && (
         <SeasonTournamentManagementModal
-          isOpen={isSeasonTournamentModalOpen}
-          onClose={handleCloseSeasonTournamentModal}
+          isOpen={seasonTournamentModal.isOpen}
+          onClose={seasonTournamentModal.handleClose}
           seasons={seasons}
           tournaments={tournaments}
           availablePlayers={availablePlayers}
@@ -2013,7 +1968,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           updateTournamentMutation={updateTournamentMutation}
           deleteTournamentMutation={deleteTournamentMutation}
         />
-      </React.Suspense>
+      )}
       
       {/* <PlayerStatsModal 
           isOpen={isPlayerStatsModalOpen} 
@@ -2023,9 +1978,9 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           onGameClick={handleGameLogClick}
       /> */}
 
-      <React.Suspense fallback={<ModalSkeleton title="Game Settings" />}>
+      {gameSettingsModal.isOpen && (
         <GameSettingsModal
-          isOpen={isGameSettingsModalOpen}
+          isOpen={gameSettingsModal.isOpen}
           onClose={handleCloseGameSettingsModal}
           currentGameId={currentGameId}
           teamName={gameSessionState.teamName}
@@ -2071,12 +2026,12 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           timeElapsedInSeconds={timeElapsedInSeconds}
           updateGameDetailsMutation={updateGameDetailsMutation}
         />
-      </React.Suspense>
+      )}
 
-      <React.Suspense fallback={<ModalSkeleton title="Settings" />}>
+      {settingsModal.isOpen && (
         <SettingsModal
-          isOpen={isSettingsModalOpen}
-          onClose={handleCloseSettingsModal}
+          isOpen={settingsModal.isOpen}
+          onClose={settingsModal.handleClose}
           language={appLanguage}
           onLanguageChange={handleLanguageChange}
           defaultTeamName={defaultTeamNameSetting}
@@ -2085,23 +2040,24 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           onHardResetApp={handleHardResetApp}
           onSignOut={signOut}
         />
-      </React.Suspense>
+      )}
 
-      <React.Suspense fallback={<ModalSkeleton title="Player Assessment" />}>
+      {playerAssessmentModal.isOpen && (
         <PlayerAssessmentModal
-          isOpen={isPlayerAssessmentModalOpen}
-          onClose={closePlayerAssessmentModal}
+          isOpen={playerAssessmentModal.isOpen}
+          onClose={playerAssessmentModal.handleClose}
           selectedPlayerIds={gameSessionState.selectedPlayerIds}
           availablePlayers={availablePlayers}
           assessments={playerAssessments}
           onSave={handleSavePlayerAssessment}
           onDelete={handleDeletePlayerAssessment}
         />
-      </React.Suspense>
+      )}
       
-      {/* Migration Modal */}
-      {MigrationModalComponent}
+      {/* 🔧 CUTOVER COMPLETE: No migration modal needed */}
     </main>
   );
 }
+// 🔧 CUTOVER COMPLETE: No migration error boundary needed - exporting HomePage directly
+
 export default HomePage;

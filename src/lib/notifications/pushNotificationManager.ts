@@ -369,8 +369,19 @@ export class PushNotificationManager {
       // In production, this would save to Supabase push_subscriptions table
       console.log('[Push] Subscription would be saved to backend:', subscription);
       
-      // Store locally for demo purposes
-      localStorage.setItem('push-subscription', JSON.stringify(subscription));
+      // Store locally for demo purposes - using unified persistence API
+      try {
+        const { usePersistenceStore } = await import('@/stores/persistenceStore');
+        const store = usePersistenceStore.getState();
+        const success = await store.setStorageItem('push-subscription', subscription);
+        if (!success) {
+          throw new Error('Failed to save via unified storage API');
+        }
+        console.log('[Push] Subscription saved via unified storage API');
+      } catch (storeError) {
+        console.log('[Push] Unified storage API failed, using localStorage fallback:', storeError);
+        localStorage.setItem('push-subscription', JSON.stringify(subscription));
+      }
     } catch (error) {
       console.error('[Push] Failed to save subscription to backend:', error);
     }
@@ -384,8 +395,19 @@ export class PushNotificationManager {
       // In production, this would remove from Supabase
       console.log('[Push] Subscription would be removed from backend:', endpoint);
       
-      // Remove from local storage
-      localStorage.removeItem('push-subscription');
+      // Remove from local storage - using unified persistence API
+      try {
+        const { usePersistenceStore } = await import('@/stores/persistenceStore');
+        const store = usePersistenceStore.getState();
+        const success = await store.removeStorageItem('push-subscription');
+        if (!success) {
+          throw new Error('Failed to remove via unified storage API');
+        }
+        console.log('[Push] Subscription removed via unified storage API');
+      } catch (storeError) {
+        console.log('[Push] Unified storage API failed, using localStorage fallback:', storeError);
+        localStorage.removeItem('push-subscription');
+      }
     } catch (error) {
       console.error('[Push] Failed to remove subscription from backend:', error);
     }
