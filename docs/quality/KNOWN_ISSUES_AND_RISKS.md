@@ -19,9 +19,9 @@ Scope: Functional bugs, inconsistencies, risks, and edge cases identified during
 - [x] Duplicate modal open when starting new game (race/flicker risk)
   - File: `src/components/HomePage.tsx` (fixed: await quick save and open modal once)
   - Ref: lines 1646–1682; `newGameSetupModal.open()` invoked twice in the save-&-continue path
-- [x] New games default to isPlayed=true (should default false)
-  - File: `src/utils/savedGames.ts` (fixed: default `isPlayed` to false in `createGame`)
-  - Ref: around lines 221–236 (`isPlayed` fallback)
+- [x] New games default to isPlayed=true
+  - File: `src/utils/savedGames.ts` (intentional per product decision; reverted to true by request)
+  - Note: Preserves stats for legacy games while allowing explicit marking for planned games
 
 ## 2) Persistence/storage contradictions (architecture)
 
@@ -45,15 +45,15 @@ Scope: Functional bugs, inconsistencies, risks, and edge cases identified during
   - Ref: lines ~331–336
 - [x] Game status enums inconsistent (`not_started` vs `notStarted`)
   - Files: `src/stores/gameStore.ts`, `src/components/game/MigratedGameStateProvider.tsx` (fixed: unified to camelCase)
-- [ ] Context casts `opponents` as `Player[]` (type mismatch risk)
-  - File: `src/components/game/GameStateProvider.tsx` (fixed: added `opponents: Player[]` to `GameStateContextType` and provider)
+- [x] Context casts `opponents` as `Player[]` (type mismatch risk)
+  - Files: `src/types/gameComponents.ts`, `src/components/game/GameStateProvider.tsx` (fixed: typed `opponents` and included in context)
 
 ## 5) Timer/substitution inconsistencies
 
 - [x] Provider initial `nextSubDueTimeSeconds` is 0; elsewhere derives from `subIntervalMinutes * 60`
   - File: `src/components/game/GameStateProvider.tsx` (fixed: initialize to `subIntervalMinutes * 60`)
-- [ ] Mixed fractional vs integer timer accumulation may create off-by-one
-  - Files: `src/hooks/useGameSessionReducer.ts` vs timer hooks (fixed: reducer rounds to integer on pause and tick)
+- [x] Mixed fractional vs integer timer accumulation may create off-by-one
+  - File: `src/hooks/useGameSessionReducer.ts` (fixed: rounds in `PAUSE_TIMER` and `SET_TIMER_ELAPSED`)
 
 ## 6) Security/CSP headers
 
@@ -68,13 +68,13 @@ Scope: Functional bugs, inconsistencies, risks, and edge cases identified during
   - File: `src/components/HomePage.tsx` (fixed: simplified to single confirmation path; quick-save awaited before opening modal)
  - [x] Excessive debug logging in hot paths (autosave, effects)
   - Multiple files (fixed: env-gated logger via `NEXT_PUBLIC_LOG_LEVEL`)
- - [x] Legacy vs migrated components coexist (TimerOverlay/GameControls), risk of drift/bloat
-  - Files: `src/components/*`, `src/components/game/*` (fixed: consumers now import migrated variants)
+- [~] Legacy vs migrated components coexist (TimerOverlay/GameControls), risk of drift/bloat
+  - Files: `src/components/*`, `src/components/game/*` (mitigated: legacy `GameControls` marked as legacy; no direct consumers found)
 - [x] Direct `localStorage` usage in store helpers without SSR guards
   - File: `src/stores/persistenceStore.ts` (fixed: added SSR guards around localStorage access)
  - [x] Resume readiness ambiguity due to auth gating vs always-true resume check
   - Files: `src/app/page.tsx`, `src/components/StartScreen.tsx` (fixed: added `useResumeAvailability` hook; page uses it as single source of truth)
-- [ ] Game event update/remove by index in utils (id is safer)
+- [x] Game event update/remove by index in utils (id is safer)
   - File: `src/utils/savedGames.ts` (fixed: now uses `eventId`)
 - [x] “Most recent game” sorting can produce `Invalid Date` and misorder
   - Files: `src/utils/savedGames.ts`, `src/components/HomePage.tsx`, `src/components/LoadGameModal.tsx` (fixed: robust parse with fallback and guards)
@@ -88,7 +88,7 @@ Scope: Functional bugs, inconsistencies, risks, and edge cases identified during
   - File: `src/app/page.tsx` (fixed: added `src/app/password-reset-help/page.tsx`)
  - [x] Provider exports extras not in `GameStateContextType` (casts to unknown)
   - File: `src/components/game/GameStateProvider.tsx` (fixed: extended `GameStateContextType` to include exported fields)
-- [ ] Autosave not debounced; can thrash storage/network
+- [x] Autosave not debounced; can thrash storage/network
   - File: `src/components/HomePage.tsx` (fixed: debounced with a simple queue)
  - [~] Load/init effects complex; double-initialization risks
   - File: `src/components/HomePage.tsx` (partially simplified: single main init effect guarded by combined loading condition)
@@ -96,7 +96,7 @@ Scope: Functional bugs, inconsistencies, risks, and edge cases identified during
   - File: `src/components/TimerOverlay.tsx` (fixed: Start disabled only when `gameStatus === 'gameEnd'`)
  - [x] Roster duplicate checks not locale/diacritics aware
   - File: `src/hooks/usePlayerRosterManager.ts` (fixed: `Intl.Collator` + NFKD normalization)
-- [ ] ESLint/TS build errors ignored in Next config (regression risk)
+- [x] ESLint/TS build errors ignored in Next config (regression risk)
   - File: `next.config.ts` (fixed: enforce in CI; relaxed locally)
  - [ ] `setStorageItem` metadata hardcodes `savedViaSupabase: false` (misleading)
   - File: `src/stores/persistenceStore.ts` (pending: consider adding truthful flag or removing)
@@ -107,11 +107,14 @@ Scope: Functional bugs, inconsistencies, risks, and edge cases identified during
   - Monitoring: legacy `GameControls` marked as legacy; prefer `MigratedGameControls`
 - [x] StartScreen language effects run twice; risk of flicker
   - File: `src/components/StartScreen.tsx` (fixed: consolidated into single init/sync effect)
-- [ ] `getLatestGameId` relies on ID timestamp pattern; UUIDs break sort
-- [ ] Period-end timer cleanup swallows storage errors
-- [ ] Timer state cleanup on period end swallows storage errors
-- [ ] `VerificationToast` `router.replace('/')` could loop if params reappear
-  - Monitoring: rare; no repro; consider idempotent flag if observed
+- [x] `getLatestGameId` relies on ID timestamp pattern; UUIDs break sort
+  - File: `src/utils/savedGames.ts` (fixed: robust date parsing with ID timestamp fallback)
+- [x] Period-end timer cleanup swallows storage errors
+  - File: `src/hooks/useOfflineFirstGameTimer.ts` (fixed: non-blocking warn with context)
+- [x] Timer state cleanup on period end swallows storage errors
+  - File: `src/hooks/useOfflineFirstGameTimer.ts` (same as above)
+- [x] `VerificationToast` `router.replace('/')` could loop if params reappear
+  - File: `src/app/page.tsx` (fixed: guard replace only on root; otherwise strip param in-place)
  - [x] `getFilteredGames` treats empty string as real filter value
   - File: `src/utils/savedGames.ts` (fixed: empty string treated as no filter)
  - [x] No pagination for saved games list; perf risk with many games
@@ -119,8 +122,8 @@ Scope: Functional bugs, inconsistencies, risks, and edge cases identified during
 - [ ] Undo/redo uses JSON.stringify snapshot compare (perf risk)
 - [ ] Drawing mode separation fragile; risk of losing lines when toggling
 - [ ] IndexedDB schema versioning fixed at 1; no migrations implemented
-- [ ] Error handling often logs without user feedback (besides alert in one path)
-  - Monitoring: continuing to replace with toasts in low-traffic paths
+- [~] Error handling often logs without user feedback (besides alert in one path)
+  - Ongoing: continuing to replace with toasts in low-traffic paths
 - [ ] Persisting `availablePlayers` snapshot increases save payloads
 - [ ] Auto-sync of field players from roster mid-game may change UI unexpectedly
 - [ ] Date/time sorting depends on locale/timezone; non-24h strings risky

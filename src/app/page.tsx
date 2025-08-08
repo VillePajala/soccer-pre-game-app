@@ -89,9 +89,20 @@ function VerificationToast({ onClose }: { onClose: () => void }) {
     }
 
     if (verified === 'true') {
+      // Prevent redirect loops: only replace when currently on root
+      const onRoot = window.location.pathname === '/';
       setShow(true);
-      // Clean up the URL parameter
-      router.replace('/', undefined);
+      // Clean up the URL parameter without causing navigation loops
+      if (onRoot) {
+        router.replace('/', undefined);
+      } else {
+        // If not on root, just remove the query param in-place
+        try {
+          const url = new URL(window.location.href);
+          url.searchParams.delete('verified');
+          window.history.replaceState({}, '', url.toString());
+        } catch {}
+      }
       // Auto-hide toast after 5 seconds
       setTimeout(() => {
         setShow(false);

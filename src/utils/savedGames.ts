@@ -129,22 +129,41 @@ export const getMostRecentGameId = async (): Promise<string | null> => {
   try {
     const allGames = await getSavedGames();
     const gameIds = Object.keys(allGames);
-    
+
     if (gameIds.length === 0) {
       return null;
     }
-    
-    // Sort games by date and time to find the most recent
-    const sortedGames = gameIds
-      .map(id => ({ id, game: allGames[id] }))
-      .filter(({ game }) => game && game.gameDate) // Ensure game and date exist
-      .sort((a, b) => {
-        const dateA = new Date(a.game.gameDate + ' ' + (a.game.gameTime || '00:00'));
-        const dateB = new Date(b.game.gameDate + ' ' + (b.game.gameTime || '00:00'));
-        return dateB.getTime() - dateA.getTime();
-      });
-    
-    return sortedGames.length > 0 ? sortedGames[0].id : null;
+
+    // Robust date parsing with fallbacks (align with LoadGameModal/HomePage logic)
+    const safeParse = (game: AppState): number => {
+      const aDateStr = `${game.gameDate || ''} ${game.gameTime || ''}`.trim();
+      if (aDateStr && Number.isFinite(Date.parse(aDateStr))) {
+        return new Date(aDateStr).getTime();
+      }
+      if (game.gameDate && Number.isFinite(Date.parse(game.gameDate))) {
+        return new Date(game.gameDate).getTime();
+      }
+      return 0;
+    };
+
+    const withScores = gameIds.map((id) => ({ id, game: allGames[id] as AppState, score: safeParse(allGames[id] as AppState) }));
+
+    const sorted = withScores.sort((a, b) => {
+      if (b.score !== a.score) {
+        if (!a.score) return 1;
+        if (!b.score) return -1;
+        return b.score - a.score;
+      }
+      // Secondary: fallback to timestamp embedded in ID if present
+      const tsA = parseInt((a.id.split('_')[1] || '').trim(), 10);
+      const tsB = parseInt((b.id.split('_')[1] || '').trim(), 10);
+      if (!Number.isNaN(tsA) && !Number.isNaN(tsB)) {
+        return tsB - tsA;
+      }
+      return 0;
+    });
+
+    return sorted.length > 0 ? sorted[0].id : null;
   } catch (error) {
     logger.error('Error getting most recent game ID:', error);
     return null;
