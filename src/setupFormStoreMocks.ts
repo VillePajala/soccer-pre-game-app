@@ -36,7 +36,7 @@ const createMockForm = (schema: FormSchema) => {
 };
 
 // Mock FormStore state
-let mockFormStoreState = {
+const mockFormStoreState = {
   forms: {} as Record<string, any>,
 };
 
@@ -88,7 +88,7 @@ const mockFormStoreActions = {
     }
   }),
   
-  validateForm: jest.fn(async (formId: string) => {
+  validateForm: jest.fn(async (_formId: string) => {
     return { isValid: true, errors: {}, hasErrors: false };
   }),
   
@@ -205,7 +205,7 @@ const wrappedActions = {
     notifyListeners();
   }),
   
-  validateForm: jest.fn(async (formId: string) => {
+  validateForm: jest.fn(async (_formId: string) => {
     return { isValid: true, errors: {}, hasErrors: false };
   }),
   

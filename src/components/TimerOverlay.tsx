@@ -61,7 +61,7 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
   lastSubTime = null,
   onOpponentNameChange = () => { logger.warn('onOpponentNameChange handler not provided'); },
   onClose,
-  isLoaded,
+  isLoaded: _isLoaded,
 }) => {
   const { t } = useTranslation(); // Initialize translation hook
 

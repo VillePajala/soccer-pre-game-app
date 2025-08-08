@@ -67,7 +67,7 @@ export const useAppSettingsManager = ({
         showToast(t('settingsModal.resetFailed', 'Failed to reset application data.'), 'error');
       }
     }
-  }, [t, showToast, setIsInstructionsModalOpen, setIsSettingsModalOpen]);
+  }, [t, showToast]);
 
   // --- Backup Handlers ---
   const handleCreateAndSendBackup = useCallback(async () => {
