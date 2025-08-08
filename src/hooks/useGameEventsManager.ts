@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { GameEvent, GoalEvent, OpponentGoalEvent, Player } from '@/types';
 import { DEFAULT_GAME_ID } from '@/config/constants';
 import { GameSessionState, GameSessionAction } from './useGameSessionReducer';
@@ -36,6 +37,7 @@ export const useGameEventsManager = ({
   setIsGoalLogModalOpen,
 }: UseGameEventsManagerProps) => {
   const { showToast } = useToast();
+  const { t } = useTranslation();
 
   // --- Goal Event Handlers ---
 

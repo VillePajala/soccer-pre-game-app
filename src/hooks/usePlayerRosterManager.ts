@@ -104,7 +104,7 @@ export const usePlayerRosterManager = ({
       const newNameNormalized = normalize(playerData.name.trim());
       const newNumberTrimmed = playerData.jerseyNumber.trim();
 
-      if (!newNameTrimmedLower) {
+      if (!playerData.name || playerData.name.trim().length === 0) {
         setRosterError(t('rosterSettingsModal.errors.nameRequired', 'Player name cannot be empty.'));
         return;
       }

@@ -142,10 +142,9 @@ function VerificationToast({ onClose }: { onClose: () => void }) {
 export default function Home() {
   const [screen, setScreen] = useState<'start' | 'home'>('start');
   const [initialAction, setInitialAction] = useState<'newGame' | 'loadGame' | 'resumeGame' | 'season' | 'stats' | null>(null);
-  const canResume = useResumeAvailability(user);
-  
   // Get auth state to listen for logout
   const { user } = useAuth();
+  const canResume = useResumeAvailability(user);
   
   // Sync auth state with storage manager
   useAuthStorage();

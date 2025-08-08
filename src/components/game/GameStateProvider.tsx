@@ -198,7 +198,7 @@ export function GameStateProvider({
     <GameStateContext.Provider value={{
       ...contextValue,
       // Extended properties for the hook
-      opponents: opponents as Player[],
+      opponents: opponents as unknown as Player[],
       drawings,
       selectedPlayerIds: gameSessionState.selectedPlayerIds,
       startGame,
