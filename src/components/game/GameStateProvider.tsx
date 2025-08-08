@@ -178,7 +178,9 @@ export function GameStateProvider({
     // Players state
     availablePlayers,
     playersOnField,
-    opponents,
+    opponents: opponents as unknown as Player[],
+    drawings,
+    selectedPlayerIds: gameSessionState.selectedPlayerIds,
     
     // Status
     isLoading,
@@ -190,8 +192,22 @@ export function GameStateProvider({
     updateGameState,
     updatePlayers,
     resetGame,
+    startGame,
+    pauseGame,
+    endGame,
     
-    // Additional field state (not in interface but useful for components)
+    // Setters
+    setIsLoading,
+    setError,
+    setTimeElapsedInSeconds,
+    setCurrentGameId,
+    currentGameId,
+    setPlayersOnField,
+    setOpponents: setOpponents as (opponents: Player[]) => void,
+    setDrawings: setDrawings as (drawings: unknown[]) => void,
+    setSelectedPlayerIds: (ids: string[]) => {
+      dispatchGameSession({ type: 'SET_SELECTED_PLAYER_IDS', payload: ids });
+    },
   };
   
   return (
