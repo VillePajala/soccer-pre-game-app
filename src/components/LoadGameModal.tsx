@@ -89,27 +89,24 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
 
-  // Load seasons and tournaments on mount or when modal opens
+  // Load seasons and tournaments on open - fetch in parallel and cache per session to reduce latency
+  const hasLoadedMetaRef = useRef(false);
   useEffect(() => {
-    if (isOpen) {
-      const fetchModalData = async () => {
+    if (!isOpen || hasLoadedMetaRef.current) return;
+    hasLoadedMetaRef.current = true;
+    const fetchModalData = async () => {
       try {
-          const loadedSeasonsData = await utilGetSeasons();
-          setSeasons(Array.isArray(loadedSeasonsData) ? loadedSeasonsData : []);
-        } catch (error) {
-        logger.error("Error loading seasons via utility:", error);
-        setSeasons([]); 
+        const [loadedSeasonsData, loadedTournamentsData] = await Promise.all([
+          utilGetSeasons().catch((e) => { logger.error('Error loading seasons via utility:', e); return []; }),
+          utilGetTournaments().catch((e) => { logger.error('Error loading tournaments via utility:', e); return []; }),
+        ]);
+        setSeasons(Array.isArray(loadedSeasonsData) ? loadedSeasonsData : []);
+        setTournaments(Array.isArray(loadedTournamentsData) ? loadedTournamentsData : []);
+      } catch {
+        // Already handled per-call; keep UI responsive
       }
-      try {
-          const loadedTournamentsData = await utilGetTournaments();
-          setTournaments(Array.isArray(loadedTournamentsData) ? loadedTournamentsData : []);
-        } catch (error) {
-        logger.error("Error loading tournaments via utility:", error);
-        setTournaments([]);
-      }
-      };
-      fetchModalData();
-    }
+    };
+    fetchModalData();
   }, [isOpen]);
 
   // Filter logic updated to only use searchText
