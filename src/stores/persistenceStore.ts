@@ -643,6 +643,9 @@ export const usePersistenceStore = create<PersistenceStore>()(
 
         _getFromLocalStorage: async <T>(key: string): Promise<{ data: T | null; timestamp?: number; error?: Error }> => {
           try {
+            if (typeof window === 'undefined') {
+              return { data: null };
+            }
             const item = localStorage.getItem(key);
             if (item === null) {
               return { data: null };
@@ -659,6 +662,9 @@ export const usePersistenceStore = create<PersistenceStore>()(
             
             return { data: parsed as T };
           } catch (error) {
+            if (typeof window === 'undefined') {
+              return { data: null, error: error as Error };
+            }
             // Try returning as string if JSON parsing fails
             const item = localStorage.getItem(key);
             if (item !== null) {
@@ -837,12 +843,13 @@ export const usePersistenceStore = create<PersistenceStore>()(
               'saveToLocalStorage',
               `Save '${key}' to localStorage with metadata`,
               async () => {
-                const supabaseSuccess = false; // Will be updated by previous operation result
+                if (typeof window === 'undefined') {
+                  return false;
+                }
                 const dataWithMetadata = {
                   data: value,
                   _persistenceMetadata: {
                     timestamp,
-                    savedViaSupabase: supabaseSuccess,
                     version: '1.0'
                   }
                 };
@@ -896,7 +903,9 @@ export const usePersistenceStore = create<PersistenceStore>()(
             }
             
             // Fallback to direct localStorage access
-            localStorage.removeItem(key);
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem(key);
+            }
             logger.debug(`[PersistenceStore] Removed '${key}' via localStorage fallback`);
             return true;
           } catch (error) {
@@ -916,6 +925,9 @@ export const usePersistenceStore = create<PersistenceStore>()(
             }
             
             // Fallback to direct localStorage check
+            if (typeof window === 'undefined') {
+              return false;
+            }
             return localStorage.getItem(key) !== null;
           } catch (error) {
             logger.error(`[PersistenceStore] Error checking storage item '${key}':`, error);
@@ -926,6 +938,9 @@ export const usePersistenceStore = create<PersistenceStore>()(
         getStorageKeys: async (): Promise<string[]> => {
           try {
             // For now, return localStorage keys as the storage manager doesn't expose a keys method
+            if (typeof window === 'undefined') {
+              return [];
+            }
             const keys: string[] = [];
             for (let i = 0; i < localStorage.length; i++) {
               const key = localStorage.key(i);
@@ -997,8 +1012,9 @@ export const usePersistenceStore = create<PersistenceStore>()(
       {
         name: 'persistence-storage', // localStorage key
         partialize: (state) => ({
-          // Persist all data except loading states and errors
-          savedGames: state.savedGames,
+          // Persist only lightweight, essential slices to reduce localStorage quota usage
+          // Heavy blobs like full savedGames are managed via typed storage helpers/IndexedDB
+          // and reloaded on demand.
           masterRoster: state.masterRoster,
           seasons: state.seasons,
           tournaments: state.tournaments,

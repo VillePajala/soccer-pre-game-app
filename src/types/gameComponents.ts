@@ -21,6 +21,7 @@ export interface GameStateContextType {
   // Players state
   availablePlayers: Player[];
   playersOnField: Player[];
+  opponents: Player[];
   
   // Data loading states
   isLoading: boolean;

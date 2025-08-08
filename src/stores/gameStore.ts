@@ -170,6 +170,7 @@ const defaultGameSession: GameSessionState = {
   subIntervalMinutes: 15,
   completedIntervalDurations: [],
   lastSubConfirmationTimeSeconds: 0,
+  nextSubDueTimeSeconds: 0,
   homeScore: 0,
   awayScore: 0,
   homeOrAway: 'home',

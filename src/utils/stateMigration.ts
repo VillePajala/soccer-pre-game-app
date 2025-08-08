@@ -134,7 +134,16 @@ export const migrateToGameStore = (legacyState: LegacyAppState): Partial<GameSto
       awayScore: legacyState.awayScore || 0,
       gameDate: legacyState.gameDate || new Date().toISOString().split('T')[0],
       gameLocation: legacyState.gameLocation || '',
-      gameStatus: (legacyState.gameStatus as 'not_started' | 'in_progress' | 'period_end' | 'game_end') || 'not_started',
+      gameStatus: (() => {
+        // Convert legacy underscored format to camelCase
+        switch (legacyState.gameStatus) {
+          case 'not_started': return 'notStarted';
+          case 'in_progress': return 'inProgress';
+          case 'period_end': return 'periodEnd';
+          case 'game_end': return 'gameEnd';
+          default: return 'notStarted';
+        }
+      })(),
       selectedPlayerIds: legacyState.selectedPlayerIds || [],
     };
     

@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "docs(quality): add KNOWN_ISSUES_AND_RISKS document"
+  "notes": "fix(quality): resolve game status and timer inconsistencies"
 }

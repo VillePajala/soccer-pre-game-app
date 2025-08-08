@@ -285,7 +285,7 @@ const mockUseFormStore = jest.fn().mockImplementation((selector: any) => {
 Object.keys(wrappedActions).forEach(actionName => {
   const originalAction = wrappedActions[actionName as keyof typeof wrappedActions];
   if (jest.isMockFunction(originalAction)) {
-    wrappedActions[actionName as keyof typeof wrappedActions] = jest.fn((...args: any[]) => {
+    (wrappedActions as any)[actionName] = jest.fn((...args: any[]) => {
       // Call original logic
       const result = (mockFormStoreActions as any)[actionName](...args);
       // Update reactive state
@@ -304,7 +304,7 @@ Object.keys(wrappedActions).forEach(actionName => {
 });
 
 // Add getState method for compatibility
-mockUseFormStore.getState = jest.fn(() => ({ ...mockStoreState, ...wrappedActions }));
+(mockUseFormStore as any).getState = jest.fn(() => ({ ...mockStoreState, ...wrappedActions }));
 
 // Set up the mock
 jest.mock('@/stores/formStore', () => ({

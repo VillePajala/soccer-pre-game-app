@@ -178,6 +178,7 @@ export function GameStateProvider({
     // Players state
     availablePlayers,
     playersOnField,
+    opponents,
     
     // Status
     isLoading,

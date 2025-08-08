@@ -204,7 +204,7 @@ export const gameSessionReducer = (state: GameSessionState, action: GameSessionA
     }
     case 'PAUSE_TIMER': {
       if (!state.isTimerRunning || !state.startTimestamp) return state;
-      const elapsedSinceStart = (Date.now() - state.startTimestamp) / 1000;
+      const elapsedSinceStart = Math.round((Date.now() - state.startTimestamp) / 1000);
       return {
         ...state,
         isTimerRunning: false,
@@ -255,7 +255,7 @@ export const gameSessionReducer = (state: GameSessionState, action: GameSessionA
       return { ...state, gameEvents: state.gameEvents.filter(e => e.id !== action.payload) };
     }
     case 'SET_TIMER_ELAPSED': {
-        const newTime = action.payload;
+        const newTime = Math.round(action.payload);
         let newAlertLevel: GameSessionState['subAlertLevel'] = 'none';
         const warningTime = state.nextSubDueTimeSeconds - 60;
         if (newTime >= state.nextSubDueTimeSeconds) {

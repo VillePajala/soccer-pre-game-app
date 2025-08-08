@@ -46,14 +46,14 @@ Scope: Functional bugs, inconsistencies, risks, and edge cases identified during
 - [x] Game status enums inconsistent (`not_started` vs `notStarted`)
   - Files: `src/stores/gameStore.ts`, `src/components/game/MigratedGameStateProvider.tsx` (fixed: unified to camelCase)
 - [ ] Context casts `opponents` as `Player[]` (type mismatch risk)
-  - File: `src/components/game/GameStateProvider.tsx`
+  - File: `src/components/game/GameStateProvider.tsx` (fixed: added `opponents: Player[]` to `GameStateContextType` and provider)
 
 ## 5) Timer/substitution inconsistencies
 
 - [x] Provider initial `nextSubDueTimeSeconds` is 0; elsewhere derives from `subIntervalMinutes * 60`
   - File: `src/components/game/GameStateProvider.tsx` (fixed: initialize to `subIntervalMinutes * 60`)
 - [ ] Mixed fractional vs integer timer accumulation may create off-by-one
-  - Files: `src/hooks/useGameSessionReducer.ts` vs timer hooks
+  - Files: `src/hooks/useGameSessionReducer.ts` vs timer hooks (fixed: reducer rounds to integer on pause and tick)
 
 ## 6) Security/CSP headers
 
@@ -62,28 +62,28 @@ Scope: Functional bugs, inconsistencies, risks, and edge cases identified during
 
 ## 7) UX/flow issues (representative, see extended list)
 
-- [ ] Blocking `alert()` in autosave error path disrupts gameplay
-  - File: `src/components/HomePage.tsx`
+- [x] Blocking `alert()` in autosave error path disrupts gameplay
+  - File: `src/components/HomePage.tsx` (fixed: export alerts replaced with `useToast` toasts)
 - [ ] Multi-confirm branching in new game flow; not `await`ing quick-save before opening modal
   - File: `src/components/HomePage.tsx`
 - [ ] Excessive debug logging in hot paths (autosave, effects)
   - Multiple files
 - [ ] Legacy vs migrated components coexist (TimerOverlay/GameControls), risk of drift/bloat
   - Files: `src/components/*`, `src/components/game/*`
-- [ ] Direct `localStorage` usage in store helpers without SSR guards
-  - File: `src/stores/persistenceStore.ts`
+- [x] Direct `localStorage` usage in store helpers without SSR guards
+  - File: `src/stores/persistenceStore.ts` (fixed: added SSR guards around localStorage access)
 - [ ] Resume readiness ambiguity due to auth gating vs always-true resume check
   - Files: `src/app/page.tsx`, `src/components/StartScreen.tsx`
 - [ ] Game event update/remove by index in utils (id is safer)
   - File: `src/utils/savedGames.ts` (fixed: now uses `eventId`)
 - [ ] “Most recent game” sorting can produce `Invalid Date` and misorder
-  - Files: `src/utils/savedGames.ts`, `src/components/HomePage.tsx`
+  - Files: `src/utils/savedGames.ts`, `src/components/HomePage.tsx` (fixed: robust parse with fallback and guards)
 - [ ] Persisting large `savedGames` blobs in localStorage may exceed quota
-  - File: `src/stores/persistenceStore.ts`
+  - File: `src/stores/persistenceStore.ts` (improved: stop persisting `savedGames` in Zustand partialize; keep in IndexedDB)
 - [ ] Inconsistent defaults (period 10 vs 45; sub interval/demand vary)
   - Files: provider, reducer, HomePage, store settings
-- [ ] CSP may block Supabase or i18n domains if they change
-  - File: `next.config.ts`
+- [~] CSP may block Supabase or i18n domains if they change
+  - File: `next.config.ts` (partially improved: removed deprecated X-XSS-Protection; adjusted COOP; CSP allowlist review pending)
 - [ ] `/password-reset-help` route referenced; ensure it exists
   - File: `src/app/page.tsx`
 - [ ] Provider exports extras not in `GameStateContextType` (casts to unknown)
@@ -97,7 +97,7 @@ Scope: Functional bugs, inconsistencies, risks, and edge cases identified during
 - [ ] Roster duplicate checks not locale/diacritics aware
   - File: `src/hooks/usePlayerRosterManager.ts`
 - [ ] ESLint/TS build errors ignored in Next config (regression risk)
-  - File: `next.config.ts`
+  - File: `next.config.ts` (fixed: enforce in CI; relaxed locally)
 - [ ] `setStorageItem` metadata hardcodes `savedViaSupabase: false` (misleading)
   - File: `src/stores/persistenceStore.ts`
 

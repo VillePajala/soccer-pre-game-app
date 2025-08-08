@@ -92,8 +92,7 @@ import { DEFAULT_GAME_ID } from '@/config/constants';
 // Storage keys no longer needed - using offline-first storage
 // Removed static import of export utilities - now using dynamic imports for better bundle splitting
 // Removed - now handled by useGameDataManager: exportJson, exportCsv
-// Removed - now handled by useGameDataManager:
-// import { useToast } from '@/contexts/ToastProvider';
+import { useToast } from '@/contexts/ToastProvider';
 import logger from '@/utils/logger';
 
 
@@ -419,6 +418,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   const [hasSkippedInitialSetup, setHasSkippedInitialSetup] = useState<boolean>(skipInitialSetup);
 
   useAutoBackup();
+  const { showToast } = useToast();
   
   // 🔧 CUTOVER COMPLETE: No migration components needed
 
@@ -692,23 +692,27 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     
     return gameIds
       .map(id => ({ id, game: currentSavedGames[id] }))
-      .filter(({ game }) => game && game.gameDate)
+      .filter(({ game }) => game && typeof game.gameDate === 'string' && game.gameDate.trim().length > 0)
       .sort((a, b) => {
-        const dateA = new Date(a.game.gameDate + ' ' + (a.game.gameTime || '00:00'));
-        const dateB = new Date(b.game.gameDate + ' ' + (b.game.gameTime || '00:00'));
-        return dateB.getTime() - dateA.getTime();
+        const aDateStr = `${a.game.gameDate} ${a.game.gameTime || '00:00'}`.trim();
+        const bDateStr = `${b.game.gameDate} ${b.game.gameTime || '00:00'}`.trim();
+        const dateA = Number.isFinite(Date.parse(aDateStr)) ? new Date(aDateStr) : new Date(a.game.gameDate);
+        const dateB = Number.isFinite(Date.parse(bDateStr)) ? new Date(bDateStr) : new Date(b.game.gameDate);
+        const aTime = Number.isFinite(dateA.getTime()) ? dateA.getTime() : 0;
+        const bTime = Number.isFinite(dateB.getTime()) ? dateB.getTime() : 0;
+        return bTime - aTime;
       });
   }, [allSavedGamesQueryResultData]);
   
   useEffect(() => {
     if (isMasterRosterQueryLoading) {
-      logger.log('[TanStack Query] Master Roster is loading...');
+      logger.debug('[TanStack Query] Master Roster is loading...');
     }
     if (masterRosterQueryResultData && !isMasterRosterQueryLoading && rosterDataKey) {
       // Only update if this is different from what we last synced
       if (rosterDataKey !== lastSyncedRosterRef.current) {
         lastSyncedRosterRef.current = rosterDataKey;
-        logger.log('[HomePage] Syncing roster from React Query:', masterRosterQueryResultData.length, 'players');
+        logger.debug('[HomePage] Syncing roster from React Query:', masterRosterQueryResultData.length, 'players');
         setAvailablePlayers(masterRosterQueryResultData);
       }
     }
@@ -721,7 +725,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   // --- Effect to update seasons from useQuery ---
   useEffect(() => {
     if (areSeasonsQueryLoading) {
-      logger.log('[TanStack Query] Seasons are loading...');
+      logger.debug('[TanStack Query] Seasons are loading...');
     }
     if (seasonsQueryResultData) {
       setSeasons(Array.isArray(seasonsQueryResultData) ? seasonsQueryResultData : []);
@@ -735,7 +739,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   // --- Effect to update tournaments from useQuery ---
   useEffect(() => {
     if (areTournamentsQueryLoading) {
-      logger.log('[TanStack Query] Tournaments are loading...');
+      logger.debug('[TanStack Query] Tournaments are loading...');
     }
     if (tournamentsQueryResultData) {
       setTournaments(Array.isArray(tournamentsQueryResultData) ? tournamentsQueryResultData : []);
@@ -793,8 +797,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   // Handle saved games loading state
   useEffect(() => {
     if (isAllSavedGamesQueryLoading) {
-      logger.log('[EFFECT savedGames] Setting games list loading to true');
-      logger.debug('[HomePage] Setting isLoadingGamesList to true');
+      logger.debug('[EFFECT savedGames] Setting games list loading to true');
       setIsLoadingGamesList(true);
     }
   }, [isAllSavedGamesQueryLoading]);
@@ -837,21 +840,21 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         return;
       }
 
-      logger.log('[EFFECT init] All queries complete, initializing app...');
+      logger.debug('[EFFECT init] All queries complete, initializing app...');
 
       // Set current game ID based on saved settings
       const lastGameIdSetting = currentGameIdSettingQueryResultData;
       const currentSavedGames = allSavedGamesQueryResultData || {};
 
       if (lastGameIdSetting && lastGameIdSetting !== DEFAULT_GAME_ID && currentSavedGames[lastGameIdSetting]) {
-        logger.log(`[EFFECT init] Restoring last saved game: ${lastGameIdSetting}`);
+        logger.debug(`[EFFECT init] Restoring last saved game: ${lastGameIdSetting}`);
         setCurrentGameId(lastGameIdSetting);
         setHasSkippedInitialSetup(true);
       } else {
         // If the saved game ID doesn't exist, try to find the most recent game
         if (sortedGamesByDate.length > 0) {
           const mostRecentId = sortedGamesByDate[0].id;
-          logger.log(`[EFFECT init] Found most recent game to restore: ${mostRecentId}`);
+          logger.debug(`[EFFECT init] Found most recent game to restore: ${mostRecentId}`);
           setCurrentGameId(mostRecentId);
           setHasSkippedInitialSetup(true);
         } else {
@@ -871,7 +874,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       }
 
       setInitialLoadComplete(true);
-      logger.log('[EFFECT init] Initial application data coordination complete.');
+      logger.debug('[EFFECT init] Initial application data coordination complete.');
     };
 
     initializeApp();
@@ -1373,7 +1376,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   
   const handleExportAggregateJson = useCallback(async (gameIds: string[], aggregateStats: import('@/types').PlayerStatRow[]) => {
     if (gameIds.length === 0) {
-      alert(t('export.noGamesInSelection', 'No games match the current filter.'));
+      showToast(t('export.noGamesInSelection', 'No games match the current filter.'), 'info');
       return;
     }
     const gamesData = gameIds.reduce((acc, id) => {
@@ -1387,13 +1390,13 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     // 🔧 DEPENDENCY INJECTION FIX: Use utility registry instead of dynamic import
     const success = await executeExportFunction('exportAggregateJson', gamesData, aggregateStats);
     if (!success) {
-      alert(t('export.error', 'Export failed. Please try again.'));
+      showToast(t('export.error', 'Export failed. Please try again.'), 'error');
     }
   }, [savedGames, t]);
 
   const handleExportAggregateCsv = useCallback(async (gameIds: string[], aggregateStats: import('@/types').PlayerStatRow[]) => {
     if (gameIds.length === 0) {
-      alert(t('export.noGamesInSelection', 'No games match the current filter.'));
+      showToast(t('export.noGamesInSelection', 'No games match the current filter.'), 'info');
       return;
     }
     const gamesData = gameIds.reduce((acc, id) => {
@@ -1407,7 +1410,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     // 🔧 DEPENDENCY INJECTION FIX: Use utility registry instead of dynamic import
     const success = await executeExportFunction('exportAggregateCsv', gamesData, aggregateStats);
     if (!success) {
-      alert(t('export.error', 'Export failed. Please try again.'));
+      showToast(t('export.error', 'Export failed. Please try again.'), 'error');
     }
   }, [savedGames, t]);
 
