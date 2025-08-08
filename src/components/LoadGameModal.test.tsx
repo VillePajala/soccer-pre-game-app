@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, within, act } from '@testing-library/react';
+import { render, screen, fireEvent, within, act } from '@/__tests__/test-utils';
 import '@testing-library/jest-dom';
 import LoadGameModal from './LoadGameModal';
 import { SavedGamesCollection, AppState, PlayerAssessment } from '@/types';
