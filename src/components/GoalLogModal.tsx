@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react'; // Added useEffect
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next'; 
+import { useToast } from '@/contexts/ToastProvider';
 import { Player } from '@/types'; // Import from types instead of page
 import logger from '@/utils/logger';
 import MigrationErrorBoundary from './MigrationErrorBoundary';
@@ -24,6 +25,7 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
   currentTime,
 }) => {
   const { t } = useTranslation(); 
+  const { showToast } = useToast();
 
   const [scorerId, setScorerId] = useState<string>('');
   const [assisterId, setAssisterId] = useState<string>(''); // Empty string means no assist
@@ -49,18 +51,18 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
   const handleLogOwnGoalClick = () => {
     if (scorerId) {
       // Validate that scorer exists in available players
-      const scorer = availablePlayers.find(p => p.id === scorerId);
-      if (!scorer) {
-        alert(t('goalLogModal.scorerNotFound', 'Selected scorer is no longer available'));
-        setScorerId(''); // Clear invalid selection
-        return;
-      }
+        const scorer = availablePlayers.find(p => p.id === scorerId);
+        if (!scorer) {
+          showToast(t('goalLogModal.scorerNotFound', 'Selected scorer is no longer available'), 'error');
+          setScorerId(''); // Clear invalid selection
+          return;
+        }
       
       // Validate that assister exists if selected
-      if (assisterId) {
+        if (assisterId) {
         const assister = availablePlayers.find(p => p.id === assisterId);
         if (!assister) {
-          alert(t('goalLogModal.assisterNotFound', 'Selected assister is no longer available'));
+          showToast(t('goalLogModal.assisterNotFound', 'Selected assister is no longer available'), 'error');
           setAssisterId(''); // Clear invalid selection
           return;
         }
@@ -75,7 +77,7 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
         // Modal stays open for retry
       }
     } else {
-      alert(t('goalLogModal.selectScorer', 'Please select a scorer'));
+      showToast(t('goalLogModal.selectScorer', 'Please select a scorer'), 'info');
     }
   };
 
@@ -86,7 +88,7 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
       // Don't call onClose() here - let the success handler close the modal
     } catch (error) {
       logger.error('Error logging opponent goal:', error);
-      alert('Failed to log opponent goal. Please try again.');
+      showToast(t('goalLogModal.opponentLogFailed', 'Failed to log opponent goal. Please try again.'), 'error');
       // Modal stays open for retry
     }
   };

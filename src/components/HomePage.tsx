@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useReducer, useRef, useMemo, s
 import SoccerField from '@/components/SoccerField';
 import PlayerBar from '@/components/PlayerBar';
 import ControlBar from '@/components/ControlBar';
-import TimerOverlay from '@/components/TimerOverlay';
+import TimerOverlay from '@/components/MigratedTimerOverlay';
 // 🔥 FLICKERING FIX: Use direct imports instead of lazy loading to eliminate loading delays
 import GoalLogModal from '@/components/GoalLogModal';
 import GameStatsModal from '@/components/GameStatsModal';
@@ -1579,10 +1579,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
                              : `ID: ${currentGameId}`;
                              
       const saveConfirmation = window.confirm(
-        t('controlBar.saveBeforeNewPrompt', 
-          `Save changes to the current game "${gameIdentifier}" before starting a new one?`, 
-          { gameName: gameIdentifier }
-        ) + "\n\n[OK = Save & Continue] [Cancel = Discard & Continue]"
+        t('controlBar.saveBeforeNewPrompt', `Save changes to the current game "${gameIdentifier}" before starting a new one?`, { gameName: gameIdentifier })
       );
 
       if (saveConfirmation) {

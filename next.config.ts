@@ -61,8 +61,8 @@ const nextConfig: NextConfig = {
               "font-src 'self' https://fonts.gstatic.com data:",
               // Images from self, data URIs, blobs, and HTTPS
               "img-src 'self' data: blob: https:",
-              // API connections to Supabase and analytics
-              "connect-src 'self' https://*.supabase.co https://vercel.live https://vitals.vercel-insights.com",
+              // API connections to Supabase, analytics, and i18n
+              "connect-src 'self' https://*.supabase.co https://vercel.live https://vitals.vercel-insights.com https://i18next.com https://*.i18napi.com",
               // Service Worker
               "worker-src 'self'",
               // Manifest for PWA

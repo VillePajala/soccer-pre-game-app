@@ -218,7 +218,9 @@ export const createGame = async (gameData: Partial<AppState>): Promise<{ gameId:
       periodDurationMinutes: gameData.periodDurationMinutes || 10,
       currentPeriod: gameData.currentPeriod || 1,
       gameStatus: gameData.gameStatus || 'notStarted',
-      isPlayed: gameData.isPlayed === undefined ? false : gameData.isPlayed,
+      // Default to true to ensure legacy games remain included in stats
+      // Users can explicitly mark future/planned games as not played
+      isPlayed: gameData.isPlayed === undefined ? true : gameData.isPlayed,
       selectedPlayerIds: gameData.selectedPlayerIds || [],
       assessments: gameData.assessments || {},
       seasonId: gameData.seasonId || '',

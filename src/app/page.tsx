@@ -5,8 +5,7 @@ import HomePage from '@/components/HomePage';
 import StartScreen from '@/components/StartScreen';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { useState, useEffect, Suspense } from 'react';
-import { getCurrentGameIdSetting } from '@/utils/appSettings';
-import { getSavedGames, getMostRecentGameId } from '@/utils/savedGames';
+import { useResumeAvailability } from '@/hooks/useResumeAvailability';
 import { useAuthStorage } from '@/hooks/useAuthStorage';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -132,7 +131,7 @@ function VerificationToast({ onClose }: { onClose: () => void }) {
 export default function Home() {
   const [screen, setScreen] = useState<'start' | 'home'>('start');
   const [initialAction, setInitialAction] = useState<'newGame' | 'loadGame' | 'resumeGame' | 'season' | 'stats' | null>(null);
-  const [canResume, setCanResume] = useState(false);
+  const canResume = useResumeAvailability(user);
   
   // Get auth state to listen for logout
   const { user } = useAuth();
@@ -148,35 +147,6 @@ export default function Home() {
     }
   }, [user, screen]);
 
-  useEffect(() => {
-    const checkResume = async () => {
-      // Wait a bit for auth to stabilize
-      await new Promise(resolve => setTimeout(resolve, 100));
-      try {
-        logger.debug('[StartScreen] Checking for resumable game...');
-        logger.debug('[StartScreen] User authenticated:', !!user);
-        const lastId = await getCurrentGameIdSetting();
-        const games = await getSavedGames();
-        if (lastId && games[lastId]) {
-          setCanResume(true);
-          return;
-        }
-        const mostRecentId = await getMostRecentGameId();
-        if (mostRecentId) {
-          setCanResume(true);
-          return;
-        }
-        setCanResume(false);
-      } catch (error) {
-        logger.error('[StartScreen] Error checking resume:', error);
-        setCanResume(false);
-      }
-    };
-    // Only run when auth state is settled; allow resume for both anon and authed but avoid redundant runs
-    if (user === null || !!user) {
-      checkResume();
-    }
-  }, [user]);
 
   const handleAction = (
     action: 'newGame' | 'loadGame' | 'resumeGame' | 'season' | 'stats'

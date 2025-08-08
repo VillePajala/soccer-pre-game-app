@@ -11,6 +11,7 @@ import {
 } from 'react-icons/hi2';
 import { useTranslation } from 'react-i18next';
 import logger from '@/utils/logger';
+import { useToast } from '@/contexts/ToastProvider';
 
 interface RosterSettingsModalProps {
   isOpen: boolean;
@@ -48,6 +49,7 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
   onOpenPlayerStats,
 }) => {
   const { t } = useTranslation();
+  const { showToast } = useToast();
   const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
   const [editPlayerData, setEditPlayerData] = useState<{ name: string; jerseyNumber: string; notes: string; nickname: string }>({ name: '', jerseyNumber: '', notes: '', nickname: '' });
 
@@ -146,7 +148,7 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
     const trimmedName = editPlayerData.name.trim();
     const trimmedNickname = editPlayerData.nickname.trim();
     if (!trimmedName) {
-        alert(t('rosterSettingsModal.nameRequired', 'Player name cannot be empty.') || 'Player name cannot be empty.');
+        showToast(t('rosterSettingsModal.nameRequired', 'Player name cannot be empty.') || 'Player name cannot be empty.', 'error');
         return;
     }
 
@@ -181,7 +183,7 @@ const RosterSettingsModal: React.FC<RosterSettingsModalProps> = ({
     const trimmedName = newPlayerData.name.trim();
     const trimmedNickname = newPlayerData.nickname.trim();
     if (!trimmedName) {
-      alert(t('rosterSettingsModal.nameRequired', 'Player name cannot be empty.') || 'Player name cannot be empty.');
+      showToast(t('rosterSettingsModal.nameRequired', 'Player name cannot be empty.') || 'Player name cannot be empty.', 'error');
       return;
     }
     // Call the prop function passed from parent

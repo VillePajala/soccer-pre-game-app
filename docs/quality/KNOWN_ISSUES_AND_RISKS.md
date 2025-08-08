@@ -29,8 +29,8 @@ Scope: Functional bugs, inconsistencies, risks, and edge cases identified during
   - File: `src/hooks/useGameTimer.ts` (fixed: delegate to `useOfflineFirstGameTimer` to persist via IndexedDB)
 - [ ] Zustand `persist` stores large app slices in localStorage (risk of quota, SSR access)
   - File: `src/stores/persistenceStore.ts`
-- [ ] Documentation contradicts implementation (claims 100% removal of localStorage)
-  - File: `docs/production/PRODUCTION_READINESS_PLAN.md` (Section 9)
+ - [x] Documentation contradicts implementation (claims 100% removal of localStorage)
+  - File: `docs/production/PRODUCTION_READINESS_PLAN.md` (Section 9) (fixed: clarified IndexedDB is source of truth; localStorage minimized with SSR guards)
 
 ## 3) Auth/session bugs
 
@@ -64,42 +64,42 @@ Scope: Functional bugs, inconsistencies, risks, and edge cases identified during
 
 - [x] Blocking `alert()` in autosave error path disrupts gameplay
   - File: `src/components/HomePage.tsx` (fixed: export alerts replaced with `useToast` toasts)
-- [ ] Multi-confirm branching in new game flow; not `await`ing quick-save before opening modal
-  - File: `src/components/HomePage.tsx`
-- [ ] Excessive debug logging in hot paths (autosave, effects)
-  - Multiple files
-- [ ] Legacy vs migrated components coexist (TimerOverlay/GameControls), risk of drift/bloat
-  - Files: `src/components/*`, `src/components/game/*`
+ - [x] Multi-confirm branching in new game flow; not `await`ing quick-save before opening modal
+  - File: `src/components/HomePage.tsx` (fixed: simplified to single confirmation path; quick-save awaited before opening modal)
+ - [x] Excessive debug logging in hot paths (autosave, effects)
+  - Multiple files (fixed: env-gated logger via `NEXT_PUBLIC_LOG_LEVEL`)
+ - [x] Legacy vs migrated components coexist (TimerOverlay/GameControls), risk of drift/bloat
+  - Files: `src/components/*`, `src/components/game/*` (fixed: consumers now import migrated variants)
 - [x] Direct `localStorage` usage in store helpers without SSR guards
   - File: `src/stores/persistenceStore.ts` (fixed: added SSR guards around localStorage access)
-- [ ] Resume readiness ambiguity due to auth gating vs always-true resume check
-  - Files: `src/app/page.tsx`, `src/components/StartScreen.tsx`
+ - [x] Resume readiness ambiguity due to auth gating vs always-true resume check
+  - Files: `src/app/page.tsx`, `src/components/StartScreen.tsx` (fixed: added `useResumeAvailability` hook; page uses it as single source of truth)
 - [ ] Game event update/remove by index in utils (id is safer)
   - File: `src/utils/savedGames.ts` (fixed: now uses `eventId`)
-- [ ] “Most recent game” sorting can produce `Invalid Date` and misorder
-  - Files: `src/utils/savedGames.ts`, `src/components/HomePage.tsx` (fixed: robust parse with fallback and guards)
+- [x] “Most recent game” sorting can produce `Invalid Date` and misorder
+  - Files: `src/utils/savedGames.ts`, `src/components/HomePage.tsx`, `src/components/LoadGameModal.tsx` (fixed: robust parse with fallback and guards)
 - [ ] Persisting large `savedGames` blobs in localStorage may exceed quota
   - File: `src/stores/persistenceStore.ts` (improved: stop persisting `savedGames` in Zustand partialize; keep in IndexedDB)
 - [ ] Inconsistent defaults (period 10 vs 45; sub interval/demand vary)
   - Files: provider, reducer, HomePage, store settings
-- [~] CSP may block Supabase or i18n domains if they change
-  - File: `next.config.ts` (partially improved: removed deprecated X-XSS-Protection; adjusted COOP; CSP allowlist review pending)
-- [ ] `/password-reset-help` route referenced; ensure it exists
-  - File: `src/app/page.tsx`
+- [x] CSP may block Supabase or i18n domains if they change
+  - File: `next.config.ts` (fixed: `connect-src` allowlist includes Supabase, analytics, i18n endpoints)
+ - [x] `/password-reset-help` route referenced; ensure it exists
+  - File: `src/app/page.tsx` (fixed: added `src/app/password-reset-help/page.tsx`)
 - [ ] Provider exports extras not in `GameStateContextType` (casts to unknown)
   - File: `src/components/game/GameStateProvider.tsx`
 - [ ] Autosave not debounced; can thrash storage/network
   - File: `src/components/HomePage.tsx` (fixed: debounced with a simple queue)
 - [ ] Load/init effects complex; double-initialization risks
   - File: `src/components/HomePage.tsx`
-- [ ] Timer overlay disables Start when `!isLoaded` even if state is otherwise ready
-  - File: `src/components/TimerOverlay.tsx`
-- [ ] Roster duplicate checks not locale/diacritics aware
-  - File: `src/hooks/usePlayerRosterManager.ts`
+ - [x] Timer overlay disables Start when `!isLoaded` even if state is otherwise ready
+  - File: `src/components/TimerOverlay.tsx` (fixed: Start disabled only when `gameStatus === 'gameEnd'`)
+ - [x] Roster duplicate checks not locale/diacritics aware
+  - File: `src/hooks/usePlayerRosterManager.ts` (fixed: `Intl.Collator` + NFKD normalization)
 - [ ] ESLint/TS build errors ignored in Next config (regression risk)
   - File: `next.config.ts` (fixed: enforce in CI; relaxed locally)
-- [ ] `setStorageItem` metadata hardcodes `savedViaSupabase: false` (misleading)
-  - File: `src/stores/persistenceStore.ts`
+ - [ ] `setStorageItem` metadata hardcodes `savedViaSupabase: false` (misleading)
+  - File: `src/stores/persistenceStore.ts` (pending: consider adding truthful flag or removing)
 
 ## 8) Extended edge cases and risks (tracked for follow-up)
 

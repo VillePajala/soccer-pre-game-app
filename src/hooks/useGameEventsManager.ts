@@ -4,6 +4,7 @@ import { DEFAULT_GAME_ID } from '@/config/constants';
 import { GameSessionState, GameSessionAction } from './useGameSessionReducer';
 import { saveMasterRoster } from '@/utils/masterRoster';
 import logger from '@/utils/logger';
+import { useToast } from '@/contexts/ToastProvider';
 
 interface UseGameEventsManagerProps {
   dispatchGameSession: React.Dispatch<GameSessionAction>;
@@ -34,6 +35,7 @@ export const useGameEventsManager = ({
   saveStateToHistory,
   setIsGoalLogModalOpen,
 }: UseGameEventsManagerProps) => {
+  const { showToast } = useToast();
 
   // --- Goal Event Handlers ---
 
@@ -49,7 +51,7 @@ export const useGameEventsManager = ({
 
     if (!scorer) {
       logger.error(`Scorer not found with ID: ${scorerId}`);
-      alert('Selected player is no longer available. Please refresh the player list and try again.');
+      showToast('Selected player is no longer available. Please refresh the player list and try again.', 'error');
       setIsGoalLogModalOpen(false);
       return;
     }
@@ -58,7 +60,7 @@ export const useGameEventsManager = ({
     if (assisterId && !assister) {
       logger.error(`Assister with ID ${assisterId} not found in roster! Logging goal without assist.`);
       // Show user-friendly message but continue without assist
-      alert('Selected assister is no longer available. Goal will be logged without assist.');
+      showToast('Selected assister is no longer available. Goal will be logged without assist.', 'info');
       assisterId = undefined; // Clear invalid assisterId
     }
 
@@ -84,7 +86,7 @@ export const useGameEventsManager = ({
       setIsGoalLogModalOpen(false); // Close modal on success
     } catch (error) {
       logger.error('Failed to add goal event:', error);
-      alert(`Failed to log goal for ${scorer.name}. Please try again.`);
+      showToast(t('goalLogModal.goalLogFailed', `Failed to log goal for ${scorer.name}. Please try again.`), 'error');
       // Keep modal open for retry
     }
   }, [dispatchGameSession, gameSessionState.timeElapsedInSeconds, masterRosterQueryResultData, availablePlayers, setIsGoalLogModalOpen]);

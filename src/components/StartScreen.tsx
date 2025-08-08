@@ -53,11 +53,11 @@ const StartScreen: React.FC<StartScreenProps> = ({
   useEffect(() => {
     // Only update if language actually changed from what's in i18n
     if (language !== i18n.language) {
-      loadLanguage(language).then(() => {
-        updateAppSettings({ language }).catch(() => {});
-      }).catch(error => {
-        logger.warn('[StartScreen] Failed to change language:', error);
-      });
+      loadLanguage(language)
+        .then(() => updateAppSettings({ language }).catch(() => {}))
+        .catch(error => {
+          logger.warn('[StartScreen] Failed to change language:', error);
+        });
     }
   }, [language]);
 

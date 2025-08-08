@@ -150,33 +150,25 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
     const sortedIds = filteredByPlayed.sort((a, b) => {
       const gameA = savedGames[a];
       const gameB = savedGames[b];
-      
-      // Primary sort: by date in descending order (newest first)
-      const dateA = gameA.gameDate ? new Date(gameA.gameDate).getTime() : 0;
-      const dateB = gameB.gameDate ? new Date(gameB.gameDate).getTime() : 0;
+
+      const aDateStr = `${gameA.gameDate || ''} ${gameA.gameTime || ''}`.trim();
+      const bDateStr = `${gameB.gameDate || ''} ${gameB.gameTime || ''}`.trim();
+      const dateA = Number.isFinite(Date.parse(aDateStr)) ? new Date(aDateStr).getTime() : (gameA.gameDate ? new Date(gameA.gameDate).getTime() : 0);
+      const dateB = Number.isFinite(Date.parse(bDateStr)) ? new Date(bDateStr).getTime() : (gameB.gameDate ? new Date(gameB.gameDate).getTime() : 0);
 
       if (dateB !== dateA) {
-        // Handle cases where one date is missing (put games without date last)
         if (!dateA) return 1;
         if (!dateB) return -1;
         return dateB - dateA;
       }
 
-      // Secondary sort: by timestamp in game ID (descending, newest first)
-      // Extract timestamp assuming format "game_TIMESTAMP_RANDOM"
-      try {
-        const timestampA = parseInt(a.split('_')[1], 10);
-        const timestampB = parseInt(b.split('_')[1], 10);
-        
-        if (!isNaN(timestampA) && !isNaN(timestampB)) {
-          return timestampB - timestampA;
-        }
-      } catch (error) {
-        logger.warn("Could not parse timestamps from game IDs for secondary sort:", a, b, error);
+      // Secondary: fallback to ID timestamp if present
+      const timestampA = parseInt(a.split('_')[1] || '', 10);
+      const timestampB = parseInt(b.split('_')[1] || '', 10);
+      if (!isNaN(timestampA) && !isNaN(timestampB)) {
+        return timestampB - timestampA;
       }
-      
-      // Fallback if dates are equal and timestamps can't be parsed
-      return 0; 
+      return 0;
     });
     return sortedIds;
   }, [savedGames, searchText, seasons, tournaments, filterType, filterId, showUnplayedOnly]);
