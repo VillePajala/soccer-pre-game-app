@@ -22,6 +22,8 @@ export interface GameStateContextType {
   availablePlayers: Player[];
   playersOnField: Player[];
   opponents: Player[];
+  drawings: unknown[];
+  selectedPlayerIds: string[];
   
   // Data loading states
   isLoading: boolean;
@@ -31,10 +33,24 @@ export interface GameStateContextType {
   updateGameState: (update: Partial<GameSessionState>) => void;
   updatePlayers: (players: Player[]) => void;
   resetGame: () => void;
+  startGame: () => void;
+  pauseGame: () => void;
+  endGame: () => void;
   
   // Game status
   isGameActive: boolean;
   timeElapsedInSeconds: number;
+
+  // Setters and ids
+  setIsLoading: (loading: boolean) => void;
+  setError: (error: string | null) => void;
+  setTimeElapsedInSeconds: (seconds: number) => void;
+  setCurrentGameId: (id: string | null) => void;
+  currentGameId: string | null;
+  setPlayersOnField: (players: Player[]) => void;
+  setOpponents: (opponents: Player[]) => void;
+  setDrawings: (drawings: unknown[]) => void;
+  setSelectedPlayerIds: (ids: string[]) => void;
 }
 
 // ============================================================================

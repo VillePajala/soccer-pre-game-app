@@ -80,14 +80,14 @@ Scope: Functional bugs, inconsistencies, risks, and edge cases identified during
   - Files: `src/utils/savedGames.ts`, `src/components/HomePage.tsx`, `src/components/LoadGameModal.tsx` (fixed: robust parse with fallback and guards)
 - [ ] Persisting large `savedGames` blobs in localStorage may exceed quota
   - File: `src/stores/persistenceStore.ts` (improved: stop persisting `savedGames` in Zustand partialize; keep in IndexedDB)
-- [ ] Inconsistent defaults (period 10 vs 45; sub interval/demand vary)
-  - Files: provider, reducer, HomePage, store settings
+ - [x] Inconsistent defaults (period 10 vs 45; sub interval/demand vary)
+  - Files: provider, reducer, HomePage, store settings (fixed: unified to 2 periods, 10 min per period, 5 min sub interval)
 - [x] CSP may block Supabase or i18n domains if they change
   - File: `next.config.ts` (fixed: `connect-src` allowlist includes Supabase, analytics, i18n endpoints)
  - [x] `/password-reset-help` route referenced; ensure it exists
   - File: `src/app/page.tsx` (fixed: added `src/app/password-reset-help/page.tsx`)
-- [ ] Provider exports extras not in `GameStateContextType` (casts to unknown)
-  - File: `src/components/game/GameStateProvider.tsx`
+ - [x] Provider exports extras not in `GameStateContextType` (casts to unknown)
+  - File: `src/components/game/GameStateProvider.tsx` (fixed: extended `GameStateContextType` to include exported fields)
 - [ ] Autosave not debounced; can thrash storage/network
   - File: `src/components/HomePage.tsx` (fixed: debounced with a simple queue)
 - [ ] Load/init effects complex; double-initialization risks

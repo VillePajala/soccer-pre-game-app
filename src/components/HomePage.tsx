@@ -1125,15 +1125,11 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
   // **** ADDED: Effect to prompt for setup if default game ID is loaded ****
   useEffect(() => {
-    // Only run the check *after* initial load is fully complete and setup hasn't been skipped
-    if (initialLoadComplete && !hasSkippedInitialSetup) {
-      // Check currentGameId *inside* the effect body
-      if (currentGameId === DEFAULT_GAME_ID) {
+    // Guard: ensure we only prompt after initial load completes and not when skipping
+    if (!initialLoadComplete || hasSkippedInitialSetup) return;
+    if (currentGameId === DEFAULT_GAME_ID) {
       newGameSetupModal.open();
-      } else {
     }
-    }
-  // Depend only on load completion and skip status - removed setIsNewGameSetupModalOpen from deps
   }, [initialLoadComplete, hasSkippedInitialSetup, currentGameId, newGameSetupModal]);
 
   // --- Player Management Handlers moved to usePlayerFieldManager ---

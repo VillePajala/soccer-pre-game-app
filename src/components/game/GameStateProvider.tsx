@@ -23,7 +23,7 @@ const createInitialGameSessionState = (): GameSessionState => ({
   gameTime: "",
   gameLocation: "",
   numberOfPeriods: 2,
-  periodDurationMinutes: 45,
+  periodDurationMinutes: 10,
   currentPeriod: 1,
   
   // Game status
