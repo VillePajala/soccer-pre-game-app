@@ -1277,10 +1277,10 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
         // Update current game ID and save settings
         setCurrentGameId(gameId);
-        await utilSaveCurrentGameIdSetting(gameId);
-
-        logger.log(`Game ${gameId} load dispatched to reducer.`);
+        // Close modal immediately for snappier UX; persist setting asynchronously
         handleCloseLoadGameModal();
+        logger.log(`Game ${gameId} load dispatched to reducer. Persisting currentGameId setting...`);
+        await utilSaveCurrentGameIdSetting(gameId);
 
       } catch(error) {
           logger.error("Error processing game load:", error);
