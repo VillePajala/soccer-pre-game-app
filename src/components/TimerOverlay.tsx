@@ -33,7 +33,7 @@ export interface TimerOverlayProps {
   lastSubTime: number | null;
   onOpponentNameChange: (name: string) => void;
   onClose?: () => void;
-  isLoaded: boolean;
+  isLoaded?: boolean;
 }
 
 const TimerOverlay: React.FC<TimerOverlayProps> = ({

@@ -67,7 +67,7 @@ export const useAppSettingsManager = ({
         showToast(t('settingsModal.resetFailed', 'Failed to reset application data.'), 'error');
       }
     }
-  }, [t]);
+  }, [t, showToast, setIsInstructionsModalOpen, setIsSettingsModalOpen]);
 
   // --- Backup Handlers ---
   const handleCreateAndSendBackup = useCallback(async () => {
@@ -97,7 +97,7 @@ export const useAppSettingsManager = ({
       logger.error("Error creating backup:", error);
       showToast(t('settingsModal.backupError', 'Failed to create backup.'), 'error');
     }
-  }, [backupEmail, t]);
+  }, [backupEmail, t, showToast]);
 
   // --- Settings Change Handlers ---
   const handleLanguageChange = useCallback((lang: string) => {

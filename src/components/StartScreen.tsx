@@ -58,7 +58,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
     };
     initAndSyncLanguage();
     return () => { cancelled = true; };
-  }, []);
+  }, [language]);
 
   // Show success message when user logs in
   useEffect(() => {

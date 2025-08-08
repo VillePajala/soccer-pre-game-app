@@ -271,7 +271,7 @@ const wrappedActions = {
 let mockStoreState = { ...mockFormStoreState };
 
 // Mock the useFormStore hook with React state simulation
-const mockUseFormStore = jest.fn().mockImplementation((selector: any) => {
+const mockUseFormStore = jest.fn().mockImplementation((selector: (state: any) => any) => {
   // Simulate React state by returning current state snapshot
   const currentState = { ...mockStoreState, ...wrappedActions };
   

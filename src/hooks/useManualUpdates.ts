@@ -78,7 +78,7 @@ export const useManualUpdates = (): UseManualUpdatesReturn => {
     } finally {
       setIsChecking(false);
     }
-  }, [isChecking, t]);
+  }, [isChecking, t, showToast]);
 
   const handleForceUpdate = useCallback(async () => {
     logger.log('[Manual Updates] User initiated force update');
@@ -95,7 +95,7 @@ export const useManualUpdates = (): UseManualUpdatesReturn => {
       const errorMessage = t('updateCheck.refreshFailed', 'Failed to refresh app. Please try again.');
       showToast(errorMessage, 'error');
     }
-  }, [t]);
+  }, [t, showToast]);
 
   return {
     isChecking,

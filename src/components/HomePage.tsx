@@ -1388,7 +1388,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     if (!success) {
       showToast(t('export.error', 'Export failed. Please try again.'), 'error');
     }
-  }, [savedGames, t]);
+  }, [savedGames, t, showToast]);
 
   const handleExportAggregateCsv = useCallback(async (gameIds: string[], aggregateStats: import('@/types').PlayerStatRow[]) => {
     if (gameIds.length === 0) {
@@ -1408,7 +1408,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     if (!success) {
       showToast(t('export.error', 'Export failed. Please try again.'), 'error');
     }
-  }, [savedGames, t]);
+  }, [savedGames, t, showToast]);
 
   // --- END AGGREGATE EXPORT HANDLERS ---
 
