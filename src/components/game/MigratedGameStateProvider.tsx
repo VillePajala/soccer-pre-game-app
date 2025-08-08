@@ -120,7 +120,7 @@ export function MigratedGameStateProvider({
         gameStore.setPeriodDuration(action.payload as number);
         break;
       case 'SET_GAME_STATUS':
-        gameStore.setGameStatus(action.payload as 'not_started' | 'in_progress' | 'period_end' | 'game_end');
+        gameStore.setGameStatus(action.payload as 'notStarted' | 'inProgress' | 'periodEnd' | 'gameEnd');
         break;
       case 'SET_CURRENT_PERIOD':
         setCurrentPeriod(action.payload as number);

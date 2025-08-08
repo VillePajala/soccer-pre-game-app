@@ -20,7 +20,7 @@ import type {
 } from '@/types';
 
 // Game status type - define locally since not exported from types
-type GameStatus = 'not_started' | 'in_progress' | 'period_end' | 'game_end';
+type GameStatus = 'notStarted' | 'inProgress' | 'periodEnd' | 'gameEnd';
 
 // Game session state (replaces GameSessionReducer useState calls)
 export interface GameSessionState {
@@ -38,6 +38,7 @@ export interface GameSessionState {
   subIntervalMinutes: number;
   completedIntervalDurations: number[];
   lastSubConfirmationTimeSeconds: number;
+  nextSubDueTimeSeconds: number;
   
   // Game scoring
   homeScore: number;
@@ -175,7 +176,7 @@ const defaultGameSession: GameSessionState = {
   gameDate: new Date().toISOString().split('T')[0],
   gameLocation: '',
   gameTime: '',
-  gameStatus: 'not_started',
+  gameStatus: 'notStarted',
   gameNotes: '',
   isPlayed: false,
   ageGroup: '',

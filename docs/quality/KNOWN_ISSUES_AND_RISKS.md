@@ -43,15 +43,15 @@ Scope: Functional bugs, inconsistencies, risks, and edge cases identified during
 - [x] `updateGameDetails` omits non-existent `events` instead of `gameEvents`
   - File: `src/utils/savedGames.ts` (fixed: omit `'gameEvents'`)
   - Ref: lines ~331–336
-- [ ] Game status enums inconsistent (`not_started` vs `notStarted`)
-  - File: `src/stores/gameStore.ts`
+- [x] Game status enums inconsistent (`not_started` vs `notStarted`)
+  - Files: `src/stores/gameStore.ts`, `src/components/game/MigratedGameStateProvider.tsx` (fixed: unified to camelCase)
 - [ ] Context casts `opponents` as `Player[]` (type mismatch risk)
   - File: `src/components/game/GameStateProvider.tsx`
 
 ## 5) Timer/substitution inconsistencies
 
-- [ ] Provider initial `nextSubDueTimeSeconds` is 0; elsewhere derives from `subIntervalMinutes * 60`
-  - File: `src/components/game/GameStateProvider.tsx`
+- [x] Provider initial `nextSubDueTimeSeconds` is 0; elsewhere derives from `subIntervalMinutes * 60`
+  - File: `src/components/game/GameStateProvider.tsx` (fixed: initialize to `subIntervalMinutes * 60`)
 - [ ] Mixed fractional vs integer timer accumulation may create off-by-one
   - Files: `src/hooks/useGameSessionReducer.ts` vs timer hooks
 
@@ -75,7 +75,7 @@ Scope: Functional bugs, inconsistencies, risks, and edge cases identified during
 - [ ] Resume readiness ambiguity due to auth gating vs always-true resume check
   - Files: `src/app/page.tsx`, `src/components/StartScreen.tsx`
 - [ ] Game event update/remove by index in utils (id is safer)
-  - File: `src/utils/savedGames.ts`
+  - File: `src/utils/savedGames.ts` (fixed: now uses `eventId`)
 - [ ] “Most recent game” sorting can produce `Invalid Date` and misorder
   - Files: `src/utils/savedGames.ts`, `src/components/HomePage.tsx`
 - [ ] Persisting large `savedGames` blobs in localStorage may exceed quota
@@ -89,7 +89,7 @@ Scope: Functional bugs, inconsistencies, risks, and edge cases identified during
 - [ ] Provider exports extras not in `GameStateContextType` (casts to unknown)
   - File: `src/components/game/GameStateProvider.tsx`
 - [ ] Autosave not debounced; can thrash storage/network
-  - File: `src/components/HomePage.tsx`
+  - File: `src/components/HomePage.tsx` (fixed: debounced with a simple queue)
 - [ ] Load/init effects complex; double-initialization risks
   - File: `src/components/HomePage.tsx`
 - [ ] Timer overlay disables Start when `!isLoaded` even if state is otherwise ready

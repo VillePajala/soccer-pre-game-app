@@ -381,31 +381,29 @@ export const addGameEvent = async (gameId: string, event: PageGameEvent): Promis
 /**
  * Updates an event in a game
  * @param gameId - ID of the game
- * @param eventIndex - Index of the event to update
+ * @param eventId - ID of the event to update
  * @param eventData - New event data
  * @returns Promise resolving to the updated game data, or null on error
  */
-export const updateGameEvent = async (gameId: string, eventIndex: number, eventData: PageGameEvent): Promise<AppState | null> => {
+export const updateGameEvent = async (
+  gameId: string,
+  eventId: string,
+  eventData: PageGameEvent
+): Promise<AppState | null> => {
   try {
     const game = await getGame(gameId);
     if (!game) {
       logger.warn(`Game with ID ${gameId} not found for updating event.`);
       return null;
     }
-    
     const events = [...(game.gameEvents || [])];
-    if (eventIndex < 0 || eventIndex >= events.length) {
-      logger.warn(`Event index ${eventIndex} out of bounds for game ${gameId}.`);
+    const idx = events.findIndex(e => e.id === eventId);
+    if (idx === -1) {
+      logger.warn(`Event id ${eventId} not found for game ${gameId}.`);
       return null;
     }
-    
-    events[eventIndex] = eventData; // Cast eventData
-    
-    const updatedGame = {
-      ...game,
-      gameEvents: events,
-    };
-    
+    events[idx] = eventData;
+    const updatedGame = { ...game, gameEvents: events };
     return saveGame(gameId, updatedGame);
   } catch (error) {
     logger.error('Error updating game event:', error);
@@ -416,30 +414,26 @@ export const updateGameEvent = async (gameId: string, eventIndex: number, eventD
 /**
  * Removes an event from a game
  * @param gameId - ID of the game
- * @param eventIndex - Index of the event to remove
+ * @param eventId - ID of the event to remove
  * @returns Promise resolving to the updated game data, or null on error
  */
-export const removeGameEvent = async (gameId: string, eventIndex: number): Promise<AppState | null> => {
+export const removeGameEvent = async (
+  gameId: string,
+  eventId: string
+): Promise<AppState | null> => {
   try {
     const game = await getGame(gameId);
     if (!game) {
       logger.warn(`Game with ID ${gameId} not found for removing event.`);
       return null;
     }
-    
     const events = [...(game.gameEvents || [])];
-    if (eventIndex < 0 || eventIndex >= events.length) {
-      logger.warn(`Event index ${eventIndex} out of bounds for game ${gameId}.`);
+    const filtered = events.filter(e => e.id !== eventId);
+    if (filtered.length === events.length) {
+      logger.warn(`Event id ${eventId} not found for game ${gameId}.`);
       return null;
     }
-    
-    events.splice(eventIndex, 1);
-    
-    const updatedGame = {
-      ...game,
-      gameEvents: events,
-    };
-    
+    const updatedGame = { ...game, gameEvents: filtered };
     return saveGame(gameId, updatedGame);
   } catch (error) {
     logger.error('Error removing game event:', error);

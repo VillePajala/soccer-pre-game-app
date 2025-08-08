@@ -58,7 +58,7 @@ const createInitialGameSessionState = (): GameSessionState => ({
   subIntervalMinutes: 5,
   completedIntervalDurations: [],
   lastSubConfirmationTimeSeconds: 0,
-  nextSubDueTimeSeconds: 0,
+  nextSubDueTimeSeconds: 5 * 60,
   subAlertLevel: 'none' as 'none' | 'warning' | 'due',
 });
 
