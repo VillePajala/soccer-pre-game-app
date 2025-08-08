@@ -375,8 +375,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   const [currentGameId, setCurrentGameId] = useState<string | null>(DEFAULT_GAME_ID);
   const [isPlayed, setIsPlayed] = useState<boolean>(true);
   // Cache seasons/tournaments for modals to avoid re-fetch cost on first open
-  const [prefetchedSeasons, setPrefetchedSeasons] = useState<Season[] | null>(null);
-  const [prefetchedTournaments, setPrefetchedTournaments] = useState<Tournament[] | null>(null);
+  const [_prefetchedSeasons, setPrefetchedSeasons] = useState<Season[] | null>(null);
+  const [_prefetchedTournaments, setPrefetchedTournaments] = useState<Tournament[] | null>(null);
   
   // This ref needs to be declared after currentGameId
   const gameIdRef = useRef(currentGameId);
