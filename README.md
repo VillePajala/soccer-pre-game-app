@@ -56,7 +56,7 @@ The app is designed to be an all-in-one digital assistant for game day, from pre
 *   **Language:** [TypeScript 5](https://www.typescriptlang.org/)
 *   **UI Library:** [React 19.0.0](https://reactjs.org/)
 *   **Styling:** [Tailwind CSS 4](https://tailwindcss.com/)
-*   **State Management:** [React Query 5.80.10](https://tanstack.com/query/latest) with intelligent caching + Custom Hooks (`useGameSessionReducer`, `useGameState`)
+*   **State Management:** [Zustand 5.0.3](https://zustand-demo.pmnd.rs/) for centralized state + [React Query 5.80.10](https://tanstack.com/query/latest) for server state caching
 *   **Data Persistence:** Multi-layer architecture with [Supabase 2.52.0](https://supabase.com/), localStorage fallback, and [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) for offline-first caching
 *   **Authentication:** [Supabase Auth](https://supabase.com/docs/guides/auth) with session management
 *   **Charts & Visualization:** [Recharts 2.15.4](https://recharts.org/)

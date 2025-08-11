@@ -23,6 +23,7 @@ import {
 // Import new utility functions
 import { getSeasons as utilGetSeasons } from '@/utils/seasons';
 import { getTournaments as utilGetTournaments } from '@/utils/tournaments';
+import { useToast } from '@/contexts/ToastProvider';
 
 export interface LoadGameModalProps {
   isOpen: boolean;
@@ -66,52 +67,78 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
   processingGameId = null,
 }) => {
   const { t, i18n } = useTranslation();
+  const { showToast } = useToast();
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [searchText, setSearchText] = useState<string>('');
   const [filterType, setFilterType] = useState<'season' | 'tournament' | null>(null);
   const [filterId, setFilterId] = useState<string | null>(null);
   const [showUnplayedOnly, setShowUnplayedOnly] = useState<boolean>(false);
+  const [page, setPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
   const menuRef = useRef<HTMLDivElement>(null);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  // Toast important errors non-blockingly
+  useEffect(() => {
+    if (loadGamesListError) {
+      showToast(loadGamesListError, 'error');
+    }
+  }, [loadGamesListError, showToast]);
+
 
   // State for seasons and tournaments
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
 
-  // Load seasons and tournaments on mount or when modal opens
+  // Load seasons and tournaments on open - fetch in parallel and cache per session to reduce latency
+  const hasLoadedMetaRef = useRef(false);
   useEffect(() => {
-    if (isOpen) {
-      const fetchModalData = async () => {
+    if (!isOpen || hasLoadedMetaRef.current) return;
+    hasLoadedMetaRef.current = true;
+    const fetchModalData = async () => {
       try {
-          const loadedSeasonsData = await utilGetSeasons();
-          setSeasons(Array.isArray(loadedSeasonsData) ? loadedSeasonsData : []);
-        } catch (error) {
-        logger.error("Error loading seasons via utility:", error);
-        setSeasons([]); 
+        const [loadedSeasonsData, loadedTournamentsData] = await Promise.all([
+          utilGetSeasons().catch((e) => { logger.error('Error loading seasons via utility:', e); return []; }),
+          utilGetTournaments().catch((e) => { logger.error('Error loading tournaments via utility:', e); return []; }),
+        ]);
+        setSeasons(Array.isArray(loadedSeasonsData) ? loadedSeasonsData : []);
+        setTournaments(Array.isArray(loadedTournamentsData) ? loadedTournamentsData : []);
+      } catch {
+        // Already handled per-call; keep UI responsive
       }
-      try {
-          const loadedTournamentsData = await utilGetTournaments();
-          setTournaments(Array.isArray(loadedTournamentsData) ? loadedTournamentsData : []);
-        } catch (error) {
-        logger.error("Error loading tournaments via utility:", error);
-        setTournaments([]);
-      }
-      };
-      fetchModalData();
-    }
+    };
+    fetchModalData();
   }, [isOpen]);
 
   // Filter logic updated to only use searchText
+  const lightweightList = useMemo(() => {
+    // Build a lightweight list for filtering/sorting
+    return Object.keys(savedGames)
+      .filter(id => id !== DEFAULT_GAME_ID)
+      .map(id => {
+        const g = savedGames[id];
+        return {
+          id,
+          teamName: (g?.teamName || '').toLowerCase(),
+          opponentName: (g?.opponentName || '').toLowerCase(),
+          gameDate: g?.gameDate || '',
+          gameTime: g?.gameTime || '',
+          seasonId: g?.seasonId || '',
+          tournamentId: g?.tournamentId || '',
+          isPlayed: g?.isPlayed,
+        };
+      });
+  }, [savedGames]);
+
   const filteredGameIds = useMemo(() => {
-    const initialIds = Object.keys(savedGames).filter(id => id !== DEFAULT_GAME_ID);
+    const initialIds = lightweightList.map(x => x.id);
     
-    const filteredBySearch = initialIds.filter(id => { 
-      const gameData = savedGames[id];
+    const filteredBySearch = initialIds.filter(id => {
+      const gameData = lightweightList.find(x => x.id === id);
       if (!gameData) return false;
       if (!searchText) return true;
       const lowerSearchText = searchText.toLowerCase();
-      const teamName = (gameData.teamName || '').toLowerCase();
-      const opponentName = (gameData.opponentName || '').toLowerCase();
+      const teamName = gameData.teamName;
+      const opponentName = gameData.opponentName;
       const gameDate = (gameData.gameDate || '').toLowerCase();
       const seasonName = seasons.find(s => s.id === gameData.seasonId)?.name.toLowerCase() || '';
       const tournamentName = tournaments.find(tourn => tourn.id === gameData.tournamentId)?.name.toLowerCase() || '';
@@ -126,7 +153,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
 
     const filteredByBadge = filteredBySearch.filter(id => {
       if (!filterType || !filterId) return true;
-      const gameData = savedGames[id];
+      const gameData = lightweightList.find(x => x.id === id);
       if (!gameData) return false;
 
       let match = false;
@@ -142,44 +169,46 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
 
     const filteredByPlayed = filteredByBadge.filter(id => {
       if (!showUnplayedOnly) return true;
-      const gameData = savedGames[id];
+      const gameData = lightweightList.find(x => x.id === id);
       if (!gameData) return false;
       return gameData.isPlayed === false;
     });
 
     const sortedIds = filteredByPlayed.sort((a, b) => {
-      const gameA = savedGames[a];
-      const gameB = savedGames[b];
-      
-      // Primary sort: by date in descending order (newest first)
-      const dateA = gameA.gameDate ? new Date(gameA.gameDate).getTime() : 0;
-      const dateB = gameB.gameDate ? new Date(gameB.gameDate).getTime() : 0;
+      const gameA = lightweightList.find(x => x.id === a)!;
+      const gameB = lightweightList.find(x => x.id === b)!;
+
+      const aDateStr = `${gameA.gameDate || ''} ${gameA.gameTime || ''}`.trim();
+      const bDateStr = `${gameB.gameDate || ''} ${gameB.gameTime || ''}`.trim();
+      const dateA = Number.isFinite(Date.parse(aDateStr)) ? new Date(aDateStr).getTime() : (gameA.gameDate ? new Date(gameA.gameDate).getTime() : 0);
+      const dateB = Number.isFinite(Date.parse(bDateStr)) ? new Date(bDateStr).getTime() : (gameB.gameDate ? new Date(gameB.gameDate).getTime() : 0);
 
       if (dateB !== dateA) {
-        // Handle cases where one date is missing (put games without date last)
         if (!dateA) return 1;
         if (!dateB) return -1;
         return dateB - dateA;
       }
 
-      // Secondary sort: by timestamp in game ID (descending, newest first)
-      // Extract timestamp assuming format "game_TIMESTAMP_RANDOM"
-      try {
-        const timestampA = parseInt(a.split('_')[1], 10);
-        const timestampB = parseInt(b.split('_')[1], 10);
-        
-        if (!isNaN(timestampA) && !isNaN(timestampB)) {
-          return timestampB - timestampA;
-        }
-      } catch (error) {
-        logger.warn("Could not parse timestamps from game IDs for secondary sort:", a, b, error);
+      // Secondary: fallback to ID timestamp if present
+      const timestampA = parseInt(a.split('_')[1] || '', 10);
+      const timestampB = parseInt(b.split('_')[1] || '', 10);
+      if (!isNaN(timestampA) && !isNaN(timestampB)) {
+        return timestampB - timestampA;
       }
-      
-      // Fallback if dates are equal and timestamps can't be parsed
-      return 0; 
+      return 0;
     });
     return sortedIds;
-  }, [savedGames, searchText, seasons, tournaments, filterType, filterId, showUnplayedOnly]);
+  }, [lightweightList, searchText, seasons, tournaments, filterType, filterId, showUnplayedOnly]);
+
+  // Pagination
+  const totalItems = filteredGameIds.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const paginatedIds = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredGameIds.slice(start, start + pageSize);
+  }, [filteredGameIds, currentPage, pageSize]);
+  useEffect(() => { setPage(1); }, [searchText, filterType, filterId, showUnplayedOnly, pageSize]);
 
   const handleDeleteClick = (gameId: string, gameName: string) => {
     // Use a confirmation dialog
@@ -292,7 +321,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
             {gameDeleteError}
           </li>
         )}
-        {filteredGameIds.map((gameId, index) => {
+        {paginatedIds.map((gameId, index) => {
           const game = savedGames[gameId];
           if (!game) return null;
           const isCurrent = gameId === currentGameId;
@@ -529,7 +558,16 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                         {/* Left Side: Load Button Only */}
                         <div className="flex items-center">
                           <button
-                            onClick={(e) => { e.stopPropagation(); onLoad(gameId); onClose(); }}
+                            onClick={async (e) => { 
+                              e.stopPropagation(); 
+                              try {
+                                await onLoad(gameId);
+                                onClose();
+                              } catch (error) {
+                                logger.error('[LoadGameModal] Failed to load game:', error);
+                                // Keep modal open on error so user can see what happened
+                              }
+                            }}
                             className={`inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors ${
                               isLoadActionActive ? 'opacity-50 cursor-not-allowed' : ''
                             }`}
@@ -638,6 +676,19 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
           {mainContent}
         </div>
         <div className="p-4 border-t border-slate-700/20 backdrop-blur-sm bg-slate-900/20 flex-shrink-0">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="text-slate-300 text-sm">
+              {t('pagination.showing', 'Showing')} {(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, totalItems)} {t('pagination.of', 'of')} {totalItems}
+            </div>
+            <div className="flex items-center gap-2">
+              <button disabled={currentPage === 1} onClick={() => setPage(p => Math.max(1, p - 1))} className="px-2 py-1 rounded bg-slate-700 text-slate-200 disabled:opacity-50">{t('pagination.prev', 'Prev')}</button>
+              <span className="text-slate-300 text-sm">{currentPage}/{totalPages}</span>
+              <button disabled={currentPage === totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))} className="px-2 py-1 rounded bg-slate-700 text-slate-200 disabled:opacity-50">{t('pagination.next', 'Next')}</button>
+              <select value={pageSize} onChange={(e) => setPageSize(Number(e.target.value))} className="ml-2 bg-slate-700 text-slate-200 rounded px-2 py-1 text-sm">
+                {[10, 20, 50].map(sz => <option key={sz} value={sz}>{sz}/page</option>)}
+              </select>
+            </div>
+          </div>
           <button onClick={onClose} className="w-full px-4 py-2 rounded-md font-semibold text-slate-200 bg-slate-700 hover:bg-slate-600 transition-colors">
             {t('common.close', 'Close')}
           </button>

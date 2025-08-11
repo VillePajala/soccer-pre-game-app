@@ -4,7 +4,7 @@ import React from 'react';
 import SoccerField from '@/components/SoccerField';
 import PlayerBar from '@/components/PlayerBar';
 import GameInfoBar from '@/components/GameInfoBar';
-import TimerOverlay from '@/components/TimerOverlay';
+import TimerOverlay from '@/components/MigratedTimerOverlay';
 import { GameViewProps } from '@/types/gameComponents';
 import { useGameStateContext } from './GameStateProvider';
 import { Point, TacticalDisc, Opponent } from '@/types';

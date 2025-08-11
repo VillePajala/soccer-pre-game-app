@@ -1,12 +1,11 @@
 'use client';
 
-import ModalProvider from '@/contexts/ModalProvider';
+// 🔧 CUTOVER COMPLETE: No ModalProvider needed - pure Zustand modal state management
 import HomePage from '@/components/HomePage';
 import StartScreen from '@/components/StartScreen';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { useState, useEffect, Suspense } from 'react';
-import { getCurrentGameIdSetting } from '@/utils/appSettings';
-import { getSavedGames, getMostRecentGameId } from '@/utils/savedGames';
+import { useResumeAvailability } from '@/hooks/useResumeAvailability';
 import { useAuthStorage } from '@/hooks/useAuthStorage';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -36,7 +35,7 @@ function VerificationToast({ onClose }: { onClose: () => void }) {
       if (code) {
         logger.debug('Password reset code detected, attempting direct exchange...');
         try {
-          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          const { error } = await supabase.auth.exchangeCodeForSession({ authCode: code });
           if (error) {
             logger.error('PKCE code exchange error:', error);
             // Clean up URL and show error
@@ -90,9 +89,20 @@ function VerificationToast({ onClose }: { onClose: () => void }) {
     }
 
     if (verified === 'true') {
+      // Prevent redirect loops: only replace when currently on root
+      const onRoot = window.location.pathname === '/';
       setShow(true);
-      // Clean up the URL parameter
-      router.replace('/', undefined);
+      // Clean up the URL parameter without causing navigation loops
+      if (onRoot) {
+        router.replace('/', undefined);
+      } else {
+        // If not on root, just remove the query param in-place
+        try {
+          const url = new URL(window.location.href);
+          url.searchParams.delete('verified');
+          window.history.replaceState({}, '', url.toString());
+        } catch {}
+      }
       // Auto-hide toast after 5 seconds
       setTimeout(() => {
         setShow(false);
@@ -132,10 +142,9 @@ function VerificationToast({ onClose }: { onClose: () => void }) {
 export default function Home() {
   const [screen, setScreen] = useState<'start' | 'home'>('start');
   const [initialAction, setInitialAction] = useState<'newGame' | 'loadGame' | 'resumeGame' | 'season' | 'stats' | null>(null);
-  const [canResume, setCanResume] = useState(false);
-  
   // Get auth state to listen for logout
   const { user } = useAuth();
+  const canResume = useResumeAvailability(user);
   
   // Sync auth state with storage manager
   useAuthStorage();
@@ -148,54 +157,6 @@ export default function Home() {
     }
   }, [user, screen]);
 
-  useEffect(() => {
-    const checkResume = async () => {
-      // Wait a bit for auth to stabilize
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      try {
-        logger.debug('[StartScreen] Checking for resumable game...');
-        logger.debug('[StartScreen] User authenticated:', !!user);
-        
-        // First try to get the saved current game ID
-        const lastId = await getCurrentGameIdSetting();
-        logger.debug('[StartScreen] Current game ID from settings:', lastId);
-        
-        const games = await getSavedGames();
-        logger.debug('[StartScreen] Number of saved games:', Object.keys(games).length);
-        logger.debug('[StartScreen] Game IDs:', Object.keys(games));
-        
-        // Check if the saved game ID exists in the games collection
-        if (lastId && games[lastId]) {
-          logger.debug('[StartScreen] Found game with saved ID, enabling resume');
-          setCanResume(true);
-          return;
-        }
-        
-        // If not, try to find the most recent game
-        const mostRecentId = await getMostRecentGameId();
-        logger.debug('[StartScreen] Most recent game ID:', mostRecentId);
-        
-        if (mostRecentId) {
-          logger.debug('[StartScreen] Found recent game, enabling resume');
-          setCanResume(true);
-          return;
-        }
-        
-        // No games available to resume
-        logger.debug('[StartScreen] No games available to resume');
-        setCanResume(false);
-      } catch (error) {
-        logger.error('[StartScreen] Error checking resume:', error);
-        setCanResume(false);
-      }
-    };
-    
-    // Only check for resume if user is authenticated when using Supabase
-    if (user || !user) { // Always check, but log the state
-      checkResume();
-    }
-  }, [user]); // Add user as dependency
 
   const handleAction = (
     action: 'newGame' | 'loadGame' | 'resumeGame' | 'season' | 'stats'
@@ -211,26 +172,24 @@ export default function Home() {
       {/* Offline Banner - shows at top when offline/poor connection */}
       <OfflineBanner className="fixed top-0 left-0 right-0 z-30" />
       
-      <ModalProvider>
-        {screen === 'start' ? (
-          <StartScreen
-            onStartNewGame={() => handleAction('newGame')}
-            onLoadGame={() => handleAction('loadGame')}
-            onResumeGame={() => handleAction('resumeGame')}
-            canResume={canResume}
-            onCreateSeason={() => handleAction('season')}
-            onViewStats={() => handleAction('stats')}
-            isAuthenticated={!!user}
-          />
-        ) : (
-          <HomePage initialAction={initialAction ?? undefined} skipInitialSetup />
-        )}
-        
-        {/* Email Verification Success Toast - wrapped in Suspense */}
-        <Suspense fallback={null}>
-          <VerificationToast onClose={() => {}} />
-        </Suspense>
-      </ModalProvider>
+      {screen === 'start' ? (
+        <StartScreen
+          onStartNewGame={() => handleAction('newGame')}
+          onLoadGame={() => handleAction('loadGame')}
+          onResumeGame={() => handleAction('resumeGame')}
+          canResume={canResume}
+          onCreateSeason={() => handleAction('season')}
+          onViewStats={() => handleAction('stats')}
+          isAuthenticated={!!user}
+        />
+      ) : (
+        <HomePage initialAction={initialAction ?? undefined} skipInitialSetup />
+      )}
+      
+      {/* Email Verification Success Toast - wrapped in Suspense */}
+      <Suspense fallback={null}>
+        <VerificationToast onClose={() => {}} />
+      </Suspense>
     </div>
   );
 }

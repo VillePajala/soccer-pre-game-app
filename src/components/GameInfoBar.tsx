@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 
-interface GameInfoBarProps {
+export interface GameInfoBarProps {
   teamName: string;
   opponentName: string;
   homeScore: number;

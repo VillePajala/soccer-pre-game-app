@@ -23,7 +23,7 @@ const createInitialGameSessionState = (): GameSessionState => ({
   gameTime: "",
   gameLocation: "",
   numberOfPeriods: 2,
-  periodDurationMinutes: 45,
+  periodDurationMinutes: 10,
   currentPeriod: 1,
   
   // Game status
@@ -58,7 +58,7 @@ const createInitialGameSessionState = (): GameSessionState => ({
   subIntervalMinutes: 5,
   completedIntervalDurations: [],
   lastSubConfirmationTimeSeconds: 0,
-  nextSubDueTimeSeconds: 0,
+  nextSubDueTimeSeconds: 5 * 60,
   subAlertLevel: 'none' as 'none' | 'warning' | 'due',
 });
 
@@ -156,10 +156,11 @@ export function GameStateProvider({
   // Pause game function  
   const pauseGame = useCallback(() => {
     logger.debug('[GameStateProvider] Pausing game');
-    // Use a valid status - will be implemented properly later
-    updateGameState({ gameStatus: 'notStarted' });
+    // Maintain current status; reduce to paused by toggling running flag
+    // Delegate to reducer semantics rather than resetting status
+    dispatchGameSession({ type: 'PAUSE_TIMER' } as any);
     setIsGameActive(false);
-  }, [updateGameState]);
+  }, []);
   
   // End game function
   const endGame = useCallback(() => {
@@ -177,6 +178,9 @@ export function GameStateProvider({
     // Players state
     availablePlayers,
     playersOnField,
+    opponents: opponents as unknown as Player[],
+    drawings,
+    selectedPlayerIds: gameSessionState.selectedPlayerIds,
     
     // Status
     isLoading,
@@ -188,15 +192,29 @@ export function GameStateProvider({
     updateGameState,
     updatePlayers,
     resetGame,
+    startGame,
+    pauseGame,
+    endGame,
     
-    // Additional field state (not in interface but useful for components)
+    // Setters
+    setIsLoading,
+    setError,
+    setTimeElapsedInSeconds,
+    setCurrentGameId,
+    currentGameId,
+    setPlayersOnField,
+    setOpponents: setOpponents as (opponents: Player[]) => void,
+    setDrawings: setDrawings as (drawings: unknown[]) => void,
+    setSelectedPlayerIds: (ids: string[]) => {
+      dispatchGameSession({ type: 'SET_SELECTED_PLAYER_IDS', payload: ids });
+    },
   };
   
   return (
     <GameStateContext.Provider value={{
       ...contextValue,
       // Extended properties for the hook
-      opponents: opponents as Player[],
+      opponents: opponents as unknown as Player[],
       drawings,
       selectedPlayerIds: gameSessionState.selectedPlayerIds,
       startGame,
@@ -210,7 +228,9 @@ export function GameStateProvider({
       setPlayersOnField,
       setOpponents, 
       setDrawings,
-      setSelectedPlayerIds: () => {}, // Placeholder for now
+      setSelectedPlayerIds: (ids: string[]) => {
+        dispatchGameSession({ type: 'SET_SELECTED_PLAYER_IDS', payload: ids });
+      },
     } as GameStateContextType & Record<string, unknown>}>
       {children}
     </GameStateContext.Provider>

@@ -21,7 +21,7 @@ const TestComponent = () => {
 };
 
 describe('AuthContext', () => {
-  const mockSupabaseAuth = supabase.auth as {
+  const mockSupabaseAuth = supabase.auth as unknown as {
     getSession: jest.Mock;
     onAuthStateChange: jest.Mock;
     signUp: jest.Mock;

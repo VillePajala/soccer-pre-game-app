@@ -34,6 +34,13 @@ Welcome to the MatchDay Coach documentation. This directory contains all project
 - **[Component Refactoring Guide](quality/guides/COMPONENT_REFACTORING_GUIDE.md)** - Step-by-step HomePage component breakdown
 - **[State Management Migration](quality/guides/STATE_MANAGEMENT_MIGRATION.md)** - Unified Zustand architecture implementation
 
+## 🔧 Technical Debt
+
+- **[Technical Debt Overview](technical-debt/README.md)** - Technical debt management and tracking
+- **[Code Review Findings - January 2025](technical-debt/code-review-findings-2025-01.md)** - ⚠️ **NEW**: 21 identified issues (3 critical, 7 high priority)
+- **[Debt Backlog](technical-debt/debt-backlog.md)** - Current technical debt tracking and prioritization
+- **[Resolution History](technical-debt/resolution-history.md)** - Resolved issues and lessons learned
+
 ## 📚 Guides
 
 - **[Demo Workflow](guides/demo-workflow.md)** - App workflow walkthrough and usage guide
@@ -75,7 +82,7 @@ The [assets](assets/) folder contains images, screenshots, and other media used 
 ## Quick Links
 
 - **Getting Started**: See the main [README.md](../README.md) in the project root
-- **Contributing**: Check [CLAUDE.md](../CLAUDE.md) for AI assistant guidelines
+- **Contributing**: Check [CLAUDE.md](ai/CLAUDE.md) for AI assistant guidelines
 - **Latest Updates**: Review the [TODO list](project/TODO.md) for current priorities
 
 ## Documentation Standards
@@ -85,3 +92,6 @@ The [assets](assets/) folder contains images, screenshots, and other media used 
 3. **Structure**: Use clear sections with descriptive headers
 4. **Updates**: Include last updated date at the bottom of documents
 5. **Links**: Use relative links for internal documentation
+
+
+Aloha

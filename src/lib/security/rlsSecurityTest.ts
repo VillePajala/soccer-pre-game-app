@@ -37,7 +37,39 @@ export class RLSSecurityTester {
   private async setAuthContext(user: TestUser): Promise<void> {
     const { error } = await supabase.auth.setSession({
       access_token: user.accessToken,
-      refresh_token: '', // Would be provided in real test
+      refresh_token: 'test-refresh-token', // Would be provided in real test
+      expires_at: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
+      expires_in: 3600,
+      token_type: 'bearer',
+      user: {
+        id: user.id,
+        email: user.email,
+        aud: 'authenticated',
+        role: 'authenticated',
+        email_confirmed_at: new Date().toISOString(),
+        app_metadata: {},
+        user_metadata: {},
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        phone: null,
+        email_change_confirm_status: null,
+        phone_confirmed_at: null,
+        confirmation_sent_at: null,
+        recovery_sent_at: null,
+        email_change_sent_at: null,
+        new_email: null,
+        invited_at: null,
+        action_link: null,
+        email_change_token_new: null,
+        email_change_token_current: null,
+        phone_change: null,
+        phone_change_token: null,
+        phone_change_sent_at: null,
+        confirmed_at: null,
+        email_change_confirm_status_current: null,
+        banned_until: null,
+        last_sign_in_at: null
+      } as any
     });
     
     if (error) {

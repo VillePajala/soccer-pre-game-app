@@ -1,3 +1,37 @@
+## Summary
+
+Describe the change and the user impact.
+
+## Type
+
+- [ ] feat
+- [ ] fix
+- [ ] refactor
+- [ ] docs
+- [ ] chore
+- [ ] test
+- [ ] perf
+- [ ] ci
+
+## Scope
+
+Optional scope tag (e.g., components, hooks, storage).
+
+## Checklist
+
+- [ ] Ran `npm run lint`
+- [ ] Ran `npm test` and tests pass
+- [ ] Updated documentation if needed
+- [ ] Added/updated tests where appropriate
+
+## Screenshots / Before-After
+
+If UI changes, add visuals.
+
+## Links
+
+Related issues/PRs: #
+
 # Pull Request
 
 ## Summary

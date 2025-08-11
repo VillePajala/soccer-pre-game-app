@@ -16,7 +16,7 @@ export class SupabaseProvider implements IStorageProvider {
 
   async isOnline(): Promise<boolean> {
     try {
-      const { error } = await supabase.from('players').select('count').limit(1);
+      const { error } = await supabase.from('players').select('id').limit(1);
       return !error;
     } catch {
       return false;
@@ -24,11 +24,28 @@ export class SupabaseProvider implements IStorageProvider {
   }
 
   private async getCurrentUserId(): Promise<string> {
-    const { data: { user }, error } = await supabase.auth.getUser();
-    if (error || !user) {
-      throw new AuthenticationError('supabase', 'getCurrentUserId', error || new Error('No user'));
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) {
+        throw new AuthenticationError('supabase', 'getCurrentUserId', error || new Error('No user'));
+      }
+      return user.id;
+    } catch (error) {
+      // During sign out, auth calls might fail - that's expected
+      if (error instanceof AuthenticationError) {
+        throw error;
+      }
+      throw new AuthenticationError('supabase', 'getCurrentUserId', error as Error);
     }
-    return user.id;
+  }
+
+  private async isAuthenticated(): Promise<boolean> {
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      return !error && !!user;
+    } catch {
+      return false;
+    }
   }
 
   // Player management with Phase 4 optimizations
@@ -345,9 +362,9 @@ export class SupabaseProvider implements IStorageProvider {
           console.error('[SupabaseProvider] Tournament save error:', {
             error,
             supabaseTournament,
-            errorDetails: error.details,
+            errorDetails: (error as { details?: string }).details,
             errorMessage: error.message,
-            errorCode: error.code
+            errorCode: (error as { code?: string }).code
           });
           throw new NetworkError('supabase', 'saveTournament', error);
         }
@@ -418,6 +435,11 @@ export class SupabaseProvider implements IStorageProvider {
   // App settings (simplified implementation for now)
   async getAppSettings(): Promise<AppSettings | null> {
     try {
+      // 🔧 SIGN OUT FIX: Check authentication before trying to get user data
+      if (!(await this.isAuthenticated())) {
+        return null; // Return null instead of throwing error during sign out
+      }
+      
       const userId = await this.getCurrentUserId();
       const { data, error } = await supabase
         .from('app_settings')
@@ -426,7 +448,8 @@ export class SupabaseProvider implements IStorageProvider {
         .single();
 
       if (error) {
-        if (error.code === 'PGRST116') {
+        const errorCode = (error as { code?: string }).code;
+        if (errorCode === 'PGRST116') {
           // No settings found, return null
           return null;
         }
@@ -449,7 +472,7 @@ export class SupabaseProvider implements IStorageProvider {
 
       const { data, error } = await supabase
         .from('app_settings')
-        .upsert(supabaseSettings, { onConflict: 'user_id' })
+        .upsert(supabaseSettings)
         .select()
         .single();
 
@@ -564,7 +587,7 @@ export class SupabaseProvider implements IStorageProvider {
         console.log(`[SUPABASE] Upserting existing game: ${supabaseGame.id}`);
         const { data, error } = await supabase
           .from('games')
-          .upsert(supabaseGame, { onConflict: 'id' })
+          .upsert(supabaseGame)
           .select()
           .single();
           

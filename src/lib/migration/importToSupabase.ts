@@ -254,7 +254,7 @@ async function importPlayer(player: Player, userId: string): Promise<void> {
   
   const { error } = await supabase
     .from('players')
-    .upsert(supabasePlayer, { onConflict: 'id' });
+    .upsert(supabasePlayer);
 
   if (error) {
     throw error;
@@ -269,7 +269,7 @@ async function importSeason(season: Season, userId: string): Promise<void> {
   
   const { error } = await supabase
     .from('seasons')
-    .upsert(supabaseSeason, { onConflict: 'id' });
+    .upsert(supabaseSeason);
 
   if (error) {
     throw error;
@@ -284,7 +284,7 @@ async function importTournament(tournament: Tournament, userId: string): Promise
   
   const { error } = await supabase
     .from('tournaments')
-    .upsert(supabaseTournament, { onConflict: 'id' });
+    .upsert(supabaseTournament);
 
   if (error) {
     throw error;
@@ -299,7 +299,7 @@ async function importGame(game: Record<string, unknown>, userId: string): Promis
   
   const { error } = await supabase
     .from('games')
-    .upsert(supabaseGame, { onConflict: 'id' });
+    .upsert(supabaseGame);
 
   if (error) {
     throw error;
@@ -314,7 +314,7 @@ async function importAppSettings(settings: Record<string, unknown>, userId: stri
   
   const { error } = await supabase
     .from('app_settings')
-    .upsert(supabaseSettings, { onConflict: 'user_id' });
+    .upsert(supabaseSettings);
 
   if (error) {
     throw error;

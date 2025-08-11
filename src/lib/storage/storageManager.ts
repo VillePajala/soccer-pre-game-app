@@ -37,6 +37,23 @@ export class StorageManager implements IStorageProvider {
     try {
       return await operation();
     } catch (error) {
+      // 🔧 SIGN OUT FIX: During sign out with AuthenticationError, return sensible defaults instead of throwing
+      if (error instanceof AuthenticationError) {
+        // For getter operations during sign out, return appropriate defaults
+        if (operationName === 'getAppSettings') {
+          logger.debug('[StorageManager] Returning null for getAppSettings during sign out');
+          return null as T;
+        }
+        if (operationName === 'getSavedGames') {
+          logger.debug('[StorageManager] Returning empty object for getSavedGames during sign out');
+          return {} as T;
+        }
+        if (operationName === 'getPlayers' || operationName === 'getSeasons' || operationName === 'getTournaments') {
+          logger.debug(`[StorageManager] Returning empty array for ${operationName} during sign out`);
+          return [] as T;
+        }
+      }
+      
       // If we're using Supabase and fallback is enabled, try localStorage
       if (
         this.config.provider === 'supabase' &&

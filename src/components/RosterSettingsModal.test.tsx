@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@/__tests__/test-utils';
 import '@testing-library/jest-dom';
 
 import RosterSettingsModal from './RosterSettingsModal';
@@ -49,11 +49,11 @@ describe('<RosterSettingsModal />', () => {
 
   test('renders the modal when isOpen is true', () => {
     render(<RosterSettingsModal {...defaultProps} />);
-    expect(screen.getByText('Manage Roster')).toBeInTheDocument();
+    expect(screen.getByText('rosterSettingsModal.title')).toBeInTheDocument();
     expect(screen.getByText('P1')).toBeInTheDocument();
     expect(screen.getByText('P2')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Add Player/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Done/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'rosterSettingsModal.addPlayerButton' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'common.doneButton' })).toBeInTheDocument();
   });
 
   test('does not render when isOpen is false', () => {
@@ -63,23 +63,23 @@ describe('<RosterSettingsModal />', () => {
 
   test('calls onClose when Done button is clicked', () => {
     render(<RosterSettingsModal {...defaultProps} />);
-    const doneButton = screen.getByRole('button', { name: /Done/i });
+    const doneButton = screen.getByRole('button', { name: 'common.doneButton' });
     fireEvent.click(doneButton);
     expect(mockOnClose).toHaveBeenCalledTimes(1);
   });
 
   test('shows add player form when Add Player button is clicked', () => {
     render(<RosterSettingsModal {...defaultProps} />);
-    const addButton = screen.getByRole('button', { name: /Add Player/i });
+    const addButton = screen.getByRole('button', { name: 'rosterSettingsModal.addPlayerButton' });
     fireEvent.click(addButton);
-    expect(screen.getByPlaceholderText(/Player Name/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('rosterSettingsModal.playerNamePlaceholder')).toBeInTheDocument();
   });
 
   test('adds a new player when form is submitted', () => {
     render(<RosterSettingsModal {...defaultProps} />);
     
     // Open form
-    const addButtons = screen.getAllByRole('button', { name: /Add Player/i });
+    const addButtons = screen.getAllByRole('button', { name: 'rosterSettingsModal.addPlayerButton' });
     const mainAddButton = addButtons.find(button => !button.hasAttribute('disabled'));
     if (!mainAddButton) throw new Error('No enabled Add Player button found');
     fireEvent.click(mainAddButton);
@@ -92,15 +92,13 @@ describe('<RosterSettingsModal />', () => {
       notes: 'Test notes'
     };
     
-    fireEvent.change(screen.getByPlaceholderText(/Player Name/i), { target: { value: newPlayer.name }});
-    fireEvent.change(screen.getByPlaceholderText(/Nickname/i), { target: { value: newPlayer.nickname }});
-    fireEvent.change(screen.getByPlaceholderText(/#/i), { target: { value: newPlayer.jerseyNumber }});
-    fireEvent.change(screen.getByPlaceholderText(/Player notes/i), { target: { value: newPlayer.notes }});
+    fireEvent.change(screen.getByPlaceholderText('rosterSettingsModal.playerNamePlaceholder'), { target: { value: newPlayer.name }});
+    fireEvent.change(screen.getByPlaceholderText('rosterSettingsModal.nicknamePlaceholder'), { target: { value: newPlayer.nickname }});
+    fireEvent.change(screen.getByPlaceholderText('rosterSettingsModal.jerseyHeader'), { target: { value: newPlayer.jerseyNumber }});
+    fireEvent.change(screen.getByPlaceholderText('rosterSettingsModal.notesPlaceholder'), { target: { value: newPlayer.notes }});
     
-    // Submit - find the enabled Add Player button in the form
-    const submitButtons = screen.getAllByRole('button', { name: /Add Player/i });
-    const submitButton = submitButtons.find(button => !button.hasAttribute('disabled'));
-    if (!submitButton) throw new Error('No enabled Add Player button found for submission');
+    // Submit - click the confirm add player button
+    const submitButton = screen.getByRole('button', { name: 'rosterSettingsModal.confirmAddPlayer' });
     fireEvent.click(submitButton);
     
     expect(mockOnAddPlayer).toHaveBeenCalledWith(newPlayer);
@@ -110,7 +108,7 @@ describe('<RosterSettingsModal />', () => {
     render(<RosterSettingsModal {...defaultProps} />);
     
     // Find and click edit button for P1
-    const editButtons = screen.getAllByTitle('Edit');
+    const editButtons = screen.getAllByTitle('Muokkaa');
     fireEvent.click(editButtons[0]); // First edit button should be for P1
     
     // Fill edit form
@@ -127,7 +125,7 @@ describe('<RosterSettingsModal />', () => {
     fireEvent.change(screen.getByDisplayValue('Note 1'), { target: { value: updatedData.notes }});
     
     // Save
-    fireEvent.click(screen.getByTitle('Save'));
+    fireEvent.click(screen.getByTitle('Tallenna'));
     
     expect(mockOnRenamePlayer).toHaveBeenCalledWith('p1', { name: updatedData.name, nickname: updatedData.nickname });
     expect(mockOnSetJerseyNumber).toHaveBeenCalledWith('p1', updatedData.jerseyNumber);
@@ -138,7 +136,7 @@ describe('<RosterSettingsModal />', () => {
     window.confirm = jest.fn(() => true);
     render(<RosterSettingsModal {...defaultProps} />);
     
-    const removeButtons = screen.getAllByTitle('Remove');
+    const removeButtons = screen.getAllByTitle('common.remove');
     fireEvent.click(removeButtons[0]); // Remove first player
     
     expect(mockOnRemovePlayer).toHaveBeenCalledWith('p1');
@@ -172,7 +170,7 @@ describe('<RosterSettingsModal />', () => {
   test('opens player stats', () => {
     render(<RosterSettingsModal {...defaultProps} />);
 
-    const statsButtons = screen.getAllByTitle('Stats');
+    const statsButtons = screen.getAllByTitle('common.stats');
     fireEvent.click(statsButtons[0]); // Open stats for first player
 
     expect(mockOnOpenPlayerStats).toHaveBeenCalledWith('p1');
@@ -180,7 +178,7 @@ describe('<RosterSettingsModal />', () => {
 
   test('filters players by search input', () => {
     render(<RosterSettingsModal {...defaultProps} />);
-    const searchInput = screen.getByPlaceholderText('Search players...');
+    const searchInput = screen.getByPlaceholderText('rosterSettingsModal.searchPlaceholder');
     fireEvent.change(searchInput, { target: { value: 'Two' } });
     expect(screen.queryByText('P1')).not.toBeInTheDocument();
     expect(screen.getByText('P2')).toBeInTheDocument();

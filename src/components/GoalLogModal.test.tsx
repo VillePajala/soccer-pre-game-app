@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@/__tests__/test-utils';
 import '@testing-library/jest-dom';
 import GoalLogModal from './GoalLogModal';
 import { Player } from '@/types';
@@ -31,8 +31,11 @@ describe('GoalLogModal', () => {
     const onLogGoal = jest.fn();
     renderModal({ onLogGoal });
 
-    fireEvent.change(screen.getByLabelText(/Scorer/i), { target: { value: 'p1' } });
-    fireEvent.click(screen.getByRole('button', { name: /Log Goal/i }));
+    // Use the select by ID since label text is also using i18n keys
+    const scorerSelect = document.getElementById('scorerSelect');
+    fireEvent.change(scorerSelect!, { target: { value: 'p1' } });
+    // Use the i18n key since translations aren't working in test
+    fireEvent.click(screen.getByRole('button', { name: 'goalLogModal.logGoalButton' }));
 
     expect(onLogGoal).toHaveBeenCalledWith('p1', undefined);
   });
@@ -41,7 +44,8 @@ describe('GoalLogModal', () => {
     const onLogOpponentGoal = jest.fn();
     renderModal({ onLogOpponentGoal });
 
-    fireEvent.click(screen.getByText(/Opponent \+1/i));
+    // The i18n in tests returns the key, not the translation
+    fireEvent.click(screen.getByText('goalLogModal.logOpponentGoalButtonShort'));
     expect(onLogOpponentGoal).toHaveBeenCalledWith(30);
   });
 });

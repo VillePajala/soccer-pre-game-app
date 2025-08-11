@@ -29,7 +29,7 @@ function ConfirmPageContent() {
         if (code) {
           logger.debug('Sign-up code detected:', code.substring(0, 10) + '...');
           // Exchange code for session
-          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession({ authCode: code });
           if (exchangeError) {
             logger.error('Sign-up code exchange error:', exchangeError);
             setError(`Email confirmation failed: ${exchangeError.message}`);
@@ -72,7 +72,8 @@ function ConfirmPageContent() {
         
         // First try verifyOtp with token_hash
         const verifyResult = await supabase.auth.verifyOtp({
-          token_hash: token_hash,
+          email: '',
+          token: token_hash,
           type: type as 'signup' | 'recovery' | 'email_change' | 'phone_change',
         });
         
