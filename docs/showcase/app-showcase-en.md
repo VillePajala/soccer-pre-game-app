@@ -42,7 +42,5 @@ The MatchDay Coach app merges roster management, live event logging and an inter
 6. Save the game for later review or back up all app data.
 
 ## Screenshots
-![TODO: Home screen screenshot](path/to/home-screen.png)
-![TODO: Tactics board screenshot](path/to/tactics-board.png)
-![TODO: Statistics modal screenshot](path/to/stats-modal.png)
+<!-- Screenshots placeholders removed to satisfy link checks. Add real images under docs/assets and update paths when available. -->
 

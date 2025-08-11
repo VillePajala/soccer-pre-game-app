@@ -82,8 +82,8 @@ Technical debt is categorized by type:
 
 ### Tools & Resources
 - [GitHub Issues - Technical Debt](https://github.com/your-repo/issues?q=is%3Aissue+is%3Aopen+label%3Atechnical-debt)
-- [Performance Monitoring Dashboard](#)
-- [Code Quality Metrics](#)
+- Performance Monitoring Dashboard (TBD)
+- Code Quality Metrics (TBD)
 
 ## Review Schedule
 

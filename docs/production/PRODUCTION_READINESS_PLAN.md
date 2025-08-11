@@ -18,7 +18,7 @@ This comprehensive plan outlines all steps required to transform MatchDay Coach 
 6. [User Experience Polish](#6-user-experience-polish)
 7. [Play Store Deployment](#7-play-store-deployment)
 8. [Post-Launch Operations](#8-post-launch-operations)
-9. [LocalStorage Deprecation](#9-localstorage-deprecation)
+9. [Offline-First Architecture & LocalStorage Deprecation](#9-offline-first-architecture--localstorage-deprecation)
 
 ---
 

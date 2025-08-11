@@ -42,7 +42,5 @@ MatchDay Coach yhdistää pelaajaluettelon hallinnan, reaaliaikaisen tapahtumaki
 6. Tallenna peli myöhempää tarkastelua varten tai varmuuskopioi kaikki data.
 
 ## Kuvakaappaukset
-![TODO: Kotinäkymän kuvakaappaus](path/to/home-screen.png)
-![TODO: Taktiikkataulun kuvakaappaus](path/to/tactics-board.png)
-![TODO: Tilastonäkymän kuvakaappaus](path/to/stats-modal.png)
+<!-- Paikkamerkit poistettu; lisää kuvat docs/assets-kansioon kun ne ovat valmiit. -->
 

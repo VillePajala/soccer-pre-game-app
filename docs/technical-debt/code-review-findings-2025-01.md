@@ -240,9 +240,9 @@ function safeJsonParse<T>(json: string, fallback: T): T {
 
 ## Related Documentation
 
-- [State Management Migration Status](/docs/architecture/state-management-migration.md)
-- [Security Assessment](/docs/security/security-assessment.md)
-- [Architecture Decision Records](/docs/architecture/decisions/)
+- [State Management Migration](../quality/guides/STATE_MANAGEMENT_MIGRATION.md)
+- [Security Documentation](../security/README.md)
+- Architecture Decision Records (planned)
 - [Testing Strategy](../production/TESTING_STRATEGY.md)
 
 ## Issue Tracking

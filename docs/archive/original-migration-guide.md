@@ -4,7 +4,7 @@ This guide consolidates all repository documentation about migrating the app fro
 
 # Migrating to Supabase
 
-This document explains how to move the MatchDay Coach application from storing data in browser `localStorage` to using Supabase as a backend. It assumes familiarity with the current architecture described in [README.md](./README.md) and [CLAUDE.md](./CLAUDE.md).
+This document explains how to move the MatchDay Coach application from storing data in browser `localStorage` to using Supabase as a backend. It assumes familiarity with the current architecture described in [project README](../README.md) and [CLAUDE.md](../ai/CLAUDE.md).
 
 ## 1. Current State Overview
 
@@ -13,12 +13,12 @@ The application is a PWA built with Next.js 15, React 19 and TypeScript. All per
 ```
 50  *   **Data Persistence:** Browser `localStorage` API
 ```
-from the [README](./README.md) and
+from the [README](../README.md) and
 
 ```
 54  **Data Persistence**: All data is stored in browser localStorage with async wrappers in `src/utils/localStorage.ts`.
 ```
-from [CLAUDE.md](./CLAUDE.md).
+from [CLAUDE.md](../ai/CLAUDE.md).
 
 Key modules that interact with storage are:
 

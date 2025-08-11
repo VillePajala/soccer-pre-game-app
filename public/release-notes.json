@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix(quality): enhance type safety and prop handling in hooks"
+  "notes": "ci(docs): add markdown-link-check config and use in docs:links script\\n\\n- Ignore external URLs to avoid network flakiness\\n- Tweak timeouts/retries for stability\\n\\n🤖 Generated with [Claude Code](https://claude.ai/code)\\n\\nCo-Authored-By: Claude <noreply@anthropic.com>"
 }
