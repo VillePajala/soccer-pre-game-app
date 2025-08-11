@@ -98,6 +98,7 @@ export interface NotificationState {
 export interface UIStore {
   // State
   modals: ModalState;
+  modalStack: Array<keyof ModalState>;
   view: ViewState;
   notifications: NotificationState;
   
@@ -107,6 +108,9 @@ export interface UIStore {
   toggleModal: (modalName: keyof ModalState) => void;
   closeAllModals: () => void;
   isModalOpen: (modalName: keyof ModalState) => boolean;
+  isAnyModalOpen: () => boolean;
+  pushModal: (modalName: keyof ModalState) => void;
+  popModal: (modalName: keyof ModalState) => void;
   
   // View actions
   setTacticsBoardView: (enabled: boolean) => void;
@@ -222,41 +226,74 @@ export const useUIStore = create<UIStore>()(
     (set, get) => ({
       // Initial state
       modals: defaultModalState,
+      modalStack: [],
       view: defaultViewState,
       notifications: defaultNotificationState,
       
       // Modal actions
       openModal: (modalName) => set(
-        (state) => ({ 
-          modals: { ...state.modals, [modalName]: true } 
-        }),
+        (state) => {
+          const alreadyOnStack = state.modalStack.includes(modalName);
+          return {
+            modals: { ...state.modals, [modalName]: true },
+            modalStack: alreadyOnStack ? state.modalStack : [...state.modalStack, modalName],
+          };
+        },
         false,
         `openModal:${modalName}`
       ),
       
       closeModal: (modalName) => set(
         (state) => ({ 
-          modals: { ...state.modals, [modalName]: false } 
+          modals: { ...state.modals, [modalName]: false },
+          modalStack: state.modalStack.filter((m) => m !== modalName),
         }),
         false,
         `closeModal:${modalName}`
       ),
       
       toggleModal: (modalName) => set(
-        (state) => ({ 
-          modals: { ...state.modals, [modalName]: !state.modals[modalName] } 
-        }),
+        (state) => {
+          const willOpen = !state.modals[modalName];
+          const nextStack = willOpen
+            ? (state.modalStack.includes(modalName) ? state.modalStack : [...state.modalStack, modalName])
+            : state.modalStack.filter((m) => m !== modalName);
+          return {
+            modals: { ...state.modals, [modalName]: willOpen },
+            modalStack: nextStack,
+          };
+        },
         false,
         `toggleModal:${modalName}`
       ),
       
       closeAllModals: () => set(
-        { modals: defaultModalState },
+        { modals: defaultModalState, modalStack: [] },
         false,
         'closeAllModals'
       ),
       
       isModalOpen: (modalName) => get().modals[modalName],
+      isAnyModalOpen: () => get().modalStack.length > 0,
+      pushModal: (modalName) => set(
+        (state) => {
+          if (state.modalStack.includes(modalName)) return state;
+          return {
+            modals: { ...state.modals, [modalName]: true },
+            modalStack: [...state.modalStack, modalName],
+          };
+        },
+        false,
+        `pushModal:${modalName}`
+      ),
+      popModal: (modalName) => set(
+        (state) => ({
+          modals: { ...state.modals, [modalName]: false },
+          modalStack: state.modalStack.filter((m) => m !== modalName),
+        }),
+        false,
+        `popModal:${modalName}`
+      ),
       
       // View actions
       setTacticsBoardView: (enabled) => set(

@@ -51,4 +51,52 @@ describe('UIStore', () => {
     });
   });
 
+  describe('Modal stack behavior', () => {
+    it('pushes to and pops from modalStack correctly', () => {
+      const { result } = renderHook(() => useUIStore());
+      expect(result.current.isAnyModalOpen()).toBe(false);
+
+      act(() => {
+        result.current.openModal('settingsModal');
+      });
+      expect(result.current.isModalOpen('settingsModal')).toBe(true);
+      expect(result.current.modalStack[result.current.modalStack.length - 1]).toBe('settingsModal');
+      expect(result.current.isAnyModalOpen()).toBe(true);
+
+      act(() => {
+        result.current.openModal('gameStatsModal');
+      });
+      expect(result.current.modalStack[result.current.modalStack.length - 1]).toBe('gameStatsModal');
+
+      act(() => {
+        result.current.closeModal('gameStatsModal');
+      });
+      expect(result.current.isModalOpen('gameStatsModal')).toBe(false);
+      expect(result.current.modalStack.includes('gameStatsModal')).toBe(false);
+      expect(result.current.isAnyModalOpen()).toBe(true);
+
+      act(() => {
+        result.current.closeAllModals();
+      });
+      expect(result.current.isAnyModalOpen()).toBe(false);
+      expect(result.current.modalStack.length).toBe(0);
+    });
+
+    it('toggleModal maintains stack consistency', () => {
+      const { result } = renderHook(() => useUIStore());
+
+      act(() => {
+        result.current.toggleModal('rosterSettingsModal');
+      });
+      expect(result.current.isModalOpen('rosterSettingsModal')).toBe(true);
+      expect(result.current.modalStack.includes('rosterSettingsModal')).toBe(true);
+
+      act(() => {
+        result.current.toggleModal('rosterSettingsModal');
+      });
+      expect(result.current.isModalOpen('rosterSettingsModal')).toBe(false);
+      expect(result.current.modalStack.includes('rosterSettingsModal')).toBe(false);
+    });
+  });
+
 });

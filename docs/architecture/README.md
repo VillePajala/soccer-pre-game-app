@@ -37,8 +37,10 @@ This overview summarizes the current architecture and links to deep-dive documen
 - State management migration: `../quality/guides/STATE_MANAGEMENT_MIGRATION.md`
 - Storage migration plan: `storage-migration.md`
 - Security: `security.md`
+- Modal Orchestration: `modal-orchestration.md`
 - Database schema: `../reference/database-schema.md`
 - Style guide: `../project/STYLE_GUIDE.md`
+- Modal orchestration: `modal-orchestration.md`
 
 ## Code Map
 
@@ -48,6 +50,6 @@ This overview summarizes the current architecture and links to deep-dive documen
 
 ## ADRs
 
-Planned. Capture major decisions (Zustand + RQ, multi-layer storage, PWA caching) here.
+See `../quality/CI_QUALITY_GATES.md` for CI-related decisions. Modal orchestration decision captured in `modal-orchestration.md`.
 
 
