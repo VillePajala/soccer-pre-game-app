@@ -11,7 +11,8 @@
     "test:unit": "jest",
     "test:fast": "LOG_LEVEL=error jest --testPathIgnorePatterns='supabase|import|backup|export|useForm.test|useRosterSettingsModalState|useSettingsModalState|useViewMode' --maxWorkers=4 --silent",
     "test:slow": "LOG_LEVEL=error jest --testPathPattern='supabase|import|backup|export' --maxWorkers=2 --silent",
-    "test:ci": "NODE_OPTIONS='--max-old-space-size=6144' LOG_LEVEL=error jest --maxWorkers=2 --silent --passWithNoTests --forceExit --testTimeout=10000",
+    "test:ci": "NODE_OPTIONS='--max-old-space-size=6144' LOG_LEVEL=error jest --coverage --maxWorkers=2 --silent --passWithNoTests --forceExit --testTimeout=10000",
+    "ci:bundle-budgets": "node scripts/check-bundle-budgets.mjs",
     "generate:i18n-types": "node scripts/generate-i18n-types.mjs",
     "analyze": "ANALYZE=true npm run build",
     "security:scan": "snyk test",
@@ -40,6 +41,7 @@
     "zustand": "^5.0.7"
   },
   "devDependencies": {
+    "@axe-core/react": "^4.10.2",
     "@eslint/eslintrc": "^3",
     "@next/bundle-analyzer": "^15.4.5",
     "@tailwindcss/postcss": "^4",
@@ -52,6 +54,7 @@
     "@types/react-dom": "^19",
     "eslint-config-next": "15.3.0",
     "jest": "^29.7.0",
+    "jest-axe": "^10.0.0",
     "jest-environment-jsdom": "^29.7.0",
     "snyk": "^1.1298.1",
     "supabase": "^2.31.8",

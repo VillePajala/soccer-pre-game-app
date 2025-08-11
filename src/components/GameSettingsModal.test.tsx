@@ -354,4 +354,9 @@ describe('<GameSettingsModal />', () => {
       expect(screen.getByRole('heading', { name: t('gameSettingsModal.title') })).toBeInTheDocument();
     });
   });
+
+  test('has no critical accessibility violations when open', async () => {
+    const { container } = await renderAndWaitForLoad();
+    await (global as any).testModalAccessibility(container);
+  });
 });

@@ -31,7 +31,6 @@ import { useGameState, UseGameStateReturn } from '@/hooks/useGameState';
 import GameInfoBar from '@/components/GameInfoBar';
 import { useOfflineFirstGameTimer } from '@/hooks/useOfflineFirstGameTimer';
 import useAutoBackup from '@/hooks/useAutoBackup';
-// 🔧 CUTOVER COMPLETE: Migration hooks no longer needed
 // Import the new game session reducer and related types
 import {
   gameSessionReducer,
@@ -67,7 +66,6 @@ import { useTacticalBoard } from '@/hooks/useTacticalBoard';
 import { useRoster } from '@/hooks/useRoster';
 import { useGameDataManager } from '@/hooks/useGameDataManager';
 import { useGameStateManager } from '@/hooks/useGameStateManager';
-// import { useModalContext } from '@/contexts/ModalProvider.migration';
 import { useGameSettingsModalWithHandlers } from '@/hooks/useGameSettingsModalState';
 import { useGameStatsModalWithHandlers } from '@/hooks/useGameStatsModalState';
 import { useRosterSettingsModalWithHandlers } from '@/hooks/useRosterSettingsModalState';
@@ -88,7 +86,6 @@ import { AppLoadingSkeleton } from '@/components/ui/AppSkeleton';
 // Removed - now handled by useGameDataManager:
 // import { updateGameDetails as utilUpdateGameDetails } from '@/utils/savedGames';
 import { DEFAULT_GAME_ID } from '@/config/constants';
-// 🔧 CUTOVER COMPLETE: Migration error boundary no longer needed
 // Storage keys no longer needed - using offline-first storage
 // Removed static import of export utilities - now using dynamic imports for better bundle splitting
 // Removed - now handled by useGameDataManager: exportJson, exportCsv
@@ -426,7 +423,6 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   useAutoBackup();
   const { showToast } = useToast();
   
-  // 🔧 CUTOVER COMPLETE: No migration components needed
 
   // Use Zustand-based modal states
   const gameSettingsModal = useGameSettingsModalWithHandlers();
@@ -441,7 +437,6 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   const playerAssessmentModal = usePlayerAssessmentModalWithHandlers();
   
   // All modal states now migrated to Zustand!
-  // const {} = useModalContext(); // No longer needed - all modals migrated!
   // Removed - now handled by useGameDataManager:
   // const { showToast } = useToast();
   // const [isPlayerStatsModalOpen, setIsPlayerStatsModalOpen] = useState(false);
@@ -2054,10 +2049,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         />
       )}
       
-      {/* 🔧 CUTOVER COMPLETE: No migration modal needed */}
     </main>
   );
 }
-// 🔧 CUTOVER COMPLETE: No migration error boundary needed - exporting HomePage directly
 
 export default HomePage;

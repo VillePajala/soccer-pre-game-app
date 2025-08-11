@@ -26,7 +26,8 @@ The build process includes a custom manifest generation step that runs before Ne
 - **Tailwind CSS 4** for styling
 - **PWA** with custom service worker
 - **Browser localStorage** for data persistence
-- **React Query** for state management
+- **Zustand** for centralized state management
+- **React Query** for server state and data fetching
 - **i18next** for internationalization (English/Finnish)
 
 ### Core Architecture
@@ -39,11 +40,13 @@ The build process includes a custom manifest generation step that runs before Ne
 - Install prompts and update notifications
 
 **State Management**: 
-- **`src/app/page.tsx`**: Acts as the central orchestrator, bringing together different state management strategies.
-- **`useReducer` (`useGameSessionReducer.ts`)**: Manages the core game session state, including score, timer, periods, and game metadata. This provides predictable state transitions.
-- **`useGameState` hook**: Manages the interactive state of the soccer field, including player positions on the field and drawings.
+- **Zustand Stores**: Centralized state management with four main stores:
+  - **`gameStore`**: Game session, timer, scoring, field state, and player positions
+  - **`uiStore`**: Modal states, view modes, selections, and UI interactions  
+  - **`persistenceStore`**: Data persistence, settings, and localStorage abstraction
+  - **`formStore`**: Form state management with validation and auto-save
 - **React Query**: Handles all asynchronous data operations, such as fetching and updating the master roster, seasons, tournaments, and saved games.
-- **`useState`**: Used for managing local UI state within components (e.g., modal visibility).
+- **`useState`**: Used only for local component state (ephemeral UI state).
 
 **Key Components**:
 - `SoccerField` - Interactive drag-and-drop field
@@ -61,13 +64,26 @@ The build process includes a custom manifest generation step that runs before Ne
 
 ## Key Files to Understand
 
-- `src/app/page.tsx` - The main component that orchestrates the entire application, integrating hooks, reducers, and data fetching.
-- `src/hooks/useGameSessionReducer.ts` - The reducer managing core game logic (timer, score, status). Crucial for understanding state transitions.
-- `src/hooks/useGameState.ts` - The hook for managing interactive state on the soccer field (player positions, drawings).
-- `src/utils/masterRosterManager.ts` - Handles all CRUD operations for the master player list, interacting with localStorage.
-- `src/config/queryKeys.ts` - Defines the keys used for caching and invalidating data with React Query.
+### **Core Architecture**
+- `src/app/page.tsx` - The main component orchestrating the entire application with Zustand state management.
+- `src/stores/index.ts` - Centralized exports for all Zustand stores and utilities.
 - `src/types/index.ts` - Core TypeScript interfaces (Player, Season, Tournament, AppState).
+
+### **State Management (Zustand)**
+- `src/stores/gameStore.ts` - Game session, timer, scoring, field state (763 lines)
+- `src/stores/uiStore.ts` - Modal states, view modes, selections (922 lines)  
+- `src/stores/persistenceStore.ts` - Data persistence, settings (1,091 lines)
+- `src/stores/formStore.ts` - Form state management with validation (912 lines)
+
+### **Data Layer**
+- `src/utils/masterRosterManager.ts` - CRUD operations for the master player list.
+- `src/config/queryKeys.ts` - Defines keys for React Query caching and invalidation.
 - `src/utils/localStorage.ts` - Async localStorage wrapper utilities.
+
+### **Component Integration**
+- `src/components/HomePage.tsx` - Main game interface using Zustand modal hooks.
+- `src/hooks/use*ModalState.ts` - Modal state hooks (10 hooks for different modals).
+- `src/hooks/use*Form.ts` - Form management hooks with Zustand integration.
 
 ## Development Notes
 

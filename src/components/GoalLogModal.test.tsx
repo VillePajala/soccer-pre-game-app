@@ -48,4 +48,9 @@ describe('GoalLogModal', () => {
     fireEvent.click(screen.getByText('goalLogModal.logOpponentGoalButtonShort'));
     expect(onLogOpponentGoal).toHaveBeenCalledWith(30);
   });
+
+  it('has no critical accessibility violations when open', async () => {
+    const { container } = renderModal();
+    await (global as any).testModalAccessibility(container);
+  });
 });

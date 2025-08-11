@@ -29,6 +29,7 @@ Welcome to the MatchDay Coach documentation. This directory contains all project
 - **[High Priority Improvements](quality/HIGH_PRIORITY_IMPROVEMENTS.md)** - Month 1 enhancements (state management, performance, testing)
 - **[Quality Enhancements](quality/QUALITY_ENHANCEMENTS.md)** - Month 2-3 refinements (architecture, developer experience, monitoring)
 - **[Long-term Improvements](quality/LONG_TERM_IMPROVEMENTS.md)** - Month 3-6 advanced features (state machines, micro-frontends, security)
+- **[CI Quality Gates](quality/CI_QUALITY_GATES.md)** - CI coverage, bundle budgets, and a11y testing
 
 ### Implementation Guides
 - **[Component Refactoring Guide](quality/guides/COMPONENT_REFACTORING_GUIDE.md)** - Step-by-step HomePage component breakdown
