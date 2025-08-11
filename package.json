@@ -17,7 +17,7 @@
     "security:scan": "snyk test",
     "security:monitor": "snyk monitor",
     "security:wizard": "snyk wizard",
-    "docs:links": "bash -lc 'set -e; find docs -name "*.md" -print0 | xargs -0 -n1 -I{} npx --yes markdown-link-check -q {}; npx --yes markdown-link-check -q README.md'"
+    "docs:links": "bash -lc 'set -e; find docs -name "*.md" -print0 | xargs -0 -n1 -I{} npx --yes markdown-link-check -q -c .mlc.json {}; npx --yes markdown-link-check -q -c .mlc.json README.md'"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.4",
