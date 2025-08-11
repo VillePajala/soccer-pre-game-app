@@ -407,7 +407,7 @@ export const addGameEvent = async (gameId: string, event: PageGameEvent): Promis
  */
 export const updateGameEvent = async (
   gameId: string,
-  eventId: string,
+  eventIdOrIndex: string | number,
   eventData: PageGameEvent
 ): Promise<AppState | null> => {
   try {
@@ -417,9 +417,13 @@ export const updateGameEvent = async (
       return null;
     }
     const events = [...(game.gameEvents || [])];
-    const idx = events.findIndex(e => e.id === eventId);
+    const idx = typeof eventIdOrIndex === 'number'
+      ? eventIdOrIndex
+      : events.findIndex(e => e.id === eventIdOrIndex);
     if (idx === -1) {
-      logger.warn(`Event id ${eventId} not found for game ${gameId}.`);
+      logger.warn(
+        `Event ${typeof eventIdOrIndex === 'number' ? `index ${eventIdOrIndex}` : `id ${eventIdOrIndex}`} not found for game ${gameId}.`
+      );
       return null;
     }
     events[idx] = eventData;
@@ -439,7 +443,7 @@ export const updateGameEvent = async (
  */
 export const removeGameEvent = async (
   gameId: string,
-  eventId: string
+  eventIdOrIndex: string | number
 ): Promise<AppState | null> => {
   try {
     const game = await getGame(gameId);
@@ -448,12 +452,22 @@ export const removeGameEvent = async (
       return null;
     }
     const events = [...(game.gameEvents || [])];
-    const filtered = events.filter(e => e.id !== eventId);
-    if (filtered.length === events.length) {
-      logger.warn(`Event id ${eventId} not found for game ${gameId}.`);
-      return null;
+    let newEvents: typeof events;
+    if (typeof eventIdOrIndex === 'number') {
+      if (eventIdOrIndex < 0 || eventIdOrIndex >= events.length) {
+        logger.warn(`Event index ${eventIdOrIndex} not found for game ${gameId}.`);
+        return null;
+      }
+      newEvents = events.filter((_, i) => i !== eventIdOrIndex);
+    } else {
+      const filtered = events.filter(e => e.id !== eventIdOrIndex);
+      if (filtered.length === events.length) {
+        logger.warn(`Event id ${eventIdOrIndex} not found for game ${gameId}.`);
+        return null;
+      }
+      newEvents = filtered;
     }
-    const updatedGame = { ...game, gameEvents: filtered };
+    const updatedGame = { ...game, gameEvents: newEvents };
     return saveGame(gameId, updatedGame);
   } catch (error) {
     logger.error('Error removing game event:', error);
