@@ -9,13 +9,18 @@ const I18nInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) 
   const [isI18nInitialized, setIsI18nInitialized] = useState(false);
 
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+    let isCancelled = false;
+    
     // Wait for async i18n initialization to complete
     const checkInitialization = () => {
+      if (isCancelled) return; // Don't continue if component unmounted
+      
       if (i18n.isInitialized) {
         setIsI18nInitialized(true);
       } else {
         // Check again in 50ms if not yet initialized
-        setTimeout(checkInitialization, 50);
+        timeoutId = setTimeout(checkInitialization, 50);
       }
     };
 
@@ -24,11 +29,21 @@ const I18nInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) 
 
     // Also listen for the initialized event in case it fires after we start checking
     const handleInitialized = () => {
-      setIsI18nInitialized(true);
+      if (!isCancelled) {
+        setIsI18nInitialized(true);
+      }
     };
     
     i18n.on('initialized', handleInitialized);
+    
     return () => {
+      // Mark as cancelled to prevent further timeout creation
+      isCancelled = true;
+      // Clear any pending timeout
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      // Remove event listener
       i18n.off('initialized', handleInitialized);
     };
   }, []);

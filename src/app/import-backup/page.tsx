@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { authAwareStorageManager as storageManager } from '@/lib/storage';
 import { useAuth } from '@/context/AuthContext';
 import logger from '@/utils/logger';
+import { safeImportDataParse } from '@/utils/safeJson';
 
 export default function ImportBackupPage() {
   const { user } = useAuth();
@@ -77,7 +78,15 @@ export default function ImportBackupPage() {
   };
 
   const importBackupData = async (jsonContent: string) => {
-    const data = JSON.parse(jsonContent);
+    const parseResult = safeImportDataParse(jsonContent, (data): data is any => {
+      return typeof data === 'object' && data !== null;
+    });
+    
+    if (!parseResult.success) {
+      throw new Error(`Invalid backup file: ${parseResult.error}`);
+    }
+    
+    const data = parseResult.data!
     const stats = {
       players: 0,
       seasons: 0,

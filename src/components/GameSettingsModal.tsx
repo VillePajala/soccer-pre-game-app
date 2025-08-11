@@ -390,6 +390,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                       id="seasonSelect"
                       value={seasonId || ''}
                       onChange={handleSeasonChange}
+                      aria-label={t('gameSettingsModal.selectSeason', '-- Select Season --')}
                       className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                     >
                       <option value="">{t('gameSettingsModal.selectSeason', '-- Select Season --')}</option>
@@ -452,6 +453,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                       id="tournamentSelect"
                       value={tournamentId || ''}
                       onChange={handleTournamentChange}
+                      aria-label={t('gameSettingsModal.selectTournament', '-- Select Tournament --')}
                       className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                     >
                       <option value="">{t('gameSettingsModal.selectTournament', '-- Select Tournament --')}</option>
@@ -565,6 +567,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                       value={gameHour}
                       onChange={handleHourChange}
                       placeholder={t('gameSettingsModal.hourPlaceholder', 'HH')}
+                      aria-label={t('gameSettingsModal.gameHourLabel', 'Game hour')}
                       className="w-1/2 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                       maxLength={2}
                     />
@@ -576,6 +579,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                       value={gameMinute}
                       onChange={handleMinuteChange}
                       placeholder={t('gameSettingsModal.minutePlaceholder', 'MM')}
+                      aria-label={t('gameSettingsModal.gameMinuteLabel', 'Game minute')}
                       className="w-1/2 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                       maxLength={2}
                     />
@@ -745,6 +749,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                       <select
                         value={availablePlayers.find(p => p.receivedFairPlayCard)?.id || ''}
                         onChange={(e) => handleFairPlayCardClick(e.target.value || null)}
+                        aria-label={t('gameSettingsModal.fairPlayCardPlayerSelect', 'Select player for Fair Play Card')}
                         className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                       >
                         <option value="">{t('gameSettingsModal.selectPlayerForFairPlay', '-- Select Player --')}</option>
@@ -806,6 +811,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                           value={eventManagement.editGoalTime}
                           onChange={(e) => eventManagement.setEditGoalTime(e.target.value)}
                           placeholder={t('gameSettingsModal.timeFormatPlaceholder', 'MM:SS')}
+                          aria-label={t('gameSettingsModal.editGoalTimeLabel', 'Edit goal time')}
                           className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                         />
                         {event.type === 'goal' && (
@@ -813,6 +819,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                             <select
                               value={eventManagement.editGoalScorerId}
                               onChange={(e) => eventManagement.setEditGoalScorerId(e.target.value)}
+                              aria-label={t('gameSettingsModal.selectScorer', 'Select Scorer...')}
                               className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm appearance-none"
                             >
                               <option value="">{t('gameSettingsModal.selectScorer', 'Select Scorer...')}</option>
@@ -823,6 +830,7 @@ const GameSettingsModal: React.FC<GameSettingsModalProps> = ({
                             <select
                               value={eventManagement.editGoalAssisterId}
                               onChange={(e) => eventManagement.setEditGoalAssisterId(e.target.value || undefined)}
+                              aria-label={t('gameSettingsModal.selectAssister', 'Select Assister (Optional)...')}
                               className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm appearance-none"
                             >
                               <option value="">{t('gameSettingsModal.selectAssister', 'Select Assister (Optional)...')}</option>

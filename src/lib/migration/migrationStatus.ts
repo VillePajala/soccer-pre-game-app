@@ -2,6 +2,7 @@
 import * as React from 'react';
 import { supabase } from '../supabase';
 import { useAuth } from '../../context/AuthContext';
+import { safeLocalStorageGet } from '../../utils/safeJson';
 
 export interface MigrationStatus {
   userId: string;
@@ -24,10 +25,10 @@ export interface MigrationStatus {
  * Check if user has existing data in localStorage
  */
 export function checkLocalStorageData(): MigrationStatus['dataTypes'] {
-  const players = JSON.parse(localStorage.getItem('masterRoster') || '[]').length;
-  const seasons = JSON.parse(localStorage.getItem('seasons') || '[]').length;
-  const tournaments = JSON.parse(localStorage.getItem('tournaments') || '[]').length;
-  const games = Object.keys(JSON.parse(localStorage.getItem('savedGames') || '{}')).length;
+  const players = safeLocalStorageGet<any[]>('masterRoster', []).length;
+  const seasons = safeLocalStorageGet<any[]>('seasons', []).length;
+  const tournaments = safeLocalStorageGet<any[]>('tournaments', []).length;
+  const games = Object.keys(safeLocalStorageGet<Record<string, any>>('savedGames', {})).length;
   const settings = Boolean(localStorage.getItem('appSettings'));
 
   return { players, seasons, tournaments, games, settings };

@@ -8,6 +8,7 @@
 import React, { Component, ReactNode } from 'react';
 import { markComponentFailed, shouldUseLegacyState } from '@/utils/stateMigration';
 import logger from '@/utils/logger';
+import { safeLocalStorageGet } from '@/utils/safeJson';
 
 interface Props {
   children: ReactNode;
@@ -102,7 +103,7 @@ export class MigrationErrorBoundary extends Component<Props, State> {
     
     // Store error report for debugging
     try {
-      const existingReports = JSON.parse(localStorage.getItem('migration-error-reports') || '[]');
+      const existingReports = safeLocalStorageGet<any[]>('migration-error-reports', []);
       existingReports.push(errorReport);
       // Keep only last 10 reports
       const recentReports = existingReports.slice(-10);

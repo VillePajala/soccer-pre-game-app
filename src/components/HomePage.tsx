@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useReducer, useRef, useMemo, startTransition } from 'react';
+import { useStateSynchronization } from '@/hooks/useStateSynchronization';
+import { GameErrorBoundary } from './GameErrorBoundary';
 import SoccerField from '@/components/SoccerField';
 import PlayerBar from '@/components/PlayerBar';
 import ControlBar from '@/components/ControlBar';
@@ -496,6 +498,14 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   const [isGameLoading, setIsGameLoading] = useState(false); // For loading a specific game
   const [gameLoadError, setGameLoadError] = useState<string | null>(null);
   const [isStateSynchronizing, setIsStateSynchronizing] = useState(false); // Prevent race conditions during state updates
+  
+  // Enhanced synchronization for preventing critical race conditions
+  const { 
+    withSynchronization, 
+    isSynchronizing, 
+    waitForSynchronization 
+  } = useStateSynchronization();
+  
   // Removed - now handled by useGameDataManager:
   // const [isGameDeleting, setIsGameDeleting] = useState(false); // For deleting a specific game
   // const [gameDeleteError, setGameDeleteError] = useState<string | null>(null);
@@ -939,10 +949,11 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     // to avoid race conditions.
   }, []);
 
-  // Helper function to load game state from game data
-  const loadGameStateFromData = (gameData: AppState | null, isInitialDefaultLoad = false) => {
-    // Set synchronization flag to prevent race conditions with auto-save
-    setIsStateSynchronizing(true);
+  // Helper function to load game state from game data with proper synchronization
+  const loadGameStateFromData = useCallback(async (gameData: AppState | null, isInitialDefaultLoad = false) => {
+    await withSynchronization('loadGameState', async () => {
+      // Set legacy synchronization flag for backward compatibility
+      setIsStateSynchronizing(true);
     
     // Use startTransition to batch all state updates together to prevent UI inconsistencies
     startTransition(() => {
@@ -1043,10 +1054,11 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     };
     resetHistory(newHistoryState);
     
-    // Clear synchronization flag after all state updates are complete
-    setIsStateSynchronizing(false);
+      // Clear synchronization flag after all state updates are complete
+      setIsStateSynchronizing(false);
+      });
     });
-  };
+  }, [withSynchronization]);
 
   // --- Effect to load game state when currentGameId changes or savedGames updates ---
   useEffect(() => {
@@ -1059,10 +1071,12 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       gameToLoad = savedGames[currentGameId] as AppState; // Cast to AppState
     } else {
     }
-    loadGameStateFromData(gameToLoad); 
+    loadGameStateFromData(gameToLoad).catch(error => {
+      logger.error('[useEffect] Failed to load game state:', error);
+    }); 
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentGameId, savedGames, initialLoadComplete]); // IMPORTANT: initialLoadComplete ensures this runs after master roster is loaded.
+  }, [currentGameId, savedGames, initialLoadComplete, loadGameStateFromData]); // IMPORTANT: initialLoadComplete ensures this runs after master roster is loaded.
 
   // --- Auto-save state using offline-first storage ---
   const autosaveTimeoutRef = useRef<number | null>(null);
@@ -1086,12 +1100,13 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   }, []);
 
   useEffect(() => {
-    // Skip autosave during new game creation or synchronization
-    if (isCreatingNewGame || isStateSynchronizing) return;
+    // Skip autosave during new game creation, synchronization, or pending synchronization operations
+    if (isCreatingNewGame || isStateSynchronizing || isSynchronizing()) return;
 
     if (initialLoadComplete && currentGameId && currentGameId !== DEFAULT_GAME_ID) {
       scheduleAutosave(async () => {
-        try {
+        await withSynchronization('autoSave', async () => {
+          try {
           const assistEvents = gameSessionState.gameEvents.filter(event => event.type === 'goal' && (event as any).assisterId);
           logger.log(`[AUTO-SAVE] Starting auto-save for game ${currentGameId}`);
           if (assistEvents.length > 0) {
@@ -1140,16 +1155,17 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           } else {
             await utilSaveCurrentGameIdSetting(currentGameId);
           }
-        } catch (error) {
-          logger.error('[AUTO-SAVE] Failed to auto-save state:', error);
-        }
+          } catch (error) {
+            logger.error('[AUTO-SAVE] Failed to auto-save state:', error);
+          }
+        });
       });
     }
   }, [
     initialLoadComplete, currentGameId, isCreatingNewGame, isStateSynchronizing,
     playersOnField, opponents, drawings, availablePlayers, masterRosterQueryResultData,
     gameSessionState, playerAssessments, tacticalDiscs, tacticalDrawings, tacticalBallPosition, isPlayed,
-    scheduleAutosave,
+    scheduleAutosave, withSynchronization,
   ]);
 
   // **** ADDED: Effect to prompt for setup if default game ID is loaded ****
@@ -1299,8 +1315,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
     if (gameDataToLoad) {
       try {
-        // Dispatch to reducer to load the game state
-        loadGameStateFromData(gameDataToLoad); // This now primarily uses the reducer
+        // Dispatch to reducer to load the game state with proper synchronization
+        await loadGameStateFromData(gameDataToLoad); // This now primarily uses the reducer
 
         // Update current game ID and save settings
         setCurrentGameId(gameId);
@@ -1765,23 +1781,28 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           />
         )}
 
-        <SoccerField
-          players={playersOnField}
-          opponents={opponents}
-          drawings={isTacticsBoardView ? tacticalDrawings : drawings}
-          onPlayerMove={handlePlayerMove}
-          onPlayerMoveEnd={handlePlayerMoveEnd}
-          onPlayerRemove={handlePlayerRemove}
-          onOpponentMove={handleOpponentMove}
-          onOpponentMoveEnd={handleOpponentMoveEnd}
-          onOpponentRemove={handleOpponentRemove}
-          onPlayerDrop={handleDropOnField}
-          showPlayerNames={gameSessionState.showPlayerNames}
-          onDrawingStart={isTacticsBoardView ? handleTacticalDrawingStart : handleDrawingStart}
-          onDrawingAddPoint={isTacticsBoardView ? handleTacticalDrawingAddPoint : handleDrawingAddPoint}
-          onDrawingEnd={isTacticsBoardView ? handleTacticalDrawingEnd : handleDrawingEnd}
-          draggingPlayerFromBarInfo={draggingPlayerFromBarInfo}
-          onPlayerDropViaTouch={handlePlayerDropViaTouch}
+        <GameErrorBoundary 
+          componentName="SoccerField" 
+          fallbackTitle="Field Error"
+          fallbackMessage="The soccer field encountered an error. This might affect player positioning."
+        >
+          <SoccerField
+            players={playersOnField}
+            opponents={opponents}
+            drawings={isTacticsBoardView ? tacticalDrawings : drawings}
+            onPlayerMove={handlePlayerMove}
+            onPlayerMoveEnd={handlePlayerMoveEnd}
+            onPlayerRemove={handlePlayerRemove}
+            onOpponentMove={handleOpponentMove}
+            onOpponentMoveEnd={handleOpponentMoveEnd}
+            onOpponentRemove={handleOpponentRemove}
+            onPlayerDrop={handleDropOnField}
+            showPlayerNames={gameSessionState.showPlayerNames}
+            onDrawingStart={isTacticsBoardView ? handleTacticalDrawingStart : handleDrawingStart}
+            onDrawingAddPoint={isTacticsBoardView ? handleTacticalDrawingAddPoint : handleDrawingAddPoint}
+            onDrawingEnd={isTacticsBoardView ? handleTacticalDrawingEnd : handleDrawingEnd}
+            draggingPlayerFromBarInfo={draggingPlayerFromBarInfo}
+            onPlayerDropViaTouch={handlePlayerDropViaTouch}
           onPlayerDragCancelViaTouch={handlePlayerDragCancelViaTouch}
           timeElapsedInSeconds={timeElapsedInSeconds}
           isTacticsBoardView={isTacticsBoardView}
@@ -1791,13 +1812,19 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           onToggleTacticalDiscType={handleToggleTacticalDiscType}
           tacticalBallPosition={tacticalBallPosition}
           onTacticalBallMove={handleTacticalBallMove}
-        />
+          />
+        </GameErrorBoundary>
         {/* Other components that might overlay or interact with the field */}
       </div>
 
       {/* Bottom Section: Control Bar */}
       <div className={barStyle}>
-        <ControlBar
+        <GameErrorBoundary 
+          componentName="ControlBar"
+          fallbackTitle="Control Panel Error"
+          fallbackMessage="The control panel encountered an error. Some game controls may not work."
+        >
+          <ControlBar
           onUndo={handleUndo}
           onRedo={handleRedo}
           canUndo={canUndo}
@@ -1827,12 +1854,19 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           onOpenSettingsModal={handleOpenSettingsModal}
           onOpenPlayerAssessmentModal={openPlayerAssessmentModal}
           onSignOut={signOut}
-        />
+          />
+        </GameErrorBoundary>
       </div>
 
       {/* Modals and Overlays */}
-      {/* Training Resources Modal */}
-      {trainingResourcesModal.isOpen && (
+      <GameErrorBoundary 
+        componentName="ModalsSection"
+        fallbackTitle="Modal Error"
+        fallbackMessage="A modal encountered an error. You can continue using the game, but some dialogs may not work properly."
+        showRetryButton={false}
+      >
+        {/* Training Resources Modal */}
+        {trainingResourcesModal.isOpen && (
         <TrainingResourcesModal
           isOpen={trainingResourcesModal.isOpen}
           onClose={trainingResourcesModal.handleClose}
@@ -2048,6 +2082,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           onDelete={handleDeletePlayerAssessment}
         />
       )}
+      </GameErrorBoundary>
       
     </main>
   );

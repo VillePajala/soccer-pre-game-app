@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PushNotificationSettings from './PushNotificationSettings';
 import { useDeviceIntegration } from '@/hooks/useDeviceIntegration';
 
@@ -28,16 +28,35 @@ export default function AdvancedPWASettings({ className = '' }: AdvancedPWASetti
 
   const [activeTab, setActiveTab] = useState<'notifications' | 'features' | 'sharing' | 'debug'>('notifications');
   const [testResults, setTestResults] = useState<Record<string, string>>({});
+  const testTimeoutsRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      testTimeoutsRef.current.forEach((timeoutId) => clearTimeout(timeoutId));
+      testTimeoutsRef.current.clear();
+    };
+  }, []);
 
   const addTestResult = (feature: string, result: string) => {
+    // Clear existing timeout for this feature if any
+    const existingTimeout = testTimeoutsRef.current.get(feature);
+    if (existingTimeout) {
+      clearTimeout(existingTimeout);
+    }
+
     setTestResults(prev => ({ ...prev, [feature]: result }));
-    setTimeout(() => {
+    
+    const timeoutId = setTimeout(() => {
       setTestResults(prev => {
         const newResults = { ...prev };
         delete newResults[feature];
         return newResults;
       });
+      testTimeoutsRef.current.delete(feature);
     }, 3000);
+    
+    testTimeoutsRef.current.set(feature, timeoutId);
   };
 
   const handleTestVibration = () => {

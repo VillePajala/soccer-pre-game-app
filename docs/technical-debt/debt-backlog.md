@@ -54,7 +54,14 @@ This document tracks all identified technical debt items across the codebase. It
 
 | ID | Title | Priority | Resolved | PR | Version |
 |----|-------|----------|----------|-----|---------|
-| - | - | - | - | - | - |
+| CR-001 | Unprotected JSON.parse() Operations | P0 | 2025-08-11 | Direct | v1.0 |
+| CR-002 | Memory Leaks from Uncleared Timers | P0 | 2025-08-11 | Direct | v1.0 |
+| CR-003 | Race Condition in State Synchronization | P0 | 2025-08-11 | Direct | v1.0 |
+| CR-005 | Unsafe Type Casting in Migration | P1 | 2025-08-11 | Direct | v1.0 |
+| CR-007 | Missing Error Boundaries in Auth Flow | P1 | 2025-08-11 | Direct | v1.0 |
+| CR-008 | Non-Atomic Game Save Operations | P1 | 2025-08-11 | Direct | v1.0 |
+| ADT-001 | Accessibility Violations in GameSettingsModal | P2 | 2025-08-11 | Direct | v1.0 |
+| PFM-001 | Bundle Size Analysis and Optimization | P2 | 2025-08-11 | Direct | v1.0 |
 
 ## Metrics
 
@@ -64,24 +71,24 @@ This document tracks all identified technical debt items across the codebase. It
 - **Velocity**: 0 story points
 
 ### Overall Progress
-- **Total Items**: 21
-- **Open**: 21
+- **Total Items**: 23 (added accessibility and performance items)
+- **Open**: 15
 - **In Progress**: 0
-- **Resolved**: 0
-- **Resolution Rate**: 0%
+- **Resolved**: 8
+- **Resolution Rate**: 35%
 
 ### By Priority
-- **P0 (Critical)**: 3 open, 0 resolved
-- **P1 (High)**: 7 open, 0 resolved
-- **P2 (Medium)**: 6 open, 0 resolved
+- **P0 (Critical)**: 0 open, 3 resolved ✅ ALL RESOLVED
+- **P1 (High)**: 4 open, 3 resolved
+- **P2 (Medium)**: 6 open, 2 resolved
 - **P3 (Low)**: 5 open, 0 resolved
 
 ### By Category
 | Category | Open | Resolved | Total |
 |----------|------|----------|-------|
-| State Management | 5 | 0 | 5 |
-| Data Persistence | 3 | 0 | 3 |
-| Memory Management | 4 | 0 | 4 |
+| State Management | 3 | 2 | 5 |
+| Data Persistence | 1 | 2 | 3 |
+| Memory Management | 3 | 1 | 4 |
 | Performance | 3 | 0 | 3 |
 | Security | 4 | 0 | 4 |
 | Type Safety | 1 | 0 | 1 |

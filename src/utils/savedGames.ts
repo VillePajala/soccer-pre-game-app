@@ -3,6 +3,9 @@ import { authAwareStorageManager as storageManager } from '@/lib/storage';
 import type { SavedGamesCollection, AppState, GameEvent as PageGameEvent, Point, Opponent, IntervalLog } from '@/types';
 import type { Player } from '@/types';
 import logger from '@/utils/logger';
+import { safeImportDataParse } from './safeJson';
+import { executeAtomicSave, createSaveOperation } from './atomicSave';
+import { safeCast, validateAppState } from './typeValidation';
 
 // Note: AppState (imported from @/types) is the primary type used for live game state
 // and for storing games in localStorage via SavedGamesCollection.
@@ -77,16 +80,22 @@ export const saveGames = async (games: SavedGamesCollection): Promise<void> => {
  * @param gameData - Game data to save
  * @returns Promise resolving to the saved game data
  */
+/**
+ * Enhanced atomic save game function with rollback support
+ * Addresses CR-008: Non-Atomic Game Save Operations
+ */
 export const saveGame = async (gameId: string, gameData: unknown): Promise<AppState> => {
   try {
     if (!gameId) {
       throw new Error('Game ID is required');
     }
     
-    const gameWithId = { ...(gameData as AppState), id: gameId };
+    // Validate the input data before proceeding
+    const validatedGameData = safeCast(gameData, validateAppState, `saveGame-${gameId}`);
+    const gameWithId = { ...validatedGameData, id: gameId };
     
     // CRITICAL BUG FIX: Add detailed logging for assist debugging
-    const gameEvents = (gameWithId as AppState).gameEvents || [];
+    const gameEvents = gameWithId.gameEvents || [];
     const assistEvents = gameEvents.filter(event => event.type === 'goal' && event.assisterId);
     if (assistEvents.length > 0) {
       logger.log(`Saving game with ${assistEvents.length} assist events:`, assistEvents.map(e => {
@@ -101,19 +110,64 @@ export const saveGame = async (gameId: string, gameData: unknown): Promise<AppSt
         return { id: e.id, type: e.type, time: e.time };
       }));
     }
+
+    // Store original game state for potential rollback
+    let originalGameState: AppState | null = null;
+    try {
+      const existingGames = await getSavedGames();
+      originalGameState = existingGames[gameId] as AppState || null;
+    } catch {
+      // No existing game to backup - that's fine for new games
+    }
+
+    // Create atomic save operation with rollback capability
+    const saveOperation = createSaveOperation(
+      `saveGame-${gameId}`,
+      async () => {
+        logger.log(`[AtomicSave] Executing save for game ${gameId}`);
+        return await storageManager.saveSavedGame(gameWithId);
+      },
+      async () => {
+        if (originalGameState) {
+          logger.log(`[AtomicSave] Rolling back game ${gameId} to previous state`);
+          await storageManager.saveSavedGame(originalGameState);
+        } else {
+          logger.log(`[AtomicSave] Deleting game ${gameId} (was new game)`);
+          await storageManager.deleteSavedGame(gameId);
+        }
+      }
+    );
+
+    // Execute the atomic save transaction
+    const result = await executeAtomicSave([saveOperation]);
     
-    const savedGame = await storageManager.saveSavedGame(gameWithId);
-    return savedGame as AppState;
+    if (!result.success) {
+      throw new Error(result.error || 'Atomic save operation failed');
+    }
+
+    const savedGame = result.results?.[0] as AppState;
+    if (!savedGame) {
+      throw new Error('Save operation completed but no result returned');
+    }
+
+    logger.log(`[AtomicSave] Game ${gameId} saved successfully`);
+    return savedGame;
+    
   } catch (error) {
-    logger.error('Error saving game:', error);
+    logger.error('Error in atomic save game:', error);
     
     // CRITICAL BUG FIX: Add specific logging for assist-related errors
     if (error instanceof Error && error.message.includes('assist')) {
-      logger.error('Assist-related save error details:', {
-        gameId,
-        gameEvents: (gameData as AppState)?.gameEvents?.length || 0,
-        assistEvents: (gameData as AppState)?.gameEvents?.filter(e => e.type === 'goal' && e.assisterId).length || 0
-      });
+      try {
+        const gameDataForLogging = safeCast(gameData, validateAppState, 'errorLogging');
+        logger.error('Assist-related save error details:', {
+          gameId,
+          gameEvents: gameDataForLogging.gameEvents?.length || 0,
+          assistEvents: gameDataForLogging.gameEvents?.filter(e => e.type === 'goal' && e.assisterId).length || 0
+        });
+      } catch (validationError) {
+        logger.error('Could not log assist details due to data validation failure');
+      }
     }
     
     throw error;
@@ -507,10 +561,15 @@ export const importGamesFromJson = async (
 ): Promise<number> => {
   let importedCount = 0;
   try {
-    const gamesToImport = JSON.parse(jsonData) as SavedGamesCollection;
-    if (typeof gamesToImport !== 'object' || gamesToImport === null) {
-      throw new Error('Invalid JSON data format for import.');
+    const parseResult = safeImportDataParse<SavedGamesCollection>(jsonData, (data): data is SavedGamesCollection => {
+      return typeof data === 'object' && data !== null && !Array.isArray(data);
+    });
+    
+    if (!parseResult.success) {
+      throw new Error(`Invalid JSON data format for import: ${parseResult.error}`);
     }
+    
+    const gamesToImport = parseResult.data!;
 
     const existingGames = await getSavedGames();
     const gamesToSave: SavedGamesCollection = { ...existingGames }; // Make a mutable copy

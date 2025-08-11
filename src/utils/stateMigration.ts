@@ -10,6 +10,7 @@ import type { GameStore, GameSessionState, FieldState } from '@/stores/gameStore
 import type { UIStore, ModalState, ViewState } from '@/stores/uiStore';
 import type { PersistenceStore, AppSettings } from '@/stores/persistenceStore';
 import logger from './logger';
+import { safeLocalStorageGet, safeJsonParse } from './safeJson';
 
 // Migration feature flags
 export interface MigrationFlags {
@@ -54,7 +55,7 @@ if (typeof window !== 'undefined') {
   try {
     const storedFlags = localStorage.getItem('migration-flags');
     if (storedFlags) {
-      const flags = JSON.parse(storedFlags);
+      const flags = safeLocalStorageGet<MigrationFlags>('migration-flags', defaultMigrationFlags);
       // If migration flags exist but no migration is in progress, assume it was completed
       if (flags && !migrationState.isInProgress) {
         migrationState.currentPhase = 'completed';
@@ -311,7 +312,12 @@ export const restoreFromMigrationBackup = (): boolean => {
       throw new Error('No migration backup found');
     }
     
-    const backup = JSON.parse(backupString);
+    const parseResult = safeJsonParse<Record<string, any>>(backupString);
+    if (!parseResult.success) {
+      throw new Error(`Invalid migration backup data: ${parseResult.error}`);
+    }
+    
+    const backup = parseResult.data!;
     
     // Clear current localStorage
     localStorage.clear();
@@ -445,8 +451,7 @@ export const rollbackMigration = (): boolean => {
  * Get current migration status
  */
 export const getMigrationStatus = (): MigrationState & { flags: MigrationFlags } => {
-  const flagsString = localStorage.getItem('migration-flags');
-  const flags = flagsString ? JSON.parse(flagsString) : defaultMigrationFlags;
+  const flags = safeLocalStorageGet<MigrationFlags>('migration-flags', defaultMigrationFlags);
   
   return {
     ...migrationState,
