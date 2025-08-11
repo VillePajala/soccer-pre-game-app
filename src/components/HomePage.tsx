@@ -502,8 +502,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   // Enhanced synchronization for preventing critical race conditions
   const { 
     withSynchronization, 
-    isSynchronizing, 
-    waitForSynchronization 
+    isSynchronizing
   } = useStateSynchronization();
   
   // Removed - now handled by useGameDataManager:
@@ -927,7 +926,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [withSynchronization]);
 
   // Add a timeout for mobile loading issues
   useEffect(() => {
@@ -1165,7 +1164,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     initialLoadComplete, currentGameId, isCreatingNewGame, isStateSynchronizing,
     playersOnField, opponents, drawings, availablePlayers, masterRosterQueryResultData,
     gameSessionState, playerAssessments, tacticalDiscs, tacticalDrawings, tacticalBallPosition, isPlayed,
-    scheduleAutosave, withSynchronization,
+    scheduleAutosave, withSynchronization, isSynchronizing,
   ]);
 
   // **** ADDED: Effect to prompt for setup if default game ID is loaded ****

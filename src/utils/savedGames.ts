@@ -165,7 +165,7 @@ export const saveGame = async (gameId: string, gameData: unknown): Promise<AppSt
           gameEvents: gameDataForLogging.gameEvents?.length || 0,
           assistEvents: gameDataForLogging.gameEvents?.filter(e => e.type === 'goal' && e.assisterId).length || 0
         });
-      } catch (validationError) {
+      } catch {
         logger.error('Could not log assist details due to data validation failure');
       }
     }

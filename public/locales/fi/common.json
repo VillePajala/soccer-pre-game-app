@@ -600,7 +600,12 @@
     "sendBackupError": "Varmuuskopion lähetys epäonnistui.",
     "sendBackupPrompt": "Lähetä varmuuskopio sähköpostilla?",
     "lastBackupLabel": "Viimeinen varmuuskopio",
-    "never": "Ei koskaan"
+    "never": "Ei koskaan",
+    "legalTitle": "Oikeudellinen Tieto",
+    "privacyPolicyLink": "Tietosuojaseloste",
+    "termsOfServiceLink": "Käyttöehdot",
+    "deleteAccount": "Poista Tili",
+    "deleteAccountDescription": "Poista tilisi ja kaikki tiedot pysyvästi. Tätä toimintoa ei voi perua."
   },
   "playerAssessmentModal": {
     "title": "Arvioi Pelaajat",

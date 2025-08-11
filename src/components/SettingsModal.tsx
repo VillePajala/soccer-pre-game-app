@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import packageJson from '../../package.json';
 import { HiOutlineArrowRightOnRectangle } from 'react-icons/hi2';
+import { HiOutlineTrash } from 'react-icons/hi2';
+import AccountDeletionModal from './AccountDeletionModal';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -31,6 +33,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   const { t } = useTranslation();
   const [teamName, setTeamName] = useState(defaultTeamName);
   const [resetConfirm, setResetConfirm] = useState('');
+  const [isAccountDeletionModalOpen, setIsAccountDeletionModalOpen] = useState(false);
 
   useEffect(() => {
     setTeamName(defaultTeamName);
@@ -112,6 +115,29 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                   )}
                 </p>
               </div>
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium text-slate-200">
+                  {t('settingsModal.legalTitle', 'Legal Information')}
+                </h4>
+                <div className="flex flex-col space-y-1">
+                  <a
+                    href="/privacy-policy.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-indigo-400 underline"
+                  >
+                    {t('settingsModal.privacyPolicyLink', 'Privacy Policy')}
+                  </a>
+                  <a
+                    href="/terms-of-service.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-indigo-400 underline"
+                  >
+                    {t('settingsModal.termsOfServiceLink', 'Terms of Service')}
+                  </a>
+                </div>
+              </div>
               <div className="space-y-1">
                 <button onClick={onResetGuide} className={primaryButtonStyle}>
                   {t('settingsModal.resetGuideButton', 'Reset App Guide')}
@@ -142,6 +168,16 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                   <HiOutlineArrowRightOnRectangle className="w-4 h-4 rotate-180" />
                   {t('auth.signOut')}
                 </button>
+                <button
+                  onClick={() => setIsAccountDeletionModalOpen(true)}
+                  className="w-full px-4 py-2 bg-red-700 hover:bg-red-600 text-red-100 rounded-lg border border-red-600 hover:border-red-500 transition-colors flex items-center justify-center gap-2"
+                >
+                  <HiOutlineTrash className="w-4 h-4" />
+                  {t('settingsModal.deleteAccount', 'Delete Account')}
+                </button>
+                <p className="text-sm text-slate-400">
+                  {t('settingsModal.deleteAccountDescription', 'Permanently delete your account and all data. This action cannot be undone.')}
+                </p>
               </div>
             )}
             <div className="pt-2 border-t border-slate-700/40 space-y-2">
@@ -183,6 +219,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
         </div>
       </div>
+      {/* Account Deletion Modal - only render when needed */}
+      {isAccountDeletionModalOpen && (
+        <AccountDeletionModal 
+          isOpen={isAccountDeletionModalOpen}
+          onClose={() => setIsAccountDeletionModalOpen(false)}
+        />
+      )}
     </div>
   );
 };

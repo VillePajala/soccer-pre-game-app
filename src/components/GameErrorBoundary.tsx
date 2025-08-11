@@ -182,7 +182,7 @@ export class GameErrorBoundary extends Component<Props, State> {
 }
 
 // Higher-order component for easy wrapping
-export function withGameErrorBoundary<T extends {}>(
+export function withGameErrorBoundary<T extends object>(
   Component: React.ComponentType<T>,
   componentName: string,
   errorBoundaryProps?: Partial<Props>

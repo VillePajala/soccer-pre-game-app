@@ -32,9 +32,10 @@ export default function AdvancedPWASettings({ className = '' }: AdvancedPWASetti
 
   // Cleanup timeouts on unmount
   useEffect(() => {
+    const timeouts = testTimeoutsRef.current;
     return () => {
-      testTimeoutsRef.current.forEach((timeoutId) => clearTimeout(timeoutId));
-      testTimeoutsRef.current.clear();
+      timeouts.forEach((timeoutId) => clearTimeout(timeoutId));
+      timeouts.clear();
     };
   }, []);
 

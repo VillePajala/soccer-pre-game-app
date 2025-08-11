@@ -609,7 +609,12 @@
     "sendBackupError": "Failed to send backup.",
     "sendBackupPrompt": "Send backup via email?",
     "lastBackupLabel": "Last Backup",
-    "never": "Never"
+    "never": "Never",
+    "legalTitle": "Legal Information",
+    "privacyPolicyLink": "Privacy Policy",
+    "termsOfServiceLink": "Terms of Service",
+    "deleteAccount": "Delete Account",
+    "deleteAccountDescription": "Permanently delete your account and all data. This action cannot be undone."
   },
   "playerAssessmentModal": {
     "title": "Assess Players",
