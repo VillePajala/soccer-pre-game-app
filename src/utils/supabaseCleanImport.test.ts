@@ -190,7 +190,7 @@ describe('cleanImportToSupabase', () => {
 
     expect(result).toEqual({
       success: false,
-      message: 'Import failed: Invalid backup format - missing localStorage data'
+      message: 'Import failed: Invalid backup format: Data validation failed - invalid format or structure'
     });
   });
 

@@ -5,6 +5,11 @@
  */
 
 import { renderHook, act } from '@testing-library/react';
+
+// Clear the UIStore mock from setupModalTests.ts to test the real implementation
+jest.unmock('../uiStore');
+jest.unmock('@/stores/uiStore');
+
 import { 
   useUIStore
 } from '../uiStore';
@@ -54,27 +59,38 @@ describe('UIStore', () => {
   describe('Modal stack behavior', () => {
     it('pushes to and pops from modalStack correctly', () => {
       const { result } = renderHook(() => useUIStore());
+      
+      // Test initial state
+      expect(typeof result.current.isAnyModalOpen).toBe('function');
       expect(result.current.isAnyModalOpen()).toBe(false);
+      expect(Array.isArray(result.current.modalStack)).toBe(true);
+      expect(result.current.modalStack.length).toBe(0);
 
+      // Test opening modal
       act(() => {
         result.current.openModal('settingsModal');
       });
       expect(result.current.isModalOpen('settingsModal')).toBe(true);
+      expect(result.current.modalStack).toContain('settingsModal');
       expect(result.current.modalStack[result.current.modalStack.length - 1]).toBe('settingsModal');
       expect(result.current.isAnyModalOpen()).toBe(true);
 
+      // Test opening another modal
       act(() => {
         result.current.openModal('gameStatsModal');
       });
+      expect(result.current.modalStack).toContain('gameStatsModal');
       expect(result.current.modalStack[result.current.modalStack.length - 1]).toBe('gameStatsModal');
 
+      // Test closing specific modal
       act(() => {
         result.current.closeModal('gameStatsModal');
       });
       expect(result.current.isModalOpen('gameStatsModal')).toBe(false);
-      expect(result.current.modalStack.includes('gameStatsModal')).toBe(false);
-      expect(result.current.isAnyModalOpen()).toBe(true);
+      expect(result.current.modalStack).not.toContain('gameStatsModal');
+      expect(result.current.isAnyModalOpen()).toBe(true); // settingsModal still open
 
+      // Test closing all modals
       act(() => {
         result.current.closeAllModals();
       });
@@ -85,17 +101,19 @@ describe('UIStore', () => {
     it('toggleModal maintains stack consistency', () => {
       const { result } = renderHook(() => useUIStore());
 
+      // Test toggle to open
       act(() => {
         result.current.toggleModal('rosterSettingsModal');
       });
       expect(result.current.isModalOpen('rosterSettingsModal')).toBe(true);
-      expect(result.current.modalStack.includes('rosterSettingsModal')).toBe(true);
+      expect(result.current.modalStack).toContain('rosterSettingsModal');
 
+      // Test toggle to close
       act(() => {
         result.current.toggleModal('rosterSettingsModal');
       });
       expect(result.current.isModalOpen('rosterSettingsModal')).toBe(false);
-      expect(result.current.modalStack.includes('rosterSettingsModal')).toBe(false);
+      expect(result.current.modalStack).not.toContain('rosterSettingsModal');
     });
   });
 

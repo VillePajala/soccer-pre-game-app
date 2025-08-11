@@ -87,15 +87,18 @@ describe('Migration Status (Actual Implementation)', () => {
       });
     });
 
-    it('should throw when JSON data is corrupted', () => {
+    it('should handle corrupted JSON gracefully with fallback values', () => {
       mockLocalStorage.getItem
         .mockImplementation((key: string) => {
           if (key === 'masterRoster') return 'invalid-json';
           return '[]';
         });
 
-      // The current implementation does throw on corrupted JSON
-      expect(() => checkLocalStorageData()).toThrow();
+      // The current implementation uses safeLocalStorageGet which doesn't throw
+      // but returns fallback values instead
+      expect(() => checkLocalStorageData()).not.toThrow();
+      const result = checkLocalStorageData();
+      expect(result.players).toBe(0); // fallback to empty array
     });
   });
 

@@ -64,38 +64,46 @@ describe('Saved Games Utilities', () => {
 
   const mockAppState: AppState = {
     id: 'game123',
-    homeTeam: 'Home FC',
-    awayTeam: 'Away United',
-    date: '2024-01-15',
+    teamName: 'Home FC',
+    opponentName: 'Away United', 
+    gameDate: '2024-01-15',
     homeScore: 0,
     awayScore: 0,
     teamOnLeft: 'home',
     players: [],
     events: [],
+    gameEvents: [],
     gameStatus: 'notStarted',
     currentPeriod: 1,
     numberOfPeriods: 2,
     periodDuration: 45,
     seasonId: null,
     tournamentId: null,
+    selectedPlayerIds: [],
+    availablePlayers: [],
+    playersOnField: [],
   };
 
   const mockGameData: GameData = {
     id: 'game123',
-    homeTeam: 'Home FC',
-    awayTeam: 'Away United',
-    date: '2024-01-15',
+    teamName: 'Home FC',  // Changed from homeTeam to teamName
+    opponentName: 'Away United', // Changed from awayTeam to opponentName  
+    gameDate: '2024-01-15', // Changed from date to gameDate
     homeScore: 0,
     awayScore: 0,
     teamOnLeft: 'home',
     players: [],
     events: [],
+    gameEvents: [],
     gameStatus: 'notStarted',
     currentPeriod: 1,
     numberOfPeriods: 2,
     periodDuration: 45,
     seasonId: null,
     tournamentId: null,
+    selectedPlayerIds: [],
+    availablePlayers: [],
+    playersOnField: [],
   };
 
   const mockSavedGames = {
@@ -103,9 +111,9 @@ describe('Saved Games Utilities', () => {
     'game456': {
       ...mockAppState,
       id: 'game456',
-      homeTeam: 'Team A',
-      awayTeam: 'Team B',
-      date: '2024-01-16'
+      teamName: 'Team A',
+      opponentName: 'Team B',
+      gameDate: '2024-01-16'
     }
   };
 
@@ -412,21 +420,21 @@ describe('Saved Games Utilities', () => {
       mockStorageManager.getSavedGames.mockResolvedValue(mockSavedGames);
       mockStorageManager.saveSavedGame.mockResolvedValue({
         ...mockAppState,
-        homeTeam: 'Updated Team'
+        teamName: 'Updated Team'
       });
       
       const result = await updateGameDetails('game123', {
-        homeTeam: 'Updated Team'
+        teamName: 'Updated Team'
       });
       
-      expect(result?.homeTeam).toBe('Updated Team');
+      expect(result?.teamName).toBe('Updated Team');
     });
 
     it('should return null if game not found', async () => {
       mockStorageManager.getSavedGames.mockResolvedValue({});
       
       const result = await updateGameDetails('nonexistent', {
-        homeTeam: 'Updated Team'
+        teamName: 'Updated Team'
       });
       
       expect(result).toBeNull();
@@ -500,7 +508,10 @@ describe('Saved Games Utilities', () => {
           type: 'goal' as const,
           time: 300,
           scorerId: 'player1'
-        }]
+        }],
+        selectedPlayerIds: ['player1'],
+        availablePlayers: [{ id: 'player1', name: 'Player 1' }],
+        playersOnField: [{ id: 'player1', name: 'Player 1' }],
       };
       mockStorageManager.getSavedGames.mockResolvedValue({
         'game123': gameWithEvents
@@ -533,7 +544,10 @@ describe('Saved Games Utilities', () => {
           type: 'goal' as const,
           time: 300,
           scorerId: 'player1'
-        }]
+        }],
+        selectedPlayerIds: ['player1'],
+        availablePlayers: [{ id: 'player1', name: 'Player 1' }],
+        playersOnField: [{ id: 'player1', name: 'Player 1' }],
       };
       mockStorageManager.getSavedGames.mockResolvedValue({
         'game123': gameWithEvents
@@ -554,7 +568,10 @@ describe('Saved Games Utilities', () => {
         gameEvents: [
           { id: 'event1', type: 'goal' as const, time: 300, scorerId: 'player1' },
           { id: 'event2', type: 'goal' as const, time: 600, scorerId: 'player2' }
-        ]
+        ],
+        selectedPlayerIds: ['player1', 'player2'],
+        availablePlayers: [{ id: 'player1', name: 'Player 1' }, { id: 'player2', name: 'Player 2' }],
+        playersOnField: [{ id: 'player1', name: 'Player 1' }, { id: 'player2', name: 'Player 2' }],
       };
       mockStorageManager.getSavedGames.mockResolvedValue({
         'game123': gameWithEvents
@@ -585,7 +602,10 @@ describe('Saved Games Utilities', () => {
         ...mockAppState,
         gameEvents: [
           { id: 'event1', type: 'goal' as const, time: 300, scorerId: 'player1' }
-        ]
+        ],
+        selectedPlayerIds: ['player1'],
+        availablePlayers: [{ id: 'player1', name: 'Player 1' }],
+        playersOnField: [{ id: 'player1', name: 'Player 1' }],
       };
       mockStorageManager.getSavedGames.mockResolvedValue({
         'game123': gameWithEvents
@@ -629,7 +649,7 @@ describe('Saved Games Utilities', () => {
 
     it('should import games from JSON string without overwriting', async () => {
       const importData = {
-        'newGame1': { ...mockAppState, id: 'newGame1', homeTeam: 'Imported Team' }
+        'newGame1': { ...mockAppState, id: 'newGame1', teamName: 'Imported Team' }
       };
       mockStorageManager.getSavedGames.mockResolvedValue(mockSavedGames);
       
@@ -643,7 +663,7 @@ describe('Saved Games Utilities', () => {
 
     it('should import games with overwrite enabled', async () => {
       const importData = {
-        'game123': { ...mockAppState, id: 'game123', homeTeam: 'Overwritten Team' }
+        'game123': { ...mockAppState, id: 'game123', teamName: 'Overwritten Team' }
       };
       mockStorageManager.getSavedGames.mockResolvedValue(mockSavedGames);
       

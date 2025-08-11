@@ -684,6 +684,36 @@ describe('Critical User Journeys', () => {
 **Effort**: 2-3 days  
 **Blocking**: Could miss critical issues that affect users
 
+### Brand Lock-In Prerequisite (App Name & Logo) — REQUIRED BEFORE CODE REVIEW
+
+Purpose: ensure all code, assets, and store copy use a single, final brand to avoid rework late in the process.
+
+Steps
+1. Name shortlisting (0.5 day)
+   - Generate 5–10 candidate names; check for readability, memorability, and domain availability
+   - Quick legal sanity check: search app stores and general web for conflicts
+   - Internal vote to pick top 2-3
+2. Logo concept sprint (0.5–1 day)
+   - Create 2–3 monochrome logo marks + wordmark variations (SVG-first)
+   - Validate at small sizes (favicon, 192px), dark/light backgrounds, and maskable icon
+   - Choose one concept based on clarity at 48–192px and scalability
+3. Finalize assets (0.5 day)
+   - Produce SVG master + raster exports: 48/72/96/128/192/512 maskable and non-maskable
+   - Generate favicon, app icon, splash/screen backgrounds
+   - Update manifest (name, short_name, icons) and PWA screenshots
+4. Lock brand in code and docs (0.5 day)
+   - Replace all occurrences of previous names and logos in:
+     - manifest, app headers/titles, README/docs, CI badges, store listing copy
+     - in-app strings (Settings/About), legal pages, and privacy policy contact info
+   - Add a brand usage guide snippet (colors, spacing, do/don’t) in docs/branding.md
+
+Acceptance Criteria
+- [ ] Final app name approved; availability check recorded
+- [ ] Final logo set delivered (SVG + PNGs at required sizes)
+- [ ] Manifest updated (name, short_name, icons, theme/background color)
+- [ ] All old names/logos removed from code and docs
+- [ ] Brand guide committed to repo (docs/branding.md)
+
 ### Step 12.1: Architecture Review (4 hours)
 
 **Component Architecture**:
