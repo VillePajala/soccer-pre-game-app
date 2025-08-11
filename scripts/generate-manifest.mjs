@@ -14,7 +14,18 @@ async function importManifestConfig() {
 
 async function generateManifest() {
   const manifestConfig = await importManifestConfig();
-  const branch = process.env.VERCEL_GIT_COMMIT_REF || 'development'; // Vercel's env var, fallback for local
+  
+  // Get branch from Vercel env var, or detect from git locally
+  let branch = process.env.VERCEL_GIT_COMMIT_REF;
+  if (!branch) {
+    try {
+      const { execSync } = await import('child_process');
+      branch = execSync('git branch --show-current', { encoding: 'utf8' }).trim();
+    } catch (error) {
+      console.warn('Could not detect git branch, falling back to development');
+      branch = 'development';
+    }
+  }
 
   console.log(`Generating manifest for branch: ${branch}`);
 
