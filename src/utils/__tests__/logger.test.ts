@@ -89,10 +89,10 @@ describe('logger utility', () => {
       expect(console.error).toHaveBeenCalledWith('error message');
     });
 
-    it('should not log warnings in production', () => {
+    it('should log warnings in production', () => {
       const logger = require('../logger').default;
       logger.warn('warning message');
-      expect(console.warn).not.toHaveBeenCalled();
+      expect(console.warn).toHaveBeenCalledWith('warning message');
     });
   });
 });

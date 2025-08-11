@@ -9,7 +9,7 @@ This repository uses Node.js 20, Next.js 15 and React 19 with TypeScript. Follow
 
 ## Code Style
 - Place React components inside `src/` and co-locate tests using the `.test.tsx` or `.test.ts` suffix.
-- Follow the UI conventions in `.docs/STYLE_GUIDE.md`.
+- Follow the UI conventions in `../project/STYLE_GUIDE.md`.
 - Use two space indentation and semicolons like the existing code.
 
 ## Pull Requests

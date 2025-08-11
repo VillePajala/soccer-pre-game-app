@@ -198,15 +198,15 @@ describe('NewGameSetupModal', () => {
     
     // Wait for the season input to appear
     await waitFor(() => {
-        const seasonNameInput = screen.getByPlaceholderText('newGameSetupModal.addSeasonPlaceholder');
+        const seasonNameInput = screen.getByPlaceholderText('newGameSetupModal.newSeasonPlaceholder');
         expect(seasonNameInput).toBeInTheDocument();
     });
     
-    const seasonNameInput = screen.getByPlaceholderText('newGameSetupModal.addSeasonPlaceholder');
+    const seasonNameInput = screen.getByPlaceholderText('newGameSetupModal.newSeasonPlaceholder');
     fireEvent.change(seasonNameInput, { target: { value: 'Fall 2024' } });
     
     await act(async () => {
-        fireEvent.click(screen.getByText('common.add'));
+        fireEvent.click(screen.getByText('newGameSetupModal.addButton'));
     });
 
     await waitFor(() => expect(mockAddSeasonMutation.mutateAsync).toHaveBeenCalledWith({ name: 'Fall 2024' }));
@@ -221,15 +221,15 @@ describe('NewGameSetupModal', () => {
 
     // Wait for the tournament input to appear
     await waitFor(() => {
-        const tournamentNameInput = screen.getByPlaceholderText('newGameSetupModal.addTournamentPlaceholder');
+        const tournamentNameInput = screen.getByPlaceholderText('newGameSetupModal.newTournamentPlaceholder');
         expect(tournamentNameInput).toBeInTheDocument();
     });
 
-    const tournamentNameInput = screen.getByPlaceholderText('newGameSetupModal.addTournamentPlaceholder');
+    const tournamentNameInput = screen.getByPlaceholderText('newGameSetupModal.newTournamentPlaceholder');
     fireEvent.change(tournamentNameInput, { target: { value: 'National Cup' } });
 
     await act(async () => {
-        fireEvent.click(screen.getByText('common.add'));
+        fireEvent.click(screen.getByText('newGameSetupModal.addButton'));
     });
     
     await waitFor(() => expect(mockAddTournamentMutation.mutateAsync).toHaveBeenCalledWith({ name: 'National Cup' }));

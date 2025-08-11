@@ -82,7 +82,7 @@ The [assets](assets/) folder contains images, screenshots, and other media used 
 ## Quick Links
 
 - **Getting Started**: See the main [README.md](../README.md) in the project root
-- **Contributing**: Check [CLAUDE.md](../CLAUDE.md) for AI assistant guidelines
+- **Contributing**: Check [CLAUDE.md](ai/CLAUDE.md) for AI assistant guidelines
 - **Latest Updates**: Review the [TODO list](project/TODO.md) for current priorities
 
 ## Documentation Standards

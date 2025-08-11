@@ -25,7 +25,7 @@
    - `AssessmentSlider` – vertical slider with ±0.5 step.
    - Multiline notes `TextInput` with character count.
 2. Build `PlayerAssessmentCard` showing player avatar, name, jersey number, goal/assist counts and status icon.
-3. Follow modal styling rules in `.docs/STYLE_GUIDE.md` for container, header, body and footer classes.
+3. Follow modal styling rules in `../project/STYLE_GUIDE.md` for container, header, body and footer classes.
 4. When a card expands, render the sliders and Save button. Disable Save until all fields are valid (ratings filled, notes ≤280 chars).
 
 ## 4. Player Assessment Modal

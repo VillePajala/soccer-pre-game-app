@@ -21,7 +21,7 @@ This document outlines the proposed Settings modal for the MatchDay Coach app. T
 - **Analytics opt-out** – option to disable Vercel analytics.
 
 ## Implementation Notes
-- Reuse modal patterns from `.docs/STYLE_GUIDE.md` for layout and visual effects.
+- Reuse modal patterns from `../project/STYLE_GUIDE.md` for layout and visual effects.
 - Update `ModalProvider` and `ControlBar.tsx` so the existing settings button opens this modal.
 - Persist all changes through the helpers in `appSettings.ts`.
 

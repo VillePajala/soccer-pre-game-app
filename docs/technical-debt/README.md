@@ -74,11 +74,11 @@ Technical debt is categorized by type:
 ## Quick Links
 
 ### Related Documentation
-- [Architecture Overview](/docs/architecture/README.md)
-- [State Management Migration](/docs/architecture/state-management-migration.md)
-- [Security Guidelines](/docs/security/README.md)
-- [Testing Strategy](/docs/quality/testing-strategy.md)
-- [Contributing Guide](/docs/development/CONTRIBUTING.md)
+- [Architecture Overview](../architecture/README.md)
+- [State Management Migration](../quality/guides/STATE_MANAGEMENT_MIGRATION.md)
+- [Security Enhancements](../architecture/security.md)
+- [Testing Strategy](../production/TESTING_STRATEGY.md)
+- [Contributing Guide](../../CONTRIBUTING.md)
 
 ### Tools & Resources
 - [GitHub Issues - Technical Debt](https://github.com/your-repo/issues?q=is%3Aissue+is%3Aopen+label%3Atechnical-debt)
