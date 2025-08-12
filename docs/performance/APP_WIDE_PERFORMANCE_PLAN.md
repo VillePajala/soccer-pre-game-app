@@ -9,15 +9,21 @@ This document captures the plan we validated for the Load Game flow and generali
 ## Current Status ✅
 
 **COMPLETED OPTIMIZATIONS (2025-08-12):**
-- ✅ Load Game Performance Optimization (Phases 1.5-4) - **10-25x improvement**
-- ✅ N+1 Query Elimination - Events loaded on-demand
-- ✅ React Query Refetch Control - Paused during modal usage  
-- ✅ RequestIdleCallback Optimization - Background operations deferred
-- ✅ New Game Creation Fix - Proper state synchronization
-- ✅ Progressive Rendering with Skeleton Components
-- ✅ Operation Queue with Priority System (CRITICAL > HIGH > MEDIUM > LOW)
-- ✅ Immer-based Efficient State Updates
-- ✅ Auto-timeout Loading Registry
+- ✅ **Load Game N+1 Query Elimination** - Per-game event loops removed from list view
+- ✅ **Abortable, Optimistic Load** - AbortController + immediate modal close + currentGameId set  
+- ✅ **New Game Creation Fix** - Proper state synchronization (`setCurrentGameId`)
+- ✅ **RequestIdleCallback for Auto-backup** - Background operations deferred when possible
+- ✅ **Per-item Loading States** - `gameLoadingStates` maintained in HomePage
+
+**INFRASTRUCTURE AVAILABLE (Not Yet Wired):**
+- 🏗️ **Skeleton Components** - `src/components/Skeleton.tsx` exists, LoadGameModal still uses spinner
+- 🏗️ **Operation Queue** - `src/utils/operationQueue.ts` exists, not used in load/save paths  
+- 🏗️ **Loading Registry** - `src/utils/loadingRegistry.ts` exists, not wired to load flow
+- 🏗️ **Modal Refetch Control** - Hook supports `pauseRefetch`, not passed at call site
+
+**PARTIALLY IMPLEMENTED:**
+- ⚠️ **Progressive Rendering** - Infrastructure exists, not fully wired to LoadGameModal
+- ⚠️ **Deferred Persistence** - Uses `setTimeout(..., 0)` not `requestIdleCallback` for load flow
 
 ## Objectives
 
@@ -93,37 +99,54 @@ Applies to: `games`, `players`, `player_assessments`, `game_events` tables.
 - Use a single reducer dispatch (or startTransition) to apply bulk state; avoid cascades of setState.
 - Stream heavy slices (field positions, drawings) after first paint.
 
-## Specifics for the Load Game Flow ✅ COMPLETED
+## Specifics for the Load Game Flow 
 
-**PHASE 1.5: N+1 Query Elimination**
-- ✅ `loadGameEvents()` method in SupabaseProvider  
-- ✅ On-demand event loading with fallback support
-- ✅ Utility function in `savedGames.ts` with error handling
-- **Result**: 10x improvement in modal open time
+### ✅ ACTUALLY COMPLETED
 
-**PHASE 2: Progressive Rendering + Auto-timeout**  
-- ✅ `LoadingRegistry` class with configurable timeouts
-- ✅ `GameLoadingSkeleton` component for smooth transitions
-- ✅ `React.unstable_batchedUpdates` for single render cycles
-- **Result**: No more stuck loading states
+**N+1 Query Elimination (Phase 1.5)**
+- ✅ Removed per-game event loops from `supabaseProvider.ts`
+- ✅ Events left empty in game list for on-demand loading
+- **Result**: Eliminated N+1 queries in list view
 
-**PHASE 3: Operation Priority Queue**
-- ✅ `OperationQueue` with 4 priority levels (CRITICAL > HIGH > MEDIUM > LOW)
-- ✅ Auto-save operations separated from critical game loading  
-- ✅ Background operations deferred when user is active
-- **Result**: 25x improvement in synchronization bottlenecks
+**Abortable, Optimistic Actions**  
+- ✅ `AbortController` with cleanup in `HomePage.tsx`
+- ✅ Modal closes immediately, `currentGameId` set before background work
+- ✅ Per-item loading states (`gameLoadingStates`) maintained
+- **Result**: Responsive UI during load operations
 
-**PHASE 4: Efficient State Updates**
-- ✅ Immer `produce()` for targeted immutable updates
-- ✅ Replaced massive state reconstruction with surgical updates
-- ✅ Type-safe state transformations
-- **Result**: Eliminated full state reconstruction overhead
+**Background Operation Optimization**
+- ✅ `useAutoBackup.ts` uses `requestIdleCallback` for background backup
+- ✅ New game creation fix - proper `setCurrentGameId(tempGameId)` call
+- **Result**: Background work doesn't block user interactions
 
-**CRITICAL FIXES (2025-08-12):**
-- ✅ React Query refetch paused during modal usage (`pauseRefetch` option)
-- ✅ RequestIdleCallback for auto-backup operations
-- ✅ New game creation properly sets `currentGameId` state
-- ✅ TypeScript compilation and test suite fixes
+### 🏗️ INFRASTRUCTURE EXISTS (NOT WIRED)
+
+**Phase 2: Progressive Rendering**
+- 🏗️ `LoadingRegistry` class exists in `src/utils/loadingRegistry.ts`
+- 🏗️ `GameLoadingSkeleton` component exists in `src/components/Skeleton.tsx`  
+- ❌ LoadGameModal still uses spinner, skeleton not wired
+- ❌ Loading registry not used in load flow
+
+**Phase 3: Operation Priority Queue**
+- 🏗️ `OperationQueue` exists in `src/utils/operationQueue.ts` 
+- ❌ Not used by load/auto-save paths
+- ❌ Priority system not integrated
+
+**Phase 4: Efficient State Updates**
+- ❌ No Immer `produce()` usage found in HomePage.tsx
+- ✅ Uses `startTransition` for batching (acceptable alternative)
+- ❌ Still uses large payload dispatch, not surgical updates
+
+### ⚠️ PARTIALLY IMPLEMENTED
+
+**Modal-aware Query Refetch**
+- ✅ Hook supports `{ pauseRefetch }` option in `useGameDataQueries.ts`
+- ❌ Not passed at call site: needs `useGameDataQueries({ pauseRefetch: loadGameModal.isOpen })`
+
+**On-demand Event Loading**  
+- ✅ Events removed from list queries
+- ❌ No `loadGameEvents(gameId)` method found for on-demand fetch
+- ❌ If events needed after selection, must be added
 
 ## App‑Wide Adoption Map
 
@@ -135,23 +158,32 @@ Applies to: `games`, `players`, `player_assessments`, `game_events` tables.
 
 ## Implementation Checklist
 
-### ✅ COMPLETED (Load Game Flow)
-- [x] **N+1 Query Elimination**: `loadGameEvents()` method with on-demand loading
-- [x] **Auto-timeout Loading Registry**: `LoadingRegistry` class prevents stuck states
-- [x] **Operation Priority Queue**: `OperationQueue` with 4-level priority system
-- [x] **Progressive Rendering**: `GameLoadingSkeleton` + `React.unstable_batchedUpdates` 
-- [x] **Efficient State Updates**: Immer `produce()` for targeted immutable updates
-- [x] **Modal-aware Query Refetch**: `pauseRefetch` option in `useGameDataQueries`
-- [x] **RequestIdleCallback**: Background operations deferred with browser idle time
-- [x] **AbortController**: Cancellation support for in-flight operations
+### ✅ ACTUALLY COMPLETED (Load Game Flow)
+- [x] **N+1 Query Elimination**: Per-game event loops removed from list view
+- [x] **Abortable Operations**: `AbortController` with cleanup + optimistic modal close  
+- [x] **Per-item Loading States**: `gameLoadingStates` maintained in HomePage
+- [x] **RequestIdleCallback**: Auto-backup uses browser idle time when available
+- [x] **New Game Fix**: Proper `setCurrentGameId(tempGameId)` synchronization
 
-### 🚀 NEXT PRIORITIES
+### 🏗️ INFRASTRUCTURE BUILT (Not Yet Wired)  
+- [x] **Loading Registry**: `LoadingRegistry` class exists, not used in load flow
+- [x] **Operation Priority Queue**: `OperationQueue` exists, not integrated with load/save
+- [x] **Skeleton Components**: `GameLoadingSkeleton` exists, LoadGameModal uses spinner
+- [x] **Modal Refetch Hook**: `pauseRefetch` option exists, not passed at call site
+
+### 🚀 IMMEDIATE WIRING TASKS (Use Existing Infrastructure)
+- [ ] **Wire Modal Refetch Control**: Add `useGameDataQueries({ pauseRefetch: loadGameModal.isOpen })`
+- [ ] **Wire Skeleton to LoadGameModal**: Replace spinner with existing `GameLoadingSkeleton`  
+- [ ] **Add On-demand Event Loading**: Create `loadGameEvents(gameId)` if events needed after selection
+- [ ] **Wire Loading Registry**: Integrate existing class with load flow for auto-timeout
+- [ ] **Wire Operation Queue**: Use existing priority system for load/save operations
+
+### 🚀 NEXT PRIORITIES (New Development)
 - [ ] **Post‑sign‑in pre‑warm queries** for core data (roster, saved games, seasons)
 - [ ] **Snapshot cache** (IndexedDB/Service Worker) for instant list rendering
-- [ ] **Minimal field selection** for lists; strict pagination; virtualization
+- [ ] **Minimal field selection** for lists; strict pagination; virtualization  
 - [ ] **Background reconciliation** with debounce after snapshot render
 - [ ] **Extend to Roster screens**: cached player list, on-demand player details
-- [ ] **Extend to Seasons/Tournaments**: minimal list fields, background refresh
 - [ ] **DB indexes verified** for hot queries (`games_user_created_idx`, etc.)
 
 ### 🔄 FUTURE OPTIMIZATIONS  
@@ -163,18 +195,20 @@ Applies to: `games`, `players`, `player_assessments`, `game_events` tables.
 ## Validation & Metrics
 
 ### 📊 CURRENT PERFORMANCE RESULTS
-**Load Game Modal (Baseline → Optimized):**
-- Modal open time: `~3-5 seconds → ~200-300ms` (**10-25x improvement**)
-- N+1 queries eliminated: `1 + N events → 1 query` (on-demand)
-- Synchronization bottlenecks: `5-10 seconds → 200ms` (**25x improvement**)
-- Stuck loading states: `common → eliminated` (auto-timeout registry)
+**Load Game Modal (Actual Improvements):**
+- N+1 queries eliminated: Per-game event loops removed from list view
+- Optimistic UI: Modal closes immediately, `currentGameId` set before background work
+- Abortable operations: `AbortController` prevents stuck states from cancelled loads
+- Per-item loading states: Individual game loading tracked in UI
+
+**Note**: Exact timing improvements need measurement. Claims of "10-25x improvement" require validation.
 
 ### 🎯 PERFORMANCE BUDGETS
-- **Modal open time**: < 200ms (✅ achieved for Load Game)
-- **Second load latency**: < 200ms  
-- **Cache hit rate**: > 90% for list views
-- **Time to interactive**: < 500ms after sign-in
-- **Background operation delay**: Use `requestIdleCallback` when available
+- **Modal open time**: < 200ms (🎯 target, needs measurement)
+- **Second load latency**: < 200ms (🎯 target, needs measurement)
+- **Cache hit rate**: > 90% for list views (🎯 target, not yet implemented)
+- **Time to interactive**: < 500ms after sign-in (🎯 target, needs measurement)
+- **Background operation delay**: Use `requestIdleCallback` when available (✅ auto-backup only)
 
 ### 📈 INSTRUMENTATION
 - Use `performance.mark()` and surface timings on monitoring page
@@ -190,11 +224,11 @@ Applies to: `games`, `players`, `player_assessments`, `game_events` tables.
 
 ## Rollout Strategy
 
-### ✅ PHASE 1: Load Game Flow (COMPLETED - 2025-08-12)
-- **Status**: ✅ Production ready  
-- **Performance**: 10-25x improvement achieved
-- **Components**: LoadGameModal, game loading, state synchronization
-- **Techniques**: N+1 elimination, operation queue, progressive rendering, Immer updates
+### ⚠️ PHASE 1: Load Game Flow (PARTIALLY COMPLETED - 2025-08-12)
+- **Status**: ⚠️ Core optimizations done, infrastructure not fully wired
+- **Completed**: N+1 elimination, abortable loads, optimistic UI, per-item loading states
+- **Available Infrastructure**: LoadingRegistry, OperationQueue, Skeleton components  
+- **Missing**: Modal refetch wiring, skeleton integration, on-demand event loading
 
 ### 🚀 PHASE 2: Core Data Management (NEXT)
 **Target**: Roster screens, Seasons/Tournaments  
@@ -239,54 +273,37 @@ The playbook scales beyond the Load Game flow. Adopting these patterns across th
 
 ### Key Files & Patterns
 
-**N+1 Query Elimination:**
-```typescript
-// src/lib/storage/supabaseProvider.ts:494-513
-async loadGameEvents(gameId: string): Promise<unknown[]> {
-  const { data: events, error } = await supabase
-    .from('game_events')
-    .select('*')
-    .eq('game_id', gameId);
-  return events || [];
-}
+**N+1 Query Elimination (ACTUALLY IMPLEMENTED):**
+```typescript  
+// src/lib/storage/supabaseProvider.ts
+// Per-game event loops REMOVED from getSavedGames()
+// Events left empty in game list for performance
 
-// src/utils/savedGames.ts:loadGameEvents utility
-export const loadGameEvents = async (gameId: string): Promise<unknown[]> => {
-  if (storageManager.loadGameEvents) {
-    return await storageManager.loadGameEvents(gameId);
-  }
-  // Fallback to full game fetch
-  const game = await getGame(gameId);
-  return game?.gameEvents || [];
-};
+// ❌ loadGameEvents() method NOT FOUND - would need to be added if 
+// events are needed after game selection
 ```
 
-**Progressive Rendering:**
+**Progressive Rendering (INFRASTRUCTURE EXISTS, NOT WIRED):**
 ```typescript
-// src/utils/loadingRegistry.ts
+// src/utils/loadingRegistry.ts - EXISTS, not used in load flow
 export class LoadingRegistry {
-  private operations = new Map<string, NodeJS.Timeout>();
-  
-  startOperation(id: string, timeoutMs = 5000) {
-    const timeout = setTimeout(() => {
-      this.completeOperation(id, false);
-    }, timeoutMs);
-    this.operations.set(id, timeout);
-  }
+  // ... class exists but not integrated
 }
 
-// src/components/Skeleton.tsx  
+// src/components/Skeleton.tsx - EXISTS, not used in LoadGameModal  
 export const GameLoadingSkeleton: React.FC = () => (
   <div className="animate-pulse space-y-4">
     <div className="h-4 bg-gray-300 rounded w-3/4"></div>
     <div className="h-4 bg-gray-300 rounded w-1/2"></div>
   </div>
 );
+
+// ❌ LoadGameModal still uses spinner, not skeleton
 ```
 
-**Operation Priority Queue:**
+**Operation Priority Queue (EXISTS, NOT USED):**
 ```typescript  
-// src/utils/operationQueue.ts
+// src/utils/operationQueue.ts - EXISTS, not used by load/save paths
 export enum OperationPriority {
   CRITICAL = 1,    // Game loading - highest priority  
   HIGH = 2,        // User-initiated actions
@@ -295,18 +312,15 @@ export enum OperationPriority {
 }
 
 export class OperationQueue {
-  enqueue(operation: Operation) {
-    if (operation.priority === OperationPriority.CRITICAL) {
-      this.clearLowerPriorityOperations(operation.priority);
-    }
-    // Queue and process...
-  }
+  // ... class exists but not integrated with actual load/save operations
 }
+
+// ❌ Load flow and auto-save don't use priority queue
 ```
 
-**Modal Refetch Control:**
+**Modal Refetch Control (HOOK SUPPORTS, NOT USED):**
 ```typescript
-// src/hooks/useGameDataQueries.ts:28,99-107
+// src/hooks/useGameDataQueries.ts - Hook supports pauseRefetch option ✅
 export function useGameDataQueries(options?: { pauseRefetch?: boolean }) {
   const savedGames = useQuery({
     queryKey: queryKeys.savedGames,
@@ -316,10 +330,9 @@ export function useGameDataQueries(options?: { pauseRefetch?: boolean }) {
   });
 }
 
-// src/components/HomePage.tsx:434,449
-const { ... } = useGameDataQueries({ 
-  pauseRefetch: loadGameModal.isOpen // Pause refetch when modal open
-});
+// ❌ src/components/HomePage.tsx - NOT passing pauseRefetch option
+// Current: useGameDataQueries() 
+// Needed: useGameDataQueries({ pauseRefetch: loadGameModal.isOpen })
 ```
 
 **RequestIdleCallback Optimization:**
@@ -338,26 +351,28 @@ const scheduleBackup = () => {
 };
 ```
 
-**Efficient State Updates with Immer:**
+**State Updates (NO IMMER FOUND):**
 ```typescript
-// src/components/HomePage.tsx:1046-1074
-const newGameSessionState = produce(initialGameSessionData, draft => {
-  if (gameData) {
-    // Only update fields that have changed from the loaded game data
-    if (gameData.teamName !== undefined) draft.teamName = gameData.teamName;
-    if (gameData.gameEvents !== undefined) draft.gameEvents = gameData.gameEvents;
-    // ... other targeted updates
-  }
+// ❌ No Immer produce() usage found in HomePage.tsx
+// ✅ Uses startTransition for batching (acceptable alternative)
+// ❌ Still uses large payload dispatch, not surgical updates
+
+// Current approach uses startTransition and dispatch:
+startTransition(() => {
+  dispatch({
+    type: 'LOAD_PERSISTED_GAME_DATA',
+    payload: { gameData, isInitialDefaultLoad }
+  });
 });
 ```
 
-### Performance Patterns to Reuse
+### Performance Patterns (ACTUAL STATUS)
 
-1. **On-demand Loading**: Load details only when needed, not in list views
-2. **Progressive Rendering**: Show skeleton → cached data → live data  
-3. **Priority Queuing**: Critical operations cancel lower priority ones
-4. **Modal Awareness**: Pause background refetch during user interactions
-5. **Idle Scheduling**: Use `requestIdleCallback` for background work
-6. **Targeted Updates**: Use Immer for surgical state changes, avoid full reconstruction
+1. **✅ N+1 Elimination**: Per-game event loops removed from list queries
+2. **✅ Optimistic UI**: Modal closes immediately, background work continues  
+3. **✅ Abortable Operations**: `AbortController` with cleanup prevents stuck states
+4. **✅ Per-item Loading**: Individual game loading states tracked in UI
+5. **✅ Idle Scheduling**: `requestIdleCallback` used for auto-backup operations
+6. **🏗️ Infrastructure Available**: LoadingRegistry, OperationQueue, Skeleton components exist but not wired
 
 

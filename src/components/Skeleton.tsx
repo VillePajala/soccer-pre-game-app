@@ -1,3 +1,17 @@
+'use client';
+
+import React from 'react';
+
+export const GameLoadingSkeleton: React.FC = () => (
+  <div className="animate-pulse space-y-3 p-4">
+    <div className="h-4 bg-slate-700 rounded w-2/3" />
+    <div className="h-4 bg-slate-700 rounded w-1/2" />
+    <div className="h-4 bg-slate-700 rounded w-3/4" />
+  </div>
+);
+
+export default GameLoadingSkeleton;
+
 /**
  * PHASE 2: Progressive Rendering with Skeleton States
  * Reusable skeleton loading components for better perceived performance
@@ -12,27 +26,27 @@ interface SkeletonProps {
   rounded?: boolean;
 }
 
-export const Skeleton: React.FC<SkeletonProps> = ({ 
-  className = '', 
-  width = 'w-full', 
+export const Skeleton: React.FC<SkeletonProps> = ({
+  className = '',
+  width = 'w-full',
   height = 'h-4',
-  rounded = true 
+  rounded = true
 }) => {
   const roundedClass = rounded ? 'rounded' : '';
   return (
-    <div 
+    <div
       className={`animate-pulse bg-slate-600/30 ${width} ${height} ${roundedClass} ${className}`}
     />
   );
 };
 
-export const SkeletonText: React.FC<{ lines?: number; className?: string }> = ({ 
-  lines = 1, 
-  className = '' 
+export const SkeletonText: React.FC<{ lines?: number; className?: string }> = ({
+  lines = 1,
+  className = ''
 }) => (
   <div className={`space-y-2 ${className}`}>
     {Array.from({ length: lines }).map((_, i) => (
-      <Skeleton 
+      <Skeleton
         key={i}
         width={i === lines - 1 && lines > 1 ? 'w-3/4' : 'w-full'}
         height="h-3"
@@ -73,7 +87,7 @@ export const GameLoadingSkeleton: React.FC<{ className?: string }> = ({ classNam
         </div>
       </div>
     </div>
-    
+
     {/* Field skeleton */}
     <div className="bg-green-900/20 border border-green-700/30 rounded-lg p-4">
       <Skeleton width="w-full" height="h-64" className="bg-green-800/20" />
@@ -82,7 +96,7 @@ export const GameLoadingSkeleton: React.FC<{ className?: string }> = ({ classNam
         <Skeleton width="w-24" height="h-4" />
       </div>
     </div>
-    
+
     {/* Player bar skeleton */}
     <div className="bg-slate-800/50 p-3 rounded-lg border border-slate-700">
       <Skeleton width="w-20" height="h-4" className="mb-3" />
@@ -103,14 +117,14 @@ export const ModalLoadingSkeleton: React.FC<{ className?: string }> = ({ classNa
       <Skeleton width="w-48" height="h-6" />
       <Skeleton width="w-6" height="h-6" rounded={true} />
     </div>
-    
+
     {/* Content skeleton */}
     <div className="space-y-4">
       {Array.from({ length: 3 }).map((_, i) => (
         <SkeletonCard key={i} />
       ))}
     </div>
-    
+
     {/* Footer skeleton */}
     <div className="flex justify-end space-x-3 pt-4 border-t border-slate-600">
       <Skeleton width="w-20" height="h-9" />
