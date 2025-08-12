@@ -66,14 +66,17 @@ export async function confirmAccountDeletion(userId: string): Promise<AccountDel
       throw error;
     }
 
-    if (!data.success) {
-      throw new Error(data.error || 'Account deletion failed');
+    // Type guard for expected response structure
+    const result = data as { success?: boolean; error?: string; deletedTables?: string[]; processed_at?: string };
+    
+    if (!result.success) {
+      throw new Error(result.error || 'Account deletion failed');
     }
 
     return { 
       success: true, 
-      deletedTables: data.deletedTables || [],
-      gracePeriodExpiry: data.processed_at
+      deletedTables: result.deletedTables || [],
+      gracePeriodExpiry: result.processed_at
     };
   } catch (e) {
     return { 
