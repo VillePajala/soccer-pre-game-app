@@ -1661,6 +1661,9 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       // 2. Auto-generate temporary ID
       const tempGameId = `game_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
+      // ✅ FIX: Set the current game ID immediately so UI recognizes the new game
+      setCurrentGameId(tempGameId);
+
       // 3. Reset History with the new state
       resetHistory(newGameState);
 

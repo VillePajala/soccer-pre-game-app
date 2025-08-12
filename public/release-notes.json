@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "feat(performance): enhance game data loading and backup efficiency"
+  "notes": "test(hooks): fix useAutoBackup test with requestIdleCallback mock"
 }
