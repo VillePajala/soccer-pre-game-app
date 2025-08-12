@@ -490,6 +490,28 @@ export class SupabaseProvider implements IStorageProvider {
   }
 
   // Saved games - simplified version that works
+  
+  // PHASE 1.5: Load game events on-demand for better performance
+  async loadGameEvents(gameId: string): Promise<unknown[]> {
+    try {
+      const { data: events, error } = await supabase
+        .from('game_events')
+        .select('*')
+        .eq('game_id', gameId);
+      
+      if (error) {
+        throw new NetworkError('supabase', 'loadGameEvents', error);
+      }
+      
+      return events || [];
+    } catch (error) {
+      if (error instanceof NetworkError) {
+        throw error;
+      }
+      throw new StorageError('Failed to load game events', 'supabase', 'loadGameEvents', error as Error);
+    }
+  }
+
   async getSavedGames(): Promise<unknown> {
     try {
       const userId = await this.getCurrentUserId();
@@ -515,28 +537,13 @@ export class SupabaseProvider implements IStorageProvider {
         gamesCollection[game.id] = transformedGame;
       }
       
-      // Try to fetch related data separately for each game
-      // This is less efficient but more reliable
-      for (const game of gamesData) {
-        try {
-          const currentGame = gamesCollection[game.id] as Record<string, unknown>;
-          
-          // Only fetch events if they don't already exist in game_data
-          if (!currentGame.gameEvents || (Array.isArray(currentGame.gameEvents) && currentGame.gameEvents.length === 0)) {
-            // Fetch game events
-            const { data: events } = await supabase
-              .from('game_events')
-              .select('*')
-              .eq('game_id', game.id);
-            
-            if (events && events.length > 0) {
-              currentGame.gameEvents = events.map((e: unknown) =>
-                e // Keep raw event for now, will be transformed later
-              );
-            }
-          }
-        } catch {
-          // Silently continue if events can't be fetched for a specific game
+      // PHASE 1.5 OPTIMIZATION: Skip N+1 game_events queries for faster modal loading
+      // DISABLED N+1 QUERY - Initialize games with empty events for faster modal loading
+      // Events will be loaded on-demand when a specific game is selected  
+      for (const gameId of Object.keys(gamesCollection)) {
+        const currentGame = gamesCollection[gameId] as Record<string, unknown>;
+        if (!currentGame.gameEvents) {
+          currentGame.gameEvents = []; // Empty array, will be populated when game is loaded
         }
       }
       

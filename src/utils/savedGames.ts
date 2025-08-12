@@ -548,6 +548,31 @@ export const exportGamesAsJson = async (): Promise<string | null> => {
 };
 
 /**
+ * PHASE 1.5: Load game events on-demand for better performance
+ * @param gameId - ID of the game to load events for
+ * @returns Promise resolving to the game events array
+ */
+export const loadGameEvents = async (gameId: string): Promise<unknown[]> => {
+  try {
+    if (!gameId) {
+      return [];
+    }
+    
+    // Use the storage manager's loadGameEvents method if available
+    if (storageManager.loadGameEvents) {
+      return await storageManager.loadGameEvents(gameId);
+    }
+    
+    // Fallback: get the full game and extract events
+    const game = await getGame(gameId);
+    return game?.gameEvents || [];
+  } catch (error) {
+    logger.error('Error loading game events:', error);
+    return []; // Return empty array on error to avoid breaking the UI
+  }
+};
+
+/**
  * Imports games from a JSON string into localStorage
  * @param jsonData - JSON string of games to import
  * @param overwrite - Whether to overwrite existing games with the same ID

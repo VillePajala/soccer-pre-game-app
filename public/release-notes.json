@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "chore(tests): adjust Jest coverage thresholds and document rationale"
+  "notes": "feat(docs): add load game performance optimization plan"
 }
