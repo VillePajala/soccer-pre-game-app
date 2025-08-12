@@ -18,6 +18,8 @@ import SettingsModal from '@/components/SettingsModal';
 import SeasonTournamentManagementModal from '@/components/SeasonTournamentManagementModal';
 import InstructionsModal from '@/components/InstructionsModal';
 import PlayerAssessmentModal from '@/components/PlayerAssessmentModal';
+// PHASE 2: Progressive rendering components  
+import { GameLoadingSkeleton } from '@/components/Skeleton';
 
 // Utility registry for export functions
 import { registerExportUtilities, executeExportFunction } from '@/services/UtilityRegistry';
@@ -45,6 +47,12 @@ import {
 
 // Import utility functions for seasons and tournaments
 import { saveGame as utilSaveGame } from '@/utils/savedGames';
+// PHASE 2: Loading registry for timeout handling
+import { loadingRegistry } from '@/utils/loadingRegistry';
+// PHASE 3: Operation priority system
+import { operationQueue, OperationPriority } from '@/utils/operationQueue';
+// PHASE 4: Immer for efficient immutable updates
+import { produce } from 'immer';
 // Removed - now handled by useGameDataManager: deleteGame, getLatestGameId, createGame
 import {
   saveCurrentGameIdSetting as utilSaveCurrentGameIdSetting,
@@ -506,6 +514,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   // const [gameDeleteError, setGameDeleteError] = useState<string | null>(null);
   // Game-specific loading states instead of single processing game ID
   const [gameLoadingStates, setGameLoadingStates] = useState<Record<string, { loading: boolean; error: string | null }>>({});
+  // PHASE 2: Progressive rendering state - show skeleton during game transitions
+  const [showGameSkeleton, setShowGameSkeleton] = useState(false);
   const {
     isTacticsBoardView,
     tacticalDiscs,
@@ -938,10 +948,14 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   // AbortController ref for canceling in-flight load operations
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Cleanup AbortController on unmount
+  // Cleanup AbortController, loading registry, and operation queue on unmount
   useEffect(() => {
     return () => {
       abortControllerRef.current?.abort();
+      // PHASE 2: Clear all loading timeouts to prevent memory leaks
+      loadingRegistry.clearAll();
+      // PHASE 3: Clear operation queue to prevent memory leaks
+      operationQueue.clear();
     };
   }, []);
 
@@ -989,16 +1003,18 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       setIsPlayed(true);
     }
 
+    // PHASE 2: Batch all remaining state updates into a single React batch
     // Update non-reducer states (these will eventually be migrated or handled differently)
     // For fields not yet in gameSessionState but are in GameData, update their local states if needed.
-    // This part will shrink as more state moves to the reducer.
-    setPlayersOnField(gameData?.playersOnField || (isInitialDefaultLoad ? initialState.playersOnField : []));
-    setOpponents(gameData?.opponents || (isInitialDefaultLoad ? initialState.opponents : []));
-    setDrawings(gameData?.drawings || (isInitialDefaultLoad ? initialState.drawings : []));
-    setTacticalDiscs(gameData?.tacticalDiscs || (isInitialDefaultLoad ? initialState.tacticalDiscs : []));
-    setTacticalDrawings(gameData?.tacticalDrawings || (isInitialDefaultLoad ? initialState.tacticalDrawings : []));
-    setTacticalBallPosition(gameData?.tacticalBallPosition || { relX: 0.5, relY: 0.5 });
-    setIsPlayed(gameData?.isPlayed === false ? false : true);
+    React.unstable_batchedUpdates(() => {
+      setPlayersOnField(gameData?.playersOnField || (isInitialDefaultLoad ? initialState.playersOnField : []));
+      setOpponents(gameData?.opponents || (isInitialDefaultLoad ? initialState.opponents : []));
+      setDrawings(gameData?.drawings || (isInitialDefaultLoad ? initialState.drawings : []));
+      setTacticalDiscs(gameData?.tacticalDiscs || (isInitialDefaultLoad ? initialState.tacticalDiscs : []));
+      setTacticalDrawings(gameData?.tacticalDrawings || (isInitialDefaultLoad ? initialState.tacticalDrawings : []));
+      setTacticalBallPosition(gameData?.tacticalBallPosition || { relX: 0.5, relY: 0.5 });
+      setIsPlayed(gameData?.isPlayed === false ? false : true);
+    });
     });
     
     // Update gameEvents from gameData if present, otherwise from initial state if it's an initial default load
@@ -1019,39 +1035,47 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     // For now, let's assume gameSessionState is updated for the next render cycle.
     // A more robust way would be to have LOAD_PERSISTED_GAME_DATA return the new state or use a useEffect.
 
-    // Construct historyState using the *potentially* updated gameSessionState for the next render.
-    // And combine with other non-reducer states.
-    const newHistoryState: AppState = {
-      teamName: gameData?.teamName ?? initialGameSessionData.teamName,
-      opponentName: gameData?.opponentName ?? initialGameSessionData.opponentName,
-      gameDate: gameData?.gameDate ?? initialGameSessionData.gameDate,
-      homeScore: gameData?.homeScore ?? initialGameSessionData.homeScore,
-      awayScore: gameData?.awayScore ?? initialGameSessionData.awayScore,
-      gameNotes: gameData?.gameNotes ?? initialGameSessionData.gameNotes,
-      homeOrAway: gameData?.homeOrAway ?? initialGameSessionData.homeOrAway,
-      numberOfPeriods: gameData?.numberOfPeriods ?? initialGameSessionData.numberOfPeriods,
-      periodDurationMinutes: gameData?.periodDurationMinutes ?? initialGameSessionData.periodDurationMinutes,
-      currentPeriod: gameData?.currentPeriod ?? initialGameSessionData.currentPeriod, 
-      gameStatus: gameData?.gameStatus ?? initialGameSessionData.gameStatus, 
-      seasonId: gameData?.seasonId ?? initialGameSessionData.seasonId,
-      tournamentId: gameData?.tournamentId ?? initialGameSessionData.tournamentId,
-      gameLocation: gameData?.gameLocation ?? initialGameSessionData.gameLocation,
-      gameTime: gameData?.gameTime ?? initialGameSessionData.gameTime,
-      demandFactor: gameData?.demandFactor ?? initialGameSessionData.demandFactor,
-      subIntervalMinutes: gameData?.subIntervalMinutes ?? initialGameSessionData.subIntervalMinutes,
-      completedIntervalDurations: gameData?.completedIntervalDurations ?? initialGameSessionData.completedIntervalDurations,
-      lastSubConfirmationTimeSeconds: gameData?.lastSubConfirmationTimeSeconds ?? initialGameSessionData.lastSubConfirmationTimeSeconds,
-      showPlayerNames: gameData?.showPlayerNames === undefined ? initialGameSessionData.showPlayerNames : gameData.showPlayerNames,
-      selectedPlayerIds: gameData?.selectedPlayerIds ?? initialGameSessionData.selectedPlayerIds,
-      gameEvents: gameData?.gameEvents ?? initialGameSessionData.gameEvents,
-      playersOnField: gameData?.playersOnField || initialState.playersOnField,
-      opponents: gameData?.opponents || initialState.opponents,
-      drawings: gameData?.drawings || initialState.drawings,
-      tacticalDiscs: gameData?.tacticalDiscs || [],
-      tacticalDrawings: gameData?.tacticalDrawings || [],
-      tacticalBallPosition: gameData?.tacticalBallPosition || { relX: 0.5, relY: 0.5 },
-      availablePlayers: masterRosterQueryResultData || availablePlayers,
-    };
+    // PHASE 4: Use Immer for efficient immutable state updates instead of full reconstruction
+    const newHistoryState: AppState = produce(initialGameSessionData, draft => {
+      // Only update fields that have changed from the loaded game data
+      if (gameData) {
+        // Update only fields that exist in gameData and are different
+        if (gameData.teamName !== undefined) draft.teamName = gameData.teamName;
+        if (gameData.opponentName !== undefined) draft.opponentName = gameData.opponentName;
+        if (gameData.gameDate !== undefined) draft.gameDate = gameData.gameDate;
+        if (gameData.homeScore !== undefined) draft.homeScore = gameData.homeScore;
+        if (gameData.awayScore !== undefined) draft.awayScore = gameData.awayScore;
+        if (gameData.gameNotes !== undefined) draft.gameNotes = gameData.gameNotes;
+        if (gameData.homeOrAway !== undefined) draft.homeOrAway = gameData.homeOrAway;
+        if (gameData.numberOfPeriods !== undefined) draft.numberOfPeriods = gameData.numberOfPeriods;
+        if (gameData.periodDurationMinutes !== undefined) draft.periodDurationMinutes = gameData.periodDurationMinutes;
+        if (gameData.currentPeriod !== undefined) draft.currentPeriod = gameData.currentPeriod;
+        if (gameData.gameStatus !== undefined) draft.gameStatus = gameData.gameStatus;
+        if (gameData.seasonId !== undefined) draft.seasonId = gameData.seasonId;
+        if (gameData.tournamentId !== undefined) draft.tournamentId = gameData.tournamentId;
+        if (gameData.gameLocation !== undefined) draft.gameLocation = gameData.gameLocation;
+        if (gameData.gameTime !== undefined) draft.gameTime = gameData.gameTime;
+        if (gameData.demandFactor !== undefined) draft.demandFactor = gameData.demandFactor;
+        if (gameData.subIntervalMinutes !== undefined) draft.subIntervalMinutes = gameData.subIntervalMinutes;
+        if (gameData.completedIntervalDurations !== undefined) draft.completedIntervalDurations = gameData.completedIntervalDurations;
+        if (gameData.lastSubConfirmationTimeSeconds !== undefined) draft.lastSubConfirmationTimeSeconds = gameData.lastSubConfirmationTimeSeconds;
+        if (gameData.showPlayerNames !== undefined) draft.showPlayerNames = gameData.showPlayerNames;
+        if (gameData.selectedPlayerIds !== undefined) draft.selectedPlayerIds = gameData.selectedPlayerIds;
+        if (gameData.gameEvents !== undefined) draft.gameEvents = gameData.gameEvents;
+        
+        // Update field-related state
+        draft.playersOnField = gameData.playersOnField || initialState.playersOnField;
+        draft.opponents = gameData.opponents || initialState.opponents;
+        draft.drawings = gameData.drawings || initialState.drawings;
+        draft.tacticalDiscs = gameData.tacticalDiscs || [];
+        draft.tacticalDrawings = gameData.tacticalDrawings || [];
+        draft.tacticalBallPosition = gameData.tacticalBallPosition || { relX: 0.5, relY: 0.5 };
+      }
+      
+      // Always update available players with latest master roster
+      draft.availablePlayers = masterRosterQueryResultData || availablePlayers;
+    });
+    
     resetHistory(newHistoryState);
     
     // Check for cancellation before final state update
@@ -1092,22 +1116,32 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
   // --- Auto-save state using offline-first storage ---
   const autosaveTimeoutRef = useRef<number | null>(null);
-  const pendingAutosaveRef = useRef<Promise<void> | null>(null);
 
+  // PHASE 3: Enhanced auto-save with operation queue and debouncing
   const scheduleAutosave = useCallback((fn: () => Promise<void>) => {
-    // Debounce 750ms and ensure only one save runs at a time
+    // Debounce 750ms to avoid excessive saves
     if (autosaveTimeoutRef.current) {
       window.clearTimeout(autosaveTimeoutRef.current);
       autosaveTimeoutRef.current = null;
     }
+    
     autosaveTimeoutRef.current = window.setTimeout(async () => {
-      if (pendingAutosaveRef.current) {
-        // wait for the in-flight save, then run again
-        try { await pendingAutosaveRef.current; } catch { /* ignore */ }
+      // Skip auto-save if there are critical operations running
+      const queueStats = operationQueue.getStats();
+      if (queueStats.priority_1 > 0) { // Skip if critical operations pending
+        console.debug('[AUTO-SAVE] Skipping auto-save due to critical operations');
+        return;
       }
-      const p = fn();
-      pendingAutosaveRef.current = p;
-      try { await p; } finally { pendingAutosaveRef.current = null; }
+      
+      // Use operation queue with MEDIUM priority for auto-save
+      await operationQueue.add({
+        id: `autosave_${Date.now()}`,
+        name: 'Auto-save Game',
+        priority: OperationPriority.MEDIUM,
+        execute: fn,
+        timeout: 15000, // 15 second timeout for auto-save
+        createdAt: Date.now()
+      });
     }, 750);
   }, []);
 
@@ -1319,6 +1353,18 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     abortControllerRef.current = new AbortController();
     const signal = abortControllerRef.current.signal;
     
+    // PHASE 2: Use loading registry with auto-timeout
+    const handleLoadTimeout = (id: string) => {
+      setGameLoadingStates(prev => ({
+        ...prev,
+        [id]: { loading: false, error: 'Operation timed out. Please try again.' }
+      }));
+      setIsGameLoading(false);
+    };
+    
+    // Register loading operation with timeout
+    loadingRegistry.setLoading(gameId, true, handleLoadTimeout, 15000, 'game_load');
+    
     // Clear any existing processing states and set current game as loading
     setGameLoadingStates(prev => ({
       ...prev,
@@ -1326,6 +1372,9 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     }));
     setIsGameLoading(true);
     setGameLoadError(null);
+    
+    // PHASE 2: Show skeleton during game transition
+    setShowGameSkeleton(true);
 
     const gameDataToLoad = savedGames[gameId] as AppState | undefined; // Ensure this is AppState
 
@@ -1337,8 +1386,17 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         // Update current game ID for immediate UI feedback
         setCurrentGameId(gameId);
         
-        // Load game state in background
-        await loadGameStateFromData(gameDataToLoad, false, signal);
+        // PHASE 3: Use operation queue for critical game loading
+        await operationQueue.add({
+          id: `load_game_${gameId}_${Date.now()}`,
+          name: `Load Game ${gameId}`,
+          priority: OperationPriority.CRITICAL,
+          execute: async () => {
+            await loadGameStateFromData(gameDataToLoad, false, signal);
+          },
+          timeout: 10000,
+          createdAt: Date.now()
+        });
 
         // Check if operation was cancelled before persistence
         if (signal.aborted) {
@@ -1360,6 +1418,10 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         logger.error("Error processing game load:", error);
         setGameLoadError(t('loadGameModal.errors.loadFailed', 'Error loading game state. Please try again.'));
       } finally {
+        // PHASE 2: Clear loading registry timeout and hide skeleton
+        loadingRegistry.setLoading(gameId, false);
+        setShowGameSkeleton(false);
+        
         setIsGameLoading(false);
         setGameLoadingStates(prev => ({
           ...prev,
@@ -1787,9 +1849,16 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
       {/* Main Content: Soccer Field */}
       <div className="flex-grow relative bg-black">
-        {/* Pass rel drawing handlers to SoccerField */}
+        {/* PHASE 2: Show skeleton during game transitions */}
+        {showGameSkeleton ? (
+          <div className="absolute inset-0 bg-black/90 z-20 flex items-center justify-center p-4">
+            <GameLoadingSkeleton className="max-w-2xl w-full" />
+          </div>
+        ) : (
+          <>
+            {/* Pass rel drawing handlers to SoccerField */}
 
-        {showLargeTimerOverlay && (
+            {showLargeTimerOverlay && (
           <TimerOverlay
             timeElapsedInSeconds={timeElapsedInSeconds}
             subAlertLevel={subAlertLevel}
@@ -1852,6 +1921,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           />
         </GameErrorBoundary>
         {/* Other components that might overlay or interact with the field */}
+          </>
+        )}
       </div>
 
       {/* Bottom Section: Control Bar */}

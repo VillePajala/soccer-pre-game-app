@@ -1,0 +1,156 @@
+/**
+ * PHASE 3: Operation Priority System
+ * Separates auto-save from game loading operations to prevent blocking
+ */
+
+export enum OperationPriority {
+  CRITICAL = 1,    // Game loading - highest priority
+  HIGH = 2,        // User actions (save, delete)
+  MEDIUM = 3,      // Auto-save
+  LOW = 4          // Background tasks
+}
+
+export interface Operation {
+  id: string;
+  name: string;
+  priority: OperationPriority;
+  execute: () => Promise<void>;
+  timeout?: number;
+  createdAt: number;
+}
+
+class OperationQueue {
+  private queues = new Map<OperationPriority, Operation[]>();
+  private running = new Set<string>();
+  private maxConcurrent = 2; // Allow 2 operations to run concurrently
+  private isProcessing = false;
+
+  constructor() {
+    // Initialize queues for each priority level
+    Object.values(OperationPriority)
+      .filter(v => typeof v === 'number')
+      .forEach(priority => {
+        this.queues.set(priority as OperationPriority, []);
+      });
+  }
+
+  async add(operation: Operation): Promise<void> {
+    const queue = this.queues.get(operation.priority) || [];
+    
+    // For critical operations, clear lower priority operations
+    if (operation.priority === OperationPriority.CRITICAL) {
+      this.clearLowerPriorityOperations(operation.priority);
+    }
+    
+    queue.push(operation);
+    this.queues.set(operation.priority, queue);
+    
+    console.debug(`[OperationQueue] Added ${operation.name} (priority: ${operation.priority})`);
+    
+    // Start processing if not already running
+    if (!this.isProcessing) {
+      this.processQueue();
+    }
+  }
+
+  private clearLowerPriorityOperations(priority: OperationPriority) {
+    for (const [queuePriority, queue] of this.queues) {
+      if (queuePriority > priority) {
+        const cleared = queue.splice(0, queue.length);
+        if (cleared.length > 0) {
+          console.debug(`[OperationQueue] Cleared ${cleared.length} lower priority operations`);
+        }
+      }
+    }
+  }
+
+  private async processQueue() {
+    if (this.isProcessing) return;
+    this.isProcessing = true;
+
+    while (this.hasOperations() && this.running.size < this.maxConcurrent) {
+      const operation = this.getNextOperation();
+      if (!operation) break;
+
+      this.runOperation(operation);
+    }
+
+    this.isProcessing = false;
+    
+    // Continue processing if more operations arrived
+    if (this.hasOperations() && this.running.size < this.maxConcurrent) {
+      setTimeout(() => this.processQueue(), 0);
+    }
+  }
+
+  private hasOperations(): boolean {
+    return Array.from(this.queues.values()).some(queue => queue.length > 0);
+  }
+
+  private getNextOperation(): Operation | null {
+    // Get operation from highest priority queue first
+    for (const priority of [OperationPriority.CRITICAL, OperationPriority.HIGH, OperationPriority.MEDIUM, OperationPriority.LOW]) {
+      const queue = this.queues.get(priority);
+      if (queue && queue.length > 0) {
+        return queue.shift() || null;
+      }
+    }
+    return null;
+  }
+
+  private async runOperation(operation: Operation) {
+    this.running.add(operation.id);
+    const startTime = Date.now();
+    
+    try {
+      console.debug(`[OperationQueue] Starting ${operation.name}`);
+      
+      // Add timeout if specified
+      if (operation.timeout) {
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error(`Operation ${operation.name} timed out`)), operation.timeout);
+        });
+        
+        await Promise.race([operation.execute(), timeoutPromise]);
+      } else {
+        await operation.execute();
+      }
+      
+      const duration = Date.now() - startTime;
+      console.debug(`[OperationQueue] Completed ${operation.name} in ${duration}ms`);
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      console.error(`[OperationQueue] Failed ${operation.name} after ${duration}ms:`, error);
+    } finally {
+      this.running.delete(operation.id);
+      
+      // Continue processing queue
+      setTimeout(() => this.processQueue(), 0);
+    }
+  }
+
+  getStats() {
+    const queueSizes = Object.fromEntries(
+      Array.from(this.queues.entries()).map(([priority, queue]) => [
+        `priority_${priority}`, 
+        queue.length
+      ])
+    );
+    
+    return {
+      ...queueSizes,
+      running: this.running.size,
+      totalQueued: Array.from(this.queues.values()).reduce((sum, queue) => sum + queue.length, 0)
+    };
+  }
+
+  clear() {
+    for (const queue of this.queues.values()) {
+      queue.splice(0, queue.length);
+    }
+    console.debug('[OperationQueue] Cleared all queues');
+  }
+}
+
+// Singleton instance
+export const operationQueue = new OperationQueue();

@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "feat(docs): add load game performance optimization plan"
+  "notes": "feat(storage): implement on-demand loading of game events"
 }
