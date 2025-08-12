@@ -1,5 +1,5 @@
 import { getSavedGames, saveGames } from './savedGames';
-import type { SavedGamesCollection } from '@/types';
+// import type { SavedGamesCollection } from '@/types'; // Unused import
 import logger from './logger';
 import { safeCast, validateSavedGamesCollection } from './typeValidation';
 

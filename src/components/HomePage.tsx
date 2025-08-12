@@ -49,7 +49,7 @@ import { saveGame as utilSaveGame } from '@/utils/savedGames';
 // Removed - now handled by useGameDataManager: deleteGame, getLatestGameId, createGame
 import {
   saveCurrentGameIdSetting as utilSaveCurrentGameIdSetting,
-  getHasSeenAppGuide,
+  // getHasSeenAppGuide, // Unused - app guide disabled
   saveHasSeenAppGuide,
   getLastHomeTeamName as utilGetLastHomeTeamName,
 } from '@/utils/appSettings';

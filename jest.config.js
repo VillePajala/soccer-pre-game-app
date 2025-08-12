@@ -12,6 +12,8 @@ const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/src/setupTests.js', '<rootDir>/src/setupModalTests.ts', '<rootDir>/src/setupFormStoreMocks.ts', '<rootDir>/src/setupAccessibilityTests.ts'],
   
   testEnvironment: 'jest-environment-jsdom',
+  testPathIgnorePatterns: ['<rootDir>/e2e/', '<rootDir>/.next/', '<rootDir>/node_modules/'],
+  testMatch: ['<rootDir>/src/**/*.(test|spec).{js,jsx,ts,tsx}'],
   moduleNameMapper: {
     '^@/i18n$': '<rootDir>/src/__mocks__/i18n.ts',
     '^@/utils/logger$': '<rootDir>/src/utils/__mocks__/logger.ts',

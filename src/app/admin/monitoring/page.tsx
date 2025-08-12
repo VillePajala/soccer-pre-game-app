@@ -259,7 +259,7 @@ export default function MonitoringDashboard() {
             </button>
           </form>
           <div className="mt-4 text-sm text-slate-400 text-center">
-            Don't have admin access?<br/>
+            Don&apos;t have admin access?<br/>
             <button 
               onClick={() => router.push('/')}
               className="text-indigo-400 hover:text-indigo-300 underline"
