@@ -16,6 +16,12 @@ import type { AppSettings } from '@/utils/appSettings';
 
 jest.useFakeTimers();
 
+// Mock requestIdleCallback for tests
+global.requestIdleCallback = jest.fn((callback: IdleRequestCallback) => {
+  const id = setTimeout(callback, 0);
+  return id as number;
+}) as typeof requestIdleCallback;
+
 describe('useAutoBackup', () => {
   afterEach(() => {
     jest.clearAllMocks();
