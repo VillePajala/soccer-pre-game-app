@@ -879,17 +879,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
       // Timer restoration is now handled by useOfflineFirstGameTimer hook
 
-      // Check if user has seen app guide (defer to next tick to avoid blocking UI)
-      setTimeout(async () => {
-        try {
-          const seenGuide = await getHasSeenAppGuide();
-          if (!seenGuide) {
-            setIsInstructionsModalOpen(true);
-          }
-        } catch (e) {
-          logger.warn('[HomePage] Failed to check app guide flag:', e);
-        }
-      }, 0);
+      // App guide/tutorial popup has been disabled per user request
 
       setInitialLoadComplete(true);
       logger.debug('[EFFECT init] Initial application data coordination complete.');

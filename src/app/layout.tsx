@@ -13,6 +13,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import AuthStorageSync from "@/components/AuthStorageSync";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { SessionWarning } from "@/components/auth/SessionWarning";
+import WebVitalsReporter from "@/components/WebVitalsReporter";
 
 // Configure Rajdhani font
 const rajdhani = Rajdhani({
@@ -58,6 +59,7 @@ export default function RootLayout({
             <AuthProvider>
               <AuthStorageSync />
               <SessionWarning />
+              <WebVitalsReporter />
               <ClientWrapper>{children}</ClientWrapper>
             </AuthProvider>
           </QueryProvider>
