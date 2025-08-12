@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useReducer, useRef, useMemo, startTransition } from 'react';
+// PHASE 2: Import unstable_batchedUpdates for performance optimization
+import { unstable_batchedUpdates } from 'react-dom';
 import { GameErrorBoundary } from './GameErrorBoundary';
 import SoccerField from '@/components/SoccerField';
 import PlayerBar from '@/components/PlayerBar';
@@ -273,21 +275,6 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
   // --- Load game data via hook --- (moved below modal definitions)
 
-  const isMasterRosterQueryLoading = isGameDataLoading;
-  const areSeasonsQueryLoading = isGameDataLoading;
-  const areTournamentsQueryLoading = isGameDataLoading;
-  const isAllSavedGamesQueryLoading = isGameDataLoading;
-  const isCurrentGameIdSettingQueryLoading = isGameDataLoading;
-
-  const isMasterRosterQueryError = !!gameDataError;
-  const isSeasonsQueryError = !!gameDataError;
-  const isTournamentsQueryError = !!gameDataError;
-  const isAllSavedGamesQueryError = !!gameDataError;
-  const masterRosterQueryErrorData = gameDataError;
-  const seasonsQueryErrorData = gameDataError;
-  const tournamentsQueryErrorData = gameDataError;
-  const allSavedGamesQueryErrorData = gameDataError;
-
   // --- Core Game State (Managed by Hook) ---
   const {
     playersOnField,
@@ -380,27 +367,6 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
   useEffect(() => { gameIdRef.current = currentGameId; }, [currentGameId]);
 
-  const {
-    playerAssessments,
-    handleRenamePlayerForModal,
-    handleSetJerseyNumberForModal,
-    handleSetPlayerNotesForModal,
-    handleRemovePlayerForModal,
-    handleAddPlayerForModal,
-    handleToggleGoalieForModal,
-    handleTogglePlayerSelection,
-    handleUpdateSelectedPlayers,
-    handleSavePlayerAssessment,
-    handleDeletePlayerAssessment,
-  } = usePlayerRosterManager({
-    roster,
-    masterRosterPlayers: masterRosterQueryResultData,
-    selectedPlayerIds: gameSessionState.selectedPlayerIds,
-    dispatchGameSession,
-    currentGameId,
-    completedIntervals: gameSessionState.completedIntervalDurations || [],
-    setSavedGames,
-  });
 
   const {
     timeElapsedInSeconds,
@@ -447,6 +413,43 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     error: gameDataError,
   } = useGameDataQueries({ 
     pauseRefetch: loadGameModal.isOpen // Pause refetch when load modal is open
+  });
+
+  const isMasterRosterQueryLoading = isGameDataLoading;
+  const areSeasonsQueryLoading = isGameDataLoading;
+  const areTournamentsQueryLoading = isGameDataLoading;
+  const isAllSavedGamesQueryLoading = isGameDataLoading;
+  const isCurrentGameIdSettingQueryLoading = isGameDataLoading;
+
+  const isMasterRosterQueryError = !!gameDataError;
+  const isSeasonsQueryError = !!gameDataError;
+  const isTournamentsQueryError = !!gameDataError;
+  const isAllSavedGamesQueryError = !!gameDataError;
+  const masterRosterQueryErrorData = gameDataError;
+  const seasonsQueryErrorData = gameDataError;
+  const tournamentsQueryErrorData = gameDataError;
+  const allSavedGamesQueryErrorData = gameDataError;
+  
+  const {
+    playerAssessments,
+    handleRenamePlayerForModal,
+    handleSetJerseyNumberForModal,
+    handleSetPlayerNotesForModal,
+    handleRemovePlayerForModal,
+    handleAddPlayerForModal,
+    handleToggleGoalieForModal,
+    handleTogglePlayerSelection,
+    handleUpdateSelectedPlayers,
+    handleSavePlayerAssessment,
+    handleDeletePlayerAssessment,
+  } = usePlayerRosterManager({
+    roster,
+    masterRosterPlayers: masterRosterQueryResultData,
+    selectedPlayerIds: gameSessionState.selectedPlayerIds,
+    dispatchGameSession,
+    currentGameId,
+    completedIntervals: gameSessionState.completedIntervalDurations || [],
+    setSavedGames,
   });
   
   // All modal states now migrated to Zustand!
@@ -1010,7 +1013,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     // PHASE 2: Batch all remaining state updates into a single React batch
     // Update non-reducer states (these will eventually be migrated or handled differently)
     // For fields not yet in gameSessionState but are in GameData, update their local states if needed.
-    React.unstable_batchedUpdates(() => {
+    unstable_batchedUpdates(() => {
       setPlayersOnField(gameData?.playersOnField || (isInitialDefaultLoad ? initialState.playersOnField : []));
       setOpponents(gameData?.opponents || (isInitialDefaultLoad ? initialState.opponents : []));
       setDrawings(gameData?.drawings || (isInitialDefaultLoad ? initialState.drawings : []));
@@ -1040,7 +1043,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     // A more robust way would be to have LOAD_PERSISTED_GAME_DATA return the new state or use a useEffect.
 
     // PHASE 4: Use Immer for efficient immutable state updates instead of full reconstruction
-    const newHistoryState: AppState = produce(initialGameSessionData, draft => {
+    const newGameSessionState = produce(initialGameSessionData, draft => {
       // Only update fields that have changed from the loaded game data
       if (gameData) {
         // Update only fields that exist in gameData and are different
@@ -1067,18 +1070,20 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         if (gameData.selectedPlayerIds !== undefined) draft.selectedPlayerIds = gameData.selectedPlayerIds;
         if (gameData.gameEvents !== undefined) draft.gameEvents = gameData.gameEvents;
         
-        // Update field-related state
-        draft.playersOnField = gameData.playersOnField || initialState.playersOnField;
-        draft.opponents = gameData.opponents || initialState.opponents;
-        draft.drawings = gameData.drawings || initialState.drawings;
-        draft.tacticalDiscs = gameData.tacticalDiscs || [];
-        draft.tacticalDrawings = gameData.tacticalDrawings || [];
-        draft.tacticalBallPosition = gameData.tacticalBallPosition || { relX: 0.5, relY: 0.5 };
       }
-      
-      // Always update available players with latest master roster
-      draft.availablePlayers = masterRosterQueryResultData || availablePlayers;
     });
+    
+    // Convert GameSessionState to AppState for history 
+    const newHistoryState: AppState = {
+      ...newGameSessionState,
+      playersOnField: gameData?.playersOnField || initialState.playersOnField,
+      opponents: gameData?.opponents || initialState.opponents,
+      drawings: gameData?.drawings || initialState.drawings,
+      tacticalDiscs: gameData?.tacticalDiscs || [],
+      tacticalDrawings: gameData?.tacticalDrawings || [],
+      tacticalBallPosition: gameData?.tacticalBallPosition || { relX: 0.5, relY: 0.5 },
+      availablePlayers: masterRosterQueryResultData || availablePlayers,
+    };
     
     resetHistory(newHistoryState);
     
@@ -1131,7 +1136,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     
     autosaveTimeoutRef.current = window.setTimeout(async () => {
       // Skip auto-save if there are critical operations running
-      const queueStats = operationQueue.getStats();
+      const queueStats = operationQueue.getStats() as Record<string, number>;
       if (queueStats.priority_1 > 0) { // Skip if critical operations pending
         console.debug('[AUTO-SAVE] Skipping auto-save due to critical operations');
         return;
