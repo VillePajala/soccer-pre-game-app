@@ -1,17 +1,5 @@
 'use client';
 
-import React from 'react';
-
-export const GameLoadingSkeleton: React.FC = () => (
-  <div className="animate-pulse space-y-3 p-4">
-    <div className="h-4 bg-slate-700 rounded w-2/3" />
-    <div className="h-4 bg-slate-700 rounded w-1/2" />
-    <div className="h-4 bg-slate-700 rounded w-3/4" />
-  </div>
-);
-
-export default GameLoadingSkeleton;
-
 /**
  * PHASE 2: Progressive Rendering with Skeleton States
  * Reusable skeleton loading components for better perceived performance
@@ -132,3 +120,6 @@ export const ModalLoadingSkeleton: React.FC<{ className?: string }> = ({ classNa
     </div>
   </div>
 );
+
+// Default export for backward compatibility with existing imports
+export default GameLoadingSkeleton;
