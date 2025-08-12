@@ -4,12 +4,13 @@ import { onCLS, onFCP, onLCP, onTTFB, onINP, Metric } from 'web-vitals';
 // We'll use a fallback for older browsers
 let onFID: ((callback: (metric: Metric) => void) => void) | undefined;
 try {
+  // @ts-expect-error FID is optional in newer versions
   onFID = require('web-vitals').onFID;
-} catch (e) {
+} catch (_e) {
   // FID not available, use INP as fallback
 }
 import * as Sentry from '@sentry/nextjs';
-import { metricsStore } from './metricsStore';
+// import { metricsStore } from './metricsStore'; // Unused - client-side only
 
 // Thresholds based on Google's recommendations
 const THRESHOLDS = {
@@ -183,7 +184,7 @@ export function observePerformance() {
       }
     });
     longTaskObserver.observe({ entryTypes: ['longtask'] });
-  } catch (e) {
+  } catch (_e) {
     // Long task observer not supported
   }
   
@@ -197,7 +198,7 @@ export function observePerformance() {
       }
     });
     layoutShiftObserver.observe({ entryTypes: ['layout-shift'] });
-  } catch (e) {
+  } catch (_e) {
     // Layout shift observer not supported
   }
 }

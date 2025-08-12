@@ -36,7 +36,7 @@ class MetricsStore {
 
     // Keep only the most recent 100 measurements per metric
     this.data.webVitals = Object.entries(vitalsByName)
-      .flatMap(([name, vitals]) => 
+      .flatMap(([_name, vitals]) => 
         vitals
           .sort((a, b) => b.timestamp - a.timestamp)
           .slice(0, 100)
