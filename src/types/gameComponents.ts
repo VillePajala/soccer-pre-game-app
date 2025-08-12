@@ -160,12 +160,13 @@ export interface ModalData {
   // Settings
   appLanguage: string;
   defaultTeamNameSetting: string;
+  currentGameId: string | null;
   
   // Loading states
   isGameLoading: boolean;
   isRosterUpdating: boolean;
   isLoadingGamesList: boolean;
-  processingGameId: string | null;
+  gameLoadingStates: Record<string, { loading: boolean; error: string | null }>;
   
   // Error states
   gameLoadError: string | null;

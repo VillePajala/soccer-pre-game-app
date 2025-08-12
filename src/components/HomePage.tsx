@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useReducer, useRef, useMemo, startTransition } from 'react';
-import { useStateSynchronization } from '@/hooks/useStateSynchronization';
 import { GameErrorBoundary } from './GameErrorBoundary';
 import SoccerField from '@/components/SoccerField';
 import PlayerBar from '@/components/PlayerBar';
@@ -497,18 +496,16 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   const [loadGamesListError, setLoadGamesListError] = useState<string | null>(null);
   const [isGameLoading, setIsGameLoading] = useState(false); // For loading a specific game
   const [gameLoadError, setGameLoadError] = useState<string | null>(null);
-  const [isStateSynchronizing, setIsStateSynchronizing] = useState(false); // Prevent race conditions during state updates
+  // Removed: isStateSynchronizing - no longer using synchronization locks for better performance
   
-  // Enhanced synchronization for preventing critical race conditions
-  const { 
-    withSynchronization, 
-    isSynchronizing
-  } = useStateSynchronization();
+  // Note: Removed synchronization hooks as they caused performance bottlenecks
+  // Synchronization removed for better performance
   
   // Removed - now handled by useGameDataManager:
   // const [isGameDeleting, setIsGameDeleting] = useState(false); // For deleting a specific game
   // const [gameDeleteError, setGameDeleteError] = useState<string | null>(null);
-  const [processingGameId, setProcessingGameId] = useState<string | null>(null); // To track which game item is being processed
+  // Game-specific loading states instead of single processing game ID
+  const [gameLoadingStates, setGameLoadingStates] = useState<Record<string, { loading: boolean; error: string | null }>>({});
   const {
     isTacticsBoardView,
     tacticalDiscs,
@@ -916,7 +913,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       }
     })();
     return () => { cancelled = true; };
-  }, [withSynchronization]);
+  }, []); // Only run once on mount
 
   // Add a timeout for mobile loading issues
   useEffect(() => {
@@ -938,11 +935,24 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     // to avoid race conditions.
   }, []);
 
-  // Helper function to load game state from game data with proper synchronization
-  const loadGameStateFromData = useCallback(async (gameData: AppState | null, isInitialDefaultLoad = false) => {
-    await withSynchronization('loadGameState', async () => {
-      // Set legacy synchronization flag for backward compatibility
-      setIsStateSynchronizing(true);
+  // AbortController ref for canceling in-flight load operations
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Cleanup AbortController on unmount
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
+
+  // Helper function to load game state from game data with optimistic updates
+  const loadGameStateFromData = useCallback(async (gameData: AppState | null, isInitialDefaultLoad = false, signal?: AbortSignal) => {
+    // Direct async loading without synchronization locks
+    
+    // Check if operation was cancelled
+    if (signal?.aborted) {
+      return;
+    }
     
     // Use startTransition to batch all state updates together to prevent UI inconsistencies
     startTransition(() => {
@@ -989,6 +999,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     setTacticalDrawings(gameData?.tacticalDrawings || (isInitialDefaultLoad ? initialState.tacticalDrawings : []));
     setTacticalBallPosition(gameData?.tacticalBallPosition || { relX: 0.5, relY: 0.5 });
     setIsPlayed(gameData?.isPlayed === false ? false : true);
+    });
     
     // Update gameEvents from gameData if present, otherwise from initial state if it's an initial default load
     // setGameEvents(gameData?.events || (isInitialDefaultLoad ? initialState.gameEvents : [])); // REMOVE - Handled by LOAD_PERSISTED_GAME_DATA in reducer
@@ -1043,12 +1054,11 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     };
     resetHistory(newHistoryState);
     
-      // Clear synchronization flag after all state updates are complete
-      setIsStateSynchronizing(false);
-      });
-    });
+    // Check for cancellation before final state update
+    if (signal?.aborted) {
+      return;
+    }
   }, [
-    withSynchronization,
     availablePlayers,
     initialGameSessionData,
     masterRosterQueryResultData,
@@ -1059,8 +1069,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     setTacticalBallPosition,
     setTacticalDiscs,
     setTacticalDrawings,
-    dispatchGameSession,
-    setIsStateSynchronizing
+    dispatchGameSession
+    // Removed setIsStateSynchronizing dependency
   ]);
 
   // --- Effect to load game state when currentGameId changes or savedGames updates ---
@@ -1102,13 +1112,12 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   }, []);
 
   useEffect(() => {
-    // Skip autosave during new game creation, synchronization, or pending synchronization operations
-    if (isCreatingNewGame || isStateSynchronizing || isSynchronizing()) return;
+    // Skip autosave during new game creation
+    if (isCreatingNewGame) return;
 
     if (initialLoadComplete && currentGameId && currentGameId !== DEFAULT_GAME_ID) {
       scheduleAutosave(async () => {
-        await withSynchronization('autoSave', async () => {
-          try {
+        try {
           const assistEvents = gameSessionState.gameEvents.filter(event => event.type === 'goal' && 'assisterId' in event && event.assisterId);
           logger.log(`[AUTO-SAVE] Starting auto-save for game ${currentGameId}`);
           if (assistEvents.length > 0) {
@@ -1160,14 +1169,13 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           } catch (error) {
             logger.error('[AUTO-SAVE] Failed to auto-save state:', error);
           }
-        });
       });
     }
   }, [
-    initialLoadComplete, currentGameId, isCreatingNewGame, isStateSynchronizing,
+    initialLoadComplete, currentGameId, isCreatingNewGame,
     playersOnField, opponents, drawings, availablePlayers, masterRosterQueryResultData,
     gameSessionState, playerAssessments, tacticalDiscs, tacticalDrawings, tacticalBallPosition, isPlayed,
-    scheduleAutosave, withSynchronization, isSynchronizing,
+    scheduleAutosave,
   ]);
 
   // **** ADDED: Effect to prompt for setup if default game ID is loaded ****
@@ -1306,10 +1314,16 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   const handleLoadGame = async (gameId: string) => {
     logger.log(`[handleLoadGame] Attempting to load game: ${gameId}`);
     
-    // Clear any existing timer state before loading a new game
-    // (Timer state is now handled by IndexedDB, no manual cleanup needed)
+    // Cancel any previous load operation
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
     
-    setProcessingGameId(gameId);
+    // Clear any existing processing states and set current game as loading
+    setGameLoadingStates(prev => ({
+      ...prev,
+      [gameId]: { loading: true, error: null }
+    }));
     setIsGameLoading(true);
     setGameLoadError(null);
 
@@ -1317,28 +1331,49 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
     if (gameDataToLoad) {
       try {
-        // Dispatch to reducer to load the game state with proper synchronization
-        await loadGameStateFromData(gameDataToLoad); // This now primarily uses the reducer
-
-        // Update current game ID and save settings
-        setCurrentGameId(gameId);
-        // Close modal immediately for snappier UX; persist setting asynchronously
+        // Close modal immediately for optimistic UX
         handleCloseLoadGameModal();
-        logger.log(`Game ${gameId} load dispatched to reducer. Persisting currentGameId setting...`);
-        await utilSaveCurrentGameIdSetting(gameId);
+        
+        // Update current game ID for immediate UI feedback
+        setCurrentGameId(gameId);
+        
+        // Load game state in background
+        await loadGameStateFromData(gameDataToLoad, false, signal);
+
+        // Check if operation was cancelled before persistence
+        if (signal.aborted) {
+          return;
+        }
+        
+        // Persist setting in background for non-critical work
+        setTimeout(async () => {
+          await utilSaveCurrentGameIdSetting(gameId);
+          logger.log(`Game ${gameId} setting persisted to storage`);
+        }, 0);
 
       } catch(error) {
-          logger.error("Error processing game load:", error);
-          setGameLoadError(t('loadGameModal.errors.loadFailed', 'Error loading game state. Please try again.'));
+        // Don't show error if operation was simply aborted
+        if (error instanceof Error && error.name === 'AbortError') {
+          logger.log('[handleLoadGame] Load operation was cancelled');
+          return;
+        }
+        logger.error("Error processing game load:", error);
+        setGameLoadError(t('loadGameModal.errors.loadFailed', 'Error loading game state. Please try again.'));
       } finally {
         setIsGameLoading(false);
-        setProcessingGameId(null);
+        setGameLoadingStates(prev => ({
+          ...prev,
+          [gameId]: { loading: false, error: null }
+        }));
       }
     } else {
       logger.error(`Game state not found for ID: ${gameId}`);
       setGameLoadError(t('loadGameModal.errors.notFound', 'Could not find saved game: {gameId}', { gameId }));
       setIsGameLoading(false);
-      setProcessingGameId(null);
+      setGameLoadingStates(prev => ({
+        ...prev,
+        [gameId]: { loading: false, error: t('loadGameModal.errors.notFound', 'Could not find saved game: {gameId}', { gameId }) }
+      }));
     }
   };
 
@@ -1874,7 +1909,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           onClose={trainingResourcesModal.handleClose}
         />
       )}
-      {isInstructionsModalOpen && (
+      {isInstructionsModalOpen && !isGameLoading && (
         <InstructionsModal
           isOpen={isInstructionsModalOpen}
           onClose={handleToggleInstructionsModal}
@@ -1886,8 +1921,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           isOpen={goalLogModal.isOpen}
           onClose={goalLogModal.handleClose}
           onLogGoal={handleAddGoalEvent}
-          onLogOpponentGoal={handleLogOpponentGoal} // ADDED: Pass the handler
-          availablePlayers={playersForCurrentGame} // MODIFIED: Pass players selected for the current game
+          onLogOpponentGoal={handleLogOpponentGoal}
+          availablePlayers={playersForCurrentGame}
           currentTime={gameSessionState.timeElapsedInSeconds}
         />
       )}
@@ -1937,10 +1972,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           loadGamesListError={loadGamesListError}
           isGameLoading={isGameLoading}
           gameLoadError={gameLoadError}
-          // Removed - now handled by useGameDataManager:
-          // isGameDeleting={isGameDeleting}
-          // gameDeleteError={gameDeleteError}
-          processingGameId={processingGameId}
+          gameLoadingStates={gameLoadingStates}
         />
       )}
 
@@ -1954,10 +1986,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           onDemandFactorChange={setNewGameDemandFactor}
           onStart={handleStartNewGameWithSetup} // CORRECTED Handler
           onCancel={newGameSetupModal.handleClose} 
-          // Pass the new mutation functions
           addSeasonMutation={addSeasonMutation}
           addTournamentMutation={addTournamentMutation}
-          // Pass loading states from mutations
           isAddingSeason={addSeasonMutation.isPending}
           isAddingTournament={addTournamentMutation.isPending}
         />
@@ -1978,7 +2008,6 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         onTogglePlayerSelection={handleTogglePlayerSelection}
         teamName={gameSessionState.teamName}
         onTeamNameChange={handleTeamNameChange}
-        // Pass loading and error states
         isRosterUpdating={isRosterUpdating}
         rosterError={rosterError}
         onOpenPlayerStats={handleOpenPlayerStats}

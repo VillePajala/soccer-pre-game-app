@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix(types): resolve unknown data type errors in accountDeletion.ts"
+  "notes": "chore(tests): adjust Jest coverage thresholds and document rationale"
 }

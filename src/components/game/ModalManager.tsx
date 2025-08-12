@@ -285,7 +285,7 @@ export const ModalManager = React.memo<ExtendedModalManagerProps>(({
             onUpdateGameEvent={handleUpdateGameEvent ? (updatedEvent: GameEvent) => handleUpdateGameEvent(updatedEvent.id, updatedEvent) : undefined}
             selectedPlayerIds={gameData.selectedPlayerIds}
             savedGames={savedGames}
-            currentGameId={modalData?.processingGameId || null}
+            currentGameId={modalData?.currentGameId || null}
             onDeleteGameEvent={handleDeleteGameEvent}
             onExportOneJson={handleExportOneJsonWrapper}
             onExportOneCsv={handleExportOneCsvWrapper}
@@ -314,12 +314,12 @@ export const ModalManager = React.memo<ExtendedModalManagerProps>(({
           onDelete={onDeleteGame || (() => {})}
           onExportOneJson={handleExportOneJsonWrapper || (() => {})}
           onExportOneCsv={handleExportOneCsvWrapper || (() => {})}
-          currentGameId={modalData?.processingGameId || undefined}
+          currentGameId={modalData?.currentGameId || undefined}
           isLoadingGamesList={modalData?.isLoadingGamesList}
           loadGamesListError={modalData?.loadGamesListError}
           isGameLoading={modalData?.isGameLoading}
           gameLoadError={modalData?.gameLoadError}
-          processingGameId={modalData?.processingGameId}
+          gameLoadingStates={modalData?.gameLoadingStates || {}}
         />
       </React.Suspense>
 
@@ -395,7 +395,7 @@ export const ModalManager = React.memo<ExtendedModalManagerProps>(({
         <GameSettingsModal
           isOpen={modalStates.isGameSettingsModalOpen}
           onClose={handleCloseGameSettingsModal || (() => onCloseModal?.('isGameSettingsModalOpen'))}
-          currentGameId={modalData?.processingGameId || null}
+          currentGameId={modalData?.currentGameId || null}
           teamName={gameData.teamName}
           opponentName={gameData.opponentName}
           gameDate={gameData.gameDate}

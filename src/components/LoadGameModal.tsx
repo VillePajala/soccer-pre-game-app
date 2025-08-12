@@ -42,7 +42,7 @@ export interface LoadGameModalProps {
   isGameDeleting?: boolean;
   gameDeleteError?: string | null;
   isGamesImporting?: boolean;
-  processingGameId?: string | null;
+  gameLoadingStates?: Record<string, { loading: boolean; error: string | null }>;
 }
 
 // Define the default game ID constant if not imported (consider sharing from page.tsx)
@@ -64,7 +64,7 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
   isGameDeleting = false,
   gameDeleteError = null,
   isGamesImporting = false,
-  processingGameId = null,
+  gameLoadingStates = {},
 }) => {
   const { t, i18n } = useTranslation();
   const { showToast } = useToast();
@@ -311,12 +311,12 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
     mainContent = (
       <ul className="scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800 pr-1 px-1">
         {/* Display general game load/delete errors here, above the list but inside scroll area if many games */}
-        {gameLoadError && processingGameId === null && ( // Show if error is general, not for a specific item in loop
+        {gameLoadError && ( // Show if error is general, not for a specific item in loop
           <li className="px-3 py-2 bg-red-700/20 border-b border-red-600 text-red-300 text-xs" role="alert">
             {gameLoadError}
           </li>
         )}
-        {gameDeleteError && processingGameId === null && (
+        {gameDeleteError && (
           <li className="px-3 py-2 bg-red-700/20 border-b border-red-600 text-red-300 text-xs" role="alert">
             {gameDeleteError}
           </li>
@@ -337,8 +337,8 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
           const displayHomeTeamName = game.homeOrAway === 'home' ? (game.teamName || 'Team') : (game.opponentName || 'Opponent');
           const displayAwayTeamName = game.homeOrAway === 'home' ? (game.opponentName || 'Opponent') : (game.teamName || 'Team');
 
-          const isProcessingThisGame = processingGameId === gameId;
-          const isLoadActionActive = isGameLoading && isProcessingThisGame;
+          const gameLoadingState = gameLoadingStates[gameId] || { loading: false, error: null };
+          const isLoadActionActive = gameLoadingState.loading;
           const disableActions = isGameLoading || isGameDeleting || isGamesImporting;
 
           const totalPlayers = game.selectedPlayerIds?.length || 0;
@@ -628,12 +628,12 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                       </div>
                       
                       {/* Error Messages */}
-                      {isProcessingThisGame && gameLoadError && (
+                      {isLoadActionActive && gameLoadError && (
                         <div className="bg-red-500/20 border border-red-500/40 text-red-300 px-4 py-3 rounded-lg text-sm">
                           <p className="font-medium">{gameLoadError}</p>
                         </div>
                       )}
-                      {isProcessingThisGame && gameDeleteError && (
+                      {isLoadActionActive && gameDeleteError && (
                         <div className="bg-red-500/20 border border-red-500/40 text-red-300 px-4 py-3 rounded-lg text-sm">
                           <p className="font-medium">{gameDeleteError}</p>
                         </div>
