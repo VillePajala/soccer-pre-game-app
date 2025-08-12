@@ -72,6 +72,7 @@ import type { AppState, SavedGamesCollection } from "@/types";
 // Removed - now handled by useGameDataManager: 
 // import { useQueryClient } from '@tanstack/react-query';
 import { useGameDataQueries } from '@/hooks/useGameDataQueries';
+import { useGameCreationData } from '@/hooks/useGameCreationData';
 import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { useTacticalBoard } from '@/hooks/useTacticalBoard';
 import { useRoster } from '@/hooks/useRoster';
@@ -412,7 +413,12 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     loading: isGameDataLoading,
     error: gameDataError,
   } = useGameDataQueries({ 
-    pauseRefetch: loadGameModal.isOpen // Pause refetch when load modal is open
+    pauseRefetch: loadGameModal.isOpen || newGameSetupModal.isOpen // Pause refetch when modals are open
+  });
+
+  // Pre-warm game creation data after auth
+  const gameCreationData = useGameCreationData({
+    pauseRefetch: newGameSetupModal.isOpen
   });
 
   const isMasterRosterQueryLoading = isGameDataLoading;
@@ -2073,6 +2079,13 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           addTournamentMutation={addTournamentMutation}
           isAddingSeason={addSeasonMutation.isPending}
           isAddingTournament={addTournamentMutation.isPending}
+          // Pre-warmed cached data
+          seasons={gameCreationData.seasons}
+          tournaments={gameCreationData.tournaments}
+          lastHomeTeamName={gameCreationData.lastHomeTeamName}
+          isLoadingCachedData={gameCreationData.isLoading}
+          hasTimedOut={gameCreationData.hasTimedOut}
+          onRefetch={gameCreationData.refetch}
         />
       )}
 
