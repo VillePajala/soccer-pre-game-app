@@ -167,7 +167,7 @@ export function safeCastWithFallback<T>(
 ): T {
   try {
     return safeCast(data, validator, context);
-  } catch (_error) {
+  } catch {
     logger.warn(`[SafeCast] ${context}: Using fallback due to validation failure`);
     return fallback;
   }

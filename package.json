@@ -7,6 +7,8 @@
     "build": "node scripts/generate-release-notes.mjs && node scripts/generate-manifest.mjs && node scripts/inject-env-vars.mjs && next build",
     "start": "next start",
     "lint": "next lint",
+    "lint:strict": "next lint --max-warnings 0",
+    "lint:fix": "next lint --fix",
     "test": "jest",
     "test:unit": "jest",
     "test:fast": "LOG_LEVEL=error jest --testPathIgnorePatterns='supabase|import|backup|export|useForm.test|useRosterSettingsModalState|useSettingsModalState|useViewMode' --maxWorkers=4 --silent",

@@ -25,7 +25,7 @@ async function getGitInfo() {
       branch: branch.trim(),
       commit: commit.trim()
     };
-  } catch (_error) {
+  } catch {
     // Fallback to environment variables (Vercel)
     return {
       branch: process.env.VERCEL_GIT_COMMIT_REF || 'unknown',
@@ -76,7 +76,7 @@ export async function GET() {
     } else {
       health.checks.database = error ? 'degraded' : 'ok';
     }
-  } catch (_err) {
+  } catch {
     health.checks.database = 'error';
     health.status = 'degraded';
   }
@@ -85,7 +85,7 @@ export async function GET() {
   try {
     await fs.access(path.join(process.cwd(), 'public', 'sw.js'));
     health.checks.serviceWorker = 'ok';
-  } catch (_err) {
+  } catch {
     health.checks.serviceWorker = 'missing';
   }
 
