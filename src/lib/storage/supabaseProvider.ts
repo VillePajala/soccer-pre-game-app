@@ -537,15 +537,9 @@ export class SupabaseProvider implements IStorageProvider {
         gamesCollection[game.id] = transformedGame;
       }
       
-      // PHASE 1.5 OPTIMIZATION: Skip N+1 game_events queries for faster modal loading
-      // DISABLED N+1 QUERY - Initialize games with empty events for faster modal loading
-      // Events will be loaded on-demand when a specific game is selected  
-      for (const gameId of Object.keys(gamesCollection)) {
-        const currentGame = gamesCollection[gameId] as Record<string, unknown>;
-        if (!currentGame.gameEvents) {
-          currentGame.gameEvents = []; // Empty array, will be populated when game is loaded
-        }
-      }
+      // PHASE 1.5 OPTIMIZATION: N+1 game_events queries eliminated
+      // Events are already included in the game_data from the database
+      // No additional processing needed - fromSupabase.game() includes all events
       
       return gamesCollection;
     } catch (error) {

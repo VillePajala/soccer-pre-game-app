@@ -271,16 +271,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   }, [gameSessionState, saveStateToHistory]);
   // END --- Effect to save gameSessionState changes to history ---
 
-  // --- Load game data via hook ---
-  const {
-    masterRoster: masterRosterQueryResultData,
-    seasons: seasonsQueryResultData,
-    tournaments: tournamentsQueryResultData,
-    savedGames: allSavedGamesQueryResultData,
-    currentGameId: currentGameIdSettingQueryResultData,
-    loading: isGameDataLoading,
-    error: gameDataError,
-  } = useGameDataQueries();
+  // --- Load game data via hook --- (moved below modal definitions)
 
   const isMasterRosterQueryLoading = isGameDataLoading;
   const areSeasonsQueryLoading = isGameDataLoading;
@@ -444,6 +435,19 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   const goalLogModal = useGoalLogModalWithHandlers();
   const settingsModal = useSettingsModalWithHandlers();
   const playerAssessmentModal = usePlayerAssessmentModalWithHandlers();
+  
+  // --- Load game data via hook ---
+  const {
+    masterRoster: masterRosterQueryResultData,
+    seasons: seasonsQueryResultData,
+    tournaments: tournamentsQueryResultData,
+    savedGames: allSavedGamesQueryResultData,
+    currentGameId: currentGameIdSettingQueryResultData,
+    loading: isGameDataLoading,
+    error: gameDataError,
+  } = useGameDataQueries({ 
+    pauseRefetch: loadGameModal.isOpen // Pause refetch when load modal is open
+  });
   
   // All modal states now migrated to Zustand!
   // Removed - now handled by useGameDataManager:

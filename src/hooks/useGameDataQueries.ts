@@ -25,7 +25,7 @@ export interface GameDataQueriesResult {
   error: Error | null;
 }
 
-export function useGameDataQueries(): GameDataQueriesResult {
+export function useGameDataQueries(options?: { pauseRefetch?: boolean }): GameDataQueriesResult {
   // Stable empty defaults to prevent infinite loops
   const emptyPlayers = useMemo<Player[]>(() => [], []);
   const emptySeasons = useMemo<Season[]>(() => [], []);
@@ -101,8 +101,8 @@ export function useGameDataQueries(): GameDataQueriesResult {
     queryFn: getSavedGames,
     staleTime: 30 * 1000, // 30 seconds - more dynamic
     gcTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: true, // Refetch when user returns to app
-    refetchInterval: 2 * 60 * 1000, // Background refresh every 2 minutes
+    refetchOnWindowFocus: !options?.pauseRefetch, // Pause refetch when modal is open
+    refetchInterval: options?.pauseRefetch ? false : 2 * 60 * 1000, // Pause background refresh
     refetchIntervalInBackground: false, // Only when app is active
   });
 

@@ -34,7 +34,27 @@ const useAutoBackup = (): void => {
         if (!cancelled) schedule();
       };
 
-      timeout = setTimeout(run, delay);
+      // PHASE 4: Use requestIdleCallback for background persistence
+      // This ensures backup operations don't interfere with user interactions
+      const scheduleBackup = () => {
+        if (typeof window !== 'undefined' && window.requestIdleCallback) {
+          // Use requestIdleCallback when available for better performance
+          window.requestIdleCallback(() => {
+            if (!cancelled) run();
+          }, { timeout: delay });
+        } else {
+          // Fallback to setTimeout for browsers without requestIdleCallback
+          timeout = setTimeout(run, delay);
+        }
+      };
+
+      if (delay > 0) {
+        // If we need to wait, use setTimeout first
+        timeout = setTimeout(scheduleBackup, delay);
+      } else {
+        // If backup is due immediately, schedule with idle callback
+        scheduleBackup();
+      }
     };
 
     schedule();
