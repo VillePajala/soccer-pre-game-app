@@ -23,7 +23,7 @@ self.addEventListener('message', (event) => {
 });
 
 // Cache configuration
-const CACHE_NAME = 'matchday-coach-v1';
+const _CACHE_NAME = 'matchday-coach-v1';
 const APP_SHELL_CACHE = 'app-shell-v1';
 const DATA_CACHE = 'data-cache-v1';
 
@@ -136,4 +136,4 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
-// Build Timestamp: 2025-08-12T09:11:12.188Z
+// Build Timestamp: 2025-08-12T09:39:17.841Z

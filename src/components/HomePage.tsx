@@ -156,7 +156,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   
   // --- Initialize Game Session Reducer ---
   // Map necessary fields from page.tsx's initialState to GameSessionState
-  const initialGameSessionData: GameSessionState = {
+  const initialGameSessionData: GameSessionState = useMemo(() => ({
     teamName: initialState.teamName,
     opponentName: initialState.opponentName,
     gameDate: initialState.gameDate,
@@ -186,7 +186,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     completedIntervalDurations: initialState.completedIntervalDurations || [],
     showPlayerNames: initialState.showPlayerNames,
     startTimestamp: null,
-  };
+  }), []);
 
   const [gameSessionState, dispatchGameSession] = useReducer(gameSessionReducer, initialGameSessionData);
 
@@ -1047,7 +1047,21 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       setIsStateSynchronizing(false);
       });
     });
-  }, [withSynchronization]);
+  }, [
+    withSynchronization,
+    availablePlayers,
+    initialGameSessionData,
+    masterRosterQueryResultData,
+    resetHistory,
+    setDrawings,
+    setOpponents,
+    setPlayersOnField,
+    setTacticalBallPosition,
+    setTacticalDiscs,
+    setTacticalDrawings,
+    dispatchGameSession,
+    setIsStateSynchronizing
+  ]);
 
   // --- Effect to load game state when currentGameId changes or savedGames updates ---
   useEffect(() => {
@@ -1064,7 +1078,6 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       logger.error('[useEffect] Failed to load game state:', error);
     }); 
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentGameId, savedGames, initialLoadComplete, loadGameStateFromData]); // IMPORTANT: initialLoadComplete ensures this runs after master roster is loaded.
 
   // --- Auto-save state using offline-first storage ---
@@ -1096,7 +1109,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       scheduleAutosave(async () => {
         await withSynchronization('autoSave', async () => {
           try {
-          const assistEvents = gameSessionState.gameEvents.filter(event => event.type === 'goal' && (event as any).assisterId);
+          const assistEvents = gameSessionState.gameEvents.filter(event => event.type === 'goal' && 'assisterId' in event && event.assisterId);
           logger.log(`[AUTO-SAVE] Starting auto-save for game ${currentGameId}`);
           if (assistEvents.length > 0) {
             logger.log(`[AUTO-SAVE] Assist events details:`, assistEvents.map(e => ({ id: e.id, type: e.type })));

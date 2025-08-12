@@ -4,9 +4,9 @@ import { onCLS, onFCP, onLCP, onTTFB, onINP, Metric } from 'web-vitals';
 // We'll use a fallback for older browsers
 let onFID: ((callback: (metric: Metric) => void) => void) | undefined;
 try {
-  // @ts-expect-error FID is optional in newer versions
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   onFID = require('web-vitals').onFID;
-} catch (_e) {
+} catch {
   // FID not available, use INP as fallback
 }
 import * as Sentry from '@sentry/nextjs';
@@ -184,7 +184,7 @@ export function observePerformance() {
       }
     });
     longTaskObserver.observe({ entryTypes: ['longtask'] });
-  } catch (_e) {
+  } catch {
     // Long task observer not supported
   }
   
@@ -192,13 +192,13 @@ export function observePerformance() {
   try {
     const layoutShiftObserver = new PerformanceObserver((list) => {
       for (const entry of list.getEntries()) {
-        if ('value' in entry && entry.value > 0.1) {
+        if ('value' in entry && typeof entry.value === 'number' && entry.value > 0.1) {
           console.warn('Layout shift detected:', entry);
         }
       }
     });
     layoutShiftObserver.observe({ entryTypes: ['layout-shift'] });
-  } catch (_e) {
+  } catch {
     // Layout shift observer not supported
   }
 }
