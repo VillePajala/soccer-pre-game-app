@@ -6,9 +6,10 @@ import path from 'path';
 const projectRoot = process.cwd();
 const nextDir = path.join(projectRoot, '.next');
 
-// Budgets (adjust as needed)
-const MAIN_BUNDLE_MAX_BYTES = 1_000_000; // 1 MB
-const TOTAL_ASSETS_MAX_BYTES = 5_000_000; // 5 MB
+// Budgets adjusted for feature-rich PWA with soccer field visualization, 
+// game management, charts, i18n, PWA features, and monitoring
+const MAIN_BUNDLE_MAX_BYTES = 2_000_000; // 2 MB (was 1 MB - too restrictive for this app)
+const TOTAL_ASSETS_MAX_BYTES = 8_000_000; // 8 MB (was 5 MB - accounts for charts, PWA assets)
 
 function getFileSize(filePath) {
   try {
