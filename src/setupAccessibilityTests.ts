@@ -9,12 +9,12 @@ import { configureAxe, toHaveNoViolations } from 'jest-axe';
 
 // Configure axe-core for our specific testing needs
 const axe = configureAxe({
-  // Use standard rule set filtered by tags; avoid specifying non-existent rule IDs
+  // Use standard rule set for WCAG 2.1 AA compliance
   rules: {
-    // Focus on WCAG 2.1 AA compliance
+    // Focus on critical accessibility rules
     'color-contrast': { enabled: true },
-    'keyboard-navigation': { enabled: true },
-    'focus-management': { enabled: true },
+    'focus-order': { enabled: true },
+    'tabindex': { enabled: true },
   }
 });
 
