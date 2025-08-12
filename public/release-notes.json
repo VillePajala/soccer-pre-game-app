@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix(eslint): enforce stricter linting rules and add VSCode settings"
+  "notes": "fix(types): resolve unknown data type errors in accountDeletion.ts"
 }
