@@ -31,7 +31,7 @@ export async function cancelAccountDeletion(userId: string): Promise<boolean> {
       .from('account_deletion_requests')
       .update({ status: 'cancelled' })
       .eq('user_id', userId)
-      .neq('status', 'completed');
+      .not('status', 'eq', 'completed');
     if (error) throw error;
     return true;
   } catch {
@@ -50,7 +50,11 @@ export async function confirmAccountDeletion(userId: string): Promise<AccountDel
     }
 
     // Call the secure edge function to process the actual deletion
-    const { data, error } = await supabase.functions.invoke('process-account-deletion', {
+    // Check if functions are available (not in lightweight client)
+    if (!('functions' in supabase)) {
+      throw new Error('Account deletion not available in lightweight mode');
+    }
+    const { data, error } = await (supabase as { functions: { invoke: (name: string, options: { body: unknown; headers: Record<string, string> }) => Promise<{ data?: unknown; error?: Error }> } }).functions.invoke('process-account-deletion', {
       body: { userId },
       headers: {
         'Authorization': `Bearer ${session.access_token}`,

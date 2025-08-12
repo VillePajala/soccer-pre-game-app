@@ -125,7 +125,7 @@ export function validateAppState(data: unknown): ValidationResult<AppState> {
 
     return {
       isValid: true,
-      data: obj as AppState
+      data: obj as unknown as AppState
     };
 
   } catch (error) {
