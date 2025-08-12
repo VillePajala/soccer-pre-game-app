@@ -55,7 +55,7 @@ export default function TestSentryPage() {
     addResult('Capturing exception manually...');
     try {
       // Intentionally cause an error
-      const obj: any = null;
+      const obj = null as unknown as { nonExistentMethod: () => void };
       obj.nonExistentMethod();
     } catch (error) {
       Sentry.captureException(error);

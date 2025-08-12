@@ -45,7 +45,7 @@ interface MetricsData {
       external: number;
       unit: string;
     };
-    cpu: any;
+    cpu: unknown;
   };
   sentry: {
     enabled: boolean;

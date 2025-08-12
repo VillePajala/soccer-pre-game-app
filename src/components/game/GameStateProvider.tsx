@@ -158,7 +158,7 @@ export function GameStateProvider({
     logger.debug('[GameStateProvider] Pausing game');
     // Maintain current status; reduce to paused by toggling running flag
     // Delegate to reducer semantics rather than resetting status
-    dispatchGameSession({ type: 'PAUSE_TIMER' } as any);
+    dispatchGameSession({ type: 'PAUSE_TIMER' });
     setIsGameActive(false);
   }, []);
   

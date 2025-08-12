@@ -21,8 +21,8 @@ import logger from '@/utils/logger';
 
 export interface UsePersistentStorageResult {
   // Core storage operations
-  getItem: <T = any>(key: string, defaultValue?: T) => Promise<T | null>;
-  setItem: <T = any>(key: string, value: T) => Promise<boolean>;
+  getItem: <T = unknown>(key: string, defaultValue?: T) => Promise<T | null>;
+  setItem: <T = unknown>(key: string, value: T) => Promise<boolean>;
   removeItem: (key: string) => Promise<boolean>;
   hasItem: (key: string) => Promise<boolean>;
   getKeys: () => Promise<string[]>;
@@ -45,21 +45,19 @@ export interface UsePersistentStorageResult {
 
 export function usePersistentStorage(): UsePersistentStorageResult {
   const { shouldUseLegacy } = useMigrationSafety('PersistentStorage');
-  
+
+  // Always initialize legacy implementation to satisfy hook rules
+  const legacyStorage = useLegacyPersistentStorage();
+
   // Get persistence store state and actions
   const { isLoading, lastError } = usePersistenceStore();
   const persistenceActions = usePersistenceActions();
-  
-  // Legacy fallback
-  if (shouldUseLegacy) {
-    return useLegacyPersistentStorage();
-  }
   
   // ============================================================================
   // Core Storage Operations
   // ============================================================================
   
-  const getItem = useCallback(async <T = any>(key: string, defaultValue?: T): Promise<T | null> => {
+  const getItem = useCallback(async <T = unknown>(key: string, defaultValue?: T): Promise<T | null> => {
     try {
       const result = await persistenceActions.getStorageItem<T>(key, defaultValue);
       logger.debug(`[usePersistentStorage] Retrieved '${key}':`, result !== null);
@@ -70,7 +68,7 @@ export function usePersistentStorage(): UsePersistentStorageResult {
     }
   }, [persistenceActions]);
   
-  const setItem = useCallback(async <T = any>(key: string, value: T): Promise<boolean> => {
+  const setItem = useCallback(async <T = unknown>(key: string, value: T): Promise<boolean> => {
     try {
       const success = await persistenceActions.setStorageItem(key, value);
       logger.debug(`[usePersistentStorage] Set '${key}':`, success);
@@ -143,7 +141,11 @@ export function usePersistentStorage(): UsePersistentStorageResult {
   // ============================================================================
   // Return Interface
   // ============================================================================
-  
+
+  if (shouldUseLegacy) {
+    return legacyStorage;
+  }
+
   return {
     // Core storage operations
     getItem,
@@ -172,7 +174,7 @@ export function usePersistentStorage(): UsePersistentStorageResult {
 function useLegacyPersistentStorage(): UsePersistentStorageResult {
   logger.debug('[usePersistentStorage] Using legacy localStorage implementation');
   
-  const getItem = useCallback(async <T = any>(key: string, defaultValue?: T): Promise<T | null> => {
+  const getItem = useCallback(async <T = unknown>(key: string, defaultValue?: T): Promise<T | null> => {
     try {
       const item = localStorage.getItem(key);
       if (item === null) {
@@ -190,7 +192,7 @@ function useLegacyPersistentStorage(): UsePersistentStorageResult {
     }
   }, []);
   
-  const setItem = useCallback(async <T = any>(key: string, value: T): Promise<boolean> => {
+  const setItem = useCallback(async <T = unknown>(key: string, value: T): Promise<boolean> => {
     try {
       const serialized = typeof value === 'string' ? value : JSON.stringify(value);
       localStorage.setItem(key, serialized);

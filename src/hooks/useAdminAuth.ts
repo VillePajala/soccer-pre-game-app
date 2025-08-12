@@ -4,11 +4,12 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { isUserAdmin, AdminRole, hasAdminRole } from '@/lib/auth/adminAuth';
+import type { User } from '@/types/supabase-types';
 
 export interface AdminAuthState {
   isAdmin: boolean;
   isLoading: boolean;
-  user: any;
+  user: User | null;
   role?: AdminRole;
   hasRole: (role: AdminRole) => boolean;
   checkingAuth: boolean;

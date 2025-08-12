@@ -128,12 +128,8 @@ export interface UseViewModeResult {
 
 export function useViewMode(): UseViewModeResult {
   const { shouldUseLegacy } = useMigrationSafety('ViewMode');
-  
-  // Legacy fallback
-  if (shouldUseLegacy) {
-    return useLegacyViewMode();
-  }
-  
+  const legacyViewMode = useLegacyViewMode();
+
   // Get all the specialized hooks
   const gameView = useGameView();
   const _tacticsBoard = useTacticsBoard();
@@ -235,7 +231,11 @@ export function useViewMode(): UseViewModeResult {
   // ============================================================================
   // Return Interface
   // ============================================================================
-  
+
+  if (shouldUseLegacy) {
+    return legacyViewMode;
+  }
+
   return {
     // View modes
     viewModes: {

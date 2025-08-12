@@ -78,7 +78,7 @@ export default function ImportBackupPage() {
   };
 
   const importBackupData = async (jsonContent: string) => {
-    const parseResult = safeImportDataParse(jsonContent, (data): data is any => {
+    const parseResult = safeImportDataParse(jsonContent, (data): data is Record<string, unknown> => {
       return typeof data === 'object' && data !== null;
     });
     
@@ -230,35 +230,38 @@ export default function ImportBackupPage() {
           
           // Update availablePlayers with new IDs (if present)
           if (gameWithoutId.availablePlayers && Array.isArray(gameWithoutId.availablePlayers)) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            gameWithoutId.availablePlayers = gameWithoutId.availablePlayers.map((player: any) => ({
-              ...player,
-              id: playerIdMap.get(player.id) || player.id
-            }));
+            gameWithoutId.availablePlayers = gameWithoutId.availablePlayers.map(
+              (player: { id: string } & Record<string, unknown>) => ({
+                ...player,
+                id: playerIdMap.get(player.id) || player.id
+              })
+            );
           }
           
           // Update playersOnField with new IDs
           if (gameWithoutId.playersOnField && Array.isArray(gameWithoutId.playersOnField)) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            gameWithoutId.playersOnField = gameWithoutId.playersOnField.map((fieldPlayer: any) => ({
-              ...fieldPlayer,
-              id: playerIdMap.get(fieldPlayer.id) || fieldPlayer.id
-            }));
+            gameWithoutId.playersOnField = gameWithoutId.playersOnField.map(
+              (fieldPlayer: { id: string } & Record<string, unknown>) => ({
+                ...fieldPlayer,
+                id: playerIdMap.get(fieldPlayer.id) || fieldPlayer.id
+              })
+            );
           }
           
           // Update gameEvents with new player IDs
           if (gameWithoutId.gameEvents && Array.isArray(gameWithoutId.gameEvents)) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            gameWithoutId.gameEvents = gameWithoutId.gameEvents.map((event: any) => {
-              const updatedEvent = { ...event };
-              if (event.scorerId) {
-                updatedEvent.scorerId = playerIdMap.get(event.scorerId) || event.scorerId;
+            gameWithoutId.gameEvents = gameWithoutId.gameEvents.map(
+              (event: { scorerId?: string; assisterId?: string } & Record<string, unknown>) => {
+                const updatedEvent = { ...event };
+                if (event.scorerId) {
+                  updatedEvent.scorerId = playerIdMap.get(event.scorerId) || event.scorerId;
+                }
+                if (event.assisterId) {
+                  updatedEvent.assisterId = playerIdMap.get(event.assisterId) || event.assisterId;
+                }
+                return updatedEvent;
               }
-              if (event.assisterId) {
-                updatedEvent.assisterId = playerIdMap.get(event.assisterId) || event.assisterId;
-              }
-              return updatedEvent;
-            });
+            );
           }
           
           // Update season and tournament IDs

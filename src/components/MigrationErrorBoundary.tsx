@@ -13,10 +13,8 @@ import { safeLocalStorageGet } from '@/utils/safeJson';
 interface Props {
   children: ReactNode;
   componentName: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  fallbackComponent?: React.ComponentType<any>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  fallbackProps?: any;
+  fallbackComponent?: React.ComponentType<unknown>;
+  fallbackProps?: unknown;
   onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
 }
 
@@ -103,7 +101,7 @@ export class MigrationErrorBoundary extends Component<Props, State> {
     
     // Store error report for debugging
     try {
-      const existingReports = safeLocalStorageGet<any[]>('migration-error-reports', []);
+      const existingReports = safeLocalStorageGet<unknown[]>('migration-error-reports', []);
       existingReports.push(errorReport);
       // Keep only last 10 reports
       const recentReports = existingReports.slice(-10);
