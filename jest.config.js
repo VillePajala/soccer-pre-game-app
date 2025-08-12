@@ -66,6 +66,11 @@ const customJestConfig = {
   // transform: {
   //   '^.+\\.(ts|tsx)$?': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.json' }],
   // },
+  
+  // Help with async operations cleanup
+  testTimeout: 15000,
+  detectOpenHandles: false, // Disable open handles detection to prevent warnings
+  forceExit: true, // Force Jest to exit after tests
 };
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

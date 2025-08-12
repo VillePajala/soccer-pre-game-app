@@ -9,13 +9,8 @@ import { configureAxe, toHaveNoViolations } from 'jest-axe';
 
 // Configure axe-core for our specific testing needs
 const axe = configureAxe({
-  // Use standard rule set for WCAG 2.1 AA compliance
-  rules: {
-    // Focus on critical accessibility rules
-    'color-contrast': { enabled: true },
-    'focus-order': { enabled: true },
-    'tabindex': { enabled: true },
-  }
+  // Use default ruleset for WCAG 2.1 AA compliance
+  // Remove custom rules configuration to avoid invalid rule errors
 });
 
 // Extend Jest matchers with accessibility assertions
