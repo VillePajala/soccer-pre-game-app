@@ -1705,7 +1705,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           numberOfPeriods: numPeriods,
           periodDurationMinutes: periodDuration,
           currentPeriod: 0,
-          gameStatus: 'not_started',
+          gameStatus: 'notStarted',
           selectedPlayerIds: initialSelectedPlayerIds,
           seasonId: seasonId,
           tournamentId: tournamentId,
