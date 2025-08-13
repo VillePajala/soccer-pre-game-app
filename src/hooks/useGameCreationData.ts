@@ -7,6 +7,7 @@ import { getSeasons } from '@/utils/seasons';
 import { getTournaments } from '@/utils/tournaments';
 import { getLastHomeTeamName } from '@/utils/appSettings';
 import logger from '@/utils/logger';
+import { performanceMetrics } from '@/utils/performanceMetrics';
 
 export interface GameCreationData {
   seasons: Season[];
@@ -133,7 +134,7 @@ export function useGameCreationData(options?: { pauseRefetch?: boolean }) {
     refetch,
   };
 
-  // Log cache performance
+  // Log cache performance and record metrics
   if (!isLoading) {
     logger.debug('[useGameCreationData] Cache performance:', {
       cacheHitRate: `${cacheHitRate.toFixed(1)}%`,
@@ -141,6 +142,9 @@ export function useGameCreationData(options?: { pauseRefetch?: boolean }) {
       tournamentsFromCache: !tournamentsQuery.isLoading,
       lastTeamNameFromCache: !lastTeamNameQuery.isLoading,
     });
+    
+    // Record cache hit rate for monitoring
+    performanceMetrics.recordCacheHitRate(cacheHitRate);
   }
 
   return result;

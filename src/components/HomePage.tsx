@@ -88,6 +88,9 @@ import { useTrainingResourcesModalWithHandlers } from '@/hooks/useTrainingResour
 import { useGoalLogModalWithHandlers } from '@/hooks/useGoalLogModalState';
 import { useSettingsModalWithHandlers } from '@/hooks/useSettingsModalState';
 import { usePlayerAssessmentModalWithHandlers } from '@/hooks/usePlayerAssessmentModalState';
+import { useSupabaseWarmup } from '@/hooks/useSupabaseWarmup';
+import { useRosterData } from '@/hooks/useRosterData';
+import { useSavedGamesData } from '@/hooks/useSavedGamesData';
 // Import skeleton components - removed unused skeletons
 // import { GameStatsModalSkeleton, LoadGameModalSkeleton, RosterModalSkeleton, ModalSkeleton } from '@/components/ui/ModalSkeleton';
 import { AppLoadingSkeleton } from '@/components/ui/AppSkeleton';
@@ -158,9 +161,12 @@ interface HomePageProps {
 
 function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   const { t } = useTranslation(); // Get translation function
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   // Removed - now handled by useGameDataManager: 
   // const queryClient = useQueryClient(); // Get query client instance
+  
+  // Warm up Supabase connection after auth to avoid cold-start penalties
+  useSupabaseWarmup(!!user);
 
  
   
@@ -419,6 +425,16 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   // Pre-warm game creation data after auth
   const gameCreationData = useGameCreationData({
     pauseRefetch: newGameSetupModal.isOpen
+  });
+  
+  // Pre-warm roster data after auth
+  const _rosterData = useRosterData({
+    pauseRefetch: rosterSettingsModal.isOpen
+  });
+  
+  // Pre-warm saved games data after auth
+  const savedGamesData = useSavedGamesData({
+    pauseRefetch: loadGameModal.isOpen
   });
 
   const isMasterRosterQueryLoading = isGameDataLoading;
@@ -2050,18 +2066,21 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         <LoadGameModal 
           isOpen={loadGameModal.isOpen}
           onClose={loadGameModal.handleClose}
-          savedGames={savedGames} 
+          savedGames={savedGamesData.games.length > 0 ? savedGamesData.games : savedGames} 
           onLoad={handleLoadGame}
           onDelete={handleDeleteGame}
           onExportOneJson={handleExportOneJsonWrapper}
           onExportOneCsv={handleExportOneCsvWrapper}
           currentGameId={currentGameId || undefined} // Convert null to undefined
           // Pass loading and error state props for LoadGameModal
-          isLoadingGamesList={isLoadingGamesList}
-          loadGamesListError={loadGamesListError}
+          isLoadingGamesList={savedGamesData.isLoading || isLoadingGamesList}
+          loadGamesListError={savedGamesData.isError ? 'Failed to load games' : loadGamesListError}
           isGameLoading={isGameLoading}
           gameLoadError={gameLoadError}
           gameLoadingStates={gameLoadingStates}
+          // Pass timeout and refetch for graceful fallback
+          hasTimedOut={savedGamesData.hasTimedOut}
+          onRefetch={savedGamesData.refetch}
         />
       )}
 

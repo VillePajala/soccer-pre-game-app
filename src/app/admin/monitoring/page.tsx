@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRequireAdmin } from '@/hooks/useAdminAuth';
 import { useAuth } from '@/context/AuthContext';
+import { performanceMetrics, type ModalPerformanceMetrics } from '@/utils/performanceMetrics';
 
 interface HealthData {
   status: string;
@@ -45,7 +46,7 @@ interface MetricsData {
       external: number;
       unit: string;
     };
-    cpu: any;
+    cpu: unknown;
   };
   sentry: {
     enabled: boolean;
@@ -79,6 +80,7 @@ export default function MonitoringDashboard() {
   
   const [health, setHealth] = useState<HealthData | null>(null);
   const [metrics, setMetrics] = useState<MetricsData | null>(null);
+  const [modalMetrics, setModalMetrics] = useState<ModalPerformanceMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
@@ -105,6 +107,10 @@ export default function MonitoringDashboard() {
         const metricsData = await metricsRes.json();
         setMetrics(metricsData);
       }
+      
+      // Fetch modal performance metrics
+      const perfMetrics = performanceMetrics.getMetrics();
+      setModalMetrics(perfMetrics);
       
       setError(null);
     } catch (err) {
@@ -411,6 +417,93 @@ export default function MonitoringDashboard() {
                 </div>
               </div>
             </div>
+
+            {/* Modal Performance Metrics */}
+            {modalMetrics && (
+              <div className="border-t border-slate-700 pt-4">
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="text-lg font-medium text-slate-200">Modal Performance</h3>
+                  <div className="text-sm text-slate-400">Real-time metrics</div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* New Game Modal */}
+                  <div className="bg-slate-900 rounded p-4">
+                    <div className="text-slate-400 text-sm mb-2">New Game Modal</div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Open → Interactive:</span>
+                        <span className={`${modalMetrics.newGameModal.openToInteractive && modalMetrics.newGameModal.openToInteractive < 200 ? 'text-green-400' : 'text-slate-300'}`}>
+                          {modalMetrics.newGameModal.openToInteractive 
+                            ? `${Math.round(modalMetrics.newGameModal.openToInteractive)}ms` 
+                            : 'No data'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Data Hydration:</span>
+                        <span className="text-slate-300">
+                          {modalMetrics.newGameModal.openToHydrated 
+                            ? `${Math.round(modalMetrics.newGameModal.openToHydrated)}ms` 
+                            : 'No data'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Cache Hit Rate:</span>
+                        <span className={`${modalMetrics.newGameModal.cacheHitRate && modalMetrics.newGameModal.cacheHitRate > 80 ? 'text-green-400' : 'text-slate-300'}`}>
+                          {modalMetrics.newGameModal.cacheHitRate !== null
+                            ? `${modalMetrics.newGameModal.cacheHitRate.toFixed(1)}%` 
+                            : 'No data'}
+                        </span>
+                      </div>
+                      {modalMetrics.newGameModal.openToInteractive && modalMetrics.newGameModal.openToInteractive < 200 && (
+                        <div className="pt-2 text-green-400 text-xs">
+                          ✓ Meeting target (&lt;200ms)
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Load Game Modal */}
+                  <div className="bg-slate-900 rounded p-4">
+                    <div className="text-slate-400 text-sm mb-2">Load Game Modal</div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Open → Interactive:</span>
+                        <span className="text-slate-300">
+                          {modalMetrics.loadGameModal.openToInteractive 
+                            ? `${Math.round(modalMetrics.loadGameModal.openToInteractive)}ms` 
+                            : 'No data'}
+                        </span>
+                      </div>
+                      {modalMetrics.loadGameModal.lastMeasured && (
+                        <div className="text-xs text-slate-600 pt-2">
+                          Last: {new Date(modalMetrics.loadGameModal.lastMeasured).toLocaleTimeString()}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Supabase Warmup */}
+                  <div className="bg-slate-900 rounded p-4">
+                    <div className="text-slate-400 text-sm mb-2">Supabase Connection</div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Warmup Time:</span>
+                        <span className={`${modalMetrics.supabaseWarmup.duration && modalMetrics.supabaseWarmup.duration < 500 ? 'text-green-400' : 'text-slate-300'}`}>
+                          {modalMetrics.supabaseWarmup.duration 
+                            ? `${Math.round(modalMetrics.supabaseWarmup.duration)}ms` 
+                            : 'No data'}
+                        </span>
+                      </div>
+                      {modalMetrics.supabaseWarmup.duration && modalMetrics.supabaseWarmup.duration < 500 && (
+                        <div className="pt-2 text-green-400 text-xs">
+                          ✓ Fast connection
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Web Vitals */}
             <div className="border-t border-slate-700 pt-4">

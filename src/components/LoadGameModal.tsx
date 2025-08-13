@@ -44,6 +44,8 @@ export interface LoadGameModalProps {
   gameDeleteError?: string | null;
   isGamesImporting?: boolean;
   gameLoadingStates?: Record<string, { loading: boolean; error: string | null }>;
+  hasTimedOut?: boolean;
+  onRefetch?: () => void;
 }
 
 // Define the default game ID constant if not imported (consider sharing from page.tsx)
@@ -66,6 +68,8 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
   gameDeleteError = null,
   isGamesImporting = false,
   gameLoadingStates = {},
+  hasTimedOut: _hasTimedOut = false,
+  onRefetch: _onRefetch,
 }) => {
   const { t, i18n } = useTranslation();
   const { showToast } = useToast();
