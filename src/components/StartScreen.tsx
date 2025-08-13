@@ -8,7 +8,7 @@ import {
   getAppSettings,
 } from '@/utils/appSettings';
 import { AuthModal } from '@/components/auth/AuthModal';
-import { HiOutlineArrowRightOnRectangle, HiCheck } from 'react-icons/hi2';
+import { HiOutlineArrowRightOnRectangle, HiOutlineUserPlus, HiCheck } from 'react-icons/hi2';
 import { useAuth } from '@/context/AuthContext';
 import logger from '@/utils/logger';
 
@@ -86,42 +86,58 @@ const StartScreen: React.FC<StartScreenProps> = ({
     }
   }, [showLoginSuccess]);
 
-  const buttonStyle =
-    'w-64 sm:w-64 md:w-56 px-3 sm:px-4 py-2 sm:py-2 rounded-md text-base sm:text-lg font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500';
+  const baseButtonStyle =
+    'w-64 sm:w-64 md:w-56 px-3 sm:px-4 py-2.5 sm:py-3 rounded-md text-base sm:text-lg font-semibold transition-colors focus:outline-none focus:ring-2';
+  const primaryButtonStyle = `${baseButtonStyle} bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-500/90 hover:to-violet-600/90 text-white focus:ring-indigo-500 shadow-lg shadow-indigo-900/20`;
+  const secondaryButtonStyle = `${baseButtonStyle} bg-slate-700 hover:bg-slate-600 text-white focus:ring-slate-500 border border-slate-600`;
 
   const containerStyle =
     'relative flex flex-col items-center justify-center min-h-screen bg-slate-950 text-slate-100 font-display overflow-hidden py-8 sm:py-16 md:py-24 px-4';
 
   const taglineStyle =
-    'text-lg sm:text-xl text-slate-300 mb-8 sm:mb-12 text-center max-w-sm drop-shadow-lg bg-slate-800/50 px-4 py-1 rounded-full';
+    'text-xl sm:text-2xl text-slate-200/95 text-center tracking-wide drop-shadow-md relative';
 
   const titleStyle =
-    'text-5xl sm:text-6xl md:text-7xl font-bold text-yellow-400 tracking-wide drop-shadow-lg mb-2 text-center';
+    'text-5xl sm:text-6xl md:text-7xl font-bold text-yellow-400 tracking-tight leading-tight drop-shadow-lg mb-2 text-center';
 
 
   return (
     <div className={containerStyle}>
       <div className="absolute inset-0 bg-noise-texture" />
       <div className="absolute inset-0 bg-gradient-radial from-slate-950 via-slate-900/80 to-slate-900" />
+      {/* Animated aurora gradient (darker, moody) */}
+      <div className="absolute inset-0 pointer-events-none animate-gradient [background:linear-gradient(120deg,theme(colors.indigo.950),theme(colors.blue.900),theme(colors.cyan.900),theme(colors.indigo.950))] opacity-25" />
+      {/* Subtle grid for depth */}
+      <div className="absolute inset-0 pointer-events-none sm:opacity-[0.04] opacity-[0.03] [background-image:linear-gradient(to_right,rgba(255,255,255,.25)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,.25)_1px,transparent_1px)] [background-size:40px_40px]" />
       <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/30 via-sky-700/20 to-cyan-600/30 mix-blend-overlay" />
       <div className="absolute inset-0 bg-gradient-to-b from-sky-400/10 via-transparent to-transparent" />
+      {/* Spotlight behind title */}
+      <div className="absolute top-[28%] left-1/2 -translate-x-1/2 w-[60vw] h-[32vh] pointer-events-none opacity-60 [background:radial-gradient(closest-side,rgba(56,189,248,0.12),transparent_70%)] blur-3xl" />
       <div className="absolute -inset-[50px] bg-sky-400/10 blur-3xl top-0 opacity-50" />
       <div className="absolute -inset-[50px] bg-indigo-600/10 blur-3xl bottom-0 opacity-50" />
       <div className="pointer-events-none absolute inset-0 opacity-60 [background:radial-gradient(60%_50%_at_12%_12%,theme(colors.indigo.700)/0.25_0%,transparent_70%)]" />
       <div className="pointer-events-none absolute inset-0 opacity-60 [background:radial-gradient(50%_40%_at_88%_78%,theme(colors.sky.500)/0.25_0%,transparent_70%)]" />
+      {/* Vignette for focus */}
+      <div className="absolute inset-0 pointer-events-none [background:radial-gradient(120%_90%_at_50%_50%,transparent_60%,rgba(0,0,0,0.35)_100%)]" />
+      {/* Elegant rotating conic highlight */}
+      <div className="absolute inset-0 pointer-events-none animate-rotate-slow opacity-10 [background:conic-gradient(from_150deg_at_65%_38%,theme(colors.cyan.400)/0.35_0deg,transparent_60deg,transparent_300deg,theme(colors.indigo.500)/0.35_360deg)]" />
 
-      <div className="relative z-10 flex flex-col items-center w-full max-w-sm sm:max-w-md">
+      <div className="relative z-10 flex flex-col items-center w-full max-w-sm sm:max-w-md mt-[-6vh] sm:mt-[-5vh]">
         <h1 className={titleStyle}>
           <span className="block">MatchDay</span>
-          <span className="block">Coach</span>
+          <span className="block -mt-1">Coach</span>
         </h1>
-        <p className={taglineStyle}>{t('startScreen.tagline', 'Elevate Your Game')}</p>
+        <p className={taglineStyle}>
+          {t('startScreen.tagline', 'Elevate Your Game')}
+          <span className="absolute inset-0 -z-10 mx-auto w-[80%] h-full pointer-events-none [background:radial-gradient(closest-side,rgba(99,102,241,0.12),transparent_70%)] blur-md" />
+        </p>
+        <div className="h-px w-44 sm:w-64 bg-gradient-to-r from-transparent via-sky-400/70 to-transparent mx-auto mt-3 sm:mt-4 mb-8 sm:mb-12" />
 
         {/* Show different content based on auth state */}
         {!isAuthenticated ? (
           <div className="flex flex-col items-center text-center space-y-3">
             <button
-              className={buttonStyle}
+              className={primaryButtonStyle}
               onClick={() => {
                 setAuthModalMode('signin');
                 setShowAuthModal(true);
@@ -136,7 +152,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
               </span>
             </button>
             <button
-              className={`${buttonStyle} bg-green-600 hover:bg-green-700`}
+              className={secondaryButtonStyle}
               onClick={() => {
                 setAuthModalMode('signup');
                 setShowAuthModal(true);
@@ -144,7 +160,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
             >
               <span className="flex items-center justify-center w-full">
                 <span className="w-6 text-left">
-                  <HiOutlineArrowRightOnRectangle className="w-4 sm:w-5 h-4 sm:h-5" />
+                  <HiOutlineUserPlus className="w-4 sm:w-5 h-4 sm:h-5" />
                 </span>
                 <span className="flex-1 text-center">{t('auth.signUp')}</span>
                 <span className="w-6" />
@@ -156,25 +172,25 @@ const StartScreen: React.FC<StartScreenProps> = ({
             {(() => {
               logger.debug('[StartScreen] Render: canResume =', canResume, 'onResumeGame =', !!onResumeGame);
               return canResume && onResumeGame ? (
-                <button className={buttonStyle} onClick={onResumeGame}>
+                <button className={primaryButtonStyle} onClick={onResumeGame}>
                   {t('startScreen.resumeGame', 'Resume Last Game')}
                 </button>
               ) : null;
             })()}
-            <button className={buttonStyle} onClick={onStartNewGame}>
+            <button className={primaryButtonStyle} onClick={onStartNewGame}>
               {t('startScreen.startNewGame', 'Start New Game')}
             </button>
-            <button className={buttonStyle} onClick={onLoadGame}>
+            <button className={secondaryButtonStyle} onClick={onLoadGame}>
               {t('startScreen.loadGame', 'Load Game')}
             </button>
-            <button className={buttonStyle} onClick={onCreateSeason}>
+            <button className={secondaryButtonStyle} onClick={onCreateSeason}>
               {t('startScreen.createSeasonTournament', 'Create Season/Tournament')}
             </button>
-            <button className={buttonStyle} onClick={onViewStats}>
+            <button className={secondaryButtonStyle} onClick={onViewStats}>
               {t('startScreen.viewStats', 'View Stats')}
             </button>
             <button
-              className={`${buttonStyle} bg-red-600 hover:bg-red-700`}
+              className={`${baseButtonStyle} bg-red-600 hover:bg-red-700`}
               onClick={signOut}
             >
               <span className="flex items-center justify-center w-full">
@@ -206,21 +222,23 @@ const StartScreen: React.FC<StartScreenProps> = ({
         />
       )}
 
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center space-x-2">
-        <button
-          aria-label={t('startScreen.languageEnglish', 'English')}
-          onClick={() => setLanguage('en')}
-          className={`w-10 h-8 rounded-md border text-sm font-bold flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${language === 'en' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-700 border-slate-600 text-white hover:bg-slate-600'}`}
-        >
-          EN
-        </button>
-        <button
-          aria-label={t('startScreen.languageFinnish', 'Finnish')}
-          onClick={() => setLanguage('fi')}
-          className={`w-10 h-8 rounded-md border text-sm font-bold flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${language === 'fi' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-700 border-slate-600 text-white hover:bg-slate-600'}`}
-        >
-          FI
-        </button>
+      <div className="absolute left-1/2 -translate-x-1/2 z-20 flex items-center bottom-8 md:bottom-6">
+        <div className="flex rounded-lg bg-slate-800/70 border border-slate-600 backdrop-blur-sm overflow-hidden">
+          <button
+            aria-label={t('startScreen.languageEnglish', 'English')}
+            onClick={() => setLanguage('en')}
+            className={`px-3 h-8 text-xs font-bold transition-colors focus:outline-none ${language === 'en' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-700/60'}`}
+          >
+            EN
+          </button>
+          <button
+            aria-label={t('startScreen.languageFinnish', 'Finnish')}
+            onClick={() => setLanguage('fi')}
+            className={`px-3 h-8 text-xs font-bold transition-colors focus:outline-none border-l border-slate-600/60 ${language === 'fi' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-700/60'}`}
+          >
+            FI
+          </button>
+        </div>
       </div>
     </div>
   );
