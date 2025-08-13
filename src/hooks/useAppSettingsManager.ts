@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import i18n, { loadLanguage } from '../i18n';
 import {
   saveHasSeenAppGuide,
-  resetAppSettings as utilResetAppSettings,
   saveLastHomeTeamName as utilSaveLastHomeTeamName,
   updateAppSettings as utilUpdateAppSettings,
 } from '@/utils/appSettings';
