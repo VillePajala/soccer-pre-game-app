@@ -2,12 +2,12 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { SavedGame } from '@/types';
-import { listGames } from '@/utils/savedGames';
+import { SavedGamesCollection } from '@/types';
+import { getSavedGames } from '@/utils/savedGames';
 import logger from '@/utils/logger';
 
 export interface SavedGamesData {
-  games: SavedGame[];
+  games: SavedGamesCollection;
   isLoading: boolean;
   isError: boolean;
   hasTimedOut: boolean;
@@ -25,7 +25,7 @@ export function useSavedGamesData(options?: { pauseRefetch?: boolean }) {
 
   const query = useQuery({
     queryKey: ['savedGames'],
-    queryFn: listGames,
+    queryFn: getSavedGames,
     staleTime: 2 * 60 * 1000, // 2 minutes (more frequently updated than roster)
     gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: !options?.pauseRefetch,
@@ -81,7 +81,7 @@ export function useSavedGamesData(options?: { pauseRefetch?: boolean }) {
   }
 
   const result: SavedGamesData = {
-    games: Array.isArray(games) ? games : [],
+    games: games || {},
     isLoading,
     isError,
     hasTimedOut,
@@ -91,7 +91,7 @@ export function useSavedGamesData(options?: { pauseRefetch?: boolean }) {
   // Log cache performance
   if (!isLoading) {
     logger.debug('[useSavedGamesData] Data loaded:', {
-      gameCount: result.games.length,
+      gameCount: Object.keys(result.games).length,
       fromCache: !query.isFetching,
     });
   }

@@ -2066,7 +2066,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         <LoadGameModal 
           isOpen={loadGameModal.isOpen}
           onClose={loadGameModal.handleClose}
-          savedGames={savedGamesData.games.length > 0 ? savedGamesData.games : savedGames} 
+          savedGames={Object.keys(savedGamesData.games).length > 0 ? savedGamesData.games : savedGames} 
           onLoad={handleLoadGame}
           onDelete={handleDeleteGame}
           onExportOneJson={handleExportOneJsonWrapper}
