@@ -18,7 +18,7 @@ import WebVitalsReporter from "@/components/WebVitalsReporter";
 // Configure Rajdhani font
 const rajdhani = Rajdhani({
   subsets: ['latin'],
-  weight: ['400', '600'], // We'll use 600 for Semi-bold
+  weight: ['400', '600', '700'], // Include 700 for extra-bold headings
   variable: '--font-rajdhani',
 });
 
@@ -67,4 +67,5 @@ export default function RootLayout({
         <Analytics />
       </body>
     </html>
-  );}
+  );
+}

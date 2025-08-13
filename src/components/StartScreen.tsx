@@ -96,7 +96,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
     'text-xl sm:text-2xl text-slate-200/95 text-center tracking-wide drop-shadow-md relative';
 
   const titleStyle =
-    'text-5xl sm:text-6xl md:text-7xl font-bold text-yellow-400 tracking-tight leading-tight drop-shadow-lg mb-2 text-center';
+    'text-6xl sm:text-7xl lg:text-9xl font-extrabold tracking-tight leading-tight drop-shadow-lg mb-2 text-center';
 
 
   return (
@@ -110,7 +110,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
       <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/30 via-sky-700/20 to-cyan-600/30 mix-blend-overlay" />
       <div className="absolute inset-0 bg-gradient-to-b from-sky-400/10 via-transparent to-transparent" />
       {/* Spotlight behind title */}
-      <div className="absolute top-[28%] left-1/2 -translate-x-1/2 w-[60vw] h-[32vh] pointer-events-none opacity-60 [background:radial-gradient(closest-side,rgba(56,189,248,0.12),transparent_70%)] blur-3xl" />
+      <div className="absolute top-[28%] left-1/2 -translate-x-1/2 w-[60vw] h-[32vh] pointer-events-none opacity-70 [background:radial-gradient(closest-side,rgba(56,189,248,0.14),transparent_70%)] blur-[28px]" />
       <div className="absolute -inset-[50px] bg-sky-400/10 blur-3xl top-0 opacity-50" />
       <div className="absolute -inset-[50px] bg-indigo-600/10 blur-3xl bottom-0 opacity-50" />
       <div className="pointer-events-none absolute inset-0 opacity-60 [background:radial-gradient(60%_50%_at_12%_12%,theme(colors.indigo.700)/0.25_0%,transparent_70%)]" />
@@ -121,9 +121,17 @@ const StartScreen: React.FC<StartScreenProps> = ({
       <div className="absolute inset-0 pointer-events-none animate-rotate-slow opacity-10 [background:conic-gradient(from_150deg_at_65%_38%,theme(colors.cyan.400)/0.35_0deg,transparent_60deg,transparent_300deg,theme(colors.indigo.500)/0.35_360deg)]" />
 
       <div className="relative z-10 flex flex-col items-center w-full max-w-sm sm:max-w-md mt-[-6vh] sm:mt-[-5vh]">
-        <h1 className={titleStyle}>
-          <span className="block">MatchDay</span>
-          <span className="block -mt-1">Coach</span>
+        <h1 className={`${titleStyle} relative`}>
+          <span className="block relative text-yellow-400 title-outline">
+            {/* Neon inner glow */}
+            <span className="absolute inset-0 -z-10 blur-[6px] opacity-60 [background:radial-gradient(closest-side,rgba(234,179,8,0.35),transparent_70%)]" />
+            MatchDay
+          </span>
+          <span className="block -mt-1 relative text-yellow-400 title-outline">
+            <span className="absolute inset-0 -z-10 blur-[6px] opacity-60 [background:radial-gradient(closest-side,rgba(234,179,8,0.35),transparent_70%)]" />
+            Coach
+          </span>
+          {/* Remove sheen sweep; rely on animated gradient text */}
         </h1>
         <p className={taglineStyle}>
           {t('startScreen.tagline', 'Elevate Your Game')}
