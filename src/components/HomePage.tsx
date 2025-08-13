@@ -1607,6 +1607,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   ) => {
       // Prevent auto-save during new game creation
       setIsCreatingNewGame(true);
+      logger.log('[GameCreation] t0: Create game clicked, autosave paused');
       
       // ADD LOGGING HERE:
       logger.log('[handleStartNewGameWithSetup] Received Params:', { 
@@ -1685,6 +1686,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
       // ✅ FIX: Set the current game ID immediately so UI recognizes the new game
       setCurrentGameId(tempGameId);
+      logger.log(`[GameCreation] t1: Temp game ID set: ${tempGameId}`);
 
       // 3. Reset History with the new state
       resetHistory(newGameState);
@@ -1724,30 +1726,34 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           showPlayerNames: true,
         }
       });
+      logger.log('[GameCreation] t2: Reducer hydrated with new game state');
 
       setIsPlayed(isPlayed);
 
       try {
+        logger.log('[GameCreation] t3: Starting save operation...');
         await handleQuickSaveGame(tempGameId, newGameState);
         
         // Check if the game ID changed after save (e.g., Supabase generated UUID)
         // The handleQuickSaveGame function will automatically update currentGameId if needed
         const updatedGameId = currentGameId; // This might have been updated by handleQuickSaveGame
-        logger.log(`[handleStartNewGameWithSetup] Game saved with ID: ${updatedGameId}`);
+        logger.log(`[GameCreation] t4: Save completed, final game ID: ${updatedGameId}`);
       } catch (error) {
-        logger.error('[handleStartNewGameWithSetup] Quick save failed:', error);
+        logger.error('[GameCreation] Save operation failed:', error);
         throw error;
       }
 
       // Close the setup modal
       newGameSetupModal.close();
       setNewGameDemandFactor(1);
+      logger.log('[GameCreation] t5: Modal closed');
 
       // <<< Trigger the roster button highlight >>>
       setHighlightRosterButton(true);
 
       // Re-enable auto-save after new game creation is complete
       setIsCreatingNewGame(false);
+      logger.log('[GameCreation] t6: Autosave re-enabled, game creation complete');
 
   }, [
     // Keep necessary dependencies

@@ -212,7 +212,7 @@ export const useGameDataManager = ({
     }
 
     // Queue the save operation to prevent race conditions
-    saveQueue.queueSave(
+    await saveQueue.queueSave(
       `quick-save-${gameId}`,
       async () => {
         logger.log(`[useGameDataManager] Processing queued quick save for game ID: ${gameId}`);
@@ -260,7 +260,7 @@ export const useGameDataManager = ({
         // 3. Update currentGameId if it changed (important for Supabase UUID sync)
         const newGameId = (savedResult as AppState & { id?: string }).id;
         if (newGameId && newGameId !== gameId) {
-          logger.log(`[useGameDataManager] Game ID changed from ${gameId} to ${newGameId} during quick save`);
+          logger.log(`[GameCreation] UUID sync: ${gameId} → ${newGameId}`);
           setCurrentGameId(newGameId);
 
           // Update savedGames with the new ID and remove the old one
@@ -281,6 +281,7 @@ export const useGameDataManager = ({
         
         // Invalidate React Query cache to refresh saved games data
         queryClient.invalidateQueries({ queryKey: queryKeys.savedGames });
+        logger.log('[GameCreation] Cache invalidated, saved games list will refresh');
       }
     );
   }, [
