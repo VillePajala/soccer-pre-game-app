@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import UpdateBanner from './UpdateBanner';
+import { useUpdate } from '@/contexts/UpdateContext';
 import logger from '@/utils/logger';
 
 export default function ServiceWorkerRegistration() {
   const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
   const [showUpdateBanner, setShowUpdateBanner] = useState(false);
   const [releaseNotes, setReleaseNotes] = useState<string | null>(null);
+  const { setUpdateAvailable, setReleaseNotes: setGlobalReleaseNotes, setVersionInfo } = useUpdate();
 
   useEffect(() => {
     const controller = new AbortController();
@@ -38,6 +40,8 @@ export default function ServiceWorkerRegistration() {
         if (res.ok) {
           const data = await res.json();
           setReleaseNotes(data.notes);
+          setGlobalReleaseNotes(data.notes || '');
+          setVersionInfo(data.version);
         }
       } catch (error) {
         if (error instanceof Error && error.name !== 'AbortError') {
@@ -56,6 +60,7 @@ export default function ServiceWorkerRegistration() {
         setWaitingWorker(registration.waiting);
         fetchReleaseNotes();
         setShowUpdateBanner(true);
+        setUpdateAvailable(true);
         return;
       }
 
@@ -71,6 +76,7 @@ export default function ServiceWorkerRegistration() {
                 setWaitingWorker(newWorker);
                 fetchReleaseNotes();
                 setShowUpdateBanner(true);
+                setUpdateAvailable(true);
               }
           };
         }
@@ -97,6 +103,8 @@ export default function ServiceWorkerRegistration() {
         navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
       }
     };
+    // Disabling exhaustive-deps as we only want this to run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleUpdate = () => {

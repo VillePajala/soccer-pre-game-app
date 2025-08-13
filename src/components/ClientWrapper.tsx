@@ -6,7 +6,7 @@ import React, { useEffect } from 'react';
 // import i18n from '../i18n';
 import I18nInitializer from './I18nInitializer';
 import InstallPrompt from './InstallPrompt';
-import EnhancedServiceWorkerRegistration from './EnhancedServiceWorkerRegistration';
+import ServiceWorkerRegistration from './ServiceWorkerRegistration';
 import { ToastProvider } from '@/contexts/ToastProvider';
 import { UpdateProvider } from '@/contexts/UpdateContext';
 import i18n from '@/i18n';
@@ -29,7 +29,7 @@ const ClientWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   return (
     <I18nInitializer>
       <UpdateProvider>
-        <EnhancedServiceWorkerRegistration />
+        <ServiceWorkerRegistration />
         <ToastProvider>
           {children}
           <InstallPrompt />
