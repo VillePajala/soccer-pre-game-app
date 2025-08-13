@@ -33,32 +33,101 @@ export function useGameCreationData(options?: { pauseRefetch?: boolean }) {
     queries: [
       {
         queryKey: ['seasons'],
-        queryFn: getSeasons,
+        queryFn: async () => {
+          try {
+            return await getSeasons();
+          } catch (error) {
+            // Handle auth errors gracefully - return empty array instead of retrying forever
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            if (errorMessage.includes('Unauthorized') || errorMessage.includes('401') || 
+                errorMessage.includes('AuthenticationError')) {
+              logger.warn('[useGameCreationData] Auth error fetching seasons, returning empty array');
+              return [];
+            }
+            // Re-throw other errors
+            throw error;
+          }
+        },
         staleTime: 5 * 60 * 1000, // 5 minutes
         gcTime: 30 * 60 * 1000, // 30 minutes
         refetchOnWindowFocus: !options?.pauseRefetch,
         refetchInterval: options?.pauseRefetch ? false : 10 * 60 * 1000, // 10 minutes
-        retry: 2,
+        retry: (failureCount, error) => {
+          // Don't retry auth errors
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          if (errorMessage.includes('Unauthorized') || errorMessage.includes('401') || 
+              errorMessage.includes('AuthenticationError')) {
+            return false;
+          }
+          // Only retry network errors up to 2 times
+          return failureCount < 2;
+        },
         retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
       },
       {
         queryKey: ['tournaments'],
-        queryFn: getTournaments,
+        queryFn: async () => {
+          try {
+            return await getTournaments();
+          } catch (error) {
+            // Handle auth errors gracefully - return empty array instead of retrying forever
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            if (errorMessage.includes('Unauthorized') || errorMessage.includes('401') || 
+                errorMessage.includes('AuthenticationError')) {
+              logger.warn('[useGameCreationData] Auth error fetching tournaments, returning empty array');
+              return [];
+            }
+            // Re-throw other errors
+            throw error;
+          }
+        },
         staleTime: 5 * 60 * 1000, // 5 minutes
         gcTime: 30 * 60 * 1000, // 30 minutes
         refetchOnWindowFocus: !options?.pauseRefetch,
         refetchInterval: options?.pauseRefetch ? false : 10 * 60 * 1000, // 10 minutes
-        retry: 2,
+        retry: (failureCount, error) => {
+          // Don't retry auth errors
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          if (errorMessage.includes('Unauthorized') || errorMessage.includes('401') || 
+              errorMessage.includes('AuthenticationError')) {
+            return false;
+          }
+          // Only retry network errors up to 2 times
+          return failureCount < 2;
+        },
         retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
       },
       {
         queryKey: ['lastHomeTeamName'],
-        queryFn: getLastHomeTeamName,
+        queryFn: async () => {
+          try {
+            return await getLastHomeTeamName();
+          } catch (error) {
+            // Handle auth errors gracefully - return default team name
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            if (errorMessage.includes('Unauthorized') || errorMessage.includes('401') || 
+                errorMessage.includes('AuthenticationError')) {
+              logger.warn('[useGameCreationData] Auth error fetching last team name, returning default');
+              return 'My Team';
+            }
+            // Re-throw other errors
+            throw error;
+          }
+        },
         staleTime: 30 * 60 * 1000, // 30 minutes (less frequently updated)
         gcTime: 60 * 60 * 1000, // 1 hour
         refetchOnWindowFocus: !options?.pauseRefetch,
         refetchInterval: options?.pauseRefetch ? false : 30 * 60 * 1000, // 30 minutes
-        retry: 1,
+        retry: (failureCount, error) => {
+          // Don't retry auth errors
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          if (errorMessage.includes('Unauthorized') || errorMessage.includes('401') || 
+              errorMessage.includes('AuthenticationError')) {
+            return false;
+          }
+          // Only retry once for settings
+          return failureCount < 1;
+        },
         retryDelay: 2000,
       },
     ],

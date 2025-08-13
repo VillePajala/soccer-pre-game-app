@@ -25,12 +25,35 @@ export function useRosterData(options?: { pauseRefetch?: boolean }) {
 
   const query = useQuery({
     queryKey: ['masterRoster'],
-    queryFn: getMasterRoster,
+    queryFn: async () => {
+      try {
+        return await getMasterRoster();
+      } catch (error) {
+        // Handle auth errors gracefully - return empty array instead of retrying forever
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        if (errorMessage.includes('Unauthorized') || errorMessage.includes('401') || 
+            errorMessage.includes('AuthenticationError')) {
+          logger.warn('[useRosterData] Auth error fetching roster, returning empty array');
+          return [];
+        }
+        // Re-throw other errors
+        throw error;
+      }
+    },
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
     refetchOnWindowFocus: !options?.pauseRefetch,
     refetchInterval: options?.pauseRefetch ? false : 10 * 60 * 1000, // 10 minutes
-    retry: 2,
+    retry: (failureCount, error) => {
+      // Don't retry auth errors
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('Unauthorized') || errorMessage.includes('401') || 
+          errorMessage.includes('AuthenticationError')) {
+        return false;
+      }
+      // Only retry network errors up to 2 times
+      return failureCount < 2;
+    },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 

@@ -25,12 +25,35 @@ export function useSavedGamesData(options?: { pauseRefetch?: boolean }) {
 
   const query = useQuery({
     queryKey: ['savedGames'],
-    queryFn: getSavedGames,
+    queryFn: async () => {
+      try {
+        return await getSavedGames();
+      } catch (error) {
+        // Handle auth errors gracefully - return empty collection instead of retrying forever
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        if (errorMessage.includes('Unauthorized') || errorMessage.includes('401') || 
+            errorMessage.includes('AuthenticationError')) {
+          logger.warn('[useSavedGamesData] Auth error fetching saved games, returning empty collection');
+          return {};
+        }
+        // Re-throw other errors
+        throw error;
+      }
+    },
     staleTime: 2 * 60 * 1000, // 2 minutes (more frequently updated than roster)
     gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: !options?.pauseRefetch,
     refetchInterval: options?.pauseRefetch ? false : 5 * 60 * 1000, // 5 minutes
-    retry: 2,
+    retry: (failureCount, error) => {
+      // Don't retry auth errors
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('Unauthorized') || errorMessage.includes('401') || 
+          errorMessage.includes('AuthenticationError')) {
+        return false;
+      }
+      // Only retry network errors up to 2 times
+      return failureCount < 2;
+    },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
