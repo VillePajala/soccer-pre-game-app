@@ -27,7 +27,7 @@ export interface SyncQueueItem {
 
 // IndexedDB database configuration
 const DB_NAME = 'soccer_coach_app';
-const DB_VERSION = 1;
+const DB_VERSION = 2; // Incremented for gameId -> id migration
 
 export class IndexedDBProvider implements IStorageProvider {
   private db: IDBDatabase | null = null;
@@ -66,8 +66,28 @@ export class IndexedDBProvider implements IStorageProvider {
 
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
+        const oldVersion = event.oldVersion;
         
-        // Create object stores if they don't exist
+        // Handle migration from version 1 to 2 (gameId -> id)
+        if (oldVersion === 1 && event.newVersion === 2) {
+          console.log('[IndexedDB] Migrating from version 1 to 2: gameId -> id field change');
+          
+          // For saved_games: We must delete and recreate because keyPath changed
+          // Unfortunately, this means losing existing data in IndexedDB
+          // But users' data should still be in localStorage or Supabase
+          if (db.objectStoreNames.contains('saved_games')) {
+            db.deleteObjectStore('saved_games');
+            console.log('[IndexedDB] Deleted old saved_games store with gameId keyPath');
+          }
+          
+          // For timer_states: Same issue with keyPath change
+          if (db.objectStoreNames.contains('timer_states')) {
+            db.deleteObjectStore('timer_states');
+            console.log('[IndexedDB] Deleted old timer_states store with gameId keyPath');
+          }
+        }
+        
+        // Create object stores if they don't exist (will recreate with correct keyPath)
         this.createObjectStores(db);
       };
     });
@@ -103,7 +123,7 @@ export class IndexedDBProvider implements IStorageProvider {
 
     // Timer states store
     if (!db.objectStoreNames.contains('timer_states')) {
-      const timerStore = db.createObjectStore('timer_states', { keyPath: 'gameId' });
+      const timerStore = db.createObjectStore('timer_states', { keyPath: 'id' });
       timerStore.createIndex('timestamp', 'timestamp', { unique: false });
     }
 
