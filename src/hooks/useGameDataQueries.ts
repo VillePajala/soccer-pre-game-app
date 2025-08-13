@@ -98,12 +98,32 @@ export function useGameDataQueries(options?: { pauseRefetch?: boolean }): GameDa
   // Saved Games - More dynamic data (updated when games are saved/loaded)
   const savedGames = useQuery<SavedGamesCollection | null, Error>({
     queryKey: queryKeys.savedGames,
-    queryFn: getSavedGames,
+    queryFn: async () => {
+      try {
+        return await getSavedGames();
+      } catch (error) {
+        // Handle auth errors gracefully - return empty collection instead of failing
+        if (error.message?.includes('Unauthorized') || error.message?.includes('401')) {
+          console.warn('[useGameDataQueries] Auth error fetching saved games, returning empty collection');
+          return {};
+        }
+        // Re-throw other errors
+        throw error;
+      }
+    },
     staleTime: 30 * 1000, // 30 seconds - more dynamic
     gcTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: !options?.pauseRefetch, // Pause refetch when modal is open
     refetchInterval: options?.pauseRefetch ? false : 2 * 60 * 1000, // Pause background refresh
     refetchIntervalInBackground: false, // Only when app is active
+    retry: (failureCount, error) => {
+      // Don't retry auth errors
+      if (error.message?.includes('Unauthorized') || error.message?.includes('401')) {
+        return false;
+      }
+      // Retry network errors up to 2 times
+      return failureCount < 2;
+    },
   });
 
   // Current Game ID - Very dynamic data (changes frequently during gameplay)

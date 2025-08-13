@@ -284,8 +284,13 @@ export const useGameDataManager = ({
         }
         
         // Invalidate React Query cache to refresh saved games data
-        queryClient.invalidateQueries({ queryKey: queryKeys.savedGames });
-        logger.log('[GameCreation] Cache invalidated, saved games list will refresh');
+        try {
+          queryClient.invalidateQueries({ queryKey: queryKeys.savedGames });
+          logger.log('[GameCreation] Cache invalidated, saved games list will refresh');
+        } catch (error) {
+          // Don't fail the save operation if cache invalidation fails
+          logger.warn('[GameCreation] Cache invalidation failed (non-critical):', error);
+        }
       }
     );
 
