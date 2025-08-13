@@ -21,7 +21,7 @@ export interface RosterData {
  */
 export function useRosterData(options?: { pauseRefetch?: boolean }) {
   const [hasTimedOut, setHasTimedOut] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   const query = useQuery({
     queryKey: ['masterRoster'],

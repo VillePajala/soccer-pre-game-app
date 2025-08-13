@@ -27,7 +27,7 @@ export interface GameCreationData {
  */
 export function useGameCreationData(options?: { pauseRefetch?: boolean }) {
   const [hasTimedOut, setHasTimedOut] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   const queries = useQueries({
     queries: [

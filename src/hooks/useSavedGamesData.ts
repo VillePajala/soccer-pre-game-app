@@ -21,7 +21,7 @@ export interface SavedGamesData {
  */
 export function useSavedGamesData(options?: { pauseRefetch?: boolean }) {
   const [hasTimedOut, setHasTimedOut] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   const query = useQuery({
     queryKey: ['savedGames'],
