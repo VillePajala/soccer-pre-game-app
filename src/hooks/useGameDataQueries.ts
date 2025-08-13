@@ -103,7 +103,8 @@ export function useGameDataQueries(options?: { pauseRefetch?: boolean }): GameDa
         return await getSavedGames();
       } catch (error) {
         // Handle auth errors gracefully - return empty collection instead of failing
-        if (error.message?.includes('Unauthorized') || error.message?.includes('401')) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        if (errorMessage.includes('Unauthorized') || errorMessage.includes('401')) {
           console.warn('[useGameDataQueries] Auth error fetching saved games, returning empty collection');
           return {};
         }
@@ -118,7 +119,8 @@ export function useGameDataQueries(options?: { pauseRefetch?: boolean }): GameDa
     refetchIntervalInBackground: false, // Only when app is active
     retry: (failureCount, error) => {
       // Don't retry auth errors
-      if (error.message?.includes('Unauthorized') || error.message?.includes('401')) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('Unauthorized') || errorMessage.includes('401')) {
         return false;
       }
       // Retry network errors up to 2 times
