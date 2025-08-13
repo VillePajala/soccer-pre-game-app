@@ -1732,12 +1732,10 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
       try {
         logger.log('[GameCreation] t3: Starting save operation...');
-        await handleQuickSaveGame(tempGameId, newGameState);
+        const finalGameId = await handleQuickSaveGame(tempGameId, newGameState);
         
-        // Check if the game ID changed after save (e.g., Supabase generated UUID)
-        // The handleQuickSaveGame function will automatically update currentGameId if needed
-        const updatedGameId = currentGameId; // This might have been updated by handleQuickSaveGame
-        logger.log(`[GameCreation] t4: Save completed, final game ID: ${updatedGameId}`);
+        // Log the final game ID returned from the save operation (not from stale currentGameId)
+        logger.log(`[GameCreation] t4: Save completed, final game ID: ${finalGameId || tempGameId}`);
       } catch (error) {
         logger.error('[GameCreation] Save operation failed:', error);
         throw error;
@@ -1760,7 +1758,6 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     availablePlayers,
     resetHistory,
     dispatchGameSession,
-    currentGameId,
     newGameSetupModal,
     setNewGameDemandFactor,
     setHighlightRosterButton,
