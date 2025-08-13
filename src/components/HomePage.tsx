@@ -81,6 +81,7 @@ import { useGameDataManager } from '@/hooks/useGameDataManager';
 import { useGameStateManager } from '@/hooks/useGameStateManager';
 import { useGameSettingsModalWithHandlers } from '@/hooks/useGameSettingsModalState';
 import { useGameStatsModalWithHandlers } from '@/hooks/useGameStatsModalState';
+import { useAuthStorage } from '@/hooks/useAuthStorage';
 import { useRosterSettingsModalWithHandlers } from '@/hooks/useRosterSettingsModalState';
 import { useLoadGameModalWithHandlers } from '@/hooks/useLoadGameModalState';
 import { useNewGameSetupModalWithHandlers } from '@/hooks/useNewGameSetupModalState';
@@ -165,6 +166,9 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   const { signOut, user } = useAuth();
   // Removed - now handled by useGameDataManager: 
   // const queryClient = useQueryClient(); // Get query client instance
+  
+  // CRITICAL FIX: Sync auth state with storage manager
+  useAuthStorage();
   
   // Warm up Supabase connection after auth to avoid cold-start penalties
   useSupabaseWarmup(!!user);
