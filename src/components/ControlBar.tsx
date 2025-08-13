@@ -39,6 +39,7 @@ import { FaFutbol } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/context/AuthContext';
 import { useManualUpdates } from '@/hooks/useManualUpdates';
+import { useUpdate } from '@/contexts/UpdateContext';
 // Removed - AuthButton now in TopBar: import { AuthButton } from '@/components/auth/AuthButton';
 
 // Define props for ControlBar
@@ -108,6 +109,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   const { t } = useTranslation(); // Standard hook
   const { user, signOut: authSignOut } = useAuth();
   const { isChecking, checkForUpdates, forceUpdate, showUpdateOption, lastCheckResult } = useManualUpdates();
+  const { updateInfo } = useUpdate();
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -351,10 +353,14 @@ const ControlBar: React.FC<ControlBarProps> = ({
         <div className="relative">
           <button
             onClick={handleSidePanelToggle}
-            className={`${baseButtonStyle} ${secondaryColor}`}
+            className={`${baseButtonStyle} ${secondaryColor} relative`}
             title={t('controlBar.menu') ?? "Menu"}
           >
             <HiBars3 className={iconSize} />
+            {/* Update Available Badge */}
+            {updateInfo.updateAvailable && (
+              <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full animate-pulse" />
+            )}
           </button>
         </div>
 

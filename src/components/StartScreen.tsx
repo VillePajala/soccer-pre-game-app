@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import Image from 'next/image';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import i18n, { loadLanguage } from '@/i18n';
 import {
@@ -39,19 +38,28 @@ const StartScreen: React.FC<StartScreenProps> = ({
   const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
   const [showLoginSuccess, setShowLoginSuccess] = useState(false);
 
+  const didInitializeLanguageRef = useRef<boolean>(false);
+
   useEffect(() => {
     let cancelled = false;
     const initAndSyncLanguage = async () => {
       try {
         const settings = await getAppSettings();
-        const desired = settings.language || language;
-        if (!cancelled && desired !== i18n.language) {
+        let desired = language;
+        // On first run, prefer saved setting if present; afterwards always honor explicit user choice
+        if (!didInitializeLanguageRef.current && settings.language) {
+          desired = settings.language;
+        }
+
+        if (!cancelled && desired && desired !== i18n.language) {
           await loadLanguage(desired);
           if (!cancelled) {
             setLanguage(desired);
-            await updateAppSettings({ language: desired }).catch(() => {});
+            await updateAppSettings({ language: desired }).catch(() => { });
           }
         }
+
+        didInitializeLanguageRef.current = true;
       } catch (error) {
         logger.warn('[StartScreen] Language init/sync failed:', error);
       }
@@ -95,18 +103,12 @@ const StartScreen: React.FC<StartScreenProps> = ({
     <div className={containerStyle}>
       <div className="absolute inset-0 bg-noise-texture" />
       <div className="absolute inset-0 bg-gradient-radial from-slate-950 via-slate-900/80 to-slate-900" />
-      <div className="absolute inset-0 bg-indigo-600/10 mix-blend-soft-light" />
+      <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/30 via-sky-700/20 to-cyan-600/30 mix-blend-overlay" />
       <div className="absolute inset-0 bg-gradient-to-b from-sky-400/10 via-transparent to-transparent" />
-      <div className="absolute -inset-[50px] bg-sky-400/5 blur-2xl top-0 opacity-50" />
-      <div className="absolute -inset-[50px] bg-indigo-600/5 blur-2xl bottom-0 opacity-50" />
-      <Image
-        src="/ball.png"
-        alt=""
-        width={320}
-        height={320}
-        priority
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-20 blur-2xl pointer-events-none"
-      />
+      <div className="absolute -inset-[50px] bg-sky-400/10 blur-3xl top-0 opacity-50" />
+      <div className="absolute -inset-[50px] bg-indigo-600/10 blur-3xl bottom-0 opacity-50" />
+      <div className="pointer-events-none absolute inset-0 opacity-60 [background:radial-gradient(60%_50%_at_12%_12%,theme(colors.indigo.700)/0.25_0%,transparent_70%)]" />
+      <div className="pointer-events-none absolute inset-0 opacity-60 [background:radial-gradient(50%_40%_at_88%_78%,theme(colors.sky.500)/0.25_0%,transparent_70%)]" />
 
       <div className="relative z-10 flex flex-col items-center w-full max-w-sm sm:max-w-md">
         <h1 className={titleStyle}>
@@ -114,12 +116,12 @@ const StartScreen: React.FC<StartScreenProps> = ({
           <span className="block">Coach</span>
         </h1>
         <p className={taglineStyle}>{t('startScreen.tagline', 'Elevate Your Game')}</p>
-        
+
         {/* Show different content based on auth state */}
         {!isAuthenticated ? (
           <div className="flex flex-col items-center text-center space-y-3">
-            <button 
-              className={buttonStyle} 
+            <button
+              className={buttonStyle}
               onClick={() => {
                 setAuthModalMode('signin');
                 setShowAuthModal(true);
@@ -133,8 +135,8 @@ const StartScreen: React.FC<StartScreenProps> = ({
                 <span className="w-6" />
               </span>
             </button>
-            <button 
-              className={`${buttonStyle} bg-green-600 hover:bg-green-700`} 
+            <button
+              className={`${buttonStyle} bg-green-600 hover:bg-green-700`}
               onClick={() => {
                 setAuthModalMode('signup');
                 setShowAuthModal(true);
@@ -171,8 +173,8 @@ const StartScreen: React.FC<StartScreenProps> = ({
             <button className={buttonStyle} onClick={onViewStats}>
               {t('startScreen.viewStats', 'View Stats')}
             </button>
-            <button 
-              className={`${buttonStyle} bg-red-600 hover:bg-red-700`} 
+            <button
+              className={`${buttonStyle} bg-red-600 hover:bg-red-700`}
               onClick={signOut}
             >
               <span className="flex items-center justify-center w-full">
@@ -186,7 +188,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
           </div>
         )}
       </div>
-      
+
       {/* Success toast notification - positioned in top area */}
       {showLoginSuccess && (
         <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 flex items-center gap-2 bg-green-600/90 backdrop-blur-sm border border-green-500/70 text-green-100 px-6 py-3 rounded-lg shadow-lg animate-fade-in">
@@ -194,7 +196,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
           <span className="font-medium">{t('auth.loginSuccess')}</span>
         </div>
       )}
-      
+
       {/* Auth modal */}
       {showAuthModal && (
         <AuthModal
@@ -203,7 +205,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
           defaultMode={authModalMode}
         />
       )}
-      
+
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center space-x-2">
         <button
           aria-label={t('startScreen.languageEnglish', 'English')}
