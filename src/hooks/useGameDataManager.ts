@@ -2,33 +2,33 @@ import { useCallback, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSaveQueue } from './useSaveQueue';
 // import { useTranslation } from 'react-i18next'; // Removed unused import
-import { 
-  saveGame as utilSaveGame, 
-  deleteGame as utilDeleteGame, 
-  getLatestGameId, 
-  updateGameDetails as utilUpdateGameDetails 
+import {
+  saveGame as utilSaveGame,
+  deleteGame as utilDeleteGame,
+  getLatestGameId,
+  updateGameDetails as utilUpdateGameDetails
 } from '@/utils/savedGames';
 import {
   saveCurrentGameIdSetting as utilSaveCurrentGameIdSetting,
 } from '@/utils/appSettings';
-import { 
-  deleteSeason as utilDeleteSeason, 
+import {
+  deleteSeason as utilDeleteSeason,
   updateSeasonLegacy as utilUpdateSeasonLegacy,
-  addSeason as utilAddSeason 
+  addSeason as utilAddSeason
 } from '@/utils/seasons';
-import { 
-  deleteTournament as utilDeleteTournament, 
-  updateTournamentLegacy as utilUpdateTournamentLegacy, 
-  addTournament as utilAddTournament 
+import {
+  deleteTournament as utilDeleteTournament,
+  updateTournamentLegacy as utilUpdateTournamentLegacy,
+  addTournament as utilAddTournament
 } from '@/utils/tournaments';
 // Removed static import - using dynamic imports for better bundle splitting: exportJson, exportCsv
 import { queryKeys } from '@/config/queryKeys';
 import { DEFAULT_GAME_ID } from '@/config/constants';
 import logger from '@/utils/logger';
-import type { 
-  Season, 
-  Tournament, 
-  AppState, 
+import type {
+  Season,
+  Tournament,
+  AppState,
   SavedGamesCollection,
   Player,
   Opponent,
@@ -73,7 +73,7 @@ export const useGameDataManager = ({
 }: UseGameDataManagerProps) => {
   const queryClient = useQueryClient();
   // const { t } = useTranslation(); // Removed unused import
-  
+
   // Initialize save queue to prevent race conditions in auto-save operations
   const saveQueue = useSaveQueue({
     debounceMs: 300, // Slightly shorter debounce for responsive auto-save
@@ -282,7 +282,7 @@ export const useGameDataManager = ({
           await utilSaveCurrentGameIdSetting(gameId);
           logger.log(`[useGameDataManager] Game ${gameId} quick saved successfully.`);
         }
-        
+
         // Invalidate React Query cache to refresh saved games data
         try {
           queryClient.invalidateQueries({ queryKey: queryKeys.savedGames });
@@ -291,7 +291,8 @@ export const useGameDataManager = ({
           // Don't fail the save operation if cache invalidation fails
           logger.warn('[GameCreation] Cache invalidation failed (non-critical):', error);
         }
-      }
+      },
+      true // process immediately for game creation
     );
 
     // Return the final game ID after the save operation completes
@@ -315,7 +316,7 @@ export const useGameDataManager = ({
 
   const handleDeleteGame = useCallback(async (gameId: string) => {
     logger.log(`[useGameDataManager] Attempting to delete game: ${gameId}`);
-    
+
     if (!gameId) {
       logger.error('[useGameDataManager] handleDeleteGame: gameId is required');
       return;
@@ -328,7 +329,7 @@ export const useGameDataManager = ({
         setSavedGames(prevSavedGames => {
           const updatedSavedGames = { ...prevSavedGames };
           delete updatedSavedGames[gameId];
-          
+
           // The logic to handle switching to a new game if the current one was deleted
           // needs to use the "updatedSavedGames" from this scope.
           if (currentGameId === gameId) {
@@ -343,7 +344,7 @@ export const useGameDataManager = ({
               utilSaveCurrentGameIdSetting(DEFAULT_GAME_ID);
             }
           }
-          
+
           return updatedSavedGames;
         });
 
@@ -409,7 +410,7 @@ export const useGameDataManager = ({
       deleteTournamentMutation,
       updateGameDetailsMutation,
     },
-    
+
     // Handlers
     handlers: {
       handleQuickSaveGame,
@@ -417,7 +418,7 @@ export const useGameDataManager = ({
       handleExportOneJson,
       handleExportOneCsv,
     },
-    
+
     // Save queue status for monitoring save operations
     saveStatus: saveQueue.status,
   };

@@ -29,6 +29,7 @@ export interface GameCreationData {
 export function useGameCreationData(options?: { pauseRefetch?: boolean }) {
   const [hasTimedOut, setHasTimedOut] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const oneShotRetryRef = useRef(false);
 
   const queries = useQueries({
     queries: [
@@ -158,6 +159,17 @@ export function useGameCreationData(options?: { pauseRefetch?: boolean }) {
     }
   }, [isLoading, hasTimedOut]);
 
+  // One-shot refetch shortly after mount/open to overcome transient auth gaps
+  useEffect(() => {
+    if (options?.pauseRefetch && !oneShotRetryRef.current) {
+      oneShotRetryRef.current = true;
+      const t = setTimeout(() => {
+        queries.forEach(q => q.refetch());
+      }, 1200);
+      return () => clearTimeout(t);
+    }
+  }, [options?.pauseRefetch, queries]);
+
   // Refetch function for manual retry
   const refetch = () => {
     setHasTimedOut(false);
@@ -200,7 +212,7 @@ export function useGameCreationData(options?: { pauseRefetch?: boolean }) {
       tournamentsFromCache: !tournamentsQuery.isLoading,
       lastTeamNameFromCache: !lastTeamNameQuery.isLoading,
     });
-    
+
     // Record cache hit rate for monitoring
     performanceMetrics.recordCacheHitRate(cacheHitRate);
   }
