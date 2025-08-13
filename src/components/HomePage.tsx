@@ -11,6 +11,7 @@ import TimerOverlay from '@/components/MigratedTimerOverlay';
 // 🔥 FLICKERING FIX: Use direct imports instead of lazy loading to eliminate loading delays
 import GoalLogModal from '@/components/GoalLogModal';
 import GameStatsModal from '@/components/GameStatsModal';
+import StorageDebug from '@/components/StorageDebug';
 import GameSettingsModal from '@/components/GameSettingsModal';
 import TrainingResourcesModal from '@/components/TrainingResourcesModal';
 import LoadGameModal from '@/components/LoadGameModal';
@@ -2276,6 +2277,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       )}
       </GameErrorBoundary>
       
+      <StorageDebug />
     </main>
   );
 }

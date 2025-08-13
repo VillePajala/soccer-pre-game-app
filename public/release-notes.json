@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix(sw): fix service worker syntax error preventing registration"
+  "notes": "perf(connectivity): optimize connection status checks to reduce console spam"
 }
