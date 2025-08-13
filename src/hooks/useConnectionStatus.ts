@@ -18,11 +18,23 @@ export const useConnectionStatus = () => {
     connectionQuality: typeof window !== 'undefined' ? (navigator.onLine ? 'good' : 'offline') : 'offline'
   });
 
+  // Cache connectivity result for 2 minutes to avoid excessive checks
+  const [lastConnectivityCheck, setLastConnectivityCheck] = useState<{
+    timestamp: number;
+    result: boolean;
+  }>({ timestamp: 0, result: false });
+
   /**
-   * Test Supabase connectivity by making a lightweight request
+   * Test Supabase connectivity by making a lightweight request with caching
    */
   const checkSupabaseConnection = useCallback(async (): Promise<boolean> => {
     if (typeof window === 'undefined' || !navigator.onLine) return false;
+
+    // Use cached result if less than 2 minutes old
+    const now = Date.now();
+    if (now - lastConnectivityCheck.timestamp < 2 * 60 * 1000) {
+      return lastConnectivityCheck.result;
+    }
 
     try {
       // Create a simple fetch to check if Supabase domain is reachable
@@ -42,15 +54,18 @@ export const useConnectionStatus = () => {
 
       clearTimeout(timeoutId);
       
-      // For no-cors mode, we can't read response status, but if fetch succeeds, domain is reachable
-      // If fetch throws, it means network/DNS failure
+      // Cache successful result
+      setLastConnectivityCheck({ timestamp: now, result: true });
       return true;
     } catch (error) {
       // Network error, timeout, DNS failure, or abort
       console.debug('[useConnectionStatus] Supabase connectivity test failed:', error);
+      
+      // Cache failed result
+      setLastConnectivityCheck({ timestamp: now, result: false });
       return false;
     }
-  }, []);
+  }, [lastConnectivityCheck]);
 
   /**
    * Determine connection quality based on response time
@@ -116,12 +131,12 @@ export const useConnectionStatus = () => {
     // Initial connection check
     updateStatus();
 
-    // Periodic connection check every 60 seconds when online
+    // Periodic connection check every 5 minutes when online (reduced frequency)
     const intervalId = setInterval(() => {
       if (typeof window !== 'undefined' && navigator.onLine) {
         updateStatus();
       }
-    }, 60000);
+    }, 5 * 60 * 1000); // 5 minutes instead of 1 minute
 
     return () => {
       window.removeEventListener('online', handleOnline);
