@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix(import-backup): resolve TypeScript error with data.localStorage typing"
+  "notes": "fix(eslint): remove explicit any types from import-backup and AuthContext"
 }

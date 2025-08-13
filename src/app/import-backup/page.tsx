@@ -155,8 +155,20 @@ export default function ImportBackupPage() {
         if (p && typeof p === 'object') {
           const player = p as { id?: unknown; name?: unknown; [key: string]: unknown };
           const oldId = typeof player.id === 'string' ? player.id : undefined;
-          const playerToSave = { ...player, id: '' }; // Clear ID to let Supabase generate
-          const savedPlayer = await storageManager.savePlayer(playerToSave);
+          
+          // Ensure we have a valid player object with required fields
+          if (typeof player.name !== 'string') {
+            addLog(`Skipping player with invalid name: ${JSON.stringify(player)}`, 'error');
+            continue;
+          }
+          
+          const playerToSave = { 
+            ...player, 
+            id: '', // Clear ID to let Supabase generate
+            name: player.name as string // Ensure name is typed as string
+          };
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const savedPlayer = await storageManager.savePlayer(playerToSave as any);
 
           // Map old ID to new ID
           if (oldId && savedPlayer.id) {
@@ -194,7 +206,8 @@ export default function ImportBackupPage() {
             );
           }
 
-          const savedSeason = await storageManager.saveSeason(seasonToSave);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const savedSeason = await storageManager.saveSeason(seasonToSave as any);
 
           // Map old ID to new ID
           if (oldId && savedSeason.id) {
@@ -231,7 +244,8 @@ export default function ImportBackupPage() {
             tournamentToSave.seasonId = seasonIdMap.get(tournamentToSave.seasonId) || tournamentToSave.seasonId;
           }
 
-          const savedTournament = await storageManager.saveTournament(tournamentToSave);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const savedTournament = await storageManager.saveTournament(tournamentToSave as any);
 
           // Map old ID to new ID
           if (oldId && savedTournament.id) {
