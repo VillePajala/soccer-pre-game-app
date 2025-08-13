@@ -1,5 +1,7 @@
 // Disable service worker in development
-if (self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1') {
+const isDevEnvironment = self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1';
+
+if (isDevEnvironment) {
   self.addEventListener('install', () => self.skipWaiting());
   self.addEventListener('activate', () => {
     self.clients.claim();
@@ -9,8 +11,7 @@ if (self.location.hostname === 'localhost' || self.location.hostname === '127.0.
     });
   });
   self.addEventListener('fetch', () => {}); // Do nothing
-  return; // Exit early for development
-}
+} else {
 
 // Primary install and activate handlers are defined below with caching logic
 
@@ -136,4 +137,6 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
-// Build Timestamp: 2025-08-13T11:51:03.343Z
+
+} // End of production service worker code
+// Build Timestamp: 2025-08-13T11:59:21.064Z

@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix(storage): implement IndexedDB schema migration for gameId to id field change"
+  "notes": "fix(connectivity): remove auth-required endpoints from connection check"
 }
