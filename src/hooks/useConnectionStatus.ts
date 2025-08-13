@@ -32,17 +32,27 @@ export const useConnectionStatus = () => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
-      const response = await fetch(`${supabaseUrl}/rest/v1/`, {
+      // Prefer public auth health endpoint (returns 200 without auth)
+      let response = await fetch(`${supabaseUrl}/auth/v1/health`, {
         method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`
-        },
+        headers: { 'Accept': 'application/json' },
         signal: controller.signal
       });
 
+      // Fallback to REST root only if auth health is unavailable
+      if (!response.ok && response.status !== 200) {
+        response = await fetch(`${supabaseUrl}/rest/v1/`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json'
+          },
+          signal: controller.signal
+        });
+      }
+
       clearTimeout(timeoutId);
-      return response.ok || response.status === 401; // 401 is fine, means auth is working
+      // Treat 200 as healthy. Avoid triggering console 401 noise in devtools.
+      return response.ok;
     } catch {
       // Network error, timeout, or abort
       return false;
@@ -113,12 +123,12 @@ export const useConnectionStatus = () => {
     // Initial connection check
     updateStatus();
 
-    // Periodic connection check every 30 seconds when online
+    // Periodic connection check every 60 seconds when online
     const intervalId = setInterval(() => {
       if (typeof window !== 'undefined' && navigator.onLine) {
         updateStatus();
       }
-    }, 30000);
+    }, 60000);
 
     return () => {
       window.removeEventListener('online', handleOnline);
