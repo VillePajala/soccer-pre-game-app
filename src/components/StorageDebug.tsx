@@ -10,10 +10,10 @@ export default function StorageDebug() {
   useEffect(() => {
     setConfig(getConfigInfo());
     setEnvVars({
-      NEXT_PUBLIC_ENABLE_SUPABASE: process.env.NEXT_PUBLIC_ENABLE_SUPABASE,
+      NEXT_PUBLIC_ENABLE_SUPABASE: process.env.NEXT_PUBLIC_ENABLE_SUPABASE || 'undefined',
       NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'SET' : 'NOT_SET',
       NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'SET' : 'NOT_SET',
-      NEXT_PUBLIC_DISABLE_FALLBACK: process.env.NEXT_PUBLIC_DISABLE_FALLBACK,
+      NEXT_PUBLIC_DISABLE_FALLBACK: process.env.NEXT_PUBLIC_DISABLE_FALLBACK || 'undefined',
     });
   }, []);
 
