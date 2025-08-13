@@ -116,8 +116,8 @@ export default function EnhancedServiceWorkerRegistration() {
 
   const registerServiceWorker = async () => {
     try {
-      // Use enhanced service worker
-      const reg = await navigator.serviceWorker.register('/sw-enhanced.js', {
+      // Use standard service worker (sw-enhanced.js not deployed yet)
+      const reg = await navigator.serviceWorker.register('/sw.js', {
         scope: '/',
         updateViaCache: 'none'
       });
