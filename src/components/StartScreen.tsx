@@ -9,6 +9,7 @@ import {
 } from '@/utils/appSettings';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { HiOutlineArrowRightOnRectangle, HiOutlineUserPlus, HiCheck } from 'react-icons/hi2';
+import Button from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
 import logger from '@/utils/logger';
 
@@ -86,10 +87,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
     }
   }, [showLoginSuccess]);
 
-  const baseButtonStyle =
-    'w-64 sm:w-64 md:w-56 px-3 sm:px-4 py-2.5 sm:py-3 rounded-md text-base sm:text-lg font-semibold transition-colors focus:outline-none focus:ring-2';
-  const primaryButtonStyle = `${baseButtonStyle} bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-500/90 hover:to-violet-600/90 text-white focus:ring-indigo-500 shadow-lg shadow-indigo-900/20`;
-  const secondaryButtonStyle = `${baseButtonStyle} bg-slate-700 hover:bg-slate-600 text-white focus:ring-slate-500 border border-slate-600`;
+  const buttonFull = 'w-64 sm:w-64 md:w-56';
 
   const containerStyle =
     'relative flex flex-col items-center justify-center min-h-screen bg-slate-950 text-slate-100 font-display overflow-hidden py-8 sm:py-16 md:py-24 px-4';
@@ -131,13 +129,14 @@ const StartScreen: React.FC<StartScreenProps> = ({
           {t('startScreen.tagline', 'Elevate Your Game')}
           <span className="absolute inset-0 -z-10 mx-auto w-[80%] h-full pointer-events-none [background:radial-gradient(closest-side,rgba(99,102,241,0.12),transparent_70%)] blur-md" />
         </p>
-        <div className="h-px w-44 sm:w-64 bg-gradient-to-r from-transparent via-sky-400/70 to-transparent mx-auto mt-3 sm:mt-4 mb-8 sm:mb-12" />
+        <div className="h-px w-44 sm:w-64 bg-gradient-to-r from-transparent via-sky-400/70 to-transparent mx-auto mt-6 sm:mt-8 mb-14 sm:mb-20" />
 
         {/* Show different content based on auth state */}
         {!isAuthenticated ? (
-          <div className="flex flex-col items-center text-center space-y-3">
-            <button
-              className={primaryButtonStyle}
+          <div className="flex flex-col items-center text-center space-y-3 sm:space-y-4">
+            <Button
+              className={buttonFull}
+              variant="primary"
               onClick={() => {
                 setAuthModalMode('signin');
                 setShowAuthModal(true);
@@ -150,9 +149,10 @@ const StartScreen: React.FC<StartScreenProps> = ({
                 <span className="flex-1 text-center">{t('auth.signIn')}</span>
                 <span className="w-6" />
               </span>
-            </button>
-            <button
-              className={secondaryButtonStyle}
+            </Button>
+            <Button
+              className={buttonFull}
+              variant="secondary"
               onClick={() => {
                 setAuthModalMode('signup');
                 setShowAuthModal(true);
@@ -165,32 +165,33 @@ const StartScreen: React.FC<StartScreenProps> = ({
                 <span className="flex-1 text-center">{t('auth.signUp')}</span>
                 <span className="w-6" />
               </span>
-            </button>
+            </Button>
           </div>
         ) : (
           <div className="flex flex-col items-center space-y-3 sm:space-y-4 w-full max-h-[60vh] sm:max-h-none overflow-y-auto">
             {(() => {
               logger.debug('[StartScreen] Render: canResume =', canResume, 'onResumeGame =', !!onResumeGame);
               return canResume && onResumeGame ? (
-                <button className={primaryButtonStyle} onClick={onResumeGame}>
+                <Button className={buttonFull} variant="primary" onClick={onResumeGame}>
                   {t('startScreen.resumeGame', 'Resume Last Game')}
-                </button>
+                </Button>
               ) : null;
             })()}
-            <button className={primaryButtonStyle} onClick={onStartNewGame}>
+            <Button className={buttonFull} variant="primary" onClick={onStartNewGame}>
               {t('startScreen.startNewGame', 'Start New Game')}
-            </button>
-            <button className={secondaryButtonStyle} onClick={onLoadGame}>
+            </Button>
+            <Button className={buttonFull} variant="secondary" onClick={onLoadGame}>
               {t('startScreen.loadGame', 'Load Game')}
-            </button>
-            <button className={secondaryButtonStyle} onClick={onCreateSeason}>
+            </Button>
+            <Button className={buttonFull} variant="secondary" onClick={onCreateSeason}>
               {t('startScreen.createSeasonTournament', 'Create Season/Tournament')}
-            </button>
-            <button className={secondaryButtonStyle} onClick={onViewStats}>
+            </Button>
+            <Button className={buttonFull} variant="secondary" onClick={onViewStats}>
               {t('startScreen.viewStats', 'View Stats')}
-            </button>
-            <button
-              className={`${baseButtonStyle} bg-red-600 hover:bg-red-700`}
+            </Button>
+            <Button
+              className={buttonFull}
+              variant="destructive"
               onClick={signOut}
             >
               <span className="flex items-center justify-center w-full">
@@ -200,7 +201,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
                 <span className="flex-1 text-center">{t('auth.signOut')}</span>
                 <span className="w-6" />
               </span>
-            </button>
+            </Button>
           </div>
         )}
       </div>
