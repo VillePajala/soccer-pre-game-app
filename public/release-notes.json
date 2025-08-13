@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "perf(connectivity): optimize connection status checks to reduce console spam"
+  "notes": "fix: clean up unused import in useAppSettingsManager"
 }

@@ -86,7 +86,16 @@ export default function ImportBackupPage() {
       throw new Error(`Invalid backup file: ${parseResult.error}`);
     }
 
-    const data = parseResult.data!
+    const data = parseResult.data! as {
+      localStorage?: Record<string, unknown>;
+      players?: unknown[];
+      masterRoster?: unknown[];
+      seasons?: unknown[];
+      seasonsList?: unknown[];
+      tournaments?: unknown[];
+      tournamentsList?: unknown[];
+      savedGames?: Record<string, unknown>;
+    }
     const stats = {
       players: 0,
       seasons: 0,
@@ -107,14 +116,15 @@ export default function ImportBackupPage() {
 
     if (data.localStorage) {
       addLog('Detected localStorage format backup');
+      const localStorage = data.localStorage as Record<string, unknown>;
       // Check for both old and new key names
-      masterRoster = data.localStorage.masterRoster || data.localStorage.soccerMasterRoster || [];
-      seasonsList = data.localStorage.seasonsList || data.localStorage.soccerSeasons || [];
-      tournamentsList = data.localStorage.tournamentsList || data.localStorage.soccerTournaments || [];
-      savedGames = data.localStorage.savedGames || data.localStorage.savedSoccerGames || {};
+      masterRoster = localStorage.masterRoster || localStorage.soccerMasterRoster || [];
+      seasonsList = localStorage.seasonsList || localStorage.soccerSeasons || [];
+      tournamentsList = localStorage.tournamentsList || localStorage.soccerTournaments || [];
+      savedGames = localStorage.savedGames || localStorage.savedSoccerGames || {};
 
       // Log what we found
-      addLog(`Found keys: ${Object.keys(data.localStorage).join(', ')}`);
+      addLog(`Found keys: ${Object.keys(localStorage).join(', ')}`);
     } else {
       addLog('Detected direct format backup');
       masterRoster = data.players || data.masterRoster || [];
