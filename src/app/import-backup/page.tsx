@@ -78,7 +78,7 @@ export default function ImportBackupPage() {
   };
 
   const importBackupData = async (jsonContent: string) => {
-    const parseResult = safeImportDataParse(jsonContent, (data): data is any => {
+    const parseResult = safeImportDataParse(jsonContent, (data): data is Record<string, unknown> => {
       return typeof data === 'object' && data !== null;
     });
 
