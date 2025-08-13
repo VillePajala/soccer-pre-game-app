@@ -1714,7 +1714,6 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           tournamentLevel: tournamentLevel,
           gameEvents: [],
           timeElapsedInSeconds: 0,
-          isRunning: false,
           startTimestamp: null,
           subIntervalMinutes: 0,
           completedIntervalDurations: [],
