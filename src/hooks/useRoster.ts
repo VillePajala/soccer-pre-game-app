@@ -153,6 +153,7 @@ export const useRoster = ({ initialPlayers, selectedPlayerIds, onPlayerIdUpdated
   };
 
   const handleSetGoalieStatus = async (playerId: string, isGoalie: boolean) => {
+    console.log('[useRoster] handleSetGoalieStatus called:', { playerId, isGoalie });
     const prev = [...availablePlayers];
     setIsRosterUpdating(true);
     
@@ -164,27 +165,34 @@ export const useRoster = ({ initialPlayers, selectedPlayerIds, onPlayerIdUpdated
         return p;
       });
     
+    console.log('[useRoster] Applying optimistic update');
     setAvailablePlayers(goalieUpdate);
     cacheManager.updateMasterRosterCache(goalieUpdate);
     
     try {
+      console.log('[useRoster] Calling setGoalieStatus storage operation');
       const updated = await setGoalieStatus(playerId, isGoalie);
+      console.log('[useRoster] setGoalieStatus result:', updated);
       if (!updated) {
+        console.log('[useRoster] Storage operation failed, rolling back');
         // Rollback optimistic updates
         setAvailablePlayers(prev);
         cacheManager.updateMasterRosterCache(() => prev);
         setRosterError('Failed to set goalie status');
       } else {
+        console.log('[useRoster] Storage operation succeeded');
         setRosterError(null);
         // Optimistic update was correct, no additional action needed
       }
-    } catch {
+    } catch (error) {
+      console.log('[useRoster] Storage operation threw error:', error);
       // Rollback optimistic updates
       setAvailablePlayers(prev);
       cacheManager.updateMasterRosterCache(() => prev);
       setRosterError('Failed to set goalie status');
     } finally {
       setIsRosterUpdating(false);
+      console.log('[useRoster] handleSetGoalieStatus completed');
     }
   };
 

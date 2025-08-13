@@ -19,7 +19,7 @@ export default function ImportBackupPage() {
 
   const clearExistingData = async () => {
     addLog('Clearing existing Supabase data...');
-    
+
     try {
       // Get all existing data
       const [players, seasons, tournaments, games] = await Promise.all([
@@ -81,11 +81,11 @@ export default function ImportBackupPage() {
     const parseResult = safeImportDataParse(jsonContent, (data): data is any => {
       return typeof data === 'object' && data !== null;
     });
-    
+
     if (!parseResult.success) {
       throw new Error(`Invalid backup file: ${parseResult.error}`);
     }
-    
+
     const data = parseResult.data!
     const stats = {
       players: 0,
@@ -93,15 +93,18 @@ export default function ImportBackupPage() {
       tournaments: 0,
       games: 0
     };
-    
+
     // ID mapping to track old IDs to new IDs
     const playerIdMap = new Map<string, string>();
     const seasonIdMap = new Map<string, string>();
     const tournamentIdMap = new Map<string, string>();
+    // Name-based fallback maps
+    const oldPlayerIdToName = new Map<string, string>();
+    const playerNameToNewId = new Map<string, string>();
 
     // Detect format
     let masterRoster, seasonsList, tournamentsList, savedGames;
-    
+
     if (data.localStorage) {
       addLog('Detected localStorage format backup');
       // Check for both old and new key names
@@ -109,7 +112,7 @@ export default function ImportBackupPage() {
       seasonsList = data.localStorage.seasonsList || data.localStorage.soccerSeasons || [];
       tournamentsList = data.localStorage.tournamentsList || data.localStorage.soccerTournaments || [];
       savedGames = data.localStorage.savedGames || data.localStorage.savedSoccerGames || {};
-      
+
       // Log what we found
       addLog(`Found keys: ${Object.keys(data.localStorage).join(', ')}`);
     } else {
@@ -120,22 +123,34 @@ export default function ImportBackupPage() {
       savedGames = data.savedGames || {};
     }
 
-    // Import players and build ID mapping
+    // Build oldId -> name map for fallback mapping
+    try {
+      for (const p of masterRoster) {
+        if (p && typeof p === 'object' && p.id && p.name) {
+          oldPlayerIdToName.set(p.id, p.name);
+        }
+      }
+    } catch { }
+
+    // Import players and build ID mapping (and name-based fallback)
     addLog(`Importing ${masterRoster.length} players...`);
     for (const player of masterRoster) {
       try {
         const oldId = player.id;
         const playerToSave = { ...player, id: '' }; // Clear ID to let Supabase generate
         const savedPlayer = await storageManager.savePlayer(playerToSave);
-        
+
         // Map old ID to new ID
         if (oldId && savedPlayer.id) {
           playerIdMap.set(oldId, savedPlayer.id);
           addLog(`Mapped player ID: ${oldId} → ${savedPlayer.id} (${savedPlayer.name})`, 'info');
+          if (player.name) {
+            playerNameToNewId.set(player.name, savedPlayer.id);
+          }
         } else {
           addLog(`Warning: Could not map player ${player.name} - old ID: ${oldId}, new ID: ${savedPlayer.id}`, 'error');
         }
-        
+
         stats.players++;
       } catch (error) {
         addLog(`Failed to import player ${player.name}: ${error}`, 'error');
@@ -149,21 +164,21 @@ export default function ImportBackupPage() {
       try {
         const oldId = season.id;
         const seasonToSave = { ...season, id: '' };
-        
+
         // Update defaultRosterId with new player IDs
         if (seasonToSave.defaultRosterId && Array.isArray(seasonToSave.defaultRosterId)) {
-          seasonToSave.defaultRosterId = seasonToSave.defaultRosterId.map((oldPlayerId: string) => 
+          seasonToSave.defaultRosterId = seasonToSave.defaultRosterId.map((oldPlayerId: string) =>
             playerIdMap.get(oldPlayerId) || oldPlayerId
           );
         }
-        
+
         const savedSeason = await storageManager.saveSeason(seasonToSave);
-        
+
         // Map old ID to new ID
         if (oldId && savedSeason.id) {
           seasonIdMap.set(oldId, savedSeason.id);
         }
-        
+
         stats.seasons++;
       } catch (error) {
         addLog(`Failed to import season ${season.name}: ${error}`, 'error');
@@ -177,26 +192,26 @@ export default function ImportBackupPage() {
       try {
         const oldId = tournament.id;
         const tournamentToSave = { ...tournament, id: '' };
-        
+
         // Update defaultRosterId with new player IDs
         if (tournamentToSave.defaultRosterId && Array.isArray(tournamentToSave.defaultRosterId)) {
-          tournamentToSave.defaultRosterId = tournamentToSave.defaultRosterId.map((oldPlayerId: string) => 
+          tournamentToSave.defaultRosterId = tournamentToSave.defaultRosterId.map((oldPlayerId: string) =>
             playerIdMap.get(oldPlayerId) || oldPlayerId
           );
         }
-        
+
         // Update seasonId with new season ID
         if (tournamentToSave.seasonId) {
           tournamentToSave.seasonId = seasonIdMap.get(tournamentToSave.seasonId) || tournamentToSave.seasonId;
         }
-        
+
         const savedTournament = await storageManager.saveTournament(tournamentToSave);
-        
+
         // Map old ID to new ID
         if (oldId && savedTournament.id) {
           tournamentIdMap.set(oldId, savedTournament.id);
         }
-        
+
         stats.tournaments++;
       } catch (error) {
         addLog(`Failed to import tournament ${tournament.name}: ${error}`, 'error');
@@ -214,53 +229,81 @@ export default function ImportBackupPage() {
           // Don't include any ID - let Supabase generate a new UUID
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { id, ...gameWithoutId } = game;
-          
-          // Update selectedPlayerIds with new IDs
+
+          // Helper to map old player ID -> new player ID using both direct map and name fallback
+          const mapPlayerId = (oldId: unknown): string | unknown => {
+            if (!oldId || typeof oldId !== 'string') return oldId;
+            const direct = playerIdMap.get(oldId);
+            if (direct) return direct;
+            const name = oldPlayerIdToName.get(oldId);
+            if (name) {
+              const byName = playerNameToNewId.get(name);
+              if (byName) return byName;
+            }
+            return oldId;
+          };
+
+          // Precompute set of valid new IDs for validation
+          const validNewIds = new Set<string>([
+            ...Array.from(playerIdMap.values()),
+            ...Array.from(playerNameToNewId.values()),
+          ]);
+
+          // Update selectedPlayerIds with new IDs (with validation)
           if (gameWithoutId.selectedPlayerIds && Array.isArray(gameWithoutId.selectedPlayerIds)) {
             const originalIds = [...gameWithoutId.selectedPlayerIds];
-            gameWithoutId.selectedPlayerIds = gameWithoutId.selectedPlayerIds.map((oldId: string) => {
-              const newId = playerIdMap.get(oldId);
-              if (!newId) {
-                addLog(`Warning: No mapping found for player ID ${oldId} in game`, 'error');
-              }
-              return newId || oldId;
-            });
-            addLog(`Updated selectedPlayerIds: ${originalIds.length} IDs mapped`, 'info');
+            const remapped = gameWithoutId.selectedPlayerIds.map((oldId: string) => mapPlayerId(oldId)) as string[];
+            const filtered = remapped.filter((id: string) => typeof id === 'string' && validNewIds.has(id));
+            const dropped = remapped.length - filtered.length;
+            gameWithoutId.selectedPlayerIds = filtered;
+            addLog(`Updated selectedPlayerIds: ${originalIds.length} remapped, ${dropped} dropped (no matching player)`, dropped > 0 ? 'error' : 'info');
           }
-          
+
           // Update availablePlayers with new IDs (if present)
           if (gameWithoutId.availablePlayers && Array.isArray(gameWithoutId.availablePlayers)) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             gameWithoutId.availablePlayers = gameWithoutId.availablePlayers.map((player: any) => ({
               ...player,
-              id: playerIdMap.get(player.id) || player.id
+              id: mapPlayerId(player.id)
             }));
           }
-          
+
           // Update playersOnField with new IDs
           if (gameWithoutId.playersOnField && Array.isArray(gameWithoutId.playersOnField)) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             gameWithoutId.playersOnField = gameWithoutId.playersOnField.map((fieldPlayer: any) => ({
               ...fieldPlayer,
-              id: playerIdMap.get(fieldPlayer.id) || fieldPlayer.id
+              id: mapPlayerId(fieldPlayer.id)
             }));
           }
-          
+
           // Update gameEvents with new player IDs
           if (gameWithoutId.gameEvents && Array.isArray(gameWithoutId.gameEvents)) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             gameWithoutId.gameEvents = gameWithoutId.gameEvents.map((event: any) => {
               const updatedEvent = { ...event };
               if (event.scorerId) {
-                updatedEvent.scorerId = playerIdMap.get(event.scorerId) || event.scorerId;
+                updatedEvent.scorerId = mapPlayerId(event.scorerId);
               }
               if (event.assisterId) {
-                updatedEvent.assisterId = playerIdMap.get(event.assisterId) || event.assisterId;
+                updatedEvent.assisterId = mapPlayerId(event.assisterId);
               }
               return updatedEvent;
             });
           }
-          
+
+          // Update assessments map keys if present (keyed by playerId)
+          if (gameWithoutId.assessments && typeof gameWithoutId.assessments === 'object') {
+            const newAssessments: Record<string, unknown> = {};
+            Object.entries(gameWithoutId.assessments as Record<string, unknown>).forEach(([oldId, val]) => {
+              const newId = mapPlayerId(oldId);
+              if (typeof newId === 'string' && validNewIds.has(newId)) {
+                newAssessments[newId] = val;
+              }
+            });
+            (gameWithoutId as Record<string, unknown>).assessments = newAssessments;
+          }
+
           // Update season and tournament IDs
           if (gameWithoutId.seasonId) {
             gameWithoutId.seasonId = seasonIdMap.get(gameWithoutId.seasonId) || gameWithoutId.seasonId;
@@ -268,7 +311,7 @@ export default function ImportBackupPage() {
           if (gameWithoutId.tournamentId) {
             gameWithoutId.tournamentId = tournamentIdMap.get(gameWithoutId.tournamentId) || gameWithoutId.tournamentId;
           }
-          
+
           await storageManager.saveSavedGame(gameWithoutId);
           stats.games++;
           addLog(`Imported game: ${game.teamName || 'Unknown'} vs ${game.opponentName || 'Unknown'}`, 'info');
@@ -281,11 +324,11 @@ export default function ImportBackupPage() {
     }
     addLog(`Imported ${stats.games}/${gameIds.length} games`, 'success');
 
-    return { 
-      stats, 
-      playerIdMap, 
-      seasonIdMap, 
-      tournamentIdMap 
+    return {
+      stats,
+      playerIdMap,
+      seasonIdMap,
+      tournamentIdMap
     };
   };
 
@@ -295,11 +338,11 @@ export default function ImportBackupPage() {
 
     setLoading(true);
     setLog([]);
-    
+
     try {
       addLog(`Selected file: ${file.name}`);
       addLog(`Current storage provider: ${storageManager.getProviderName?.() || 'unknown'}`);
-      
+
       if (!user) {
         addLog('ERROR: You must be signed in to import to Supabase', 'error');
         return;
@@ -332,13 +375,13 @@ export default function ImportBackupPage() {
 
       addLog('=== IMPORT COMPLETE ===', 'success');
       addLog(`Total imported: ${result.stats.players} players, ${result.stats.seasons} seasons, ${result.stats.tournaments} tournaments, ${result.stats.games} games`, 'success');
-      
+
       // Show ID mapping summary
       addLog('\n=== ID MAPPING SUMMARY ===', 'info');
       addLog(`Player ID mappings created: ${result.playerIdMap.size}`, 'info');
       addLog(`Season ID mappings created: ${result.seasonIdMap.size}`, 'info');
       addLog(`Tournament ID mappings created: ${result.tournamentIdMap.size}`, 'info');
-      
+
       if (result.playerIdMap.size === 0) {
         addLog('WARNING: No player ID mappings were created! This will cause invalid references.', 'error');
       }
@@ -346,7 +389,7 @@ export default function ImportBackupPage() {
       // Wait a moment for database to commit
       addLog('Waiting for database sync...');
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       // Verify
       addLog('Verifying import...');
       const [newPlayers, newSeasons, newTournaments, newGames] = await Promise.all([
@@ -368,7 +411,7 @@ export default function ImportBackupPage() {
   return (
     <div className="p-8 max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold mb-8">Import Backup (Replace All Data)</h1>
-      
+
       <div className="mb-6 p-4 bg-red-100 border border-red-400 rounded">
         <h2 className="text-xl font-semibold mb-2">⚠️ Warning</h2>
         <p>This will completely REPLACE all data in Supabase with your backup file.</p>
@@ -391,7 +434,7 @@ export default function ImportBackupPage() {
         >
           {loading ? 'Importing...' : 'Select Backup File to Import'}
         </button>
-        
+
         {!user && (
           <p className="mt-2 text-red-600">You must be signed in to import data</p>
         )}
@@ -403,12 +446,12 @@ export default function ImportBackupPage() {
           <p className="text-gray-500">No activity yet...</p>
         ) : (
           log.map((line, i) => (
-            <div 
-              key={i} 
+            <div
+              key={i}
               className={
-                line.includes('ERROR') ? 'text-red-400' : 
-                line.includes('SUCCESS') ? 'text-green-400' : 
-                'text-gray-300'
+                line.includes('ERROR') ? 'text-red-400' :
+                  line.includes('SUCCESS') ? 'text-green-400' :
+                    'text-gray-300'
               }
             >
               {line}

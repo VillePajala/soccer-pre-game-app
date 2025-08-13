@@ -465,12 +465,12 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
       context.fillStyle = shadowGradient;
       context.fillRect(absX - opponentRadius, absY - opponentRadius, opponentRadius * 2, opponentRadius * 2);
       
-      // 5. Restore and add border
+      // 5. Restore and add thin white border for contrast
       context.restore();
       context.beginPath();
       context.arc(absX, absY, opponentRadius, 0, Math.PI * 2);
-      context.strokeStyle = 'rgba(0, 0, 0, 0.25)';
-      context.lineWidth = 1;
+      context.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+      context.lineWidth = 1.5;
       context.stroke();
     });
     }
@@ -496,13 +496,13 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
 
         if (disc.type === 'home') {
           context.fillStyle = '#7E22CE'; // Purple
-          context.strokeStyle = '#581C87';
+          context.strokeStyle = 'rgba(255, 255, 255, 0.7)';
         } else if (disc.type === 'opponent') {
           context.fillStyle = '#DC2626'; // Red
-          context.strokeStyle = '#B91C1C';
+          context.strokeStyle = 'rgba(255, 255, 255, 0.7)';
         } else if (disc.type === 'goalie') {
           context.fillStyle = '#F97316'; // Orange
-          context.strokeStyle = '#D97706';
+          context.strokeStyle = 'rgba(255, 255, 255, 0.7)';
         }
 
         context.fill();
@@ -594,12 +594,12 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
       context.fillStyle = shadowGradient;
       context.fillRect(absX - playerRadius, absY - playerRadius, playerRadius * 2, playerRadius * 2);
 
-      // 5. Restore from clipping mask and add border
+      // 5. Restore from clipping mask and add thin white border for contrast
       context.restore();
       context.beginPath();
       context.arc(absX, absY, playerRadius, 0, Math.PI * 2);
-      context.strokeStyle = 'rgba(0, 0, 0, 0.25)';
-      context.lineWidth = 1;
+      context.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+      context.lineWidth = 1.5;
       context.stroke();
       
       // --- End Disc Redesign ---

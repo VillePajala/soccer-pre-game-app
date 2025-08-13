@@ -339,7 +339,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   );
 
   const roster = useRoster({
-    initialPlayers: initialState.availablePlayers,
+    initialPlayers: masterRosterQueryResultData || [],
     selectedPlayerIds: gameSessionState.selectedPlayerIds,
     onPlayerIdUpdated: handlePlayerIdUpdated,
   });
