@@ -112,119 +112,137 @@ export default function ImportBackupPage() {
     const playerNameToNewId = new Map<string, string>();
 
     // Detect format
-    let masterRoster, seasonsList, tournamentsList, savedGames;
+    let masterRoster: unknown[] = [];
+    let seasonsList: unknown[] = [];
+    let tournamentsList: unknown[] = [];
+    let savedGames: Record<string, unknown> = {};
 
     if (data.localStorage) {
       addLog('Detected localStorage format backup');
       const localStorage = data.localStorage as Record<string, unknown>;
       // Check for both old and new key names
-      masterRoster = localStorage.masterRoster || localStorage.soccerMasterRoster || [];
-      seasonsList = localStorage.seasonsList || localStorage.soccerSeasons || [];
-      tournamentsList = localStorage.tournamentsList || localStorage.soccerTournaments || [];
-      savedGames = localStorage.savedGames || localStorage.savedSoccerGames || {};
+      masterRoster = (localStorage.masterRoster as unknown[]) || (localStorage.soccerMasterRoster as unknown[]) || [];
+      seasonsList = (localStorage.seasonsList as unknown[]) || (localStorage.soccerSeasons as unknown[]) || [];
+      tournamentsList = (localStorage.tournamentsList as unknown[]) || (localStorage.soccerTournaments as unknown[]) || [];
+      savedGames = (localStorage.savedGames as Record<string, unknown>) || (localStorage.savedSoccerGames as Record<string, unknown>) || {};
 
       // Log what we found
       addLog(`Found keys: ${Object.keys(localStorage).join(', ')}`);
     } else {
       addLog('Detected direct format backup');
-      masterRoster = data.players || data.masterRoster || [];
-      seasonsList = data.seasons || data.seasonsList || [];
-      tournamentsList = data.tournaments || data.tournamentsList || [];
-      savedGames = data.savedGames || {};
+      masterRoster = (data.players as unknown[]) || (data.masterRoster as unknown[]) || [];
+      seasonsList = (data.seasons as unknown[]) || (data.seasonsList as unknown[]) || [];
+      tournamentsList = (data.tournaments as unknown[]) || (data.tournamentsList as unknown[]) || [];
+      savedGames = (data.savedGames as Record<string, unknown>) || {};
     }
 
     // Build oldId -> name map for fallback mapping
     try {
       for (const p of masterRoster) {
-        if (p && typeof p === 'object' && p.id && p.name) {
-          oldPlayerIdToName.set(p.id, p.name);
+        if (p && typeof p === 'object' && 'id' in p && 'name' in p) {
+          const player = p as { id: unknown; name: unknown };
+          if (typeof player.id === 'string' && typeof player.name === 'string') {
+            oldPlayerIdToName.set(player.id, player.name);
+          }
         }
       }
     } catch { }
 
     // Import players and build ID mapping (and name-based fallback)
     addLog(`Importing ${masterRoster.length} players...`);
-    for (const player of masterRoster) {
+    for (const p of masterRoster) {
       try {
-        const oldId = player.id;
-        const playerToSave = { ...player, id: '' }; // Clear ID to let Supabase generate
-        const savedPlayer = await storageManager.savePlayer(playerToSave);
+        if (p && typeof p === 'object') {
+          const player = p as { id?: unknown; name?: unknown; [key: string]: unknown };
+          const oldId = typeof player.id === 'string' ? player.id : undefined;
+          const playerToSave = { ...player, id: '' }; // Clear ID to let Supabase generate
+          const savedPlayer = await storageManager.savePlayer(playerToSave);
 
-        // Map old ID to new ID
-        if (oldId && savedPlayer.id) {
-          playerIdMap.set(oldId, savedPlayer.id);
-          addLog(`Mapped player ID: ${oldId} → ${savedPlayer.id} (${savedPlayer.name})`, 'info');
-          if (player.name) {
-            playerNameToNewId.set(player.name, savedPlayer.id);
+          // Map old ID to new ID
+          if (oldId && savedPlayer.id) {
+            playerIdMap.set(oldId, savedPlayer.id);
+            addLog(`Mapped player ID: ${oldId} → ${savedPlayer.id} (${savedPlayer.name})`, 'info');
+            if (typeof player.name === 'string') {
+              playerNameToNewId.set(player.name, savedPlayer.id);
+            }
+          } else {
+            addLog(`Warning: Could not map player ${player.name} - old ID: ${oldId}, new ID: ${savedPlayer.id}`, 'error');
           }
-        } else {
-          addLog(`Warning: Could not map player ${player.name} - old ID: ${oldId}, new ID: ${savedPlayer.id}`, 'error');
-        }
 
-        stats.players++;
+          stats.players++;
+        }
       } catch (error) {
-        addLog(`Failed to import player ${player.name}: ${error}`, 'error');
+        const playerName = (p && typeof p === 'object' && 'name' in p && typeof (p as Record<string, unknown>).name === 'string') ? (p as Record<string, unknown>).name : 'Unknown';
+        addLog(`Failed to import player ${playerName}: ${error}`, 'error');
       }
     }
     addLog(`Imported ${stats.players}/${masterRoster.length} players`, 'success');
 
     // Import seasons and build ID mapping
     addLog(`Importing ${seasonsList.length} seasons...`);
-    for (const season of seasonsList) {
+    for (const s of seasonsList) {
       try {
-        const oldId = season.id;
-        const seasonToSave = { ...season, id: '' };
+        if (s && typeof s === 'object') {
+          const season = s as { id?: unknown; name?: unknown; defaultRosterId?: unknown; [key: string]: unknown };
+          const oldId = typeof season.id === 'string' ? season.id : undefined;
+          const seasonToSave = { ...season, id: '' };
 
-        // Update defaultRosterId with new player IDs
-        if (seasonToSave.defaultRosterId && Array.isArray(seasonToSave.defaultRosterId)) {
-          seasonToSave.defaultRosterId = seasonToSave.defaultRosterId.map((oldPlayerId: string) =>
-            playerIdMap.get(oldPlayerId) || oldPlayerId
-          );
+          // Update defaultRosterId with new player IDs
+          if (seasonToSave.defaultRosterId && Array.isArray(seasonToSave.defaultRosterId)) {
+            seasonToSave.defaultRosterId = seasonToSave.defaultRosterId.map((oldPlayerId: string) =>
+              playerIdMap.get(oldPlayerId) || oldPlayerId
+            );
+          }
+
+          const savedSeason = await storageManager.saveSeason(seasonToSave);
+
+          // Map old ID to new ID
+          if (oldId && savedSeason.id) {
+            seasonIdMap.set(oldId, savedSeason.id);
+          }
+
+          stats.seasons++;
         }
-
-        const savedSeason = await storageManager.saveSeason(seasonToSave);
-
-        // Map old ID to new ID
-        if (oldId && savedSeason.id) {
-          seasonIdMap.set(oldId, savedSeason.id);
-        }
-
-        stats.seasons++;
       } catch (error) {
-        addLog(`Failed to import season ${season.name}: ${error}`, 'error');
+        const seasonName = (s && typeof s === 'object' && 'name' in s && typeof (s as Record<string, unknown>).name === 'string') ? (s as Record<string, unknown>).name : 'Unknown';
+        addLog(`Failed to import season ${seasonName}: ${error}`, 'error');
       }
     }
     addLog(`Imported ${stats.seasons}/${seasonsList.length} seasons`, 'success');
 
     // Import tournaments and build ID mapping
     addLog(`Importing ${tournamentsList.length} tournaments...`);
-    for (const tournament of tournamentsList) {
+    for (const t of tournamentsList) {
       try {
-        const oldId = tournament.id;
-        const tournamentToSave = { ...tournament, id: '' };
+        if (t && typeof t === 'object') {
+          const tournament = t as { id?: unknown; name?: unknown; defaultRosterId?: unknown; seasonId?: unknown; [key: string]: unknown };
+          const oldId = typeof tournament.id === 'string' ? tournament.id : undefined;
+          const tournamentToSave = { ...tournament, id: '' };
 
-        // Update defaultRosterId with new player IDs
-        if (tournamentToSave.defaultRosterId && Array.isArray(tournamentToSave.defaultRosterId)) {
-          tournamentToSave.defaultRosterId = tournamentToSave.defaultRosterId.map((oldPlayerId: string) =>
-            playerIdMap.get(oldPlayerId) || oldPlayerId
-          );
+          // Update defaultRosterId with new player IDs
+          if (tournamentToSave.defaultRosterId && Array.isArray(tournamentToSave.defaultRosterId)) {
+            tournamentToSave.defaultRosterId = tournamentToSave.defaultRosterId.map((oldPlayerId: string) =>
+              playerIdMap.get(oldPlayerId) || oldPlayerId
+            );
+          }
+
+          // Update seasonId with new season ID
+          if (typeof tournamentToSave.seasonId === 'string') {
+            tournamentToSave.seasonId = seasonIdMap.get(tournamentToSave.seasonId) || tournamentToSave.seasonId;
+          }
+
+          const savedTournament = await storageManager.saveTournament(tournamentToSave);
+
+          // Map old ID to new ID
+          if (oldId && savedTournament.id) {
+            tournamentIdMap.set(oldId, savedTournament.id);
+          }
+
+          stats.tournaments++;
         }
-
-        // Update seasonId with new season ID
-        if (tournamentToSave.seasonId) {
-          tournamentToSave.seasonId = seasonIdMap.get(tournamentToSave.seasonId) || tournamentToSave.seasonId;
-        }
-
-        const savedTournament = await storageManager.saveTournament(tournamentToSave);
-
-        // Map old ID to new ID
-        if (oldId && savedTournament.id) {
-          tournamentIdMap.set(oldId, savedTournament.id);
-        }
-
-        stats.tournaments++;
       } catch (error) {
-        addLog(`Failed to import tournament ${tournament.name}: ${error}`, 'error');
+        const tournamentName = (t && typeof t === 'object' && 'name' in t && typeof (t as Record<string, unknown>).name === 'string') ? (t as Record<string, unknown>).name : 'Unknown';
+        addLog(`Failed to import tournament ${tournamentName}: ${error}`, 'error');
       }
     }
     addLog(`Imported ${stats.tournaments}/${tournamentsList.length} tournaments`, 'success');
@@ -238,7 +256,7 @@ export default function ImportBackupPage() {
         if (game && typeof game === 'object') {
           // Don't include any ID - let Supabase generate a new UUID
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { id, ...gameWithoutId } = game;
+          const { id, ...gameWithoutId } = game as { id?: unknown; [key: string]: unknown };
 
           // Helper to map old player ID -> new player ID using both direct map and name fallback
           const mapPlayerId = (oldId: unknown): string | unknown => {
@@ -315,16 +333,17 @@ export default function ImportBackupPage() {
           }
 
           // Update season and tournament IDs
-          if (gameWithoutId.seasonId) {
+          if (typeof gameWithoutId.seasonId === 'string') {
             gameWithoutId.seasonId = seasonIdMap.get(gameWithoutId.seasonId) || gameWithoutId.seasonId;
           }
-          if (gameWithoutId.tournamentId) {
+          if (typeof gameWithoutId.tournamentId === 'string') {
             gameWithoutId.tournamentId = tournamentIdMap.get(gameWithoutId.tournamentId) || gameWithoutId.tournamentId;
           }
 
           await storageManager.saveSavedGame(gameWithoutId);
           stats.games++;
-          addLog(`Imported game: ${game.teamName || 'Unknown'} vs ${game.opponentName || 'Unknown'}`, 'info');
+          const gameObj = game as { teamName?: unknown; opponentName?: unknown };
+          addLog(`Imported game: ${gameObj.teamName || 'Unknown'} vs ${gameObj.opponentName || 'Unknown'}`, 'info');
         }
       } catch (error) {
         addLog(`Failed to import game ${gameId}: ${error}`, 'error');

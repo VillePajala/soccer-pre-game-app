@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix: clean up unused import in useAppSettingsManager"
+  "notes": "fix(import-backup): resolve TypeScript error with data.localStorage typing"
 }
