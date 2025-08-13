@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Player } from '@/types';
 import { getMasterRoster } from '@/utils/masterRoster';
+import { isAuthenticationError } from '@/utils/authErrorUtils';
 import logger from '@/utils/logger';
 
 export interface RosterData {
@@ -30,9 +31,7 @@ export function useRosterData(options?: { pauseRefetch?: boolean }) {
         return await getMasterRoster();
       } catch (error) {
         // Handle auth errors gracefully - return empty array instead of retrying forever
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        if (errorMessage.includes('Unauthorized') || errorMessage.includes('401') || 
-            errorMessage.includes('AuthenticationError')) {
+        if (isAuthenticationError(error)) {
           logger.warn('[useRosterData] Auth error fetching roster, returning empty array');
           return [];
         }
@@ -46,9 +45,7 @@ export function useRosterData(options?: { pauseRefetch?: boolean }) {
     refetchInterval: options?.pauseRefetch ? false : 10 * 60 * 1000, // 10 minutes
     retry: (failureCount, error) => {
       // Don't retry auth errors
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      if (errorMessage.includes('Unauthorized') || errorMessage.includes('401') || 
-          errorMessage.includes('AuthenticationError')) {
+      if (isAuthenticationError(error)) {
         return false;
       }
       // Only retry network errors up to 2 times

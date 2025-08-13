@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { SavedGamesCollection } from '@/types';
 import { getSavedGames } from '@/utils/savedGames';
+import { isAuthenticationError } from '@/utils/authErrorUtils';
 import logger from '@/utils/logger';
 
 export interface SavedGamesData {
@@ -30,9 +31,7 @@ export function useSavedGamesData(options?: { pauseRefetch?: boolean }) {
         return await getSavedGames();
       } catch (error) {
         // Handle auth errors gracefully - return empty collection instead of retrying forever
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        if (errorMessage.includes('Unauthorized') || errorMessage.includes('401') || 
-            errorMessage.includes('AuthenticationError')) {
+        if (isAuthenticationError(error)) {
           logger.warn('[useSavedGamesData] Auth error fetching saved games, returning empty collection');
           return {};
         }
@@ -46,9 +45,7 @@ export function useSavedGamesData(options?: { pauseRefetch?: boolean }) {
     refetchInterval: options?.pauseRefetch ? false : 5 * 60 * 1000, // 5 minutes
     retry: (failureCount, error) => {
       // Don't retry auth errors
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      if (errorMessage.includes('Unauthorized') || errorMessage.includes('401') || 
-          errorMessage.includes('AuthenticationError')) {
+      if (isAuthenticationError(error)) {
         return false;
       }
       // Only retry network errors up to 2 times

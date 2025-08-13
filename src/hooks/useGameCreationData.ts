@@ -6,6 +6,7 @@ import { Season, Tournament } from '@/types';
 import { getSeasons } from '@/utils/seasons';
 import { getTournaments } from '@/utils/tournaments';
 import { getLastHomeTeamName } from '@/utils/appSettings';
+import { isAuthenticationError } from '@/utils/authErrorUtils';
 import logger from '@/utils/logger';
 import { performanceMetrics } from '@/utils/performanceMetrics';
 
@@ -38,9 +39,7 @@ export function useGameCreationData(options?: { pauseRefetch?: boolean }) {
             return await getSeasons();
           } catch (error) {
             // Handle auth errors gracefully - return empty array instead of retrying forever
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            if (errorMessage.includes('Unauthorized') || errorMessage.includes('401') || 
-                errorMessage.includes('AuthenticationError')) {
+            if (isAuthenticationError(error)) {
               logger.warn('[useGameCreationData] Auth error fetching seasons, returning empty array');
               return [];
             }
@@ -54,9 +53,7 @@ export function useGameCreationData(options?: { pauseRefetch?: boolean }) {
         refetchInterval: options?.pauseRefetch ? false : 10 * 60 * 1000, // 10 minutes
         retry: (failureCount, error) => {
           // Don't retry auth errors
-          const errorMessage = error instanceof Error ? error.message : String(error);
-          if (errorMessage.includes('Unauthorized') || errorMessage.includes('401') || 
-              errorMessage.includes('AuthenticationError')) {
+          if (isAuthenticationError(error)) {
             return false;
           }
           // Only retry network errors up to 2 times
@@ -71,9 +68,7 @@ export function useGameCreationData(options?: { pauseRefetch?: boolean }) {
             return await getTournaments();
           } catch (error) {
             // Handle auth errors gracefully - return empty array instead of retrying forever
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            if (errorMessage.includes('Unauthorized') || errorMessage.includes('401') || 
-                errorMessage.includes('AuthenticationError')) {
+            if (isAuthenticationError(error)) {
               logger.warn('[useGameCreationData] Auth error fetching tournaments, returning empty array');
               return [];
             }
@@ -87,9 +82,7 @@ export function useGameCreationData(options?: { pauseRefetch?: boolean }) {
         refetchInterval: options?.pauseRefetch ? false : 10 * 60 * 1000, // 10 minutes
         retry: (failureCount, error) => {
           // Don't retry auth errors
-          const errorMessage = error instanceof Error ? error.message : String(error);
-          if (errorMessage.includes('Unauthorized') || errorMessage.includes('401') || 
-              errorMessage.includes('AuthenticationError')) {
+          if (isAuthenticationError(error)) {
             return false;
           }
           // Only retry network errors up to 2 times
@@ -104,9 +97,7 @@ export function useGameCreationData(options?: { pauseRefetch?: boolean }) {
             return await getLastHomeTeamName();
           } catch (error) {
             // Handle auth errors gracefully - return default team name
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            if (errorMessage.includes('Unauthorized') || errorMessage.includes('401') || 
-                errorMessage.includes('AuthenticationError')) {
+            if (isAuthenticationError(error)) {
               logger.warn('[useGameCreationData] Auth error fetching last team name, returning default');
               return 'My Team';
             }
@@ -120,9 +111,7 @@ export function useGameCreationData(options?: { pauseRefetch?: boolean }) {
         refetchInterval: options?.pauseRefetch ? false : 30 * 60 * 1000, // 30 minutes
         retry: (failureCount, error) => {
           // Don't retry auth errors
-          const errorMessage = error instanceof Error ? error.message : String(error);
-          if (errorMessage.includes('Unauthorized') || errorMessage.includes('401') || 
-              errorMessage.includes('AuthenticationError')) {
+          if (isAuthenticationError(error)) {
             return false;
           }
           // Only retry once for settings
