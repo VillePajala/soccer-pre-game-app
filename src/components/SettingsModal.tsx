@@ -6,6 +6,7 @@ import packageJson from '../../package.json';
 import { HiOutlineArrowRightOnRectangle } from 'react-icons/hi2';
 import { HiOutlineTrash } from 'react-icons/hi2';
 import AccountDeletionModal from './AccountDeletionModal';
+import { useAuth } from '@/context/AuthContext';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -31,6 +32,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   onSignOut,
 }) => {
   const { t } = useTranslation();
+  const { globalSignOut } = useAuth() as unknown as { globalSignOut?: () => Promise<{ error: unknown | null }> };
   const [teamName, setTeamName] = useState(defaultTeamName);
   const [resetConfirm, setResetConfirm] = useState('');
   const [isAccountDeletionModalOpen, setIsAccountDeletionModalOpen] = useState(false);
@@ -158,23 +160,38 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 <p className="text-sm text-slate-400">
                   {t('settingsModal.signOutDescription', 'Sign out of your account and return to the login screen.')}
                 </p>
-                <button
-                  onClick={() => {
-                    onSignOut();
-                    onClose();
-                  }}
-                  className="w-full px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg border border-slate-600 hover:border-slate-500 transition-colors flex items-center justify-center gap-2"
-                >
-                  <HiOutlineArrowRightOnRectangle className="w-4 h-4 rotate-180" />
-                  {t('auth.signOut')}
-                </button>
-                <button
-                  onClick={() => setIsAccountDeletionModalOpen(true)}
-                  className="w-full px-4 py-2 bg-red-700 hover:bg-red-600 text-red-100 rounded-lg border border-red-600 hover:border-red-500 transition-colors flex items-center justify-center gap-2"
-                >
-                  <HiOutlineTrash className="w-4 h-4" />
-                  {t('settingsModal.deleteAccount', 'Delete Account')}
-                </button>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <button
+                    onClick={() => {
+                      onSignOut();
+                      onClose();
+                    }}
+                    className="w-full px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg border border-slate-600 hover:border-slate-500 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <HiOutlineArrowRightOnRectangle className="w-4 h-4 rotate-180" />
+                    {t('auth.signOut')}
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!globalSignOut) return onSignOut?.();
+                      if (window.confirm(t('settingsModal.globalSignOutConfirm', 'Sign out everywhere? This will log you out from all devices.'))) {
+                        await globalSignOut();
+                        onClose();
+                      }
+                    }}
+                    className="w-full px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg border border-slate-600 hover:border-slate-500 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <HiOutlineArrowRightOnRectangle className="w-4 h-4 rotate-180" />
+                    {t('settingsModal.globalSignOut', 'Sign Out Everywhere')}
+                  </button>
+                  <button
+                    onClick={() => setIsAccountDeletionModalOpen(true)}
+                    className="w-full px-4 py-2 bg-red-700 hover:bg-red-600 text-red-100 rounded-lg border border-red-600 hover:border-red-500 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <HiOutlineTrash className="w-4 h-4" />
+                    {t('settingsModal.deleteAccount', 'Delete Account')}
+                  </button>
+                </div>
                 <p className="text-sm text-slate-400">
                   {t('settingsModal.deleteAccountDescription', 'Permanently delete your account and all data. This action cannot be undone.')}
                 </p>
@@ -185,10 +202,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 {t('settingsModal.dangerZoneTitle', 'Danger Zone')}
               </h3>
               <p className="text-sm text-red-200">
-                {t(
-                  'settingsModal.hardResetDescription',
-                  'Erase all saved teams, games and settings. This action cannot be undone.'
-                )}
+                {t('settingsModal.hardResetDescription', 'Erase all players, games, seasons, tournaments and settings for this account. This action cannot be undone.')}
               </p>
               <label htmlFor="hard-reset-confirm" className={labelStyle}>
                 {t('settingsModal.confirmResetLabel', 'Type RESET to confirm')}

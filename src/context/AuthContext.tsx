@@ -191,6 +191,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const globalSignOut = async () => {
+    try {
+      logger.info('Starting GLOBAL sign out process (revoke all sessions)...');
+      sessionManager.cleanup();
+      // Supabase: revoke all refresh tokens for this user
+      // We do this by calling signOut with scope: 'global' if available
+      // Fallback: call RPC endpoint if one exists; here we use built-in global sign out
+      // @ts-expect-error - typings may not include scope yet in some SDK versions
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
+      if (error) {
+        logger.error('Global sign out error:', error);
+      } else {
+        logger.info('Global sign out successful');
+      }
+      setSession(null);
+      setUser(null);
+      setLoading(false);
+      if (typeof window !== 'undefined') {
+        const keys = Object.keys(localStorage);
+        keys.forEach((key) => {
+          if (key.startsWith('sb-')) localStorage.removeItem(key);
+        });
+      }
+      return { error };
+    } catch (error) {
+      logger.error('Global sign out exception:', error);
+      return { error: error as AuthError };
+    }
+  };
+
   const resetPassword = async (email: string) => {
     try {
       // Use secure auth service with rate limiting
@@ -225,6 +255,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signOut,
     resetPassword,
+    // Expose global sign out for settings modal
+    globalSignOut,
     extendSession,
     sessionInfo,
   };

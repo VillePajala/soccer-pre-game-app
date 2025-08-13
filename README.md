@@ -2,6 +2,76 @@
 
 A comprehensive Progressive Web App (PWA) for soccer coaches to manage rosters, track live game events, analyze detailed statistics, and design plays on an interactive tactics board. Built for the sideline, available on any device, with cloud synchronization and offline-first capabilities.
 
+## TL;DR Quick Start
+
+### Cloud mode (Supabase)
+1. Clone and install
+   ```bash
+   git clone https://github.com/VillePajala/soccer-pre-game-app.git
+   cd soccer-pre-game-app && npm install
+   ```
+2. Create `.env.local` (see Environment Variables below) with at least:
+   ```bash
+   NEXT_PUBLIC_SUPABASE_URL=...    
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+   NEXT_PUBLIC_ENABLE_SUPABASE=true
+   ```
+3. Run the app
+   ```bash
+   npm run dev
+   ```
+4. Sign up in the app, create a team, and start a new game.
+
+### Local mode (no cloud)
+- Skip Supabase env vars, run `npm run dev`. Data is stored in the browser (IndexedDB/localStorage). Export/Import backups from Settings anytime.
+
+## Architecture at a glance
+- Next.js App Router + client providers
+- Storage layers
+  - Supabase (Auth, PostgREST) when enabled
+  - IndexedDB cache for offline-first reads
+  - localStorage fallback if cloud disabled/unavailable
+- PWA service worker
+  - App shell caching, data-cache for GETs, no caching for non-GET
+  - Update banner + Settings action to refresh to latest
+- React Query for server state, Zustand for app/session state
+
+## Operational essentials
+
+### PWA updates
+- You’ll see an in-app banner when a new version is available. Click Update to activate the new SW and auto-reload.
+- You can also check via Settings → Check for updates. The update flow is safe and preserves your data.
+  - More: `docs/production/APP_UPDATE_FLOW_FIX_PLAN.md`
+
+### Import/Export (Backups)
+- Export a full backup (players, games, seasons, tournaments, settings) from Settings.
+- Importing a backup now automatically remaps old player IDs to the new UUIDs.
+  - This prevents empty player bars and broken stats after imports.
+  - Any unmapped references are safely dropped and listed in the import log.
+  - More: `docs/archive/IMPORT_FIX_SUMMARY.md`, `docs/archive/STATS_FIX_SUMMARY.md`
+
+### Reset vs Delete
+- Hard Reset App (Settings → Danger Zone):
+  - Wipes ALL user data for this account (players, games, seasons, tournaments, settings), clears caches, and reloads. Your login remains.
+- Delete Account:
+  - Removes your Supabase Auth user and all data. Irreversible.
+
+### Multi‑device sessions
+- You can be signed in on multiple devices. Use:
+  - Sign out (this device only)
+  - Sign out everywhere (global): revokes sessions on all devices (Settings → Account).
+  - Session manager handles inactivity timeouts and token refresh.
+
+### Monitoring and error reporting
+- Admin monitoring page and Sentry integration are available for diagnostics.
+  - More: `docs/production/MONITORING_SETUP.md`, `docs/production/SENTRY_*`
+
+## Support & compatibility
+- Desktop: Chrome, Edge, Safari, Firefox (latest)
+- Mobile: iOS Safari (PWA install supported), Android Chrome (TWA-ready)
+- Offline: Full offline workflow; background sync when back online.
+
+
 
 ## Key Features
 
@@ -97,6 +167,16 @@ The app is designed to be an all-in-one digital assistant for game day, from pre
 
    When launched, you can choose to use the app locally (localStorage) or create an account for cloud synchronization. A **Start Screen** appears with options to start a new game, load an existing one, create a season or tournament, or view statistics. Select an action to continue to the main field view.
 
+### Common scripts
+```bash
+npm run dev           # Start dev server
+npm run build         # Production build
+npm start             # Start production server
+npm run test:unit     # Unit tests
+npm run lint          # ESLint
+npm run type-check    # TypeScript diagnostics
+```
+
 ## Running Tests
 
 Install project dependencies with `npm install` as shown above. Then execute the automated test suite with:
@@ -139,6 +219,16 @@ These values configure the multi-layer storage system and enable/disable specifi
 *   **Offline Experience:** Full functionality available offline with automatic sync when connection is restored
 *   **PWA Installation:** Install as a native app from your browser for the best experience ("Add to Home Screen" on mobile, install icon in address bar on desktop)
 
+### Troubleshooting
+- Service worker failed to register
+  - Ensure `public/sw.js` exists in production and CSP contains `worker-src 'self'` and appropriate `connect-src` entries for Supabase.
+- Supabase 401 after sign-in
+  - Verify `NEXT_PUBLIC_SUPABASE_URL/ANON_KEY`, and that `NEXT_PUBLIC_ENABLE_SUPABASE=true` in `.env.local`.
+- Imported games show no players / stats are zero
+  - Re-import with the new importer (auto ID remap). Check the on-page import log for “remapped” and “dropped” counts.
+- Update banner doesn’t show
+  - Open Settings → Check for updates; verify network requests aren’t blocked by CSP.
+
 ## Project Status
 
 This project is **production-ready** and under active development for app store deployment. The comprehensive production readiness plan is documented in `docs/production/PRODUCTION_READINESS_PLAN.md`.
@@ -149,6 +239,16 @@ This project is **production-ready** and under active development for app store 
 - ✅ **Performance:** Optimized with lazy loading, code splitting, and efficient caching
 - ✅ **Architecture:** Offline-first with multi-layer storage and automatic fallback
 - 🚧 **App Store Preparation:** TWA packaging and store assets in progress
+
+### Release checklist (summary)
+1. Bump version, update release notes (`scripts/generate-release-notes.mjs`).
+2. Build and deploy to Vercel.
+3. Verify:
+   - Update banner appears and updates successfully
+   - Monitoring page shows metrics; Sentry test page reports
+   - Import/export works; auto ID remap log contains remapped counts
+   - PWA install and offline work on a real device
+4. Tag and publish.
 
 ---
 

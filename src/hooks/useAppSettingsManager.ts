@@ -11,6 +11,7 @@ import { exportFullBackup } from '@/utils/fullBackup';
 import { sendBackupEmail } from '@/utils/sendBackupEmail';
 import logger from '@/utils/logger';
 import { useToast } from '@/contexts/ToastProvider';
+import { hardResetAllUserData } from '@/utils/hardResetApp';
 
 interface UseAppSettingsManagerProps {
   setIsSettingsModalOpen: (open: boolean) => void;
@@ -59,11 +60,13 @@ export const useAppSettingsManager = ({
   const handleHardResetApp = useCallback(async () => {
     if (window.confirm(t('controlBar.hardResetConfirmation', 'Are you sure you want to completely reset the application? All saved data (players, stats, positions) will be permanently lost.'))) {
       try {
-        logger.log("Performing hard reset using utility...");
-        await utilResetAppSettings(); // Use utility function
-        window.location.reload();
+        logger.log('[HardReset] Starting full user data wipe...');
+        const res = await hardResetAllUserData();
+        logger.log('[HardReset] Completed', res);
+        showToast(t('settingsModal.resetSuccess', 'All data erased successfully. Reloading...'), 'success');
+        setTimeout(() => window.location.reload(), 600);
       } catch (error) {
-        logger.error("Error during hard reset:", error);
+        logger.error('[HardReset] Error during hard reset:', error);
         showToast(t('settingsModal.resetFailed', 'Failed to reset application data.'), 'error');
       }
     }
