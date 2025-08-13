@@ -1718,7 +1718,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           startTimestamp: null,
           subIntervalMinutes: 0,
           completedIntervalDurations: [],
-          lastSubConfirmationTimeSeconds: null,
+          lastSubConfirmationTimeSeconds: 0,
           showPlayerNames: true,
         }
       });
