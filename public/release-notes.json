@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix(hooks): prevent React Query retry storm with auth error handling"
+  "notes": "fix(hooks): improve connection status check with fallback"
 }

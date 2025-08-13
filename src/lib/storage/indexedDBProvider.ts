@@ -97,7 +97,7 @@ export class IndexedDBProvider implements IStorageProvider {
 
     // Saved games store
     if (!db.objectStoreNames.contains('saved_games')) {
-      const gamesStore = db.createObjectStore('saved_games', { keyPath: 'gameId' });
+      const gamesStore = db.createObjectStore('saved_games', { keyPath: 'id' });
       gamesStore.createIndex('timestamp', 'lastSaved', { unique: false });
     }
 
@@ -291,8 +291,8 @@ export class IndexedDBProvider implements IStorageProvider {
     const gamesRecord: Record<string, AppState> = {};
     
     games.forEach(game => {
-      if ('gameId' in game && game.gameId && typeof game.gameId === 'string') {
-        gamesRecord[game.gameId] = game;
+      if ('id' in game && game.id && typeof game.id === 'string') {
+        gamesRecord[game.id] = game;
       }
     });
     
@@ -300,8 +300,8 @@ export class IndexedDBProvider implements IStorageProvider {
   }
 
   async saveSavedGame(gameData: unknown): Promise<unknown> {
-    if (typeof gameData !== 'object' || !gameData || !('gameId' in gameData)) {
-      throw new Error('Invalid game data: missing gameId');
+    if (typeof gameData !== 'object' || !gameData || !('id' in gameData)) {
+      throw new Error('Invalid game data: missing id');
     }
 
     return this.saveToStore('saved_games', gameData);
@@ -359,7 +359,7 @@ export class IndexedDBProvider implements IStorageProvider {
 
     if (importData.saved_games && typeof importData.saved_games === 'object') {
       for (const [gameId, gameData] of Object.entries(importData.saved_games)) {
-        await this.saveSavedGame({ ...gameData, gameId });
+        await this.saveSavedGame({ ...gameData, id: gameId });
       }
     }
 
