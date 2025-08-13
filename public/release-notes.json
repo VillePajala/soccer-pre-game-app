@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix(eslint): remove explicit any types from import-backup and AuthContext"
+  "notes": "fix(eslint): add explicit any disable comments for import-backup type casting"
 }
