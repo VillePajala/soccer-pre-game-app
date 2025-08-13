@@ -1689,10 +1689,49 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       // 3. Reset History with the new state
       resetHistory(newGameState);
 
+      // 4. Reset Game Session State to reflect the new game immediately
+      dispatchGameSession({
+        type: 'RESET_GAME_SESSION_STATE',
+        payload: {
+          teamName: homeTeamName,
+          opponentName: opponentName,
+          gameDate: gameDate,
+          gameLocation: gameLocation.trim(),
+          gameTime: gameTime,
+          homeScore: 0,
+          awayScore: 0,
+          gameNotes: '',
+          homeOrAway: homeOrAway,
+          numberOfPeriods: numPeriods,
+          periodDurationMinutes: periodDuration,
+          currentPeriod: 0,
+          gameStatus: 'not_started',
+          selectedPlayerIds: initialSelectedPlayerIds,
+          seasonId: seasonId,
+          tournamentId: tournamentId,
+          demandFactor: demandFactor,
+          ageGroup: ageGroup,
+          tournamentLevel: tournamentLevel,
+          gameEvents: [],
+          timeElapsedInSeconds: 0,
+          isRunning: false,
+          startTimestamp: null,
+          subIntervalMinutes: 0,
+          completedIntervalDurations: [],
+          lastSubConfirmationTimeSeconds: null,
+          showPlayerNames: true,
+        }
+      });
+
       setIsPlayed(isPlayed);
 
       try {
         await handleQuickSaveGame(tempGameId, newGameState);
+        
+        // Check if the game ID changed after save (e.g., Supabase generated UUID)
+        // The handleQuickSaveGame function will automatically update currentGameId if needed
+        const updatedGameId = currentGameId; // This might have been updated by handleQuickSaveGame
+        logger.log(`[handleStartNewGameWithSetup] Game saved with ID: ${updatedGameId}`);
       } catch (error) {
         logger.error('[handleStartNewGameWithSetup] Quick save failed:', error);
         throw error;
@@ -1712,6 +1751,8 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     // Keep necessary dependencies
     availablePlayers,
     resetHistory,
+    dispatchGameSession,
+    currentGameId,
     newGameSetupModal,
     setNewGameDemandFactor,
     setHighlightRosterButton,

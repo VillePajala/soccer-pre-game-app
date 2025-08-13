@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "feat(performance): implement New Game Setup modal instant open"
+  "notes": "fix(typescript): fix useRef type errors in performance hooks"
 }

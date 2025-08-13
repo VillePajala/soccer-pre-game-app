@@ -278,6 +278,9 @@ export const useGameDataManager = ({
           await utilSaveCurrentGameIdSetting(gameId);
           logger.log(`[useGameDataManager] Game ${gameId} quick saved successfully.`);
         }
+        
+        // Invalidate React Query cache to refresh saved games data
+        queryClient.invalidateQueries({ queryKey: queryKeys.savedGames });
       }
     );
   }, [
@@ -294,6 +297,7 @@ export const useGameDataManager = ({
     tacticalDrawings,
     tacticalBallPosition,
     saveQueue,
+    queryClient,
   ]);
 
   const handleDeleteGame = useCallback(async (gameId: string) => {
