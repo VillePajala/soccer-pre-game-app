@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix(storage): fix critical IndexedDB game save failure"
+  "notes": "fix(storage): implement IndexedDB schema migration for gameId to id field change"
 }

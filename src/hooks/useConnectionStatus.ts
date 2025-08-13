@@ -25,36 +25,29 @@ export const useConnectionStatus = () => {
     if (typeof window === 'undefined' || !navigator.onLine) return false;
 
     try {
-      // Create a simple fetch to Supabase REST API health check
+      // Create a simple fetch to check if Supabase domain is reachable
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       if (!supabaseUrl) return false;
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
-      // Prefer public auth health endpoint (returns 200 without auth)
-      let response = await fetch(`${supabaseUrl}/auth/v1/health`, {
-        method: 'GET',
-        headers: { 'Accept': 'application/json' },
+      // Use a simple connectivity test that doesn't require authentication
+      // Just test if we can reach the domain - any response (even 404) means it's reachable
+      await fetch(`${supabaseUrl}/`, {
+        method: 'HEAD', // HEAD request to minimize data transfer
+        mode: 'no-cors', // Avoid CORS issues for connectivity test
         signal: controller.signal
       });
 
-      // Fallback to REST root only if auth health is unavailable
-      if (!response.ok && response.status !== 200) {
-        response = await fetch(`${supabaseUrl}/rest/v1/`, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json'
-          },
-          signal: controller.signal
-        });
-      }
-
       clearTimeout(timeoutId);
-      // Treat 200 as healthy. Avoid triggering console 401 noise in devtools.
-      return response.ok;
-    } catch {
-      // Network error, timeout, or abort
+      
+      // For no-cors mode, we can't read response status, but if fetch succeeds, domain is reachable
+      // If fetch throws, it means network/DNS failure
+      return true;
+    } catch (error) {
+      // Network error, timeout, DNS failure, or abort
+      console.debug('[useConnectionStatus] Supabase connectivity test failed:', error);
       return false;
     }
   }, []);
