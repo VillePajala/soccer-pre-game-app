@@ -204,12 +204,14 @@ export const useGameDataManager = ({
   const handleQuickSaveGame = useCallback(async (
     overrideGameId?: string,
     overrideSnapshot?: AppState
-  ) => {
+  ): Promise<string | null> => {
     const gameId = overrideGameId || currentGameId;
     if (!gameId || gameId === DEFAULT_GAME_ID) {
       logger.warn('[useGameDataManager] Cannot quick save: no valid game ID.');
-      return;
+      return null;
     }
+
+    let finalGameId: string | null = null;
 
     // Queue the save operation to prevent race conditions
     await saveQueue.queueSave(
@@ -262,6 +264,7 @@ export const useGameDataManager = ({
         if (newGameId && newGameId !== gameId) {
           logger.log(`[GameCreation] UUID sync: ${gameId} → ${newGameId}`);
           setCurrentGameId(newGameId);
+          finalGameId = newGameId;
 
           // Update savedGames with the new ID and remove the old one
           const updatedSavedGames = { ...savedGames };
@@ -273,6 +276,7 @@ export const useGameDataManager = ({
           logger.log(`[useGameDataManager] Game ${newGameId} quick saved successfully with ID sync.`);
         } else {
           // No ID change, update savedGames normally
+          finalGameId = gameId;
           const updatedSavedGames = { ...savedGames, [gameId]: snapshot };
           setSavedGames(updatedSavedGames);
           await utilSaveCurrentGameIdSetting(gameId);
@@ -284,6 +288,9 @@ export const useGameDataManager = ({
         logger.log('[GameCreation] Cache invalidated, saved games list will refresh');
       }
     );
+
+    // Return the final game ID after the save operation completes
+    return finalGameId;
   }, [
     currentGameId,
     savedGames,

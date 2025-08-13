@@ -127,8 +127,8 @@ export const useSaveQueue = (options: SaveQueueOptions = {}) => {
         operation,
         timestamp: Date.now(),
         retryCount: 0,
-        resolve,
-        reject
+        resolve, // This will be called by processQueue when the operation actually completes
+        reject   // This will be called by processQueue if the operation fails
       };
 
       if (existingIndex >= 0) {
@@ -148,14 +148,17 @@ export const useSaveQueue = (options: SaveQueueOptions = {}) => {
       setQueueSize(queueRef.current.length);
 
       if (immediate) {
-        // Process immediately
+        // Process immediately - The promise will resolve when processQueue completes the operation
         processQueue();
       } else {
-        // Debounce the processing
+        // Debounce the processing - The promise will resolve when processQueue completes the operation
         debounceTimerRef.current = setTimeout(() => {
           processQueue();
         }, debounceMs);
       }
+      
+      // The Promise will resolve when processQueue() calls resolve() after the operation completes
+      // The Promise will reject when processQueue() calls reject() if the operation fails permanently
     });
   }, [debounceMs, maxQueueSize, processQueue]);
 

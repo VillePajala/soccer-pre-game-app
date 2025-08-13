@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix(typescript): add missing properties to GameSessionState payload"
+  "notes": "fix(game-creation): implement complete game creation bug fix"
 }
