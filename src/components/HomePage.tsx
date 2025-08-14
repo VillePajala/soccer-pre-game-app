@@ -314,6 +314,18 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     // masterRosterKey: MASTER_ROSTER_KEY, // Removed as no longer used by useGameState
   });
 
+  // Sync goalie status from field to roster for PlayerBar visual updates  
+  useEffect(() => {
+    // Update roster's availablePlayers to reflect goalie changes from field
+    setAvailablePlayers(prev => prev.map(rosterPlayer => {
+      const fieldPlayer = playersOnField.find(fp => fp.id === rosterPlayer.id);
+      if (fieldPlayer && fieldPlayer.isGoalie !== rosterPlayer.isGoalie) {
+        return { ...rosterPlayer, isGoalie: fieldPlayer.isGoalie };
+      }
+      return rosterPlayer;
+    }));
+  }, [playersOnField, setAvailablePlayers]);
+
   // Keep a snapshot of the last non-empty field state to avoid accidental clears during sync
   const lastNonEmptyPlayersOnFieldRef = useRef<Player[]>([]);
   useEffect(() => {
@@ -826,10 +838,9 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     }
     rosterFieldSyncTimerRef.current = window.setTimeout(() => {
       setPlayersOnField(prevPlayersOnField => {
-        // If field is empty, never overwrite with empty from sync; keep last non-empty snapshot
+        // REMOVED: "last non-empty" fallback that caused formation reversion
         if (!prevPlayersOnField || prevPlayersOnField.length === 0) {
-          const fallback = lastNonEmptyPlayersOnFieldRef.current;
-          return (fallback && fallback.length > 0) ? fallback : prevPlayersOnField;
+          return prevPlayersOnField; // Don't restore old formations
         }
 
         // Only sync if all field players exist in roster (avoid structural changes during place-all)
@@ -844,7 +855,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           const needsUpdate = (
             fieldPlayer.name !== rosterPlayer.name ||
             fieldPlayer.jerseyNumber !== rosterPlayer.jerseyNumber ||
-            fieldPlayer.isGoalie !== rosterPlayer.isGoalie ||
+            // REMOVED: isGoalie sync - field is authoritative for goalie status
             fieldPlayer.nickname !== rosterPlayer.nickname ||
             fieldPlayer.notes !== rosterPlayer.notes ||
             (rosterPlayer.receivedFairPlayCard !== undefined && fieldPlayer.receivedFairPlayCard !== rosterPlayer.receivedFairPlayCard)
@@ -853,10 +864,10 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           if (!needsUpdate) return fieldPlayer;
           didChange = true;
           return {
-            ...fieldPlayer, // Preserve relX/relY
+            ...fieldPlayer, // Preserve relX/relY AND isGoalie (field is authoritative)
             name: rosterPlayer.name,
             jerseyNumber: rosterPlayer.jerseyNumber,
-            isGoalie: rosterPlayer.isGoalie,
+            // REMOVED: isGoalie writeback - field keeps its authoritative goalie status
             nickname: rosterPlayer.nickname,
             notes: rosterPlayer.notes,
             receivedFairPlayCard: rosterPlayer.receivedFairPlayCard !== undefined ? rosterPlayer.receivedFairPlayCard : fieldPlayer.receivedFairPlayCard,

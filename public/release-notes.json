@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix: prevent goalie toggle position data loss by fixing race condition"
+  "notes": "fix: use simple direct goalie handler instead of complex roster path"
 }

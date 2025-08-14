@@ -188,14 +188,7 @@ export function useGameState({ initialState, saveStateToHistory }: UseGameStateA
         const baselineIsGoalie = fieldPlayer ? !!fieldPlayer.isGoalie : !!(rosterPlayerForBaseline?.isGoalie);
         const targetGoalieStatus = !baselineIsGoalie;
 
-        // Optimistically update availablePlayers to prevent visual revert before persistence completes
-        setAvailablePlayers(prev => prev.map(p => {
-            if (p.id === playerId) return { ...p, isGoalie: targetGoalieStatus };
-            if (targetGoalieStatus && p.id !== playerId && p.isGoalie) return { ...p, isGoalie: false };
-            return p;
-        }));
-
-        // Update players on field immediately
+        // Update players on field immediately - SINGLE SOURCE OF TRUTH
         let newPlayersOnFieldState: Player[] = [];
         setPlayersOnField(prevPlayersOnField => {
             newPlayersOnFieldState = prevPlayersOnField.map(p => {
@@ -217,7 +210,7 @@ export function useGameState({ initialState, saveStateToHistory }: UseGameStateA
         } catch (error) {
             logger.error(`[useGameState:handleToggleGoalie] Error toggling goalie for ID ${playerId}:`, error);
         }
-    }, [availablePlayers, playersOnField, saveStateToHistory, setAvailablePlayers, setPlayersOnField]);
+    }, [availablePlayers, playersOnField, saveStateToHistory, setPlayersOnField]);
 
     // ... (more handlers will be moved here later)
 
