@@ -125,7 +125,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
           <span className="block relative text-yellow-400 title-outline">
             {/* Neon inner glow */}
             <span className="absolute inset-0 -z-10 blur-[6px] opacity-60 [background:radial-gradient(closest-side,rgba(234,179,8,0.35),transparent_70%)]" />
-            MatchDay
+            MatchOps
           </span>
           <span className="block -mt-1 relative text-yellow-400 title-outline">
             <span className="absolute inset-0 -z-10 blur-[6px] opacity-60 [background:radial-gradient(closest-side,rgba(234,179,8,0.35),transparent_70%)]" />
