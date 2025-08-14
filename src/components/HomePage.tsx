@@ -1384,6 +1384,27 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           } else {
             await utilSaveCurrentGameIdSetting(currentGameId);
           }
+
+          // Ensure saved games list reflects latest state for cards without requiring manual quick save
+          try {
+            // Optimistically update local savedGames fallback state
+            const idToUpdate = newGameId || currentGameId;
+            if (idToUpdate) {
+              setSavedGames(prev => ({
+                ...prev,
+                [idToUpdate]: {
+                  ...(prev[idToUpdate] || {}),
+                  ...currentSnapshot,
+                },
+              }));
+            }
+            // Trigger saved games refetch if available (preferred source for LoadGameModal list)
+            if (savedGamesData && typeof savedGamesData.refetch === 'function') {
+              savedGamesData.refetch();
+            }
+          } catch (refreshError) {
+            logger.warn('[AUTO-SAVE] Post-save refresh failed (non-fatal):', refreshError);
+          }
         } catch (error) {
           logger.error('[AUTO-SAVE] Failed to auto-save state:', error);
         }
@@ -1408,6 +1429,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     gameSessionState.showPlayerNames, gameSessionState.timeElapsedInSeconds,
     availablePlayers, opponents, drawings, tacticalDiscs, tacticalDrawings, tacticalBallPosition,
     isPlayed, masterRosterQueryResultData, playerAssessments, playersOnField,
+    savedGamesData, // FIXED: Added missing dependency used in auto-save effect
   ]);
 
   // Force save on critical events (page unload, visibility change)
@@ -1980,7 +2002,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         homeOrAway: homeOrAway,
         numberOfPeriods: numPeriods,
         periodDurationMinutes: periodDuration,
-        currentPeriod: 0,
+        currentPeriod: 1,
         gameStatus: 'notStarted',
         selectedPlayerIds: initialSelectedPlayerIds,
         seasonId: seasonId || '',

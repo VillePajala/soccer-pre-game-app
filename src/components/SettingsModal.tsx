@@ -6,13 +6,16 @@ import packageJson from '../../package.json';
 import { HiOutlineArrowRightOnRectangle } from 'react-icons/hi2';
 import { HiOutlineTrash } from 'react-icons/hi2';
 import { HiOutlineArrowDownTray, HiOutlineArrowUpTray } from 'react-icons/hi2';
+import { HiOutlineChartBarSquare } from 'react-icons/hi2';
 import AccountDeletionModal from './AccountDeletionModal';
 import { useAuth } from '@/context/AuthContext';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { authAwareStorageManager as storageManager } from '@/lib/storage';
 import { importBackupToSupabase } from '@/utils/supabaseBackupImport';
 import { cleanImportToSupabase } from '@/utils/supabaseCleanImport';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/config/queryKeys';
+import { useRouter } from 'next/navigation';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -39,6 +42,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const { user, globalSignOut } = useAuth() as unknown as { user?: unknown; globalSignOut?: () => Promise<{ error: unknown | null }> };
+  const { isAdmin, isLoading: isAdminLoading } = useAdminAuth();
+  const router = useRouter();
   const [teamName, setTeamName] = useState(defaultTeamName);
   const [resetConfirm, setResetConfirm] = useState('');
   const [isAccountDeletionModalOpen, setIsAccountDeletionModalOpen] = useState(false);
@@ -58,22 +63,22 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      
+
       const now = new Date();
       const timestamp = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}`;
       a.download = `SoccerApp_Backup_${timestamp}.json`;
-      
+
       a.href = url;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      
+
       setImportResult({ success: true, message: t('settings.exportSuccess', 'Data exported successfully') });
     } catch (error) {
-      setImportResult({ 
-        success: false, 
-        message: t('settings.exportError', 'Failed to export data: ') + (error instanceof Error ? error.message : 'Unknown error') 
+      setImportResult({
+        success: false,
+        message: t('settings.exportError', 'Failed to export data: ') + (error instanceof Error ? error.message : 'Unknown error')
       });
     }
   };
@@ -87,12 +92,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
 
     try {
       const fileContent = await file.text();
-      const result = importType === 'replace' 
+      const result = importType === 'replace'
         ? await cleanImportToSupabase(fileContent)
         : await importBackupToSupabase(fileContent);
-      
+
       setImportResult(result);
-      
+
       if (result.success) {
         // Invalidate all queries to refresh data
         await queryClient.invalidateQueries({ queryKey: queryKeys.masterRoster });
@@ -144,85 +149,33 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
             <h2 className={titleStyle}>{t('settingsModal.title', 'App Settings')}</h2>
           </div>
           <div className="flex-1 overflow-y-auto min-h-0 px-6 py-4 space-y-4">
-            <div>
-              <label htmlFor="language-select" className={labelStyle}>{t('settingsModal.languageLabel', 'Language')}</label>
-              <select
-                id="language-select"
-                value={language}
-                onChange={(e) => onLanguageChange(e.target.value)}
-                className={inputStyle}
-              >
-                <option value="en">English</option>
-                <option value="fi">Suomi</option>
-              </select>
-            </div>
-            <div>
-              <label htmlFor="team-name-input" className={labelStyle}>{t('settingsModal.defaultTeamNameLabel', 'Default Team Name')}</label>
-              <input
-                id="team-name-input"
-                type="text"
-                value={teamName}
-                onChange={(e) => setTeamName(e.target.value)}
-                onBlur={() => onDefaultTeamNameChange(teamName)}
-                className={inputStyle}
-              />
-            </div>
-            <div className="pt-2 border-t border-slate-700/40 space-y-2">
+            {/* General Settings */}
+            <div className="space-y-2">
               <h3 className="text-lg font-semibold text-slate-200">
-                {t('settingsModal.aboutTitle', 'About')}
+                {t('settingsModal.generalTitle', 'General')}
               </h3>
-              <p className="text-sm text-slate-300">
-                {t('settingsModal.appVersion', 'App Version')}: {packageJson.version}
-              </p>
-              <div className="space-y-1">
-                <a
-                  href="https://github.com/VillePajala/soccer-pre-game-app"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-indigo-400 underline"
+              <div>
+                <label htmlFor="language-select" className={labelStyle}>{t('settingsModal.languageLabel', 'Language')}</label>
+                <select
+                  id="language-select"
+                  value={language}
+                  onChange={(e) => onLanguageChange(e.target.value)}
+                  className={inputStyle}
                 >
-                  {t('settingsModal.documentationLink', 'Documentation')}
-                </a>
-                <p className="text-sm text-slate-300">
-                  {t(
-                    'settingsModal.documentationDescription',
-                    'Read the full user guide and troubleshooting tips.'
-                  )}
-                </p>
+                  <option value="en">English</option>
+                  <option value="fi">Suomi</option>
+                </select>
               </div>
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium text-slate-200">
-                  {t('settingsModal.legalTitle', 'Legal Information')}
-                </h4>
-                <div className="flex flex-col space-y-1">
-                  <a
-                    href="/privacy-policy.html"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-indigo-400 underline"
-                  >
-                    {t('settingsModal.privacyPolicyLink', 'Privacy Policy')}
-                  </a>
-                  <a
-                    href="/terms-of-service.html"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-indigo-400 underline"
-                  >
-                    {t('settingsModal.termsOfServiceLink', 'Terms of Service')}
-                  </a>
-                </div>
-              </div>
-              <div className="space-y-1">
-                <button onClick={onResetGuide} className={primaryButtonStyle}>
-                  {t('settingsModal.resetGuideButton', 'Reset App Guide')}
-                </button>
-                <p className="text-sm text-slate-300">
-                  {t(
-                    'settingsModal.resetGuideDescription',
-                    'Show the onboarding guide again the next time you open the app.'
-                  )}
-                </p>
+              <div>
+                <label htmlFor="team-name-input" className={labelStyle}>{t('settingsModal.defaultTeamNameLabel', 'Default Team Name')}</label>
+                <input
+                  id="team-name-input"
+                  type="text"
+                  value={teamName}
+                  onChange={(e) => setTeamName(e.target.value)}
+                  onBlur={() => onDefaultTeamNameChange(teamName)}
+                  className={inputStyle}
+                />
               </div>
             </div>
             {onSignOut && (
@@ -270,7 +223,31 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 </p>
               </div>
             )}
-            {/* Data Management Section */}
+            {/* Admin Tools - Only for admins */}
+            {!isAdminLoading && isAdmin && (
+              <div className="pt-2 border-t border-slate-700/40 space-y-2">
+                <h3 className="text-lg font-semibold text-slate-200">
+                  {t('settingsModal.adminTitle', 'Admin Tools')}
+                </h3>
+                <p className="text-sm text-slate-400">
+                  {t('settingsModal.adminDescription', 'Administrative tools and monitoring.')}
+                </p>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => {
+                      // PWA-friendly navigation - close modal and navigate with Next.js router
+                      onClose();
+                      router.push('/admin/monitoring');
+                    }}
+                    className="w-full px-4 py-2 bg-gradient-to-b from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-700 hover:to-purple-800 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <HiOutlineChartBarSquare className="w-4 h-4" />
+                    {t('settingsModal.adminMonitoring', 'System Monitoring')}
+                  </button>
+                </div>
+              </div>
+            )}
+            {/* Data Management */}
             {!!user && (
               <div className="pt-2 border-t border-slate-700/40 space-y-2">
                 <h3 className="text-lg font-semibold text-slate-200">
@@ -279,7 +256,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 <p className="text-sm text-slate-400">
                   {t('settingsModal.dataManagementDescription', 'Export your data for backup or import data from a previous backup.')}
                 </p>
-                
+
                 {/* Export Button */}
                 <div className="space-y-2">
                   <button
@@ -307,7 +284,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                       <option value="replace">{t('settings.replace', 'Replace all data')}</option>
                     </select>
                   </div>
-                  
+
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -316,39 +293,82 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     className="hidden"
                     disabled={isImporting}
                   />
-                  
+
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isImporting}
-                    className={`w-full px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 ${
-                      importType === 'replace' 
-                        ? 'bg-gradient-to-b from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800' 
+                    className={`w-full px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 ${importType === 'replace'
+                        ? 'bg-gradient-to-b from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800'
                         : 'bg-gradient-to-b from-green-600 to-green-700 hover:from-green-700 hover:to-green-800'
-                    } text-white disabled:opacity-50 disabled:cursor-not-allowed`}
+                      } text-white disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     <HiOutlineArrowUpTray className="w-4 h-4" />
                     {isImporting ? t('common.importing', 'Importing...') : t('settings.importBackup', 'Import Backup')}
                   </button>
-                  
+
                   {importType === 'replace' && (
                     <p className="text-xs text-orange-400">
                       {t('settings.replaceWarning', '⚠️ This will delete all existing data')}
                     </p>
                   )}
                 </div>
-                
+
                 {/* Import Result Message */}
                 {importResult && (
-                  <div className={`p-3 rounded-lg text-sm ${
-                    importResult.success 
-                      ? 'bg-green-900/50 text-green-200 border border-green-700/50' 
+                  <div className={`p-3 rounded-lg text-sm ${importResult.success
+                      ? 'bg-green-900/50 text-green-200 border border-green-700/50'
                       : 'bg-red-900/50 text-red-200 border border-red-700/50'
-                  }`}>
+                    }`}>
                     {importResult.message}
                   </div>
                 )}
               </div>
             )}
+            {/* About */}
+            <div className="pt-2 border-t border-slate-700/40 space-y-2">
+              <h3 className="text-lg font-semibold text-slate-200">
+                {t('settingsModal.aboutTitle', 'About')}
+              </h3>
+              <p className="text-sm text-slate-300">
+                {t('settingsModal.appVersion', 'App Version')}: {packageJson.version}
+              </p>
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium text-slate-200">
+                  {t('settingsModal.legalTitle', 'Legal Information')}
+                </h4>
+                <div className="flex flex-col space-y-1">
+                  <a
+                    href="/privacy-policy.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-indigo-400 underline"
+                  >
+                    {t('settingsModal.privacyPolicyLink', 'Privacy Policy')}
+                  </a>
+                  <a
+                    href="/terms-of-service.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-indigo-400 underline"
+                  >
+                    {t('settingsModal.termsOfServiceLink', 'Terms of Service')}
+                  </a>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <button onClick={onResetGuide} className={primaryButtonStyle}>
+                  {t('settingsModal.resetGuideButton', 'Reset App Guide')}
+                </button>
+                <p className="text-sm text-slate-300">
+                  {t(
+                    'settingsModal.resetGuideDescription',
+                    'Show the onboarding guide again the next time you open the app.'
+                  )}
+                </p>
+              </div>
+            </div>
+
+            {/* Danger Zone */}
             <div className="pt-2 border-t border-slate-700/40 space-y-2">
               <h3 className="text-lg font-semibold text-red-300">
                 {t('settingsModal.dangerZoneTitle', 'Danger Zone')}
@@ -387,7 +407,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
       </div>
       {/* Account Deletion Modal - only render when needed */}
       {isAccountDeletionModalOpen && (
-        <AccountDeletionModal 
+        <AccountDeletionModal
           isOpen={isAccountDeletionModalOpen}
           onClose={() => setIsAccountDeletionModalOpen(false)}
         />

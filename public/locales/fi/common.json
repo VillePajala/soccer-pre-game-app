@@ -608,6 +608,9 @@
     "deleteAccountDescription": "Poista tilisi ja kaikki tiedot pysyvästi. Tätä toimintoa ei voi perua.",
     "globalSignOut": "Kirjaudu ulos kaikkialta",
     "globalSignOutConfirm": "Kirjaudu ulos kaikkialta? Tämä kirjaa sinut ulos kaikista laitteista.",
+    "adminTitle": "Ylläpitotyökalut",
+    "adminDescription": "Ylläpitotyökalut ja järjestelmän seuranta.",
+    "adminMonitoring": "Järjestelmän seuranta",
     "dataManagementTitle": "Tietojen hallinta",
     "dataManagementDescription": "Vie tietosi varmuuskopioksi tai tuo tiedot aiemmasta varmuuskopiosta."
   },

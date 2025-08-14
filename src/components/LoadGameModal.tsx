@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import GameLoadingSkeleton from './Skeleton';
+import { DEFAULT_GAME_ID } from '@/config/constants';
 import { useTranslation } from 'react-i18next';
 import { SavedGamesCollection } from '@/types'; // Keep this if SavedGamesCollection is from here
 import { Season, Tournament } from '@/types'; // Corrected import path
@@ -48,8 +49,6 @@ export interface LoadGameModalProps {
   onRefetch?: () => void;
 }
 
-// Define the default game ID constant if not imported (consider sharing from page.tsx)
-const DEFAULT_GAME_ID = '__default_unsaved__';
 
 const LoadGameModal: React.FC<LoadGameModalProps> = ({
   isOpen,
@@ -357,8 +356,8 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
             >
               {/* Clean Game Card */}
               <div className={`relative rounded-lg border shadow-lg transition-all duration-200 ${index % 2 === 0
-                  ? 'bg-slate-700/60 border-slate-600/60 hover:bg-slate-700/80 hover:border-slate-500/80'
-                  : 'bg-slate-700/40 border-slate-600/40 hover:bg-slate-700/60 hover:border-slate-500/60'
+                ? 'bg-slate-700/60 border-slate-600/60 hover:bg-slate-700/80 hover:border-slate-500/80'
+                : 'bg-slate-700/40 border-slate-600/40 hover:bg-slate-700/60 hover:border-slate-500/60'
                 } ${isCurrent ? 'ring-2 ring-indigo-500 border-indigo-500' : ''
                 } hover:shadow-xl`}>
 
@@ -377,16 +376,16 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                       <div className="flex items-center gap-3 mb-2">
                         {/* Home Team - Bold if it's your team */}
                         <h3 className={`text-lg ${game.homeOrAway === 'home'
-                            ? `font-semibold ${isCurrent ? 'text-indigo-400' : 'text-slate-100'}`
-                            : `font-normal ${isCurrent ? 'text-indigo-300' : 'text-slate-300'}`
+                          ? `font-semibold ${isCurrent ? 'text-indigo-400' : 'text-slate-100'}`
+                          : `font-normal ${isCurrent ? 'text-indigo-300' : 'text-slate-300'}`
                           }`}>
                           {displayHomeTeamName}
                         </h3>
                         <span className="text-slate-400 font-medium">vs</span>
                         {/* Away Team - Bold if it's your team */}
                         <h3 className={`text-lg ${game.homeOrAway === 'away'
-                            ? `font-semibold ${isCurrent ? 'text-indigo-400' : 'text-slate-100'}`
-                            : `font-normal ${isCurrent ? 'text-indigo-300' : 'text-slate-300'}`
+                          ? `font-semibold ${isCurrent ? 'text-indigo-400' : 'text-slate-100'}`
+                          : `font-normal ${isCurrent ? 'text-indigo-300' : 'text-slate-300'}`
                           }`}>
                           {displayAwayTeamName}
                         </h3>
@@ -410,8 +409,8 @@ const LoadGameModal: React.FC<LoadGameModalProps> = ({
                               handleBadgeClick(contextType.toLowerCase() as ('season' | 'tournament'), contextId);
                             }}
                             className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium transition-colors cursor-pointer ${contextType.toLowerCase() === 'tournament'
-                                ? 'bg-purple-500/20 text-purple-300 hover:bg-purple-500/30'
-                                : 'bg-blue-500/20 text-blue-300 hover:bg-blue-500/30'
+                              ? 'bg-purple-500/20 text-purple-300 hover:bg-purple-500/30'
+                              : 'bg-blue-500/20 text-blue-300 hover:bg-blue-500/30'
                               } ${filterType === contextType.toLowerCase() && filterId === contextId ? 'ring-2 ring-indigo-500' : ''
                               }`}
                             title={t('loadGameModal.filterByTooltip', 'Filter by {{name}}', { replace: { name: contextName } }) ?? `Filter by ${contextName}`}

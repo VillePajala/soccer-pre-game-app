@@ -604,97 +604,97 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                   </div>
                 </div>
               )}
-            </div>
 
-            {/* Tournament Selection */}
-            <div className="mb-4">
-              <label htmlFor="tournamentSelect" className="block text-sm font-medium text-slate-300 mb-1">
-                {t('newGameSetupModal.tournamentLabel', 'Tournament')}
-              </label>
-              <div className="flex items-center gap-2">
-                {isLoadingCachedData && (!tournaments || tournaments.length === 0) ? (
-                  <div className="flex-1 px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-md">
-                    <div className="h-5 bg-slate-600 rounded animate-pulse"></div>
-                  </div>
-                ) : (
-                  <select
-                    id="tournamentSelect"
-                    value={selectedTournamentId || ''}
-                    onChange={handleTournamentChange}
-                    className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+              {/* Tournament Selection (moved inside the same section container) */}
+              <div>
+                <label htmlFor="tournamentSelect" className="block text-sm font-medium text-slate-300 mb-1">
+                  {t('newGameSetupModal.tournamentLabel', 'Tournament')}
+                </label>
+                <div className="flex items-center gap-2">
+                  {isLoadingCachedData && (!tournaments || tournaments.length === 0) ? (
+                    <div className="flex-1 px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-md">
+                      <div className="h-5 bg-slate-600 rounded animate-pulse"></div>
+                    </div>
+                  ) : (
+                    <select
+                      id="tournamentSelect"
+                      value={selectedTournamentId || ''}
+                      onChange={handleTournamentChange}
+                      className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                    >
+                      <option value="">{t('newGameSetupModal.selectTournament', '-- Select Tournament --')}</option>
+                      {tournaments.map((tournament) => (
+                        <option key={tournament.id} value={tournament.id}>
+                          {tournament.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleShowCreateTournament}
+                    className="p-2 text-indigo-400 hover:text-indigo-300 disabled:opacity-50"
+                    title={showNewTournamentInput ? t('newGameSetupModal.cancelCreate', 'Cancel creation') : t('newGameSetupModal.createTournament', 'Create new tournament')}
+                    disabled={isAddingSeason || isAddingTournament}
                   >
-                    <option value="">{t('newGameSetupModal.selectTournament', '-- Select Tournament --')}</option>
-                    {tournaments.map((tournament) => (
-                      <option key={tournament.id} value={tournament.id}>
-                        {tournament.name}
-                      </option>
-                    ))}
-                  </select>
+                    <HiPlusCircle className={`w-6 h-6 transition-transform ${showNewTournamentInput ? 'rotate-45' : ''}`} />
+                  </button>
+                </div>
+                {selectedTournamentId && (
+                  <div className="mt-2">
+                    <label htmlFor="tournamentLevelInput" className="block text-sm font-medium text-slate-300 mb-1">
+                      {t('newGameSetupModal.levelLabel', 'Level')}
+                    </label>
+                    <select
+                      id="tournamentLevelInput"
+                      value={tournamentLevel}
+                      onChange={(e) => setTournamentLevel(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                      disabled={false}
+                    >
+                      <option value="">{t('common.none', 'None')}</option>
+                      {LEVELS.map((lvl) => (
+                        <option key={lvl} value={lvl}>
+                          {t(`common.level${lvl}` as TranslationKey, lvl)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 )}
-                <button
-                  type="button"
-                  onClick={handleShowCreateTournament}
-                  className="p-2 text-indigo-400 hover:text-indigo-300 disabled:opacity-50"
-                  title={showNewTournamentInput ? t('newGameSetupModal.cancelCreate', 'Cancel creation') : t('newGameSetupModal.createTournament', 'Create new tournament')}
-                  disabled={isAddingSeason || isAddingTournament}
-                >
-                  <HiPlusCircle className={`w-6 h-6 transition-transform ${showNewTournamentInput ? 'rotate-45' : ''}`} />
-                </button>
-              </div>
-              {selectedTournamentId && (
-                <div className="mt-2">
-                  <label htmlFor="tournamentLevelInput" className="block text-sm font-medium text-slate-300 mb-1">
-                    {t('newGameSetupModal.levelLabel', 'Level')}
-                  </label>
-                  <select
-                    id="tournamentLevelInput"
-                    value={tournamentLevel}
-                    onChange={(e) => setTournamentLevel(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
-                    disabled={false}
-                  >
-                    <option value="">{t('common.none', 'None')}</option>
-                    {LEVELS.map((lvl) => (
-                      <option key={lvl} value={lvl}>
-                        {t(`common.level${lvl}` as TranslationKey, lvl)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-              {showNewTournamentInput && (
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <input
-                    ref={newTournamentInputRef}
-                    type="text"
-                    value={newTournamentName}
-                    onChange={(e) => setNewTournamentName(e.target.value)}
-                    onKeyDown={handleNewTournamentKeyDown}
-                    placeholder={t('newGameSetupModal.newTournamentPlaceholder', 'Enter new tournament name...')}
-                    className="flex-1 min-w-[200px] px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
-                    disabled={isAddingTournament}
-                  />
-                  <div className="flex gap-2 shrink-0">
-                    <button
-                      onClick={handleAddNewTournament}
-                      disabled={isAddingTournament || !newTournamentName.trim()}
-                      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md shadow-sm disabled:opacity-50 whitespace-nowrap"
-                    >
-                      {isAddingTournament ? t('newGameSetupModal.creating', 'Creating...') : t('newGameSetupModal.addButton', 'Add')}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowNewTournamentInput(false);
-                        setNewTournamentName('');
-                      }}
-                      className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-md shadow-sm whitespace-nowrap"
-                    >
-                      {t('common.cancelButton', 'Cancel')}
-                    </button>
+                {showNewTournamentInput && (
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <input
+                      ref={newTournamentInputRef}
+                      type="text"
+                      value={newTournamentName}
+                      onChange={(e) => setNewTournamentName(e.target.value)}
+                      onKeyDown={handleNewTournamentKeyDown}
+                      placeholder={t('newGameSetupModal.newTournamentPlaceholder', 'Enter new tournament name...')}
+                      className="flex-1 min-w-[200px] px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                      disabled={isAddingTournament}
+                    />
+                    <div className="flex gap-2 shrink-0">
+                      <button
+                        onClick={handleAddNewTournament}
+                        disabled={isAddingTournament || !newTournamentName.trim()}
+                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md shadow-sm disabled:opacity-50 whitespace-nowrap"
+                      >
+                        {isAddingTournament ? t('newGameSetupModal.creating', 'Creating...') : t('newGameSetupModal.addButton', 'Add')}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowNewTournamentInput(false);
+                          setNewTournamentName('');
+                        }}
+                        className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-md shadow-sm whitespace-nowrap"
+                      >
+                        {t('common.cancelButton', 'Cancel')}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
             {/* Age Group */}
@@ -857,8 +857,8 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                   <button
                     onClick={() => setLocalHomeOrAway('home')}
                     className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 ${localHomeOrAway === 'home'
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
                       }`}
                   >
                     {t('common.home', 'Home')}
@@ -866,8 +866,8 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                   <button
                     onClick={() => setLocalHomeOrAway('away')}
                     className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 ${localHomeOrAway === 'away'
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
                       }`}
                   >
                     {t('common.away', 'Away')}

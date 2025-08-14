@@ -617,6 +617,9 @@
     "termsOfServiceLink": "Terms of Service",
     "deleteAccount": "Delete Account",
     "deleteAccountDescription": "Permanently delete your account and all data. This action cannot be undone.",
+    "adminTitle": "Admin Tools",
+    "adminDescription": "Administrative tools and monitoring.",
+    "adminMonitoring": "System Monitoring",
     "dataManagementTitle": "Data Management",
     "dataManagementDescription": "Export your data for backup or import data from a previous backup."
   },
