@@ -101,7 +101,7 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
   const bgColor = 'bg-slate-900/85'; // Always use default background
   
   // Consistent button styles (simplified for overlay)
-  const timerButtonStyle = "text-white font-semibold py-2 px-5 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 transition-colors duration-150 flex items-center justify-center space-x-2";
+  const timerButtonStyle = "text-white font-semibold py-4 px-8 text-lg rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 transition-colors duration-150 flex items-center justify-center space-x-3";
   const controlButtonStyle = "text-slate-100 font-bold py-1 px-3 rounded shadow bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-lg active:scale-95";
   const controlValueStyle = "text-slate-100 font-bold text-lg tabular-nums w-8 mx-2 text-center";
   const controlLabelStyle = "text-sm font-medium text-slate-300 mr-2";
@@ -174,15 +174,15 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
   const awayScoreDisplayColor = homeOrAway === 'away' ? userTeamColor : opponentTeamColor;
 
   return (
-    <div className={`fixed inset-0 z-40 flex flex-col items-center p-4 pt-12 ${bgColor} backdrop-blur-lg`}>
-      <div className="w-full max-w-lg flex flex-col items-center">
+    <div className={`fixed inset-0 z-40 flex flex-col items-center justify-center px-8 py-8 ${bgColor} backdrop-blur-lg`}>
+      <div className="w-full max-w-4xl flex flex-col items-center">
         {/* Game Score Display - MOVED TO TOP ABOVE TIMER */}
-        <div className="bg-slate-800/70 px-5 py-2 rounded-lg mb-4">
-          <div className="flex items-center justify-center gap-3 text-xl font-semibold">
+        <div className="bg-slate-800/70 px-8 py-4 rounded-xl mb-8">
+          <div className="flex items-center justify-center gap-4 text-2xl font-semibold">
             <span className="text-slate-100">{displayHomeTeamName}</span>
-            <span className={`text-2xl font-bold ${homeScoreDisplayColor}`}>{homeScore}</span>
-            <span className="text-slate-500">-</span>
-            <span className={`text-2xl font-bold ${awayScoreDisplayColor}`}>{awayScore}</span>
+            <span className={`text-4xl font-bold ${homeScoreDisplayColor}`}>{homeScore}</span>
+            <span className="text-slate-500 text-3xl">-</span>
+            <span className={`text-4xl font-bold ${awayScoreDisplayColor}`}>{awayScore}</span>
             {/* --- Opponent Name Display/Edit --- */}
             {isEditingOpponentName ? (
                 <input
@@ -209,8 +209,8 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
         </div>
       
         {/* Timer Display */}
-        <div className="mb-3">
-          <span className={`text-7xl sm:text-8xl font-bold tabular-nums ${textColor}`}>
+        <div className="mb-8">
+          <span className={`text-8xl sm:text-9xl md:text-[12rem] lg:text-[14rem] font-bold tabular-nums ${textColor} leading-none`}>
             {formatTime(timeElapsedInSeconds)}
           </span>
         </div>
@@ -262,7 +262,7 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
         </div>
 
         {/* Timer Controls */}
-        <div className="flex items-center space-x-3 mb-5"> 
+        <div className="flex items-center space-x-6 mb-8"> 
           <button 
             onClick={onStartPauseTimer} 
             disabled={gameStatus === 'gameEnd'}

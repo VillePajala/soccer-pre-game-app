@@ -13,21 +13,21 @@ interface ExtendedGameViewProps extends Partial<GameViewProps> {
   // UI state
   showLargeTimerOverlay?: boolean;
   isTacticsBoardView?: boolean;
-  
+
   // Timer and game state
   timeElapsedInSeconds?: number;
   isTimerRunning?: boolean;
   subAlertLevel?: number;
   lastSubConfirmationTimeSeconds?: number;
-  
+
   // Tactical board state
   tacticalDrawings?: unknown[];
   tacticalDiscs?: unknown[];
   tacticalBallPosition?: unknown;
-  
+
   // Style
   barStyle?: string;
-  
+
   // Additional handlers from HomePage
   handlePlayerDragStartFromBar?: (player: unknown) => void;
   handleDeselectPlayer?: () => void;
@@ -54,7 +54,7 @@ interface ExtendedGameViewProps extends Partial<GameViewProps> {
   handleTacticalDiscRemove?: (discId: string) => void;
   handleToggleTacticalDiscType?: (discId: string) => void;
   handleTacticalBallMove?: (position: unknown) => void;
-  
+
   // Timer overlay handlers
   handleSubstitutionMade?: () => void;
   handleSetSubInterval?: (minutes: number) => void;
@@ -63,7 +63,7 @@ interface ExtendedGameViewProps extends Partial<GameViewProps> {
   handleToggleGoalLogModal?: () => void;
   handleLogOpponentGoal?: (timeInSeconds: number) => void;
   handleToggleLargeTimerOverlay?: () => void;
-  
+
   // Loading state
   initialLoadComplete?: boolean;
 }
@@ -80,25 +80,25 @@ interface ExtendedGameViewProps extends Partial<GameViewProps> {
  */
 export const GameView = React.memo<ExtendedGameViewProps>(({
   // UI state
-  showLargeTimerOverlay = false,
+  showLargeTimerOverlay = true,
   isTacticsBoardView = false,
   barStyle = "flex-shrink-0 bg-slate-800",
-  
+
   // Timer and game state
   timeElapsedInSeconds = 0,
   isTimerRunning = false,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   subAlertLevel = 0,
   lastSubConfirmationTimeSeconds = 0,
-  
+
   // Tactical board state
   tacticalDrawings = [],
   tacticalDiscs = [],
   tacticalBallPosition = null,
-  
+
   // Loading state
   initialLoadComplete = true,
-  
+
   // Event handlers (required)
   handlePlayerDragStartFromBar,
   handleDeselectPlayer,
@@ -126,7 +126,7 @@ export const GameView = React.memo<ExtendedGameViewProps>(({
   handleTacticalDiscRemove,
   handleToggleTacticalDiscType,
   handleTacticalBallMove,
-  
+
   // Timer overlay handlers
   handleSubstitutionMade,
   handleSetSubInterval,
@@ -144,15 +144,15 @@ export const GameView = React.memo<ExtendedGameViewProps>(({
     opponents,
     drawings,
   } = useGameStateContext();
-  
+
   // Placeholder for dragging info - will be implemented later
   const draggingPlayerFromBarInfo = null;
-  
+
   // Determine which players are available for the current game based on selected IDs
-  const playersForCurrentGame = availablePlayers.filter(player => 
+  const playersForCurrentGame = availablePlayers.filter(player =>
     gameState.selectedPlayerIds.includes(player.id)
   );
-  
+
   return (
     <>
       {/* Top Section: Player Bar, Game Info */}
@@ -172,8 +172,8 @@ export const GameView = React.memo<ExtendedGameViewProps>(({
           opponentName={gameState.opponentName}
           homeScore={gameState.homeScore}
           awayScore={gameState.awayScore}
-          onTeamNameChange={handleTeamNameChange || (() => {})}
-          onOpponentNameChange={handleOpponentNameChange || (() => {})}
+          onTeamNameChange={handleTeamNameChange || (() => { })}
+          onOpponentNameChange={handleOpponentNameChange || (() => { })}
           homeOrAway={gameState.homeOrAway}
         />
       </div>
@@ -185,13 +185,13 @@ export const GameView = React.memo<ExtendedGameViewProps>(({
           <TimerOverlay
             timeElapsedInSeconds={timeElapsedInSeconds}
             subAlertLevel={'none' as 'none' | 'warning' | 'due'}
-            onSubstitutionMade={handleSubstitutionMade || (() => {})}
+            onSubstitutionMade={handleSubstitutionMade || (() => { })}
             completedIntervalDurations={gameState.completedIntervalDurations || []}
             subIntervalMinutes={gameState.subIntervalMinutes}
-            onSetSubInterval={handleSetSubInterval || (() => {})}
+            onSetSubInterval={handleSetSubInterval || (() => { })}
             isTimerRunning={isTimerRunning}
-            onStartPauseTimer={handleStartPauseTimer || (() => {})}
-            onResetTimer={handleResetTimer || (() => {})}
+            onStartPauseTimer={handleStartPauseTimer || (() => { })}
+            onResetTimer={handleResetTimer || (() => { })}
             onToggleGoalLogModal={handleToggleGoalLogModal}
             onRecordOpponentGoal={() => handleLogOpponentGoal?.(timeElapsedInSeconds)}
             teamName={gameState.teamName}
@@ -204,7 +204,7 @@ export const GameView = React.memo<ExtendedGameViewProps>(({
             periodDurationMinutes={gameState.periodDurationMinutes}
             currentPeriod={gameState.currentPeriod}
             gameStatus={gameState.gameStatus}
-            onOpponentNameChange={handleOpponentNameChange || (() => {})}
+            onOpponentNameChange={handleOpponentNameChange || (() => { })}
             onClose={handleToggleLargeTimerOverlay}
             isLoaded={initialLoadComplete}
           />
@@ -215,28 +215,28 @@ export const GameView = React.memo<ExtendedGameViewProps>(({
           players={playersOnField}
           opponents={opponents as Opponent[]}
           drawings={(isTacticsBoardView ? tacticalDrawings : drawings) as Point[][]}
-          onPlayerMove={handlePlayerMove ? (playerId: string, relX: number, relY: number) => handlePlayerMove(playerId, { relX, relY }) : (() => {})}
-          onPlayerMoveEnd={() => {}}
-          onPlayerRemove={handlePlayerRemove || (() => {})}
-          onOpponentMove={handleOpponentMove ? (opponentId: string, relX: number, relY: number) => handleOpponentMove(opponentId, { relX, relY }) : (() => {})}
-          onOpponentMoveEnd={handleOpponentMoveEnd ? (opponentId: string) => handleOpponentMoveEnd(opponentId, { relX: 0, relY: 0 }) : (() => {})}
-          onOpponentRemove={handleOpponentRemove || (() => {})}
-          onPlayerDrop={handleDropOnField || (() => {})}
+          onPlayerMove={handlePlayerMove ? (playerId: string, relX: number, relY: number) => handlePlayerMove(playerId, { relX, relY }) : (() => { })}
+          onPlayerMoveEnd={() => { }}
+          onPlayerRemove={handlePlayerRemove || (() => { })}
+          onOpponentMove={handleOpponentMove ? (opponentId: string, relX: number, relY: number) => handleOpponentMove(opponentId, { relX, relY }) : (() => { })}
+          onOpponentMoveEnd={handleOpponentMoveEnd ? (opponentId: string) => handleOpponentMoveEnd(opponentId, { relX: 0, relY: 0 }) : (() => { })}
+          onOpponentRemove={handleOpponentRemove || (() => { })}
+          onPlayerDrop={handleDropOnField || (() => { })}
           showPlayerNames={gameState.showPlayerNames}
-          onDrawingStart={(isTacticsBoardView ? handleTacticalDrawingStart : handleDrawingStart) || (() => {})}
-          onDrawingAddPoint={(isTacticsBoardView ? handleTacticalDrawingAddPoint : handleDrawingAddPoint) || (() => {})}
-          onDrawingEnd={(isTacticsBoardView ? handleTacticalDrawingEnd : handleDrawingEnd) || (() => {})}
+          onDrawingStart={(isTacticsBoardView ? handleTacticalDrawingStart : handleDrawingStart) || (() => { })}
+          onDrawingAddPoint={(isTacticsBoardView ? handleTacticalDrawingAddPoint : handleDrawingAddPoint) || (() => { })}
+          onDrawingEnd={(isTacticsBoardView ? handleTacticalDrawingEnd : handleDrawingEnd) || (() => { })}
           draggingPlayerFromBarInfo={draggingPlayerFromBarInfo}
-          onPlayerDropViaTouch={handlePlayerDropViaTouch || (() => {})}
-          onPlayerDragCancelViaTouch={handlePlayerDragCancelViaTouch || (() => {})}
+          onPlayerDropViaTouch={handlePlayerDropViaTouch || (() => { })}
+          onPlayerDragCancelViaTouch={handlePlayerDragCancelViaTouch || (() => { })}
           timeElapsedInSeconds={timeElapsedInSeconds}
           isTacticsBoardView={isTacticsBoardView}
           tacticalDiscs={(tacticalDiscs as TacticalDisc[]) || []}
-          onTacticalDiscMove={handleTacticalDiscMove || (() => {})}
-          onTacticalDiscRemove={handleTacticalDiscRemove || (() => {})}
-          onToggleTacticalDiscType={handleToggleTacticalDiscType || (() => {})}
+          onTacticalDiscMove={handleTacticalDiscMove || (() => { })}
+          onTacticalDiscRemove={handleTacticalDiscRemove || (() => { })}
+          onToggleTacticalDiscType={handleToggleTacticalDiscType || (() => { })}
           tacticalBallPosition={(tacticalBallPosition as Point) || null}
-          onTacticalBallMove={handleTacticalBallMove || (() => {})}
+          onTacticalBallMove={handleTacticalBallMove || (() => { })}
         />
       </div>
     </>
