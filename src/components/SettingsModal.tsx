@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import packageJson from '../../package.json';
 import { HiOutlineArrowRightOnRectangle } from 'react-icons/hi2';
@@ -11,10 +11,6 @@ import AccountDeletionModal from './AccountDeletionModal';
 import { useAuth } from '@/context/AuthContext';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { authAwareStorageManager as storageManager } from '@/lib/storage';
-import { importBackupToSupabase } from '@/utils/supabaseBackupImport';
-import { cleanImportToSupabase } from '@/utils/supabaseCleanImport';
-import { useQueryClient } from '@tanstack/react-query';
-import { queryKeys } from '@/config/queryKeys';
 import { useRouter } from 'next/navigation';
 
 interface SettingsModalProps {
@@ -47,11 +43,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   const [teamName, setTeamName] = useState(defaultTeamName);
   const [resetConfirm, setResetConfirm] = useState('');
   const [isAccountDeletionModalOpen, setIsAccountDeletionModalOpen] = useState(false);
-  const [isImporting, setIsImporting] = useState(false);
-  const [importType, setImportType] = useState<'merge' | 'replace'>('merge');
-  const [importResult, setImportResult] = useState<{ success: boolean; message: string } | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const queryClient = useQueryClient();
 
   useEffect(() => {
     setTeamName(defaultTeamName);
@@ -83,42 +74,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
     }
   };
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setIsImporting(true);
-    setImportResult(null);
-
-    try {
-      const fileContent = await file.text();
-      const result = importType === 'replace'
-        ? await cleanImportToSupabase(fileContent)
-        : await importBackupToSupabase(fileContent);
-
-      setImportResult(result);
-
-      if (result.success) {
-        // Invalidate all queries to refresh data
-        await queryClient.invalidateQueries({ queryKey: queryKeys.masterRoster });
-        await queryClient.invalidateQueries({ queryKey: queryKeys.seasons });
-        await queryClient.invalidateQueries({ queryKey: queryKeys.tournaments });
-        await queryClient.invalidateQueries({ queryKey: queryKeys.savedGames });
-        await queryClient.invalidateQueries({ queryKey: queryKeys.appSettingsCurrentGameId });
-      }
-    } catch (error) {
-      setImportResult({
-        success: false,
-        message: error instanceof Error ? error.message : 'Failed to read file'
-      });
-    } finally {
-      setIsImporting(false);
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }
-  };
 
   if (!isOpen) return null;
 
@@ -257,7 +212,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                   {t('settingsModal.dataManagementDescription', 'Export your data for backup or import data from a previous backup.')}
                 </p>
 
-                {/* Export Button */}
                 <div className="space-y-2">
                   <button
                     onClick={handleExport}
@@ -266,69 +220,19 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     <HiOutlineArrowDownTray className="w-4 h-4" />
                     {t('settings.exportBackup', 'Export Backup')}
                   </button>
-                </div>
-
-                {/* Import Section */}
-                <div className="space-y-3 mt-3 pt-3 border-t border-slate-700/20">
-                  <div className="space-y-1">
-                    <label htmlFor="import-type-select" className="text-sm font-medium text-slate-300">
-                      {t('settings.importType', 'Import type')}
-                    </label>
-                    <select
-                      id="import-type-select"
-                      value={importType}
-                      onChange={(e) => setImportType(e.target.value as 'merge' | 'replace')}
-                      className="w-full sm:w-auto bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm text-white"
-                      disabled={isImporting}
-                    >
-                      <option value="merge">{t('settings.merge', 'Merge with existing')}</option>
-                      <option value="replace">{t('settings.replace', 'Replace all data')}</option>
-                    </select>
-                  </div>
-
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".json"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                    disabled={isImporting}
-                  />
-
+                  
                   <button
                     onClick={() => {
-                      if (importType === 'replace') {
-                        const ok = window.confirm(t('settings.replaceConfirm', 'Replace all existing data with the backup? This cannot be undone.'));
-                        if (!ok) return;
-                      }
-                      fileInputRef.current?.click();
+                      // PWA-friendly navigation - close modal and navigate to import page
+                      onClose();
+                      router.push('/import-backup');
                     }}
-                    disabled={isImporting}
-                    className={`w-full px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 ${importType === 'replace'
-                      ? 'bg-gradient-to-b from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800'
-                      : 'bg-gradient-to-b from-green-600 to-green-700 hover:from-green-700 hover:to-green-800'
-                      } text-white disabled:opacity-50 disabled:cursor-not-allowed mt-1`}
+                    className="w-full px-4 py-2 bg-gradient-to-b from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-colors flex items-center justify-center gap-2"
                   >
                     <HiOutlineArrowUpTray className="w-4 h-4" />
-                    {isImporting ? t('common.importing', 'Importing...') : t('settings.importBackup', 'Import Backup')}
+                    {t('settings.importBackup', 'Import Backup')}
                   </button>
-
-                  {importType === 'replace' && (
-                    <p className="text-xs text-orange-400">
-                      {t('settings.replaceWarning', '⚠️ This will delete all existing data')}
-                    </p>
-                  )}
                 </div>
-
-                {/* Import Result Message */}
-                {importResult && (
-                  <div className={`p-3 rounded-lg text-sm ${importResult.success
-                    ? 'bg-green-900/50 text-green-200 border border-green-700/50'
-                    : 'bg-red-900/50 text-red-200 border border-red-700/50'
-                    }`}>
-                    {importResult.message}
-                  </div>
-                )}
               </div>
             )}
             {/* About */}
