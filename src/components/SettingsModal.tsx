@@ -269,15 +269,16 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 </div>
 
                 {/* Import Section */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <label className="text-sm font-medium text-slate-300">
-                      {t('settings.importType', 'Import Type:')}
+                <div className="space-y-3 mt-3 pt-3 border-t border-slate-700/20">
+                  <div className="space-y-1">
+                    <label htmlFor="import-type-select" className="text-sm font-medium text-slate-300">
+                      {t('settings.importType', 'Import type')}
                     </label>
                     <select
+                      id="import-type-select"
                       value={importType}
                       onChange={(e) => setImportType(e.target.value as 'merge' | 'replace')}
-                      className="bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm text-white"
+                      className="w-full sm:w-auto bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm text-white"
                       disabled={isImporting}
                     >
                       <option value="merge">{t('settings.merge', 'Merge with existing')}</option>
@@ -298,9 +299,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isImporting}
                     className={`w-full px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 ${importType === 'replace'
-                        ? 'bg-gradient-to-b from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800'
-                        : 'bg-gradient-to-b from-green-600 to-green-700 hover:from-green-700 hover:to-green-800'
-                      } text-white disabled:opacity-50 disabled:cursor-not-allowed`}
+                      ? 'bg-gradient-to-b from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800'
+                      : 'bg-gradient-to-b from-green-600 to-green-700 hover:from-green-700 hover:to-green-800'
+                      } text-white disabled:opacity-50 disabled:cursor-not-allowed mt-1`}
                   >
                     <HiOutlineArrowUpTray className="w-4 h-4" />
                     {isImporting ? t('common.importing', 'Importing...') : t('settings.importBackup', 'Import Backup')}
@@ -316,8 +317,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 {/* Import Result Message */}
                 {importResult && (
                   <div className={`p-3 rounded-lg text-sm ${importResult.success
-                      ? 'bg-green-900/50 text-green-200 border border-green-700/50'
-                      : 'bg-red-900/50 text-red-200 border border-red-700/50'
+                    ? 'bg-green-900/50 text-green-200 border border-green-700/50'
+                    : 'bg-red-900/50 text-red-200 border border-red-700/50'
                     }`}>
                     {importResult.message}
                   </div>

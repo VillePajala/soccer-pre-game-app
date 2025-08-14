@@ -1320,6 +1320,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         currentPeriod: gameSessionState.currentPeriod,
         gameStatus: gameSessionState.gameStatus,
         gameNotes: gameSessionState.gameNotes,
+        selectedPlayerIds: gameSessionState.selectedPlayerIds,
         playersOnField,
       };
 
@@ -1446,6 +1447,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           currentPeriod: gameSessionState.currentPeriod,
           gameStatus: gameSessionState.gameStatus,
           gameNotes: gameSessionState.gameNotes,
+          selectedPlayerIds: gameSessionState.selectedPlayerIds,
           playersOnField,
         };
 
@@ -1506,6 +1508,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         currentPeriod: gameSessionState.currentPeriod,
         gameStatus: gameSessionState.gameStatus,
         gameNotes: gameSessionState.gameNotes,
+        selectedPlayerIds: gameSessionState.selectedPlayerIds,
         playersOnField,
       };
 

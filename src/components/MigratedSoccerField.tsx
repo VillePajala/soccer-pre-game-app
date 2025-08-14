@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { 
-  useGameStore, 
-  useGameSession, 
+import {
+  useGameStore,
+  useGameSession,
   useGameTimer,
-  useFieldState 
+  useFieldState
 } from '@/stores/gameStore';
 import { useGameView } from '@/stores/uiStore';
 import { Player, Point, Opponent } from '@/types';
@@ -27,7 +27,7 @@ export const MigratedSoccerField: React.FC<SoccerFieldProps> = ({
   isTacticsBoardView: propIsTacticsBoardView,
   tacticalDiscs: propTacticalDiscs,
   tacticalBallPosition: propTacticalBallPosition,
-  
+
   // Props that are still used for compatibility
   onPlayerDrop: _onPlayerDrop,
   onPlayerMove,
@@ -54,7 +54,7 @@ export const MigratedSoccerField: React.FC<SoccerFieldProps> = ({
   const gameStore = useGameStore();
   // const uiStore = useUIStore(); // TODO: Use when implementing UI state
   const gameView = useGameView();
-  
+
   // Use store values instead of props where available
   const displayPlayers = field.playersOnField.length > 0 ? field.playersOnField : propPlayers;
   const displayOpponents = field.opponents.length > 0 ? field.opponents : propOpponents;
@@ -359,20 +359,20 @@ export const MigratedSoccerField: React.FC<SoccerFieldProps> = ({
     // Draw penalty areas
     const penaltyWidth = 100;
     const penaltyHeight = 60;
-    
+
     // Left penalty area
     ctx.strokeRect(10, (canvasHeight - penaltyHeight) / 2, penaltyWidth, penaltyHeight);
-    
+
     // Right penalty area
     ctx.strokeRect(canvasWidth - penaltyWidth - 10, (canvasHeight - penaltyHeight) / 2, penaltyWidth, penaltyHeight);
 
     // Draw goal areas
     const goalWidth = 40;
     const goalHeight = 20;
-    
+
     // Left goal area
     ctx.strokeRect(10, (canvasHeight - goalHeight) / 2, goalWidth, goalHeight);
-    
+
     // Right goal area
     ctx.strokeRect(canvasWidth - goalWidth - 10, (canvasHeight - goalHeight) / 2, goalWidth, goalHeight);
 
@@ -397,18 +397,18 @@ export const MigratedSoccerField: React.FC<SoccerFieldProps> = ({
       if (player.relX !== undefined && player.relY !== undefined) {
         const x = player.relX * canvasWidth;
         const y = player.relY * canvasHeight;
-        
+
         // Player circle
         ctx.fillStyle = player.color || '#4285f4';
         ctx.beginPath();
         ctx.arc(x, y, PLAYER_RADIUS, 0, 2 * Math.PI);
         ctx.fill();
-        
+
         // Player border
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 2;
         ctx.stroke();
-        
+
         // Player number/name
         if (displayShowPlayerNames && player.name) {
           ctx.fillStyle = '#ffffff';
@@ -423,13 +423,13 @@ export const MigratedSoccerField: React.FC<SoccerFieldProps> = ({
     displayOpponents.forEach(opponent => {
       const x = opponent.relX * canvasWidth;
       const y = opponent.relY * canvasHeight;
-      
+
       // Opponent circle (smaller and different color)
       ctx.fillStyle = '#ff4444';
       ctx.beginPath();
       ctx.arc(x, y, PLAYER_RADIUS * 0.9, 0, 2 * Math.PI);
       ctx.fill();
-      
+
       // Opponent border
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 2;
@@ -441,12 +441,12 @@ export const MigratedSoccerField: React.FC<SoccerFieldProps> = ({
       displayTacticalDiscs.forEach(disc => {
         const x = disc.relX * canvasWidth;
         const y = disc.relY * canvasHeight;
-        
+
         ctx.fillStyle = disc.type === 'home' ? '#4285f4' : '#ff4444';
         ctx.beginPath();
         ctx.arc(x, y, PLAYER_RADIUS, 0, 2 * Math.PI);
         ctx.fill();
-        
+
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 2;
         ctx.stroke();
@@ -457,7 +457,7 @@ export const MigratedSoccerField: React.FC<SoccerFieldProps> = ({
         const x = displayTacticalBallPosition.relX * canvasWidth;
         const y = displayTacticalBallPosition.relY * canvasHeight;
         const ballSize = PLAYER_RADIUS;
-        ctx.drawImage(ballImage, x - ballSize/2, y - ballSize/2, ballSize, ballSize);
+        ctx.drawImage(ballImage, x - ballSize / 2, y - ballSize / 2, ballSize, ballSize);
       }
     }
 
@@ -468,10 +468,10 @@ export const MigratedSoccerField: React.FC<SoccerFieldProps> = ({
     ctx.fillText(formatTime(displayTimeElapsed), 20, 30);
 
   }, [
-    displayPlayers, 
-    displayOpponents, 
-    displayDrawings, 
-    displayShowPlayerNames, 
+    displayPlayers,
+    displayOpponents,
+    displayDrawings,
+    displayShowPlayerNames,
     displayTimeElapsed,
     displayIsTacticsBoardView,
     displayTacticalDiscs,
@@ -521,8 +521,10 @@ export const MigratedSoccerField: React.FC<SoccerFieldProps> = ({
 
     if (isDraggingPlayer && draggingPlayerId) {
       handlePlayerMoveWithStore(draggingPlayerId, relPos.relX, relPos.relY);
+      if (canvasRef.current) canvasRef.current.style.cursor = 'grabbing';
     } else if (isDraggingOpponent && draggingOpponentId) {
       handleOpponentMoveWithStore(draggingOpponentId, relPos.relX, relPos.relY);
+      if (canvasRef.current) canvasRef.current.style.cursor = 'grabbing';
     } else if (isDrawing) {
       handleDrawingAddPointWithStore(relPos);
     }
@@ -533,13 +535,16 @@ export const MigratedSoccerField: React.FC<SoccerFieldProps> = ({
       setIsDraggingPlayer(false);
       setDraggingPlayerId(null);
       onPlayerMoveEnd();
+      if (canvasRef.current) canvasRef.current.style.cursor = 'default';
     } else if (isDraggingOpponent) {
       setIsDraggingOpponent(false);
       setDraggingOpponentId(null);
       onOpponentMoveEnd(draggingOpponentId || '');
+      if (canvasRef.current) canvasRef.current.style.cursor = 'default';
     } else if (isDrawing) {
       setIsDrawing(false);
       onDrawingEnd();
+      if (canvasRef.current) canvasRef.current.style.cursor = 'default';
     }
   };
 
@@ -566,7 +571,7 @@ export const MigratedSoccerField: React.FC<SoccerFieldProps> = ({
       width={800}
       height={600}
       className="w-full h-full border border-slate-300 rounded-lg cursor-crosshair"
-      style={{ 
+      style={{
         aspectRatio: '4/3',
         maxWidth: '100%',
         maxHeight: '70vh'
