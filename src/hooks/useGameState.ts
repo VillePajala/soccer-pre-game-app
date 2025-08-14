@@ -206,9 +206,19 @@ export function useGameState({ initialState, saveStateToHistory }: UseGameStateA
         try {
             const updatedPlayerFromManager = await setGoalieStatusInMasterRoster(playerId, targetGoalieStatus);
             if (updatedPlayerFromManager) {
-                // Refresh roster from source of truth after successful persistence
+                // Refresh roster, but enforce the intended goalie state to avoid flicker from stale reads
                 const latestRoster = await getMasterRosterFromManager();
-                setAvailablePlayers(latestRoster);
+                const normalized = latestRoster.map(p => {
+                    if (p.id === playerId) {
+                        return { ...p, isGoalie: targetGoalieStatus };
+                    }
+                    // If turning someone into goalie, ensure others are unset
+                    if (targetGoalieStatus && p.isGoalie) {
+                        return { ...p, isGoalie: false };
+                    }
+                    return p;
+                });
+                setAvailablePlayers(normalized);
                 logger.log(`[useGameState:handleToggleGoalie] Persisted goalie=${targetGoalieStatus} for ${playerId}`);
             } else {
                 logger.error(`[useGameState:handleToggleGoalie] Persistence returned null for ${playerId}`);
