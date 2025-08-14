@@ -343,6 +343,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     initialPlayers: initialState.availablePlayers,
     selectedPlayerIds: gameSessionState.selectedPlayerIds,
     onPlayerIdUpdated: handlePlayerIdUpdated,
+    onFieldPlayersUpdate: setPlayersOnField,
   });
   const {
     availablePlayers,
