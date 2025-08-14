@@ -296,7 +296,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                   />
 
                   <button
-                    onClick={() => fileInputRef.current?.click()}
+                    onClick={() => {
+                      if (importType === 'replace') {
+                        const ok = window.confirm(t('settings.replaceConfirm', 'Replace all existing data with the backup? This cannot be undone.'));
+                        if (!ok) return;
+                      }
+                      fileInputRef.current?.click();
+                    }}
                     disabled={isImporting}
                     className={`w-full px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 ${importType === 'replace'
                       ? 'bg-gradient-to-b from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800'

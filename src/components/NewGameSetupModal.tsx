@@ -100,6 +100,13 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   const [gameMinute, setGameMinute] = useState<string>('');
   const [ageGroup, setAgeGroup] = useState('');
   const [tournamentLevel, setTournamentLevel] = useState('');
+  // Track fields user has manually edited; avoid overwriting them with Season/Tournament auto-prefill
+  const dirtyFieldsRef = useRef<{ [K in 'gameLocation' | 'ageGroup' | 'tournamentLevel' | 'numPeriods' | 'periodDurationMinutes' | 'selectedPlayerIds' | 'gameDate']?: boolean }>({});
+
+  const _markDirty = (key: keyof typeof dirtyFieldsRef.current) => {
+    dirtyFieldsRef.current[key] = true;
+  };
+
   const homeTeamInputRef = useRef<HTMLInputElement>(null);
   const opponentInputRef = useRef<HTMLInputElement>(null);
 
@@ -222,11 +229,11 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
     if (selectedSeasonId) {
       const s = seasons.find(se => se.id === selectedSeasonId);
       if (s) {
-        setGameLocation(s.location || '');
-        setAgeGroup(s.ageGroup || '');
-        setLocalNumPeriods((s.periodCount as 1 | 2) || 2);
-        setLocalPeriodDurationString(s.periodDuration ? String(s.periodDuration) : '10');
-        if (s.defaultRoster && s.defaultRoster.length > 0) {
+        if (!dirtyFieldsRef.current.gameLocation) setGameLocation(s.location || '');
+        if (!dirtyFieldsRef.current.ageGroup) setAgeGroup(s.ageGroup || '');
+        if (!dirtyFieldsRef.current.numPeriods) setLocalNumPeriods((s.periodCount as 1 | 2) || 2);
+        if (!dirtyFieldsRef.current.periodDurationMinutes) setLocalPeriodDurationString(s.periodDuration ? String(s.periodDuration) : '10');
+        if (s.defaultRoster && s.defaultRoster.length > 0 && !dirtyFieldsRef.current.selectedPlayerIds) {
           setSelectedPlayerIds(normalizeRosterIds(s.defaultRoster));
         }
       }
@@ -249,13 +256,17 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
     if (selectedTournamentId) {
       const t = tournaments.find(tt => tt.id === selectedTournamentId);
       if (t) {
-        setGameLocation(t.location || '');
-        setAgeGroup(t.ageGroup || '');
-        setTournamentLevel(t.level || '');
-        setLocalNumPeriods((t.periodCount as 1 | 2) || 2);
-        setLocalPeriodDurationString(t.periodDuration ? String(t.periodDuration) : '10');
-        if (t.defaultRoster && t.defaultRoster.length > 0) {
+        if (!dirtyFieldsRef.current.gameLocation) setGameLocation(t.location || '');
+        if (!dirtyFieldsRef.current.ageGroup) setAgeGroup(t.ageGroup || '');
+        if (!dirtyFieldsRef.current.tournamentLevel) setTournamentLevel(t.level || '');
+        if (!dirtyFieldsRef.current.numPeriods) setLocalNumPeriods((t.periodCount as 1 | 2) || 2);
+        if (!dirtyFieldsRef.current.periodDurationMinutes) setLocalPeriodDurationString(t.periodDuration ? String(t.periodDuration) : '10');
+        if (t.defaultRoster && t.defaultRoster.length > 0 && !dirtyFieldsRef.current.selectedPlayerIds) {
           setSelectedPlayerIds(normalizeRosterIds(t.defaultRoster));
+        }
+        // NEW: If tournament has a start date and user hasn't edited game date, set game date from tournament start
+        if (t.startDate && !dirtyFieldsRef.current.gameDate) {
+          setGameDate(t.startDate);
         }
       }
     }
@@ -729,7 +740,7 @@ const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                 type="date"
                 id="gameDateInput"
                 value={gameDate}
-                onChange={(e) => setGameDate(e.target.value)}
+                onChange={(e) => { setGameDate(e.target.value); dirtyFieldsRef.current.gameDate = true; }}
                 onKeyDown={handleKeyDown}
                 className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                 disabled={false}

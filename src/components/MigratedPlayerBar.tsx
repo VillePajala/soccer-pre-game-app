@@ -31,7 +31,7 @@ export const MigratedPlayerBar: React.FC<PlayerBarProps> = ({
   // Get values from Zustand stores
   const gameSession = useGameSession();
   const field = useFieldState();
-  const gameStore = useGameStore();
+  const _gameStore = useGameStore();
   const uiStore = useUIStore();
   const { selectedPlayerIds } = useSelectionState();
   
@@ -76,27 +76,7 @@ export const MigratedPlayerBar: React.FC<PlayerBarProps> = ({
   };
   
   const handleToggleGoalie = (playerId: string) => {
-    // Find the player in available players
-    const player = displayPlayers.find(p => p.id === playerId);
-    if (player) {
-      // Update player in store
-      const updatedPlayers = displayPlayers.map(p => 
-        p.id === playerId ? { ...p, isGoalie: !p.isGoalie } : p
-      );
-      gameStore.setAvailablePlayers(updatedPlayers);
-      
-      // Also update if player is on field
-      const playersOnField = field.playersOnField;
-      const playerOnField = playersOnField.find(p => p.id === playerId);
-      if (playerOnField) {
-        const updatedFieldPlayers = playersOnField.map(p => 
-          p.id === playerId ? { ...p, isGoalie: !p.isGoalie } : p
-        );
-        gameStore.setPlayersOnField(updatedFieldPlayers);
-      }
-    }
-    
-    // Also call parent handler for compatibility
+    // Delegate exclusively to the central handler to avoid double-toggles
     if (onToggleGoalie) {
       onToggleGoalie(playerId);
     }

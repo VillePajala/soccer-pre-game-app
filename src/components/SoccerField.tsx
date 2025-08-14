@@ -123,6 +123,8 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
   const [lastTapInfo, setLastTapInfo] = useState<{ time: number; x: number; y: number; targetId: string | null; targetType: 'player' | 'opponent' | 'tactical' | 'ball' | null } | null>(null);
   const [ballImage, setBallImage] = useState<HTMLImageElement | null>(null);
   const drawingFrameRef = useRef<number | null>(null);
+  // Cache heavy noise patterns to avoid regenerating every draw
+  const patternCacheRef = useRef<{ ctx: CanvasRenderingContext2D | null; cloud: CanvasPattern | null; grain: CanvasPattern | null }>({ ctx: null, cloud: null, grain: null });
 
   useEffect(() => {
     const img = new Image();
@@ -192,19 +194,16 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
       context.fillStyle = baseGreen;
       context.fillRect(0, 0, W, H);
 
-      // 2. Add organic, low-frequency texture (clouds/mottling)
-      const cloudPattern = createNoisePattern(context, 400, 400, 0.02); // Large, faint pattern
-      if (cloudPattern) {
-        context.fillStyle = cloudPattern;
-        context.fillRect(0, 0, W, H);
+      // 2-3. Add background textures using cached patterns
+      if (patternCacheRef.current.ctx !== context) {
+        patternCacheRef.current.ctx = context;
+        patternCacheRef.current.cloud = createNoisePattern(context, 400, 400, 0.02);
+        patternCacheRef.current.grain = createNoisePattern(context, 100, 100, 0.03);
       }
-
-      // 3. Add high-frequency texture (grass grain)
-      const grainPattern = createNoisePattern(context, 100, 100, 0.03); // Finer grain pattern
-      if (grainPattern) {
-        context.fillStyle = grainPattern;
-        context.fillRect(0, 0, W, H);
-      }
+      const cloudPattern = patternCacheRef.current.cloud;
+      if (cloudPattern) { context.fillStyle = cloudPattern; context.fillRect(0, 0, W, H); }
+      const grainPattern = patternCacheRef.current.grain;
+      if (grainPattern) { context.fillStyle = grainPattern; context.fillRect(0, 0, W, H); }
 
       // 4. Add "Ghost Stripe" mowing pattern for authentic feel
       context.save();
@@ -1047,7 +1046,41 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     lastTapInfo, onDrawingStart
   ]);
 
+  // Throttle touch move drawing/dragging with rAF to avoid overproducing points on mobile
+  const throttledRef = useRef<number | null>(null);
+  const lastTouchEventRef = useRef<TouchEvent | null>(null);
+
+  const processTouchMove = useCallback((evt: TouchEvent) => {
+    if (activeTouchId === null) return;
+    const currentTouch = Array.from(evt.changedTouches).find(t => t.identifier === activeTouchId);
+    if (!currentTouch) return;
+    if (isDraggingBall || isDraggingPlayer || isDraggingOpponent || isDrawing || isDraggingTacticalDisc) {
+      evt.preventDefault();
+    }
+    const pos = getRelativeEventPosition(evt, activeTouchId);
+    if (!pos) return;
+    if (isDraggingBall) {
+      onTacticalBallMove(pos);
+    } else if (isDraggingTacticalDisc && draggingTacticalDiscId) {
+      onTacticalDiscMove(draggingTacticalDiscId, pos.relX, pos.relY);
+    } else if (isDraggingPlayer && draggingPlayerId) {
+      onPlayerMove(draggingPlayerId, pos.relX, pos.relY);
+    } else if (isDraggingOpponent && draggingOpponentId) {
+      onOpponentMove(draggingOpponentId, pos.relX, pos.relY);
+    } else if (isDrawing) {
+      onDrawingAddPoint(pos);
+    }
+  }, [activeTouchId, isDraggingBall, isDraggingPlayer, isDraggingOpponent, isDrawing, isDraggingTacticalDisc, draggingTacticalDiscId, draggingPlayerId, draggingOpponentId, onTacticalBallMove, onTacticalDiscMove, onPlayerMove, onOpponentMove, onDrawingAddPoint]);
+
   const handleTouchMove = useCallback((e: TouchEvent) => {
+    lastTouchEventRef.current = e;
+    if (throttledRef.current !== null) return; // already scheduled
+    throttledRef.current = requestAnimationFrame(() => {
+      throttledRef.current = null;
+      if (lastTouchEventRef.current) {
+        processTouchMove(lastTouchEventRef.current);
+      }
+    });
     if (activeTouchId === null) return;
 
     const currentTouch = Array.from(e.changedTouches).find(t => t.identifier === activeTouchId);
@@ -1071,7 +1104,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     } else if (isDrawing) {
       onDrawingAddPoint(pos);
     }
-  }, [activeTouchId, isDrawing, isDraggingPlayer, isDraggingOpponent, draggingPlayerId, draggingOpponentId, onPlayerMove, onOpponentMove, onDrawingAddPoint, isDraggingTacticalDisc, draggingTacticalDiscId, onTacticalDiscMove, isDraggingBall, onTacticalBallMove]);
+  }, [processTouchMove, activeTouchId, isDrawing, isDraggingPlayer, isDraggingOpponent, draggingPlayerId, draggingOpponentId, onPlayerMove, onOpponentMove, onDrawingAddPoint, isDraggingTacticalDisc, draggingTacticalDiscId, onTacticalDiscMove, isDraggingBall, onTacticalBallMove]);
 
   const handleTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => {
     if (activeTouchId !== null) {

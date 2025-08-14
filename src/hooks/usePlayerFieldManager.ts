@@ -145,38 +145,40 @@ export const usePlayerFieldManager = ({
     }
 
     const remainingCount = playersToPlace.length;
-    let positions: { relX: number; relY: number }[] = [];
 
-    if (remainingCount <= 3) {
-      if (remainingCount >= 1) positions.push({ relX: 0.5, relY: 0.8 });
-      if (remainingCount >= 2) positions.push({ relX: 0.5, relY: 0.5 });
-      if (remainingCount >= 3) positions.push({ relX: 0.5, relY: 0.3 });
-    } else if (remainingCount <= 7) {
-      positions.push({ relX: 0.3, relY: 0.8 });
-      positions.push({ relX: 0.7, relY: 0.8 });
-      positions.push({ relX: 0.25, relY: 0.6 });
-      positions.push({ relX: 0.5, relY: 0.55 });
-      positions.push({ relX: 0.75, relY: 0.6 });
-      positions.push({ relX: 0.35, relY: 0.3 });
-      if (remainingCount >= 7) positions.push({ relX: 0.65, relY: 0.3 });
-    } else {
-      positions.push({ relX: 0.25, relY: 0.85 });
-      positions.push({ relX: 0.5, relY: 0.8 });
-      positions.push({ relX: 0.75, relY: 0.85 });
-      positions.push({ relX: 0.2, relY: 0.6 });
-      positions.push({ relX: 0.4, relY: 0.55 });
-      positions.push({ relX: 0.6, relY: 0.55 });
-      positions.push({ relX: 0.8, relY: 0.6 });
-      positions.push({ relX: 0.5, relY: 0.3 });
-      if (remainingCount >= 9) positions.push({ relX: 0.35, relY: 0.3 });
-      if (remainingCount >= 10) positions.push({ relX: 0.65, relY: 0.3 });
-    }
+    // Robust position generator: grid layout spanning safe field area
+    const generatePositions = (count: number): { relX: number; relY: number }[] => {
+      if (count <= 0) return [];
+      const paddingX = 0.12; // left/right padding
+      const paddingYTop = 0.2; // keep players off the very bottom (goalie area) and top
+      const paddingYBottom = 0.85;
+      // Choose columns/rows based on sqrt to keep grid square-ish
+      const cols = Math.ceil(Math.sqrt(count));
+      const rows = Math.ceil(count / cols);
+      const spanX = 1 - paddingX * 2;
+      const spanY = paddingYBottom - paddingYTop;
+      const stepX = cols > 1 ? spanX / (cols - 1) : 0;
+      const stepY = rows > 1 ? spanY / (rows - 1) : 0;
+      const positions: { relX: number; relY: number }[] = [];
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          if (positions.length >= count) break;
+          const relX = paddingX + c * stepX;
+          const relY = paddingYTop + r * stepY;
+          positions.push({ relX, relY });
+        }
+      }
+      return positions;
+    };
 
-    positions = positions.slice(0, remainingCount);
+    const positions = generatePositions(remainingCount);
 
     playersToPlace.forEach((player, index) => {
       const pos = positions[index];
-      newFieldPlayers.push({ ...player, relX: pos.relX, relY: pos.relY });
+      // Defensive guard (should not trigger due to generator length)
+      const safeRelX = pos ? pos.relX : 0.5;
+      const safeRelY = pos ? pos.relY : 0.5;
+      newFieldPlayers.push({ ...player, relX: safeRelX, relY: safeRelY });
     });
 
     setPlayersOnField(newFieldPlayers);
