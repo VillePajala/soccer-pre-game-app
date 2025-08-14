@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix: implement clean single-source-of-truth goalie toggle solution"
+  "notes": "fix: resolve goalie toggle data sync and PlayerBar visual update issues"
 }
