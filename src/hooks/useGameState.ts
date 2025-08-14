@@ -177,12 +177,16 @@ export function useGameState({ initialState, saveStateToHistory }: UseGameStateA
     // --- Add Goalie Handler Here ---
     const handleToggleGoalie = useCallback(async (playerId: string) => {
         logger.log(`[useGameState:handleToggleGoalie] Called for ${playerId}`);
-        const playerToToggle = availablePlayers.find(p => p.id === playerId);
-        if (!playerToToggle) {
-            logger.error(`[useGameState:handleToggleGoalie] Player ${playerId} not found.`);
+        // Determine baseline goalie status from the authoritative view first (field),
+        // falling back to roster only if the player is not on the field
+        const fieldPlayer = playersOnField.find(p => p.id === playerId);
+        const rosterPlayerForBaseline = fieldPlayer ? null : availablePlayers.find(p => p.id === playerId);
+        if (!fieldPlayer && !rosterPlayerForBaseline) {
+            logger.error(`[useGameState:handleToggleGoalie] Player ${playerId} not found in field or roster.`);
             return;
         }
-        const targetGoalieStatus = !(playerToToggle.isGoalie ?? false);
+        const baselineIsGoalie = fieldPlayer ? !!fieldPlayer.isGoalie : !!(rosterPlayerForBaseline?.isGoalie);
+        const targetGoalieStatus = !baselineIsGoalie;
 
         // Optimistically update availablePlayers to prevent visual revert before persistence completes
         setAvailablePlayers(prev => prev.map(p => {
@@ -205,47 +209,15 @@ export function useGameState({ initialState, saveStateToHistory }: UseGameStateA
 
         try {
             const updatedPlayerFromManager = await setGoalieStatusInMasterRoster(playerId, targetGoalieStatus);
-            if (updatedPlayerFromManager) {
-                // Refresh roster, but enforce the intended goalie state to avoid flicker from stale reads
-                const latestRoster = await getMasterRosterFromManager();
-                const normalized = latestRoster.map(p => {
-                    if (p.id === playerId) {
-                        return { ...p, isGoalie: targetGoalieStatus };
-                    }
-                    // If turning someone into goalie, ensure others are unset
-                    if (targetGoalieStatus && p.isGoalie) {
-                        return { ...p, isGoalie: false };
-                    }
-                    return p;
-                });
-                setAvailablePlayers(normalized);
-
-                // CRITICAL FIX: Also update players on field with the same normalization
-                // This prevents field players from becoming stale/invisible after goalie toggle
-                setPlayersOnField(prevPlayersOnField => {
-                    return prevPlayersOnField.map(fieldPlayer => {
-                        const updatedRosterPlayer = normalized.find(p => p.id === fieldPlayer.id);
-                        if (updatedRosterPlayer) {
-                            // Preserve field position but sync goalie status from roster
-                            return { 
-                                ...fieldPlayer, 
-                                isGoalie: updatedRosterPlayer.isGoalie,
-                                name: updatedRosterPlayer.name,
-                                nickname: updatedRosterPlayer.nickname 
-                            };
-                        }
-                        return fieldPlayer;
-                    });
-                });
-
-                logger.log(`[useGameState:handleToggleGoalie] Persisted goalie=${targetGoalieStatus} for ${playerId}`);
-            } else {
+            if (!updatedPlayerFromManager) {
                 logger.error(`[useGameState:handleToggleGoalie] Persistence returned null for ${playerId}`);
             }
+            // Do not refresh roster here to avoid a second repaint; optimistic update already applied
+            logger.log(`[useGameState:handleToggleGoalie] Persisted goalie=${targetGoalieStatus} for ${playerId}`);
         } catch (error) {
             logger.error(`[useGameState:handleToggleGoalie] Error toggling goalie for ID ${playerId}:`, error);
         }
-    }, [availablePlayers, saveStateToHistory, setAvailablePlayers, setPlayersOnField]);
+    }, [availablePlayers, playersOnField, saveStateToHistory, setAvailablePlayers, setPlayersOnField]);
 
     // ... (more handlers will be moved here later)
 

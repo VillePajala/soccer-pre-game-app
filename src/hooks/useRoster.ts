@@ -158,28 +158,6 @@ export const useRoster = ({ initialPlayers, selectedPlayerIds, onPlayerIdUpdated
     const prev = [...availablePlayers];
     setIsRosterUpdating(true);
     
-    // CRITICAL FIX: Update field players FIRST before touching availablePlayers
-    // This prevents race condition with roster-field sync effect
-    if (onFieldPlayersUpdate) {
-      console.log('[useRoster] Updating field players with goalie status FIRST');
-      onFieldPlayersUpdate((currentFieldPlayers) => 
-        currentFieldPlayers.map((fieldPlayer) => {
-          if (fieldPlayer.id === playerId) {
-            // Update this player's goalie status while preserving position
-            return { ...fieldPlayer, isGoalie };
-          }
-          if (isGoalie && fieldPlayer.isGoalie) {
-            // Clear other goalies while preserving their positions
-            return { ...fieldPlayer, isGoalie: false };
-          }
-          return fieldPlayer; // No changes, preserve everything including position
-        })
-      );
-    }
-    
-    // SMALL DELAY: Let field update settle before triggering roster sync
-    await new Promise(resolve => setTimeout(resolve, 10));
-    
     // Optimistic updates
     const goalieUpdate = (players: Player[]) =>
       players.map((p) => {
@@ -188,7 +166,7 @@ export const useRoster = ({ initialPlayers, selectedPlayerIds, onPlayerIdUpdated
         return p;
       });
     
-    console.log('[useRoster] Applying optimistic update to availablePlayers');
+    console.log('[useRoster] Applying optimistic update');
     
     // Calculate the updated players once
     const updatedPlayers = goalieUpdate(availablePlayers);

@@ -125,6 +125,9 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
   const drawingFrameRef = useRef<number | null>(null);
   // Cache heavy noise patterns to avoid regenerating every draw
   const patternCacheRef = useRef<{ ctx: CanvasRenderingContext2D | null; cloud: CanvasPattern | null; grain: CanvasPattern | null }>({ ctx: null, cloud: null, grain: null });
+  // Offscreen pre-rendered field background to avoid repainting heavy layers every frame
+  const backgroundCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const lastBackgroundKeyRef = useRef<string>('');
 
   useEffect(() => {
     const img = new Image();
@@ -194,75 +197,126 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
       context.fillStyle = baseGreen;
       context.fillRect(0, 0, W, H);
 
-      // 2-3. Add background textures using cached patterns
-      if (patternCacheRef.current.ctx !== context) {
-        patternCacheRef.current.ctx = context;
-        patternCacheRef.current.cloud = createNoisePattern(context, 400, 400, 0.02);
-        patternCacheRef.current.grain = createNoisePattern(context, 100, 100, 0.03);
-      }
-      const cloudPattern = patternCacheRef.current.cloud;
-      if (cloudPattern) { context.fillStyle = cloudPattern; context.fillRect(0, 0, W, H); }
-      const grainPattern = patternCacheRef.current.grain;
-      if (grainPattern) { context.fillStyle = grainPattern; context.fillRect(0, 0, W, H); }
+      // Pre-rendered background: build offscreen once per size/view, then blit
+      const bgKey = `${Math.round(cssWidth)}x${Math.round(cssHeight)}-${isTacticsBoardView ? 'tactic' : 'normal'}`;
+      if (!backgroundCanvasRef.current || lastBackgroundKeyRef.current !== bgKey) {
+        const bgCanvas = document.createElement('canvas');
+        bgCanvas.width = cssWidth;
+        bgCanvas.height = cssHeight;
+        const bgCtx = bgCanvas.getContext('2d');
+        if (bgCtx) {
+          // Base solid green
+          const baseGreenLocal = '#427B44';
+          bgCtx.fillStyle = baseGreenLocal;
+          bgCtx.fillRect(0, 0, cssWidth, cssHeight);
 
-      // 4. Add "Ghost Stripe" mowing pattern for authentic feel
-      context.save();
-      context.globalCompositeOperation = 'soft-light';
-      const numStripes = 9;
-      const stripeWidth = W / numStripes;
-      for (let i = 0; i < numStripes; i++) {
-        context.fillStyle = (i % 2 === 0) ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)';
-        context.fillRect(i * stripeWidth, 0, stripeWidth, H);
-      }
-      context.restore();
+          // Background textures using cached patterns (create patterns against main context for consistency)
+          if (patternCacheRef.current.ctx !== context) {
+            patternCacheRef.current.ctx = context;
+            patternCacheRef.current.cloud = createNoisePattern(context, 400, 400, 0.02);
+            patternCacheRef.current.grain = createNoisePattern(context, 100, 100, 0.03);
+          }
+          const cloudPatternLocal = patternCacheRef.current.cloud;
+          if (cloudPatternLocal) { bgCtx.fillStyle = cloudPatternLocal; bgCtx.fillRect(0, 0, cssWidth, cssHeight); }
+          const grainPatternLocal = patternCacheRef.current.grain;
+          if (grainPatternLocal) { bgCtx.fillStyle = grainPatternLocal; bgCtx.fillRect(0, 0, cssWidth, cssHeight); }
 
-      // 5. Add final, balanced lighting (Lighter Shadows to compensate for darker base)
-      // Part A: A top-to-bottom linear shadow, made lighter
-      const linearShadow = context.createLinearGradient(0, 0, 0, H);
-      linearShadow.addColorStop(0, 'rgba(0, 0, 0, 0.03)');
-      linearShadow.addColorStop(1, 'rgba(0, 0, 0, 0.25)');
-      context.fillStyle = linearShadow;
-      context.fillRect(0, 0, W, H);
+          // Mowing stripes
+          bgCtx.save();
+          bgCtx.globalCompositeOperation = 'soft-light';
+          const stripes = 9;
+          const stripeW = cssWidth / stripes;
+          for (let i = 0; i < stripes; i++) {
+            bgCtx.fillStyle = (i % 2 === 0) ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)';
+            bgCtx.fillRect(i * stripeW, 0, stripeW, cssHeight);
+          }
+          bgCtx.restore();
 
-      // Part B: A softer hotspot to match
-      const lightSourceX = W / 2;
-      const lightSourceY = H * 0.3;
-      const hotspot = context.createRadialGradient(
-        lightSourceX, lightSourceY, 0,
-        lightSourceX, lightSourceY, H * 0.8
-      );
-      hotspot.addColorStop(0, 'rgba(255, 255, 255, 0.10)');
-      hotspot.addColorStop(1, 'rgba(255, 255, 255, 0)');
-      context.fillStyle = hotspot;
-      context.fillRect(0, 0, W, H);
+          // Lighting
+          const linearShadowLocal = bgCtx.createLinearGradient(0, 0, 0, cssHeight);
+          linearShadowLocal.addColorStop(0, 'rgba(0, 0, 0, 0.03)');
+          linearShadowLocal.addColorStop(1, 'rgba(0, 0, 0, 0.25)');
+          bgCtx.fillStyle = linearShadowLocal;
+          bgCtx.fillRect(0, 0, cssWidth, cssHeight);
 
-      // --- Draw Tactical Mode Border ---
-      if (isTacticsBoardView) {
-        context.strokeStyle = 'rgba(255, 255, 255, 0.5)'; // Subtle white for a cleaner look
-        context.lineWidth = 2; // Can be a bit thinner now
-        context.strokeRect(0, 0, W, H);
+          const lightSourceXLocal = cssWidth / 2;
+          const lightSourceYLocal = cssHeight * 0.3;
+          const hotspotLocal = bgCtx.createRadialGradient(
+            lightSourceXLocal, lightSourceYLocal, 0,
+            lightSourceXLocal, lightSourceYLocal, cssHeight * 0.8
+          );
+          hotspotLocal.addColorStop(0, 'rgba(255, 255, 255, 0.10)');
+          hotspotLocal.addColorStop(1, 'rgba(255, 255, 255, 0)');
+          bgCtx.fillStyle = hotspotLocal;
+          bgCtx.fillRect(0, 0, cssWidth, cssHeight);
 
-        // --- Draw Tactical Grid Overlay ---
-        context.strokeStyle = 'rgba(255, 255, 255, 0.1)'; // Faint white grid lines
-        context.lineWidth = 1;
-        const gridSpacing = 40; // pixels
+          // Field lines and markings (scaled to CSS pixels)
+          bgCtx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+          bgCtx.lineWidth = 2;
+          const lineMarginLocal = 5;
+          const centerRadiusLocal = Math.min(cssWidth, cssHeight) * 0.08;
+          const penaltyBoxWidthLocal = cssWidth * 0.6;
+          const penaltyBoxHeightLocal = cssHeight * 0.18;
+          const goalBoxWidthLocal = cssWidth * 0.3;
+          const goalBoxHeightLocal = cssHeight * 0.07;
+          const penaltySpotDistLocal = cssHeight * 0.12;
+          const cornerRadiusLocal = Math.min(cssWidth, cssHeight) * 0.02;
 
-        // Draw vertical lines
-        for (let x = gridSpacing; x < W; x += gridSpacing) {
-          context.beginPath();
-          context.moveTo(x, 0);
-          context.lineTo(x, H);
-          context.stroke();
+          bgCtx.strokeRect(lineMarginLocal, lineMarginLocal, cssWidth - 2 * lineMarginLocal, cssHeight - 2 * lineMarginLocal);
+          bgCtx.beginPath();
+          bgCtx.moveTo(lineMarginLocal, cssHeight / 2);
+          bgCtx.lineTo(cssWidth - lineMarginLocal, cssHeight / 2);
+          bgCtx.stroke();
+
+          bgCtx.beginPath();
+          bgCtx.arc(cssWidth / 2, cssHeight / 2, centerRadiusLocal, 0, Math.PI * 2);
+          bgCtx.stroke();
+
+          // Top penalty area & arc
+          const topPenaltyXLocal = (cssWidth - penaltyBoxWidthLocal) / 2;
+          bgCtx.strokeRect(topPenaltyXLocal, lineMarginLocal, penaltyBoxWidthLocal, penaltyBoxHeightLocal);
+          bgCtx.beginPath();
+          bgCtx.arc(cssWidth / 2, lineMarginLocal + penaltyBoxHeightLocal, centerRadiusLocal * 0.8, 0, Math.PI, false);
+          bgCtx.stroke();
+
+          // Bottom penalty area & arc
+          const bottomPenaltyYLocal = cssHeight - lineMarginLocal - penaltyBoxHeightLocal;
+          bgCtx.strokeRect(topPenaltyXLocal, bottomPenaltyYLocal, penaltyBoxWidthLocal, penaltyBoxHeightLocal);
+          bgCtx.beginPath();
+          bgCtx.arc(cssWidth / 2, cssHeight - lineMarginLocal - penaltyBoxHeightLocal, centerRadiusLocal * 0.8, Math.PI, 0, false);
+          bgCtx.stroke();
+
+          // Goal areas
+          const topGoalXLocal = (cssWidth - goalBoxWidthLocal) / 2;
+          const bottomGoalYLocal = cssHeight - lineMarginLocal - goalBoxHeightLocal;
+          bgCtx.strokeRect(topGoalXLocal, lineMarginLocal, goalBoxWidthLocal, goalBoxHeightLocal);
+          bgCtx.strokeRect(topGoalXLocal, bottomGoalYLocal, goalBoxWidthLocal, goalBoxHeightLocal);
+
+          // Corners
+          bgCtx.beginPath(); bgCtx.arc(lineMarginLocal, lineMarginLocal, cornerRadiusLocal, 0, Math.PI / 2); bgCtx.stroke();
+          bgCtx.beginPath(); bgCtx.arc(cssWidth - lineMarginLocal, lineMarginLocal, cornerRadiusLocal, Math.PI / 2, Math.PI); bgCtx.stroke();
+          bgCtx.beginPath(); bgCtx.arc(lineMarginLocal, cssHeight - lineMarginLocal, cornerRadiusLocal, Math.PI * 1.5, 0); bgCtx.stroke();
+          bgCtx.beginPath(); bgCtx.arc(cssWidth - lineMarginLocal, cssHeight - lineMarginLocal, cornerRadiusLocal, Math.PI, Math.PI * 1.5); bgCtx.stroke();
+
+          // Spots
+          bgCtx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+          const spotRadiusLocal = 3;
+          bgCtx.beginPath(); bgCtx.arc(cssWidth / 2, cssHeight / 2, spotRadiusLocal, 0, Math.PI * 2); bgCtx.fill();
+          bgCtx.beginPath(); bgCtx.arc(cssWidth / 2, lineMarginLocal + penaltySpotDistLocal, spotRadiusLocal, 0, Math.PI * 2); bgCtx.fill();
+          bgCtx.beginPath(); bgCtx.arc(cssWidth / 2, cssHeight - lineMarginLocal - penaltySpotDistLocal, spotRadiusLocal, 0, Math.PI * 2); bgCtx.fill();
+
+          backgroundCanvasRef.current = bgCanvas;
+          lastBackgroundKeyRef.current = bgKey;
         }
+      }
 
-        // Draw horizontal lines
-        for (let y = gridSpacing; y < H; y += gridSpacing) {
-          context.beginPath();
-          context.moveTo(0, y);
-          context.lineTo(W, y);
-          context.stroke();
-        }
-        // --- End Tactical Grid Overlay ---
+      // Draw pre-rendered background (fallback to inline draw if not available)
+      if (backgroundCanvasRef.current) {
+        context.drawImage(backgroundCanvasRef.current, 0, 0, W, H);
+      } else {
+        // Fallback to simple solid if offscreen failed
+        context.fillStyle = '#427B44';
+        context.fillRect(0, 0, W, H);
       }
 
       context.shadowColor = 'rgba(0, 0, 0, 0.25)';
@@ -363,21 +417,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
       context.arc(W / 2, H - lineMargin - penaltySpotDist, spotRadius, 0, Math.PI * 2);
       context.fill();
 
-      // --- Draw Goals ---
-      const goalWidth = W * 0.15;
-      const goalHeight = 5; // A fixed pixel height for the line
-      context.fillStyle = 'rgba(255, 255, 255, 0.9)';
-
-      // Top Goal
-      context.fillRect((W - goalWidth) / 2, lineMargin, goalWidth, goalHeight);
-
-      // Bottom Goal
-      context.fillRect((W - goalWidth) / 2, H - lineMargin - goalHeight, goalWidth, goalHeight);
-
-      // --- Reset shadow after all field lines are drawn ---
-      resetShadow();
-
-      // --- End Field Lines ---
+      // --- End Background ---
 
       // --- Draw User Drawings --- (lineWidth only change needed)
       context.strokeStyle = '#FB923C';

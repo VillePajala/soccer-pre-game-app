@@ -307,11 +307,23 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     handleOpponentMoveEnd,
     handleOpponentRemove,
     // handleRenamePlayer, // This is the one from useGameState, will be passed to PlayerBar
+    handleToggleGoalie,
   }: UseGameStateReturn = useGameState({
     initialState,
     saveStateToHistory,
     // masterRosterKey: MASTER_ROSTER_KEY, // Removed as no longer used by useGameState
   });
+
+  // Keep a snapshot of the last non-empty field state to avoid accidental clears during sync
+  const lastNonEmptyPlayersOnFieldRef = useRef<Player[]>([]);
+  useEffect(() => {
+    if (playersOnField && playersOnField.length > 0) {
+      lastNonEmptyPlayersOnFieldRef.current = playersOnField;
+    }
+  }, [playersOnField]);
+
+  // Debounce timer for roster→field sync
+  const rosterFieldSyncTimerRef = useRef<number | null>(null);
 
   const handlePlayerIdUpdated = useCallback(
     (oldId: string, newId: string) => {
@@ -465,7 +477,6 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     handleSetPlayerNotesForModal,
     handleRemovePlayerForModal,
     handleAddPlayerForModal,
-    handleToggleGoalieForModal,
     handleTogglePlayerSelection,
     handleUpdateSelectedPlayers,
     handleSavePlayerAssessment,
@@ -806,42 +817,64 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
   // --- Effect to sync playersOnField details with availablePlayers changes ---
   useEffect(() => {
-    if (availablePlayers && availablePlayers.length > 0) {
+    if (!availablePlayers || availablePlayers.length === 0) return;
+
+    // Debounce to end-of-tick so optimistic updates settle first
+    if (rosterFieldSyncTimerRef.current) {
+      window.clearTimeout(rosterFieldSyncTimerRef.current);
+      rosterFieldSyncTimerRef.current = null;
+    }
+    rosterFieldSyncTimerRef.current = window.setTimeout(() => {
       setPlayersOnField(prevPlayersOnField => {
+        // If field is empty, never overwrite with empty from sync; keep last non-empty snapshot
+        if (!prevPlayersOnField || prevPlayersOnField.length === 0) {
+          const fallback = lastNonEmptyPlayersOnFieldRef.current;
+          return (fallback && fallback.length > 0) ? fallback : prevPlayersOnField;
+        }
+
+        // Only sync if all field players exist in roster (avoid structural changes during place-all)
+        const allPresent = prevPlayersOnField.every(fp => availablePlayers.some(ap => ap.id === fp.id));
+        if (!allPresent) return prevPlayersOnField;
+
+        let didChange = false;
         const nextPlayersOnField = prevPlayersOnField.map(fieldPlayer => {
           const rosterPlayer = availablePlayers.find(ap => ap.id === fieldPlayer.id);
-          if (rosterPlayer) {
-            // Sync relevant properties from rosterPlayer to fieldPlayer
-            // Only update if there's a difference to avoid unnecessary re-renders / history saves
-            if (fieldPlayer.name !== rosterPlayer.name ||
-              fieldPlayer.jerseyNumber !== rosterPlayer.jerseyNumber ||
-              fieldPlayer.isGoalie !== rosterPlayer.isGoalie ||
-              fieldPlayer.nickname !== rosterPlayer.nickname ||
-              fieldPlayer.notes !== rosterPlayer.notes
-              // Add any other properties that should be synced
-            ) {
-              return {
-                ...fieldPlayer, // Keep position (relX, relY)
-                name: rosterPlayer.name,
-                jerseyNumber: rosterPlayer.jerseyNumber,
-                isGoalie: rosterPlayer.isGoalie,
-                nickname: rosterPlayer.nickname,
-                notes: rosterPlayer.notes,
-                // Ensure other essential Player properties are maintained if not in rosterPlayer directly
-                receivedFairPlayCard: rosterPlayer.receivedFairPlayCard !== undefined ? rosterPlayer.receivedFairPlayCard : fieldPlayer.receivedFairPlayCard
-              };
-            }
-          }
-          return fieldPlayer; // Return original if no corresponding roster player or no changes
+          if (!rosterPlayer) return fieldPlayer;
+
+          const needsUpdate = (
+            fieldPlayer.name !== rosterPlayer.name ||
+            fieldPlayer.jerseyNumber !== rosterPlayer.jerseyNumber ||
+            fieldPlayer.isGoalie !== rosterPlayer.isGoalie ||
+            fieldPlayer.nickname !== rosterPlayer.nickname ||
+            fieldPlayer.notes !== rosterPlayer.notes ||
+            (rosterPlayer.receivedFairPlayCard !== undefined && fieldPlayer.receivedFairPlayCard !== rosterPlayer.receivedFairPlayCard)
+          );
+
+          if (!needsUpdate) return fieldPlayer;
+          didChange = true;
+          return {
+            ...fieldPlayer, // Preserve relX/relY
+            name: rosterPlayer.name,
+            jerseyNumber: rosterPlayer.jerseyNumber,
+            isGoalie: rosterPlayer.isGoalie,
+            nickname: rosterPlayer.nickname,
+            notes: rosterPlayer.notes,
+            receivedFairPlayCard: rosterPlayer.receivedFairPlayCard !== undefined ? rosterPlayer.receivedFairPlayCard : fieldPlayer.receivedFairPlayCard,
+          };
         });
 
-        // Don't save to history here - let other mechanisms handle history
-        // This prevents circular updates
-        return nextPlayersOnField;
+        return didChange ? nextPlayersOnField : prevPlayersOnField;
       });
-    }
+    }, 0);
+
+    return () => {
+      if (rosterFieldSyncTimerRef.current) {
+        window.clearTimeout(rosterFieldSyncTimerRef.current);
+        rosterFieldSyncTimerRef.current = null;
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [availablePlayers]); // Removed saveStateToHistory to prevent circular updates
+  }, [availablePlayers]);
   // Note: We don't want setPlayersOnField in deps if it causes loops.
   // saveStateToHistory is also a dependency as it's used inside.
 
@@ -2220,7 +2253,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           onBarBackgroundClick={handleDeselectPlayer}
           gameEvents={gameSessionState.gameEvents}
           onPlayerTapInBar={handlePlayerTapInBar}
-          onToggleGoalie={handleToggleGoalieForModal}
+          onToggleGoalie={handleToggleGoalie}
         />
         <GameInfoBar
           teamName={gameSessionState.teamName}

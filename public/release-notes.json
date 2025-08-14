@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "feat(admin): add PWA-compatible admin monitoring button to SettingsModal"
+  "notes": "fix: prevent goalie toggle position data loss by fixing race condition"
 }
