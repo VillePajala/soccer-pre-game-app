@@ -1957,7 +1957,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       homeOrAway: homeOrAway, // <<< Step 4b: Use parameter value
       demandFactor: demandFactor,
       isPlayed: isPlayed,
-      availablePlayers: availablePlayers, // <<< ADD: Use current global roster
+      availablePlayers: availablePlayers.map(p => ({ ...p, isGoalie: false })), // Reset goalie status for new game
       selectedPlayerIds: finalSelectedPlayerIds, // <-- USE PASSED OR FALLBACK
       playersOnField: [], // Always start with empty field
       opponents: [], // Always start with empty opponents
@@ -2032,6 +2032,11 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     });
     logger.log('[GameCreation] t2: Reducer hydrated with new game state');
 
+    // Reset goalie status in the roster state to match the new game state
+    const resetPlayers = availablePlayers.map(p => ({ ...p, isGoalie: false }));
+    setAvailablePlayers(resetPlayers);
+    logger.log('[GameCreation] t2.1: Roster goalie status reset for new game');
+
     setIsPlayed(isPlayed);
 
     try {
@@ -2060,6 +2065,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   }, [
     // Keep necessary dependencies
     availablePlayers,
+    setAvailablePlayers,
     resetHistory,
     dispatchGameSession,
     newGameSetupModal,

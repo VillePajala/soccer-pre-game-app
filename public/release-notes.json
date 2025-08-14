@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix: resolve goalie toggle data sync and PlayerBar visual update issues"
+  "notes": "fix: resolve season creation stuck loading with proper UI feedback and debugging"
 }
