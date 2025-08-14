@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useOfflineManager } from '../../hooks/useOfflineManager';
+import logger from '@/utils/logger';
 
 /**
  * Offline settings component for managing offline capabilities
@@ -31,7 +32,7 @@ export function OfflineSettings() {
     try {
       await clearOfflineData();
     } catch (err) {
-      console.error('Failed to clear offline data:', err);
+      logger.error('Failed to clear offline data:', err);
     } finally {
       setIsClearing(false);
     }
@@ -42,7 +43,7 @@ export function OfflineSettings() {
     try {
       await triggerSync();
     } catch (err) {
-      console.error('Failed to trigger sync:', err);
+      logger.error('Failed to trigger sync:', err);
     } finally {
       setIsSyncing(false);
     }

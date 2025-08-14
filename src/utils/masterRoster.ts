@@ -3,40 +3,78 @@ import type { Player } from '@/types';
 import logger from '@/utils/logger';
 
 /**
- * Retrieves the master roster of players from localStorage.
+ * DEPRECATED: Direct localStorage access for master roster.
+ * This function now delegates to the unified persistence store.
+ * 
+ * @deprecated Use the persistenceStore.loadMasterRoster() action instead.
  * @returns An array of Player objects.
  */
 export const getMasterRoster = async (): Promise<Player[]> => {
+  logger.warn('[getMasterRoster] DEPRECATED: Use persistenceStore.loadMasterRoster() instead');
+  
+  // Import the store dynamically to avoid circular dependencies
   try {
+    const { usePersistenceStore } = await import('@/stores/persistenceStore');
+    const store = usePersistenceStore.getState();
+    
+    // Try to use the unified storage API first
+    try {
+      const roster = await store.getStorageItem<Player[]>(MASTER_ROSTER_KEY, []);
+      return roster || [];
+    } catch (storageError) {
+      logger.debug('[getMasterRoster] Storage API failed, using localStorage fallback:', storageError);
+    }
+    
+    // Fallback to direct localStorage access
     const rosterJson = localStorage.getItem(MASTER_ROSTER_KEY);
     if (!rosterJson) {
-      return Promise.resolve([]);
+      return [];
     }
-    return Promise.resolve(JSON.parse(rosterJson) as Player[]);
+    return JSON.parse(rosterJson) as Player[];
   } catch (error) {
-    logger.error('[getMasterRoster] Error getting master roster from localStorage:', error);
-    return Promise.resolve([]); // Return empty array on error
+    logger.error('[getMasterRoster] Error getting master roster:', error);
+    return []; // Return empty array on error
   }
 };
 
 /**
- * Saves the master roster to localStorage, overwriting any existing roster.
+ * DEPRECATED: Direct localStorage access for saving master roster.
+ * This function now delegates to the unified persistence store.
+ * 
+ * @deprecated Use the persistenceStore.saveMasterRoster() action instead.
  * @param players - The array of Player objects to save.
  * @returns {boolean} True if successful, false otherwise.
  */
 export const saveMasterRoster = async (players: Player[]): Promise<boolean> => {
+  logger.warn('[saveMasterRoster] DEPRECATED: Use persistenceStore.saveMasterRoster() instead');
+  
+  // Import the store dynamically to avoid circular dependencies
   try {
+    const { usePersistenceStore } = await import('@/stores/persistenceStore');
+    const store = usePersistenceStore.getState();
+    
+    // Try to use the unified storage API first
+    try {
+      const success = await store.setStorageItem(MASTER_ROSTER_KEY, players);
+      return success;
+    } catch (storageError) {
+      logger.debug('[saveMasterRoster] Storage API failed, using localStorage fallback:', storageError);
+    }
+    
+    // Fallback to direct localStorage access
     localStorage.setItem(MASTER_ROSTER_KEY, JSON.stringify(players));
-    return Promise.resolve(true);
+    return true;
   } catch (error) {
-    logger.error('[saveMasterRoster] Error saving master roster to localStorage:', error);
-    // Handle potential errors, e.g., localStorage quota exceeded
-    return Promise.resolve(false);
+    logger.error('[saveMasterRoster] Error saving master roster:', error);
+    return false;
   }
 };
 
 /**
- * Adds a new player to the master roster in localStorage.
+ * DEPRECATED: Direct localStorage access for adding players to master roster.
+ * This function now delegates to the unified persistence store.
+ * 
+ * @deprecated Use the persistenceStore.addPlayerToRoster() action instead.
  * @param playerData - The player data to add. Must contain at least a name.
  * @returns The new Player object with generated ID, or null if operation failed.
  */
@@ -46,6 +84,8 @@ export const addPlayerToRoster = async (playerData: {
   jerseyNumber?: string;
   notes?: string;
 }): Promise<Player | null> => {
+  logger.warn('[addPlayerToRoster] DEPRECATED: Use persistenceStore.addPlayerToRoster() instead');
+  
   const trimmedName = playerData.name?.trim();
   if (!trimmedName) {
     logger.error('[addPlayerToRoster] Validation Failed: Player name cannot be empty.');
@@ -53,26 +93,46 @@ export const addPlayerToRoster = async (playerData: {
   }
   
   try {
+    // Import the store dynamically to avoid circular dependencies
+    const { usePersistenceStore } = await import('@/stores/persistenceStore');
+    const store = usePersistenceStore.getState();
+    
+    // Try to use the unified persistence API first
+    try {
+      // Create new player with unique ID
+      const newPlayer: Player = {
+        id: `player_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+        name: trimmedName,
+        nickname: playerData.nickname,
+        jerseyNumber: playerData.jerseyNumber,
+        notes: playerData.notes,
+        isGoalie: false, // Default to not goalie
+        receivedFairPlayCard: false, // Default to not having received fair play card
+      };
+      
+      const success = await store.addPlayerToRoster(newPlayer);
+      return success ? newPlayer : null;
+    } catch (storeError) {
+      logger.debug('[addPlayerToRoster] Store API failed, using legacy implementation:', storeError);
+    }
+    
+    // Fallback to legacy implementation
     const currentRoster = await getMasterRoster();
     
-    // Create new player with unique ID
     const newPlayer: Player = {
       id: `player_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
       name: trimmedName,
       nickname: playerData.nickname,
       jerseyNumber: playerData.jerseyNumber,
       notes: playerData.notes,
-      isGoalie: false, // Default to not goalie
-      receivedFairPlayCard: false, // Default to not having received fair play card
+      isGoalie: false,
+      receivedFairPlayCard: false,
     };
     
     const updatedRoster = [...currentRoster, newPlayer];
     const success = await saveMasterRoster(updatedRoster);
     
-    if (!success) {
-      return Promise.resolve(null);
-    }
-    return Promise.resolve(newPlayer);
+    return success ? newPlayer : null;
   } catch (error) {
     logger.error('[addPlayerToRoster] Unexpected error adding player:', error);
     return Promise.resolve(null);
@@ -80,7 +140,10 @@ export const addPlayerToRoster = async (playerData: {
 };
 
 /**
- * Updates an existing player in the master roster.
+ * DEPRECATED: Direct localStorage access for updating players in master roster.
+ * This function now delegates to the unified persistence store.
+ * 
+ * @deprecated Use the persistenceStore.updatePlayerInRoster() action instead.
  * @param playerId - The ID of the player to update.
  * @param updateData - The player data to update.
  * @returns The updated Player object, or null if player not found or operation failed.
@@ -89,12 +152,44 @@ export const updatePlayerInRoster = async (
   playerId: string, 
   updateData: Partial<Omit<Player, 'id'>>
 ): Promise<Player | null> => {
+  logger.warn('[updatePlayerInRoster] DEPRECATED: Use persistenceStore.updatePlayerInRoster() instead');
+  
   if (!playerId) {
     logger.error('[updatePlayerInRoster] Validation Failed: Player ID cannot be empty.');
     return Promise.resolve(null);
   }
 
   try {
+    // Import the store dynamically to avoid circular dependencies
+    const { usePersistenceStore } = await import('@/stores/persistenceStore');
+    const store = usePersistenceStore.getState();
+    
+    // Try to use the unified persistence API first
+    try {
+      // Ensure name is trimmed if provided
+      const cleanedUpdateData = { ...updateData };
+      if (cleanedUpdateData.name !== undefined) {
+        const trimmedName = cleanedUpdateData.name?.trim();
+        if (!trimmedName) {
+          logger.error('[updatePlayerInRoster] Validation Failed: Player name cannot be empty.');
+          return Promise.resolve(null);
+        }
+        cleanedUpdateData.name = trimmedName;
+      }
+      
+      const success = await store.updatePlayerInRoster(playerId, cleanedUpdateData);
+      if (success) {
+        // Get the updated player from the roster
+        const currentRoster = await store.loadMasterRoster();
+        const updatedPlayer = currentRoster.find(p => p.id === playerId);
+        return updatedPlayer || null;
+      }
+      return null;
+    } catch (storeError) {
+      logger.debug('[updatePlayerInRoster] Store API failed, using legacy implementation:', storeError);
+    }
+    
+    // Fallback to legacy implementation
     const currentRoster = await getMasterRoster();
     const playerIndex = currentRoster.findIndex(p => p.id === playerId);
     
@@ -103,33 +198,24 @@ export const updatePlayerInRoster = async (
       return Promise.resolve(null);
     }
     
-    // Create updated player object
     const updatedPlayer = {
       ...currentRoster[playerIndex],
       ...updateData
     };
     
-    // Ensure name is not empty if it's being updated
     if (updateData.name !== undefined && !updatedPlayer.name?.trim()) {
       logger.error('[updatePlayerInRoster] Validation Failed: Player name cannot be empty.');
       return Promise.resolve(null);
     }
-    // Ensure name is trimmed if updated
     if (updatedPlayer.name) {
       updatedPlayer.name = updatedPlayer.name.trim();
     }
     
-    // Update roster
     const updatedRoster = [...currentRoster];
     updatedRoster[playerIndex] = updatedPlayer;
     const success = await saveMasterRoster(updatedRoster);
     
-    if (!success) {
-      // Error logged by saveMasterRoster
-      return Promise.resolve(null);
-    }
-
-    return Promise.resolve(updatedPlayer);
+    return success ? updatedPlayer : null;
   } catch (error) {
     logger.error('[updatePlayerInRoster] Unexpected error updating player:', error);
     return Promise.resolve(null);
@@ -137,17 +223,35 @@ export const updatePlayerInRoster = async (
 };
 
 /**
- * Removes a player from the master roster.
+ * DEPRECATED: Direct localStorage access for removing players from master roster.
+ * This function now delegates to the unified persistence store.
+ * 
+ * @deprecated Use the persistenceStore.removePlayerFromRoster() action instead.
  * @param playerId - The ID of the player to remove.
  * @returns True if player was successfully removed, false otherwise.
  */
 export const removePlayerFromRoster = async (playerId: string): Promise<boolean> => {
+  logger.warn('[removePlayerFromRoster] DEPRECATED: Use persistenceStore.removePlayerFromRoster() instead');
+  
   if (!playerId) {
     logger.error('[removePlayerFromRoster] Validation Failed: Player ID cannot be empty.');
     return Promise.resolve(false);
   }
 
   try {
+    // Import the store dynamically to avoid circular dependencies
+    const { usePersistenceStore } = await import('@/stores/persistenceStore');
+    const store = usePersistenceStore.getState();
+    
+    // Try to use the unified persistence API first
+    try {
+      const success = await store.removePlayerFromRoster(playerId);
+      return success;
+    } catch (storeError) {
+      logger.debug('[removePlayerFromRoster] Store API failed, using legacy implementation:', storeError);
+    }
+    
+    // Fallback to legacy implementation
     const currentRoster = await getMasterRoster();
     const updatedRoster = currentRoster.filter(p => p.id !== playerId);
     
@@ -166,7 +270,10 @@ export const removePlayerFromRoster = async (playerId: string): Promise<boolean>
 };
 
 /**
- * Sets the goalie status for a player in the master roster.
+ * DEPRECATED: Direct localStorage access for setting player goalie status.
+ * This function now delegates to the unified persistence store.
+ * 
+ * @deprecated Use the persistenceStore.updatePlayerInRoster() action instead.
  * @param playerId - The ID of the player to update.
  * @param isGoalie - Whether the player should be marked as a goalie.
  * @returns The updated Player object, or null if player not found or operation failed.
@@ -175,12 +282,59 @@ export const setPlayerGoalieStatus = async (
   playerId: string,
   isGoalie: boolean
 ): Promise<Player | null> => {
+  logger.warn('[setPlayerGoalieStatus] DEPRECATED: Use persistenceStore.updatePlayerInRoster() instead');
+  
   if (!playerId) {
     logger.error('[setPlayerGoalieStatus] Validation Failed: Player ID cannot be empty.');
     return Promise.resolve(null);
   }
 
   try {
+    // Import the store dynamically to avoid circular dependencies
+    const { usePersistenceStore } = await import('@/stores/persistenceStore');
+    const store = usePersistenceStore.getState();
+    
+    // Try to use the unified persistence API first
+    try {
+      const currentRoster = await store.loadMasterRoster();
+      let targetPlayer: Player | undefined = undefined;
+      
+      // Create updated roster with goalie logic
+      const updatedRoster = currentRoster.map(player => {
+        if (player.id === playerId) {
+          targetPlayer = { ...player, isGoalie };
+          return targetPlayer;
+        }
+        // If setting a new goalie, unset goalie status for all other players
+        if (isGoalie && player.isGoalie) {
+          return { ...player, isGoalie: false };
+        }
+        return player;
+      });
+
+      if (!targetPlayer) {
+        logger.error(`[setPlayerGoalieStatus] Player with ID ${playerId} not found.`);
+        return Promise.resolve(null);
+      }
+      
+      // Ensure the target player is definitely the goalie if isGoalie=true
+      let finalRoster = updatedRoster;
+      if (isGoalie) {
+        finalRoster = updatedRoster.map(p => {
+          if (p.id === playerId) return { ...p, isGoalie: true };
+          if (p.id !== playerId && p.isGoalie) return { ...p, isGoalie: false}; 
+          return p;
+        });
+        targetPlayer = finalRoster.find(p => p.id === playerId);
+      }
+
+      const success = await store.saveMasterRoster(finalRoster);
+      return success ? (targetPlayer || null) : null;
+    } catch (storeError) {
+      logger.debug('[setPlayerGoalieStatus] Store API failed, using legacy implementation:', storeError);
+    }
+    
+    // Fallback to legacy implementation
     const currentRoster = await getMasterRoster();
     let targetPlayer: Player | undefined = undefined;
     
@@ -189,7 +343,6 @@ export const setPlayerGoalieStatus = async (
         targetPlayer = { ...player, isGoalie };
         return targetPlayer;
       }
-      // If we are setting a new goalie, unset goalie status for all other players.
       if (isGoalie && player.isGoalie) {
         return { ...player, isGoalie: false };
       }
@@ -201,31 +354,18 @@ export const setPlayerGoalieStatus = async (
       return Promise.resolve(null);
     }
     
-    // If isGoalie is true, we need a second pass to ensure the target player is definitely the goalie
-    // This handles the case where the target player was not the one initially having player.isGoalie = true
-    // when isGoalie=true was passed.
     let finalRoster = updatedRoster;
     if (isGoalie) {
       finalRoster = updatedRoster.map(p => {
         if (p.id === playerId) return { ...p, isGoalie: true };
-        // Ensure all others are not goalie if we are definitively setting one.
-        // This is slightly redundant if the first pass caught it, but ensures correctness.
         if (p.id !== playerId && p.isGoalie) return { ...p, isGoalie: false}; 
         return p;
       });
-      // Update targetPlayer reference from the finalRoster
       targetPlayer = finalRoster.find(p => p.id === playerId);
     }
 
-
     const success = await saveMasterRoster(finalRoster);
-
-    if (!success) {
-      // Error logged by saveMasterRoster
-      return Promise.resolve(null);
-    }
-
-    return Promise.resolve(targetPlayer || null); // Should always be targetPlayer if found earlier
+    return success ? (targetPlayer || null) : null;
 
   } catch (error) {
     logger.error('[setPlayerGoalieStatus] Unexpected error:', error);
@@ -234,7 +374,10 @@ export const setPlayerGoalieStatus = async (
 };
 
 /**
- * Sets the fair play card status for a player in the master roster.
+ * DEPRECATED: Direct localStorage access for setting player fair play card status.
+ * This function now delegates to the unified persistence store.
+ * 
+ * @deprecated Use the persistenceStore.updatePlayerInRoster() action instead.
  * @param playerId - The ID of the player to update.
  * @param receivedFairPlayCard - Whether the player should be marked as having received the fair play card.
  * @returns The updated Player object, or null if player not found or operation failed.
@@ -243,5 +386,6 @@ export const setPlayerFairPlayCardStatus = async (
   playerId: string,
   receivedFairPlayCard: boolean
 ): Promise<Player | null> => {
+  logger.warn('[setPlayerFairPlayCardStatus] DEPRECATED: Use persistenceStore.updatePlayerInRoster() instead');
   return updatePlayerInRoster(playerId, { receivedFairPlayCard });
 }; 

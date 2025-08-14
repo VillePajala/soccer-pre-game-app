@@ -35,6 +35,8 @@ const AssessmentSlider: React.FC<AssessmentSliderProps> = ({
         step={step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
+        aria-label={`${label}: ${value} out of ${max}`}
+        aria-describedby={`${label.toLowerCase().replace(/\s+/g, '-')}-value`}
         className="flex-1 h-2 rounded-lg appearance-none cursor-pointer bg-slate-600"
         style={{
           accentColor: `hsl(${
@@ -44,7 +46,12 @@ const AssessmentSlider: React.FC<AssessmentSliderProps> = ({
           }, 70%, 50%)`,
         }}
       />
-      <span className="text-sm text-yellow-400 w-6 text-right">{value}</span>
+      <span 
+        id={`${label.toLowerCase().replace(/\s+/g, '-')}-value`}
+        className="text-sm text-yellow-400 w-6 text-right"
+      >
+        {value}
+      </span>
     </div>
   );
 };

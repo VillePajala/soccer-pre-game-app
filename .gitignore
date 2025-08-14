@@ -1,5 +1,9 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# Admin keys and secrets
+.admin-key.txt
+generate-admin-key.js
+
 # dependencies
 /node_modules
 /.pnp

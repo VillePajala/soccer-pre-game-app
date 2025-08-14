@@ -1,19 +1,14 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useConnectionStatus } from '@/hooks/useConnectionStatus';
+import { useUpdate } from '@/contexts/UpdateContext';
+import logger from '@/utils/logger';
 
 interface ServiceWorkerState extends ServiceWorkerRegistration {
   waiting: ServiceWorker | null;
   installing: ServiceWorker | null;
   active: ServiceWorker | null;
-}
-
-interface ServiceWorkerUpdateInfo {
-  isUpdateAvailable: boolean;
-  isUpdating: boolean;
-  hasError: boolean;
-  errorMessage?: string;
 }
 
 interface SyncNotification {
@@ -29,20 +24,49 @@ interface SyncNotification {
 
 export default function EnhancedServiceWorkerRegistration() {
   const [registration, setRegistration] = useState<ServiceWorkerState | null>(null);
-  const [updateInfo, setUpdateInfo] = useState<ServiceWorkerUpdateInfo>({
-    isUpdateAvailable: false,
-    isUpdating: false,
-    hasError: false
-  });
   const [syncNotifications, setSyncNotifications] = useState<SyncNotification[]>([]);
   const [showSyncToast, setShowSyncToast] = useState(false);
   const connectionStatus = useConnectionStatus();
+  const { setUpdateAvailable, setIsUpdating, setReleaseNotes, setVersionInfo, updateInfo, clearUpdate } = useUpdate();
+  
+  // Store timeout IDs for cleanup
+  const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       registerServiceWorker();
       setupMessageListeners();
+      fetchReleaseNotes();
+      
+      // Set up periodic update checks (every 30 minutes)
+      const intervalId = setInterval(() => {
+        checkForUpdates();
+      }, 30 * 60 * 1000);
+      
+      // Check for updates on visibility change
+      const handleVisibilityChange = () => {
+        if (!document.hidden) {
+          checkForUpdates();
+        }
+      };
+      
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      
+      // Cleanup
+      return () => {
+        clearInterval(intervalId);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      };
     }
+    
+    // Cleanup timeouts on component unmount
+    return () => {
+      timeoutsRef.current.forEach(timeout => clearTimeout(timeout));
+      timeoutsRef.current = [];
+    };
+    // Disabling exhaustive-deps as these functions are defined within the component
+    // and we only want to run this effect once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const requestManualSync = useCallback(() => {
@@ -60,10 +84,40 @@ export default function EnhancedServiceWorkerRegistration() {
     }
   }, [connectionStatus.isOnline, registration, requestManualSync]);
 
+  const fetchReleaseNotes = async () => {
+    try {
+      const res = await fetch('/release-notes.json', { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        setReleaseNotes(data.notes || '');
+        setVersionInfo(data.version);
+      }
+    } catch (error) {
+      logger.warn('[SW] Failed to fetch release notes', error);
+    }
+  };
+
+  const checkForUpdates = async () => {
+    if (registration) {
+      try {
+        logger.debug('[SW] Checking for updates...');
+        await registration.update();
+        
+        // Check if there's a waiting worker after update
+        if (registration.waiting) {
+          setUpdateAvailable(true, { newVersion: 'Latest' });
+          fetchReleaseNotes();
+        }
+      } catch (error) {
+        logger.warn('[SW] Update check failed:', error);
+      }
+    }
+  };
+
   const registerServiceWorker = async () => {
     try {
-      // Use enhanced service worker
-      const reg = await navigator.serviceWorker.register('/sw-enhanced.js', {
+      // Use standard service worker (sw-enhanced.js not deployed yet)
+      const reg = await navigator.serviceWorker.register('/sw.js', {
         scope: '/',
         updateViaCache: 'none'
       });
@@ -73,28 +127,40 @@ export default function EnhancedServiceWorkerRegistration() {
       // Check for updates immediately
       await reg.update();
 
+      // Check if there's already a waiting worker
+      if (reg.waiting) {
+        setUpdateAvailable(true, { newVersion: 'Latest' });
+      }
+
       // Listen for updates
-      reg.addEventListener('updatefound', () => {
+      const handleUpdateFound = () => {
         const newWorker = reg.installing;
         if (newWorker) {
-          setUpdateInfo(prev => ({ ...prev, isUpdateAvailable: true }));
+          setUpdateAvailable(true, { newVersion: 'Latest' });
           
-          newWorker.addEventListener('statechange', () => {
+          const handleStateChange = () => {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              setUpdateInfo(prev => ({ ...prev, isUpdateAvailable: true }));
+              setUpdateAvailable(true, { newVersion: 'Latest' });
             }
-          });
+          };
+          
+          newWorker.addEventListener('statechange', handleStateChange);
+          // Note: We can't easily track individual worker cleanup, but this is acceptable
+          // as the worker will be garbage collected when no longer needed
         }
-      });
+      };
+      
+      reg.addEventListener('updatefound', handleUpdateFound);
+      
+      // Store the cleanup function for the registration listener
+      // This will be cleaned up when the component unmounts via the main useEffect
 
-      console.log('[SW] Enhanced service worker registered successfully');
+      logger.debug('[SW] Enhanced service worker registered successfully');
     } catch (error) {
-      console.error('[SW] Enhanced service worker registration failed:', error);
-      setUpdateInfo(prev => ({
-        ...prev,
-        hasError: true,
-        errorMessage: error instanceof Error ? error.message : 'Registration failed'
-      }));
+      logger.error('[SW] Enhanced service worker registration failed:', error);
+      setUpdateAvailable(false, {
+        error: error instanceof Error ? error.message : 'Registration failed'
+      });
     }
   };
 
@@ -110,7 +176,8 @@ export default function EnhancedServiceWorkerRegistration() {
               ...prev.slice(0, 4)
             ]);
             setShowSyncToast(true);
-            setTimeout(() => setShowSyncToast(false), 3000);
+            const timeout1 = setTimeout(() => setShowSyncToast(false), 3000);
+            timeoutsRef.current.push(timeout1);
             break;
             
           case 'SYNC_FAILED':
@@ -119,11 +186,12 @@ export default function EnhancedServiceWorkerRegistration() {
               ...prev.slice(0, 4)
             ]);
             setShowSyncToast(true);
-            setTimeout(() => setShowSyncToast(false), 5000);
+            const timeout2 = setTimeout(() => setShowSyncToast(false), 5000);
+            timeoutsRef.current.push(timeout2);
             break;
             
           case 'CACHE_STATUS_RESPONSE':
-            console.log('[SW] Cache status:', data);
+            logger.debug('[SW] Cache status:', data);
             break;
         }
       });
@@ -132,15 +200,20 @@ export default function EnhancedServiceWorkerRegistration() {
 
   const activateUpdate = async () => {
     if (registration?.waiting) {
-      setUpdateInfo(prev => ({ ...prev, isUpdating: true }));
+      setIsUpdating(true);
       
       // Send skip waiting message
       registration.waiting.postMessage({ type: 'SKIP_WAITING' });
       
       // Wait for the new service worker to take control
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
+      const handleControllerChange = () => {
         window.location.reload();
-      });
+      };
+      
+      navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
+      
+      // Note: We don't cleanup this listener because the page will reload
+      // If the user navigates away before reload, it's acceptable to leave this listener
     }
   };
 
@@ -169,7 +242,7 @@ export default function EnhancedServiceWorkerRegistration() {
       
       channel.port1.onmessage = function(event) {
         if (event.data.type === 'CACHE_CLEARED') {
-          console.log('[SW] All caches cleared');
+          logger.debug('[SW] All caches cleared');
         }
       };
       
@@ -183,7 +256,7 @@ export default function EnhancedServiceWorkerRegistration() {
   return (
     <>
       {/* Update Available Banner */}
-      {updateInfo.isUpdateAvailable && !updateInfo.isUpdating && (
+      {updateInfo.updateAvailable && !updateInfo.isUpdating && (
         <div className="fixed top-0 left-0 right-0 z-[300] bg-blue-600 text-white px-4 py-3 text-center">
           <div className="flex items-center justify-center gap-4">
             <span>🚀 App update available!</span>
@@ -205,12 +278,12 @@ export default function EnhancedServiceWorkerRegistration() {
       )}
 
       {/* Error Banner */}
-      {updateInfo.hasError && (
+      {updateInfo.error && (
         <div className="fixed top-0 left-0 right-0 z-[300] bg-red-600 text-white px-4 py-3 text-center">
           <div className="flex items-center justify-center gap-4">
-            <span>❌ Service Worker Error: {updateInfo.errorMessage}</span>
+            <span>❌ Service Worker Error: {updateInfo.error}</span>
             <button
-              onClick={() => setUpdateInfo(prev => ({ ...prev, hasError: false }))}
+              onClick={() => clearUpdate()}
               className="text-red-200 hover:text-white"
             >
               ✕
@@ -275,7 +348,7 @@ export default function EnhancedServiceWorkerRegistration() {
               🔄 Manual Sync
             </button>
             <button 
-              onClick={() => getCacheStatus().then(console.log)}
+              onClick={() => getCacheStatus().then(data => logger.debug('[SW] Cache status:', data))}
               className="block w-full text-left hover:text-blue-300"
             >
               📊 Cache Status

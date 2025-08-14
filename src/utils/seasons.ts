@@ -30,9 +30,12 @@ export const getSeasons = async (): Promise<Season[]> => {
  */
 export const saveSeason = async (season: Season): Promise<Season> => {
   try {
-    return await storageManager.saveSeason(season);
+    logger.log(`[saveSeason] Starting save operation for season: ${season.name} (ID: ${season.id})`);
+    const result = await storageManager.saveSeason(season);
+    logger.log(`[saveSeason] Save operation completed successfully for season: ${season.name}`);
+    return result;
   } catch (error) {
-    logger.error('[saveSeason] Error saving season:', error);
+    logger.error(`[saveSeason] Error saving season "${season.name}":`, error);
     throw error;
   }
 };
@@ -45,24 +48,32 @@ export const saveSeason = async (season: Season): Promise<Season> => {
  */
 export const addSeason = async (newSeasonName: string, extra: Partial<Season> = {}): Promise<Season | null> => {
   const trimmedName = newSeasonName.trim();
+  logger.log(`[addSeason] Starting season creation for: "${trimmedName}"`);
+  
   if (!trimmedName) {
     logger.error('[addSeason] Validation failed: Season name cannot be empty.');
     return null;
   }
 
   try {
+    logger.log('[addSeason] Getting current seasons for validation...');
     const currentSeasons = await getSeasons();
+    logger.log(`[addSeason] Found ${currentSeasons.length} existing seasons`);
+    
     if (currentSeasons.some(s => s.name.toLowerCase() === trimmedName.toLowerCase())) {
       logger.error(`[addSeason] Validation failed: A season with name "${trimmedName}" already exists.`);
       return null;
     }
+    
     const newSeason: Season = {
       id: `season_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
       name: trimmedName,
       ...extra,
     };
     
+    logger.log(`[addSeason] Saving season with ID: ${newSeason.id}`);
     const savedSeason = await saveSeason(newSeason);
+    logger.log(`[addSeason] Season saved successfully: ${savedSeason.name}`);
     return savedSeason;
   } catch (error) {
     logger.error('[addSeason] Unexpected error adding season:', error);

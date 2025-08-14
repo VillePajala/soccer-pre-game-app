@@ -6,6 +6,7 @@ import { SupabaseProvider } from './supabaseProvider';
 import type { Player, Season, Tournament } from '../../types';
 import type { AppSettings } from '../../utils/appSettings';
 import { safeConsoleError } from '../../utils/errorSanitization';
+import logger from '../../utils/logger';
 
 export class StorageManager implements IStorageProvider {
   private localStorage: LocalStorageProvider;
@@ -36,6 +37,23 @@ export class StorageManager implements IStorageProvider {
     try {
       return await operation();
     } catch (error) {
+      // 🔧 SIGN OUT FIX: During sign out with AuthenticationError, return sensible defaults instead of throwing
+      if (error instanceof AuthenticationError) {
+        // For getter operations during sign out, return appropriate defaults
+        if (operationName === 'getAppSettings') {
+          logger.debug('[StorageManager] Returning null for getAppSettings during sign out');
+          return null as T;
+        }
+        if (operationName === 'getSavedGames') {
+          logger.debug('[StorageManager] Returning empty object for getSavedGames during sign out');
+          return {} as T;
+        }
+        if (operationName === 'getPlayers' || operationName === 'getSeasons' || operationName === 'getTournaments') {
+          logger.debug(`[StorageManager] Returning empty array for ${operationName} during sign out`);
+          return [] as T;
+        }
+      }
+      
       // If we're using Supabase and fallback is enabled, try localStorage
       if (
         this.config.provider === 'supabase' &&
@@ -207,8 +225,8 @@ export class StorageManager implements IStorageProvider {
     const gameState = gameData as Record<string, unknown>;
     const gameEvents = gameState?.gameEvents as Array<Record<string, unknown>> || [];
     const assistEvents = gameEvents.filter((event: Record<string, unknown>) => event.assisterId) || [];
-    console.log(`[STORAGE_MANAGER] saveSavedGame called - Provider: ${this.currentProvider.constructor.name}`);
-    console.log(`[STORAGE_MANAGER] Events: ${gameEvents.length || 0}, Assist events: ${assistEvents.length}`);
+    logger.debug(`[STORAGE_MANAGER] saveSavedGame called - Provider: ${this.currentProvider.constructor.name}`);
+    logger.debug(`[STORAGE_MANAGER] Events: ${gameEvents.length || 0}, Assist events: ${assistEvents.length}`);
     
     return this.executeWithFallback(
       () => this.currentProvider.saveSavedGame(gameData),

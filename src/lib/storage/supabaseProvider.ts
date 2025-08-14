@@ -9,14 +9,14 @@ import type { DbSeason, DbTournament, DbPlayer, DbAppSettings, DbGame } from '..
 import { compressionManager, FIELD_SELECTIONS } from './compressionUtils';
 
 export class SupabaseProvider implements IStorageProvider {
-  
+
   getProviderName(): string {
     return 'supabase';
   }
 
   async isOnline(): Promise<boolean> {
     try {
-      const { error } = await supabase.from('players').select('count').limit(1);
+      const { error } = await supabase.from('players').select('id').limit(1);
       return !error;
     } catch {
       return false;
@@ -24,11 +24,28 @@ export class SupabaseProvider implements IStorageProvider {
   }
 
   private async getCurrentUserId(): Promise<string> {
-    const { data: { user }, error } = await supabase.auth.getUser();
-    if (error || !user) {
-      throw new AuthenticationError('supabase', 'getCurrentUserId', error || new Error('No user'));
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) {
+        throw new AuthenticationError('supabase', 'getCurrentUserId', error || new Error('No user'));
+      }
+      return user.id;
+    } catch (error) {
+      // During sign out, auth calls might fail - that's expected
+      if (error instanceof AuthenticationError) {
+        throw error;
+      }
+      throw new AuthenticationError('supabase', 'getCurrentUserId', error as Error);
     }
-    return user.id;
+  }
+
+  private async isAuthenticated(): Promise<boolean> {
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      return !error && !!user;
+    } catch {
+      return false;
+    }
   }
 
   // Player management with Phase 4 optimizations
@@ -58,12 +75,19 @@ export class SupabaseProvider implements IStorageProvider {
 
   async savePlayer(player: Player): Promise<Player> {
     try {
-      const userId = await this.getCurrentUserId();
-      
+      let userId: string;
+      try {
+        userId = await this.getCurrentUserId();
+      } catch {
+        // Transient auth gap after sign-in: retry once shortly
+        await new Promise(res => setTimeout(res, 400));
+        userId = await this.getCurrentUserId();
+      }
+
       // For players with local IDs (e.g., player_123_abc), treat as new
       const isLocalId = player.id && player.id.startsWith('player_');
       const playerForSupabase = isLocalId ? { ...player, id: '' } : player;
-      
+
       const supabasePlayer = toSupabase.player(playerForSupabase, userId);
 
       let result;
@@ -184,11 +208,11 @@ export class SupabaseProvider implements IStorageProvider {
   async saveSeason(season: Season): Promise<Season> {
     try {
       const userId = await this.getCurrentUserId();
-      
+
       // For seasons with local IDs (e.g., season_123_abc), treat as new
       const isLocalId = season.id && season.id.startsWith('season_');
       const seasonForSupabase = isLocalId ? { ...season, id: '' } : season;
-      
+
       const supabaseSeason = toSupabase.season(seasonForSupabase, userId);
 
       let result;
@@ -309,11 +333,11 @@ export class SupabaseProvider implements IStorageProvider {
   async saveTournament(tournament: Tournament): Promise<Tournament> {
     try {
       const userId = await this.getCurrentUserId();
-      
+
       // For tournaments with local IDs (e.g., tournament_123_abc), treat as new
       const isLocalId = tournament.id && tournament.id.startsWith('tournament_');
       const tournamentForSupabase = isLocalId ? { ...tournament, id: '' } : tournament;
-      
+
       const supabaseTournament = toSupabase.tournament(tournamentForSupabase, userId);
 
       let result;
@@ -345,9 +369,9 @@ export class SupabaseProvider implements IStorageProvider {
           console.error('[SupabaseProvider] Tournament save error:', {
             error,
             supabaseTournament,
-            errorDetails: error.details,
+            errorDetails: (error as { details?: string }).details,
             errorMessage: error.message,
-            errorCode: error.code
+            errorCode: (error as { code?: string }).code
           });
           throw new NetworkError('supabase', 'saveTournament', error);
         }
@@ -418,6 +442,11 @@ export class SupabaseProvider implements IStorageProvider {
   // App settings (simplified implementation for now)
   async getAppSettings(): Promise<AppSettings | null> {
     try {
+      // 🔧 SIGN OUT FIX: Check authentication before trying to get user data
+      if (!(await this.isAuthenticated())) {
+        return null; // Return null instead of throwing error during sign out
+      }
+
       const userId = await this.getCurrentUserId();
       const { data, error } = await supabase
         .from('app_settings')
@@ -426,7 +455,8 @@ export class SupabaseProvider implements IStorageProvider {
         .single();
 
       if (error) {
-        if (error.code === 'PGRST116') {
+        const errorCode = (error as { code?: string }).code;
+        if (errorCode === 'PGRST116') {
           // No settings found, return null
           return null;
         }
@@ -449,7 +479,7 @@ export class SupabaseProvider implements IStorageProvider {
 
       const { data, error } = await supabase
         .from('app_settings')
-        .upsert(supabaseSettings, { onConflict: 'user_id' })
+        .upsert(supabaseSettings)
         .select()
         .single();
 
@@ -467,16 +497,40 @@ export class SupabaseProvider implements IStorageProvider {
   }
 
   // Saved games - simplified version that works
+
+  // PHASE 1.5: Load game events on-demand for better performance
+  async loadGameEvents(gameId: string): Promise<unknown[]> {
+    try {
+      const { data: events, error } = await supabase
+        .from('game_events')
+        .select('*')
+        .eq('game_id', gameId);
+
+      if (error) {
+        throw new NetworkError('supabase', 'loadGameEvents', error);
+      }
+
+      return events || [];
+    } catch (error) {
+      if (error instanceof NetworkError) {
+        throw error;
+      }
+      throw new StorageError('Failed to load game events', 'supabase', 'loadGameEvents', error as Error);
+    }
+  }
+
   async getSavedGames(): Promise<unknown> {
     try {
       const userId = await this.getCurrentUserId();
-      
-      // First, try the simple approach that was working before
+
+      // REVERT: Using full game data to fix critical bug where playersOnField, gameEvents, etc. were missing
+      // TODO: Implement separate lightweight endpoint for list view vs full game loading
       const { data: gamesData, error: gamesError } = await supabase
         .from('games')
         .select('*')
         .eq('user_id', userId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(50); // Keep pagination limit for performance
 
       if (gamesError) {
         throw new NetworkError('supabase', 'getSavedGames', gamesError);
@@ -484,39 +538,13 @@ export class SupabaseProvider implements IStorageProvider {
 
       // Convert array to object format expected by the app
       const gamesCollection: Record<string, unknown> = {};
-      
-      // For now, just transform the basic game data
-      // This ensures the app continues to work even if the complex query fails
+
+      // Transform the full game data using the original approach
       for (const game of gamesData) {
         const transformedGame = fromSupabase.game(game as DbGame);
         gamesCollection[game.id] = transformedGame;
       }
-      
-      // Try to fetch related data separately for each game
-      // This is less efficient but more reliable
-      for (const game of gamesData) {
-        try {
-          const currentGame = gamesCollection[game.id] as Record<string, unknown>;
-          
-          // Only fetch events if they don't already exist in game_data
-          if (!currentGame.gameEvents || (Array.isArray(currentGame.gameEvents) && currentGame.gameEvents.length === 0)) {
-            // Fetch game events
-            const { data: events } = await supabase
-              .from('game_events')
-              .select('*')
-              .eq('game_id', game.id);
-            
-            if (events && events.length > 0) {
-              currentGame.gameEvents = events.map((e: unknown) =>
-                e // Keep raw event for now, will be transformed later
-              );
-            }
-          }
-        } catch {
-          // Silently continue if events can't be fetched for a specific game
-        }
-      }
-      
+
       return gamesCollection;
     } catch (error) {
       if (error instanceof AuthenticationError || error instanceof NetworkError) {
@@ -529,7 +557,7 @@ export class SupabaseProvider implements IStorageProvider {
   async saveSavedGame(gameData: unknown): Promise<unknown> {
     try {
       const userId = await this.getCurrentUserId();
-      
+
       // Only log in development for performance
       if (process.env.NODE_ENV === 'development') {
         const gameState = gameData as Record<string, unknown>;
@@ -539,12 +567,12 @@ export class SupabaseProvider implements IStorageProvider {
           console.log(`[SUPABASE] Saving game with ${assistEvents.length} assist events`);
         }
       }
-      
+
       const supabaseGame = toSupabase.game(gameData, userId) as Record<string, unknown> & { id?: string };
       // Removed verbose logging for performance
 
       let result;
-      
+
       // If game has no ID, do an insert (not upsert)
       if (!supabaseGame.id) {
         console.log(`[SUPABASE] Inserting new game...`);
@@ -553,7 +581,7 @@ export class SupabaseProvider implements IStorageProvider {
           .insert(supabaseGame)
           .select()
           .single();
-          
+
         if (error) {
           console.error(`[SUPABASE] Insert error:`, error);
           throw new NetworkError('supabase', 'saveSavedGame', error);
@@ -564,10 +592,10 @@ export class SupabaseProvider implements IStorageProvider {
         console.log(`[SUPABASE] Upserting existing game: ${supabaseGame.id}`);
         const { data, error } = await supabase
           .from('games')
-          .upsert(supabaseGame, { onConflict: 'id' })
+          .upsert(supabaseGame)
           .select()
           .single();
-          
+
         if (error) {
           console.error(`[SUPABASE] Upsert error:`, error);
           throw new NetworkError('supabase', 'saveSavedGame', error);

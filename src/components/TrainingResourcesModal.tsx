@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { HiOutlineChevronDown, HiOutlineChevronUp } from 'react-icons/hi2';
+import MigrationErrorBoundary from './MigrationErrorBoundary';
 
 interface TrainingResourcesModalProps {
   isOpen: boolean;
@@ -135,4 +136,11 @@ const TrainingResourcesModal: React.FC<TrainingResourcesModalProps> = ({ isOpen,
   );
 };
 
-export default TrainingResourcesModal; 
+// Wrapped component with error boundary
+const TrainingResourcesModalWithErrorBoundary: React.FC<TrainingResourcesModalProps> = (props) => (
+  <MigrationErrorBoundary componentName="TrainingResourcesModal">
+    <TrainingResourcesModal {...props} />
+  </MigrationErrorBoundary>
+);
+
+export default TrainingResourcesModalWithErrorBoundary; 

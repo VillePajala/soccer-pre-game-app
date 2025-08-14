@@ -2,6 +2,7 @@
 
 import React, { Component, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import * as Sentry from '@sentry/nextjs';
 import logger from '@/utils/logger';
 
 interface ErrorBoundaryState {
@@ -108,6 +109,16 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
       componentStack: errorInfo.componentStack,
     });
 
+    // Send error to Sentry
+    Sentry.withScope((scope) => {
+      scope.setContext('react', {
+        componentStack: errorInfo.componentStack,
+      });
+      scope.setLevel('error');
+      scope.setTag('error.boundary', true);
+      Sentry.captureException(error);
+    });
+
     // Call custom error handler if provided
     if (this.props.onError) {
       this.props.onError(error, errorInfo);
@@ -117,9 +128,6 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
       error,
       errorInfo,
     });
-
-    // TODO: Send error to monitoring service (Sentry, etc.)
-    // Example: Sentry.captureException(error, { contexts: { react: errorInfo } });
   }
 
   resetError = () => {

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import logger from '@/utils/logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -6,7 +7,7 @@ export async function POST(request: NextRequest) {
     
     // Log CSP violations in development
     if (process.env.NODE_ENV === 'development') {
-      console.warn('CSP Violation:', report);
+      logger.warn('CSP Violation:', report);
     }
     
     // In production, you might want to send this to a monitoring service
@@ -14,7 +15,7 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error('Error processing CSP report:', error);
+    logger.error('Error processing CSP report:', error);
     return NextResponse.json({ error: 'Invalid report' }, { status: 400 });
   }
 }

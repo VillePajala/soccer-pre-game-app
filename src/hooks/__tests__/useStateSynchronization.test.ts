@@ -49,23 +49,19 @@ describe('useStateSynchronization', () => {
       return 'sync2';
     });
 
-    let result1: string;
-    let result2: string;
+    let result1: string | undefined;
+    let result2: string | undefined;
 
     await act(async () => {
-      if (result.current) {
-        result1 = await result.current.withSynchronization('sync1', operation1);
-      }
+      result1 = await result.current.withSynchronization('sync1', operation1);
     });
 
     await act(async () => {
-      if (result.current) {
-        result2 = await result.current.withSynchronization('sync2', operation2);
-      }
+      result2 = await result.current.withSynchronization('sync2', operation2);
     });
 
-    expect(result1!).toBe('sync1');
-    expect(result2!).toBe('sync2');
+    expect(result1).toBe('sync1');
+    expect(result2).toBe('sync2');
     expect(executionOrder).toEqual([1, 2]);
   });
 
@@ -95,15 +91,13 @@ describe('useStateSynchronization', () => {
       }
     });
 
-    let result2: string;
+    let result2: string | undefined;
     await act(async () => {
-      if (result.current) {
-        result2 = await result.current.withSynchronization('success-op', operation2);
-      }
+      result2 = await result.current.withSynchronization('success-op', operation2);
     });
 
     expect(error?.message).toBe('Operation failed');
-    expect(result2!).toBe('success');
+    expect(result2).toBe('success');
     expect(executionOrder).toEqual([1, 2]); // Both should have executed in order
   });
 
@@ -116,18 +110,14 @@ describe('useStateSynchronization', () => {
       return 'result';
     });
 
-    let promise: Promise<string>;
-    await act(async () => {
-      if (result.current) {
-        promise = result.current.withSynchronization('test-op', operation);
-      }
+    let promise: Promise<string> | undefined;
+    act(() => {
+      promise = result.current.withSynchronization('test-op', operation);
     });
 
     // Clear synchronization
     act(() => {
-      if (result.current) {
-        result.current.clearSynchronization();
-      }
+      result.current.clearSynchronization();
     });
 
     // The original operation should still complete
@@ -136,14 +126,12 @@ describe('useStateSynchronization', () => {
 
     // New operations should start immediately after clearing
     const fastOperation = jest.fn(() => 'fast');
-    let result2: string;
+    let result2: string | undefined;
     await act(async () => {
-      if (result.current) {
-        result2 = await result.current.withSynchronization('fast-op', fastOperation);
-      }
+      result2 = await result.current.withSynchronization('fast-op', fastOperation);
     });
 
-    expect(result2!).toBe('fast');
+    expect(result2).toBe('fast');
   });
 
   it.skip('should wait for synchronization to complete', async () => {
@@ -156,20 +144,16 @@ describe('useStateSynchronization', () => {
       return 'result';
     });
 
-    // Start operation
-    await act(async () => {
-      if (result.current) {
-        result.current.withSynchronization('test-op', operation);
-      }
+    // Start operation without awaiting it
+    act(() => {
+      result.current.withSynchronization('test-op', operation);
     });
 
     expect(operationCompleted).toBe(false);
 
     // Wait for it to complete
     await act(async () => {
-      if (result.current) {
-        await result.current.waitForSynchronization();
-      }
+      await result.current.waitForSynchronization();
     });
 
     expect(operationCompleted).toBe(true);

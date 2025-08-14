@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "ms-vscode.vscode-eslint",
+    "ms-vscode.vscode-typescript-next",
+    "bradlc.vscode-tailwindcss",
+    "formulahendry.auto-rename-tag",
+    "ms-playwright.playwright",
+    "ms-vscode.test-adapter-converter"
+  ]
+}

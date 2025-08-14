@@ -1,15 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import i18n from '../i18n';
+import i18n, { loadLanguage } from '../i18n';
 import {
   saveHasSeenAppGuide,
-  resetAppSettings as utilResetAppSettings,
   saveLastHomeTeamName as utilSaveLastHomeTeamName,
   updateAppSettings as utilUpdateAppSettings,
 } from '@/utils/appSettings';
 import { exportFullBackup } from '@/utils/fullBackup';
 import { sendBackupEmail } from '@/utils/sendBackupEmail';
 import logger from '@/utils/logger';
+import { useToast } from '@/contexts/ToastProvider';
+import { hardResetAllUserData } from '@/utils/hardResetApp';
 
 interface UseAppSettingsManagerProps {
   setIsSettingsModalOpen: (open: boolean) => void;
@@ -25,6 +26,7 @@ export const useAppSettingsManager = ({
   setIsInstructionsModalOpen,
 }: UseAppSettingsManagerProps) => {
   const { t } = useTranslation();
+  const { showToast } = useToast();
 
   // --- Settings State ---
   const [appLanguage, setAppLanguage] = useState<string>(i18n.language);
@@ -38,8 +40,11 @@ export const useAppSettingsManager = ({
   useEffect(() => {
     // Only update if language actually changed
     if (i18n.language !== appLanguage) {
-      i18n.changeLanguage(appLanguage);
-      utilUpdateAppSettings({ language: appLanguage }).catch(() => {});
+      loadLanguage(appLanguage).then(() => {
+        utilUpdateAppSettings({ language: appLanguage }).catch(() => {});
+      }).catch(error => {
+        logger.warn('[useAppSettingsManager] Failed to change language:', error);
+      });
     }
   }, [appLanguage]);
 
@@ -54,15 +59,17 @@ export const useAppSettingsManager = ({
   const handleHardResetApp = useCallback(async () => {
     if (window.confirm(t('controlBar.hardResetConfirmation', 'Are you sure you want to completely reset the application? All saved data (players, stats, positions) will be permanently lost.'))) {
       try {
-        logger.log("Performing hard reset using utility...");
-        await utilResetAppSettings(); // Use utility function
-        window.location.reload();
+        logger.log('[HardReset] Starting full user data wipe...');
+        const res = await hardResetAllUserData();
+        logger.log('[HardReset] Completed', res);
+        showToast(t('settingsModal.resetSuccess', 'All data erased successfully. Reloading...'), 'success');
+        setTimeout(() => window.location.reload(), 600);
       } catch (error) {
-        logger.error("Error during hard reset:", error);
-        alert("Failed to reset application data.");
+        logger.error('[HardReset] Error during hard reset:', error);
+        showToast(t('settingsModal.resetFailed', 'Failed to reset application data.'), 'error');
       }
     }
-  }, [t]);
+  }, [t, showToast]);
 
   // --- Backup Handlers ---
   const handleCreateAndSendBackup = useCallback(async () => {
@@ -74,7 +81,7 @@ export const useAppSettingsManager = ({
         );
         if (confirmSend) {
           await sendBackupEmail(json, backupEmail);
-          alert(t('settingsModal.sendBackupSuccess', 'Backup sent successfully.'));
+          showToast(t('settingsModal.sendBackupSuccess', 'Backup sent successfully.'), 'success');
         }
       } else {
         // Download backup if no email is set
@@ -90,9 +97,9 @@ export const useAppSettingsManager = ({
       }
     } catch (error) {
       logger.error("Error creating backup:", error);
-      alert(t('settingsModal.backupError', 'Failed to create backup.'));
+      showToast(t('settingsModal.backupError', 'Failed to create backup.'), 'error');
     }
-  }, [backupEmail, t]);
+  }, [backupEmail, t, showToast]);
 
   // --- Settings Change Handlers ---
   const handleLanguageChange = useCallback((lang: string) => {

@@ -1,6 +1,7 @@
 import { getSavedGames, saveGames } from './savedGames';
-import type { SavedGamesCollection } from '@/types';
+// import type { SavedGamesCollection } from '@/types'; // Unused import
 import logger from './logger';
+import { safeCast, validateSavedGamesCollection } from './typeValidation';
 
 /**
  * Adds `isPlayed: true` to any saved game lacking the property.
@@ -17,7 +18,8 @@ export const migrateSavedGamesIsPlayed = async (): Promise<number> => {
       }
     });
     if (updated > 0) {
-      await saveGames(games as SavedGamesCollection);
+      const validatedGames = safeCast(games, validateSavedGamesCollection, 'migrateSavedGamesIsPlayed');
+      await saveGames(validatedGames);
     }
     return updated;
   } catch (error) {

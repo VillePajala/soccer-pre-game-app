@@ -7,6 +7,7 @@ import { getSeasons as utilGetSeasons } from '@/utils/seasons';
 import { getTournaments as utilGetTournaments } from '@/utils/tournaments';
 import { usePlayerStats } from '@/hooks/usePlayerStats';
 import type { StatsTab, SortableColumn, SortDirection } from './types';
+import logger from '@/utils/logger';
 
 // Lazy load tab components for code splitting optimization
 const CurrentGameStats = lazy(() => import('./CurrentGameStats'));
@@ -99,7 +100,7 @@ const GameStatsModalNew: React.FC<GameStatsModalProps> = ({
         setSeasons(seasonsData || []);
         setTournaments(tournamentsData || []);
       } catch (error) {
-        console.error('[GameStatsModal] Failed to load seasons/tournaments:', error);
+        logger.error('[GameStatsModal] Failed to load seasons/tournaments:', error);
         setSeasons([]);
         setTournaments([]);
       }

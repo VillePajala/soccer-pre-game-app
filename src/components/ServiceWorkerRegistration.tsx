@@ -2,14 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import UpdateBanner from './UpdateBanner';
+import { useUpdate } from '@/contexts/UpdateContext';
 import logger from '@/utils/logger';
 
 export default function ServiceWorkerRegistration() {
   const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
   const [showUpdateBanner, setShowUpdateBanner] = useState(false);
   const [releaseNotes, setReleaseNotes] = useState<string | null>(null);
+  const { setUpdateAvailable, setReleaseNotes: setGlobalReleaseNotes, setVersionInfo } = useUpdate();
 
   useEffect(() => {
+    const controller = new AbortController();
+    
     if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
       logger.log('[PWA] Service Worker is not supported or not in browser.');
       return;
@@ -29,13 +33,20 @@ export default function ServiceWorkerRegistration() {
 
     const fetchReleaseNotes = async () => {
       try {
-        const res = await fetch('/release-notes.json', { cache: 'no-store' });
+        const res = await fetch('/release-notes.json', { 
+          cache: 'no-store',
+          signal: controller.signal 
+        });
         if (res.ok) {
           const data = await res.json();
           setReleaseNotes(data.notes);
+          setGlobalReleaseNotes(data.notes || '');
+          setVersionInfo(data.version);
         }
       } catch (error) {
-        logger.error('Failed to fetch release notes', error);
+        if (error instanceof Error && error.name !== 'AbortError') {
+          logger.error('Failed to fetch release notes', error);
+        }
       }
     };
 
@@ -49,6 +60,7 @@ export default function ServiceWorkerRegistration() {
         setWaitingWorker(registration.waiting);
         fetchReleaseNotes();
         setShowUpdateBanner(true);
+        setUpdateAvailable(true);
         return;
       }
 
@@ -64,6 +76,7 @@ export default function ServiceWorkerRegistration() {
                 setWaitingWorker(newWorker);
                 fetchReleaseNotes();
                 setShowUpdateBanner(true);
+                setUpdateAvailable(true);
               }
           };
         }
@@ -74,12 +87,24 @@ export default function ServiceWorkerRegistration() {
 
     // Listen for controller changes
     let refreshing = false;
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
+    const handleControllerChange = () => {
       if (refreshing) return;
       refreshing = true;
       window.location.reload();
-    });
+    };
+    
+    navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
 
+    // Cleanup function
+    return () => {
+      controller.abort();
+      // Check if removeEventListener exists (not available in all environments/tests)
+      if (navigator.serviceWorker && typeof navigator.serviceWorker.removeEventListener === 'function') {
+        navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
+      }
+    };
+    // Disabling exhaustive-deps as we only want this to run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleUpdate = () => {

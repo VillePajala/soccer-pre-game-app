@@ -1,7 +1,7 @@
 # Product Requirements Document
 
 ## 1. Elevator Pitch
-A mobile-first progressive web app for soccer coaches to manage rosters, log game events and design tactics.  Coaches can drag players onto the field, keep score with a built in timer and record goals or cards as they happen.  Everything is stored locally so the app works offline and remains fast on the sideline.
+A mobile-first progressive web app for soccer coaches to manage rosters, log game events and design tactics. Coaches can drag players onto the field, keep score with a built in timer and record goals or cards as they happen. Works fully offline and optionally syncs via Supabase for cross-device access.
 
 ## 2. Who is this app for
 Coaches of youth and amateur teams who need a single tool for pre‑game planning, live event tracking and quick tactical visualization on phones or tablets.
@@ -18,7 +18,7 @@ Coaches of youth and amateur teams who need a single tool for pre‑game plannin
 - Dedicated tactics board with freehand drawing tools
 - Toggle player name visibility
 - Responsive design for mobile and desktop
-- Offline first using `localStorage`
+- Offline first using multi-layer storage (Supabase + IndexedDB cache + localStorage fallback)
 - Internationalization for English and Finnish
 
 ## 4. User Stories
@@ -35,5 +35,6 @@ Coaches of youth and amateur teams who need a single tool for pre‑game plannin
 - Main soccer field canvas for placing players and drawing
 - Bottom control bar with undo/redo, timer controls and settings
 - Modals for roster management, game stats, save/load and instructions
+- Optional auth/sign-in flow for enabling cloud sync
 - Dedicated tactics view that hides the scoreboard for a clean drawing space
 

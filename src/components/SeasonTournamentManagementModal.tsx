@@ -8,6 +8,8 @@ import { HiPlusCircle, HiOutlinePencil, HiOutlineTrash, HiOutlineCheck, HiOutlin
 import { UseMutationResult } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import RosterSelection from './RosterSelection';
+import logger from '@/utils/logger';
+import MigrationErrorBoundary from './MigrationErrorBoundary';
 
 interface SeasonTournamentManagementModalProps {
     isOpen: boolean;
@@ -144,7 +146,7 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                         handleCancelEdit();
                     },
                     onError: (error) => {
-                        console.error('Failed to update season:', error);
+                        logger.error('Failed to update season:', error);
                         // Keep edit mode open so user can try again
                     }
                 });
@@ -154,7 +156,7 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                         handleCancelEdit();
                     },
                     onError: (error) => {
-                        console.error('Failed to update tournament:', error);
+                        logger.error('Failed to update tournament:', error);
                         // Keep edit mode open so user can try again
                     }
                 });
@@ -253,8 +255,39 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
                             <label className="text-slate-200 text-sm flex items-center gap-1"><input type="checkbox" checked={(type==='season'?newSeasonFields.archived:newTournamentFields.archived) || false} onChange={(e)=>type==='season'?setNewSeasonFields(f=>({...f,archived:e.target.checked})):setNewTournamentFields(f=>({...f,archived:e.target.checked}))} className="form-checkbox h-4 w-4" />{t('seasonTournamentModal.archiveLabel')}</label>
                         </div>
                         <div className="flex justify-end gap-2">
-                            <button onClick={() => {setShowInput(false); if(type==='season'){setNewSeasonFields({});} else {setNewTournamentFields({});}}} className="px-3 py-1 text-xs rounded bg-slate-600 hover:bg-slate-500">{t('common.cancel')}</button>
-                            <button onClick={() => handleSave(type)} className="px-3 py-1 text-xs rounded bg-indigo-600 hover:bg-indigo-500" data-testid={`save-new-${type}-button`}>{t('common.save')}</button>
+                            <button 
+                                onClick={() => {setShowInput(false); if(type==='season'){setNewSeasonFields({});} else {setNewTournamentFields({});}}} 
+                                disabled={type === 'season' ? addSeasonMutation.isPending : addTournamentMutation.isPending}
+                                className={`px-3 py-1 text-xs rounded ${
+                                    (type === 'season' ? addSeasonMutation.isPending : addTournamentMutation.isPending) 
+                                        ? 'bg-slate-700 cursor-not-allowed' 
+                                        : 'bg-slate-600 hover:bg-slate-500'
+                                }`}
+                            >
+                                {t('common.cancel')}
+                            </button>
+                            <button 
+                                onClick={() => handleSave(type)} 
+                                disabled={type === 'season' ? addSeasonMutation.isPending : addTournamentMutation.isPending}
+                                className={`px-3 py-1 text-xs rounded flex items-center gap-1 ${
+                                    (type === 'season' ? addSeasonMutation.isPending : addTournamentMutation.isPending) 
+                                        ? 'bg-indigo-700 cursor-not-allowed' 
+                                        : 'bg-indigo-600 hover:bg-indigo-500'
+                                }`} 
+                                data-testid={`save-new-${type}-button`}
+                            >
+                                {(type === 'season' ? addSeasonMutation.isPending : addTournamentMutation.isPending) ? (
+                                    <>
+                                        <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        {t('common.saving')}
+                                    </>
+                                ) : (
+                                    t('common.save')
+                                )}
+                            </button>
                         </div>
                     </div>
                 )}
@@ -397,4 +430,11 @@ const SeasonTournamentManagementModal: React.FC<SeasonTournamentManagementModalP
   );
 };
 
-export default SeasonTournamentManagementModal; 
+// Wrapped component with error boundary
+const SeasonTournamentManagementModalWithErrorBoundary: React.FC<SeasonTournamentManagementModalProps> = (props) => (
+  <MigrationErrorBoundary componentName="SeasonTournamentManagementModal">
+    <SeasonTournamentManagementModal {...props} />
+  </MigrationErrorBoundary>
+);
+
+export default SeasonTournamentManagementModalWithErrorBoundary; 

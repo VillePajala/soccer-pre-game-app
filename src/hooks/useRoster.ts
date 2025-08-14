@@ -8,9 +8,10 @@ interface UseRosterArgs {
   initialPlayers: Player[];
   selectedPlayerIds: string[];
   onPlayerIdUpdated?: (tempId: string, newId: string) => void;
+  onFieldPlayersUpdate?: (updateFn: (players: Player[]) => Player[]) => void;
 }
 
-export const useRoster = ({ initialPlayers, selectedPlayerIds, onPlayerIdUpdated }: UseRosterArgs) => {
+export const useRoster = ({ initialPlayers, selectedPlayerIds, onPlayerIdUpdated, onFieldPlayersUpdate }: UseRosterArgs) => {
   const queryClient = useQueryClient();
   const cacheManager = useCacheManager(queryClient);
   const [availablePlayers, setAvailablePlayers] = useState<Player[]>(initialPlayers);
@@ -153,6 +154,7 @@ export const useRoster = ({ initialPlayers, selectedPlayerIds, onPlayerIdUpdated
   };
 
   const handleSetGoalieStatus = async (playerId: string, isGoalie: boolean) => {
+    console.log('[useRoster] handleSetGoalieStatus called:', { playerId, isGoalie });
     const prev = [...availablePlayers];
     setIsRosterUpdating(true);
     
@@ -164,27 +166,54 @@ export const useRoster = ({ initialPlayers, selectedPlayerIds, onPlayerIdUpdated
         return p;
       });
     
-    setAvailablePlayers(goalieUpdate);
-    cacheManager.updateMasterRosterCache(goalieUpdate);
+    console.log('[useRoster] Applying optimistic update');
+    
+    // Calculate the updated players once
+    const updatedPlayers = goalieUpdate(availablePlayers);
+    
+    setAvailablePlayers(updatedPlayers);
+    cacheManager.updateMasterRosterCache(() => updatedPlayers);
     
     try {
+      console.log('[useRoster] Calling setGoalieStatus storage operation');
       const updated = await setGoalieStatus(playerId, isGoalie);
+      console.log('[useRoster] setGoalieStatus result:', updated);
       if (!updated) {
+        console.log('[useRoster] Storage operation failed, rolling back');
         // Rollback optimistic updates
         setAvailablePlayers(prev);
         cacheManager.updateMasterRosterCache(() => prev);
+        
+        // CRITICAL FIX: Also rollback field players to previous state while preserving positions
+        if (onFieldPlayersUpdate) {
+          console.log('[useRoster] Rolling back field players');
+          onFieldPlayersUpdate((currentFieldPlayers) => {
+            // Rollback: restore previous goalie states for field players while preserving positions
+            return currentFieldPlayers.map(fieldPlayer => {
+              const prevPlayer = prev.find(p => p.id === fieldPlayer.id);
+              if (prevPlayer) {
+                // Restore goalie status from previous state but keep field position
+                return { ...fieldPlayer, isGoalie: prevPlayer.isGoalie };
+              }
+              return fieldPlayer; // No changes, preserve position
+            });
+          });
+        }
         setRosterError('Failed to set goalie status');
       } else {
+        console.log('[useRoster] Storage operation succeeded');
         setRosterError(null);
         // Optimistic update was correct, no additional action needed
       }
-    } catch {
+    } catch (error) {
+      console.log('[useRoster] Storage operation threw error:', error);
       // Rollback optimistic updates
       setAvailablePlayers(prev);
       cacheManager.updateMasterRosterCache(() => prev);
       setRosterError('Failed to set goalie status');
     } finally {
       setIsRosterUpdating(false);
+      console.log('[useRoster] handleSetGoalieStatus completed');
     }
   };
 

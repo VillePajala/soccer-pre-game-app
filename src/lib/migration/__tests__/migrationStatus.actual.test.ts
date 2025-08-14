@@ -87,15 +87,18 @@ describe('Migration Status (Actual Implementation)', () => {
       });
     });
 
-    it('should throw when JSON data is corrupted', () => {
+    it('should handle corrupted JSON gracefully with fallback values', () => {
       mockLocalStorage.getItem
         .mockImplementation((key: string) => {
           if (key === 'masterRoster') return 'invalid-json';
           return '[]';
         });
 
-      // The current implementation does throw on corrupted JSON
-      expect(() => checkLocalStorageData()).toThrow();
+      // The current implementation uses safeLocalStorageGet which doesn't throw
+      // but returns fallback values instead
+      expect(() => checkLocalStorageData()).not.toThrow();
+      const result = checkLocalStorageData();
+      expect(result.players).toBe(0); // fallback to empty array
     });
   });
 
@@ -206,9 +209,9 @@ describe('Migration Status (Actual Implementation)', () => {
           user_id: mockUserId,
           migration_started: true,
           migration_progress: 50,
-          last_migration_attempt: '2024-01-01T12:00:00Z'
-        }),
-        { onConflict: 'user_id' }
+          last_migration_attempt: '2024-01-01T12:00:00Z',
+          updated_at: expect.any(String)
+        })
       );
     });
 

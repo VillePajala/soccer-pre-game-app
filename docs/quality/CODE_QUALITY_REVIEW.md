@@ -37,9 +37,9 @@ This review includes comprehensive, step-by-step action plans organized by prior
 
 - **[Component Refactoring Guide](guides/COMPONENT_REFACTORING_GUIDE.md)** - Breaking down HomePage
 - **[State Management Migration](guides/STATE_MANAGEMENT_MIGRATION.md)** - Unified state strategy
-- **[Performance Optimization Guide](guides/PERFORMANCE_OPTIMIZATION_GUIDE.md)** - Bundle & runtime improvements
-- **[Testing Strategy Guide](guides/TESTING_STRATEGY_GUIDE.md)** - Coverage & quality improvements
-- **[TypeScript Improvements Guide](guides/TYPESCRIPT_IMPROVEMENTS_GUIDE.md)** - Type safety enhancements
+- Performance Optimization Guide (planned)
+- Testing Strategy: see `../production/TESTING_STRATEGY.md`
+- TypeScript Improvements Guide (planned)
 
 ## Architecture Assessment
 

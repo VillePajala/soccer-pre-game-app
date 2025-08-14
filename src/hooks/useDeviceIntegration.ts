@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { deviceIntegration } from '@/lib/native/deviceIntegration';
+import logger from '@/utils/logger';
 
 interface DeviceIntegrationState {
   capabilities: {
@@ -66,9 +67,9 @@ export function useDeviceIntegration(): UseDeviceIntegrationReturn {
           isLoading: false
         }));
 
-        console.log('[Device Hook] Initialized with capabilities:', capabilities);
+        logger.debug('[Device Hook] Initialized with capabilities:', capabilities);
       } catch (error) {
-        console.error('[Device Hook] Failed to initialize:', error);
+        logger.error('[Device Hook] Failed to initialize:', error);
         setState(prev => ({
           ...prev,
           isLoading: false,
@@ -147,7 +148,7 @@ export function useDeviceIntegration(): UseDeviceIntegrationReturn {
     try {
       return deviceIntegration.vibrate(pattern);
     } catch (error) {
-      console.error('[Device Hook] Vibration failed:', error);
+      logger.error('[Device Hook] Vibration failed:', error);
       return false;
     }
   }, []);

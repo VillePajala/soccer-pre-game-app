@@ -396,5 +396,168 @@ describe('Data Transformation Utilities', () => {
         user_id: mockUserId
       });
     });
+
+    it('should handle season with empty id', () => {
+      const seasonWithEmptyId: Season = {
+        id: '',
+        name: 'Test Season',
+        periodCount: 2,
+        periodDuration: 45,
+        archived: false
+      };
+
+      const result = toSupabase.season(seasonWithEmptyId, mockUserId);
+
+      expect(result.id).toBeUndefined();
+      expect(result.name).toBe('Test Season');
+    });
+
+    it('should handle tournament with empty id', () => {
+      const tournamentWithEmptyId: Tournament = {
+        id: '',
+        name: 'Test Tournament',
+        periodCount: 2,
+        periodDuration: 45,
+        archived: false
+      };
+
+      const result = toSupabase.tournament(tournamentWithEmptyId, mockUserId);
+
+      expect(result.id).toBeUndefined();
+      expect(result.name).toBe('Test Tournament');
+    });
+
+    it('should handle season with defaultRoster array', () => {
+      const seasonWithRosterArray: Season = {
+        id: 'season-1',
+        name: 'Test Season',
+        periodCount: 2,
+        periodDuration: 45,
+        archived: false,
+        defaultRoster: ['player-1', 'player-2']
+      };
+
+      const result = toSupabase.season(seasonWithRosterArray, mockUserId);
+
+      expect(result.default_roster_ids).toEqual(['player-1', 'player-2']);
+    });
+
+    it('should handle tournament with defaultRoster array', () => {
+      const tournamentWithRosterArray: Tournament = {
+        id: 'tournament-1',
+        name: 'Test Tournament',
+        periodCount: 2,
+        periodDuration: 45,
+        archived: false,
+        defaultRoster: ['player-1', 'player-2']
+      };
+
+      const result = toSupabase.tournament(tournamentWithRosterArray, mockUserId);
+
+      expect(result.default_roster_ids).toEqual(['player-1', 'player-2']);
+    });
+
+    it('should handle season with defaultRosterId as array', () => {
+      const seasonWithRosterIdArray: Season = {
+        id: 'season-1',
+        name: 'Test Season',
+        periodCount: 2,
+        periodDuration: 45,
+        archived: false,
+        defaultRosterId: ['player-1', 'player-2'] as any
+      };
+
+      const result = toSupabase.season(seasonWithRosterIdArray, mockUserId);
+
+      expect(result.default_roster_ids).toEqual(['player-1', 'player-2']);
+    });
+
+    it('should handle tournament with defaultRosterId as array', () => {
+      const tournamentWithRosterIdArray: Tournament = {
+        id: 'tournament-1',
+        name: 'Test Tournament',
+        periodCount: 2,
+        periodDuration: 45,
+        archived: false,
+        defaultRosterId: ['player-1', 'player-2'] as any
+      };
+
+      const result = toSupabase.tournament(tournamentWithRosterIdArray, mockUserId);
+
+      expect(result.default_roster_ids).toEqual(['player-1', 'player-2']);
+    });
+
+    it('should handle season updates with roster changes', () => {
+      const updates: Partial<Season> = {
+        name: 'Updated Season',
+        defaultRoster: ['player-3', 'player-4'],
+        archived: true
+      };
+
+      const result = toSupabase.seasonUpdate(updates, mockUserId);
+
+      expect(result).toEqual({
+        user_id: mockUserId,
+        name: 'Updated Season',
+        default_roster_ids: ['player-3', 'player-4'],
+        archived: true
+      });
+    });
+
+    it('should handle season updates with defaultRosterId', () => {
+      const updates: Partial<Season> = {
+        name: 'Updated Season',
+        defaultRosterId: 'player-5' as any
+      };
+
+      const result = toSupabase.seasonUpdate(updates, mockUserId);
+
+      expect(result).toEqual({
+        user_id: mockUserId,
+        name: 'Updated Season',
+        default_roster_ids: ['player-5']
+      });
+    });
+
+    it('should handle tournament updates with all fields', () => {
+      const updates: Partial<Tournament> = {
+        name: 'Updated Tournament',
+        location: 'New Location',
+        startDate: '2024-08-01',
+        endDate: '2024-08-15',
+        periodCount: 3,
+        periodDuration: 30,
+        gameDates: ['2024-08-05'],
+        archived: true,
+        notes: 'Updated notes',
+        color: '#ff0000',
+        badge: 'new-badge',
+        level: 'Advanced',
+        ageGroup: 'U16',
+        seasonId: 'season-2',
+        defaultRoster: ['player-6']
+      };
+
+      const result = toSupabase.tournamentUpdate(updates, mockUserId);
+
+      expect(result).toEqual({
+        user_id: mockUserId,
+        name: 'Updated Tournament',
+        location: 'New Location',
+        start_date: '2024-08-01',
+        end_date: '2024-08-15',
+        period_count: 3,
+        period_duration: 30,
+        game_dates: ['2024-08-05'],
+        archived: true,
+        notes: 'Updated notes',
+        color: '#ff0000',
+        badge: 'new-badge',
+        level: 'Advanced',
+        age_group: 'U16',
+        season_id: 'season-2',
+        default_roster_ids: ['player-6']
+      });
+    });
   });
 });

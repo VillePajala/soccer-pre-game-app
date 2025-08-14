@@ -15,20 +15,22 @@ export function useAuthStorage() {
   useEffect(() => {
     // Always sync auth state, even during loading
     
-    // Get the base manager (might be wrapped in offline cache)
-    let manager = authAwareStorageManager;
-    
-    // If wrapped in offline cache, get the primary provider
-    if (manager instanceof OfflineCacheManager) {
-      const offlineManager = manager as OfflineCacheManager;
-      manager = (offlineManager as unknown as { primaryProvider: AuthAwareStorageManager }).primaryProvider;
-    }
-    
-    // Update auth state if it's an AuthAwareStorageManager
-    if (manager instanceof AuthAwareStorageManager) {
-      // Force update even if loading
-      manager.updateAuthState(!!user, user?.id || null);
-    }
+    // Update auth state through a stable API even if wrapped
+    const update = (mgr: unknown) => {
+      if (mgr instanceof AuthAwareStorageManager) {
+        mgr.updateAuthState(!!user, user?.id || null);
+        return true;
+      }
+      if (mgr instanceof OfflineCacheManager) {
+        // The OfflineCacheManager proxies to the primary provider via a public method
+        (mgr as OfflineCacheManager).setUserId(user?.id || null);
+        // Try to reach inner provider if available
+        const inner = (mgr as unknown as { primaryProvider?: unknown }).primaryProvider;
+        if (inner) return update(inner);
+      }
+      return false;
+    };
+    update(authAwareStorageManager);
     
     // Also update offline cache manager with user ID if applicable
     if (authAwareStorageManager instanceof OfflineCacheManager) {

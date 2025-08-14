@@ -33,6 +33,14 @@ export class AuthAwareStorageManager extends StorageManager {
   }
 
   /**
+   * Explicit sign-out cleanup for storage manager consumers
+   */
+  handleSignOutCleanup(): void {
+    this.authState = { isAuthenticated: false, userId: null };
+    this.reconfigureForAuthState();
+  }
+
+  /**
    * Get current authentication state
    */
   getAuthState(): { isAuthenticated: boolean; userId: string | null } {

@@ -1,19 +1,19 @@
 {
-  "name": "MatchDay Coach (Dev)",
-  "short_name": "Dev App",
-  "description": "Soccer Tactics and Timer App for Coaches",
+  "name": "MatchOps Coach (Preview)",
+  "short_name": "Preview App",
+  "description": "Plan • Track • Debrief - Soccer Tactics and Timer App for Coaches",
   "start_url": "/",
   "display": "fullscreen",
   "background_color": "#111827",
-  "theme_color": "#4f46e5",
+  "theme_color": "#ca8a04",
   "icons": [
     {
-      "src": "/pepo-logo-dev.png",
+      "src": "/pepo-logo.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/pepo-logo-dev.png",
+      "src": "/pepo-logo.png",
       "sizes": "512x512",
       "type": "image/png"
     }

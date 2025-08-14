@@ -3,6 +3,9 @@ import { authAwareStorageManager as storageManager } from '@/lib/storage';
 import type { SavedGamesCollection, AppState, GameEvent as PageGameEvent, Point, Opponent, IntervalLog } from '@/types';
 import type { Player } from '@/types';
 import logger from '@/utils/logger';
+import { safeImportDataParse } from './safeJson';
+import { executeAtomicSave, createSaveOperation } from './atomicSave';
+import { safeCast, validateAppState } from './typeValidation';
 
 // Note: AppState (imported from @/types) is the primary type used for live game state
 // and for storing games in localStorage via SavedGamesCollection.
@@ -77,16 +80,22 @@ export const saveGames = async (games: SavedGamesCollection): Promise<void> => {
  * @param gameData - Game data to save
  * @returns Promise resolving to the saved game data
  */
+/**
+ * Enhanced atomic save game function with rollback support
+ * Addresses CR-008: Non-Atomic Game Save Operations
+ */
 export const saveGame = async (gameId: string, gameData: unknown): Promise<AppState> => {
   try {
     if (!gameId) {
       throw new Error('Game ID is required');
     }
     
-    const gameWithId = { ...(gameData as AppState), id: gameId };
+    // Validate the input data before proceeding
+    const validatedGameData = safeCast(gameData, validateAppState, `saveGame-${gameId}`);
+    const gameWithId = { ...validatedGameData, id: gameId };
     
     // CRITICAL BUG FIX: Add detailed logging for assist debugging
-    const gameEvents = (gameWithId as AppState).gameEvents || [];
+    const gameEvents = gameWithId.gameEvents || [];
     const assistEvents = gameEvents.filter(event => event.type === 'goal' && event.assisterId);
     if (assistEvents.length > 0) {
       logger.log(`Saving game with ${assistEvents.length} assist events:`, assistEvents.map(e => {
@@ -101,19 +110,64 @@ export const saveGame = async (gameId: string, gameData: unknown): Promise<AppSt
         return { id: e.id, type: e.type, time: e.time };
       }));
     }
+
+    // Store original game state for potential rollback
+    let originalGameState: AppState | null = null;
+    try {
+      const existingGames = await getSavedGames();
+      originalGameState = existingGames[gameId] as AppState || null;
+    } catch {
+      // No existing game to backup - that's fine for new games
+    }
+
+    // Create atomic save operation with rollback capability
+    const saveOperation = createSaveOperation(
+      `saveGame-${gameId}`,
+      async () => {
+        logger.log(`[AtomicSave] Executing save for game ${gameId}`);
+        return await storageManager.saveSavedGame(gameWithId);
+      },
+      async () => {
+        if (originalGameState) {
+          logger.log(`[AtomicSave] Rolling back game ${gameId} to previous state`);
+          await storageManager.saveSavedGame(originalGameState);
+        } else {
+          logger.log(`[AtomicSave] Deleting game ${gameId} (was new game)`);
+          await storageManager.deleteSavedGame(gameId);
+        }
+      }
+    );
+
+    // Execute the atomic save transaction
+    const result = await executeAtomicSave([saveOperation]);
     
-    const savedGame = await storageManager.saveSavedGame(gameWithId);
-    return savedGame as AppState;
+    if (!result.success) {
+      throw new Error(result.error || 'Atomic save operation failed');
+    }
+
+    const savedGame = result.results?.[0] as AppState;
+    if (!savedGame) {
+      throw new Error('Save operation completed but no result returned');
+    }
+
+    logger.log(`[AtomicSave] Game ${gameId} saved successfully`);
+    return savedGame;
+    
   } catch (error) {
-    logger.error('Error saving game:', error);
+    logger.error('Error in atomic save game:', error);
     
     // CRITICAL BUG FIX: Add specific logging for assist-related errors
     if (error instanceof Error && error.message.includes('assist')) {
-      logger.error('Assist-related save error details:', {
-        gameId,
-        gameEvents: (gameData as AppState)?.gameEvents?.length || 0,
-        assistEvents: (gameData as AppState)?.gameEvents?.filter(e => e.type === 'goal' && e.assisterId).length || 0
-      });
+      try {
+        const gameDataForLogging = safeCast(gameData, validateAppState, 'errorLogging');
+        logger.error('Assist-related save error details:', {
+          gameId,
+          gameEvents: gameDataForLogging.gameEvents?.length || 0,
+          assistEvents: gameDataForLogging.gameEvents?.filter(e => e.type === 'goal' && e.assisterId).length || 0
+        });
+      } catch {
+        logger.error('Could not log assist details due to data validation failure');
+      }
     }
     
     throw error;
@@ -129,22 +183,41 @@ export const getMostRecentGameId = async (): Promise<string | null> => {
   try {
     const allGames = await getSavedGames();
     const gameIds = Object.keys(allGames);
-    
+
     if (gameIds.length === 0) {
       return null;
     }
-    
-    // Sort games by date and time to find the most recent
-    const sortedGames = gameIds
-      .map(id => ({ id, game: allGames[id] }))
-      .filter(({ game }) => game && game.gameDate) // Ensure game and date exist
-      .sort((a, b) => {
-        const dateA = new Date(a.game.gameDate + ' ' + (a.game.gameTime || '00:00'));
-        const dateB = new Date(b.game.gameDate + ' ' + (b.game.gameTime || '00:00'));
-        return dateB.getTime() - dateA.getTime();
-      });
-    
-    return sortedGames.length > 0 ? sortedGames[0].id : null;
+
+    // Robust date parsing with fallbacks (align with LoadGameModal/HomePage logic)
+    const safeParse = (game: AppState): number => {
+      const aDateStr = `${game.gameDate || ''} ${game.gameTime || ''}`.trim();
+      if (aDateStr && Number.isFinite(Date.parse(aDateStr))) {
+        return new Date(aDateStr).getTime();
+      }
+      if (game.gameDate && Number.isFinite(Date.parse(game.gameDate))) {
+        return new Date(game.gameDate).getTime();
+      }
+      return 0;
+    };
+
+    const withScores = gameIds.map((id) => ({ id, game: allGames[id] as AppState, score: safeParse(allGames[id] as AppState) }));
+
+    const sorted = withScores.sort((a, b) => {
+      if (b.score !== a.score) {
+        if (!a.score) return 1;
+        if (!b.score) return -1;
+        return b.score - a.score;
+      }
+      // Secondary: fallback to timestamp embedded in ID if present
+      const tsA = parseInt((a.id.split('_')[1] || '').trim(), 10);
+      const tsB = parseInt((b.id.split('_')[1] || '').trim(), 10);
+      if (!Number.isNaN(tsA) && !Number.isNaN(tsB)) {
+        return tsB - tsA;
+      }
+      return 0;
+    });
+
+    return sorted.length > 0 ? sorted[0].id : null;
   } catch (error) {
     logger.error('Error getting most recent game ID:', error);
     return null;
@@ -218,6 +291,8 @@ export const createGame = async (gameData: Partial<AppState>): Promise<{ gameId:
       periodDurationMinutes: gameData.periodDurationMinutes || 10,
       currentPeriod: gameData.currentPeriod || 1,
       gameStatus: gameData.gameStatus || 'notStarted',
+      // Default to true to ensure legacy games remain included in stats
+      // Users can explicitly mark future/planned games as not played
       isPlayed: gameData.isPlayed === undefined ? true : gameData.isPlayed,
       selectedPlayerIds: gameData.selectedPlayerIds || [],
       assessments: gameData.assessments || {},
@@ -275,12 +350,11 @@ export const getFilteredGames = async (filters: {
     
     const filtered = gameEntries.filter(([, game]) => {
       const gameData = game as AppState;
-      // If filters.seasonId is provided (not null/undefined), game must match.
-      // If filters.seasonId is null/undefined, this part of the condition is true (don't filter by season).
-      const seasonMatch = filters.seasonId === undefined || filters.seasonId === null || gameData.seasonId === filters.seasonId;
-      // If filters.tournamentId is provided (not null/undefined), game must match.
-      // This correctly handles filtering for tournamentId: '' (empty string).
-      const tournamentMatch = filters.tournamentId === undefined || filters.tournamentId === null || gameData.tournamentId === filters.tournamentId;
+      // Treat empty strings as no filter
+      const seasonFilter = (filters.seasonId ?? undefined) === '' ? undefined : filters.seasonId ?? undefined;
+      const tournamentFilter = (filters.tournamentId ?? undefined) === '' ? undefined : filters.tournamentId ?? undefined;
+      const seasonMatch = seasonFilter === undefined || gameData.seasonId === seasonFilter;
+      const tournamentMatch = tournamentFilter === undefined || gameData.tournamentId === tournamentFilter;
       return seasonMatch && tournamentMatch;
     }).map(([id, game]) => [id, game as AppState] as [string, AppState]); // Ensure correct tuple type
     return filtered;
@@ -330,7 +404,7 @@ export const getLatestGameId = (games: SavedGamesCollection): string | null => {
  */
 export const updateGameDetails = async (
   gameId: string,
-  updateData: Partial<Omit<AppState, 'id' | 'events'>>
+  updateData: Partial<Omit<AppState, 'id' | 'gameEvents'>>
 ): Promise<AppState | null> => {
   try {
     const game = await getGame(gameId);
@@ -381,31 +455,33 @@ export const addGameEvent = async (gameId: string, event: PageGameEvent): Promis
 /**
  * Updates an event in a game
  * @param gameId - ID of the game
- * @param eventIndex - Index of the event to update
+ * @param eventId - ID of the event to update
  * @param eventData - New event data
  * @returns Promise resolving to the updated game data, or null on error
  */
-export const updateGameEvent = async (gameId: string, eventIndex: number, eventData: PageGameEvent): Promise<AppState | null> => {
+export const updateGameEvent = async (
+  gameId: string,
+  eventIdOrIndex: string | number,
+  eventData: PageGameEvent
+): Promise<AppState | null> => {
   try {
     const game = await getGame(gameId);
     if (!game) {
       logger.warn(`Game with ID ${gameId} not found for updating event.`);
       return null;
     }
-    
     const events = [...(game.gameEvents || [])];
-    if (eventIndex < 0 || eventIndex >= events.length) {
-      logger.warn(`Event index ${eventIndex} out of bounds for game ${gameId}.`);
+    const idx = typeof eventIdOrIndex === 'number'
+      ? eventIdOrIndex
+      : events.findIndex(e => e.id === eventIdOrIndex);
+    if (idx === -1) {
+      logger.warn(
+        `Event ${typeof eventIdOrIndex === 'number' ? `index ${eventIdOrIndex}` : `id ${eventIdOrIndex}`} not found for game ${gameId}.`
+      );
       return null;
     }
-    
-    events[eventIndex] = eventData; // Cast eventData
-    
-    const updatedGame = {
-      ...game,
-      gameEvents: events,
-    };
-    
+    events[idx] = eventData;
+    const updatedGame = { ...game, gameEvents: events };
     return saveGame(gameId, updatedGame);
   } catch (error) {
     logger.error('Error updating game event:', error);
@@ -416,30 +492,36 @@ export const updateGameEvent = async (gameId: string, eventIndex: number, eventD
 /**
  * Removes an event from a game
  * @param gameId - ID of the game
- * @param eventIndex - Index of the event to remove
+ * @param eventId - ID of the event to remove
  * @returns Promise resolving to the updated game data, or null on error
  */
-export const removeGameEvent = async (gameId: string, eventIndex: number): Promise<AppState | null> => {
+export const removeGameEvent = async (
+  gameId: string,
+  eventIdOrIndex: string | number
+): Promise<AppState | null> => {
   try {
     const game = await getGame(gameId);
     if (!game) {
       logger.warn(`Game with ID ${gameId} not found for removing event.`);
       return null;
     }
-    
     const events = [...(game.gameEvents || [])];
-    if (eventIndex < 0 || eventIndex >= events.length) {
-      logger.warn(`Event index ${eventIndex} out of bounds for game ${gameId}.`);
-      return null;
+    let newEvents: typeof events;
+    if (typeof eventIdOrIndex === 'number') {
+      if (eventIdOrIndex < 0 || eventIdOrIndex >= events.length) {
+        logger.warn(`Event index ${eventIdOrIndex} not found for game ${gameId}.`);
+        return null;
+      }
+      newEvents = events.filter((_, i) => i !== eventIdOrIndex);
+    } else {
+      const filtered = events.filter(e => e.id !== eventIdOrIndex);
+      if (filtered.length === events.length) {
+        logger.warn(`Event id ${eventIdOrIndex} not found for game ${gameId}.`);
+        return null;
+      }
+      newEvents = filtered;
     }
-    
-    events.splice(eventIndex, 1);
-    
-    const updatedGame = {
-      ...game,
-      gameEvents: events,
-    };
-    
+    const updatedGame = { ...game, gameEvents: newEvents };
     return saveGame(gameId, updatedGame);
   } catch (error) {
     logger.error('Error removing game event:', error);
@@ -466,6 +548,31 @@ export const exportGamesAsJson = async (): Promise<string | null> => {
 };
 
 /**
+ * PHASE 1.5: Load game events on-demand for better performance
+ * @param gameId - ID of the game to load events for
+ * @returns Promise resolving to the game events array
+ */
+export const loadGameEvents = async (gameId: string): Promise<unknown[]> => {
+  try {
+    if (!gameId) {
+      return [];
+    }
+    
+    // Use the storage manager's loadGameEvents method if available
+    if (storageManager.loadGameEvents) {
+      return await storageManager.loadGameEvents(gameId);
+    }
+    
+    // Fallback: get the full game and extract events
+    const game = await getGame(gameId);
+    return game?.gameEvents || [];
+  } catch (error) {
+    logger.error('Error loading game events:', error);
+    return []; // Return empty array on error to avoid breaking the UI
+  }
+};
+
+/**
  * Imports games from a JSON string into localStorage
  * @param jsonData - JSON string of games to import
  * @param overwrite - Whether to overwrite existing games with the same ID
@@ -479,10 +586,15 @@ export const importGamesFromJson = async (
 ): Promise<number> => {
   let importedCount = 0;
   try {
-    const gamesToImport = JSON.parse(jsonData) as SavedGamesCollection;
-    if (typeof gamesToImport !== 'object' || gamesToImport === null) {
-      throw new Error('Invalid JSON data format for import.');
+    const parseResult = safeImportDataParse<SavedGamesCollection>(jsonData, (data): data is SavedGamesCollection => {
+      return typeof data === 'object' && data !== null && !Array.isArray(data);
+    });
+    
+    if (!parseResult.success) {
+      throw new Error(`Invalid JSON data format for import: ${parseResult.error}`);
     }
+    
+    const gamesToImport = parseResult.data!;
 
     const existingGames = await getSavedGames();
     const gamesToSave: SavedGamesCollection = { ...existingGames }; // Make a mutable copy

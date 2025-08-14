@@ -1,0 +1,38 @@
+{
+  "eslint.enable": true,
+  "eslint.format.enable": true,
+  "eslint.lintTask.enable": true,
+  "eslint.run": "onType",
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "editor.formatOnSave": true,
+  "typescript.preferences.noUnusedParameters": "error",
+  "typescript.preferences.noUnusedLocals": "error",
+  "files.exclude": {
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/CVS": true,
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true,
+    "node_modules": true,
+    ".next": true,
+    "coverage": true,
+    "dist": true,
+    "build": true
+  },
+  "search.exclude": {
+    "node_modules": true,
+    ".next": true,
+    "coverage": true,
+    "dist": true,
+    "build": true
+  }
+}

@@ -43,7 +43,18 @@ const testResources = {
       "common.opponentGoal": "Opponent Goal",
       "common.assist": "Assist: {{player}}",
       "common.notSet": "Not Set",
-      "playerStats.totalsRow": "Totals"
+      "playerStats.totalsRow": "Totals",
+      // GoalLogModal translations
+      "goalLogModal.title": "Log Goal",
+      "goalLogModal.timeLabel": "Time",
+      "goalLogModal.scorerLabel": "Scorer",
+      "goalLogModal.assisterLabel": "Assister",
+      "goalLogModal.selectPlaceholder": "Select player",
+      "goalLogModal.noAssisterPlaceholder": "No assist",
+      "goalLogModal.logGoalButton": "Log Goal",
+      "goalLogModal.logOpponentGoalButton": "Log Opponent Goal",
+      "goalLogModal.logOpponentGoalButtonShort": "Opponent +1",
+      "goalLogModal.logOpponentGoalTooltip": "Log opponent goal"
       // Add any other keys used in GameStatsModal or its tests
     }
   },
@@ -96,7 +107,7 @@ i18n
   .use(initReactI18next)
   .init({
     resources: testResources,
-    lng: 'fi', // Set default language to Finnish for tests
+    lng: 'en', // Set default language to English for tests
     fallbackLng: 'en', // Keep English as fallback
     interpolation: {
       escapeValue: false, // react already safes from xss

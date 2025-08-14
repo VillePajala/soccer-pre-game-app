@@ -1,8 +1,11 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react'; // Added useEffect
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next'; 
+import { useToast } from '@/contexts/ToastProvider';
 import { Player } from '@/types'; // Import from types instead of page
+import logger from '@/utils/logger';
+import MigrationErrorBoundary from './MigrationErrorBoundary';
 
 interface GoalLogModalProps {
   isOpen: boolean;
@@ -22,6 +25,7 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
   currentTime,
 }) => {
   const { t } = useTranslation(); 
+  const { showToast } = useToast();
 
   const [scorerId, setScorerId] = useState<string>('');
   const [assisterId, setAssisterId] = useState<string>(''); // Empty string means no assist
@@ -47,18 +51,18 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
   const handleLogOwnGoalClick = () => {
     if (scorerId) {
       // Validate that scorer exists in available players
-      const scorer = availablePlayers.find(p => p.id === scorerId);
-      if (!scorer) {
-        alert(t('goalLogModal.scorerNotFound', 'Selected scorer is no longer available'));
-        setScorerId(''); // Clear invalid selection
-        return;
-      }
+        const scorer = availablePlayers.find(p => p.id === scorerId);
+        if (!scorer) {
+          showToast(t('goalLogModal.scorerNotFound', 'Selected scorer is no longer available'), 'error');
+          setScorerId(''); // Clear invalid selection
+          return;
+        }
       
       // Validate that assister exists if selected
-      if (assisterId) {
+        if (assisterId) {
         const assister = availablePlayers.find(p => p.id === assisterId);
         if (!assister) {
-          alert(t('goalLogModal.assisterNotFound', 'Selected assister is no longer available'));
+          showToast(t('goalLogModal.assisterNotFound', 'Selected assister is no longer available'), 'error');
           setAssisterId(''); // Clear invalid selection
           return;
         }
@@ -69,11 +73,11 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
         onLogGoal(scorerId, assisterId || undefined); // Pass undefined if assisterId is empty
         // Don't call onClose() here - let the success handler close the modal
       } catch (error) {
-        console.error('Error logging goal:', error);
+        logger.error('Error logging goal:', error);
         // Modal stays open for retry
       }
     } else {
-      alert(t('goalLogModal.selectScorer', 'Please select a scorer'));
+      showToast(t('goalLogModal.selectScorer', 'Please select a scorer'), 'info');
     }
   };
 
@@ -83,8 +87,8 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
       onLogOpponentGoal(currentTime); // Call the passed handler with the current time
       // Don't call onClose() here - let the success handler close the modal
     } catch (error) {
-      console.error('Error logging opponent goal:', error);
-      alert('Failed to log opponent goal. Please try again.');
+      logger.error('Error logging opponent goal:', error);
+      showToast(t('goalLogModal.opponentLogFailed', 'Failed to log opponent goal. Please try again.'), 'error');
       // Modal stays open for retry
     }
   };
@@ -101,7 +105,7 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60] font-display">
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[10000] font-display">
       <div className="bg-slate-800 flex flex-col h-full w-full bg-noise-texture relative overflow-hidden">
         {/* Background Effects */}
         <div className="absolute inset-0 bg-gradient-to-b from-sky-400/10 via-transparent to-transparent pointer-events-none" />
@@ -197,4 +201,11 @@ const GoalLogModal: React.FC<GoalLogModalProps> = ({
   );
 };
 
-export default React.memo(GoalLogModal);
+// Wrapped component with error boundary
+const GoalLogModalWithErrorBoundary: React.FC<GoalLogModalProps> = (props) => (
+  <MigrationErrorBoundary componentName="GoalLogModal">
+    <GoalLogModal {...props} />
+  </MigrationErrorBoundary>
+);
+
+export default React.memo(GoalLogModalWithErrorBoundary);

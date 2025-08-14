@@ -2,33 +2,33 @@ import { useCallback, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSaveQueue } from './useSaveQueue';
 // import { useTranslation } from 'react-i18next'; // Removed unused import
-import { 
-  saveGame as utilSaveGame, 
-  deleteGame as utilDeleteGame, 
-  getLatestGameId, 
-  updateGameDetails as utilUpdateGameDetails 
+import {
+  saveGame as utilSaveGame,
+  deleteGame as utilDeleteGame,
+  getLatestGameId,
+  updateGameDetails as utilUpdateGameDetails
 } from '@/utils/savedGames';
 import {
   saveCurrentGameIdSetting as utilSaveCurrentGameIdSetting,
 } from '@/utils/appSettings';
-import { 
-  deleteSeason as utilDeleteSeason, 
+import {
+  deleteSeason as utilDeleteSeason,
   updateSeasonLegacy as utilUpdateSeasonLegacy,
-  addSeason as utilAddSeason 
+  addSeason as utilAddSeason
 } from '@/utils/seasons';
-import { 
-  deleteTournament as utilDeleteTournament, 
-  updateTournamentLegacy as utilUpdateTournamentLegacy, 
-  addTournament as utilAddTournament 
+import {
+  deleteTournament as utilDeleteTournament,
+  updateTournamentLegacy as utilUpdateTournamentLegacy,
+  addTournament as utilAddTournament
 } from '@/utils/tournaments';
-import { exportJson, exportCsv } from '@/utils/exportGames';
+// Removed static import - using dynamic imports for better bundle splitting: exportJson, exportCsv
 import { queryKeys } from '@/config/queryKeys';
 import { DEFAULT_GAME_ID } from '@/config/constants';
 import logger from '@/utils/logger';
-import type { 
-  Season, 
-  Tournament, 
-  AppState, 
+import type {
+  Season,
+  Tournament,
+  AppState,
   SavedGamesCollection,
   Player,
   Opponent,
@@ -73,7 +73,7 @@ export const useGameDataManager = ({
 }: UseGameDataManagerProps) => {
   const queryClient = useQueryClient();
   // const { t } = useTranslation(); // Removed unused import
-  
+
   // Initialize save queue to prevent race conditions in auto-save operations
   const saveQueue = useSaveQueue({
     debounceMs: 300, // Slightly shorter debounce for responsive auto-save
@@ -204,15 +204,17 @@ export const useGameDataManager = ({
   const handleQuickSaveGame = useCallback(async (
     overrideGameId?: string,
     overrideSnapshot?: AppState
-  ) => {
+  ): Promise<string | null> => {
     const gameId = overrideGameId || currentGameId;
     if (!gameId || gameId === DEFAULT_GAME_ID) {
       logger.warn('[useGameDataManager] Cannot quick save: no valid game ID.');
-      return;
+      return null;
     }
 
+    let finalGameId: string | null = null;
+
     // Queue the save operation to prevent race conditions
-    saveQueue.queueSave(
+    await saveQueue.queueSave(
       `quick-save-${gameId}`,
       async () => {
         logger.log(`[useGameDataManager] Processing queued quick save for game ID: ${gameId}`);
@@ -260,8 +262,9 @@ export const useGameDataManager = ({
         // 3. Update currentGameId if it changed (important for Supabase UUID sync)
         const newGameId = (savedResult as AppState & { id?: string }).id;
         if (newGameId && newGameId !== gameId) {
-          logger.log(`[useGameDataManager] Game ID changed from ${gameId} to ${newGameId} during quick save`);
+          logger.log(`[GameCreation] UUID sync: ${gameId} → ${newGameId}`);
           setCurrentGameId(newGameId);
+          finalGameId = newGameId;
 
           // Update savedGames with the new ID and remove the old one
           const updatedSavedGames = { ...savedGames };
@@ -273,13 +276,27 @@ export const useGameDataManager = ({
           logger.log(`[useGameDataManager] Game ${newGameId} quick saved successfully with ID sync.`);
         } else {
           // No ID change, update savedGames normally
+          finalGameId = gameId;
           const updatedSavedGames = { ...savedGames, [gameId]: snapshot };
           setSavedGames(updatedSavedGames);
           await utilSaveCurrentGameIdSetting(gameId);
           logger.log(`[useGameDataManager] Game ${gameId} quick saved successfully.`);
         }
-      }
+
+        // Invalidate React Query cache to refresh saved games data
+        try {
+          queryClient.invalidateQueries({ queryKey: queryKeys.savedGames });
+          logger.log('[GameCreation] Cache invalidated, saved games list will refresh');
+        } catch (error) {
+          // Don't fail the save operation if cache invalidation fails
+          logger.warn('[GameCreation] Cache invalidation failed (non-critical):', error);
+        }
+      },
+      true // process immediately for game creation
     );
+
+    // Return the final game ID after the save operation completes
+    return finalGameId;
   }, [
     currentGameId,
     savedGames,
@@ -294,11 +311,12 @@ export const useGameDataManager = ({
     tacticalDrawings,
     tacticalBallPosition,
     saveQueue,
+    queryClient,
   ]);
 
   const handleDeleteGame = useCallback(async (gameId: string) => {
     logger.log(`[useGameDataManager] Attempting to delete game: ${gameId}`);
-    
+
     if (!gameId) {
       logger.error('[useGameDataManager] handleDeleteGame: gameId is required');
       return;
@@ -311,7 +329,7 @@ export const useGameDataManager = ({
         setSavedGames(prevSavedGames => {
           const updatedSavedGames = { ...prevSavedGames };
           delete updatedSavedGames[gameId];
-          
+
           // The logic to handle switching to a new game if the current one was deleted
           // needs to use the "updatedSavedGames" from this scope.
           if (currentGameId === gameId) {
@@ -326,7 +344,7 @@ export const useGameDataManager = ({
               utilSaveCurrentGameIdSetting(DEFAULT_GAME_ID);
             }
           }
-          
+
           return updatedSavedGames;
         });
 
@@ -347,8 +365,13 @@ export const useGameDataManager = ({
   const handleExportOneJson = useCallback((gameId: string, seasons: Season[] = [], tournaments: Tournament[] = []) => {
     const gameData = savedGames[gameId];
     if (gameData) {
-      exportJson(gameId, gameData, seasons, tournaments);
-      logger.log(`[useGameDataManager] Exported game ${gameId} as JSON`);
+      // Dynamic import for better bundle splitting
+      import('@/utils/exportGames').then(({ exportJson }) => {
+        exportJson(gameId, gameData, seasons, tournaments);
+        logger.log(`[useGameDataManager] Exported game ${gameId} as JSON`);
+      }).catch(error => {
+        logger.error(`[useGameDataManager] Failed to load export utilities for JSON export:`, error);
+      });
     } else {
       logger.error(`[useGameDataManager] Game ${gameId} not found for JSON export`);
     }
@@ -357,8 +380,13 @@ export const useGameDataManager = ({
   const handleExportOneCsv = useCallback((gameId: string, players: Player[], seasons: Season[] = [], tournaments: Tournament[] = []) => {
     const gameData = savedGames[gameId];
     if (gameData) {
-      exportCsv(gameId, gameData, players, seasons, tournaments);
-      logger.log(`[useGameDataManager] Exported game ${gameId} as CSV`);
+      // Dynamic import for better bundle splitting
+      import('@/utils/exportGames').then(({ exportCsv }) => {
+        exportCsv(gameId, gameData, players, seasons, tournaments);
+        logger.log(`[useGameDataManager] Exported game ${gameId} as CSV`);
+      }).catch(error => {
+        logger.error(`[useGameDataManager] Failed to load export utilities for CSV export:`, error);
+      });
     } else {
       logger.error(`[useGameDataManager] Game ${gameId} not found for CSV export`);
     }
@@ -382,7 +410,7 @@ export const useGameDataManager = ({
       deleteTournamentMutation,
       updateGameDetailsMutation,
     },
-    
+
     // Handlers
     handlers: {
       handleQuickSaveGame,
@@ -390,7 +418,7 @@ export const useGameDataManager = ({
       handleExportOneJson,
       handleExportOneCsv,
     },
-    
+
     // Save queue status for monitoring save operations
     saveStatus: saveQueue.status,
   };

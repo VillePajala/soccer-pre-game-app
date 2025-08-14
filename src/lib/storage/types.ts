@@ -30,6 +30,9 @@ export interface IStorageProvider {
   getSavedGames(): Promise<unknown>;
   saveSavedGame(gameData: unknown): Promise<unknown>;
   deleteSavedGame(gameId: string): Promise<void>;
+  
+  // PHASE 1.5: On-demand game events loading for performance
+  loadGameEvents?(gameId: string): Promise<unknown[]>;
 
   // Backup/restore
   exportAllData(): Promise<unknown>;

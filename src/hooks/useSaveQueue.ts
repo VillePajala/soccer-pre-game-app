@@ -6,6 +6,8 @@ interface SaveOperation {
   operation: () => Promise<void>;
   timestamp: number;
   retryCount: number;
+  resolve?: (value: void) => void;
+  reject?: (reason: Error) => void;
 }
 
 interface SaveQueueOptions {
@@ -54,6 +56,11 @@ export const useSaveQueue = (options: SaveQueueOptions = {}) => {
         await operation.operation();
         setLastSaveTime(new Date());
         logger.log(`[SaveQueue] Operation ${operation.id} completed successfully`);
+        
+        // Resolve the promise for this operation
+        if (operation.resolve) {
+          operation.resolve();
+        }
       } catch (error) {
         logger.error(`[SaveQueue] Operation ${operation.id} failed:`, error);
         
@@ -62,7 +69,9 @@ export const useSaveQueue = (options: SaveQueueOptions = {}) => {
           const retryOperation: SaveOperation = {
             ...operation,
             retryCount: operation.retryCount + 1,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            resolve: operation.resolve, // Preserve original promise handlers
+            reject: operation.reject
           };
           queueRef.current.unshift(retryOperation); // Add to front for immediate retry
           setQueueSize(queueRef.current.length);
@@ -70,6 +79,11 @@ export const useSaveQueue = (options: SaveQueueOptions = {}) => {
         } else {
           setError(`Save operation failed after ${maxRetries} attempts`);
           logger.error(`[SaveQueue] Operation ${operation.id} failed permanently after ${maxRetries} attempts`);
+          
+          // Reject the promise for this operation
+          if (operation.reject) {
+            operation.reject(new Error(`Save operation failed after ${maxRetries} attempts`));
+          }
         }
       }
     }
@@ -81,62 +95,84 @@ export const useSaveQueue = (options: SaveQueueOptions = {}) => {
 
   /**
    * Add a save operation to the queue with debouncing
+   * Returns a Promise that resolves when the operation completes
    */
   const queueSave = useCallback((
     operationId: string,
     operation: () => Promise<void>,
     immediate: boolean = false
-  ) => {
-    // Clear existing debounce timer
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-      debounceTimerRef.current = null;
-    }
-
-    // If queue is full, remove oldest operation
-    if (queueRef.current.length >= maxQueueSize) {
-      const removed = queueRef.current.shift();
-      if (removed) {
-        logger.warn(`[SaveQueue] Queue full, removed operation ${removed.id}`);
+  ): Promise<void> => {
+    return new Promise<void>((resolve, reject) => {
+      // Clear existing debounce timer
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+        debounceTimerRef.current = null;
       }
-    }
 
-    // Check if operation with same ID already exists and replace it
-    const existingIndex = queueRef.current.findIndex(op => op.id === operationId);
-    const newOperation: SaveOperation = {
-      id: operationId,
-      operation,
-      timestamp: Date.now(),
-      retryCount: 0
-    };
+      // If queue is full, remove oldest operation (and reject its promise)
+      if (queueRef.current.length >= maxQueueSize) {
+        const removed = queueRef.current.shift();
+        if (removed) {
+          logger.warn(`[SaveQueue] Queue full, removed operation ${removed.id}`);
+          if (removed.reject) {
+            removed.reject(new Error('Operation removed from queue due to size limit'));
+          }
+        }
+      }
 
-    if (existingIndex >= 0) {
-      // Replace existing operation
-      queueRef.current[existingIndex] = newOperation;
-      logger.log(`[SaveQueue] Replaced existing operation ${operationId}`);
-    } else {
-      // Add new operation
-      queueRef.current.push(newOperation);
-      logger.log(`[SaveQueue] Queued new operation ${operationId}`);
-    }
+      // Check if operation with same ID already exists and replace it
+      const existingIndex = queueRef.current.findIndex(op => op.id === operationId);
+      const newOperation: SaveOperation = {
+        id: operationId,
+        operation,
+        timestamp: Date.now(),
+        retryCount: 0,
+        resolve, // This will be called by processQueue when the operation actually completes
+        reject   // This will be called by processQueue if the operation fails
+      };
 
-    setQueueSize(queueRef.current.length);
+      if (existingIndex >= 0) {
+        // Replace existing operation (reject the old one's promise)
+        const existing = queueRef.current[existingIndex];
+        if (existing.reject) {
+          existing.reject(new Error('Operation replaced with newer version'));
+        }
+        queueRef.current[existingIndex] = newOperation;
+        logger.log(`[SaveQueue] Replaced existing operation ${operationId}`);
+      } else {
+        // Add new operation
+        queueRef.current.push(newOperation);
+        logger.log(`[SaveQueue] Queued new operation ${operationId}`);
+      }
 
-    if (immediate) {
-      // Process immediately
-      processQueue();
-    } else {
-      // Debounce the processing
-      debounceTimerRef.current = setTimeout(() => {
+      setQueueSize(queueRef.current.length);
+
+      if (immediate) {
+        // Process immediately - The promise will resolve when processQueue completes the operation
         processQueue();
-      }, debounceMs);
-    }
+      } else {
+        // Debounce the processing - The promise will resolve when processQueue completes the operation
+        debounceTimerRef.current = setTimeout(() => {
+          processQueue();
+        }, debounceMs);
+      }
+      
+      // The Promise will resolve when processQueue() calls resolve() after the operation completes
+      // The Promise will reject when processQueue() calls reject() if the operation fails permanently
+    });
   }, [debounceMs, maxQueueSize, processQueue]);
 
   /**
    * Clear the queue and cancel any pending operations
    */
   const clearQueue = useCallback(() => {
+    // Reject all pending operations
+    queueRef.current.forEach(operation => {
+      if (operation.reject) {
+        operation.reject(new Error('Operation cancelled - queue cleared'));
+      }
+    });
+    
     queueRef.current = [];
     setQueueSize(0);
     setError(null);

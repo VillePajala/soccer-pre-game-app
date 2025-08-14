@@ -2,8 +2,20 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { AuthProvider } from '@/context/AuthContext';
 
 import SettingsModal from './SettingsModal';
+
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    back: jest.fn(),
+    forward: jest.fn(),
+    refresh: jest.fn(),
+    prefetch: jest.fn(),
+  }),
+}));
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -40,26 +52,42 @@ describe('<SettingsModal />', () => {
   });
 
   test('renders when open', () => {
-    render(<SettingsModal {...defaultProps} />);
+    render(
+      <AuthProvider>
+        <SettingsModal {...defaultProps} />
+      </AuthProvider>
+    );
     expect(screen.getByText('App Settings')).toBeInTheDocument();
     expect(screen.getByLabelText('Language')).toBeInTheDocument();
     expect(screen.getByLabelText('Default Team Name')).toBeInTheDocument();
   });
 
   test('renders settings sections', async () => {
-    render(<SettingsModal {...defaultProps} />);
+    render(
+      <AuthProvider>
+        <SettingsModal {...defaultProps} />
+      </AuthProvider>
+    );
     expect(screen.getByText('About')).toBeInTheDocument();
     expect(screen.getByText(/App Version/)).toBeInTheDocument();
   });
 
   test('calls onClose when Done clicked', () => {
-    render(<SettingsModal {...defaultProps} />);
+    render(
+      <AuthProvider>
+        <SettingsModal {...defaultProps} />
+      </AuthProvider>
+    );
     fireEvent.click(screen.getByRole('button', { name: /Done/i }));
     expect(defaultProps.onClose).toHaveBeenCalled();
   });
 
   test('requires typing RESET before Hard Reset', () => {
-    render(<SettingsModal {...defaultProps} />);
+    render(
+      <AuthProvider>
+        <SettingsModal {...defaultProps} />
+      </AuthProvider>
+    );
     const resetBtn = screen.getByRole('button', { name: /Hard Reset App/i });
     expect(resetBtn).toBeDisabled();
     fireEvent.change(
@@ -71,14 +99,22 @@ describe('<SettingsModal />', () => {
   });
 
   test('calls onResetGuide when Reset App Guide clicked', () => {
-    render(<SettingsModal {...defaultProps} />);
+    render(
+      <AuthProvider>
+        <SettingsModal {...defaultProps} />
+      </AuthProvider>
+    );
     fireEvent.click(screen.getByRole('button', { name: /Reset App Guide/i }));
     expect(defaultProps.onResetGuide).toHaveBeenCalled();
   });
 
 
   test('does not auto focus team name input on open', () => {
-    render(<SettingsModal {...defaultProps} />);
+    render(
+      <AuthProvider>
+        <SettingsModal {...defaultProps} />
+      </AuthProvider>
+    );
     const input = screen.getByLabelText('Default Team Name');
     expect(input).not.toHaveFocus();
   });

@@ -27,7 +27,7 @@ export interface SyncQueueItem {
 
 // IndexedDB database configuration
 const DB_NAME = 'soccer_coach_app';
-const DB_VERSION = 1;
+const DB_VERSION = 2; // Incremented for gameId -> id migration
 
 export class IndexedDBProvider implements IStorageProvider {
   private db: IDBDatabase | null = null;
@@ -66,8 +66,28 @@ export class IndexedDBProvider implements IStorageProvider {
 
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
+        const oldVersion = event.oldVersion;
         
-        // Create object stores if they don't exist
+        // Handle migration from version 1 to 2 (gameId -> id)
+        if (oldVersion === 1 && event.newVersion === 2) {
+          console.log('[IndexedDB] Migrating from version 1 to 2: gameId -> id field change');
+          
+          // For saved_games: We must delete and recreate because keyPath changed
+          // Unfortunately, this means losing existing data in IndexedDB
+          // But users' data should still be in localStorage or Supabase
+          if (db.objectStoreNames.contains('saved_games')) {
+            db.deleteObjectStore('saved_games');
+            console.log('[IndexedDB] Deleted old saved_games store with gameId keyPath');
+          }
+          
+          // For timer_states: Same issue with keyPath change
+          if (db.objectStoreNames.contains('timer_states')) {
+            db.deleteObjectStore('timer_states');
+            console.log('[IndexedDB] Deleted old timer_states store with gameId keyPath');
+          }
+        }
+        
+        // Create object stores if they don't exist (will recreate with correct keyPath)
         this.createObjectStores(db);
       };
     });
@@ -97,13 +117,13 @@ export class IndexedDBProvider implements IStorageProvider {
 
     // Saved games store
     if (!db.objectStoreNames.contains('saved_games')) {
-      const gamesStore = db.createObjectStore('saved_games', { keyPath: 'gameId' });
+      const gamesStore = db.createObjectStore('saved_games', { keyPath: 'id' });
       gamesStore.createIndex('timestamp', 'lastSaved', { unique: false });
     }
 
     // Timer states store
     if (!db.objectStoreNames.contains('timer_states')) {
-      const timerStore = db.createObjectStore('timer_states', { keyPath: 'gameId' });
+      const timerStore = db.createObjectStore('timer_states', { keyPath: 'id' });
       timerStore.createIndex('timestamp', 'timestamp', { unique: false });
     }
 
@@ -291,8 +311,8 @@ export class IndexedDBProvider implements IStorageProvider {
     const gamesRecord: Record<string, AppState> = {};
     
     games.forEach(game => {
-      if ('gameId' in game && game.gameId && typeof game.gameId === 'string') {
-        gamesRecord[game.gameId] = game;
+      if ('id' in game && game.id && typeof game.id === 'string') {
+        gamesRecord[game.id] = game;
       }
     });
     
@@ -300,8 +320,8 @@ export class IndexedDBProvider implements IStorageProvider {
   }
 
   async saveSavedGame(gameData: unknown): Promise<unknown> {
-    if (typeof gameData !== 'object' || !gameData || !('gameId' in gameData)) {
-      throw new Error('Invalid game data: missing gameId');
+    if (typeof gameData !== 'object' || !gameData || !('id' in gameData)) {
+      throw new Error('Invalid game data: missing id');
     }
 
     return this.saveToStore('saved_games', gameData);
@@ -359,7 +379,7 @@ export class IndexedDBProvider implements IStorageProvider {
 
     if (importData.saved_games && typeof importData.saved_games === 'object') {
       for (const [gameId, gameData] of Object.entries(importData.saved_games)) {
-        await this.saveSavedGame({ ...gameData, gameId });
+        await this.saveSavedGame({ ...gameData, id: gameId });
       }
     }
 
@@ -383,7 +403,10 @@ export class IndexedDBProvider implements IStorageProvider {
   }
 
   async saveTimerState(timerState: TimerState): Promise<TimerState> {
-    return this.saveToStore('timer_states', timerState);
+    // The object store uses keyPath 'id' (DB_VERSION 2). Ensure we persist with that key.
+    const recordWithKey = { id: timerState.gameId, ...timerState } as unknown as TimerState & { id: string };
+    // Note: store.get(gameId) still works as we pass the same value as 'id'
+    return this.saveToStore('timer_states', recordWithKey as unknown as TimerState);
   }
 
   async deleteTimerState(gameId: string): Promise<void> {

@@ -6,6 +6,7 @@ import { useMigrationStatus } from '../../lib/migration/migrationStatus';
 import { exportLocalStorageData } from '../../lib/migration/exportLocalData';
 import { importDataToSupabase, type ImportProgress } from '../../lib/migration/importToSupabase';
 import type { LocalDataExport } from '../../lib/migration/exportLocalData';
+import logger from '@/utils/logger';
 
 interface MigrationModalProps {
   isOpen: boolean;
@@ -71,7 +72,7 @@ export function MigrationModal({ isOpen, onClose, onComplete }: MigrationModalPr
       });
       onClose();
     } catch (err) {
-      console.error('Failed to skip migration:', err);
+      logger.error('Failed to skip migration:', err);
     }
   };
 

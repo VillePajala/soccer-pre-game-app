@@ -1,4 +1,5 @@
 import { GameEvent } from '@/types';
+import logger from '@/utils/logger';
 
 // --- State Definition ---
 export interface GameSessionState {
@@ -203,7 +204,7 @@ export const gameSessionReducer = (state: GameSessionState, action: GameSessionA
     }
     case 'PAUSE_TIMER': {
       if (!state.isTimerRunning || !state.startTimestamp) return state;
-      const elapsedSinceStart = (Date.now() - state.startTimestamp) / 1000;
+      const elapsedSinceStart = Math.round((Date.now() - state.startTimestamp) / 1000);
       return {
         ...state,
         isTimerRunning: false,
@@ -231,13 +232,13 @@ export const gameSessionReducer = (state: GameSessionState, action: GameSessionA
       // Validate event payload to prevent silent failures
       const event = action.payload;
       if (!event || !event.id || !event.type || typeof event.time !== 'number') {
-        console.error('Invalid game event payload:', event);
+        logger.error('Invalid game event payload:', event);
         return state; // Don't add invalid events
       }
       
       // Check for duplicate event IDs
       if (state.gameEvents.some(e => e.id === event.id)) {
-        console.warn('Attempted to add duplicate game event:', event.id);
+        logger.warn('Attempted to add duplicate game event:', event.id);
         return state;
       }
       
@@ -254,7 +255,7 @@ export const gameSessionReducer = (state: GameSessionState, action: GameSessionA
       return { ...state, gameEvents: state.gameEvents.filter(e => e.id !== action.payload) };
     }
     case 'SET_TIMER_ELAPSED': {
-        const newTime = action.payload;
+        const newTime = Math.round(action.payload);
         let newAlertLevel: GameSessionState['subAlertLevel'] = 'none';
         const warningTime = state.nextSubDueTimeSeconds - 60;
         if (newTime >= state.nextSubDueTimeSeconds) {

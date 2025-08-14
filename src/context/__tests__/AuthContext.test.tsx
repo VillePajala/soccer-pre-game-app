@@ -58,7 +58,7 @@ const renderWithAuthProvider = async (children: ReactNode) => {
 
 describe('AuthContext', () => {
   let mockUnsubscribe: jest.Mock;
-  const mockSupabaseAuth = supabase.auth as {
+  const mockSupabaseAuth = supabase.auth as unknown as {
     getSession: jest.Mock;
     onAuthStateChange: jest.Mock;
     signUp: jest.Mock;

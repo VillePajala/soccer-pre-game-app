@@ -3,6 +3,7 @@ import { render, screen, waitFor, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import userEvent from '@testing-library/user-event';
 import EnhancedServiceWorkerRegistration from '../EnhancedServiceWorkerRegistration';
+import { UpdateProvider } from '@/contexts/UpdateContext';
 import { useConnectionStatus } from '@/hooks/useConnectionStatus';
 
 // Mock the connection status hook
@@ -71,10 +72,16 @@ describe('EnhancedServiceWorkerRegistration', () => {
 
   describe('Service Worker Registration', () => {
     it('should register enhanced service worker on mount', async () => {
-      render(<EnhancedServiceWorkerRegistration />);
+      await act(async () => {
+        render(
+        <UpdateProvider>
+          <EnhancedServiceWorkerRegistration />
+        </UpdateProvider>
+      );
+      });
 
       await waitFor(() => {
-        expect(navigator.serviceWorker.register).toHaveBeenCalledWith('/sw-enhanced.js', {
+        expect(navigator.serviceWorker.register).toHaveBeenCalledWith('/sw.js', {
           scope: '/',
           updateViaCache: 'none'
         });
@@ -85,7 +92,13 @@ describe('EnhancedServiceWorkerRegistration', () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
       (navigator.serviceWorker.register as jest.Mock).mockRejectedValue(new Error('Registration failed'));
 
-      render(<EnhancedServiceWorkerRegistration />);
+      await act(async () => {
+        render(
+        <UpdateProvider>
+          <EnhancedServiceWorkerRegistration />
+        </UpdateProvider>
+      );
+      });
 
       await waitFor(() => {
         expect(consoleSpy).toHaveBeenCalledWith(
@@ -109,7 +122,13 @@ describe('EnhancedServiceWorkerRegistration', () => {
       };
       (navigator.serviceWorker.register as jest.Mock).mockResolvedValue(registration);
 
-      render(<EnhancedServiceWorkerRegistration />);
+      await act(async () => {
+        render(
+        <UpdateProvider>
+          <EnhancedServiceWorkerRegistration />
+        </UpdateProvider>
+      );
+      });
 
       // Simulate update found event
       const updateFoundCallback = mockAddEventListener.mock.calls
@@ -165,7 +184,11 @@ describe('EnhancedServiceWorkerRegistration', () => {
       };
       (navigator.serviceWorker.register as jest.Mock).mockResolvedValue(registration);
 
-      render(<EnhancedServiceWorkerRegistration />);
+      render(
+        <UpdateProvider>
+          <EnhancedServiceWorkerRegistration />
+        </UpdateProvider>
+      );
 
       // Simulate update available state
       const updateFoundCallback = mockAddEventListener.mock.calls
@@ -215,7 +238,11 @@ describe('EnhancedServiceWorkerRegistration', () => {
       const registration = mockServiceWorkerRegistration;
       (navigator.serviceWorker.register as jest.Mock).mockResolvedValue(registration);
 
-      const { rerender } = render(<EnhancedServiceWorkerRegistration />);
+      const { rerender } = render(
+        <UpdateProvider>
+          <EnhancedServiceWorkerRegistration />
+        </UpdateProvider>
+      );
 
       await waitFor(() => {
         expect(navigator.serviceWorker.register).toHaveBeenCalled();
@@ -230,7 +257,11 @@ describe('EnhancedServiceWorkerRegistration', () => {
         checkConnection: jest.fn()
       });
 
-      rerender(<EnhancedServiceWorkerRegistration />);
+      rerender(
+        <UpdateProvider>
+          <EnhancedServiceWorkerRegistration />
+        </UpdateProvider>
+      );
 
       mockUseConnectionStatus.mockReturnValue({
         isOnline: true,
@@ -240,7 +271,11 @@ describe('EnhancedServiceWorkerRegistration', () => {
         checkConnection: jest.fn()
       });
 
-      rerender(<EnhancedServiceWorkerRegistration />);
+      rerender(
+        <UpdateProvider>
+          <EnhancedServiceWorkerRegistration />
+        </UpdateProvider>
+      );
 
       await waitFor(() => {
         expect(navigator.serviceWorker.controller?.postMessage).toHaveBeenCalledWith({
@@ -250,7 +285,11 @@ describe('EnhancedServiceWorkerRegistration', () => {
     });
 
     it('should display sync notifications', async () => {
-      render(<EnhancedServiceWorkerRegistration />);
+      render(
+        <UpdateProvider>
+          <EnhancedServiceWorkerRegistration />
+        </UpdateProvider>
+      );
 
       // Mock navigator.serviceWorker.addEventListener calls
       const navigatorServiceWorkerAddEventListener = navigator.serviceWorker.addEventListener as jest.Mock;
@@ -277,7 +316,11 @@ describe('EnhancedServiceWorkerRegistration', () => {
     });
 
     it('should display sync failure notifications', async () => {
-      render(<EnhancedServiceWorkerRegistration />);
+      render(
+        <UpdateProvider>
+          <EnhancedServiceWorkerRegistration />
+        </UpdateProvider>
+      );
 
       const navigatorServiceWorkerAddEventListener = navigator.serviceWorker.addEventListener as jest.Mock;
       const messageHandler = navigatorServiceWorkerAddEventListener.mock.calls
@@ -309,7 +352,11 @@ describe('EnhancedServiceWorkerRegistration', () => {
         configurable: true
       });
 
-      render(<EnhancedServiceWorkerRegistration />);
+      render(
+        <UpdateProvider>
+          <EnhancedServiceWorkerRegistration />
+        </UpdateProvider>
+      );
 
       expect(screen.getByText('SW Dev Tools')).toBeInTheDocument();
       expect(screen.getByText('🔄 Manual Sync')).toBeInTheDocument();
@@ -329,7 +376,11 @@ describe('EnhancedServiceWorkerRegistration', () => {
         configurable: true
       });
 
-      render(<EnhancedServiceWorkerRegistration />);
+      render(
+        <UpdateProvider>
+          <EnhancedServiceWorkerRegistration />
+        </UpdateProvider>
+      );
 
       expect(screen.queryByText('SW Dev Tools')).not.toBeInTheDocument();
 
@@ -346,7 +397,11 @@ describe('EnhancedServiceWorkerRegistration', () => {
         configurable: true
       });
 
-      render(<EnhancedServiceWorkerRegistration />);
+      render(
+        <UpdateProvider>
+          <EnhancedServiceWorkerRegistration />
+        </UpdateProvider>
+      );
 
       const manualSyncButton = screen.getByText('🔄 Manual Sync');
       await user.click(manualSyncButton);
@@ -369,7 +424,11 @@ describe('EnhancedServiceWorkerRegistration', () => {
       });
       const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
 
-      render(<EnhancedServiceWorkerRegistration />);
+      render(
+        <UpdateProvider>
+          <EnhancedServiceWorkerRegistration />
+        </UpdateProvider>
+      );
 
       const cacheStatusButton = screen.getByText('📊 Cache Status');
       await user.click(cacheStatusButton);
@@ -394,7 +453,11 @@ describe('EnhancedServiceWorkerRegistration', () => {
         configurable: true
       });
 
-      render(<EnhancedServiceWorkerRegistration />);
+      render(
+        <UpdateProvider>
+          <EnhancedServiceWorkerRegistration />
+        </UpdateProvider>
+      );
 
       const clearCachesButton = screen.getByText('🗑️ Clear Caches');
       await user.click(clearCachesButton);
@@ -419,7 +482,11 @@ describe('EnhancedServiceWorkerRegistration', () => {
 
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
-      render(<EnhancedServiceWorkerRegistration />);
+      render(
+        <UpdateProvider>
+          <EnhancedServiceWorkerRegistration />
+        </UpdateProvider>
+      );
 
       // Should not crash and not show any banners
       expect(screen.queryByText(/Service Worker Error/)).not.toBeInTheDocument();
@@ -438,16 +505,26 @@ describe('EnhancedServiceWorkerRegistration', () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
       (navigator.serviceWorker.register as jest.Mock).mockRejectedValue(new Error('Registration failed'));
 
-      render(<EnhancedServiceWorkerRegistration />);
+      await act(async () => {
+        render(
+          <UpdateProvider>
+            <EnhancedServiceWorkerRegistration />
+          </UpdateProvider>
+        );
+      });
 
       await waitFor(() => {
         expect(screen.getByText(/Service Worker Error/)).toBeInTheDocument();
       });
 
       const closeButton = screen.getByText('✕');
-      await user.click(closeButton);
+      await act(async () => {
+        await user.click(closeButton);
+      });
 
-      expect(screen.queryByText(/Service Worker Error/)).not.toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByText(/Service Worker Error/)).not.toBeInTheDocument();
+      });
 
       consoleSpy.mockRestore();
     });

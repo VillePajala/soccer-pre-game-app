@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import logger from '@/utils/logger';
 import type { Player, Season, Tournament, SavedGamesCollection } from '@/types';
 import type { AppSettings } from '@/utils/appSettings';
+import { safeImportDataParse } from './safeJson';
 import {
   SAVED_GAMES_KEY,
   APP_SETTINGS_KEY,
@@ -66,7 +67,15 @@ export async function cleanImportToSupabase(jsonContent: string): Promise<{
   logger.log('[SupabaseCleanImport] Starting clean import...');
   
   try {
-    const backupData: BackupData = JSON.parse(jsonContent);
+    const parseResult = safeImportDataParse<BackupData>(jsonContent, (data): data is BackupData => {
+      return typeof data === 'object' && data !== null && 'localStorage' in data;
+    });
+    
+    if (!parseResult.success) {
+      throw new Error(`Invalid backup format: ${parseResult.error}`);
+    }
+    
+    const backupData = parseResult.data!;
     
     if (!backupData.localStorage) {
       throw new Error('Invalid backup format - missing localStorage data');

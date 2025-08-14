@@ -600,7 +600,19 @@
     "sendBackupError": "Varmuuskopion lähetys epäonnistui.",
     "sendBackupPrompt": "Lähetä varmuuskopio sähköpostilla?",
     "lastBackupLabel": "Viimeinen varmuuskopio",
-    "never": "Ei koskaan"
+    "never": "Ei koskaan",
+    "legalTitle": "Oikeudellinen Tieto",
+    "privacyPolicyLink": "Tietosuojaseloste",
+    "termsOfServiceLink": "Käyttöehdot",
+    "deleteAccount": "Poista Tili",
+    "deleteAccountDescription": "Poista tilisi ja kaikki tiedot pysyvästi. Tätä toimintoa ei voi perua.",
+    "globalSignOut": "Kirjaudu ulos kaikkialta",
+    "globalSignOutConfirm": "Kirjaudu ulos kaikkialta? Tämä kirjaa sinut ulos kaikista laitteista.",
+    "adminTitle": "Ylläpitotyökalut",
+    "adminDescription": "Ylläpitotyökalut ja järjestelmän seuranta.",
+    "adminMonitoring": "Järjestelmän seuranta",
+    "dataManagementTitle": "Tietojen hallinta",
+    "dataManagementDescription": "Vie tietosi varmuuskopioksi tai tuo tiedot aiemmasta varmuuskopiosta."
   },
   "playerAssessmentModal": {
     "title": "Arvioi Pelaajat",
@@ -666,10 +678,11 @@
     "noServiceWorker": "(Service worker ei aktiivinen)"
   },
   "installPrompt": {
-    "message": "Asenna Coaching Companion saadaksesi nopeamman ja offline-toimivan kokemuksen!",
+    "message": "Asenna MatchOps Coach saadaksesi nopeamman ja offline-toimivan kokemuksen!",
     "installButton": "Asenna",
     "dismissButton": "Ei nyt"
   },
+  "appSubtitle": "Suunnittele • Kirjaa • Arvioi",
   "fullBackup": {
     "exportSuccess": "Varmuuskopio vietiin onnistuneesti.",
     "exportError": "Varmuuskopion vienti epäonnistui. Katso konsoli.",
@@ -696,7 +709,14 @@
   "close": "Sulje",
   "settings": {
     "importBackup": "Tuo varmuuskopio",
+    "exportBackup": "Vie varmuuskopio",
     "importBackupDescription": "Tuo varmuuskopiotiedosto palauttaaksesi tietosi. Tukee sekä vanhoja localStorage-varmuuskopioita että uusia Supabase-vientejä.",
-    "selectBackupFile": "Valitse varmuuskopiotiedosto"
+    "selectBackupFile": "Valitse varmuuskopiotiedosto",
+    "exportSuccess": "Tiedot viety onnistuneesti",
+    "exportError": "Tietojen vienti epäonnistui",
+    "importType": "Tuonnin tyyppi",
+    "merge": "Yhdistä olemassa oleviin",
+    "replace": "Korvaa kaikki tiedot",
+    "replaceWarning": "⚠️ Tämä poistaa kaikki olemassa olevat tiedot"
   }
 }

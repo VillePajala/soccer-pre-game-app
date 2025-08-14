@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import logger from '@/utils/logger';
 
 function ResetPasswordForm() {
   const [newPassword, setNewPassword] = useState('');
@@ -17,11 +18,11 @@ function ResetPasswordForm() {
 
   useEffect(() => {
     const checkSession = async () => {
-      console.log('Reset password page - checking session and tokens...');
+      logger.debug('Reset password page - checking session and tokens...');
       
       // Debug: Log URL info
       if (typeof window !== 'undefined') {
-        console.log('Reset page URL info:', {
+        logger.debug('Reset page URL info:', {
           href: window.location.href,
           hash: window.location.hash,
           search: window.location.search
@@ -31,14 +32,14 @@ function ResetPasswordForm() {
       // Check if we already have a recovery session
       const { data: { session } } = await supabase.auth.getSession();
       
-      console.log('Current session:', { 
+      logger.debug('Current session:', { 
         hasSession: !!session, 
         userId: session?.user?.id,
         recoveryTime: session?.user?.recovery_sent_at 
       });
       
       if (session?.user) {
-        console.log('Valid session found, allowing password reset');
+        logger.debug('Valid session found, allowing password reset');
         setIsValidToken(true);
         return;
       }
@@ -50,7 +51,7 @@ function ResetPasswordForm() {
       const email = hashParams.get('email');
 
       if (type === 'recovery' && token && email) {
-        console.log('OTP token found, attempting verification:', { token, email });
+        logger.debug('OTP token found, attempting verification:', { token, email });
         
         // Try to verify the OTP
         const { error } = await supabase.auth.verifyOtp({
@@ -60,11 +61,11 @@ function ResetPasswordForm() {
         });
         
         if (error) {
-          console.error('OTP verification error:', error);
+          logger.error('OTP verification error:', error);
           setError('Invalid or expired reset code. Please request a new password reset.');
           setIsValidToken(false);
         } else {
-          console.log('OTP verification successful');
+          logger.debug('OTP verification successful');
           setIsValidToken(true);
         }
       } else {

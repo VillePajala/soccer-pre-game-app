@@ -45,6 +45,9 @@ test('timer increments over time using a stable interval', () => {
     return useGameTimer({ state, dispatch, currentGameId: 'game1' });
   });
 
+  // Clear any calls from initial render/setup
+  setIntervalSpy.mockClear();
+
   act(() => {
     result.current.startPause();
   });

@@ -6,6 +6,7 @@
     "**/*.test.tsx",
     "**/__tests__/**/*",
     "**/__mocks__/**/*",
-    "tests/**/*"
+    "tests/**/*",
+    "supabase/functions/**/*"
   ]
 }

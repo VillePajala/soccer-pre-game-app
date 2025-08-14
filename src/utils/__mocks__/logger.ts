@@ -1,10 +1,9 @@
-// Mock implementation for logger
-const loggerMock = {
-  log: jest.fn(),
+const mockLogger = {
+  debug: jest.fn(),
   info: jest.fn(),
   warn: jest.fn(),
   error: jest.fn(),
-  debug: jest.fn(),
+  log: jest.fn(),
 };
 
-export default loggerMock;
+export default mockLogger;

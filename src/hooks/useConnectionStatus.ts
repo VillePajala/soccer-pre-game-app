@@ -18,36 +18,54 @@ export const useConnectionStatus = () => {
     connectionQuality: typeof window !== 'undefined' ? (navigator.onLine ? 'good' : 'offline') : 'offline'
   });
 
+  // Cache connectivity result for 2 minutes to avoid excessive checks
+  const [lastConnectivityCheck, setLastConnectivityCheck] = useState<{
+    timestamp: number;
+    result: boolean;
+  }>({ timestamp: 0, result: false });
+
   /**
-   * Test Supabase connectivity by making a lightweight request
+   * Test Supabase connectivity by making a lightweight request with caching
    */
   const checkSupabaseConnection = useCallback(async (): Promise<boolean> => {
     if (typeof window === 'undefined' || !navigator.onLine) return false;
 
+    // Use cached result if less than 2 minutes old
+    const now = Date.now();
+    if (now - lastConnectivityCheck.timestamp < 2 * 60 * 1000) {
+      return lastConnectivityCheck.result;
+    }
+
     try {
-      // Create a simple fetch to Supabase REST API health check
+      // Create a simple fetch to check if Supabase domain is reachable
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       if (!supabaseUrl) return false;
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
-      const response = await fetch(`${supabaseUrl}/rest/v1/`, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`
-        },
+      // Use a simple connectivity test that doesn't require authentication
+      // Just test if we can reach the domain - any response (even 404) means it's reachable
+      await fetch(`${supabaseUrl}/`, {
+        method: 'HEAD', // HEAD request to minimize data transfer
+        mode: 'no-cors', // Avoid CORS issues for connectivity test
         signal: controller.signal
       });
 
       clearTimeout(timeoutId);
-      return response.ok || response.status === 401; // 401 is fine, means auth is working
-    } catch {
-      // Network error, timeout, or abort
+      
+      // Cache successful result
+      setLastConnectivityCheck({ timestamp: now, result: true });
+      return true;
+    } catch (error) {
+      // Network error, timeout, DNS failure, or abort
+      console.debug('[useConnectionStatus] Supabase connectivity test failed:', error);
+      
+      // Cache failed result
+      setLastConnectivityCheck({ timestamp: now, result: false });
       return false;
     }
-  }, []);
+  }, [lastConnectivityCheck]);
 
   /**
    * Determine connection quality based on response time
@@ -113,12 +131,12 @@ export const useConnectionStatus = () => {
     // Initial connection check
     updateStatus();
 
-    // Periodic connection check every 30 seconds when online
+    // Periodic connection check every 5 minutes when online (reduced frequency)
     const intervalId = setInterval(() => {
       if (typeof window !== 'undefined' && navigator.onLine) {
         updateStatus();
       }
-    }, 30000);
+    }, 5 * 60 * 1000); // 5 minutes instead of 1 minute
 
     return () => {
       window.removeEventListener('online', handleOnline);

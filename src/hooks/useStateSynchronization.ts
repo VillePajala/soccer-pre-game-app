@@ -39,7 +39,13 @@ export const useStateSynchronization = () => {
     })();
 
     // Store the current operation promise for synchronization
-    const lockPromise = currentOperation.then(() => {}, () => {}); // Convert to void promise
+    const lockPromise = currentOperation
+      .then(() => undefined)
+      .catch(() => undefined)
+      .finally(() => {
+        // Clear the lock when the operation finishes to allow next operations
+        synchronizationLockRef.current = null;
+      });
     synchronizationLockRef.current = lockPromise;
 
     return currentOperation;

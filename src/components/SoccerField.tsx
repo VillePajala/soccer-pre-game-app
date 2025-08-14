@@ -7,7 +7,7 @@ import tinycolor from 'tinycolor2';
 import logger from '@/utils/logger';
 
 // Define props for SoccerField
-interface SoccerFieldProps {
+export interface SoccerFieldProps {
   players: Player[];
   opponents: Opponent[];
   drawings: Point[][];
@@ -24,7 +24,7 @@ interface SoccerFieldProps {
   onOpponentMoveEnd: (opponentId: string) => void;
   onOpponentRemove: (opponentId: string) => void;
   // Touch drag props
-  draggingPlayerFromBarInfo: Player | null; 
+  draggingPlayerFromBarInfo: Player | null;
   onPlayerDropViaTouch: (relX: number, relY: number) => void; // Use relative coords
   onPlayerDragCancelViaTouch: () => void;
   // ADD prop for timer display
@@ -98,7 +98,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
   onOpponentMove,
   onOpponentMoveEnd,
   onOpponentRemove,
-  draggingPlayerFromBarInfo, 
+  draggingPlayerFromBarInfo,
   onPlayerDropViaTouch,
   onPlayerDragCancelViaTouch,
   timeElapsedInSeconds,
@@ -123,6 +123,11 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
   const [lastTapInfo, setLastTapInfo] = useState<{ time: number; x: number; y: number; targetId: string | null; targetType: 'player' | 'opponent' | 'tactical' | 'ball' | null } | null>(null);
   const [ballImage, setBallImage] = useState<HTMLImageElement | null>(null);
   const drawingFrameRef = useRef<number | null>(null);
+  // Cache heavy noise patterns to avoid regenerating every draw
+  const patternCacheRef = useRef<{ ctx: CanvasRenderingContext2D | null; cloud: CanvasPattern | null; grain: CanvasPattern | null }>({ ctx: null, cloud: null, grain: null });
+  // Offscreen pre-rendered field background to avoid repainting heavy layers every frame
+  const backgroundCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const lastBackgroundKeyRef = useRef<string>('');
 
   useEffect(() => {
     const img = new Image();
@@ -140,495 +145,529 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
   }, []);
 
   // --- Drawing Logic with Performance Optimization ---
-  const draw = useCallback(() => { 
+  const draw = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
+
     // Performance optimization: Use requestAnimationFrame for smooth rendering
     if (drawingFrameRef.current) {
       cancelAnimationFrame(drawingFrameRef.current);
     }
-    
+
     drawingFrameRef.current = requestAnimationFrame(() => {
       const context = canvas.getContext('2d');
       if (!context) return;
 
-    // --- High-DPI Scaling --- 
-    const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect(); 
-    const cssWidth = rect.width;
-    const cssHeight = rect.height;
+      // --- High-DPI Scaling --- 
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const cssWidth = rect.width;
+      const cssHeight = rect.height;
 
-    // Set the canvas buffer size to match the physical pixels
-    if (canvas.width !== cssWidth * dpr || canvas.height !== cssHeight * dpr) {
-      canvas.width = cssWidth * dpr;
-      canvas.height = cssHeight * dpr;
-    }
-
-    // Reset transform to default state before applying new scaling
-    context.resetTransform();
-    // Scale the context to draw in CSS pixels
-    context.scale(dpr, dpr);
-    // --- End High-DPI Scaling ---
-
-    // Now use cssWidth and cssHeight for drawing calculations (W/H equivalent)
-    const W = cssWidth;
-    const H = cssHeight;
-
-    // *** SAFETY CHECK: Ensure calculated CSS dimensions are valid ***
-    if (W <= 0 || H <= 0 || !Number.isFinite(W) || !Number.isFinite(H)) {
-      logger.warn("Canvas dimensions are invalid, skipping draw:", { W, H });
-      return; 
-    }
-
-    // Define field line constants early so they can be used by all effects
-    const lineMargin = 5; // No DPR scaling
-
-    // --- Clear and Draw Background/Field Lines --- 
-    // Final version: A balanced, rich green with noticeable but not overpowering lighting
-    const baseGreen = '#427B44'; // Deeper hue and darker base
-
-    // 1. Draw the base solid green color
-    context.fillStyle = baseGreen;
-    context.fillRect(0, 0, W, H);
-
-    // 2. Add organic, low-frequency texture (clouds/mottling)
-    const cloudPattern = createNoisePattern(context, 400, 400, 0.02); // Large, faint pattern
-    if (cloudPattern) {
-        context.fillStyle = cloudPattern;
-        context.fillRect(0, 0, W, H);
-    }
-
-    // 3. Add high-frequency texture (grass grain)
-    const grainPattern = createNoisePattern(context, 100, 100, 0.03); // Finer grain pattern
-    if (grainPattern) {
-        context.fillStyle = grainPattern;
-        context.fillRect(0, 0, W, H);
-    }
-
-    // 4. Add "Ghost Stripe" mowing pattern for authentic feel
-    context.save();
-    context.globalCompositeOperation = 'soft-light';
-    const numStripes = 9;
-    const stripeWidth = W / numStripes;
-    for (let i = 0; i < numStripes; i++) {
-        context.fillStyle = (i % 2 === 0) ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)';
-        context.fillRect(i * stripeWidth, 0, stripeWidth, H);
-    }
-    context.restore();
-    
-    // 5. Add final, balanced lighting (Lighter Shadows to compensate for darker base)
-    // Part A: A top-to-bottom linear shadow, made lighter
-    const linearShadow = context.createLinearGradient(0, 0, 0, H);
-    linearShadow.addColorStop(0, 'rgba(0, 0, 0, 0.03)');
-    linearShadow.addColorStop(1, 'rgba(0, 0, 0, 0.25)');
-    context.fillStyle = linearShadow;
-    context.fillRect(0, 0, W, H);
-
-    // Part B: A softer hotspot to match
-    const lightSourceX = W / 2;
-    const lightSourceY = H * 0.3;
-    const hotspot = context.createRadialGradient(
-      lightSourceX, lightSourceY, 0,
-      lightSourceX, lightSourceY, H * 0.8
-    );
-    hotspot.addColorStop(0, 'rgba(255, 255, 255, 0.10)');
-    hotspot.addColorStop(1, 'rgba(255, 255, 255, 0)');
-    context.fillStyle = hotspot;
-    context.fillRect(0, 0, W, H);
-
-    // --- Draw Tactical Mode Border ---
-    if (isTacticsBoardView) {
-      context.strokeStyle = 'rgba(255, 255, 255, 0.5)'; // Subtle white for a cleaner look
-      context.lineWidth = 2; // Can be a bit thinner now
-      context.strokeRect(0, 0, W, H);
-
-      // --- Draw Tactical Grid Overlay ---
-      context.strokeStyle = 'rgba(255, 255, 255, 0.1)'; // Faint white grid lines
-      context.lineWidth = 1;
-      const gridSpacing = 40; // pixels
-
-      // Draw vertical lines
-      for (let x = gridSpacing; x < W; x += gridSpacing) {
-        context.beginPath();
-        context.moveTo(x, 0);
-        context.lineTo(x, H);
-        context.stroke();
+      // Set the canvas buffer size to match the physical pixels
+      if (canvas.width !== cssWidth * dpr || canvas.height !== cssHeight * dpr) {
+        canvas.width = cssWidth * dpr;
+        canvas.height = cssHeight * dpr;
       }
 
-      // Draw horizontal lines
-      for (let y = gridSpacing; y < H; y += gridSpacing) {
-        context.beginPath();
-        context.moveTo(0, y);
-        context.lineTo(W, y);
-        context.stroke();
-      }
-      // --- End Tactical Grid Overlay ---
-    }
+      // Reset transform to default state before applying new scaling
+      context.resetTransform();
+      // Scale the context to draw in CSS pixels
+      context.scale(dpr, dpr);
+      // --- End High-DPI Scaling ---
 
-    context.shadowColor = 'rgba(0, 0, 0, 0.25)';
-    context.shadowBlur = 2;
-    context.shadowOffsetY = 1;
-    context.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-    context.lineWidth = 2; // No DPR scaling needed here
-    const centerRadius = Math.min(W, H) * 0.08; // Use W/H (CSS)
-    const penaltyBoxWidth = W * 0.6; // Use W (CSS)
-    const penaltyBoxHeight = H * 0.18; // Use H (CSS)
-    const goalBoxWidth = W * 0.3; // Use W
-    const goalBoxHeight = H * 0.07; // Use H
-    const penaltySpotDist = H * 0.12; // Use H
-    const cornerRadius = Math.min(W, H) * 0.02; // Use W/H
+      // Now use cssWidth and cssHeight for drawing calculations (W/H equivalent)
+      const W = cssWidth;
+      const H = cssHeight;
 
-    // Function to reset shadow for elements that shouldn't have it (like filled spots)
-    const resetShadow = () => {
-      context.shadowColor = 'transparent';
-      context.shadowBlur = 0;
-      context.shadowOffsetY = 0;
-    };
-
-    // Outer boundary (using CSS W/H and non-scaled margin)
-    context.beginPath();
-    context.strokeRect(lineMargin, lineMargin, W - 2 * lineMargin, H - 2 * lineMargin);
-
-    // Halfway line
-    context.beginPath();
-    context.moveTo(lineMargin, H / 2);
-    context.lineTo(W - lineMargin, H / 2);
-    context.stroke();
-
-    // Center circle
-    context.beginPath();
-    context.arc(W / 2, H / 2, centerRadius, 0, Math.PI * 2);
-    context.stroke();
-
-    // Top Penalty Area & Arc
-    context.beginPath();
-    const topPenaltyX = (W - penaltyBoxWidth) / 2;
-    context.rect(topPenaltyX, lineMargin, penaltyBoxWidth, penaltyBoxHeight);
-    context.stroke();
-    context.beginPath();
-    context.arc(W / 2, lineMargin + penaltyBoxHeight, centerRadius * 0.8, 0, Math.PI, false);
-    context.stroke();
-
-    // Top Goal Area
-    context.beginPath();
-    const topGoalX = (W - goalBoxWidth) / 2;
-    context.strokeRect(topGoalX, lineMargin, goalBoxWidth, goalBoxHeight);
-    context.stroke();
-
-    // Bottom Penalty Area & Arc
-    context.beginPath();
-    const bottomPenaltyY = H - lineMargin - penaltyBoxHeight;
-    context.rect(topPenaltyX, bottomPenaltyY, penaltyBoxWidth, penaltyBoxHeight);
-    context.stroke();
-    context.beginPath();
-    context.arc(W / 2, H - lineMargin - penaltyBoxHeight, centerRadius * 0.8, Math.PI, 0, false);
-    context.stroke();
-
-    // Bottom Goal Area
-    context.beginPath();
-    const bottomGoalY = H - lineMargin - goalBoxHeight;
-    context.strokeRect(topGoalX, bottomGoalY, goalBoxWidth, goalBoxHeight);
-    context.stroke();
-
-    // Corner Arcs
-    context.beginPath();
-    context.arc(lineMargin, lineMargin, cornerRadius, 0, Math.PI / 2);
-    context.stroke();
-    context.beginPath();
-    context.arc(W - lineMargin, lineMargin, cornerRadius, Math.PI / 2, Math.PI);
-    context.stroke();
-    context.beginPath();
-    context.arc(lineMargin, H - lineMargin, cornerRadius, Math.PI * 1.5, 0);
-    context.stroke();
-    context.beginPath();
-    context.arc(W - lineMargin, H - lineMargin, cornerRadius, Math.PI, Math.PI * 1.5);
-    context.stroke();
-
-    // --- Before drawing filled spots, reset the shadow ---
-    resetShadow();
-
-    // Draw filled spots
-    context.fillStyle = 'rgba(255, 255, 255, 0.8)';
-    const spotRadius = 3; // No DPR scaling
-    // Center Spot
-    context.beginPath();
-    context.arc(W / 2, H / 2, spotRadius, 0, Math.PI * 2);
-    context.fill();
-    // Top Penalty Spot
-    context.beginPath();
-    context.arc(W / 2, lineMargin + penaltySpotDist, spotRadius, 0, Math.PI * 2);
-    context.fill();
-    // Bottom Penalty Spot
-    context.beginPath();
-    context.arc(W / 2, H - lineMargin - penaltySpotDist, spotRadius, 0, Math.PI * 2);
-    context.fill();
-
-    // --- Draw Goals ---
-    const goalWidth = W * 0.15;
-    const goalHeight = 5; // A fixed pixel height for the line
-    context.fillStyle = 'rgba(255, 255, 255, 0.9)';
-    
-    // Top Goal
-    context.fillRect((W - goalWidth) / 2, lineMargin, goalWidth, goalHeight);
-    
-    // Bottom Goal
-    context.fillRect((W - goalWidth) / 2, H - lineMargin - goalHeight, goalWidth, goalHeight);
-
-    // --- Reset shadow after all field lines are drawn ---
-    resetShadow();
-
-    // --- End Field Lines ---
-
-    // --- Draw User Drawings --- (lineWidth only change needed)
-    context.strokeStyle = '#FB923C';
-    context.lineWidth = 3; // No DPR scaling
-    context.lineCap = 'round';
-    context.lineJoin = 'round';
-    drawings.forEach(path => {
-      if (path.length < 2) return;
-      
-      // Calculate absolute positions using CSS dimensions (W/H)
-      const startX = path[0].relX * W;
-      const startY = path[0].relY * H;
-      if (!Number.isFinite(startX) || !Number.isFinite(startY)) {
-        logger.warn("Skipping drawing path due to non-finite start point", path[0]);
-        return; 
+      // *** SAFETY CHECK: Ensure calculated CSS dimensions are valid ***
+      if (W <= 0 || H <= 0 || !Number.isFinite(W) || !Number.isFinite(H)) {
+        logger.warn("Canvas dimensions are invalid, skipping draw:", { W, H });
+        return;
       }
 
-      context.beginPath();
-      context.moveTo(startX, startY);
-      
-      for (let i = 1; i < path.length; i++) {
-        const pointX = path[i].relX * W;
-        const pointY = path[i].relY * H;
-        if (!Number.isFinite(pointX) || !Number.isFinite(pointY)) {
-          logger.warn("Skipping drawing segment due to non-finite point", path[i]);
-          context.stroke(); 
-          context.beginPath();
-          context.moveTo(pointX, pointY);
-          continue;
+      // Define field line constants early so they can be used by all effects
+      const lineMargin = 5; // No DPR scaling
+
+      // --- Clear and Draw Background/Field Lines --- 
+      // Final version: A balanced, rich green with noticeable but not overpowering lighting
+      const baseGreen = '#427B44'; // Deeper hue and darker base
+
+      // 1. Draw the base solid green color
+      context.fillStyle = baseGreen;
+      context.fillRect(0, 0, W, H);
+
+      // Pre-rendered background: build offscreen once per size/view, then blit
+      const bgKey = `${Math.round(cssWidth)}x${Math.round(cssHeight)}-${isTacticsBoardView ? 'tactic' : 'normal'}`;
+      if (!backgroundCanvasRef.current || lastBackgroundKeyRef.current !== bgKey) {
+        const bgCanvas = document.createElement('canvas');
+        bgCanvas.width = cssWidth;
+        bgCanvas.height = cssHeight;
+        const bgCtx = bgCanvas.getContext('2d');
+        if (bgCtx) {
+          // Base solid green
+          const baseGreenLocal = '#427B44';
+          bgCtx.fillStyle = baseGreenLocal;
+          bgCtx.fillRect(0, 0, cssWidth, cssHeight);
+
+          // Background textures using cached patterns (create patterns against main context for consistency)
+          if (patternCacheRef.current.ctx !== context) {
+            patternCacheRef.current.ctx = context;
+            patternCacheRef.current.cloud = createNoisePattern(context, 400, 400, 0.02);
+            patternCacheRef.current.grain = createNoisePattern(context, 100, 100, 0.03);
+          }
+          const cloudPatternLocal = patternCacheRef.current.cloud;
+          if (cloudPatternLocal) { bgCtx.fillStyle = cloudPatternLocal; bgCtx.fillRect(0, 0, cssWidth, cssHeight); }
+          const grainPatternLocal = patternCacheRef.current.grain;
+          if (grainPatternLocal) { bgCtx.fillStyle = grainPatternLocal; bgCtx.fillRect(0, 0, cssWidth, cssHeight); }
+
+          // Mowing stripes
+          bgCtx.save();
+          bgCtx.globalCompositeOperation = 'soft-light';
+          const stripes = 9;
+          const stripeW = cssWidth / stripes;
+          for (let i = 0; i < stripes; i++) {
+            bgCtx.fillStyle = (i % 2 === 0) ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)';
+            bgCtx.fillRect(i * stripeW, 0, stripeW, cssHeight);
+          }
+          bgCtx.restore();
+
+          // Lighting
+          const linearShadowLocal = bgCtx.createLinearGradient(0, 0, 0, cssHeight);
+          linearShadowLocal.addColorStop(0, 'rgba(0, 0, 0, 0.03)');
+          linearShadowLocal.addColorStop(1, 'rgba(0, 0, 0, 0.25)');
+          bgCtx.fillStyle = linearShadowLocal;
+          bgCtx.fillRect(0, 0, cssWidth, cssHeight);
+
+          const lightSourceXLocal = cssWidth / 2;
+          const lightSourceYLocal = cssHeight * 0.3;
+          const hotspotLocal = bgCtx.createRadialGradient(
+            lightSourceXLocal, lightSourceYLocal, 0,
+            lightSourceXLocal, lightSourceYLocal, cssHeight * 0.8
+          );
+          hotspotLocal.addColorStop(0, 'rgba(255, 255, 255, 0.10)');
+          hotspotLocal.addColorStop(1, 'rgba(255, 255, 255, 0)');
+          bgCtx.fillStyle = hotspotLocal;
+          bgCtx.fillRect(0, 0, cssWidth, cssHeight);
+
+          // Field lines and markings (scaled to CSS pixels)
+          bgCtx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+          bgCtx.lineWidth = 2;
+          const lineMarginLocal = 5;
+          const centerRadiusLocal = Math.min(cssWidth, cssHeight) * 0.08;
+          const penaltyBoxWidthLocal = cssWidth * 0.6;
+          const penaltyBoxHeightLocal = cssHeight * 0.18;
+          const goalBoxWidthLocal = cssWidth * 0.3;
+          const goalBoxHeightLocal = cssHeight * 0.07;
+          const penaltySpotDistLocal = cssHeight * 0.12;
+          const cornerRadiusLocal = Math.min(cssWidth, cssHeight) * 0.02;
+
+          bgCtx.strokeRect(lineMarginLocal, lineMarginLocal, cssWidth - 2 * lineMarginLocal, cssHeight - 2 * lineMarginLocal);
+          bgCtx.beginPath();
+          bgCtx.moveTo(lineMarginLocal, cssHeight / 2);
+          bgCtx.lineTo(cssWidth - lineMarginLocal, cssHeight / 2);
+          bgCtx.stroke();
+
+          bgCtx.beginPath();
+          bgCtx.arc(cssWidth / 2, cssHeight / 2, centerRadiusLocal, 0, Math.PI * 2);
+          bgCtx.stroke();
+
+          // Top penalty area & arc
+          const topPenaltyXLocal = (cssWidth - penaltyBoxWidthLocal) / 2;
+          bgCtx.strokeRect(topPenaltyXLocal, lineMarginLocal, penaltyBoxWidthLocal, penaltyBoxHeightLocal);
+          bgCtx.beginPath();
+          bgCtx.arc(cssWidth / 2, lineMarginLocal + penaltyBoxHeightLocal, centerRadiusLocal * 0.8, 0, Math.PI, false);
+          bgCtx.stroke();
+
+          // Bottom penalty area & arc
+          const bottomPenaltyYLocal = cssHeight - lineMarginLocal - penaltyBoxHeightLocal;
+          bgCtx.strokeRect(topPenaltyXLocal, bottomPenaltyYLocal, penaltyBoxWidthLocal, penaltyBoxHeightLocal);
+          bgCtx.beginPath();
+          bgCtx.arc(cssWidth / 2, cssHeight - lineMarginLocal - penaltyBoxHeightLocal, centerRadiusLocal * 0.8, Math.PI, 0, false);
+          bgCtx.stroke();
+
+          // Goal areas
+          const topGoalXLocal = (cssWidth - goalBoxWidthLocal) / 2;
+          const bottomGoalYLocal = cssHeight - lineMarginLocal - goalBoxHeightLocal;
+          bgCtx.strokeRect(topGoalXLocal, lineMarginLocal, goalBoxWidthLocal, goalBoxHeightLocal);
+          bgCtx.strokeRect(topGoalXLocal, bottomGoalYLocal, goalBoxWidthLocal, goalBoxHeightLocal);
+
+          // Corners
+          bgCtx.beginPath(); bgCtx.arc(lineMarginLocal, lineMarginLocal, cornerRadiusLocal, 0, Math.PI / 2); bgCtx.stroke();
+          bgCtx.beginPath(); bgCtx.arc(cssWidth - lineMarginLocal, lineMarginLocal, cornerRadiusLocal, Math.PI / 2, Math.PI); bgCtx.stroke();
+          bgCtx.beginPath(); bgCtx.arc(lineMarginLocal, cssHeight - lineMarginLocal, cornerRadiusLocal, Math.PI * 1.5, 0); bgCtx.stroke();
+          bgCtx.beginPath(); bgCtx.arc(cssWidth - lineMarginLocal, cssHeight - lineMarginLocal, cornerRadiusLocal, Math.PI, Math.PI * 1.5); bgCtx.stroke();
+
+          // Spots
+          bgCtx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+          const spotRadiusLocal = 3;
+          bgCtx.beginPath(); bgCtx.arc(cssWidth / 2, cssHeight / 2, spotRadiusLocal, 0, Math.PI * 2); bgCtx.fill();
+          bgCtx.beginPath(); bgCtx.arc(cssWidth / 2, lineMarginLocal + penaltySpotDistLocal, spotRadiusLocal, 0, Math.PI * 2); bgCtx.fill();
+          bgCtx.beginPath(); bgCtx.arc(cssWidth / 2, cssHeight - lineMarginLocal - penaltySpotDistLocal, spotRadiusLocal, 0, Math.PI * 2); bgCtx.fill();
+
+          backgroundCanvasRef.current = bgCanvas;
+          lastBackgroundKeyRef.current = bgKey;
         }
-        context.lineTo(pointX, pointY);
-      }
-      context.stroke();
-    });
-
-    // --- Draw Opponents --- (No manual scaling needed)
-    context.lineWidth = 1.5;
-    const opponentRadius = PLAYER_RADIUS * 0.9; // Use original radius
-    if (!isTacticsBoardView) {
-    opponents.forEach(opponent => {
-      if (typeof opponent.relX !== 'number' || typeof opponent.relY !== 'number') {
-        logger.warn("Skipping opponent due to invalid relX/relY", opponent);
-        return;
-      }
-      // Calculate absolute positions using CSS dimensions (W/H)
-      const absX = opponent.relX * W;
-      const absY = opponent.relY * H;
-      if (!Number.isFinite(absX) || !Number.isFinite(absY)) {
-        logger.warn("Skipping opponent due to non-finite calculated position", { opponent, absX, absY });
-        return;
       }
 
-      const baseColor = tinycolor('#DC2626'); // Opponent Red
+      // Draw pre-rendered background (fallback to inline draw if not available)
+      if (backgroundCanvasRef.current) {
+        context.drawImage(backgroundCanvasRef.current, 0, 0, W, H);
+      } else {
+        // Fallback to simple solid if offscreen failed
+        context.fillStyle = '#427B44';
+        context.fillRect(0, 0, W, H);
+      }
 
-      // 1. Base Disc Color
+      context.shadowColor = 'rgba(0, 0, 0, 0.25)';
+      context.shadowBlur = 2;
+      context.shadowOffsetY = 1;
+      context.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+      context.lineWidth = 2; // No DPR scaling needed here
+      const centerRadius = Math.min(W, H) * 0.08; // Use W/H (CSS)
+      const penaltyBoxWidth = W * 0.6; // Use W (CSS)
+      const penaltyBoxHeight = H * 0.18; // Use H (CSS)
+      const goalBoxWidth = W * 0.3; // Use W
+      const goalBoxHeight = H * 0.07; // Use H
+      const penaltySpotDist = H * 0.12; // Use H
+      const cornerRadius = Math.min(W, H) * 0.02; // Use W/H
+
+      // Function to reset shadow for elements that shouldn't have it (like filled spots)
+      const resetShadow = () => {
+        context.shadowColor = 'transparent';
+        context.shadowBlur = 0;
+        context.shadowOffsetY = 0;
+      };
+
+      // Outer boundary (using CSS W/H and non-scaled margin)
       context.beginPath();
-      context.arc(absX, absY, opponentRadius, 0, Math.PI * 2);
-      context.fillStyle = baseColor.toString();
+      context.strokeRect(lineMargin, lineMargin, W - 2 * lineMargin, H - 2 * lineMargin);
+
+      // Halfway line
+      context.beginPath();
+      context.moveTo(lineMargin, H / 2);
+      context.lineTo(W - lineMargin, H / 2);
+      context.stroke();
+
+      // Center circle
+      context.beginPath();
+      context.arc(W / 2, H / 2, centerRadius, 0, Math.PI * 2);
+      context.stroke();
+
+      // Top Penalty Area & Arc
+      context.beginPath();
+      const topPenaltyX = (W - penaltyBoxWidth) / 2;
+      context.rect(topPenaltyX, lineMargin, penaltyBoxWidth, penaltyBoxHeight);
+      context.stroke();
+      context.beginPath();
+      context.arc(W / 2, lineMargin + penaltyBoxHeight, centerRadius * 0.8, 0, Math.PI, false);
+      context.stroke();
+
+      // Top Goal Area
+      context.beginPath();
+      const topGoalX = (W - goalBoxWidth) / 2;
+      context.strokeRect(topGoalX, lineMargin, goalBoxWidth, goalBoxHeight);
+      context.stroke();
+
+      // Bottom Penalty Area & Arc
+      context.beginPath();
+      const bottomPenaltyY = H - lineMargin - penaltyBoxHeight;
+      context.rect(topPenaltyX, bottomPenaltyY, penaltyBoxWidth, penaltyBoxHeight);
+      context.stroke();
+      context.beginPath();
+      context.arc(W / 2, H - lineMargin - penaltyBoxHeight, centerRadius * 0.8, Math.PI, 0, false);
+      context.stroke();
+
+      // Bottom Goal Area
+      context.beginPath();
+      const bottomGoalY = H - lineMargin - goalBoxHeight;
+      context.strokeRect(topGoalX, bottomGoalY, goalBoxWidth, goalBoxHeight);
+      context.stroke();
+
+      // Corner Arcs
+      context.beginPath();
+      context.arc(lineMargin, lineMargin, cornerRadius, 0, Math.PI / 2);
+      context.stroke();
+      context.beginPath();
+      context.arc(W - lineMargin, lineMargin, cornerRadius, Math.PI / 2, Math.PI);
+      context.stroke();
+      context.beginPath();
+      context.arc(lineMargin, H - lineMargin, cornerRadius, Math.PI * 1.5, 0);
+      context.stroke();
+      context.beginPath();
+      context.arc(W - lineMargin, H - lineMargin, cornerRadius, Math.PI, Math.PI * 1.5);
+      context.stroke();
+
+      // --- Before drawing filled spots, reset the shadow ---
+      resetShadow();
+
+      // Draw filled spots
+      context.fillStyle = 'rgba(255, 255, 255, 0.8)';
+      const spotRadius = 3; // No DPR scaling
+      // Center Spot
+      context.beginPath();
+      context.arc(W / 2, H / 2, spotRadius, 0, Math.PI * 2);
+      context.fill();
+      // Top Penalty Spot
+      context.beginPath();
+      context.arc(W / 2, lineMargin + penaltySpotDist, spotRadius, 0, Math.PI * 2);
+      context.fill();
+      // Bottom Penalty Spot
+      context.beginPath();
+      context.arc(W / 2, H - lineMargin - penaltySpotDist, spotRadius, 0, Math.PI * 2);
       context.fill();
 
-      // 2. Create a clipping mask
-      context.save();
-      context.beginPath();
-      context.arc(absX, absY, opponentRadius, 0, Math.PI * 2);
-      context.clip();
+      // --- End Background ---
 
-      // 3. Top-left Highlight (Sheen)
-      const highlightGradient = context.createRadialGradient(
-        absX - opponentRadius * 0.3, absY - opponentRadius * 0.3, 0,
-        absX - opponentRadius * 0.3, absY - opponentRadius * 0.3, opponentRadius * 1.2
-      );
-      highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
-      highlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-      context.fillStyle = highlightGradient;
-      context.fillRect(absX - opponentRadius, absY - opponentRadius, opponentRadius * 2, opponentRadius * 2);
+      // --- Draw User Drawings --- (lineWidth only change needed)
+      context.strokeStyle = '#FB923C';
+      context.lineWidth = 3; // No DPR scaling
+      context.lineCap = 'round';
+      context.lineJoin = 'round';
+      drawings.forEach(path => {
+        if (path.length < 2) return;
 
-      // 4. Bottom-right Inner Shadow for depth
-      const shadowGradient = context.createRadialGradient(
-        absX + opponentRadius * 0.4, absY + opponentRadius * 0.4, 0,
-        absX + opponentRadius * 0.4, absY + opponentRadius * 0.4, opponentRadius * 1.5
-      );
-      shadowGradient.addColorStop(0, 'rgba(0, 0, 0, 0.2)');
-      shadowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      context.fillStyle = shadowGradient;
-      context.fillRect(absX - opponentRadius, absY - opponentRadius, opponentRadius * 2, opponentRadius * 2);
-      
-      // 5. Restore and add border
-      context.restore();
-      context.beginPath();
-      context.arc(absX, absY, opponentRadius, 0, Math.PI * 2);
-      context.strokeStyle = 'rgba(0, 0, 0, 0.25)';
-      context.lineWidth = 1;
-      context.stroke();
-    });
-    }
-
-    // --- Draw Tactical Discs ---
-    if (isTacticsBoardView) {
-      const tacticalDiscRadius = PLAYER_RADIUS * 0.9;
-      tacticalDiscs.forEach(disc => {
-        const absX = disc.relX * W;
-        const absY = disc.relY * H;
-        if (!Number.isFinite(absX) || !Number.isFinite(absY)) {
-          logger.warn("Skipping tactical disc due to non-finite calculated position", { disc, absX, absY });
+        // Calculate absolute positions using CSS dimensions (W/H)
+        const startX = path[0].relX * W;
+        const startY = path[0].relY * H;
+        if (!Number.isFinite(startX) || !Number.isFinite(startY)) {
+          logger.warn("Skipping drawing path due to non-finite start point", path[0]);
           return;
         }
 
         context.beginPath();
-        context.arc(absX, absY, tacticalDiscRadius, 0, Math.PI * 2);
-        context.save();
-        context.shadowColor = 'rgba(0, 0, 0, 0.5)';
-        context.shadowBlur = 5;
-        context.shadowOffsetX = 1;
-        context.shadowOffsetY = 2;
+        context.moveTo(startX, startY);
 
-        if (disc.type === 'home') {
-          context.fillStyle = '#7E22CE'; // Purple
-          context.strokeStyle = '#581C87';
-        } else if (disc.type === 'opponent') {
-          context.fillStyle = '#DC2626'; // Red
-          context.strokeStyle = '#B91C1C';
-        } else if (disc.type === 'goalie') {
-          context.fillStyle = '#F97316'; // Orange
-          context.strokeStyle = '#D97706';
+        for (let i = 1; i < path.length; i++) {
+          const pointX = path[i].relX * W;
+          const pointY = path[i].relY * H;
+          if (!Number.isFinite(pointX) || !Number.isFinite(pointY)) {
+            logger.warn("Skipping drawing segment due to non-finite point", path[i]);
+            context.stroke();
+            context.beginPath();
+            context.moveTo(pointX, pointY);
+            continue;
+          }
+          context.lineTo(pointX, pointY);
         }
-
-        context.fill();
-        context.restore();
-        context.lineWidth = 1.5;
         context.stroke();
       });
-    }
 
-    // --- Draw Tactical Ball ---
-    if (isTacticsBoardView && tacticalBallPosition && ballImage) {
-      const ballRadius = PLAYER_RADIUS * 0.6; // Increased size
-      const absX = tacticalBallPosition.relX * W;
-      const absY = tacticalBallPosition.relY * H;
-      
-      context.save();
-      context.shadowColor = 'rgba(0, 0, 0, 0.4)';
-      context.shadowBlur = 5;
-      context.shadowOffsetX = 2;
-      context.shadowOffsetY = 3;
+      // --- Draw Opponents --- (No manual scaling needed)
+      context.lineWidth = 1.5;
+      const opponentRadius = PLAYER_RADIUS * 0.9; // Use original radius
+      if (!isTacticsBoardView) {
+        opponents.forEach(opponent => {
+          if (typeof opponent.relX !== 'number' || typeof opponent.relY !== 'number') {
+            logger.warn("Skipping opponent due to invalid relX/relY", opponent);
+            return;
+          }
+          // Calculate absolute positions using CSS dimensions (W/H)
+          const absX = opponent.relX * W;
+          const absY = opponent.relY * H;
+          if (!Number.isFinite(absX) || !Number.isFinite(absY)) {
+            logger.warn("Skipping opponent due to non-finite calculated position", { opponent, absX, absY });
+            return;
+          }
 
-      // Create a circular clipping path
-      context.beginPath();
-      context.arc(absX, absY, ballRadius, 0, Math.PI * 2);
-      context.closePath();
-      context.clip();
+          const baseColor = tinycolor('#DC2626'); // Opponent Red
 
-      // Slightly enlarge the image to cut off any edge artifacts
-      const imageSize = ballRadius * 2.1;
-      context.drawImage(ballImage, absX - imageSize / 2, absY - imageSize / 2, imageSize, imageSize);
-      
-      // Restore from clipping mask before drawing the border
+          // 1. Base Disc Color
+          context.beginPath();
+          context.arc(absX, absY, opponentRadius, 0, Math.PI * 2);
+          context.fillStyle = baseColor.toString();
+          context.fill();
+
+          // 2. Create a clipping mask
+          context.save();
+          context.beginPath();
+          context.arc(absX, absY, opponentRadius, 0, Math.PI * 2);
+          context.clip();
+
+          // 3. Top-left Highlight (Sheen)
+          const highlightGradient = context.createRadialGradient(
+            absX - opponentRadius * 0.3, absY - opponentRadius * 0.3, 0,
+            absX - opponentRadius * 0.3, absY - opponentRadius * 0.3, opponentRadius * 1.2
+          );
+          highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
+          highlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+          context.fillStyle = highlightGradient;
+          context.fillRect(absX - opponentRadius, absY - opponentRadius, opponentRadius * 2, opponentRadius * 2);
+
+          // 4. Bottom-right Inner Shadow for depth
+          const shadowGradient = context.createRadialGradient(
+            absX + opponentRadius * 0.4, absY + opponentRadius * 0.4, 0,
+            absX + opponentRadius * 0.4, absY + opponentRadius * 0.4, opponentRadius * 1.5
+          );
+          shadowGradient.addColorStop(0, 'rgba(0, 0, 0, 0.2)');
+          shadowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          context.fillStyle = shadowGradient;
+          context.fillRect(absX - opponentRadius, absY - opponentRadius, opponentRadius * 2, opponentRadius * 2);
+
+          // 5. Restore and add thin white border for contrast
+          context.restore();
+          context.beginPath();
+          context.arc(absX, absY, opponentRadius, 0, Math.PI * 2);
+          context.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+          context.lineWidth = 1.5;
+          context.stroke();
+        });
+      }
+
+      // --- Draw Tactical Discs ---
+      if (isTacticsBoardView) {
+        const tacticalDiscRadius = PLAYER_RADIUS * 0.9;
+        tacticalDiscs.forEach(disc => {
+          const absX = disc.relX * W;
+          const absY = disc.relY * H;
+          if (!Number.isFinite(absX) || !Number.isFinite(absY)) {
+            logger.warn("Skipping tactical disc due to non-finite calculated position", { disc, absX, absY });
+            return;
+          }
+
+          context.beginPath();
+          context.arc(absX, absY, tacticalDiscRadius, 0, Math.PI * 2);
+          context.save();
+          context.shadowColor = 'rgba(0, 0, 0, 0.5)';
+          context.shadowBlur = 5;
+          context.shadowOffsetX = 1;
+          context.shadowOffsetY = 2;
+
+          if (disc.type === 'home') {
+            context.fillStyle = '#7E22CE'; // Purple
+            context.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+          } else if (disc.type === 'opponent') {
+            context.fillStyle = '#DC2626'; // Red
+            context.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+          } else if (disc.type === 'goalie') {
+            context.fillStyle = '#F97316'; // Orange
+            context.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+          }
+
+          context.fill();
+          context.restore();
+          context.lineWidth = 1.5;
+          context.stroke();
+        });
+      }
+
+      // --- Draw Tactical Ball ---
+      if (isTacticsBoardView && tacticalBallPosition && ballImage) {
+        const ballRadius = PLAYER_RADIUS * 0.6; // Increased size
+        const absX = tacticalBallPosition.relX * W;
+        const absY = tacticalBallPosition.relY * H;
+
+        context.save();
+        context.shadowColor = 'rgba(0, 0, 0, 0.4)';
+        context.shadowBlur = 5;
+        context.shadowOffsetX = 2;
+        context.shadowOffsetY = 3;
+
+        // Create a circular clipping path
+        context.beginPath();
+        context.arc(absX, absY, ballRadius, 0, Math.PI * 2);
+        context.closePath();
+        context.clip();
+
+        // Slightly enlarge the image to cut off any edge artifacts
+        const imageSize = ballRadius * 2.1;
+        context.drawImage(ballImage, absX - imageSize / 2, absY - imageSize / 2, imageSize, imageSize);
+
+        // Restore from clipping mask before drawing the border
+        context.restore();
+
+        // Draw a clean border on top to hide any artifacts
+        context.beginPath();
+        context.arc(absX, absY, ballRadius, 0, Math.PI * 2);
+        context.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+        context.lineWidth = 1;
+        context.stroke();
+      }
+
+      // --- Draw Players ---
+      const playerRadius = PLAYER_RADIUS;
+      if (!isTacticsBoardView) {
+        players.forEach(player => {
+          if (typeof player.relX !== 'number' || typeof player.relY !== 'number') {
+            return;
+          }
+          const absX = player.relX * W;
+          const absY = player.relY * H;
+          if (!Number.isFinite(absX) || !Number.isFinite(absY)) {
+            logger.warn("Skipping player due to non-finite calculated position", { player, absX, absY });
+            return;
+          }
+
+          // --- Start Refined "Polished Enamel" Disc Redesign ---
+          const baseColor = tinycolor(player.isGoalie ? '#F97316' : (player.color || '#7E22CE'));
+
+          // 1. Base Disc Color
+          context.beginPath();
+          context.arc(absX, absY, playerRadius, 0, Math.PI * 2);
+          context.fillStyle = baseColor.toString();
+          context.fill();
+
+          // 2. Create a clipping mask for the subsequent effects
+          context.save();
+          context.beginPath();
+          context.arc(absX, absY, playerRadius, 0, Math.PI * 2);
+          context.clip();
+
+          // 3. Top-left Highlight (Sheen)
+          const highlightGradient = context.createRadialGradient(
+            absX - playerRadius * 0.3, absY - playerRadius * 0.3, 0,
+            absX - playerRadius * 0.3, absY - playerRadius * 0.3, playerRadius * 1.2
+          );
+          highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
+          highlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+          context.fillStyle = highlightGradient;
+          context.fillRect(absX - playerRadius, absY - playerRadius, playerRadius * 2, playerRadius * 2);
+
+          // 4. Bottom-right Inner Shadow for depth
+          const shadowGradient = context.createRadialGradient(
+            absX + playerRadius * 0.4, absY + playerRadius * 0.4, 0,
+            absX + playerRadius * 0.4, absY + playerRadius * 0.4, playerRadius * 1.5
+          );
+          shadowGradient.addColorStop(0, 'rgba(0, 0, 0, 0.2)');
+          shadowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          context.fillStyle = shadowGradient;
+          context.fillRect(absX - playerRadius, absY - playerRadius, playerRadius * 2, playerRadius * 2);
+
+          // 5. Restore from clipping mask and add thin white border for contrast
+          context.restore();
+          context.beginPath();
+          context.arc(absX, absY, playerRadius, 0, Math.PI * 2);
+          context.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+          context.lineWidth = 1.5;
+          context.stroke();
+
+          // --- End Disc Redesign ---
+
+          // Draw player name with clean "engraved" effect
+          if (showPlayerNames) {
+            context.font = '600 12px Rajdhani, sans-serif';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+
+            const text = player.nickname || player.name;
+
+            // 1. Dark shadow on top-left for the "pressed-in" look
+            context.fillStyle = 'rgba(0, 0, 0, 0.25)';
+            context.fillText(text, absX - 0.5, absY - 0.5);
+
+            // 2. Light highlight on bottom-right
+            context.fillStyle = 'rgba(255, 255, 255, 0.25)';
+            context.fillText(text, absX + 0.5, absY + 0.5);
+
+            // 3. Main text fill
+            context.fillStyle = '#F0F0F0';
+            context.fillText(text, absX, absY);
+          }
+        });
+      }
+
+      // --- Restore context --- 
       context.restore();
-
-      // Draw a clean border on top to hide any artifacts
-      context.beginPath();
-      context.arc(absX, absY, ballRadius, 0, Math.PI * 2);
-      context.strokeStyle = 'rgba(0, 0, 0, 0.5)';
-      context.lineWidth = 1;
-      context.stroke();
-    }
-
-    // --- Draw Players ---
-    const playerRadius = PLAYER_RADIUS;
-    if (!isTacticsBoardView) {
-    players.forEach(player => {
-      if (typeof player.relX !== 'number' || typeof player.relY !== 'number') {
-        return;
-      }
-      const absX = player.relX * W;
-      const absY = player.relY * H;
-      if (!Number.isFinite(absX) || !Number.isFinite(absY)) {
-        logger.warn("Skipping player due to non-finite calculated position", { player, absX, absY });
-        return;
-      }
-
-      // --- Start Refined "Polished Enamel" Disc Redesign ---
-      const baseColor = tinycolor(player.isGoalie ? '#F97316' : (player.color || '#7E22CE'));
-
-      // 1. Base Disc Color
-      context.beginPath();
-      context.arc(absX, absY, playerRadius, 0, Math.PI * 2);
-      context.fillStyle = baseColor.toString();
-      context.fill();
-
-      // 2. Create a clipping mask for the subsequent effects
-      context.save();
-      context.beginPath();
-      context.arc(absX, absY, playerRadius, 0, Math.PI * 2);
-      context.clip();
-
-      // 3. Top-left Highlight (Sheen)
-      const highlightGradient = context.createRadialGradient(
-        absX - playerRadius * 0.3, absY - playerRadius * 0.3, 0,
-        absX - playerRadius * 0.3, absY - playerRadius * 0.3, playerRadius * 1.2
-      );
-      highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
-      highlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-      context.fillStyle = highlightGradient;
-      context.fillRect(absX - playerRadius, absY - playerRadius, playerRadius * 2, playerRadius * 2);
-
-      // 4. Bottom-right Inner Shadow for depth
-      const shadowGradient = context.createRadialGradient(
-        absX + playerRadius * 0.4, absY + playerRadius * 0.4, 0,
-        absX + playerRadius * 0.4, absY + playerRadius * 0.4, playerRadius * 1.5
-      );
-      shadowGradient.addColorStop(0, 'rgba(0, 0, 0, 0.2)');
-      shadowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      context.fillStyle = shadowGradient;
-      context.fillRect(absX - playerRadius, absY - playerRadius, playerRadius * 2, playerRadius * 2);
-
-      // 5. Restore from clipping mask and add border
-      context.restore();
-      context.beginPath();
-      context.arc(absX, absY, playerRadius, 0, Math.PI * 2);
-      context.strokeStyle = 'rgba(0, 0, 0, 0.25)';
-      context.lineWidth = 1;
-      context.stroke();
-      
-      // --- End Disc Redesign ---
-
-      // Draw player name with clean "engraved" effect
-      if (showPlayerNames) {
-        context.font = '600 12px Rajdhani, sans-serif';
-        context.textAlign = 'center';
-        context.textBaseline = 'middle';
-        
-        const text = player.nickname || player.name;
-
-        // 1. Dark shadow on top-left for the "pressed-in" look
-        context.fillStyle = 'rgba(0, 0, 0, 0.25)';
-        context.fillText(text, absX - 0.5, absY - 0.5);
-
-        // 2. Light highlight on bottom-right
-        context.fillStyle = 'rgba(255, 255, 255, 0.25)';
-        context.fillText(text, absX + 0.5, absY + 0.5);
-
-        // 3. Main text fill
-        context.fillStyle = '#F0F0F0';
-        context.fillText(text, absX, absY);
-      }
-    });
-    }
-
-    // --- Restore context --- 
-    context.restore();
     }); // Close requestAnimationFrame callback
   }, [players, opponents, drawings, showPlayerNames, isTacticsBoardView, tacticalDiscs, tacticalBallPosition, ballImage]); // Remove gameEvents dependency
 
@@ -637,19 +676,19 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     const canvas = canvasRef.current;
     const parent = canvas?.parentElement; // Observe the parent which dictates size
     if (!parent || typeof ResizeObserver === 'undefined') {
-        // Fallback or handle browsers without ResizeObserver
-        logger.warn('ResizeObserver not supported or parent not found');
-        // Consider adding back the window resize listener as a fallback?
-        draw(); // Initial draw attempt
-        return; 
+      // Fallback or handle browsers without ResizeObserver
+      logger.warn('ResizeObserver not supported or parent not found');
+      // Consider adding back the window resize listener as a fallback?
+      draw(); // Initial draw attempt
+      return;
     }
 
     const resizeObserver = new ResizeObserver(entries => {
-        // We are only observing one element, so entries[0] is fine
-        if (entries[0]) {
-            // Call draw whenever the observed element size changes
-            draw();
-        }
+      // We are only observing one element, so entries[0] is fine
+      if (entries[0]) {
+        // Call draw whenever the observed element size changes
+        draw();
+      }
     });
 
     // Start observing the parent element
@@ -657,8 +696,8 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
 
     // Cleanup function to disconnect the observer when the component unmounts
     return () => {
-        resizeObserver.unobserve(parent);
-        resizeObserver.disconnect();
+      resizeObserver.unobserve(parent);
+      resizeObserver.disconnect();
     };
   }, [draw]); // Dependency on `draw` ensures the observer always uses the latest version
 
@@ -676,20 +715,20 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     let clientX: number, clientY: number;
 
     if ('touches' in e) { // Handle both React and native TouchEvents
-        let touch: Touch | React.Touch | undefined;
-        // Access changedTouches directly - it exists on both types
-        const touches = e.changedTouches;
-        if (specificTouchId !== undefined && specificTouchId !== null) {
-            // Find the specific touch by identifier
-            touch = Array.from(touches).find(t => t.identifier === specificTouchId);
-        } else if (touches.length > 0) {
-             // Fallback to the first changed touch if no specific ID
-             touch = touches[0];
-        }
+      let touch: Touch | React.Touch | undefined;
+      // Access changedTouches directly - it exists on both types
+      const touches = e.changedTouches;
+      if (specificTouchId !== undefined && specificTouchId !== null) {
+        // Find the specific touch by identifier
+        touch = Array.from(touches).find(t => t.identifier === specificTouchId);
+      } else if (touches.length > 0) {
+        // Fallback to the first changed touch if no specific ID
+        touch = touches[0];
+      }
 
-        if (!touch) return null; 
-        clientX = touch.clientX;
-        clientY = touch.clientY;
+      if (!touch) return null;
+      clientX = touch.clientX;
+      clientY = touch.clientY;
     } else { // It's a MouseEvent
       clientX = e.clientX;
       clientY = e.clientY;
@@ -697,13 +736,13 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
 
     // Check for invalid dimensions before calculating relative position
     if (rect.width <= 0 || rect.height <= 0) {
-        logger.warn("Canvas has invalid dimensions, cannot calculate relative position.");
-        return null;
+      logger.warn("Canvas has invalid dimensions, cannot calculate relative position.");
+      return null;
     }
 
     const relX = (clientX - rect.left) / rect.width;
     const relY = (clientY - rect.top) / rect.height;
-    
+
     // Clamp values between 0 and 1 (optional, but good practice)
     const clampedX = Math.max(0, Math.min(1, relX));
     const clampedY = Math.max(0, Math.min(1, relY));
@@ -811,56 +850,56 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
         }
       }
     } else {
-    // *** Check if placing a tapped player ***
-    if (draggingPlayerFromBarInfo) {
-      logger.log("Field MouseDown: Placing player from bar tap:", draggingPlayerFromBarInfo.id);
-      onPlayerDrop(draggingPlayerFromBarInfo.id, relPos.relX, relPos.relY);
-      // IMPORTANT: Clear the selection state after placing
-      // This needs to happen in the parent (page.tsx), 
-      // so we might need a new callback prop like `onPlayerPlaceFromBar()` 
-      // OR rely on handleDropOnField in page.tsx to clear it.
+      // *** Check if placing a tapped player ***
+      if (draggingPlayerFromBarInfo) {
+        logger.log("Field MouseDown: Placing player from bar tap:", draggingPlayerFromBarInfo.id);
+        onPlayerDrop(draggingPlayerFromBarInfo.id, relPos.relX, relPos.relY);
+        // IMPORTANT: Clear the selection state after placing
+        // This needs to happen in the parent (page.tsx), 
+        // so we might need a new callback prop like `onPlayerPlaceFromBar()` 
+        // OR rely on handleDropOnField in page.tsx to clear it.
         // For now, let's assume handleDropOnField in page.tsx clears draggingPlayerFromBarInfo.
-      // For now, let's assume handleDropOnField in page.tsx clears draggingPlayerFromBarInfo.
-      return; // Don't proceed with other actions
-    }
+        // For now, let's assume handleDropOnField in page.tsx clears draggingPlayerFromBarInfo.
+        return; // Don't proceed with other actions
+      }
 
-    // Double-click check
-    if (e.detail === 2) {
+      // Double-click check
+      if (e.detail === 2) {
+        for (const player of players) {
+          // Pass event clientX/Y and the player object
+          if (isPointInPlayer(e.clientX, e.clientY, player)) {
+            onPlayerRemove(player.id);
+            return;
+          }
+        }
+        for (const opponent of opponents) {
+          // Pass event clientX/Y and the opponent object
+          if (isPointInOpponent(e.clientX, e.clientY, opponent)) {
+            onOpponentRemove(opponent.id);
+            return;
+          }
+        }
+      }
+
+      // Drag check
       for (const player of players) {
         // Pass event clientX/Y and the player object
         if (isPointInPlayer(e.clientX, e.clientY, player)) {
-          onPlayerRemove(player.id);
+          setIsDraggingPlayer(true);
+          setDraggingPlayerId(player.id);
+          if (canvasRef.current) canvasRef.current.style.cursor = 'grabbing';
           return;
         }
       }
       for (const opponent of opponents) {
         // Pass event clientX/Y and the opponent object
         if (isPointInOpponent(e.clientX, e.clientY, opponent)) {
-          onOpponentRemove(opponent.id);
+          setIsDraggingOpponent(true);
+          setDraggingOpponentId(opponent.id);
+          if (canvasRef.current) canvasRef.current.style.cursor = 'grabbing';
           return;
         }
       }
-    }
-
-    // Drag check
-    for (const player of players) {
-      // Pass event clientX/Y and the player object
-      if (isPointInPlayer(e.clientX, e.clientY, player)) {
-        setIsDraggingPlayer(true);
-        setDraggingPlayerId(player.id);
-        if (canvasRef.current) canvasRef.current.style.cursor = 'grabbing';
-        return;
-      }
-    }
-    for (const opponent of opponents) {
-        // Pass event clientX/Y and the opponent object
-        if (isPointInOpponent(e.clientX, e.clientY, opponent)) {
-            setIsDraggingOpponent(true);
-            setDraggingOpponentId(opponent.id);
-            if (canvasRef.current) canvasRef.current.style.cursor = 'grabbing';
-            return;
-          }
-        }
     }
 
     // Start drawing
@@ -891,16 +930,16 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
           if (isPointInTacticalDisc(e.clientX, e.clientY, disc)) { hovering = true; break; }
         }
       } else {
-      for (const player of players) {
-        // Pass event clientX/Y and the player object
-        if (isPointInPlayer(e.clientX, e.clientY, player)) { hovering = true; break; }
-      }
-      if (!hovering) {
+        for (const player of players) {
+          // Pass event clientX/Y and the player object
+          if (isPointInPlayer(e.clientX, e.clientY, player)) { hovering = true; break; }
+        }
+        if (!hovering) {
           for (const opponent of opponents) {
-              // Pass event clientX/Y and the opponent object
-              if (isPointInOpponent(e.clientX, e.clientY, opponent)) { hovering = true; break; }
-            }
+            // Pass event clientX/Y and the opponent object
+            if (isPointInOpponent(e.clientX, e.clientY, opponent)) { hovering = true; break; }
           }
+        }
       }
       if (canvasRef.current) {
         canvasRef.current.style.cursor = hovering ? 'grab' : 'default';
@@ -919,9 +958,9 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
       setIsDraggingPlayer(false);
       setDraggingPlayerId(null);
     } else if (isDraggingOpponent && draggingOpponentId) {
-        onOpponentMoveEnd(draggingOpponentId);
-        setIsDraggingOpponent(false);
-        setDraggingOpponentId(null);
+      onOpponentMoveEnd(draggingOpponentId);
+      setIsDraggingOpponent(false);
+      setDraggingOpponentId(null);
     } else if (isDrawing) {
       onDrawingEnd();
       setIsDrawing(false);
@@ -947,11 +986,11 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
 
     // *** Check if placing a tapped player ***
     if (draggingPlayerFromBarInfo) {
-        logger.log("Field TouchStart: Placing player from bar tap:", draggingPlayerFromBarInfo.id);
-        // Don't preventDefault here for placing, allow potential scroll if placement fails
-        onPlayerDropViaTouch(relPos.relX, relPos.relY);
-        setActiveTouchId(null); 
-        return; 
+      logger.log("Field TouchStart: Placing player from bar tap:", draggingPlayerFromBarInfo.id);
+      // Don't preventDefault here for placing, allow potential scroll if placement fails
+      onPlayerDropViaTouch(relPos.relX, relPos.relY);
+      setActiveTouchId(null);
+      return;
     }
 
     const now = Date.now();
@@ -1047,7 +1086,41 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     lastTapInfo, onDrawingStart
   ]);
 
+  // Throttle touch move drawing/dragging with rAF to avoid overproducing points on mobile
+  const throttledRef = useRef<number | null>(null);
+  const lastTouchEventRef = useRef<TouchEvent | null>(null);
+
+  const processTouchMove = useCallback((evt: TouchEvent) => {
+    if (activeTouchId === null) return;
+    const currentTouch = Array.from(evt.changedTouches).find(t => t.identifier === activeTouchId);
+    if (!currentTouch) return;
+    if (isDraggingBall || isDraggingPlayer || isDraggingOpponent || isDrawing || isDraggingTacticalDisc) {
+      evt.preventDefault();
+    }
+    const pos = getRelativeEventPosition(evt, activeTouchId);
+    if (!pos) return;
+    if (isDraggingBall) {
+      onTacticalBallMove(pos);
+    } else if (isDraggingTacticalDisc && draggingTacticalDiscId) {
+      onTacticalDiscMove(draggingTacticalDiscId, pos.relX, pos.relY);
+    } else if (isDraggingPlayer && draggingPlayerId) {
+      onPlayerMove(draggingPlayerId, pos.relX, pos.relY);
+    } else if (isDraggingOpponent && draggingOpponentId) {
+      onOpponentMove(draggingOpponentId, pos.relX, pos.relY);
+    } else if (isDrawing) {
+      onDrawingAddPoint(pos);
+    }
+  }, [activeTouchId, isDraggingBall, isDraggingPlayer, isDraggingOpponent, isDrawing, isDraggingTacticalDisc, draggingTacticalDiscId, draggingPlayerId, draggingOpponentId, onTacticalBallMove, onTacticalDiscMove, onPlayerMove, onOpponentMove, onDrawingAddPoint]);
+
   const handleTouchMove = useCallback((e: TouchEvent) => {
+    lastTouchEventRef.current = e;
+    if (throttledRef.current !== null) return; // already scheduled
+    throttledRef.current = requestAnimationFrame(() => {
+      throttledRef.current = null;
+      if (lastTouchEventRef.current) {
+        processTouchMove(lastTouchEventRef.current);
+      }
+    });
     if (activeTouchId === null) return;
 
     const currentTouch = Array.from(e.changedTouches).find(t => t.identifier === activeTouchId);
@@ -1056,7 +1129,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     if (isDraggingBall || isDraggingPlayer || isDraggingOpponent || isDrawing || isDraggingTacticalDisc) {
       e.preventDefault();
     }
-    
+
     const pos = getRelativeEventPosition(e, activeTouchId);
     if (!pos) return;
 
@@ -1071,7 +1144,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
     } else if (isDrawing) {
       onDrawingAddPoint(pos);
     }
-  }, [activeTouchId, isDrawing, isDraggingPlayer, isDraggingOpponent, draggingPlayerId, draggingOpponentId, onPlayerMove, onOpponentMove, onDrawingAddPoint, isDraggingTacticalDisc, draggingTacticalDiscId, onTacticalDiscMove, isDraggingBall, onTacticalBallMove]);
+  }, [processTouchMove, activeTouchId, isDrawing, isDraggingPlayer, isDraggingOpponent, draggingPlayerId, draggingOpponentId, onPlayerMove, onOpponentMove, onDrawingAddPoint, isDraggingTacticalDisc, draggingTacticalDiscId, onTacticalDiscMove, isDraggingBall, onTacticalBallMove]);
 
   const handleTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => {
     if (activeTouchId !== null) {
@@ -1087,17 +1160,21 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
 
     if (isDraggingBall) {
       setIsDraggingBall(false);
+      if (canvasRef.current) canvasRef.current.style.cursor = 'default';
     } else if (isDraggingTacticalDisc) {
       setIsDraggingTacticalDisc(false);
       setDraggingTacticalDiscId(null);
+      if (canvasRef.current) canvasRef.current.style.cursor = 'default';
     } else if (isDraggingPlayer) {
       onPlayerMoveEnd();
       setIsDraggingPlayer(false);
       setDraggingPlayerId(null);
+      if (canvasRef.current) canvasRef.current.style.cursor = 'default';
     } else if (isDraggingOpponent && draggingOpponentId) {
       onOpponentMoveEnd(draggingOpponentId);
       setIsDraggingOpponent(false);
       setDraggingOpponentId(null);
+      if (canvasRef.current) canvasRef.current.style.cursor = 'default';
     } else if (isDrawing) {
       onDrawingEnd();
       setIsDrawing(false);
@@ -1121,13 +1198,13 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
 
   const handleDrop = (e: React.DragEvent<HTMLCanvasElement>) => {
     e.preventDefault();
-    const data = e.dataTransfer.getData('application/json'); 
+    const data = e.dataTransfer.getData('application/json');
     if (!data) return;
     let droppedPlayerId: string;
     try {
-        const parsedData = JSON.parse(data);
-        droppedPlayerId = parsedData.id;
-        if (!droppedPlayerId) throw new Error("ID missing");
+      const parsedData = JSON.parse(data);
+      droppedPlayerId = parsedData.id;
+      if (!droppedPlayerId) throw new Error("ID missing");
     } catch (error) { logger.error("Drop data error:", error); return; }
 
     const canvas = canvasRef.current;
@@ -1171,7 +1248,7 @@ const SoccerField: React.FC<SoccerFieldProps> = ({
         onDrop={handleDrop}
       />
       {/* Optional: Render player names/numbers as separate HTML elements over the canvas? */}
-      
+
       {/* <<< Change Timer Position to Bottom-Right >>> */}
       <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs font-mono px-2 py-1 rounded pointer-events-none select-none z-10">
         {formatTime(timeElapsedInSeconds)}

@@ -4,8 +4,7 @@ import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import GameSettingsModal from './GameSettingsModal';
 import { type GameSettingsModalProps } from './GameSettingsModal';
-import { Player, Season, Tournament, AppState } from '@/types';
-import { GameEvent, GameEventType } from './GameSettingsModal';
+import { Player, Season, Tournament, AppState, GameEvent } from '@/types';
 import { getSeasons } from '@/utils/seasons';
 import { getTournaments } from '@/utils/tournaments';
 import { updateGameDetails, updateGameEvent, removeGameEvent } from '@/utils/savedGames';
@@ -112,8 +111,8 @@ const mockPlayers: Player[] = [
   { id: 'p3', name: 'Player Three', isGoalie: false },
 ];
 const mockGameEvents: GameEvent[] = [
-  { id: 'goal1', type: 'goal' as GameEventType, time: 120, scorerId: 'p1', assisterId: 'p2' },
-  { id: 'goal2', type: 'opponentGoal' as GameEventType, time: 300 },
+  { id: 'goal1', type: 'goal', time: 120, scorerId: 'p1', assisterId: 'p2' },
+  { id: 'goal2', type: 'opponentGoal', time: 300 },
 ];
 const mockSeasons: Season[] = [
   { id: 's1', name: 'Spring League 2024', location: 'Arena', periodCount: 2, periodDuration: 25, defaultRoster: ['p1', 'p2', 'p3'] },
@@ -354,5 +353,10 @@ describe('<GameSettingsModal />', () => {
       // Just verify the component renders without errors
       expect(screen.getByRole('heading', { name: t('gameSettingsModal.title') })).toBeInTheDocument();
     });
+  });
+
+  test('has no critical accessibility violations when open', async () => {
+    const { container } = await renderAndWaitForLoad();
+    await (global as any).testModalAccessibility(container);
   });
 });

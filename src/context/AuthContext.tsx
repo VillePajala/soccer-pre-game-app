@@ -1,11 +1,16 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session, AuthError } from '@supabase/supabase-js';
+import type { User, Session, AuthError } from '@/types/supabase-types';
 import { supabase } from '../lib/supabase';
 import { sessionManager } from '../lib/security/sessionManager';
+import { authAwareStorageManager } from '@/lib/storage';
+import { loadingRegistry } from '@/utils/loadingRegistry';
+import { operationQueue } from '@/utils/operationQueue';
 import { SecureAuthService } from '../lib/security/rateLimiter';
-import logger from '../utils/logger';
+import { SmartPreloader, registerModalComponents } from '@/services/ComponentRegistry';
+import { perfMark } from '@/utils/performance';
+import logger from '@/utils/logger';
 
 interface AuthContextType {
   user: User | null;
@@ -70,6 +75,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         // Update session info
         setSessionInfo(sessionManager.getSessionInfo());
+        
+        // PERFORMANCE: Prefetch modal components after successful sign-in
+        if (event === 'SIGNED_IN' && session) {
+          perfMark('auth:signInSuccess');
+          
+          // Register all modal components first
+          registerModalComponents();
+          
+          // Use requestIdleCallback for non-blocking prefetch
+          if (typeof window !== 'undefined' && window.requestIdleCallback) {
+            window.requestIdleCallback(
+              async () => {
+                try {
+                  perfMark('prefetch:start');
+                  await SmartPreloader.preloadCriticalComponents();
+                  perfMark('prefetch:complete');
+                  logger.debug('[Auth] Critical modal components prefetched after sign-in');
+                } catch (error) {
+                  logger.warn('[Auth] Failed to prefetch components:', error);
+                }
+              },
+              { timeout: 2000 } // Fallback after 2s
+            );
+          } else {
+            // Fallback for browsers without requestIdleCallback
+            setTimeout(async () => {
+              try {
+                await SmartPreloader.preloadCriticalComponents();
+                logger.debug('[Auth] Critical modal components prefetched after sign-in (fallback)');
+              } catch (error) {
+                logger.warn('[Auth] Failed to prefetch components:', error);
+              }
+            }, 1500);
+          }
+        }
       }
     );
 
@@ -107,7 +147,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       
       // Log for debugging
-      console.log('Supabase signup response:', { data, error });
+      logger.debug('Supabase signup response:', { data, error });
       
       return { error };
     } catch (error) {
@@ -150,43 +190,75 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const immediateLocalCleanup = () => {
+    // Cancel in-flight operations
+    try { loadingRegistry.clearAll(); } catch {}
+    try { operationQueue.clear(); } catch {}
+    // Update storage manager immediately
+    try { (authAwareStorageManager as { handleSignOutCleanup?: () => void })?.handleSignOutCleanup?.(); } catch {}
+    // Broadcast to other tabs
+    try {
+      localStorage.setItem('mdc:signout', String(Date.now()));
+      setTimeout(() => localStorage.removeItem('mdc:signout'), 0);
+    } catch {}
+    // Clear state
+    setSession(null);
+    setUser(null);
+    setLoading(false);
+  };
+
+  const clearSupabaseAuthKeys = () => {
+    if (typeof window !== 'undefined') {
+      const keys = Object.keys(localStorage);
+      keys.forEach((key) => { if (key.startsWith('sb-')) localStorage.removeItem(key); });
+    }
+  };
+
+  const postSignOutCleanup = () => {
+    clearSupabaseAuthKeys();
+    // Ask SW to clear caches, then navigate with cache-busting
+    try {
+      if (navigator.serviceWorker?.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: 'CLEAR_CACHE' });
+      }
+    } catch {}
+    const url = new URL(window.location.href);
+    url.searchParams.set('_signed_out', String(Date.now()));
+    window.location.replace(url.toString());
+  };
+
   const signOut = async () => {
     try {
       logger.info('Starting sign out process...');
-      
-      // Cleanup session manager
+      // UI-first local cleanup
+      immediateLocalCleanup();
       sessionManager.cleanup();
-      
-      // Sign out from Supabase
+      // Background network sign out (ignore errors)
       const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        logger.error('Supabase sign out error:', error);
-      } else {
-        logger.info('Supabase sign out successful');
-      }
-      
-      // Force clear local state
-      setSession(null);
-      setUser(null);
-      setLoading(false);
-      
-      // Clear only Supabase auth storage (not all auth-related keys)
-      if (typeof window !== 'undefined') {
-        // Clear only specific Supabase auth storage keys to avoid clearing game data
-        const keys = Object.keys(localStorage);
-        keys.forEach(key => {
-          if (key.startsWith('sb-') && key.includes('supabase')) {
-            logger.info('Clearing Supabase auth key:', key);
-            localStorage.removeItem(key);
-          }
-        });
-      }
-      
-      logger.info('Sign out process completed');
-      return { error };
+      if (error) logger.error('Supabase sign out error:', error);
+      postSignOutCleanup();
+      return { error: null };
     } catch (error) {
       logger.error('Sign out error:', error);
+      return { error: error as AuthError };
+    }
+  };
+
+  const globalSignOut = async () => {
+    try {
+      logger.info('Starting GLOBAL sign out process (revoke all sessions)...');
+      immediateLocalCleanup();
+      sessionManager.cleanup();
+      // Supabase: revoke all refresh tokens for this user
+      // We do this by calling signOut with scope: 'global' if available
+      // Fallback: call RPC endpoint if one exists; here we use built-in global sign out
+      // @ts-expect-error - typings may not include scope yet in some SDK versions
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
+      if (error) logger.error('Global sign out error:', error); else logger.info('Global sign out successful');
+      postSignOutCleanup();
+      return { error: null };
+    } catch (error) {
+      logger.error('Global sign out exception:', error);
       return { error: error as AuthError };
     }
   };
@@ -225,6 +297,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signOut,
     resetPassword,
+    // Expose global sign out for settings modal
+    globalSignOut,
     extendSession,
     sessionInfo,
   };

@@ -29,6 +29,7 @@ describe('PlayerBar', () => {
 
   const defaultProps = {
     players: mockPlayers,
+    playersOnField: mockPlayers, // Add the missing playersOnField prop
     gameEvents: mockGameEvents,
     onPlayerDragStartFromBar: jest.fn(),
     selectedPlayerIdFromBar: null,
@@ -50,7 +51,7 @@ describe('PlayerBar', () => {
     render(<PlayerBar {...defaultProps} />);
     
     // Find and click on the background (the main container)
-    const background = screen.getByRole('img', { name: /Coaching Companion Logo/i }).closest('div');
+    const background = screen.getByRole('img', { name: /MatchOps Coach Logo/i }).closest('div');
     if (background) {
       fireEvent.click(background);
       expect(defaultProps.onBarBackgroundClick).toHaveBeenCalled();

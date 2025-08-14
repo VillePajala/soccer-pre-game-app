@@ -1,5 +1,5 @@
 {
-  "name": "test-pro-soccer-coach",
+  "name": "matchops-coach",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -7,16 +7,28 @@
     "build": "node scripts/generate-release-notes.mjs && node scripts/generate-manifest.mjs && node scripts/inject-env-vars.mjs && next build",
     "start": "next start",
     "lint": "next lint",
+    "lint:strict": "next lint --max-warnings 0",
+    "lint:fix": "next lint --fix",
     "test": "jest",
     "test:unit": "jest",
+    "test:fast": "LOG_LEVEL=error jest --testPathIgnorePatterns='supabase|import|backup|export|useForm.test|useRosterSettingsModalState|useSettingsModalState|useViewMode' --maxWorkers=4 --silent",
+    "test:slow": "LOG_LEVEL=error jest --testPathPattern='supabase|import|backup|export' --maxWorkers=2 --silent",
+    "test:ci": "NODE_OPTIONS='--max-old-space-size=6144' LOG_LEVEL=error jest --coverage --maxWorkers=2 --silent --passWithNoTests --forceExit --testTimeout=10000",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:smoke": "./scripts/smoke-test.sh",
+    "ci:bundle-budgets": "node scripts/check-bundle-budgets.mjs",
     "generate:i18n-types": "node scripts/generate-i18n-types.mjs",
     "analyze": "ANALYZE=true npm run build",
     "security:scan": "snyk test",
     "security:monitor": "snyk monitor",
-    "security:wizard": "snyk wizard"
+    "security:wizard": "snyk wizard",
+    "docs:links": "bash -lc 'set -e; find docs -name \"*.md\" -print0 | xargs -0 -n1 -I{} npx --yes markdown-link-check -q -c .mlc.json {}; npx --yes markdown-link-check -q -c .mlc.json README.md'"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.4",
+    "@sentry/nextjs": "^10.4.0",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.52.0",
     "@tanstack/react-query": "^5.80.10",
@@ -25,6 +37,7 @@
     "dotenv": "^17.2.1",
     "i18next": "^24.2.3",
     "idb-keyval": "^6.2.2",
+    "immer": "^10.1.1",
     "next": "^15.3.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -32,25 +45,32 @@
     "react-icons": "^5.5.0",
     "recharts": "^2.15.4",
     "tinycolor2": "^1.6.0",
-    "zod": "^3.25.76"
+    "web-vitals": "^5.1.0",
+    "zod": "^3.25.76",
+    "zustand": "^5.0.7"
   },
   "devDependencies": {
+    "@axe-core/react": "^4.10.2",
     "@eslint/eslintrc": "^3",
     "@next/bundle-analyzer": "^15.4.5",
+    "@playwright/test": "^1.54.2",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
     "@types/jest": "^29.5.14",
+    "@types/jest-axe": "^3.5.9",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint-config-next": "15.3.0",
     "jest": "^29.7.0",
+    "jest-axe": "^10.0.0",
     "jest-environment-jsdom": "^29.7.0",
     "snyk": "^1.1298.1",
     "supabase": "^2.31.8",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "webpack-bundle-analyzer": "^4.10.2"
   }
 }
