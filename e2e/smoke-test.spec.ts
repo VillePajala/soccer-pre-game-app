@@ -11,7 +11,7 @@ test.describe('Core User Journey Smoke Test', () => {
 
   test('should load homepage without errors', async ({ page }) => {
     // Check that the page loads successfully
-    await expect(page).toHaveTitle(/MatchDay Coach/);
+    await expect(page).toHaveTitle(/MatchOps Coach/);
     
     // Check for any console errors
     const errors: string[] = [];
