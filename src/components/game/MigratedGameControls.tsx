@@ -164,30 +164,78 @@ export const MigratedGameControls = React.memo<ExtendedGameControlsProps>(({
   };
   
   const handlePlaceAllPlayers = () => {
-    // Auto-place all available players on field
-    const availablePlayers = useGameStore.getState().field.availablePlayers;
-    const formations = [
-      // Basic 4-4-2 formation positions
-      { relX: 0.1, relY: 0.5 }, // GK
-      { relX: 0.25, relY: 0.2 }, // RB
-      { relX: 0.25, relY: 0.4 }, // CB
-      { relX: 0.25, relY: 0.6 }, // CB
-      { relX: 0.25, relY: 0.8 }, // LB
-      { relX: 0.5, relY: 0.2 }, // RM
-      { relX: 0.5, relY: 0.4 }, // CM
-      { relX: 0.5, relY: 0.6 }, // CM
-      { relX: 0.5, relY: 0.8 }, // LM
-      { relX: 0.75, relY: 0.4 }, // ST
-      { relX: 0.75, relY: 0.6 }, // ST
-    ];
+    // Get current state from store
+    const currentState = useGameStore.getState();
+    const availablePlayers = currentState.field.availablePlayers;
+    const selectedPlayerIds = currentState.gameSession.selectedPlayerIds || [];
+    const currentPlayersOnField = currentState.field.playersOnField || [];
     
-    const playersToPlace = availablePlayers.slice(0, formations.length).map((player, index) => ({
-      ...player,
-      relX: formations[index].relX,
-      relY: formations[index].relY,
-    }));
+    // Find selected players that are not already on field
+    const selectedButNotOnField = selectedPlayerIds.filter(
+      id => !currentPlayersOnField.some(p => p.id === id)
+    );
     
-    gameStore.setPlayersOnField(playersToPlace);
+    if (selectedButNotOnField.length === 0) {
+      // Also call parent handler for compatibility
+      if (onPlaceAllPlayers) {
+        onPlaceAllPlayers();
+      }
+      return;
+    }
+
+    const playersToPlace = selectedButNotOnField
+      .map(id => availablePlayers.find(p => p.id === id))
+      .filter((p): p is Player => p !== undefined);
+
+    const newFieldPlayers: Player[] = [...currentPlayersOnField];
+
+    // Place goalie first if present
+    const goalieIndex = playersToPlace.findIndex(p => p.isGoalie);
+    let goalie: Player | null = null;
+    if (goalieIndex !== -1) {
+      goalie = playersToPlace.splice(goalieIndex, 1)[0];
+    }
+    if (goalie) {
+      newFieldPlayers.push({ ...goalie, relX: 0.5, relY: 0.95 });
+    }
+
+    // Position remaining players based on count
+    const remainingCount = playersToPlace.length;
+    let positions: { relX: number; relY: number }[] = [];
+
+    if (remainingCount <= 3) {
+      if (remainingCount >= 1) positions.push({ relX: 0.5, relY: 0.8 });
+      if (remainingCount >= 2) positions.push({ relX: 0.5, relY: 0.5 });
+      if (remainingCount >= 3) positions.push({ relX: 0.5, relY: 0.3 });
+    } else if (remainingCount <= 7) {
+      positions.push({ relX: 0.3, relY: 0.8 });
+      positions.push({ relX: 0.7, relY: 0.8 });
+      positions.push({ relX: 0.25, relY: 0.6 });
+      positions.push({ relX: 0.5, relY: 0.55 });
+      positions.push({ relX: 0.75, relY: 0.6 });
+      positions.push({ relX: 0.35, relY: 0.3 });
+      if (remainingCount >= 7) positions.push({ relX: 0.65, relY: 0.3 });
+    } else {
+      positions.push({ relX: 0.25, relY: 0.85 });
+      positions.push({ relX: 0.5, relY: 0.8 });
+      positions.push({ relX: 0.75, relY: 0.85 });
+      positions.push({ relX: 0.2, relY: 0.6 });
+      positions.push({ relX: 0.4, relY: 0.55 });
+      positions.push({ relX: 0.6, relY: 0.55 });
+      positions.push({ relX: 0.8, relY: 0.6 });
+      positions.push({ relX: 0.5, relY: 0.3 });
+      if (remainingCount >= 9) positions.push({ relX: 0.35, relY: 0.3 });
+      if (remainingCount >= 10) positions.push({ relX: 0.65, relY: 0.3 });
+    }
+
+    positions = positions.slice(0, remainingCount);
+
+    playersToPlace.forEach((player, index) => {
+      const pos = positions[index];
+      newFieldPlayers.push({ ...player, relX: pos.relX, relY: pos.relY });
+    });
+
+    gameStore.setPlayersOnField(newFieldPlayers);
     
     // Also call parent handler for compatibility
     if (onPlaceAllPlayers) {

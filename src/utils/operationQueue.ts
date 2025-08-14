@@ -17,6 +17,8 @@ export interface Operation {
   execute: () => Promise<void>;
   timeout?: number;
   createdAt: number;
+  retryCount?: number;
+  maxRetries?: number;
 }
 
 class OperationQueue {
@@ -103,7 +105,7 @@ class OperationQueue {
     const startTime = Date.now();
     
     try {
-      console.debug(`[OperationQueue] Starting ${operation.name}`);
+      console.debug(`[OperationQueue] Starting ${operation.name} (attempt ${(operation.retryCount || 0) + 1})`);
       
       // Add timeout if specified
       if (operation.timeout) {
@@ -120,7 +122,34 @@ class OperationQueue {
       console.debug(`[OperationQueue] Completed ${operation.name} in ${duration}ms`);
     } catch (error) {
       const duration = Date.now() - startTime;
-      console.error(`[OperationQueue] Failed ${operation.name} after ${duration}ms:`, error);
+      const retryCount = operation.retryCount || 0;
+      const maxRetries = operation.maxRetries || 0;
+      
+      if (retryCount < maxRetries) {
+        // Exponential backoff with jitter
+        const baseDelay = Math.min(1000 * Math.pow(2, retryCount), 10000); // Cap at 10s
+        const jitter = Math.random() * 0.1 * baseDelay; // 10% jitter
+        const delay = baseDelay + jitter;
+        
+        console.debug(`[OperationQueue] Retrying ${operation.name} in ${Math.round(delay)}ms (attempt ${retryCount + 1}/${maxRetries})`);
+        
+        setTimeout(() => {
+          const retryOperation: Operation = {
+            ...operation,
+            retryCount: retryCount + 1,
+            createdAt: Date.now()
+          };
+          
+          // Add back to appropriate queue
+          const queue = this.queues.get(operation.priority) || [];
+          queue.unshift(retryOperation); // Add to front for immediate retry
+          this.queues.set(operation.priority, queue);
+          
+          this.processQueue();
+        }, delay);
+      } else {
+        console.error(`[OperationQueue] Failed ${operation.name} after ${duration}ms (${retryCount + 1} attempts):`, error);
+      }
     } finally {
       this.running.delete(operation.id);
       

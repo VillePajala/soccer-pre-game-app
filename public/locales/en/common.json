@@ -599,6 +599,8 @@
     "storageUsageUnavailable": "Storage usage information unavailable.",
     "accountTitle": "Account",
     "signOutDescription": "Sign out of your account and return to the login screen.",
+    "globalSignOut": "Sign Out Everywhere",
+    "globalSignOutConfirm": "Sign out everywhere? This will log you out from all devices.",
     "dangerZoneTitle": "Danger Zone",
     "confirmResetLabel": "Type RESET to confirm",
     "backupTitle": "Automatic Backup",
@@ -614,7 +616,9 @@
     "privacyPolicyLink": "Privacy Policy",
     "termsOfServiceLink": "Terms of Service",
     "deleteAccount": "Delete Account",
-    "deleteAccountDescription": "Permanently delete your account and all data. This action cannot be undone."
+    "deleteAccountDescription": "Permanently delete your account and all data. This action cannot be undone.",
+    "dataManagementTitle": "Data Management",
+    "dataManagementDescription": "Export your data for backup or import data from a previous backup."
   },
   "playerAssessmentModal": {
     "title": "Assess Players",
@@ -710,7 +714,14 @@
   "close": "Close",
   "settings": {
     "importBackup": "Import Backup",
+    "exportBackup": "Export Backup",
     "importBackupDescription": "Import your backup file to restore your data. This supports both old localStorage backups and new Supabase exports.",
-    "selectBackupFile": "Select Backup File"
+    "selectBackupFile": "Select Backup File",
+    "exportSuccess": "Data exported successfully",
+    "exportError": "Failed to export data",
+    "importType": "Import Type",
+    "merge": "Merge with existing",
+    "replace": "Replace all data",
+    "replaceWarning": "⚠️ This will delete all existing data"
   }
 }

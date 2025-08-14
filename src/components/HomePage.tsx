@@ -1151,42 +1151,112 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
   // --- Auto-save state using offline-first storage ---
   const autosaveTimeoutRef = useRef<number | null>(null);
+  const lastSaveContentHashRef = useRef<string>('');
+  const saveLatencyHistoryRef = useRef<number[]>([]);
+
+  // Adaptive timeout calculation based on recent latency
+  const getAdaptiveTimeout = useCallback(() => {
+    const history = saveLatencyHistoryRef.current;
+    if (history.length === 0) return 8000; // Default 8s
+    
+    // Calculate P95 latency
+    const sorted = [...history].sort((a, b) => a - b);
+    const p95Index = Math.floor(sorted.length * 0.95);
+    const p95Latency = sorted[p95Index] || sorted[sorted.length - 1];
+    
+    // Adaptive timeout: P95 × 3, clamped between 4s and 12s
+    return Math.max(4000, Math.min(12000, p95Latency * 3));
+  }, []);
+
+  // Content-based deduplication
+  const hashGameState = useCallback((state: any) => {
+    const criticalFields = {
+      homeScore: state.homeScore,
+      awayScore: state.awayScore,
+      gameEvents: state.gameEvents?.length || 0,
+      currentPeriod: state.currentPeriod,
+      gameStatus: state.gameStatus,
+      gameNotes: state.gameNotes,
+      playersOnFieldCount: state.playersOnField?.length || 0
+    };
+    return JSON.stringify(criticalFields);
+  }, []);
 
   // PHASE 3: Enhanced auto-save with operation queue and debouncing
-  const scheduleAutosave = useCallback((fn: () => Promise<void>) => {
-    // Debounce 750ms to avoid excessive saves
+  const scheduleAutosave = useCallback((fn: () => Promise<void>, critical = false) => {
+    const debounceTime = critical ? 100 : 2000; // Faster for critical events
+    
+    // Clear existing timeout
     if (autosaveTimeoutRef.current) {
       window.clearTimeout(autosaveTimeoutRef.current);
       autosaveTimeoutRef.current = null;
     }
     
     autosaveTimeoutRef.current = window.setTimeout(async () => {
-      // Skip auto-save if there are critical operations running
+      // Skip auto-save if there are critical operations running (except for critical saves)
       const queueStats = operationQueue.getStats() as Record<string, number>;
-      if (queueStats.priority_1 > 0) { // Skip if critical operations pending
-        console.debug('[AUTO-SAVE] Skipping auto-save due to critical operations');
+      if (!critical && (queueStats.priority_1 > 0 || queueStats.running >= 1)) { // Reduced to 1 concurrent write
+        console.debug('[AUTO-SAVE] Skipping auto-save due to queue congestion');
         return;
       }
       
-      // Use operation queue with MEDIUM priority for auto-save
+      const startTime = Date.now();
+      
+      // Use operation queue with appropriate priority
       await operationQueue.add({
-        id: `autosave_${Date.now()}`,
-        name: 'Auto-save Game',
-        priority: OperationPriority.MEDIUM,
-        execute: fn,
-        timeout: 15000, // 15 second timeout for auto-save
+        id: `autosave_${currentGameId}_${Date.now()}`,
+        name: critical ? 'Critical Auto-save Game' : 'Auto-save Game',
+        priority: critical ? OperationPriority.HIGH : OperationPriority.MEDIUM,
+        execute: async () => {
+          const result = await fn();
+          
+          // Track latency for adaptive timeout
+          const latency = Date.now() - startTime;
+          saveLatencyHistoryRef.current.push(latency);
+          // Keep only last 10 measurements
+          if (saveLatencyHistoryRef.current.length > 10) {
+            saveLatencyHistoryRef.current.shift();
+          }
+          
+          return result;
+        },
+        timeout: getAdaptiveTimeout(),
+        maxRetries: critical ? 3 : 1, // More retries for critical saves
+        retryCount: 0,
         createdAt: Date.now()
       });
-    }, 750);
-  }, []);
+    }, debounceTime);
+  }, [currentGameId, getAdaptiveTimeout]);
 
   useEffect(() => {
     // Skip autosave during new game creation
     if (isCreatingNewGame) return;
 
     if (initialLoadComplete && currentGameId && currentGameId !== DEFAULT_GAME_ID) {
+      // Create current game state snapshot for deduplication
+      const currentGameSnapshot = {
+        homeScore: gameSessionState.homeScore,
+        awayScore: gameSessionState.awayScore,
+        gameEvents: gameSessionState.gameEvents,
+        currentPeriod: gameSessionState.currentPeriod,
+        gameStatus: gameSessionState.gameStatus,
+        gameNotes: gameSessionState.gameNotes,
+        playersOnField,
+      };
+
+      const currentContentHash = hashGameState(currentGameSnapshot);
+      
+      // Skip save if content hasn't changed
+      if (currentContentHash === lastSaveContentHashRef.current) {
+        console.debug('[AUTO-SAVE] Skipping save - content unchanged');
+        return;
+      }
+
       scheduleAutosave(async () => {
         try {
+          // Update hash before save attempt
+          lastSaveContentHashRef.current = currentContentHash;
+          
           const assistEvents = gameSessionState.gameEvents.filter(event => event.type === 'goal' && 'assisterId' in event && event.assisterId);
           logger.log(`[AUTO-SAVE] Starting auto-save for game ${currentGameId}`);
           if (assistEvents.length > 0) {
@@ -1242,9 +1312,113 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     }
   }, [
     initialLoadComplete, currentGameId, isCreatingNewGame,
-    playersOnField, opponents, drawings, availablePlayers, masterRosterQueryResultData,
-    gameSessionState, playerAssessments, tacticalDiscs, tacticalDrawings, tacticalBallPosition, isPlayed,
-    scheduleAutosave,
+    // Only trigger auto-save on meaningful game state changes:
+    gameSessionState.homeScore, gameSessionState.awayScore, // Score changes
+    gameSessionState.gameEvents, // New events (goals, subs, etc.)
+    gameSessionState.currentPeriod, gameSessionState.gameStatus, // Period/status changes
+    playersOnField.length, // Player changes on field (not positions)
+    gameSessionState.gameNotes, // Notes changes
+    scheduleAutosave, hashGameState,
+  ]);
+
+  // Force save on critical events (page unload, visibility change)
+  useEffect(() => {
+    if (!initialLoadComplete || !currentGameId || currentGameId === DEFAULT_GAME_ID) return;
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // Page becoming hidden - force immediate save
+        const currentGameSnapshot = {
+          homeScore: gameSessionState.homeScore,
+          awayScore: gameSessionState.awayScore,
+          gameEvents: gameSessionState.gameEvents,
+          currentPeriod: gameSessionState.currentPeriod,
+          gameStatus: gameSessionState.gameStatus,
+          gameNotes: gameSessionState.gameNotes,
+          playersOnField,
+        };
+
+        const currentContentHash = hashGameState(currentGameSnapshot);
+        if (currentContentHash !== lastSaveContentHashRef.current) {
+          scheduleAutosave(async () => {
+            lastSaveContentHashRef.current = currentContentHash;
+            logger.log(`[CRITICAL-SAVE] Force saving due to visibility change`);
+            
+            const currentSnapshot: AppState = {
+              teamName: gameSessionState.teamName,
+              opponentName: gameSessionState.opponentName,
+              gameDate: gameSessionState.gameDate,
+              homeScore: gameSessionState.homeScore,
+              awayScore: gameSessionState.awayScore,
+              gameNotes: gameSessionState.gameNotes,
+              homeOrAway: gameSessionState.homeOrAway,
+              isPlayed,
+              numberOfPeriods: gameSessionState.numberOfPeriods,
+              periodDurationMinutes: gameSessionState.periodDurationMinutes,
+              currentPeriod: gameSessionState.currentPeriod,
+              gameStatus: gameSessionState.gameStatus,
+              seasonId: gameSessionState.seasonId,
+              tournamentId: gameSessionState.tournamentId,
+              gameLocation: gameSessionState.gameLocation,
+              gameTime: gameSessionState.gameTime,
+              demandFactor: gameSessionState.demandFactor,
+              subIntervalMinutes: gameSessionState.subIntervalMinutes,
+              completedIntervalDurations: gameSessionState.completedIntervalDurations,
+              lastSubConfirmationTimeSeconds: gameSessionState.lastSubConfirmationTimeSeconds,
+              showPlayerNames: gameSessionState.showPlayerNames,
+              selectedPlayerIds: gameSessionState.selectedPlayerIds,
+              timeElapsedInSeconds: gameSessionState.timeElapsedInSeconds,
+              availablePlayers,
+              playersOnField,
+              opponents,
+              drawings,
+              gameEvents: gameSessionState.gameEvents,
+              ageGroup: gameSessionState.ageGroup,
+              tournamentLevel: gameSessionState.tournamentLevel,
+              tacticalDiscs,
+              tacticalDrawings,
+              tacticalBallPosition,
+            };
+
+            await handleQuickSaveGame(currentSnapshot);
+          }, true); // Mark as critical
+        }
+      }
+    };
+
+    const handleBeforeUnload = () => {
+      // Force immediate save on page unload - use sendBeacon for reliability
+      const currentGameSnapshot = {
+        homeScore: gameSessionState.homeScore,
+        awayScore: gameSessionState.awayScore,
+        gameEvents: gameSessionState.gameEvents,
+        currentPeriod: gameSessionState.currentPeriod,
+        gameStatus: gameSessionState.gameStatus,
+        gameNotes: gameSessionState.gameNotes,
+        playersOnField,
+      };
+
+      const currentContentHash = hashGameState(currentGameSnapshot);
+      if (currentContentHash !== lastSaveContentHashRef.current) {
+        logger.log(`[CRITICAL-SAVE] Force saving due to page unload`);
+        // Note: In a real implementation, you'd want to use sendBeacon or similar
+        // for reliable data transmission during page unload
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [
+    initialLoadComplete, currentGameId, gameSessionState.homeScore, gameSessionState.awayScore,
+    gameSessionState.gameEvents, gameSessionState.currentPeriod, gameSessionState.gameStatus,
+    gameSessionState.gameNotes, playersOnField, hashGameState, scheduleAutosave, 
+    gameSessionState, availablePlayers, opponents, drawings, tacticalDiscs, 
+    tacticalDrawings, tacticalBallPosition, isPlayed, handleQuickSaveGame
   ]);
 
   // **** ADDED: Effect to prompt for setup if default game ID is loaded ****

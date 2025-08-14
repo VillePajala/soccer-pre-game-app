@@ -1,12 +1,18 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import packageJson from '../../package.json';
 import { HiOutlineArrowRightOnRectangle } from 'react-icons/hi2';
 import { HiOutlineTrash } from 'react-icons/hi2';
+import { HiOutlineArrowDownTray, HiOutlineArrowUpTray } from 'react-icons/hi2';
 import AccountDeletionModal from './AccountDeletionModal';
 import { useAuth } from '@/context/AuthContext';
+import { authAwareStorageManager as storageManager } from '@/lib/storage';
+import { importBackupToSupabase } from '@/utils/supabaseBackupImport';
+import { cleanImportToSupabase } from '@/utils/supabaseCleanImport';
+import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/config/queryKeys';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -32,15 +38,82 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   onSignOut,
 }) => {
   const { t } = useTranslation();
-  const { globalSignOut } = useAuth() as unknown as { globalSignOut?: () => Promise<{ error: unknown | null }> };
+  const { user, globalSignOut } = useAuth() as unknown as { user?: unknown; globalSignOut?: () => Promise<{ error: unknown | null }> };
   const [teamName, setTeamName] = useState(defaultTeamName);
   const [resetConfirm, setResetConfirm] = useState('');
   const [isAccountDeletionModalOpen, setIsAccountDeletionModalOpen] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importType, setImportType] = useState<'merge' | 'replace'>('merge');
+  const [importResult, setImportResult] = useState<{ success: boolean; message: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     setTeamName(defaultTeamName);
   }, [defaultTeamName]);
 
+  const handleExport = async () => {
+    try {
+      const data = await storageManager.exportAllData();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      
+      const now = new Date();
+      const timestamp = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}`;
+      a.download = `SoccerApp_Backup_${timestamp}.json`;
+      
+      a.href = url;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      setImportResult({ success: true, message: t('settings.exportSuccess', 'Data exported successfully') });
+    } catch (error) {
+      setImportResult({ 
+        success: false, 
+        message: t('settings.exportError', 'Failed to export data: ') + (error instanceof Error ? error.message : 'Unknown error') 
+      });
+    }
+  };
+
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    setImportResult(null);
+
+    try {
+      const fileContent = await file.text();
+      const result = importType === 'replace' 
+        ? await cleanImportToSupabase(fileContent)
+        : await importBackupToSupabase(fileContent);
+      
+      setImportResult(result);
+      
+      if (result.success) {
+        // Invalidate all queries to refresh data
+        await queryClient.invalidateQueries({ queryKey: queryKeys.masterRoster });
+        await queryClient.invalidateQueries({ queryKey: queryKeys.seasons });
+        await queryClient.invalidateQueries({ queryKey: queryKeys.tournaments });
+        await queryClient.invalidateQueries({ queryKey: queryKeys.savedGames });
+        await queryClient.invalidateQueries({ queryKey: queryKeys.appSettingsCurrentGameId });
+      }
+    } catch (error) {
+      setImportResult({
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to read file'
+      });
+    } finally {
+      setIsImporting(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -195,6 +268,85 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 <p className="text-sm text-slate-400">
                   {t('settingsModal.deleteAccountDescription', 'Permanently delete your account and all data. This action cannot be undone.')}
                 </p>
+              </div>
+            )}
+            {/* Data Management Section */}
+            {!!user && (
+              <div className="pt-2 border-t border-slate-700/40 space-y-2">
+                <h3 className="text-lg font-semibold text-slate-200">
+                  {t('settingsModal.dataManagementTitle', 'Data Management')}
+                </h3>
+                <p className="text-sm text-slate-400">
+                  {t('settingsModal.dataManagementDescription', 'Export your data for backup or import data from a previous backup.')}
+                </p>
+                
+                {/* Export Button */}
+                <div className="space-y-2">
+                  <button
+                    onClick={handleExport}
+                    className="w-full px-4 py-2 bg-gradient-to-b from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <HiOutlineArrowDownTray className="w-4 h-4" />
+                    {t('settings.exportBackup', 'Export Backup')}
+                  </button>
+                </div>
+
+                {/* Import Section */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm font-medium text-slate-300">
+                      {t('settings.importType', 'Import Type:')}
+                    </label>
+                    <select
+                      value={importType}
+                      onChange={(e) => setImportType(e.target.value as 'merge' | 'replace')}
+                      className="bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm text-white"
+                      disabled={isImporting}
+                    >
+                      <option value="merge">{t('settings.merge', 'Merge with existing')}</option>
+                      <option value="replace">{t('settings.replace', 'Replace all data')}</option>
+                    </select>
+                  </div>
+                  
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".json"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    disabled={isImporting}
+                  />
+                  
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isImporting}
+                    className={`w-full px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 ${
+                      importType === 'replace' 
+                        ? 'bg-gradient-to-b from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800' 
+                        : 'bg-gradient-to-b from-green-600 to-green-700 hover:from-green-700 hover:to-green-800'
+                    } text-white disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    <HiOutlineArrowUpTray className="w-4 h-4" />
+                    {isImporting ? t('common.importing', 'Importing...') : t('settings.importBackup', 'Import Backup')}
+                  </button>
+                  
+                  {importType === 'replace' && (
+                    <p className="text-xs text-orange-400">
+                      {t('settings.replaceWarning', '⚠️ This will delete all existing data')}
+                    </p>
+                  )}
+                </div>
+                
+                {/* Import Result Message */}
+                {importResult && (
+                  <div className={`p-3 rounded-lg text-sm ${
+                    importResult.success 
+                      ? 'bg-green-900/50 text-green-200 border border-green-700/50' 
+                      : 'bg-red-900/50 text-red-200 border border-red-700/50'
+                  }`}>
+                    {importResult.message}
+                  </div>
+                )}
               </div>
             )}
             <div className="pt-2 border-t border-slate-700/40 space-y-2">
