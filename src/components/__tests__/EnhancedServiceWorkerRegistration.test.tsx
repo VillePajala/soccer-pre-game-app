@@ -505,20 +505,26 @@ describe('EnhancedServiceWorkerRegistration', () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
       (navigator.serviceWorker.register as jest.Mock).mockRejectedValue(new Error('Registration failed'));
 
-      render(
-        <UpdateProvider>
-          <EnhancedServiceWorkerRegistration />
-        </UpdateProvider>
-      );
+      await act(async () => {
+        render(
+          <UpdateProvider>
+            <EnhancedServiceWorkerRegistration />
+          </UpdateProvider>
+        );
+      });
 
       await waitFor(() => {
         expect(screen.getByText(/Service Worker Error/)).toBeInTheDocument();
       });
 
       const closeButton = screen.getByText('✕');
-      await user.click(closeButton);
+      await act(async () => {
+        await user.click(closeButton);
+      });
 
-      expect(screen.queryByText(/Service Worker Error/)).not.toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByText(/Service Worker Error/)).not.toBeInTheDocument();
+      });
 
       consoleSpy.mockRestore();
     });

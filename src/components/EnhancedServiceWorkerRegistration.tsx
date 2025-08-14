@@ -27,7 +27,7 @@ export default function EnhancedServiceWorkerRegistration() {
   const [syncNotifications, setSyncNotifications] = useState<SyncNotification[]>([]);
   const [showSyncToast, setShowSyncToast] = useState(false);
   const connectionStatus = useConnectionStatus();
-  const { setUpdateAvailable, setIsUpdating, setReleaseNotes, setVersionInfo, updateInfo } = useUpdate();
+  const { setUpdateAvailable, setIsUpdating, setReleaseNotes, setVersionInfo, updateInfo, clearUpdate } = useUpdate();
   
   // Store timeout IDs for cleanup
   const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
@@ -283,7 +283,7 @@ export default function EnhancedServiceWorkerRegistration() {
           <div className="flex items-center justify-center gap-4">
             <span>❌ Service Worker Error: {updateInfo.error}</span>
             <button
-              onClick={() => setUpdateAvailable(false)}
+              onClick={() => clearUpdate()}
               className="text-red-200 hover:text-white"
             >
               ✕

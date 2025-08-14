@@ -115,6 +115,11 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
     onSubstitutionMade();
   };
 
+  // Open Goal Log without closing the timer overlay; z-index will ensure visibility
+  const handleOpenGoalLog = () => {
+    onToggleGoalLogModal();
+  };
+
   // Calculate time since last substitution
   const timeSinceLastSub = lastSubTime === null ? timeElapsedInSeconds : timeElapsedInSeconds - lastSubTime;
 
@@ -175,42 +180,50 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
 
   return (
     <div className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center px-8 py-8 ${bgColor} backdrop-blur-lg`}>
-      <div className="w-full max-w-4xl flex flex-col items-center">
-        {/* Game Score Display - MOVED TO TOP ABOVE TIMER */}
-        <div className="bg-slate-800/70 px-8 py-4 rounded-xl mb-8">
-          <div className="flex items-center justify-center gap-4 text-2xl font-semibold">
-            <span className="text-slate-100">{displayHomeTeamName}</span>
-            <span className={`text-4xl font-bold ${homeScoreDisplayColor}`}>{homeScore}</span>
-            <span className="text-slate-500 text-3xl">-</span>
-            <span className={`text-4xl font-bold ${awayScoreDisplayColor}`}>{awayScore}</span>
-            {/* --- Opponent Name Display/Edit --- */}
-            {isEditingOpponentName ? (
-              <input
-                ref={opponentInputRef}
-                type="text"
-                value={editedOpponentName}
-                onChange={handleOpponentInputChange}
-                onBlur={handleSaveOpponentName} // Save on blur
-                onKeyDown={handleOpponentKeyDown}
-                className="bg-slate-700 text-slate-100 text-xl font-semibold outline-none rounded px-2 py-0.5 w-28" // Adjust width as needed
-                onClick={(e) => e.stopPropagation()} // Prevent triggering underlying handlers
-              />
-            ) : (
-              <span
-                className="text-slate-100 cursor-pointer hover:text-slate-300"
-                onClick={handleStartEditingOpponent} // Click to edit
-                title={t('timerOverlay.editOpponentNameTitle', 'Click to edit opponent name') ?? undefined}
-              >
-                {displayAwayTeamName}
+      <div className="w-full max-w-2xl flex flex-col items-center">
+        {/* Game Score Header - aligned to column width, balanced layout */}
+        <div className="bg-slate-800/70 px-6 py-4 rounded-xl mb-8 w-full">
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+            <div className="text-left text-slate-100 text-xl font-semibold whitespace-normal break-words leading-tight">
+              {displayHomeTeamName}
+            </div>
+            <div className="text-center">
+              <span className="inline-block bg-slate-700/70 px-3 py-1 rounded-md">
+                <span className={`text-3xl font-bold ${homeScoreDisplayColor}`}>{homeScore}</span>
+                <span className="text-slate-400 text-2xl mx-2">-</span>
+                <span className={`text-3xl font-bold ${awayScoreDisplayColor}`}>{awayScore}</span>
               </span>
-            )}
-            {/* --- End Opponent Name --- */}
+            </div>
+            <div className="text-right whitespace-normal break-words leading-tight">
+              {/* --- Opponent Name Display/Edit --- */}
+              {isEditingOpponentName ? (
+                <input
+                  ref={opponentInputRef}
+                  type="text"
+                  value={editedOpponentName}
+                  onChange={handleOpponentInputChange}
+                  onBlur={handleSaveOpponentName} // Save on blur
+                  onKeyDown={handleOpponentKeyDown}
+                  className="bg-slate-700 text-slate-100 text-xl font-semibold outline-none rounded px-2 py-0.5 w-36 md:w-48"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              ) : (
+                <span
+                  className="text-slate-100 cursor-pointer hover:text-slate-300"
+                  onClick={handleStartEditingOpponent}
+                  title={t('timerOverlay.editOpponentNameTitle', 'Click to edit opponent name') ?? undefined}
+                >
+                  {displayAwayTeamName}
+                </span>
+              )}
+              {/* --- End Opponent Name --- */}
+            </div>
           </div>
         </div>
 
         {/* Timer Display */}
-        <div className="mb-8">
-          <span className={`text-8xl sm:text-9xl md:text-[12rem] lg:text-[14rem] font-bold tabular-nums ${textColor} leading-none`}>
+        <div className="mt-2 mb-8">
+          <span className={`text-9xl sm:text-[10rem] md:text-[12.5rem] lg:text-[14.5rem] font-bold tabular-nums ${textColor} leading-none`}>
             {formatTime(timeElapsedInSeconds)}
           </span>
         </div>
@@ -227,7 +240,7 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
         {/* Game Status / Period Info */}
         <div className="mb-4 text-center">
           {gameStatus === 'notStarted' && (
-            <span className="text-base text-yellow-400 font-medium">
+            <span className="text-sm text-yellow-400 font-medium">
               {t('timerOverlay.gameNotStarted', 'Game not started')}
               {numberOfPeriods === 1 ?
                 ` (${periodDurationMinutes} min)` :
@@ -235,7 +248,7 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
             </span>
           )}
           {gameStatus === 'inProgress' && (
-            <span className="text-base text-green-400 font-medium">
+            <span className="text-sm text-green-400 font-medium">
               {numberOfPeriods === 1 ? (
                 // For single period games, no text needed
                 ''
@@ -246,7 +259,7 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
             </span>
           )}
           {gameStatus === 'periodEnd' && currentPeriod < numberOfPeriods && (
-            <span className="text-base text-orange-400 font-medium">
+            <span className="text-sm text-orange-400 font-medium">
               {numberOfPeriods === 1 ?
                 t('timerOverlay.gameEnded', 'Game Ended') :
                 // Use t() interpolation directly
@@ -255,25 +268,25 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
             </span>
           )}
           {gameStatus === 'gameEnd' && (
-            <span className="text-base text-red-500 font-medium">
+            <span className="text-sm text-red-500 font-medium">
               {t('timerOverlay.gameEnded', 'Game Ended')}
             </span>
           )}
         </div>
 
         {/* Timer Controls */}
-        <div className="flex items-center space-x-6 mb-8">
+        <div className="flex items-center justify-center space-x-4 mb-8 w-full max-w-md mx-auto">
           <button
             onClick={onStartPauseTimer}
             disabled={gameStatus === 'gameEnd'}
-            className={`${timerButtonStyle} ${isTimerRunning ? 'bg-orange-600 hover:bg-orange-700 focus:ring-orange-400' : 'bg-green-600 hover:bg-green-700 focus:ring-green-500'} ${gameStatus === 'gameEnd' ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`${timerButtonStyle} h-14 ${isTimerRunning ? 'bg-orange-600 hover:bg-orange-700 focus:ring-orange-400' : 'bg-green-600 hover:bg-green-700 focus:ring-green-500'} ${gameStatus === 'gameEnd' ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {isTimerRunning ? <FaPause size={16} /> : <FaPlay size={16} />}
             <span>{startPauseButtonText}</span>
           </button>
           <button
             onClick={onResetTimer}
-            className={`${timerButtonStyle} bg-slate-600 hover:bg-slate-700 focus:ring-slate-500 disabled:opacity-50 disabled:cursor-not-allowed`}
+            className={`${timerButtonStyle} h-14 bg-slate-600 hover:bg-slate-700 focus:ring-slate-500 disabled:opacity-50 disabled:cursor-not-allowed`}
             disabled={timeElapsedInSeconds === 0 && gameStatus === 'notStarted'} // Only disable if truly at start
           >
             <FaUndo size={14} />
@@ -282,22 +295,22 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
         </div>
 
         {/* Game Setup & Interval Controls Section */}
-        <div className="bg-slate-800/80 backdrop-blur-sm p-3 rounded-lg w-full mb-4 space-y-4">
+        <div className="bg-slate-800/80 backdrop-blur-sm p-4 rounded-lg w-full mb-4 space-y-4 max-w-md">
           {/* Substitution Interval Control (only when game not started) */}
           {gameStatus === 'notStarted' && (
-            <div className="flex items-center justify-center">
+            <div className="flex flex-col items-center gap-2">
               <span className={controlLabelStyle}>{t('timerOverlay.subIntervalLabel', 'Sub Interval:')}</span>
-              <div className="flex items-center">
+              <div className="flex items-center bg-slate-700 rounded-md overflow-hidden">
                 <button
                   onClick={() => onSetSubInterval(subIntervalMinutes - 1)}
                   disabled={subIntervalMinutes <= 1}
-                  className={controlButtonStyle} aria-label="Decrease interval">
+                  className={`${controlButtonStyle} rounded-none`} aria-label="Decrease interval">
                   -
                 </button>
-                <span className={controlValueStyle}>{subIntervalMinutes}</span>
+                <span className={`${controlValueStyle} bg-slate-600`}>{subIntervalMinutes}</span>
                 <button
                   onClick={() => onSetSubInterval(subIntervalMinutes + 1)}
-                  className={controlButtonStyle} aria-label="Increase interval">
+                  className={`${controlButtonStyle} rounded-none`} aria-label="Increase interval">
                   +
                 </button>
               </div>
@@ -310,7 +323,7 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
             <div className="flex justify-center">
               <button
                 onClick={handleConfirmSubClick}
-                className={`${primaryActionStyle} w-full`}
+                className={`${primaryActionStyle} w-full h-14`}
               >
                 {t('timerOverlay.confirmSubButton', 'Vaihto tehty')}
               </button>
@@ -319,15 +332,15 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({
             {/* Goal Buttons - Side by side layout */}
             <div className="flex gap-2 pt-1">
               <button
-                onClick={onToggleGoalLogModal}
-                className={`${secondaryActionStyle} flex-1`}
+                onClick={handleOpenGoalLog}
+                className={`${secondaryActionStyle} flex-1 h-14`}
                 title={`${displayHomeTeamName} ${t('timerOverlay.goalSuffix', 'goal')}`}
               >
                 {t('timerOverlay.teamGoalButton', 'Kirjaa maali')}
               </button>
               <button
                 onClick={onRecordOpponentGoal}
-                className={`${dangerActionStyle} flex-1`}
+                className={`${dangerActionStyle} flex-1 h-14`}
                 title={`${displayAwayTeamName} ${t('timerOverlay.goalSuffix', 'goal')}`}
               >
                 {t('timerOverlay.opponentGoalButton', 'Vastustaja +1')}

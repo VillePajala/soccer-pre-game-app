@@ -403,8 +403,10 @@ describe('IndexedDBProvider', () => {
 
       const savedState = await provider.saveTimerState(mockTimerState);
       
-      expect(mockStore.put).toHaveBeenCalledWith(mockTimerState);
-      expect(savedState).toEqual(mockTimerState);
+      // The saveTimerState method adds an id field for DB v2 compatibility
+      const expectedTimerState = { id: 'game-123', ...mockTimerState };
+      expect(mockStore.put).toHaveBeenCalledWith(expectedTimerState);
+      expect(savedState).toEqual(expectedTimerState);
     });
 
     it('should delete timer state', async () => {

@@ -403,7 +403,10 @@ export class IndexedDBProvider implements IStorageProvider {
   }
 
   async saveTimerState(timerState: TimerState): Promise<TimerState> {
-    return this.saveToStore('timer_states', timerState);
+    // The object store uses keyPath 'id' (DB_VERSION 2). Ensure we persist with that key.
+    const recordWithKey = { id: timerState.gameId, ...timerState } as unknown as TimerState & { id: string };
+    // Note: store.get(gameId) still works as we pass the same value as 'id'
+    return this.saveToStore('timer_states', recordWithKey as unknown as TimerState);
   }
 
   async deleteTimerState(gameId: string): Promise<void> {
