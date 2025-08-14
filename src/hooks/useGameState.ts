@@ -219,6 +219,25 @@ export function useGameState({ initialState, saveStateToHistory }: UseGameStateA
                     return p;
                 });
                 setAvailablePlayers(normalized);
+
+                // CRITICAL FIX: Also update players on field with the same normalization
+                // This prevents field players from becoming stale/invisible after goalie toggle
+                setPlayersOnField(prevPlayersOnField => {
+                    return prevPlayersOnField.map(fieldPlayer => {
+                        const updatedRosterPlayer = normalized.find(p => p.id === fieldPlayer.id);
+                        if (updatedRosterPlayer) {
+                            // Preserve field position but sync goalie status from roster
+                            return { 
+                                ...fieldPlayer, 
+                                isGoalie: updatedRosterPlayer.isGoalie,
+                                name: updatedRosterPlayer.name,
+                                nickname: updatedRosterPlayer.nickname 
+                            };
+                        }
+                        return fieldPlayer;
+                    });
+                });
+
                 logger.log(`[useGameState:handleToggleGoalie] Persisted goalie=${targetGoalieStatus} for ${playerId}`);
             } else {
                 logger.error(`[useGameState:handleToggleGoalie] Persistence returned null for ${playerId}`);
