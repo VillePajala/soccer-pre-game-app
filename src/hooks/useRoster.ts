@@ -158,6 +158,28 @@ export const useRoster = ({ initialPlayers, selectedPlayerIds, onPlayerIdUpdated
     const prev = [...availablePlayers];
     setIsRosterUpdating(true);
     
+    // CRITICAL FIX: Update field players FIRST before touching availablePlayers
+    // This prevents race condition with roster-field sync effect
+    if (onFieldPlayersUpdate) {
+      console.log('[useRoster] Updating field players with goalie status FIRST');
+      onFieldPlayersUpdate((currentFieldPlayers) => 
+        currentFieldPlayers.map((fieldPlayer) => {
+          if (fieldPlayer.id === playerId) {
+            // Update this player's goalie status while preserving position
+            return { ...fieldPlayer, isGoalie };
+          }
+          if (isGoalie && fieldPlayer.isGoalie) {
+            // Clear other goalies while preserving their positions
+            return { ...fieldPlayer, isGoalie: false };
+          }
+          return fieldPlayer; // No changes, preserve everything including position
+        })
+      );
+    }
+    
+    // SMALL DELAY: Let field update settle before triggering roster sync
+    await new Promise(resolve => setTimeout(resolve, 10));
+    
     // Optimistic updates
     const goalieUpdate = (players: Player[]) =>
       players.map((p) => {
@@ -166,20 +188,13 @@ export const useRoster = ({ initialPlayers, selectedPlayerIds, onPlayerIdUpdated
         return p;
       });
     
-    console.log('[useRoster] Applying optimistic update');
+    console.log('[useRoster] Applying optimistic update to availablePlayers');
     
     // Calculate the updated players once
     const updatedPlayers = goalieUpdate(availablePlayers);
     
     setAvailablePlayers(updatedPlayers);
     cacheManager.updateMasterRosterCache(() => updatedPlayers);
-    
-    // CRITICAL FIX: Also update players on field to keep them synchronized
-    // Pass the updater function that applies the same logic to field players
-    if (onFieldPlayersUpdate) {
-      console.log('[useRoster] Updating field players with goalie status');
-      onFieldPlayersUpdate(goalieUpdate);
-    }
     
     try {
       console.log('[useRoster] Calling setGoalieStatus storage operation');
@@ -191,17 +206,18 @@ export const useRoster = ({ initialPlayers, selectedPlayerIds, onPlayerIdUpdated
         setAvailablePlayers(prev);
         cacheManager.updateMasterRosterCache(() => prev);
         
-        // CRITICAL FIX: Also rollback field players to previous state
+        // CRITICAL FIX: Also rollback field players to previous state while preserving positions
         if (onFieldPlayersUpdate) {
           console.log('[useRoster] Rolling back field players');
           onFieldPlayersUpdate((currentFieldPlayers) => {
-            // Rollback: restore previous goalie states for field players
+            // Rollback: restore previous goalie states for field players while preserving positions
             return currentFieldPlayers.map(fieldPlayer => {
               const prevPlayer = prev.find(p => p.id === fieldPlayer.id);
               if (prevPlayer) {
+                // Restore goalie status from previous state but keep field position
                 return { ...fieldPlayer, isGoalie: prevPlayer.isGoalie };
               }
-              return fieldPlayer;
+              return fieldPlayer; // No changes, preserve position
             });
           });
         }
