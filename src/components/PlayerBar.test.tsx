@@ -29,6 +29,7 @@ describe('PlayerBar', () => {
 
   const defaultProps = {
     players: mockPlayers,
+    playersOnField: mockPlayers, // Add the missing playersOnField prop
     gameEvents: mockGameEvents,
     onPlayerDragStartFromBar: jest.fn(),
     selectedPlayerIdFromBar: null,

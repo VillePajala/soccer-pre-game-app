@@ -1,6 +1,7 @@
 // Unit tests for Service Worker Registration component
 import { render, screen, waitFor } from '@testing-library/react';
 import ServiceWorkerRegistration from '../ServiceWorkerRegistration';
+import { UpdateProvider } from '@/contexts/UpdateContext';
 import logger from '@/utils/logger';
 
 // Mock logger
@@ -105,7 +106,11 @@ describe('ServiceWorkerRegistration', () => {
   });
 
   it('should render without crashing', () => {
-    const { container } = render(<ServiceWorkerRegistration />);
+    const { container } = render(
+      <UpdateProvider>
+        <ServiceWorkerRegistration />
+      </UpdateProvider>
+    );
     expect(container).toBeTruthy();
   });
 
@@ -125,7 +130,11 @@ describe('ServiceWorkerRegistration', () => {
     };
     mockServiceWorker.getRegistrations.mockResolvedValue([mockRegistration]);
 
-    render(<ServiceWorkerRegistration />);
+    render(
+      <UpdateProvider>
+        <ServiceWorkerRegistration />
+      </UpdateProvider>
+    );
 
     await waitFor(() => {
       expect(mockServiceWorker.getRegistrations).toHaveBeenCalled();
@@ -140,7 +149,11 @@ describe('ServiceWorkerRegistration', () => {
     // Remove serviceWorker property entirely
     delete (navigator as any).serviceWorker;
 
-    const { container } = render(<ServiceWorkerRegistration />);
+    const { container } = render(
+      <UpdateProvider>
+        <ServiceWorkerRegistration />
+      </UpdateProvider>
+    );
     
     // Component should render empty when service workers are not supported
     expect(container.firstChild).toBeNull();
@@ -162,7 +175,11 @@ describe('ServiceWorkerRegistration', () => {
 
       mockServiceWorker.register.mockResolvedValue(mockRegistration);
 
-      render(<ServiceWorkerRegistration />);
+      render(
+      <UpdateProvider>
+        <ServiceWorkerRegistration />
+      </UpdateProvider>
+    );
 
       await waitFor(() => {
         expect(mockServiceWorker.register).toHaveBeenCalledWith('/sw.js');
@@ -176,7 +193,11 @@ describe('ServiceWorkerRegistration', () => {
       const registrationError = new Error('Registration failed');
       mockServiceWorker.register.mockRejectedValue(registrationError);
 
-      render(<ServiceWorkerRegistration />);
+      render(
+      <UpdateProvider>
+        <ServiceWorkerRegistration />
+      </UpdateProvider>
+    );
 
       await waitFor(() => {
         // Logger expectation removed to avoid mock issues - error handling verified by other means
@@ -204,7 +225,11 @@ describe('ServiceWorkerRegistration', () => {
 
       mockServiceWorker.register.mockResolvedValue(mockRegistration);
 
-      render(<ServiceWorkerRegistration />);
+      render(
+      <UpdateProvider>
+        <ServiceWorkerRegistration />
+      </UpdateProvider>
+    );
 
       // Wait for the promise to resolve and onupdatefound to be assigned
       await waitFor(() => {
@@ -246,7 +271,11 @@ describe('ServiceWorkerRegistration', () => {
 
       mockServiceWorker.register.mockResolvedValue(mockRegistration);
 
-      render(<ServiceWorkerRegistration />);
+      render(
+      <UpdateProvider>
+        <ServiceWorkerRegistration />
+      </UpdateProvider>
+    );
 
       await waitFor(() => {
         expect(mockServiceWorker.register).toHaveBeenCalled();
@@ -281,7 +310,11 @@ describe('ServiceWorkerRegistration', () => {
 
       mockServiceWorker.register.mockResolvedValue(mockRegistration);
 
-      render(<ServiceWorkerRegistration />);
+      render(
+      <UpdateProvider>
+        <ServiceWorkerRegistration />
+      </UpdateProvider>
+    );
 
       await waitFor(() => {
         expect(screen.getByText(/New version available!/i)).toBeInTheDocument();
@@ -307,7 +340,11 @@ describe('ServiceWorkerRegistration', () => {
 
       mockServiceWorker.register.mockResolvedValue(mockRegistration);
 
-      render(<ServiceWorkerRegistration />);
+      render(
+      <UpdateProvider>
+        <ServiceWorkerRegistration />
+      </UpdateProvider>
+    );
 
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /Update/i })).toBeInTheDocument();
@@ -342,7 +379,11 @@ describe('ServiceWorkerRegistration', () => {
       mockServiceWorker.register.mockResolvedValue(mockRegistration);
       mockServiceWorker.controller = { state: 'active' } as unknown as ServiceWorker;
 
-      render(<ServiceWorkerRegistration />);
+      render(
+      <UpdateProvider>
+        <ServiceWorkerRegistration />
+      </UpdateProvider>
+    );
 
       await waitFor(() => {
         expect(mockServiceWorker.addEventListener).toHaveBeenCalledWith(
@@ -368,7 +409,11 @@ describe('ServiceWorkerRegistration', () => {
       const registrationError = new Error('Registration failed');
       mockServiceWorker.register.mockRejectedValue(registrationError);
 
-      render(<ServiceWorkerRegistration />);
+      render(
+      <UpdateProvider>
+        <ServiceWorkerRegistration />
+      </UpdateProvider>
+    );
 
       await waitFor(() => {
         // Logger expectation removed to avoid mock issues - error handling verified by other means
@@ -388,7 +433,11 @@ describe('ServiceWorkerRegistration', () => {
       // Remove serviceWorker property entirely
       delete (navigator as any).serviceWorker;
 
-      expect(() => render(<ServiceWorkerRegistration />)).not.toThrow();
+      expect(() => render(
+      <UpdateProvider>
+        <ServiceWorkerRegistration />
+      </UpdateProvider>
+    )).not.toThrow();
     });
   });
 
@@ -409,7 +458,11 @@ describe('ServiceWorkerRegistration', () => {
 
       mockServiceWorker.register.mockResolvedValue(mockRegistration);
 
-      render(<ServiceWorkerRegistration />);
+      render(
+      <UpdateProvider>
+        <ServiceWorkerRegistration />
+      </UpdateProvider>
+    );
 
       await waitFor(() => {
         const statusElement = screen.getByRole('status');
@@ -432,7 +485,11 @@ describe('ServiceWorkerRegistration', () => {
 
       mockServiceWorker.register.mockResolvedValue(mockRegistration);
 
-      render(<ServiceWorkerRegistration />);
+      render(
+      <UpdateProvider>
+        <ServiceWorkerRegistration />
+      </UpdateProvider>
+    );
 
       await waitFor(() => {
         const updateMessage = screen.getByText(/New version available!/i);
@@ -446,7 +503,11 @@ describe('ServiceWorkerRegistration', () => {
       // Remove serviceWorker property entirely to test the 'in' check
       delete (navigator as any).serviceWorker;
 
-      const { container } = render(<ServiceWorkerRegistration />);
+      const { container } = render(
+        <UpdateProvider>
+          <ServiceWorkerRegistration />
+        </UpdateProvider>
+      );
 
       // Should still render and show no content
       expect(container.firstChild).toBeNull();
@@ -457,7 +518,11 @@ describe('ServiceWorkerRegistration', () => {
     it('should provide fallback when registration fails', async () => {
       mockServiceWorker.register.mockRejectedValue(new Error('Network error'));
 
-      const { container } = render(<ServiceWorkerRegistration />);
+      const { container } = render(
+        <UpdateProvider>
+          <ServiceWorkerRegistration />
+        </UpdateProvider>
+      );
 
       await waitFor(() => {
         // Logger expectation removed to avoid mock issues - error handling verified by other means

@@ -55,7 +55,7 @@ describe('App Settings Utilities', () => {
       expect(settings).toEqual({
         currentGameId: null,
         lastHomeTeamName: '',
-        language: 'en',
+        language: 'fi',
         hasSeenAppGuide: false,
         autoBackupEnabled: false,
         autoBackupIntervalHours: 24,
@@ -140,7 +140,7 @@ describe('App Settings Utilities', () => {
       expect(settings).toEqual({
         currentGameId: null,
         lastHomeTeamName: '',
-        language: 'en',
+        language: 'fi',
         hasSeenAppGuide: false,
         autoBackupEnabled: false,
         autoBackupIntervalHours: 24,
@@ -199,7 +199,7 @@ describe('App Settings Utilities', () => {
     it('should update only specified settings', async () => {
       const existingSettings: AppSettings = {
         currentGameId: 'game123',
-        language: 'en',
+        language: 'fi',
         hasSeenAppGuide: false,
         autoBackupEnabled: false,
         autoBackupIntervalHours: 24,
@@ -281,7 +281,7 @@ describe('App Settings Utilities', () => {
     it('should save current game ID', async () => {
       const existingSettings: AppSettings = {
         currentGameId: null,
-        language: 'en',
+        language: 'fi',
         hasSeenAppGuide: false,
         autoBackupEnabled: false,
         autoBackupIntervalHours: 24,
@@ -312,7 +312,7 @@ describe('App Settings Utilities', () => {
     it('should clear current game ID when passed null', async () => {
       const existingSettings: AppSettings = {
         currentGameId: 'game123',
-        language: 'en',
+        language: 'fi',
         hasSeenAppGuide: false,
         autoBackupEnabled: false,
         autoBackupIntervalHours: 24,
@@ -415,7 +415,7 @@ describe('App Settings Utilities', () => {
       expect(mockStorageManager.saveAppSettings).toHaveBeenCalledWith({
         currentGameId: null,
         lastHomeTeamName: '',
-        language: 'en',
+        language: 'fi',
         hasSeenAppGuide: false,
         autoBackupEnabled: false,
         autoBackupIntervalHours: 24,
