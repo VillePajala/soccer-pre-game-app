@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix: resolve season creation stuck loading with proper UI feedback and debugging"
+  "notes": "fix: resolve new game multiple goalie discs initialization issue"
 }

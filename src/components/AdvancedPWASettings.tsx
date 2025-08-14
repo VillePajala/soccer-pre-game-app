@@ -73,7 +73,7 @@ export default function AdvancedPWASettings({ className = '' }: AdvancedPWASetti
   };
 
   const handleTestClipboard = async () => {
-    const success = await copyToClipboard('MatchDay Coach - The ultimate soccer coaching app!');
+    const success = await copyToClipboard('MatchOps Coach - Plan • Track • Debrief');
     addTestResult('clipboard', success ? '✅ Copied to clipboard!' : '❌ Clipboard access failed');
   };
 

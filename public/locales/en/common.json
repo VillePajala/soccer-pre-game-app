@@ -687,10 +687,11 @@
     "noServiceWorker": "(Service worker not active)"
   },
   "installPrompt": {
-    "message": "Install MatchDay Coach for a faster, offline experience!",
+    "message": "Install MatchOps Coach for a faster, offline experience!",
     "installButton": "Install",
     "dismissButton": "Not now"
   },
+  "appSubtitle": "Plan • Track • Debrief",
   "fullBackup": {
     "exportSuccess": "Backup exported successfully.",
     "exportError": "Error exporting backup. Check the console.",

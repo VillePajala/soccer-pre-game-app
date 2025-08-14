@@ -24,7 +24,7 @@ if (isDevEnvironment) {
   });
 
   // Cache configuration
-  const _CACHE_NAME = 'matchday-coach-v1';
+  const _CACHE_NAME = 'matchops-coach-v1';
   const APP_SHELL_CACHE = 'app-shell-v1';
   const DATA_CACHE = 'data-cache-v1';
 
@@ -145,4 +145,4 @@ if (isDevEnvironment) {
   });
 
 } // End of production service worker code
-// Build Timestamp: 2025-08-14T15:48:50.007Z
+// Build Timestamp: 2025-08-14T16:01:13.088Z

@@ -51,7 +51,7 @@ export async function hardResetAllUserData(): Promise<HardResetResult> {
     // Best-effort: clear offline IndexedDB used by the app (if present)
     if (typeof indexedDB !== 'undefined' && indexedDB.deleteDatabase) {
       try {
-        indexedDB.deleteDatabase('soccer-coach-offline');
+        indexedDB.deleteDatabase('matchops-coach-offline');
       } catch (err) {
         logger.warn('[HardReset] Failed deleting IndexedDB', err);
       }

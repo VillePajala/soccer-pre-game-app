@@ -60,7 +60,7 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, playersOnField, onPlayer
           <Image
             className="h-16 w-16"
             src="/pepo-logo.png"
-            alt="MatchDay Coach Logo"
+            alt="MatchOps Coach Logo"
             width={64}
             height={64}
             // priority // Temporarily remove to silence test warning

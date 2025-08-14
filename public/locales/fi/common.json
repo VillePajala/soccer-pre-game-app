@@ -678,10 +678,11 @@
     "noServiceWorker": "(Service worker ei aktiivinen)"
   },
   "installPrompt": {
-    "message": "Asenna MatchDay Coach saadaksesi nopeamman ja offline-toimivan kokemuksen!",
+    "message": "Asenna MatchOps Coach saadaksesi nopeamman ja offline-toimivan kokemuksen!",
     "installButton": "Asenna",
     "dismissButton": "Ei nyt"
   },
+  "appSubtitle": "Suunnittele • Kirjaa • Arvioi",
   "fullBackup": {
     "exportSuccess": "Varmuuskopio vietiin onnistuneesti.",
     "exportError": "Varmuuskopion vienti epäonnistui. Katso konsoli.",

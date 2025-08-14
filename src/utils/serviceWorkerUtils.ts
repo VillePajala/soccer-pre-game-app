@@ -223,7 +223,7 @@ export const forceAppUpdate = async (): Promise<void> => {
       try {
         const cacheNames = await caches.keys();
         const pwaCacheNames = cacheNames.filter(name => 
-          name.includes('matchday-coach') || 
+          name.includes('matchops-coach') || 
           name.includes('app-shell') || 
           name.includes('data-cache') ||
           name.includes('pwa') ||
