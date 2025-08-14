@@ -65,12 +65,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      setImportResult({ success: true, message: t('settings.exportSuccess', 'Data exported successfully') });
+      // Export successful - no UI feedback for now
     } catch (error) {
-      setImportResult({
-        success: false,
-        message: t('settings.exportError', 'Failed to export data: ') + (error instanceof Error ? error.message : 'Unknown error')
-      });
+      console.error('Export error:', error);
     }
   };
 

@@ -8,23 +8,27 @@ There are two symptoms observed when interacting with goalie selection and forma
 
 This document explains the root causes in the current code, shows exact locations, and proposes clean fixes with trade‑offs.
 
-### Current status (verified)
-As of this investigation, the behaviors below are still in code and explain the symptoms:
+### Current status (re-verified in this pass)
+As of this re-investigation, these behaviors are present in the active paths and explain the symptoms:
 
-1) Two‑phase goalie toggle that causes two rapid writes
+1) Two‑phase goalie toggle that causes two rapid writes (still active in UI path)
 - Path used by UI: `usePlayerRosterManager.handleToggleGoalieForModal → useRoster.handleSetGoalieStatus`.
 - `useRoster.handleSetGoalieStatus` performs two writes:
   - First, it updates `playersOnField` via the `onFieldPlayersUpdate` callback (optimistic UI update).
   - Then, after a 10ms delay, it updates `availablePlayers` (roster) and persists to storage.
 - The second write triggers the roster→field synchronization effect, causing a second `playersOnField` update and therefore a second repaint → flicker/pop.
 
-2) Roster→field sync effect has a “last non‑empty snapshot” fallback and syncs goalie flag
+2) Roster→field sync effect still has a “last non‑empty snapshot” fallback and syncs the goalie flag
 - In `HomePage.tsx`, an effect runs on `availablePlayers` changes, debounced with `setTimeout(0)`.
 - Inside the updater, if it sees `prevPlayersOnField` empty, it restores a “last non‑empty” copy kept in a ref.
 - It also writes back non‑positional fields from roster to field, including `isGoalie`.
 - After delete-all → place-all → toggle goalie, this effect can restore an older formation if the last‑non‑empty snapshot ref has not yet been updated with the new formation. Even when it doesn’t restore, it still writes `playersOnField` again (second repaint) → flicker.
 
-### Code references
+Additionally, a related change that did not affect the UI path:
+
+- `useGameState.handleToggleGoalie` was adjusted to avoid a post-persist roster refresh, but the UI does not call this handler for goalie toggles. The UI currently routes via `useRoster.handleSetGoalieStatus`. Therefore, that change could not remove the flicker.
+
+### Code references (confirmed in this pass)
 
 1) Two‑phase goalie toggle (field first, then roster after 10ms), which triggers the sync effect:
 
@@ -98,6 +102,17 @@ As of this investigation, the behaviors below are still in code and explain the 
   }, [availablePlayers]);
 ```
 
+3) Last non-empty snapshot ref used by the sync fallback (can restore old formations if racing):
+
+```317:323:src/components/HomePage.tsx
+  const lastNonEmptyPlayersOnFieldRef = useRef<Player[]>([]);
+  useEffect(() => {
+    if (playersOnField && playersOnField.length > 0) {
+      lastNonEmptyPlayersOnFieldRef.current = playersOnField;
+    }
+  }, [playersOnField]);
+```
+
 3) Place‑all logic (for context on structural changes):
 
 ```126:186:src/hooks/usePlayerFieldManager.ts
@@ -149,14 +164,14 @@ As of this investigation, the behaviors below are still in code and explain the 
 - Dual writes on goalie toggle (field, then roster after delay) → triggers roster→field sync → second write to `playersOnField` → second repaint → flicker.
 - Roster→field sync effect with fallback to last non‑empty formation and `isGoalie` propagation → can restore stale formation and also causes an extra repaint.
 
-### Fix options
+### Fix options (updated)
 
-Option A: Single‑source‑of‑truth goalie toggle (preferred)
+Option A: Single‑source‑of‑truth goalie toggle (preferred, and needed here)
 - Remove the 10ms delayed second write or make the roster update non‑observable by the field sync.
 - Let the goalie toggle be authoritative for `playersOnField`. The roster→field sync should not modify `isGoalie`.
 - Keep roster persistence, but do not emit additional UI writes that change field state.
 
-Option B: Narrow the roster→field sync responsibilities
+Option B: Narrow the roster→field sync responsibilities (required here)
 - Remove the “last non‑empty” fallback entirely. This fallback is the mechanism that restores an older formation in the delete‑all → place‑all → toggle sequence.
 - Do not sync `isGoalie` from roster to field. Only sync stable, non‑visual metadata such as `name` and `jerseyNumber`.
 - Additionally, gate the effect: if a structural change just happened (e.g., place‑all), skip any sync for one tick or until the formation snapshot ref is confirmed updated.
@@ -168,13 +183,35 @@ Option D: Minimal tactical change
 - Keep current optimistic UI update for the toggle.
 - Drop the 10ms delay and the second write to `availablePlayers`, or at least debounce it so the roster→field sync does not fire within the same frame window.
 
-### Recommendation
+### Concrete implementation steps (actionable)
 
-- Implement A + B:
-  - Eliminate the second, delayed write in `useRoster.handleSetGoalieStatus` that changes `availablePlayers` immediately after the field update; persist without emitting another observable write, or coalesce it with the first update so there is a single UI mutation.
-  - In `HomePage` roster→field sync, remove the “last non‑empty” fallback and stop syncing `isGoalie`. Restrict the sync to non‑positional, non‑stateful metadata.
+Step 1: Make goalie toggle a single-observable UI write (useRoster)
+- File: `src/hooks/useRoster.ts`
+- Function: `handleSetGoalieStatus`
+- Changes:
+  - Remove the artificial 10ms delay (`await new Promise(resolve => setTimeout(resolve, 10))`).
+  - Avoid immediately calling `setAvailablePlayers` in a way that triggers the roster→field sync to rewrite `playersOnField`. Options:
+    - Persist goalie to storage and update roster cache, but don’t emit a local `setAvailablePlayers` update for `isGoalie` (let the field remain the source of truth for the visual state). Or,
+    - If updating `availablePlayers` is necessary, ensure the roster→field sync ignores goalie changes (see Step 2), so there is no second write to `playersOnField`.
+  - Outcome: the field updates once; persistence happens without forcing an extra repaint.
 
-This restores “one logical action → one visual repaint”, prevents stale formation restoration, and keeps UI consistent.
+Step 2: Narrow roster→field sync so it cannot cause reverts or repaint flicker
+- File: `src/components/HomePage.tsx`
+- Effect: the `useEffect` keyed by `availablePlayers`
+- Changes:
+  - Remove the fallback that restores `lastNonEmptyPlayersOnFieldRef` when `prevPlayersOnField` is empty; this is the mechanism that restores older formations during the delete-all → place-all → toggle sequence.
+  - Remove `isGoalie` from the `needsUpdate` comparison and from the assignment block. Do not propagate goalie state from roster to field; the toggle handler is authoritative.
+  - Optional safety: Add a lightweight guard so that right after structural changes (place-all/reset), the effect either skips one tick or only syncs name/number, not stateful fields, to avoid any chance of formation mutation.
+
+Step 3: Confirm the UI path uses the intended handler
+- Ensure goalie toggles invoked from `PlayerBar`/`PlayerDisk` route through the updated path (currently `useRoster.handleSetGoalieStatus`). If the central handler in `useGameState` is preferred, wire it in consistently and remove duplicate implementations to prevent races.
+
+Step 4: Validate rendering behavior
+- After Steps 1–2, the canvas should repaint only once on goalie toggle. Confirm no second repaint occurs by profiling or simply observing the absence of a pop.
+- Confirm that delete-all → place-all → toggle-goalie preserves the current formation (no restoration of old snapshot).
+
+Why prior attempts didn’t eliminate the issue
+- The change in `useGameState.handleToggleGoalie` avoided a roster refresh, but the UI does not call that handler. The remaining two-phase flow in `useRoster` plus the sync fallback continues to cause both the flicker and formation reverts.
 
 ### Acceptance criteria
 
@@ -192,5 +229,7 @@ This restores “one logical action → one visual repaint”, prevents stale fo
 ### Notes
 
 - A prior change moved more sync logic into `HomePage` to “stabilize” roster→field updates. The fallback to a last non‑empty snapshot is helpful to guard against accidental clears, but it’s unsafe when combined with structural operations and separate delayed writes. Removing that fallback (or guarding it with more context) is key to preventing formation restoration.
+
+— Document updated after re-investigation to reflect the active UI path and concrete steps required to resolve both symptoms.
 
 

@@ -11,6 +11,7 @@ import type { GameEvent } from '@/types'; // Correctly import GameEvent type
 // Define props for PlayerBar
 export interface PlayerBarProps {
   players: Player[];
+  playersOnField: Player[];
   onPlayerDragStartFromBar?: (player: Player) => void;
   selectedPlayerIdFromBar?: string | null; 
   onBarBackgroundClick?: () => void;
@@ -34,7 +35,7 @@ export interface PlayerBarProps {
 //   { id: 'p11', name: 'Player 11' },
 // ];
 
-const PlayerBar: React.FC<PlayerBarProps> = ({ players, onPlayerDragStartFromBar, selectedPlayerIdFromBar, onBarBackgroundClick, gameEvents, onPlayerTapInBar, onToggleGoalie }) => {
+const PlayerBar: React.FC<PlayerBarProps> = ({ players, playersOnField, onPlayerDragStartFromBar, selectedPlayerIdFromBar, onBarBackgroundClick, gameEvents, onPlayerTapInBar, onToggleGoalie }) => {
   return (
     <div 
       className="bg-gradient-to-b from-slate-800 to-slate-900/85 backdrop-blur-md pl-4 pr-2 py-0.5 flex items-center space-x-3 flex-shrink-0 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-slate-700/80 scrollbar-track-slate-800/50 shadow-lg border-b border-slate-700/50"
@@ -72,21 +73,27 @@ const PlayerBar: React.FC<PlayerBarProps> = ({ players, onPlayerDragStartFromBar
 
       {/* Player Disks */}
       <div className="flex items-center space-x-1"> 
-        {players.map(player => (
-          <PlayerDisk
-            key={player.id}
-            id={player.id}
-            fullName={player.name}
-            nickname={player.nickname}
-            color={player.color}
-            isGoalie={player.isGoalie}
-            onPlayerDragStartFromBar={onPlayerDragStartFromBar}
-            selectedPlayerIdFromBar={selectedPlayerIdFromBar}
-            gameEvents={gameEvents}
-            onPlayerTapInBar={onPlayerTapInBar}
-            onToggleGoalie={onToggleGoalie}
-          />
-        ))}
+        {players.map(player => {
+          // Get goalie status from field (authoritative) instead of roster
+          const fieldPlayer = playersOnField.find(p => p.id === player.id);
+          const isGoalie = fieldPlayer ? fieldPlayer.isGoalie : player.isGoalie;
+          
+          return (
+            <PlayerDisk
+              key={player.id}
+              id={player.id}
+              fullName={player.name}
+              nickname={player.nickname}
+              color={player.color}
+              isGoalie={isGoalie}
+              onPlayerDragStartFromBar={onPlayerDragStartFromBar}
+              selectedPlayerIdFromBar={selectedPlayerIdFromBar}
+              gameEvents={gameEvents}
+              onPlayerTapInBar={onPlayerTapInBar}
+              onToggleGoalie={onToggleGoalie}
+            />
+          );
+        })}
       </div>
     </div>
   );

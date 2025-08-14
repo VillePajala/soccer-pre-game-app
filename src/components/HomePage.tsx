@@ -295,6 +295,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     setPlayersOnField,
     setOpponents,
     setDrawings,
+    setAvailablePlayers: setAvailablePlayersFromGameState,
     handlePlayerDrop,
     // Destructure drawing handlers from hook
     handleDrawingStart,
@@ -313,18 +314,6 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     saveStateToHistory,
     // masterRosterKey: MASTER_ROSTER_KEY, // Removed as no longer used by useGameState
   });
-
-  // Sync goalie status from field to roster for PlayerBar visual updates  
-  useEffect(() => {
-    // Update roster's availablePlayers to reflect goalie changes from field
-    setAvailablePlayers(prev => prev.map(rosterPlayer => {
-      const fieldPlayer = playersOnField.find(fp => fp.id === rosterPlayer.id);
-      if (fieldPlayer && fieldPlayer.isGoalie !== rosterPlayer.isGoalie) {
-        return { ...rosterPlayer, isGoalie: fieldPlayer.isGoalie };
-      }
-      return rosterPlayer;
-    }));
-  }, [playersOnField, setAvailablePlayers]);
 
   // Keep a snapshot of the last non-empty field state to avoid accidental clears during sync
   const lastNonEmptyPlayersOnFieldRef = useRef<Player[]>([]);
@@ -378,6 +367,13 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     rosterError,
     playersForCurrentGame,
   } = roster;
+
+  // Sync roster availablePlayers with useGameState availablePlayers
+  useEffect(() => {
+    if (availablePlayers && availablePlayers.length > 0) {
+      setAvailablePlayersFromGameState(availablePlayers);
+    }
+  }, [availablePlayers, setAvailablePlayersFromGameState]);
 
   // --- State Management (Remaining in Home component) ---
   // const [showPlayerNames, setShowPlayerNames] = useState<boolean>(initialState.showPlayerNames); // REMOVE - Migrated to gameSessionState
@@ -1502,43 +1498,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
             lastSaveContentHashRef.current = currentContentHash;
             logger.log(`[CRITICAL-SAVE] Force saving due to visibility change`);
 
-            const currentSnapshot: AppState = {
-              teamName: gameSessionState.teamName,
-              opponentName: gameSessionState.opponentName,
-              gameDate: gameSessionState.gameDate,
-              homeScore: gameSessionState.homeScore,
-              awayScore: gameSessionState.awayScore,
-              gameNotes: gameSessionState.gameNotes,
-              homeOrAway: gameSessionState.homeOrAway,
-              isPlayed,
-              numberOfPeriods: gameSessionState.numberOfPeriods,
-              periodDurationMinutes: gameSessionState.periodDurationMinutes,
-              currentPeriod: gameSessionState.currentPeriod,
-              gameStatus: gameSessionState.gameStatus,
-              seasonId: gameSessionState.seasonId,
-              tournamentId: gameSessionState.tournamentId,
-              gameLocation: gameSessionState.gameLocation,
-              gameTime: gameSessionState.gameTime,
-              demandFactor: gameSessionState.demandFactor,
-              subIntervalMinutes: gameSessionState.subIntervalMinutes,
-              completedIntervalDurations: gameSessionState.completedIntervalDurations,
-              lastSubConfirmationTimeSeconds: gameSessionState.lastSubConfirmationTimeSeconds,
-              showPlayerNames: gameSessionState.showPlayerNames,
-              selectedPlayerIds: gameSessionState.selectedPlayerIds,
-              timeElapsedInSeconds: gameSessionState.timeElapsedInSeconds,
-              availablePlayers,
-              playersOnField,
-              opponents,
-              drawings,
-              gameEvents: gameSessionState.gameEvents,
-              ageGroup: gameSessionState.ageGroup,
-              tournamentLevel: gameSessionState.tournamentLevel,
-              tacticalDiscs,
-              tacticalDrawings,
-              tacticalBallPosition,
-            };
-
-            await handleQuickSaveGame(currentSnapshot);
+            await handleQuickSaveGame(currentGameId || DEFAULT_GAME_ID);
           }, true); // Mark as critical
         }
       }
@@ -2259,6 +2219,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       <div className={barStyle}>
         <PlayerBar
           players={playersForCurrentGame}
+          playersOnField={playersOnField}
           onPlayerDragStartFromBar={handlePlayerDragStartFromBar}
           selectedPlayerIdFromBar={draggingPlayerFromBarInfo?.id}
           onBarBackgroundClick={handleDeselectPlayer}

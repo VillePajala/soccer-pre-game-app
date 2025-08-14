@@ -1,4 +1,4 @@
 {
   "version": "0.1.0",
-  "notes": "fix: use simple direct goalie handler instead of complex roster path"
+  "notes": "fix: implement clean single-source-of-truth goalie toggle solution"
 }

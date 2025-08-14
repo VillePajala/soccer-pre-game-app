@@ -32,7 +32,7 @@ interface ExtendedGameViewProps extends Partial<GameViewProps> {
   handlePlayerDragStartFromBar?: (player: unknown) => void;
   handleDeselectPlayer?: () => void;
   handlePlayerTapInBar?: (player: unknown) => void;
-  handleToggleGoalieForModal?: (playerId: string) => void;
+  handleToggleGoalie?: (playerId: string) => void;
   handleTeamNameChange?: (name: string) => void;
   handleOpponentNameChange?: (name: string) => void;
   handlePlayerMove?: (playerId: string, position: unknown) => void;
@@ -103,7 +103,7 @@ export const GameView = React.memo<ExtendedGameViewProps>(({
   handlePlayerDragStartFromBar,
   handleDeselectPlayer,
   handlePlayerTapInBar,
-  handleToggleGoalieForModal,
+  handleToggleGoalie,
   handleTeamNameChange,
   handleOpponentNameChange,
   handlePlayerMove,
@@ -159,12 +159,13 @@ export const GameView = React.memo<ExtendedGameViewProps>(({
       <div className={barStyle}>
         <PlayerBar
           players={playersForCurrentGame}
+          playersOnField={playersOnField}
           onPlayerDragStartFromBar={handlePlayerDragStartFromBar}
           selectedPlayerIdFromBar={null}
           onBarBackgroundClick={handleDeselectPlayer}
           gameEvents={gameState.gameEvents}
           onPlayerTapInBar={handlePlayerTapInBar}
-          onToggleGoalie={handleToggleGoalieForModal}
+          onToggleGoalie={handleToggleGoalie}
         />
         <GameInfoBar
           teamName={gameState.teamName}
