@@ -1275,7 +1275,9 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         createdAt: Date.now()
       });
     }, debounceTime);
-  }, [currentGameId, getAdaptiveTimeout]);
+  }, [currentGameId, getAdaptiveTimeout, gameSessionState.homeScore, gameSessionState.awayScore, 
+      gameSessionState.currentPeriod, gameSessionState.gameStatus, gameSessionState.gameEvents, 
+      gameSessionState.timeElapsedInSeconds]);
 
   useEffect(() => {
     // Skip autosave during new game creation
@@ -2026,6 +2028,9 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
   // --- Start New Game Handler (Uses Quick Save) ---
   const handleStartNewGame = useCallback(async () => {
+    // Show loading indicator immediately
+    newGameSetupModal.open();
+    
     // Check if the current game is potentially unsaved (not the default ID and not null)
     if (currentGameId && currentGameId !== DEFAULT_GAME_ID) {
       // Prompt to save first
@@ -2039,16 +2044,14 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
       );
 
       if (saveConfirmation) {
-        // User chose OK (Save) -> Call Quick Save, then open setup modal.
+        // User chose OK (Save) -> Call Quick Save, modal stays open
         logger.log("User chose to Quick Save before starting new game.");
         try {
           await handleQuickSaveGame();
         } catch (e) {
           logger.error('Quick save failed before new game setup:', e);
         }
-        // Open setup modal once after save completes
-        newGameSetupModal.open();
-        // Note: do not open modal again below
+        // Modal stays open, just continue to setup
         return;
       } else {
         // User chose Cancel (Discard) -> Proceed to next confirmation
@@ -2058,9 +2061,11 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
           logger.log("Start new game confirmed after discarding, opening setup modal...");
           // <<< SET default player selection (all players) >>>
           setPlayerIdsForNewGame(availablePlayers.map(p => p.id));
-          newGameSetupModal.open(); // Open the setup modal
-        } 
-        // If user cancels this second confirmation, do nothing.
+          // Modal already open, just continue
+        } else {
+          // User cancelled - close the modal
+          newGameSetupModal.close();
+        }
         // Exit the function after handling the discard path.
         return;
       }
@@ -2070,7 +2075,10 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
          logger.log("Start new game confirmed (no prior game to save), opening setup modal...");
          // <<< SET default player selection (all players) >>>
          setPlayerIdsForNewGame(availablePlayers.map(p => p.id));
-         newGameSetupModal.open(); // Open the setup modal
+         // Modal already open, just continue
+       } else {
+         // User cancelled - close the modal
+         newGameSetupModal.close();
        }
        // If user cancels this confirmation, do nothing.
        // Exit the function after handling the no-game-loaded path.
