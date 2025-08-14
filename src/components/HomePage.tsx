@@ -7,7 +7,7 @@ import { GameErrorBoundary } from './GameErrorBoundary';
 import SoccerField from '@/components/SoccerField';
 import PlayerBar from '@/components/PlayerBar';
 import ControlBar from '@/components/ControlBar';
-import TimerOverlay from '@/components/MigratedTimerOverlay';
+import TimerOverlay from '@/components/TimerOverlay';
 // 🔥 FLICKERING FIX: Use direct imports instead of lazy loading to eliminate loading delays
 import GoalLogModal from '@/components/GoalLogModal';
 import GameStatsModal from '@/components/GameStatsModal';

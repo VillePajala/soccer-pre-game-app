@@ -64,7 +64,7 @@ describe('IndexedDBProvider', () => {
 
   describe('Database Initialization', () => {
     it('should initialize database with correct name and version', async () => {
-      expect(indexedDB.open).toHaveBeenCalledWith('soccer_coach_app', 1);
+      expect(indexedDB.open).toHaveBeenCalledWith('soccer_coach_app', 2);
     });
 
     it('should return correct provider name', () => {
@@ -292,7 +292,7 @@ describe('IndexedDBProvider', () => {
 
   describe('Saved Games', () => {
     const mockGameData = {
-      gameId: 'game-123',
+      id: 'game-123',
       teamName: 'Test Team',
       playersOnField: [],
       opponents: [],
@@ -337,7 +337,7 @@ describe('IndexedDBProvider', () => {
 
     it('should throw error when saving invalid game data', async () => {
       await expect(provider.saveSavedGame({}))
-        .rejects.toThrow('Invalid game data: missing gameId');
+        .rejects.toThrow('Invalid game data: missing id');
     });
 
     it('should delete a saved game', async () => {
@@ -527,17 +527,7 @@ describe('IndexedDBProvider', () => {
       const mockSeason = { id: 'season-1', name: 'Test Season' };
       const mockTournament = { id: 'tournament-1', name: 'Test Tournament' };
       const mockSettings = { currentGameId: 'game-123' };
-      const mockGames = { 'game-123': { gameId: 'game-123', teamName: 'Test' } };
-
-      // Mock all the get methods
-      mockStore.getAll.mockImplementation(() => {
-        const request = new MockIDBRequest();
-        setTimeout(() => {
-          request.result = [mockPlayer]; // First call returns players
-          if (request.onsuccess) request.onsuccess();
-        }, 0);
-        return request;
-      });
+      const mockGames = { 'game-123': { id: 'game-123', teamName: 'Test' } };
 
       // Mock different calls sequentially
       let callCount = 0;
@@ -548,7 +538,7 @@ describe('IndexedDBProvider', () => {
             case 0: request.result = [mockPlayer]; break;
             case 1: request.result = [mockSeason]; break;
             case 2: request.result = [mockTournament]; break;
-            case 3: request.result = [{ gameId: 'game-123', teamName: 'Test' }]; break;
+            case 3: request.result = [{ id: 'game-123', teamName: 'Test' }]; break;
             default: request.result = [];
           }
           if (request.onsuccess) request.onsuccess();
