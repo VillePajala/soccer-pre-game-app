@@ -1169,6 +1169,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   }, []);
 
   // Content-based deduplication
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const hashGameState = useCallback((state: any) => {
     const criticalFields = {
       homeScore: state.homeScore,
@@ -1319,6 +1320,15 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     playersOnField.length, // Player changes on field (not positions)
     gameSessionState.gameNotes, // Notes changes
     scheduleAutosave, hashGameState,
+    // Include dependencies needed by the auto-save function but don't trigger on them
+    gameSessionState.teamName, gameSessionState.opponentName, gameSessionState.gameDate,
+    gameSessionState.homeOrAway, gameSessionState.numberOfPeriods, gameSessionState.periodDurationMinutes,
+    gameSessionState.seasonId, gameSessionState.tournamentId, gameSessionState.gameLocation,
+    gameSessionState.gameTime, gameSessionState.demandFactor, gameSessionState.subIntervalMinutes,
+    gameSessionState.completedIntervalDurations, gameSessionState.lastSubConfirmationTimeSeconds,
+    gameSessionState.showPlayerNames, gameSessionState.selectedPlayerIds, gameSessionState.timeElapsedInSeconds,
+    availablePlayers, opponents, drawings, tacticalDiscs, tacticalDrawings, tacticalBallPosition,
+    isPlayed, masterRosterQueryResultData, playerAssessments, playersOnField,
   ]);
 
   // Force save on critical events (page unload, visibility change)
