@@ -126,9 +126,9 @@ class OperationQueue {
       const maxRetries = operation.maxRetries || 0;
       
       if (retryCount < maxRetries) {
-        // Exponential backoff with jitter
-        const baseDelay = Math.min(1000 * Math.pow(2, retryCount), 10000); // Cap at 10s
-        const jitter = Math.random() * 0.1 * baseDelay; // 10% jitter
+        // Exponential backoff with jitter - more conservative
+        const baseDelay = Math.min(2000 * Math.pow(2, retryCount), 15000); // Cap at 15s, start at 2s
+        const jitter = Math.random() * 0.2 * baseDelay; // 20% jitter
         const delay = baseDelay + jitter;
         
         console.debug(`[OperationQueue] Retrying ${operation.name} in ${Math.round(delay)}ms (attempt ${retryCount + 1}/${maxRetries})`);
@@ -148,7 +148,13 @@ class OperationQueue {
           this.processQueue();
         }, delay);
       } else {
-        console.error(`[OperationQueue] Failed ${operation.name} after ${duration}ms (${retryCount + 1} attempts):`, error);
+        const isTimeout = error.message?.includes('timed out');
+        if (isTimeout) {
+          console.error(`[OperationQueue] ⏰ TIMEOUT: ${operation.name} failed after ${duration}ms (${retryCount + 1} attempts). This may indicate network or database performance issues.`);
+          console.error(`[OperationQueue] Consider checking: 1) Network connectivity, 2) Database performance, 3) Server load`);
+        } else {
+          console.error(`[OperationQueue] Failed ${operation.name} after ${duration}ms (${retryCount + 1} attempts):`, error);
+        }
       }
     } finally {
       this.running.delete(operation.id);

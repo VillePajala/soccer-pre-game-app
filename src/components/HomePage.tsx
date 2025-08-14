@@ -1153,19 +1153,21 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   const autosaveTimeoutRef = useRef<number | null>(null);
   const lastSaveContentHashRef = useRef<string>('');
   const saveLatencyHistoryRef = useRef<number[]>([]);
+  const consecutiveFailuresRef = useRef<number>(0);
+  const lastFailureTimeRef = useRef<number>(0);
 
   // Adaptive timeout calculation based on recent latency
   const getAdaptiveTimeout = useCallback(() => {
     const history = saveLatencyHistoryRef.current;
-    if (history.length === 0) return 8000; // Default 8s
+    if (history.length === 0) return 15000; // Default 15s - increased for reliability
     
     // Calculate P95 latency
     const sorted = [...history].sort((a, b) => a - b);
     const p95Index = Math.floor(sorted.length * 0.95);
     const p95Latency = sorted[p95Index] || sorted[sorted.length - 1];
     
-    // Adaptive timeout: P95 × 3, clamped between 4s and 12s
-    return Math.max(4000, Math.min(12000, p95Latency * 3));
+    // Adaptive timeout: P95 × 4, clamped between 8s and 20s - more generous
+    return Math.max(8000, Math.min(20000, p95Latency * 4));
   }, []);
 
   // Content-based deduplication
@@ -1185,7 +1187,17 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
   // PHASE 3: Enhanced auto-save with operation queue and debouncing
   const scheduleAutosave = useCallback((fn: () => Promise<void>, critical = false) => {
-    const debounceTime = critical ? 100 : 2000; // Faster for critical events
+    // Circuit breaker: If we have too many consecutive failures, back off
+    const consecutiveFailures = consecutiveFailuresRef.current;
+    const lastFailureTime = lastFailureTimeRef.current;
+    const timeSinceLastFailure = Date.now() - lastFailureTime;
+    
+    if (consecutiveFailures >= 3 && timeSinceLastFailure < 30000) { // 30s cooldown after 3 failures
+      console.debug('[AUTO-SAVE] Circuit breaker active - too many consecutive failures, skipping save');
+      return;
+    }
+    
+    const debounceTime = critical ? 500 : 5000; // Increased: 500ms for critical, 5s for normal
     
     // Clear existing timeout
     if (autosaveTimeoutRef.current) {
@@ -1209,17 +1221,53 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         name: critical ? 'Critical Auto-save Game' : 'Auto-save Game',
         priority: critical ? OperationPriority.HIGH : OperationPriority.MEDIUM,
         execute: async () => {
-          const result = await fn();
-          
-          // Track latency for adaptive timeout
-          const latency = Date.now() - startTime;
-          saveLatencyHistoryRef.current.push(latency);
-          // Keep only last 10 measurements
-          if (saveLatencyHistoryRef.current.length > 10) {
-            saveLatencyHistoryRef.current.shift();
+          try {
+            const result = await fn();
+            
+            // Track success - reset failure counter
+            consecutiveFailuresRef.current = 0;
+            
+            // Track latency for adaptive timeout
+            const latency = Date.now() - startTime;
+            saveLatencyHistoryRef.current.push(latency);
+            // Keep only last 10 measurements
+            if (saveLatencyHistoryRef.current.length > 10) {
+              saveLatencyHistoryRef.current.shift();
+            }
+            
+            console.debug(`[AUTO-SAVE] ✅ Success in ${latency}ms`);
+            return result;
+          } catch (error) {
+            // Track failure
+            consecutiveFailuresRef.current += 1;
+            lastFailureTimeRef.current = Date.now();
+            
+            console.error(`[AUTO-SAVE] ❌ Failed (${consecutiveFailuresRef.current} consecutive):`, error);
+            
+            // Fallback: Save to localStorage as emergency backup
+            if (critical && currentGameId && currentGameId !== DEFAULT_GAME_ID) {
+              try {
+                const fallbackData = {
+                  gameId: currentGameId,
+                  timestamp: Date.now(),
+                  gameState: {
+                    homeScore: gameSessionState.homeScore,
+                    awayScore: gameSessionState.awayScore,
+                    currentPeriod: gameSessionState.currentPeriod,
+                    gameStatus: gameSessionState.gameStatus,
+                    gameEvents: gameSessionState.gameEvents,
+                    timeElapsed: gameSessionState.timeElapsedInSeconds
+                  }
+                };
+                localStorage.setItem(`fallback_save_${currentGameId}`, JSON.stringify(fallbackData));
+                console.warn(`[AUTO-SAVE] 💾 Emergency fallback save to localStorage completed`);
+              } catch (fallbackError) {
+                console.error(`[AUTO-SAVE] ❌ Fallback save also failed:`, fallbackError);
+              }
+            }
+            
+            throw error;
           }
-          
-          return result;
         },
         timeout: getAdaptiveTimeout(),
         maxRetries: critical ? 3 : 1, // More retries for critical saves
