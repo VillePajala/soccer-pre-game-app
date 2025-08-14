@@ -167,10 +167,15 @@ export const useRoster = ({ initialPlayers, selectedPlayerIds, onPlayerIdUpdated
       });
     
     console.log('[useRoster] Applying optimistic update');
-    setAvailablePlayers(goalieUpdate);
-    cacheManager.updateMasterRosterCache(goalieUpdate);
+    
+    // Calculate the updated players once
+    const updatedPlayers = goalieUpdate(availablePlayers);
+    
+    setAvailablePlayers(updatedPlayers);
+    cacheManager.updateMasterRosterCache(() => updatedPlayers);
     
     // CRITICAL FIX: Also update players on field to keep them synchronized
+    // Pass the updater function that applies the same logic to field players
     if (onFieldPlayersUpdate) {
       console.log('[useRoster] Updating field players with goalie status');
       onFieldPlayersUpdate(goalieUpdate);
@@ -186,10 +191,19 @@ export const useRoster = ({ initialPlayers, selectedPlayerIds, onPlayerIdUpdated
         setAvailablePlayers(prev);
         cacheManager.updateMasterRosterCache(() => prev);
         
-        // CRITICAL FIX: Also rollback field players
+        // CRITICAL FIX: Also rollback field players to previous state
         if (onFieldPlayersUpdate) {
           console.log('[useRoster] Rolling back field players');
-          onFieldPlayersUpdate(() => prev);
+          onFieldPlayersUpdate((currentFieldPlayers) => {
+            // Rollback: restore previous goalie states for field players
+            return currentFieldPlayers.map(fieldPlayer => {
+              const prevPlayer = prev.find(p => p.id === fieldPlayer.id);
+              if (prevPlayer) {
+                return { ...fieldPlayer, isGoalie: prevPlayer.isGoalie };
+              }
+              return fieldPlayer;
+            });
+          });
         }
         setRosterError('Failed to set goalie status');
       } else {
