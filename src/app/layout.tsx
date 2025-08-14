@@ -45,9 +45,23 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Extract Supabase URL for preconnect (if available)
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseHost = supabaseUrl ? new URL(supabaseUrl).origin : null;
+  
   return (
     <html lang="fi">
       <head>
+        {/* Performance optimizations: Preconnect to critical domains */}
+        {supabaseHost && (
+          <>
+            <link rel="preconnect" href={supabaseHost} />
+            <link rel="dns-prefetch" href={supabaseHost} />
+          </>
+        )}
+        {/* Preconnect to Supabase storage if using different domain */}
+        <link rel="preconnect" href="https://supabase.co" />
+        <link rel="dns-prefetch" href="https://supabase.co" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />

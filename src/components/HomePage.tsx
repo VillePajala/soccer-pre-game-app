@@ -107,6 +107,7 @@ import { DEFAULT_GAME_ID } from '@/config/constants';
 // Removed - now handled by useGameDataManager: exportJson, exportCsv
 import { useToast } from '@/contexts/ToastProvider';
 import logger from '@/utils/logger';
+import { perfMark, perfMeasure, PERF_MARKS } from '@/utils/performance';
 // Prefetch helpers for reference data
 import { getSeasons as utilGetSeasons } from '@/utils/seasons';
 import { getTournaments as utilGetTournaments } from '@/utils/tournaments';
@@ -1171,15 +1172,27 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   }, []);
 
   // Content-based deduplication
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const hashGameState = useCallback((state: any) => {
+  const hashGameState = useCallback((state: {
+    homeScore: number;
+    awayScore: number;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    gameEvents: any[];
+    currentPeriod: number;
+    gameStatus: string;
+    gameNotes: string;
+    selectedPlayerIds: string[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    playersOnField: any[];
+  }) => {
     const criticalFields = {
       homeScore: state.homeScore,
       awayScore: state.awayScore,
-      gameEvents: state.gameEvents?.length || 0,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      gameEvents: state.gameEvents?.map((e: any) => ({ id: e.id, type: e.type, time: e.time })) || [], // IMPROVED: Track event content, not just length
       currentPeriod: state.currentPeriod,
       gameStatus: state.gameStatus,
       gameNotes: state.gameNotes,
+      selectedPlayerIds: state.selectedPlayerIds || [], // ADDED: Track selected players
       playersOnFieldCount: state.playersOnField?.length || 0
     };
     return JSON.stringify(criticalFields);
@@ -1367,6 +1380,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     gameSessionState.homeScore, gameSessionState.awayScore, // Score changes
     gameSessionState.gameEvents, // New events (goals, subs, etc.)
     gameSessionState.currentPeriod, gameSessionState.gameStatus, // Period/status changes
+    gameSessionState.selectedPlayerIds, // FIXED: Player roster selection changes
     playersOnField.length, // Player changes on field (not positions)
     gameSessionState.gameNotes, // Notes changes
     scheduleAutosave, hashGameState,
@@ -1376,7 +1390,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
     gameSessionState.seasonId, gameSessionState.tournamentId, gameSessionState.gameLocation,
     gameSessionState.gameTime, gameSessionState.demandFactor, gameSessionState.subIntervalMinutes,
     gameSessionState.completedIntervalDurations, gameSessionState.lastSubConfirmationTimeSeconds,
-    gameSessionState.showPlayerNames, gameSessionState.selectedPlayerIds, gameSessionState.timeElapsedInSeconds,
+    gameSessionState.showPlayerNames, gameSessionState.timeElapsedInSeconds,
     availablePlayers, opponents, drawings, tacticalDiscs, tacticalDrawings, tacticalBallPosition,
     isPlayed, masterRosterQueryResultData, playerAssessments, playersOnField,
   ]);
@@ -1597,7 +1611,12 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
 
   const handleOpenLoadGameModal = () => {
     logger.log("Opening Load Game Modal...");
+    perfMark(PERF_MARKS.MODAL_OPEN_START, { modal: 'LoadGameModal' });
     loadGameModal.open();
+    // Measure when modal becomes interactive
+    requestAnimationFrame(() => {
+      perfMeasure('LoadGameModal:open', PERF_MARKS.MODAL_OPEN_START);
+    });
   };
 
   const handleCloseLoadGameModal = () => {
@@ -1616,6 +1635,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   // Function to handle loading a selected game
   const handleLoadGame = async (gameId: string) => {
     logger.log(`[handleLoadGame] Attempting to load game: ${gameId}`);
+    perfMark(PERF_MARKS.GAME_LOAD_START, { gameId });
     
     // Cancel any previous load operation
     abortControllerRef.current?.abort();
@@ -1654,6 +1674,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         
         // Update current game ID for immediate UI feedback
         setCurrentGameId(gameId);
+        perfMeasure('Game:load', PERF_MARKS.GAME_LOAD_START);
         
         // PHASE 3: Use operation queue for critical game loading
         await operationQueue.add({

@@ -523,12 +523,14 @@ export class SupabaseProvider implements IStorageProvider {
     try {
       const userId = await this.getCurrentUserId();
 
-      // First, try the simple approach that was working before
+      // REVERT: Using full game data to fix critical bug where playersOnField, gameEvents, etc. were missing
+      // TODO: Implement separate lightweight endpoint for list view vs full game loading
       const { data: gamesData, error: gamesError } = await supabase
         .from('games')
         .select('*')
         .eq('user_id', userId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(50); // Keep pagination limit for performance
 
       if (gamesError) {
         throw new NetworkError('supabase', 'getSavedGames', gamesError);
@@ -537,16 +539,11 @@ export class SupabaseProvider implements IStorageProvider {
       // Convert array to object format expected by the app
       const gamesCollection: Record<string, unknown> = {};
 
-      // For now, just transform the basic game data
-      // This ensures the app continues to work even if the complex query fails
+      // Transform the full game data using the original approach
       for (const game of gamesData) {
         const transformedGame = fromSupabase.game(game as DbGame);
         gamesCollection[game.id] = transformedGame;
       }
-
-      // PHASE 1.5 OPTIMIZATION: N+1 game_events queries eliminated
-      // Events are already included in the game_data from the database
-      // No additional processing needed - fromSupabase.game() includes all events
 
       return gamesCollection;
     } catch (error) {

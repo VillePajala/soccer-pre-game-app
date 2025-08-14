@@ -8,6 +8,8 @@ import { authAwareStorageManager } from '@/lib/storage';
 import { loadingRegistry } from '@/utils/loadingRegistry';
 import { operationQueue } from '@/utils/operationQueue';
 import { SecureAuthService } from '../lib/security/rateLimiter';
+import { SmartPreloader, registerModalComponents } from '@/services/ComponentRegistry';
+import { perfMark } from '@/utils/performance';
 import logger from '@/utils/logger';
 
 interface AuthContextType {
@@ -73,6 +75,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         // Update session info
         setSessionInfo(sessionManager.getSessionInfo());
+        
+        // PERFORMANCE: Prefetch modal components after successful sign-in
+        if (event === 'SIGNED_IN' && session) {
+          perfMark('auth:signInSuccess');
+          
+          // Register all modal components first
+          registerModalComponents();
+          
+          // Use requestIdleCallback for non-blocking prefetch
+          if (typeof window !== 'undefined' && window.requestIdleCallback) {
+            window.requestIdleCallback(
+              async () => {
+                try {
+                  perfMark('prefetch:start');
+                  await SmartPreloader.preloadCriticalComponents();
+                  perfMark('prefetch:complete');
+                  logger.debug('[Auth] Critical modal components prefetched after sign-in');
+                } catch (error) {
+                  logger.warn('[Auth] Failed to prefetch components:', error);
+                }
+              },
+              { timeout: 2000 } // Fallback after 2s
+            );
+          } else {
+            // Fallback for browsers without requestIdleCallback
+            setTimeout(async () => {
+              try {
+                await SmartPreloader.preloadCriticalComponents();
+                logger.debug('[Auth] Critical modal components prefetched after sign-in (fallback)');
+              } catch (error) {
+                logger.warn('[Auth] Failed to prefetch components:', error);
+              }
+            }, 1500);
+          }
+        }
       }
     );
 
