@@ -104,7 +104,7 @@ export const MigratedPlayerBar: React.FC<PlayerBarProps> = ({
           <Image
             className="h-16 w-16"
             src="/pepo-logo.png"
-            alt="Coaching Companion Logo"
+            alt="MatchDay Coach Logo"
             width={64}
             height={64}
           />

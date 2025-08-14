@@ -678,7 +678,7 @@
     "noServiceWorker": "(Service worker ei aktiivinen)"
   },
   "installPrompt": {
-    "message": "Asenna Coaching Companion saadaksesi nopeamman ja offline-toimivan kokemuksen!",
+    "message": "Asenna MatchDay Coach saadaksesi nopeamman ja offline-toimivan kokemuksen!",
     "installButton": "Asenna",
     "dismissButton": "Ei nyt"
   },

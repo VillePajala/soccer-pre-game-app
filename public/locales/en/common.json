@@ -687,7 +687,7 @@
     "noServiceWorker": "(Service worker not active)"
   },
   "installPrompt": {
-    "message": "Install Coaching Companion for a faster, offline experience!",
+    "message": "Install MatchDay Coach for a faster, offline experience!",
     "installButton": "Install",
     "dismissButton": "Not now"
   },
