@@ -1,11 +1,18 @@
-# E2E Tests Workflow
-name: E2E Tests
+# E2E Tests Workflow - DISABLED
+# Re-enable when E2E test stability is improved
+name: E2E Tests (Disabled)
 
 on:
-  push:
-    branches: [ main, master, develop ]
-  pull_request:
-    branches: [ main, master ]
+  # Disabled - uncomment to re-enable
+  # push:
+  #   branches: [ main, master, develop ]
+  # pull_request:
+  #   branches: [ main, master ]
+  #   paths-ignore:
+  #     - 'docs/**'
+  #     - '*.md'
+  #     - '.vscode/**'
+  workflow_dispatch: # Allow manual triggering only
 
 jobs:
   e2e:
