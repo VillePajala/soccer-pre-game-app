@@ -54,17 +54,71 @@ const customJestConfig = {
     '!src/app/auth-debug/**',
     '!src/app/password-reset-help/**'
   ],
-  // Week 1 Coverage Thresholds - Gradual Ramp Up
+  // Week 3 Coverage Thresholds - Integration & Reliability
   coverageThreshold: {
-    // Start with current levels + 2-3% improvement
+    // Week 3 targets: ~72-78% global coverage
     global: { 
-      statements: 45, 
-      lines: 45, 
-      functions: 41, 
-      branches: 38 
+      statements: 75, 
+      lines: 75, 
+      functions: 75, 
+      branches: 65 
+    },
+    // Scope-specific gates (Week 3 step-up)
+    "./src/utils/**/*.{ts,tsx}": { 
+      statements: 90, 
+      lines: 90, 
+      functions: 90, 
+      branches: 80 
+    },
+    "./src/stores/**/*.{ts,tsx}": { 
+      statements: 85, 
+      lines: 85, 
+      functions: 85, 
+      branches: 75 
+    },
+    "./src/hooks/**/*.{ts,tsx}": { 
+      statements: 80, 
+      lines: 80, 
+      functions: 80, 
+      branches: 70 
+    },
+    // Core component targets for Week 3
+    "./src/components/HomePage.tsx": { 
+      statements: 75, 
+      lines: 75, 
+      functions: 75, 
+      branches: 65 
+    },
+    "./src/components/ControlBar.tsx": { 
+      statements: 75, 
+      lines: 75, 
+      functions: 75, 
+      branches: 65 
+    },
+    "./src/components/TimerOverlay.tsx": { 
+      statements: 75, 
+      lines: 75, 
+      functions: 75, 
+      branches: 65 
+    },
+    "./src/components/GameInfoBar.tsx": { 
+      statements: 75, 
+      lines: 75, 
+      functions: 75, 
+      branches: 65 
+    },
+    "./src/components/SoccerField.tsx": { 
+      statements: 75, 
+      lines: 75, 
+      functions: 75, 
+      branches: 65 
+    },
+    "./src/app/**/*.{ts,tsx}": { 
+      statements: 65, 
+      lines: 65, 
+      functions: 65, 
+      branches: 55 
     }
-    // Focus on specific high-value utils first
-    // Will add scope-specific gates as we improve individual files
   },
   // Add transform for ts-jest if needed, but next/jest should handle it
   // transform: {

@@ -23,6 +23,16 @@ jest.mock('@/utils/logger', () => ({
 }));
 
 describe('TimerOverlay', () => {
+  beforeAll(() => {
+    // Enable fake timers for all tests
+    jest.useFakeTimers();
+  });
+
+  afterAll(() => {
+    // Restore real timers
+    jest.useRealTimers();
+  });
+
   const defaultProps: TimerOverlayProps = {
     timeElapsedInSeconds: 0,
     subAlertLevel: 'none',
@@ -52,6 +62,13 @@ describe('TimerOverlay', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Clear any pending timer operations
+    jest.clearAllTimers();
+  });
+
+  afterEach(() => {
+    // Clean up any pending timers after each test
+    jest.clearAllTimers();
   });
 
   describe('Timer Display', () => {
@@ -419,6 +436,151 @@ describe('TimerOverlay', () => {
       
       fireEvent.click(playButton);
       expect(onStartPauseTimer).toHaveBeenCalled();
+    });
+  });
+
+  describe('Timer State Management with Fake Timers', () => {
+    it('should handle start/pause/resume cycle with fake timers', async () => {
+      const onStartPauseTimer = jest.fn();
+      const { rerender } = render(
+        <TimerOverlay 
+          {...defaultProps} 
+          onStartPauseTimer={onStartPauseTimer}
+          isTimerRunning={false}
+          timeElapsedInSeconds={0}
+        />
+      );
+      
+      // Start timer
+      const startButton = screen.getByRole('button', { name: /start/i });
+      fireEvent.click(startButton);
+      expect(onStartPauseTimer).toHaveBeenCalledTimes(1);
+      
+      // Simulate timer running
+      rerender(
+        <TimerOverlay 
+          {...defaultProps} 
+          onStartPauseTimer={onStartPauseTimer}
+          isTimerRunning={true}
+          timeElapsedInSeconds={30}
+        />
+      );
+      
+      // Advance fake timers
+      jest.advanceTimersByTime(1000);
+      
+      // Pause timer
+      const pauseButton = screen.getByRole('button', { name: /timerOverlay.pauseButton/i });
+      fireEvent.click(pauseButton);
+      expect(onStartPauseTimer).toHaveBeenCalledTimes(2);
+      
+      // Simulate paused state
+      rerender(
+        <TimerOverlay 
+          {...defaultProps} 
+          onStartPauseTimer={onStartPauseTimer}
+          isTimerRunning={false}
+          timeElapsedInSeconds={30}
+        />
+      );
+      
+      // Resume timer
+      const resumeButton = screen.getByRole('button', { name: /start/i });
+      fireEvent.click(resumeButton);
+      expect(onStartPauseTimer).toHaveBeenCalledTimes(3);
+    });
+
+    it('should handle timer reset with persistence', () => {
+      const onResetTimer = jest.fn();
+      const { rerender } = render(
+        <TimerOverlay 
+          {...defaultProps} 
+          onResetTimer={onResetTimer}
+          timeElapsedInSeconds={120}
+          isTimerRunning={true}
+        />
+      );
+      
+      // Verify timer shows current time
+      expect(screen.getByText('02:00')).toBeInTheDocument();
+      
+      // Reset timer
+      const resetButton = screen.getByRole('button', { name: /reset/i });
+      fireEvent.click(resetButton);
+      expect(onResetTimer).toHaveBeenCalledTimes(1);
+      
+      // Simulate reset state
+      rerender(
+        <TimerOverlay 
+          {...defaultProps} 
+          onResetTimer={onResetTimer}
+          timeElapsedInSeconds={0}
+          isTimerRunning={false}
+        />
+      );
+      
+      expect(screen.getByText('00:00')).toBeInTheDocument();
+    });
+
+    it('should handle timer across different game periods', () => {
+      const { rerender } = render(
+        <TimerOverlay 
+          {...defaultProps} 
+          currentPeriod={1}
+          timeElapsedInSeconds={45 * 60}
+          gameStatus="periodEnd"
+        />
+      );
+      
+      // Check for the timer display - it might not show exactly 45:00 due to formatting
+      expect(formatTime).toHaveBeenCalledWith(45 * 60);
+      
+      // Move to second period
+      rerender(
+        <TimerOverlay 
+          {...defaultProps} 
+          currentPeriod={2}
+          timeElapsedInSeconds={0}
+          gameStatus="inProgress"
+        />
+      );
+      
+      expect(formatTime).toHaveBeenCalledWith(0);
+      expect(screen.getByText('00:00')).toBeInTheDocument();
+    });
+  });
+
+  describe('Advanced Timer Scenarios', () => {
+    it('should handle complex game state transitions', () => {
+      const { rerender } = render(
+        <TimerOverlay 
+          {...defaultProps} 
+          gameStatus="notStarted"
+          timeElapsedInSeconds={0}
+        />
+      );
+      
+      // Start game
+      rerender(
+        <TimerOverlay 
+          {...defaultProps} 
+          gameStatus="inProgress"
+          isTimerRunning={true}
+          timeElapsedInSeconds={30}
+        />
+      );
+      
+      // End game
+      rerender(
+        <TimerOverlay 
+          {...defaultProps} 
+          gameStatus="gameEnd"
+          isTimerRunning={false}
+          timeElapsedInSeconds={90 * 60}
+        />
+      );
+      
+      expect(screen.getByText(/gameEnded/)).toBeInTheDocument();
     });
   });
 });

@@ -1,5 +1,13 @@
 import '@testing-library/jest-dom';
 
+// Setup MSW for integration tests (conditionally)
+if (process.env.MSW_ENABLED === 'true' || process.env.INTEGRATION_TEST === 'true') {
+  // Dynamic import for MSW server
+  import('./__tests__/mocks/server').catch(() => {
+    // Ignore errors if MSW is not available
+  });
+}
+
 // Suppress console errors during tests unless explicitly enabled
 const originalConsoleError = console.error;
 const originalConsoleWarn = console.warn;

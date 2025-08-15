@@ -460,4 +460,111 @@ describe('GameInfoBar', () => {
       expect(onTeamNameChange).not.toHaveBeenCalled();
     });
   });
+
+  describe('Advanced Score Scenarios', () => {
+    it('should handle rapid score updates', () => {
+      const { rerender } = render(<GameInfoBar {...defaultProps} homeScore={0} awayScore={0} />);
+      
+      // Rapid score changes
+      const scores = [
+        { home: 1, away: 0 },
+        { home: 1, away: 1 },
+        { home: 2, away: 1 },
+        { home: 2, away: 2 },
+        { home: 3, away: 2 },
+      ];
+      
+      scores.forEach(score => {
+        rerender(<GameInfoBar {...defaultProps} homeScore={score.home} awayScore={score.away} />);
+        expect(screen.getByText(`${score.home} - ${score.away}`)).toBeInTheDocument();
+      });
+    });
+
+    it('should handle extreme score values', () => {
+      render(<GameInfoBar {...defaultProps} homeScore={99} awayScore={88} />);
+      
+      expect(screen.getByText('99 - 88')).toBeInTheDocument();
+    });
+
+    it('should handle team switching with score updates', () => {
+      const { rerender } = render(
+        <GameInfoBar {...defaultProps} homeScore={2} awayScore={1} homeOrAway="home" />
+      );
+      
+      expect(screen.getByText('2 - 1')).toBeInTheDocument();
+      
+      // Switch to away - score should remain the same format
+      rerender(
+        <GameInfoBar {...defaultProps} homeScore={3} awayScore={2} homeOrAway="away" />
+      );
+      
+      expect(screen.getByText('3 - 2')).toBeInTheDocument();
+    });
+  });
+
+  describe('Complex Interaction Patterns', () => {
+    it('should handle editing with prop changes', () => {
+      const onTeamNameChange = jest.fn();
+      
+      const { rerender } = render(
+        <GameInfoBar {...defaultProps} onTeamNameChange={onTeamNameChange} homeScore={0} />
+      );
+      
+      // Start editing
+      const homeTeam = screen.getByText('Home Team');
+      fireEvent.doubleClick(homeTeam);
+      
+      const input = screen.getByRole('textbox');
+      fireEvent.change(input, { target: { value: 'Editing Team' } });
+      
+      // Score changes while editing
+      rerender(
+        <GameInfoBar {...defaultProps} onTeamNameChange={onTeamNameChange} homeScore={1} />
+      );
+      
+      // Should still be in edit mode
+      const stillEditing = screen.getByRole('textbox');
+      expect(stillEditing).toHaveValue('Editing Team');
+      
+      // Complete editing
+      fireEvent.keyDown(stillEditing, { key: 'Enter' });
+      expect(onTeamNameChange).toHaveBeenCalledWith('Editing Team');
+    });
+
+    it('should handle simultaneous editing attempts', () => {
+      render(<GameInfoBar {...defaultProps} />);
+      
+      // Try to edit both teams simultaneously
+      const homeTeam = screen.getByText('Home Team');
+      const awayTeam = screen.getByText('Away Team');
+      
+      fireEvent.doubleClick(homeTeam);
+      fireEvent.doubleClick(awayTeam);
+      
+      // Only one input should exist
+      const inputs = screen.getAllByRole('textbox');
+      expect(inputs).toHaveLength(1);
+    });
+
+    it('should handle performance with many rapid interactions', () => {
+      const { rerender } = render(<GameInfoBar {...defaultProps} />);
+      
+      // Multiple rapid prop updates
+      for (let i = 0; i < 20; i++) {
+        rerender(
+          <GameInfoBar 
+            {...defaultProps} 
+            homeScore={i} 
+            awayScore={i + 1}
+            teamName={`Team ${i}`}
+            opponentName={`Opponent ${i}`}
+          />
+        );
+      }
+      
+      expect(screen.getByText('Team 19')).toBeInTheDocument();
+      expect(screen.getByText('Opponent 19')).toBeInTheDocument();
+      expect(screen.getByText('19 - 20')).toBeInTheDocument();
+    });
+  });
 });

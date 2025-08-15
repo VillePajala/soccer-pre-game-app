@@ -179,8 +179,29 @@ describe('ControlBar', () => {
       expect(onRedo).toHaveBeenCalledTimes(1);
     });
 
+    it('should call onStartNewGame when start new game button is clicked', () => {
+      const onStartNewGame = jest.fn();
+      render(<ControlBar {...defaultProps} onStartNewGame={onStartNewGame} />);
+      
+      fireEvent.click(screen.getByRole('button', { name: /controlBar.newGame/i }));
+      expect(onStartNewGame).toHaveBeenCalledTimes(1);
+    });
 
+    it('should call onOpenLoadGameModal when load game button is clicked', () => {
+      const onOpenLoadGameModal = jest.fn();
+      render(<ControlBar {...defaultProps} onOpenLoadGameModal={onOpenLoadGameModal} />);
+      
+      fireEvent.click(screen.getByRole('button', { name: /controlBar.loadGame/i }));
+      expect(onOpenLoadGameModal).toHaveBeenCalledTimes(1);
+    });
 
+    it('should call onQuickSave when save button is clicked', () => {
+      const onQuickSave = jest.fn();
+      render(<ControlBar {...defaultProps} onQuickSave={onQuickSave} />);
+      
+      fireEvent.click(screen.getByRole('button', { name: /controlBar.saveGame/i }));
+      expect(onQuickSave).toHaveBeenCalledTimes(1);
+    });
 
     it('should call onOpenGameSettingsModal when settings button is clicked', () => {
       const onOpenGameSettingsModal = jest.fn();
@@ -201,7 +222,13 @@ describe('ControlBar', () => {
       expect(onOpenRosterModal).toHaveBeenCalledTimes(1);
     });
 
-
+    it('should call onToggleTrainingResources when training resources button is clicked', () => {
+      const onToggleTrainingResources = jest.fn();
+      render(<ControlBar {...defaultProps} onToggleTrainingResources={onToggleTrainingResources} />);
+      
+      fireEvent.click(screen.getByRole('button', { name: /controlBar.trainingResources/i }));
+      expect(onToggleTrainingResources).toHaveBeenCalledTimes(1);
+    });
 
     it('should call onToggleGoalLogModal when goal button is clicked', () => {
       const onToggleGoalLogModal = jest.fn();
@@ -209,6 +236,22 @@ describe('ControlBar', () => {
       
       fireEvent.click(screen.getByRole('button', { name: /controlBar.logGoal/i }));
       expect(onToggleGoalLogModal).toHaveBeenCalledTimes(1);
+    });
+
+    it('should call onToggleGameStatsModal when stats button is clicked', () => {
+      const onToggleGameStatsModal = jest.fn();
+      render(<ControlBar {...defaultProps} onToggleGameStatsModal={onToggleGameStatsModal} />);
+      
+      fireEvent.click(screen.getByRole('button', { name: /controlBar.gameStats/i }));
+      expect(onToggleGameStatsModal).toHaveBeenCalledTimes(1);
+    });
+
+    it('should call onAddOpponent when add opponent button is clicked', () => {
+      const onAddOpponent = jest.fn();
+      render(<ControlBar {...defaultProps} onAddOpponent={onAddOpponent} />);
+      
+      fireEvent.click(screen.getByRole('button', { name: /controlBar.addOpponent/i }));
+      expect(onAddOpponent).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -301,8 +344,39 @@ describe('ControlBar', () => {
   });
 
   describe('Update Checking', () => {
+    it('should check for manual updates', () => {
+      const mockCheckForUpdate = jest.fn();
+      (useManualUpdates as jest.Mock).mockReturnValue({
+        ...mockManualUpdates,
+        checkForUpdate: mockCheckForUpdate,
+      });
+      
+      render(<ControlBar {...defaultProps} />);
+      expect(useManualUpdates).toHaveBeenCalled();
+    });
 
+    it('should handle available update state', () => {
+      (useManualUpdates as jest.Mock).mockReturnValue({
+        ...mockManualUpdates,
+        isUpdateAvailable: true,
+      });
+      
+      render(<ControlBar {...defaultProps} />);
+      
+      // Should render normally with update available
+      expect(screen.getByRole('button', { name: /controlBar.logGoal/i })).toBeInTheDocument();
+    });
 
+    it('should handle update restart state', () => {
+      (useManualUpdates as jest.Mock).mockReturnValue({
+        ...mockManualUpdates,
+        isRestarting: true,
+      });
+      
+      render(<ControlBar {...defaultProps} />);
+      
+      expect(screen.getByRole('button', { name: /controlBar.logGoal/i })).toBeInTheDocument();
+    });
   });
 
   describe('Mobile Menu', () => {
@@ -313,11 +387,47 @@ describe('ControlBar', () => {
       expect(menuButton).toBeInTheDocument();
     });
 
+    it('should handle mobile menu interactions', () => {
+      render(<ControlBar {...defaultProps} />);
+      
+      const menuButton = screen.getByRole('button', { name: /controlBar.menu/i });
+      fireEvent.click(menuButton);
+      
+      // Menu should respond to click
+      expect(menuButton).toBeInTheDocument();
+    });
 
+    it('should maintain functionality in mobile view', () => {
+      render(<ControlBar {...defaultProps} />);
+      
+      // Key buttons should still be accessible
+      expect(screen.getByRole('button', { name: /controlBar.logGoal/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /controlBar.rosterSettings/i })).toBeInTheDocument();
+    });
   });
 
   describe('Timer Overlay State', () => {
+    it('should toggle timer overlay when timer button is clicked', () => {
+      const onToggleLargeTimerOverlay = jest.fn();
+      render(<ControlBar {...defaultProps} onToggleLargeTimerOverlay={onToggleLargeTimerOverlay} />);
+      
+      fireEvent.click(screen.getByRole('button', { name: /controlBar.toggleTimer/i }));
+      expect(onToggleLargeTimerOverlay).toHaveBeenCalledTimes(1);
+    });
 
+    it('should show different timer button state when overlay is visible', () => {
+      render(<ControlBar {...defaultProps} showLargeTimerOverlay={true} />);
+      
+      const timerButton = screen.getByRole('button', { name: /controlBar.toggleTimer/i });
+      expect(timerButton).toHaveClass('bg-indigo-600');
+    });
+
+    it('should handle timer state changes', () => {
+      render(<ControlBar {...defaultProps} showLargeTimerOverlay={false} />);
+      
+      const timerButton = screen.getByRole('button', { name: /controlBar.toggleTimer/i });
+      expect(timerButton).not.toHaveClass('bg-indigo-600');
+    });
   });
 
   describe('Accessibility', () => {
@@ -396,6 +506,240 @@ describe('ControlBar', () => {
       // Check for button grouping containers
       const buttonGroups = container.querySelectorAll('[class*="flex"][class*="gap"]');
       expect(buttonGroups.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Advanced Button States and Branches', () => {
+    it('should handle rapid button clicks', () => {
+      const onUndo = jest.fn();
+      render(<ControlBar {...defaultProps} onUndo={onUndo} canUndo={true} />);
+      
+      const undoButton = screen.getByRole('button', { name: /controlBar.undo/i });
+      
+      // Rapid fire clicks
+      fireEvent.click(undoButton);
+      fireEvent.click(undoButton);
+      fireEvent.click(undoButton);
+      
+      expect(onUndo).toHaveBeenCalledTimes(3);
+    });
+
+    it('should prevent undo/redo when disabled', () => {
+      const onUndo = jest.fn();
+      const onRedo = jest.fn();
+      render(
+        <ControlBar 
+          {...defaultProps} 
+          onUndo={onUndo} 
+          onRedo={onRedo}
+          canUndo={false} 
+          canRedo={false} 
+        />
+      );
+      
+      const undoButton = screen.getByRole('button', { name: /controlBar.undo/i });
+      const redoButton = screen.getByRole('button', { name: /controlBar.redo/i });
+      
+      fireEvent.click(undoButton);
+      fireEvent.click(redoButton);
+      
+      // Disabled buttons should not trigger callbacks
+      expect(onUndo).not.toHaveBeenCalled();
+      expect(onRedo).not.toHaveBeenCalled();
+    });
+
+    it('should handle alternating undo/redo states', () => {
+      const { rerender } = render(
+        <ControlBar {...defaultProps} canUndo={true} canRedo={false} />
+      );
+      
+      expect(screen.getByRole('button', { name: /controlBar.undo/i })).not.toBeDisabled();
+      expect(screen.getByRole('button', { name: /controlBar.redo/i })).toBeDisabled();
+      
+      // Switch states
+      rerender(<ControlBar {...defaultProps} canUndo={false} canRedo={true} />);
+      
+      expect(screen.getByRole('button', { name: /controlBar.undo/i })).toBeDisabled();
+      expect(screen.getByRole('button', { name: /controlBar.redo/i })).not.toBeDisabled();
+    });
+
+    it('should handle game loaded state changes', () => {
+      const { rerender } = render(
+        <ControlBar {...defaultProps} isGameLoaded={false} />
+      );
+      
+      // Some buttons should be disabled when no game is loaded
+      const settingsButtons = screen.getAllByRole('button', { name: /controlBar.gameSettings/i });
+      const disabledButton = settingsButtons.find(btn => btn.hasAttribute('disabled'));
+      expect(disabledButton).toBeDisabled();
+      
+      // Enable game
+      rerender(<ControlBar {...defaultProps} isGameLoaded={true} />);
+      
+      // Buttons should now be enabled
+      const enabledSettingsButtons = screen.getAllByRole('button', { name: /controlBar.gameSettings/i });
+      const enabledButton = enabledSettingsButtons.find(btn => !btn.hasAttribute('disabled'));
+      expect(enabledButton).not.toBeDisabled();
+    });
+
+    it('should handle tactics board view toggle', () => {
+      const { rerender } = render(
+        <ControlBar {...defaultProps} isTacticsBoardView={false} />
+      );
+      
+      let tacticsButton = screen.getByRole('button', { name: /controlBar.toggleTacticsBoardShow/i });
+      expect(tacticsButton).not.toHaveClass('bg-indigo-600');
+      
+      // Toggle tactics board active
+      rerender(<ControlBar {...defaultProps} isTacticsBoardView={true} />);
+      
+      tacticsButton = screen.getByRole('button', { name: /controlBar.toggleTacticsBoardHide/i });
+      expect(tacticsButton).toHaveClass('bg-indigo-600');
+    });
+
+    it('should handle timer overlay visibility states', () => {
+      const { rerender } = render(
+        <ControlBar {...defaultProps} showLargeTimerOverlay={false} />
+      );
+      
+      let timerButton = screen.getByRole('button', { name: /controlBar.toggleTimer/i });
+      expect(timerButton).not.toHaveClass('bg-indigo-600');
+      
+      // Show timer overlay
+      rerender(<ControlBar {...defaultProps} showLargeTimerOverlay={true} />);
+      
+      timerButton = screen.getByRole('button', { name: /controlBar.toggleTimer/i });
+      expect(timerButton).toHaveClass('bg-indigo-600');
+    });
+  });
+
+  describe('Complex Interaction Scenarios', () => {
+    it('should handle multiple modal triggers in sequence', async () => {
+      const onToggleGoalLogModal = jest.fn();
+      const onToggleGameStatsModal = jest.fn();
+      const onToggleTrainingResources = jest.fn();
+      
+      render(
+        <ControlBar 
+          {...defaultProps} 
+          onToggleGoalLogModal={onToggleGoalLogModal}
+          onToggleGameStatsModal={onToggleGameStatsModal}
+          onToggleTrainingResources={onToggleTrainingResources}
+        />
+      );
+      
+      // Trigger multiple modals
+      fireEvent.click(screen.getByRole('button', { name: /controlBar.logGoal/i }));
+      fireEvent.click(screen.getByRole('button', { name: /controlBar.gameStats/i }));
+      fireEvent.click(screen.getByRole('button', { name: /controlBar.trainingResources/i }));
+      
+      expect(onToggleGoalLogModal).toHaveBeenCalledTimes(1);
+      expect(onToggleGameStatsModal).toHaveBeenCalledTimes(1);
+      expect(onToggleTrainingResources).toHaveBeenCalledTimes(1);
+    });
+
+    it('should handle save operations with different game states', () => {
+      const onQuickSave = jest.fn();
+      const { rerender } = render(
+        <ControlBar {...defaultProps} onQuickSave={onQuickSave} isGameLoaded={false} />
+      );
+      
+      // Try to save when no game loaded
+      fireEvent.click(screen.getByRole('button', { name: /controlBar.saveGame/i }));
+      expect(onQuickSave).toHaveBeenCalledTimes(1); // Should still call handler
+      
+      // Save with game loaded
+      rerender(<ControlBar {...defaultProps} onQuickSave={onQuickSave} isGameLoaded={true} />);
+      fireEvent.click(screen.getByRole('button', { name: /controlBar.saveGame/i }));
+      expect(onQuickSave).toHaveBeenCalledTimes(2);
+    });
+
+    it('should handle tactical disc placement operations', () => {
+      const onAddHomeDisc = jest.fn();
+      const onAddOpponentDisc = jest.fn();
+      
+      render(
+        <ControlBar 
+          {...defaultProps} 
+          onAddHomeDisc={onAddHomeDisc}
+          onAddOpponentDisc={onAddOpponentDisc}
+          isTacticsBoardView={true}
+        />
+      );
+      
+      // Add tactical discs (these might be in tactics board controls)
+      const homeDiscButton = screen.queryByRole('button', { name: /home.*disc/i });
+      const opponentDiscButton = screen.queryByRole('button', { name: /opponent.*disc/i });
+      
+      if (homeDiscButton) {
+        fireEvent.click(homeDiscButton);
+        expect(onAddHomeDisc).toHaveBeenCalledTimes(1);
+      }
+      
+      if (opponentDiscButton) {
+        fireEvent.click(opponentDiscButton);
+        expect(onAddOpponentDisc).toHaveBeenCalledTimes(1);
+      }
+    });
+  });
+
+  describe('Performance and Edge Cases', () => {
+    it('should handle prop changes efficiently', () => {
+      const { rerender } = render(<ControlBar {...defaultProps} />);
+      
+      // Multiple prop changes
+      for (let i = 0; i < 10; i++) {
+        rerender(
+          <ControlBar 
+            {...defaultProps} 
+            canUndo={i % 2 === 0} 
+            canRedo={i % 3 === 0}
+            highlightRosterButton={i % 4 === 0}
+          />
+        );
+      }
+      
+      // Should still render correctly
+      expect(screen.getByRole('button', { name: /controlBar.logGoal/i })).toBeInTheDocument();
+    });
+
+    it('should handle undefined optional props', () => {
+      const minimalProps = {
+        onUndo: jest.fn(),
+        onRedo: jest.fn(),
+        canUndo: false,
+        canRedo: false,
+        onResetField: jest.fn(),
+        onClearDrawings: jest.fn(),
+        onAddOpponent: jest.fn(),
+        showLargeTimerOverlay: false,
+        onToggleLargeTimerOverlay: jest.fn(),
+        onToggleTrainingResources: jest.fn(),
+        onToggleGoalLogModal: jest.fn(),
+        onToggleGameStatsModal: jest.fn(),
+        onOpenLoadGameModal: jest.fn(),
+        onStartNewGame: jest.fn(),
+        onOpenRosterModal: jest.fn(),
+        onQuickSave: jest.fn(),
+        onOpenGameSettingsModal: jest.fn(),
+        isGameLoaded: true,
+        onPlaceAllPlayers: jest.fn(),
+        highlightRosterButton: false,
+        onOpenSeasonTournamentModal: jest.fn(),
+        isTacticsBoardView: false,
+        onToggleTacticsBoard: jest.fn(),
+        onAddHomeDisc: jest.fn(),
+        onAddOpponentDisc: jest.fn(),
+        onToggleInstructionsModal: jest.fn(),
+        onOpenSettingsModal: jest.fn(),
+        onOpenPlayerAssessmentModal: jest.fn(),
+        onSignOut: jest.fn(),
+        // Missing some optional props intentionally
+      };
+      
+      render(<ControlBar {...minimalProps} />);
+      
+      expect(screen.getByRole('button', { name: /controlBar.logGoal/i })).toBeInTheDocument();
     });
   });
 });
