@@ -153,7 +153,8 @@ describe('Email Confirmation Page', () => {
       // Assert - Should attempt verifyOtp when no auth code present
       await waitFor(() => {
         expect(mockSupabase.auth.verifyOtp).toHaveBeenCalledWith({
-          token_hash: 'valid_token_hash',
+          email: '',
+          token: 'valid_token_hash',
           type: 'signup',
         });
       });
@@ -177,8 +178,8 @@ describe('Email Confirmation Page', () => {
 
       // Assert
       await waitFor(() => {
-        expect(screen.getByText(/confirmation failed/i)).toBeInTheDocument();
-      });
+        expect(screen.getByRole('heading', { name: /Email Confirmation Failed/i })).toBeInTheDocument();
+      }, { timeout: 3000 });
     });
   });
 
@@ -308,7 +309,7 @@ describe('Email Confirmation Page', () => {
 
       // Assert
       await waitFor(() => {
-        expect(screen.getByText(/successfully confirmed/i)).toBeInTheDocument();
+        expect(screen.getByText(/Email Verified Successfully!/i)).toBeInTheDocument();
       });
     });
   });

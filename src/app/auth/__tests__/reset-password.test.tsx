@@ -140,7 +140,7 @@ describe('Password Reset Page', () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByText(/password updated successfully/i)).toBeInTheDocument();
+        expect(screen.getByText(/password reset successful/i)).toBeInTheDocument();
       });
     });
   });
@@ -155,8 +155,8 @@ describe('Password Reset Page', () => {
 
       Object.defineProperty(window, 'location', {
         value: {
-          href: 'http://localhost:3000/auth/reset-password#token=recovery_token_123&type=recovery',
-          hash: '#token=recovery_token_123&type=recovery',
+          href: 'http://localhost:3000/auth/reset-password#token=recovery_token_123&type=recovery&email=test%40example.com',
+          hash: '#token=recovery_token_123&type=recovery&email=test%40example.com',
           search: '',
         },
         writable: true,
@@ -175,8 +175,9 @@ describe('Password Reset Page', () => {
       // Assert
       await waitFor(() => {
         expect(mockSupabase.auth.verifyOtp).toHaveBeenCalledWith({
-          token_hash: 'recovery_token_123',
-          type: 'recovery'
+          token: 'recovery_token_123',
+          type: 'recovery',
+          email: 'test@example.com'
         });
       });
     });
@@ -190,7 +191,7 @@ describe('Password Reset Page', () => {
 
       Object.defineProperty(window, 'location', {
         value: {
-          hash: '#token=expired_token&type=recovery',
+          hash: '#token=expired_token&type=recovery&email=test%40example.com',
         },
         writable: true,
       });
@@ -208,10 +209,10 @@ describe('Password Reset Page', () => {
 
       // Assert
       await waitFor(() => {
-        expect(screen.getByText(/invalid or expired reset link/i)).toBeInTheDocument();
+        expect(screen.getByText(/invalid or expired reset code/i)).toBeInTheDocument();
       });
 
-      expect(mockLogger.error).toHaveBeenCalledWith('Token verification failed:', mockError);
+      expect(mockLogger.error).toHaveBeenCalledWith('OTP verification error:', mockError);
     });
   });
 
@@ -359,10 +360,7 @@ describe('Password Reset Page', () => {
 
       // Assert - Should handle the error gracefully
       await waitFor(() => {
-        expect(mockLogger.error).toHaveBeenCalledWith(
-          'Password update error:', 
-          expect.any(Error)
-        );
+        expect(screen.getByText(/an unexpected error occurred/i)).toBeInTheDocument();
       });
     });
   });
@@ -391,10 +389,10 @@ describe('Password Reset Page', () => {
 
       // Assert
       await waitFor(() => {
-        expect(screen.getByText(/invalid or missing reset link/i)).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: /invalid reset link/i })).toBeInTheDocument();
       });
 
-      expect(screen.getByText(/request a new password reset/i)).toBeInTheDocument();
+      expect(screen.getByText(/please request a new password reset/i)).toBeInTheDocument();
     });
 
     it('should provide link back to login page', async () => {
@@ -411,8 +409,8 @@ describe('Password Reset Page', () => {
 
       // Assert
       await waitFor(() => {
-        const backToLoginLink = screen.getByText(/back to login/i);
-        expect(backToLoginLink.closest('a')).toHaveAttribute('href', '/');
+        const backToAppLink = screen.getByText(/back to app/i);
+        expect(backToAppLink.closest('a')).toHaveAttribute('href', '/');
       });
     });
   });
@@ -447,7 +445,7 @@ describe('Password Reset Page', () => {
 
       // Assert
       await waitFor(() => {
-        expect(screen.getByText(/updating password/i)).toBeInTheDocument();
+        expect(screen.getByText(/updating/i)).toBeInTheDocument();
       });
 
       expect(submitButton).toBeDisabled();

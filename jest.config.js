@@ -54,23 +54,31 @@ const customJestConfig = {
     '!src/app/auth-debug/**',
     '!src/app/password-reset-help/**'
   ],
+  // Week 1 Coverage Thresholds - Gradual Ramp Up
   coverageThreshold: {
-    global: {
-      branches: 30,    // Adjusted from 31% to 30% (current: 30.7%)
-      functions: 35,   // Adjusted from 36% to 35% (current: 35.51%)
-      lines: 36,       // Adjusted from 37% to 36% (current: 36.94%)
-      statements: 36,  // Adjusted from 37% to 36% (current: 36.79%)
-    },
+    // Start with current levels + 2-3% improvement
+    global: { 
+      statements: 45, 
+      lines: 45, 
+      functions: 41, 
+      branches: 38 
+    }
+    // Focus on specific high-value utils first
+    // Will add scope-specific gates as we improve individual files
   },
   // Add transform for ts-jest if needed, but next/jest should handle it
   // transform: {
   //   '^.+\\.(ts|tsx)$?': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.json' }],
   // },
   
-  // Help with async operations cleanup
+  // Coverage reporting
+  coverageReporters: ['text-summary', 'html', 'lcov'],
+  coverageDirectory: 'coverage',
+  
+  // Help with async operations cleanup - Week 1 hardening
   testTimeout: 15000,
-  detectOpenHandles: false, // Disable open handles detection to prevent warnings
-  forceExit: true, // Force Jest to exit after tests
+  detectOpenHandles: true, // Enable to find async leaks
+  forceExit: false, // Disable force exit to properly detect issues
 };
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
