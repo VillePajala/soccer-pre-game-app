@@ -82,11 +82,31 @@ if (isDevEnvironment) {
       return;
     }
 
+    // Supabase requests - short-circuit and bypass caching
+    if (url.hostname.includes('supabase')) {
+      event.respondWith(
+        fetch(request).catch(
+          () => new Response(JSON.stringify({ error: 'offline' }), {
+            status: 503,
+            headers: { 'Content-Type': 'application/json' }
+          })
+        )
+      );
+      return;
+    }
+
     // API requests - Network first, cache fallback (GET only)
-    if (url.pathname.startsWith('/api/') || url.hostname.includes('supabase')) {
+    if (url.pathname.startsWith('/api/')) {
       // Never attempt to cache non-GET requests (Cache API only supports GET)
       if (request.method !== 'GET') {
-        event.respondWith(fetch(request));
+        event.respondWith(
+          fetch(request).catch(
+            () => new Response(JSON.stringify({ error: 'offline' }), {
+              status: 503,
+              headers: { 'Content-Type': 'application/json' }
+            })
+          )
+        );
         return;
       }
       event.respondWith(
@@ -105,7 +125,11 @@ if (isDevEnvironment) {
             // Try cache on network failure; ensure a Response is returned
             const cached = await caches.match(request);
             return (
-              cached || new Response(JSON.stringify({ error: 'offline' }), { status: 503, headers: { 'Content-Type': 'application/json' } })
+              cached ||
+              new Response(JSON.stringify({ error: 'offline' }), {
+                status: 503,
+                headers: { 'Content-Type': 'application/json' }
+              })
             );
           })
       );
