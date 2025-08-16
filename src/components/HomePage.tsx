@@ -506,7 +506,7 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
   const [selectedPlayerForStats, setSelectedPlayerForStats] = useState<Player | null>(null);
 
   // --- Timer State (Still needed here) ---
-  const [showLargeTimerOverlay, setShowLargeTimerOverlay] = useState<boolean>(true); // State for overlay visibility
+  const [showLargeTimerOverlay, setShowLargeTimerOverlay] = useState<boolean>(false); // State for overlay visibility
   const [isInstructionsModalOpen, setIsInstructionsModalOpen] = useState<boolean>(false);
 
   const hasHandledInitialActionRef = useRef(false);

@@ -1,4 +1,4 @@
-import { http, HttpResponse } from 'msw';
+const { http, HttpResponse } = require('msw');
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://test.supabase.co';
 

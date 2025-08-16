@@ -387,7 +387,7 @@ export const useGameDataManager = ({
       // Allow future saves again
       isDeleteInFlightRef.current = false;
     }
-  }, [setSavedGames, currentGameId, setCurrentGameId, queryClient]);
+  }, [setSavedGames, currentGameId, setCurrentGameId, queryClient, saveQueue]);
 
   // --- Export Handlers ---
   const handleExportOneJson = useCallback((gameId: string, seasons: Season[] = [], tournaments: Tournament[] = []) => {
