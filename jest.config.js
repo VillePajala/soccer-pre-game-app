@@ -54,70 +54,70 @@ const customJestConfig = {
     '!src/app/auth-debug/**',
     '!src/app/password-reset-help/**'
   ],
-  // Week 3 Coverage Thresholds - Integration & Reliability
+  // Week 4 Coverage Thresholds - Advanced Testing & Optimization
   coverageThreshold: {
-    // Week 3 targets: ~72-78% global coverage
+    // Week 4 targets: ~80-88% global coverage
     global: { 
-      statements: 75, 
-      lines: 75, 
-      functions: 75, 
-      branches: 65 
-    },
-    // Scope-specific gates (Week 3 step-up)
-    "./src/utils/**/*.{ts,tsx}": { 
-      statements: 90, 
-      lines: 90, 
-      functions: 90, 
-      branches: 80 
-    },
-    "./src/stores/**/*.{ts,tsx}": { 
       statements: 85, 
       lines: 85, 
       functions: 85, 
       branches: 75 
     },
-    "./src/hooks/**/*.{ts,tsx}": { 
-      statements: 80, 
-      lines: 80, 
-      functions: 80, 
-      branches: 70 
+    // Scope-specific gates (Week 4 step-up)
+    "./src/utils/**/*.{ts,tsx}": { 
+      statements: 95, 
+      lines: 95, 
+      functions: 95, 
+      branches: 85 
     },
-    // Core component targets for Week 3
+    "./src/stores/**/*.{ts,tsx}": { 
+      statements: 90, 
+      lines: 90, 
+      functions: 90, 
+      branches: 85 
+    },
+    "./src/hooks/**/*.{ts,tsx}": { 
+      statements: 85, 
+      lines: 85, 
+      functions: 85, 
+      branches: 80 
+    },
+    // Core component targets for Week 4
     "./src/components/HomePage.tsx": { 
-      statements: 75, 
-      lines: 75, 
-      functions: 75, 
-      branches: 65 
+      statements: 85, 
+      lines: 85, 
+      functions: 85, 
+      branches: 75 
     },
     "./src/components/ControlBar.tsx": { 
-      statements: 75, 
-      lines: 75, 
-      functions: 75, 
-      branches: 65 
+      statements: 85, 
+      lines: 85, 
+      functions: 85, 
+      branches: 75 
     },
     "./src/components/TimerOverlay.tsx": { 
-      statements: 75, 
-      lines: 75, 
-      functions: 75, 
-      branches: 65 
+      statements: 85, 
+      lines: 85, 
+      functions: 85, 
+      branches: 75 
     },
     "./src/components/GameInfoBar.tsx": { 
-      statements: 75, 
-      lines: 75, 
-      functions: 75, 
-      branches: 65 
+      statements: 85, 
+      lines: 85, 
+      functions: 85, 
+      branches: 75 
     },
     "./src/components/SoccerField.tsx": { 
+      statements: 85, 
+      lines: 85, 
+      functions: 85, 
+      branches: 75 
+    },
+    "./src/app/**/*.{ts,tsx}": { 
       statements: 75, 
       lines: 75, 
       functions: 75, 
       branches: 65 
-    },
-    "./src/app/**/*.{ts,tsx}": { 
-      statements: 65, 
-      lines: 65, 
-      functions: 65, 
-      branches: 55 
     }
   },
   // Add transform for ts-jest if needed, but next/jest should handle it
