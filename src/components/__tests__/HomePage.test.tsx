@@ -377,7 +377,7 @@ describe('HomePage', () => {
       expect(screen.getByTestId('soccer-field')).toBeInTheDocument();
       expect(screen.getByTestId('player-bar')).toBeInTheDocument();
       expect(screen.getByTestId('control-bar')).toBeInTheDocument();
-      expect(screen.getByTestId('timer-overlay')).toBeInTheDocument();
+      // TimerOverlay is conditionally rendered based on showLargeTimerOverlay state
     });
 
     it('should render within error boundary', () => {
@@ -455,10 +455,11 @@ describe('HomePage', () => {
       );
     });
 
-    it('should render timer overlay with timer state', () => {
+    it('should not render timer overlay by default', () => {
       render(<HomePage initialState={mockInitialState} />);
       
-      expect(screen.getByTestId('timer-overlay')).toBeInTheDocument();
+      // Timer overlay is hidden by default
+      expect(screen.queryByTestId('timer-overlay')).not.toBeInTheDocument();
     });
   });
 
@@ -869,8 +870,8 @@ describe('HomePage', () => {
       
       render(<HomePage initialState={mockInitialState} />);
       
-      // Component should still render with failing timer
-      expect(screen.getByTestId('timer-overlay')).toBeInTheDocument();
+      // Component should still render even with failing timer (but timer overlay won't be shown by default)
+      expect(screen.getByTestId('control-bar')).toBeInTheDocument();
     });
 
     it('should handle authentication errors', () => {

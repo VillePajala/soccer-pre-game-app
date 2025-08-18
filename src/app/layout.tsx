@@ -47,7 +47,15 @@ export default function RootLayout({
 }>) {
   // Extract Supabase URL for preconnect (if available)
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseHost = supabaseUrl ? new URL(supabaseUrl).origin : null;
+  let supabaseHost: string | null = null;
+  if (supabaseUrl) {
+    try {
+      supabaseHost = new URL(supabaseUrl).origin;
+    } catch {
+      // Invalid URL - skip preconnect
+      console.warn('Invalid Supabase URL provided:', supabaseUrl);
+    }
+  }
   
   return (
     <html lang="fi">

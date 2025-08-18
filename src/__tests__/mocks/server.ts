@@ -1,5 +1,5 @@
 const { setupServer } = require('msw/node');
-import { handlers } from './handlers';
+const { handlers } = require('./handlers');
 
 // Setup the server with default handlers
 export const server = setupServer(...handlers);

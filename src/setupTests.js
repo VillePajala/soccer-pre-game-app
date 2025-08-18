@@ -1,11 +1,39 @@
+// Polyfills first
+import 'whatwg-fetch';
+import 'fake-indexeddb/auto';
+import { TextEncoder, TextDecoder } from 'util';
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder;
+
+// BroadcastChannel polyfill
+if (typeof BroadcastChannel === 'undefined') {
+  global.BroadcastChannel = class BroadcastChannel {
+    constructor(name) {
+      this.name = name;
+      this.onmessage = null;
+    }
+    postMessage(_message) {
+      // No-op in test environment
+    }
+    close() {
+      // No-op in test environment
+    }
+  };
+}
+
+// JSDOM matchers
 import '@testing-library/jest-dom';
 
-// Setup MSW for integration tests (conditionally)
-if (process.env.MSW_ENABLED === 'true' || process.env.INTEGRATION_TEST === 'true') {
-  // Dynamic import for MSW server
-  import('./__tests__/mocks/server').catch(() => {
-    // Ignore errors if MSW is not available
-  });
+// MSW in Node (not the browser worker)
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { server } = require('./test/msw/server');
+  beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }));
+  afterEach(() => server.resetHandlers());
+  afterAll(() => server.close());
+} catch {
+  // MSW not available, continue without it
+  console.warn('MSW server not available for tests');
 }
 
 // Suppress console errors during tests unless explicitly enabled

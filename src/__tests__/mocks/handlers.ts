@@ -74,7 +74,7 @@ const mockTournaments = [
   },
 ];
 
-export const handlers = [
+const handlers = [
   // Auth endpoints
   http.post(`${SUPABASE_URL}/auth/v1/token`, async ({ request }) => {
     const body = await request.json();
@@ -222,7 +222,7 @@ export const handlers = [
 ];
 
 // Error simulation handlers for testing error scenarios
-export const errorHandlers = {
+const errorHandlers = {
   authError: http.post(`${SUPABASE_URL}/auth/v1/token`, async () => {
     return HttpResponse.json(
       { error: 'Invalid login credentials', message: 'Invalid login credentials' },
@@ -255,3 +255,4 @@ export const errorHandlers = {
     );
   }),
 };
+module.exports = { handlers, errorHandlers };
