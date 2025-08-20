@@ -1085,9 +1085,16 @@ function HomePage({ initialAction, skipInitialSetup = false }: HomePageProps) {
         setPlayersOnField(gameData?.playersOnField || (isInitialDefaultLoad ? initialState.playersOnField : []));
         setOpponents(gameData?.opponents || (isInitialDefaultLoad ? initialState.opponents : []));
         setDrawings(gameData?.drawings || (isInitialDefaultLoad ? initialState.drawings : []));
-        setTacticalDiscs(gameData?.tacticalDiscs || (isInitialDefaultLoad ? initialState.tacticalDiscs : []));
-        setTacticalDrawings(gameData?.tacticalDrawings || (isInitialDefaultLoad ? initialState.tacticalDrawings : []));
-        setTacticalBallPosition(gameData?.tacticalBallPosition || { relX: 0.5, relY: 0.5 });
+        // Safely call tactical setters with null checks
+        if (setTacticalDiscs) {
+          setTacticalDiscs(gameData?.tacticalDiscs || (isInitialDefaultLoad ? initialState.tacticalDiscs : []));
+        }
+        if (setTacticalDrawings) {
+          setTacticalDrawings(gameData?.tacticalDrawings || (isInitialDefaultLoad ? initialState.tacticalDrawings : []));
+        }
+        if (setTacticalBallPosition) {
+          setTacticalBallPosition(gameData?.tacticalBallPosition || { relX: 0.5, relY: 0.5 });
+        }
         setIsPlayed(gameData?.isPlayed === false ? false : true);
       });
     });
